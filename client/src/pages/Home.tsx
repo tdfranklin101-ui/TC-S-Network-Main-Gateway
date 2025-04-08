@@ -45,12 +45,21 @@ const Home = () => {
           <img src="/branding_logo.png" alt="The Current-See Logo" className="logo w-24 h-24 mx-auto mb-6" />
           <h1 className="text-4xl md:text-6xl font-bold mb-4">Welcome to The Current-See</h1>
           <p className="text-xl md:text-2xl mb-8">A new global economy backed by the Sun. One Solar. One Earth. Daily.</p>
-          <button 
-            onClick={() => scrollToSection("demo")}
-            className="cta-button bg-[#FFD700] text-[#212529] hover:bg-opacity-90 font-bold py-3 px-8 rounded-lg shadow-lg transition duration-300"
-          >
-            Enter the Demo
-          </button>
+          <div className="flex flex-col sm:flex-row justify-center gap-4">
+            <button 
+              onClick={() => scrollToSection("demo")}
+              className="cta-button bg-[#FFD700] text-[#212529] hover:bg-opacity-90 font-bold py-3 px-8 rounded-lg shadow-lg transition duration-300"
+            >
+              Learn More
+            </button>
+            <a 
+              href="https://replit.com/@tdfranklin101/SolarSpender" 
+              target="_blank" 
+              className="cta-button bg-white text-[#0057B8] hover:bg-opacity-90 font-bold py-3 px-8 rounded-lg shadow-lg transition duration-300"
+            >
+              Try the Demo
+            </a>
+          </div>
         </div>
       </header>
 
@@ -77,13 +86,27 @@ const Home = () => {
             </li>
           </ul>
           
-          <div className="text-center">
+          <div className="text-center grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto">
             <a 
-              href="https://replit.com/@yourprojectpath" 
+              href="https://replit.com/@tdfranklin101/SolarSpender" 
               target="_blank" 
-              className="cta-button bg-[#0057B8] text-white hover:bg-opacity-90 font-bold py-3 px-8 rounded-lg shadow-lg transition duration-300 inline-block"
+              className="cta-button bg-[#0057B8] text-white hover:bg-opacity-90 font-bold py-3 px-4 rounded-lg shadow-lg transition duration-300 text-center"
             >
-              Run the Wallet Demo
+              Solar Spender
+            </a>
+            <a 
+              href="https://replit.com/@tdfranklin101/wallet_assistant.py" 
+              target="_blank" 
+              className="cta-button bg-[#0057B8] text-white hover:bg-opacity-90 font-bold py-3 px-4 rounded-lg shadow-lg transition duration-300 text-center"
+            >
+              Wallet Assistant
+            </a>
+            <a 
+              href="https://replit.com/@tdfranklin101/wallet_dashboard.py" 
+              target="_blank" 
+              className="cta-button bg-[#0057B8] text-white hover:bg-opacity-90 font-bold py-3 px-4 rounded-lg shadow-lg transition duration-300 text-center"
+            >
+              Wallet Dashboard
             </a>
           </div>
         </div>
