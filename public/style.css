@@ -1,0 +1,153 @@
+/* Base styles */
+body {
+  font-family: 'Arial', sans-serif;
+  margin: 0;
+  padding: 0;
+  line-height: 1.6;
+  color: #333;
+}
+
+/* Hero section */
+.hero {
+  background: linear-gradient(135deg, #0057B8 0%, #00A896 100%);
+  color: white;
+  padding: 4rem 1rem;
+  text-align: center;
+}
+
+.logo {
+  width: 120px;
+  height: auto;
+  margin-bottom: 2rem;
+}
+
+h1 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.hero p {
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+}
+
+/* Buttons */
+.cta-button {
+  display: inline-block;
+  background-color: #FFD700;
+  color: #212529;
+  text-decoration: none;
+  padding: 0.8rem 1.8rem;
+  border-radius: 30px;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.cta-button:hover {
+  background-color: #f0cb00;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Sections */
+section {
+  padding: 4rem 1rem;
+}
+
+section h2 {
+  text-align: center;
+  color: #0057B8;
+  margin-bottom: 2rem;
+  font-size: 2rem;
+}
+
+/* Demo section */
+#demo {
+  background-color: white;
+}
+
+#demo ul {
+  list-style-type: none;
+  padding-left: 0;
+  max-width: 600px;
+  margin: 0 auto 2rem;
+}
+
+#demo li {
+  margin-bottom: 0.8rem;
+}
+
+/* Merchandise section */
+#merch {
+  background-color: #f8f9fa;
+}
+
+.merch-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.item {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.item:hover {
+  transform: translateY(-5px);
+}
+
+.item img {
+  width: 100%;
+  height: auto;
+}
+
+.item p {
+  padding: 1rem;
+  margin: 0;
+  text-align: center;
+  font-weight: 500;
+}
+
+.centered {
+  text-align: center;
+}
+
+/* Footer */
+footer {
+  background-color: #212529;
+  color: white;
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+footer a {
+  color: #FFD700;
+  text-decoration: none;
+}
+
+footer a:hover {
+  text-decoration: underline;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 768px) {
+  h1 {
+    font-size: 2rem;
+  }
+  
+  .hero p {
+    font-size: 1rem;
+  }
+  
+  .merch-grid {
+    grid-template-columns: 1fr;
+  }
+}
