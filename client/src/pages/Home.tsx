@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import Footer from "../components/Footer";
 
 const Home = () => {
   const { toast } = useToast();
@@ -189,13 +190,15 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Contact/Footer Section */}
-      <footer id="contact" className="py-10 bg-[#212529] text-white text-center">
+      {/* Contact Section */}
+      <section id="contact" className="py-10 bg-[#212529] text-white text-center">
         <div className="container mx-auto px-4">
           <p className="mb-2">🌐 Contact us at <a href="mailto:hello@thecurrentsee.org" className="text-[#FFD700] hover:underline">hello@thecurrentsee.org</a></p>
-          <p>&copy; 2025 The Current-See PBC, Inc. | All rights reserved</p>
         </div>
-      </footer>
+      </section>
+      
+      {/* Footer with all links */}
+      <Footer />
     </div>
   );
 };
