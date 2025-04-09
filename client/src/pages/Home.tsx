@@ -149,7 +149,7 @@ const Home = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
             <div className="bg-[#F8F9FA] p-6 rounded-lg shadow-md text-center hover:shadow-lg transition-shadow">
               <h3 className="text-xl font-bold mb-3 text-[#0057B8]">Founder's Note</h3>
-              <p className="mb-4">Read a personal message from our founder about the vision behind The Current-See.</p>
+              <p className="mb-4">Read a personal message from Terry D. Franklin about the vision behind The Current-See.</p>
               <a 
                 href="/founder_note.html" 
                 className="inline-block bg-[#0057B8] text-white hover:bg-opacity-90 font-medium py-2 px-4 rounded transition duration-300"
