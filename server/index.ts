@@ -3,6 +3,9 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import path from "path";
 
+// Set environment variables
+process.env.SESSION_SECRET = process.env.SESSION_SECRET || 'currentsee-session-secret';
+
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -42,6 +45,19 @@ app.get('/white_paper_4.html', (req, res) => {
 
 app.get('/white_paper_5.html', (req, res) => {
   res.sendFile(path.join(process.cwd(), 'public', 'white_paper_5.html'));
+});
+
+// Admin routes
+app.get('/admin', (req, res) => {
+  res.redirect('/admin/login');
+});
+
+app.get('/admin/login', (req, res) => {
+  res.sendFile(path.join(process.cwd(), 'public', 'admin', 'login.html'));
+});
+
+app.get('/admin/dashboard', (req, res) => {
+  res.sendFile(path.join(process.cwd(), 'public', 'admin', 'dashboard.html'));
 });
 
 app.use((req, res, next) => {

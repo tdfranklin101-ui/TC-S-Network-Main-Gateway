@@ -202,7 +202,27 @@
             <p>Every day, the sun delivers enough energy to power all of humanity for a year. Through The Current-See, that energy becomes income for everyone.</p>
         </div>
         
-        <a href="/" class="return-link">Return to Homepage</a>
+        <div class="footer-links">
+            <a href="/" class="return-link">Return to Homepage</a>
+            <a href="/admin" class="admin-link">Admin</a>
+        </div>
+        
+        <style>
+            .footer-links {
+                display: flex;
+                justify-content: center;
+                gap: 20px;
+                margin-top: 30px;
+            }
+            .admin-link {
+                color: #888;
+                font-size: 0.9rem;
+                text-decoration: none;
+            }
+            .admin-link:hover {
+                text-decoration: underline;
+            }
+        </style>
     </div>
 </body>
 </html>

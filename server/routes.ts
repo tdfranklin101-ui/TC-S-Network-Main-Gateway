@@ -3,8 +3,12 @@ import type { Server } from "http";
 import { storage } from "./storage";
 import { insertNewsletterSubscriptionSchema, insertContactMessageSchema } from "@shared/schema";
 import { setupWaitlistRoutes } from "./waitlist";
+import { setupAdminRoutes } from "./admin";
+import cookieParser from "cookie-parser";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Add cookie parser middleware for admin authentication
+  app.use(cookieParser());
   const apiRouter = express.Router();
   
   // API routes
@@ -45,6 +49,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Set up waitlist routes (direct routes, not under /api)
   setupWaitlistRoutes(app);
+  
+  // Set up admin routes
+  setupAdminRoutes(app);
 
   const httpServer = createServer(app);
   return httpServer;

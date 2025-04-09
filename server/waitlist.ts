@@ -19,14 +19,19 @@ function handleSignup(req: Request, res: Response) {
   
   try {
     const fileExists = fs.existsSync(REGISTRANT_FILE);
+    const now = new Date().toISOString();
     
     // Create file with headers if it doesn't exist
     if (!fileExists) {
-      fs.writeFileSync(REGISTRANT_FILE, 'Name,Email\n');
+      fs.writeFileSync(REGISTRANT_FILE, 'name,email,date\n');
     }
     
-    // Append to CSV file
-    fs.appendFileSync(REGISTRANT_FILE, `${name},${email}\n`);
+    // Escape CSV fields to handle commas in values
+    const escapedName = name.includes(',') ? `"${name}"` : name;
+    const escapedEmail = email.includes(',') ? `"${email}"` : email;
+    
+    // Append to CSV file with date
+    fs.appendFileSync(REGISTRANT_FILE, `${escapedName},${escapedEmail},${now}\n`);
     
     return res.status(200).json({ 
       success: true, 
