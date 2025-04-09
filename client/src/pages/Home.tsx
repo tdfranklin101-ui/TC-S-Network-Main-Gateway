@@ -41,12 +41,12 @@ const Home = () => {
     <div className="font-body bg-white text-[#212529]">
       {/* Hero Section */}
       <header className="hero text-white py-20 text-center relative" style={{ 
-        backgroundImage: 'url(/solar_background.svg)', 
+        backgroundImage: 'url(/solar_background.png)', 
         backgroundSize: 'cover', 
         backgroundPosition: 'center' 
       }}>
         <div className="container mx-auto px-4">
-          <img src="/branding_logo.svg" alt="The Current-See Logo" className="logo w-24 h-24 mx-auto mb-6" />
+          <img src="/branding_logo.png" alt="The Current-See Logo" className="logo w-24 h-24 mx-auto mb-6" />
           <h1 className="text-4xl md:text-6xl font-bold mb-4" style={{ textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)' }}>Welcome to The Current-See</h1>
           <p className="text-xl md:text-2xl mb-8" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}>A new global economy backed by the Sun. One Solar. One Earth. Daily.</p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
@@ -110,21 +110,21 @@ const Home = () => {
           <div className="merch-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-10">
             <div className="item bg-white p-6 rounded-lg shadow-md text-center">
               <div className="aspect-square bg-gray-100 flex items-center justify-center rounded-lg mb-4">
-                <img src="/solar_spinner.svg" alt="Solar Spinner" className="max-w-full max-h-full object-contain" />
+                <img src="/solar_spinner.png" alt="Solar Spinner" className="max-w-full max-h-full object-contain" />
               </div>
               <p className="text-lg font-medium">Solar Spinner Bulb</p>
             </div>
             
             <div className="item bg-white p-6 rounded-lg shadow-md text-center">
               <div className="aspect-square bg-gray-100 flex items-center justify-center rounded-lg mb-4">
-                <img src="/solar_coin.svg" alt="Solar Coin" className="max-w-full max-h-full object-contain" />
+                <img src="/solar_coin.png" alt="Solar Coin" className="max-w-full max-h-full object-contain" />
               </div>
               <p className="text-lg font-medium">Energy Coin</p>
             </div>
             
             <div className="item bg-white p-6 rounded-lg shadow-md text-center">
               <div className="aspect-square bg-gray-100 flex items-center justify-center rounded-lg mb-4">
-                <img src="/solar_tshirt.svg" alt="Solar Shirt" className="max-w-full max-h-full object-contain" />
+                <img src="/solar_tshirt.png" alt="Solar Shirt" className="max-w-full max-h-full object-contain" />
               </div>
               <p className="text-lg font-medium">1 Solar = $136K Tee</p>
             </div>
