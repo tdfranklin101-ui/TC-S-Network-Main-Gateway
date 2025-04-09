@@ -90,27 +90,13 @@ const Home = () => {
             </li>
           </ul>
           
-          <div className="text-center grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto">
+          <div className="text-center mx-auto">
             <a 
               href="https://replit.com/@tdfranklin101/SolarSpender" 
               target="_blank" 
-              className="cta-button bg-[#0057B8] text-white hover:bg-opacity-90 font-bold py-3 px-4 rounded-lg shadow-lg transition duration-300 text-center"
+              className="cta-button bg-[#0057B8] text-white hover:bg-opacity-90 font-bold py-4 px-8 rounded-lg shadow-lg transition duration-300 text-center text-lg"
             >
-              Solar Spender
-            </a>
-            <a 
-              href="https://replit.com/@tdfranklin101/wallet_assistant.py" 
-              target="_blank" 
-              className="cta-button bg-[#0057B8] text-white hover:bg-opacity-90 font-bold py-3 px-4 rounded-lg shadow-lg transition duration-300 text-center"
-            >
-              Wallet Assistant
-            </a>
-            <a 
-              href="https://replit.com/@tdfranklin101/wallet_dashboard.py" 
-              target="_blank" 
-              className="cta-button bg-[#0057B8] text-white hover:bg-opacity-90 font-bold py-3 px-4 rounded-lg shadow-lg transition duration-300 text-center"
-            >
-              Wallet Dashboard
+              Try Solar Spender Prototype
             </a>
           </div>
         </div>
