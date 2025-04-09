@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Up - The Current-See</title>
+    <title>Join Waitlist - The Current-See</title>
     <link rel="stylesheet" href="/style.css">
     <script src="/navigation.js"></script>
     <style>
@@ -11,77 +11,84 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             line-height: 1.6;
             color: #333;
-            background-color: #f5f5f5;
             margin: 0;
             padding: 0;
+            background-color: #f8f9fa;
         }
         header {
             background-color: #0057B8;
             color: white;
             text-align: center;
-            padding: 1rem 0;
+            padding: 2rem 0;
         }
         .logo {
-            width: 80px;
+            width: 100px;
             height: auto;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
         }
         .container {
-            max-width: 600px;
-            margin: 2rem auto;
+            max-width: 800px;
+            margin: 0 auto;
             padding: 2rem;
             background-color: white;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-top: -50px;
         }
         h1 {
             color: #0057B8;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
             text-align: center;
         }
+        .intro {
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        .waitlist-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            margin: 2rem auto;
+            max-width: 500px;
+        }
         .form-group {
-            margin-bottom: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
         }
         label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
+            font-weight: bold;
+            color: #0057B8;
         }
-        input, select {
-            width: 100%;
+        input {
             padding: 0.75rem;
             border: 1px solid #ddd;
             border-radius: 4px;
             font-size: 1rem;
         }
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-        .checkbox-group input {
-            width: auto;
-            margin-right: 10px;
-        }
         button {
-            background-color: #0057B8;
-            color: white;
+            background-color: #f0de4d;
+            color: #333;
             border: none;
-            padding: 1rem 2rem;
-            font-size: 1rem;
+            padding: 1rem;
             border-radius: 4px;
+            font-weight: bold;
             cursor: pointer;
-            width: 100%;
-            font-weight: 600;
+            font-size: 1rem;
+            transition: background-color 0.3s;
         }
         button:hover {
-            background-color: #004090;
+            background-color: #e5d546;
         }
-        .note {
-            margin-top: 1.5rem;
+        .solar-counter {
+            margin-top: 2rem;
+            text-align: center;
+            padding: 1rem;
+            border-top: 1px solid #eee;
+        }
+        .solar-counter p {
             font-size: 0.9rem;
             color: #666;
-            text-align: center;
         }
         .return-link {
             display: block;
@@ -93,83 +100,109 @@
         .return-link:hover {
             text-decoration: underline;
         }
+        .success-message {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 1rem;
+            border-radius: 4px;
+            text-align: center;
+            margin: 2rem auto;
+            max-width: 500px;
+            display: none;
+        }
     </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('waitlist-form');
+            const successMessage = document.getElementById('success-message');
+            
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(form);
+                
+                try {
+                    const response = await fetch('/signup', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            name: formData.get('name'),
+                            email: formData.get('email')
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        successMessage.textContent = data.message;
+                        successMessage.style.display = 'block';
+                        form.reset();
+                        form.style.display = 'none';
+                    } else {
+                        const error = await response.json();
+                        alert('Error: ' + (error.error || 'Unknown error'));
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Failed to submit form. Please try again.');
+                }
+            });
+            
+            // Fetch and display waitlist count
+            async function fetchWaitlistCount() {
+                try {
+                    const response = await fetch('/registrants/count');
+                    if (response.ok) {
+                        const data = await response.json();
+                        const countElement = document.getElementById('waitlist-count');
+                        if (countElement) {
+                            countElement.textContent = data.count;
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error fetching waitlist count:', error);
+                }
+            }
+            
+            fetchWaitlistCount();
+        });
+    </script>
 </head>
 <body>
     <header>
         <a href="/"><img src="/branding_logo.png" alt="The Current-See Logo" class="logo"></a>
-        <h2>The Current-See</h2>
+        <h1>Join the Waitlist</h1>
+        <p>Be among the first to experience a new solar-backed economy</p>
     </header>
     
     <div class="container">
-        <h1>Join the Solar Movement</h1>
+        <div class="intro">
+            <p>Sign up today to secure your place in the initial release of the Current-See solar economy platform. Early members will receive priority access and additional Solar tokens at launch.</p>
+            <p><strong>Current waitlist:</strong> <span id="waitlist-count">0</span> future members</p>
+        </div>
         
-        <form id="signup-form">
+        <div id="success-message" class="success-message"></div>
+        
+        <form id="waitlist-form" class="waitlist-form" action="/signup" method="POST">
             <div class="form-group">
-                <label for="name">Full Name</label>
-                <input type="text" id="name" name="name" required>
+                <label for="name">Your Name</label>
+                <input type="text" id="name" name="name" required placeholder="Enter your full name">
             </div>
             
             <div class="form-group">
                 <label for="email">Email Address</label>
-                <input type="email" id="email" name="email" required>
+                <input type="email" id="email" name="email" required placeholder="Enter your email address">
             </div>
             
-            <div class="form-group">
-                <label for="country">Country</label>
-                <select id="country" name="country" required>
-                    <option value="">Select your country</option>
-                    <option value="us">United States</option>
-                    <option value="ca">Canada</option>
-                    <option value="uk">United Kingdom</option>
-                    <option value="au">Australia</option>
-                    <option value="other">Other</option>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label>Interests (select all that apply)</label>
-                
-                <div class="checkbox-group">
-                    <input type="checkbox" id="interest-technology" name="interests" value="technology">
-                    <label for="interest-technology">Sustainable Technology</label>
-                </div>
-                
-                <div class="checkbox-group">
-                    <input type="checkbox" id="interest-economy" name="interests" value="economy">
-                    <label for="interest-economy">Alternative Economics</label>
-                </div>
-                
-                <div class="checkbox-group">
-                    <input type="checkbox" id="interest-solar" name="interests" value="solar">
-                    <label for="interest-solar">Solar Energy</label>
-                </div>
-                
-                <div class="checkbox-group">
-                    <input type="checkbox" id="interest-community" name="interests" value="community">
-                    <label for="interest-community">Community Building</label>
-                </div>
-            </div>
-            
-            <div class="checkbox-group">
-                <input type="checkbox" id="agreement" name="agreement" required>
-                <label for="agreement">I agree to receive updates about The Current-See</label>
-            </div>
-            
-            <button type="submit">Sign Up Now</button>
+            <button type="submit">Join the Waitlist</button>
         </form>
         
-        <p class="note">By signing up, you'll receive our newsletter and updates about the project. We respect your privacy and will never share your information with third parties.</p>
+        <div class="solar-counter">
+            <p>Every day, the sun delivers enough energy to power all of humanity for a year. Through The Current-See, that energy becomes income for everyone.</p>
+        </div>
         
         <a href="/" class="return-link">Return to Homepage</a>
     </div>
-
-    <script>
-        document.getElementById('signup-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            alert('Thank you for signing up! We will be in touch soon.');
-            this.reset();
-        });
-    </script>
 </body>
 </html>

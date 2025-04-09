@@ -63,6 +63,12 @@ const Home = () => {
             >
               Try the Demo
             </a>
+            <a 
+              href="/signup.html" 
+              className="cta-button bg-[#28a745] text-white hover:bg-opacity-90 font-bold py-3 px-8 rounded-lg shadow-lg transition duration-300"
+            >
+              Join Waitlist
+            </a>
           </div>
         </div>
       </header>
@@ -170,13 +176,13 @@ const Home = () => {
             </div>
 
             <div className="bg-[#F8F9FA] p-6 rounded-lg shadow-md text-center hover:shadow-lg transition-shadow">
-              <h3 className="text-xl font-bold mb-3 text-[#0057B8]">Join Us</h3>
-              <p className="mb-4">Sign up to receive updates and be part of the solar movement.</p>
+              <h3 className="text-xl font-bold mb-3 text-[#0057B8]">Join Our Waitlist</h3>
+              <p className="mb-4">Be among the first to experience the solar economy and receive priority access when we launch.</p>
               <a 
                 href="/signup.html" 
-                className="inline-block bg-[#0057B8] text-white hover:bg-opacity-90 font-medium py-2 px-4 rounded transition duration-300"
+                className="inline-block bg-[#28a745] text-white hover:bg-opacity-90 font-medium py-2 px-4 rounded transition duration-300"
               >
-                Sign Up
+                Join Waitlist
               </a>
             </div>
           </div>

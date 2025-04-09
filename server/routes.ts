@@ -2,6 +2,7 @@ import express, { type Express } from "express";
 import type { Server } from "http";
 import { storage } from "./storage";
 import { insertNewsletterSubscriptionSchema, insertContactMessageSchema } from "@shared/schema";
+import { setupWaitlistRoutes } from "./waitlist";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const apiRouter = express.Router();
@@ -41,6 +42,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Mount the API router
   app.use("/api", apiRouter);
+  
+  // Set up waitlist routes (direct routes, not under /api)
+  setupWaitlistRoutes(app);
 
   const httpServer = createServer(app);
   return httpServer;

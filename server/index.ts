@@ -23,6 +23,27 @@ app.get('/signup.html', (req, res) => {
   res.sendFile(path.join(process.cwd(), 'public', 'signup.html'));
 });
 
+// White paper HTML files
+app.get('/white_paper_1.html', (req, res) => {
+  res.sendFile(path.join(process.cwd(), 'public', 'white_paper_1.html'));
+});
+
+app.get('/white_paper_2.html', (req, res) => {
+  res.sendFile(path.join(process.cwd(), 'public', 'white_paper_2.html'));
+});
+
+app.get('/white_paper_3.html', (req, res) => {
+  res.sendFile(path.join(process.cwd(), 'public', 'white_paper_3.html'));
+});
+
+app.get('/white_paper_4.html', (req, res) => {
+  res.sendFile(path.join(process.cwd(), 'public', 'white_paper_4.html'));
+});
+
+app.get('/white_paper_5.html', (req, res) => {
+  res.sendFile(path.join(process.cwd(), 'public', 'white_paper_5.html'));
+});
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
