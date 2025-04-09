@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>White Papers - The Current-See</title>
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #0057B8;
+            color: white;
+            text-align: center;
+            padding: 2rem 0;
+        }
+        .logo {
+            width: 100px;
+            height: auto;
+            margin-bottom: 15px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        h1 {
+            margin-bottom: 1rem;
+        }
+        .intro {
+            margin-bottom: 3rem;
+            text-align: center;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .papers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+        .paper-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .paper-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        .paper-cover {
+            height: 180px;
+            background-color: #f0de4d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+            font-weight: bold;
+            font-size: 1.2rem;
+            text-align: center;
+            padding: 1rem;
+        }
+        .paper-info {
+            padding: 1.5rem;
+        }
+        .paper-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            color: #0057B8;
+        }
+        .paper-abstract {
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            color: #555;
+        }
+        .paper-link {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background-color: #0057B8;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        .paper-link:hover {
+            background-color: #004090;
+        }
+        .return-link {
+            display: inline-block;
+            margin-top: 3rem;
+            padding: 0.75rem 1.5rem;
+            background-color: #0057B8;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .return-link:hover {
+            background-color: #004090;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="/"><img src="/branding_logo.png" alt="The Current-See Logo" class="logo"></a>
+        <h1>White Papers</h1>
+        <p>Technical and Economic Research</p>
+    </header>
+    
+    <div class="container">
+        <div class="intro">
+            <p>Our collection of white papers explores the theoretical foundations and practical implementations of the solar-backed economy. These documents outline our research, methodologies, and vision for a new global economic system.</p>
+        </div>
+        
+        <div class="papers-grid">
+            <div class="paper-card">
+                <div class="paper-cover">
+                    White Paper 1
+                </div>
+                <div class="paper-info">
+                    <h3 class="paper-title">Theoretical Foundation of Solar Economics</h3>
+                    <p class="paper-abstract">This paper presents the fundamental theory behind using solar energy as the backing for a global currency system.</p>
+                    <a href="/White_Paper_1.pdf" class="paper-link" target="_blank">Download PDF</a>
+                </div>
+            </div>
+            
+            <div class="paper-card">
+                <div class="paper-cover">
+                    White Paper 2
+                </div>
+                <div class="paper-info">
+                    <h3 class="paper-title">Wallet System Infrastructure</h3>
+                    <p class="paper-abstract">A technical overview of our situationally-aware wallet system and income distribution mechanisms.</p>
+                    <a href="/White_Paper_2.pdf" class="paper-link" target="_blank">Download PDF</a>
+                </div>
+            </div>
+            
+            <div class="paper-card">
+                <div class="paper-cover">
+                    White Paper 3
+                </div>
+                <div class="paper-info">
+                    <h3 class="paper-title">Energy Value Mapping</h3>
+                    <p class="paper-abstract">Analysis of the relationship between solar energy production and economic value creation.</p>
+                    <a href="/White_Paper_3.pdf" class="paper-link" target="_blank">Download PDF</a>
+                </div>
+            </div>
+            
+            <div class="paper-card">
+                <div class="paper-cover">
+                    White Paper 4
+                </div>
+                <div class="paper-info">
+                    <h3 class="paper-title">Equitable Distribution Models</h3>
+                    <p class="paper-abstract">Strategies for ensuring fair distribution of solar-generated income across global populations.</p>
+                    <a href="/White_Paper_4.pdf" class="paper-link" target="_blank">Download PDF</a>
+                </div>
+            </div>
+            
+            <div class="paper-card">
+                <div class="paper-cover">
+                    White Paper 5
+                </div>
+                <div class="paper-info">
+                    <h3 class="paper-title">Transition Framework</h3>
+                    <p class="paper-abstract">Proposed roadmap for transitioning from traditional fiat currencies to a solar-backed economic system.</p>
+                    <a href="/White_Paper_5.pdf" class="paper-link" target="_blank">Download PDF</a>
+                </div>
+            </div>
+        </div>
+        
+        <div style="text-align: center;">
+            <a href="/" class="return-link">Return to Homepage</a>
+        </div>
+    </div>
+</body>
+</html>
