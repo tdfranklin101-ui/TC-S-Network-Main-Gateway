@@ -1,1 +1,21 @@
-This is a placeholder for White_Paper_4.pdf. Replace with real content.
+Solar Conversion and Monetization Algorithm
+
+At the core of the Current-See system is a conversion algorithm that turns solar energy into monetary value.
+
+Key Assumptions:
+- Total solar energy reaching Earth: ~174 Petawatts per day
+- Monetized portion: 1%
+- Global population: 8.5 billion
+- Target daily income per person: $136,000 (interest on $1 billion annually)
+
+Calculation Logic:
+1% of 174 Petawatts = 1.74 Petawatts = 1.74e+17 watts/day
+Converted to kilowatt-hours (kWh): 1.74e+17 W / 1000 * 24h = 4.176e+15 kWh/day
+
+Divide by population: ~491 million kWh/person/day
+
+From this, each "Solar" token represents one person's share of the monetized solar input.
+
+Using this daily issuance as the basis, the algorithm also splits a portion into reserves and operations. Any unused Solar accrues, creating long-term wealth.
+
+This approach ensures scalability, fairness, and non-inflationary supply.
