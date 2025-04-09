@@ -42,6 +42,19 @@ const Header = () => {
     setResourcesOpen(false);
     window.location.href = url;
   };
+  
+  const scrollToResourcesSection = () => {
+    setMobileMenuOpen(false);
+    setResourcesOpen(false);
+    const element = document.getElementById("resources");
+    if (element) {
+      const offsetTop = element.offsetTop - 80; // Account for fixed header
+      window.scrollTo({
+        top: offsetTop,
+        behavior: "smooth",
+      });
+    }
+  };
 
   return (
     <header className={`sticky top-0 z-50 bg-white ${scrolled ? 'shadow-md' : ''}`}>
@@ -78,41 +91,13 @@ const Header = () => {
             Merchandise
           </button>
           
-          {/* Resources dropdown */}
-          <div className="relative">
-            <button 
-              onClick={toggleResources}
-              className="text-neutral-dark hover:text-[#0057B8] font-medium transition duration-300 flex items-center"
-            >
-              Resources
-              <svg className={`w-4 h-4 ml-1 transform ${resourcesOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
-              </svg>
-            </button>
-            
-            {resourcesOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
-                <button
-                  onClick={() => openExternalPage('/whitepapers.html')}
-                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                >
-                  White Papers
-                </button>
-                <button
-                  onClick={() => openExternalPage('/founder_note.html')}
-                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                >
-                  Founder's Note
-                </button>
-                <button
-                  onClick={() => openExternalPage('/signup.html')}
-                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                >
-                  Sign Up
-                </button>
-              </div>
-            )}
-          </div>
+          {/* Resources button */}
+          <button 
+            onClick={scrollToResourcesSection} 
+            className="text-neutral-dark hover:text-[#0057B8] font-medium transition duration-300"
+          >
+            Resources
+          </button>
         </div>
         
         {/* Mobile menu button */}
@@ -154,27 +139,12 @@ const Header = () => {
         </button>
         
         {/* Mobile Resources section */}
-        <div className="mt-2 border-t pt-2">
-          <div className="font-medium px-2 py-1">Resources:</div>
-          <button 
-            onClick={() => openExternalPage('/whitepapers.html')} 
-            className="block w-full text-left py-2 px-4 text-neutral-dark hover:bg-neutral-light rounded"
-          >
-            White Papers
-          </button>
-          <button 
-            onClick={() => openExternalPage('/founder_note.html')} 
-            className="block w-full text-left py-2 px-4 text-neutral-dark hover:bg-neutral-light rounded"
-          >
-            Founder's Note
-          </button>
-          <button 
-            onClick={() => openExternalPage('/signup.html')} 
-            className="block w-full text-left py-2 px-4 text-neutral-dark hover:bg-neutral-light rounded"
-          >
-            Sign Up
-          </button>
-        </div>
+        <button 
+          onClick={scrollToResourcesSection} 
+          className="block w-full text-left py-2 px-2 text-neutral-dark hover:bg-neutral-light rounded"
+        >
+          Resources
+        </button>
       </div>
     </header>
   );

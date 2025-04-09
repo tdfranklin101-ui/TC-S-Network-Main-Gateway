@@ -141,6 +141,48 @@ const Home = () => {
         </div>
       </section>
 
+      {/* Resources Section */}
+      <section id="resources" className="py-16 bg-white">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center mb-8 text-[#0057B8]">Additional Resources</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+            <div className="bg-[#F8F9FA] p-6 rounded-lg shadow-md text-center hover:shadow-lg transition-shadow">
+              <h3 className="text-xl font-bold mb-3 text-[#0057B8]">Founder's Note</h3>
+              <p className="mb-4">Read a personal message from our founder about the vision behind The Current-See.</p>
+              <a 
+                href="/founder_note.html" 
+                className="inline-block bg-[#0057B8] text-white hover:bg-opacity-90 font-medium py-2 px-4 rounded transition duration-300"
+              >
+                Read Note
+              </a>
+            </div>
+
+            <div className="bg-[#F8F9FA] p-6 rounded-lg shadow-md text-center hover:shadow-lg transition-shadow">
+              <h3 className="text-xl font-bold mb-3 text-[#0057B8]">White Papers</h3>
+              <p className="mb-4">Explore our technical research and economic models for the solar-backed economy.</p>
+              <a 
+                href="/whitepapers.html" 
+                className="inline-block bg-[#0057B8] text-white hover:bg-opacity-90 font-medium py-2 px-4 rounded transition duration-300"
+              >
+                View Papers
+              </a>
+            </div>
+
+            <div className="bg-[#F8F9FA] p-6 rounded-lg shadow-md text-center hover:shadow-lg transition-shadow">
+              <h3 className="text-xl font-bold mb-3 text-[#0057B8]">Join Us</h3>
+              <p className="mb-4">Sign up to receive updates and be part of the solar movement.</p>
+              <a 
+                href="/signup.html" 
+                className="inline-block bg-[#0057B8] text-white hover:bg-opacity-90 font-medium py-2 px-4 rounded transition duration-300"
+              >
+                Sign Up
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Contact/Footer Section */}
       <footer id="contact" className="py-10 bg-[#212529] text-white text-center">
         <div className="container mx-auto px-4">
