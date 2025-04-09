@@ -72,11 +72,11 @@ const Footer = () => {
         </div>
         
         <div className="border-t border-gray-700 mt-10 pt-8 text-center text-sm opacity-70">
-          <p>&copy; {new Date().getFullYear()} The Current-See PBC, Inc. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} The Current-See PBC, Inc.</p>
+          <p><a href="/admin" style={{fontSize: "0.9em"}} className="hover:text-[#FFD700] transition">Admin</a></p>
           <div className="mt-2 space-x-4">
             <a href="#" className="hover:text-[#FFD700] transition">Privacy Policy</a>
             <a href="#" className="hover:text-[#FFD700] transition">Terms of Service</a>
-            <a href="/admin" className="hover:text-[#FFD700] transition text-opacity-70">Admin</a>
           </div>
         </div>
       </div>
