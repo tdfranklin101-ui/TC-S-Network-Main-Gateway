@@ -40,7 +40,7 @@ const Header = () => {
   const openExternalPage = (url: string) => {
     setMobileMenuOpen(false);
     setResourcesOpen(false);
-    window.open(url, '_blank');
+    window.location.href = url;
   };
 
   return (
