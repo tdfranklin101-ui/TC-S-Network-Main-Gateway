@@ -49,10 +49,10 @@ const Footer = () => {
           <div>
             <h3 className="text-lg font-bold mb-4">Resources</h3>
             <ul className="space-y-2">
-              <li><a href="#" className="hover:text-[#FFD700] transition">White Paper</a></li>
+              <li><a href="/whitepapers.html" className="hover:text-[#FFD700] transition">White Papers</a></li>
+              <li><a href="/declaration" className="hover:text-[#FFD700] transition">Solar Declaration</a></li>
               <li><a href="#" className="hover:text-[#FFD700] transition">Technical Documentation</a></li>
               <li><a href="#" className="hover:text-[#FFD700] transition">FAQs</a></li>
-              <li><a href="#" className="hover:text-[#FFD700] transition">Blog</a></li>
             </ul>
           </div>
           
