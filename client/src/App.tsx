@@ -19,15 +19,19 @@ function Router() {
 function App() {
   useEffect(() => {
     // Load the solar counter script dynamically
-    const solarCounterScript = document.createElement('script');
-    solarCounterScript.src = '/solar_counter.js';
-    solarCounterScript.async = true;
-    document.body.appendChild(solarCounterScript);
+    if (!document.getElementById('solar-counter-script')) {
+      const solarCounterScript = document.createElement('script');
+      solarCounterScript.id = 'solar-counter-script';
+      solarCounterScript.src = '/solar_counter.js';
+      solarCounterScript.async = true;
+      document.body.appendChild(solarCounterScript);
+    }
 
     return () => {
       // Cleanup script on component unmount
-      if (document.body.contains(solarCounterScript)) {
-        document.body.removeChild(solarCounterScript);
+      const scriptElement = document.getElementById('solar-counter-script');
+      if (scriptElement) {
+        document.body.removeChild(scriptElement);
       }
     };
   }, []);
