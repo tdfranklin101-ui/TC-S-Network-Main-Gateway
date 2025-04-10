@@ -99,11 +99,42 @@ function initCounter(data) {
     // Clear existing content
     counterElement.innerHTML = '';
     
-    // Create counter title
+    // Create counter title with activity indicator
+    const titleContainer = document.createElement('div');
+    titleContainer.style.display = 'flex';
+    titleContainer.style.alignItems = 'center';
+    titleContainer.style.justifyContent = 'center';
+    titleContainer.style.marginBottom = '5px';
+    
     const title = document.createElement('div');
     title.textContent = '☀️ Live Solar Generation';
     title.style.fontWeight = 'bold';
-    title.style.marginBottom = '5px';
+    
+    // Add blinking activity indicator
+    const indicator = document.createElement('div');
+    indicator.style.width = '8px';
+    indicator.style.height = '8px';
+    indicator.style.borderRadius = '50%';
+    indicator.style.backgroundColor = '#FF0000';
+    indicator.style.marginLeft = '8px';
+    indicator.style.animation = 'blink 1s infinite';
+    
+    // Add animation style if it doesn't exist
+    if (!document.getElementById('blink-animation-style')) {
+        const style = document.createElement('style');
+        style.id = 'blink-animation-style';
+        style.textContent = `
+            @keyframes blink {
+                0% { opacity: 1; }
+                50% { opacity: 0.2; }
+                100% { opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    titleContainer.appendChild(title);
+    titleContainer.appendChild(indicator);
     
     // Create main counter
     const counter = document.createElement('div');
@@ -123,7 +154,7 @@ function initCounter(data) {
     details.style.fontSize = '12px';
     
     // Add elements to counter
-    counterElement.appendChild(title);
+    counterElement.appendChild(titleContainer);
     counterElement.appendChild(counter);
     counterElement.appendChild(details);
     
