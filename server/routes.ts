@@ -52,6 +52,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Set up admin routes
   setupAdminRoutes(app);
+  
+  // Route for the Solar Declaration page
+  app.get('/declaration', (req, res) => {
+    res.sendFile('declaration.html', { root: './public' });
+  });
 
   const httpServer = createServer(app);
   return httpServer;
