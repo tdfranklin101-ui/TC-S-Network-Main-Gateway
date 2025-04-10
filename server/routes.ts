@@ -36,7 +36,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const elapsedSeconds = (currentTimestamp - baseTimestamp) / 1000;
           
           // Accumulation rates (per second)
-          const kwhPerSecond = 0.00005;
+          const kwhPerSecond = 0.0005; // Increased by 10x for more visible changes
           const dollarPerKwh = 0.12;
           
           // Calculate accumulated amounts since base timestamp

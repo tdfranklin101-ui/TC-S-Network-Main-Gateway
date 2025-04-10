@@ -171,12 +171,16 @@ function initCounter(data) {
 }
 
 function updateCounter(initialData) {
+    // Store previous values for comparison to highlight changes
+    const prevMainCounter = document.getElementById('main-counter');
+    const prevMkWh = prevMainCounter ? prevMainCounter.getAttribute('data-mkwh') : null;
+    
     // Calculate current values based on initial data and time elapsed since fetch
     const fetchTimestamp = new Date(initialData.timestamp).getTime();
     const currentTimestamp = Date.now();
     const secondsSinceFetch = (currentTimestamp - fetchTimestamp) / 1000;
     
-    // Add kWh generated since the data was fetched
+    // Add kWh generated since the data was fetched - ensure this is increasing
     const additionalKwh = secondsSinceFetch * initialData.kwhPerSecond;
     const additionalDollars = additionalKwh * initialData.dollarPerKwh;
     
@@ -189,6 +193,9 @@ function updateCounter(initialData) {
     
     // Convert to MkWh (Million kWh) for display
     const currentMkWh = currentKwh / 1000000;
+    
+    // Store full precision value for debugging
+    console.log(`Solar counter updating: ${currentMkWh.toFixed(8)} MkWh (${additionalKwh.toFixed(8)} kWh added)`);
     
     // Make sure the numbers change visibly by ensuring 6 decimal places
     const formattedMkWh = currentMkWh.toLocaleString(undefined, {
@@ -204,25 +211,38 @@ function updateCounter(initialData) {
     // Update main counter
     const mainCounter = document.getElementById('main-counter');
     if (mainCounter) {
+        // Store the current value for comparison on next update
+        mainCounter.setAttribute('data-mkwh', currentMkWh.toString());
+        
         // Generate HTML with spans for each character to enable animation of changing digits
         const mkwhParts = formattedMkWh.split('');
         const dollarParts = formattedDollars.split('');
         
         let mkwhHtml = '';
         for (let i = 0; i < mkwhParts.length; i++) {
-            // Add animation class to the last 3 decimal digits
-            const isAnimated = mkwhParts.length - i <= 3 && mkwhParts[i] !== ',' && mkwhParts[i] !== '.';
-            mkwhHtml += isAnimated 
-                ? `<span class="digit-animate">${mkwhParts[i]}</span>` 
-                : `<span>${mkwhParts[i]}</span>`;
+            // Make the last 6 decimal digits animated with a more noticeable effect
+            const isAnimated = mkwhParts.length - i <= 6 && mkwhParts[i] !== ',' && mkwhParts[i] !== '.';
+            const isHighlighted = mkwhParts.length - i <= 3 && mkwhParts[i] !== ',' && mkwhParts[i] !== '.';
+            
+            if (isHighlighted) {
+                mkwhHtml += `<span class="digit-highlight">${mkwhParts[i]}</span>`;
+            } else if (isAnimated) {
+                mkwhHtml += `<span class="digit-animate">${mkwhParts[i]}</span>`;
+            } else {
+                mkwhHtml += `<span>${mkwhParts[i]}</span>`;
+            }
         }
         
         let dollarHtml = '';
         for (let i = 0; i < dollarParts.length; i++) {
-            dollarHtml += `<span>${dollarParts[i]}</span>`;
+            // Animate the cents in dollar value too
+            const isAnimated = i >= dollarParts.length - 2;
+            dollarHtml += isAnimated 
+                ? `<span class="digit-animate">${dollarParts[i]}</span>` 
+                : `<span>${dollarParts[i]}</span>`;
         }
         
-        // Add styling for digit animation if it doesn't exist yet
+        // Add enhanced styling for digit animation
         if (!document.getElementById('digit-animation-style')) {
             const style = document.createElement('style');
             style.id = 'digit-animation-style';
@@ -232,10 +252,21 @@ function updateCounter(initialData) {
                     color: #FFD700;
                     animation: pulse 2s infinite;
                 }
+                .digit-highlight {
+                    display: inline-block;
+                    color: #FF9500;
+                    animation: glow 1s infinite;
+                    font-weight: bold;
+                }
                 @keyframes pulse {
                     0% { opacity: 1; }
-                    50% { opacity: 0.8; }
+                    50% { opacity: 0.7; }
                     100% { opacity: 1; }
+                }
+                @keyframes glow {
+                    0% { text-shadow: 0 0 2px #FF9500; }
+                    50% { text-shadow: 0 0 8px #FF9500; }
+                    100% { text-shadow: 0 0 2px #FF9500; }
                 }
             `;
             document.head.appendChild(style);
