@@ -47,6 +47,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const totalKwh = parseFloat(baseData.kwh) + additionalKwh;
           const totalDollars = parseFloat(baseData.dollars) + additionalDollars;
           
+          // Check if we need to update the base values (if it's a new day)
+          const baseDate = new Date(baseData.timestamp);
+          const currentDate = new Date();
+          
+          // If the base date is not today, update the CSV file with current totals
+          if (baseDate.toDateString() !== currentDate.toDateString()) {
+            console.log("Updating solar clock base values for new day...");
+            
+            // Format the updated CSV content
+            const updatedContent = `timestamp,kwh,dollars
+${currentDate.toISOString()},${totalKwh},${totalDollars}`;
+            
+            // Write the updated values back to the CSV file
+            fs.writeFileSync(csvFilePath, updatedContent, 'utf-8');
+            console.log("Solar clock base values updated successfully");
+          }
+          
           res.json({
             timestamp: new Date().toISOString(),
             baseTimestamp: baseData.timestamp,
