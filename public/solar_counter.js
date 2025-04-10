@@ -165,7 +165,44 @@ function updateCounter(initialData) {
     // Update main counter
     const mainCounter = document.getElementById('main-counter');
     if (mainCounter) {
-        mainCounter.textContent = `${formattedMkWh} MkWh = $${formattedDollars}`;
+        // Generate HTML with spans for each character to enable animation of changing digits
+        const mkwhParts = formattedMkWh.split('');
+        const dollarParts = formattedDollars.split('');
+        
+        let mkwhHtml = '';
+        for (let i = 0; i < mkwhParts.length; i++) {
+            // Add animation class to the last 3 decimal digits
+            const isAnimated = mkwhParts.length - i <= 3 && mkwhParts[i] !== ',' && mkwhParts[i] !== '.';
+            mkwhHtml += isAnimated 
+                ? `<span class="digit-animate">${mkwhParts[i]}</span>` 
+                : `<span>${mkwhParts[i]}</span>`;
+        }
+        
+        let dollarHtml = '';
+        for (let i = 0; i < dollarParts.length; i++) {
+            dollarHtml += `<span>${dollarParts[i]}</span>`;
+        }
+        
+        // Add styling for digit animation if it doesn't exist yet
+        if (!document.getElementById('digit-animation-style')) {
+            const style = document.createElement('style');
+            style.id = 'digit-animation-style';
+            style.textContent = `
+                .digit-animate {
+                    display: inline-block;
+                    color: #FFD700;
+                    animation: pulse 2s infinite;
+                }
+                @keyframes pulse {
+                    0% { opacity: 1; }
+                    50% { opacity: 0.8; }
+                    100% { opacity: 1; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        mainCounter.innerHTML = `${mkwhHtml} MkWh = $${dollarHtml}`;
     }
     
     // Update details section
