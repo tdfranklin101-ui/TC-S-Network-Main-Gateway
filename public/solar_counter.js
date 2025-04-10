@@ -7,18 +7,26 @@
  */
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Create counter element if it doesn't exist
-    if (!document.getElementById('solar-counter')) {
-        const counterDiv = document.createElement('div');
-        counterDiv.id = 'solar-counter';
-        document.body.appendChild(counterDiv);
-        
-        // Style the counter
-        styleCounter(counterDiv);
+    console.log("Solar counter initializing...");
+    
+    // Always recreate the counter element to ensure fresh state
+    const existingCounter = document.getElementById('solar-counter');
+    if (existingCounter) {
+        existingCounter.remove();
     }
+    
+    const counterDiv = document.createElement('div');
+    counterDiv.id = 'solar-counter';
+    document.body.appendChild(counterDiv);
+    
+    // Style the counter
+    styleCounter(counterDiv);
     
     // Initialize the counter
     fetchSolarClockData();
+    
+    // Set up periodic refresh every 5 minutes to ensure data stays current
+    setInterval(fetchSolarClockData, 300000);
 });
 
 function styleCounter(element) {
