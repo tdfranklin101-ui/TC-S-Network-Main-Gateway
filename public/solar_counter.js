@@ -65,8 +65,6 @@ function styleCounter(element) {
 
 // Fetch the solar clock data from the server API
 function fetchSolarClockData() {
-    console.log('Fetching solar clock data...');
-    
     // Display loading state
     const counterElement = document.getElementById('solar-counter');
     if (counterElement) {
@@ -81,7 +79,6 @@ function fetchSolarClockData() {
             return response.json();
         })
         .then(data => {
-            console.log('Solar data received:', data);
             // Initialize the counter with fetched data
             initCounter(data);
         })
@@ -92,9 +89,6 @@ function fetchSolarClockData() {
             if (counterElement) {
                 counterElement.innerHTML = '<div style="color: #FFD700">⚠️ Solar data unavailable</div>';
             }
-            
-            // Try again after a short delay
-            setTimeout(fetchSolarClockData, 3000);
         });
 }
 
@@ -194,8 +188,8 @@ function updateCounter(initialData) {
         `;
     }
     
-    // Continue updating - make sure this happens faster to show visible changes
-    setTimeout(() => updateCounter(initialData), 100);
+    // Continue updating
+    requestAnimationFrame(() => updateCounter(initialData));
 }
 
 function formatTime(seconds) {
