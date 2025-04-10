@@ -5,6 +5,9 @@ import { insertNewsletterSubscriptionSchema, insertContactMessageSchema } from "
 import { setupWaitlistRoutes } from "./waitlist";
 import { setupAdminRoutes } from "./admin";
 import cookieParser from "cookie-parser";
+import fs from "fs";
+import path from "path";
+import { parse } from "csv";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Add cookie parser middleware for admin authentication
@@ -12,6 +15,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const apiRouter = express.Router();
   
   // API routes
+  apiRouter.get("/solar-clock", async (req, res) => {
+    try {
+      const csvFilePath = path.resolve('./solar_clock.csv');
+      const fileContent = fs.readFileSync(csvFilePath, { encoding: 'utf-8' });
+      
+      // Parse CSV data
+      parse(fileContent, { columns: true }, (err, records) => {
+        if (err) {
+          console.error("Error parsing CSV:", err);
+          return res.status(500).json({ message: "Failed to parse solar clock data" });
+        }
+        
+        if (records && records.length > 0) {
+          const baseData = records[0];
+          
+          // Calculate current values based on base data and continuous accumulation
+          const baseTimestamp = new Date(baseData.timestamp).getTime();
+          const currentTimestamp = Date.now();
+          const elapsedSeconds = (currentTimestamp - baseTimestamp) / 1000;
+          
+          // Accumulation rates (per second)
+          const kwhPerSecond = 0.00005;
+          const dollarPerKwh = 0.12;
+          
+          // Calculate accumulated amounts since base timestamp
+          const additionalKwh = elapsedSeconds * kwhPerSecond;
+          const additionalDollars = additionalKwh * dollarPerKwh;
+          
+          // Add to base amounts
+          const totalKwh = parseFloat(baseData.kwh) + additionalKwh;
+          const totalDollars = parseFloat(baseData.dollars) + additionalDollars;
+          
+          res.json({
+            timestamp: new Date().toISOString(),
+            baseTimestamp: baseData.timestamp,
+            totalKwh,
+            totalDollars,
+            kwhPerSecond,
+            dollarPerKwh,
+            elapsedSeconds
+          });
+        } else {
+          res.status(404).json({ message: "No solar clock data found" });
+        }
+      });
+    } catch (error) {
+      console.error("Error fetching solar clock data:", error);
+      res.status(500).json({ message: "Failed to fetch solar clock data" });
+    }
+  });
+
   apiRouter.get("/products", async (req, res) => {
     try {
       const products = await storage.getAllProducts();

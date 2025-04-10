@@ -2,7 +2,8 @@
  * Solar Counter - A dynamic counter showing solar energy accumulation
  * 
  * This script creates an animated counter that visualizes the 
- * continuous generation of solar energy and its equivalent monetary value.
+ * continuous generation of solar energy and its equivalent monetary value
+ * based on data accumulated since April 7, 2025.
  */
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -17,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Initialize the counter
-    initCounter();
+    fetchSolarClockData();
 });
 
 function styleCounter(element) {
@@ -62,8 +63,38 @@ function styleCounter(element) {
     });
 }
 
-function initCounter() {
+// Fetch the solar clock data from the server API
+function fetchSolarClockData() {
+    // Display loading state
     const counterElement = document.getElementById('solar-counter');
+    if (counterElement) {
+        counterElement.innerHTML = '<div>Loading solar data...</div>';
+    }
+    
+    fetch('/api/solar-clock')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to fetch solar clock data');
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Initialize the counter with fetched data
+            initCounter(data);
+        })
+        .catch(error => {
+            console.error('Error fetching solar clock data:', error);
+            
+            // Show error in counter
+            if (counterElement) {
+                counterElement.innerHTML = '<div style="color: #FFD700">⚠️ Solar data unavailable</div>';
+            }
+        });
+}
+
+function initCounter(data) {
+    const counterElement = document.getElementById('solar-counter');
+    if (!counterElement) return;
     
     // Clear existing content
     counterElement.innerHTML = '';
@@ -96,42 +127,75 @@ function initCounter() {
     counterElement.appendChild(counter);
     counterElement.appendChild(details);
     
-    // Initialize values
-    const startTimestamp = Date.now();
-    const kwhPerSecond = 0.00005; // Approximate solar generation rate for visualization
-    const dollarPerKwh = 0.12;    // Average electricity cost
-    
-    // Start counter animation
-    updateCounter(startTimestamp, kwhPerSecond, dollarPerKwh);
+    // Start counter animation with the fetched data
+    updateCounter(data);
 }
 
-function updateCounter(startTimestamp, kwhPerSecond, dollarPerKwh) {
-    const elapsedSeconds = (Date.now() - startTimestamp) / 1000;
-    const generatedKwh = elapsedSeconds * kwhPerSecond;
-    const generatedValue = generatedKwh * dollarPerKwh;
+function updateCounter(initialData) {
+    // Calculate current values based on initial data and time elapsed since fetch
+    const fetchTimestamp = new Date(initialData.timestamp).getTime();
+    const currentTimestamp = Date.now();
+    const secondsSinceFetch = (currentTimestamp - fetchTimestamp) / 1000;
+    
+    // Add kWh generated since the data was fetched
+    const additionalKwh = secondsSinceFetch * initialData.kwhPerSecond;
+    const additionalDollars = additionalKwh * initialData.dollarPerKwh;
+    
+    // Current total values
+    const currentKwh = initialData.totalKwh + additionalKwh;
+    const currentDollars = initialData.totalDollars + additionalDollars;
+    
+    // Total elapsed seconds since base date (April 7, 2025)
+    const totalElapsedSeconds = initialData.elapsedSeconds + secondsSinceFetch;
+    
+    // Format for display
+    const formattedKwh = currentKwh.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+    
+    const formattedDollars = currentDollars.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
     
     // Update main counter
     const mainCounter = document.getElementById('main-counter');
-    mainCounter.textContent = `${generatedKwh.toFixed(6)} kWh = $${generatedValue.toFixed(6)}`;
+    if (mainCounter) {
+        mainCounter.textContent = `${formattedKwh} kWh = $${formattedDollars}`;
+    }
     
     // Update details section
     const details = document.getElementById('counter-details');
-    details.innerHTML = `
-        <div style="margin-bottom: 5px">Solar Generation Rate: ${(kwhPerSecond * 3600).toFixed(4)} kWh/hour</div>
-        <div style="margin-bottom: 5px">Time Elapsed: ${formatTime(elapsedSeconds)}</div>
-        <div style="margin-bottom: 5px">Equivalent CO₂ Saved: ${(generatedKwh * 0.85).toFixed(4)} kg</div>
-        <div style="margin-bottom: 5px">Homes Powered: ${(generatedKwh / 1.5).toFixed(6)}</div>
-        <div style="font-size: 10px; margin-top: 10px; opacity: 0.7">Click to toggle details</div>
-    `;
+    if (details) {
+        // Calculate various statistics
+        const kwhPerHour = initialData.kwhPerSecond * 3600;
+        const co2Saved = currentKwh * 0.85; // kg of CO2 saved per kWh
+        const homesPowered = currentKwh / 1.5; // Homes powered based on average consumption
+        
+        details.innerHTML = `
+            <div style="margin-bottom: 5px">Base Date: April 7, 2025</div>
+            <div style="margin-bottom: 5px">Total Days: ${(totalElapsedSeconds / 86400).toFixed(2)}</div>
+            <div style="margin-bottom: 5px">Generation Rate: ${kwhPerHour.toFixed(4)} kWh/hour</div>
+            <div style="margin-bottom: 5px">Equivalent CO₂ Saved: ${co2Saved.toLocaleString(undefined, {maximumFractionDigits: 2})} kg</div>
+            <div style="margin-bottom: 5px">Homes Powered: ${homesPowered.toLocaleString(undefined, {maximumFractionDigits: 2})}</div>
+            <div style="font-size: 10px; margin-top: 10px; opacity: 0.7">Click to toggle details</div>
+        `;
+    }
     
     // Continue updating
-    requestAnimationFrame(() => updateCounter(startTimestamp, kwhPerSecond, dollarPerKwh));
+    requestAnimationFrame(() => updateCounter(initialData));
 }
 
 function formatTime(seconds) {
-    const hours = Math.floor(seconds / 3600);
+    const days = Math.floor(seconds / 86400);
+    const hours = Math.floor((seconds % 86400) / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = Math.floor(seconds % 60);
     
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    if (days > 0) {
+        return `${days}d ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    } else {
+        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
 }
