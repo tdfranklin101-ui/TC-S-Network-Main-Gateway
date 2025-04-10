@@ -148,10 +148,13 @@ function updateCounter(initialData) {
     // Total elapsed seconds since base date (April 7, 2025)
     const totalElapsedSeconds = initialData.elapsedSeconds + secondsSinceFetch;
     
+    // Convert to MkWh (Million kWh) for display
+    const currentMkWh = currentKwh / 1000000;
+    
     // Format for display
-    const formattedKwh = currentKwh.toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
+    const formattedMkWh = currentMkWh.toLocaleString(undefined, {
+        minimumFractionDigits: 4,
+        maximumFractionDigits: 4
     });
     
     const formattedDollars = currentDollars.toLocaleString(undefined, {
@@ -162,7 +165,7 @@ function updateCounter(initialData) {
     // Update main counter
     const mainCounter = document.getElementById('main-counter');
     if (mainCounter) {
-        mainCounter.textContent = `${formattedKwh} kWh = $${formattedDollars}`;
+        mainCounter.textContent = `${formattedMkWh} MkWh = $${formattedDollars}`;
     }
     
     // Update details section
@@ -170,15 +173,17 @@ function updateCounter(initialData) {
     if (details) {
         // Calculate various statistics
         const kwhPerHour = initialData.kwhPerSecond * 3600;
+        const mkwhPerHour = kwhPerHour / 1000000;
         const co2Saved = currentKwh * 0.85; // kg of CO2 saved per kWh
+        const co2SavedTons = co2Saved / 1000; // Convert to metric tons
         const homesPowered = currentKwh / 1.5; // Homes powered based on average consumption
         
         details.innerHTML = `
             <div style="margin-bottom: 5px">Base Date: April 7, 2025</div>
             <div style="margin-bottom: 5px">Total Days: ${(totalElapsedSeconds / 86400).toFixed(2)}</div>
-            <div style="margin-bottom: 5px">Generation Rate: ${kwhPerHour.toFixed(4)} kWh/hour</div>
-            <div style="margin-bottom: 5px">Equivalent CO₂ Saved: ${co2Saved.toLocaleString(undefined, {maximumFractionDigits: 2})} kg</div>
-            <div style="margin-bottom: 5px">Homes Powered: ${homesPowered.toLocaleString(undefined, {maximumFractionDigits: 2})}</div>
+            <div style="margin-bottom: 5px">Generation Rate: ${mkwhPerHour.toFixed(8)} MkWh/hour</div>
+            <div style="margin-bottom: 5px">Equivalent CO₂ Saved: ${co2SavedTons.toLocaleString(undefined, {maximumFractionDigits: 2})} metric tons</div>
+            <div style="margin-bottom: 5px">Homes Powered: ${homesPowered.toLocaleString(undefined, {maximumFractionDigits: 0})}</div>
             <div style="font-size: 10px; margin-top: 10px; opacity: 0.7">Click to toggle details</div>
         `;
     }
