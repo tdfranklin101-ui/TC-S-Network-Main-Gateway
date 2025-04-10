@@ -151,10 +151,10 @@ function updateCounter(initialData) {
     // Convert to MkWh (Million kWh) for display
     const currentMkWh = currentKwh / 1000000;
     
-    // Format for display
+    // Make sure the numbers change visibly by ensuring 6 decimal places
     const formattedMkWh = currentMkWh.toLocaleString(undefined, {
-        minimumFractionDigits: 4,
-        maximumFractionDigits: 4
+        minimumFractionDigits: 6,
+        maximumFractionDigits: 6
     });
     
     const formattedDollars = currentDollars.toLocaleString(undefined, {
@@ -188,8 +188,8 @@ function updateCounter(initialData) {
         `;
     }
     
-    // Continue updating
-    requestAnimationFrame(() => updateCounter(initialData));
+    // Continue updating - make sure this happens faster to show visible changes
+    setTimeout(() => updateCounter(initialData), 100);
 }
 
 function formatTime(seconds) {
