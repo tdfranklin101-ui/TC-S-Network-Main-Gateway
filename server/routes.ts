@@ -12,6 +12,7 @@ import fs from "fs";
 import path from "path";
 import { parse } from "csv";
 import { generatePage } from "./template-processor";
+import * as solarConstants from "./solar-constants";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Add cookie parser middleware for authentication
@@ -44,9 +45,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const currentTimestamp = Date.now();
           const elapsedSeconds = (currentTimestamp - baseTimestamp) / 1000;
           
-          // Accumulation rates (per second)
-          const kwhPerSecond = 0.0005; // Increased by 10x for more visible changes
-          const dollarPerKwh = 0.12;
+          // Accumulation rates (per second) from solar constants
+          const kwhPerSecond = solarConstants.KWH_PER_SECOND; 
+          // Dollar per kWh is calculated from the solar constants
+          const dollarPerKwh = solarConstants.USD_PER_SOLAR / (solarConstants.solarPerPersonKwh * 365);
           
           // Calculate accumulated amounts since base timestamp
           const additionalKwh = elapsedSeconds * kwhPerSecond;
