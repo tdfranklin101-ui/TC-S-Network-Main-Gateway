@@ -740,7 +740,7 @@
                 // Calculate a realistic solar balance based on join date
                 // Users who joined earlier will have more solar
                 const daysActive = Math.floor(Math.random() * 90) + 1; // 1-90 days
-                const baseBalance = (daysActive * 0.00274).toFixed(5); // Daily distribution amount
+                const baseBalance = (daysActive * 1).toFixed(5); // Daily distribution amount (1 SOLAR per day)
                 const bonusAmount = (Math.random() * 0.05).toFixed(5); // Random bonus transactions
                 const solarBalance = (parseFloat(baseBalance) + parseFloat(bonusAmount)).toFixed(5);
                 

@@ -246,7 +246,7 @@
                         <a class="nav-link" href="/declaration">Solar Declaration</a>
                     </li>
                     <li class="nav-item unauthenticated-only">
-                        <a class="nav-link" href="#" id="login-button">Log In</a>
+                        <a class="nav-link" href="/login" id="login-button">Log In</a>
                     </li>
                     <li class="nav-item authenticated-only" style="display: none;">
                         <a class="nav-link" href="#" id="logout-button">Log Out</a>
@@ -700,14 +700,7 @@
             }
         });
 
-        // Login modal trigger
-        document.getElementById('login-button').addEventListener('click', function(e) {
-            e.preventDefault();
-            // Show login tab
-            const authTabs = document.getElementById('auth-tabs');
-            const loginTab = new bootstrap.Tab(authTabs.querySelector('a[href="#login-tab"]'));
-            loginTab.show();
-        });
+        // Note: The login button now links directly to the login page
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
