@@ -101,12 +101,43 @@ class PublicMembersLog {
     }
     
     console.log(`Rendering ${members.length} members in the leaderboard`);
-    membersContainer.innerHTML = '';
+    
+    // Create a document fragment for better performance
+    const fragment = document.createDocumentFragment();
+    
+    // Add a header to the leaderboard
+    const headerEl = document.createElement('div');
+    headerEl.className = 'members-header';
+    headerEl.innerHTML = `
+      <h3 class="text-center mb-3">Current Solar Participants</h3>
+      <p class="text-center small-text">Join these pioneers in the solar movement</p>
+    `;
+    fragment.appendChild(headerEl);
+    
+    // Create the members list
+    const listEl = document.createElement('div');
+    listEl.className = 'members-entries';
     
     members.forEach((member, index) => {
       try {
         const entryEl = document.createElement('div');
         entryEl.className = 'member-entry';
+        entryEl.setAttribute('data-member-id', member.id);
+        
+        // Format the registration date if available
+        let joinDate = '';
+        if (member.joinedDate) {
+          try {
+            const date = new Date(member.joinedDate);
+            joinDate = date.toLocaleDateString('en-US', { 
+              month: 'short', 
+              day: 'numeric',
+              year: 'numeric' 
+            });
+          } catch (e) {
+            console.error('Error formatting join date:', e);
+          }
+        }
         
         // Safely format the solar amount with fallback
         let formattedSolar = '0.00000';
@@ -119,16 +150,21 @@ class PublicMembersLog {
         entryEl.innerHTML = `
           <div class="member-rank">#${index + 1}</div>
           <div class="member-info">
-            <div class="member-name">${member.displayName || 'Anonymous Member'}</div>
+            <div class="member-details">
+              <div class="member-name">${member.displayName || 'Anonymous Member'}</div>
+              ${joinDate ? `<div class="member-joined">Since ${joinDate}</div>` : ''}
+            </div>
             <div class="member-solar">${formattedSolar} <small>SOLAR</small></div>
           </div>
         `;
         
-        membersContainer.appendChild(entryEl);
+        listEl.appendChild(entryEl);
       } catch (error) {
         console.error(`Error rendering member at index ${index}:`, error);
       }
     });
+    
+    fragment.appendChild(listEl);
     
     // Show the "Join Now" button below the list
     const joinEl = document.createElement('div');
@@ -136,7 +172,20 @@ class PublicMembersLog {
     joinEl.innerHTML = `
       <a href="/my-solar" class="btn btn-primary">Join The Current-See</a>
     `;
-    membersContainer.appendChild(joinEl);
+    fragment.appendChild(joinEl);
+    
+    // Last updated timestamp
+    const timestampEl = document.createElement('div');
+    timestampEl.className = 'last-updated text-center mt-2';
+    timestampEl.innerHTML = `
+      <small>Last updated: ${new Date().toLocaleTimeString()}</small>
+    `;
+    fragment.appendChild(timestampEl);
+    
+    // Clear the container and append the fragment
+    membersContainer.innerHTML = '';
+    membersContainer.appendChild(fragment);
+    
     console.log('Finished rendering members leaderboard');
   }
   
@@ -235,9 +284,37 @@ class PublicMembersLog {
           align-items: center;
         }
         
+        .member-details {
+          display: flex;
+          flex-direction: column;
+        }
+        
         .member-name {
           font-weight: 500;
           color: #0057B8;
+        }
+        
+        .member-joined {
+          font-size: 0.8rem;
+          color: #555;
+          margin-top: 2px;
+        }
+        
+        .members-header {
+          margin-bottom: 1.5rem;
+        }
+        
+        .members-header h3 {
+          color: #0057B8;
+          font-size: 1.5rem;
+          font-weight: 600;
+          margin-bottom: 0.5rem;
+        }
+        
+        .last-updated {
+          font-size: 0.75rem;
+          color: #666;
+          margin-top: 1rem;
         }
         
         .member-solar {
