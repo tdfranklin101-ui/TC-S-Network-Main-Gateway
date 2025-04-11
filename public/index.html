@@ -166,14 +166,18 @@
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
         }
         
-        .solar-counter-section {
+        .solar-counter-section, .member-counter-section {
             padding: 60px 0;
             background-color: rgba(255, 255, 255, 0.1);
             text-align: center;
             backdrop-filter: blur(5px);
         }
         
-        .solar-counter-container {
+        .member-counter-section {
+            padding-top: 0;
+        }
+        
+        .solar-counter-container, .member-counter-container {
             max-width: 800px;
             margin: 0 auto;
             padding: 30px;
@@ -181,6 +185,10 @@
             background-color: rgba(255, 255, 255, 0.2);
             box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
             border: 3px solid rgba(76, 175, 80, 0.5);
+        }
+        
+        .member-counter-container {
+            margin-top: 30px;
         }
         
         .counter-title {
@@ -197,6 +205,13 @@
             margin-bottom: 20px;
             color: white;
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            transition: all 0.5s ease;
+        }
+        
+        .counter-highlight {
+            color: #4CAF50;
+            text-shadow: 0 0 20px rgba(76, 175, 80, 0.8);
+            transform: scale(1.1);
         }
         
         .main-sections {
@@ -266,12 +281,74 @@
             border: 3px solid rgba(76, 175, 80, 0.5);
         }
         
-        .members-log-title {
+        .members-log-title, .site-index-title {
             font-size: 2rem;
             margin-bottom: 30px;
             color: white;
             font-weight: 600;
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .site-index-section {
+            padding: 60px 0;
+            background-color: rgba(255, 255, 255, 0.1);
+            text-align: center;
+            backdrop-filter: blur(5px);
+        }
+        
+        .site-index-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 30px;
+            border-radius: 10px;
+            background-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+            border: 3px solid rgba(76, 175, 80, 0.5);
+        }
+        
+        .site-index-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            text-align: left;
+        }
+        
+        .site-index-column h3 {
+            color: white;
+            margin-bottom: 15px;
+            font-size: 1.4rem;
+            border-bottom: 2px solid rgba(76, 175, 80, 0.5);
+            padding-bottom: 10px;
+        }
+        
+        .site-index-column ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .site-index-column ul li {
+            margin-bottom: 10px;
+        }
+        
+        .site-index-column a {
+            color: white;
+            text-decoration: none;
+            transition: color 0.3s ease;
+            display: block;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        
+        .site-index-column a:hover {
+            background-color: rgba(76, 175, 80, 0.3);
+            color: white;
+        }
+        
+        @media (max-width: 768px) {
+            .site-index-grid {
+                grid-template-columns: 1fr;
+            }
         }
         
         footer {
@@ -439,6 +516,16 @@
             </div>
         </div>
     </section>
+    
+    <section class="member-counter-section">
+        <div class="container">
+            <div class="member-counter-container">
+                <h2 class="counter-title">Members Worldwide</h2>
+                <div id="member-counter" class="counter-value">Loading...</div>
+                <p>Join the growing community of solar-powered individuals</p>
+            </div>
+        </div>
+    </section>
 
     <section class="main-sections">
         <div class="container">
@@ -485,6 +572,41 @@
             </div>
         </div>
     </section>
+    
+    <section class="site-index-section">
+        <div class="container">
+            <div class="site-index-container">
+                <h2 class="site-index-title">Complete Site Index</h2>
+                <div class="site-index-grid">
+                    <div class="site-index-column">
+                        <h3>Core Sections</h3>
+                        <ul>
+                            <li><a href="/">Home Page</a></li>
+                            <li><a href="/prototype">Prototype Demo</a></li>
+                            <li><a href="/merch">Current-See Merchandise</a></li>
+                            <li><a href="/my-solar">My Solar Account</a></li>
+                        </ul>
+                    </div>
+                    <div class="site-index-column">
+                        <h3>Documentation</h3>
+                        <ul>
+                            <li><a href="/declaration">Solar Declaration</a></li>
+                            <li><a href="/whitepapers">White Papers</a></li>
+                            <li><a href="/founder_note">Founder's Note</a></li>
+                        </ul>
+                    </div>
+                    <div class="site-index-column">
+                        <h3>Coming Soon</h3>
+                        <ul>
+                            <li>Solar Wallet Prototype</li>
+                            <li>Interactive Visualization</li>
+                            <li>Global Impact Dashboard</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
     <footer>
         <div class="container">
@@ -526,5 +648,37 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/solar_counter.js"></script>
     <script src="/js/public-members-log.js"></script>
+    <script>
+        // Fetch member count from API
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchMemberCount();
+        });
+        
+        async function fetchMemberCount() {
+            try {
+                const response = await fetch('/api/member-count');
+                const data = await response.json();
+                
+                // Update member counter with actual count
+                const memberCountElement = document.getElementById('member-counter');
+                if (memberCountElement) {
+                    memberCountElement.textContent = data.count.toLocaleString();
+                    
+                    // Add animation effect
+                    memberCountElement.classList.add('counter-highlight');
+                    setTimeout(() => {
+                        memberCountElement.classList.remove('counter-highlight');
+                    }, 1500);
+                }
+            } catch (error) {
+                console.error('Error fetching member count:', error);
+                // Fallback if there's an error
+                const memberCountElement = document.getElementById('member-counter');
+                if (memberCountElement) {
+                    memberCountElement.textContent = 'Join Today!';
+                }
+            }
+        }
+    </script>
 </body>
 </html>

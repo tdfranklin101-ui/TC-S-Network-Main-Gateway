@@ -64,6 +64,16 @@ export function setupDistributionRoutes(app: any) {
       next(error);
     }
   });
+  
+  // Get total member count for display on homepage
+  app.get("/api/member-count", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const solarAccounts = await storage.getAllSolarAccounts(1000, true); // Get a large number to get total count
+      res.json({ count: solarAccounts.length });
+    } catch (error) {
+      next(error);
+    }
+  });
 
   // Process daily distributions (could be triggered by a cron job)
   app.post("/api/admin/process-distributions", isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
