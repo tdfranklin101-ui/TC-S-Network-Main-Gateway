@@ -23,8 +23,8 @@ const mkwhPerDay = monetizedKwh / 1e6;      // MkWh = Million kWh
 // The rate of solar generation per second (for the counter)
 const KWH_PER_SECOND = mkwhPerDay * 1e6 / (24 * 60 * 60);
 
-// Daily distribution amount per person (1/365th of a SOLAR)
-const DAILY_SOLAR_DISTRIBUTION = 1 / 365;
+// Daily distribution amount per person (1 SOLAR per day)
+const DAILY_SOLAR_DISTRIBUTION = 1;
 const DAILY_KWH_DISTRIBUTION = solarPerPersonKwh;
 const DAILY_USD_DISTRIBUTION = DAILY_SOLAR_DISTRIBUTION * USD_PER_SOLAR;
 

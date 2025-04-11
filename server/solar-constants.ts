@@ -27,8 +27,8 @@ export const totalSolarsReserved = totalSolarsIssued - totalSolarsDistributed;
 // The rate of solar generation per second (for the counter)
 export const KWH_PER_SECOND = mkwhPerDay * 1e6 / (24 * 60 * 60);
 
-// Calculate daily distribution amount per person (1/365th of a SOLAR)
-export const DAILY_SOLAR_DISTRIBUTION = 1 / 365;
+// Calculate daily distribution amount per person (1 SOLAR per day)
+export const DAILY_SOLAR_DISTRIBUTION = 1;
 export const DAILY_KWH_DISTRIBUTION = solarPerPersonKwh;
 export const DAILY_USD_DISTRIBUTION = DAILY_SOLAR_DISTRIBUTION * USD_PER_SOLAR;
 

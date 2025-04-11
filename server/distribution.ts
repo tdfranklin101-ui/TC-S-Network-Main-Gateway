@@ -18,7 +18,7 @@ interface UserWithRole extends User {
 // Constants for solar distribution calculations (from solar-constants.js)
 const SOLAR_VALUE_USD = solarConstants.USD_PER_SOLAR; // 1 Solar = $136,000
 const SOLAR_VALUE_KWH = solarConstants.solarPerPersonKwh * 365; // 1 Solar = 17.7M kWh 
-const DAILY_DISTRIBUTION_SOLAR = solarConstants.DAILY_SOLAR_DISTRIBUTION; // 1/365th solar per day
+const DAILY_DISTRIBUTION_SOLAR = solarConstants.DAILY_SOLAR_DISTRIBUTION; // 1 solar per day
 
 // Setup distribution routes
 export function setupDistributionRoutes(app: any) {
