@@ -124,10 +124,11 @@ try {
   // It is the only port that is not firewalled.
   const port = 5000;
   server.listen({
-    port,
+    port: process.env.PORT || 5000,
     host: "0.0.0.0",
     reusePort: true,
   }, () => {
-    log(`serving on port ${port}`);
+    log(`Server running on port ${process.env.PORT || 5000}`);
+    log(`Environment: ${process.env.NODE_ENV}`);
   });
 })();
