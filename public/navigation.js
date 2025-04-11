@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     list-style: none;
                 }
                 .nav-menu a {
-                    color: white;
+                    color: #0057B8; /* Changed from white to blue for better contrast */
                     text-decoration: none;
                     font-weight: 500;
                     transition: opacity 0.3s;
