@@ -144,10 +144,10 @@ async function createDailyDistributions(date: Date): Promise<number> {
         await storage.createDistribution({
           solarAccountId: account.id,
           userId: account.userId,
-          distributionDate: date,
-          solarAmount: DAILY_DISTRIBUTION_SOLAR,
-          kwhAmount: kwhPerUser,
-          dollarValue: dollarsPerUser,
+          distributionDate: date.toISOString().split('T')[0],
+          solarAmount: String(DAILY_DISTRIBUTION_SOLAR),
+          kwhAmount: String(kwhPerUser),
+          dollarValue: String(dollarsPerUser),
           status: 'pending'
         });
         createdCount++;

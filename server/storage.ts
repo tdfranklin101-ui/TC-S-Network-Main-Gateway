@@ -215,23 +215,37 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getDistributionsByDate(date: Date): Promise<Distribution[]> {
-    // Convert date to YYYY-MM-DD format for comparison
-    const formattedDate = date.toISOString().split('T')[0];
+    // Format the date to use for filtering
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
     
+    // Use the appropriate date filtering method
     return await db
       .select()
       .from(distributions)
-      .where(sql`CAST(${distributions.distributionDate} AS TEXT) = ${formattedDate}`);
+      .where(
+        sql`(EXTRACT(YEAR FROM ${distributions.distributionDate}) = ${year} AND 
+             EXTRACT(MONTH FROM ${distributions.distributionDate}) = ${month} AND 
+             EXTRACT(DAY FROM ${distributions.distributionDate}) = ${day})`
+      );
   }
 
   async processDistributions(date: Date): Promise<number> {
+    // Format the date to use for filtering
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    
     // Find all pending distributions for the given date
     const pendingDistributions = await db
       .select()
       .from(distributions)
       .where(
         and(
-          sql`CAST(${distributions.distributionDate} AS TEXT) = ${date.toISOString().split('T')[0]}`,
+          sql`(EXTRACT(YEAR FROM ${distributions.distributionDate}) = ${year} AND 
+               EXTRACT(MONTH FROM ${distributions.distributionDate}) = ${month} AND 
+               EXTRACT(DAY FROM ${distributions.distributionDate}) = ${day})`,
           eq(distributions.status, 'pending')
         )
       );
