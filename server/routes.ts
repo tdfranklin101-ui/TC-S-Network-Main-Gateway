@@ -142,6 +142,25 @@ ${currentDate.toISOString()},${totalKwh},${totalDollars}`;
   app.get('/my-solar', (req, res) => {
     res.sendFile('my-solar.html', { root: './public' });
   });
+  
+  // Add route for the prototype page
+  app.get('/prototype', (req, res) => {
+    res.sendFile('prototype.html', { root: './public' });
+  });
+  
+  // Add route for the merchandise page
+  app.get('/merch', (req, res) => {
+    res.sendFile('merch.html', { root: './public' });
+  });
+  
+  // Add routes for other pages
+  app.get('/whitepapers', (req, res) => {
+    res.sendFile('whitepapers.html', { root: './public' });
+  });
+  
+  app.get('/founder_note', (req, res) => {
+    res.sendFile('founder_note.html', { root: './public' });
+  });
 
   const httpServer = createServer(app);
   return httpServer;
