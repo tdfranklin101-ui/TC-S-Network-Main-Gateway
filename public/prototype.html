@@ -587,11 +587,6 @@
         </div>
 
         <div class="demo-section">
-            <h2>Solar Daily Summary Report</h2>
-            <div id="solar-report-container"></div>
-        </div>
-
-        <div class="demo-section">
             <h2>Interactive Demo</h2>
             <div class="text-center mb-4">
                 <button id="solar-spender-button" class="btn-solar-spender">
@@ -718,7 +713,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/js/solar-constants.js"></script>
-    <script src="/js/solar-report.js"></script>
     <script>
         // Apply initial background gradient
         document.body.classList.add('bg-gradient-1');
@@ -896,11 +890,6 @@
         
         // Initialize user display
         displayUsers();
-        
-        // Generate and display the solar report
-        if (window.SolarReport && window.SolarReport.generate) {
-            window.SolarReport.generate('solar-report-container');
-        }
     </script>
 </body>
 </html>
