@@ -58,8 +58,7 @@ const Home = () => {
               Learn More
             </button>
             <a 
-              href="https://replit.com/@tdfranklin101/SolarSpender" 
-              target="_blank" 
+              href="/wallet.html" 
               className="cta-button bg-white text-[#0057B8] hover:bg-opacity-90 font-bold py-3 px-8 rounded-lg shadow-lg transition duration-300"
             >
               Try the Demo
@@ -99,8 +98,7 @@ const Home = () => {
           
           <div className="text-center mx-auto">
             <a 
-              href="https://replit.com/@tdfranklin101/SolarSpender" 
-              target="_blank" 
+              href="/wallet.html" 
               className="cta-button bg-[#0057B8] text-white hover:bg-opacity-90 font-bold py-4 px-8 rounded-lg shadow-lg transition duration-300 text-center text-lg"
             >
               Try Solar Spender Prototype

@@ -857,16 +857,17 @@
         
         // Solar Spender Button interaction
         document.getElementById('solar-spender-button').addEventListener('click', function() {
-            // Scroll to the iframe
+            // Redirect to the wallet page instead of scrolling to iframe
+            window.location.href = '/wallet.html';
+            
+            // The code below is commented out as it won't execute due to the redirect
+            /*
             const iframe = document.querySelector('.demo-frame');
             iframe.scrollIntoView({ behavior: 'smooth', block: 'center' });
             
-            // Optionally interact with the iframe content if possible
-            // For demo purposes, we'll just focus the iframe
             setTimeout(() => {
                 iframe.focus();
                 
-                // Add a pulsing border effect to draw attention to the iframe
                 iframe.style.transition = 'box-shadow 0.3s ease';
                 iframe.style.boxShadow = '0 0 0 3px rgba(255, 140, 0, 0.7)';
                 
@@ -874,6 +875,7 @@
                     iframe.style.boxShadow = '0 10px 30px rgba(0, 0, 0, 0.2)';
                 }, 1500);
             }, 500);
+            */
         });
         
         // Initialize user display
