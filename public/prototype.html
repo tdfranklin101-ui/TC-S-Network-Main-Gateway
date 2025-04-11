@@ -428,14 +428,15 @@
         
         /* User List Styling */
         .user-list-container {
-            background-color: rgba(255, 255, 255, 0.9);
+            background-color: rgba(255, 215, 0, 0.15);
             border-radius: 10px;
             padding: 20px;
             color: #0057B8;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         }
         
         .user-list {
-            background-color: rgba(255, 255, 255, 0.95);
+            background-color: rgba(255, 255, 255, 0.5);
             border-radius: 8px;
             overflow: hidden;
             border: 1px solid rgba(0, 87, 184, 0.2);
@@ -452,6 +453,7 @@
         .user-list-body {
             max-height: 400px;
             overflow-y: auto;
+            background-color: rgba(255, 255, 255, 0.5);
         }
         
         .user-item {
@@ -783,7 +785,7 @@
                 const userElement = document.createElement('div');
                 userElement.className = 'user-item';
                 userElement.innerHTML = `
-                    <div class="row">
+                    <div class="row" style="color: #0057B8;">
                         <div class="col-3" style="width: 20%; flex: 0 0 20%;">#${user.id}</div>
                         <div class="col-5" style="width: 50%; flex: 0 0 50%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${user.username}</div>
                         <div class="col-4" style="width: 30%; flex: 0 0 30%; text-align: right;">${user.solarBalance} SOLAR</div>
