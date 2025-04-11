@@ -10,6 +10,7 @@ import cookieParser from "cookie-parser";
 import fs from "fs";
 import path from "path";
 import { parse } from "csv";
+import { generatePage } from "./template-processor";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Add cookie parser middleware for authentication
@@ -160,6 +161,29 @@ ${currentDate.toISOString()},${totalKwh},${totalDollars}`;
   
   app.get('/founder_note', (req, res) => {
     res.sendFile('founder_note.html', { root: './public' });
+  });
+  
+  // Homepage using the template system
+  app.get('/', (req, res) => {
+    try {
+      // Read the template files
+      const homeContent = fs.readFileSync(path.join('./public/templates/home-content.html'), 'utf8');
+      const homeScripts = fs.readFileSync(path.join('./public/templates/home-page-scripts.html'), 'utf8');
+      
+      // Generate the complete HTML
+      const htmlContent = generatePage(
+        'The Current-See - Solar-Backed Worldwide Economy',
+        homeContent,
+        '', // No additional CSS
+        homeScripts
+      );
+      
+      res.send(htmlContent);
+    } catch (error) {
+      console.error('Error generating homepage:', error);
+      // Fallback to static file if template processing fails
+      res.sendFile('index.html', { root: './public' });
+    }
   });
 
   const httpServer = createServer(app);
