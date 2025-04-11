@@ -13,6 +13,11 @@ app.use(express.urlencoded({ extended: false }));
 // Serve static files from public folder with higher priority
 app.use(express.static(path.join(process.cwd(), 'public')));
 
+// Explicit route for solar_counter.js to ensure it's available in production
+app.get('/solar_counter.js', (req, res) => {
+  res.sendFile(path.join(process.cwd(), 'public', 'solar_counter.js'));
+});
+
 // Specific routes for our HTML pages
 app.get('/founder_note.html', (req, res) => {
   res.sendFile(path.join(process.cwd(), 'public', 'founder_note.html'));
