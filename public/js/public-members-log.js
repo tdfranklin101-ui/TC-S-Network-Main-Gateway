@@ -89,7 +89,7 @@ class PublicMembersLog {
       styleEl.id = 'members-log-styles';
       styleEl.textContent = `
         .public-members-log {
-          background-color: rgba(255, 255, 255, 0.2);
+          background-color: rgba(255, 255, 255, 0.9);
           border-radius: 10px;
           padding: 1.5rem;
           box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
@@ -111,7 +111,7 @@ class PublicMembersLog {
           font-weight: bold;
           font-size: 1.2rem;
           margin-right: 1rem;
-          color: white;
+          color: #0057B8;
           min-width: 2rem;
         }
         
@@ -124,12 +124,12 @@ class PublicMembersLog {
         
         .member-name {
           font-weight: 500;
-          color: white;
+          color: #0057B8;
         }
         
         .member-solar {
           font-weight: bold;
-          color: white;
+          color: #0057B8;
         }
         
         .member-solar small {
@@ -140,12 +140,12 @@ class PublicMembersLog {
         
         .empty-state, .error-state {
           padding: 2rem 0;
-          color: rgba(255, 255, 255, 0.8);
+          color: #0057B8;
         }
         
         .members-list .btn-primary {
           background-color: white;
-          color: #FF8C00;
+          color: #0057B8;
           border: none;
           padding: 8px 20px;
           font-size: 0.9rem;
@@ -159,7 +159,7 @@ class PublicMembersLog {
         }
         
         .members-list .btn-primary:hover {
-          background-color: #FF8C00;
+          background-color: #0057B8;
           color: white;
           transform: translateY(-3px);
           box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
@@ -168,16 +168,16 @@ class PublicMembersLog {
         .loading-indicator {
           text-align: center;
           padding: 2rem 0;
-          color: rgba(255, 255, 255, 0.8);
+          color: #0057B8;
         }
         
         .loading-spinner {
           display: inline-block;
           width: 2rem;
           height: 2rem;
-          border: 3px solid rgba(255, 255, 255, 0.2);
+          border: 3px solid rgba(0, 87, 184, 0.2);
           border-radius: 50%;
-          border-top-color: white;
+          border-top-color: #0057B8;
           animation: spin 1s ease-in-out infinite;
           margin-bottom: 1rem;
         }
