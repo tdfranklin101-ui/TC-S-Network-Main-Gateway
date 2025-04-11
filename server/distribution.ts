@@ -34,8 +34,28 @@ export function setupDistributionRoutes(app: any) {
       if (!solarAccount) {
         return res.status(404).json({ error: "Solar account not found" });
       }
-
-      res.json(solarAccount);
+      
+      // Calculate accurate SOLAR balance based on join date (1 SOLAR per day + initial 0.01918)
+      const today = new Date();
+      const joinDate = new Date(solarAccount.joinedDate.toString());
+      // Calculate difference in time
+      const timeDiff = today.getTime() - joinDate.getTime();
+      // Calculate days difference (rounded down)
+      const daysDiff = Math.floor(timeDiff / (1000 * 3600 * 24));
+      // 1 SOLAR per day + 0.01918 initial bonus
+      const calculatedSolar = daysDiff + 0.01918;
+      
+      // Calculate KWh and dollars based on new SOLAR amount
+      const kwhPerSolar = 17700000; // 17.7M kWh per SOLAR
+      const usdPerSolar = 136000; // $136,000 per SOLAR
+      
+      // Return updated account with real-time calculations
+      res.json({
+        ...solarAccount,
+        totalSolar: String(calculatedSolar),
+        totalKwh: String(calculatedSolar * kwhPerSolar),
+        totalDollars: String(calculatedSolar * usdPerSolar)
+      });
     } catch (error) {
       next(error);
     }
@@ -60,7 +80,31 @@ export function setupDistributionRoutes(app: any) {
   app.get("/api/solar-accounts/leaderboard", async (req: Request, res: Response, next: NextFunction) => {
     try {
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
-      const solarAccounts = await storage.getAllSolarAccounts(limit, false);
+      let solarAccounts = await storage.getAllSolarAccounts(limit, false);
+      
+      // Calculate accurate SOLAR balances based on join date (1 SOLAR per day + initial 0.01918)
+      const today = new Date();
+      solarAccounts = solarAccounts.map(account => {
+        const joinDate = new Date(account.joinedDate);
+        // Calculate difference in time
+        const timeDiff = today.getTime() - joinDate.getTime();
+        // Calculate days difference (rounded down)
+        const daysDiff = Math.floor(timeDiff / (1000 * 3600 * 24));
+        // 1 SOLAR per day + 0.01918 initial bonus
+        const calculatedSolar = daysDiff + 0.01918;
+        
+        // Calculate KWh and dollars based on new SOLAR amount
+        const kwhPerSolar = 17700000; // 17.7M kWh per SOLAR
+        const usdPerSolar = 136000; // $136,000 per SOLAR
+        
+        return {
+          ...account,
+          totalSolar: String(calculatedSolar),
+          totalKwh: String(calculatedSolar * kwhPerSolar),
+          totalDollars: String(calculatedSolar * usdPerSolar)
+        };
+      });
+      
       res.json(solarAccounts);
     } catch (error) {
       next(error);
