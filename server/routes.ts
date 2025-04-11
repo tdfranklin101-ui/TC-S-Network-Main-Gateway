@@ -128,43 +128,12 @@ ${currentDate.toISOString()},${totalKwh},${totalDollars}`;
   // Set up distribution routes
   setupDistributionRoutes(app);
   
-  // Set up waitlist routes (direct routes, not under /api)
-  setupWaitlistRoutes(app);
+  // Add the templated homepage route before the other setups that might override it
+  console.log('Registering templated homepage route...');
   
-  // Set up admin routes
-  setupAdminRoutes(app);
-  
-  // Route for the Solar Declaration page
-  app.get('/declaration', (req, res) => {
-    res.sendFile('declaration.html', { root: './public' });
-  });
-
-  // Add route for the personal distributions page
-  app.get('/my-solar', (req, res) => {
-    res.sendFile('my-solar.html', { root: './public' });
-  });
-  
-  // Add route for the prototype page
-  app.get('/prototype', (req, res) => {
-    res.sendFile('prototype.html', { root: './public' });
-  });
-  
-  // Add route for the merchandise page
-  app.get('/merch', (req, res) => {
-    res.sendFile('merch.html', { root: './public' });
-  });
-  
-  // Add routes for other pages
-  app.get('/whitepapers', (req, res) => {
-    res.sendFile('whitepapers.html', { root: './public' });
-  });
-  
-  app.get('/founder_note', (req, res) => {
-    res.sendFile('founder_note.html', { root: './public' });
-  });
-  
-  // Homepage using the template system
+  // Move homepage route before any other routes to ensure it gets priority
   app.get('/', (req, res) => {
+    console.log('HOME ROUTE TRIGGERED!');
     try {
       console.log('Attempting to serve templated homepage...');
       
@@ -210,6 +179,41 @@ ${currentDate.toISOString()},${totalKwh},${totalDollars}`;
       // Fallback to static file if template processing fails
       res.sendFile('index.html', { root: './public' });
     }
+  });
+  
+  // Set up waitlist routes (direct routes, not under /api)
+  setupWaitlistRoutes(app);
+  
+  // Set up admin routes
+  setupAdminRoutes(app);
+  
+  // Route for the Solar Declaration page
+  app.get('/declaration', (req, res) => {
+    res.sendFile('declaration.html', { root: './public' });
+  });
+
+  // Add route for the personal distributions page
+  app.get('/my-solar', (req, res) => {
+    res.sendFile('my-solar.html', { root: './public' });
+  });
+  
+  // Add route for the prototype page
+  app.get('/prototype', (req, res) => {
+    res.sendFile('prototype.html', { root: './public' });
+  });
+  
+  // Add route for the merchandise page
+  app.get('/merch', (req, res) => {
+    res.sendFile('merch.html', { root: './public' });
+  });
+  
+  // Add routes for other pages
+  app.get('/whitepapers', (req, res) => {
+    res.sendFile('whitepapers.html', { root: './public' });
+  });
+  
+  app.get('/founder_note', (req, res) => {
+    res.sendFile('founder_note.html', { root: './public' });
   });
 
   const httpServer = createServer(app);
