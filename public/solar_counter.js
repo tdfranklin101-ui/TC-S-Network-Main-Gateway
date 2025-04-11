@@ -4,12 +4,30 @@
  * This script creates an animated counter that visualizes the 
  * continuous generation of solar energy and its equivalent monetary value
  * based on data accumulated since April 7, 2025.
+ * 
+ * Updated: April 11, 2025 - Integrated with new solar constants and formulas
  */
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log("Solar counter initializing...");
     
-    // Use the existing counter element in the page instead of creating a new one
+    // Load solar constants first
+    const script = document.createElement('script');
+    script.src = '/js/solar-constants.js';
+    script.onload = function() {
+        // Once constants are loaded, initialize the counter
+        initializeSolarCounter();
+    };
+    script.onerror = function() {
+        console.error("Failed to load solar constants. Using fallback values.");
+        // Initialize with fallback if constants aren't available
+        initializeSolarCounter();
+    };
+    document.head.appendChild(script);
+});
+
+function initializeSolarCounter() {
+    // Use the existing counter element in the page
     const counterDiv = document.getElementById('solar-counter');
     if (!counterDiv) {
         console.error("Solar counter container not found!");
@@ -24,7 +42,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Set up periodic refresh every 5 minutes to ensure data stays current
     setInterval(fetchSolarClockData, 300000);
-});
+}
 
 function styleCounter(element) {
     // We don't need the fixed positioning as the counter is in its designated container
@@ -159,9 +177,20 @@ function updateCounter(initialData) {
     const currentTimestamp = Date.now();
     const secondsSinceFetch = (currentTimestamp - fetchTimestamp) / 1000;
     
+    // Use solar constants if available, otherwise fall back to the API data
+    let kwhPerSecond = initialData.kwhPerSecond;
+    let dollarPerKwh = initialData.dollarPerKwh;
+    
+    // Check if SolarConstants is available from our loaded script
+    if (window.SolarConstants) {
+        // Use the values from our constants
+        kwhPerSecond = window.SolarConstants.KWH_PER_SECOND;
+        dollarPerKwh = window.SolarConstants.USD_PER_SOLAR / (window.SolarConstants.solarPerPersonKwh * 365);
+    }
+    
     // Add kWh generated since the data was fetched - ensure this is increasing
-    const additionalKwh = secondsSinceFetch * initialData.kwhPerSecond;
-    const additionalDollars = additionalKwh * initialData.dollarPerKwh;
+    const additionalKwh = secondsSinceFetch * kwhPerSecond;
+    const additionalDollars = additionalKwh * dollarPerKwh;
     
     // Current total values
     const currentKwh = initialData.totalKwh + additionalKwh;

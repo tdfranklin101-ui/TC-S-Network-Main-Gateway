@@ -5,16 +5,20 @@ import { insertDistributionSchema, User } from "@shared/schema";
 import fs from "fs";
 import path from "path";
 import { parse } from "csv";
+import { fileURLToPath } from "url";
+
+// Import solar constants
+import * as solarConstants from "./solar-constants";
 
 // Define admin role for authorization
 interface UserWithRole extends User {
   role?: string;
 }
 
-// Constants for solar distribution calculations
-const SOLAR_VALUE_USD = 136000; // 1 Solar = $136,000
-const SOLAR_VALUE_KWH = 17700000; // 1 Solar = 17.7M kWh
-const DAILY_DISTRIBUTION_SOLAR = 1 / 365; // 1/365th solar per day (approx)
+// Constants for solar distribution calculations (from solar-constants.js)
+const SOLAR_VALUE_USD = solarConstants.USD_PER_SOLAR; // 1 Solar = $136,000
+const SOLAR_VALUE_KWH = solarConstants.solarPerPersonKwh * 365; // 1 Solar = 17.7M kWh 
+const DAILY_DISTRIBUTION_SOLAR = solarConstants.DAILY_SOLAR_DISTRIBUTION; // 1/365th solar per day
 
 // Setup distribution routes
 export function setupDistributionRoutes(app: any) {
