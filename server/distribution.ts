@@ -126,8 +126,9 @@ async function createDailyDistributions(date: Date): Promise<number> {
     for (const account of solarAccounts) {
       // Check if a distribution already exists for this user and date
       const existingDistributions = await storage.getDistributionsByDate(date);
+      const dateStr = date.toISOString().split('T')[0];
       const userHasDistribution = existingDistributions.some(
-        d => d.solarAccountId === account.id && d.distributionDate.toISOString().split('T')[0] === date.toISOString().split('T')[0]
+        d => d.solarAccountId === account.id && (typeof d.distributionDate === 'string' ? d.distributionDate : new Date(d.distributionDate).toISOString().split('T')[0]) === dateStr
       );
 
       if (!userHasDistribution) {
