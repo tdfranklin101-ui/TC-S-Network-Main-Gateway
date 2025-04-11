@@ -128,7 +128,7 @@ function initCounter(data) {
     counter.id = 'main-counter';
     counter.style.fontSize = '16px';
     counter.style.fontWeight = 'bold';
-    counter.style.color = '#FFD700';
+    counter.style.color = '#0057B8';
     
     // Create expanding details section
     const details = document.createElement('div');
@@ -228,12 +228,12 @@ function updateCounter(initialData) {
             style.textContent = `
                 .digit-animate {
                     display: inline-block;
-                    color: #FFD700;
+                    color: #0057B8;
                     animation: pulse 2s infinite;
                 }
                 .digit-highlight {
                     display: inline-block;
-                    color: #FF9500;
+                    color: #0057B8;
                     animation: glow 1s infinite;
                     font-weight: bold;
                 }
@@ -243,9 +243,9 @@ function updateCounter(initialData) {
                     100% { opacity: 1; }
                 }
                 @keyframes glow {
-                    0% { text-shadow: 0 0 2px #FF9500; }
-                    50% { text-shadow: 0 0 8px #FF9500; }
-                    100% { text-shadow: 0 0 2px #FF9500; }
+                    0% { text-shadow: 0 0 2px #0057B8; }
+                    50% { text-shadow: 0 0 8px #0057B8; }
+                    100% { text-shadow: 0 0 2px #0057B8; }
                 }
             `;
             document.head.appendChild(style);
