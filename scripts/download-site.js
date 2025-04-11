@@ -67,10 +67,10 @@ const jsFiles = [
 // Image files to copy
 const imageFiles = [
   'branding_logo.png',
-  'solar_background.png.png',
-  'solar_coin.png.png',
-  'solar_spinner.png.png',
-  'solar_tshirt.png.png'
+  'solar_background.png',
+  'solar_coin.png',
+  'solar_spinner.png',
+  'solar_tshirt.png'
 ];
 
 // Copy HTML files

@@ -1,6 +1,6 @@
 const DUMMY_DATA = {
   "solarCounter": {
-    "timestamp": "2025-04-11T07:44:02.455Z",
+    "timestamp": "2025-04-11T07:44:44.751Z",
     "baseTimestamp": "2025-04-07T00:00:00.000Z",
     "totalKwh": 12.87702875,
     "totalDollars": 1030162.3,
