@@ -114,6 +114,7 @@ function initCounter(data) {
     const title = document.createElement('div');
     title.textContent = '☀️ Live Solar Generation';
     title.style.fontWeight = 'bold';
+    title.style.color = '#0057B8';
     
     // Add blinking activity indicator
     const indicator = document.createElement('div');
@@ -283,12 +284,12 @@ function updateCounter(initialData) {
         const homesPowered = currentKwh / 1.5; // Homes powered based on average consumption
         
         details.innerHTML = `
-            <div style="margin-bottom: 5px">Base Date: April 7, 2025</div>
-            <div style="margin-bottom: 5px">Total Days: ${(totalElapsedSeconds / 86400).toFixed(2)}</div>
-            <div style="margin-bottom: 5px">Generation Rate: ${mkwhPerHour.toFixed(8)} MkWh/hour</div>
-            <div style="margin-bottom: 5px">Equivalent CO₂ Saved: ${co2SavedTons.toLocaleString(undefined, {maximumFractionDigits: 2})} metric tons</div>
-            <div style="margin-bottom: 5px">Homes Powered: ${homesPowered.toLocaleString(undefined, {maximumFractionDigits: 0})}</div>
-            <div style="font-size: 10px; margin-top: 10px; opacity: 0.7">Click to toggle details</div>
+            <div style="margin-bottom: 5px; color: #0057B8;">Base Date: April 7, 2025</div>
+            <div style="margin-bottom: 5px; color: #0057B8;">Total Days: ${(totalElapsedSeconds / 86400).toFixed(2)}</div>
+            <div style="margin-bottom: 5px; color: #0057B8;">Generation Rate: ${mkwhPerHour.toFixed(8)} MkWh/hour</div>
+            <div style="margin-bottom: 5px; color: #0057B8;">Equivalent CO₂ Saved: ${co2SavedTons.toLocaleString(undefined, {maximumFractionDigits: 2})} metric tons</div>
+            <div style="margin-bottom: 5px; color: #0057B8;">Homes Powered: ${homesPowered.toLocaleString(undefined, {maximumFractionDigits: 0})}</div>
+            <div style="font-size: 10px; margin-top: 10px; color: #0057B8; opacity: 0.8">Click to toggle details</div>
         `;
     }
     
