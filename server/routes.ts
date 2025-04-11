@@ -169,6 +169,16 @@ ${currentDate.toISOString()},${totalKwh},${totalDollars}`;
   app.get('/founder_note', (req, res) => {
     res.sendFile('founder_note.html', { root: './public' });
   });
+  
+  // Add route for the login page
+  app.get('/login', (req, res) => {
+    res.sendFile('login.html', { root: './public' });
+  });
+  
+  // Add route for the account update page
+  app.get('/update-account', (req, res) => {
+    res.sendFile('update-account.html', { root: './public' });
+  });
 
   const httpServer = createServer(app);
   return httpServer;

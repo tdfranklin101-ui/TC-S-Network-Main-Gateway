@@ -180,6 +180,5 @@ export function isAuthenticated(req: Express.Request, res: Express.Response, nex
   if (req.isAuthenticated()) {
     return next();
   }
-  res.writeHead(401, { 'Content-Type': 'application/json' });
-  res.end(JSON.stringify({ error: "Unauthorized" }));
+  res.sendStatus(401);
 }
