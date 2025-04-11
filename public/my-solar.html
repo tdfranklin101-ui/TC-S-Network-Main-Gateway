@@ -14,10 +14,18 @@
             --text-dark: #343A40;
         }
         
-        body {
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             color: var(--text-dark);
             background-color: var(--bg-light);
+        }
+        
+        * {
+            box-sizing: border-box;
         }
         
         .navbar {
@@ -411,6 +419,8 @@
                 <div class="col-md-6">
                     <h5>The Current-See</h5>
                     <p>A new global economy backed by the Sun. One Solar. One Earth. Daily.</p>
+                    <p style="margin-top: 10px;">The Current-See PBC, Inc.<br>
+                    <a href="mailto:hello@thecurrentsee.org" style="color: #ADB5BD; text-decoration: none;">hello@thecurrentsee.org</a></p>
                 </div>
                 <div class="col-md-6 text-md-end">
                     <div class="footer-links">
