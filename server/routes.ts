@@ -4,14 +4,20 @@ import { storage } from "./storage";
 import { insertNewsletterSubscriptionSchema, insertContactMessageSchema } from "@shared/schema";
 import { setupWaitlistRoutes } from "./waitlist";
 import { setupAdminRoutes } from "./admin";
+import { setupAuth } from "./auth";
+import { setupDistributionRoutes } from "./distribution";
 import cookieParser from "cookie-parser";
 import fs from "fs";
 import path from "path";
 import { parse } from "csv";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Add cookie parser middleware for admin authentication
+  // Add cookie parser middleware for authentication
   app.use(cookieParser());
+  
+  // Set up authentication
+  setupAuth(app);
+  
   const apiRouter = express.Router();
   
   // API routes
@@ -118,6 +124,9 @@ ${currentDate.toISOString()},${totalKwh},${totalDollars}`;
   // Mount the API router
   app.use("/api", apiRouter);
   
+  // Set up distribution routes
+  setupDistributionRoutes(app);
+  
   // Set up waitlist routes (direct routes, not under /api)
   setupWaitlistRoutes(app);
   
@@ -127,6 +136,11 @@ ${currentDate.toISOString()},${totalKwh},${totalDollars}`;
   // Route for the Solar Declaration page
   app.get('/declaration', (req, res) => {
     res.sendFile('declaration.html', { root: './public' });
+  });
+
+  // Add route for the personal distributions page
+  app.get('/my-solar', (req, res) => {
+    res.sendFile('my-solar.html', { root: './public' });
   });
 
   const httpServer = createServer(app);
