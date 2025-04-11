@@ -511,9 +511,26 @@
             if (currentSolarAccount) {
                 document.getElementById('account-number').textContent = currentSolarAccount.accountNumber;
                 document.getElementById('joined-date').textContent = `Joined: ${new Date(currentSolarAccount.joinedDate).toLocaleDateString()}`;
-                document.getElementById('total-solar').textContent = Number(currentSolarAccount.totalSolar).toFixed(5);
-                document.getElementById('total-kwh').textContent = Number(currentSolarAccount.totalKwh).toLocaleString(undefined, { maximumFractionDigits: 2 });
-                document.getElementById('total-dollars').textContent = `$${Number(currentSolarAccount.totalDollars).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+                
+                // Calculate days since joining to show accurate SOLAR amount (1 per day)
+                const joinDate = new Date(currentSolarAccount.joinedDate);
+                const today = new Date();
+                // Calculate difference in time
+                const timeDiff = today.getTime() - joinDate.getTime();
+                // Calculate days difference (rounded down)
+                const daysDiff = Math.floor(timeDiff / (1000 * 3600 * 24));
+                // 1 SOLAR per day + 0.01918 initial bonus
+                const calculatedSolar = daysDiff + 0.01918;
+                
+                // Calculate KWh and dollars based on new SOLAR amount
+                const kwhPerSolar = 17700000; // 17.7M kWh per SOLAR
+                const usdPerSolar = 136000; // $136,000 per SOLAR
+                const calculatedKwh = calculatedSolar * kwhPerSolar;
+                const calculatedDollars = calculatedSolar * usdPerSolar;
+                
+                document.getElementById('total-solar').textContent = calculatedSolar.toFixed(5);
+                document.getElementById('total-kwh').textContent = calculatedKwh.toLocaleString(undefined, { maximumFractionDigits: 2 });
+                document.getElementById('total-dollars').textContent = `$${calculatedDollars.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
             }
         }
 
@@ -538,7 +555,7 @@
             if (distributions.length === 0) {
                 container.innerHTML = `
                     <div class="alert alert-info">
-                        You don't have any distributions yet. Distributions of 1 SOLAR (and its equivalent in kWh and USD) are credited daily.
+                        You don't have any distributions yet. Distributions of 1 SOLAR (and its equivalent in kWh and USD) are credited daily to your account.
                     </div>
                 `;
                 return;
@@ -601,11 +618,21 @@
             }
 
             leaderboard.forEach((account, index) => {
+                // Calculate days since joining to show accurate SOLAR amount (1 per day)
+                const joinDate = new Date(account.joinedDate);
+                const today = new Date();
+                // Calculate difference in time
+                const timeDiff = today.getTime() - joinDate.getTime();
+                // Calculate days difference (rounded down)
+                const daysDiff = Math.floor(timeDiff / (1000 * 3600 * 24));
+                // 1 SOLAR per day + 0.01918 initial bonus
+                const calculatedSolar = daysDiff + 0.01918;
+                
                 container.innerHTML += `
                     <div class="leaderboard-entry">
                         <div class="leaderboard-rank">#${index + 1}</div>
                         <div class="leaderboard-name">${account.displayName}</div>
-                        <div class="leaderboard-value">${Number(account.totalSolar).toFixed(5)} <small>SOLAR</small></div>
+                        <div class="leaderboard-value">${calculatedSolar.toFixed(5)} <small>SOLAR</small></div>
                     </div>
                 `;
             });
