@@ -11,7 +11,7 @@
             margin: 0;
             padding: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #FF8C00, #FFD700);
+            /* Remove the static background, we'll apply it dynamically with JavaScript */
             background-attachment: fixed;
             color: #fff;
             line-height: 1.6;
@@ -345,43 +345,53 @@
         
         /* Background gradient variations */
         .bg-gradient-1 {
-            background: linear-gradient(135deg, #FF8C00, #FFD700);
+            background: linear-gradient(135deg, #FF8C00, #FFD700) !important;
+            background-attachment: fixed !important;
         }
         
         .bg-gradient-2 {
-            background: linear-gradient(135deg, #FF4500, #FFA500);
+            background: linear-gradient(135deg, #FF4500, #FFA500) !important;
+            background-attachment: fixed !important;
         }
         
         .bg-gradient-3 {
-            background: linear-gradient(135deg, #FF6347, #FFD700);
+            background: linear-gradient(135deg, #FF6347, #FFD700) !important;
+            background-attachment: fixed !important;
         }
         
         .bg-gradient-4 {
-            background: linear-gradient(135deg, #FF8C00, #FFAA33);
+            background: linear-gradient(135deg, #FF8C00, #FFAA33) !important;
+            background-attachment: fixed !important;
         }
         
         .bg-gradient-5 {
-            background: linear-gradient(135deg, #FFA07A, #FFD700);
+            background: linear-gradient(135deg, #FFA07A, #FFD700) !important;
+            background-attachment: fixed !important;
         }
         
         .bg-gradient-6 {
-            background: linear-gradient(135deg, #FF7F50, #FFCC33);
+            background: linear-gradient(135deg, #FF7F50, #FFCC33) !important;
+            background-attachment: fixed !important;
         }
         
         .bg-gradient-7 {
-            background: linear-gradient(135deg, #FF4500, #FFD700);
+            background: linear-gradient(135deg, #FF4500, #FFD700) !important;
+            background-attachment: fixed !important;
         }
         
         .bg-gradient-8 {
-            background: linear-gradient(135deg, #FF8C00, #FFC125);
+            background: linear-gradient(135deg, #FF8C00, #FFC125) !important;
+            background-attachment: fixed !important;
         }
         
         .bg-gradient-9 {
-            background: linear-gradient(135deg, #FF7F50, #FFD700);
+            background: linear-gradient(135deg, #FF7F50, #FFD700) !important;
+            background-attachment: fixed !important;
         }
         
         .bg-gradient-10 {
-            background: linear-gradient(135deg, #FF6347, #FFCC33);
+            background: linear-gradient(135deg, #FF6347, #FFCC33) !important;
+            background-attachment: fixed !important;
         }
         
         .spender-icon {
@@ -538,7 +548,7 @@
         }
     </style>
 </head>
-<body>
+<body style="background-color: #FF8C00;">
     <div class="container">
         <header>
             <a href="/" class="logo">
@@ -812,6 +822,8 @@
             
             // Add a smooth transition effect
             document.body.style.transition = 'background 0.8s ease';
+            document.documentElement.style.background = 'none'; // Ensure no white block appears
+            
             setTimeout(() => {
                 document.body.style.transition = '';
             }, 800);
