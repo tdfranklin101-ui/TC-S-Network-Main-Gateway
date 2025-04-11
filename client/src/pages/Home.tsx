@@ -53,7 +53,7 @@ const Home = () => {
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <button 
               onClick={() => scrollToSection("demo")}
-              className="cta-button bg-[#FFD700] text-[#212529] hover:bg-opacity-90 font-bold py-3 px-8 rounded-lg shadow-lg transition duration-300"
+              className="cta-button bg-[#FFD700] text-[#0057B8] hover:bg-opacity-90 font-bold py-3 px-8 rounded-lg shadow-lg transition duration-300"
             >
               Learn More
             </button>
