@@ -89,14 +89,15 @@ class PublicMembersLog {
       styleEl.id = 'members-log-styles';
       styleEl.textContent = `
         .public-members-log {
-          background-color: #f8f9fa;
+          background-color: rgba(255, 255, 255, 0.9);
           border-radius: 10px;
           padding: 1.5rem;
           box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+          border: 1px solid rgba(255, 215, 0, 0.4);
         }
         
         .public-members-log h3 {
-          color: #0057B8;
+          color: #4CAF50;
           margin-bottom: 1.5rem;
           text-align: center;
           font-weight: 600;
@@ -106,7 +107,7 @@ class PublicMembersLog {
           display: flex;
           align-items: center;
           padding: 0.75rem 0;
-          border-bottom: 1px solid #e9ecef;
+          border-bottom: 1px solid rgba(255, 215, 0, 0.2);
         }
         
         .member-entry:last-of-type {
@@ -118,7 +119,7 @@ class PublicMembersLog {
           font-weight: bold;
           font-size: 1.2rem;
           margin-right: 1rem;
-          color: #343a40;
+          color: #333333;
           min-width: 2rem;
         }
         
@@ -135,7 +136,7 @@ class PublicMembersLog {
         
         .member-solar {
           font-weight: bold;
-          color: #0057B8;
+          color: #4CAF50;
         }
         
         .member-solar small {
@@ -146,32 +147,33 @@ class PublicMembersLog {
         
         .empty-state, .error-state {
           padding: 2rem 0;
-          color: #6c757d;
+          color: #666;
         }
         
         .members-list .btn-primary {
-          background-color: #0057B8;
-          border-color: #0057B8;
+          background-color: #4CAF50;
+          border-color: #4CAF50;
+          color: white;
         }
         
         .members-list .btn-primary:hover {
-          background-color: #004494;
-          border-color: #004494;
+          background-color: #3d8b40;
+          border-color: #3d8b40;
         }
         
         .loading-indicator {
           text-align: center;
           padding: 2rem 0;
-          color: #6c757d;
+          color: #666;
         }
         
         .loading-spinner {
           display: inline-block;
           width: 2rem;
           height: 2rem;
-          border: 3px solid #e9ecef;
+          border: 3px solid rgba(255, 215, 0, 0.2);
           border-radius: 50%;
-          border-top-color: #0057B8;
+          border-top-color: #FFD700;
           animation: spin 1s ease-in-out infinite;
           margin-bottom: 1rem;
         }
@@ -186,7 +188,6 @@ class PublicMembersLog {
     // Create the component HTML
     this.container.innerHTML = `
       <div class="public-members-log">
-        <h3>Public Members Log</h3>
         <div class="members-list">
           <div class="loading-indicator">
             <div class="loading-spinner"></div>

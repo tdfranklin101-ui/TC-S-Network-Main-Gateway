@@ -8,51 +8,79 @@
     <link rel="stylesheet" href="/style.css">
     <style>
         :root {
-            --primary-color: #0057B8;
-            --secondary-color: #FFD700;
-            --accent-color: #FF6B35;
+            --primary-green: #4CAF50;
+            --secondary-yellow: #FFD700;
+            --accent-green: #8BC34A;
             --bg-light: #F8F9FA;
-            --text-dark: #343A40;
+            --text-dark: #333333;
         }
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             color: var(--text-dark);
             background-color: var(--bg-light);
+            background-image: url('/solar_background.png');
+            background-repeat: no-repeat;
+            background-size: cover;
+            background-attachment: fixed;
+            background-position: center;
+        }
+        
+        .content-wrapper {
+            background-color: rgba(255, 255, 255, 0.92);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            margin: 20px auto;
+            padding: 20px;
+            max-width: 1240px;
         }
         
         .navbar {
-            background-color: var(--primary-color);
+            background-color: rgba(255, 215, 0, 0.9);
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
         
         .navbar-brand {
             font-weight: bold;
-            color: white !important;
+            color: var(--text-dark) !important;
+        }
+        
+        .navbar-nav .nav-link {
+            color: var(--text-dark) !important;
+            margin-left: 1rem;
+            font-weight: 600;
+        }
+        
+        .navbar-nav .nav-link:hover {
+            color: var(--primary-green) !important;
         }
         
         .hero {
-            background: linear-gradient(135deg, var(--primary-color), #004494);
-            color: white;
-            padding: 5rem 0;
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.9), rgba(139, 195, 74, 0.9));
+            color: var(--text-dark);
+            padding: 3rem 0;
             position: relative;
             overflow: hidden;
-        }
-        
-        .hero h1 {
-            font-size: 3rem;
-            font-weight: 700;
-            margin-bottom: 1.5rem;
-        }
-        
-        .hero p.lead {
-            font-size: 1.5rem;
+            border-radius: 8px;
             margin-bottom: 2rem;
         }
         
+        .hero h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: #333;
+        }
+        
+        .hero p.lead {
+            font-size: 1.3rem;
+            margin-bottom: 2rem;
+            color: #333;
+        }
+        
         .hero .btn-primary {
-            background-color: var(--secondary-color);
-            color: var(--text-dark);
+            background-color: var(--primary-green);
+            color: white;
             border: none;
             font-weight: 600;
             padding: 0.75rem 2rem;
@@ -62,76 +90,82 @@
         }
         
         .hero .btn-primary:hover {
-            background-color: #e6c200;
+            background-color: #3d8b40;
             transform: translateY(-3px);
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         }
         
         .hero-image {
-            max-width: 100%;
+            max-width: 90%;
             height: auto;
-            margin-top: 2rem;
+            margin: 0 auto;
+            display: block;
         }
         
         .section {
-            padding: 5rem 0;
+            padding: 2rem 0;
         }
         
         .section-title {
-            color: var(--primary-color);
+            color: var(--primary-green);
             font-weight: 700;
-            margin-bottom: 2.5rem;
+            margin-bottom: 1.5rem;
             text-align: center;
         }
         
         .feature-card {
-            background-color: white;
+            background-color: rgba(255, 255, 255, 0.85);
             border-radius: 10px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-            padding: 2rem;
-            margin-bottom: 2rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
             transition: transform 0.3s ease;
             height: 100%;
+            border: 1px solid rgba(255, 215, 0, 0.3);
         }
         
         .feature-card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-3px);
+            border-color: var(--secondary-yellow);
         }
         
         .feature-icon {
-            background-color: var(--primary-color);
-            color: white;
-            width: 60px;
-            height: 60px;
+            background-color: var(--secondary-yellow);
+            color: var(--text-dark);
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
-            margin-bottom: 1.5rem;
+            font-size: 1.3rem;
+            margin-bottom: 1.2rem;
+            font-weight: bold;
         }
         
         .feature-title {
             font-weight: 600;
             margin-bottom: 1rem;
+            color: var(--primary-green);
         }
         
         .solar-counter-container {
-            background-color: var(--secondary-color);
-            padding: 3rem;
+            background-color: rgba(255, 215, 0, 0.2);
+            padding: 2rem;
             border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            margin-bottom: 3rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            margin-bottom: 2rem;
+            border: 1px solid var(--secondary-yellow);
         }
         
         .counter-title {
             font-weight: 700;
-            margin-bottom: 2rem;
-            color: var(--text-dark);
+            margin-bottom: 1.5rem;
+            color: var(--primary-green);
         }
         
         .counter-value {
-            font-size: 2.5rem;
+            font-size: 2.2rem;
             font-weight: 700;
             color: var(--text-dark);
             margin-bottom: 1rem;
@@ -143,10 +177,11 @@
         }
         
         .call-to-action {
-            background: linear-gradient(135deg, var(--accent-color), #e55a2b);
+            background: linear-gradient(135deg, var(--primary-green), var(--accent-green));
             color: white;
-            padding: 5rem 0;
+            padding: 3rem 0;
             text-align: center;
+            border-radius: 8px;
         }
         
         .call-to-action h2 {
@@ -155,8 +190,8 @@
         }
         
         .call-to-action .btn-secondary {
-            background-color: white;
-            color: var(--accent-color);
+            background-color: var(--secondary-yellow);
+            color: var(--text-dark);
             border: none;
             font-weight: 600;
             padding: 0.75rem 2rem;
@@ -166,46 +201,62 @@
         }
         
         .call-to-action .btn-secondary:hover {
-            background-color: #f5f5f5;
+            background-color: #e6c200;
             transform: translateY(-3px);
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         }
         
-        .navbar-nav .nav-link {
-            color: white !important;
-            margin-left: 1rem;
-        }
-        
         footer {
-            background-color: var(--text-dark);
-            color: white;
-            padding: 3rem 0;
+            background-color: rgba(255, 215, 0, 0.9);
+            color: var(--text-dark);
+            padding: 2rem 0;
+            border-radius: 8px;
         }
         
         .footer-links a {
-            color: #ADB5BD;
+            color: var(--text-dark);
             text-decoration: none;
             margin-right: 1rem;
+            font-weight: 500;
         }
         
         .footer-links a:hover {
-            color: white;
+            color: var(--primary-green);
+            text-decoration: underline;
+        }
+        
+        /* Public Members Log specific styling */
+        .members-log-container {
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+            border: 1px solid var(--secondary-yellow);
+        }
+        
+        .members-log-title {
+            color: var(--primary-green);
+            font-weight: 700;
+            margin-bottom: 1.2rem;
+            text-align: center;
+            font-size: 1.3rem;
         }
         
         /* Two-column layout with members log on the side */
         .home-2col-layout {
             display: flex;
             flex-wrap: wrap;
+            gap: 20px;
         }
         
         .home-main-content {
             flex: 3;
-            padding-right: 2rem;
+            min-width: 280px;
         }
         
         .home-side-content {
             flex: 1;
-            min-width: 300px;
+            min-width: 280px;
         }
         
         @media (max-width: 992px) {
@@ -213,18 +264,25 @@
                 flex-direction: column;
             }
             
-            .home-main-content {
-                padding-right: 0;
-                margin-bottom: 2rem;
+            .hero h1 {
+                font-size: 2rem;
+            }
+            
+            .hero p.lead {
+                font-size: 1.1rem;
             }
         }
     </style>
 </head>
 <body>
+<div class="content-wrapper">
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark">
+    <nav class="navbar navbar-expand-lg">
         <div class="container">
-            <a class="navbar-brand" href="/">The Current-See</a>
+            <a class="navbar-brand" href="/">
+                <img src="/branding_logo.png" alt="The Current-See Logo" height="40">
+                The Current-See
+            </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -313,8 +371,11 @@
                     </div>
                 </div>
                 <div class="home-side-content">
-                    <!-- Public Members Log will be inserted here -->
-                    <div id="public-members-log"></div>
+                    <!-- Public Members Log container -->
+                    <div class="members-log-container">
+                        <h3 class="members-log-title">Public Members Log</h3>
+                        <div id="public-members-log"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -348,7 +409,7 @@
                     </div>
                 </div>
             </div>
-            <hr class="mt-4 mb-4" style="border-color: #495057;">
+            <hr class="mt-4 mb-4" style="border-color: rgba(0, 0, 0, 0.1);">
             <div class="row">
                 <div class="col-12 text-center">
                     <p class="mb-0">&copy; 2025 The Current-See PBC, Inc. All rights reserved.</p>
@@ -356,6 +417,7 @@
             </div>
         </div>
     </footer>
+</div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/solar_counter.js"></script>
