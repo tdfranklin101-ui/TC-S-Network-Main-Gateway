@@ -78,6 +78,23 @@ function copyFilesToDist() {
     const publicJsDir = path.resolve(__dirname, '../public/js');
     const distJsDir = path.resolve(__dirname, '../dist/public/js');
     if (fs.existsSync(publicJsDir)) {
+      // Ensure the dist/public/js directory exists
+      if (!fs.existsSync(distJsDir)) {
+        fs.mkdirSync(distJsDir, { recursive: true });
+        console.log(`Created directory: ${distJsDir}`);
+      }
+      
+      // Explicitly check and copy the public-members-log.js file
+      const membersLogSource = path.resolve(publicJsDir, 'public-members-log.js');
+      const membersLogDest = path.resolve(distJsDir, 'public-members-log.js');
+      if (fs.existsSync(membersLogSource)) {
+        fs.copyFileSync(membersLogSource, membersLogDest);
+        console.log(`✓ Explicitly copied public-members-log.js to ${membersLogDest}`);
+      } else {
+        console.error(`❌ Critical file public-members-log.js not found at ${membersLogSource}`);
+      }
+      
+      // Copy the rest of the JS files
       copyDirectoryRecursive(publicJsDir, distJsDir);
       console.log('✓ Copied all files from public/js to dist/public/js');
     } else {

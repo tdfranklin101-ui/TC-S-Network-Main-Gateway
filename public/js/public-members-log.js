@@ -6,10 +6,24 @@
  */
 class PublicMembersLog {
   constructor(containerId) {
+    console.log(`Initializing PublicMembersLog with container: ${containerId}`);
     this.container = document.getElementById(containerId);
     if (!this.container) {
       console.error(`Container with ID '${containerId}' not found`);
-      return;
+      // Try to create a fallback container for debugging
+      const body = document.querySelector('body');
+      if (body) {
+        console.log('Creating fallback container for debugging');
+        const fallbackContainer = document.createElement('div');
+        fallbackContainer.id = containerId;
+        fallbackContainer.style.margin = '20px';
+        fallbackContainer.style.padding = '20px';
+        fallbackContainer.style.border = '1px solid red';
+        body.appendChild(fallbackContainer);
+        this.container = fallbackContainer;
+      } else {
+        return;
+      }
     }
     
     this.render();
@@ -18,10 +32,17 @@ class PublicMembersLog {
   
   async fetchMembers() {
     try {
+      console.log('Fetching members from leaderboard API...');
       const response = await fetch('/api/solar-accounts/leaderboard?limit=5');
-      if (!response.ok) throw new Error('Failed to fetch public members');
+      console.log('API response status:', response.status);
+      
+      if (!response.ok) {
+        console.error('Response not OK:', response.status, response.statusText);
+        throw new Error(`Failed to fetch public members: ${response.status} ${response.statusText}`);
+      }
       
       const members = await response.json();
+      console.log('Members data received:', members);
       this.updateUI(members);
     } catch (error) {
       console.error('Error fetching members:', error);
@@ -30,9 +51,21 @@ class PublicMembersLog {
   }
   
   updateUI(members) {
+    console.log('Updating UI with members data');
     const membersContainer = this.container.querySelector('.members-list');
     
-    if (members.length === 0) {
+    if (!membersContainer) {
+      console.error('Members list container not found within', this.container);
+      // Create the members list if it doesn't exist
+      const membersListDiv = document.createElement('div');
+      membersListDiv.className = 'members-list';
+      this.container.querySelector('.public-members-log')?.appendChild(membersListDiv);
+      console.log('Created new members-list container');
+      return;
+    }
+    
+    if (!members || members.length === 0) {
+      console.log('No members found, showing empty state');
       membersContainer.innerHTML = `
         <div class="empty-state">
           <p class="text-center">No public members yet.<br>Be the first to participate!</p>
@@ -44,21 +77,34 @@ class PublicMembersLog {
       return;
     }
     
+    console.log(`Rendering ${members.length} members in the leaderboard`);
     membersContainer.innerHTML = '';
     
     members.forEach((member, index) => {
-      const entryEl = document.createElement('div');
-      entryEl.className = 'member-entry';
-      
-      entryEl.innerHTML = `
-        <div class="member-rank">#${index + 1}</div>
-        <div class="member-info">
-          <div class="member-name">${member.displayName}</div>
-          <div class="member-solar">${Number(member.totalSolar).toFixed(5)} <small>SOLAR</small></div>
-        </div>
-      `;
-      
-      membersContainer.appendChild(entryEl);
+      try {
+        const entryEl = document.createElement('div');
+        entryEl.className = 'member-entry';
+        
+        // Safely format the solar amount with fallback
+        let formattedSolar = '0.00000';
+        try {
+          formattedSolar = Number(member.totalSolar).toFixed(5);
+        } catch (e) {
+          console.error('Error formatting solar amount:', e);
+        }
+        
+        entryEl.innerHTML = `
+          <div class="member-rank">#${index + 1}</div>
+          <div class="member-info">
+            <div class="member-name">${member.displayName || 'Anonymous Member'}</div>
+            <div class="member-solar">${formattedSolar} <small>SOLAR</small></div>
+          </div>
+        `;
+        
+        membersContainer.appendChild(entryEl);
+      } catch (error) {
+        console.error(`Error rendering member at index ${index}:`, error);
+      }
     });
     
     // Show the "Join Now" button below the list
@@ -68,18 +114,30 @@ class PublicMembersLog {
       <a href="/my-solar" class="btn btn-primary">Join The Current-See</a>
     `;
     membersContainer.appendChild(joinEl);
+    console.log('Finished rendering members leaderboard');
   }
   
   showError() {
+    console.log('Showing error state');
     const membersContainer = this.container.querySelector('.members-list');
+    
+    if (!membersContainer) {
+      console.error('Members list container not found when trying to show error');
+      // Try to recreate the container structure if missing
+      this.render();
+      return;
+    }
+    
     membersContainer.innerHTML = `
       <div class="error-state">
         <p class="text-center">Unable to load member data.</p>
         <div class="text-center mt-3">
+          <button class="btn btn-secondary" onclick="window.location.reload()">Retry</button>
           <a href="/my-solar" class="btn btn-primary">Join Now</a>
         </div>
       </div>
     `;
+    console.log('Error state displayed with retry option');
   }
   
   render() {
@@ -161,6 +219,29 @@ class PublicMembersLog {
         .members-list .btn-primary:hover {
           background-color: #0057B8;
           color: white;
+          transform: translateY(-3px);
+          box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .members-list .btn-secondary {
+          background-color: #f1f1f1;
+          color: #333;
+          border: none;
+          padding: 8px 20px;
+          font-size: 0.9rem;
+          font-weight: 600;
+          border-radius: 30px;
+          text-transform: uppercase;
+          transition: all 0.3s ease;
+          text-decoration: none;
+          display: inline-block;
+          margin-top: 1rem;
+          margin-right: 10px;
+          cursor: pointer;
+        }
+        
+        .members-list .btn-secondary:hover {
+          background-color: #ddd;
           transform: translateY(-3px);
           box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
         }
