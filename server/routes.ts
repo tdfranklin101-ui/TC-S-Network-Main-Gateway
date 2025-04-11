@@ -166,9 +166,33 @@ ${currentDate.toISOString()},${totalKwh},${totalDollars}`;
   // Homepage using the template system
   app.get('/', (req, res) => {
     try {
+      console.log('Attempting to serve templated homepage...');
+      
+      // Check if template files exist
+      const headerPath = path.join('./public/templates/header.html');
+      const footerPath = path.join('./public/templates/footer.html');
+      const homeContentPath = path.join('./public/templates/home-content.html');
+      const homeScriptsPath = path.join('./public/templates/home-page-scripts.html');
+      
+      console.log('Template paths:', { 
+        headerPath, 
+        footerPath,
+        homeContentPath,
+        homeScriptsPath
+      });
+      
+      console.log('Templates exist?', {
+        header: fs.existsSync(headerPath),
+        footer: fs.existsSync(footerPath),
+        homeContent: fs.existsSync(homeContentPath),
+        homeScripts: fs.existsSync(homeScriptsPath)
+      });
+      
       // Read the template files
-      const homeContent = fs.readFileSync(path.join('./public/templates/home-content.html'), 'utf8');
-      const homeScripts = fs.readFileSync(path.join('./public/templates/home-page-scripts.html'), 'utf8');
+      const homeContent = fs.readFileSync(homeContentPath, 'utf8');
+      const homeScripts = fs.readFileSync(homeScriptsPath, 'utf8');
+      
+      console.log('Templates read successfully');
       
       // Generate the complete HTML
       const htmlContent = generatePage(
@@ -177,6 +201,8 @@ ${currentDate.toISOString()},${totalKwh},${totalDollars}`;
         '', // No additional CSS
         homeScripts
       );
+      
+      console.log('HTML content generated successfully');
       
       res.send(htmlContent);
     } catch (error) {
