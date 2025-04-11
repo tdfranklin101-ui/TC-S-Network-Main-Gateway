@@ -9,18 +9,15 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log("Solar counter initializing...");
     
-    // Always recreate the counter element to ensure fresh state
-    const existingCounter = document.getElementById('solar-counter');
-    if (existingCounter) {
-        existingCounter.remove();
+    // Use the existing counter element in the page instead of creating a new one
+    const counterDiv = document.getElementById('solar-counter');
+    if (!counterDiv) {
+        console.error("Solar counter container not found!");
+        return;
     }
     
-    const counterDiv = document.createElement('div');
-    counterDiv.id = 'solar-counter';
-    document.body.appendChild(counterDiv);
-    
-    // Style the counter
-    styleCounter(counterDiv);
+    // Clear any existing content
+    counterDiv.innerHTML = '';
     
     // Initialize the counter
     fetchSolarClockData();
