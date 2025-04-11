@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Current-See | A New Global Economy Backed by the Sun</title>
+    <title>Prototype | The Current-See</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="/style.css">
     <style>
@@ -91,38 +91,108 @@
             width: 100%;
         }
         
-        .hero {
-            min-height: 80vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
+        .page-header {
             text-align: center;
-            padding: 60px 20px;
+            padding: 60px 0 40px;
         }
         
-        .hero h1 {
-            font-size: 5rem;
+        .page-header h1 {
+            font-size: 4rem;
             font-weight: 700;
-            margin-bottom: 10px;
-            letter-spacing: 1px;
+            margin-bottom: 20px;
+            color: white;
             text-transform: uppercase;
+        }
+        
+        .page-header p {
+            font-size: 1.3rem;
+            max-width: 800px;
+            margin: 0 auto 30px;
             color: white;
         }
         
-        .hero p {
-            font-size: 1.8rem;
+        .demo-section {
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 40px;
+            margin-bottom: 60px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .demo-section h2 {
+            font-size: 2.2rem;
+            margin-bottom: 30px;
+            color: white;
+            text-align: center;
+        }
+        
+        .demo-frame {
+            width: 100%;
+            height: 600px;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            background-color: white;
+        }
+        
+        .features-section {
+            margin-bottom: 60px;
+        }
+        
+        .features-section h2 {
+            font-size: 2.2rem;
             margin-bottom: 40px;
+            color: white;
+            text-align: center;
+        }
+        
+        .feature-item {
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 30px;
+            margin-bottom: 30px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        
+        .feature-item:hover {
+            transform: translateY(-10px);
+        }
+        
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: white;
+        }
+        
+        .feature-item h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: white;
+        }
+        
+        .feature-item p {
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .cta-section {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+        
+        .cta-section h2 {
+            font-size: 2.2rem;
+            margin-bottom: 20px;
+            color: white;
+        }
+        
+        .cta-section p {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            color: white;
             max-width: 800px;
             margin-left: auto;
             margin-right: auto;
-            color: white;
-        }
-        
-        .cta-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-top: 40px;
         }
         
         .btn-primary {
@@ -136,6 +206,7 @@
             text-transform: uppercase;
             transition: all 0.3s ease;
             text-decoration: none;
+            display: inline-block;
         }
         
         .btn-primary:hover {
@@ -143,127 +214,6 @@
             color: white;
             transform: translateY(-3px);
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-        }
-        
-        .btn-secondary {
-            background-color: transparent;
-            color: white;
-            border: 2px solid white;
-            padding: 12px 30px;
-            font-size: 1rem;
-            font-weight: 600;
-            border-radius: 30px;
-            text-transform: uppercase;
-            transition: all 0.3s ease;
-            text-decoration: none;
-        }
-        
-        .btn-secondary:hover {
-            background-color: white;
-            color: #FF8C00;
-            transform: translateY(-3px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-        }
-        
-        .solar-counter-section {
-            padding: 60px 0;
-            background-color: rgba(255, 255, 255, 0.1);
-            text-align: center;
-            backdrop-filter: blur(5px);
-        }
-        
-        .solar-counter-container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 30px;
-            border-radius: 10px;
-            background-color: rgba(255, 255, 255, 0.2);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
-        }
-        
-        .counter-title {
-            font-size: 2rem;
-            margin-bottom: 30px;
-            color: white;
-            font-weight: 600;
-        }
-        
-        .counter-value {
-            font-size: 3.5rem;
-            font-weight: 700;
-            margin-bottom: 20px;
-            color: white;
-        }
-        
-        .main-sections {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 30px;
-            padding: 80px 20px;
-        }
-        
-        .section-card {
-            background-color: rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
-            overflow: hidden;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .section-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
-        }
-        
-        .section-card img {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-        }
-        
-        .section-content {
-            padding: 30px;
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .section-content h3 {
-            font-size: 1.8rem;
-            margin-bottom: 15px;
-            color: white;
-            font-weight: 600;
-        }
-        
-        .section-content p {
-            margin-bottom: 25px;
-            color: rgba(255, 255, 255, 0.9);
-            flex-grow: 1;
-        }
-        
-        .public-members-section {
-            padding: 80px 0;
-            background-color: rgba(255, 255, 255, 0.1);
-            text-align: center;
-        }
-        
-        .members-log-container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 30px;
-            border-radius: 10px;
-            background-color: rgba(255, 255, 255, 0.2);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
-        }
-        
-        .members-log-title {
-            font-size: 2rem;
-            margin-bottom: 30px;
-            color: white;
-            font-weight: 600;
         }
         
         footer {
@@ -332,21 +282,6 @@
             font-size: 0.9rem;
         }
         
-        /* Responsive styles */
-        @media (max-width: 992px) {
-            .hero h1 {
-                font-size: 3.5rem;
-            }
-            
-            .hero p {
-                font-size: 1.4rem;
-            }
-            
-            .main-sections {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-        
         @media (max-width: 768px) {
             header {
                 flex-direction: column;
@@ -366,21 +301,12 @@
                 margin: 10px 15px;
             }
             
-            .hero h1 {
+            .page-header h1 {
                 font-size: 3rem;
             }
             
-            .hero p {
-                font-size: 1.2rem;
-            }
-            
-            .main-sections {
-                grid-template-columns: 1fr;
-            }
-            
-            .cta-buttons {
-                flex-direction: column;
-                gap: 15px;
+            .demo-frame {
+                height: 400px;
             }
             
             .footer-content {
@@ -405,7 +331,7 @@
             <nav>
                 <ul>
                     <li><a href="/">Home</a></li>
-                    <li><a href="/prototype">Prototype</a></li>
+                    <li><a href="/prototype" class="active">Prototype</a></li>
                     <li><a href="/merch">Merch</a></li>
                     <li><a href="/my-solar">My Solar</a></li>
                 </ul>
@@ -413,72 +339,50 @@
         </header>
     </div>
 
-    <section class="hero">
-        <div class="container">
-            <h1>The Current-See</h1>
-            <p>Empowering a Planet of Billionaires with Solar Currency</p>
-            <div class="cta-buttons">
-                <a href="/my-solar" class="btn-primary">My Solar</a>
-                <a href="/declaration" class="btn-secondary">Solar Declaration</a>
-            </div>
+    <div class="container">
+        <div class="page-header">
+            <h1>Solar Prototype</h1>
+            <p>Experience our working prototype and see how a solar-backed currency can transform the global economy</p>
         </div>
-    </section>
 
-    <section class="solar-counter-section">
-        <div class="container">
-            <div class="solar-counter-container">
-                <h2 class="counter-title">Solar Generator</h2>
-                <div id="solar-counter"></div>
-                <p class="mt-4">One Solar = 17.7M kWh = $136,000</p>
-            </div>
+        <div class="demo-section">
+            <h2>Interactive Demo</h2>
+            <iframe class="demo-frame" src="https://replit.com/@tdfranklin101/SolarSpender" title="The Current-See Solar Spender Demo"></iframe>
         </div>
-    </section>
 
-    <section class="main-sections">
-        <div class="container">
+        <div class="features-section">
+            <h2>Key Features</h2>
             <div class="row">
-                <div class="col-md-4 mb-4">
-                    <div class="section-card">
-                        <img src="/solar_coin.png" alt="Prototype">
-                        <div class="section-content">
-                            <h3>Prototype</h3>
-                            <p>Experience our working prototype and see the future of solar-backed currency in action.</p>
-                            <a href="/prototype" class="btn-primary">Try Demo</a>
-                        </div>
+                <div class="col-md-4">
+                    <div class="feature-item">
+                        <div class="feature-icon">🌞</div>
+                        <h3>Solar Distribution</h3>
+                        <p>Every user receives a daily distribution of solar currency, democratizing wealth creation.</p>
                     </div>
                 </div>
-                <div class="col-md-4 mb-4">
-                    <div class="section-card">
-                        <img src="/solar_tshirt.png" alt="Merchandise">
-                        <div class="section-content">
-                            <h3>Merchandise</h3>
-                            <p>Support our mission by purchasing exclusive Current-See branded merchandise.</p>
-                            <a href="/merch" class="btn-primary">Shop Now</a>
-                        </div>
+                <div class="col-md-4">
+                    <div class="feature-item">
+                        <div class="feature-icon">🔄</div>
+                        <h3>Peer-to-Peer Transfers</h3>
+                        <p>Send and receive solar currency between members with simple, transparent transactions.</p>
                     </div>
                 </div>
-                <div class="col-md-4 mb-4">
-                    <div class="section-card">
-                        <img src="/solar_background.png" alt="My Solar">
-                        <div class="section-content">
-                            <h3>My Solar</h3>
-                            <p>Sign up to receive daily solar distributions and track your growing solar balance.</p>
-                            <a href="/my-solar" class="btn-primary">Join Today</a>
-                        </div>
+                <div class="col-md-4">
+                    <div class="feature-item">
+                        <div class="feature-icon">📊</div>
+                        <h3>Real-Time Tracking</h3>
+                        <p>Monitor your solar balance and the total energy captured by the global network.</p>
                     </div>
                 </div>
             </div>
         </div>
-    </section>
 
-    <section class="public-members-section">
-        <div class="container">
-            <div class="members-log-container">
-                <h2 class="members-log-title">Public Members Log</h2>
-                <div id="public-members-log"></div>
-            </div>
+        <div class="cta-section">
+            <h2>Ready to Participate?</h2>
+            <p>Join our growing community and start receiving your daily solar distributions. Be part of the movement to create a more equitable and sustainable global economy.</p>
+            <a href="/my-solar" class="btn-primary">Create Your Solar Account</a>
         </div>
-    </section>
+    </div>
 
     <footer>
         <div class="container">
@@ -518,7 +422,5 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="/solar_counter.js"></script>
-    <script src="/js/public-members-log.js"></script>
 </body>
 </html>

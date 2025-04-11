@@ -89,25 +89,17 @@ class PublicMembersLog {
       styleEl.id = 'members-log-styles';
       styleEl.textContent = `
         .public-members-log {
-          background-color: rgba(255, 255, 255, 0.9);
+          background-color: rgba(255, 255, 255, 0.2);
           border-radius: 10px;
           padding: 1.5rem;
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-          border: 1px solid rgba(255, 215, 0, 0.4);
-        }
-        
-        .public-members-log h3 {
-          color: #4CAF50;
-          margin-bottom: 1.5rem;
-          text-align: center;
-          font-weight: 600;
+          box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
         }
         
         .member-entry {
           display: flex;
           align-items: center;
           padding: 0.75rem 0;
-          border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.2);
         }
         
         .member-entry:last-of-type {
@@ -119,7 +111,7 @@ class PublicMembersLog {
           font-weight: bold;
           font-size: 1.2rem;
           margin-right: 1rem;
-          color: #333333;
+          color: white;
           min-width: 2rem;
         }
         
@@ -132,11 +124,12 @@ class PublicMembersLog {
         
         .member-name {
           font-weight: 500;
+          color: white;
         }
         
         .member-solar {
           font-weight: bold;
-          color: #4CAF50;
+          color: white;
         }
         
         .member-solar small {
@@ -147,33 +140,44 @@ class PublicMembersLog {
         
         .empty-state, .error-state {
           padding: 2rem 0;
-          color: #666;
+          color: rgba(255, 255, 255, 0.8);
         }
         
         .members-list .btn-primary {
-          background-color: #4CAF50;
-          border-color: #4CAF50;
-          color: white;
+          background-color: white;
+          color: #FF8C00;
+          border: none;
+          padding: 8px 20px;
+          font-size: 0.9rem;
+          font-weight: 600;
+          border-radius: 30px;
+          text-transform: uppercase;
+          transition: all 0.3s ease;
+          text-decoration: none;
+          display: inline-block;
+          margin-top: 1rem;
         }
         
         .members-list .btn-primary:hover {
-          background-color: #3d8b40;
-          border-color: #3d8b40;
+          background-color: #FF8C00;
+          color: white;
+          transform: translateY(-3px);
+          box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
         }
         
         .loading-indicator {
           text-align: center;
           padding: 2rem 0;
-          color: #666;
+          color: rgba(255, 255, 255, 0.8);
         }
         
         .loading-spinner {
           display: inline-block;
           width: 2rem;
           height: 2rem;
-          border: 3px solid rgba(255, 215, 0, 0.2);
+          border: 3px solid rgba(255, 255, 255, 0.2);
           border-radius: 50%;
-          border-top-color: #FFD700;
+          border-top-color: white;
           animation: spin 1s ease-in-out infinite;
           margin-bottom: 1rem;
         }
