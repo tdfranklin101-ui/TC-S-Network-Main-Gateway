@@ -24,6 +24,7 @@ import { randomBytes } from "crypto";
 import connectPg from "connect-pg-simple";
 import session from "express-session";
 import { pool } from "./db";
+import MemoryStore from "memorystore";
 
 // Interface for storage operations
 export interface IStorage {
@@ -67,45 +68,112 @@ export class DatabaseStorage implements IStorage {
   sessionStore: session.Store;
 
   constructor() {
-    const PostgresSessionStore = connectPg(session);
-    this.sessionStore = new PostgresSessionStore({ 
-      pool, 
-      createTableIfMissing: true 
-    });
-
-    // Initialize the database with sample products if needed
-    this.initializeSampleProductsIfNeeded();
+    // Setup session store based on available database connection
+    if (pool) {
+      // If database is available, use PostgreSQL for session storage
+      const PostgresSessionStore = connectPg(session);
+      this.sessionStore = new PostgresSessionStore({ 
+        pool, 
+        createTableIfMissing: true 
+      });
+      
+      // Initialize the database with sample products if needed
+      this.initializeSampleProductsIfNeeded().catch(err => {
+        console.error('Failed to initialize sample products:', err);
+      });
+    } else {
+      // Fall back to memory store if database is not available
+      const MemStore = MemoryStore(session);
+      this.sessionStore = new MemStore({
+        checkPeriod: 86400000 // prune expired entries every 24h
+      });
+      console.warn('Using memory session store as database is not available');
+    }
   }
 
   // User methods
   async getUser(id: number): Promise<User | undefined> {
-    const results = await db.select().from(users).where(eq(users.id, id));
-    return results[0];
+    try {
+      if (!db) {
+        console.warn("Database not available, cannot get user");
+        return undefined;
+      }
+      const results = await db.select().from(users).where(eq(users.id, id));
+      return results[0];
+    } catch (error) {
+      console.error("Error getting user:", error);
+      return undefined;
+    }
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    const results = await db.select().from(users).where(eq(users.username, username));
-    return results[0];
+    try {
+      if (!db) {
+        console.warn("Database not available, cannot get user by username");
+        return undefined;
+      }
+      const results = await db.select().from(users).where(eq(users.username, username));
+      return results[0];
+    } catch (error) {
+      console.error("Error getting user by username:", error);
+      return undefined;
+    }
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db.insert(users).values(insertUser).returning();
-    return user;
+    try {
+      if (!db) {
+        console.warn("Database not available, cannot create user");
+        throw new Error("Database connection unavailable");
+      }
+      const [user] = await db.insert(users).values(insertUser).returning();
+      return user;
+    } catch (error) {
+      console.error("Error creating user:", error);
+      throw error;
+    }
   }
   
   // Product methods
   async getAllProducts(): Promise<Product[]> {
-    return await db.select().from(products);
+    try {
+      if (!db) {
+        console.warn("Database not available, returning empty products array");
+        return [];
+      }
+      return await db.select().from(products);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      return [];
+    }
   }
   
   async getProduct(id: number): Promise<Product | undefined> {
-    const results = await db.select().from(products).where(eq(products.id, id));
-    return results[0];
+    try {
+      if (!db) {
+        console.warn("Database not available, cannot get product");
+        return undefined;
+      }
+      const results = await db.select().from(products).where(eq(products.id, id));
+      return results[0];
+    } catch (error) {
+      console.error("Error getting product:", error);
+      return undefined;
+    }
   }
   
   async createProduct(insertProduct: InsertProduct): Promise<Product> {
-    const [product] = await db.insert(products).values(insertProduct).returning();
-    return product;
+    try {
+      if (!db) {
+        console.warn("Database not available, cannot create product");
+        throw new Error("Database connection unavailable");
+      }
+      const [product] = await db.insert(products).values(insertProduct).returning();
+      return product;
+    } catch (error) {
+      console.error("Error creating product:", error);
+      throw error;
+    }
   }
   
   // Newsletter subscription methods
