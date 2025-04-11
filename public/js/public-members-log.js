@@ -33,7 +33,15 @@ class PublicMembersLog {
   async fetchMembers() {
     try {
       console.log('Fetching members from leaderboard API...');
-      const response = await fetch('/api/solar-accounts/leaderboard?limit=5');
+      // Add cache-busting parameter and set cache to no-store to ensure fresh data
+      const timestamp = new Date().getTime();
+      const response = await fetch(`/api/solar-accounts/leaderboard?limit=5&_=${timestamp}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
       console.log('API response status:', response.status);
       
       if (!response.ok) {
@@ -42,7 +50,22 @@ class PublicMembersLog {
       }
       
       const members = await response.json();
-      console.log('Members data received:', members);
+      console.log(`Members data received (${members.length} members):`, members);
+      
+      // Get the member count as well to make sure it's consistent
+      const countResponse = await fetch(`/api/member-count?_=${timestamp}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+      
+      if (countResponse.ok) {
+        const countData = await countResponse.json();
+        console.log(`Total member count from API: ${countData.count}`);
+      }
+      
       this.updateUI(members);
     } catch (error) {
       console.error('Error fetching members:', error);
@@ -128,16 +151,48 @@ class PublicMembersLog {
       return;
     }
     
+    const thisComponent = this; // Store reference to the component for the retry function
+    
     membersContainer.innerHTML = `
       <div class="error-state">
         <p class="text-center">Unable to load member data.</p>
+        <div class="text-center mt-2">
+          <p class="small-text">This might be due to a temporary connection issue.</p>
+        </div>
         <div class="text-center mt-3">
-          <button class="btn btn-secondary" onclick="window.location.reload()">Retry</button>
+          <button id="retry-members-btn" class="btn btn-secondary">Retry Now</button>
           <a href="/my-solar" class="btn btn-primary">Join Now</a>
         </div>
       </div>
     `;
+    
+    // Add event listener for the retry button
+    setTimeout(() => {
+      const retryButton = membersContainer.querySelector('#retry-members-btn');
+      if (retryButton) {
+        retryButton.addEventListener('click', function(e) {
+          e.preventDefault();
+          console.log('Retry button clicked, attempting to fetch members again');
+          // Show loading spinner
+          membersContainer.innerHTML = `
+            <div class="loading-indicator">
+              <div class="loading-spinner"></div>
+              <p>Refreshing member data...</p>
+            </div>
+          `;
+          // Try to fetch members again
+          thisComponent.fetchMembers();
+        });
+      }
+    }, 100);
+    
     console.log('Error state displayed with retry option');
+    
+    // Set up an automatic retry after 10 seconds
+    setTimeout(() => {
+      console.log('Automatically retrying member data fetch after timeout');
+      this.fetchMembers();
+    }, 10000);
   }
   
   render() {
@@ -199,6 +254,12 @@ class PublicMembersLog {
         .empty-state, .error-state {
           padding: 2rem 0;
           color: #0057B8;
+        }
+        
+        .small-text {
+          font-size: 0.85rem;
+          opacity: 0.8;
+          margin: 0;
         }
         
         .members-list .btn-primary {
@@ -288,6 +349,20 @@ class PublicMembersLog {
 document.addEventListener('DOMContentLoaded', function() {
   // Check if the container exists before initializing
   if (document.getElementById('public-members-log')) {
-    new PublicMembersLog('public-members-log');
+    const membersLog = new PublicMembersLog('public-members-log');
+    
+    // Set up periodic refresh to ensure new members are shown (every 60 seconds)
+    setInterval(() => {
+      console.log('Refreshing members list to check for new registrations');
+      membersLog.fetchMembers();
+    }, 60000);
+    
+    // Also refresh when user becomes active on the page
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        console.log('Page became visible, refreshing members list');
+        membersLog.fetchMembers();
+      }
+    });
   }
 });

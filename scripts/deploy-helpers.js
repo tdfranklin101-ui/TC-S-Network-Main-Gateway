@@ -151,7 +151,27 @@ function copyFilesToDist() {
       console.log('✓ Copied all HTML files from public directory');
     }
     
-    console.log('Deployment file preparation complete');
+    // Log the contents of public/js directory for diagnosis
+    console.log('\nVerifying public/js directory contents:');
+    if (fs.existsSync(publicJsDir)) {
+      const jsFiles = fs.readdirSync(publicJsDir);
+      console.log(`Found ${jsFiles.length} files in public/js:`);
+      jsFiles.forEach(file => console.log(`- ${file}`));
+    } else {
+      console.error('❌ public/js directory not found for verification');
+    }
+
+    // Log the contents of dist/public/js directory for comparison
+    console.log('\nVerifying dist/public/js directory contents:');
+    if (fs.existsSync(distJsDir)) {
+      const distJsFiles = fs.readdirSync(distJsDir);
+      console.log(`Found ${distJsFiles.length} files in dist/public/js:`);
+      distJsFiles.forEach(file => console.log(`- ${file}`));
+    } else {
+      console.error('❌ dist/public/js directory not found for verification');
+    }
+
+    console.log('\nDeployment file preparation complete');
   } catch (error) {
     console.error('Error during deployment file preparation:', error);
   }
