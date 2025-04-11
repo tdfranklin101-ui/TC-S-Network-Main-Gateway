@@ -57,7 +57,7 @@ export interface IStorage {
   getDistributionsBySolarAccountId(solarAccountId: number): Promise<Distribution[]>;
   getDistributionsByDate(date: Date): Promise<Distribution[]>;
   processDistributions(date: Date): Promise<number>; // Returns number of processed distributions
-
+  
   // Session store
   sessionStore: session.Store;
 }

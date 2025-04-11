@@ -1,5 +1,6 @@
 import express, { type Express } from "express";
 import type { Server } from "http";
+import { createServer } from "http";
 import { storage } from "./storage";
 import { insertNewsletterSubscriptionSchema, insertContactMessageSchema } from "@shared/schema";
 import { setupWaitlistRoutes } from "./waitlist";
@@ -169,5 +170,3 @@ ${currentDate.toISOString()},${totalKwh},${totalDollars}`;
   const httpServer = createServer(app);
   return httpServer;
 }
-
-import { createServer } from "http";
