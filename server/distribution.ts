@@ -1,16 +1,14 @@
 import { Request, Response, NextFunction } from "express";
 import { storage } from "./storage";
 import { isAuthenticated } from "./auth";
-import { insertDistributionSchema } from "@shared/schema";
+import { insertDistributionSchema, User } from "@shared/schema";
 import fs from "fs";
 import path from "path";
 import { parse } from "csv";
 
-// Add role field to User type
-declare module "@shared/schema" {
-  interface User {
-    role?: string;
-  }
+// Define admin role for authorization
+interface UserWithRole extends User {
+  role?: string;
 }
 
 // Constants for solar distribution calculations
@@ -78,8 +76,9 @@ export function setupDistributionRoutes(app: any) {
   // Process daily distributions (could be triggered by a cron job)
   app.post("/api/admin/process-distributions", isAuthenticated, async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // Check if user is admin (you'd need to add an admin field to the user model)
-      if (!req.user || req.user.role !== 'admin') {
+      // Check if user is admin - cast to UserWithRole interface for type safety
+      const userWithRole = req.user as UserWithRole;
+      if (!userWithRole || userWithRole.role !== 'admin') {
         return res.status(403).json({ error: "Unauthorized" });
       }
 
@@ -146,10 +145,10 @@ async function createDailyDistributions(date: Date): Promise<number> {
           solarAccountId: account.id,
           userId: account.userId,
           distributionDate: date,
-          solarAmount: DAILY_DISTRIBUTION_SOLAR as any,
-          kwhAmount: kwhPerUser as any,
-          dollarValue: dollarsPerUser as any,
-          status: 'pending' as any
+          solarAmount: DAILY_DISTRIBUTION_SOLAR,
+          kwhAmount: kwhPerUser,
+          dollarValue: dollarsPerUser,
+          status: 'pending'
         });
         createdCount++;
       }
@@ -175,7 +174,8 @@ async function processDistributions(date: Date): Promise<number> {
 // Helper function to get solar clock data
 async function getSolarClockData() {
   try {
-    const csvFilePath = path.resolve('./solar_clock.csv');
+    const csvFilePath = path.resolve(process.cwd(), 'solar_clock.csv');
+    console.log(`Reading solar clock data from: ${csvFilePath}`);
     const fileContent = fs.readFileSync(csvFilePath, { encoding: 'utf-8' });
     
     return new Promise<{ timestamp: string, totalKwh: number, totalDollars: number, dailyKwh: number, dailyDollars: number }>((resolve, reject) => {

@@ -25,7 +25,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API routes
   apiRouter.get("/solar-clock", async (req, res) => {
     try {
-      const csvFilePath = path.resolve('./solar_clock.csv');
+      const csvFilePath = path.resolve(process.cwd(), 'solar_clock.csv');
+      console.log(`Reading solar clock data from: ${csvFilePath}`);
       const fileContent = fs.readFileSync(csvFilePath, { encoding: 'utf-8' });
       
       // Parse CSV data
