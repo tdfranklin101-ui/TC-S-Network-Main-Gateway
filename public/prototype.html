@@ -216,6 +216,27 @@
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
         }
         
+        .btn-return {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        
+        .btn-return:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+            border-color: white;
+            color: white;
+        }
+        
         footer {
             background-color: #000;
             color: white;
@@ -381,6 +402,9 @@
             <h2>Ready to Participate?</h2>
             <p>Join our growing community and start receiving your daily solar distributions. Be part of the movement to create a more equitable and sustainable global economy.</p>
             <a href="/my-solar" class="btn-primary">Create Your Solar Account</a>
+            <div style="margin-top: 30px;">
+                <a href="/" class="btn-return">Return to Home</a>
+            </div>
         </div>
     </div>
 
@@ -411,6 +435,7 @@
                     <h4>Links</h4>
                     <ul>
                         <li><a href="/">Home</a></li>
+                        <li><a href="/wallet">Solar Wallet</a></li>
                         <li><a href="/admin">Admin</a></li>
                     </ul>
                 </div>
