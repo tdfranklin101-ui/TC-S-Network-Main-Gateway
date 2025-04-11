@@ -279,7 +279,7 @@
                                             <div class="mb-3 form-check">
                                                 <input type="checkbox" class="form-check-input" id="register-anonymous">
                                                 <label class="form-check-label" for="register-anonymous">
-                                                    Remain anonymous on public leaderboards
+                                                    Remain anonymous in the Public Members Log
                                                 </label>
                                             </div>
                                             <div class="d-grid">
@@ -351,7 +351,7 @@
                 <div class="col-lg-4">
                     <div class="card">
                         <div class="card-header">
-                            Leaderboard
+                            Public Members Log
                         </div>
                         <div class="card-body" id="leaderboard-container">
                             <div class="loading-spinner">
@@ -543,7 +543,7 @@
             if (leaderboard.length === 0) {
                 container.innerHTML = `
                     <div class="alert alert-info">
-                        No participants yet.
+                        No public members yet. Be the first to join!
                     </div>
                 `;
                 return;
@@ -554,7 +554,7 @@
                     <div class="leaderboard-entry">
                         <div class="leaderboard-rank">#${index + 1}</div>
                         <div class="leaderboard-name">${account.displayName}</div>
-                        <div class="leaderboard-value">${Number(account.totalSolar).toFixed(5)}</div>
+                        <div class="leaderboard-value">${Number(account.totalSolar).toFixed(5)} <small>SOLAR</small></div>
                     </div>
                 `;
             });
