@@ -27,34 +27,15 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function styleCounter(element) {
-    element.style.position = 'fixed';
-    element.style.bottom = '20px';
-    element.style.right = '20px';
-    element.style.backgroundColor = 'rgba(0, 87, 184, 0.9)';
-    element.style.color = 'white';
-    element.style.padding = '15px';
-    element.style.borderRadius = '8px';
-    element.style.boxShadow = '0 4px 10px rgba(0, 0, 0, 0.2)';
+    // We don't need the fixed positioning as the counter is in its designated container
     element.style.fontFamily = 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif';
-    element.style.fontSize = '14px';
-    element.style.zIndex = '1000';
+    element.style.padding = '15px';
     element.style.display = 'flex';
     element.style.flexDirection = 'column';
     element.style.alignItems = 'center';
     element.style.justifyContent = 'center';
     element.style.transition = 'all 0.3s ease';
     element.style.cursor = 'pointer';
-    
-    // Add hover effect
-    element.addEventListener('mouseenter', function() {
-        this.style.backgroundColor = 'rgba(0, 64, 144, 0.95)';
-        this.style.transform = 'scale(1.05)';
-    });
-    
-    element.addEventListener('mouseleave', function() {
-        this.style.backgroundColor = 'rgba(0, 87, 184, 0.9)';
-        this.style.transform = 'scale(1)';
-    });
     
     // Add click to hide/show details
     let expanded = false;
