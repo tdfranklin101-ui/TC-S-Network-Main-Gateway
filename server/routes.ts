@@ -128,58 +128,8 @@ ${currentDate.toISOString()},${totalKwh},${totalDollars}`;
   // Set up distribution routes
   setupDistributionRoutes(app);
   
-  // Add the templated homepage route before the other setups that might override it
-  console.log('Registering templated homepage route...');
-  
-  // Move homepage route before any other routes to ensure it gets priority
-  app.get('/', (req, res) => {
-    console.log('HOME ROUTE TRIGGERED!');
-    try {
-      console.log('Attempting to serve templated homepage...');
-      
-      // Check if template files exist
-      const headerPath = path.join('./public/templates/header.html');
-      const footerPath = path.join('./public/templates/footer.html');
-      const homeContentPath = path.join('./public/templates/home-content.html');
-      const homeScriptsPath = path.join('./public/templates/home-page-scripts.html');
-      
-      console.log('Template paths:', { 
-        headerPath, 
-        footerPath,
-        homeContentPath,
-        homeScriptsPath
-      });
-      
-      console.log('Templates exist?', {
-        header: fs.existsSync(headerPath),
-        footer: fs.existsSync(footerPath),
-        homeContent: fs.existsSync(homeContentPath),
-        homeScripts: fs.existsSync(homeScriptsPath)
-      });
-      
-      // Read the template files
-      const homeContent = fs.readFileSync(homeContentPath, 'utf8');
-      const homeScripts = fs.readFileSync(homeScriptsPath, 'utf8');
-      
-      console.log('Templates read successfully');
-      
-      // Generate the complete HTML
-      const htmlContent = generatePage(
-        'The Current-See - Solar-Backed Worldwide Economy',
-        homeContent,
-        '', // No additional CSS
-        homeScripts
-      );
-      
-      console.log('HTML content generated successfully');
-      
-      res.send(htmlContent);
-    } catch (error) {
-      console.error('Error generating homepage:', error);
-      // Fallback to static file if template processing fails
-      res.sendFile('index.html', { root: './public' });
-    }
-  });
+  // Since we generate static files at startup, we can simply use the static file for homepage
+  console.log('Using static homepage file generated at startup...');
   
   // Set up waitlist routes (direct routes, not under /api)
   setupWaitlistRoutes(app);
