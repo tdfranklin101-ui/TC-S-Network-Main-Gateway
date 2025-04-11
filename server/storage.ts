@@ -19,7 +19,7 @@ import {
   distributions
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, sql } from "drizzle-orm";
+import { eq, desc, asc, and, sql } from "drizzle-orm";
 import { randomBytes } from "crypto";
 import connectPg from "connect-pg-simple";
 import session from "express-session";
@@ -172,7 +172,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllSolarAccounts(limit = 50, includeAnonymous = false): Promise<SolarAccount[]> {
-    let query = db.select().from(solarAccounts).orderBy(desc(solarAccounts.totalSolar)).limit(limit);
+    let query = db.select().from(solarAccounts).orderBy(asc(solarAccounts.joinedDate)).limit(limit);
     
     if (!includeAnonymous) {
       query = query.where(eq(solarAccounts.isAnonymous, false));
