@@ -587,6 +587,11 @@
         </div>
 
         <div class="demo-section">
+            <h2>Solar Daily Summary Report</h2>
+            <div id="solar-report-container"></div>
+        </div>
+
+        <div class="demo-section">
             <h2>Interactive Demo</h2>
             <div class="text-center mb-4">
                 <button id="solar-spender-button" class="btn-solar-spender">
@@ -891,6 +896,11 @@
         
         // Initialize user display
         displayUsers();
+        
+        // Generate and display the solar report
+        if (window.SolarReport && window.SolarReport.generate) {
+            window.SolarReport.generate('solar-report-container');
+        }
     </script>
 </body>
 </html>
