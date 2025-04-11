@@ -32,6 +32,7 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUserCredentials(id: number, email: string, password: string): Promise<User | undefined>;
   
   // Product methods
   getAllProducts(): Promise<Product[]>;
@@ -131,6 +132,28 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error("Error creating user:", error);
       throw error;
+    }
+  }
+  
+  async updateUserCredentials(id: number, email: string, password: string): Promise<User | undefined> {
+    try {
+      if (!db) {
+        console.warn("Database not available, cannot update user credentials");
+        return undefined;
+      }
+      const [updatedUser] = await db
+        .update(users)
+        .set({
+          email,
+          password
+          // No updatedAt field in schema, Drizzle will handle this
+        })
+        .where(eq(users.id, id))
+        .returning();
+      return updatedUser;
+    } catch (error) {
+      console.error("Error updating user credentials:", error);
+      return undefined;
     }
   }
   

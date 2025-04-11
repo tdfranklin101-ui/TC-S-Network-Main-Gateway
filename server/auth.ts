@@ -118,11 +118,51 @@ export function setupAuth(app: Express) {
     const userResponse = { ...req.user, password: undefined };
     res.status(200).json(userResponse);
   });
+  
+  // API endpoint to update existing account with credentials
+  app.post("/api/update-account", async (req, res, next) => {
+    try {
+      const { identifier, email, password } = req.body;
+      
+      if (!identifier || !email || !password) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+      
+      // Try to find the user by ID first (if numeric)
+      let user;
+      if (!isNaN(parseInt(identifier))) {
+        user = await storage.getUser(parseInt(identifier));
+      }
+      
+      // If not found by ID, try by username
+      if (!user) {
+        user = await storage.getUserByUsername(identifier);
+      }
+      
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      // Hash the password
+      const hashedPassword = await hashPassword(password);
+      
+      // Update the user with new credentials
+      const updatedUser = await storage.updateUserCredentials(user.id, email, hashedPassword);
+      
+      if (!updatedUser) {
+        return res.status(500).json({ error: "Failed to update user" });
+      }
+      
+      res.status(200).json({ success: true, message: "Account updated successfully" });
+    } catch (err) {
+      next(err);
+    }
+  });
 
   app.post("/api/logout", (req, res, next) => {
     req.logout((err) => {
       if (err) return next(err);
-      res.sendStatus(200);
+      res.status(200).send({ message: "Logged out successfully" });
     });
   });
 
@@ -140,5 +180,6 @@ export function isAuthenticated(req: Express.Request, res: Express.Response, nex
   if (req.isAuthenticated()) {
     return next();
   }
-  res.status(401).json({ error: "Unauthorized" });
+  res.writeHead(401, { 'Content-Type': 'application/json' });
+  res.end(JSON.stringify({ error: "Unauthorized" }));
 }

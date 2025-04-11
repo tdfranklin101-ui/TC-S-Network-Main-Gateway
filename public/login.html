@@ -21,56 +21,32 @@
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
             overflow: hidden;
-        }
-        
-        .auth-row {
             display: flex;
-            flex-wrap: wrap;
-        }
-        
-        .auth-form-column {
-            flex: 1;
-            padding: 40px;
-            min-width: 320px;
-        }
-        
-        .auth-hero-column {
-            flex: 1;
-            background: linear-gradient(45deg, #2E7D32, #388E3C);
-            color: white;
-            padding: 40px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            min-width: 320px;
-        }
-        
-        .auth-tabs {
-            display: flex;
-            margin-bottom: 30px;
-        }
-        
-        .auth-tab {
-            flex: 1;
-            text-align: center;
-            padding: 15px;
-            cursor: pointer;
-            border-bottom: 3px solid #ddd;
-            transition: all 0.3s ease;
-        }
-        
-        .auth-tab.active {
-            border-bottom-color: #4CAF50;
-            font-weight: bold;
-            color: #4CAF50;
+            min-height: 600px;
         }
         
         .auth-form {
-            display: none;
+            padding: 40px;
+            width: 50%;
         }
         
-        .auth-form.active {
-            display: block;
+        .auth-hero {
+            width: 50%;
+            background: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('/images/solar-energy-bg.jpg');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .auth-logo {
+            max-width: 80px;
+            margin-bottom: 20px;
         }
         
         .form-group {
@@ -105,34 +81,6 @@
             position: relative;
         }
         
-        .hero-title {
-            font-size: 2.5rem;
-            margin-bottom: 20px;
-        }
-        
-        .hero-subtitle {
-            font-size: 1.2rem;
-            margin-bottom: 30px;
-            opacity: 0.9;
-        }
-        
-        .feature-list {
-            list-style-type: none;
-            padding: 0;
-        }
-        
-        .feature-list li {
-            margin-bottom: 15px;
-            display: flex;
-            align-items: flex-start;
-        }
-        
-        .feature-icon {
-            margin-right: 10px;
-            font-size: 1.2rem;
-            color: #FFC107;
-        }
-        
         .notification {
             padding: 15px;
             margin-bottom: 20px;
@@ -152,9 +100,45 @@
             color: #2e7d32;
         }
         
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 30px;
+        }
+        
+        .auth-tab {
+            flex: 1;
+            text-align: center;
+            padding: 15px;
+            cursor: pointer;
+            font-weight: bold;
+            border-bottom: 2px solid transparent;
+        }
+        
+        .auth-tab.active {
+            border-bottom: 2px solid #4CAF50;
+            color: #4CAF50;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
         @media (max-width: 768px) {
-            .auth-hero-column {
-                display: none;
+            .auth-container {
+                flex-direction: column;
+            }
+            
+            .auth-form, .auth-hero {
+                width: 100%;
+            }
+            
+            .auth-hero {
+                min-height: 300px;
+                order: -1;
             }
         }
     </style>
@@ -165,7 +149,7 @@
             <nav>
                 <div class="logo">
                     <a href="/">
-                        <img src="/images/currentsee-logo.png" alt="The Current-See Logo">
+                        <img src="/branding_logo.png" alt="The Current-See Logo">
                     </a>
                 </div>
                 <div class="menu">
@@ -186,23 +170,25 @@
     
     <div class="container main-content">
         <div class="auth-container">
-            <div class="auth-row">
-                <div class="auth-form-column">
-                    <h1 class="text-center mb-4">Welcome to The Current-See</h1>
-                    
-                    <div class="notification error" id="error-message"></div>
-                    <div class="notification success" id="success-message"></div>
-                    
-                    <div class="auth-tabs">
-                        <div class="auth-tab active" id="login-tab">Login</div>
-                        <div class="auth-tab" id="register-tab">Register</div>
-                    </div>
-                    
-                    <form class="auth-form active" id="login-form">
+            <div class="auth-form">
+                <h1 class="text-center mb-4">Welcome to The Current-See</h1>
+                
+                <div class="auth-tabs">
+                    <div class="auth-tab active" data-tab="login">Login</div>
+                    <div class="auth-tab" data-tab="register">Register</div>
+                </div>
+                
+                <div class="notification error" id="error-message"></div>
+                <div class="notification success" id="success-message"></div>
+                
+                <!-- Login Form -->
+                <div class="tab-content active" id="login-tab">
+                    <form id="login-form">
                         <div class="form-group">
                             <label for="login-username">Username</label>
                             <input type="text" class="form-control" id="login-username" placeholder="Enter your username" required>
                         </div>
+                        
                         <div class="form-group">
                             <div class="password-container">
                                 <label for="login-password">Password</label>
@@ -210,81 +196,72 @@
                                 <span class="toggle-password" onclick="togglePassword('login-password')">👁️</span>
                             </div>
                         </div>
-                        <div class="form-group">
+                        
+                        <div class="form-group mt-4">
                             <button type="submit" class="btn-auth">Login</button>
                         </div>
                     </form>
-                    
-                    <form class="auth-form" id="register-form">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="register-first-name">First Name</label>
-                                    <input type="text" class="form-control" id="register-first-name" placeholder="First name">
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="register-last-name">Last Name</label>
-                                    <input type="text" class="form-control" id="register-last-name" placeholder="Last name">
-                                </div>
-                            </div>
-                        </div>
+                    <div class="text-center mt-3">
+                        <p>Registered before we had login? <a href="/update-account">Add login credentials</a> to your account.</p>
+                    </div>
+                </div>
+                
+                <!-- Register Form -->
+                <div class="tab-content" id="register-tab">
+                    <form id="register-form">
                         <div class="form-group">
-                            <label for="register-username">Username (required)</label>
+                            <label for="register-username">Username</label>
                             <input type="text" class="form-control" id="register-username" placeholder="Choose a username" required>
                         </div>
+                        
                         <div class="form-group">
-                            <label for="register-email">Email (required)</label>
-                            <input type="email" class="form-control" id="register-email" placeholder="Your email address" required>
+                            <label for="register-name">Display Name</label>
+                            <input type="text" class="form-control" id="register-name" placeholder="Your full name" required>
                         </div>
+                        
+                        <div class="form-group">
+                            <label for="register-email">Email Address</label>
+                            <input type="email" class="form-control" id="register-email" placeholder="Enter your email address" required>
+                        </div>
+                        
                         <div class="form-group">
                             <div class="password-container">
-                                <label for="register-password">Password (required)</label>
+                                <label for="register-password">Password</label>
                                 <input type="password" class="form-control" id="register-password" placeholder="Choose a password" required>
                                 <span class="toggle-password" onclick="togglePassword('register-password')">👁️</span>
                             </div>
                         </div>
+                        
+                        <div class="form-group">
+                            <div class="password-container">
+                                <label for="register-confirm-password">Confirm Password</label>
+                                <input type="password" class="form-control" id="register-confirm-password" placeholder="Confirm your password" required>
+                                <span class="toggle-password" onclick="togglePassword('register-confirm-password')">👁️</span>
+                            </div>
+                        </div>
+                        
                         <div class="form-group">
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="register-anonymous">
                                 <label class="form-check-label" for="register-anonymous">
-                                    Join anonymously on the public leaderboard
+                                    Keep my account anonymous in public leaderboards
                                 </label>
                             </div>
                         </div>
-                        <div class="form-group">
-                            <button type="submit" class="btn-auth">Create Account</button>
+                        
+                        <div class="form-group mt-4">
+                            <button type="submit" class="btn-auth">Register</button>
                         </div>
                     </form>
                 </div>
-                
-                <div class="auth-hero-column">
-                    <h2 class="hero-title">A New Global Economy Backed by the Sun</h2>
-                    <p class="hero-subtitle">Experience the power of distributed solar wealth as The Current-See creates an equitable future for all.</p>
-                    
-                    <ul class="feature-list">
-                        <li>
-                            <span class="feature-icon">☀️</span>
-                            <span>Daily solar currency distributions free for all members</span>
-                        </li>
-                        <li>
-                            <span class="feature-icon">📱</span>
-                            <span>Track your solar balance and accumulation over time</span>
-                        </li>
-                        <li>
-                            <span class="feature-icon">🔄</span>
-                            <span>Exchange solar currency with other members</span>
-                        </li>
-                        <li>
-                            <span class="feature-icon">🌍</span>
-                            <span>Be part of a more sustainable economic system</span>
-                        </li>
-                        <li>
-                            <span class="feature-icon">⚡</span>
-                            <span>One Solar. One Earth. Daily.</span>
-                        </li>
-                    </ul>
+            </div>
+            
+            <div class="auth-hero">
+                <img src="/solar_coin.png.png" alt="Solar Coin" class="auth-logo">
+                <h2>Solar is the currency of the future</h2>
+                <p class="mt-3">Join our global community transforming the economy through clean energy and digital innovation.</p>
+                <div class="mt-4">
+                    <p>One Solar. One Earth. Daily.</p>
                 </div>
             </div>
         </div>
@@ -332,21 +309,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Tab switching logic
-        document.getElementById('login-tab').addEventListener('click', function() {
-            document.getElementById('login-tab').classList.add('active');
-            document.getElementById('register-tab').classList.remove('active');
-            document.getElementById('login-form').classList.add('active');
-            document.getElementById('register-form').classList.remove('active');
-        });
-        
-        document.getElementById('register-tab').addEventListener('click', function() {
-            document.getElementById('register-tab').classList.add('active');
-            document.getElementById('login-tab').classList.remove('active');
-            document.getElementById('register-form').classList.add('active');
-            document.getElementById('login-form').classList.remove('active');
-        });
-        
         // Toggle password visibility
         function togglePassword(inputId) {
             const passwordInput = document.getElementById(inputId);
@@ -368,6 +330,21 @@
             }, 5000);
         }
         
+        // Tab switching
+        document.querySelectorAll('.auth-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                // Remove active class from all tabs
+                document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+                // Add active class to clicked tab
+                this.classList.add('active');
+                
+                // Hide all tab contents
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                // Show the selected tab content
+                document.getElementById(`${this.dataset.tab}-tab`).classList.add('active');
+            });
+        });
+        
         // Login form submission
         document.getElementById('login-form').addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -381,18 +358,21 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ username, password })
+                    body: JSON.stringify({
+                        username,
+                        password
+                    })
                 });
                 
                 if (response.ok) {
-                    showNotification('success', 'Login successful. Redirecting...');
-                    // Redirect to the dashboard after a short delay
+                    showNotification('success', 'Login successful! Redirecting...');
+                    // Redirect to my solar page after a short delay
                     setTimeout(() => {
                         window.location.href = '/my-solar';
                     }, 1500);
                 } else {
                     const errorData = await response.json();
-                    showNotification('error', errorData.error || 'Invalid username or password');
+                    showNotification('error', errorData.error || 'Invalid username or password.');
                 }
             } catch (error) {
                 showNotification('error', 'An error occurred. Please try again.');
@@ -404,12 +384,18 @@
         document.getElementById('register-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const firstName = document.getElementById('register-first-name').value;
-            const lastName = document.getElementById('register-last-name').value;
             const username = document.getElementById('register-username').value;
+            const displayName = document.getElementById('register-name').value;
             const email = document.getElementById('register-email').value;
             const password = document.getElementById('register-password').value;
+            const confirmPassword = document.getElementById('register-confirm-password').value;
             const isAnonymous = document.getElementById('register-anonymous').checked;
+            
+            // Validate passwords match
+            if (password !== confirmPassword) {
+                showNotification('error', 'Passwords do not match');
+                return;
+            }
             
             try {
                 const response = await fetch('/api/register', {
@@ -418,26 +404,23 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        firstName,
-                        lastName,
                         username,
+                        displayName,
                         email,
                         password,
-                        isAnonymous,
-                        // Use combined name as display name if provided
-                        displayName: firstName || lastName ? `${firstName} ${lastName}`.trim() : username
+                        isAnonymous
                     })
                 });
                 
                 if (response.ok) {
-                    showNotification('success', 'Account created successfully! Redirecting...');
-                    // Redirect to the dashboard after a short delay
+                    showNotification('success', 'Registration successful! Redirecting...');
+                    // Redirect to my solar page after a short delay
                     setTimeout(() => {
                         window.location.href = '/my-solar';
                     }, 1500);
                 } else {
                     const errorData = await response.json();
-                    showNotification('error', errorData.error || 'Registration failed. Please try again.');
+                    showNotification('error', errorData.error || 'Registration failed. Please try another username.');
                 }
             } catch (error) {
                 showNotification('error', 'An error occurred. Please try again.');
