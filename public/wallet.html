@@ -16,8 +16,19 @@
             --text-dark: #333333;
         }
         
-        body {
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
             margin: 0;
             padding: 0;
             color: var(--text-dark);
@@ -1059,6 +1070,8 @@
                 <div class="footer-column">
                     <h4>The Current-See</h4>
                     <p>A new global economy backed by the Sun.<br>One Solar. One Earth. Daily.</p>
+                    <p style="margin-top: 10px;">The Current-See PBC, Inc.<br>
+                    <a href="mailto:hello@thecurrentsee.org" style="color: rgba(255, 255, 255, 0.7);">hello@thecurrentsee.org</a></p>
                 </div>
                 <div class="footer-column">
                     <h4>Learn More</h4>
