@@ -6,7 +6,20 @@
   <title>Solar Declaration – The Current-See</title>
   <link rel="icon" href="/favicon.ico" type="image/x-icon">
   <style>
-    body { font-family: Arial, sans-serif; padding: 2rem; max-width: 800px; margin: auto; background-color: #fdfdfd; }
+    html, body { 
+      font-family: Arial, sans-serif; 
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      background-color: #fdfdfd; 
+    }
+    * { box-sizing: border-box; }
+    .container { 
+      max-width: 800px; 
+      margin: 0 auto; 
+      padding: 2rem; 
+    }
     header, footer { text-align: center; margin-bottom: 2rem; }
     footer { font-size: 0.85em; color: #777; margin-top: 4rem; }
     h1, h2, h3 { color: #333; }
@@ -42,11 +55,12 @@
   <script src="/solar_counter.js" defer></script>
 </head>
 <body>
-  <header>
-    <h1>The Current-See Solar Declaration</h1>
-  </header>
+  <div class="container">
+    <header>
+      <h1>The Current-See Solar Declaration</h1>
+    </header>
 
-  <p style="text-indent: 0pt;text-align: left;"><br/></p>
+    <p style="text-indent: 0pt;text-align: left;"><br/></p>
   <p class="s1" style="padding-left: 7pt;text-indent: 0pt;text-align: left;">The Current-See Declaration of Solar Value</p>
   <p style="padding-top: 1pt;text-indent: 0pt;text-align: left;"><br/></p>
   <p style="padding-left: 7pt;text-indent: 0pt;text-align: left;">We, <b>The Current-See PBC, Inc., </b>do hereby recognize that Earth receives approximately <b>174 petawatts </b>of solar energy per day-a resource both abundant and renewable, yet historically unmonetized for the benefit of the global public.</p>
@@ -85,6 +99,10 @@
       <a href="/admin" class="admin-link">Admin</a>
     </div>
     <p style="margin-top: 20px;">&copy; 2025 The Current-See PBC, Inc.</p>
+    <p style="margin-top: 10px; font-size: 0.8em;">
+      The Current-See PBC, Inc.<br>
+      <a href="mailto:hello@thecurrentsee.org" style="color: #777;">hello@thecurrentsee.org</a>
+    </p>
   </footer>
 
   <!-- Track page visits -->

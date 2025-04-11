@@ -7,12 +7,18 @@
     <link rel="stylesheet" href="/style.css">
     <script src="/navigation.js"></script>
     <style>
-        body {
+        html, body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             line-height: 1.6;
             color: #333;
             margin: 0;
             padding: 0;
+            height: 100%;
+            width: 100%;
+        }
+        
+        * {
+            box-sizing: border-box;
         }
         header {
             background-color: #0057B8;
@@ -179,9 +185,15 @@
             </div>
         </div>
         
-        <div style="text-align: center;" class="footer-links">
-            <a href="/" class="return-link">Return to Homepage</a>
-            <a href="/admin" class="admin-link">Admin</a>
+        <div style="text-align: center; margin-top: 40px;">
+            <div class="footer-links">
+                <a href="/" class="return-link">Return to Homepage</a>
+                <a href="/admin" class="admin-link">Admin</a>
+            </div>
+            <p style="margin-top: 30px; color: #777; font-size: 0.9rem;">
+                &copy; 2025 The Current-See PBC, Inc.<br>
+                <a href="mailto:hello@thecurrentsee.org" style="color: #777; text-decoration: none;">hello@thecurrentsee.org</a>
+            </p>
         </div>
         
         <style>
