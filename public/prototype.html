@@ -428,18 +428,18 @@
         
         /* User List Styling */
         .user-list-container {
-            background-color: rgba(255, 215, 0, 0.15);
+            background-color: transparent;
             border-radius: 10px;
             padding: 20px;
             color: #0057B8;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         }
         
         .user-list {
-            background-color: rgba(255, 255, 255, 0.5);
+            background-color: rgba(255, 215, 0, 0.15);
             border-radius: 8px;
             overflow: hidden;
             border: 1px solid rgba(0, 87, 184, 0.2);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         }
         
         .user-list-header {
@@ -453,7 +453,7 @@
         .user-list-body {
             max-height: 400px;
             overflow-y: auto;
-            background-color: rgba(255, 255, 255, 0.5);
+            background-color: rgba(255, 215, 0, 0.05);
         }
         
         .user-item {
@@ -774,7 +774,7 @@
             
             if (usersToDisplay.length === 0) {
                 userContainer.innerHTML = `
-                    <div class="p-4 text-center">
+                    <div class="p-4 text-center" style="color: #0057B8; background-color: rgba(255, 255, 255, 0.5); border-radius: 8px;">
                         <p>No users found matching your search.</p>
                     </div>
                 `;
@@ -784,11 +784,13 @@
             usersToDisplay.forEach(user => {
                 const userElement = document.createElement('div');
                 userElement.className = 'user-item';
+                userElement.style.color = '#0057B8';
+                userElement.style.backgroundColor = 'rgba(255, 255, 255, 0.5)';
                 userElement.innerHTML = `
-                    <div class="row" style="color: #0057B8;">
-                        <div class="col-3" style="width: 20%; flex: 0 0 20%;">#${user.id}</div>
-                        <div class="col-5" style="width: 50%; flex: 0 0 50%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${user.username}</div>
-                        <div class="col-4" style="width: 30%; flex: 0 0 30%; text-align: right;">${user.solarBalance} SOLAR</div>
+                    <div class="row">
+                        <div class="col-3" style="width: 20%; flex: 0 0 20%; color: #0057B8;">#${user.id}</div>
+                        <div class="col-5" style="width: 50%; flex: 0 0 50%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #0057B8;">${user.username}</div>
+                        <div class="col-4" style="width: 30%; flex: 0 0 30%; text-align: right; color: #0057B8;">${user.solarBalance} SOLAR</div>
                     </div>
                 `;
                 userContainer.appendChild(userElement);
