@@ -37,7 +37,9 @@ export function setupDistributionRoutes(app: any) {
       
       // Calculate accurate SOLAR balance based on join date (1 SOLAR per day + initial 0.01918)
       const today = new Date();
-      const joinDate = new Date(solarAccount.joinedDate.toString());
+      // Ensure joinedDate is not null
+      const joinDateValue = solarAccount.joinedDate ? solarAccount.joinedDate.toString() : '2025-04-10';
+      const joinDate = new Date(joinDateValue);
       // Calculate difference in time
       const timeDiff = today.getTime() - joinDate.getTime();
       // Calculate days difference (rounded down)
@@ -85,7 +87,9 @@ export function setupDistributionRoutes(app: any) {
       // Calculate accurate SOLAR balances based on join date (1 SOLAR per day + initial 0.01918)
       const today = new Date();
       solarAccounts = solarAccounts.map(account => {
-        const joinDate = new Date(account.joinedDate);
+        // Ensure joinedDate is not null
+        const joinDateValue = account.joinedDate ? account.joinedDate.toString() : '2025-04-10'; // Default to April 10 if null
+        const joinDate = new Date(joinDateValue);
         // Calculate difference in time
         const timeDiff = today.getTime() - joinDate.getTime();
         // Calculate days difference (rounded down)
