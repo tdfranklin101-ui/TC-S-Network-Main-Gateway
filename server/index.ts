@@ -90,6 +90,15 @@ app.use((req, res, next) => {
   next();
 });
 
+// Generate static HTML files from templates
+console.log('Generating static pages from templates...');
+try {
+  await import('./template-to-static');
+  console.log('Static page generation complete');
+} catch (error) {
+  console.error('Error generating static pages:', error);
+}
+
 (async () => {
   const server = await registerRoutes(app);
 

@@ -73,28 +73,54 @@ For adding new pages to the site:
 
 ## Template System
 
-The site uses a simple template system:
+The site uses a simple template-to-static file system:
 
-1. Templates are in `public/templates/`
+1. Templates are stored in `public/templates/`
 2. The server-side processor is in `server/template-processor.ts`
-3. Templates use HTML comments as placeholders: `<!-- PLACEHOLDER_NAME -->`
+3. The static file generator is in `server/template-to-static.ts`
+4. Templates use HTML comments as placeholders: `<!-- PLACEHOLDER_NAME -->`
+5. Static HTML files are generated at server startup
 
-### Example Usage:
+### How the Template System Works:
+
+1. When the server starts, it runs `template-to-static.ts` which:
+   - Reads template files from `public/templates/`
+   - Processes them using `template-processor.ts`
+   - Generates static HTML files in the `public` directory
+
+2. The server serves these static HTML files directly
+
+3. This approach offers the advantages of both template systems (maintainability)
+   and static files (performance, simplicity)
+
+### Template Components:
+
+- `header.html` - Contains the HTML head and navigation
+- `footer.html` - Contains the footer and closing tags
+- `home-content.html` - Content specific to the homepage
+- `home-page-scripts.html` - Scripts for the homepage
+
+### Adding a New Page with Templates:
+
+1. Create a new content template in `public/templates/` (e.g., `about-content.html`)
+2. Create a new scripts template if needed (e.g., `about-scripts.html`)
+3. Add a generator function in `server/template-to-static.ts`:
 
 ```typescript
-import { generatePage } from './template-processor';
-
-// Create a page with title, content, and optional CSS/scripts
-const htmlContent = generatePage(
-  'Page Title',
-  '<div class="page-content">Your content here</div>',
-  '<style>/* Additional CSS */</style>',
-  '<script>// Additional scripts</script>'
+// Generate about page
+generateStaticPage(
+  'about',                            // Output filename (without .html)
+  'About Us - The Current-See',       // Page title
+  'about-content.html',              // Content template filename
+  '',                                // Additional CSS (optional)
+  fs.readFileSync(                   // Additional scripts (optional)
+    path.join(templatesDir, 'about-scripts.html'), 
+    'utf8'
+  )
 );
-
-// Send to client
-res.send(htmlContent);
 ```
+
+4. Restart the server to generate the new static page
 
 ## Best Practices
 
