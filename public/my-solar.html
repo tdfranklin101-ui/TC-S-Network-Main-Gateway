@@ -184,6 +184,29 @@
             font-weight: normal;
             cursor: pointer;
         }
+        
+        /* Return to Home button */
+        .btn-return {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: rgba(0, 87, 184, 0.2);
+            color: var(--primary-color);
+            border: 2px solid rgba(0, 87, 184, 0.3);
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            margin-top: 30px;
+        }
+        
+        .btn-return:hover {
+            background-color: rgba(0, 87, 184, 0.3);
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
     </style>
 </head>
 <body>
@@ -200,10 +223,19 @@
                         <a class="nav-link" href="/">Home</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/declaration">Solar Declaration</a>
+                        <a class="nav-link" href="/prototype">Prototype</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/merch">Merch</a>
                     </li>
                     <li class="nav-item authenticated-only" style="display: none;">
                         <a class="nav-link active" href="/my-solar">My Solar</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/wallet">Wallet</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/declaration">Solar Declaration</a>
                     </li>
                     <li class="nav-item unauthenticated-only">
                         <a class="nav-link" href="#" id="login-button">Log In</a>
@@ -377,8 +409,11 @@
                 <div class="col-md-6 text-md-end">
                     <div class="footer-links">
                         <a href="/">Home</a>
-                        <a href="/declaration">Solar Declaration</a>
+                        <a href="/prototype">Prototype</a>
+                        <a href="/merch">Merch</a>
+                        <a href="/wallet">Wallet</a>
                         <a href="/my-solar">My Solar</a>
+                        <a href="/declaration">Solar Declaration</a>
                         <a href="/admin">Admin</a>
                     </div>
                 </div>
