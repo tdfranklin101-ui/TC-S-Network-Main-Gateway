@@ -36,8 +36,10 @@ chmod +x dist/health.cjs dist/cloud-run-health.js dist/replit-health-check.js \
          dist/cloud-run-deploy.js dist/deploy-index.cjs dist/start.sh
 
 # Create key files at the root of the dist directory for deployment
+cp server.js dist/server.js  # Main server for Replit deployment
+cp server.js dist/index.js   # Alternative entry point
 cp deploy-index.cjs dist/index.cjs
-cp final-health-check.js dist/index.js  # This is the recommended approach
+cp final-health-check.js dist/final-health-check.js
 cp replit-health-handler.js dist/index-health.js
 cp cloud-run-deploy.js dist/main.js
 cp final-health-check.js dist/health.js
@@ -48,12 +50,20 @@ cp cloud-run-health.js dist/public/cloud-run-health.js
 cp replit-health-check.js dist/public/replit-health-check.js
 cp replit-health-handler.js dist/public/replit-health-handler.js
 
-# Create a special health file that can be executed directly at the root
+# Create special health files that can be executed directly at the root
 cat > dist/health <<EOF
 #!/bin/bash
 node replit-health-handler.js
 EOF
 chmod +x dist/health
+
+# Copy special health check files that Replit might look for
+cp healthz dist/healthz
+cp health-check dist/health-check
+chmod +x dist/healthz dist/health-check
+
+# Create a symlink as an alternative option
+ln -sf dist/server.js dist/healthz.js
 
 # Create a main entry point for Replit
 echo "Creating main entry point for Replit deployment..."
@@ -156,46 +166,8 @@ cat > dist/package.json <<EOF
 }
 EOF
 
-# Create a simple server.js fallback for additional reliability
-echo "Creating fallback server..."
-cat > dist/server.js <<EOF
-// Simple fallback server that responds to all routes with 200 OK
-// Will run if the main app server fails for any reason
-const http = require('http');
-const fs = require('fs');
-const path = require('path');
-
-const port = process.env.PORT || 3000;
-
-const server = http.createServer((req, res) => {
-  // Always respond to health checks with 200 OK
-  if (req.url === '/health' || req.url === '/healthz' || req.url === '/_health' || 
-      (req.url === '/' && req.headers['user-agent']?.includes('Health'))) {
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    return res.end(JSON.stringify({ status: 'ok' }));
-  }
-  
-  // Try to serve the index.html file for normal requests
-  try {
-    const indexPath = path.join(__dirname, 'public', 'index.html');
-    if (fs.existsSync(indexPath)) {
-      const content = fs.readFileSync(indexPath);
-      res.writeHead(200, { 'Content-Type': 'text/html' });
-      return res.end(content);
-    }
-  } catch (e) {
-    console.error('Error serving index.html:', e);
-  }
-  
-  // Fallback response
-  res.writeHead(200, { 'Content-Type': 'text/html' });
-  res.end('<html><body><h1>The Current-See</h1><p>Site loading, please try again shortly.</p></body></html>');
-});
-
-server.listen(port, '0.0.0.0', () => {
-  console.log(\`Fallback server running on port \${port}\`);
-});
-EOF
+# We now use a dedicated server.js file instead of generating it inline
+echo "Using dedicated server.js file..."
 
 # Print success message
 echo "Deployment preparation complete. Ready to deploy!"
