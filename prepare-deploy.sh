@@ -37,13 +37,17 @@ chmod +x dist/health.cjs dist/cloud-run-health.js dist/replit-health-check.js \
          dist/replit-deploy.js dist/cloud-run-deploy.js dist/deploy-index.cjs dist/start.sh
 
 # Create key files at the root of the dist directory for deployment
-cp server.js dist/server.js  # Main server for Replit deployment
-cp server.js dist/index.js   # Alternative entry point
+cp server.js dist/server.js       # Main server for Replit deployment (ES Modules)
+cp server.cjs dist/server.cjs     # CommonJS version of server
+cp server.js dist/index.js        # Alternative entry point
+cp server.cjs dist/main.cjs       # Alternative CommonJS entry point
 cp deploy-index.cjs dist/index.cjs
 cp final-health-check.js dist/final-health-check.js
+cp final-health-check.cjs dist/final-health-check.cjs
 cp replit-health-handler.js dist/index-health.js
 cp cloud-run-deploy.js dist/main.js
 cp final-health-check.js dist/health.js
+cp server.cjs dist/healthz.cjs
 
 # Ensure health check is available at multiple locations
 cp health.cjs dist/public/health.cjs
