@@ -44,30 +44,30 @@ const healthServer = http.createServer((req, res) => {
   res.end(JSON.stringify(healthResponse));
 });
 
+// Function to try listening on different ports
+const tryToListen = (port: number, retries = 3) => {
+  healthServer.listen(port, '0.0.0.0', () => {
+    console.log(`Standalone health check server running on port ${port}`);
+  });
+  
+  healthServer.on('error', (err) => {
+    console.warn(`Health check server error on port ${port}: ${err.message}`);
+    
+    if (retries > 0 && (err as any).code === 'EADDRINUSE') {
+      // Try next port if this one is in use
+      const nextPort = port + 1;
+      console.log(`Port ${port} in use, trying ${nextPort}...`);
+      
+      setTimeout(() => {
+        healthServer.close();
+        tryToListen(nextPort, retries - 1);
+      }, 1000);
+    }
+  });
+};
+
 // Start the health server and log status
 try {
-  // Connect to a range of possible ports if the primary one fails
-  function tryToListen(port: number, retries = 3) {
-    healthServer.listen(port, '0.0.0.0', () => {
-      console.log(`Standalone health check server running on port ${port}`);
-    });
-    
-    healthServer.on('error', (err) => {
-      console.warn(`Health check server error on port ${port}: ${err.message}`);
-      
-      if (retries > 0 && (err as any).code === 'EADDRINUSE') {
-        // Try next port if this one is in use
-        const nextPort = port + 1;
-        console.log(`Port ${port} in use, trying ${nextPort}...`);
-        
-        setTimeout(() => {
-          healthServer.close();
-          tryToListen(nextPort, retries - 1);
-        }, 1000);
-      }
-    });
-  }
-  
   // Start on the primary port
   tryToListen(HEALTH_PORT);
   
