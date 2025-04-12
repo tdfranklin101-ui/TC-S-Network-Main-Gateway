@@ -2,7 +2,7 @@
  * Replit Cloud Run Deployment Server (CommonJS version)
  * 
  * This file directly addresses the deployment issues by:
- * 1. Listening on port 3000 (Replit's expected health check port)
+ * 1. Listening on port 5000 (Replit's expected port for this application)
  * 2. Responding to all paths with 200 OK
  * 3. Implementing a proper health check for Cloud Run
  */
@@ -13,7 +13,7 @@ const fs = require('fs');
 const path = require('path');
 
 // Constants
-const PORT = 3000;
+const PORT = 5000;
 const HOST = '0.0.0.0';
 
 console.log('Starting Replit Cloud Run deployment server...');

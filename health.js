@@ -7,8 +7,8 @@
 
 const http = require('http');
 
-// Use port 3000 as required by Replit deployments
-const PORT = 3000;
+// Use port 5000 as required by this application
+const PORT = 5000;
 const HOST = '0.0.0.0';
 
 console.log(`Starting minimal health check server on port ${PORT}...`);
