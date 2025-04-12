@@ -1,6 +1,6 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
-import { Express, Request, Response, NextFunction } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
@@ -207,9 +207,9 @@ export function setupAuth(app: Express) {
 }
 
 // Helper middleware to check if user is authenticated
-export function isAuthenticated(req: Express.Request, res: Express.Response, next: Function) {
+export function isAuthenticated(req: Request, res: Response, next: NextFunction) {
   if (req.isAuthenticated()) {
     return next();
   }
-  res.sendStatus(401);
+  res.status(401).send('Unauthorized');
 }

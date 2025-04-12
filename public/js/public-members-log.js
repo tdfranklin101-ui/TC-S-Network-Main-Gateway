@@ -181,7 +181,6 @@ class PublicMembersLog {
     
     this.showError();
   }
-  }
   
   updateUI(members) {
     console.log('Updating UI with members data');
