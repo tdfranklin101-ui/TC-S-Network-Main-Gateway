@@ -7,6 +7,15 @@ import { runMigrations } from "./migration";
 // Set environment variables
 process.env.SESSION_SECRET = process.env.SESSION_SECRET || 'currentsee-session-secret';
 
+// Handle missing DATABASE_URL in production
+if (!process.env.DATABASE_URL && process.env.NODE_ENV === 'production') {
+  console.warn('WARNING: DATABASE_URL is not set in production environment. Using in-memory mode.');
+  process.env.USE_IN_MEMORY_MODE = 'true';
+} else if (!process.env.DATABASE_URL) {
+  console.warn('WARNING: DATABASE_URL is not set. Using default development database URL.');
+  process.env.DATABASE_URL = 'postgres://postgres:postgres@localhost:5432/postgres';
+}
+
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
