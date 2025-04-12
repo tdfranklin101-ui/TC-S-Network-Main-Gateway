@@ -25,19 +25,33 @@ echo "Setting up health check files for Replit deployment..."
 cp health.cjs dist/health.cjs
 cp cloud-run-health.js dist/cloud-run-health.js
 cp replit-health-check.js dist/replit-health-check.js
+cp replit-health-handler.js dist/replit-health-handler.js
+cp final-health-check.js dist/final-health-check.js
 cp replit-deploy.js dist/replit-deploy.js
+cp cloud-run-deploy.js dist/cloud-run-deploy.js
+cp deploy-index.cjs dist/deploy-index.cjs
 cp start.sh dist/start.sh
-chmod +x dist/health.cjs dist/cloud-run-health.js dist/replit-health-check.js dist/replit-deploy.js dist/start.sh
+chmod +x dist/health.cjs dist/cloud-run-health.js dist/replit-health-check.js \
+         dist/replit-health-handler.js dist/final-health-check.js dist/replit-deploy.js \
+         dist/cloud-run-deploy.js dist/deploy-index.cjs dist/start.sh
+
+# Create key files at the root of the dist directory for deployment
+cp deploy-index.cjs dist/index.cjs
+cp final-health-check.js dist/index.js  # This is the recommended approach
+cp replit-health-handler.js dist/index-health.js
+cp cloud-run-deploy.js dist/main.js
+cp final-health-check.js dist/health.js
 
 # Ensure health check is available at multiple locations
 cp health.cjs dist/public/health.cjs
 cp cloud-run-health.js dist/public/cloud-run-health.js
 cp replit-health-check.js dist/public/replit-health-check.js
+cp replit-health-handler.js dist/public/replit-health-handler.js
 
 # Create a special health file that can be executed directly at the root
 cat > dist/health <<EOF
 #!/bin/bash
-node health.cjs
+node replit-health-handler.js
 EOF
 chmod +x dist/health
 
@@ -129,11 +143,12 @@ cat > dist/package.json <<EOF
   "main": "index.js",
   "scripts": {
     "start": "./start.sh",
-    "health": "node cloud-run-health.js",
+    "health": "node replit-health-handler.js",
     "health:cloud": "node cloud-run-health.js",
     "health:replit": "node replit-health-check.js",
     "health:minimal": "node health.cjs",
-    "deploy": "node replit-deploy.js"
+    "deploy": "node cloud-run-deploy.js",
+    "handler": "node replit-health-handler.js"
   },
   "engines": {
     "node": ">=18"
