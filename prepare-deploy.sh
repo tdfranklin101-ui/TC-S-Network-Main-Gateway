@@ -27,13 +27,14 @@ cp cloud-run-health.js dist/cloud-run-health.js
 cp replit-health-check.js dist/replit-health-check.js
 cp replit-health-handler.js dist/replit-health-handler.js
 cp final-health-check.js dist/final-health-check.js
+cp final-health-check.cjs dist/final-health-check.cjs
 cp replit-deploy.js dist/replit-deploy.js
 cp cloud-run-deploy.js dist/cloud-run-deploy.js
 cp deploy-index.cjs dist/deploy-index.cjs
 cp start.sh dist/start.sh
 chmod +x dist/health.cjs dist/cloud-run-health.js dist/replit-health-check.js \
-         dist/replit-health-handler.js dist/final-health-check.js dist/replit-deploy.js \
-         dist/cloud-run-deploy.js dist/deploy-index.cjs dist/start.sh
+         dist/replit-health-handler.js dist/final-health-check.js dist/final-health-check.cjs \
+         dist/replit-deploy.js dist/cloud-run-deploy.js dist/deploy-index.cjs dist/start.sh
 
 # Create key files at the root of the dist directory for deployment
 cp server.js dist/server.js  # Main server for Replit deployment

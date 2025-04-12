@@ -1,5 +1,5 @@
 /**
- * Final Health Check Solution
+ * Final Health Check Solution (CommonJS version)
  * 
  * This is the recommended solution that explicitly addresses all the issues
  * mentioned in the deployment screenshot:
@@ -9,8 +9,8 @@
  * 3. Missing proper health check implementation for Cloud Run
  */
 
-// Use ES modules since our package.json has "type": "module"
-import http from 'http';
+// Use CommonJS as it's more reliable for deployment
+const http = require('http');
 
 // CRITICAL: Use port 3000 which is what Replit expects
 const PORT = 3000;
