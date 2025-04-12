@@ -1,9 +1,13 @@
+// Import standalone health server first so it starts immediately
+import './standalone-health';
+
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import path from "path";
 import { runMigrations } from "./migration";
 import fs from "fs";
+import { setupHealthChecks } from "./health-check";
 
 // Set environment variables
 process.env.SESSION_SECRET = process.env.SESSION_SECRET || 'currentsee-session-secret';
@@ -19,30 +23,17 @@ if (!process.env.DATABASE_URL && process.env.NODE_ENV === 'production') {
 
 const app = express();
 
-// Add health check endpoints BEFORE all other middleware
-// This ensures they're accessible even if other parts of the app fail
+// Initialize health checks BEFORE any other middleware
+setupHealthChecks(app);
+
+// For normal web requests to the root, check if index.html exists in the public folder
 app.get('/', (req, res, next) => {
-  // Check if this is a health check request from the deployment system
-  const userAgent = req.headers['user-agent'] || '';
-  if (userAgent.includes('Health') || req.query.health === 'check') {
-    // Set the content type to application/json for proper health checks
-    res.setHeader('Content-Type', 'application/json');
-    return res.status(200).send(JSON.stringify({ status: 'ok', timestamp: new Date().toISOString() }));
-  }
-  
-  // For normal web requests, check if index.html exists in the public folder
   const indexPath = path.join(process.cwd(), 'public', 'index.html');
   if (fs.existsSync(indexPath) && req.path === '/') {
     return res.sendFile(indexPath);
   }
-  
   // Otherwise continue to the next handler
   next();
-});
-
-// Dedicated health check endpoint
-app.get('/health', (req, res) => {
-  res.status(200).send({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 app.use(express.json());
