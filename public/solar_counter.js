@@ -67,6 +67,13 @@ function styleCounter(element) {
     });
 }
 
+// Helper function to get the base API URL that works in both environments
+function getBaseApiUrl() {
+    // In deployment with custom domain, use the current origin
+    // This ensures URLs work correctly both in development and production
+    return window.location.origin;
+}
+
 // Fetch the solar clock data from the server API
 function fetchSolarClockData() {
     // Display loading state
@@ -75,7 +82,8 @@ function fetchSolarClockData() {
         counterElement.innerHTML = '<div>Loading solar data...</div>';
     }
     
-    fetch('/api/solar-clock')
+    const baseUrl = getBaseApiUrl();
+    fetch(`${baseUrl}/api/solar-clock`)
         .then(response => {
             if (!response.ok) {
                 throw new Error('Failed to fetch solar clock data');

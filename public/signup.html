@@ -116,13 +116,21 @@
             const form = document.getElementById('waitlist-form');
             const successMessage = document.getElementById('success-message');
             
+            // Function to get the base API URL that works in both environments
+            function getBaseApiUrl() {
+                // In deployment with custom domain, we need to make sure we're using the same origin
+                // This ensures URLs work correctly both in development and production
+                return window.location.origin;
+            }
+            
             form.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
                 const formData = new FormData(form);
+                const baseUrl = getBaseApiUrl();
                 
                 try {
-                    const response = await fetch('/signup', {
+                    const response = await fetch(`${baseUrl}/signup`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -151,8 +159,9 @@
             
             // Fetch and display waitlist count with retry functionality
             async function fetchWaitlistCount(retryCount = 0) {
+                const baseUrl = getBaseApiUrl();
                 try {
-                    const response = await fetch('/registrants/count', {
+                    const response = await fetch(`${baseUrl}/registrants/count`, {
                         headers: {
                             'Cache-Control': 'no-cache',
                             'Pragma': 'no-cache'

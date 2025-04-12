@@ -30,6 +30,13 @@ class PublicMembersLog {
     this.fetchMembers();
   }
   
+  // Helper function to get the base API URL
+  getBaseApiUrl() {
+    // In deployment with custom domain, use the current origin
+    // This ensures URLs work correctly both in development and production
+    return window.location.origin;
+  }
+  
   async fetchMembers() {
     // Define all possible endpoints to try, in order of preference
     const endpoints = [
@@ -41,6 +48,7 @@ class PublicMembersLog {
       '/embedded-members'
     ];
     
+    const baseUrl = this.getBaseApiUrl();
     const timestamp = new Date().getTime();
     const requestOptions = {
       cache: 'no-store',
@@ -79,7 +87,7 @@ class PublicMembersLog {
               this.showError();
             }
           };
-          iframe.src = endpoint;
+          iframe.src = `${baseUrl}${endpoint}`;
           document.body.appendChild(iframe);
           return;
         }
@@ -126,7 +134,7 @@ class PublicMembersLog {
                 }
               }, 5000);
               
-              script.src = `${endpoint}?callback=updateMembers&_=${timestamp}`;
+              script.src = `${baseUrl}${endpoint}?callback=updateMembers&_=${timestamp}`;
               document.head.appendChild(script);
             });
             
@@ -140,7 +148,7 @@ class PublicMembersLog {
           }
         }
         
-        let url = `${endpoint}?_=${timestamp}`;
+        let url = `${baseUrl}${endpoint}?_=${timestamp}`;
         if (endpoint.includes('leaderboard')) {
           url += '&limit=5';
         }
@@ -191,7 +199,7 @@ class PublicMembersLog {
     
     // Try to get the member count as a last resort
     try {
-      const countResponse = await fetch(`/api/member-count?_=${timestamp}`, requestOptions);
+      const countResponse = await fetch(`${baseUrl}/api/member-count?_=${timestamp}`, requestOptions);
       if (countResponse.ok) {
         const countData = await countResponse.json();
         console.log(`Total member count from API: ${countData.count}`);
