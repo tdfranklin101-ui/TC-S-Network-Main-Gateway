@@ -1,12 +1,13 @@
 {
-  "name": "minimal-health-check",
+  "name": "thecurrentsee-health",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "server.cjs",
   "type": "commonjs",
   "engines": {
     "node": ">=16.0.0"
   },
   "scripts": {
-    "start": "node index.js"
-  }
+    "start": "node server.cjs"
+  },
+  "private": true
 }
