@@ -71,8 +71,8 @@ function startMainApplication() {
   console.log('Starting main application...');
   
   try {
-    // Try to start the server.js file directly
-    mainApp = spawn('node', ['server/index.js'], {
+    // Try npm run dev first (your current working approach)
+    mainApp = spawn('npm', ['run', 'dev'], {
       env: { ...process.env, PORT: MAIN_APP_PORT.toString() }
     });
     
