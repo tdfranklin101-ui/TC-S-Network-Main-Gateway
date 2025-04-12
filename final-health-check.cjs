@@ -12,11 +12,11 @@
 // Use CommonJS as it's more reliable for deployment
 const http = require('http');
 
-// CRITICAL: Use port 3000 which is what Replit expects
-const PORT = 3000;
+// CRITICAL: Use port 5000 which is what this application expects
+const PORT = 5000;
 const HOST = '0.0.0.0';
 
-console.log('Starting final health check solution on port 3000...');
+console.log('Starting final health check solution on port 5000...');
 
 // Create the simplest possible server
 const server = http.createServer((req, res) => {
@@ -28,7 +28,7 @@ const server = http.createServer((req, res) => {
   res.end(JSON.stringify({ status: 'ok' }));
 });
 
-// Start listening on port 3000
+// Start listening on port 5000
 server.listen(PORT, HOST, () => {
   console.log(`Health check server running on port ${PORT}`);
 });
