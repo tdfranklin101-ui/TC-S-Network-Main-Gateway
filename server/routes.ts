@@ -2,7 +2,7 @@ import express, { type Express } from "express";
 import type { Server } from "http";
 import { createServer } from "http";
 import { storage } from "./storage";
-import { insertNewsletterSubscriptionSchema, insertContactMessageSchema } from "@shared/schema";
+import { insertNewsletterSubscriptionSchema, insertContactMessageSchema, solarClock } from "@shared/schema";
 import { setupWaitlistRoutes } from "./waitlist";
 import { setupAdminRoutes } from "./admin";
 import { setupAuth } from "./auth";
@@ -15,6 +15,7 @@ import { generatePage } from "./template-processor";
 import * as solarConstants from "./solar-constants";
 import cors from "cors";
 import { db } from "./db";
+import { sql } from "drizzle-orm";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Add CORS headers middleware with more comprehensive configuration
@@ -42,70 +43,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   const apiRouter = express.Router();
   
+  // Migration endpoint
+  apiRouter.post("/migrate", async (req, res) => {
+    try {
+      // This is an admin-only endpoint, should be protected
+      const { handleMigrationRequest } = await import('./migration');
+      const result = await handleMigrationRequest();
+      res.json(result);
+    } catch (error) {
+      console.error('Error handling migration request:', error);
+      res.status(500).json({ success: false, message: 'Migration failed', error: String(error) });
+    }
+  });
+
   // API routes
   apiRouter.get("/solar-clock", async (req, res) => {
     try {
-      const csvFilePath = path.resolve(process.cwd(), 'solar_clock.csv');
-      console.log(`Reading solar clock data from: ${csvFilePath}`);
-      const fileContent = fs.readFileSync(csvFilePath, { encoding: 'utf-8' });
+      // Check if database is available
+      if (!db) {
+        return res.status(500).json({ message: "Database not available" });
+      }
       
-      // Parse CSV data
-      parse(fileContent, { columns: true }, (err, records) => {
-        if (err) {
-          console.error("Error parsing CSV:", err);
-          return res.status(500).json({ message: "Failed to parse solar clock data" });
-        }
+      // Try to get solar clock data from database
+      const clockRecords = await db.select().from(solarClock).orderBy(sql`${solarClock.timestamp} DESC`).limit(1);
+      
+      if (!clockRecords || clockRecords.length === 0) {
+        return res.status(404).json({ message: "No solar clock data found" });
+      }
+      
+      const baseData = clockRecords[0];
+      
+      // Calculate current values based on base data and continuous accumulation
+      const baseTimestamp = new Date(baseData.timestamp).getTime();
+      const currentTimestamp = Date.now();
+      const elapsedSeconds = (currentTimestamp - baseTimestamp) / 1000;
+      
+      // Accumulation rates (per second) from solar constants
+      const kwhPerSecond = solarConstants.KWH_PER_SECOND; 
+      // Dollar per kWh is calculated from the solar constants
+      const dollarPerKwh = solarConstants.USD_PER_SOLAR / (solarConstants.solarPerPersonKwh * 365);
+      
+      // Calculate accumulated amounts since base timestamp
+      const additionalKwh = elapsedSeconds * kwhPerSecond;
+      const additionalDollars = additionalKwh * dollarPerKwh;
+      
+      // Add to base amounts
+      const totalKwh = parseFloat(String(baseData.kwh)) + additionalKwh;
+      const totalDollars = parseFloat(String(baseData.dollars)) + additionalDollars;
+      
+      // Check if we need to update the base values (if it's a new day)
+      const baseDate = new Date(baseData.timestamp);
+      const currentDate = new Date();
+      
+      // If the base date is not today, update the database with current totals
+      if (baseDate.toDateString() !== currentDate.toDateString()) {
+        console.log("Updating solar clock base values for new day...");
         
-        if (records && records.length > 0) {
-          const baseData = records[0];
-          
-          // Calculate current values based on base data and continuous accumulation
-          const baseTimestamp = new Date(baseData.timestamp).getTime();
-          const currentTimestamp = Date.now();
-          const elapsedSeconds = (currentTimestamp - baseTimestamp) / 1000;
-          
-          // Accumulation rates (per second) from solar constants
-          const kwhPerSecond = solarConstants.KWH_PER_SECOND; 
-          // Dollar per kWh is calculated from the solar constants
-          const dollarPerKwh = solarConstants.USD_PER_SOLAR / (solarConstants.solarPerPersonKwh * 365);
-          
-          // Calculate accumulated amounts since base timestamp
-          const additionalKwh = elapsedSeconds * kwhPerSecond;
-          const additionalDollars = additionalKwh * dollarPerKwh;
-          
-          // Add to base amounts
-          const totalKwh = parseFloat(baseData.kwh) + additionalKwh;
-          const totalDollars = parseFloat(baseData.dollars) + additionalDollars;
-          
-          // Check if we need to update the base values (if it's a new day)
-          const baseDate = new Date(baseData.timestamp);
-          const currentDate = new Date();
-          
-          // If the base date is not today, update the CSV file with current totals
-          if (baseDate.toDateString() !== currentDate.toDateString()) {
-            console.log("Updating solar clock base values for new day...");
-            
-            // Format the updated CSV content
-            const updatedContent = `timestamp,kwh,dollars
-${currentDate.toISOString()},${totalKwh},${totalDollars}`;
-            
-            // Write the updated values back to the CSV file
-            fs.writeFileSync(csvFilePath, updatedContent, 'utf-8');
-            console.log("Solar clock base values updated successfully");
-          }
-          
-          res.json({
-            timestamp: new Date().toISOString(),
-            baseTimestamp: baseData.timestamp,
-            totalKwh,
-            totalDollars,
-            kwhPerSecond,
-            dollarPerKwh,
-            elapsedSeconds
-          });
-        } else {
-          res.status(404).json({ message: "No solar clock data found" });
-        }
+        // Insert new record with updated values
+        await db.insert(solarClock).values({
+          timestamp: currentDate,
+          kwh: String(totalKwh),
+          dollars: String(totalDollars)
+        });
+        
+        console.log("Solar clock base values updated successfully in database");
+      }
+      
+      res.json({
+        timestamp: new Date().toISOString(),
+        baseTimestamp: baseData.timestamp,
+        totalKwh,
+        totalDollars,
+        kwhPerSecond,
+        dollarPerKwh,
+        elapsedSeconds
       });
     } catch (error) {
       console.error("Error fetching solar clock data:", error);

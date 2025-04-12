@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import path from "path";
+import { runMigrations } from "./migration";
 
 // Set environment variables
 process.env.SESSION_SECRET = process.env.SESSION_SECRET || 'currentsee-session-secret';
@@ -100,6 +101,13 @@ import './template-to-static';
 console.log('Static page generation complete');
 
 (async () => {
+  // Run data migrations from CSV to database
+  try {
+    await runMigrations();
+  } catch (error) {
+    console.error('Error running migrations:', error);
+  }
+
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

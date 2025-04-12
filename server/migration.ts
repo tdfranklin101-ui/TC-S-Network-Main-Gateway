@@ -19,6 +19,12 @@ const REGISTRANTS_CSV = path.join(process.cwd(), 'registrants.csv');
 // Migrate solar clock data from CSV to database
 export async function migrateSolarClockData(): Promise<boolean> {
   try {
+    // Check if the database is available
+    if (!db) {
+      console.log('Database not available, skipping solar clock migration');
+      return false;
+    }
+
     // Check if the CSV file exists
     if (!fs.existsSync(SOLAR_CLOCK_CSV)) {
       console.log('Solar clock CSV file not found, skipping migration');
@@ -52,8 +58,8 @@ export async function migrateSolarClockData(): Promise<boolean> {
       // Insert data into database
       await db.insert(solarClock).values({
         timestamp: new Date(baseData.timestamp),
-        kwh: parseFloat(baseData.kwh),
-        dollars: parseFloat(baseData.dollars)
+        kwh: String(parseFloat(baseData.kwh)),
+        dollars: String(parseFloat(baseData.dollars))
       });
       
       console.log('Solar clock data migrated successfully from CSV to database');
@@ -71,6 +77,12 @@ export async function migrateSolarClockData(): Promise<boolean> {
 // Migrate registrants data from CSV to database
 export async function migrateRegistrantsData(): Promise<boolean> {
   try {
+    // Check if the database is available
+    if (!db) {
+      console.log('Database not available, skipping registrants migration');
+      return false;
+    }
+    
     // Check if the CSV file exists
     if (!fs.existsSync(REGISTRANTS_CSV)) {
       console.log('Registrants CSV file not found, skipping migration');
@@ -108,9 +120,10 @@ export async function migrateRegistrantsData(): Promise<boolean> {
       }));
       
       // Insert data into database
-      await db.insert(registrants).values(values);
-      
-      console.log(`${values.length} registrants migrated successfully from CSV to database`);
+      if (values.length > 0) {
+        await db.insert(registrants).values(values);
+        console.log(`${values.length} registrants migrated successfully from CSV to database`);
+      }
       return true;
     } else {
       console.log('No registrant data found in CSV');
@@ -136,8 +149,9 @@ export async function handleMigrationRequest() {
     await runMigrations();
     return { success: true, message: 'Migration completed successfully' };
   } catch (error) {
-    console.error('Migration error:', error);
-    return { success: false, message: 'Migration failed', error: error.message };
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('Migration error:', errorMessage);
+    return { success: false, message: 'Migration failed', error: errorMessage };
   }
 }
 
