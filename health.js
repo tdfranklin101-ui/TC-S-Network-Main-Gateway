@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 /**
  * Minimal Health Check Script
  * 
@@ -6,32 +8,42 @@
  */
 
 const http = require('http');
-const PORT = process.env.PORT || 3333;
 
-// Create the simplest possible server that responds with 200 to everything
+// Use port 3000 as required by Replit deployments
+const PORT = 3000;
+const HOST = '0.0.0.0';
+
+console.log(`Starting minimal health check server on port ${PORT}...`);
+
 const server = http.createServer((req, res) => {
-  // Log the request for debugging
-  console.log(`Health check request: ${req.method} ${req.url}`);
+  // Log request for debugging
+  console.log(`[HEALTH CHECK] ${req.method} ${req.url}`);
   
-  // Set headers to indicate this is a JSON response
+  // Respond to ALL paths with 200 OK
   res.writeHead(200, {
     'Content-Type': 'application/json',
-    'Cache-Control': 'no-cache'
+    'Cache-Control': 'no-cache, no-store',
+    'Connection': 'close'
   });
   
-  // Send the simplest valid JSON response
   res.end(JSON.stringify({
     status: 'ok',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    path: req.url
   }));
 });
 
-// Start the server
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`Health check server running on http://0.0.0.0:${PORT}`);
+// Start server and handle errors gracefully
+server.listen(PORT, HOST, () => {
+  console.log(`Health check server running at http://${HOST}:${PORT}/`);
+});
+
+// Handle potential errors
+server.on('error', (err) => {
+  console.error(`Server error: ${err.message}`);
 });
 
 // Keep the process running
 process.on('uncaughtException', (err) => {
-  console.error('Uncaught exception (continuing anyway):', err);
+  console.error('Uncaught exception:', err);
 });
