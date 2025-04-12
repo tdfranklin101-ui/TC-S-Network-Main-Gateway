@@ -8,8 +8,10 @@
 import http from 'http';
 
 // Create a standalone health check server on a different port
-// This needs to match port 3333 specifically for Replit health checks
-const HEALTH_PORT = 3333;
+// Port configuration for health check server:
+// - In Replit deployment, the health check will use port 3000
+// - In local development, we use port 3333 to avoid conflicts
+const HEALTH_PORT = process.env.NODE_ENV === 'production' ? 3000 : 3333;
 
 // Log more info in development
 const isDevMode = process.env.NODE_ENV !== 'production';
@@ -34,7 +36,9 @@ const healthServer = http.createServer((req, res) => {
     status: 'ok',
     timestamp: new Date().toISOString(),
     service: 'thecurrentsee',
-    server: 'standalone'
+    server: 'standalone',
+    mode: process.env.NODE_ENV || 'development',
+    port: HEALTH_PORT
   };
   
   res.end(JSON.stringify(healthResponse));
@@ -42,25 +46,47 @@ const healthServer = http.createServer((req, res) => {
 
 // Start the health server and log status
 try {
-  healthServer.listen(HEALTH_PORT, '0.0.0.0', () => {
-    console.log(`Standalone health check server running on port ${HEALTH_PORT}`);
-  });
-  
-  // Handle errors without crashing
-  healthServer.on('error', (err) => {
-    console.warn(`Health check server error (non-critical): ${err.message}`);
+  // Connect to a range of possible ports if the primary one fails
+  function tryToListen(port: number, retries = 3) {
+    healthServer.listen(port, '0.0.0.0', () => {
+      console.log(`Standalone health check server running on port ${port}`);
+    });
     
-    // Try again if the port is in use (might be available later)
-    if ((err as any).code === 'EADDRINUSE') {
-      console.log('Port in use, will retry in 15 seconds...');
-      setTimeout(() => {
-        healthServer.close();
-        healthServer.listen(HEALTH_PORT, '0.0.0.0');
-      }, 15000);
-    }
-  });
+    healthServer.on('error', (err) => {
+      console.warn(`Health check server error on port ${port}: ${err.message}`);
+      
+      if (retries > 0 && (err as any).code === 'EADDRINUSE') {
+        // Try next port if this one is in use
+        const nextPort = port + 1;
+        console.log(`Port ${port} in use, trying ${nextPort}...`);
+        
+        setTimeout(() => {
+          healthServer.close();
+          tryToListen(nextPort, retries - 1);
+        }, 1000);
+      }
+    });
+  }
+  
+  // Start on the primary port
+  tryToListen(HEALTH_PORT);
+  
 } catch (err) {
   console.warn(`Failed to start standalone health server: ${err}`);
+  
+  // Last resort - try a completely different approach
+  try {
+    const alternateServer = http.createServer((req, res) => {
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ status: 'ok', fallback: true }));
+    });
+    
+    alternateServer.listen(process.env.NODE_ENV === 'production' ? 3001 : 3334, '0.0.0.0');
+  } catch (e) {
+    // Just log and continue - the main server should still work
+    console.error('Even fallback health server failed:', e);
+  }
 }
 
 // Make sure the server stays running even if there are errors
