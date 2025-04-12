@@ -8,20 +8,32 @@
 import http from 'http';
 
 // Create a standalone health check server on a different port
-const HEALTH_PORT = parseInt(process.env.HEALTH_PORT || '3333');
+// This needs to match port 3333 specifically for Replit health checks
+const HEALTH_PORT = 3333;
 
-// Create a simple HTTP server
+// Log more info in development
+const isDevMode = process.env.NODE_ENV !== 'production';
+
+// Create a simple HTTP server that responds to ALL paths
 const healthServer = http.createServer((req, res) => {
-  // Set CORS headers to allow health checks from anywhere
+  if (isDevMode) {
+    const userAgent = req.headers['user-agent'] || 'Unknown';
+    console.log(`[STANDALONE] Health check request received for ${req.url} (User-Agent: ${userAgent})`);
+  }
+  
+  // Set headers for proper health check response
+  res.setHeader('Content-Type', 'application/json');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   
   // Always respond with 200 OK and basic health info
-  res.writeHead(200, { 'Content-Type': 'application/json' });
+  res.statusCode = 200;
   
   const healthResponse = {
     status: 'ok',
     timestamp: new Date().toISOString(),
+    service: 'thecurrentsee',
     server: 'standalone'
   };
   
@@ -37,10 +49,24 @@ try {
   // Handle errors without crashing
   healthServer.on('error', (err) => {
     console.warn(`Health check server error (non-critical): ${err.message}`);
+    
+    // Try again if the port is in use (might be available later)
+    if ((err as any).code === 'EADDRINUSE') {
+      console.log('Port in use, will retry in 15 seconds...');
+      setTimeout(() => {
+        healthServer.close();
+        healthServer.listen(HEALTH_PORT, '0.0.0.0');
+      }, 15000);
+    }
   });
 } catch (err) {
   console.warn(`Failed to start standalone health server: ${err}`);
 }
+
+// Make sure the server stays running even if there are errors
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught exception in health server (continuing anyway):', err);
+});
 
 // Export the server in case we need to close it programmatically
 export { healthServer };

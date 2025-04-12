@@ -26,12 +26,30 @@ const app = express();
 // Initialize health checks BEFORE any other middleware
 setupHealthChecks(app);
 
-// For normal web requests to the root, check if index.html exists in the public folder
+// Root path handler with special handling for health checks
+// This must come AFTER the health check middleware but BEFORE other middleware
 app.get('/', (req, res, next) => {
+  // Special support for Replit deployment health checks
+  // They often don't include standard headers but need special handling
+  const isReplitDeploy = req.headers['x-forwarded-for'] !== undefined && 
+                          !req.headers.accept?.includes('html');
+  
+  // If this might be a Replit health check
+  if (isReplitDeploy) {
+    console.log('Possible Replit deployment health check detected');
+    return res.status(200).json({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      service: 'thecurrentsee'
+    });
+  }
+  
+  // For normal web requests, check if index.html exists in the public folder
   const indexPath = path.join(process.cwd(), 'public', 'index.html');
   if (fs.existsSync(indexPath) && req.path === '/') {
     return res.sendFile(indexPath);
   }
+  
   // Otherwise continue to the next handler
   next();
 });
