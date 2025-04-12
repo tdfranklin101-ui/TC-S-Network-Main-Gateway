@@ -15,6 +15,20 @@ import { generatePage } from "./template-processor";
 import * as solarConstants from "./solar-constants";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Add CORS headers middleware
+  app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    
+    // Handle preflight requests
+    if (req.method === 'OPTIONS') {
+      return res.sendStatus(200);
+    }
+    
+    next();
+  });
+  
   // Add cookie parser middleware for authentication
   app.use(cookieParser());
   

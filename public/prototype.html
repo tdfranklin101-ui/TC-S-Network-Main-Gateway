@@ -751,10 +751,20 @@
                 // Fetch the actual solar accounts from our API
                 // Use absolute URL to ensure it works in both deployed and development environments
                 const apiUrl = window.location.origin + '/api/solar-accounts/leaderboard';
-                const response = await fetch(apiUrl);
-                
-                if (!response.ok) {
-                    throw new Error('Failed to fetch users');
+                console.log('Fetching members from URL:', apiUrl);
+                try {
+                    const response = await fetch(apiUrl);
+                    console.log('API response status:', response.status);
+                    
+                    if (!response.ok) {
+                        console.error('Failed to fetch users with status:', response.status);
+                        const errorText = await response.text();
+                        console.error('Error response body:', errorText);
+                        throw new Error('Failed to fetch users: ' + response.status);
+                    }
+                } catch (fetchError) {
+                    console.error('Fetch error:', fetchError);
+                    throw fetchError;
                 }
                 
                 const data = await response.json();
