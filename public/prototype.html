@@ -717,6 +717,13 @@
         // Apply initial background gradient
         document.body.classList.add('bg-gradient-1');
         
+        // Helper function to get the base API URL
+        function getBaseApiUrl() {
+            // In deployment with custom domain, use the current origin
+            // This ensures URLs work correctly both in development and production
+            return window.location.origin;
+        }
+        
         // Store all users and current page state
         let allUsers = [];
         let currentPage = 1;
@@ -751,11 +758,12 @@
                 // Fetch the actual solar accounts - try multiple endpoints with fallbacks
                 
                 // First try the regular API endpoint
-                const primaryApiUrl = window.location.origin + '/api/solar-accounts/leaderboard';
+                const baseUrl = getBaseApiUrl();
+                const primaryApiUrl = `${baseUrl}/api/solar-accounts/leaderboard`;
                 // Fallback to the special public API endpoint if the first one fails
-                const fallbackApiUrl = window.location.origin + '/public-api/members';
+                const fallbackApiUrl = `${baseUrl}/public-api/members`;
                 // Ultimate fallback - embedded members page in an iframe
-                const iframeFallbackUrl = window.location.origin + '/embedded-members';
+                const iframeFallbackUrl = `${baseUrl}/embedded-members`;
                 
                 console.log('Fetching members from URL:', primaryApiUrl);
                 
@@ -857,7 +865,8 @@
                 // Try the primary API endpoint
                 try {
                     // Use absolute URL to ensure it works in both deployed and development environments
-                    const apiUrl = window.location.origin + '/api/member-count';
+                    const baseUrl = getBaseApiUrl();
+                    const apiUrl = `${baseUrl}/api/member-count`;
                     console.log('Fetching member count from URL:', apiUrl);
                     
                     const response = await fetch(apiUrl, {
@@ -885,7 +894,8 @@
                     
                     // Try the fallback public API
                     try {
-                        const fallbackApiUrl = window.location.origin + '/public-api/members';
+                        const baseUrl = getBaseApiUrl();
+                        const fallbackApiUrl = `${baseUrl}/public-api/members`;
                         console.log('Trying fallback API for member count:', fallbackApiUrl);
                         const fallbackResponse = await fetch(fallbackApiUrl, {
                             method: 'GET',
