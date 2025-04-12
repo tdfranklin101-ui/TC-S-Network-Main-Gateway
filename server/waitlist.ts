@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import fs from 'fs';
 import { parse, stringify } from 'csv/sync';
 import path from 'path';
-import { db } from './db';
+import { db, retryDbOperation, isDatabaseAvailable, checkDatabaseHealth } from './db';
 import { registrants } from '@shared/schema';
 import { count, eq } from 'drizzle-orm';
 
@@ -11,28 +11,16 @@ const REGISTRANT_FILE = path.join(process.cwd(), 'registrants.csv');
 export function setupWaitlistRoutes(app: any) {
   app.post('/signup', handleSignup);
   app.get('/registrants/count', getRegistrantCount);
-}
-
-// Helper function to retry operations
-async function retryOperation<T>(operation: () => Promise<T>, maxRetries = 3, retryDelay = 300): Promise<T> {
-  let lastError: any;
   
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      return await operation();
-    } catch (error) {
-      lastError = error;
-      console.warn(`Registration operation failed (attempt ${attempt}/${maxRetries}):`, error);
-      
-      if (attempt < maxRetries) {
-        // Wait before retrying with exponential backoff
-        await new Promise(resolve => setTimeout(resolve, retryDelay * attempt));
-      }
-    }
-  }
-  
-  // If we reach here, all retries failed
-  throw lastError;
+  // Add a database health check endpoint (internal use only)
+  app.get('/api/db-health', async (req, res) => {
+    const isHealthy = await checkDatabaseHealth();
+    res.json({ 
+      healthy: isHealthy, 
+      available: isDatabaseAvailable,
+      timestamp: new Date().toISOString()
+    });
+  });
 }
 
 async function handleSignup(req: Request, res: Response) {
@@ -43,13 +31,22 @@ async function handleSignup(req: Request, res: Response) {
   }
   
   try {
-    // Primary database storage approach
-    if (db) {
+    // Check if database is available (either through health check or by checking the db object)
+    if (db && isDatabaseAvailable) {
       try {
+        // First, verify database health
+        const isHealthy = await checkDatabaseHealth();
+        
+        if (!isHealthy) {
+          console.warn('Database health check failed before registration, falling back to CSV');
+          return saveToCSVFallback(name, email, res);
+        }
+        
         // Check if email already exists - with retry mechanism
-        const existingRegistrants = await retryOperation(
-          () => db!.select().from(registrants).where(eq(registrants.email, email))
-        );
+        const existingRegistrants = await retryDbOperation(async () => {
+          if (!db) throw new Error('Database not available');
+          return db.select().from(registrants).where(eq(registrants.email, email));
+        });
         
         if (existingRegistrants && existingRegistrants.length > 0) {
           return res.status(400).json({ 
@@ -58,14 +55,15 @@ async function handleSignup(req: Request, res: Response) {
         }
         
         // Insert new registrant - with retry mechanism
-        await retryOperation(
-          () => db!.insert(registrants).values({
+        await retryDbOperation(async () => {
+          if (!db) throw new Error('Database not available');
+          return db.insert(registrants).values({
             name: name || null,
             email: email,
             interests: interests || null,
             registeredAt: new Date()
-          })
-        );
+          });
+        });
         
         // Set proper headers
         res.header('Cache-Control', 'no-store');
@@ -82,6 +80,7 @@ async function handleSignup(req: Request, res: Response) {
         return saveToCSVFallback(name, email, res);
       }
     } else {
+      console.warn('Database unavailable for registration, using CSV fallback');
       // Fallback to CSV if database is not available
       return saveToCSVFallback(name, email, res);
     }
@@ -123,13 +122,19 @@ function saveToCSVFallback(name: string, email: string, res: Response) {
 async function getRegistrantCount(req: Request, res: Response) {
   try {
     // Try to get count from database first with retry mechanism
-    if (db) {
+    if (db && isDatabaseAvailable) {
       try {
-        const result = await retryOperation(
-          () => db!.select({ value: count() }).from(registrants),
-          3, // Max 3 retries
-          300 // 300ms delay, increasing with each retry
-        );
+        // First check database health
+        const isHealthy = await checkDatabaseHealth();
+        
+        if (!isHealthy) {
+          throw new Error('Database health check failed');
+        }
+        
+        const result = await retryDbOperation(async () => {
+          if (!db) throw new Error('Database not available');
+          return db.select({ value: count() }).from(registrants);
+        });
         
         const dbCount = result[0].value || 0;
         
@@ -146,6 +151,9 @@ async function getRegistrantCount(req: Request, res: Response) {
     
     // Fallback to CSV counting
     if (!fs.existsSync(REGISTRANT_FILE)) {
+      // Set cache headers even for zero response
+      res.header('Cache-Control', 'max-age=30');
+      res.header('Access-Control-Allow-Origin', '*');
       return res.json({ count: 0 });
     }
     
@@ -163,10 +171,20 @@ async function getRegistrantCount(req: Request, res: Response) {
     } catch (csvError) {
       console.error('Error reading CSV for registrant count:', csvError);
       // If CSV reading fails, return at least 1 for Terry D. Franklin
+      
+      // Set cache headers for error response
+      res.header('Cache-Control', 'max-age=60'); // Cache longer for fallback fallback
+      res.header('Access-Control-Allow-Origin', '*');
+      
       return res.json({ count: 1, estimated: true });
     }
   } catch (error) {
     console.error('Error counting registrants:', error);
+    
+    // Set cache headers for error response
+    res.header('Cache-Control', 'max-age=60');
+    res.header('Access-Control-Allow-Origin', '*');
+    
     return res.status(500).json({ count: 1, error: 'Failed to count registrants accurately', estimated: true });
   }
 }
