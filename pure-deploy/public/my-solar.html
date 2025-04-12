@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Solar Distributions | The Current-See</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        :root {
+            --primary-color: #0057B8;
+            --secondary-color: #FFD700;
+            --accent-color: #FF6B35;
+            --bg-light: #F8F9FA;
+            --text-dark: #343A40;
+        }
+        
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text-dark);
+            background-color: var(--bg-light);
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        .navbar {
+            background-color: var(--primary-color);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .navbar-brand {
+            font-weight: bold;
+            color: white !important;
+        }
+        
+        .hero {
+            background: linear-gradient(135deg, var(--primary-color), #004494);
+            color: white;
+            padding: 3rem 0;
+            margin-bottom: 2rem;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            margin-bottom: 1.5rem;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card-header {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 600;
+            border-radius: 10px 10px 0 0 !important;
+        }
+        
+        .distribution-card {
+            background-color: white;
+            border-left: 4px solid var(--accent-color);
+        }
+        
+        .badge-solar {
+            background-color: var(--secondary-color);
+            color: var(--text-dark);
+        }
+        
+        .badge-pending {
+            background-color: #FFC107;
+            color: var(--text-dark);
+        }
+        
+        .badge-processed {
+            background-color: #28A745;
+            color: white;
+        }
+        
+        .badge-failed {
+            background-color: #DC3545;
+            color: white;
+        }
+        
+        .stat-card {
+            text-align: center;
+            padding: 1.5rem;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        
+        .navbar-nav .nav-link {
+            color: white !important;
+            margin-left: 1rem;
+        }
+        
+        footer {
+            background-color: var(--text-dark);
+            color: white;
+            padding: 2rem 0;
+            margin-top: 3rem;
+        }
+        
+        .footer-links a {
+            color: #ADB5BD;
+            text-decoration: none;
+            margin-right: 1rem;
+        }
+        
+        .footer-links a:hover {
+            color: white;
+        }
+        
+        /* Login form styling */
+        .auth-container {
+            max-width: 400px;
+            margin: 2rem auto;
+        }
+        
+        .auth-tabs {
+            margin-bottom: 1.5rem;
+        }
+        
+        .auth-tabs .nav-link {
+            color: var(--text-dark);
+            font-weight: 500;
+        }
+        
+        .auth-tabs .nav-link.active {
+            color: var(--primary-color);
+            border-bottom: 3px solid var(--primary-color);
+        }
+        
+        /* Loading indicator */
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+        }
+        
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+            color: var(--primary-color);
+        }
+        
+        /* Leaderboard section */
+        .leaderboard-entry {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            align-items: center;
+        }
+        
+        .leaderboard-rank {
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-right: 1rem;
+            color: var(--text-dark);
+            min-width: 2rem;
+        }
+        
+        .leaderboard-name {
+            flex-grow: 1;
+        }
+        
+        .leaderboard-value {
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        /* Anonymous toggle */
+        .form-check-label {
+            font-weight: normal;
+            cursor: pointer;
+        }
+        
+        /* Return to Home button */
+        .btn-return {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: rgba(0, 87, 184, 0.2);
+            color: var(--primary-color);
+            border: 2px solid rgba(0, 87, 184, 0.3);
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            margin-top: 30px;
+        }
+        
+        .btn-return:hover {
+            background-color: rgba(0, 87, 184, 0.3);
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">The Current-See</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/prototype">Prototype</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/merch">Merch</a>
+                    </li>
+                    <li class="nav-item authenticated-only" style="display: none;">
+                        <a class="nav-link active" href="/my-solar">My Solar</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/wallet">Wallet</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/declaration">Solar Declaration</a>
+                    </li>
+                    <li class="nav-item unauthenticated-only">
+                        <a class="nav-link" href="/login" id="login-button">Log In</a>
+                    </li>
+                    <li class="nav-item authenticated-only" style="display: none;">
+                        <a class="nav-link" href="#" id="logout-button">Log Out</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main content -->
+    <div class="container mt-4">
+        <!-- Unauthenticated view -->
+        <div class="unauthenticated-view">
+            <div class="row">
+                <div class="col-md-6 offset-md-3">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h4 class="mb-0">Authentication Required</h4>
+                        </div>
+                        <div class="card-body">
+                            <p>Please log in or register to access your personal solar distributions.</p>
+                            <div class="auth-container">
+                                <ul class="nav nav-tabs auth-tabs" id="auth-tabs">
+                                    <li class="nav-item">
+                                        <a class="nav-link active" data-bs-toggle="tab" href="#login-tab">Login</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" data-bs-toggle="tab" href="#register-tab">Register</a>
+                                    </li>
+                                </ul>
+                                <div class="tab-content">
+                                    <div class="tab-pane fade show active" id="login-tab">
+                                        <form id="login-form" class="mt-3">
+                                            <div class="mb-3">
+                                                <label for="login-username" class="form-label">Username</label>
+                                                <input type="text" class="form-control" id="login-username" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="login-password" class="form-label">Password</label>
+                                                <input type="password" class="form-control" id="login-password" required>
+                                            </div>
+                                            <div class="d-grid">
+                                                <button type="submit" class="btn btn-primary">Log In</button>
+                                            </div>
+                                            <div class="alert alert-danger mt-3" id="login-error" style="display: none;"></div>
+                                        </form>
+                                    </div>
+                                    <div class="tab-pane fade" id="register-tab">
+                                        <form id="register-form" class="mt-3">
+                                            <div class="mb-3">
+                                                <label for="register-username" class="form-label">Username</label>
+                                                <input type="text" class="form-control" id="register-username" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="register-email" class="form-label">Email</label>
+                                                <input type="email" class="form-control" id="register-email" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="register-password" class="form-label">Password</label>
+                                                <input type="password" class="form-control" id="register-password" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="register-first-name" class="form-label">First Name (optional)</label>
+                                                <input type="text" class="form-control" id="register-first-name">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="register-last-name" class="form-label">Last Name (optional)</label>
+                                                <input type="text" class="form-control" id="register-last-name">
+                                            </div>
+                                            <div class="mb-3 form-check">
+                                                <input type="checkbox" class="form-check-input" id="register-anonymous">
+                                                <label class="form-check-label" for="register-anonymous">
+                                                    Remain anonymous in the Public Members Log
+                                                </label>
+                                            </div>
+                                            <div class="d-grid">
+                                                <button type="submit" class="btn btn-primary">Register</button>
+                                            </div>
+                                            <div class="alert alert-danger mt-3" id="register-error" style="display: none;"></div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Authenticated view -->
+        <div class="authenticated-view" style="display: none;">
+            <div class="row">
+                <div class="col-lg-8">
+                    <h1 class="mb-4">My Solar Distributions</h1>
+                    <p class="lead">Track your personal solar energy distributions and contributions to the Current-See economy.</p>
+                </div>
+                <div class="col-lg-4 text-end">
+                    <div class="d-flex flex-column align-items-end">
+                        <span class="badge badge-solar mb-2" id="account-number"></span>
+                        <span class="text-muted" id="joined-date"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <!-- Solar stats -->
+                <div class="col-md-4">
+                    <div class="card stat-card">
+                        <div class="stat-value" id="total-solar">0.00000</div>
+                        <div class="stat-label">Total Solar</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card stat-card">
+                        <div class="stat-value" id="total-kwh">0.00</div>
+                        <div class="stat-label">Total kWh</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card stat-card">
+                        <div class="stat-value" id="total-dollars">$0.00</div>
+                        <div class="stat-label">Total Value (USD)</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header">
+                            Distribution History
+                        </div>
+                        <div class="card-body" id="distributions-container">
+                            <div class="loading-spinner">
+                                <div class="spinner-border" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-header">
+                            Public Members Log
+                        </div>
+                        <div class="card-body" id="leaderboard-container">
+                            <div class="loading-spinner">
+                                <div class="spinner-border" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mt-4">
+                <div class="col-12 text-center">
+                    <a href="/" class="btn-return">Return to Home</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>The Current-See</h5>
+                    <p>A new global economy backed by the Sun. One Solar. One Earth. Daily.</p>
+                    <p style="margin-top: 10px;">The Current-See PBC, Inc.<br>
+                    <a href="mailto:hello@thecurrentsee.org" style="color: #ADB5BD; text-decoration: none;">hello@thecurrentsee.org</a></p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <div class="footer-links">
+                        <a href="/">Home</a>
+                        <a href="/prototype">Prototype</a>
+                        <a href="/merch">Merch</a>
+                        <a href="/wallet">Wallet</a>
+                        <a href="/my-solar">My Solar</a>
+                        <a href="/declaration">Solar Declaration</a>
+                        <a href="/admin">Admin</a>
+                    </div>
+                </div>
+            </div>
+            <hr class="mt-4 mb-4" style="border-color: #495057;">
+            <div class="row">
+                <div class="col-12 text-center">
+                    <p class="mb-0">&copy; 2025 The Current-See PBC, Inc. All rights reserved.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // State management
+        let currentUser = null;
+        let currentSolarAccount = null;
+        let distributions = [];
+        let leaderboard = [];
+        
+        // Helper function to get the base API URL
+        function getBaseApiUrl() {
+            // In deployment with custom domain, use the current origin
+            // This ensures URLs work correctly both in development and production
+            return window.location.origin;
+        }
+
+        // DOM elements
+        const authenticatedElements = document.querySelectorAll('.authenticated-only');
+        const unauthenticatedElements = document.querySelectorAll('.unauthenticated-only');
+        const authenticatedView = document.querySelector('.authenticated-view');
+        const unauthenticatedView = document.querySelector('.unauthenticated-view');
+
+        // Authentication status update
+        function updateAuthStatus() {
+            if (currentUser) {
+                authenticatedElements.forEach(el => el.style.display = 'block');
+                unauthenticatedElements.forEach(el => el.style.display = 'none');
+                authenticatedView.style.display = 'block';
+                unauthenticatedView.style.display = 'none';
+                fetchSolarAccount();
+                fetchDistributions();
+                fetchLeaderboard();
+            } else {
+                authenticatedElements.forEach(el => el.style.display = 'none');
+                unauthenticatedElements.forEach(el => el.style.display = 'block');
+                authenticatedView.style.display = 'none';
+                unauthenticatedView.style.display = 'block';
+            }
+        }
+
+        // Fetch current user
+        async function fetchCurrentUser() {
+            try {
+                const baseUrl = getBaseApiUrl();
+                const response = await fetch(`${baseUrl}/api/user`);
+                if (response.ok) {
+                    currentUser = await response.json();
+                    updateAuthStatus();
+                } else {
+                    currentUser = null;
+                    updateAuthStatus();
+                }
+            } catch (error) {
+                console.error('Error fetching user:', error);
+                currentUser = null;
+                updateAuthStatus();
+            }
+        }
+
+        // Fetch solar account
+        async function fetchSolarAccount() {
+            try {
+                const baseUrl = getBaseApiUrl();
+                const response = await fetch(`${baseUrl}/api/solar-account`);
+                if (response.ok) {
+                    currentSolarAccount = await response.json();
+                    updateSolarAccountUI();
+                }
+            } catch (error) {
+                console.error('Error fetching solar account:', error);
+            }
+        }
+
+        // Update solar account UI
+        function updateSolarAccountUI() {
+            if (currentSolarAccount) {
+                document.getElementById('account-number').textContent = currentSolarAccount.accountNumber;
+                document.getElementById('joined-date').textContent = `Joined: ${new Date(currentSolarAccount.joinedDate).toLocaleDateString()}`;
+                
+                // Calculate days since joining to show accurate SOLAR amount (1 per day)
+                const joinDate = new Date(currentSolarAccount.joinedDate);
+                const today = new Date();
+                // Calculate difference in time
+                const timeDiff = today.getTime() - joinDate.getTime();
+                // Calculate days difference (rounded down)
+                const daysDiff = Math.floor(timeDiff / (1000 * 3600 * 24));
+                // 1 SOLAR per day + 0.01918 initial bonus
+                const calculatedSolar = daysDiff + 0.01918;
+                
+                // Calculate KWh and dollars based on new SOLAR amount
+                const kwhPerSolar = 17700000; // 17.7M kWh per SOLAR
+                const usdPerSolar = 136000; // $136,000 per SOLAR
+                const calculatedKwh = calculatedSolar * kwhPerSolar;
+                const calculatedDollars = calculatedSolar * usdPerSolar;
+                
+                document.getElementById('total-solar').textContent = calculatedSolar.toFixed(5);
+                document.getElementById('total-kwh').textContent = calculatedKwh.toLocaleString(undefined, { maximumFractionDigits: 2 });
+                document.getElementById('total-dollars').textContent = `$${calculatedDollars.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+            }
+        }
+
+        // Fetch distributions
+        async function fetchDistributions() {
+            try {
+                const baseUrl = getBaseApiUrl();
+                const response = await fetch(`${baseUrl}/api/distributions`);
+                if (response.ok) {
+                    distributions = await response.json();
+                    updateDistributionsUI();
+                }
+            } catch (error) {
+                console.error('Error fetching distributions:', error);
+            }
+        }
+
+        // Update distributions UI
+        function updateDistributionsUI() {
+            const container = document.getElementById('distributions-container');
+            container.innerHTML = '';
+
+            if (distributions.length === 0) {
+                container.innerHTML = `
+                    <div class="alert alert-info">
+                        You don't have any distributions yet. Distributions of 1 SOLAR (and its equivalent in kWh and USD) are credited daily to your account.
+                    </div>
+                `;
+                return;
+            }
+
+            distributions.forEach(dist => {
+                const statusBadgeClass = dist.status === 'processed' ? 'badge-processed' : 
+                                        dist.status === 'pending' ? 'badge-pending' : 'badge-failed';
+                
+                container.innerHTML += `
+                    <div class="distribution-card p-3 mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <strong>${new Date(dist.distributionDate).toLocaleDateString()}</strong>
+                            <span class="badge ${statusBadgeClass}">${dist.status.charAt(0).toUpperCase() + dist.status.slice(1)}</span>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <small class="text-muted">Solar</small>
+                                <div>${Number(dist.solarAmount).toFixed(5)}</div>
+                            </div>
+                            <div class="col-md-4">
+                                <small class="text-muted">kWh</small>
+                                <div>${Number(dist.kwhAmount).toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
+                            </div>
+                            <div class="col-md-4">
+                                <small class="text-muted">Value (USD)</small>
+                                <div>$${Number(dist.dollarValue).toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // Fetch leaderboard
+        async function fetchLeaderboard() {
+            try {
+                const baseUrl = getBaseApiUrl();
+                const response = await fetch(`${baseUrl}/api/solar-accounts/leaderboard?limit=10`);
+                if (response.ok) {
+                    leaderboard = await response.json();
+                    updateLeaderboardUI();
+                }
+            } catch (error) {
+                console.error('Error fetching leaderboard:', error);
+            }
+        }
+
+        // Update leaderboard UI
+        function updateLeaderboardUI() {
+            const container = document.getElementById('leaderboard-container');
+            container.innerHTML = '';
+
+            if (leaderboard.length === 0) {
+                container.innerHTML = `
+                    <div class="alert alert-info">
+                        No public members yet. Be the first to join!
+                    </div>
+                `;
+                return;
+            }
+
+            leaderboard.forEach((account, index) => {
+                // Calculate days since joining to show accurate SOLAR amount (1 per day)
+                const joinDate = new Date(account.joinedDate);
+                const today = new Date();
+                // Calculate difference in time
+                const timeDiff = today.getTime() - joinDate.getTime();
+                // Calculate days difference (rounded down)
+                const daysDiff = Math.floor(timeDiff / (1000 * 3600 * 24));
+                // 1 SOLAR per day + 0.01918 initial bonus
+                const calculatedSolar = daysDiff + 0.01918;
+                
+                container.innerHTML += `
+                    <div class="leaderboard-entry">
+                        <div class="leaderboard-rank">#${index + 1}</div>
+                        <div class="leaderboard-name">${account.displayName}</div>
+                        <div class="leaderboard-value">${calculatedSolar.toFixed(5)} <small>SOLAR</small></div>
+                    </div>
+                `;
+            });
+        }
+
+        // Login form submission
+        document.getElementById('login-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            const errorElement = document.getElementById('login-error');
+            
+            try {
+                const baseUrl = getBaseApiUrl();
+                const response = await fetch(`${baseUrl}/api/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                if (response.ok) {
+                    currentUser = await response.json();
+                    errorElement.style.display = 'none';
+                    updateAuthStatus();
+                } else {
+                    errorElement.textContent = 'Invalid username or password';
+                    errorElement.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                errorElement.textContent = 'An error occurred during login';
+                errorElement.style.display = 'block';
+            }
+        });
+
+        // Register form submission
+        document.getElementById('register-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const username = document.getElementById('register-username').value;
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            const firstName = document.getElementById('register-first-name').value;
+            const lastName = document.getElementById('register-last-name').value;
+            const isAnonymous = document.getElementById('register-anonymous').checked;
+            const errorElement = document.getElementById('register-error');
+            
+            try {
+                const baseUrl = getBaseApiUrl();
+                const response = await fetch(`${baseUrl}/api/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        username, 
+                        email, 
+                        password, 
+                        firstName, 
+                        lastName, 
+                        isAnonymous 
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    currentUser = data.user;
+                    currentSolarAccount = data.solarAccount;
+                    errorElement.style.display = 'none';
+                    updateAuthStatus();
+                } else {
+                    const error = await response.json();
+                    errorElement.textContent = error.error || 'Registration failed';
+                    errorElement.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Registration error:', error);
+                errorElement.textContent = 'An error occurred during registration';
+                errorElement.style.display = 'block';
+            }
+        });
+
+        // Logout functionality
+        document.getElementById('logout-button').addEventListener('click', async function(e) {
+            e.preventDefault();
+            try {
+                const baseUrl = getBaseApiUrl();
+                await fetch(`${baseUrl}/api/logout`, { method: 'POST' });
+                currentUser = null;
+                currentSolarAccount = null;
+                updateAuthStatus();
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        });
+
+        // Note: The login button now links directly to the login page
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchCurrentUser();
+        });
+    </script>
+</body>
+</html>
