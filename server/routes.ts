@@ -18,6 +18,21 @@ import { db } from "./db";
 import { sql } from "drizzle-orm";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Add a simple health check endpoint for deployment checks
+  app.get('/health', (req, res) => {
+    res.status(200).send({ status: 'ok', timestamp: new Date().toISOString() });
+  });
+
+  // Root endpoint for health checks
+  app.get('/', (req, res, next) => {
+    // Check if this is a health check request from the deployment system
+    const userAgent = req.headers['user-agent'] || '';
+    if (userAgent.includes('Health') || req.query.health === 'check') {
+      return res.status(200).send({ status: 'ok', timestamp: new Date().toISOString() });
+    }
+    // Otherwise continue to the next handler (which will serve the index.html)
+    next();
+  });
   // Add CORS headers middleware with more comprehensive configuration
   app.use((req, res, next) => {
     // Allow all origins for maximum compatibility

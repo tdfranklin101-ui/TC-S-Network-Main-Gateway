@@ -11,17 +11,18 @@ import { exec } from 'child_process';
 // Configure the WebSocket constructor for neon
 neonConfig.webSocketConstructor = ws;
 
+// Define getPool function at the module level
+let getPool: () => any;
+
 // Check for in-memory mode
 if (process.env.USE_IN_MEMORY_MODE === 'true') {
   console.log('Running in in-memory mode. Skipping database schema updates.');
   
-  // Function to get a mock pool for in-memory mode
-  function getPool() {
-    return {
-      query: async () => ({ rows: [] }),
-      end: async () => {}
-    };
-  }
+  // Set getPool to return a mock pool for in-memory mode
+  getPool = () => ({
+    query: async () => ({ rows: [] }),
+    end: async () => {}
+  });
 } else {
   // Check for the DATABASE_URL
   if (!process.env.DATABASE_URL) {
@@ -29,10 +30,8 @@ if (process.env.USE_IN_MEMORY_MODE === 'true') {
     process.exit(1);
   }
 
-  // Function to get a connected pool
-  function getPool() {
-    return new Pool({ connectionString: process.env.DATABASE_URL });
-  }
+  // Set getPool to return a real Pool for database mode
+  getPool = () => new Pool({ connectionString: process.env.DATABASE_URL });
 }
 
 /**
