@@ -384,6 +384,12 @@
         document.getElementById('register-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             
+            // Show loading state
+            const submitButton = this.querySelector('button[type="submit"]');
+            const originalButtonText = submitButton.innerText;
+            submitButton.innerText = 'Processing...';
+            submitButton.disabled = true;
+            
             const username = document.getElementById('register-username').value;
             const displayName = document.getElementById('register-name').value;
             const email = document.getElementById('register-email').value;
@@ -391,26 +397,39 @@
             const confirmPassword = document.getElementById('register-confirm-password').value;
             const isAnonymous = document.getElementById('register-anonymous').checked;
             
+            // Get first name and last name from display name
+            const nameParts = displayName.split(' ');
+            const firstName = nameParts[0];
+            const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+            
             // Validate passwords match
             if (password !== confirmPassword) {
                 showNotification('error', 'Passwords do not match');
+                submitButton.innerText = originalButtonText;
+                submitButton.disabled = false;
                 return;
             }
             
             try {
+                console.log('Sending registration request...');
                 const response = await fetch('/api/register', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
                     },
                     body: JSON.stringify({
                         username,
                         displayName,
                         email,
                         password,
-                        isAnonymous
+                        isAnonymous,
+                        firstName,
+                        lastName
                     })
                 });
+                
+                console.log('Registration response status:', response.status);
                 
                 if (response.ok) {
                     showNotification('success', 'Registration successful! Redirecting...');
@@ -419,8 +438,16 @@
                         window.location.href = '/my-solar';
                     }, 1500);
                 } else {
-                    const errorData = await response.json();
-                    showNotification('error', errorData.error || 'Registration failed. Please try another username.');
+                    let errorMessage = 'Registration failed. Please try another username.';
+                    try {
+                        const errorData = await response.json();
+                        errorMessage = errorData.error || errorMessage;
+                    } catch (parseError) {
+                        console.error('Error parsing error response:', parseError);
+                    }
+                    showNotification('error', errorMessage);
+                    submitButton.innerText = originalButtonText;
+                    submitButton.disabled = false;
                 }
             } catch (error) {
                 showNotification('error', 'An error occurred. Please try again.');
