@@ -5,158 +5,325 @@
  * continuous generation of solar energy and its equivalent monetary value
  * based on data accumulated since April 7, 2025.
  * 
- * Updated: April 12, 2025 - CommonJS deployment version
+ * Updated: April 11, 2025 - Integrated with new solar constants and formulas
  */
 
-// Constants
-const START_DATE = new Date('2025-04-07T00:00:00Z');
-const KWH_RATE_PER_SECOND = 4.176e+15 * 0.01 / (24 * 60 * 60);
-const USD_PER_SOLAR = 136000;
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("Solar counter initializing...");
+    
+    // Load solar constants first
+    const script = document.createElement('script');
+    script.src = '/js/solar-constants.js';
+    script.onload = function() {
+        // Once constants are loaded, initialize the counter
+        initializeSolarCounter();
+    };
+    script.onerror = function() {
+        console.error("Failed to load solar constants. Using fallback values.");
+        // Initialize with fallback if constants aren't available
+        initializeSolarCounter();
+    };
+    document.head.appendChild(script);
+});
 
-// Helper function to style counter elements
+function initializeSolarCounter() {
+    // Use the existing counter element in the page
+    const counterDiv = document.getElementById('solar-counter');
+    if (!counterDiv) {
+        console.error("Solar counter container not found!");
+        return;
+    }
+    
+    // Clear any existing content
+    counterDiv.innerHTML = '';
+    
+    // Initialize the counter
+    fetchSolarClockData();
+    
+    // Set up periodic refresh every 5 minutes to ensure data stays current
+    setInterval(fetchSolarClockData, 300000);
+}
+
 function styleCounter(element) {
-  if (!element) return;
-  
-  element.style.fontFamily = 'monospace, "Courier New", Courier';
-  element.style.fontSize = '1.2rem';
-  element.style.fontWeight = 'bold';
-  element.style.padding = '8px 16px';
-  element.style.borderRadius = '4px';
-  element.style.backgroundColor = 'rgba(0, 0, 0, 0.05)';
-  element.style.margin = '10px 0';
-  element.style.display = 'inline-block';
-}
-
-// Function to get the base API URL
-function getBaseApiUrl() {
-  const protocol = window.location.protocol;
-  const host = window.location.host;
-  return `${protocol}//${host}`;
-}
-
-// Function to fetch initial solar clock data
-function fetchSolarClockData() {
-  const apiUrl = `${getBaseApiUrl()}/api/solar-clock`;
-  
-  return fetch(apiUrl)
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-      return response.json();
-    })
-    .catch(error => {
-      console.error('Error fetching solar clock data:', error);
-      // Fallback to calculated values
-      const now = new Date();
-      const secondsElapsed = (now - START_DATE) / 1000;
-      const kwhAccumulated = KWH_RATE_PER_SECOND * secondsElapsed;
-      
-      return {
-        timestamp: now.toISOString(),
-        kwh_accumulated: kwhAccumulated,
-        monetary_value: kwhAccumulated * USD_PER_SOLAR / 1e15
-      };
+    // We don't need the fixed positioning as the counter is in its designated container
+    element.style.fontFamily = 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif';
+    element.style.padding = '15px';
+    element.style.display = 'flex';
+    element.style.flexDirection = 'column';
+    element.style.alignItems = 'center';
+    element.style.justifyContent = 'center';
+    element.style.transition = 'all 0.3s ease';
+    element.style.cursor = 'pointer';
+    
+    // Add click to hide/show details
+    let expanded = false;
+    element.addEventListener('click', function() {
+        const detailsElement = document.getElementById('counter-details');
+        if (detailsElement) {
+            expanded = !expanded;
+            detailsElement.style.maxHeight = expanded ? '300px' : '0';
+            detailsElement.style.opacity = expanded ? '1' : '0';
+        }
     });
 }
 
-// Initialize counter with fetched data
+// Helper function to get the base API URL that works in both environments
+function getBaseApiUrl() {
+    // In deployment with custom domain, use the current origin
+    // This ensures URLs work correctly both in development and production
+    return window.location.origin;
+}
+
+// Fetch the solar clock data from the server API
+function fetchSolarClockData() {
+    // Display loading state
+    const counterElement = document.getElementById('solar-counter');
+    if (counterElement) {
+        counterElement.innerHTML = '<div>Loading solar data...</div>';
+    }
+    
+    const baseUrl = getBaseApiUrl();
+    fetch(`${baseUrl}/api/solar-clock`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to fetch solar clock data');
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Initialize the counter with fetched data
+            initCounter(data);
+        })
+        .catch(error => {
+            console.error('Error fetching solar clock data:', error);
+            
+            // Show error in counter
+            if (counterElement) {
+                counterElement.innerHTML = '<div style="color: #FFD700">⚠️ Solar data unavailable</div>';
+            }
+        });
+}
+
 function initCounter(data) {
-  // Get counter elements
-  const energyCounter = document.getElementById('energy-counter');
-  const valueCounter = document.getElementById('value-counter');
-  const elapsedTimeElement = document.getElementById('elapsed-time');
-  
-  if (!energyCounter || !valueCounter) {
-    console.error('Counter elements not found');
-    return;
-  }
-  
-  // Style counter elements
-  styleCounter(energyCounter);
-  styleCounter(valueCounter);
-  if (elapsedTimeElement) styleCounter(elapsedTimeElement);
-  
-  // Initialize values from data
-  let initialKWh = parseFloat(data.kwh_accumulated) || 0;
-  let initialValue = parseFloat(data.monetary_value) || 0;
-  
-  // Set initial values in DOM
-  energyCounter.textContent = `${(initialKWh / 1e6).toFixed(6)} MkWh`;
-  valueCounter.textContent = `$${initialValue.toLocaleString('en-US')}`;
-  
-  // Start updating the counter
-  updateCounter({
-    startTime: new Date(),
-    startKWh: initialKWh,
-    startValue: initialValue
-  });
-  
-  // Update elapsed time if element exists
-  if (elapsedTimeElement) {
-    setInterval(() => {
-      const now = new Date();
-      const secondsElapsed = Math.floor((now - START_DATE) / 1000);
-      elapsedTimeElement.textContent = formatTime(secondsElapsed);
-    }, 1000);
-  }
+    const counterElement = document.getElementById('solar-counter');
+    if (!counterElement) return;
+    
+    // Clear existing content
+    counterElement.innerHTML = '';
+    
+    // Create counter title with activity indicator
+    const titleContainer = document.createElement('div');
+    titleContainer.style.display = 'flex';
+    titleContainer.style.alignItems = 'center';
+    titleContainer.style.justifyContent = 'center';
+    titleContainer.style.marginBottom = '5px';
+    
+    const title = document.createElement('div');
+    title.textContent = '☀️ Live Solar Generation';
+    title.style.fontWeight = 'bold';
+    title.style.color = '#0057B8';
+    
+    // Add blinking activity indicator
+    const indicator = document.createElement('div');
+    indicator.style.width = '8px';
+    indicator.style.height = '8px';
+    indicator.style.borderRadius = '50%';
+    indicator.style.backgroundColor = '#FF0000';
+    indicator.style.marginLeft = '8px';
+    indicator.style.animation = 'blink 1s infinite';
+    
+    // Add animation style if it doesn't exist
+    if (!document.getElementById('blink-animation-style')) {
+        const style = document.createElement('style');
+        style.id = 'blink-animation-style';
+        style.textContent = `
+            @keyframes blink {
+                0% { opacity: 1; }
+                50% { opacity: 0.2; }
+                100% { opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    titleContainer.appendChild(title);
+    titleContainer.appendChild(indicator);
+    
+    // Create main counter
+    const counter = document.createElement('div');
+    counter.id = 'main-counter';
+    counter.style.fontSize = '16px';
+    counter.style.fontWeight = 'bold';
+    counter.style.color = '#0057B8';
+    
+    // Create expanding details section
+    const details = document.createElement('div');
+    details.id = 'counter-details';
+    details.style.overflow = 'hidden';
+    details.style.maxHeight = '0';
+    details.style.opacity = '0';
+    details.style.transition = 'all 0.5s ease';
+    details.style.marginTop = '10px';
+    details.style.fontSize = '12px';
+    
+    // Add elements to counter
+    counterElement.appendChild(titleContainer);
+    counterElement.appendChild(counter);
+    counterElement.appendChild(details);
+    
+    // Start counter animation with the fetched data
+    updateCounter(data);
 }
 
-// Update counter values continuously
 function updateCounter(initialData) {
-  const updateInterval = 100; // milliseconds
-  
-  let lastUpdateTime = initialData.startTime;
-  let currentKWh = initialData.startKWh;
-  let currentValue = initialData.startValue;
-  
-  // Get counter elements
-  const energyCounter = document.getElementById('energy-counter');
-  const valueCounter = document.getElementById('value-counter');
-  
-  if (!energyCounter || !valueCounter) return;
-  
-  // Update function
-  function update() {
-    const now = new Date();
-    const secondsElapsed = (now - lastUpdateTime) / 1000;
-    lastUpdateTime = now;
+    // Store previous values for comparison to highlight changes
+    const prevMainCounter = document.getElementById('main-counter');
+    const prevMkWh = prevMainCounter ? prevMainCounter.getAttribute('data-mkwh') : null;
     
-    // Calculate new values
-    currentKWh += KWH_RATE_PER_SECOND * secondsElapsed;
-    currentValue = currentKWh * USD_PER_SOLAR / 1e15;
+    // Calculate current values based on initial data and time elapsed since fetch
+    const fetchTimestamp = new Date(initialData.timestamp).getTime();
+    const currentTimestamp = Date.now();
+    const secondsSinceFetch = (currentTimestamp - fetchTimestamp) / 1000;
     
-    // Update display
-    energyCounter.textContent = `${(currentKWh / 1e6).toFixed(6)} MkWh`;
-    valueCounter.textContent = `$${currentValue.toLocaleString('en-US')}`;
+    // Use solar constants if available, otherwise fall back to the API data
+    let kwhPerSecond = initialData.kwhPerSecond;
+    let dollarPerKwh = initialData.dollarPerKwh;
     
-    // Schedule next update
-    requestAnimationFrame(update);
-  }
-  
-  // Start updating
-  update();
+    // Check if SolarConstants is available from our loaded script
+    if (window.SolarConstants) {
+        // Use the values from our constants
+        kwhPerSecond = window.SolarConstants.KWH_PER_SECOND;
+        dollarPerKwh = window.SolarConstants.USD_PER_SOLAR / (window.SolarConstants.solarPerPersonKwh * 365);
+    }
+    
+    // Add kWh generated since the data was fetched - ensure this is increasing
+    const additionalKwh = secondsSinceFetch * kwhPerSecond;
+    const additionalDollars = additionalKwh * dollarPerKwh;
+    
+    // Current total values
+    const currentKwh = initialData.totalKwh + additionalKwh;
+    const currentDollars = initialData.totalDollars + additionalDollars;
+    
+    // Total elapsed seconds since base date (April 7, 2025)
+    const totalElapsedSeconds = initialData.elapsedSeconds + secondsSinceFetch;
+    
+    // Convert to MkWh (Million kWh) for display
+    const currentMkWh = currentKwh / 1000000;
+    
+    // Store full precision value for debugging
+    console.log(`Solar counter updating: ${currentMkWh.toFixed(8)} MkWh (${additionalKwh.toFixed(8)} kWh added)`);
+    
+    // Make sure the numbers change visibly by ensuring 6 decimal places
+    const formattedMkWh = currentMkWh.toLocaleString(undefined, {
+        minimumFractionDigits: 6,
+        maximumFractionDigits: 6
+    });
+    
+    const formattedDollars = currentDollars.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+    
+    // Update main counter
+    const mainCounter = document.getElementById('main-counter');
+    if (mainCounter) {
+        // Store the current value for comparison on next update
+        mainCounter.setAttribute('data-mkwh', currentMkWh.toString());
+        
+        // Generate HTML with spans for each character to enable animation of changing digits
+        const mkwhParts = formattedMkWh.split('');
+        const dollarParts = formattedDollars.split('');
+        
+        let mkwhHtml = '';
+        for (let i = 0; i < mkwhParts.length; i++) {
+            // Make the last 6 decimal digits animated with a more noticeable effect
+            const isAnimated = mkwhParts.length - i <= 6 && mkwhParts[i] !== ',' && mkwhParts[i] !== '.';
+            const isHighlighted = mkwhParts.length - i <= 3 && mkwhParts[i] !== ',' && mkwhParts[i] !== '.';
+            
+            if (isHighlighted) {
+                mkwhHtml += `<span class="digit-highlight">${mkwhParts[i]}</span>`;
+            } else if (isAnimated) {
+                mkwhHtml += `<span class="digit-animate">${mkwhParts[i]}</span>`;
+            } else {
+                mkwhHtml += `<span>${mkwhParts[i]}</span>`;
+            }
+        }
+        
+        let dollarHtml = '';
+        for (let i = 0; i < dollarParts.length; i++) {
+            // Animate the cents in dollar value too
+            const isAnimated = i >= dollarParts.length - 2;
+            dollarHtml += isAnimated 
+                ? `<span class="digit-animate">${dollarParts[i]}</span>` 
+                : `<span>${dollarParts[i]}</span>`;
+        }
+        
+        // Add enhanced styling for digit animation
+        if (!document.getElementById('digit-animation-style')) {
+            const style = document.createElement('style');
+            style.id = 'digit-animation-style';
+            style.textContent = `
+                .digit-animate {
+                    display: inline-block;
+                    color: #0057B8;
+                    animation: pulse 2s infinite;
+                }
+                .digit-highlight {
+                    display: inline-block;
+                    color: #0057B8;
+                    animation: glow 1s infinite;
+                    font-weight: bold;
+                }
+                @keyframes pulse {
+                    0% { opacity: 1; }
+                    50% { opacity: 0.7; }
+                    100% { opacity: 1; }
+                }
+                @keyframes glow {
+                    0% { text-shadow: 0 0 2px #0057B8; }
+                    50% { text-shadow: 0 0 8px #0057B8; }
+                    100% { text-shadow: 0 0 2px #0057B8; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        mainCounter.innerHTML = `${mkwhHtml} MkWh = $${dollarHtml}`;
+    }
+    
+    // Update details section
+    const details = document.getElementById('counter-details');
+    if (details) {
+        // Calculate various statistics
+        const kwhPerHour = initialData.kwhPerSecond * 3600;
+        const mkwhPerHour = kwhPerHour / 1000000;
+        const co2Saved = currentKwh * 0.85; // kg of CO2 saved per kWh
+        const co2SavedTons = co2Saved / 1000; // Convert to metric tons
+        const homesPowered = currentKwh / 1.5; // Homes powered based on average consumption
+        
+        details.innerHTML = `
+            <div style="margin-bottom: 5px; color: #0057B8;">Base Date: April 7, 2025</div>
+            <div style="margin-bottom: 5px; color: #0057B8;">Total Days: ${(totalElapsedSeconds / 86400).toFixed(2)}</div>
+            <div style="margin-bottom: 5px; color: #0057B8;">Generation Rate: ${mkwhPerHour.toFixed(8)} MkWh/hour</div>
+            <div style="margin-bottom: 5px; color: #0057B8;">Equivalent CO₂ Saved: ${co2SavedTons.toLocaleString(undefined, {maximumFractionDigits: 2})} metric tons</div>
+            <div style="margin-bottom: 5px; color: #0057B8;">Homes Powered: ${homesPowered.toLocaleString(undefined, {maximumFractionDigits: 0})}</div>
+            <div style="font-size: 10px; margin-top: 10px; color: #0057B8; opacity: 0.8">Click to toggle details</div>
+        `;
+    }
+    
+    // Continue updating
+    requestAnimationFrame(() => updateCounter(initialData));
 }
 
-// Format time as days, hours, minutes, seconds
 function formatTime(seconds) {
-  const days = Math.floor(seconds / 86400);
-  seconds %= 86400;
-  const hours = Math.floor(seconds / 3600);
-  seconds %= 3600;
-  const minutes = Math.floor(seconds / 60);
-  seconds %= 60;
-  
-  return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+    const days = Math.floor(seconds / 86400);
+    const hours = Math.floor((seconds % 86400) / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = Math.floor(seconds % 60);
+    
+    if (days > 0) {
+        return `${days}d ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    } else {
+        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
 }
-
-// Initialize when document is ready
-document.addEventListener('DOMContentLoaded', function() {
-  // Get counter elements
-  const energyCounter = document.getElementById('energy-counter');
-  const valueCounter = document.getElementById('value-counter');
-  
-  if (energyCounter && valueCounter) {
-    fetchSolarClockData().then(initCounter);
-  }
-});
