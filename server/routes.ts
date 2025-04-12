@@ -146,6 +146,114 @@ ${currentDate.toISOString()},${totalKwh},${totalDollars}`;
   // Set up distribution routes
   setupDistributionRoutes(app);
   
+  // Add a special endpoint for public consumption with embedded JSONP support
+  app.get("/public-api/members", async (req, res) => {
+    try {
+      // Get the callback name from the query string or use a default
+      const callback = req.query.callback || 'processMembers';
+      
+      // Get the solar accounts (members)
+      const accounts = await storage.getAllSolarAccounts(100, false);
+      
+      // Format the data for the public API
+      const formattedAccounts = accounts.map(account => ({
+        id: account.id,
+        displayName: account.displayName || account.accountNumber,
+        solarBalance: parseFloat(account.totalSolar).toFixed(5),
+        joinedDate: account.joinedDate
+      }));
+      
+      // Get the member count
+      const count = formattedAccounts.length;
+      
+      // Create the response object
+      const responseData = {
+        members: formattedAccounts,
+        count: count,
+        timestamp: new Date().toISOString()
+      };
+      
+      // Set appropriate headers
+      res.header('Access-Control-Allow-Origin', '*');
+      res.header('Access-Control-Allow-Methods', 'GET');
+      res.header('Access-Control-Allow-Headers', 'Content-Type');
+      res.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.header('Pragma', 'no-cache');
+      res.header('Expires', '0');
+      
+      // If it's a JSONP request, wrap the response in the callback
+      if (req.query.callback) {
+        return res.jsonp(responseData);
+      }
+      
+      // Otherwise, send as regular JSON
+      res.json(responseData);
+    } catch (error) {
+      console.error("Error fetching members for public API:", error);
+      res.status(500).json({ error: "Failed to fetch members" });
+    }
+  });
+  
+  // Add a simple HTML endpoint that includes the member data directly
+  app.get("/embedded-members", async (req, res) => {
+    try {
+      // Get the solar accounts (members)
+      const accounts = await storage.getAllSolarAccounts(100, false);
+      
+      // Format the accounts data for embedding
+      const accountsForTemplate = accounts.map(account => ({
+        id: account.id,
+        displayName: account.displayName || account.accountNumber,
+        solarBalance: parseFloat(account.totalSolar).toFixed(5),
+        joinedDate: account.joinedDate ? new Date(account.joinedDate).toISOString().split('T')[0] : ''
+      }));
+      
+      // Create the HTML content with embedded member data
+      const htmlContent = `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Current-See Members</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+          .member-list { margin-top: 20px; }
+          .member-item { padding: 10px; border-bottom: 1px solid #eee; }
+          .count { font-weight: bold; margin-bottom: 20px; }
+        </style>
+      </head>
+      <body>
+        <div class="count">Total Members: ${accountsForTemplate.length}</div>
+        <div class="member-list">
+          ${accountsForTemplate.map(member => `
+            <div class="member-item">
+              <div>#${member.id} - ${member.displayName}</div>
+              <div>Solar Balance: ${member.solarBalance}</div>
+              <div>Joined: ${member.joinedDate}</div>
+            </div>
+          `).join('')}
+        </div>
+        
+        <script>
+          // This data can be used by parent pages if embedded in an iframe
+          window.memberData = ${JSON.stringify({
+            members: accountsForTemplate,
+            count: accountsForTemplate.length,
+            timestamp: new Date().toISOString()
+          })};
+        </script>
+      </body>
+      </html>
+      `;
+      
+      res.send(htmlContent);
+    } catch (error) {
+      console.error("Error generating embedded members page:", error);
+      res.status(500).send("Error loading member data");
+    }
+  });
+  
   // Since we generate static files at startup, we can simply use the static file for homepage
   console.log('Using static homepage file generated at startup...');
   
