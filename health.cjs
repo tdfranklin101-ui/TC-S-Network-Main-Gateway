@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 /**
  * Minimal Health Check Script
  * 

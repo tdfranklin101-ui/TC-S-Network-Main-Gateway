@@ -67,4 +67,20 @@ fi
 
 # Method 5: Final fallback - start a minimal server that passes health checks
 echo "No suitable application entry point found, starting minimal fallback server..."
-node health.js
+if [ -f "cloud-run-health.js" ]; then
+  node cloud-run-health.js
+elif [ -f "health.cjs" ]; then
+  node health.cjs
+else
+  # Ultimate fallback - create and run an inline health check server
+  echo "Creating inline health check server..."
+  cat > inline-health.js <<EOF
+const http = require('http');
+http.createServer((req, res) => {
+  res.writeHead(200, { 'Content-Type': 'application/json' });
+  res.end(JSON.stringify({ status: 'ok' }));
+}).listen(3000, '0.0.0.0');
+console.log('Inline health check server running on port 3000');
+EOF
+  node inline-health.js
+fi

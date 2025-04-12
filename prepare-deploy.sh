@@ -22,17 +22,24 @@ cp public/solar_counter.js dist/public/
 
 # Copy our dedicated health check files
 echo "Setting up health check files for Replit deployment..."
-cp health.js dist/health.js
+cp health.cjs dist/health.cjs
 cp cloud-run-health.js dist/cloud-run-health.js
 cp replit-health-check.js dist/replit-health-check.js
 cp replit-deploy.js dist/replit-deploy.js
 cp start.sh dist/start.sh
-chmod +x dist/health.js dist/cloud-run-health.js dist/replit-health-check.js dist/replit-deploy.js dist/start.sh
+chmod +x dist/health.cjs dist/cloud-run-health.js dist/replit-health-check.js dist/replit-deploy.js dist/start.sh
 
 # Ensure health check is available at multiple locations
-cp health.js dist/public/health.js
+cp health.cjs dist/public/health.cjs
 cp cloud-run-health.js dist/public/cloud-run-health.js
 cp replit-health-check.js dist/public/replit-health-check.js
+
+# Create a special health file that can be executed directly at the root
+cat > dist/health <<EOF
+#!/bin/bash
+node health.cjs
+EOF
+chmod +x dist/health
 
 # Create a main entry point for Replit
 echo "Creating main entry point for Replit deployment..."
@@ -45,14 +52,14 @@ console.log('Starting The Current-See application...');
 
 // Check if we're running as a health check
 if (process.argv.includes('--health-check')) {
-  require('./health.js');
+  require('./health.cjs');
 } else {
   // Start the health check server in a separate process
   const { fork } = require('child_process');
   
   try {
     // Fork the health check as a separate process
-    const healthProcess = fork('./health.js', [], {
+    const healthProcess = fork('./health.cjs', [], {
       detached: true,
       stdio: 'inherit'
     });
@@ -125,7 +132,7 @@ cat > dist/package.json <<EOF
     "health": "node cloud-run-health.js",
     "health:cloud": "node cloud-run-health.js",
     "health:replit": "node replit-health-check.js",
-    "health:minimal": "node health.js",
+    "health:minimal": "node health.cjs",
     "deploy": "node replit-deploy.js"
   },
   "engines": {
