@@ -70,7 +70,6 @@ a:hover {
   transition: all 0.3s;
   display: inline-block;
   margin-top: 10px;
-  margin-left: 10px;
   text-decoration: none;
   font-weight: 600;
 }
@@ -160,6 +159,14 @@ section:nth-child(even) {
 
 .cta-buttons {
   margin-top: 2rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 15px;
+}
+
+.cta-buttons a {
+  margin: 5px;
 }
 
 /* Solar Counter Styles */
