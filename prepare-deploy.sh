@@ -23,12 +23,16 @@ cp public/solar_counter.js dist/public/
 # Copy our dedicated health check files
 echo "Setting up health check files for Replit deployment..."
 cp health.js dist/health.js
-cp health-check.js dist/health-check.js
+cp cloud-run-health.js dist/cloud-run-health.js
+cp replit-health-check.js dist/replit-health-check.js
 cp replit-deploy.js dist/replit-deploy.js
-chmod +x dist/health.js dist/health-check.js dist/replit-deploy.js
+cp start.sh dist/start.sh
+chmod +x dist/health.js dist/cloud-run-health.js dist/replit-health-check.js dist/replit-deploy.js dist/start.sh
 
-# Ensure health check is also available at the root and public path
-cp health-check.js dist/public/health-check.js
+# Ensure health check is available at multiple locations
+cp health.js dist/public/health.js
+cp cloud-run-health.js dist/public/cloud-run-health.js
+cp replit-health-check.js dist/public/replit-health-check.js
 
 # Create a main entry point for Replit
 echo "Creating main entry point for Replit deployment..."
@@ -107,7 +111,7 @@ EOF
 
 chmod +x dist/start.sh
 
-# Also create a package.json in the dist directory for completeness
+# Also create a package.json in the dist directory for deployment
 echo "Creating package.json for deployment..."
 cat > dist/package.json <<EOF
 {
@@ -118,7 +122,11 @@ cat > dist/package.json <<EOF
   "main": "index.js",
   "scripts": {
     "start": "./start.sh",
-    "health": "node health-check.js"
+    "health": "node cloud-run-health.js",
+    "health:cloud": "node cloud-run-health.js",
+    "health:replit": "node replit-health-check.js",
+    "health:minimal": "node health.js",
+    "deploy": "node replit-deploy.js"
   },
   "engines": {
     "node": ">=18"
