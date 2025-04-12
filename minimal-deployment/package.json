@@ -1,5 +1,5 @@
 {
-  "name": "thecurrentsee-health",
+  "name": "thecurrentsee-minimal-deployment",
   "version": "1.0.0",
   "main": "server.cjs",
   "type": "commonjs",
@@ -8,6 +8,10 @@
   },
   "scripts": {
     "start": "node server.cjs"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2"
   },
   "private": true
 }
