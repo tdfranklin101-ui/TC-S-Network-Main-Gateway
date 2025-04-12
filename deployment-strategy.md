@@ -14,22 +14,20 @@ Both packages use pure CommonJS syntax to avoid ES Module errors that have been 
 ### Option 1: Minimal Deployment (Guaranteed Success)
 
 1. Create a new Node.js Repl on Replit
-2. Upload the files from the `minimal-deployment` directory:
-   - `server.cjs`
-   - `package.json`
-   - `.replit`
-   - `replit.nix`
-3. Deploy the application through Replit's deployment interface
-4. Connect your custom domain: `www.thecurrentsee.org`
+2. Download `minimal-deployment-fixed.zip` and extract it locally
+3. Upload all the extracted files to your new Repl (including server.js, NOT server.cjs)
+4. Deploy the application through Replit's deployment interface
+5. Connect your custom domain: `www.thecurrentsee.org`
 
 This minimal deployment provides a temporary landing page that will successfully pass all health checks. Use this if the full deployment encounters issues.
 
 ### Option 2: Full Deployment (Complete Website)
 
 1. Create a new Node.js Repl on Replit
-2. Unzip and upload `current-see-deployment.zip` contents to the Repl
-3. Deploy the application through Replit's deployment interface
-4. Connect your custom domain: `www.thecurrentsee.org`
+2. Download `full-deployment-fixed.zip` and extract it locally
+3. Upload all the extracted files to your new Repl
+4. Deploy the application through Replit's deployment interface
+5. Connect your custom domain: `www.thecurrentsee.org`
 
 If issues occur with the full deployment, fall back to the minimal deployment to ensure the domain is active while troubleshooting continues.
 
