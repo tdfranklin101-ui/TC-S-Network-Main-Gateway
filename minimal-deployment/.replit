@@ -1,9 +1,9 @@
-run = "node server.cjs"
+run = "node server.js"
 hidden = [".config", "package-lock.json"]
 
 [nix]
 channel = "stable-22_11"
 
 [deployment]
-run = ["node", "server.cjs"]
+run = ["node", "server.js"]
 deploymentTarget = "cloudrun"
