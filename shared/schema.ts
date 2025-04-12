@@ -157,3 +157,40 @@ export type NewsletterSubscription = typeof newsletterSubscriptions.$inferSelect
 
 export type InsertContactMessage = z.infer<typeof insertContactMessageSchema>;
 export type ContactMessage = typeof contactMessages.$inferSelect;
+
+// Solar Clock model for tracking global accumulation
+export const solarClock = pgTable("solar_clock", {
+  id: serial("id").primaryKey(),
+  timestamp: timestamp("timestamp").notNull().defaultNow(),
+  kwh: numeric("kwh").notNull(),
+  dollars: numeric("dollars").notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertSolarClockSchema = createInsertSchema(solarClock).pick({
+  timestamp: true,
+  kwh: true,
+  dollars: true,
+});
+
+// Waitlist registrants model
+export const registrants = pgTable("registrants", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  name: text("name"),
+  interests: text("interests"),
+  registeredAt: timestamp("registered_at").defaultNow(),
+});
+
+export const insertRegistrantSchema = createInsertSchema(registrants).pick({
+  email: true,
+  name: true,
+  interests: true,
+});
+
+// Types for new tables
+export type InsertSolarClock = z.infer<typeof insertSolarClockSchema>;
+export type SolarClock = typeof solarClock.$inferSelect;
+
+export type InsertRegistrant = z.infer<typeof insertRegistrantSchema>;
+export type Registrant = typeof registrants.$inferSelect;
