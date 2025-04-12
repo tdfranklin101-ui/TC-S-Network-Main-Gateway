@@ -450,6 +450,13 @@
         let currentSolarAccount = null;
         let distributions = [];
         let leaderboard = [];
+        
+        // Helper function to get the base API URL
+        function getBaseApiUrl() {
+            // In deployment with custom domain, use the current origin
+            // This ensures URLs work correctly both in development and production
+            return window.location.origin;
+        }
 
         // DOM elements
         const authenticatedElements = document.querySelectorAll('.authenticated-only');
@@ -478,7 +485,8 @@
         // Fetch current user
         async function fetchCurrentUser() {
             try {
-                const response = await fetch('/api/user');
+                const baseUrl = getBaseApiUrl();
+                const response = await fetch(`${baseUrl}/api/user`);
                 if (response.ok) {
                     currentUser = await response.json();
                     updateAuthStatus();
@@ -496,7 +504,8 @@
         // Fetch solar account
         async function fetchSolarAccount() {
             try {
-                const response = await fetch('/api/solar-account');
+                const baseUrl = getBaseApiUrl();
+                const response = await fetch(`${baseUrl}/api/solar-account`);
                 if (response.ok) {
                     currentSolarAccount = await response.json();
                     updateSolarAccountUI();
@@ -537,7 +546,8 @@
         // Fetch distributions
         async function fetchDistributions() {
             try {
-                const response = await fetch('/api/distributions');
+                const baseUrl = getBaseApiUrl();
+                const response = await fetch(`${baseUrl}/api/distributions`);
                 if (response.ok) {
                     distributions = await response.json();
                     updateDistributionsUI();
@@ -593,7 +603,8 @@
         // Fetch leaderboard
         async function fetchLeaderboard() {
             try {
-                const response = await fetch('/api/solar-accounts/leaderboard?limit=10');
+                const baseUrl = getBaseApiUrl();
+                const response = await fetch(`${baseUrl}/api/solar-accounts/leaderboard?limit=10`);
                 if (response.ok) {
                     leaderboard = await response.json();
                     updateLeaderboardUI();
@@ -646,7 +657,8 @@
             const errorElement = document.getElementById('login-error');
             
             try {
-                const response = await fetch('/api/login', {
+                const baseUrl = getBaseApiUrl();
+                const response = await fetch(`${baseUrl}/api/login`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -681,7 +693,8 @@
             const errorElement = document.getElementById('register-error');
             
             try {
-                const response = await fetch('/api/register', {
+                const baseUrl = getBaseApiUrl();
+                const response = await fetch(`${baseUrl}/api/register`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -718,7 +731,8 @@
         document.getElementById('logout-button').addEventListener('click', async function(e) {
             e.preventDefault();
             try {
-                await fetch('/api/logout', { method: 'POST' });
+                const baseUrl = getBaseApiUrl();
+                await fetch(`${baseUrl}/api/logout`, { method: 'POST' });
                 currentUser = null;
                 currentSolarAccount = null;
                 updateAuthStatus();
