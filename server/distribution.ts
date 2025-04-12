@@ -78,11 +78,39 @@ export function setupDistributionRoutes(app: any) {
     }
   });
 
+  // Helper function to retry database operations (similar to the one in routes.ts)
+  async function retryOperation<T>(operation: () => Promise<T>, maxRetries = 3, retryDelay = 500): Promise<T> {
+    let lastError: any;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        return await operation();
+      } catch (error) {
+        lastError = error;
+        console.warn(`Operation failed (attempt ${attempt}/${maxRetries}):`, error);
+        
+        if (attempt < maxRetries) {
+          // Wait before retrying with exponential backoff
+          await new Promise(resolve => setTimeout(resolve, retryDelay * attempt));
+        }
+      }
+    }
+    
+    // If we reach here, all retries failed
+    throw lastError;
+  }
+
   // Get public leaderboard of solar accounts (excluding anonymous accounts)
   app.get("/api/solar-accounts/leaderboard", async (req: Request, res: Response, next: NextFunction) => {
     try {
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
-      let solarAccounts = await storage.getAllSolarAccounts(limit, false);
+      
+      // Use retry mechanism for database operations
+      let solarAccounts = await retryOperation(
+        () => storage.getAllSolarAccounts(limit, false),
+        3, // Max 3 retries
+        300 // 300ms delay, increasing with each retry
+      );
       
       // Calculate accurate SOLAR balances based on join date (1 SOLAR per day + initial 0.01918)
       const today = new Date();
@@ -109,19 +137,44 @@ export function setupDistributionRoutes(app: any) {
         };
       });
       
+      // Set cache headers to improve performance
+      res.header('Cache-Control', 'max-age=10'); // Cache for 10 seconds
+      res.header('Access-Control-Allow-Origin', '*');
+      
       res.json(solarAccounts);
     } catch (error) {
-      next(error);
+      console.error("Error getting solar accounts leaderboard:", error);
+      res.status(500).json({ 
+        error: "Failed to fetch solar accounts", 
+        message: "Server encountered a temporary database issue. Please try again.",
+        retry: true
+      });
     }
   });
   
   // Get total member count for display on homepage
   app.get("/api/member-count", async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const solarAccounts = await storage.getAllSolarAccounts(1000, true); // Get a large number to get total count
+      // Use retry mechanism for member count as well
+      const solarAccounts = await retryOperation(
+        () => storage.getAllSolarAccounts(1000, true),
+        3, // Max 3 retries
+        300 // 300ms delay, increasing with each retry
+      );
+      
+      // Set cache headers to improve performance
+      res.header('Cache-Control', 'max-age=10'); // Cache for 10 seconds
+      res.header('Access-Control-Allow-Origin', '*');
+      
       res.json({ count: solarAccounts.length });
     } catch (error) {
-      next(error);
+      console.error("Error getting member count:", error);
+      res.status(500).json({ 
+        error: "Failed to fetch member count", 
+        count: 1, // Provide at least the default value (Terry D. Franklin)
+        estimated: true,
+        message: "Server encountered a database issue. Using estimated count."
+      });
     }
   });
 

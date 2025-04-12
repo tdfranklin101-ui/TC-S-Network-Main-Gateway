@@ -351,11 +351,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Helper function to retry database operations
+  async function retryOperation<T>(operation: () => Promise<T>, maxRetries = 3, retryDelay = 500): Promise<T> {
+    let lastError: any;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        return await operation();
+      } catch (error) {
+        lastError = error;
+        console.warn(`Operation failed (attempt ${attempt}/${maxRetries}):`, error);
+        
+        if (attempt < maxRetries) {
+          // Wait before retrying with exponential backoff
+          await new Promise(resolve => setTimeout(resolve, retryDelay * attempt));
+        }
+      }
+    }
+    
+    // If we reach here, all retries failed
+    throw lastError;
+  }
+
   // Add a simplified endpoint with minimal processing
   app.get("/api/members-data", async (req, res) => {
     try {
-      // Use the storage interface but with a simplified approach
-      const accounts = await storage.getAllSolarAccounts(100, false);
+      // Use the storage interface with retry mechanism
+      const accounts = await retryOperation(
+        () => storage.getAllSolarAccounts(100, false),
+        3, // Max 3 retries
+        300 // 300ms delay, increasing with each retry
+      );
       
       // Format the accounts data
       const formattedAccounts = accounts.map(account => ({
@@ -365,11 +391,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         joinedDate: account.joinedDate
       }));
       
-      // Set CORS headers
+      // Set CORS headers with longer cache times for better performance
       res.header('Access-Control-Allow-Origin', '*');
       res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
       res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-      res.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.header('Cache-Control', 'max-age=10'); // Cache for 10 seconds
       
       // Send the response
       res.json({
@@ -378,8 +404,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timestamp: new Date().toISOString()
       });
     } catch (error) {
-      console.error("Error generating minimal members data:", error);
-      res.status(500).json({ error: "Failed to fetch members" });
+      console.error("Error generating minimal members data after retries:", error);
+      res.status(500).json({ 
+        error: "Failed to fetch members", 
+        message: "Server encountered a temporary database issue. Please try again.",
+        retry: true
+      });
     }
   });
   
