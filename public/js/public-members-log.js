@@ -86,37 +86,58 @@ class PublicMembersLog {
         
         // For JS endpoint, use script injection method
         if (endpoint === '/api/members.js') {
-          return new Promise((resolve, reject) => {
-            const script = document.createElement('script');
-            script.id = 'members-data-script';
+          // Handle JS endpoint separately with a flag for success/failure
+          let jsEndpointSucceeded = false;
+          
+          try {
+            // We need to use a Promise but can't use continue inside its catch,
+            // so we'll await it and catch errors at this level
+            await new Promise((resolve, reject) => {
+              const script = document.createElement('script');
+              script.id = 'members-data-script';
+              
+              // Define the callback function that the script will call
+              window.updateMembers = (data) => {
+                if (data && data.members) {
+                  console.log(`Retrieved ${data.members.length} members from JS endpoint`);
+                  this.updateUI(data.members);
+                  jsEndpointSucceeded = true;
+                  resolve();
+                } else {
+                  reject(new Error('Invalid data from JS endpoint'));
+                }
+                // Clean up
+                document.getElementById('members-data-script').remove();
+                delete window.updateMembers;
+              };
+              
+              script.onerror = () => {
+                reject(new Error('Failed to load members JS'));
+                document.getElementById('members-data-script').remove();
+                delete window.updateMembers;
+              };
+              
+              // Set a timeout to reject if the script doesn't load or call the callback
+              setTimeout(() => {
+                if (document.getElementById('members-data-script')) {
+                  reject(new Error('JS endpoint timed out'));
+                  document.getElementById('members-data-script').remove();
+                  delete window.updateMembers;
+                }
+              }, 5000);
+              
+              script.src = `${endpoint}?callback=updateMembers&_=${timestamp}`;
+              document.head.appendChild(script);
+            });
             
-            // Define the callback function that the script will call
-            window.updateMembers = (data) => {
-              if (data && data.members) {
-                console.log(`Retrieved ${data.members.length} members from JS endpoint`);
-                this.updateUI(data.members);
-                resolve();
-              } else {
-                reject(new Error('Invalid data from JS endpoint'));
-              }
-              // Clean up
-              document.getElementById('members-data-script').remove();
-              delete window.updateMembers;
-            };
-            
-            script.onerror = () => {
-              reject(new Error('Failed to load members JS'));
-              document.getElementById('members-data-script').remove();
-              delete window.updateMembers;
-            };
-            
-            script.src = `${endpoint}?callback=updateMembers&_=${timestamp}`;
-            document.head.appendChild(script);
-          }).catch(error => {
+            // If we reached here and succeeded, return from the outer function
+            if (jsEndpointSucceeded) {
+              return;
+            }
+          } catch (error) {
             console.error('JS endpoint error:', error);
-            // Continue to the next endpoint
-            continue;
-          });
+            // Continue to the next endpoint (no need for continue here since we're at the function level)
+          }
         }
         
         let url = `${endpoint}?_=${timestamp}`;
