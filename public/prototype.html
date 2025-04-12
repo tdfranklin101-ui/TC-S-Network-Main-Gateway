@@ -749,7 +749,9 @@
                 }
                 
                 // Fetch the actual solar accounts from our API
-                const response = await fetch('/api/solar-accounts/leaderboard');
+                // Use absolute URL to ensure it works in both deployed and development environments
+                const apiUrl = window.location.origin + '/api/solar-accounts/leaderboard';
+                const response = await fetch(apiUrl);
                 
                 if (!response.ok) {
                     throw new Error('Failed to fetch users');
@@ -792,7 +794,9 @@
         // Function to update the member count
         async function updateMemberCount() {
             try {
-                const response = await fetch('/api/member-count');
+                // Use absolute URL to ensure it works in both deployed and development environments
+                const apiUrl = window.location.origin + '/api/member-count';
+                const response = await fetch(apiUrl);
                 if (response.ok) {
                     const data = await response.json();
                     const memberCountElement = document.getElementById('member-count');
