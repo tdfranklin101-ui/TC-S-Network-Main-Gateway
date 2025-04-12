@@ -752,8 +752,17 @@
                 // Use absolute URL to ensure it works in both deployed and development environments
                 const apiUrl = window.location.origin + '/api/solar-accounts/leaderboard';
                 console.log('Fetching members from URL:', apiUrl);
+                
+                let data;
                 try {
-                    const response = await fetch(apiUrl);
+                    const response = await fetch(apiUrl, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json'
+                        },
+                        // Add cache control to prevent caching issues
+                        cache: 'no-cache'
+                    });
                     console.log('API response status:', response.status);
                     
                     if (!response.ok) {
@@ -762,12 +771,13 @@
                         console.error('Error response body:', errorText);
                         throw new Error('Failed to fetch users: ' + response.status);
                     }
+                    
+                    data = await response.json();
+                    console.log('Received data:', data);
                 } catch (fetchError) {
                     console.error('Fetch error:', fetchError);
                     throw fetchError;
                 }
-                
-                const data = await response.json();
                 
                 // Map the API data to our expected format
                 allUsers = data.map(account => ({
@@ -806,13 +816,29 @@
             try {
                 // Use absolute URL to ensure it works in both deployed and development environments
                 const apiUrl = window.location.origin + '/api/member-count';
-                const response = await fetch(apiUrl);
+                console.log('Fetching member count from URL:', apiUrl);
+                
+                const response = await fetch(apiUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    },
+                    cache: 'no-cache'
+                });
+                
+                console.log('Member count API response status:', response.status);
+                
                 if (response.ok) {
                     const data = await response.json();
+                    console.log('Received member count data:', data);
                     const memberCountElement = document.getElementById('member-count');
                     if (memberCountElement) {
                         memberCountElement.textContent = data.count;
                     }
+                } else {
+                    console.error('Failed to fetch member count with status:', response.status);
+                    const errorText = await response.text();
+                    console.error('Error response body:', errorText);
                 }
             } catch (error) {
                 console.error('Error fetching member count:', error);
