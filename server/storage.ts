@@ -127,7 +127,29 @@ export class DatabaseStorage implements IStorage {
         console.warn("Database not available, cannot create user");
         throw new Error("Database connection unavailable");
       }
-      const [user] = await db.insert(users).values(insertUser).returning();
+      
+      console.log("Creating user with data:", { ...insertUser, password: "[REDACTED]" });
+      
+      // Explicitly use SQL to get the sequence working correctly
+      const result = await db.execute(sql`
+        INSERT INTO users (username, password, email, first_name, last_name, created_at) 
+        VALUES (
+          ${insertUser.username}, 
+          ${insertUser.password}, 
+          ${insertUser.email || null}, 
+          ${insertUser.firstName || null}, 
+          ${insertUser.lastName || null},
+          ${new Date()}
+        ) 
+        RETURNING *
+      `);
+      
+      if (!result || !result.rows || result.rows.length === 0) {
+        throw new Error("Failed to create user - no result returned");
+      }
+      
+      const user = result.rows[0] as User;
+      console.log("User created successfully with ID:", user.id);
       return user;
     } catch (error) {
       console.error("Error creating user:", error);
@@ -234,18 +256,52 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createSolarAccount(account: Omit<InsertSolarAccount, 'accountNumber'>): Promise<SolarAccount> {
-    // Generate a unique account number
-    const accountNumber = this.generateAccountNumber();
-    
-    const [solarAccount] = await db
-      .insert(solarAccounts)
-      .values({
-        ...account,
-        accountNumber,
-      })
-      .returning();
-    
-    return solarAccount;
+    try {
+      if (!db) {
+        console.warn("Database not available, cannot create solar account");
+        throw new Error("Database connection unavailable");
+      }
+      
+      // Generate a unique account number
+      const accountNumber = this.generateAccountNumber();
+      console.log("Creating solar account with account number:", accountNumber, "for user ID:", account.userId);
+      
+      // Use explicit SQL approach to ensure sequence advances correctly
+      const result = await db.execute(sql`
+        INSERT INTO solar_accounts (
+          user_id, 
+          account_number, 
+          is_anonymous, 
+          display_name, 
+          total_solar, 
+          total_kwh, 
+          total_dollars, 
+          joined_date
+        ) 
+        VALUES (
+          ${account.userId}, 
+          ${accountNumber}, 
+          ${account.isAnonymous}, 
+          ${account.displayName},
+          ${account.totalSolar || 0},
+          ${account.totalKwh || 0},
+          ${account.totalDollars || 0},
+          ${account.joinedDate || new Date()}
+        ) 
+        RETURNING *
+      `);
+      
+      if (!result || !result.rows || result.rows.length === 0) {
+        throw new Error("Failed to create solar account - no result returned");
+      }
+      
+      const solarAccount = result.rows[0] as SolarAccount;
+      console.log("Solar account created successfully with ID:", solarAccount.id);
+      return solarAccount;
+    } catch (error) {
+      console.error("Error creating solar account:", error);
+      throw error;
+    }
   }
 
   async updateSolarAccountTotals(id: number, solarAmount: number, kwhAmount: number, dollarValue: number): Promise<SolarAccount> {
