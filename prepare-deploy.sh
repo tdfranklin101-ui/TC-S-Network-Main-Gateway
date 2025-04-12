@@ -20,13 +20,15 @@ cp -r public/js/* dist/public/js/
 echo "Ensuring solar_counter.js is available at the root..."
 cp public/solar_counter.js dist/public/
 
-# Copy our dedicated minimal health check file
-echo "Setting up minimal health check for Replit deployment..."
+# Copy our dedicated health check files
+echo "Setting up health check files for Replit deployment..."
 cp health.js dist/health.js
-chmod +x dist/health.js
+cp health-check.js dist/health-check.js
+cp replit-deploy.js dist/replit-deploy.js
+chmod +x dist/health.js dist/health-check.js dist/replit-deploy.js
 
-# Ensure it's also available at the root of the deployed application
-cp health.js dist/public/health.js
+# Ensure health check is also available at the root and public path
+cp health-check.js dist/public/health-check.js
 
 # Create a main entry point for Replit
 echo "Creating main entry point for Replit deployment..."
@@ -74,14 +76,55 @@ EOF
 # Make the entry point executable
 chmod +x dist/index.cjs
 
-# Create a special "start" script for Replit
+# Create a special "start" script for Replit deployment
 echo "Creating start script..."
 cat > dist/start.sh <<EOF
 #!/bin/bash
-NODE_ENV=production node index.cjs
+# Start both the health check server and main application
+NODE_ENV=production
+
+# First try the replit-deploy.js approach (most reliable)
+if [ -f "replit-deploy.js" ]; then
+  echo "Starting with replit-deploy.js..."
+  node replit-deploy.js
+elif [ -f "health-check.js" ]; then
+  # Start health check in background
+  echo "Starting health-check.js in background..."
+  node health-check.js &
+  
+  # Wait a moment for health check to start
+  sleep 2
+  
+  # Start main application
+  echo "Starting main application..."
+  node index.js
+else
+  # Fallback to older approach
+  echo "Falling back to index.cjs..."
+  node index.cjs
+fi
 EOF
 
 chmod +x dist/start.sh
+
+# Also create a package.json in the dist directory for completeness
+echo "Creating package.json for deployment..."
+cat > dist/package.json <<EOF
+{
+  "name": "thecurrentsee-app",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "The Current-See Application",
+  "main": "index.js",
+  "scripts": {
+    "start": "./start.sh",
+    "health": "node health-check.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
+EOF
 
 # Create a simple server.js fallback for additional reliability
 echo "Creating fallback server..."
