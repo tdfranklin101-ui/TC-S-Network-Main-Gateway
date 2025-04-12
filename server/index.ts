@@ -101,6 +101,16 @@ import './template-to-static';
 console.log('Static page generation complete');
 
 (async () => {
+  // Run schema push to ensure all tables exist
+  try {
+    console.log('Ensuring database schema is up to date...');
+    const createTables = (await import('./push-schema')).createTables;
+    await createTables();
+    console.log('Database schema updated successfully');
+  } catch (schemaError) {
+    console.error('Error updating database schema:', schemaError);
+  }
+
   // Run data migrations from CSV to database
   try {
     await runMigrations();
