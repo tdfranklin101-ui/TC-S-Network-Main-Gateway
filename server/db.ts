@@ -11,6 +11,9 @@ let isDatabaseAvailable = false;
 // Basic health check query
 const HEALTH_CHECK_QUERY = 'SELECT 1 as health';
 
+// We'll populate this later after initialization
+let dbPool: any = null;
+
 /**
  * Retry function for database operations
  */
@@ -39,10 +42,11 @@ export async function retryDbOperation<T>(operation: () => Promise<T>, maxRetrie
  * Performs a health check on the database connection
  */
 export async function checkDatabaseHealth(): Promise<boolean> {
-  if (!pool) return false;
+  // If pool hasn't been assigned yet or is null, database is not available
+  if (!dbPool) return false;
   
   try {
-    const client = await pool.connect();
+    const client = await dbPool.connect();
     try {
       await client.query(HEALTH_CHECK_QUERY);
       isDatabaseAvailable = true;
@@ -117,6 +121,9 @@ function initializeDatabase() {
 
 // Initialize database connection
 const { pool, db } = initializeDatabase();
+
+// Assign the pool to our global variable for health checks
+dbPool = pool;
 
 // Schedule periodic health checks
 setInterval(async () => {

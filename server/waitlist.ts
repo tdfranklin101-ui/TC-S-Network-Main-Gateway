@@ -13,7 +13,7 @@ export function setupWaitlistRoutes(app: any) {
   app.get('/registrants/count', getRegistrantCount);
   
   // Add a database health check endpoint (internal use only)
-  app.get('/api/db-health', async (req, res) => {
+  app.get('/api/db-health', async (req: Request, res: Response) => {
     const isHealthy = await checkDatabaseHealth();
     res.json({ 
       healthy: isHealthy, 
