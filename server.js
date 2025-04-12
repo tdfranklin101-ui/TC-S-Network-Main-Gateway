@@ -1,5 +1,5 @@
 /**
- * Replit Cloud Run Deployment Server
+ * Replit Cloud Run Deployment Server (CommonJS version)
  * 
  * This file directly addresses the deployment issues by:
  * 1. Listening on port 5000 (Replit's expected port for this application)
@@ -7,14 +7,10 @@
  * 3. Implementing a proper health check for Cloud Run
  */
 
-// Use ES modules since our package.json has "type": "module"
-import http from 'http';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Use CommonJS for compatibility
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
 
 // Constants
 const PORT = 5000;

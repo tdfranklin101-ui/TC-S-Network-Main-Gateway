@@ -1,42 +1,21 @@
+#!/usr/bin/env node
+
 /**
- * Minimal Health Check Script
- * 
- * This is a dedicated health check script for Replit deployments.
- * It's intentionally bare-bones with no dependencies to ensure reliability.
+ * Standalone Health Check for Replit Deployments
+ * This is a minimal CommonJS file with NO ES module syntax
  */
 
 const http = require('http');
 
-// Use port 5000 as required by this application
-const PORT = 5000;
-const HOST = '0.0.0.0';
-
-console.log(`Starting minimal health check server on port ${PORT}...`);
-
 const server = http.createServer((req, res) => {
-  // Log request for debugging
-  console.log(`[HEALTH CHECK] ${req.method} ${req.url}`);
+  console.log(`${new Date().toISOString()} - Request received at ${req.url}`);
   
-  // Respond to ALL paths with 200 OK
-  res.writeHead(200, {
-    'Content-Type': 'application/json',
-    'Cache-Control': 'no-cache, no-store',
-    'Connection': 'close'
-  });
-  
-  res.end(JSON.stringify({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    path: req.url
-  }));
+  // Always respond with 200 OK
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
+  res.end('OK');
 });
 
-// Start server and handle errors gracefully
-server.listen(PORT, HOST, () => {
-  console.log(`Health check server running at http://${HOST}:${PORT}/`);
-});
-
-// Handle potential errors
-server.on('error', (err) => {
-  console.error(`Server error: ${err.message}`);
+const PORT = process.env.PORT || 5000;
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`${new Date().toISOString()} - Health check server running on port ${PORT}`);
 });
