@@ -31,46 +31,156 @@ class PublicMembersLog {
   }
   
   async fetchMembers() {
-    try {
-      console.log('Fetching members from leaderboard API...');
-      // Add cache-busting parameter and set cache to no-store to ensure fresh data
-      const timestamp = new Date().getTime();
-      const response = await fetch(`/api/solar-accounts/leaderboard?limit=5&_=${timestamp}`, {
-        cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        }
-      });
-      console.log('API response status:', response.status);
-      
-      if (!response.ok) {
-        console.error('Response not OK:', response.status, response.statusText);
-        throw new Error(`Failed to fetch public members: ${response.status} ${response.statusText}`);
+    // Define all possible endpoints to try, in order of preference
+    const endpoints = [
+      '/api/solar-accounts/leaderboard',
+      '/api/members.json',
+      '/api/members-data',
+      '/public-api/members',
+      '/api/members.js',
+      '/embedded-members'
+    ];
+    
+    const timestamp = new Date().getTime();
+    const requestOptions = {
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
       }
-      
-      const members = await response.json();
-      console.log(`Members data received (${members.length} members):`, members);
-      
-      // Get the member count as well to make sure it's consistent
-      const countResponse = await fetch(`/api/member-count?_=${timestamp}`, {
-        cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
+    };
+    
+    // Try each endpoint in sequence until one works
+    for (let i = 0; i < endpoints.length; i++) {
+      const endpoint = endpoints[i];
+      try {
+        console.log(`Trying member endpoint ${i+1}/${endpoints.length}: ${endpoint}`);
+        
+        // Handle special case for embedded members HTML endpoint
+        if (endpoint === '/embedded-members') {
+          // This is our last resort - redirect to the embedded page
+          const iframe = document.createElement('iframe');
+          iframe.style.display = 'none';
+          iframe.onload = () => {
+            try {
+              // Try to extract the member data from the iframe
+              if (iframe.contentWindow && iframe.contentWindow.memberData) {
+                const members = iframe.contentWindow.memberData.members;
+                console.log(`Retrieved ${members.length} members from embedded HTML`);
+                this.updateUI(members);
+                // Clean up
+                document.body.removeChild(iframe);
+              } else {
+                throw new Error('No member data in iframe');
+              }
+            } catch (iframeError) {
+              console.error('Error accessing iframe data:', iframeError);
+              document.body.removeChild(iframe);
+              this.showError();
+            }
+          };
+          iframe.src = endpoint;
+          document.body.appendChild(iframe);
+          return;
         }
-      });
-      
+        
+        // For JS endpoint, use script injection method
+        if (endpoint === '/api/members.js') {
+          return new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.id = 'members-data-script';
+            
+            // Define the callback function that the script will call
+            window.updateMembers = (data) => {
+              if (data && data.members) {
+                console.log(`Retrieved ${data.members.length} members from JS endpoint`);
+                this.updateUI(data.members);
+                resolve();
+              } else {
+                reject(new Error('Invalid data from JS endpoint'));
+              }
+              // Clean up
+              document.getElementById('members-data-script').remove();
+              delete window.updateMembers;
+            };
+            
+            script.onerror = () => {
+              reject(new Error('Failed to load members JS'));
+              document.getElementById('members-data-script').remove();
+              delete window.updateMembers;
+            };
+            
+            script.src = `${endpoint}?callback=updateMembers&_=${timestamp}`;
+            document.head.appendChild(script);
+          }).catch(error => {
+            console.error('JS endpoint error:', error);
+            // Continue to the next endpoint
+            continue;
+          });
+        }
+        
+        let url = `${endpoint}?_=${timestamp}`;
+        if (endpoint.includes('leaderboard')) {
+          url += '&limit=5';
+        }
+        
+        const response = await fetch(url, requestOptions);
+        
+        if (!response.ok) {
+          console.error(`Response not OK for ${endpoint}:`, response.status, response.statusText);
+          // Try next endpoint
+          continue;
+        }
+        
+        // Parse the response based on content type
+        const contentType = response.headers.get('content-type');
+        let data;
+        
+        if (contentType && contentType.includes('application/json')) {
+          data = await response.json();
+          
+          // Handle different response formats
+          if (Array.isArray(data)) {
+            console.log(`Received array of ${data.length} members from ${endpoint}`);
+            this.updateUI(data);
+            return;
+          } else if (data.members && Array.isArray(data.members)) {
+            console.log(`Received ${data.members.length} members from ${endpoint}`);
+            this.updateUI(data.members);
+            return;
+          } else {
+            console.error(`Unexpected data format from ${endpoint}:`, data);
+            // Try next endpoint
+            continue;
+          }
+        } else {
+          console.error(`Unexpected content type from ${endpoint}:`, contentType);
+          // Try next endpoint
+          continue;
+        }
+      } catch (error) {
+        console.error(`Error with endpoint ${endpoint}:`, error);
+        // Try next endpoint
+        continue;
+      }
+    }
+    
+    // If we get here, all endpoints failed
+    console.error('All member endpoints failed');
+    
+    // Try to get the member count as a last resort
+    try {
+      const countResponse = await fetch(`/api/member-count?_=${timestamp}`, requestOptions);
       if (countResponse.ok) {
         const countData = await countResponse.json();
         console.log(`Total member count from API: ${countData.count}`);
       }
-      
-      this.updateUI(members);
-    } catch (error) {
-      console.error('Error fetching members:', error);
-      this.showError();
+    } catch (countError) {
+      console.error('Error fetching member count:', countError);
     }
+    
+    this.showError();
+  }
   }
   
   updateUI(members) {

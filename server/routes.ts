@@ -13,6 +13,8 @@ import path from "path";
 import { parse } from "csv";
 import { generatePage } from "./template-processor";
 import * as solarConstants from "./solar-constants";
+import cors from "cors";
+import { db } from "./db";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Add CORS headers middleware with more comprehensive configuration
@@ -250,10 +252,123 @@ ${currentDate.toISOString()},${totalKwh},${totalDollars}`;
       </html>
       `;
       
+      // Ensure proper CORS headers
+      res.header('Access-Control-Allow-Origin', '*');
+      res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+      res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+      res.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+      
       res.send(htmlContent);
     } catch (error) {
       console.error("Error generating embedded members page:", error);
       res.status(500).send("Error loading member data");
+    }
+  });
+  
+  // Add JSON endpoint for members
+  app.get("/api/members.json", async (req, res) => {
+    try {
+      // Get the solar accounts (members)
+      const accounts = await storage.getAllSolarAccounts(100, false);
+      
+      // Format the accounts data
+      const formattedAccounts = accounts.map(account => ({
+        id: account.id,
+        displayName: account.displayName || account.accountNumber,
+        solarBalance: parseFloat(account.totalSolar).toFixed(5),
+        joinedDate: account.joinedDate
+      }));
+      
+      // Set appropriate headers for cross-origin access
+      res.header('Access-Control-Allow-Origin', '*');
+      res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+      res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+      res.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.header('Content-Type', 'application/json');
+      
+      // Send the response
+      res.json({
+        members: formattedAccounts,
+        count: formattedAccounts.length,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Error generating members JSON:", error);
+      res.status(500).json({ error: "Failed to fetch members" });
+    }
+  });
+  
+  // Add JS endpoint for members (JSONP style)
+  app.get("/api/members.js", async (req, res) => {
+    try {
+      // Get the solar accounts (members)
+      const accounts = await storage.getAllSolarAccounts(100, false);
+      
+      // Format the accounts data
+      const formattedAccounts = accounts.map(account => ({
+        id: account.id,
+        displayName: account.displayName || account.accountNumber,
+        solarBalance: parseFloat(account.totalSolar).toFixed(5),
+        joinedDate: account.joinedDate
+      }));
+      
+      // Get the callback name from query or use default
+      const callback = req.query.callback || 'updateMembers';
+      
+      // Create data object
+      const data = {
+        members: formattedAccounts,
+        count: formattedAccounts.length,
+        timestamp: new Date().toISOString()
+      };
+      
+      // Create JavaScript content that calls the callback function
+      const jsContent = `${callback}(${JSON.stringify(data)});`;
+      
+      // Set appropriate headers
+      res.header('Access-Control-Allow-Origin', '*');
+      res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+      res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+      res.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.header('Content-Type', 'application/javascript');
+      
+      // Send the response
+      res.send(jsContent);
+    } catch (error) {
+      console.error("Error generating members JS:", error);
+      res.status(500).send(`console.error("Failed to load members data");`);
+    }
+  });
+  
+  // Add a simplified endpoint with minimal processing
+  app.get("/api/members-data", async (req, res) => {
+    try {
+      // Use the storage interface but with a simplified approach
+      const accounts = await storage.getAllSolarAccounts(100, false);
+      
+      // Format the accounts data
+      const formattedAccounts = accounts.map(account => ({
+        id: account.id,
+        displayName: account.displayName || account.accountNumber,
+        solarBalance: parseFloat(account.totalSolar).toFixed(5),
+        joinedDate: account.joinedDate
+      }));
+      
+      // Set CORS headers
+      res.header('Access-Control-Allow-Origin', '*');
+      res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+      res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+      res.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+      
+      // Send the response
+      res.json({
+        members: formattedAccounts,
+        count: formattedAccounts.length,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Error generating minimal members data:", error);
+      res.status(500).json({ error: "Failed to fetch members" });
     }
   });
   
