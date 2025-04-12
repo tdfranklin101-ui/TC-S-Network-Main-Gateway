@@ -1,0 +1,12 @@
+{
+  "name": "minimal-health-check",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "scripts": {
+    "start": "node index.js"
+  }
+}
