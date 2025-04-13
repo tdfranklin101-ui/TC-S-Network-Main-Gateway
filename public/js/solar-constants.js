@@ -1,83 +1,121 @@
 /**
- * Solar Generation Constants (Client-Side)
- * 
- * This is the client-side mirror of server/solar-constants.ts
- * Used by the Solar Counter to ensure consistent calculations 
- * between server and client.
- * 
- * Updated based on the formulas provided in the Python code.
+ * Solar Constants - Global configuration for The Current-See platform
  */
 
-// Constants
-const TOTAL_SOLAR_KWH_PER_DAY = 4.176e+15;  // Total solar energy hitting Earth daily in kWh
-const MONETIZED_PERCENTAGE = 0.01;          // 1% of total solar energy is monetized
-const GLOBAL_POPULATION = 8.5e+9;           // Global population estimate
-const TEST_GROUP_POPULATION = 1000;         // Initial test group size
-const USD_PER_SOLAR = 136000;               // Value of 1 SOLAR unit in USD
+const SOLAR_CONSTANTS = {
+  // Solar energy hitting Earth daily in kWh
+  TOTAL_SOLAR_KWH_PER_DAY: 4.176e+15,
+  
+  // Percentage of solar energy monetized
+  MONETIZED_PERCENTAGE: 0.01,
+  
+  // Global population estimate
+  GLOBAL_POPULATION: 8.5e+9,
+  
+  // Initial test group size
+  TEST_GROUP_POPULATION: 1000,
+  
+  // Value of 1 SOLAR unit in USD
+  USD_PER_SOLAR: 136000,
+  
+  // Base date for all calculations
+  BASE_DATE: new Date('2025-04-07T00:00:00Z'),
+  
+  // Daily SOLAR distribution per person
+  DAILY_SOLAR_DISTRIBUTION: 1,
+  
+  // Calculated values (will be filled in)
+  monetizedKwh: 0,
+  solarPerPersonKwh: 0,
+  mkwhPerDay: 0,
+  KWH_PER_SECOND: 0,
+  DAILY_KWH_DISTRIBUTION: 0,
+  DAILY_USD_DISTRIBUTION: 0
+};
 
-// Calculate monetized solar
-const monetizedKwh = TOTAL_SOLAR_KWH_PER_DAY * MONETIZED_PERCENTAGE;
-const solarPerPersonKwh = monetizedKwh / GLOBAL_POPULATION;
-const mkwhPerDay = monetizedKwh / 1e6;      // MkWh = Million kWh
-
-// The rate of solar generation per second (for the counter)
-const KWH_PER_SECOND = mkwhPerDay * 1e6 / (24 * 60 * 60);
-
-// Daily distribution amount per person (1 SOLAR per day)
-const DAILY_SOLAR_DISTRIBUTION = 1;
-const DAILY_KWH_DISTRIBUTION = solarPerPersonKwh;
-const DAILY_USD_DISTRIBUTION = DAILY_SOLAR_DISTRIBUTION * USD_PER_SOLAR;
-
-// Calculate the ledger data for today
-function getLedgerData() {
-  const today = new Date().toISOString().split('T')[0];
-  return {
-    date: today,
-    mkwh_generated: mkwhPerDay,
-    solar_per_person_kwh: solarPerPersonKwh,
-    solar_value_usd: USD_PER_SOLAR,
-    total_solars_issued: GLOBAL_POPULATION,
-    total_solars_distributed: TEST_GROUP_POPULATION,
-    total_solars_reserved: GLOBAL_POPULATION - TEST_GROUP_POPULATION,
-    registrants: [
-      {
-        name: 'Terry Franklin',
-        email: 'hello@thecurrentsee.org',
-        date_registered: '2025-04-10',
-        solars_received: 1
-      },
-      {
-        name: 'Demo Test',
-        email: 'demo@example.com',
-        date_registered: '2025-04-10',
-        solars_received: 1
-      }
-    ]
-  };
+// Calculate derived constants
+function initializeSolarConstants() {
+  // Total daily solar energy monetized in kWh
+  SOLAR_CONSTANTS.monetizedKwh = 
+    SOLAR_CONSTANTS.TOTAL_SOLAR_KWH_PER_DAY * 
+    SOLAR_CONSTANTS.MONETIZED_PERCENTAGE;
+  
+  // Per person share of monetized daily solar energy in kWh
+  SOLAR_CONSTANTS.solarPerPersonKwh = 
+    SOLAR_CONSTANTS.monetizedKwh / 
+    SOLAR_CONSTANTS.GLOBAL_POPULATION;
+  
+  // Daily solar energy in million kWh (MkWh)
+  SOLAR_CONSTANTS.mkwhPerDay = 
+    SOLAR_CONSTANTS.monetizedKwh / 1e6;
+  
+  // Solar energy production rate in kWh per second
+  SOLAR_CONSTANTS.KWH_PER_SECOND = 
+    SOLAR_CONSTANTS.mkwhPerDay * 1e6 / (24 * 60 * 60);
+  
+  // Daily kWh distribution per person (same as solarPerPersonKwh)
+  SOLAR_CONSTANTS.DAILY_KWH_DISTRIBUTION = 
+    SOLAR_CONSTANTS.solarPerPersonKwh;
+  
+  // Daily USD value distribution per person
+  SOLAR_CONSTANTS.DAILY_USD_DISTRIBUTION = 
+    SOLAR_CONSTANTS.DAILY_SOLAR_DISTRIBUTION * 
+    SOLAR_CONSTANTS.USD_PER_SOLAR;
 }
 
-// Export as global SolarConstants object
-window.SolarConstants = {
-  // Core constants
-  TOTAL_SOLAR_KWH_PER_DAY,
-  MONETIZED_PERCENTAGE,
-  GLOBAL_POPULATION,
-  TEST_GROUP_POPULATION,
-  USD_PER_SOLAR,
+// Initialize on load
+initializeSolarConstants();
+
+// Utility functions to calculate solar amounts
+const SolarCalculator = {
+  /**
+   * Calculate total SOLAR accumulated since a given date
+   * @param {Date|string} joinDate - The date to calculate from
+   * @returns {number} - Total SOLAR units
+   */
+  calculateTotalSolar: function(joinDate) {
+    const startDate = joinDate instanceof Date ? 
+      joinDate : new Date(joinDate);
+    
+    if (isNaN(startDate.getTime())) {
+      console.error('Invalid date provided to calculateTotalSolar:', joinDate);
+      return 0;
+    }
+    
+    // Don't allow dates before the base date
+    if (startDate < SOLAR_CONSTANTS.BASE_DATE) {
+      startDate = new Date(SOLAR_CONSTANTS.BASE_DATE);
+    }
+    
+    const now = new Date();
+    const millisDiff = now - startDate;
+    const daysDiff = millisDiff / (1000 * 60 * 60 * 24);
+    
+    // Daily distribution is 1 SOLAR per day
+    return SOLAR_CONSTANTS.DAILY_SOLAR_DISTRIBUTION * daysDiff;
+  },
   
-  // Calculated values
-  monetizedKwh,
-  solarPerPersonKwh,
-  mkwhPerDay,
+  /**
+   * Calculate total kWh accumulated since a given date
+   * @param {Date|string} joinDate - The date to calculate from
+   * @returns {number} - Total kWh
+   */
+  calculateTotalKwh: function(joinDate) {
+    const totalSolar = this.calculateTotalSolar(joinDate);
+    return totalSolar * SOLAR_CONSTANTS.solarPerPersonKwh * 365;
+  },
   
-  // Rate constants for real-time calculations
-  KWH_PER_SECOND,
-  
-  // Daily distribution amounts
-  DAILY_SOLAR_DISTRIBUTION,
-  DAILY_KWH_DISTRIBUTION,
-  DAILY_USD_DISTRIBUTION,
-  
-  // Helper function
-  getLedgerData
+  /**
+   * Calculate total monetary value accumulated since a given date
+   * @param {Date|string} joinDate - The date to calculate from
+   * @returns {number} - Total value in USD
+   */
+  calculateTotalValue: function(joinDate) {
+    const totalSolar = this.calculateTotalSolar(joinDate);
+    return totalSolar * SOLAR_CONSTANTS.USD_PER_SOLAR;
+  }
 };
+
+// Make available globally
+window.SOLAR_CONSTANTS = SOLAR_CONSTANTS;
+window.SolarCalculator = SolarCalculator;
