@@ -83,6 +83,16 @@ const members = [
     totalDollars: 408000,
     isAnonymous: false,
     lastDistributionDate: '2025-04-12' // Track last distribution date
+  },
+  {
+    id: 2,
+    username: 'j.franklin',
+    name: 'JF',
+    joinedDate: '2025-04-11',
+    totalSolar: 2.00,
+    totalDollars: 272000,
+    isAnonymous: false,
+    lastDistributionDate: '2025-04-12' // Track last distribution date
   }
 ];
 
@@ -511,6 +521,12 @@ function generateLandingPage() {
           <td class="member-name">Terry D. Franklin</td>
           <td>April 10, 2025</td>
           <td>3.00</td>
+        </tr>
+        <tr>
+          <td class="member-id">#2</td>
+          <td class="member-name">JF</td>
+          <td>April 11, 2025</td>
+          <td>2.00</td>
         </tr>
       </tbody>
     </table>
