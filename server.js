@@ -1,13 +1,20 @@
-// Deployment-ready Node.js server for The Current-See
+/**
+ * The Current-See Main Application Server (CommonJS Version)
+ * This file handles both the health checks and serves the static website
+ */
+
+// CommonJS imports
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const url = require('url');
-const querystring = require('querystring');
+const express = require('express');
+const cors = require('cors');
+const { Pool } = require('pg');
 
 // Constants
 const PORT = process.env.PORT || 3000;
 const HOST = '0.0.0.0';
+const DATABASE_URL = process.env.DATABASE_URL;
 
 // Solar Constants
 const SOLAR_CONSTANTS = {
@@ -78,7 +85,100 @@ const members = [
   }
 ];
 
-// Landing page HTML
+// Initialize Express app
+const app = express();
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Database connection (if available)
+let pool = null;
+try {
+  if (DATABASE_URL) {
+    pool = new Pool({
+      connectionString: DATABASE_URL,
+      ssl: {
+        rejectUnauthorized: false
+      }
+    });
+    console.log('Database connection initialized');
+  } else {
+    console.log('No DATABASE_URL provided, running in memory mode');
+  }
+} catch (err) {
+  console.error('Database connection error:', err);
+}
+
+// Health check routes (high priority)
+app.get(['/health', '/healthz', '/_health'], (req, res) => {
+  console.log(`[HEALTH] ${req.method} ${req.url} (${req.headers['user-agent'] || 'unknown'})`);
+  res.status(200).send('OK');
+});
+
+// Static file serving - key feature to serve all files in the public directory
+app.use(express.static('public'));
+
+// API Endpoints
+app.get('/api/solar-clock', (req, res) => {
+  updateSolarClockData();
+  res.json(solarClockData);
+});
+
+app.get('/api/members', (req, res) => {
+  res.json(members);
+});
+
+app.get('/api/solar-accounts/leaderboard', (req, res) => {
+  res.json(members);
+});
+
+app.get('/api/member-count', (req, res) => {
+  res.json({ count: members.length });
+});
+
+app.post('/api/signup', (req, res) => {
+  try {
+    const userData = req.body;
+    
+    // Validate required fields
+    if (!userData.name || !userData.email) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Name and email are required' 
+      });
+    }
+    
+    // Calculate new member data
+    const newMember = {
+      id: members.length + 1,
+      username: userData.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '.'),
+      name: userData.name,
+      joinedDate: new Date().toISOString().split('T')[0],
+      totalSolar: 1.00, // Initial allocation
+      totalDollars: SOLAR_CONSTANTS.USD_PER_SOLAR,
+      isAnonymous: userData.isAnonymous || false
+    };
+    
+    // Add to members array
+    members.push(newMember);
+    
+    // Return success response
+    res.status(201).json({ 
+      success: true, 
+      member: newMember
+    });
+  } catch (e) {
+    console.error('Error processing signup:', e);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Internal server error' 
+    });
+  }
+});
+
+// Landing page generation
 function generateLandingPage() {
   updateSolarClockData();
   const energyValue = (solarClockData.totalKwh / 1000000).toFixed(6);
@@ -395,68 +495,24 @@ function generateLandingPage() {
 </html>`;
 }
 
-// Create the HTTP server
-const server = http.createServer((req, res) => {
-  // Log all requests
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-  
-  // Parse URL
-  const parsedUrl = url.parse(req.url);
-  const pathname = parsedUrl.pathname;
-  
-  // Add CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  
-  // Handle preflight requests
-  if (req.method === 'OPTIONS') {
-    res.writeHead(204);
-    res.end();
-    return;
+// Root route that serves index.html or generates one
+app.get('/', (req, res) => {
+  const indexPath = path.join(__dirname, 'public', 'index.html');
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    res.send(generateLandingPage());
   }
-  
-  // Health check endpoints
-  if (pathname === '/health' || pathname === '/healthz' || pathname === '/_health') {
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ status: 'ok', timestamp: new Date().toISOString() }));
-    return;
-  }
-  
-  // API endpoints
-  if (pathname === '/api/solar-clock') {
-    updateSolarClockData();
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify(solarClockData));
-    return;
-  }
-  
-  if (pathname === '/api/members' || pathname === '/api/solar-accounts/leaderboard') {
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify(members));
-    return;
-  }
-  
-  if (pathname === '/api/member-count') {
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ count: members.length }));
-    return;
-  }
-  
-  // Main routes
-  if (pathname === '/' || pathname === '/index.html') {
-    res.writeHead(200, { 'Content-Type': 'text/html' });
-    res.end(generateLandingPage());
-    return;
-  }
-  
-  // For all other routes, return a 200 with the landing page
-  // This is to ensure the deployment health check passes
-  res.writeHead(200, { 'Content-Type': 'text/html' });
-  res.end(generateLandingPage());
+});
+
+// Catch-all route - serve files from public or fall back to index.html
+app.use((req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Start the server
+const server = http.createServer(app);
+
 server.listen(PORT, HOST, () => {
   console.log(`Server running at http://${HOST}:${PORT}/`);
   console.log('Solar Generator is tracking energy since April 7, 2025');
@@ -470,4 +526,8 @@ server.on('error', (err) => {
 
 process.on('uncaughtException', (err) => {
   console.error('Uncaught exception:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled rejection at:', promise, 'reason:', reason);
 });
