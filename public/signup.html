@@ -16,18 +16,16 @@
       flex-direction: column;
     }
     
-    header {
-      background-color: rgba(255, 255, 255, 0.95);
-      padding: 1rem 2rem;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.07);
+    header.site-header {
+      background-color: transparent;
+      padding: 0.75rem 1.5rem;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      position: sticky;
-      top: 0;
+      position: relative;
       z-index: 100;
-      backdrop-filter: blur(5px);
-      border-bottom: 1px solid rgba(123, 193, 68, 0.1);
+      text-align: center;
+      margin-bottom: 2rem;
     }
     
     .logo {
@@ -444,7 +442,7 @@
   <link rel="stylesheet" href="/css/common.css">
 </head>
 <body>
-  <header>
+  <header class="site-header">
     <div>
       <img src="/branding_logo.png" alt="The Current-See Logo" class="logo">
     </div>
@@ -504,6 +502,12 @@
       <h2>How It Works</h2>
       <p>When you join, you'll be assigned a unique solar account. Every day, your account will receive 1 SOLAR unit, representing your share of the sun's energy that reaches Earth.</p>
       <p>The Current-See system tracks the cumulative energy production since April 7, 2025, and distributes it equitably to all members.</p>
+      
+      <div style="text-align: center; margin-top: 3rem;">
+        <a href="/" style="display: inline-block; background-color: #7bc144; color: white; font-weight: 700; padding: 1.2rem 2.5rem; border-radius: 50px; text-decoration: none; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(123, 193, 68, 0.3); font-size: 1.1rem; letter-spacing: 0.5px;">
+          <span style="display: inline-block; margin-right: 8px;">⬅</span> Return to Home Page
+        </a>
+      </div>
     </div>
   </div>
   
@@ -531,11 +535,11 @@
       <div class="footer-links">
         <h3>Resources</h3>
         <ul>
-          <li><a href="/whitepaper.html">White Paper</a></li>
+          <li><a href="/whitepapers.html">White Papers</a></li>
           <li><a href="/faq.html">FAQ</a></li>
           <li><a href="/contact.html">Contact Us</a></li>
-          <li><a href="/privacy.html">Privacy Policy</a></li>
-          <li><a href="/terms.html">Terms of Service</a></li>
+          <li><a href="/declaration.html">Solar Declaration</a></li>
+          <li><a href="/founder_note.html">Founder's Note</a></li>
         </ul>
       </div>
     </div>

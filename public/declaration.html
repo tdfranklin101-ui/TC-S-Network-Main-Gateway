@@ -16,18 +16,14 @@
       display: flex;
       flex-direction: column;
     }
-    header {
-      background-color: rgba(255, 255, 255, 0.95);
-      padding: 1rem 2rem;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.07);
+    header.site-header {
+      background-color: transparent;
+      padding: 0.75rem 1.5rem;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      position: sticky;
-      top: 0;
+      position: relative;
       z-index: 100;
-      backdrop-filter: blur(5px);
-      border-bottom: 1px solid rgba(123, 193, 68, 0.1);
       text-align: center;
       margin-bottom: 2rem;
     }
@@ -188,7 +184,7 @@
   </style>
 </head>
 <body>
-  <header>
+  <header class="site-header">
     <div>
       <img src="/branding_logo.png" alt="The Current-See Logo" class="logo">
     </div>

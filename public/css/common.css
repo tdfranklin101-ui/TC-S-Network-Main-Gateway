@@ -45,13 +45,13 @@ body {
 }
 
 a {
-  color: var(--primary-color);
+  color: #3498db; /* Blue link color */
   text-decoration: none;
   transition: color 0.3s ease;
 }
 
 a:hover {
-  color: var(--primary-dark);
+  color: #2980b9; /* Darker blue on hover */
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -63,12 +63,12 @@ h1, h2, h3, h4, h5, h6 {
 /* Header and Navigation */
 .navbar {
   background-color: transparent !important;
-  padding: 0.5rem 1rem;
+  padding: 0.25rem 0.5rem;
   z-index: 100;
 }
 
 .navbar-brand {
-  color: var(--primary-dark);
+  color: #3498db; /* Blue link color */
   font-weight: bold;
 }
 
@@ -78,40 +78,44 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .nav-item {
-  margin: 0 0.1rem;
+  margin: 0 0.05rem;
 }
 
 .nav-link {
-  color: var(--text-dark);
+  color: #3498db; /* Blue link color */
   text-decoration: none;
   font-weight: 600;
   transition: all 0.3s ease;
-  font-size: 0.9rem;
-  padding: 0.4rem 0.6rem !important;
+  font-size: 0.85rem;
+  padding: 0.3rem 0.5rem !important;
   position: relative;
   display: inline-block;
+  line-height: 1.2;
 }
 
 .nav-link:hover {
-  color: var(--primary-color);
+  color: #2980b9; /* Darker blue on hover */
 }
 
 .dropdown-menu {
-  padding: 0.25rem 0;
+  padding: 0.15rem 0;
   border-radius: 0.25rem;
   background-color: rgba(255, 255, 255, 0.95);
   border: 1px solid rgba(0,0,0,0.1);
-  min-width: 10rem;
+  min-width: 8rem;
+  margin-top: 0.1rem;
 }
 
 .dropdown-item {
-  padding: 0.35rem 1rem;
-  font-size: 0.9rem;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.8rem;
+  color: #3498db; /* Blue link color */
+  line-height: 1.2;
 }
 
 .dropdown-item:hover {
-  background-color: var(--primary-light);
-  color: white;
+  background-color: #f8f9fa;
+  color: #2980b9; /* Darker blue on hover */
 }
 
 /* Public Members Log styles */
@@ -502,19 +506,25 @@ footer {
   
   /* Container layouts */
   .note-container,
-  .declaration-container {
+  .declaration-container,
+  .whitepapers-container {
     margin: 1rem;
     padding: 2rem 1.5rem;
+    max-width: 85%;
+    aspect-ratio: auto; /* Allow natural aspect ratio */
   }
   
   .signup-container {
     flex-direction: column;
+    max-width: 90%;
+    margin: 1rem auto;
   }
   
   .signup-form,
   .signup-benefits {
     width: 100%;
     padding: 1.5rem;
+    aspect-ratio: auto; /* Allow natural aspect ratio */
   }
   
   /* Footer */
@@ -531,6 +541,15 @@ footer {
   .footer-links h3::after {
     left: 50%;
     transform: translateX(-50%);
+  }
+  
+  /* Ensure discrete page boundaries */
+  .page-container {
+    min-height: 100vh;
+    width: 100%;
+    overflow-x: hidden;
+    margin: 0;
+    padding: 0;
   }
 }
 
@@ -550,8 +569,22 @@ footer {
   }
   
   .note-container,
-  .declaration-container {
+  .declaration-container,
+  .whitepapers-container {
     padding: 1.5rem 1rem;
+    max-width: 95%;
+    margin: 0.5rem auto;
+  }
+  
+  .signup-container {
+    max-width: 95%;
+    margin: 0.5rem auto;
+    padding: 1rem;
+  }
+  
+  .solar-counter-container {
+    max-width: 95%;
+    padding: 1rem;
   }
   
   h1 {
@@ -565,5 +598,25 @@ footer {
   .quote {
     padding: 1rem;
     font-size: 1.1rem;
+  }
+  
+  /* Ensure discrete pages on small screens */
+  .page-container {
+    min-height: 100vh;
+    overflow-x: hidden;
+    padding: 0.5rem;
+  }
+  
+  /* Adjust button sizes for better tap targets */
+  button, 
+  .btn,
+  a.btn,
+  .nav-link {
+    padding: 0.8rem 1.2rem;
+    min-height: 44px; /* Minimum touch target size */
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 }
