@@ -61,69 +61,57 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* Header and Navigation */
-header {
-  background-color: rgba(255, 255, 255, 0.95);
-  padding: 1rem 2rem;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.07);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  position: sticky;
-  top: 0;
+.navbar {
+  background-color: transparent !important;
+  padding: 0.5rem 1rem;
   z-index: 100;
-  backdrop-filter: blur(5px);
-  border-bottom: 1px solid rgba(123, 193, 68, 0.1);
 }
 
-.logo {
-  height: 60px;
-  transition: transform 0.3s ease;
+.navbar-brand {
+  color: var(--primary-dark);
+  font-weight: bold;
 }
 
-.logo:hover {
-  transform: scale(1.05);
+.navbar-brand img {
+  max-width: 40px;
+  height: auto;
 }
 
-nav ul {
-  display: flex;
-  list-style: none;
-  margin: 0;
-  padding: 0;
+.nav-item {
+  margin: 0 0.1rem;
 }
 
-nav li {
-  margin-left: 2rem;
-  position: relative;
-}
-
-nav a {
+.nav-link {
   color: var(--text-dark);
   text-decoration: none;
   font-weight: 600;
   transition: all 0.3s ease;
-  font-size: 1.05rem;
-  padding: 0.5rem 0;
+  font-size: 0.9rem;
+  padding: 0.4rem 0.6rem !important;
   position: relative;
   display: inline-block;
 }
 
-nav a::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 0;
-  height: 2px;
-  background-color: var(--primary-color);
-  transition: width 0.3s ease;
-}
-
-nav a:hover {
+.nav-link:hover {
   color: var(--primary-color);
 }
 
-nav a:hover::after {
-  width: 100%;
+.dropdown-menu {
+  padding: 0.25rem 0;
+  border-radius: 0.25rem;
+  background-color: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(0,0,0,0.1);
+  min-width: 10rem;
+}
+
+.dropdown-item {
+  padding: 0.35rem 1rem;
+  font-size: 0.9rem;
+}
+
+.dropdown-item:hover {
+  background-color: var(--primary-light);
+  color: white;
 }
 
 /* Public Members Log styles */
@@ -245,6 +233,72 @@ nav a:hover::after {
   background-color: var(--primary-color);
   color: var(--white);
   border-color: var(--primary-color);
+}
+
+/* Solar Counter styles */
+.solar-counter-section {
+  padding: 2rem 0;
+}
+
+.solar-counter-container {
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 10px;
+  padding: 2rem;
+  text-align: center;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.counter-title {
+  color: var(--primary-dark);
+  margin-bottom: 1.5rem;
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.solar-counter-display {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.counter-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.counter-row:last-child {
+  border-bottom: none;
+}
+
+.counter-label {
+  font-weight: bold;
+  color: var(--text-medium);
+  font-size: 1.1rem;
+}
+
+.counter-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--accent-dark);
+  min-width: 160px;
+  text-align: right;
+}
+
+@keyframes counter-update {
+  0% { color: var(--primary-color); }
+  50% { color: var(--primary-dark); }
+  100% { color: var(--accent-dark); }
+}
+
+.counter-highlight {
+  animation: counter-update 1.5s;
 }
 
 /* Loading and error states */

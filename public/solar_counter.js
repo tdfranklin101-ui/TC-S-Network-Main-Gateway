@@ -9,6 +9,8 @@
 // Elements and configuration
 let energyCounter = null;
 let moneyCounter = null;
+let energyDisplay = null;
+let moneyDisplay = null;
 let initialized = false;
 let lastUpdateTime = 0;
 let currentKwh = 0;
@@ -49,6 +51,16 @@ function fetchSolarClockData() {
     })
     .catch(error => {
       console.error('Error fetching solar data:', error);
+      
+      // If we can't fetch data, use fallback values for demo purpose
+      if (!initialized) {
+        initCounter({
+          totalKwh: 262412146783333,  // Example starting value
+          totalDollars: 2015858563710, // Example starting value
+          kwhPerSecond: 482600, // Expected kWh per second
+          dollarPerKwh: 0.00768 // Value of kWh in dollars
+        });
+      }
     });
 }
 
@@ -56,16 +68,26 @@ function fetchSolarClockData() {
 function initCounter(data) {
   console.log('Solar counter initializing...');
   
+  // Get hidden counter elements for storing raw values
   energyCounter = document.getElementById('energy-counter');
   moneyCounter = document.getElementById('money-counter');
   
+  // Get display elements for formatted values
+  energyDisplay = document.getElementById('energy-display');
+  moneyDisplay = document.getElementById('money-display');
+  
   if (!energyCounter || !moneyCounter) {
-    console.error('Counter elements not found');
+    console.error('Counter storage elements not found');
     return;
   }
   
-  styleCounter(energyCounter);
-  styleCounter(moneyCounter);
+  if (!energyDisplay || !moneyDisplay) {
+    console.error('Counter display elements not found');
+    return;
+  }
+  
+  styleCounter(energyDisplay);
+  styleCounter(moneyDisplay);
   
   // Set initial values
   currentKwh = data.totalKwh;
@@ -76,6 +98,18 @@ function initCounter(data) {
   // Display initial values
   energyCounter.textContent = formatMkwh(currentKwh / 1000000);
   moneyCounter.textContent = formatDollars(currentDollars);
+  
+  energyDisplay.textContent = formatMkwh(currentKwh / 1000000);
+  moneyDisplay.textContent = formatDollars(currentDollars);
+  
+  // Add highlight effect
+  energyDisplay.classList.add('counter-highlight');
+  moneyDisplay.classList.add('counter-highlight');
+  
+  setTimeout(() => {
+    energyDisplay.classList.remove('counter-highlight');
+    moneyDisplay.classList.remove('counter-highlight');
+  }, 1500);
   
   // Set as initialized
   initialized = true;
@@ -99,6 +133,17 @@ function updateCounter(data) {
   
   // Update the timestamp
   lastUpdateTime = Date.now();
+  
+  // Add highlight effect
+  if (energyDisplay && moneyDisplay) {
+    energyDisplay.classList.add('counter-highlight');
+    moneyDisplay.classList.add('counter-highlight');
+    
+    setTimeout(() => {
+      energyDisplay.classList.remove('counter-highlight');
+      moneyDisplay.classList.remove('counter-highlight');
+    }, 1500);
+  }
 }
 
 // Animate counters between server updates
@@ -112,13 +157,22 @@ function animateCounters(timestamp) {
   const interpolatedKwh = currentKwh + (kwhPerSecond * deltaTime);
   const interpolatedDollars = currentDollars + (kwhPerSecond * dollarPerKwh * deltaTime);
   
-  // Update display
+  // Update hidden storage elements
   if (energyCounter) {
     energyCounter.textContent = formatMkwh(interpolatedKwh / 1000000);
   }
   
   if (moneyCounter) {
     moneyCounter.textContent = formatDollars(interpolatedDollars);
+  }
+  
+  // Update visible display elements
+  if (energyDisplay) {
+    energyDisplay.textContent = formatMkwh(interpolatedKwh / 1000000);
+  }
+  
+  if (moneyDisplay) {
+    moneyDisplay.textContent = formatDollars(interpolatedDollars);
   }
   
   // Continue animation

@@ -98,7 +98,16 @@
     <div class="container">
         <div class="solar-counter-container">
             <h2 class="counter-title">Solar Generator</h2>
-            <div id="solar-counter"></div>
+            <div id="solar-counter" class="solar-counter-display">
+                <div class="counter-row">
+                    <div class="counter-label">Energy Generated:</div>
+                    <div class="counter-value"><span id="energy-display">Loading...</span> MkWh</div>
+                </div>
+                <div class="counter-row">
+                    <div class="counter-label">Value Created:</div>
+                    <div class="counter-value" id="money-display">Loading...</div>
+                </div>
+            </div>
             <p class="mt-4" style="color: var(--primary-blue);">One Solar = 17.7M kWh = $136,000</p>
         </div>
     </div>
