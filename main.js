@@ -443,11 +443,107 @@ const server = http.createServer((req, res) => {
     return;
   }
   
+  // Signup/registration endpoint
+  if (pathname === '/api/signup' || pathname === '/api/register') {
+    if (req.method === 'POST') {
+      let body = '';
+      req.on('data', chunk => {
+        body += chunk.toString();
+      });
+      
+      req.on('end', () => {
+        try {
+          const userData = JSON.parse(body);
+          
+          // Validate required fields
+          if (!userData.name || !userData.email) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ 
+              success: false, 
+              error: 'Name and email are required' 
+            }));
+            return;
+          }
+          
+          // Calculate new member data
+          const newMember = {
+            id: members.length + 1,
+            username: userData.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '.'),
+            name: userData.name,
+            joinedDate: new Date().toISOString().split('T')[0],
+            totalSolar: 1.00, // Initial allocation
+            totalDollars: SOLAR_CONSTANTS.USD_PER_SOLAR,
+            isAnonymous: userData.isAnonymous || false
+          };
+          
+          // Add to members array
+          members.push(newMember);
+          
+          // Return success response
+          res.writeHead(201, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ 
+            success: true, 
+            member: newMember
+          }));
+        } catch (e) {
+          console.error('Error processing signup:', e);
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ 
+            success: false, 
+            error: 'Internal server error' 
+          }));
+        }
+      });
+      return;
+    } else {
+      // Method not allowed
+      res.writeHead(405, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ 
+        success: false, 
+        error: 'Method not allowed' 
+      }));
+      return;
+    }
+  }
+  
   // Main routes
   if (pathname === '/' || pathname === '/index.html') {
     res.writeHead(200, { 'Content-Type': 'text/html' });
     res.end(generateLandingPage());
     return;
+  }
+
+  // Static file handling
+  try {
+    const publicDir = path.join(__dirname, 'public');
+    let filePath = path.join(publicDir, pathname);
+    
+    // Handle directory paths by appending index.html
+    if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
+      filePath = path.join(filePath, 'index.html');
+    }
+    
+    // Check if file exists
+    if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+      const content = fs.readFileSync(filePath);
+      let contentType = 'text/plain';
+      
+      // Set content type based on file extension
+      if (filePath.endsWith('.html')) contentType = 'text/html';
+      else if (filePath.endsWith('.css')) contentType = 'text/css';
+      else if (filePath.endsWith('.js')) contentType = 'application/javascript';
+      else if (filePath.endsWith('.json')) contentType = 'application/json';
+      else if (filePath.endsWith('.png')) contentType = 'image/png';
+      else if (filePath.endsWith('.jpg') || filePath.endsWith('.jpeg')) contentType = 'image/jpeg';
+      else if (filePath.endsWith('.svg')) contentType = 'image/svg+xml';
+      else if (filePath.endsWith('.pdf')) contentType = 'application/pdf';
+      
+      res.writeHead(200, { 'Content-Type': contentType });
+      res.end(content);
+      return;
+    }
+  } catch (e) {
+    console.error(`Error serving static file: ${e.message}`);
   }
   
   // For all other routes, return a 200 with the landing page
