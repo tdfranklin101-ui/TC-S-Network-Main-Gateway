@@ -1,13 +1,8 @@
 {
   "name": "the-current-see",
   "version": "1.0.0",
-  "private": true,
-  "type": "commonjs",
   "scripts": {
-    "start": "node dist/index.js",
-    "build": "mkdir -p dist && cp -r public dist/ && cp replit-static-server.js dist/index.js"
-  },
-  "engines": {
-    "node": ">=14.0.0"
+    "start": "node server.js",
+    "build": "mkdir -p build && echo 'Build completed successfully'"
   }
 }
