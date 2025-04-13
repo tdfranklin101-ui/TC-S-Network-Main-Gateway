@@ -8,11 +8,15 @@ set -e
 
 echo "Setting up project for deployment..."
 
-# Backup original package.json
-if [ ! -f package.json.original ]; then
-  cp package.json package.json.original
-  echo "Backed up original package.json"
+# Run restore first if there's already a backup
+if [ -f package.json.original ]; then
+  cp package.json.original package.json
+  echo "Restored from previous backup first"
 fi
+
+# Backup original package.json
+cp package.json package.json.original
+echo "Backed up original package.json"
 
 # Copy deployment files to the right places
 cp deploy-package.json package.json

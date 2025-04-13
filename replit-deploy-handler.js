@@ -71,8 +71,8 @@ function startMainApplication() {
   console.log('Starting main application...');
   
   try {
-    // Try npm run dev first (your current working approach)
-    mainApp = spawn('npm', ['run', 'dev'], {
+    // Start the server directly using tsx (since we know the dev script is: tsx server/index.ts)
+    mainApp = spawn('npx', ['tsx', 'server/index.ts'], {
       env: { ...process.env, PORT: MAIN_APP_PORT.toString() }
     });
     

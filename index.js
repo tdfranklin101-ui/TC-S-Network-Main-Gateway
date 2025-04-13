@@ -1,124 +1,209 @@
-/**
- * Replit Cloud Run Deployment Server (CommonJS version)
- * 
- * This file directly addresses the deployment issues by:
- * 1. Listening on port 5000 (Replit's expected port for this application)
- * 2. Responding to all paths with 200 OK
- * 3. Implementing a proper health check for Cloud Run
- */
-
-// Use CommonJS for compatibility
+// Simple standalone server for deployment - NO ESM syntax, pure CommonJS
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
 // Constants
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 const HOST = '0.0.0.0';
 
-console.log('Starting Replit Cloud Run deployment server...');
-
-// Create the server
-const server = http.createServer((req, res) => {
-  // Log requests for debugging
-  console.log(`[REQUEST] ${req.method} ${req.url} (${req.headers['user-agent'] || 'unknown'})`);
+// Solar Constants (mirrored from server/solar-constants.ts)
+const SOLAR_CONSTANTS = {
+  TOTAL_SOLAR_KWH_PER_DAY: 4.176e+15,  // Total solar energy hitting Earth daily in kWh
+  MONETIZED_PERCENTAGE: 0.01,          // 1% of total solar energy is monetized
+  GLOBAL_POPULATION: 8.5e+9,           // Global population estimate
+  TEST_GROUP_POPULATION: 1000,         // Initial test group size
+  USD_PER_SOLAR: 136000,               // Value of 1 SOLAR unit in USD
   
-  // For health checks, always return 200 OK
-  if (req.url === '/health' || req.url === '/healthz' || 
-      req.headers['user-agent']?.includes('Health') || 
-      req.headers['user-agent']?.includes('health')) {
+  // Calculated values (these will be computed in init)
+  monetizedKwh: 0,
+  solarPerPersonKwh: 0,
+  mkwhPerDay: 0,
+  KWH_PER_SECOND: 0,
+  DAILY_SOLAR_DISTRIBUTION: 1, // 1 SOLAR per day per person
+  DAILY_KWH_DISTRIBUTION: 0,
+  DAILY_USD_DISTRIBUTION: 0
+};
+
+// Initialize calculated solar values
+function initSolarConstants() {
+  SOLAR_CONSTANTS.monetizedKwh = SOLAR_CONSTANTS.TOTAL_SOLAR_KWH_PER_DAY * SOLAR_CONSTANTS.MONETIZED_PERCENTAGE;
+  SOLAR_CONSTANTS.solarPerPersonKwh = SOLAR_CONSTANTS.monetizedKwh / SOLAR_CONSTANTS.GLOBAL_POPULATION;
+  SOLAR_CONSTANTS.mkwhPerDay = SOLAR_CONSTANTS.monetizedKwh / 1e6;
+  SOLAR_CONSTANTS.KWH_PER_SECOND = SOLAR_CONSTANTS.mkwhPerDay * 1e6 / (24 * 60 * 60);
+  SOLAR_CONSTANTS.DAILY_KWH_DISTRIBUTION = SOLAR_CONSTANTS.solarPerPersonKwh;
+  SOLAR_CONSTANTS.DAILY_USD_DISTRIBUTION = SOLAR_CONSTANTS.DAILY_SOLAR_DISTRIBUTION * SOLAR_CONSTANTS.USD_PER_SOLAR;
+}
+
+// Initialize solar constants
+initSolarConstants();
+
+// Base date for solar clock calculations
+const SOLAR_CLOCK_BASE_DATE = new Date('2025-04-07T00:00:00Z');
+
+// Initialize solar clock data
+const solarClockData = {
+  timestamp: new Date().toISOString(),
+  elapsedSeconds: (Date.now() - SOLAR_CLOCK_BASE_DATE.getTime()) / 1000,
+  totalKwh: 0,  // This will be calculated
+  totalDollars: 0,  // This will be calculated
+  kwhPerSecond: SOLAR_CONSTANTS.KWH_PER_SECOND,
+  dollarPerKwh: SOLAR_CONSTANTS.USD_PER_SOLAR / (SOLAR_CONSTANTS.solarPerPersonKwh * 365),
+  dailyKwh: SOLAR_CONSTANTS.monetizedKwh,
+  dailyDollars: SOLAR_CONSTANTS.DAILY_USD_DISTRIBUTION * SOLAR_CONSTANTS.GLOBAL_POPULATION
+};
+
+// Calculate initial solar clock values
+function initSolarClockData() {
+  const now = Date.now();
+  solarClockData.timestamp = new Date().toISOString();
+  solarClockData.elapsedSeconds = (now - SOLAR_CLOCK_BASE_DATE.getTime()) / 1000;
+  solarClockData.totalKwh = solarClockData.elapsedSeconds * SOLAR_CONSTANTS.KWH_PER_SECOND;
+  solarClockData.totalDollars = solarClockData.totalKwh * solarClockData.dollarPerKwh;
+}
+
+// Initialize solar clock data
+initSolarClockData();
+
+// MIME types
+const MIME_TYPES = {
+  '.html': 'text/html',
+  '.css': 'text/css',
+  '.js': 'text/javascript',
+  '.json': 'application/json',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.svg': 'image/svg+xml',
+  '.pdf': 'application/pdf',
+  '.ico': 'image/x-icon'
+};
+
+// Create a basic HTTP server
+const server = http.createServer((req, res) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  
+  // Enable CORS for all requests
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  
+  // Handle OPTIONS requests for CORS preflight
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204);
+    return res.end();
+  }
+  
+  // Health check endpoints
+  if (req.url === '/health' || req.url === '/healthz' || req.url === '/health-check') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     return res.end(JSON.stringify({ status: 'ok' }));
   }
   
-  // For root path, also return 200 OK (required for Replit health checks)
-  if (req.url === '/') {
-    // Try to serve the index.html file
-    try {
-      const publicDir = path.join(__dirname, 'public');
-      const indexPath = path.join(publicDir, 'index.html');
-      
-      if (fs.existsSync(indexPath)) {
-        const content = fs.readFileSync(indexPath);
-        res.writeHead(200, { 'Content-Type': 'text/html' });
-        return res.end(content);
-      }
-    } catch (e) {
-      console.error('Error serving index.html:', e);
-    }
+  // Solar clock API endpoint
+  if (req.url === '/api/solar-clock') {
+    // Update the timestamp and calculations to ensure fresh data
+    initSolarClockData();
     
-    // Fallback for root path
-    res.writeHead(200, { 'Content-Type': 'text/html' });
-    return res.end(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>The Current-See</title>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1">
-          <style>
-            body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-            h1 { color: #2a9d8f; }
-          </style>
-        </head>
-        <body>
-          <h1>The Current-See</h1>
-          <p>The application is starting...</p>
-        </body>
-      </html>
-    `);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    return res.end(JSON.stringify(solarClockData));
   }
   
-  // For all other paths, try to serve static files or return 404
-  try {
-    const publicDir = path.join(__dirname, 'public');
-    const filePath = path.join(publicDir, req.url);
+  // Users and registrants API endpoint - simplified read-only version with static data
+  if (req.url === '/api/users' || req.url === '/api/registrants') {
+    const users = [
+      {
+        id: 1,
+        username: 'terry.franklin',
+        firstName: 'Terry',
+        lastName: 'Franklin',
+        email: 'hello@thecurrentsee.org',
+        joinedDate: '2025-04-10',
+        totalSolar: 1,
+        isAnonymous: false
+      }
+    ];
     
-    if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
-      const content = fs.readFileSync(filePath);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    return res.end(JSON.stringify(users));
+  }
+  
+  // Normalize the URL
+  let url = req.url;
+  
+  // Handle root path
+  if (url === '/') {
+    url = '/index.html';
+  }
+  
+  // Remove query parameters
+  url = url.split('?')[0];
+  
+  // Build the file path
+  const filePath = path.join(__dirname, 'public', url);
+  const extname = path.extname(filePath).toLowerCase();
+  
+  // Check if the file exists
+  fs.stat(filePath, (err, stats) => {
+    if (err || !stats.isFile()) {
+      // File not found, try to serve index.html
+      if (url !== '/index.html') {
+        const indexPath = path.join(__dirname, 'public', 'index.html');
+        fs.stat(indexPath, (err, stats) => {
+          if (err || !stats.isFile()) {
+            // If index.html not found, return 200 OK with a simple message
+            res.writeHead(200, { 'Content-Type': 'text/html' });
+            return res.end('<html><body><h1>The Current-See</h1><p>Welcome to the service.</p></body></html>');
+          } else {
+            // Serve index.html instead
+            fs.readFile(indexPath, (err, content) => {
+              if (err) {
+                res.writeHead(500);
+                return res.end('Server Error');
+              }
+              res.writeHead(200, { 'Content-Type': 'text/html' });
+              return res.end(content);
+            });
+          }
+        });
+      } else {
+        // If index.html was requested but not found
+        res.writeHead(200, { 'Content-Type': 'text/html' });
+        return res.end('<html><body><h1>The Current-See</h1><p>Welcome to the service.</p></body></html>');
+      }
+      return;
+    }
+    
+    // Read and serve the file
+    fs.readFile(filePath, (err, content) => {
+      if (err) {
+        res.writeHead(500);
+        return res.end('Server Error');
+      }
       
-      // Determine content type
-      let contentType = 'text/plain';
-      if (filePath.endsWith('.html')) contentType = 'text/html';
-      else if (filePath.endsWith('.css')) contentType = 'text/css';
-      else if (filePath.endsWith('.js')) contentType = 'application/javascript';
-      else if (filePath.endsWith('.json')) contentType = 'application/json';
-      else if (filePath.endsWith('.png')) contentType = 'image/png';
-      else if (filePath.endsWith('.jpg') || filePath.endsWith('.jpeg')) contentType = 'image/jpeg';
+      // Get content type
+      const contentType = MIME_TYPES[extname] || 'text/plain';
       
+      // Send the response
       res.writeHead(200, { 'Content-Type': contentType });
       return res.end(content);
-    }
-  } catch (e) {
-    console.error(`Error serving ${req.url}:`, e);
-  }
-  
-  // Default: return 200 OK to pass health checks (critical for Replit)
-  res.writeHead(200, { 'Content-Type': 'text/html' });
-  res.end(`
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <title>The Current-See</title>
-        <style>
-          body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-          h1 { color: #2a9d8f; }
-        </style>
-      </head>
-      <body>
-        <h1>The Current-See</h1>
-        <p>Page not found. Please navigate to the <a href="/">home page</a>.</p>
-      </body>
-    </html>
-  `);
+    });
+  });
 });
 
 // Start the server
 server.listen(PORT, HOST, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Server running at http://${HOST}:${PORT}/`);
 });
 
 // Handle server errors
-server.on('error', (err) => {
-  console.error(`Server error: ${err.message}`);
+server.on('error', (error) => {
+  console.error(`Server error: ${error.message}`);
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+  console.error(`Uncaught exception: ${error.message}`);
+  console.error(error.stack);
 });
