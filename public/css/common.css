@@ -45,13 +45,14 @@ body {
 }
 
 a {
-  color: #3498db; /* Blue link color for better contrast */
+  color: #2054a6; /* Dark blue link color */
   text-decoration: none;
+  font-weight: 700; /* Bold */
   transition: color 0.3s ease;
 }
 
 a:hover {
-  color: #2980b9; /* Darker blue on hover */
+  color: #16407f; /* Even darker blue on hover */
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -68,7 +69,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .navbar-brand {
-  color: #7bc144; /* Green link color to match theme */
+  color: #2054a6; /* Dark blue link color */
   font-weight: bold;
 }
 
@@ -82,9 +83,9 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .nav-link {
-  color: #7bc144; /* Green link color to match theme */
+  color: #2054a6; /* Dark blue link color */
   text-decoration: none;
-  font-weight: 600;
+  font-weight: 700; /* Bold */
   transition: all 0.3s ease;
   font-size: 0.85rem;
   padding: 0.3rem 0.5rem !important;
@@ -94,7 +95,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .nav-link:hover {
-  color: #669f33; /* Darker green on hover */
+  color: #16407f; /* Even darker blue on hover */
 }
 
 .dropdown-menu {
@@ -109,13 +110,14 @@ h1, h2, h3, h4, h5, h6 {
 .dropdown-item {
   padding: 0.25rem 0.75rem;
   font-size: 0.8rem;
-  color: #7bc144; /* Green link color to match theme */
+  color: #2054a6; /* Dark blue link color */
+  font-weight: 700; /* Bold */
   line-height: 1.2;
 }
 
 .dropdown-item:hover {
   background-color: #f8f9fa;
-  color: #669f33; /* Darker green on hover */
+  color: #16407f; /* Even darker blue on hover */
 }
 
 /* Public Members Log styles */
