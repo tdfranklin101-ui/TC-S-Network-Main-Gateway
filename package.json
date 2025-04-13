@@ -1,8 +1,4 @@
 {
   "name": "the-current-see",
-  "version": "1.0.0",
-  "scripts": {
-    "start": "node server.js",
-    "build": "mkdir -p build && echo 'Build completed successfully'"
-  }
+  "main": "main.js"
 }
