@@ -140,10 +140,12 @@ app.get('/api/member-count', (req, res) => {
 
 app.post('/api/signup', (req, res) => {
   try {
+    console.log('Received signup request:', req.body);
     const userData = req.body;
     
     // Validate required fields
     if (!userData.name || !userData.email) {
+      console.log('Validation failed: Missing name or email');
       return res.status(400).json({ 
         success: false, 
         error: 'Name and email are required' 
@@ -161,8 +163,12 @@ app.post('/api/signup', (req, res) => {
       isAnonymous: userData.isAnonymous || false
     };
     
+    console.log('Creating new member:', newMember);
+    
     // Add to members array
     members.push(newMember);
+    
+    console.log('Current member count:', members.length);
     
     // Return success response
     res.status(201).json({ 

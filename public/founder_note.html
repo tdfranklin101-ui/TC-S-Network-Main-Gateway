@@ -1,126 +1,152 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Founder's Note - The Current-See</title>
-    <link rel="stylesheet" href="/style.css">
-    <script src="/navigation.js"></script>
-    <style>
-        html, body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: white;
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            width: 100%;
-            background-color: #333;
-        }
-        
-        * {
-            box-sizing: border-box;
-        }
-        
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .logo {
-            width: 120px;
-            height: auto;
-            margin-bottom: 20px;
-        }
-        h1 {
-            color: #4CAF50;
-            margin-bottom: 5px;
-        }
-        .date {
-            font-style: italic;
-            color: #ddd;
-            margin-bottom: 30px;
-        }
-        .signature {
-            margin-top: 40px;
-            font-style: italic;
-        }
-        .return-link {
-            display: inline-block;
-            margin-top: 40px;
-            padding: 10px 20px;
-            background-color: #0057B8;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-        }
-        .return-link:hover {
-            background-color: #004090;
-        }
-    </style>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Founder's Note – The Current-See</title>
+  <link rel="stylesheet" href="/css/common.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #ffeb99, #96c93d);
+      min-height: 100vh;
+    }
+    .note-container {
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 3rem;
+      background-color: rgba(255, 255, 255, 0.9);
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+    .note-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .note-content {
+      line-height: 1.8;
+      font-size: 1.1rem;
+    }
+    .note-content p {
+      margin-bottom: 1.5rem;
+    }
+    .signature {
+      margin-top: 3rem;
+      border-top: 1px solid #ddd;
+      padding-top: 2rem;
+    }
+    .signature-name {
+      font-weight: bold;
+      font-size: 1.2rem;
+      margin-bottom: 0.3rem;
+    }
+    .signature-title {
+      font-style: italic;
+      margin-bottom: 1rem;
+      color: #555;
+    }
+    .quote {
+      border-left: 4px solid #7bc144;
+      padding-left: 1.5rem;
+      margin: 2rem 0;
+      font-style: italic;
+      color: #555;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <a href="/"><img src="/branding_logo.png" alt="The Current-See Logo" class="logo"></a>
-            <h1>A Note From Our Founder</h1>
-            <div class="date">April 9, 2025</div>
-            <div style="margin-top: 15px;">
-                <a href="/founder_note.pdf" class="button" style="text-decoration: none; padding: 8px 15px; background-color: #0057B8; color: white; border-radius: 4px; font-size: 14px;">Download PDF Version</a>
-            </div>
-        </header>
-        
-        <main>
-        <p>Before Ray Kurzweil there was Buckminster Fuller. In the 1920s Fuller determined to see what one
-man could do to assist humanity's survival. Being ahead of his time, he found that human progress
-has found and used his work to further humanity.</p>
-        
-        <p>A book called Critical Path Fuller wrote as a sign post. Caring for the earth like a space ship requires
-space age planning (NASA invented CPM-scheduling to get to the moon). Fuller had an idea that
-the citizens own the space ship and need to steward sustainably to fulfill humanity's mission to keep
-boldly going on. Fuller envisioned a solar backed currency that was a birthright of every citizen on
-the planet. Monetizing and distributing an amount equivalent to the daily interest on $1 billion dollars
-...</p>
-        
-        <p>We are living in the design and engineering revolution/evolution that Fuller predicted. As an
-individual citizen of Space Ship Earth I am using the current technology available to me now to bring
-Buckminster Fuller's dream of a solar backed currency to reality.</p>
-        
-        <p>I think that is what Bucky would do today.</p>
-        
-        <div class="signature">
-            <p>Terry D Franklin</p>
-            <p>The Current-See, PBC, Inc.<br>
-            TC-S Network<br>
-            April 9, 2025</p>
-        </div>
-    </main>
+  <header>
+    <div>
+      <img src="/branding_logo.png" alt="The Current-See Logo" class="logo">
+    </div>
+    <nav>
+      <ul>
+        <li><a href="/">Home</a></li>
+        <li><a href="/about.html">About</a></li>
+        <li><a href="/wallet.html">My Solar</a></li>
+        <li><a href="/prototype.html">Prototype</a></li>
+        <li><a href="/signup.html">Join</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <div class="note-container">
+    <div class="note-header">
+      <h1>Founder's Note</h1>
+      <p class="date">April 10, 2025</p>
+    </div>
     
-    <footer>
-        <div class="footer-links">
-            <a href="/" class="return-link">Return to Homepage</a>
-            <a href="/admin" class="admin-link">Admin</a>
-        </div>
-        <div style="text-align: center; margin-top: 20px; font-size: 0.85em; color: #ddd;">
-            &copy; 2025 The Current-See PBC, Inc.<br>
-            <a href="mailto:hello@thecurrentsee.org" style="color: #ddd; text-decoration: none;">hello@thecurrentsee.org</a>
-        </div>
-    </footer>
+    <div class="note-content">
+      <p>Dear Supporters, Innovators, and Fellow Planetary Citizens,</p>
+      
+      <p>Today marks a significant moment in our shared journey as we launch The Current-See—a bold experiment in recognizing and distributing the abundant value of our sun.</p>
+      
+      <p>For too long, we've operated within economic systems that prioritize scarcity and extraction. The Current-See offers a different path—one based on natural abundance, transparent distribution, and planet-first thinking.</p>
+      
+      <div class="quote">
+        <p>"The sun shines its energy upon all of us equally. Why shouldn't its value be shared the same way?"</p>
+      </div>
+      
+      <p>Since April 7, 2025, when we activated the Solar Clock, our prototype has been tracking and tokenizing a tiny fraction (just 1%) of the daily solar energy hitting Earth. This energy—all 174 petawatts of it—exists whether we acknowledge it or not. But by recognizing its value and creating a transparent system for its accounting and distribution, we open new possibilities for what an economy can be.</p>
+      
+      <p>The Current-See is not just a technological innovation—it's a fundamental reimagining of value. The Solar, our energy-denominated asset, is neither mined nor extracted. It requires no complicated consensus mechanisms or energy-intensive validations. It simply recognizes what already exists: the life-sustaining energy that powers our entire planet.</p>
+      
+      <p>As we move forward with our Solar Generator prototype, we invite you to participate, question, and contribute. This is an open system designed to evolve with your input. Sign up to secure your daily solar allocation, track its growth, and help us refine this model for global implementation.</p>
+      
+      <p>The sun rises each day without discrimination. Its energy falls on every square meter of our planet, regardless of the political borders, economic systems, or social structures we've created. The Current-See aims to mirror this natural equality in the distribution of value.</p>
+      
+      <p>Thank you for joining us on this journey. Together, we're building more than just a prototype—we're creating a blueprint for a more equitable, sustainable economic future.</p>
+      
+      <div class="signature">
+        <p>With gratitude and optimism,</p>
+        <p class="signature-name">Terry D. Franklin</p>
+        <p class="signature-title">Founder, The Current-See PBC, Inc.</p>
+      </div>
+      
+      <div style="text-align: center; margin-top: 3rem;">
+        <a href="/" style="display: inline-block; background-color: #7bc144; color: white; font-weight: bold; padding: 1rem 2rem; border-radius: 5px; text-decoration: none; transition: background-color 0.3s;">Return to Home Page</a>
+      </div>
+    </div>
+  </div>
+  
+  <footer>
+    <div class="footer-content">
+      <div class="footer-info">
+        <img src="/branding_logo.png" alt="The Current-See Logo" width="150" class="footer-logo">
+        <p>The Current-See PBC, Inc.</p>
+        <p>A Public Benefit Corporation</p>
+        <p>Established 2025</p>
+        <p>Email: <a href="mailto:hello@thecurrentsee.org" style="color:#7bc144; text-decoration:none;">hello@thecurrentsee.org</a></p>
+      </div>
+      
+      <div class="footer-links">
+        <h3>Navigation</h3>
+        <ul>
+          <li><a href="/">Home</a></li>
+          <li><a href="/about.html">About</a></li>
+          <li><a href="/wallet.html">My Solar</a></li>
+          <li><a href="/prototype.html">Prototype</a></li>
+          <li><a href="/signup.html">Join</a></li>
+        </ul>
+      </div>
+      
+      <div class="footer-links">
+        <h3>Resources</h3>
+        <ul>
+          <li><a href="/whitepapers.html">White Papers</a></li>
+          <li><a href="/faq.html">FAQ</a></li>
+          <li><a href="/contact.html">Contact Us</a></li>
+          <li><a href="/declaration.html">Solar Declaration</a></li>
+          <li><a href="/founder_note.html">Founder's Note</a></li>
+        </ul>
+      </div>
+    </div>
     
-    <style>
-        .footer-links {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-        }
-        .admin-link {
-            color: #bbb;
-            font-size: 0.9em;
-        }
-    </style>
+    <div class="copyright">
+      &copy; 2025 The Current-See PBC, Inc. All rights reserved.
+    </div>
+  </footer>
 </body>
 </html>
