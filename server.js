@@ -81,9 +81,37 @@ const members = [
     joinedDate: '2025-04-10',
     totalSolar: 3.00,
     totalDollars: 408000,
-    isAnonymous: false
+    isAnonymous: false,
+    lastDistributionDate: '2025-04-12' // Track last distribution date
   }
 ];
+
+// Function to update member SOLAR distributions
+function updateMemberDistributions() {
+  const today = new Date().toISOString().split('T')[0];
+  console.log(`Running daily SOLAR distribution update for ${today}`);
+  
+  let distributedCount = 0;
+  
+  members.forEach(member => {
+    // Check if member needs distribution for today
+    if (!member.lastDistributionDate || member.lastDistributionDate < today) {
+      // Add 1 SOLAR per day as specified
+      member.totalSolar += SOLAR_CONSTANTS.DAILY_SOLAR_DISTRIBUTION;
+      member.totalDollars = member.totalSolar * SOLAR_CONSTANTS.USD_PER_SOLAR;
+      member.lastDistributionDate = today;
+      distributedCount++;
+      
+      console.log(`Distributed ${SOLAR_CONSTANTS.DAILY_SOLAR_DISTRIBUTION} SOLAR to member #${member.id} (${member.name})`);
+    }
+  });
+  
+  console.log(`Daily distribution completed: ${distributedCount} members updated`);
+  return distributedCount;
+}
+
+// Run distribution update immediately and then on a schedule
+updateMemberDistributions();
 
 // Initialize Express app
 const app = express();
@@ -153,14 +181,16 @@ app.post('/api/signup', (req, res) => {
     }
     
     // Calculate new member data
+    const today = new Date().toISOString().split('T')[0];
     const newMember = {
       id: members.length + 1,
       username: userData.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '.'),
       name: userData.name,
-      joinedDate: new Date().toISOString().split('T')[0],
+      joinedDate: today,
       totalSolar: 1.00, // Initial allocation
       totalDollars: SOLAR_CONSTANTS.USD_PER_SOLAR,
-      isAnonymous: userData.isAnonymous || false
+      isAnonymous: userData.isAnonymous || false,
+      lastDistributionDate: today // Set initial distribution date
     };
     
     console.log('Creating new member:', newMember);
@@ -523,6 +553,16 @@ server.listen(PORT, HOST, () => {
   console.log(`Server running at http://${HOST}:${PORT}/`);
   console.log('Solar Generator is tracking energy since April 7, 2025');
   console.log('Current-See member #1: Terry D. Franklin - Joined April 10, 2025');
+  
+  // Set up a daily schedule for distribution at midnight
+  const DISTRIBUTION_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+  setInterval(() => {
+    console.log('Running scheduled SOLAR distribution...');
+    const updatedCount = updateMemberDistributions();
+    console.log(`Scheduled distribution complete. Updated ${updatedCount} members.`);
+  }, DISTRIBUTION_INTERVAL);
+  
+  console.log('SOLAR distribution scheduler is active. Will distribute 1 SOLAR per user every 24 hours.');
 });
 
 // Error handling

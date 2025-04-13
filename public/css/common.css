@@ -18,6 +18,10 @@
   --black: #222222;
   --footer-bg: #222222;
   --footer-text: #dddddd;
+  --primary-blue: #0047AB;
+  --accent-blue: #004080;
+  --highlight-color: #f3c622;
+  --update-color: #7bc144;
   --footer-border: #444444;
   --footer-link-hover: #7bc144;
   --success: #2ecc71;
@@ -128,6 +132,50 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   margin: 2rem 0;
   overflow: hidden;
+  position: relative;
+  transition: box-shadow 0.3s ease;
+}
+
+/* Highlight styles for updates */
+.highlight-updated {
+  box-shadow: 0 4px 20px rgba(123, 193, 68, 0.4);
+}
+
+.highlight-row {
+  background-color: rgba(123, 193, 68, 0.08);
+  transition: background-color 2s ease;
+}
+
+.highlight-cell {
+  position: relative;
+  animation: pulse-highlight 2s ease;
+  font-weight: bold;
+}
+
+.update-badge {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background-color: var(--update-color);
+  color: white;
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  opacity: 1;
+  transition: opacity 0.5s ease;
+}
+
+.last-updated {
+  color: var(--text-light);
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
+@keyframes pulse-highlight {
+  0% { color: var(--text-dark); }
+  30% { color: var(--update-color); }
+  100% { color: var(--text-dark); }
 }
 
 .members-header {

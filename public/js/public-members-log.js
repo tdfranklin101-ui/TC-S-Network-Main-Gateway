@@ -15,7 +15,10 @@ class PublicMembersLog {
     this.currentPage = 1;
     this.loading = true;
     this.error = null;
+    this.lastRefresh = 0;
+    this.refreshInterval = 60 * 1000; // Refresh every minute
     this.apiEndpoints = [
+      '/api/members',
       '/api/solar-accounts/leaderboard',
       '/api/members.json',
       '/api/members-data',
@@ -33,12 +36,25 @@ class PublicMembersLog {
     
     this.render();
     this.loadMembers();
+    
+    // Set up periodic refresh
+    setInterval(() => {
+      const now = Date.now();
+      if (now - this.lastRefresh >= this.refreshInterval) {
+        console.log('Refreshing members data...');
+        this.loadMembers();
+      }
+    }, this.refreshInterval);
   }
   
   async loadMembers() {
-    this.loading = true;
-    this.error = null;
-    this.render();
+    const isRefresh = !this.loading && this.members.length > 0;
+    
+    if (!isRefresh) {
+      this.loading = true;
+      this.error = null;
+      this.render();
+    }
     
     for (let i = 0; i < this.apiEndpoints.length; i++) {
       const endpoint = this.apiEndpoints[i];
@@ -50,16 +66,18 @@ class PublicMembersLog {
         // Handle JSONP endpoint differently
         if (endpoint === '/api/members.js') {
           await this.loadMembersJSONP(endpoint);
+          this.lastRefresh = Date.now();
           return;
         }
         
         // Handle iframe embedding
         if (endpoint === '/embedded-members') {
           await this.loadMembersIframe();
+          this.lastRefresh = Date.now();
           return;
         }
         
-        // Standard fetch
+        // Standard fetch with cache-busting query parameter
         response = await fetch(`${endpoint}?_=${Date.now()}${endpoint.includes('leaderboard') ? '&limit=5' : ''}`);
         
         // Check content type
@@ -73,22 +91,33 @@ class PublicMembersLog {
         
         if (Array.isArray(data)) {
           console.log(`Received array of ${data.length} members from ${endpoint}`);
+          
+          // Check if data has changed
+          const hasChanged = this.hasDataChanged(this.members, data);
+          
           this.members = data;
           this.loading = false;
+          this.lastRefresh = Date.now();
           
           // Also try to get member count
           this.loadMemberCount();
           
-          console.log('Updating UI with members data');
-          this.render();
+          console.log('Updating UI with members data. Data changed:', hasChanged);
+          this.render(hasChanged);
           
           return;
         } else if (data && data.members && Array.isArray(data.members)) {
           console.log(`Received ${data.members.length} members from ${endpoint}`);
+          
+          // Check if data has changed
+          const hasChanged = this.hasDataChanged(this.members, data.members);
+          
           this.members = data.members;
           this.memberCount = data.total || data.members.length;
           this.loading = false;
-          this.render();
+          this.lastRefresh = Date.now();
+          
+          this.render(hasChanged);
           return;
         }
       } catch (error) {
@@ -98,8 +127,30 @@ class PublicMembersLog {
     
     // If we reach here, all endpoints failed
     this.loading = false;
-    this.error = 'Unable to load member data. Please try again later.';
-    this.render();
+    if (!isRefresh) {
+      this.error = 'Unable to load member data. Please try again later.';
+      this.render();
+    }
+  }
+  
+  // Helper method to check if member data has changed
+  hasDataChanged(oldData, newData) {
+    if (!oldData || !newData || oldData.length !== newData.length) {
+      return true;
+    }
+    
+    for (let i = 0; i < oldData.length; i++) {
+      const oldMember = oldData[i];
+      const newMember = newData[i];
+      
+      // Check if any important properties have changed
+      if (oldMember.totalSolar !== newMember.totalSolar ||
+          oldMember.totalDollars !== newMember.totalDollars) {
+        return true;
+      }
+    }
+    
+    return false;
   }
   
   async loadMembersJSONP(endpoint) {
@@ -218,7 +269,7 @@ class PublicMembersLog {
     return '$' + value.toLocaleString(undefined, { maximumFractionDigits: 0 });
   }
   
-  render() {
+  render(hasChanged = false) {
     if (!this.container) return;
     
     let html = '';
@@ -271,14 +322,16 @@ class PublicMembersLog {
     } else {
       // Show members
       const displayMembers = this.members.slice(0, 5); // Just show the top 5 for the homepage
+      const highlightClass = hasChanged ? 'highlight-updated' : '';
       
-      console.log(`Rendering ${displayMembers.length} members in the leaderboard`);
+      console.log(`Rendering ${displayMembers.length} members in the leaderboard. Highlight changes: ${hasChanged}`);
       
       html = `
-        <div class="public-members-log">
+        <div class="public-members-log ${highlightClass}">
           <div class="members-header">
             <h2 class="members-title">Current-See Members</h2>
             <span class="members-count">${this.memberCount || displayMembers.length} Total</span>
+            ${hasChanged ? '<span class="update-badge">Updated</span>' : ''}
           </div>
           
           <table class="members-table">
@@ -301,12 +354,12 @@ class PublicMembersLog {
                 const isAnonymous = member.isAnonymous || member.is_anonymous;
                 
                 return `
-                  <tr class="${isAnonymous ? 'member-anonymous' : ''}">
+                  <tr class="${isAnonymous ? 'member-anonymous' : ''} ${hasChanged ? 'highlight-row' : ''}">
                     <td class="member-id">#${memberId}</td>
                     <td class="member-name">${isAnonymous ? 'Anonymous Member' : memberName}</td>
                     <td class="member-joined">${joinedDate}</td>
-                    <td class="member-solar">${solarAmount}</td>
-                    <td class="member-value">${dollarValue}</td>
+                    <td class="member-solar ${hasChanged ? 'highlight-cell' : ''}">${solarAmount}</td>
+                    <td class="member-value ${hasChanged ? 'highlight-cell' : ''}">${dollarValue}</td>
                   </tr>
                 `;
               }).join('')}
@@ -314,15 +367,32 @@ class PublicMembersLog {
           </table>
           
           <div class="members-actions">
-            <div></div>
+            <div class="last-updated">
+              ${this.lastRefresh ? `Last updated: ${new Date(this.lastRefresh).toLocaleTimeString()}` : ''}
+            </div>
             <a href="/members.html" class="view-all-button">View All Members</a>
           </div>
         </div>
       `;
+      
       console.log('Finished rendering members leaderboard');
     }
     
     this.container.innerHTML = html;
+    
+    // Add animation removal after delay if highlighting changes
+    if (hasChanged) {
+      setTimeout(() => {
+        const highlights = this.container.querySelectorAll('.highlight-cell, .highlight-row, .highlight-updated, .update-badge');
+        highlights.forEach(el => {
+          if (el.classList.contains('update-badge')) {
+            el.style.opacity = '0';
+          } else {
+            el.classList.remove('highlight-cell', 'highlight-row', 'highlight-updated');
+          }
+        });
+      }, 3000);
+    }
   }
   
   retry() {
