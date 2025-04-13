@@ -445,12 +445,13 @@ footer {
 }
 
 .footer-links a {
-  color: var(--footer-text);
+  color: white;
   text-decoration: none;
   transition: all 0.3s ease;
   font-size: 0.95rem;
   position: relative;
   padding-left: 0;
+  font-weight: 700; /* Bold */
 }
 
 .footer-links a:hover {
