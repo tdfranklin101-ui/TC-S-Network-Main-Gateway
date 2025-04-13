@@ -1,50 +1,10 @@
-modules = ["nodejs-20", "bash", "web"]
-run = "npm run dev"
-hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
+run = "npm run start"
+entrypoint = "dist/index.js"
 
 [nix]
-channel = "stable-24_05"
+channel = "stable-23_11"
 
 [deployment]
-deploymentTarget = "autoscale"
-run = ["npm", "run", "start"]
-build = ["npm", "run", "build"]
-
-[[ports]]
-localPort = 3000
-externalPort = 3001
-
-[[ports]]
-localPort = 3333
-externalPort = 3000
-
-[[ports]]
-localPort = 5000
-externalPort = 80
-
-[workflows]
-runButton = "Project"
-
-[[workflows.workflow]]
-name = "Project"
-mode = "parallel"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Start application"
-
-[[workflows.workflow]]
-name = "Start application"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npm run dev"
-waitForPort = 5000
+run = ["sh", "-c", "npm run start"]
+deploymentTarget = "cloudrun"
+ignorePorts = false

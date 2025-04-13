@@ -1,10 +1,11 @@
 {
-  "name": "the-current-see-static",
+  "name": "the-current-see",
   "version": "1.0.0",
-  "main": "deploy-server.js",
+  "private": true,
   "type": "commonjs",
   "scripts": {
-    "start": "node deploy-server.js"
+    "start": "node dist/index.js",
+    "build": "mkdir -p dist && cp -r public dist/ && cp replit-static-server.js dist/index.js"
   },
   "engines": {
     "node": ">=14.0.0"
