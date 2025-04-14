@@ -152,7 +152,21 @@ try {
 // Health check routes (high priority)
 app.get(['/health', '/healthz', '/_health'], (req, res) => {
   console.log(`[HEALTH] ${req.method} ${req.url} (${req.headers['user-agent'] || 'unknown'})`);
-  res.status(200).send('OK');
+  
+  // Enhanced health check response with server status
+  const status = {
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    memberCount: members.length,
+    lastDistribution: members.length > 0 ? members[0].lastDistributionDate : null,
+    solarTracking: {
+      startDate: '2025-04-07',
+      currentTotal: solarClockData.totalKwh / 1000000
+    }
+  };
+  
+  res.status(200).json(status);
 });
 
 // Static file serving - key feature to serve all files in the public directory
@@ -570,15 +584,55 @@ server.listen(PORT, HOST, () => {
   console.log('Solar Generator is tracking energy since April 7, 2025');
   console.log('Current-See member #1: Terry D. Franklin - Joined April 10, 2025');
   
-  // Set up a daily schedule for distribution at midnight
+  // Set up a daily schedule for distribution at midnight GMT (5:00 PM Pacific Time)
   const DISTRIBUTION_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+  
+  // Create a monitoring log file
+  const logDistribution = (message) => {
+    const timestamp = new Date().toISOString();
+    const logMessage = `[${timestamp}] ${message}\n`;
+    console.log(logMessage.trim());
+    
+    // Also log to a file for permanent record
+    try {
+      fs.appendFileSync('distribution_log.txt', logMessage);
+    } catch (error) {
+      console.error('Error writing to log file:', error);
+    }
+  };
+  
+  // Log server start
+  logDistribution('Server started. SOLAR distribution scheduler initialized.');
+  
+  // Set up health check logging (runs every 6 hours)
+  const HEALTH_CHECK_INTERVAL = 6 * 60 * 60 * 1000; // 6 hours
   setInterval(() => {
-    console.log('Running scheduled SOLAR distribution...');
+    logDistribution(`Health check: Server up and running. ${members.length} members in system.`);
+  }, HEALTH_CHECK_INTERVAL);
+  
+  // Main distribution interval
+  setInterval(() => {
+    logDistribution('Running scheduled SOLAR distribution...');
     const updatedCount = updateMemberDistributions();
-    console.log(`Scheduled distribution complete. Updated ${updatedCount} members.`);
+    
+    // Log detailed distribution results
+    const distributionTime = new Date().toISOString();
+    const pacificTime = new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' });
+    logDistribution(`Distribution completed at ${distributionTime} (${pacificTime} Pacific Time). Updated ${updatedCount} members.`);
+    
+    // Save a backup of the current members data
+    try {
+      fs.writeFileSync(
+        `members_backup_${new Date().toISOString().replace(/[:.]/g, '-')}.json`,
+        JSON.stringify(members, null, 2)
+      );
+      logDistribution('Members data backup created successfully.');
+    } catch (error) {
+      console.error('Error creating members backup:', error);
+    }
   }, DISTRIBUTION_INTERVAL);
   
-  console.log('SOLAR distribution scheduler is active. Will distribute 1 SOLAR per user every 24 hours.');
+  console.log('SOLAR distribution scheduler is active. Will distribute 1 SOLAR per user daily at 00:00 GMT (5:00 PM Pacific Time).');
 });
 
 // Error handling
