@@ -520,13 +520,13 @@ function generateLandingPage() {
           <td class="member-id">#1</td>
           <td class="member-name">Terry D. Franklin</td>
           <td>April 10, 2025</td>
-          <td>3.00</td>
+          <td>5.00</td>
         </tr>
         <tr>
           <td class="member-id">#2</td>
           <td class="member-name">JF</td>
           <td>April 11, 2025</td>
-          <td>2.00</td>
+          <td>4.00</td>
         </tr>
       </tbody>
     </table>
