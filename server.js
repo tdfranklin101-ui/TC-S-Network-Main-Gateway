@@ -606,9 +606,23 @@ app.get('/', (req, res) => {
   }
 });
 
-// Catch-all route - serve files from public or fall back to index.html
+// Define a specific route for the solar generator page
+app.get('/solar-generator', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'solar-generator.html'));
+});
+
+// Catch-all route - first try to serve the file from public directory,
+// and if it doesn't exist, fall back to index.html
 app.use((req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  const filePath = path.join(__dirname, 'public', req.path);
+  
+  // Check if the file exists
+  if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+    res.sendFile(filePath);
+  } else {
+    // Fall back to index.html
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  }
 });
 
 // Start the server
