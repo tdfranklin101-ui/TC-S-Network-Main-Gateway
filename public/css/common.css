@@ -1,5 +1,9 @@
 /* Common styles for The Current-See website */
 
+/* Import component styles */
+@import url('/css/components/solar-animations.css');
+@import url('/css/dashboard.css');
+
 /* Consistent colors */
 :root {
   --primary-color: #7bc144;

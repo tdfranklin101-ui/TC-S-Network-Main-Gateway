@@ -16,6 +16,8 @@ import * as solarConstants from "./solar-constants";
 import cors from "cors";
 import { db } from "./db";
 import { sql } from "drizzle-orm";
+import apiRoutes from "./routes/api";
+import geoip from "geoip-lite";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Add a simple health check endpoint for deployment checks

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Solar Achievement - The Current-See</title>
+  <link rel="stylesheet" href="/css/common.css">
+  
+  <!-- Open Graph meta tags for social sharing -->
+  <meta property="og:title" content="Solar Achievement - The Current-See">
+  <meta property="og:description" content="Check out my solar achievement with The Current-See!">
+  <meta property="og:image" id="og-image" content="">
+  <meta property="og:url" id="og-url" content="">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+</head>
+<body>
+  <header class="navbar">
+    <div class="navbar-brand">
+      <a href="/">The Current-See</a>
+    </div>
+    <nav>
+      <ul class="nav-list">
+        <li class="nav-item"><a href="/" class="nav-link">Home</a></li>
+        <li class="nav-item"><a href="/solar-generator" class="nav-link">Solar Generator</a></li>
+        <li class="nav-item"><a href="/dashboard-demo.html" class="nav-link">Dashboard</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="page-container">
+    <div class="container" style="max-width: 800px; margin: 0 auto; padding: 20px;">
+      <div style="text-align: center; margin-bottom: 30px;">
+        <h1>Solar Achievement</h1>
+        <p class="subtitle">A celebration of renewable energy impact</p>
+      </div>
+
+      <!-- Badge Display -->
+      <div style="background: white; border-radius: 10px; padding: 30px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); text-align: center; margin-bottom: 30px;">
+        <img id="achievement-badge" src="" alt="Solar Achievement Badge" style="max-width: 100%; max-height: 400px; margin-bottom: 20px;">
+        
+        <div id="achievement-info" style="margin-top: 20px;">
+          <h2 id="achievement-title" style="margin-bottom: 10px; color: #333;">Loading achievement...</h2>
+          <p id="achievement-description" style="font-size: 1.1rem; color: #666; margin-bottom: 20px;">Please wait while we load your achievement details.</p>
+        </div>
+      </div>
+      
+      <!-- Call to Action -->
+      <div class="solar-rays-bg" style="background-color: rgba(255,255,255,0.9); border-radius: 10px; padding: 30px; text-align: center;">
+        <h2>Join The Current-See</h2>
+        <p style="margin-bottom: 20px;">Track your own solar achievements and be part of the solar revolution.</p>
+        <a href="/join" class="btn-join">Start Your Solar Journey</a>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="footer-content">
+      <div class="footer-info">
+        <h3>The Current-See PBC, Inc.</h3>
+        <p>A Public Benefit Corporation</p>
+        <p>Making the power of the sun accessible to everyone.</p>
+      </div>
+      <div class="footer-links">
+        <h3>Resources</h3>
+        <ul>
+          <li><a href="/solar-declaration">Solar Declaration</a></li>
+          <li><a href="/founders-note">Founder's Note</a></li>
+          <li><a href="/whitepapers">White Papers</a></li>
+        </ul>
+      </div>
+      <div class="footer-links">
+        <h3>Company</h3>
+        <ul>
+          <li><a href="/about">About Us</a></li>
+          <li><a href="/join">Join</a></li>
+          <li><a href="/contact">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="copyright">
+      &copy; 2025 The Current-See PBC, Inc. All rights reserved.
+    </div>
+  </footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Get URL parameters
+      const urlParams = new URLSearchParams(window.location.search);
+      const name = urlParams.get('name') || 'Solar Hero';
+      const value = urlParams.get('value') || '0';
+      const type = urlParams.get('type') || 'offset';
+      
+      // Generate badge URL
+      const badgeUrl = `/badge?name=${encodeURIComponent(name)}&kwh=${encodeURIComponent(value)}&type=${encodeURIComponent(type)}`;
+      
+      // Update image source
+      const badgeImage = document.getElementById('achievement-badge');
+      if (badgeImage) {
+        badgeImage.src = badgeUrl;
+        badgeImage.alt = `${name}'s Solar Achievement`;
+      }
+      
+      // Update Open Graph meta tags for social sharing
+      const ogImage = document.getElementById('og-image');
+      const ogUrl = document.getElementById('og-url');
+      
+      if (ogImage) {
+        ogImage.content = `${window.location.origin}${badgeUrl}`;
+      }
+      
+      if (ogUrl) {
+        ogUrl.content = window.location.href;
+      }
+      
+      // Update achievement information
+      const achievementTitle = document.getElementById('achievement-title');
+      const achievementDescription = document.getElementById('achievement-description');
+      
+      if (achievementTitle) {
+        achievementTitle.textContent = 'Solar Achievement';
+      }
+      
+      if (achievementDescription) {
+        // Customize description based on achievement type
+        let action = 'achieved';
+        
+        switch (type) {
+          case 'offset':
+            action = 'offset';
+            break;
+          case 'generated':
+            action = 'generated';
+            break;
+          case 'saved':
+            action = 'saved';
+            break;
+        }
+        
+        achievementDescription.textContent = `${name} ${action} ${value} kWh of energy with The Current-See!`;
+      }
+      
+      // Update page title
+      document.title = `${name}'s Solar Achievement - The Current-See`;
+    });
+  </script>
+</body>
+</html>

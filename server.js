@@ -16,6 +16,8 @@ const schedule = require('node-schedule');
 const PORT = process.env.PORT || 3000;
 const HOST = '0.0.0.0';
 const DATABASE_URL = process.env.DATABASE_URL;
+const MAXMIND_LICENSE_KEY = process.env.MAXMIND_LICENSE_KEY;
+const ADMIN_API_TOKEN = process.env.ADMIN_API_TOKEN;
 
 // Solar Constants
 const SOLAR_CONSTANTS = {
@@ -202,6 +204,357 @@ app.get('/api/solar-accounts/leaderboard', (req, res) => {
 
 app.get('/api/member-count', (req, res) => {
   res.json({ count: members.length });
+});
+
+// Load product-energy-service
+let productService;
+try {
+  productService = require('./server/product-energy-service').default;
+  console.log('Product energy service loaded successfully');
+} catch (err) {
+  console.error('Error loading product energy service:', err);
+  productService = {
+    getProductData: () => null,
+    recommendAlternative: () => [],
+    analyzeProduct: async () => ({ error: 'Product service unavailable' })
+  };
+}
+
+// Load geolocation-service
+let geolocationService;
+try {
+  geolocationService = require('./server/geolocation-service');
+  console.log('Geolocation service loaded successfully');
+  // Start the Python service
+  geolocationService.startPythonService();
+} catch (err) {
+  console.error('Error loading geolocation service:', err);
+  geolocationService = {
+    getLocation: async (ip) => ({ 
+      ip, 
+      city: 'Unknown', 
+      country: 'Unknown',
+      source: 'fallback',
+      reason: 'Service unavailable'
+    })
+  };
+}
+
+// Product energy data endpoints
+app.get('/api/product/:productId', (req, res) => {
+  try {
+    const { productId } = req.params;
+    
+    if (!productId) {
+      return res.status(400).json({
+        error: 'Missing productId parameter',
+        message: 'Product ID is required'
+      });
+    }
+    
+    const productData = productService.getProductData(productId);
+    
+    if (!productData) {
+      return res.status(404).json({
+        error: 'Product not found',
+        message: `No energy data found for product: ${productId}`
+      });
+    }
+    
+    // Return the product energy data
+    res.json(productData);
+  } catch (error) {
+    console.error('Error getting product data:', error);
+    res.status(500).json({
+      error: 'Failed to retrieve product data',
+      message: error.message
+    });
+  }
+});
+
+// Analyze a product using AI if available
+app.post('/api/analyze-product', async (req, res) => {
+  try {
+    const { productName, productDescription } = req.body;
+    
+    if (!productName) {
+      return res.status(400).json({
+        error: 'Missing product name',
+        message: 'Product name is required'
+      });
+    }
+    
+    // Use the product service to analyze the product
+    const productData = await productService.analyzeProduct(productName, productDescription || '');
+    
+    // Return the product energy data with recommendations
+    const recommendations = productService.recommendAlternative(productName);
+    
+    res.json({
+      ...productData,
+      recommendations
+    });
+  } catch (error) {
+    console.error('Error analyzing product:', error);
+    res.status(500).json({
+      error: 'Failed to analyze product',
+      message: error.message
+    });
+  }
+});
+
+// Get product recommendations
+app.get('/api/recommendations/:productId', async (req, res) => {
+  try {
+    const { productId } = req.params;
+    
+    if (!productId) {
+      return res.status(400).json({
+        error: 'Missing productId parameter',
+        message: 'Product ID is required'
+      });
+    }
+    
+    const recommendations = productService.recommendAlternative(productId);
+    
+    res.json({
+      productId,
+      recommendations
+    });
+  } catch (error) {
+    console.error('Error getting recommendations:', error);
+    res.status(500).json({
+      error: 'Failed to get recommendations',
+      message: error.message
+    });
+  }
+});
+
+// Get geolocation data
+app.get('/api/geolocation', async (req, res) => {
+  try {
+    // Get the client IP address
+    const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    
+    // Use the geolocation service to get location data
+    const locationData = await geolocationService.getLocation(clientIp);
+    
+    res.json(locationData);
+  } catch (error) {
+    console.error('Error getting geolocation data:', error);
+    res.status(500).json({
+      error: 'Failed to get geolocation data',
+      message: error.message
+    });
+  }
+});
+
+// Admin Routes with token authentication
+const adminAuthMiddleware = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  
+  if (!authHeader) {
+    return res.status(401).json({ 
+      error: 'Authentication required',
+      message: 'Missing Authorization header'
+    });
+  }
+  
+  // Check if the token matches the environment variable
+  if (!ADMIN_API_TOKEN) {
+    return res.status(500).json({ 
+      error: 'Server configuration error',
+      message: 'Admin API token not configured'
+    });
+  }
+  
+  // Simple token comparison - format should be "Bearer TOKEN"
+  const token = authHeader.startsWith('Bearer ') 
+    ? authHeader.substring(7) 
+    : authHeader;
+  
+  if (token !== ADMIN_API_TOKEN) {
+    return res.status(403).json({ 
+      error: 'Forbidden',
+      message: 'Invalid API token'
+    });
+  }
+  
+  // Token is valid, proceed to the route handler
+  next();
+};
+
+// Admin route to view system logs
+app.get('/api/admin/logs', adminAuthMiddleware, (req, res) => {
+  try {
+    // In a real application, you would retrieve logs from a database
+    // For this prototype, we'll return the members and some system info
+    const logs = {
+      members,
+      system: {
+        uptime: process.uptime(),
+        memory: process.memoryUsage(),
+        timestamp: new Date().toISOString()
+      }
+    };
+    
+    res.json(logs);
+  } catch (error) {
+    console.error('Error getting admin logs:', error);
+    res.status(500).json({ error: 'Failed to retrieve logs' });
+  }
+});
+
+// Admin route for system diagnostics
+app.get('/api/admin/diagnostics', adminAuthMiddleware, async (req, res) => {
+  try {
+    // Database connection check
+    let dbStatus = 'not_connected';
+    if (pool) {
+      try {
+        await pool.query('SELECT 1');
+        dbStatus = 'connected';
+      } catch (dbError) {
+        console.error('Database connection error:', dbError);
+        dbStatus = 'error';
+      }
+    }
+    
+    res.json({
+      system: {
+        uptime: process.uptime(),
+        memory: process.memoryUsage(),
+        env: process.env.NODE_ENV,
+        nodeVersion: process.version
+      },
+      database: {
+        status: dbStatus,
+        timestamp: new Date().toISOString()
+      },
+      services: {
+        productService: productService ? 'loaded' : 'not_loaded',
+        geolocationService: geolocationService ? 'loaded' : 'not_loaded',
+        pythonServiceRunning: geolocationService && geolocationService.pythonServiceRunning
+      }
+    });
+  } catch (error) {
+    console.error('Error getting system diagnostics:', error);
+    res.status(500).json({ error: 'Failed to retrieve diagnostics' });
+  }
+});
+
+// Admin route for viewing product database
+app.get('/api/admin/products', adminAuthMiddleware, (req, res) => {
+  try {
+    const products = productService.getAllProducts ? productService.getAllProducts() : [];
+    
+    res.json({
+      products,
+      count: products.length,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error getting product database:', error);
+    res.status(500).json({ error: 'Failed to retrieve product database' });
+  }
+});
+
+// Load badge-service
+let badgeService;
+try {
+  badgeService = require('./server/badge-service');
+  console.log('Badge service loaded successfully');
+  // Start the Python badge service
+  badgeService.startBadgeService();
+} catch (err) {
+  console.error('Error loading badge service:', err);
+  badgeService = null;
+}
+
+// Badge generation endpoint
+app.get('/badge', async (req, res) => {
+  try {
+    if (!badgeService) {
+      return res.status(503).json({
+        error: 'Badge service unavailable',
+        message: 'The badge generation service is currently unavailable'
+      });
+    }
+    
+    // Get parameters from query string
+    const options = {
+      name: req.query.name || 'Solar Hero',
+      kwh: req.query.kwh || '0.0',
+      type: req.query.type || 'offset',
+      theme: req.query.theme || 'default',
+      format: req.query.format || 'png'
+    };
+    
+    // Generate the badge
+    const badge = await badgeService.generateBadge(options);
+    
+    if (options.format === 'base64') {
+      // Return JSON with base64 data
+      res.json(badge);
+    } else {
+      // Return the PNG image
+      res.set('Content-Type', 'image/png');
+      res.set('Content-Disposition', `inline; filename="solar_badge_${options.name}.png"`);
+      res.send(badge);
+    }
+  } catch (error) {
+    console.error('Error generating badge:', error);
+    res.status(500).json({
+      error: 'Badge generation failed',
+      message: error.message
+    });
+  }
+});
+
+// Solar achievement endpoint (for tracking and generating badges)
+app.post('/api/achievement', (req, res) => {
+  try {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({
+        error: 'Authentication required',
+        message: 'You must be logged in to record achievements'
+      });
+    }
+    
+    const { type, value, description } = req.body;
+    
+    if (!type || !value) {
+      return res.status(400).json({
+        error: 'Missing required fields',
+        message: 'Type and value are required'
+      });
+    }
+    
+    // For this prototype, we'll just return success
+    // In a real application, this would save to the database
+    
+    // Generate achievement URL for sharing
+    const username = req.user.username;
+    const shareUrl = `/badge?name=${encodeURIComponent(username)}&kwh=${encodeURIComponent(value)}&type=${encodeURIComponent(type)}`;
+    
+    res.status(201).json({
+      success: true,
+      achievement: {
+        type,
+        value,
+        description: description || `${type} achievement`,
+        timestamp: new Date().toISOString(),
+        shareUrl
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error recording achievement:', error);
+    res.status(500).json({
+      error: 'Failed to record achievement',
+      message: error.message
+    });
+  }
 });
 
 app.post('/api/signup', (req, res) => {

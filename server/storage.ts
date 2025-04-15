@@ -1,483 +1,89 @@
-import {
-  User,
-  InsertUser,
-  Product,
-  InsertProduct,
-  NewsletterSubscription,
-  InsertNewsletterSubscription,
-  ContactMessage,
-  InsertContactMessage,
-  SolarAccount,
-  InsertSolarAccount,
-  Distribution,
-  InsertDistribution,
-  users,
-  products,
-  newsletterSubscriptions,
-  contactMessages,
-  solarAccounts,
-  distributions
-} from "@shared/schema";
+import { users, type User, type InsertUser, productScans, type ProductScan, type InsertProductScan } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, asc, and, sql } from "drizzle-orm";
-import { randomBytes } from "crypto";
-import connectPg from "connect-pg-simple";
+import { eq } from "drizzle-orm";
 import session from "express-session";
+import connectPg from "connect-pg-simple";
 import { pool } from "./db";
-import MemoryStore from "memorystore";
 
-// Interface for storage operations
+const PostgresSessionStore = connectPg(session);
+
 export interface IStorage {
   // User methods
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
-  updateUserCredentials(id: number, email: string, password: string): Promise<User | undefined>;
+  createUser(insertUser: InsertUser): Promise<User>;
+  updateUserSolarBalance(id: number, solarBalance: number): Promise<User>;
+  updateLastDistribution(id: number): Promise<User>;
   
-  // Product methods
-  getAllProducts(): Promise<Product[]>;
-  getProduct(id: number): Promise<Product | undefined>;
-  createProduct(product: InsertProduct): Promise<Product>;
+  // Product scan methods
+  getProductScans(userId: number): Promise<ProductScan[]>;
+  createProductScan(scan: InsertProductScan): Promise<ProductScan>;
   
-  // Newsletter subscription methods
-  createNewsletterSubscription(subscription: InsertNewsletterSubscription): Promise<NewsletterSubscription>;
-  
-  // Contact message methods
-  createContactMessage(message: InsertContactMessage): Promise<ContactMessage>;
-
-  // Solar account methods
-  getSolarAccount(id: number): Promise<SolarAccount | undefined>;
-  getSolarAccountByUserId(userId: number): Promise<SolarAccount | undefined>;
-  getSolarAccountByAccountNumber(accountNumber: string): Promise<SolarAccount | undefined>;
-  createSolarAccount(account: Omit<InsertSolarAccount, 'accountNumber'>): Promise<SolarAccount>;
-  updateSolarAccountTotals(id: number, solarAmount: number, kwhAmount: number, dollarValue: number): Promise<SolarAccount>;
-  getAllSolarAccounts(limit?: number, includeAnonymous?: boolean): Promise<SolarAccount[]>;
-  
-  // Distribution methods
-  createDistribution(distribution: InsertDistribution): Promise<Distribution>;
-  getDistributionsByUserId(userId: number): Promise<Distribution[]>;
-  getDistributionsBySolarAccountId(solarAccountId: number): Promise<Distribution[]>;
-  getDistributionsByDate(date: Date): Promise<Distribution[]>;
-  processDistributions(date: Date): Promise<number>; // Returns number of processed distributions
-  
-  // Session store
-  sessionStore: session.Store;
+  sessionStore: session.SessionStore;
 }
 
-// Database-backed storage implementation
 export class DatabaseStorage implements IStorage {
-  sessionStore: session.Store;
-
+  sessionStore: session.SessionStore;
+  
   constructor() {
-    // Setup session store based on available database connection
-    if (pool) {
-      // If database is available, use PostgreSQL for session storage
-      const PostgresSessionStore = connectPg(session);
-      this.sessionStore = new PostgresSessionStore({ 
-        pool, 
-        createTableIfMissing: true 
-      });
-      
-      // Initialize the database with sample products if needed
-      this.initializeSampleProductsIfNeeded().catch(err => {
-        console.error('Failed to initialize sample products:', err);
-      });
-    } else {
-      // Fall back to memory store if database is not available
-      const MemStore = MemoryStore(session);
-      this.sessionStore = new MemStore({
-        checkPeriod: 86400000 // prune expired entries every 24h
-      });
-      console.warn('Using memory session store as database is not available');
-    }
+    this.sessionStore = new PostgresSessionStore({ 
+      pool, 
+      createTableIfMissing: true 
+    });
   }
 
-  // User methods
   async getUser(id: number): Promise<User | undefined> {
-    try {
-      if (!db) {
-        console.warn("Database not available, cannot get user");
-        return undefined;
-      }
-      const results = await db.select().from(users).where(eq(users.id, id));
-      return results[0];
-    } catch (error) {
-      console.error("Error getting user:", error);
-      return undefined;
-    }
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    try {
-      if (!db) {
-        console.warn("Database not available, cannot get user by username");
-        return undefined;
-      }
-      const results = await db.select().from(users).where(eq(users.username, username));
-      return results[0];
-    } catch (error) {
-      console.error("Error getting user by username:", error);
-      return undefined;
-    }
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    try {
-      if (!db) {
-        console.warn("Database not available, cannot create user");
-        throw new Error("Database connection unavailable");
-      }
-      
-      console.log("Creating user with data:", { ...insertUser, password: "[REDACTED]" });
-      
-      // Explicitly use SQL to get the sequence working correctly
-      const result = await db.execute(sql`
-        INSERT INTO users (username, password, email, first_name, last_name, created_at) 
-        VALUES (
-          ${insertUser.username}, 
-          ${insertUser.password}, 
-          ${insertUser.email || null}, 
-          ${insertUser.firstName || null}, 
-          ${insertUser.lastName || null},
-          ${new Date()}
-        ) 
-        RETURNING *
-      `);
-      
-      if (!result || !result.rows || result.rows.length === 0) {
-        throw new Error("Failed to create user - no result returned");
-      }
-      
-      const user = result.rows[0] as User;
-      console.log("User created successfully with ID:", user.id);
-      return user;
-    } catch (error) {
-      console.error("Error creating user:", error);
-      throw error;
-    }
-  }
-  
-  async updateUserCredentials(id: number, email: string, password: string): Promise<User | undefined> {
-    try {
-      if (!db) {
-        console.warn("Database not available, cannot update user credentials");
-        return undefined;
-      }
-      const [updatedUser] = await db
-        .update(users)
-        .set({
-          email,
-          password
-          // No updatedAt field in schema, Drizzle will handle this
-        })
-        .where(eq(users.id, id))
-        .returning();
-      return updatedUser;
-    } catch (error) {
-      console.error("Error updating user credentials:", error);
-      return undefined;
-    }
-  }
-  
-  // Product methods
-  async getAllProducts(): Promise<Product[]> {
-    try {
-      if (!db) {
-        console.warn("Database not available, returning empty products array");
-        return [];
-      }
-      return await db.select().from(products);
-    } catch (error) {
-      console.error("Error fetching products:", error);
-      return [];
-    }
-  }
-  
-  async getProduct(id: number): Promise<Product | undefined> {
-    try {
-      if (!db) {
-        console.warn("Database not available, cannot get product");
-        return undefined;
-      }
-      const results = await db.select().from(products).where(eq(products.id, id));
-      return results[0];
-    } catch (error) {
-      console.error("Error getting product:", error);
-      return undefined;
-    }
-  }
-  
-  async createProduct(insertProduct: InsertProduct): Promise<Product> {
-    try {
-      if (!db) {
-        console.warn("Database not available, cannot create product");
-        throw new Error("Database connection unavailable");
-      }
-      const [product] = await db.insert(products).values(insertProduct).returning();
-      return product;
-    } catch (error) {
-      console.error("Error creating product:", error);
-      throw error;
-    }
-  }
-  
-  // Newsletter subscription methods
-  async createNewsletterSubscription(insertSubscription: InsertNewsletterSubscription): Promise<NewsletterSubscription> {
-    const [subscription] = await db
-      .insert(newsletterSubscriptions)
-      .values(insertSubscription)
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
       .returning();
-    return subscription;
+    return user;
   }
-  
-  // Contact message methods
-  async createContactMessage(insertMessage: InsertContactMessage): Promise<ContactMessage> {
-    const [message] = await db
-      .insert(contactMessages)
-      .values(insertMessage)
+
+  async updateUserSolarBalance(id: number, solarBalance: number): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ solarBalance })
+      .where(eq(users.id, id))
       .returning();
-    return message;
+    return user;
   }
 
-  // Solar account methods
-  async getSolarAccount(id: number): Promise<SolarAccount | undefined> {
-    const results = await db.select().from(solarAccounts).where(eq(solarAccounts.id, id));
-    return results[0];
-  }
-
-  async getSolarAccountByUserId(userId: number): Promise<SolarAccount | undefined> {
-    const results = await db.select().from(solarAccounts).where(eq(solarAccounts.userId, userId));
-    return results[0];
-  }
-
-  async getSolarAccountByAccountNumber(accountNumber: string): Promise<SolarAccount | undefined> {
-    const results = await db.select().from(solarAccounts).where(eq(solarAccounts.accountNumber, accountNumber));
-    return results[0];
-  }
-
-  async createSolarAccount(account: Omit<InsertSolarAccount, 'accountNumber'>): Promise<SolarAccount> {
-    try {
-      if (!db) {
-        console.warn("Database not available, cannot create solar account");
-        throw new Error("Database connection unavailable");
-      }
-      
-      // Generate a unique account number
-      const accountNumber = this.generateAccountNumber();
-      console.log("Creating solar account with account number:", accountNumber, "for user ID:", account.userId);
-      
-      // Use explicit SQL approach to ensure sequence advances correctly
-      const result = await db.execute(sql`
-        INSERT INTO solar_accounts (
-          user_id, 
-          account_number, 
-          is_anonymous, 
-          display_name, 
-          total_solar, 
-          total_kwh, 
-          total_dollars, 
-          joined_date
-        ) 
-        VALUES (
-          ${account.userId}, 
-          ${accountNumber}, 
-          ${account.isAnonymous}, 
-          ${account.displayName},
-          ${account.totalSolar || 0},
-          ${account.totalKwh || 0},
-          ${account.totalDollars || 0},
-          ${account.joinedDate || new Date()}
-        ) 
-        RETURNING *
-      `);
-      
-      if (!result || !result.rows || result.rows.length === 0) {
-        throw new Error("Failed to create solar account - no result returned");
-      }
-      
-      const solarAccount = result.rows[0] as SolarAccount;
-      console.log("Solar account created successfully with ID:", solarAccount.id);
-      return solarAccount;
-    } catch (error) {
-      console.error("Error creating solar account:", error);
-      throw error;
-    }
-  }
-
-  async updateSolarAccountTotals(id: number, solarAmount: number, kwhAmount: number, dollarValue: number): Promise<SolarAccount> {
-    const [updated] = await db
-      .update(solarAccounts)
-      .set({
-        totalSolar: sql`${solarAccounts.totalSolar} + ${solarAmount}`,
-        totalKwh: sql`${solarAccounts.totalKwh} + ${kwhAmount}`,
-        totalDollars: sql`${solarAccounts.totalDollars} + ${dollarValue}`,
-      })
-      .where(eq(solarAccounts.id, id))
+  async updateLastDistribution(id: number): Promise<User> {
+    const now = new Date();
+    const [user] = await db
+      .update(users)
+      .set({ lastDistribution: now })
+      .where(eq(users.id, id))
       .returning();
-    
-    return updated;
+    return user;
   }
 
-  async getAllSolarAccounts(limit = 50, includeAnonymous = false): Promise<SolarAccount[]> {
-    if (!includeAnonymous) {
-      return await db
-        .select()
-        .from(solarAccounts)
-        .where(eq(solarAccounts.isAnonymous, false))
-        .orderBy(asc(solarAccounts.joinedDate))
-        .limit(limit);
-    } else {
-      return await db
-        .select()
-        .from(solarAccounts)
-        .orderBy(asc(solarAccounts.joinedDate))
-        .limit(limit);
-    }
-  }
-
-  // Distribution methods
-  async createDistribution(distribution: InsertDistribution): Promise<Distribution> {
-    const [newDistribution] = await db
-      .insert(distributions)
-      .values(distribution)
-      .returning();
-    
-    return newDistribution;
-  }
-
-  async getDistributionsByUserId(userId: number): Promise<Distribution[]> {
+  async getProductScans(userId: number): Promise<ProductScan[]> {
     return await db
       .select()
-      .from(distributions)
-      .where(eq(distributions.userId, userId))
-      .orderBy(desc(distributions.distributionDate));
+      .from(productScans)
+      .where(eq(productScans.userId, userId))
+      .orderBy(productScans.scanDate);
   }
 
-  async getDistributionsBySolarAccountId(solarAccountId: number): Promise<Distribution[]> {
-    return await db
-      .select()
-      .from(distributions)
-      .where(eq(distributions.solarAccountId, solarAccountId))
-      .orderBy(desc(distributions.distributionDate));
-  }
-
-  async getDistributionsByDate(date: Date): Promise<Distribution[]> {
-    // Format the date to use for filtering
-    const year = date.getFullYear();
-    const month = date.getMonth() + 1;
-    const day = date.getDate();
-    
-    // Use the appropriate date filtering method
-    return await db
-      .select()
-      .from(distributions)
-      .where(
-        sql`(EXTRACT(YEAR FROM ${distributions.distributionDate}) = ${year} AND 
-             EXTRACT(MONTH FROM ${distributions.distributionDate}) = ${month} AND 
-             EXTRACT(DAY FROM ${distributions.distributionDate}) = ${day})`
-      );
-  }
-
-  async processDistributions(date: Date): Promise<number> {
-    // Format the date to use for filtering
-    const year = date.getFullYear();
-    const month = date.getMonth() + 1;
-    const day = date.getDate();
-    
-    // Find all pending distributions for the given date
-    const pendingDistributions = await db
-      .select()
-      .from(distributions)
-      .where(
-        and(
-          sql`(EXTRACT(YEAR FROM ${distributions.distributionDate}) = ${year} AND 
-               EXTRACT(MONTH FROM ${distributions.distributionDate}) = ${month} AND 
-               EXTRACT(DAY FROM ${distributions.distributionDate}) = ${day})`,
-          eq(distributions.status, 'pending')
-        )
-      );
-    
-    let processedCount = 0;
-    
-    // Process each distribution and update the corresponding solar account
-    for (const distribution of pendingDistributions) {
-      try {
-        // Update the solar account totals
-        await this.updateSolarAccountTotals(
-          distribution.solarAccountId,
-          Number(distribution.solarAmount),
-          Number(distribution.kwhAmount),
-          Number(distribution.dollarValue)
-        );
-        
-        // Mark the distribution as processed
-        await db
-          .update(distributions)
-          .set({
-            status: 'processed',
-            processedAt: new Date()
-          })
-          .where(eq(distributions.id, distribution.id));
-        
-        processedCount++;
-      } catch (error) {
-        console.error(`Failed to process distribution ${distribution.id}:`, error);
-        
-        // Mark the distribution as failed
-        await db
-          .update(distributions)
-          .set({
-            status: 'failed'
-          })
-          .where(eq(distributions.id, distribution.id));
-      }
-    }
-    
-    return processedCount;
-  }
-
-  // Helper methods
-  private generateAccountNumber(): string {
-    const prefix = 'SOL';
-    const randomPart = randomBytes(8).toString('hex').toUpperCase().substring(0, 12);
-    return `${prefix}-${randomPart}`;
-  }
-
-  // Initialize sample products if needed
-  private async initializeSampleProductsIfNeeded() {
-    const existingProducts = await this.getAllProducts();
-    
-    if (existingProducts.length === 0) {
-      const sampleProducts: InsertProduct[] = [
-        {
-          name: "Solar Future T-Shirt",
-          description: "100% organic cotton t-shirt featuring our \"Power the Future\" design.",
-          price: 2999, // $29.99
-          imageUrl: "https://images.unsplash.com/photo-1618354691792-d1d42acfd860?auto=format&fit=crop&w=600&h=400&q=80",
-          isNew: true
-        },
-        {
-          name: "Solar Power Bank",
-          description: "10,000mAh solar-rechargeable power bank with Current-See branding.",
-          price: 4999, // $49.99
-          imageUrl: "https://images.unsplash.com/photo-1603557244695-37478f2ef0c1?auto=format&fit=crop&w=600&h=400&q=80",
-          isNew: false
-        },
-        {
-          name: "Insulated Water Bottle",
-          description: "Stainless steel insulated bottle with our mission statement and logo.",
-          price: 3499, // $34.99
-          imageUrl: "https://images.unsplash.com/photo-1618403323851-eb733d77465b?auto=format&fit=crop&w=600&h=400&q=80",
-          isNew: false
-        }
-      ];
-      
-      for (const product of sampleProducts) {
-        await this.createProduct(product);
-      }
-    }
+  async createProductScan(scan: InsertProductScan): Promise<ProductScan> {
+    const [newScan] = await db
+      .insert(productScans)
+      .values(scan)
+      .returning();
+    return newScan;
   }
 }
 
-// Use the database storage implementation
 export const storage = new DatabaseStorage();

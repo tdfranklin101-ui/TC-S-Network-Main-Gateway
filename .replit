@@ -1,6 +1,6 @@
 run = "node main.js"
 entrypoint = "main.js"
-modules = ["nodejs-20"]
+modules = ["nodejs-20", "python-3.11"]
 
 [nix]
 channel = "stable-22_11"
@@ -20,3 +20,15 @@ externalPort = 3000
 [[ports]]
 localPort = 5000
 externalPort = 5000
+
+[[ports]]
+localPort = 5001
+externalPort = 3001
+
+[[ports]]
+localPort = 5002
+externalPort = 3002
+
+[[ports]]
+localPort = 8080
+externalPort = 8080
