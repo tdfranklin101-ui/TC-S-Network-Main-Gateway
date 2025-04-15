@@ -104,17 +104,30 @@ function updateMemberDistributions() {
   let distributedCount = 0;
   
   members.forEach(member => {
-    // Check if member needs distribution for today
-    if (!member.lastDistributionDate || member.lastDistributionDate < today) {
-      // Add 1 SOLAR per day as specified
-      member.totalSolar += SOLAR_CONSTANTS.DAILY_SOLAR_DISTRIBUTION;
-      member.totalDollars = member.totalSolar * SOLAR_CONSTANTS.USD_PER_SOLAR;
-      member.lastDistributionDate = today;
-      distributedCount++;
-      
-      console.log(`Distributed ${SOLAR_CONSTANTS.DAILY_SOLAR_DISTRIBUTION} SOLAR to member #${member.id} (${member.name})`);
-    }
+    // Always distribute SOLAR when this function is called (during the scheduled time)
+    // This ensures all members get their SOLAR at the designated time
+    member.totalSolar += SOLAR_CONSTANTS.DAILY_SOLAR_DISTRIBUTION;
+    member.totalDollars = member.totalSolar * SOLAR_CONSTANTS.USD_PER_SOLAR;
+    member.lastDistributionDate = today;
+    distributedCount++;
+    
+    console.log(`Distributed ${SOLAR_CONSTANTS.DAILY_SOLAR_DISTRIBUTION} SOLAR to member #${member.id} (${member.name})`);
   });
+  
+  // Update the HTML values directly for the client-side rendering
+  // Update Terry's value (member #1)
+  const terryIdx = members.findIndex(m => m.id === 1);
+  if (terryIdx >= 0) {
+    const terrySOLAR = members[terryIdx].totalSolar.toFixed(2);
+    console.log(`Updating Terry's SOLAR value to ${terrySOLAR}`);
+  }
+  
+  // Update JF's value (member #2)
+  const jfIdx = members.findIndex(m => m.id === 2);
+  if (jfIdx >= 0) {
+    const jfSOLAR = members[jfIdx].totalSolar.toFixed(2);
+    console.log(`Updating JF's SOLAR value to ${jfSOLAR}`);
+  }
   
   console.log(`Daily distribution completed: ${distributedCount} members updated`);
   return distributedCount;
@@ -604,14 +617,8 @@ server.listen(PORT, HOST, () => {
   // Log server start
   logDistribution('Server started. SOLAR distribution scheduler initialized.');
   
-  // Set up health check logging (runs every 6 hours)
-  const HEALTH_CHECK_INTERVAL = 6 * 60 * 60 * 1000; // 6 hours
-  setInterval(() => {
-    logDistribution(`Health check: Server up and running. ${members.length} members in system.`);
-  }, HEALTH_CHECK_INTERVAL);
-  
-  // Main distribution interval
-  setInterval(() => {
+  // Helper function to run a distribution with proper logging
+  const runDistribution = () => {
     logDistribution('Running scheduled SOLAR distribution...');
     const updatedCount = updateMemberDistributions();
     
@@ -630,7 +637,27 @@ server.listen(PORT, HOST, () => {
     } catch (error) {
       console.error('Error creating members backup:', error);
     }
-  }, DISTRIBUTION_INTERVAL);
+  };
+  
+  // Check if it's time to run a distribution now (5:00 PM Pacific Time / 00:00 GMT)
+  const now = new Date();
+  const pstHour = now.toLocaleString('en-US', { timeZone: 'America/Los_Angeles', hour: 'numeric', hour12: false });
+  if (pstHour === '17') {
+    logDistribution('It is currently 5:00 PM Pacific Time - running immediate distribution');
+    // Run an immediate distribution now
+    runDistribution();
+  } else {
+    logDistribution(`Current Pacific Time hour is ${pstHour}, next distribution at 17:00 (5:00 PM Pacific Time)`);
+  }
+  
+  // Set up health check logging (runs every 6 hours)
+  const HEALTH_CHECK_INTERVAL = 6 * 60 * 60 * 1000; // 6 hours
+  setInterval(() => {
+    logDistribution(`Health check: Server up and running. ${members.length} members in system.`);
+  }, HEALTH_CHECK_INTERVAL);
+  
+  // Main distribution interval
+  setInterval(runDistribution, DISTRIBUTION_INTERVAL);
   
   console.log('SOLAR distribution scheduler is active. Will distribute 1 SOLAR per user daily at 00:00 GMT (5:00 PM Pacific Time).');
 });
