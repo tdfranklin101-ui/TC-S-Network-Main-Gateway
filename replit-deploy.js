@@ -5,162 +5,105 @@
  * the main application and health checks.
  */
 
-const http = require('http');
-const fs = require('fs');
-const path = require('path');
 const { spawn } = require('child_process');
+const http = require('http');
 
-console.log('Replit deployment helper starting...');
+const PORT = process.env.PORT || 3000;
+const APP_PORT = 8080;
 
-// Constants
-const HEALTH_PORT = 3000;  // Replit's expected health check port
-const APP_PORT = process.env.PORT || 5000;  // Main application port
-
-// Create a specialized health check server that responds to all requests
+// Handle all incoming requests with a health check response
 const healthServer = http.createServer((req, res) => {
-  console.log(`[HEALTH] ${req.method} ${req.url} - User-Agent: ${req.headers['user-agent'] || 'none'}`);
+  console.log(`[${new Date().toISOString()}] Health request: ${req.method} ${req.url}`);
   
-  // Always respond with 200 OK to health checks
-  res.writeHead(200, {
-    'Content-Type': 'application/json',
-    'Cache-Control': 'no-cache, no-store',
-    'Connection': 'close'
-  });
+  // Add CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   
-  res.end(JSON.stringify({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    path: req.url
-  }));
-});
-
-// Start health server
-try {
-  healthServer.listen(HEALTH_PORT, '0.0.0.0', () => {
-    console.log(`Health check server running on port ${HEALTH_PORT}`);
-  });
-  
-  healthServer.on('error', (err) => {
-    console.error(`Health server error: ${err.message}`);
-    
-    if (err.code === 'EADDRINUSE') {
-      console.log('Port 3000 already in use, assuming health check is already running');
-    }
-  });
-} catch (err) {
-  console.error('Failed to start health server:', err);
-}
-
-// Function to start the main application
-function startMainApp() {
-  console.log('Starting main application...');
-  
-  try {
-    // Try to use the compiled Node.js application
-    if (fs.existsSync('./dist/index.js')) {
-      // For ESM modules
-      import('./dist/index.js').catch((err) => {
-        console.error('Failed to import ESM module:', err);
-        startFallbackServer();
-      });
-    } else if (fs.existsSync('./index.js')) {
-      // Direct require for CommonJS
-      try {
-        require('./index.js');
-      } catch (err) {
-        console.error('Failed to require index.js:', err);
-        startFallbackServer();
-      }
-    } else {
-      console.log('No index.js found, checking for alternative entry points...');
-      
-      if (fs.existsSync('./server/index.js')) {
-        require('./server/index.js');
-      } else if (fs.existsSync('./server/index.ts')) {
-        // Try to use tsx to run TypeScript directly
-        const child = spawn('npx', ['tsx', './server/index.ts'], {
-          stdio: 'inherit'
-        });
-        
-        child.on('error', (err) => {
-          console.error('Failed to start TypeScript application:', err);
-          startFallbackServer();
-        });
-      } else {
-        console.error('No suitable entry point found');
-        startFallbackServer();
-      }
-    }
-  } catch (err) {
-    console.error('Error starting main application:', err);
-    startFallbackServer();
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204);
+    res.end();
+    return;
   }
-}
-
-// Function to start a fallback server if the main app fails
-function startFallbackServer() {
-  console.log('Starting fallback server...');
   
-  const fallbackServer = http.createServer((req, res) => {
-    // Always respond to health checks with 200 OK
-    if (req.url === '/health' || req.url === '/healthz' || req.url === '/_health' || 
-        (req.url === '/' && req.headers['user-agent']?.includes('Health'))) {
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      return res.end(JSON.stringify({ status: 'ok' }));
-    }
-    
-    // Try to serve static content if available
-    try {
-      const publicDir = path.join(__dirname, 'public');
-      
-      if (fs.existsSync(publicDir)) {
-        const indexPath = path.join(publicDir, 'index.html');
-        
-        if (fs.existsSync(indexPath)) {
-          const content = fs.readFileSync(indexPath);
-          res.writeHead(200, { 'Content-Type': 'text/html' });
-          return res.end(content);
-        }
-      }
-    } catch (err) {
-      console.error('Error serving static content:', err);
-    }
-    
-    // Fallback response if static content not available
-    res.writeHead(200, { 'Content-Type': 'text/html' });
-    res.end(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>The Current-See</title>
-          <style>
-            body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-            h1 { color: #2a9d8f; }
-          </style>
-        </head>
-        <body>
-          <h1>The Current-See</h1>
-          <p>The application is starting up. Please try again in a moment.</p>
-        </body>
-      </html>
-    `);
+  if (req.url === '/health' || req.url === '/healthz' || req.url === '/') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      status: 'healthy',
+      service: 'Current-See',
+      timestamp: new Date().toISOString()
+    }));
+    return;
+  }
+  
+  // Proxy other requests to the app server
+  const options = {
+    hostname: 'localhost',
+    port: APP_PORT,
+    path: req.url,
+    method: req.method,
+    headers: req.headers
+  };
+  
+  const proxyReq = http.request(options, (proxyRes) => {
+    res.writeHead(proxyRes.statusCode, proxyRes.headers);
+    proxyRes.pipe(res, { end: true });
   });
   
-  fallbackServer.listen(APP_PORT, '0.0.0.0', () => {
-    console.log(`Fallback server running on port ${APP_PORT}`);
+  proxyReq.on('error', (err) => {
+    console.error(`[${new Date().toISOString()}] Proxy error:`, err.message);
+    res.writeHead(502, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Bad Gateway', message: 'Unable to reach application server' }));
   });
-}
+  
+  req.pipe(proxyReq, { end: true });
+});
 
 // Start the main application
-startMainApp();
+function startMainApp() {
+  console.log(`[${new Date().toISOString()}] Starting main application...`);
+  
+  // Set environment variables for the child process
+  const env = { ...process.env, PORT: APP_PORT };
+  
+  // Start the app as a child process
+  const app = spawn('node', ['server.js'], { 
+    env,
+    stdio: 'inherit'
+  });
+  
+  app.on('error', (err) => {
+    console.error(`[${new Date().toISOString()}] Failed to start application:`, err);
+    setTimeout(() => startMainApp(), 5000); // Retry after 5 seconds
+  });
+  
+  app.on('exit', (code, signal) => {
+    console.log(`[${new Date().toISOString()}] Application exited with code ${code} and signal ${signal}`);
+    if (code !== 0) {
+      setTimeout(() => startMainApp(), 5000); // Restart if crashed
+    }
+  });
+  
+  return app;
+}
 
-// Keep the process alive
-process.on('uncaughtException', (err) => {
-  console.error('Uncaught exception:', err);
-  // Don't exit
+// Start health check server
+healthServer.listen(PORT, '0.0.0.0', () => {
+  console.log(`[${new Date().toISOString()}] Health check server running on port ${PORT}`);
+  
+  // Start the main application
+  const app = startMainApp();
+  
+  // Handle clean shutdown
+  process.on('SIGTERM', () => {
+    console.log(`[${new Date().toISOString()}] SIGTERM received, shutting down gracefully`);
+    
+    // Close the servers
+    healthServer.close(() => {
+      console.log(`[${new Date().toISOString()}] Health check server closed`);
+      process.exit(0);
+    });
+  });
 });
 
-process.on('unhandledRejection', (err) => {
-  console.error('Unhandled rejection:', err);
-  // Don't exit
-});
+console.log(`[${new Date().toISOString()}] Current-See Deployment Manager started`);

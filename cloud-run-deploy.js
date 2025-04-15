@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 /**
  * Replit Cloud Run Deployment Helper
  * 
@@ -10,104 +8,155 @@
  */
 
 const http = require('http');
-const path = require('path');
 const { spawn } = require('child_process');
+const fs = require('fs');
 
-// Constants
-const PORT = 3000;  // Important: Must use port 3000 for Replit health checks
-const HOST = '0.0.0.0';
+// Configuration
+const PORT = process.env.PORT || 3000;
+const APP_PORT = 8080;
+const LOG_FILE = 'deployment.log';
 
-console.log('Starting Replit Cloud Run deployment helper...');
-
-// Create the health check server on port 3000
-const server = http.createServer((req, res) => {
-  console.log(`[CLOUD RUN] ${req.method} ${req.url} - User-Agent: ${req.headers['user-agent'] || 'none'}`);
-  
-  // Always return 200 OK for any path
-  res.writeHead(200, {
-    'Content-Type': 'application/json',
-    'Cache-Control': 'no-cache, no-store'
-  });
-  
-  res.end(JSON.stringify({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    path: req.url
-  }));
-});
-
-// Start the server
-server.listen(PORT, HOST, () => {
-  console.log(`Replit Cloud Run health check server running on port ${PORT}`);
-});
-
-// Handle server errors
-server.on('error', (err) => {
-  console.error(`Server error: ${err.message}`);
-  
-  if (err.code === 'EADDRINUSE') {
-    console.log(`Port ${PORT} is already in use. Health check may be running elsewhere.`);
-  }
-});
-
-// Try to start the main application in the background
-function startMainApp() {
-  console.log('Attempting to start main application...');
-  
-  // Try several methods in sequence
-  const methods = [
-    { name: 'Using start.sh', cmd: './start.sh' },
-    { name: 'Using node index.js', cmd: 'node index.js' },
-    { name: 'Using node server/index.js', cmd: 'node server/index.js' }
-  ];
-  
-  // Try each method with a delay between attempts
-  let currentMethod = 0;
-  
-  function tryNextMethod() {
-    if (currentMethod >= methods.length) {
-      console.log('All methods tried, health check server will continue running');
-      return;
-    }
-    
-    const method = methods[currentMethod++];
-    console.log(`Trying method: ${method.name}`);
-    
-    try {
-      const child = spawn(method.cmd, [], {
-        shell: true,
-        stdio: 'inherit'
-      });
-      
-      child.on('error', (err) => {
-        console.error(`Failed to start with ${method.name}: ${err.message}`);
-        setTimeout(tryNextMethod, 3000);  // Try next method after delay
-      });
-      
-      child.on('exit', (code) => {
-        if (code !== 0) {
-          console.error(`${method.name} exited with code ${code}`);
-          setTimeout(tryNextMethod, 3000);  // Try next method after delay
-        }
-      });
-    } catch (err) {
-      console.error(`Error using ${method.name}: ${err.message}`);
-      setTimeout(tryNextMethod, 3000);  // Try next method after delay
-    }
-  }
-  
-  // Start trying methods
-  tryNextMethod();
+// Create a deployment log file
+function log(message) {
+  const timestamp = new Date().toISOString();
+  const logEntry = `[${timestamp}] ${message}\n`;
+  console.log(logEntry.trim());
+  fs.appendFileSync(LOG_FILE, logEntry);
 }
 
-// Attempt to start the main app in the background
-setTimeout(startMainApp, 1000);
+// Create the HTTP server for health checks and proxying
+const server = http.createServer((req, res) => {
+  // Validate that we received a request
+  log(`Received request: ${req.method} ${req.url}`);
 
-// Keep the process alive
-process.on('uncaughtException', (err) => {
-  console.error('Uncaught exception:', err);
+  // Handle CORS headers for cross-origin requests
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  
+  if (req.method === 'OPTIONS') {
+    // Handle preflight requests
+    res.writeHead(204);
+    res.end();
+    return;
+  }
+
+  // Health check endpoint
+  if (req.url === '/' || req.url === '/health' || req.url === '/healthz') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      status: 'healthy',
+      service: 'Current-See Deployment',
+      timestamp: new Date().toISOString()
+    }));
+    return;
+  }
+
+  // For all other requests, proxy to the main app on the internal port
+  const options = {
+    hostname: 'localhost',
+    port: APP_PORT,
+    path: req.url,
+    method: req.method,
+    headers: req.headers
+  };
+
+  // Create the proxy request
+  const proxyReq = http.request(options, proxyRes => {
+    res.writeHead(proxyRes.statusCode, proxyRes.headers);
+    proxyRes.pipe(res, { end: true });
+  });
+
+  // Handle proxy errors
+  proxyReq.on('error', err => {
+    log(`Proxy error: ${err.message}`);
+    res.writeHead(502, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      error: 'Bad Gateway',
+      message: 'Unable to reach application server'
+    }));
+  });
+
+  // Forward the request body to the proxy request
+  req.pipe(proxyReq, { end: true });
 });
 
-process.on('unhandledRejection', (err) => {
-  console.error('Unhandled rejection:', err);
+// Start the main application
+function startMainApp() {
+  log('Starting main application...');
+  
+  // Set the environment for the application
+  const env = { ...process.env, PORT: APP_PORT };
+  
+  // Start the application as a child process
+  const appProcess = spawn('node', ['server.js'], {
+    env,
+    stdio: 'pipe',
+    detached: true
+  });
+  
+  // Capture stdout and stderr from the child process
+  appProcess.stdout.on('data', data => {
+    log(`[APP] ${data.toString().trim()}`);
+  });
+  
+  appProcess.stderr.on('data', data => {
+    log(`[APP ERROR] ${data.toString().trim()}`);
+  });
+  
+  // Handle process events
+  appProcess.on('error', err => {
+    log(`Failed to start application: ${err.message}`);
+    tryNextMethod();
+  });
+  
+  appProcess.on('exit', (code, signal) => {
+    log(`Application exited with code ${code} and signal ${signal}`);
+    if (code !== 0) {
+      tryNextMethod();
+    }
+  });
+  
+  return appProcess;
+}
+
+// Fallback methods if the main application fails to start
+function tryNextMethod() {
+  log('Attempting fallback method...');
+  // Start a direct health check server if main app fails
+  http.createServer((req, res) => {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      status: 'fallback',
+      message: 'Operating in fallback mode',
+      timestamp: new Date().toISOString()
+    }));
+  }).listen(APP_PORT, '0.0.0.0', () => {
+    log(`Fallback server running on port ${APP_PORT}`);
+  });
+}
+
+// Start deployment server
+server.listen(PORT, '0.0.0.0', () => {
+  log(`Deployment server running on port ${PORT}`);
+  log(`Will proxy to internal app on port ${APP_PORT}`);
+  
+  // Start the main application
+  const appProcess = startMainApp();
+  
+  // Handle graceful shutdown
+  process.on('SIGTERM', () => {
+    log('SIGTERM received, shutting down...');
+    server.close();
+    
+    // Terminate the main application
+    if (appProcess && !appProcess.killed) {
+      log('Terminating application process...');
+      appProcess.kill();
+    }
+    
+    process.exit(0);
+  });
 });
+
+log('Cloud Run deployment helper started');
