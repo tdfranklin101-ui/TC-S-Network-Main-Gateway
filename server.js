@@ -370,6 +370,23 @@ function generateLandingPage() {
       color: #666;
     }
     
+    .solar-equation {
+      text-align: center;
+      padding: 1rem;
+      margin: 0 auto 2rem;
+      max-width: 900px;
+      background-color: rgba(255, 255, 255, 0.8);
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    
+    .solar-equation p {
+      font-size: 1.1rem;
+      color: #333;
+      font-weight: 600;
+      margin: 0;
+    }
+    
     .members-section {
       background-color: rgba(255, 255, 255, 0.8);
       padding: 3rem 1rem;
@@ -516,7 +533,7 @@ function generateLandingPage() {
   
   <div class="counter-container">
     <div class="counter">
-      <div class="counter-label">Solar Energy Generated Since April 7, 2025</div>
+      <div class="counter-label">Solar Energy Generated Since April 7, 2025 (12:00 AM GMT)</div>
       <div id="energy-counter" class="counter-value">${energyValue}</div>
       <div class="counter-label">Million kWh (MkWh)</div>
     </div>
@@ -526,6 +543,10 @@ function generateLandingPage() {
       <div id="money-counter" class="counter-value">$${moneyValue}</div>
       <div class="counter-label">USD</div>
     </div>
+  </div>
+  
+  <div class="solar-equation">
+    <p>1 Solar = 4,913 kWh (based on 1% of Earth's solar input divided among 8.5B people)</p>
   </div>
   
   <section class="members-section">
