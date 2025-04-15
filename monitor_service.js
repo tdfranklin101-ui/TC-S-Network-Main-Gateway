@@ -3,10 +3,12 @@
  * 
  * This script checks the distribution log and monitors the server status
  * to ensure the daily SOLAR distributions are occurring as scheduled.
+ * Compatible with the node-schedule implementation for precise timing.
  */
 
 const fs = require('fs');
 const http = require('http');
+const schedule = require('node-schedule');
 
 // Configuration
 const LOG_FILE = 'distribution_log.txt';
@@ -95,15 +97,20 @@ async function runMonitoring() {
     checkDistributions();
   }
   
-  // Set up recurring checks
-  setInterval(async () => {
+  // Set up scheduled monitoring using node-schedule (runs every 6 hours)
+  // This uses the same cron syntax as the main distribution system
+  const monitorJob = schedule.scheduleJob('0 */6 * * *', async function() {
     const isRunning = await checkServerStatus();
     if (isRunning) {
       checkDistributions();
     }
-  }, CHECK_INTERVAL);
+  });
   
-  console.log(`Monitoring service active. Checks will run every ${CHECK_INTERVAL / (60 * 60 * 1000)} hours.`);
+  // Display the next scheduled check time
+  const nextCheck = monitorJob.nextInvocation();
+  console.log(`Next scheduled check: ${nextCheck.toLocaleString()} (${nextCheck.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })} Pacific Time)`);
+  
+  console.log('Monitoring service active using node-schedule. Checks will run every 6 hours.');
 }
 
 // Start the monitoring service

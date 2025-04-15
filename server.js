@@ -10,6 +10,7 @@ const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
+const schedule = require('node-schedule');
 
 // Constants
 const PORT = process.env.PORT || 3000;
@@ -639,27 +640,53 @@ server.listen(PORT, HOST, () => {
     }
   };
   
-  // Check if it's time to run a distribution now (5:00 PM Pacific Time / 00:00 GMT)
+  // Set up a precise scheduler for 5:00 PM Pacific Time (00:00 GMT) using node-schedule
+  // This runs every day at exactly 5:00 PM Pacific Time (12h format = 5PM)
+  const distributionJob = schedule.scheduleJob('0 17 * * *', function() {
+    logDistribution('Scheduled SOLAR distribution triggered at 5:00 PM Pacific Time (00:00 GMT)');
+    runDistribution();
+  });
+  
+  // Check if we need to run distribution immediately
   const now = new Date();
   const pstHour = now.toLocaleString('en-US', { timeZone: 'America/Los_Angeles', hour: 'numeric', hour12: false });
-  if (pstHour === '17') {
-    logDistribution('It is currently 5:00 PM Pacific Time - running immediate distribution');
-    // Run an immediate distribution now
+  const pstMinute = now.toLocaleString('en-US', { timeZone: 'America/Los_Angeles', minute: 'numeric' });
+  
+  if (pstHour === '17' && parseInt(pstMinute) < 5) {
+    logDistribution('Server started within 5 minutes of distribution time - running immediate distribution');
     runDistribution();
   } else {
-    logDistribution(`Current Pacific Time hour is ${pstHour}, next distribution at 17:00 (5:00 PM Pacific Time)`);
+    // Format next distribution time
+    const nextDistribution = new Date();
+    if (parseInt(pstHour) >= 17) {
+      // Move to next day
+      nextDistribution.setDate(nextDistribution.getDate() + 1);
+    }
+    
+    // Get the next distribution time (we need to create a temporary job just to check the next time)
+    const tempJob = schedule.scheduleJob('0 17 * * *', function() {
+      // This is just a dummy function that won't actually run
+      // We only need this job to get the next invocation time
+    });
+    
+    const nextDistText = tempJob.nextInvocation().toLocaleString('en-US', { 
+      timeZone: 'America/Los_Angeles',
+      dateStyle: 'medium',
+      timeStyle: 'short'
+    });
+    
+    // Cancel the temporary job since we only needed it to get the next time
+    tempJob.cancel();
+    
+    logDistribution(`Next SOLAR distribution scheduled for ${nextDistText} Pacific Time`);
   }
   
-  // Set up health check logging (runs every 6 hours)
-  const HEALTH_CHECK_INTERVAL = 6 * 60 * 60 * 1000; // 6 hours
-  setInterval(() => {
+  // Set up health check logging using node-schedule (runs every 6 hours)
+  const healthCheckJob = schedule.scheduleJob('0 */6 * * *', function() {
     logDistribution(`Health check: Server up and running. ${members.length} members in system.`);
-  }, HEALTH_CHECK_INTERVAL);
+  });
   
-  // Main distribution interval
-  setInterval(runDistribution, DISTRIBUTION_INTERVAL);
-  
-  console.log('SOLAR distribution scheduler is active. Will distribute 1 SOLAR per user daily at 00:00 GMT (5:00 PM Pacific Time).');
+  console.log('SOLAR distribution scheduler is active using node-schedule. Will distribute 1 SOLAR per user daily at 00:00 GMT (5:00 PM Pacific Time).');
 });
 
 // Error handling
