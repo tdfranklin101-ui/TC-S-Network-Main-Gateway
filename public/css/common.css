@@ -38,6 +38,18 @@
   --bg-medium: #f3f3f3;
   --bg-dark: #eaeaea;
   
+  /* Standard gradients */
+  --gradient-solar: linear-gradient(135deg, #ffb700, #ffd500);
+  --gradient-primary: linear-gradient(135deg, #4CAF50, #8BC34A, #FFC107);
+  --gradient-subtle: linear-gradient(135deg, #f9f9f9, #d8eed6);
+  --gradient-wallet: linear-gradient(135deg, #4CAF50, #2E7D32);
+  
+  /* Text colors for high contrast */
+  --text-on-light: #333333; /* Dark text on light backgrounds */
+  --text-on-dark: #ffffff;  /* White text on dark backgrounds */
+  --text-on-green: #003366; /* Dark blue on green backgrounds for contrast */
+  --text-on-yellow: #333333; /* Dark text on yellow/gold backgrounds */
+  
   /* Misc */
   --border-radius: 8px;
   --box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
@@ -153,12 +165,13 @@ a:hover {
 
 .btn-accent {
   background-color: var(--accent-color);
-  color: var(--text-dark);
+  color: var(--text-on-yellow); /* Dark text on yellow for better contrast */
+  font-weight: 600; /* Make slightly bolder for better readability */
 }
 
 .btn-accent:hover {
   background-color: var(--accent-dark);
-  color: var(--text-dark);
+  color: var(--text-on-yellow);
   text-decoration: none;
 }
 
@@ -680,4 +693,41 @@ footer {
 
 .font-light {
   font-weight: 300;
+}
+
+/* High Contrast Classes */
+.bg-green {
+  background-color: var(--primary-color);
+  color: var(--text-on-green);
+}
+
+.bg-yellow {
+  background-color: var(--accent-color);
+  color: var(--text-on-yellow);
+}
+
+.bg-dark {
+  background-color: var(--text-dark);
+  color: var(--text-on-dark);
+}
+
+/* Gradient Backgrounds with Proper Contrast */
+.bg-gradient-solar {
+  background: var(--gradient-solar);
+  color: var(--text-on-yellow);
+}
+
+.bg-gradient-primary {
+  background: var(--gradient-primary);
+  color: var(--text-on-green);
+}
+
+.bg-gradient-subtle {
+  background: var(--gradient-subtle);
+  color: var(--text-on-light);
+}
+
+.bg-gradient-wallet {
+  background: var(--gradient-wallet);
+  color: var(--text-on-dark);
 }
