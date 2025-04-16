@@ -43,28 +43,6 @@ app.get('/', (req, res, next) => {
       
       indexContent = indexContent.replace('<!-- HEADER_PLACEHOLDER -->', header);
       indexContent = indexContent.replace('<!-- FOOTER_PLACEHOLDER -->', footer);
-      
-      // Ensure scripts are properly loaded after DOM content
-      if (indexContent.includes('/js/real_time_solar_counter.js')) {
-        log('Found solar counter script in index.html, ensuring proper initialization');
-        
-        // Make sure trySolarCounterInit is called after page fully loads
-        const additionalScript = `
-<script>
-  // Ensure solar counter initialization happens after DOM is fully loaded
-  window.addEventListener('load', function() {
-    console.log('Window fully loaded with injected content, running solar counter init');
-    setTimeout(function() {
-      if (typeof trySolarCounterInit === 'function') {
-        trySolarCounterInit();
-      }
-    }, 100);
-  });
-</script>`;
-        
-        // Add script just before closing body tag
-        indexContent = indexContent.replace('</body>', additionalScript + '</body>');
-      }
     } catch (includeError) {
       log(`Warning: Could not inject header/footer: ${includeError.message}`);
     }
