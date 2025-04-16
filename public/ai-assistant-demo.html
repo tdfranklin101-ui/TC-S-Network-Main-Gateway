@@ -10,8 +10,8 @@
     .assistant-demo-main {
       position: relative;
       overflow: hidden;
-      background-color: var(--bg-light);
-      padding: 2rem 0;
+      background-color: #f9f9f9;
+      padding: 3rem 0;
       min-height: 80vh;
     }
     
@@ -38,34 +38,36 @@
       background-color: rgba(255, 255, 255, 0.95);
       border-radius: 12px;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-      padding: 2rem;
+      padding: 2.5rem;
       max-width: 900px;
       margin: 0 auto;
     }
     
     .assistant-header {
       text-align: center;
-      margin-bottom: 2rem;
+      margin-bottom: 2.5rem;
     }
     
     .assistant-header h1 {
-      color: var(--color-primary);
+      color: #4CAF50;
       font-size: 2.5rem;
       margin-bottom: 1rem;
+      font-weight: 700;
     }
     
     .assistant-header p {
       font-size: 1.2rem;
-      color: var(--color-text);
+      color: #333;
       max-width: 700px;
       margin: 0 auto;
+      line-height: 1.6;
     }
     
     .assistant-interaction {
       display: flex;
       flex-direction: column;
       gap: 1.5rem;
-      margin-bottom: 2rem;
+      margin-bottom: 2.5rem;
     }
     
     .input-container {
@@ -75,49 +77,70 @@
     
     .input-container input {
       flex: 1;
-      padding: 0.8rem 1.2rem;
+      padding: 0.9rem 1.2rem;
       border-radius: 8px;
       border: 2px solid #e0e0e0;
       font-size: 1.1rem;
       transition: border-color 0.3s ease;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     }
     
     .input-container input:focus {
       outline: none;
-      border-color: var(--color-primary);
+      border-color: #4CAF50;
+      box-shadow: 0 2px 10px rgba(76, 175, 80, 0.2);
     }
     
     .assistant-button {
-      background-color: var(--color-primary);
+      background-color: #4CAF50;
       color: white;
       border: none;
       border-radius: 8px;
-      padding: 0.8rem 1.5rem;
+      padding: 0.9rem 1.5rem;
       font-size: 1.1rem;
       font-weight: 600;
       cursor: pointer;
-      transition: background-color 0.3s ease;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
     
     .assistant-button:hover {
-      background-color: var(--color-primary-dark);
+      background-color: #3a8b3a;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    
+    .assistant-button:active {
+      transform: translateY(1px);
     }
     
     .response-container {
-      border-radius: 8px;
+      border-radius: 10px;
       background-color: #f7f7f7;
-      padding: 1.5rem;
+      padding: 1.8rem;
       min-height: 200px;
       max-height: 400px;
       overflow-y: auto;
-      white-space: pre-wrap;
+      line-height: 1.6;
+      border: 1px solid #e5e5e5;
+      box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
+      font-size: 1.05rem;
+    }
+    
+    .response-container .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 160px;
+      color: #666;
+      font-style: italic;
     }
     
     .mic-button {
       background-color: #ff5733;
       color: white;
-      width: 50px;
-      height: 50px;
+      width: 52px;
+      height: 52px;
       border: none;
       border-radius: 50%;
       display: flex;
@@ -126,11 +149,13 @@
       cursor: pointer;
       font-size: 1.5rem;
       transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(255, 87, 51, 0.3);
     }
     
     .mic-button:hover {
       background-color: #e64a2e;
       transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(255, 87, 51, 0.4);
     }
     
     .mic-button.listening {
@@ -151,12 +176,14 @@
     }
     
     .example-queries {
-      margin-top: 2rem;
+      margin-top: 2.5rem;
     }
     
     .example-queries h3 {
       margin-bottom: 1rem;
-      color: var(--color-primary);
+      color: #4CAF50;
+      font-weight: 600;
+      font-size: 1.3rem;
     }
     
     .example-queries ul {
@@ -164,55 +191,68 @@
       padding: 0;
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
+      gap: 12px;
     }
     
     .example-queries li {
       background-color: rgba(76, 175, 80, 0.1);
-      padding: 0.5rem 1rem;
-      border-radius: 4px;
+      padding: 0.6rem 1.2rem;
+      border-radius: 6px;
       cursor: pointer;
-      transition: background-color 0.3s ease;
+      transition: all 0.3s ease;
+      border: 1px solid rgba(76, 175, 80, 0.2);
+      font-weight: 500;
     }
     
     .example-queries li:hover {
       background-color: rgba(76, 175, 80, 0.2);
+      transform: translateY(-2px);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
     
     .capabilities-section {
-      margin-top: 3rem;
+      margin-top: 3.5rem;
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 1.5rem;
+      gap: 1.8rem;
     }
     
     .capability-card {
       background-color: white;
-      border-radius: 8px;
-      padding: 1.5rem;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      border-radius: 10px;
+      padding: 1.8rem;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
       transition: transform 0.3s ease, box-shadow 0.3s ease;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid #f0f0f0;
     }
     
     .capability-card:hover {
       transform: translateY(-5px);
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+      border-color: rgba(76, 175, 80, 0.3);
     }
     
     .capability-card h3 {
-      color: var(--color-primary);
-      margin-bottom: 0.8rem;
+      color: #4CAF50;
+      margin-bottom: 1rem;
+      font-weight: 600;
+      font-size: 1.25rem;
     }
     
     .capability-card p {
-      color: var(--color-text);
-      font-size: 0.95rem;
-      line-height: 1.5;
+      color: #444;
+      font-size: 1rem;
+      line-height: 1.6;
+      flex-grow: 1;
     }
     
     @media (max-width: 768px) {
       .assistant-demo-container {
         padding: 1.5rem;
+        margin: 0 1rem;
       }
       
       .assistant-header h1 {
@@ -221,6 +261,24 @@
       
       .capability-card {
         padding: 1.2rem;
+      }
+      
+      .input-container {
+        flex-direction: column;
+      }
+      
+      .input-container input {
+        width: 100%;
+      }
+      
+      .assistant-button {
+        width: 100%;
+      }
+      
+      .mic-button {
+        width: 100%;
+        border-radius: 8px;
+        height: 48px;
       }
     }
   </style>
@@ -296,29 +354,34 @@
       const responseContainer = document.getElementById('assistant-response');
       
       // Initialize the wallet AI assistant
-      const assistant = new WalletAIAssistant();
+      const assistant = new WalletAIAssistant({
+        containerId: 'assistant-response',
+        triggerButtonId: 'send-button'
+      });
       
       // Function to send a query to the assistant
       async function sendQuery(query) {
         if (!query.trim()) return;
         
         // Show loading state
-        responseContainer.textContent = "Thinking...";
+        responseContainer.innerHTML = "<div class='loading'>Thinking...</div>";
         
         try {
           // Process the query with the assistant (local processing for demo)
-          const response = await assistant.handleWalletQuery(query);
+          let response = await assistant.handleWalletQuery(query);
           
           // Display the response
           if (response) {
-            responseContainer.textContent = response;
+            // Replace newlines with <br> tags for proper HTML formatting
+            response = response.replace(/\n/g, '<br>');
+            responseContainer.innerHTML = response;
           } else {
             // If no specialized response, use a fallback
-            responseContainer.textContent = `I don't have specific information about "${query}" yet. I'm specialized in carbon footprints, energy pricing, Buckminster Fuller concepts, and longevity science related to The Current-See. Please try one of the example queries.`;
+            responseContainer.innerHTML = `I don't have specific information about "${query}" yet. I'm specialized in carbon footprints, energy pricing, Buckminster Fuller concepts, and longevity science related to The Current-See. Please try one of the example queries.`;
           }
         } catch (error) {
           console.error('Error processing query:', error);
-          responseContainer.textContent = "Sorry, I encountered an error processing your request. Please try again.";
+          responseContainer.innerHTML = "Sorry, I encountered an error processing your request. Please try again.";
         }
         
         // Clear the input

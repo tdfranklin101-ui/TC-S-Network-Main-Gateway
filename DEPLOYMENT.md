@@ -7,6 +7,8 @@ This document outlines the deployment process for The Current-See website on Rep
 1. **Prepare for Deployment**:
    - Ensure all HTML files have the header and footer placeholders
    - Verify the solar counter is working properly
+   - Test language translation functionality
+   - Test AI assistant and voice assistant features
    - Test all pages and navigation
 
 2. **Deploy on Replit**:
@@ -41,6 +43,16 @@ If you encounter issues:
 3. **Solar Counter Issues**:
    - Verify the solar counter script is included
    - Check the initialization values
+
+4. **Language Translator Not Working**:
+   - Verify language-translator.js is loaded
+   - Check language-translator-loader.js is included in footer
+   - Ensure Google Translate API is accessible
+   
+5. **AI or Voice Assistant Issues**:
+   - Check that wallet-ai-assistant.js is properly loaded
+   - Verify voice-assistant.js is included
+   - Test speech recognition API browser compatibility
 
 ## Maintenance
 

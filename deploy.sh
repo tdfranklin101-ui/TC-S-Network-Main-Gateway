@@ -36,6 +36,26 @@ if [ ! -f "public/includes/footer.html" ]; then
   exit 1
 fi
 
+if [ ! -f "public/js/language-translator.js" ]; then
+  echo -e "${RED}Error: language-translator.js not found${NC}"
+  exit 1
+fi
+
+if [ ! -f "public/js/language-translator-loader.js" ]; then
+  echo -e "${RED}Error: language-translator-loader.js not found${NC}"
+  exit 1
+fi
+
+if [ ! -f "public/js/voice-assistant.js" ]; then
+  echo -e "${RED}Error: voice-assistant.js not found${NC}"
+  exit 1
+fi
+
+if [ ! -f "public/js/voice-assistant-loader.js" ]; then
+  echo -e "${RED}Error: voice-assistant-loader.js not found${NC}"
+  exit 1
+fi
+
 if [ ! -f "deploy-simple.js" ]; then
   echo -e "${RED}Error: deploy-simple.js server file not found${NC}"
   exit 1

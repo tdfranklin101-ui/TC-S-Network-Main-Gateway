@@ -54,6 +54,13 @@ class VoiceAssistant {
         "SOLAR tokens are backed by the actual kilowatt-hours of energy produced globally",
         "The Current-See creates a more equitable distribution of energy value worldwide",
         "Your SOLAR balance represents your share of the global solar energy economy"
+      ],
+      relatedWebsites: [
+        "1028atoms.com is a connected website focusing on longevity science research",
+        "The 1028 Atoms project explores the intersection of atomic precision, energy, and health",
+        "Longevity science research supports The Current-See's mission for sustainable futures",
+        "Visit 1028atoms.com to learn about complementary research in atomic-precision science",
+        "The Current-See ecosystem bridges energy economics with health and longevity research"
       ]
     };
     
@@ -126,6 +133,7 @@ class VoiceAssistant {
           <button class="suggestion-chip">How does solar tracking work?</button>
           <button class="suggestion-chip">Energy conservation tips</button>
           <button class="suggestion-chip">My SOLAR balance</button>
+          <button class="suggestion-chip">Tell me about 1028atoms</button>
           <button class="suggestion-chip">Current-See ecosystem</button>
         </div>
       </div>
@@ -385,6 +393,7 @@ class VoiceAssistant {
             width: calc(100vw - 40px);
             max-height: 70vh;
             bottom: 70px;
+            right: 20px;
           }
           
           .voice-trigger {
@@ -395,6 +404,17 @@ class VoiceAssistant {
           .mic-icon {
             width: 20px;
             height: 20px;
+          }
+          
+          .voice-suggestions {
+            overflow-x: auto;
+            padding: 10px 5px;
+            justify-content: flex-start;
+            flex-wrap: nowrap;
+          }
+          
+          .suggestion-chip {
+            flex-shrink: 0;
           }
         }
         
@@ -748,6 +768,14 @@ class VoiceAssistant {
       return `Here's how The Current-See works:\n\n${this.getRandomItemsFromArray(this.knowledgeBase.currentSeeSystem, 3).join('\n\n')}`;
     }
     
+    // Check for 1028atoms and longevity science queries
+    if (query.includes('1028atoms') || 
+        query.includes('1028 atoms') || 
+        query.includes('longevity') ||
+        query.includes('related website')) {
+      return `Here's information about our related initiatives:\n\n${this.getRandomItemsFromArray(this.knowledgeBase.relatedWebsites, 3).join('\n\n')}`;
+    }
+    
     // Check for specific balance questions
     if (query.includes('my balance') || 
         query.includes('my solar') || 
@@ -776,7 +804,9 @@ class VoiceAssistant {
       "Solar energy is the most abundant energy source on Earth. The Current-See tracks global solar generation and distributes its value equitably. How else can I help you understand our system?",
       "Our mission is to create a more equitable financial future through solar energy distribution. Each user receives SOLAR tokens daily representing real energy value. Would you like more details on this process?",
       "Energy conservation is a key part of creating a sustainable future. The Current-See rewards efficient energy use and solar adoption. Can I share some energy-saving tips with you?",
-      "As a Current-See member, you're part of a global community working toward a more sustainable and equitable energy economy. How else can I assist you today?"
+      "As a Current-See member, you're part of a global community working toward a more sustainable and equitable energy economy. How else can I assist you today?",
+      "The Current-See ecosystem works alongside projects like 1028atoms.com, which focuses on longevity science research and atomic-precision technology. Would you like to learn more about these related initiatives?",
+      "Longevity science and sustainable energy systems are complementary fields. Check out 1028atoms.com to explore how atomic precision science supports our mission of creating a better future."
     ];
     
     return fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
