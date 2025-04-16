@@ -1417,6 +1417,81 @@ app.get('/api/energy-pricing', (req, res) => {
   res.json(energyPricing);
 });
 
+// Wallet App Connectivity Endpoints
+// These are proxy endpoints for the wallet applications accessed through the wallet-prototype.html page
+
+// Ping endpoint for Cross Platform Mobile (Full AI Wallet)
+app.get('/ping', (req, res) => {
+  console.log('Received ping request from wallet app');
+  res.status(200).json({ status: 'ok', message: 'Full AI Wallet is ready' });
+});
+
+// Root endpoint for handling POST wake requests for Full AI Wallet
+app.post('/', (req, res) => {
+  console.log('Received wake request for wallet app:', req.body);
+  res.status(200).json({ status: 'ok', message: 'Wallet app is awake' });
+});
+
+// Mock wallet data endpoints to provide fallback functionality
+app.get('/wallets', (req, res) => {
+  console.log('Serving wallet data');
+  res.status(200).json({
+    user1: { balance: 123.45 },
+    user2: { balance: 67.89 }
+  });
+});
+
+app.get('/transfers', (req, res) => {
+  console.log('Serving transfers data');
+  res.status(200).json([
+    { from: "User1", to: "User2", amount: 10.0, timestamp: "2025-04-16T12:34:56Z" },
+    { from: "User2", to: "User1", amount: 5.0, timestamp: "2025-04-16T10:30:00Z" },
+    { from: "User1", to: "Admin", amount: 2.5, timestamp: "2025-04-15T15:45:22Z" }
+  ]);
+});
+
+// Endpoints for 2-Wallet Demo
+app.get('/wallet-demo/ping', (req, res) => {
+  console.log('Received ping request from 2-wallet demo');
+  res.status(200).json({ status: 'ok', message: '2-Wallet Demo is ready' });
+});
+
+app.post('/wallet-demo', (req, res) => {
+  console.log('Received wake request for 2-wallet demo:', req.body);
+  res.status(200).json({ status: 'ok', message: '2-Wallet Demo is awake' });
+});
+
+// Transfer demo endpoints
+app.get('/transfer-demo', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'transfer-demo.html'));
+});
+
+// AI Wallet Prototype endpoints
+app.get('/wallet-ai-prototype', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'wallet-ai-prototype.html'));
+});
+
+// Mock AI services for wallet prototype
+app.post('/wallet-ai/analyze', (req, res) => {
+  console.log('Received AI analysis request:', req.body);
+  
+  const { query, type } = req.body;
+  let response = '';
+  
+  if (type === 'carbon_footprint') {
+    response = `Carbon Footprint Analysis:\n\nBased on your query about "${query}", here's the environmental impact breakdown:\n\n• Manufacturing: 45 kg CO2e (65% of emissions)\n• Usage: 18 kg CO2e (25% of emissions)\n• Disposal: 7 kg CO2e (10% of emissions)\n• Total: 70 kg CO2e\n\nThis is equivalent to approximately 280 km driven by an average car.\n\nOffetting this footprint would require 21 SOLAR tokens.`;
+  } else if (type === 'energy_pricing') {
+    response = `Energy-Based Pricing Analysis:\n\nFor ${query}:\n\n• Production energy: 1.2 kWh/unit\n• Transportation: 0.7 kWh/unit\n• Storage: 0.2 kWh/unit\n• Total energy input: 2.1 kWh/unit\n\nThis represents an energy cost component of $0.25/unit.\n\nIn the Current-See system, this would be valued at 0.9 SOLAR tokens per unit.`;
+  } else {
+    response = `Your question about "${query}" requires a comprehensive analysis. I'd be happy to explore this topic in depth when the full AI wallet feature is available. This prototype demonstrates the interface, but the complete analysis engine is coming soon.`;
+  }
+  
+  setTimeout(() => {
+    res.json({ response });
+  }, 1200); // Add slight delay to simulate processing
+});
+
+// Sign up endpoint
 app.post('/api/signup', (req, res) => {
   try {
     console.log('Received signup request:', req.body);

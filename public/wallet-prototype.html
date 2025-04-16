@@ -144,11 +144,12 @@
   <script>
     // Try multiple potential URLs in case one isn't working
     const backendUrls = [
+      window.location.origin, // Use our own server first
       "https://cross-platform-mobile-tdfranklin101.replit.app",
       "https://crossplatformmobile.tdfrankl.repl.co",
       "https://crossplatformmobile.tdfrankl.replit.app"
     ];
-    let backendBase = backendUrls[0]; // Start with the first one
+    let backendBase = backendUrls[0]; // Start with our own server
 
     // Try all available backend URLs
     let currentUrlIndex = 0;
@@ -399,6 +400,7 @@
       // Setup 2-Wallet Demo launch
       const twoWalletButton = document.getElementById('launch-2wallet-demo');
       const twoWalletUrls = [
+        window.location.origin + "/wallet-demo", // Use our own server first
         "https://demo-wallet-transfer-tdfranklin101.replit.app",
         "https://demo-wallet-transfer.tdfrankl.repl.co"
       ];
