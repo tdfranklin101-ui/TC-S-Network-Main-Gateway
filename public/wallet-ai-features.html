@@ -475,6 +475,54 @@
         </div>
       </div>
       
+      <div class="feature-section">
+        <h2>Buckminster Fuller Design Principles</h2>
+        <div class="feature-description">
+          <p>Our AI wallet integrates the visionary principles of R. Buckminster Fuller, whose concepts of "doing more with less" and "Spaceship Earth" deeply influence The Current-See's approach to energy economics.</p>
+          
+          <p>Ask the AI assistant about Fuller's principles to understand how his pioneering systems thinking shaped our approach to energy accounting and sustainable value creation.</p>
+        </div>
+        
+        <div class="use-case">
+          <h3>Example: Fuller's Influence on The Current-See</h3>
+          
+          <div class="example-query">
+            "How does Buckminster Fuller's work relate to the SOLAR token system?"
+          </div>
+          
+          <div class="example-response">
+            <strong>R. Buckminster Fuller (1895-1983)</strong> was a visionary systems theorist, architect, engineer, and inventor whose work deeply influences The Current-See philosophy.<br><br>
+            <strong>Ephemeralization:</strong> Doing more with less, continuously increasing efficiency through technological advancement.<br>
+            "More and more with less and less until eventually you can do everything with nothing."<br><br>
+            <strong>Application to The Current-See:</strong> The Current-See ecosystem embodies ephemeralization by creating value from the ever-increasing efficiency of solar energy collection and distribution.<br><br>
+            <strong>Spaceship Earth:</strong> The metaphor describing Earth as a vessel with finite resources traveling through space.<br>
+            "We are all astronauts on a little spaceship called Earth."<br><br>
+            <strong>Application to The Current-See:</strong> Our SOLAR token system represents an energy accounting system for fairly distributing the resources of our shared planetary vessel.<br><br>
+            Fuller's vision of "making the world work for 100% of humanity" through resource efficiency directly inspires our approach to universal energy access and equitable distribution of solar resources.<br><br>
+            In the context of your wallet, the SOLAR token system embodies Fuller's concept of "energy accounting" as the true basis for economic value, rather than artificial monetary systems. Each SOLAR token represents real energy potential and contributes to the creation of a more equitable global energy economy.
+          </div>
+        </div>
+        
+        <div class="ai-demo-box">
+          <h3>Explore Fuller's Principles</h3>
+          
+          <div class="ai-demo-form" id="fuller-form">
+            <div class="form-group">
+              <label for="fuller-query">Ask about Fuller's principles and their application</label>
+              <textarea id="fuller-query" rows="3" placeholder="e.g., 'Explain Fuller's concept of ephemeralization' or 'How does The Current-See relate to Spaceship Earth?'"></textarea>
+            </div>
+            
+            <button type="button" class="btn" id="fuller-button" disabled>Explore Fuller's Ideas</button>
+          </div>
+          
+          <div class="loading-indicator" id="fuller-loading">
+            <div class="loading-spinner"></div>
+          </div>
+          
+          <div class="ai-response" id="fuller-response"></div>
+        </div>
+      </div>
+      
       <div class="cta-section">
         <a href="/" class="btn btn-primary">Return to Home Page</a>
       </div>
@@ -739,6 +787,110 @@ Average energy intensity by transportation mode (for 1 ton-kilometer):
 By optimizing transportation modes and distances, supply chain energy consumption can be reduced by 30-60%. The Current-See platform incentivizes this optimization by making energy costs explicit through SOLAR token pricing.
 
 For international shipping from Asia to North America, sea freight typically adds 0.5-1.5 kWh of energy consumption per kg of product, equivalent to approximately 0.2-0.6 SOLAR tokens per kg in the Current-See system.`;
+          
+          loadingIndicator.classList.remove('show');
+          responseContainer.textContent = response;
+          responseContainer.classList.add('show');
+        }, 1500);
+      });
+      
+      // Fuller principles form
+      const fullerQuery = document.getElementById('fuller-query');
+      const fullerButton = document.getElementById('fuller-button');
+      
+      // Enable Fuller button when query has text
+      fullerQuery.addEventListener('input', function() {
+        fullerButton.disabled = !this.value.trim();
+      });
+      
+      // Fuller principles analysis
+      fullerButton.addEventListener('click', function() {
+        const query = fullerQuery.value.trim();
+        
+        if (!query) return;
+        
+        const loadingIndicator = document.getElementById('fuller-loading');
+        const responseContainer = document.getElementById('fuller-response');
+        
+        loadingIndicator.classList.add('show');
+        responseContainer.classList.remove('show');
+        responseContainer.textContent = '';
+        
+        // Simulate API call
+        setTimeout(() => {
+          let response = '';
+          
+          if (query.includes('ephemeralization') || query.includes('more with less')) {
+            response = `Buckminster Fuller's Concept of Ephemeralization:
+
+"Ephemeralization" is Fuller's term for the principle of doing more with less - continuously increasing efficiency through technological advancement.
+
+Fuller described it as "the ability of technological advancement to do more and more with less and less until eventually you can do everything with nothing."
+
+This principle is central to The Current-See system in several ways:
+
+1. Solar energy itself exemplifies ephemeralization - panels become more efficient while costs decrease
+2. Our SOLAR tokens track and reward efficiency gains in the global energy system
+3. The digital distribution system allows nearly frictionless transfer of energy value
+4. As solar efficiency increases, each SOLAR token represents more actual energy value over time
+
+This principle shows why a solar-backed currency is fundamentally different from traditional fiat money - it's backed by a technology that consistently produces more with less input over time.`;
+          } else if (query.includes('spaceship earth')) {
+            response = `Buckminster Fuller's "Spaceship Earth" Concept:
+
+In his influential book "Operating Manual for Spaceship Earth" (1969), Fuller introduced the metaphor of Earth as a finite vessel with limited resources traveling through space.
+
+Key aspects of this concept:
+• Earth has limited resources that must be properly managed
+• There is no "away" where waste can be discarded
+• We are all crew members responsible for maintaining our shared vessel
+• We need a comprehensive understanding of Earth's systems
+
+The Current-See directly applies this principle by:
+• Creating an economic system aligned with actual energy availability
+• Fairly distributing the "supplies" (solar energy) to all crew members
+• Tracking global energy production to ensure sustainability
+• Providing tools to make resource usage transparent
+
+The SOLAR token system serves as the "operating manual" - making visible the true energetic basis of our economy in ways traditional money obscures.`;
+          } else if (query.includes('tensegrity') || query.includes('tension')) {
+            response = `Buckminster Fuller's Principle of Tensegrity:
+
+Tensegrity (tension + integrity) describes structures that maintain their integrity through a balance of tension and compression components.
+
+Fuller's famous geodesic domes exemplify this principle - creating maximum strength with minimal material by distributing forces optimally through the structure.
+
+Applied to The Current-See:
+• Our economic model balances distributed solar production with centralized tracking
+• The system creates stability through the dynamic relationship between energy production and token value
+• Rather than fighting existing economic systems, we create a parallel structure that demonstrates advantages naturally
+• "Don't fight forces, use them" - Fuller's approach to systemic change
+
+The Current-See embodies tensegrity by creating a resilient economic network that derives strength from its distributed nature rather than centralized control.`;
+          } else {
+            response = `R. Buckminster Fuller (1895-1983) was a visionary systems theorist, architect, engineer, and inventor whose work deeply influences The Current-See philosophy.
+
+Fuller pioneered concepts that are fundamental to our approach:
+
+1. Ephemeralization - doing more with less through technological advancement
+"More and more with less and less until eventually you can do everything with nothing."
+
+2. Spaceship Earth - recognizing our planet as a finite vessel with limited resources
+"We are all astronauts on a little spaceship called Earth."
+
+3. Anticipatory Design Science - solving problems by anticipating future needs
+"The best way to predict the future is to design it."
+
+4. Synergetics - understanding systems holistically rather than as collections of parts
+"Synergy means behavior of whole systems unpredicted by the behavior of their parts."
+
+5. Comprehensive Accounting - measuring true costs and benefits
+"Either war is obsolete, or men are."
+
+Fuller's vision of "making the world work for 100% of humanity" through resource efficiency directly inspires our approach to universal energy access and equitable distribution of solar resources.
+
+The SOLAR token economy embodies Fuller's concept of "energy accounting" as the true basis for economic value, rather than artificial monetary systems.`;
+          }
           
           loadingIndicator.classList.remove('show');
           responseContainer.textContent = response;

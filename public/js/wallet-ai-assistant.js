@@ -245,8 +245,101 @@ class WalletAIAssistant {
       return this.analyzeSupplyChainEnergy(query);
     }
     
+    // Check for R. Buckminster Fuller queries
+    if (query.includes('buckminster fuller') || 
+        query.includes('bucky fuller') || 
+        query.includes('dymaxion') || 
+        query.includes('geodesic') ||
+        query.includes('spaceship earth')) {
+      return this.provideBuckyFullerInsights(query);
+    }
+    
     // Return null if not a wallet-specific query
     return null;
+  }
+  
+  /**
+   * Provide insights based on R. Buckminster Fuller's principles
+   */
+  provideBuckyFullerInsights(query) {
+    // Collection of R. Buckminster Fuller quotes and principles
+    const fullerPrinciples = [
+      {
+        concept: "Ephemeralization",
+        definition: "Doing more with less, continuously increasing efficiency through technological advancement.",
+        quote: "More and more with less and less until eventually you can do everything with nothing.",
+        application: "The Current-See ecosystem embodies ephemeralization by creating value from the ever-increasing efficiency of solar energy collection and distribution."
+      },
+      {
+        concept: "Spaceship Earth",
+        definition: "The metaphor describing Earth as a vessel with finite resources traveling through space.",
+        quote: "We are all astronauts on a little spaceship called Earth.",
+        application: "Our SOLAR token system represents an energy accounting system for fairly distributing the resources of our shared planetary vessel."
+      },
+      {
+        concept: "Comprehensive Anticipatory Design Science",
+        definition: "Applying scientific principles to solve problems while anticipating future needs.",
+        quote: "The best way to predict the future is to design it.",
+        application: "The Current-See platform anticipates the transition to renewable energy by building the economic infrastructure needed for an equitable energy future."
+      },
+      {
+        concept: "Synergetics",
+        definition: "The study of systems and their behavior as wholes, rather than collections of parts.",
+        quote: "Synergy means behavior of whole systems unpredicted by the behavior of their parts.",
+        application: "The distributed nature of our solar energy tracking creates system-wide benefits greater than the sum of individual contributions."
+      },
+      {
+        concept: "Tensegrity",
+        definition: "Structural integrity through balanced tension and compression components.",
+        quote: "Don't fight forces, use them.",
+        application: "Our economic model doesn't fight against existing systems but creates a parallel structure that naturally demonstrates advantages through efficiency and fairness."
+      }
+    ];
+    
+    // Select relevant principles based on query keywords
+    let relevantPrinciples = [];
+    
+    if (query.includes('ephemeralization') || query.includes('efficiency') || query.includes('more with less')) {
+      relevantPrinciples.push(fullerPrinciples[0]);
+    }
+    
+    if (query.includes('spaceship earth') || query.includes('resources') || query.includes('finite')) {
+      relevantPrinciples.push(fullerPrinciples[1]);
+    }
+    
+    if (query.includes('design') || query.includes('anticipatory') || query.includes('future')) {
+      relevantPrinciples.push(fullerPrinciples[2]);
+    }
+    
+    if (query.includes('synergy') || query.includes('system') || query.includes('whole')) {
+      relevantPrinciples.push(fullerPrinciples[3]);
+    }
+    
+    if (query.includes('tensegrity') || query.includes('structure') || query.includes('forces')) {
+      relevantPrinciples.push(fullerPrinciples[4]);
+    }
+    
+    // If no specific principles matched, provide a general overview
+    if (relevantPrinciples.length === 0) {
+      relevantPrinciples = [fullerPrinciples[0], fullerPrinciples[1]]; // Default to first two
+    }
+    
+    // Generate response based on matched principles
+    let response = `R. Buckminster Fuller (1895-1983) was a visionary systems theorist, architect, engineer, and inventor whose work deeply influences The Current-See philosophy.\n\n`;
+    
+    relevantPrinciples.forEach(principle => {
+      response += `${principle.concept}: ${principle.definition}\n`;
+      response += `"${principle.quote}"\n\n`;
+      response += `Application to The Current-See: ${principle.application}\n\n`;
+    });
+    
+    response += `Fuller's vision of "making the world work for 100% of humanity" through resource efficiency directly inspires our approach to universal energy access and equitable distribution of solar resources.`;
+    
+    if (query.includes('wallet') || query.includes('solar token') || query.includes('economy')) {
+      response += `\n\nIn the context of your wallet, the SOLAR token system embodies Fuller's concept of "energy accounting" as the true basis for economic value, rather than artificial monetary systems. Each SOLAR token represents real energy potential and contributes to the creation of a more equitable global energy economy.`;
+    }
+    
+    return response;
   }
   
   /**

@@ -1,174 +1,223 @@
-<section class="hero">
-    <div class="container">
-        <h1 style="color: var(--accent-blue);">Welcome to The Current-See</h1>
-        <p style="color: var(--primary-blue);">Empowering a Planet of Billionaires with Solar Currency</p>
-        <div class="cta-buttons">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Current-See</title>
+  <link rel="stylesheet" href="/css/common.css">
+  <link rel="stylesheet" href="/css/components/language-selector.css">
+</head>
+<body>
+  <div class="wrapper">
+    <!-- Header Begin -->
+    <header>
+      <div class="header-container container">
+        <div class="logo-container">
+          <a href="/">
+            <img src="/solar_coin.png" alt="The Current-See Logo" class="logo">
+            <span class="logo-text">The Current-See</span>
+          </a>
+        </div>
+        
+        <!-- Desktop Navigation -->
+        <nav class="desktop-nav">
+          <ul>
+            <li><a href="/" class="nav-link active">Home</a></li>
+            <li><a href="/declaration.html" class="nav-link">Solar Declaration</a></li>
+            <li><a href="/founder_note.html" class="nav-link">Founder's Note</a></li>
+            <li><a href="/whitepapers.html" class="nav-link">White Papers</a></li>
+            <li><a href="/demo-features.html" class="nav-link">Features</a></li>
+            <li><a href="/wallet-ai-features.html" class="nav-link">AI Wallet</a></li>
+            <li><a href="https://current-see-wallet-demo.replit.app" class="nav-link" target="_blank">Wallet Demo</a></li>
+          </ul>
+        </nav>
+        
+        <!-- No language selector -->
+        
+        <!-- Mobile Menu Toggle -->
+        <button class="mobile-menu-toggle" aria-label="Toggle mobile menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+      
+      <!-- Mobile Navigation -->
+      <div class="mobile-nav">
+        <ul>
+          <li><a href="/" class="nav-link active">Home</a></li>
+          <li><a href="/declaration.html" class="nav-link">Solar Declaration</a></li>
+          <li><a href="/founder_note.html" class="nav-link">Founder's Note</a></li>
+          <li><a href="/whitepapers.html" class="nav-link">White Papers</a></li>
+          <li><a href="/demo-features.html" class="nav-link">Features</a></li>
+          <li><a href="/wallet-ai-features.html" class="nav-link">AI Wallet</a></li>
+          <li><a href="https://current-see-wallet-demo.replit.app" class="nav-link" target="_blank">Wallet Demo</a></li>
+        </ul>
+      </div>
+    </header>
+    <!-- Header End -->
+
+    <main>
+      <!-- Hero Section -->
+      <section class="hero">
+        <div class="container">
+          <h1>Welcome to The Current-See</h1>
+          <p>Empowering a Planet of Billionaires with Solar Currency</p>
+          <div class="cta-buttons">
             <a href="/wallet.html" class="btn-primary">My Solar</a>
             <a href="/declaration.html" class="btn-secondary">Solar Declaration</a>
             <a href="/founder_note.html" class="btn-secondary">Founder's Note</a>
             <a href="/whitepapers.html" class="btn-secondary">White Papers</a>
-        </div>
-        
-        <!-- Prominent Join Button -->
-        <div class="join-button-container" style="margin-top: 30px; text-align: center;">
+          </div>
+          
+          <!-- Prominent Join Button -->
+          <div class="join-button-container">
             <a href="/signup.html" class="btn-join">
-                Join the 1,000 member prototype, start getting Solars today
+              Join the 1,000 member prototype, start getting Solars today
             </a>
+          </div>
         </div>
-    </div>
-</section>
+      </section>
 
-<section class="solar-counter-section">
-    <div class="container">
-        <div class="solar-counter-container">
-            <h2 class="counter-title">Solar Generator</h2>
-            <div id="solar-counter" class="solar-counter-display">
-                <div class="counter-row">
-                    <div class="counter-label">Energy Generated:</div>
-                    <div class="counter-value"><span id="energy-display">Loading...</span> MkWh</div>
-                </div>
-                <div class="counter-row">
-                    <div class="counter-label">Value Created:</div>
-                    <div class="counter-value" id="money-display">Loading...</div>
-                </div>
+      <!-- Solar Generator Section -->
+      <section class="solar-generator-section">
+        <div class="container">
+          <h2>Solar Generator</h2>
+          <div class="solar-counter-container">
+            <div class="counter-row">
+              <div class="counter-label">Energy Generated:</div>
+              <div id="energy-counter" class="counter-value">0.000000 MkWh</div>
             </div>
-            <p class="mt-4" style="color: var(--primary-blue);">One Solar = 4,913 kWh (based on 1% of Earth's solar input divided among 8.5B people)</p>
-            <p><a href="/solar-generator" class="btn-primary mt-3">View Full Solar Generator</a></p>
-        </div>
-    </div>
-</section>
-
-<section class="member-counter-section">
-    <div class="container">
-        <div class="member-counter-container">
-            <h2 class="counter-title">Members Worldwide</h2>
-            <div id="member-counter" class="counter-value">Loading...</div>
-            <p style="color: var(--primary-blue);">Join the growing community of solar-powered individuals</p>
-        </div>
-    </div>
-</section>
-
-<section class="main-sections">
-    <div class="container">
-        <div class="row">
-            <div class="col-md-4 mb-4">
-                <div class="section-card">
-                    <img src="/solar_coin.png" alt="Prototype" style="max-width: 100px; height: auto;">
-                    <div class="section-content">
-                        <h3>Prototype</h3>
-                        <p>Experience our working prototype and see the future of solar-backed currency in action.</p>
-                        <a href="/prototype.html" class="btn-primary">Try Demo</a>
-                    </div>
-                </div>
+            <div class="counter-row">
+              <div class="counter-label">Value Created:</div>
+              <div id="value-counter" class="counter-value">$0</div>
             </div>
-            <div class="col-md-4 mb-4">
-                <div class="section-card">
-                    <img src="/solar_tshirt.png" alt="Merchandise" style="max-width: 100px; height: auto;">
-                    <div class="section-content">
-                        <h3>Merchandise</h3>
-                        <p>Support our mission by purchasing exclusive Current-See branded merchandise.</p>
-                        <a href="/merch.html" class="btn-primary">Shop Now</a>
-                    </div>
-                </div>
+            <div class="counter-info">
+              One Solar = 4,913 kWh (based on 1% of Earth's solar input divided among 8.5B people)
             </div>
-            <div class="col-md-4 mb-4">
-                <div class="section-card">
-                    <img src="/solar_background.png" alt="My Solar" style="max-width: 100px; height: auto;">
-                    <div class="section-content">
-                        <h3>My Solar</h3>
-                        <p>Sign up to receive daily solar distributions and track your growing solar balance.</p>
-                        <a href="/wallet.html" class="btn-primary">Join Today</a>
-                    </div>
-                </div>
+          </div>
+          <div class="view-all-button">
+            <a href="/solar-generator.html" class="btn-secondary">View Full Solar Generator</a>
+          </div>
+        </div>
+      </section>
+
+      <!-- Members Section -->
+      <section class="members-section">
+        <div class="container">
+          <h2>Members Worldwide</h2>
+          <div class="member-count" id="member-count">2</div>
+          <p>Join the growing community of solar-powered individuals</p>
+          <div class="solar-token-container">
+            <img src="/solar_coin.png" alt="Solar Token" class="solar-token">
+          </div>
+        </div>
+      </section>
+
+      <!-- Prototype Section -->
+      <section class="prototype-section">
+        <div class="container">
+          <h2>Prototype</h2>
+          <p>Experience our working prototype and see the future of solar-backed currency in action.</p>
+          <div class="demo-button">
+            <a href="/prototype.html" class="btn-primary">Try Demo</a>
+          </div>
+          <div class="company-logo">
+            <img src="/solar_coin.png" alt="The Current-See Logo" class="company-logo-img">
+          </div>
+        </div>
+      </section>
+
+      <!-- Merchandise Section -->
+      <section class="merchandise-section">
+        <div class="container">
+          <h2>Merchandise</h2>
+          <p>Support our mission by purchasing exclusive Current-See branded merchandise.</p>
+          <div class="shop-button">
+            <a href="/merch.html" class="btn-primary">Shop Now</a>
+          </div>
+          <div class="merchandise-image">
+            <img src="/solar_tshirt.png" alt="Current-See Merchandise" class="merchandise-img">
+          </div>
+        </div>
+      </section>
+
+      <!-- My Solar Section -->
+      <section class="my-solar-section">
+        <div class="container">
+          <h2>My Solar</h2>
+          <p>Sign up to receive daily solar distributions and track your growing solar balance.</p>
+          <div class="join-today-button">
+            <a href="/signup.html" class="btn-primary">Join Today</a>
+          </div>
+        </div>
+      </section>
+
+      <!-- Public Members Log -->
+      <section class="members-log-section">
+        <div class="container">
+          <h2>Public Members Log</h2>
+          <div class="members-log-container" id="members-log-container">
+            <div class="members-log-entry">
+              <div class="member-name">Terry D. Franklin</div>
+              <div class="member-joined">Joined: April 10, 2025</div>
+              <div class="member-solar">SOLAR: 6</div>
             </div>
+          </div>
         </div>
-    </div>
-</section>
+      </section>
+    </main>
 
-<section class="public-members-section">
-    <div class="container">
-        <div class="members-log-container">
-            <h2 class="members-log-title">Public Members Log</h2>
-            <div id="public-members-log"></div>
+    <!-- Footer Begin -->
+    <footer>
+      <div class="container">
+        <div class="footer-columns">
+          <div class="footer-column">
+            <h3>About Us</h3>
+            <p>The Current-See is a revolutionary organization creating a solar-backed economic system for a more equitable world.</p>
+          </div>
+          <div class="footer-column">
+            <h3>Resources</h3>
+            <ul>
+              <li><a href="/declaration.html">Solar Declaration</a></li>
+              <li><a href="/founder_note.html">Founder's Note</a></li>
+              <li><a href="/whitepapers.html">White Papers</a></li>
+              <li><a href="/demo-features.html">Features</a></li>
+            </ul>
+          </div>
+          <div class="footer-column">
+            <h3>Connect</h3>
+            <ul>
+              <li><a href="/contact.html">Contact Us</a></li>
+              <li><a href="/signup.html">Sign Up</a></li>
+              <li><a href="/login.html">Login</a></li>
+            </ul>
+          </div>
         </div>
-    </div>
-</section>
-
-<section class="site-index-section">
-    <div class="container">
-        <div class="site-index-container">
-            <h2 class="site-index-title">Complete Site Index</h2>
-            <div class="site-index-grid">
-                <div class="site-index-column">
-                    <h3>Core Sections</h3>
-                    <ul>
-                        <li><a href="/">Home Page</a></li>
-                        <li><a href="/prototype.html">Prototype Demo</a></li>
-                        <li><a href="/solar-generator">Solar Generator</a></li>
-                        <li><a href="/merch.html">Current-See Merchandise</a></li>
-                        <li><a href="/wallet.html">My Solar Account</a></li>
-                    </ul>
-                </div>
-                <div class="site-index-column">
-                    <h3>Documentation</h3>
-                    <ul>
-                        <li><a href="/declaration.html">Solar Declaration</a></li>
-                        <li><a href="/whitepapers.html">White Papers</a></li>
-                        <li><a href="/founder_note.html">Founder's Note</a></li>
-                    </ul>
-                </div>
-                <div class="site-index-column">
-                    <h3>Coming Soon</h3>
-                    <ul>
-                        <li><span style="color: var(--primary-blue);">Solar Wallet Prototype</span></li>
-                        <li><span style="color: var(--primary-blue);">Interactive Visualization</span></li>
-                        <li><span style="color: var(--primary-blue);">Global Impact Dashboard</span></li>
-                    </ul>
-                </div>
-            </div>
+        <div class="footer-bottom">
+          <p>&copy; 2025 The Current-See PBC, Inc. All rights reserved.</p>
         </div>
-    </div>
-</section>
+      </div>
+    </footer>
+    <!-- Footer End -->
+  </div>
 
-<!-- Hidden elements for solar_counter.js -->
-<div class="hidden-counters">
-    <div id="energy-counter"></div>
-    <div id="money-counter"></div>
-</div>
-
-<script>
-    // Fetch member count from API
-    document.addEventListener('DOMContentLoaded', function() {
-        fetchMemberCount();
+  <!-- Mobile Menu Script -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
+      const mobileNav = document.querySelector('.mobile-nav');
+      
+      if (mobileMenuToggle && mobileNav) {
+        mobileMenuToggle.addEventListener('click', () => {
+          mobileMenuToggle.classList.toggle('open');
+          mobileNav.classList.toggle('mobile-nav-active');
+        });
+      }
     });
-    
-    async function fetchMemberCount() {
-        try {
-            const response = await fetch('/api/member-count');
-            const data = await response.json();
-            
-            // Update member counter with actual count
-            const memberCountElement = document.getElementById('member-counter');
-            if (memberCountElement) {
-                memberCountElement.textContent = data.count.toLocaleString();
-                
-                // Add animation effect
-                memberCountElement.classList.add('counter-highlight');
-                setTimeout(() => {
-                    memberCountElement.classList.remove('counter-highlight');
-                }, 1500);
-            }
-        } catch (error) {
-            console.error('Error fetching member count:', error);
-            // Fallback if there's an error
-            const memberCountElement = document.getElementById('member-counter');
-            if (memberCountElement) {
-                memberCountElement.textContent = 'Join Today!';
-            }
-        }
-    }
-</script>
+  </script>
 
-<!-- Page-specific scripts -->
-<script src="/solar_counter.js"></script>
-<script src="/js/public-members-log.js"></script>
+  <!-- Solar Counter Script -->
+  <script src="/solar_counter.js"></script>
+</body>
+</html>

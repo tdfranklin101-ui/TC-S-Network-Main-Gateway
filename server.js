@@ -757,6 +757,25 @@ app.post('/api/voice-assistant', async (req, res) => {
 
 Would you like me to explain any of these features in more detail?`;
       
+    } else if (queryLower.includes('buckminster fuller') || 
+               queryLower.includes('bucky fuller') || 
+               queryLower.includes('dymaxion') || 
+               queryLower.includes('geodesic')) {
+      
+      response = `R. Buckminster Fuller (1895-1983) was a visionary systems theorist, architect, engineer, and inventor whose work deeply influences The Current-See philosophy.
+
+Key Contributions:
+• Fuller pioneered the concept of "ephemeralization" — doing more with less — which is central to our energy efficiency focus
+• His "Operating Manual for Spaceship Earth" (1969) established the metaphor of Earth as a finite vessel with limited resources
+• The geodesic dome exemplified his principle of achieving maximum structural strength with minimal material usage
+• His Dymaxion™ concepts (houses, cars, maps) all focused on maximum efficiency with minimal energy inputs
+
+Fuller's vision of "making the world work for 100% of humanity" through resource efficiency directly inspires The Current-See's approach to universal energy access and equitable distribution of solar resources.
+
+His famous quote, "You never change things by fighting the existing reality. To change something, build a new model that makes the existing model obsolete," is essentially what we're accomplishing with The Current-See system.
+
+The SOLAR token economy embodies Fuller's concept of "energy accounting" as the true basis for economic value, rather than artificial monetary systems.`;
+    
     } else {
       // General fallback response
       response = `As your Current-See Energy Assistant, I can help you with:
@@ -766,6 +785,7 @@ Would you like me to explain any of these features in more detail?`;
 - Understanding solar energy benefits and technologies
 - Tracking your SOLAR token balance and distributions
 - Finding ways to reduce your energy consumption
+- Information about visionaries like R. Buckminster Fuller who inspire our work
 
 How else can I assist you with energy-related questions today?`;
     }
