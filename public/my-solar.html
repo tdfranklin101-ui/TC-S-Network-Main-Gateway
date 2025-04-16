@@ -24,6 +24,35 @@
             background-color: var(--bg-light);
         }
         
+        /* My Solar Page Specific Watermark */
+        .my-solar-main {
+            position: relative;
+            overflow: hidden;
+            background-color: var(--bg-light);
+            padding: 2rem 0;
+        }
+        
+        .my-solar-main::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: repeating-conic-gradient(
+                rgba(0, 87, 184, 0.02) 0deg 15deg,
+                rgba(255, 215, 0, 0.03) 15deg 30deg
+            );
+            animation: sun-ray-rotate 180s linear infinite reverse;
+            z-index: 0;
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        
+        @keyframes sun-ray-rotate {
+            to { transform: rotate(360deg); }
+        }
+        
         * {
             box-sizing: border-box;
         }
@@ -257,6 +286,7 @@
     </nav>
 
     <!-- Main content -->
+    <div class="my-solar-main">
     <div class="container mt-4">
         <!-- Unauthenticated view -->
         <div class="unauthenticated-view">
@@ -411,6 +441,7 @@
             </div>
         </div>
     </div>
+    </div> <!-- Close my-solar-main div -->
 
     <!-- Footer -->
     <footer>
