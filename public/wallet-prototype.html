@@ -29,7 +29,7 @@
 
   <div class="wallet-box">
     <div class="title">Most Recent Transfers</div>
-    <pre id="transfer-log">Loading...</pre>
+    <div id="transfer-log-display" style="padding: 1rem; font-size: 0.9rem;">Loading...</div>
   </div>
 
   <div class="wallet-box">
@@ -39,7 +39,7 @@
   </div>
 
   <div class="wallet-box">
-    <a href="https://cross-platform-mobile-tdfranklin101.replit.app" class="btn" id="launch-demo-btn">Launch Full Demo</a>
+    <a href="https://current-see-wallet-demo.replit.app" class="btn" id="launch-demo-btn">Launch Full Demo</a>
     <a href="/join" class="btn">Join the TC-S Network</a>
   </div>
 
@@ -90,8 +90,8 @@
           document.getElementById("wallet1").innerText = `${data.user1.balance.toFixed(2)} Solar`;
           document.getElementById("wallet2").innerText = `${data.user2.balance.toFixed(2)} Solar`;
           
-          // Update Launch Demo button with working URL
-          document.getElementById('launch-demo-btn').href = backendBase;
+          // Keep the fixed Full Demo URL - no need to update it
+          // document.getElementById('launch-demo-btn').href = backendBase;
         })
         .catch(error => {
           console.error('Error loading wallet data:', error);
@@ -124,18 +124,54 @@
           return res.json();
         })
         .then(data => {
-          document.getElementById("transfer-log").innerText = JSON.stringify(data.slice(-5).reverse(), null, 2);
+          displayFormattedTransfers(data.slice(-5).reverse());
         })
         .catch(error => {
           console.error('Error loading transfer data:', error);
           
           // Display mock transfer data if all attempts fail
           if (connectAttempts >= maxAttempts) {
-            document.getElementById("transfer-log").innerText = JSON.stringify(mockTransferData, null, 2);
+            displayFormattedTransfers(mockTransferData);
           } else {
-            document.getElementById("transfer-log").innerText = `Error loading transfer data: ${error.message}`;
+            document.getElementById("transfer-log-display").innerHTML = `<div class="error">Error loading transfer data: Connection issue</div>`;
           }
         });
+    }
+    
+    function displayFormattedTransfers(transfers) {
+      const transfersElement = document.getElementById("transfer-log-display");
+      transfersElement.innerHTML = '';
+      
+      if (!transfers || transfers.length === 0) {
+        transfersElement.innerHTML = '<div style="color: #666; font-style: italic;">No transfers found</div>';
+        return;
+      }
+      
+      transfers.forEach(transfer => {
+        const date = new Date(transfer.timestamp);
+        const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        
+        const transferItem = document.createElement('div');
+        transferItem.style.marginBottom = '0.8rem';
+        transferItem.style.borderBottom = '1px solid #eee';
+        transferItem.style.paddingBottom = '0.8rem';
+        
+        transferItem.innerHTML = `
+          <div style="display: flex; justify-content: space-between;">
+            <div>
+              <strong>${transfer.from}</strong> → <strong>${transfer.to}</strong>
+            </div>
+            <div style="font-weight: bold; color: #006655;">
+              ${transfer.amount.toFixed(2)} Solar
+            </div>
+          </div>
+          <div style="font-size: 0.8rem; color: #777; margin-top: 0.3rem;">
+            ${formattedDate}
+          </div>
+        `;
+        
+        transfersElement.appendChild(transferItem);
+      });
     }
 
     function walletWhisper(text) {
