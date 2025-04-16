@@ -50,6 +50,10 @@
   --text-on-green: #003366; /* Dark blue on green backgrounds for contrast */
   --text-on-yellow: #333333; /* Dark text on yellow/gold backgrounds */
   
+  /* Sun Ray Watermark Variables */
+  --sun-ray-color: rgba(255, 215, 0, 0.04); /* Very subtle gold color */
+  --sun-ray-highlight: rgba(255, 215, 0, 0.08); /* Slightly stronger highlight */
+  
   /* Misc */
   --border-radius: 8px;
   --box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
@@ -69,6 +73,26 @@ body {
   line-height: 1.6;
   color: var(--text-dark);
   background-color: var(--bg-light);
+  position: relative;
+  min-height: 100vh;
+}
+
+/* Global Sun Ray Watermark */
+body::before {
+  content: '';
+  position: fixed;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: repeating-conic-gradient(
+    var(--sun-ray-color) 0deg 10deg,
+    var(--sun-ray-highlight) 10deg 20deg
+  );
+  animation: sun-ray-rotate 240s linear infinite;
+  z-index: -1;
+  opacity: 0.15;
+  pointer-events: none;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -590,6 +614,31 @@ footer {
   overflow: hidden;
 }
 
+/* Hero with Sun Ray Emphasis */
+.hero-solar {
+  background: var(--gradient-primary);
+  color: var(--text-on-green);
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-solar::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: repeating-conic-gradient(
+    rgba(255, 215, 0, 0.06) 0deg 10deg,
+    rgba(255, 215, 0, 0.10) 10deg 20deg
+  );
+  animation: sun-ray-rotate 180s linear infinite;
+  z-index: 1;
+  opacity: 0.8;
+  pointer-events: none;
+}
+
 .hero-content {
   max-width: 800px;
   margin: 0 auto;
@@ -730,4 +779,125 @@ footer {
 .bg-gradient-wallet {
   background: var(--gradient-wallet);
   color: var(--text-on-dark);
+}
+
+/* Sun Ray Watermark */
+.sun-ray-watermark {
+  position: relative;
+  overflow: hidden;
+}
+
+.sun-ray-watermark::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: repeating-conic-gradient(
+    var(--sun-ray-color) 0deg 10deg,
+    var(--sun-ray-highlight) 10deg 20deg
+  );
+  animation: sun-ray-rotate 240s linear infinite;
+  z-index: 0;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.sun-ray-watermark > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* Sun Ray Animation */
+@keyframes sun-ray-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Subtle Watermark (For light backgrounds) */
+.sun-ray-watermark-subtle::before {
+  opacity: 0.2;
+}
+
+/* Strong Watermark (For dark backgrounds) */
+.sun-ray-watermark-strong::before {
+  opacity: 0.8;
+  background: repeating-conic-gradient(
+    rgba(255, 215, 0, 0.08) 0deg 10deg,
+    rgba(255, 215, 0, 0.12) 10deg 20deg
+  );
+}
+
+/* Solar Counter Specific Styling */
+.solar-counter-container {
+  background: var(--gradient-solar);
+  color: var(--text-on-yellow);
+  border-radius: var(--border-radius);
+  padding: 2rem;
+  margin: 2rem 0;
+  box-shadow: var(--box-shadow);
+  position: relative;
+  overflow: hidden;
+}
+
+.solar-counter-container::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: repeating-conic-gradient(
+    rgba(255, 215, 0, 0.04) 0deg 10deg,
+    rgba(255, 215, 0, 0.08) 10deg 20deg
+  );
+  animation: sun-ray-rotate 120s linear infinite;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.solar-counter-container > * {
+  position: relative;
+  z-index: 2;
+}
+
+.solar-counter {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin: 1rem 0;
+  color: var(--text-on-yellow);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Wallet Specific Styling */
+.wallet-container {
+  background: var(--gradient-wallet);
+  color: var(--text-on-dark);
+  border-radius: var(--border-radius);
+  padding: 2rem;
+  box-shadow: var(--box-shadow);
+  position: relative;
+  overflow: hidden;
+}
+
+.wallet-container::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: repeating-conic-gradient(
+    rgba(255, 255, 255, 0.02) 0deg 10deg,
+    rgba(255, 255, 255, 0.04) 10deg 20deg
+  );
+  animation: sun-ray-rotate 180s linear infinite reverse;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.wallet-container > * {
+  position: relative;
+  z-index: 2;
 }
