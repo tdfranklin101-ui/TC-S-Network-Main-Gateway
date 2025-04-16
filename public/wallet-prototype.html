@@ -8,11 +8,14 @@
   body {
     font-family: system-ui, sans-serif;
     background: #f8fdfc;
-    margin: 1rem;
+    margin: 0;
     padding: 0;
-    max-width: 700px;
-    margin-left: auto;
-    margin-right: auto;
+  }
+  
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
   }
 
   .wallet-box {
@@ -88,36 +91,38 @@
   </style>
 </head>
 <body>
-  <h1>The Current-See: AI Wallet Prototype</h1>
-  <p class="sub">A live demonstration of our AI-powered, energy-conscious wallet system. Data is streaming in real time from our working prototype.</p>
+  <div class="container">
+    <h1>The Current-See: AI Wallet Prototype</h1>
+    <p class="sub">A live demonstration of our AI-powered, energy-conscious wallet system. Data is streaming in real time from our working prototype.</p>
 
-  <div class="wallet-box">
-    <div class="title">User 1 Wallet</div>
-    <div id="wallet1">Loading...</div>
-  </div>
-
-  <div class="wallet-box">
-    <div class="title">User 2 Wallet</div>
-    <div id="wallet2">Loading...</div>
-  </div>
-
-  <div class="wallet-box">
-    <div class="title">Most Recent Transfers</div>
-    <div id="transfer-log-display" style="padding: 1rem; font-size: 0.9rem;">Loading...</div>
-  </div>
-
-  <div class="wallet-box">
-    <div class="title">WalletWhisper: Sustainability Tip Preview</div>
-    <p>"Consider switching to a reusable bottle. It saves ~0.2 kWh per use."</p>
-    <div class="button-row">
-      <button class="btn" onclick="walletWhisper('Consider switching to a reusable bottle. It saves 0.2 kilowatt-hours per use.')">Play Voice Tip</button>
+    <div class="wallet-box">
+      <div class="title">User 1 Wallet</div>
+      <div id="wallet1">Loading...</div>
     </div>
-  </div>
 
-  <div class="wallet-box button-row">
-    <a href="https://current-see-wallet-demo.replit.app" class="btn" target="_blank" rel="noopener noreferrer">Launch Full AI Wallet</a>
-    <a href="https://cross-platform-mobile-tdfranklin101.replit.app/transfer-demo" class="btn" target="_blank" rel="noopener noreferrer">View 2-Wallet Demo</a>
-    <a href="/join" class="btn">Join the TC-S Network</a>
+    <div class="wallet-box">
+      <div class="title">User 2 Wallet</div>
+      <div id="wallet2">Loading...</div>
+    </div>
+
+    <div class="wallet-box">
+      <div class="title">Most Recent Transfers</div>
+      <div id="transfer-log-display" style="padding: 1rem; font-size: 0.9rem;">Loading...</div>
+    </div>
+
+    <div class="wallet-box">
+      <div class="title">WalletWhisper: Sustainability Tip Preview</div>
+      <p>"Consider switching to a reusable bottle. It saves ~0.2 kWh per use."</p>
+      <div class="button-row">
+        <button class="btn" onclick="walletWhisper('Consider switching to a reusable bottle. It saves 0.2 kilowatt-hours per use.')">Play Voice Tip</button>
+      </div>
+    </div>
+
+    <div class="wallet-box button-row">
+      <a href="https://cross-platform-mobile-tdfranklin101.replit.app" class="btn" target="_blank" rel="noopener noreferrer">Launch Full AI Wallet</a>
+      <a href="https://cross-platform-mobile-tdfranklin101.replit.app/transfer-demo" class="btn" target="_blank" rel="noopener noreferrer">View 2-Wallet Demo</a>
+      <a href="/join" class="btn">Join the TC-S Network</a>
+    </div>
   </div>
 
   <script>
