@@ -34,7 +34,7 @@
 
   <div class="wallet-box">
     <div class="title">WalletWhisper: Sustainability Tip Preview</div>
-    <p>"Consider switching to a reusable bottle. It saves ~0.2 kWh per use."</p>
+    <p>“Consider switching to a reusable bottle. It saves ~0.2 kWh per use.”</p>
     <button class="btn" onclick="walletWhisper('Consider switching to a reusable bottle. It saves 0.2 kilowatt-hours per use.')">Play Voice Tip</button>
   </div>
 
