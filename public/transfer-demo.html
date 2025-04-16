@@ -179,6 +179,137 @@
       margin-top: 1.5rem;
     }
     
+    /* Transaction History Styles */
+    .transaction-history-container {
+      margin: 3rem 0;
+      background-color: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      padding: 1.5rem;
+      position: relative;
+    }
+    
+    .section-title {
+      color: var(--text-dark);
+      margin-bottom: 1.5rem;
+      position: relative;
+      display: inline-block;
+      font-size: 1.35rem;
+      font-weight: 700;
+    }
+    
+    .section-title::after {
+      content: '';
+      position: absolute;
+      bottom: -8px;
+      left: 0;
+      width: 50px;
+      height: 3px;
+      background: var(--accent-color);
+      border-radius: 2px;
+    }
+    
+    .transaction-history-log {
+      max-height: 300px;
+      overflow-y: auto;
+      background-color: #f9f9f9;
+      border-radius: 8px;
+      padding: 0.5rem 1rem;
+    }
+    
+    .transaction-history-entry {
+      padding: 1rem;
+      border-bottom: 1px solid #e5e5e5;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    
+    .transaction-history-entry:last-child {
+      border-bottom: none;
+    }
+    
+    .transaction-history-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    
+    .transaction-history-icon.transfer-to {
+      background-color: #e1f5fe;
+      color: #0288d1;
+    }
+    
+    .transaction-history-icon.transfer-from {
+      background-color: #e8f5e9;
+      color: #388e3c;
+    }
+    
+    .transaction-history-details {
+      flex-grow: 1;
+    }
+    
+    .transaction-history-time {
+      font-size: 0.8rem;
+      color: #767676;
+    }
+    
+    .transaction-history-amount {
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+    
+    .transaction-history-empty {
+      padding: 2rem;
+      text-align: center;
+      color: #767676;
+      font-style: italic;
+    }
+    
+    /* Network Speed Controls */
+    .transaction-speed-container {
+      background-color: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    
+    .network-speed-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    
+    /* Pending Transfer Animation */
+    .pending-transfer {
+      position: relative;
+      padding-left: 25px;
+    }
+    
+    .pending-transfer::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--accent-color);
+      border-top: 2px solid transparent;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: translateY(-50%) rotate(0deg); }
+      100% { transform: translateY(-50%) rotate(360deg); }
+    }
+    
     @media (min-width: 768px) {
       .wallet-grid {
         display: grid;
@@ -262,6 +393,34 @@
           <p id="transfer-message"></p>
         </div>
         
+        <!-- Transfer History Log -->
+        <div class="transaction-history-container mt-4">
+          <h2 class="section-title">Transfer History</h2>
+          <div class="transaction-history-log" id="transaction-history-log">
+            <!-- Transactions will be added here dynamically -->
+            <div class="transaction-history-empty" id="empty-history-message">No transfers have been made yet.</div>
+          </div>
+        </div>
+
+        <!-- Transaction Speed Simulator -->
+        <div class="transaction-speed-container mt-4">
+          <h3 class="section-title">Network Speed Simulator</h3>
+          <div class="network-speed-controls">
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="radio" name="networkSpeed" id="speedFast" value="fast" checked>
+              <label class="form-check-label" for="speedFast">Fast (Instant)</label>
+            </div>
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="radio" name="networkSpeed" id="speedMedium" value="medium">
+              <label class="form-check-label" for="speedMedium">Medium (2s)</label>
+            </div>
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="radio" name="networkSpeed" id="speedSlow" value="slow">
+              <label class="form-check-label" for="speedSlow">Slow (5s)</label>
+            </div>
+          </div>
+        </div>
+        
         <div class="button-group text-center mt-5">
           <a href="/wallet.html" class="btn-secondary">Back to Wallet</a>
           <a href="/" class="btn-return">Return to Home</a>
@@ -284,10 +443,28 @@
       const sendToA = document.getElementById('send-to-a');
       const transferStatus = document.getElementById('transfer-status');
       const transferMessage = document.getElementById('transfer-message');
+      const historyLog = document.getElementById('transaction-history-log');
+      const emptyHistoryMessage = document.getElementById('empty-history-message');
+      const speedControls = document.querySelectorAll('input[name="networkSpeed"]');
       
       // Initial balances
       let balanceA = 10.000000;
       let balanceB = 5.000000;
+      let transferCount = 0;
+      
+      // Get the selected network speed
+      function getNetworkSpeed() {
+        const selectedSpeed = document.querySelector('input[name="networkSpeed"]:checked').value;
+        switch (selectedSpeed) {
+          case 'slow':
+            return 5000; // 5 seconds
+          case 'medium':
+            return 2000; // 2 seconds
+          case 'fast':
+          default:
+            return 0; // Instant
+        }
+      }
       
       // Update displays
       function updateBalances() {
@@ -314,23 +491,53 @@
           return;
         }
         
-        // Process transfer
-        balanceA -= amount;
-        balanceB += amount;
-        updateBalances();
+        // Disable send buttons during transfer
+        sendToB.disabled = true;
+        sendToA.disabled = true;
         
-        // Update transaction history (in a real app, this would be persisted)
-        const transactionDate = new Date().toLocaleDateString();
+        // Get transaction time
+        const transactionDate = new Date();
+        const formattedDate = transactionDate.toLocaleDateString();
+        const formattedTime = transactionDate.toLocaleTimeString();
         
-        // Clear input
-        transferAmount.value = '';
+        // Create a pending transaction in the history log
+        const pendingEntryId = 'pending-transfer-' + Date.now();
+        addToTransferHistory({
+          id: pendingEntryId,
+          fromWallet: 'Wallet A',
+          toWallet: 'Wallet B',
+          amount: amount,
+          timestamp: formattedTime,
+          date: formattedDate,
+          status: 'pending'
+        });
         
-        // Show success message
-        showSuccess(`Successfully transferred ${amount.toFixed(6)} SOLAR from Wallet A to Wallet B.`);
+        // Add a delay based on network speed
+        const delay = getNetworkSpeed();
         
-        // Add transaction to the list
-        addTransaction('Wallet A', 'outgoing', 'Sent to Wallet B', transactionDate, amount);
-        addTransaction('Wallet B', 'incoming', 'Received from Wallet A', transactionDate, amount);
+        setTimeout(() => {
+          // Process transfer
+          balanceA -= amount;
+          balanceB += amount;
+          updateBalances();
+          
+          // Update the pending transaction to completed
+          updateTransferHistoryStatus(pendingEntryId, 'completed');
+          
+          // Clear input
+          transferAmount.value = '';
+          
+          // Show success message
+          showSuccess(`Successfully transferred ${amount.toFixed(6)} SOLAR from Wallet A to Wallet B.`);
+          
+          // Add transaction to the wallet history
+          addTransaction('Wallet A', 'outgoing', 'Sent to Wallet B', formattedDate, amount);
+          addTransaction('Wallet B', 'incoming', 'Received from Wallet A', formattedDate, amount);
+          
+          // Re-enable send buttons
+          sendToB.disabled = false;
+          sendToA.disabled = false;
+        }, delay);
       });
       
       // Transfer from B to A
@@ -348,25 +555,56 @@
           return;
         }
         
-        // Process transfer
-        balanceB -= amount;
-        balanceA += amount;
-        updateBalances();
+        // Disable send buttons during transfer
+        sendToB.disabled = true;
+        sendToA.disabled = true;
         
-        // Update transaction history
-        const transactionDate = new Date().toLocaleDateString();
+        // Get transaction time
+        const transactionDate = new Date();
+        const formattedDate = transactionDate.toLocaleDateString();
+        const formattedTime = transactionDate.toLocaleTimeString();
         
-        // Clear input
-        transferAmountB.value = '';
+        // Create a pending transaction in the history log
+        const pendingEntryId = 'pending-transfer-' + Date.now();
+        addToTransferHistory({
+          id: pendingEntryId,
+          fromWallet: 'Wallet B',
+          toWallet: 'Wallet A',
+          amount: amount,
+          timestamp: formattedTime,
+          date: formattedDate,
+          status: 'pending'
+        });
         
-        // Show success message
-        showSuccess(`Successfully transferred ${amount.toFixed(6)} SOLAR from Wallet B to Wallet A.`);
+        // Add a delay based on network speed
+        const delay = getNetworkSpeed();
         
-        // Add transaction to the list
-        addTransaction('Wallet B', 'outgoing', 'Sent to Wallet A', transactionDate, amount);
-        addTransaction('Wallet A', 'incoming', 'Received from Wallet B', transactionDate, amount);
+        setTimeout(() => {
+          // Process transfer
+          balanceB -= amount;
+          balanceA += amount;
+          updateBalances();
+          
+          // Update the pending transaction to completed
+          updateTransferHistoryStatus(pendingEntryId, 'completed');
+          
+          // Clear input
+          transferAmountB.value = '';
+          
+          // Show success message
+          showSuccess(`Successfully transferred ${amount.toFixed(6)} SOLAR from Wallet B to Wallet A.`);
+          
+          // Add transaction to the wallet history
+          addTransaction('Wallet B', 'outgoing', 'Sent to Wallet A', formattedDate, amount);
+          addTransaction('Wallet A', 'incoming', 'Received from Wallet B', formattedDate, amount);
+          
+          // Re-enable send buttons
+          sendToB.disabled = false;
+          sendToA.disabled = false;
+        }, delay);
       });
       
+      // Add transaction to the wallet card
       function addTransaction(walletId, type, title, date, amount) {
         const walletElement = walletId === 'Wallet A' ? 
           document.querySelector('.wallet-card:first-child .transaction-list') : 
@@ -386,6 +624,55 @@
         `;
         
         walletElement.insertAdjacentHTML('afterbegin', transactionHTML);
+      }
+      
+      // Add a transaction to the transfer history log
+      function addToTransferHistory(transfer) {
+        // Hide empty message if this is the first transfer
+        if (transferCount === 0) {
+          emptyHistoryMessage.style.display = 'none';
+        }
+        
+        transferCount++;
+        
+        // Create the transfer entry HTML
+        const transferHTML = `
+          <div class="transaction-history-entry" id="${transfer.id}">
+            <div class="transaction-history-icon transfer-to">
+              <i class="fas fa-exchange-alt"></i>
+            </div>
+            <div class="transaction-history-details">
+              <div class="transaction-history-title">
+                ${transfer.status === 'pending' ? 
+                  `<span class="pending-transfer">Transfer in progress</span>` : 
+                  'Transfer completed'}
+              </div>
+              <div>${transfer.fromWallet} → ${transfer.toWallet}</div>
+              <div class="transaction-history-time">${transfer.date} at ${transfer.timestamp}</div>
+            </div>
+            <div class="transaction-history-amount">${transfer.amount.toFixed(6)} SOLAR</div>
+          </div>
+        `;
+        
+        // Add to the top of the history log
+        historyLog.insertAdjacentHTML('afterbegin', transferHTML);
+      }
+      
+      // Update a pending transaction status
+      function updateTransferHistoryStatus(id, status) {
+        const entry = document.getElementById(id);
+        if (entry) {
+          const titleElement = entry.querySelector('.transaction-history-title');
+          if (titleElement) {
+            if (status === 'completed') {
+              titleElement.innerHTML = 'Transfer completed';
+              entry.classList.add('transfer-completed');
+            } else if (status === 'failed') {
+              titleElement.innerHTML = '<span class="transfer-failed">Transfer failed</span>';
+              entry.classList.add('transfer-failed');
+            }
+          }
+        }
       }
       
       function showSuccess(message) {

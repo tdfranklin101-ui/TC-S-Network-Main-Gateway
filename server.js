@@ -287,11 +287,48 @@ app.get('/api/solar-clock', (req, res) => {
 });
 
 app.get('/api/members', (req, res) => {
+  // First update the members with the latest SOLAR distributions
+  updateMemberDistributions();
   res.json(members);
 });
 
 app.get('/api/solar-accounts/leaderboard', (req, res) => {
+  // First update the members with the latest SOLAR distributions
+  updateMemberDistributions();
   res.json(members);
+});
+
+app.get('/api/members.json', (req, res) => {
+  // First update the members with the latest SOLAR distributions
+  updateMemberDistributions();
+  res.json(members);
+});
+
+// Serve the embedded members data with proper content type
+app.get('/embedded-members', (req, res) => {
+  updateMemberDistributions();
+  res.setHeader('Content-Type', 'application/json');
+  res.json(members);
+});
+
+app.get('/api/members-data', (req, res) => {
+  // Alternative endpoint for JSONP callback support
+  updateMemberDistributions();
+  const callback = req.query.callback;
+  if (callback) {
+    res.setHeader('Content-Type', 'application/javascript');
+    res.send(`${callback}(${JSON.stringify(members)})`);
+  } else {
+    res.json(members);
+  }
+});
+
+app.get('/api/members.js', (req, res) => {
+  // JSONP endpoint for cross-domain support
+  updateMemberDistributions();
+  const callback = req.query.callback || 'updateMembers';
+  res.setHeader('Content-Type', 'application/javascript');
+  res.send(`${callback}(${JSON.stringify(members)})`);
 });
 
 app.get('/api/member-count', (req, res) => {
