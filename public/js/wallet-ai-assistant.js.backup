@@ -350,86 +350,6 @@ class WalletAIAssistant {
     
     return response;
   }
-
-  /**
-   * Provide insights about 1028atoms.com and longevity science
-   */
-  provideLongevityInsights(query) {
-    // Information about 1028atoms.com and longevity science
-    const longevityInfo = {
-      website: {
-        name: "1028 Atoms",
-        url: "https://www.1028atoms.com",
-        description: "A platform dedicated to longevity science, exploring how to extend healthy human lifespan through scientific advances and holistic approaches."
-      },
-      foundingPrinciple: "The name '1028 Atoms' represents the approximate number of atoms in the human body (10^28) and symbolizes the deep understanding of human biology needed to address aging at its most fundamental level.",
-      keyAreas: [
-        {
-          area: "Biological Aging Research",
-          description: "Investigating the fundamental cellular and molecular mechanisms of aging, including telomere shortening, senescent cells, and mitochondrial dysfunction."
-        },
-        {
-          area: "Longevity Interventions",
-          description: "Exploring scientifically-backed approaches to extending healthy lifespan, including caloric restriction, intermittent fasting, and targeted supplementation."
-        },
-        {
-          area: "Age-Related Disease Prevention",
-          description: "Addressing the root causes of conditions like cardiovascular disease, neurodegenerative disorders, and diabetes through comprehensive preventative strategies."
-        },
-        {
-          area: "Holistic Health Optimization",
-          description: "Integrating nutrition, exercise, sleep, stress management, and environmental factors for comprehensive longevity enhancement."
-        }
-      ],
-      connectionToCurrentSee: "Both 1028 Atoms and The Current-See share the founding vision of Terry D. Franklin, applying systems thinking to some of humanity's greatest challenges. While The Current-See addresses economic and energy equity through solar distribution, 1028 Atoms tackles the fundamental challenge of human health and longevity, both working toward a more sustainable and prosperous future."
-    };
-    
-    // Determine what aspect of longevity to focus on
-    let response = "";
-    
-    if (query.includes('1028atoms') || query.includes('1028 atoms') || query.includes('website')) {
-      response = `${longevityInfo.website.name} (${longevityInfo.website.url})\n\n${longevityInfo.website.description}\n\n${longevityInfo.foundingPrinciple}\n\n`;
-    } else {
-      response = `Longevity Science and 1028 Atoms:\n\n${longevityInfo.website.description}\n\n`;
-    }
-    
-    // Add key areas based on query focus
-    let relevantAreas = [];
-    
-    if (query.includes('aging') || query.includes('biology') || query.includes('cellular')) {
-      relevantAreas.push(longevityInfo.keyAreas[0]);
-    }
-    
-    if (query.includes('interventions') || query.includes('extending') || query.includes('fasting')) {
-      relevantAreas.push(longevityInfo.keyAreas[1]);
-    }
-    
-    if (query.includes('disease') || query.includes('prevention') || query.includes('conditions')) {
-      relevantAreas.push(longevityInfo.keyAreas[2]);
-    }
-    
-    if (query.includes('holistic') || query.includes('nutrition') || query.includes('exercise')) {
-      relevantAreas.push(longevityInfo.keyAreas[3]);
-    }
-    
-    // If no specific areas matched, provide overview of all areas
-    if (relevantAreas.length === 0) {
-      relevantAreas = longevityInfo.keyAreas;
-    }
-    
-    // Add relevant areas to response
-    response += "Key Research Areas:\n\n";
-    relevantAreas.forEach(area => {
-      response += `${area.area}: ${area.description}\n\n`;
-    });
-    
-    // Add connection to Current-See if relevant
-    if (query.includes('current-see') || query.includes('connection') || query.includes('terry') || query.includes('franklin')) {
-      response += `Connection to The Current-See: ${longevityInfo.connectionToCurrentSee}`;
-    }
-    
-    return response;
-  }
   
   /**
    * Evaluate carbon footprint of products
@@ -583,6 +503,106 @@ In terms of SOLAR tokens: producing 1kg of ${displayName} requires energy equiva
     const displayName = productType.replace('_', ' ');
     
     return `
+Carbon Footprint Analysis: ${displayName.toUpperCase()} (per km per person)
+
+• Emissions: ${data.avgCO2kgPerKm} kg CO2e per kilometer
+• Energy Consumption: ${data.energyConsumptionKwhPerKm} kWh per kilometer
+• Typical Occupancy: ${data.avgOccupancy} people
+
+A 100km journey by ${displayName} would generate approximately ${(data.avgCO2kgPerKm * 100).toFixed(1)} kg CO2e per person.
+
+${data.evAlternativeReductionPercent ? `Switching to an electric alternative could reduce emissions by approximately ${data.evAlternativeReductionPercent}%, depending on your electricity source.` : ''}
+
+For comparison, a train journey of the same distance would produce approximately ${(0.041 * 100).toFixed(1)} kg CO2e per person, ${(data.avgCO2kgPerKm / 0.041).toFixed(1)} times less than ${displayName}.
+
+In terms of SOLAR tokens: a 100km journey by ${displayName} requires energy equivalent to approximately ${(data.energyConsumptionKwhPerKm * 100 * 0.4).toFixed(1)} SOLAR tokens per person.
+`;
+  }
+  
+  /**
+   * Provide insights about 1028atoms.com and longevity science
+   */
+  provideLongevityInsights(query) {
+    // Information about 1028atoms.com and longevity science
+    const longevityInfo = {
+      website: {
+        name: "1028 Atoms",
+        url: "https://www.1028atoms.com",
+        description: "A platform dedicated to longevity science, exploring how to extend healthy human lifespan through scientific advances and holistic approaches."
+      },
+      foundingPrinciple: "The name '1028 Atoms' represents the approximate number of atoms in the human body (10^28) and symbolizes the deep understanding of human biology needed to address aging at its most fundamental level.",
+      keyAreas: [
+        {
+          area: "Biological Aging Research",
+          description: "Investigating the fundamental cellular and molecular mechanisms of aging, including telomere shortening, senescent cells, and mitochondrial dysfunction."
+        },
+        {
+          area: "Longevity Interventions",
+          description: "Exploring scientifically-backed approaches to extending healthy lifespan, including caloric restriction, intermittent fasting, and targeted supplementation."
+        },
+        {
+          area: "Age-Related Disease Prevention",
+          description: "Addressing the root causes of conditions like cardiovascular disease, neurodegenerative disorders, and diabetes through comprehensive preventative strategies."
+        },
+        {
+          area: "Holistic Health Optimization",
+          description: "Integrating nutrition, exercise, sleep, stress management, and environmental factors for comprehensive longevity enhancement."
+        }
+      ],
+      connectionToCurrentSee: "Both 1028 Atoms and The Current-See share the founding vision of Terry D. Franklin, applying systems thinking to some of humanity's greatest challenges. While The Current-See addresses economic and energy equity through solar distribution, 1028 Atoms tackles the fundamental challenge of human health and longevity, both working toward a more sustainable and prosperous future."
+    };
+    
+    // Determine what aspect of longevity to focus on
+    let response = "";
+    
+    if (query.includes('1028atoms') || query.includes('1028 atoms') || query.includes('website')) {
+      response = `${longevityInfo.website.name} (${longevityInfo.website.url})\n\n${longevityInfo.website.description}\n\n${longevityInfo.foundingPrinciple}\n\n`;
+    } else {
+      response = `Longevity Science and 1028 Atoms:\n\n${longevityInfo.website.description}\n\n`;
+    }
+    
+    // Add key areas based on query focus
+    let relevantAreas = [];
+    
+    if (query.includes('aging') || query.includes('biology') || query.includes('cellular')) {
+      relevantAreas.push(longevityInfo.keyAreas[0]);
+    }
+    
+    if (query.includes('interventions') || query.includes('extending') || query.includes('fasting')) {
+      relevantAreas.push(longevityInfo.keyAreas[1]);
+    }
+    
+    if (query.includes('disease') || query.includes('prevention') || query.includes('conditions')) {
+      relevantAreas.push(longevityInfo.keyAreas[2]);
+    }
+    
+    if (query.includes('holistic') || query.includes('nutrition') || query.includes('exercise')) {
+      relevantAreas.push(longevityInfo.keyAreas[3]);
+    }
+    
+    // If no specific areas matched, provide overview of all areas
+    if (relevantAreas.length === 0) {
+      relevantAreas = longevityInfo.keyAreas;
+    }
+    
+    // Add relevant areas to response
+    response += "Key Research Areas:\n\n";
+    relevantAreas.forEach(area => {
+      response += `${area.area}: ${area.description}\n\n`;
+    });
+    
+    // Add connection to Current-See if relevant
+    if (query.includes('current-see') || query.includes('connection') || query.includes('terry') || query.includes('franklin')) {
+      response += `Connection to The Current-See: ${longevityInfo.connectionToCurrentSee}`;
+    }
+    
+    return response;
+  }
+  
+  /**
+   * Calculate farm-to-table pricing based on energy metrics
+   */
+  calculateFarmToTablePricing(query) {
 Carbon Footprint Analysis: ${displayName.toUpperCase()} (per km per person)
 
 • Emissions: ${data.avgCO2kgPerKm} kg CO2e per kilometer
