@@ -119,9 +119,9 @@
     </div>
 
     <div class="wallet-box button-row">
-      <a href="#" id="launch-ai-wallet" class="btn">Launch Full AI Wallet</a>
-      <a href="#" id="launch-2wallet-demo" class="btn">View 2-Wallet Demo</a>
-      <a href="https://thecurrentsee.org/signup" class="btn" target="_blank" rel="noopener noreferrer">Join the TC-S Network</a>
+      <a href="https://crossplatformmobile.tdfrankl.replit.app/wallet" id="launch-ai-wallet" class="btn">Launch Full AI Wallet</a>
+      <a href="https://crossplatformmobile.tdfrankl.replit.app/transfer-demo" id="launch-2wallet-demo" class="btn">View 2-Wallet Demo</a>
+      <a href="/signup.html" class="btn">Join the TC-S Network</a>
     </div>
     
     <!-- Loading modal for the wallet apps -->
@@ -392,17 +392,22 @@
       
       // Setup Full AI Wallet launch
       const aiWalletButton = document.getElementById('launch-ai-wallet');
+      const aiWalletUrls = [
+        "https://crossplatformmobile.tdfrankl.replit.app/wallet",
+        "https://cross-platform-mobile-tdfranklin101.replit.app/wallet",
+        window.location.origin + "/wallet-ai-prototype"  // Fallback to our local prototype
+      ];
       aiWalletButton.addEventListener('click', function(e) {
         e.preventDefault();
-        launchAppWithWakeup([...backendUrls], 'Full AI Wallet');
+        launchAppWithWakeup(aiWalletUrls, 'Full AI Wallet');
       });
       
       // Setup 2-Wallet Demo launch
       const twoWalletButton = document.getElementById('launch-2wallet-demo');
       const twoWalletUrls = [
-        window.location.origin + "/wallet-demo", // Use our own server first
-        "https://demo-wallet-transfer-tdfranklin101.replit.app",
-        "https://demo-wallet-transfer.tdfrankl.repl.co"
+        "https://crossplatformmobile.tdfrankl.replit.app/transfer-demo",
+        "https://cross-platform-mobile-tdfranklin101.replit.app/transfer-demo",
+        window.location.origin + "/transfer-demo"  // Fallback to our local transfer demo
       ];
       twoWalletButton.addEventListener('click', function(e) {
         e.preventDefault();
