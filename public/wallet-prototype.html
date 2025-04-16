@@ -2,15 +2,89 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TC-S Wallet Prototype</title>
   <style>
-    body { font-family: system-ui, sans-serif; background: #f8fdfc; margin: 2rem; }
-    .wallet-box { border: 1px solid #ccc; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; background: #fff; }
-    .title { font-size: 1.4rem; font-weight: bold; color: #003a33; }
-    .sub { font-size: 0.9rem; color: #555; }
-    pre { background: #eef7f4; padding: 1rem; border-radius: 6px; font-size: 0.85rem; overflow-x: auto; }
-    .btn { background: #00aa88; color: white; border: none; padding: 0.7rem 1rem; font-size: 1rem; border-radius: 6px; cursor: pointer; margin-top: 1rem; }
-    .btn:hover { background: #008f72; }
+  body {
+    font-family: system-ui, sans-serif;
+    background: #f8fdfc;
+    margin: 1rem;
+    padding: 0;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .wallet-box {
+    border: 1px solid #ccc;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+
+  .title {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #003a33;
+    margin-bottom: 0.4rem;
+  }
+
+  .sub {
+    font-size: 0.95rem;
+    color: #555;
+    margin-bottom: 1rem;
+  }
+
+  pre {
+    background: #eef7f4;
+    padding: 0.8rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+
+  .btn {
+    background: #00aa88;
+    color: white;
+    border: none;
+    padding: 0.8rem 1.2rem;
+    font-size: 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    margin: 0.3rem 0.3rem 0 0;
+    display: inline-block;
+    width: calc(100% - 1rem);
+    max-width: 400px;
+  }
+
+  .btn:hover {
+    background: #008f72;
+  }
+
+  .btn:active {
+    transform: scale(0.98);
+  }
+
+  .button-row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  @media screen and (min-width: 600px) {
+    .button-row {
+      flex-direction: row;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .btn {
+      width: auto;
+    }
+  }
   </style>
 </head>
 <body>
@@ -35,11 +109,14 @@
   <div class="wallet-box">
     <div class="title">WalletWhisper: Sustainability Tip Preview</div>
     <p>"Consider switching to a reusable bottle. It saves ~0.2 kWh per use."</p>
-    <button class="btn" onclick="walletWhisper('Consider switching to a reusable bottle. It saves 0.2 kilowatt-hours per use.')">Play Voice Tip</button>
+    <div class="button-row">
+      <button class="btn" onclick="walletWhisper('Consider switching to a reusable bottle. It saves 0.2 kilowatt-hours per use.')">Play Voice Tip</button>
+    </div>
   </div>
 
-  <div class="wallet-box">
-    <a href="https://current-see-wallet-demo.replit.app" class="btn" id="launch-demo-btn">Launch Full Demo</a>
+  <div class="wallet-box button-row">
+    <a href="https://current-see-wallet-demo.replit.app" class="btn" target="_blank" rel="noopener noreferrer">Launch Full AI Wallet</a>
+    <a href="https://cross-platform-mobile-tdfranklin101.replit.app/transfer-demo" class="btn" target="_blank" rel="noopener noreferrer">View 2-Wallet Demo</a>
     <a href="/join" class="btn">Join the TC-S Network</a>
   </div>
 
