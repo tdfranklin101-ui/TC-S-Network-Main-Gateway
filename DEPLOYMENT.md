@@ -1,97 +1,53 @@
 # The Current-See Deployment Guide
 
-This document contains instructions for deploying The Current-See website to www.thecurrentsee.org.
-
-## Deployment Files
-
-The following files are ready for deployment:
-
-1. `unified-deploy.js` - Main deployment server that handles both health checks and the application
-2. `server.js` - The Current-See application server
-3. `health-check.js` - Standalone health check file (fallback)
-4. `deploy-ready.js` - Simplified deployment server (alternative option)
-5. `deploy-config.js` - Deployment configuration
+This document outlines the deployment process for The Current-See website on Replit.
 
 ## Deployment Steps
 
-### 1. Prepare for Deployment
+1. **Prepare for Deployment**:
+   - Ensure all HTML files have the header and footer placeholders
+   - Verify the solar counter is working properly
+   - Test all pages and navigation
 
-Ensure all files are properly committed to version control.
+2. **Deploy on Replit**:
+   - Use the Replit deployment feature
+   - The deployment uses `main.js` as the entry point (which is linked to `deploy-simple.js`)
+   - The server handles both file serving and health checks
 
-### 2. Set Environment Variables
+3. **Configure Domain**:
+   - Once deployed, configure the custom domain (www.thecurrentsee.org)
+   - Follow Replit's custom domain setup instructions
+   - Update DNS settings on Namecheap
 
-Make sure the following environment variables are set in the Replit deployment environment:
+## Testing Deployment
 
-- `PORT`: 3000 (default)
-- `DATABASE_URL`: URL to the PostgreSQL database
-- `ADMIN_API_TOKEN`: Token for admin API access
-- `SESSION_SECRET`: Secret for session management
+- Use the health check endpoint: `/health`
+- Verify all pages load correctly
+- Test header and footer inclusion
+- Check the solar counter functionality
 
-### 3. Deploy with Replit
+## Troubleshooting
 
-1. Open the Replit project
-2. Click the "Deploy" button in the Replit interface
-3. Choose "Deploy from Git" option
-4. Set the configuration:
-   - Entry point: `unified-deploy.js`
-   - Environment: Node.js
+If you encounter issues:
 
-### 4. Configure Custom Domain
+1. **Header/Footer Not Loading**:
+   - Verify the placeholders exist in the HTML files
+   - Check the includes directory structure
 
-1. In the Replit deployment settings, add the custom domain: www.thecurrentsee.org
-2. Follow the DNS configuration instructions provided by Replit
-3. Update your domain's DNS settings at Namecheap with the CNAME record provided by Replit
+2. **Server Errors**:
+   - Check the logs in the Replit console
+   - Verify port settings (default: 3000)
 
-### 5. Verify Deployment
+3. **Solar Counter Issues**:
+   - Verify the solar counter script is included
+   - Check the initialization values
 
-1. Check that the health check endpoint is responding: https://www.thecurrentsee.org/
-2. Verify that all pages are loading correctly:
-   - Home page: https://www.thecurrentsee.org/
-   - Declaration page: https://www.thecurrentsee.org/declaration.html
-   - Wallet features: https://www.thecurrentsee.org/wallet-ai-features.html
-   - Whitepapers: https://www.thecurrentsee.org/whitepapers.html
-   - Founder note: https://www.thecurrentsee.org/founder_note.html
-   - My Solar: https://www.thecurrentsee.org/my-solar.html
-   - Solar Generator: https://www.thecurrentsee.org/solar-generator.html
+## Maintenance
 
-### 6. Troubleshooting
-
-If deployment fails, consider these steps:
-
-1. Check the Replit logs for error messages
-2. Verify that the health check is responding correctly
-3. Try deploying with the alternative `deploy-ready.js` file
-4. Check DNS configuration if the custom domain is not working
-
-## Visual Enhancements
-
-The deployed website includes the following visual enhancements:
-
-1. **Sun Ray Watermarks**: Each page has a unique sun ray watermark pattern that matches its purpose:
-   - Home page: Varying section-specific patterns
-   - Declaration page: Golden rays
-   - Wallet features page: Green-tinted rays
-   - Founder note page: Alternating subtle green/gold rays
-   - Whitepapers page: Blue and gold academic-themed rays
-   - Demo features page: Feature-oriented ray pattern
-   - Solar generator page: Bright yellow rays
-   - My Solar page: Blue and gold distribution-themed rays
-
-2. **Animation Effects**: Subtle animations that reinforce the solar energy concept.
-
-3. **Standardized Gradients**: Consistent color gradients defined as CSS variables for easy management.
-
-## Post-Deployment
-
-After successful deployment, verify the following:
-
-1. All pages load correctly with proper styling
-2. Watermark backgrounds appear on each page
-3. Animations work as expected
-4. Solar Generator counter is calculating correctly
-5. API endpoints are responding appropriately
+- Update content through the Replit editor
+- Any significant changes might require re-deployment
+- Monitor logs regularly for potential issues
 
 ## Contact
 
-For assistance with deployment, contact:
-- Email: hello@thecurrentsee.org
+For deployment assistance, contact: support@thecurrentsee.org

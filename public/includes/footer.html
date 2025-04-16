@@ -1,98 +1,115 @@
-<!-- Footer Component -->
-<footer>
-  <div class="container">
-    <div class="footer-container">
-      <!-- Company Info -->
-      <div class="footer-section">
-        <h3>The Current-See</h3>
-        <p>Solar-backed global economic system for sustainable wealth distribution and environmental impact.</p>
-        <div class="social-media">
-          <a href="#" aria-label="Twitter"><i class="fas fa-twitter"></i></a>
-          <a href="#" aria-label="LinkedIn"><i class="fas fa-linkedin"></i></a>
-          <a href="#" aria-label="Instagram"><i class="fas fa-instagram"></i></a>
-        </div>
-      </div>
-
-      <!-- Quick Links -->
-      <div class="footer-section">
-        <h3>Quick Links</h3>
-        <ul>
-          <li><a href="/">Home</a></li>
-          <li><a href="/declaration.html">Solar Declaration</a></li>
-          <li><a href="/founder_note.html">Founder's Note</a></li>
-          <li><a href="/whitepapers.html">White Papers</a></li>
-          <li><a href="https://current-see-wallet-demo.replit.app" target="_blank">Wallet Demo</a></li>
-        </ul>
-      </div>
-
-      <!-- Resources -->
-      <div class="footer-section">
-        <h3>Resources</h3>
-        <ul>
-          <li><a href="#">FAQ</a></li>
-          <li><a href="#">Solar Calculations</a></li>
-          <li><a href="#">Distribution Model</a></li>
-          <li><a href="#">Economic Impact</a></li>
-          <li><a href="#">Solar Technology</a></li>
-        </ul>
-      </div>
-
-      <!-- Contact -->
-      <div class="footer-section">
-        <h3>Contact Us</h3>
-        <p>Questions about our mission? Interested in joining the solar revolution?</p>
-        <a href="mailto:info@thecurrentsee.org" class="btn btn-outline">info@thecurrentsee.org</a>
-      </div>
+<!-- Common Footer -->
+<footer class="site-footer">
+  <div class="footer-content">
+    <div class="footer-section about">
+      <h3>The Current-See</h3>
+      <p>A revolutionary organization creating a solar-backed economic system for a more equitable world.</p>
+      <p>The Current-See PBC, Inc.</p>
+      <p><a href="mailto:hello@thecurrentsee.org">hello@thecurrentsee.org</a></p>
     </div>
-
-    <!-- Footer Bottom -->
-    <div class="footer-bottom">
-      <p>&copy; 2025 The Current-See PBC, Inc. All rights reserved.</p>
-      <p>A Public Benefit Corporation committed to solar energy and economic equity.</p>
-      <p class="mt-2">
-        <a href="#">Privacy Policy</a> | 
-        <a href="#">Terms of Service</a> | 
-        <a href="#">Accessibility</a>
-      </p>
+    
+    <div class="footer-section links">
+      <h3>Quick Links</h3>
+      <ul>
+        <li><a href="/">Home</a></li>
+        <li><a href="/solar-declaration.html">Solar Declaration</a></li>
+        <li><a href="/founder_note.html">Founder's Note</a></li>
+        <li><a href="/white-papers.html">White Papers</a></li>
+        <li><a href="/features.html">Features</a></li>
+      </ul>
     </div>
+    
+    <div class="footer-section join">
+      <h3>Join the Movement</h3>
+      <ul>
+        <li><a href="/contact-us.html">Contact Us</a></li>
+        <li><a href="/sign-up.html">Sign Up</a></li>
+        <li><a href="/login.html">Login</a></li>
+      </ul>
+    </div>
+  </div>
+  
+  <div class="footer-bottom">
+    <p>&copy; 2025 The Current-See PBC, Inc. All rights reserved.</p>
   </div>
 </footer>
 
-<!-- FontAwesome for Icons -->
-<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
-
-<!-- Add Google's Font Awesome alternative since the above might not be available -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
-<script>
-  // Fallback for FontAwesome
-  document.addEventListener('DOMContentLoaded', () => {
-    if (typeof FontAwesome === 'undefined') {
-      document.querySelectorAll('.fas').forEach(icon => {
-        const iconName = Array.from(icon.classList)
-          .find(cls => cls.startsWith('fa-'))
-          ?.replace('fa-', '');
-        
-        if (iconName) {
-          const materialIcon = document.createElement('span');
-          materialIcon.className = 'material-icons';
-          
-          // Map FontAwesome icons to Material icons
-          const iconMap = {
-            'twitter': 'twitter',
-            'linkedin': 'linkedin',
-            'instagram': 'photo_camera',
-            'facebook': 'facebook',
-            'envelope': 'email',
-            'phone': 'phone'
-          };
-          
-          materialIcon.textContent = iconMap[iconName] || 'link';
-          icon.parentNode.replaceChild(materialIcon, icon);
-        }
-      });
+<style>
+  /* Footer Styles */
+  .site-footer {
+    background-color: #333;
+    color: #fff;
+    padding: 2rem 0 0 0;
+    font-size: 0.9rem;
+  }
+  
+  .footer-content {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+  }
+  
+  .footer-section {
+    flex: 1;
+    margin: 0 1rem 2rem;
+    min-width: 200px;
+  }
+  
+  .footer-section h3 {
+    color: #FFC107;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 0.5rem;
+    font-size: 1.2rem;
+  }
+  
+  .footer-section p {
+    line-height: 1.6;
+    margin-bottom: 0.7rem;
+  }
+  
+  .footer-section a {
+    color: #ADB5BD;
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+  
+  .footer-section a:hover {
+    color: #FFC107;
+  }
+  
+  .footer-section ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .footer-section ul li {
+    margin-bottom: 0.7rem;
+  }
+  
+  .footer-bottom {
+    background-color: #222;
+    padding: 1rem 0;
+    text-align: center;
+    font-size: 0.8rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  
+  .footer-bottom p {
+    margin: 0;
+  }
+  
+  @media (max-width: 768px) {
+    .footer-content {
+      flex-direction: column;
     }
-  });
-</script>
-
-<!-- Voice Assistant Container - Will be populated by the voice assistant script -->
-<div id="voice-assistant-container"></div>
+    
+    .footer-section {
+      margin: 0 0 1.5rem;
+    }
+  }
+</style>

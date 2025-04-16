@@ -1,74 +1,167 @@
-<!-- Header Component -->
-<header>
-  <div class="header-container container">
-    <div class="logo-container">
-      <a href="/">
-        <img src="/solar_coin.png" alt="The Current-See Logo" class="logo">
-        <span class="logo-text">The Current-See</span>
-      </a>
-    </div>
-    
-    <!-- Desktop Navigation -->
-    <nav class="desktop-nav">
-      <ul>
-        <li><a href="/" class="nav-link">Home</a></li>
-        <li><a href="/declaration.html" class="nav-link">Solar Declaration</a></li>
-        <li><a href="/founder_note.html" class="nav-link">Founder's Note</a></li>
-        <li><a href="/whitepapers.html" class="nav-link">White Papers</a></li>
-        <li><a href="/demo-features.html" class="nav-link">Features</a></li>
-        <li><a href="/wallet-ai-features.html" class="nav-link">AI Wallet</a></li>
-        <li><a href="https://current-see-wallet-demo.replit.app" class="nav-link" target="_blank">Wallet Demo</a></li>
-      </ul>
-    </nav>
-    
-    <!-- Language Selector Placeholder -->
-    <div id="language-selector" class="language-selector"></div>
-    
-    <!-- Mobile Menu Toggle -->
-    <button class="mobile-menu-toggle" aria-label="Toggle mobile menu">
-      <span></span>
-      <span></span>
-      <span></span>
+<!-- Common Header -->
+<header class="site-header">
+  <div class="logo-container">
+    <a href="/">
+      <img src="/images/solar-logo.png" alt="The Current-See Logo" class="logo-img">
+      <div class="logo-text">The Current-See<br>PBC, Inc.</div>
+    </a>
+  </div>
+  <nav class="main-nav">
+    <button class="mobile-menu-toggle" aria-label="Toggle navigation menu">
+      <span class="bar"></span>
+      <span class="bar"></span>
+      <span class="bar"></span>
     </button>
-  </div>
-  
-  <!-- Mobile Navigation -->
-  <div class="mobile-nav">
-    <ul>
-      <li><a href="/" class="nav-link">Home</a></li>
-      <li><a href="/declaration.html" class="nav-link">Solar Declaration</a></li>
-      <li><a href="/founder_note.html" class="nav-link">Founder's Note</a></li>
-      <li><a href="/whitepapers.html" class="nav-link">White Papers</a></li>
-      <li><a href="/demo-features.html" class="nav-link">Features</a></li>
-      <li><a href="/wallet-ai-features.html" class="nav-link">AI Wallet</a></li>
-      <li><a href="https://current-see-wallet-demo.replit.app" class="nav-link" target="_blank">Wallet Demo</a></li>
+    <ul class="nav-items">
+      <li><a href="/">Home</a></li>
+      <li><a href="/prototype.html">Prototype</a></li>
+      <li><a href="/my-solar.html">My Solar</a></li>
+      <li><a href="/declaration.html">Solar Declaration</a></li>
+      <li><a href="/founder_note.html">Founder's Note</a></li>
+      <li><a href="/whitepapers.html">White Papers</a></li>
+      <li><a href="/merch.html">Merchandise</a></li>
+      <li><a href="/wallet-ai-features.html">Wallet</a></li>
+      <li><a href="/ai-assistant-demo.html">AI Assistant</a></li>
     </ul>
-  </div>
+  </nav>
 </header>
 
-<!-- Mobile Menu Script -->
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
-    const mobileNav = document.querySelector('.mobile-nav');
-    
-    if (mobileMenuToggle && mobileNav) {
-      mobileMenuToggle.addEventListener('click', () => {
-        mobileMenuToggle.classList.toggle('open');
-        mobileNav.classList.toggle('mobile-nav-active');
-      });
+<style>
+  /* Header Styles */
+  .site-header {
+    background: linear-gradient(to right, #F5F5F5, #FFFDF0);
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    position: relative;
+    border-bottom: 3px solid #4caf50;
+  }
+  
+  .logo-container {
+    display: flex;
+    align-items: center;
+  }
+  
+  .logo-container a {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: #00573B;
+  }
+  
+  .logo-img {
+    height: 50px;
+    margin-right: 1rem;
+  }
+  
+  .logo-text {
+    font-size: 1.2rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #00573B;
+  }
+  
+  .main-nav {
+    display: flex;
+    align-items: center;
+  }
+  
+  .nav-items {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .nav-items li {
+    margin-left: 1.5rem;
+  }
+  
+  .nav-items a {
+    color: #00573B;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s ease;
+    padding: 0.5rem 0;
+    position: relative;
+  }
+  
+  .nav-items a:hover {
+    color: #FFC107;
+  }
+  
+  .nav-items a::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background-color: #FFC107;
+    transition: width 0.3s ease;
+  }
+  
+  .nav-items a:hover::after {
+    width: 100%;
+  }
+  
+  .mobile-menu-toggle {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+  }
+  
+  .mobile-menu-toggle .bar {
+    display: block;
+    width: 25px;
+    height: 3px;
+    background-color: #00573B;
+    margin: 5px 0;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+  
+  @media (max-width: 768px) {
+    .mobile-menu-toggle {
+      display: block;
     }
     
-    // Add active class to current page link
-    const currentPage = window.location.pathname;
-    document.querySelectorAll('.nav-link').forEach(link => {
-      const href = link.getAttribute('href');
-      if (href === currentPage) {
-        link.classList.add('active');
-      }
-    });
+    .nav-items {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background-color: #FFFFFF;
+      flex-direction: column;
+      padding: 1rem;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      display: none;
+      z-index: 100;
+    }
+    
+    .nav-items.active {
+      display: flex;
+    }
+    
+    .nav-items li {
+      margin: 0.5rem 0;
+    }
+  }
+</style>
+
+<script>
+  // Mobile menu toggle functionality
+  document.addEventListener('DOMContentLoaded', function() {
+    const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
+    const navItems = document.querySelector('.nav-items');
+    
+    if (mobileMenuToggle && navItems) {
+      mobileMenuToggle.addEventListener('click', function() {
+        navItems.classList.toggle('active');
+      });
+    }
   });
 </script>
-
-<!-- Voice Assistant Script -->
-<script src="/js/voice-assistant.js"></script>

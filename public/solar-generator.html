@@ -104,53 +104,7 @@
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg">
-        <div class="container">
-            <a class="navbar-brand" href="/">
-                <img src="/branding_logo.png" alt="The Current-See Logo" width="30" height="30" style="margin-right: 5px;">
-                The Current-See
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/">Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/prototype.html">Prototype</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/merch.html">Merchandise</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/wallet.html">My Solar</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/signup.html">Join</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/declaration.html">Solar Declaration</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/founder_note.html">Founder's Note</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/whitepapers.html">White Papers</a>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            More
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <li><a class="dropdown-item" href="/admin.html">Admin</a></li>
-                        </ul>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+    <!-- HEADER_PLACEHOLDER -->
 
     <section class="hero">
         <div class="container">
@@ -165,13 +119,13 @@
             <div class="counter-container">
                 <div class="counter">
                     <div class="counter-label">Solar Energy Generated Since April 7, 2025 (12:00 AM GMT)</div>
-                    <div id="energy-counter" class="counter-value">Loading...</div>
+                    <div id="energy-display" class="counter-value">0.000000</div>
                     <div class="counter-label">Million kWh (MkWh)</div>
                 </div>
                 
                 <div class="counter">
                     <div class="counter-label">Equivalent Monetary Value</div>
-                    <div id="money-counter" class="counter-value">Loading...</div>
+                    <div id="money-display" class="counter-value">$0</div>
                     <div class="counter-label">USD</div>
                 </div>
             </div>
@@ -204,68 +158,16 @@
         </a>
     </div>
     
-    <footer>
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-column">
-                    <h4>The Current-See</h4>
-                    <p>A new global economy backed by the Sun.<br>One Solar. One Earth. Daily.</p>
-                    <p style="margin-top: 10px;">The Current-See PBC, Inc.<br>
-                    <a href="mailto:hello@thecurrentsee.org" style="color:white; font-weight:700;">hello@thecurrentsee.org</a></p>
-                </div>
-                <div class="footer-column">
-                    <h4>Learn More</h4>
-                    <ul>
-                        <li><a href="/whitepapers.html">White Papers</a></li>
-                        <li><a href="/declaration.html">Solar Declaration</a></li>
-                        <li><a href="/founder_note.html">Founder's Note</a></li>
-                    </ul>
-                </div>
-                <div class="footer-column">
-                    <h4>Get Involved</h4>
-                    <ul>
-                        <li><a href="/wallet.html">Join The Current-See</a></li>
-                        <li><a href="/prototype.html">Try The Prototype</a></li>
-                        <li><a href="/merch.html">Support With Merch</a></li>
-                    </ul>
-                </div>
-                <div class="footer-column">
-                    <h4>Links</h4>
-                    <ul>
-                        <li><a href="/">Home</a></li>
-                        <li><a href="/admin.html">Admin</a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="copyright">
-                &copy; 2025 The Current-See PBC, Inc. All rights reserved.
-            </div>
-        </div>
-    </footer>
+    <!-- FOOTER_PLACEHOLDER -->
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="/solar_counter.js"></script>
+    <script src="/standalone_solar_counter.js"></script>
     <script src="/js/public-members-log.js"></script>
 
     <script>
-        function updateCounters() {
-            fetch('/api/solar-clock')
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('energy-counter').textContent = 
-                        (data.totalKwh / 1000000).toFixed(6);
-                    document.getElementById('money-counter').textContent = 
-                        '$' + Math.floor(data.totalDollars).toLocaleString();
-                })
-                .catch(error => {
-                    console.error('Error fetching solar data:', error);
-                });
-        }
-        
+        // The standalone counter script handles all updates automatically
         document.addEventListener('DOMContentLoaded', function() {
-            // Update immediately and then every second
-            updateCounters();
-            setInterval(updateCounters, 1000);
+            console.log('Solar generator page initialized with standalone counter');
         });
     </script>
 </body>

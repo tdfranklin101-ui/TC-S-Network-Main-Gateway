@@ -9,53 +9,7 @@
 </head>
 <body>
   <div class="wrapper">
-    <!-- Header Begin -->
-    <header>
-      <div class="header-container container">
-        <div class="logo-container">
-          <a href="/">
-            <img src="/solar_coin.png" alt="The Current-See Logo" class="logo">
-            <span class="logo-text">The Current-See</span>
-          </a>
-        </div>
-        
-        <!-- Desktop Navigation -->
-        <nav class="desktop-nav">
-          <ul>
-            <li><a href="/" class="nav-link active">Home</a></li>
-            <li><a href="/declaration.html" class="nav-link">Solar Declaration</a></li>
-            <li><a href="/founder_note.html" class="nav-link">Founder's Note</a></li>
-            <li><a href="/whitepapers.html" class="nav-link">White Papers</a></li>
-            <li><a href="/demo-features.html" class="nav-link">Features</a></li>
-            <li><a href="/wallet-ai-features.html" class="nav-link">AI Wallet</a></li>
-            <li><a href="https://current-see-wallet-demo.replit.app" class="nav-link" target="_blank">Wallet Demo</a></li>
-          </ul>
-        </nav>
-        
-        <!-- No language selector -->
-        
-        <!-- Mobile Menu Toggle -->
-        <button class="mobile-menu-toggle" aria-label="Toggle mobile menu">
-          <span></span>
-          <span></span>
-          <span></span>
-        </button>
-      </div>
-      
-      <!-- Mobile Navigation -->
-      <div class="mobile-nav">
-        <ul>
-          <li><a href="/" class="nav-link active">Home</a></li>
-          <li><a href="/declaration.html" class="nav-link">Solar Declaration</a></li>
-          <li><a href="/founder_note.html" class="nav-link">Founder's Note</a></li>
-          <li><a href="/whitepapers.html" class="nav-link">White Papers</a></li>
-          <li><a href="/demo-features.html" class="nav-link">Features</a></li>
-          <li><a href="/wallet-ai-features.html" class="nav-link">AI Wallet</a></li>
-          <li><a href="https://current-see-wallet-demo.replit.app" class="nav-link" target="_blank">Wallet Demo</a></li>
-        </ul>
-      </div>
-    </header>
-    <!-- Header End -->
+    <!-- HEADER_PLACEHOLDER -->
 
     <main>
       <!-- Hero Section with Solar Ray Watermark -->
@@ -86,13 +40,16 @@
           <div class="solar-counter-container">
             <div class="counter-row">
               <div class="counter-label">Energy Generated:</div>
-              <div id="energy-counter" class="counter-value">0.000000 MkWh</div>
+              <div id="energy-display" class="counter-value">0.000000</div> MkWh
             </div>
             <div class="counter-row">
               <div class="counter-label">Value Created:</div>
-              <div id="value-counter" class="counter-value">$0</div>
+              <div id="money-display" class="counter-value">$0</div>
             </div>
-            <div class="counter-info">
+            <div class="counter-row">
+              <div class="counter-label">Since April 7, 2025</div>
+            </div>
+            <div class="counter-info" id="kwh-rate-display">
               One Solar = 4,913 kWh (based on 1% of Earth's solar input divided among 8.5B people)
             </div>
           </div>
@@ -168,38 +125,7 @@
       </section>
     </main>
 
-    <!-- Footer Begin -->
-    <footer>
-      <div class="container">
-        <div class="footer-columns">
-          <div class="footer-column">
-            <h3>About Us</h3>
-            <p>The Current-See is a revolutionary organization creating a solar-backed economic system for a more equitable world.</p>
-          </div>
-          <div class="footer-column">
-            <h3>Resources</h3>
-            <ul>
-              <li><a href="/declaration.html">Solar Declaration</a></li>
-              <li><a href="/founder_note.html">Founder's Note</a></li>
-              <li><a href="/whitepapers.html">White Papers</a></li>
-              <li><a href="/demo-features.html">Features</a></li>
-            </ul>
-          </div>
-          <div class="footer-column">
-            <h3>Connect</h3>
-            <ul>
-              <li><a href="/contact.html">Contact Us</a></li>
-              <li><a href="/signup.html">Sign Up</a></li>
-              <li><a href="/login.html">Login</a></li>
-            </ul>
-          </div>
-        </div>
-        <div class="footer-bottom">
-          <p>&copy; 2025 The Current-See PBC, Inc. All rights reserved.</p>
-        </div>
-      </div>
-    </footer>
-    <!-- Footer End -->
+    <!-- FOOTER_PLACEHOLDER -->
   </div>
 
   <!-- Mobile Menu Script -->
@@ -218,7 +144,7 @@
   </script>
 
   <!-- Solar Counter Script -->
-  <script src="/solar_counter.js"></script>
+  <script src="/standalone_solar_counter.js"></script>
 
   <!-- Voice Assistant Script -->
   <script src="/js/voice-assistant.js"></script>

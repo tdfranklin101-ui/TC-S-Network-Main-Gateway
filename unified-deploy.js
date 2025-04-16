@@ -1,204 +1,143 @@
 /**
  * Unified Deployment Server for The Current-See
  * 
- * This script handles both the main application and health checks
+ * This script handles both the website serving and health checks
  * in a single process to ensure deployment reliability.
- * 
- * Updated to include support for watermark backgrounds and enhanced styles.
  */
 
+// Import required modules
+const express = require('express');
 const http = require('http');
-const { fork } = require('child_process');
-const fs = require('fs');
 const path = require('path');
+const fs = require('fs');
+const serveStatic = require('serve-static');
+const cors = require('cors');
 
 // Configuration
 const PORT = process.env.PORT || 3000;
-const APP_PORT = 8080;
-const LOG_FILE = 'unified-deploy.log';
+const PUBLIC_DIR = path.join(__dirname, 'public');
+const INCLUDES_DIR = path.join(__dirname, 'public', 'includes');
 
-// Ensure log file exists
-fs.writeFileSync(LOG_FILE, `=== Unified Deployment Server Started at ${new Date().toISOString()} ===\n`);
+// Initialize express app
+const app = express();
 
-// Logging function
+// Enable CORS
+app.use(cors());
+
+// Custom logging function
 function log(message) {
   const timestamp = new Date().toISOString();
-  const logMessage = `[${timestamp}] ${message}`;
-  console.log(logMessage);
-  fs.appendFileSync(LOG_FILE, logMessage + '\n');
+  console.log(`[${timestamp}] ${message}`);
 }
 
-// Health check state
-let isAppRunning = false;
-let appProcess = null;
-let startTime = Date.now();
-let requestCount = 0;
-
-// Create the proxy/health check server
-const server = http.createServer((req, res) => {
-  requestCount++;
-  log(`Request #${requestCount}: ${req.method} ${req.url}`);
-  
-  // Set CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  
-  // Handle preflight requests
-  if (req.method === 'OPTIONS') {
-    res.writeHead(204);
-    res.end();
-    return;
-  }
-  
-  // Health check endpoints
-  if (req.url === '/' || req.url === '/health' || req.url === '/healthz') {
-    const uptime = Math.floor((Date.now() - startTime) / 1000);
+// Function to inject header and footer
+function injectHeaderAndFooter(html) {
+  try {
+    // Read header and footer
+    const header = fs.readFileSync(path.join(INCLUDES_DIR, 'header.html'), 'utf8');
+    const footer = fs.readFileSync(path.join(INCLUDES_DIR, 'footer.html'), 'utf8');
     
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({
-      status: 'healthy',
-      service: 'The Current-See',
-      uptime: uptime,
-      version: '1.0.0',
-      appRunning: isAppRunning,
-      timestamp: new Date().toISOString(),
-      requestsServed: requestCount
-    }));
-    return;
+    // Replace placeholder comment with actual header/footer
+    html = html.replace('<!-- HEADER_PLACEHOLDER -->', header);
+    html = html.replace('<!-- FOOTER_PLACEHOLDER -->', footer);
+    
+    return html;
+  } catch (error) {
+    log(`Error injecting header/footer: ${error.message}`);
+    return html;
   }
-  
-  // If the app is not yet running, return a "please wait" message
-  if (!isAppRunning) {
-    res.writeHead(503, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({
-      status: 'starting',
-      message: 'The application is starting, please try again in a moment.',
-      timestamp: new Date().toISOString()
-    }));
-    return;
-  }
-  
-  // Proxy to the main app
-  const options = {
-    hostname: 'localhost',
-    port: APP_PORT,
-    path: req.url,
-    method: req.method,
-    headers: req.headers
-  };
-  
-  const proxyReq = http.request(options, (proxyRes) => {
-    res.writeHead(proxyRes.statusCode, proxyRes.headers);
-    proxyRes.pipe(res, { end: true });
-  });
-  
-  proxyReq.on('error', (err) => {
-    log(`Proxy error: ${err.message}`);
-    res.writeHead(502, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ 
-      error: 'Bad Gateway',
-      message: 'Unable to reach application server',
-      timestamp: new Date().toISOString()
-    }));
-  });
-  
-  req.pipe(proxyReq, { end: true });
+}
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).send('OK');
 });
 
-// Start the application as a child process
-function startApp() {
-  log('Starting The Current-See application...');
+// Root health check for Replit deployments
+app.get('/', (req, res, next) => {
+  // If this is a health check from Replit (no user agent)
+  if (!req.headers['user-agent']) {
+    return res.status(200).send('OK');
+  }
+  next();
+});
+
+// Middleware to handle HTML file includes
+app.use((req, res, next) => {
+  // Only intercept HTML files
+  if (!req.path.endsWith('.html') && req.path !== '/') {
+    return next();
+  }
   
-  // Set the environment variables
-  const env = { 
-    ...process.env, 
-    PORT: APP_PORT,
-    NODE_ENV: process.env.NODE_ENV || 'production'
+  // Store original send function
+  const originalSend = res.send;
+  
+  // Override send method to inject includes for HTML responses
+  res.send = function(body) {
+    // Only process HTML content
+    if (typeof body === 'string' && body.includes('<!DOCTYPE html>')) {
+      body = injectHeaderAndFooter(body);
+    }
+    
+    // Call original send with modified body
+    return originalSend.call(this, body);
   };
   
-  // Start the app as a detached child process
-  appProcess = fork('server.js', [], {
-    env,
-    stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
-    detached: false
-  });
-  
-  // Capture and log stdout
-  appProcess.stdout.on('data', (data) => {
-    const message = data.toString().trim();
-    fs.appendFileSync(LOG_FILE, `[APP] ${message}\n`);
-    
-    // Set the app as running when we see the server started message
-    if (message.includes('Server running at http://') || 
-        message.includes('Server started.')) {
-      isAppRunning = true;
-      log('The Current-See application is now running');
-    }
-  });
-  
-  // Capture and log stderr
-  appProcess.stderr.on('data', (data) => {
-    fs.appendFileSync(LOG_FILE, `[APP ERROR] ${data.toString().trim()}\n`);
-  });
-  
-  // Handle process exit
-  appProcess.on('exit', (code, signal) => {
-    isAppRunning = false;
-    log(`Application process exited with code ${code} and signal ${signal}`);
-    
-    // Restart the application if it crashes
-    if (code !== 0) {
-      log('Restarting application...');
-      setTimeout(startApp, 5000);
-    }
-  });
-  
-  return appProcess;
-}
+  next();
+});
 
-// Start the server
-server.listen(PORT, '0.0.0.0', () => {
-  log(`Unified deployment server running on port ${PORT}`);
-  log(`Will proxy to app on port ${APP_PORT}`);
-  
-  // Start the application
-  startApp();
-  
-  // Handle graceful shutdown
-  process.on('SIGTERM', () => {
-    log('SIGTERM received, shutting down...');
+// Static file serving
+app.use(serveStatic(PUBLIC_DIR, {
+  maxAge: '1d',
+  setHeaders: (res, path) => {
+    if (path.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'public, max-age=0');
+    }
+  }
+}));
+
+// Default route handler for SPA-like behavior
+app.get('*', (req, res) => {
+  // Check if the path has an extension
+  if (path.extname(req.path) === '') {
+    // No extension, try to serve the HTML file with the same name
+    const htmlPath = path.join(PUBLIC_DIR, `${req.path}.html`);
     
-    // Close the server to stop accepting new connections
-    server.close(() => {
-      log('Server closed');
-      
-      // Terminate the application process
-      if (appProcess) {
-        log('Terminating application process...');
-        appProcess.kill();
-      }
-      
-      process.exit(0);
-    });
-  });
-  
-  process.on('SIGINT', () => {
-    log('SIGINT received, shutting down...');
+    if (fs.existsSync(htmlPath)) {
+      return res.sendFile(htmlPath);
+    }
     
-    // Close the server to stop accepting new connections
-    server.close(() => {
-      log('Server closed');
-      
-      // Terminate the application process
-      if (appProcess) {
-        log('Terminating application process...');
-        appProcess.kill();
-      }
-      
-      process.exit(0);
-    });
+    // If no matching HTML file, serve index.html
+    return res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
+  }
+  
+  // 404 for files with extensions that don't exist
+  res.status(404).send('Not found');
+});
+
+// Create HTTP server
+const server = http.createServer(app);
+
+// Start server
+server.listen(PORT, () => {
+  log(`The Current-See server listening on port ${PORT}`);
+  log(`Serving static files from: ${PUBLIC_DIR}`);
+  log(`Including header/footer from: ${INCLUDES_DIR}`);
+});
+
+// Handle server errors
+server.on('error', (error) => {
+  log(`Server error: ${error.message}`);
+});
+
+// Handle process termination
+process.on('SIGTERM', () => {
+  log('SIGTERM received. Shutting down gracefully...');
+  server.close(() => {
+    log('Server closed.');
+    process.exit(0);
   });
 });
 
-log('Unified deployment server started');
+// Make the server available for testing
+module.exports = server;
