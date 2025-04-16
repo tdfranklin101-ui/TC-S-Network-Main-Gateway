@@ -29,6 +29,30 @@
     background: linear-gradient(90deg, #7bc144, #f3c622);
   }
   
+  /* Declaration page specific sun ray watermark */
+  .declaration-main {
+    position: relative;
+    overflow: hidden;
+    background-color: var(--bg-light);
+  }
+  
+  .declaration-main::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: repeating-conic-gradient(
+      rgba(255, 215, 0, 0.02) 0deg 15deg,
+      rgba(255, 215, 0, 0.03) 15deg 30deg
+    );
+    animation: sun-ray-rotate 300s linear infinite;
+    z-index: 0;
+    opacity: 0.4;
+    pointer-events: none;
+  }
+  
   .declaration-title {
     color: #333;
     margin-bottom: 2rem;
@@ -149,7 +173,7 @@
     </header>
     <!-- Header End -->
     
-    <main>
+    <main class="declaration-main">
       <div class="declaration-container">
   <h1 class="declaration-title">The Solar Declaration</h1>
   <div class="declaration-subtitle">A Foundation for a Solar-Backed Economy</div>
