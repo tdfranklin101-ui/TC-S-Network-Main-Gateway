@@ -1,4 +1,29 @@
 <style>
+    /* Whitepapers Page Specific Watermark */
+    .whitepapers-main {
+        position: relative;
+        overflow: hidden;
+        background-color: var(--bg-light);
+        padding: 2rem 0;
+    }
+    
+    .whitepapers-main::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: repeating-conic-gradient(
+            rgba(243, 198, 34, 0.02) 0deg 15deg,
+            rgba(30, 80, 120, 0.03) 15deg 30deg
+        );
+        animation: sun-ray-rotate 240s linear infinite;
+        z-index: 0;
+        opacity: 0.7;
+        pointer-events: none;
+    }
+    
     .whitepapers-container {
         max-width: 1000px;
         margin: 3rem auto;
@@ -6,6 +31,8 @@
         background-color: rgba(255, 255, 255, 0.95);
         border-radius: 10px;
         box-shadow: 0 5px 25px rgba(0, 0, 0, 0.1);
+        position: relative;
+        z-index: 1;
     }
     
     .whitepapers-title {
@@ -167,7 +194,8 @@
     }
 </style>
 
-<div class="whitepapers-container">
+<div class="whitepapers-main">
+  <div class="whitepapers-container">
     <h1 class="whitepapers-title">The Current-See White Papers</h1>
     
     <div class="intro">
@@ -252,3 +280,4 @@
 </div>
 
 <a href="/" class="back-btn">Return to Home Page</a>
+</div> <!-- Close whitepapers-main wrapper -->
