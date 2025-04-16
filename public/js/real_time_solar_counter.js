@@ -9,8 +9,21 @@
  * with each person receiving an equal share (1 SOLAR = 4,913 kWh).
  */
 
-document.addEventListener('DOMContentLoaded', function() {
-  console.log("Real-time solar counter initializing...");
+// Function to initialize the counter with retry capability
+function trySolarCounterInit() {
+  console.log("Attempting to initialize solar counter...");
+  
+  // Check if elements exist
+  const energyDisplay = document.getElementById('energy-display');
+  const moneyDisplay = document.getElementById('money-display');
+  
+  if (!energyDisplay || !moneyDisplay) {
+    console.log("Solar counter elements not found, will retry in 1 second...");
+    setTimeout(trySolarCounterInit, 1000);
+    return;
+  }
+  
+  console.log("Solar counter elements found. Starting counter!");
   initSolarCounter();
   
   // Initialize kwh rate display
@@ -18,6 +31,12 @@ document.addEventListener('DOMContentLoaded', function() {
   if (kwhRateDisplay) {
     kwhRateDisplay.innerHTML = '1 Solar = 4,913 kWh (based on 1% of Earth\'s solar input divided among 8.5B people)';
   }
+}
+
+// Start initialization when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+  console.log("DOM Content Loaded - starting solar counter initialization");
+  trySolarCounterInit();
 });
 
 function initSolarCounter() {
@@ -26,9 +45,13 @@ function initSolarCounter() {
   const moneyDisplay = document.getElementById('money-display');
   
   if (!energyDisplay || !moneyDisplay) {
-    console.error("Solar counter elements not found!");
+    console.error("Solar counter elements not found! Will retry in 1 second...");
+    // Retry after a short delay (in case elements load after script)
+    setTimeout(initSolarCounter, 1000);
     return;
   }
+  
+  console.log("Solar counter elements found. Starting counter...");
   
   // Base values - hardcoded for static implementation
   // April 7, 2025 is the official starting date for the Solar Generator

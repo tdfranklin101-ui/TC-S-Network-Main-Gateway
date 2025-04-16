@@ -28,6 +28,30 @@ This document outlines the deployment process for The Current-See website on Rep
 - Test header and footer inclusion
 - Check the solar counter functionality
 
+## Updates and Fixes
+
+### Solar Counter Fix (April 16, 2025)
+
+The solar counter component was updated to address issues with initialization after header/footer injection:
+
+1. **Modified Files**:
+   - `public/js/real_time_solar_counter.js`: Added retry mechanism and improved initialization
+   - `main.js` and `deploy-simple.js`: Enhanced HTML processing to ensure scripts run after DOM is ready
+
+2. **How to Update Existing Deployment**:
+   - Run the included `update-deploy.sh` script which will:
+     - Copy the updated JS files to the deployment directory
+     - Attempt to restart the server if PM2 or systemctl are available
+   - Alternatively, manually redeploy using the Replit interface
+
+3. **Verifying the Fix**:
+   - Check that the solar counter appears and animates on:
+     - Homepage (index.html)
+     - Solar Generator page (solar-generator.html)
+     - My Solar page (my-solar.html)
+   - Verify the counter shows proper MkWh values (6 decimal places)
+   - Verify monetary values update in real-time
+
 ## Troubleshooting
 
 If you encounter issues:
