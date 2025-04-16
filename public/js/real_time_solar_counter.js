@@ -56,8 +56,13 @@ function initSolarCounter() {
   // Base values - hardcoded for static implementation
   // April 7, 2025 is the official starting date for the Solar Generator
   const baseDate = new Date('2025-04-07T00:00:00Z');
-  const kwhPerSecond = 0.155664; // kWh generated per second
+  // 4,913 kWh per SOLAR per day = 0.056863425925926 kWh per second per person
+  // World population of 8.5 billion = 483,333,333.5 kWh per second total
+  const kwhPerSecond = 483333333.5; // kWh generated per second globally
   const dollarPerKwh = 0.12;     // Dollar value per kWh
+  
+  console.log("Solar counter starting with base date:", baseDate);
+  console.log("kWh per second:", kwhPerSecond);
   
   // Start counter animation
   updateCounter(baseDate, kwhPerSecond, dollarPerKwh);
