@@ -1,220 +1,124 @@
 /**
- * Real-Time Solar Counter - An advanced, animated counter showing solar energy accumulation
+ * Real-Time Solar Counter - A dynamic odometer for the Current-See project
  * 
- * This script creates an animated, real-time counter that visualizes the 
+ * This script creates an animated counter that visualizes the 
  * continuous generation of solar energy and its equivalent monetary value
  * based on data accumulated since April 7, 2025.
+ * 
+ * The calculation is based on 1% of Earth's solar input divided among 8.5 billion people,
+ * with each person receiving an equal share (1 SOLAR = 4,913 kWh).
  */
 
-// Configuration
-const START_DATE = new Date('2025-04-07T00:00:00Z');
-const KWH_PER_SOLAR = 4913; // 4,913 kWh per SOLAR
-const DOLLAR_PER_SOLAR = 392; // $392 per SOLAR (at $0.08 per kWh)
-const SOLAR_PER_DAY = 1; // 1 SOLAR per day
-const SOLAR_PER_SECOND = SOLAR_PER_DAY / (24 * 60 * 60); // 1 SOLAR per day in seconds
-
-// Elements
-let energyDisplay, moneyDisplay;
-let initialized = false;
-let lastUpdated = 0;
-let animationFrameId = null;
-
-// Format numbers for display with animation
-function formatMkwh(value) {
-  return value.toFixed(6);
-}
-
-function formatDollars(value) {
-  return '$' + Math.floor(value).toLocaleString();
-}
-
-// Calculate current values based on time elapsed since START_DATE
-function calculateCurrentValues() {
-  const now = new Date();
-  const elapsedMs = now.getTime() - START_DATE.getTime();
-  const elapsedSeconds = elapsedMs / 1000;
+document.addEventListener('DOMContentLoaded', function() {
+  console.log("Real-time solar counter initializing...");
+  initSolarCounter();
   
-  const totalSolar = SOLAR_PER_SECOND * elapsedSeconds;
-  const totalKwh = totalSolar * KWH_PER_SOLAR;
-  const totalDollars = totalSolar * DOLLAR_PER_SOLAR;
-  
-  return {
-    totalSolar,
-    totalKwh,
-    totalDollars,
-    elapsedSeconds
-  };
-}
-
-// Initialize the counter
-function initRealTimeCounter() {
-  console.log('Real-time solar counter initializing...');
-  
-  // Get display elements
-  energyDisplay = document.getElementById('energy-display');
-  moneyDisplay = document.getElementById('money-display');
-  
-  if (!energyDisplay || !moneyDisplay) {
-    console.error('Counter display elements not found');
-    return;
-  }
-  
-  // Add animation styles
-  addCounterStyles();
-  
-  // Set as initialized
-  initialized = true;
-  
-  // Start animation loop
-  animateCounters();
-}
-
-function addCounterStyles() {
-  if (document.getElementById('real-time-counter-styles')) return;
-  
-  const style = document.createElement('style');
-  style.id = 'real-time-counter-styles';
-  style.textContent = `
-    @keyframes digitPulse {
-      0% { color: #7bc144; }
-      50% { color: #4a9021; }
-      100% { color: #7bc144; }
-    }
-    
-    .digit {
-      display: inline-block;
-      transition: transform 0.2s ease;
-    }
-    
-    .digit.changing {
-      animation: digitPulse 0.5s;
-      transform: scale(1.1);
-    }
-    
-    .counter-value {
-      font-family: 'Roboto Mono', monospace, sans-serif;
-      letter-spacing: 0.5px;
-    }
-  `;
-  document.head.appendChild(style);
-  
-  // Add roboto mono if needed
-  const fontLink = document.createElement('link');
-  fontLink.href = 'https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap';
-  fontLink.rel = 'stylesheet';
-  document.head.appendChild(fontLink);
-}
-
-// Animate both counters with realistic odometer effect
-function animateCounters() {
-  if (!initialized) return;
-  
-  const now = Date.now();
-  const values = calculateCurrentValues();
-  
-  // Calculate MkWh (Million kWh)
-  const mkwh = values.totalKwh / 1000000;
-  const formattedMkwh = formatMkwh(mkwh);
-  
-  // Format dollar value
-  const dollars = values.totalDollars;
-  const formattedDollars = formatDollars(dollars);
-  
-  // Update the energy display with animation
-  if (energyDisplay) {
-    // Only update DOM if content has changed or 250ms has passed (for performance)
-    if (energyDisplay.textContent !== formattedMkwh || now - lastUpdated > 250) {
-      updateWithAnimation(energyDisplay, energyDisplay.textContent, formattedMkwh);
-    }
-  }
-  
-  // Update the money display with animation
-  if (moneyDisplay) {
-    // Only update DOM if content has changed or 250ms has passed
-    if (moneyDisplay.textContent !== formattedDollars || now - lastUpdated > 250) {
-      updateWithAnimation(moneyDisplay, moneyDisplay.textContent, formattedDollars);
-    }
-  }
-  
-  // Update last update timestamp
-  if (now - lastUpdated > 250) {
-    lastUpdated = now;
-  }
-  
-  // Continue animation
-  animationFrameId = requestAnimationFrame(animateCounters);
-}
-
-// Update element with animated transition for changing digits
-function updateWithAnimation(element, oldValue, newValue) {
-  // Convert to simple strings if they're not already
-  oldValue = String(oldValue || '');
-  newValue = String(newValue || '');
-  
-  // If no previous value, just set it
-  if (!oldValue || oldValue === '0' || oldValue === '0.000000' || oldValue === '$0') {
-    element.textContent = newValue;
-    return;
-  }
-  
-  // Create array of spans for each character
-  const chars = [];
-  
-  // Keep track of which digits have changed
-  const changedIndexes = [];
-  
-  // Loop through each character in the new value
-  for (let i = 0; i < newValue.length; i++) {
-    const char = newValue[i];
-    const oldChar = i < oldValue.length ? oldValue[i] : '';
-    
-    // Check if this character has changed
-    const hasChanged = char !== oldChar;
-    if (hasChanged) {
-      changedIndexes.push(i);
-    }
-    
-    // Create a span for this character
-    const span = document.createElement('span');
-    span.textContent = char;
-    span.className = 'digit';
-    chars.push(span);
-  }
-  
-  // Clear the element and add all spans
-  element.innerHTML = '';
-  chars.forEach(span => element.appendChild(span));
-  
-  // Animate the changed digits
-  changedIndexes.forEach(index => {
-    const span = element.childNodes[index];
-    if (span) {
-      span.classList.add('changing');
-      setTimeout(() => span.classList.remove('changing'), 500);
-    }
-  });
-}
-
-// Start updating when the page loads
-document.addEventListener('DOMContentLoaded', initRealTimeCounter);
-
-// Clean up on page unload
-window.addEventListener('beforeunload', function() {
-  if (animationFrameId) {
-    cancelAnimationFrame(animationFrameId);
+  // Initialize kwh rate display
+  const kwhRateDisplay = document.getElementById('kwh-rate-display');
+  if (kwhRateDisplay) {
+    kwhRateDisplay.innerHTML = '1 Solar = 4,913 kWh (based on 1% of Earth\'s solar input divided among 8.5B people)';
   }
 });
 
-// Expose for debugging
-window.debugSolarCounter = function() {
-  const values = calculateCurrentValues();
-  console.log({
-    startDate: START_DATE.toISOString(),
-    elapsedSeconds: values.elapsedSeconds,
-    totalSolar: values.totalSolar,
-    totalKwh: values.totalKwh,
-    totalDollars: values.totalDollars,
-    displayMkwh: formatMkwh(values.totalKwh / 1000000),
-    displayDollars: formatDollars(values.totalDollars)
-  });
-};
+function initSolarCounter() {
+  // Reference to the counter elements
+  const energyDisplay = document.getElementById('energy-display');
+  const moneyDisplay = document.getElementById('money-display');
+  
+  if (!energyDisplay || !moneyDisplay) {
+    console.error("Solar counter elements not found!");
+    return;
+  }
+  
+  // Base values - hardcoded for static implementation
+  // April 7, 2025 is the official starting date for the Solar Generator
+  const baseDate = new Date('2025-04-07T00:00:00Z');
+  const kwhPerSecond = 0.155664; // kWh generated per second
+  const dollarPerKwh = 0.12;     // Dollar value per kWh
+  
+  // Start counter animation
+  updateCounter(baseDate, kwhPerSecond, dollarPerKwh);
+}
+
+function updateCounter(baseDate, kwhPerSecond, dollarPerKwh) {
+  // Calculate elapsed time since base date
+  const currentTime = new Date();
+  const elapsedMs = currentTime.getTime() - baseDate.getTime();
+  const elapsedSeconds = elapsedMs / 1000;
+  
+  // Calculate current energy and money values
+  const totalKwh = elapsedSeconds * kwhPerSecond;
+  const totalDollars = totalKwh * dollarPerKwh;
+  
+  // Convert to MkWh (Million kWh) for display
+  const currentMkWh = totalKwh / 1000000;
+  
+  // Format values with proper precision
+  const formattedMkWh = formatWithDigitAnimation(
+    currentMkWh.toFixed(6), 
+    document.getElementById('energy-display')
+  );
+  
+  const formattedDollars = formatWithDigitAnimation(
+    '$' + totalDollars.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }),
+    document.getElementById('money-display')
+  );
+  
+  // Request next animation frame
+  requestAnimationFrame(() => updateCounter(baseDate, kwhPerSecond, dollarPerKwh));
+}
+
+function formatWithDigitAnimation(value, element) {
+  if (!element) return value;
+  
+  const newValue = value.toString();
+  const oldValue = element.getAttribute('data-value') || '0';
+  
+  // Store new value for next comparison
+  element.setAttribute('data-value', newValue);
+  
+  // If this is the first render, just set the text
+  if (oldValue === '0') {
+    element.textContent = newValue;
+    return newValue;
+  }
+  
+  // Create a new display with animated digits
+  let html = '';
+  const digitRegex = /(\d|\.|\,|\$)/g;
+  
+  for (let i = 0; i < newValue.length; i++) {
+    const char = newValue[i];
+    
+    // Check if this digit changed
+    const changed = (i < oldValue.length) ? (char !== oldValue[i]) : true;
+    
+    if (char.match(digitRegex)) {
+      // It's a digit, decimal point, comma, or currency symbol
+      if (changed && char.match(/\d/)) {
+        // Only digits get animation, not separators or currency symbols
+        html += `<span class="digit changing">${char}</span>`;
+      } else {
+        html += `<span class="digit">${char}</span>`;
+      }
+    } else {
+      // Other characters
+      html += char;
+    }
+  }
+  
+  element.innerHTML = html;
+  
+  // Clear animation classes after the animation completes
+  setTimeout(() => {
+    const changingDigits = element.querySelectorAll('.changing');
+    changingDigits.forEach(digit => {
+      digit.classList.remove('changing');
+    });
+  }, 500);
+  
+  return newValue;
+}

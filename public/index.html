@@ -6,6 +6,8 @@
   <title>The Current-See</title>
   <link rel="stylesheet" href="/css/common.css">
   <link rel="stylesheet" href="/css/components/language-selector.css">
+  <link rel="stylesheet" href="/css/solar-counter.css">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
   <div class="wrapper">
@@ -37,20 +39,25 @@
       <section class="solar-generator-section">
         <div class="container">
           <h2>Solar Generator</h2>
+          <p class="section-subtitle">Powered by Solar-Conversion App</p>
           <div class="solar-counter-container">
+            <div class="solar-counter-header">
+              <img src="/img/solar-conversion-icon.png" alt="Solar Conversion" class="solar-app-icon" onerror="this.src='/img/solar-icon-default.png'; this.onerror=null;">
+              <div class="solar-counter-title">
+                <h3>Live Solar Generation</h3>
+                <div class="pulse-dot"></div>
+              </div>
+            </div>
             <div class="counter-row">
-              <div class="counter-label">Energy Generated:</div>
-              <div id="energy-display" class="counter-value">0.000000</div> MkWh
+              <div class="counter-label">Energy Generated Since April 7, 2025:</div>
+              <div id="energy-display" class="counter-value odometer-value">0.000000</div> <span class="counter-unit">MkWh</span>
             </div>
             <div class="counter-row">
               <div class="counter-label">Value Created:</div>
-              <div id="money-display" class="counter-value">$0</div>
-            </div>
-            <div class="counter-row">
-              <div class="counter-label">Since April 7, 2025</div>
+              <div id="money-display" class="counter-value odometer-value">$0</div>
             </div>
             <div class="counter-info" id="kwh-rate-display">
-              One Solar = 4,913 kWh (based on 1% of Earth's solar input divided among 8.5B people)
+              1 Solar = 4,913 kWh (based on 1% of Earth's solar input divided among 8.5B people)
             </div>
           </div>
           <div class="view-all-button">
@@ -143,8 +150,8 @@
     });
   </script>
 
-  <!-- Solar Counter Script -->
-  <script src="/standalone_solar_counter.js"></script>
+  <!-- Real-Time Solar Counter Script -->
+  <script src="/js/real_time_solar_counter.js"></script>
 
   <!-- Voice Assistant Script -->
   <script src="/js/voice-assistant.js"></script>
