@@ -71,7 +71,13 @@ body {
   border-radius: 50px;
   text-align: center;
   text-decoration: none;
-  box-shadow: 0 6px 15px rgba(243, 198, 34, 0.4);
+  /* 3D shadow effect */
+  box-shadow: 
+    0 6px 15px rgba(243, 198, 34, 0.4),
+    0 10px 0 -5px #e0b520,
+    0 10px 5px -4px rgba(0,0,0,0.3),
+    0 20px 0 -10px #d9aa18,
+    0 20px 10px -8px rgba(0,0,0,0.2);
   transition: all 0.3s ease;
   border: 2px solid var(--join-btn-bg);
   text-transform: uppercase;
@@ -80,32 +86,57 @@ body {
   overflow: hidden;
   z-index: 1;
   animation: pulse-btn 3s infinite;
+  transform: translateY(-4px);
 }
 
 .btn-join:hover {
   background-color: var(--join-btn-hover);
-  transform: translateY(-3px);
-  box-shadow: 0 10px 20px rgba(243, 198, 34, 0.5);
+  transform: translateY(-6px);
+  box-shadow: 
+    0 10px 20px rgba(243, 198, 34, 0.5),
+    0 12px 0 -5px #e0b520,
+    0 12px 5px -4px rgba(0,0,0,0.3),
+    0 24px 0 -10px #d9aa18,
+    0 24px 10px -8px rgba(0,0,0,0.2);
   color: var(--join-btn-text);
 }
 
 .btn-join:active {
-  transform: translateY(1px);
-  box-shadow: 0 4px 10px rgba(243, 198, 34, 0.3);
+  transform: translateY(0);
+  box-shadow: 
+    0 4px 10px rgba(243, 198, 34, 0.3),
+    0 5px 0 -2px #e0b520,
+    0 5px 5px -4px rgba(0,0,0,0.3);
+  transition: all 0.1s ease;
 }
 
 @keyframes pulse-btn {
   0% {
-    transform: scale(1);
-    box-shadow: 0 6px 15px rgba(243, 198, 34, 0.4);
+    transform: scale(1) translateY(-4px);
+    box-shadow: 
+      0 6px 15px rgba(243, 198, 34, 0.4),
+      0 10px 0 -5px #e0b520,
+      0 10px 5px -4px rgba(0,0,0,0.3),
+      0 20px 0 -10px #d9aa18,
+      0 20px 10px -8px rgba(0,0,0,0.2);
   }
   50% {
-    transform: scale(1.03);
-    box-shadow: 0 10px 25px rgba(243, 198, 34, 0.6);
+    transform: scale(1.03) translateY(-4px);
+    box-shadow: 
+      0 8px 20px rgba(243, 198, 34, 0.6),
+      0 10px 0 -5px #e0b520,
+      0 10px 5px -4px rgba(0,0,0,0.3),
+      0 20px 0 -10px #d9aa18,
+      0 20px 10px -8px rgba(0,0,0,0.2);
   }
   100% {
-    transform: scale(1);
-    box-shadow: 0 6px 15px rgba(243, 198, 34, 0.4);
+    transform: scale(1) translateY(-4px);
+    box-shadow: 
+      0 6px 15px rgba(243, 198, 34, 0.4),
+      0 10px 0 -5px #e0b520,
+      0 10px 5px -4px rgba(0,0,0,0.3),
+      0 20px 0 -10px #d9aa18,
+      0 20px 10px -8px rgba(0,0,0,0.2);
   }
 }
 
