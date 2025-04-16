@@ -142,10 +142,15 @@ updateMemberDistributions();
 // Initialize Express app
 const app = express();
 
+// Import page includes system
+const { createIncludesMiddleware } = require('./page-includes');
+console.log('Page includes middleware loaded');
+
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(createIncludesMiddleware()); // Add page includes middleware
 
 // Database connection (if available)
 let pool = null;
@@ -183,6 +188,93 @@ app.get(['/health', '/healthz', '/_health'], (req, res) => {
   };
   
   res.status(200).json(status);
+});
+
+// Special test route for language translator
+app.get('/test-language-translator', (req, res) => {
+  console.log('Serving language translator test page');
+  
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Language Translation Test</title>
+  
+  <style>
+    .test-container {
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 2rem;
+      background-color: #f9f9f9;
+      border-radius: 10px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    }
+    
+    .test-section {
+      margin-bottom: 2rem;
+      padding: 1.5rem;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    
+    code {
+      display: block;
+      padding: 1rem;
+      background-color: #f5f5f5;
+      border-radius: 4px;
+      margin: 1rem 0;
+      font-family: monospace;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="test-container">
+    <h1>Language Translation Test Page</h1>
+    
+    <p>This page is used to verify that the language translation component is working correctly across the website.</p>
+    
+    <div class="test-section">
+      <h2>Sample Text in Multiple Languages</h2>
+      
+      <p>The following text should be translated when you select a different language:</p>
+      
+      <ul>
+        <li>Welcome to The Current-See website.</li>
+        <li>We are building a solar-backed global economic system.</li>
+        <li>Join us in creating a more equitable financial future.</li>
+        <li>Every day, solar energy creates new value.</li>
+        <li>This value can be distributed to everyone on Earth.</li>
+      </ul>
+    </div>
+    
+    <div class="test-section">
+      <h2>Testing Rich Content</h2>
+      
+      <p>Complex content with formatting should also translate correctly:</p>
+      
+      <h3>Our Mission</h3>
+      <p>The Current-See aims to <strong>revolutionize global economics</strong> by creating a <em>solar-backed currency system</em> that distributes daily value to all participants.</p>
+      
+      <h3>How It Works</h3>
+      <ol>
+        <li>Solar panels generate electricity across the globe</li>
+        <li>This electricity has a monetary value</li>
+        <li>We track this value in real-time</li>
+        <li>Every participant receives a daily distribution</li>
+      </ol>
+    </div>
+    
+    <a href="/" class="btn btn-primary">Return to Home Page</a>
+  </div>
+  
+  <!-- No need to include the translator script manually as it should be added by the middleware -->
+</body>
+</html>`;
+  
+  res.send(html);
 });
 
 // Static file serving - key feature to serve all files in the public directory
@@ -555,6 +647,717 @@ app.post('/api/achievement', (req, res) => {
       message: error.message
     });
   }
+});
+
+// Voice Assistant API Endpoint
+app.post('/api/voice-assistant', async (req, res) => {
+  try {
+    const { query, language = 'en', history = [] } = req.body;
+    
+    if (!query) {
+      return res.status(400).json({
+        error: 'Missing query',
+        message: 'A query is required'
+      });
+    }
+    
+    console.log(`Voice assistant query (${language}): ${query}`);
+    
+    // Get client location
+    const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    let locationInfo = '';
+    
+    try {
+      if (geolocationService) {
+        const location = await geolocationService.getLocation(clientIp);
+        if (location && location.city && location.country) {
+          locationInfo = `User location: ${location.city}, ${location.country}.`;
+        }
+      }
+    } catch (err) {
+      console.error('Error getting geolocation for voice assistant:', err);
+    }
+    
+    // In a real implementation with API keys, we would call OpenAI or Anthropic here
+    // For this prototype, we'll use a simple local knowledge base
+    
+    // Check for energy conservation queries
+    let response;
+    const queryLower = query.toLowerCase();
+    
+    if (queryLower.includes('energy conservation') || 
+        queryLower.includes('save energy') || 
+        queryLower.includes('energy tips')) {
+      response = `Here are some energy conservation tips:
+      
+1. Turning off lights when not in use can save up to 10% on your energy bills
+2. Energy-efficient appliances can reduce your energy consumption by 30-50%
+3. Smart thermostats can reduce heating and cooling costs by 10-15%
+4. Unplug electronics when not in use to eliminate "phantom" energy usage
+5. Using cold water for laundry can save up to 90% of the energy used per load`;
+
+    } else if (queryLower.includes('solar benefit') || 
+               queryLower.includes('why solar') || 
+               queryLower.includes('solar energy')) {
+      response = `Here are some benefits of solar energy:
+      
+1. Solar energy is renewable, abundant, and produces no harmful emissions
+2. The sun delivers more energy to Earth in one hour than humanity uses in a year
+3. Solar panel efficiency has improved dramatically while costs have decreased by 70% since 2010
+4. Solar investments typically pay for themselves in 6-10 years and provide decades of clean energy
+5. Solar energy creates jobs and economic opportunities in the green economy`;
+               
+    } else if (queryLower.includes('current-see') || 
+               queryLower.includes('how does it work') || 
+               queryLower.includes('solar token') ||
+               queryLower.includes('system')) {
+      response = `The Current-See is a revolutionary solar-backed global economic system:
+
+1. It tracks solar energy production in real-time through the Solar Generator
+2. Each user receives a daily SOLAR token allocation representing real energy value
+3. SOLAR tokens are backed by the actual kilowatt-hours of energy produced globally
+4. The system creates a more equitable distribution of energy value worldwide
+5. Anyone can join and receive their share of the global solar energy economy`;
+      
+    } else if (queryLower.includes('my balance') || 
+               queryLower.includes('my solar') || 
+               queryLower.includes('my token')) {
+      if (req.isAuthenticated()) {
+        const user = req.user;
+        response = `Your current SOLAR balance is ${user.totalSolar} SOLAR tokens. This represents your share of the global solar energy economy. You receive a daily distribution of 1 SOLAR token, which is backed by real solar energy production.`;
+      } else {
+        response = "To view your SOLAR balance, you need to log in to your Current-See wallet. You can access it by clicking on the 'Wallet Demo' button in the navigation menu. Once logged in, your balance will be displayed on your dashboard.";
+      }
+      
+    } else if (queryLower.includes('solar counter') || 
+               queryLower.includes('generator') || 
+               queryLower.includes('solar clock')) {
+      updateSolarClockData();
+      const energyValue = (solarClockData.totalKwh / 1000000).toFixed(6);
+      const moneyValue = Math.floor(solarClockData.totalDollars).toLocaleString();
+      
+      response = `The Current-See Solar Generator is currently tracking ${energyValue} MkWh of clean solar energy generated since April 7, 2025. This represents approximately $${moneyValue} in monetary value. The counter updates in real-time and powers the daily SOLAR token distributions to all members.`;
+      
+    } else if (queryLower.includes('join') || 
+               queryLower.includes('sign up') || 
+               queryLower.includes('register') ||
+               queryLower.includes('become a member')) {
+      response = `To join The Current-See, click on the "Sign Up" button in the navigation menu. Registration is free and takes just a minute. Once registered, you'll start receiving daily SOLAR token distributions and can track your balance in the wallet. ${locationInfo ? locationInfo + ' ' : ''}Welcome to the global solar economy!`;
+      
+    } else if (queryLower.includes('track energy') || 
+               queryLower.includes('monitor usage') || 
+               queryLower.includes('consumption')) {
+      response = `The Current-See offers several ways to track energy:
+
+1. The Solar Generator displays global solar production in real-time
+2. Your personal wallet shows your SOLAR token balance and transaction history
+3. Our product scanner lets you evaluate the energy impact of everyday items
+4. Energy badges allow you to share your conservation achievements
+5. The energy calculation tool helps you understand your personal impact
+
+Would you like me to explain any of these features in more detail?`;
+      
+    } else {
+      // General fallback response
+      response = `As your Current-See Energy Assistant, I can help you with:
+
+- Information about The Current-See solar-backed economic system
+- Energy conservation tips and sustainable practices
+- Understanding solar energy benefits and technologies
+- Tracking your SOLAR token balance and distributions
+- Finding ways to reduce your energy consumption
+
+How else can I assist you with energy-related questions today?`;
+    }
+    
+    // If we have location info, personalize the response
+    if (locationInfo && !response.includes(locationInfo)) {
+      // Only add location if it's not already mentioned
+      response = `${response}\n\n${locationInfo}`;
+    }
+    
+    // Log the response (in a real implementation, we would log to a database)
+    console.log(`Voice assistant response: ${response.substring(0, 50)}...`);
+    
+    // Send the response
+    res.json({
+      response: response
+    });
+    
+  } catch (error) {
+    console.error('Error processing voice assistant query:', error);
+    res.status(500).json({
+      error: 'Failed to process voice assistant query',
+      message: error.message
+    });
+  }
+});
+
+// Wallet AI Assistant API Endpoint - Enhanced with econometric and carbon footprint capabilities
+app.post('/api/wallet-assistant', async (req, res) => {
+  try {
+    const { query, language = 'en', history = [], mode = 'general' } = req.body;
+    
+    if (!query) {
+      return res.status(400).json({
+        error: 'Missing query',
+        message: 'A query is required'
+      });
+    }
+    
+    console.log(`Wallet AI assistant query (${language}, ${mode}): ${query}`);
+    
+    // Get client location for personalized recommendations
+    const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    let locationInfo = '';
+    
+    try {
+      if (geolocationService) {
+        const location = await geolocationService.getLocation(clientIp);
+        if (location && location.city && location.country) {
+          locationInfo = `${location.city}, ${location.country}`;
+        }
+      }
+    } catch (err) {
+      console.error('Error getting geolocation for wallet assistant:', err);
+    }
+    
+    // In a production implementation, we would use a more sophisticated AI model
+    // For now, we'll demonstrate key capabilities with pattern matching
+    
+    // Determine the query type based on keywords
+    const queryLower = query.toLowerCase();
+    let response;
+    
+    if (mode === 'carbon_footprint' || 
+        queryLower.includes('carbon') || 
+        queryLower.includes('footprint') || 
+        queryLower.includes('environmental') ||
+        queryLower.includes('sustainable')) {
+      
+      // Extract product information from query
+      const productInfo = extractProductInfo(queryLower);
+      
+      if (productInfo) {
+        response = generateCarbonFootprintResponse(productInfo, locationInfo);
+      } else {
+        response = `I can analyze the carbon footprint and environmental impact of various products and activities. Please specify what you'd like me to analyze, such as a specific food item, electronic device, or transportation method.`;
+      }
+      
+    } else if (mode === 'farm_to_table' || 
+              queryLower.includes('farm') || 
+              queryLower.includes('produce') || 
+              queryLower.includes('food price') ||
+              queryLower.includes('vegetable') ||
+              queryLower.includes('fruit')) {
+      
+      // Extract produce information from query
+      const produceInfo = extractProduceInfo(queryLower);
+      
+      if (produceInfo) {
+        response = generateFarmToTableResponse(produceInfo, locationInfo);
+      } else {
+        response = `I can calculate energy-based pricing for farm-to-table produce, taking into account factors like seasonality, transportation distance, and production methods. Please specify the produce item you're interested in.`;
+      }
+      
+    } else if (mode === 'supply_chain' || 
+              queryLower.includes('supply chain') || 
+              queryLower.includes('logistics') || 
+              queryLower.includes('transportation') ||
+              queryLower.includes('shipping')) {
+      
+      response = `Supply Chain Energy Analysis:
+
+The energy consumption across modern supply chains can be divided into:
+• Production energy (30-40%)
+• Processing energy (10-20%)
+• Transportation energy (15-30%)
+• Storage energy (5-15%)
+• End-use energy (10-20%)
+
+For most consumer products, transportation represents between 5-15% of the total carbon footprint, while production often accounts for 30-60% depending on the product type.
+
+${locationInfo ? `For products shipped to ${locationInfo}, international shipping typically adds 0.5-2 kWh of energy consumption per kg of product, equivalent to approximately 0.2-0.8 SOLAR tokens per kg in the Current-See system.` : ''}
+
+Would you like me to analyze a specific product's supply chain energy usage?`;
+      
+    } else {
+      // General wallet assistant response
+      if (req.isAuthenticated()) {
+        const user = req.user;
+        response = `Welcome to your Enhanced AI Wallet Assistant, ${user.username}. 
+
+Your current SOLAR balance is ${user.totalSolar} tokens.
+
+I can help you with:
+• Calculating the carbon footprint of products and activities
+• Providing energy-based pricing for farm-to-table produce
+• Analyzing supply chain energy consumption
+• Converting traditional costs to SOLAR token value
+• Making sustainability-focused purchase recommendations
+
+What would you like assistance with today?`;
+      } else {
+        response = `Welcome to the Enhanced AI Wallet Assistant. 
+
+I can help you with:
+• Calculating the carbon footprint of products and activities
+• Providing energy-based pricing for farm-to-table produce
+• Analyzing supply chain energy consumption
+• Converting traditional costs to SOLAR token value
+• Making sustainability-focused purchase recommendations
+
+For personalized recommendations and to access your SOLAR balance, please log in to your wallet.`;
+      }
+    }
+    
+    // Log and send the response
+    console.log(`Wallet assistant response: ${response.substring(0, 50)}...`);
+    
+    res.json({
+      response: response
+    });
+    
+  } catch (error) {
+    console.error('Error processing wallet assistant query:', error);
+    res.status(500).json({
+      error: 'Failed to process wallet assistant query',
+      message: error.message
+    });
+  }
+});
+
+// Helper functions for the wallet assistant
+
+function extractProductInfo(query) {
+  // Simple keyword extraction for products
+  const electronics = ['smartphone', 'phone', 'laptop', 'computer', 'tv', 'television'];
+  const clothing = ['shirt', 't-shirt', 'tshirt', 'jeans', 'pants', 'jacket', 'dress'];
+  const food = ['beef', 'chicken', 'rice', 'vegetable', 'fruit', 'meat', 'dairy'];
+  const transportation = ['car', 'bus', 'train', 'plane', 'flight', 'bike', 'bicycle'];
+  
+  // Check for product type
+  let productType = null;
+  let category = null;
+  
+  for (const item of electronics) {
+    if (query.includes(item)) {
+      productType = item;
+      category = 'electronics';
+      break;
+    }
+  }
+  
+  if (!productType) {
+    for (const item of clothing) {
+      if (query.includes(item)) {
+        productType = item;
+        category = 'clothing';
+        break;
+      }
+    }
+  }
+  
+  if (!productType) {
+    for (const item of food) {
+      if (query.includes(item)) {
+        productType = item;
+        category = 'food';
+        break;
+      }
+    }
+  }
+  
+  if (!productType) {
+    for (const item of transportation) {
+      if (query.includes(item)) {
+        productType = item;
+        category = 'transportation';
+        break;
+      }
+    }
+  }
+  
+  if (!productType) return null;
+  
+  return {
+    type: productType,
+    category: category
+  };
+}
+
+function extractProduceInfo(query) {
+  // Simple keyword extraction for produce
+  const produceTypes = {
+    'leafy_greens': ['lettuce', 'spinach', 'kale', 'greens', 'leafy'],
+    'root_vegetables': ['carrot', 'potato', 'onion', 'beet', 'root'],
+    'tomatoes': ['tomato', 'tomatoes'],
+    'berries': ['berry', 'berries', 'strawberry', 'blueberry', 'raspberry'],
+    'tree_fruits': ['apple', 'orange', 'peach', 'pear', 'fruit'],
+    'grains': ['wheat', 'rice', 'oat', 'grain', 'corn']
+  };
+  
+  // Extract produce type
+  let produceType = null;
+  
+  for (const [type, keywords] of Object.entries(produceTypes)) {
+    for (const keyword of keywords) {
+      if (query.includes(keyword)) {
+        produceType = type;
+        break;
+      }
+    }
+    if (produceType) break;
+  }
+  
+  if (!produceType) return null;
+  
+  // Extract other parameters
+  const isLocal = query.includes('local');
+  const isOrganic = query.includes('organic');
+  const isSeasonal = !(query.includes('winter') || query.includes('off season') || query.includes('out of season'));
+  
+  return {
+    type: produceType,
+    isLocal: isLocal,
+    isOrganic: isOrganic,
+    isSeasonal: isSeasonal
+  };
+}
+
+function generateCarbonFootprintResponse(productInfo, locationInfo) {
+  // Sample carbon footprint data by category
+  const carbonData = {
+    electronics: {
+      smartphone: {
+        production: 60, // kg CO2e
+        usage: 8.5,     // kg CO2e per year
+        lifespan: 2.5,  // years
+        energy: 5.5     // kWh per year
+      },
+      laptop: {
+        production: 330,
+        usage: 44,
+        lifespan: 4,
+        energy: 65
+      },
+      television: {
+        production: 400,
+        usage: 110,
+        lifespan: 7,
+        energy: 150
+      }
+    },
+    clothing: {
+      shirt: {
+        production: 5.5,
+        water: 2700, // liters
+        lifespan: 2,
+        washing: 0.3 // kg CO2e per wash
+      },
+      jeans: {
+        production: 33.4,
+        water: 8000,
+        lifespan: 4,
+        washing: 0.4
+      },
+      jacket: {
+        production: 17,
+        water: 900,
+        lifespan: 3,
+        washing: 0.5
+      }
+    },
+    food: {
+      beef: {
+        perKg: 60,
+        water: 15400,
+        land: 326
+      },
+      chicken: {
+        perKg: 6,
+        water: 4325,
+        land: 12
+      },
+      rice: {
+        perKg: 4,
+        water: 2500,
+        land: 2.5
+      }
+    },
+    transportation: {
+      car: {
+        perKm: 0.21,
+        perPassengerKm: 0.14,
+        energy: 0.8
+      },
+      bus: {
+        perKm: 0.105,
+        perPassengerKm: 0.03,
+        energy: 0.4
+      },
+      train: {
+        perKm: 0.041,
+        perPassengerKm: 0.02,
+        energy: 0.15
+      }
+    }
+  };
+  
+  // Get data for the specific product
+  const category = productInfo.category;
+  const type = productInfo.type;
+  
+  // Handle specific product types or return general category info
+  if (category === 'electronics') {
+    // Map similar terms
+    const typeMap = {
+      'phone': 'smartphone',
+      'computer': 'laptop',
+      'tv': 'television'
+    };
+    const mappedType = typeMap[type] || type;
+    
+    const data = carbonData.electronics[mappedType] || carbonData.electronics.smartphone;
+    const totalFootprint = data.production + (data.usage * data.lifespan);
+    const solarTokens = ((data.production / 3) + (data.energy * data.lifespan / 2.5)).toFixed(2); // Conversion to SOLAR tokens
+    
+    return `Carbon Footprint Analysis: ${type.toUpperCase()}
+
+• Manufacturing: ${data.production} kg CO2e (${Math.round(data.production/totalFootprint*100)}% of lifecycle emissions)
+• Usage over ${data.lifespan} years: ${data.usage * data.lifespan} kg CO2e (${Math.round(data.usage*data.lifespan/totalFootprint*100)}% of lifecycle emissions)
+• Total lifecycle emissions: ${totalFootprint} kg CO2e
+• Energy consumption: ${data.energy * data.lifespan} kWh over product lifetime
+
+This is equivalent to approximately ${(totalFootprint / 60).toFixed(1)} kg of beef or ${(totalFootprint / 0.21 / 1000).toFixed(0)} kilometers driven by car.
+
+In the Current-See SOLAR economy, offsetting this carbon footprint would require approximately ${solarTokens} SOLAR tokens.
+
+${locationInfo ? `Based on your location in ${locationInfo}, extending this device's lifespan by 1 year could save approximately ${(data.production / data.lifespan).toFixed(1)} kg CO2e, with local recycling options available to recover valuable materials.` : 'Extending your device lifespan and proper recycling are the most effective ways to reduce its environmental impact.'}`;
+  } else if (category === 'clothing') {
+    const typeMap = {
+      't-shirt': 'shirt',
+      'tshirt': 'shirt',
+      'pants': 'jeans'
+    };
+    const mappedType = typeMap[type] || type;
+    
+    const data = carbonData.clothing[mappedType] || carbonData.clothing.shirt;
+    const washingFootprint = 30 * data.lifespan * data.washing; // Assuming 30 washes per year
+    const totalFootprint = data.production + washingFootprint;
+    const solarTokens = (totalFootprint / 3).toFixed(2); // Simple conversion to SOLAR tokens
+    
+    return `Carbon Footprint Analysis: ${type.toUpperCase()}
+
+• Production: ${data.production} kg CO2e
+• Water usage in production: ${(data.water / 1000).toFixed(1)} cubic meters
+• Washing over ${data.lifespan} years: ${washingFootprint.toFixed(1)} kg CO2e
+• Total lifecycle emissions: ${totalFootprint.toFixed(1)} kg CO2e
+
+Fast fashion has a significant environmental impact. Choosing organic materials can reduce water usage by 30-50%, while extending garment life reduces production emissions.
+
+In the Current-See SOLAR economy, this garment represents approximately ${solarTokens} SOLAR tokens worth of energy.
+
+${locationInfo ? `In ${locationInfo}, considering secondhand options could reduce your fashion footprint by up to 80%, and local textile recycling programs are available for end-of-life management.` : 'Consider secondhand options, repair garments instead of replacing them, and recycle textiles at end-of-life to minimize environmental impact.'}`;
+  } else {
+    // Generic response for other categories
+    return `I can analyze the carbon footprint and environmental impact of various products and activities. For ${category} like ${type}, the main environmental considerations include:
+
+• Production emissions
+• Energy consumption during use
+• Lifespan and disposal impact
+• Alternative lower-impact options
+
+Would you like me to provide more specific data about the environmental impact of ${type}? I can calculate its carbon footprint and convert this to equivalent SOLAR tokens in the Current-See economy.`;
+  }
+}
+
+function generateFarmToTableResponse(produceInfo, locationInfo) {
+  // Base energy required to grow 1kg of produce (kWh)
+  const baseGrowingEnergy = {
+    leafy_greens: 0.5,
+    root_vegetables: 0.7,
+    tomatoes: 2.1,
+    berries: 3.0,
+    tree_fruits: 1.2,
+    grains: 1.8
+  };
+  
+  // Transportation energy cost multipliers by distance
+  const transportMultipliers = {
+    local: 1.0,      // < 50 miles
+    regional: 2.5,   // 50-500 miles
+    national: 6.0,   // 500-2000 miles
+    international: 15.0 // > 2000 miles
+  };
+  
+  // Seasonal adjustment factors
+  const seasonalFactors = {
+    in_season: 1.0,
+    off_season: 2.2
+  };
+  
+  // Calculate energy costs based on produce information
+  const type = produceInfo.type;
+  const displayName = type.replace('_', ' ');
+  const baseEnergy = baseGrowingEnergy[type] || 1.5;
+  const transportType = produceInfo.isLocal ? 'local' : 'regional';
+  const transportMultiplier = transportMultipliers[transportType];
+  const seasonalFactor = produceInfo.isSeasonal ? seasonalFactors.in_season : seasonalFactors.off_season;
+  const organicFactor = produceInfo.isOrganic ? 0.8 : 1.0; // Organic often uses less energy but more land
+  
+  // Total energy in kWh per kg
+  const growingEnergy = baseEnergy * seasonalFactor * organicFactor;
+  const transportEnergy = baseEnergy * transportMultiplier * 0.3;
+  const processingEnergy = 0.5; // Simple processing
+  const totalEnergy = growingEnergy + transportEnergy + processingEnergy;
+  
+  // Convert to SOLAR tokens (1 SOLAR = approx 2.5 kWh)
+  const solarTokens = (totalEnergy / 2.5).toFixed(2);
+  
+  // Base price per kg in USD (simplified model)
+  const basePricePerKg = {
+    leafy_greens: 3.50,
+    root_vegetables: 1.80,
+    tomatoes: 3.20,
+    berries: 5.50,
+    tree_fruits: 3.00,
+    grains: 1.20
+  }[type] || 3.00;
+  
+  // Adjust for organic, seasonal, and local factors
+  const organicPriceFactor = produceInfo.isOrganic ? 1.3 : 1.0;
+  const localPriceFactor = produceInfo.isLocal ? 1.2 : 1.0;
+  const seasonalPriceFactor = produceInfo.isSeasonal ? 0.8 : 1.2;
+  
+  // Energy-adjusted price (combining traditional pricing with energy costs)
+  const energyCost = totalEnergy * 0.12; // USD per kWh
+  const marketPrice = basePricePerKg * organicPriceFactor * localPriceFactor * seasonalPriceFactor;
+  const energyAdjustedPrice = marketPrice + energyCost;
+  
+  return `Energy-Based Pricing Analysis: ${displayName.toUpperCase()}
+${produceInfo.isLocal ? 'Local' : 'Non-local'}, ${produceInfo.isSeasonal ? 'In-Season' : 'Off-Season'}, ${produceInfo.isOrganic ? 'Organic' : 'Conventional'}
+
+Energy Requirements:
+• Growing: ${growingEnergy.toFixed(2)} kWh/kg
+• Transportation: ${transportEnergy.toFixed(2)} kWh/kg
+• Processing: ${processingEnergy.toFixed(2)} kWh/kg
+• Total Energy Footprint: ${totalEnergy.toFixed(2)} kWh/kg
+
+Market Price: $${marketPrice.toFixed(2)}/kg
+Energy Cost Component: $${energyCost.toFixed(2)}/kg
+Energy-Adjusted Fair Price: $${energyAdjustedPrice.toFixed(2)}/kg
+
+In the Current-See SOLAR economy, this represents ${solarTokens} SOLAR tokens per kg.
+
+${locationInfo ? `Based on your location in ${locationInfo}, ${produceInfo.isLocal ? 'you\'re making an energy-efficient choice with local produce' : 'switching to local options could reduce transportation energy by up to 60%'}.` : ''}
+
+${produceInfo.isSeasonal ? 'Seasonal produce typically requires 50-70% less energy than off-season alternatives.' : 'Off-season produce often requires energy-intensive greenhouse growing or long-distance transportation.'}
+
+${produceInfo.isOrganic ? 'Organic farming practices typically use 30-50% less energy but may require more land area.' : 'Conventional farming often uses more energy for synthetic fertilizers and pesticides.'}`;
+}
+
+// API endpoint for product database access
+app.get('/api/products', (req, res) => {
+  // In a real implementation, this would access a database of products with energy and carbon data
+  // For now, we'll return a simple sample of products
+  
+  const products = [
+    {
+      id: 'smartphone_standard',
+      name: 'Smartphone (Standard)',
+      category: 'electronics',
+      carbonFootprint: 60,
+      energyConsumption: 5.5,
+      lifespan: 2.5,
+      waterUsage: 13000,
+      solarTokenValue: 24.0
+    },
+    {
+      id: 'smartphone_eco',
+      name: 'Smartphone (Eco)',
+      category: 'electronics',
+      carbonFootprint: 45,
+      energyConsumption: 4.5,
+      lifespan: 3.5,
+      waterUsage: 10000,
+      solarTokenValue: 18.0
+    },
+    {
+      id: 'beef_kg',
+      name: 'Beef (1kg)',
+      category: 'food',
+      carbonFootprint: 60,
+      energyConsumption: 25.0,
+      waterUsage: 15400,
+      landUse: 326,
+      solarTokenValue: 10.0
+    },
+    {
+      id: 'vegetables_local_kg',
+      name: 'Vegetables - Local (1kg)',
+      category: 'food',
+      carbonFootprint: 0.3,
+      energyConsumption: 0.5,
+      waterUsage: 300,
+      landUse: 0.3,
+      solarTokenValue: 0.2
+    }
+  ];
+  
+  // Filter by category or search term if provided
+  const { category, search } = req.query;
+  
+  let filteredProducts = products;
+  
+  if (category) {
+    filteredProducts = filteredProducts.filter(p => p.category === category);
+  }
+  
+  if (search) {
+    const searchLower = search.toLowerCase();
+    filteredProducts = filteredProducts.filter(p => 
+      p.name.toLowerCase().includes(searchLower) || 
+      p.category.toLowerCase().includes(searchLower)
+    );
+  }
+  
+  res.json({
+    products: filteredProducts,
+    count: filteredProducts.length
+  });
+});
+
+// Energy pricing API endpoint
+app.get('/api/energy-pricing', (req, res) => {
+  // Get current energy pricing data
+  const currentDate = new Date();
+  
+  // Basic model for energy pricing (simplified)
+  const energyPricing = {
+    timestamp: currentDate.toISOString(),
+    baseKwhPrice: 0.12, // USD per kWh
+    solarKwhPrice: 0.08, // USD per kWh from solar
+    carbonPrice: 25.00, // USD per ton CO2
+    solarTokenValue: 2.5, // kWh per SOLAR token
+    solarTokenPrice: 0.30, // USD per SOLAR token
+    regionalModifiers: {
+      northAmerica: 1.0,
+      europe: 1.2,
+      asia: 0.9,
+      africa: 0.8,
+      southAmerica: 0.85,
+      oceania: 1.1
+    },
+    seasonalFactors: {
+      winter: 1.2,
+      spring: 0.9,
+      summer: 1.0,
+      fall: 0.95
+    }
+  };
+  
+  res.json(energyPricing);
 });
 
 app.post('/api/signup', (req, res) => {

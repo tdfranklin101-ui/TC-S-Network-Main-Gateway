@@ -1,0 +1,98 @@
+<!-- Footer Component -->
+<footer>
+  <div class="container">
+    <div class="footer-container">
+      <!-- Company Info -->
+      <div class="footer-section">
+        <h3>The Current-See</h3>
+        <p>Solar-backed global economic system for sustainable wealth distribution and environmental impact.</p>
+        <div class="social-media">
+          <a href="#" aria-label="Twitter"><i class="fas fa-twitter"></i></a>
+          <a href="#" aria-label="LinkedIn"><i class="fas fa-linkedin"></i></a>
+          <a href="#" aria-label="Instagram"><i class="fas fa-instagram"></i></a>
+        </div>
+      </div>
+
+      <!-- Quick Links -->
+      <div class="footer-section">
+        <h3>Quick Links</h3>
+        <ul>
+          <li><a href="/">Home</a></li>
+          <li><a href="/declaration.html">Solar Declaration</a></li>
+          <li><a href="/founder_note.html">Founder's Note</a></li>
+          <li><a href="/whitepapers.html">White Papers</a></li>
+          <li><a href="https://current-see-wallet-demo.replit.app" target="_blank">Wallet Demo</a></li>
+        </ul>
+      </div>
+
+      <!-- Resources -->
+      <div class="footer-section">
+        <h3>Resources</h3>
+        <ul>
+          <li><a href="#">FAQ</a></li>
+          <li><a href="#">Solar Calculations</a></li>
+          <li><a href="#">Distribution Model</a></li>
+          <li><a href="#">Economic Impact</a></li>
+          <li><a href="#">Solar Technology</a></li>
+        </ul>
+      </div>
+
+      <!-- Contact -->
+      <div class="footer-section">
+        <h3>Contact Us</h3>
+        <p>Questions about our mission? Interested in joining the solar revolution?</p>
+        <a href="mailto:info@thecurrentsee.org" class="btn btn-outline">info@thecurrentsee.org</a>
+      </div>
+    </div>
+
+    <!-- Footer Bottom -->
+    <div class="footer-bottom">
+      <p>&copy; 2025 The Current-See PBC, Inc. All rights reserved.</p>
+      <p>A Public Benefit Corporation committed to solar energy and economic equity.</p>
+      <p class="mt-2">
+        <a href="#">Privacy Policy</a> | 
+        <a href="#">Terms of Service</a> | 
+        <a href="#">Accessibility</a>
+      </p>
+    </div>
+  </div>
+</footer>
+
+<!-- FontAwesome for Icons -->
+<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+
+<!-- Add Google's Font Awesome alternative since the above might not be available -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+<script>
+  // Fallback for FontAwesome
+  document.addEventListener('DOMContentLoaded', () => {
+    if (typeof FontAwesome === 'undefined') {
+      document.querySelectorAll('.fas').forEach(icon => {
+        const iconName = Array.from(icon.classList)
+          .find(cls => cls.startsWith('fa-'))
+          ?.replace('fa-', '');
+        
+        if (iconName) {
+          const materialIcon = document.createElement('span');
+          materialIcon.className = 'material-icons';
+          
+          // Map FontAwesome icons to Material icons
+          const iconMap = {
+            'twitter': 'twitter',
+            'linkedin': 'linkedin',
+            'instagram': 'photo_camera',
+            'facebook': 'facebook',
+            'envelope': 'email',
+            'phone': 'phone'
+          };
+          
+          materialIcon.textContent = iconMap[iconName] || 'link';
+          icon.parentNode.replaceChild(materialIcon, icon);
+        }
+      });
+    }
+  });
+</script>
+
+<!-- Voice Assistant Container - Will be populated by the voice assistant script -->
+<div id="voice-assistant-container"></div>

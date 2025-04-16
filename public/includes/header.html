@@ -1,0 +1,74 @@
+<!-- Header Component -->
+<header>
+  <div class="header-container container">
+    <div class="logo-container">
+      <a href="/">
+        <img src="/solar_coin.png" alt="The Current-See Logo" class="logo">
+        <span class="logo-text">The Current-See</span>
+      </a>
+    </div>
+    
+    <!-- Desktop Navigation -->
+    <nav class="desktop-nav">
+      <ul>
+        <li><a href="/" class="nav-link">Home</a></li>
+        <li><a href="/declaration.html" class="nav-link">Solar Declaration</a></li>
+        <li><a href="/founder_note.html" class="nav-link">Founder's Note</a></li>
+        <li><a href="/whitepapers.html" class="nav-link">White Papers</a></li>
+        <li><a href="/demo-features.html" class="nav-link">Features</a></li>
+        <li><a href="/wallet-ai-features.html" class="nav-link">AI Wallet</a></li>
+        <li><a href="https://current-see-wallet-demo.replit.app" class="nav-link" target="_blank">Wallet Demo</a></li>
+      </ul>
+    </nav>
+    
+    <!-- Language Selector Placeholder -->
+    <div id="language-selector" class="language-selector"></div>
+    
+    <!-- Mobile Menu Toggle -->
+    <button class="mobile-menu-toggle" aria-label="Toggle mobile menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </div>
+  
+  <!-- Mobile Navigation -->
+  <div class="mobile-nav">
+    <ul>
+      <li><a href="/" class="nav-link">Home</a></li>
+      <li><a href="/declaration.html" class="nav-link">Solar Declaration</a></li>
+      <li><a href="/founder_note.html" class="nav-link">Founder's Note</a></li>
+      <li><a href="/whitepapers.html" class="nav-link">White Papers</a></li>
+      <li><a href="/demo-features.html" class="nav-link">Features</a></li>
+      <li><a href="/wallet-ai-features.html" class="nav-link">AI Wallet</a></li>
+      <li><a href="https://current-see-wallet-demo.replit.app" class="nav-link" target="_blank">Wallet Demo</a></li>
+    </ul>
+  </div>
+</header>
+
+<!-- Mobile Menu Script -->
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
+    const mobileNav = document.querySelector('.mobile-nav');
+    
+    if (mobileMenuToggle && mobileNav) {
+      mobileMenuToggle.addEventListener('click', () => {
+        mobileMenuToggle.classList.toggle('open');
+        mobileNav.classList.toggle('mobile-nav-active');
+      });
+    }
+    
+    // Add active class to current page link
+    const currentPage = window.location.pathname;
+    document.querySelectorAll('.nav-link').forEach(link => {
+      const href = link.getAttribute('href');
+      if (href === currentPage) {
+        link.classList.add('active');
+      }
+    });
+  });
+</script>
+
+<!-- Voice Assistant Script -->
+<script src="/js/voice-assistant.js"></script>

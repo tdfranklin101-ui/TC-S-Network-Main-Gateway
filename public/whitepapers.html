@@ -1,333 +1,254 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>White Papers - The Current-See</title>
-    <link rel="stylesheet" href="/style.css">
-    <link rel="stylesheet" href="/css/common.css">
-    <script src="/navigation.js"></script>
-    <style>
-        html, body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            width: 100%;
+<style>
+    .whitepapers-container {
+        max-width: 1000px;
+        margin: 3rem auto;
+        padding: 2rem;
+        background-color: rgba(255, 255, 255, 0.95);
+        border-radius: 10px;
+        box-shadow: 0 5px 25px rgba(0, 0, 0, 0.1);
+    }
+    
+    .whitepapers-title {
+        text-align: center;
+        color: var(--accent-blue);
+        margin-bottom: 1.5rem;
+    }
+    
+    .intro {
+        margin-bottom: 2rem;
+        text-align: center;
+        color: var(--primary-blue);
+        font-size: 1.1rem;
+    }
+    
+    .papers-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 2rem;
+    }
+    
+    .paper-card {
+        background-color: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .paper-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    }
+    
+    .paper-image {
+        height: 140px;
+        overflow: hidden;
+        position: relative;
+        background: linear-gradient(135deg, #7bc144, #f3c622);
+    }
+    
+    .paper-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0.8;
+        transition: opacity 0.3s ease;
+    }
+    
+    .paper-card:hover .paper-image img {
+        opacity: 1;
+    }
+    
+    .paper-content {
+        padding: 1.5rem;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .paper-title {
+        font-size: 1.2rem;
+        margin-bottom: 0.5rem;
+        color: var(--accent-blue);
+        font-weight: 600;
+    }
+    
+    .paper-description {
+        color: var(--text-medium);
+        margin-bottom: 1rem;
+        flex-grow: 1;
+    }
+    
+    .paper-meta {
+        color: var(--text-light);
+        font-size: 0.9rem;
+        display: flex;
+        justify-content: space-between;
+    }
+    
+    .paper-author {
+        font-style: italic;
+    }
+    
+    .paper-date {
+        color: var(--accent-color);
+    }
+    
+    .paper-actions {
+        margin-top: 1rem;
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .paper-button {
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        text-align: center;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.9rem;
+        flex: 1;
+        transition: background-color 0.3s ease;
+    }
+    
+    .btn-view {
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+    }
+    
+    .btn-view:hover {
+        background-color: var(--primary-dark);
+        color: white;
+    }
+    
+    .btn-download {
+        background-color: transparent;
+        color: var(--primary-color);
+        border: 1px solid var(--primary-color);
+    }
+    
+    .btn-download:hover {
+        background-color: rgba(123, 193, 68, 0.1);
+    }
+    
+    .back-btn {
+        display: block;
+        width: fit-content;
+        margin: 2rem auto;
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 50px;
+        text-decoration: none;
+        font-weight: bold;
+        transition: background-color 0.3s;
+        text-align: center;
+    }
+    
+    .back-btn:hover {
+        background-color: var(--primary-dark);
+        color: white;
+    }
+    
+    @media (max-width: 768px) {
+        .papers-grid {
+            grid-template-columns: 1fr;
         }
         
-        * {
-            box-sizing: border-box;
-        }
-        header {
-            background: url('/solar_background.png') center center/cover no-repeat;
-            color: #333;
-            text-align: center;
-            padding: 2rem 0;
-        }
-        .logo {
-            width: 100px;
-            height: auto;
-            margin-bottom: 15px;
-        }
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-        h1 {
-            margin-bottom: 1rem;
-        }
-        .intro {
-            margin-bottom: 3rem;
-            text-align: center;
-            max-width: 800px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        .papers-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 2rem;
-        }
-        .paper-card {
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            overflow: hidden;
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-        .paper-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-        }
-        .paper-cover {
-            height: 180px;
-            background-color: #f0de4d;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #333;
-            font-weight: bold;
-            font-size: 1.2rem;
-            text-align: center;
-            padding: 1rem;
-        }
-        .paper-info {
+        .whitepapers-container {
+            margin: 1rem;
             padding: 1.5rem;
         }
-        .paper-title {
-            font-size: 1.2rem;
-            font-weight: bold;
-            margin-bottom: 0.5rem;
-            color: #7bc144;
-        }
-        .paper-abstract {
-            font-size: 0.9rem;
-            margin-bottom: 1rem;
-            color: #555;
-        }
-        .paper-link {
-            display: inline-block;
-            padding: 0.5rem 1rem;
-            background-color: #7bc144;
-            color: white;
-            text-decoration: none;
-            border-radius: 4px;
-            font-size: 0.9rem;
-        }
-        .paper-link:hover {
-            background-color: #5d9a2d;
-        }
-        .return-link {
-            display: inline-block;
-            margin-top: 3rem;
-            padding: 0.75rem 1.5rem;
-            background-color: #7bc144;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-        }
-        .return-link:hover {
-            background-color: #5d9a2d;
-        }
-    </style>
-</head>
-<body>
-    <header>
-        <a href="/"><img src="/branding_logo.png" alt="The Current-See Logo" class="logo"></a>
-        <h1>White Papers</h1>
-        <p>Technical and Economic Research</p>
-    </header>
+    }
+</style>
+
+<div class="whitepapers-container">
+    <h1 class="whitepapers-title">The Current-See White Papers</h1>
     
-    <div class="container">
-        <div class="intro">
-            <p>Our collection of white papers explores the theoretical foundations and practical implementations of the solar-backed economy. These documents outline our research, methodologies, and vision for a new global economic system.</p>
-            <div style="background-color: #f8f9fa; border-left: 4px solid #7bc144; padding: 15px; margin-top: 20px; border-radius: 4px;">
-                <strong>Note:</strong> Click on "Read Online" to view our white papers directly in your browser.
-            </div>
-        </div>
-        
-        <div class="papers-grid">
-            <div class="paper-card">
-                <div class="paper-cover">
-                    White Paper 1
-                </div>
-                <div class="paper-info">
-                    <h3 class="paper-title">The Problem and Vision</h3>
-                    <p class="paper-abstract">An introduction to the challenges facing our current economic and energy systems, and the vision for a solar-backed currency.</p>
-                    <a href="/white_paper_1.html" class="paper-link">Read Online</a>
-                </div>
-            </div>
-            
-            <div class="paper-card">
-                <div class="paper-cover">
-                    White Paper 2
-                </div>
-                <div class="paper-info">
-                    <h3 class="paper-title">The Current-See Solution and Technology Stack</h3>
-                    <p class="paper-abstract">A technical overview of our four-layer system architecture and implementation approach.</p>
-                    <a href="/white_paper_2.html" class="paper-link">Read Online</a>
-                </div>
-            </div>
-            
-            <div class="paper-card">
-                <div class="paper-cover">
-                    White Paper 3
-                </div>
-                <div class="paper-info">
-                    <h3 class="paper-title">Situationally Aware AI Wallet</h3>
-                    <p class="paper-abstract">Details on our intelligent digital wallet that guides spending decisions based on energy equivalency.</p>
-                    <a href="/white_paper_3.html" class="paper-link">Read Online</a>
-                </div>
-            </div>
-            
-            <div class="paper-card">
-                <div class="paper-cover">
-                    White Paper 4
-                </div>
-                <div class="paper-info">
-                    <h3 class="paper-title">Solar Conversion and Monetization Algorithm</h3>
-                    <p class="paper-abstract">The mathematical foundation for converting solar energy into monetary value.</p>
-                    <a href="/white_paper_4.html" class="paper-link">Read Online</a>
-                </div>
-            </div>
-            
-            <div class="paper-card">
-                <div class="paper-cover">
-                    White Paper 5
-                </div>
-                <div class="paper-info">
-                    <h3 class="paper-title">The TC-S Network</h3>
-                    <p class="paper-abstract">The core protocol layer and implementation roadmap for the global Current-See system.</p>
-                    <a href="/white_paper_5.html" class="paper-link">Read Online</a>
-                </div>
-            </div>
-            
-            <div class="paper-card">
-                <div class="paper-cover">
-                    White Paper 6
-                </div>
-                <div class="paper-info">
-                    <h3 class="paper-title">The Billionaire Surplus</h3>
-                    <p class="paper-abstract">Unlocking Discretionary Abundance for All: how the Current-See model creates a planet of billionaires.</p>
-                    <a href="/The_Billionaire_Surplus_White_Paper.pdf" class="paper-link">Read PDF</a>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Prominent Join Button -->
-        <div class="join-button-container" style="margin-top: 3rem; text-align: center;">
-            <a href="/signup.html" class="btn-join">
-              Join the 1,000 member prototype, start getting Solars today
-            </a>
-        </div>
-        
-        <div style="text-align: center; margin-top: 2rem;">
-            <a href="/" style="display: inline-block; background-color: #2054a6; color: white; font-weight: 700; padding: 1.2rem 2.5rem; border-radius: 50px; text-decoration: none; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(32, 84, 166, 0.3); font-size: 1.1rem; letter-spacing: 0.5px;">
-              <span style="display: inline-block; margin-right: 8px;">⬅</span> Return to Home Page
-            </a>
-        </div>
+    <div class="intro">
+        <p>Our collection of white papers explores the theoretical foundations and practical implementations of the solar-backed economy. These documents outline our research, methodologies, and vision for a new global economic system.</p>
     </div>
     
-    <footer>
-        <div class="footer-content">
-            <div class="footer-info">
-                <img src="/branding_logo.png" alt="The Current-See Logo" width="150" class="footer-logo">
-                <p>The Current-See PBC, Inc.</p>
-                <p>A Public Benefit Corporation</p>
-                <p>Established 2025</p>
-                <p>Email: <a href="mailto:hello@thecurrentsee.org" style="color:white; text-decoration:none; font-weight:700;">hello@thecurrentsee.org</a></p>
+    <div class="papers-grid">
+        <!-- Paper 1 -->
+        <div class="paper-card">
+            <div class="paper-image">
+                <img src="/solar_background.png" alt="Solar Economic Theory">
             </div>
-            
-            <div class="footer-links">
-                <h3>Navigation</h3>
-                <ul>
-                    <li><a href="/">Home</a></li>
-                    <li><a href="/about.html">About</a></li>
-                    <li><a href="/wallet.html">My Solar</a></li>
-                    <li><a href="/prototype.html">Prototype</a></li>
-                    <li><a href="/signup.html">Join</a></li>
-                </ul>
-            </div>
-            
-            <div class="footer-links">
-                <h3>Resources</h3>
-                <ul>
-                    <li><a href="/whitepapers.html">White Papers</a></li>
-                    <li><a href="/faq.html">FAQ</a></li>
-                    <li><a href="/contact.html">Contact Us</a></li>
-                    <li><a href="/declaration.html">Solar Declaration</a></li>
-                    <li><a href="/founder_note.html">Founder's Note</a></li>
-                </ul>
+            <div class="paper-content">
+                <h3 class="paper-title">The Billionaire Surplus: Solar Distribution as Economic Reset</h3>
+                <p class="paper-description">Examines the theoretical framework for redistributing solar energy value to create a planet of billionaires through daily solar distributions.</p>
+                <div class="paper-meta">
+                    <span class="paper-author">By T.D. Franklin</span>
+                    <span class="paper-date">March 2025</span>
+                </div>
+                <div class="paper-actions">
+                    <a href="/attached_assets/The_Billionaire_Surplus_White_Paper.pdf" class="paper-button btn-view" target="_blank">View</a>
+                    <a href="/attached_assets/The_Billionaire_Surplus_White_Paper.pdf" class="paper-button btn-download" download>Download</a>
+                </div>
             </div>
         </div>
         
-        <div class="copyright">
-            &copy; 2025 The Current-See PBC, Inc. All rights reserved.
+        <!-- Paper 2 -->
+        <div class="paper-card">
+            <div class="paper-image">
+                <img src="/solar_background.png" alt="Implementation Strategy">
+            </div>
+            <div class="paper-content">
+                <h3 class="paper-title">Implementing the Solar Economic System</h3>
+                <p class="paper-description">A technical overview of the implementation strategy for The Current-See prototype, including distribution mechanisms and technology stack.</p>
+                <div class="paper-meta">
+                    <span class="paper-author">By Technical Team</span>
+                    <span class="paper-date">April 2025</span>
+                </div>
+                <div class="paper-actions">
+                    <a href="/attached_assets/White_Paper_5.pdf" class="paper-button btn-view" target="_blank">View</a>
+                    <a href="/attached_assets/White_Paper_5.pdf" class="paper-button btn-download" download>Download</a>
+                </div>
+            </div>
         </div>
-    </footer>
-    
-    <style>
-        footer {
-            background-color: #222;
-            color: #f5f5f5;
-            padding: 3rem 0 1rem;
-            margin-top: 4rem;
-        }
         
-        .footer-content {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 2rem;
-        }
+        <!-- Paper 3 -->
+        <div class="paper-card">
+            <div class="paper-image">
+                <img src="/solar_background.png" alt="Solar Value Metric">
+            </div>
+            <div class="paper-content">
+                <h3 class="paper-title">Measuring Solar Value: The kWh Standard</h3>
+                <p class="paper-description">Details the scientific basis for using kilowatt-hours as the fundamental unit of measure for the solar economic system.</p>
+                <div class="paper-meta">
+                    <span class="paper-author">By Energy Research Team</span>
+                    <span class="paper-date">February 2025</span>
+                </div>
+                <div class="paper-actions">
+                    <a href="#" class="paper-button btn-view">Coming Soon</a>
+                </div>
+            </div>
+        </div>
         
-        .footer-info {
-            flex: 1;
-            min-width: 250px;
-            margin-bottom: 2rem;
-        }
-        
-        .footer-info p {
-            margin: 0.5rem 0;
-            color: #ccc;
-        }
-        
-        .footer-logo {
-            margin-bottom: 1rem;
-            filter: brightness(1.2);
-        }
-        
-        .footer-links {
-            flex: 1;
-            min-width: 200px;
-            margin-bottom: 2rem;
-        }
-        
-        .footer-links h3 {
-            font-size: 1.2rem;
-            margin-bottom: 1.2rem;
-            color: #fff;
-        }
-        
-        .footer-links ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-        
-        .footer-links li {
-            margin-bottom: 0.7rem;
-        }
-        
-        .footer-links a {
-            color: white;
-            text-decoration: none;
-            transition: color 0.3s ease;
-            font-weight: 700; /* Bold */
-        }
-        
-        .footer-links a:hover {
-            color: #f0f0f0;
-        }
-        
-        .copyright {
-            text-align: center;
-            padding-top: 2rem;
-            margin-top: 1rem;
-            border-top: 1px solid #444;
-            color: #888;
-            font-size: 0.9rem;
-            max-width: 1200px;
-            margin-left: auto;
-            margin-right: auto;
-            padding-left: 2rem;
-            padding-right: 2rem;
-        }
-    </style>
-</body>
-</html>
+        <!-- Paper 4 -->
+        <div class="paper-card">
+            <div class="paper-image">
+                <img src="/solar_background.png" alt="Global Economic Impact">
+            </div>
+            <div class="paper-content">
+                <h3 class="paper-title">Global Economic Impact Assessment</h3>
+                <p class="paper-description">Analysis of the projected global economic impact of transitioning to a solar-backed currency system, with focus on reducing inequality.</p>
+                <div class="paper-meta">
+                    <span class="paper-author">By Economics Team</span>
+                    <span class="paper-date">January 2025</span>
+                </div>
+                <div class="paper-actions">
+                    <a href="#" class="paper-button btn-view">Coming Soon</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<a href="/" class="back-btn">Return to Home Page</a>
