@@ -119,9 +119,21 @@
     </div>
 
     <div class="wallet-box button-row">
-      <a href="https://cross-platform-mobile-tdfranklin101.replit.app/" class="btn" target="_blank" rel="noopener noreferrer">Launch Full AI Wallet</a>
+      <a href="#" id="launch-ai-wallet" class="btn">Launch Full AI Wallet</a>
       <a href="https://demo-wallet-transfer-tdfranklin101.replit.app/" class="btn" target="_blank" rel="noopener noreferrer">View 2-Wallet Demo</a>
       <a href="https://thecurrentsee.org/signup" class="btn" target="_blank" rel="noopener noreferrer">Join the TC-S Network</a>
+    </div>
+    
+    <!-- Loading modal for the Full AI Wallet -->
+    <div id="loading-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; flex-direction: column;">
+      <div style="background-color: white; padding: 2rem; border-radius: 10px; text-align: center; max-width: 500px; width: 90%;">
+        <h3 style="margin-top: 0; color: #00aa88;">Starting Full AI Wallet...</h3>
+        <p>The wallet app is waking up and loading. This may take 10-15 seconds.</p>
+        <div style="margin: 1.5rem 0; height: 6px; background-color: #f0f0f0; border-radius: 3px; overflow: hidden;">
+          <div id="loading-progress" style="height: 100%; width: 0%; background-color: #00aa88; transition: width 0.5s;"></div>
+        </div>
+        <div id="loading-status">Initializing connection...</div>
+      </div>
     </div>
     
     <div class="wallet-box" style="text-align: center; margin-top: 20px;">
@@ -275,6 +287,117 @@
     window.onload = () => {
       loadWalletData();
       loadTransferLog();
+      
+      // Setup AI Wallet launch with "wake up" functionality
+      const launchButton = document.getElementById('launch-ai-wallet');
+      const loadingModal = document.getElementById('loading-modal');
+      const loadingProgress = document.getElementById('loading-progress');
+      const loadingStatus = document.getElementById('loading-status');
+      
+      launchButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        // Show loading modal
+        loadingModal.style.display = 'flex';
+        
+        // Try each of the app URLs in sequence
+        let appUrls = [...backendUrls]; // Create a copy of the backend URLs
+        let currentAppUrlIndex = 0;
+        let pingAttempts = 0;
+        const maxPingAttempts = 3;
+        
+        // Update the progress bar
+        function updateProgress(percent) {
+          loadingProgress.style.width = `${percent}%`;
+        }
+        
+        // Ping the app to wake it up
+        function pingApp() {
+          const currentAppUrl = appUrls[currentAppUrlIndex];
+          updateProgress(15 + pingAttempts * 20);
+          loadingStatus.textContent = `Waking up wallet app (attempt ${pingAttempts + 1})...`;
+          
+          // First try a GET request to /ping
+          fetch(`${currentAppUrl}/ping`, { method: 'GET' })
+            .then(res => {
+              if (res.ok) {
+                // App is awake, redirect
+                loadingStatus.textContent = 'Success! Launching wallet app...';
+                updateProgress(100);
+                
+                // Short delay before redirect for visual feedback
+                setTimeout(() => {
+                  window.open(currentAppUrl, '_blank');
+                  loadingModal.style.display = 'none';
+                  updateProgress(0);
+                }, 1000);
+              } else {
+                throw new Error('App not ready yet with GET request');
+              }
+            })
+            // If GET fails, try a POST request which sometimes works better for waking up Replit apps
+            .catch(() => {
+              loadingStatus.textContent = `Trying alternative wake method...`;
+              
+              return fetch(`${currentAppUrl}/`, { 
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'wake' })
+              })
+              .then(res => {
+                // Any response here is good, means the app is responsive
+                loadingStatus.textContent = 'Success! Launching wallet app...';
+                updateProgress(100);
+                
+                setTimeout(() => {
+                  window.open(currentAppUrl, '_blank');
+                  loadingModal.style.display = 'none';
+                  updateProgress(0);
+                }, 1000);
+              })
+              .catch(err => {
+                throw new Error('App not ready after both GET and POST attempts');
+              });
+            })
+            .catch(err => {
+              pingAttempts++;
+              
+              if (pingAttempts >= maxPingAttempts) {
+                // Try next URL
+                currentAppUrlIndex++;
+                pingAttempts = 0;
+                
+                if (currentAppUrlIndex >= appUrls.length) {
+                  // All URLs failed, just attempt direct launch of first URL
+                  loadingStatus.textContent = 'Unable to wake app automatically. Launching anyway...';
+                  updateProgress(100);
+                  
+                  setTimeout(() => {
+                    window.open(appUrls[0], '_blank');
+                    loadingModal.style.display = 'none';
+                    updateProgress(0);
+                  }, 2000);
+                  
+                  return;
+                }
+              }
+              
+              // Try again after a short delay
+              setTimeout(pingApp, 1500);
+            });
+        }
+        
+        // Start the ping process
+        pingApp();
+      });
+      
+      // Allow clicking outside the modal to close it
+      loadingModal.addEventListener('click', function(e) {
+        if (e.target === loadingModal) {
+          loadingModal.style.display = 'none';
+          loadingProgress.style.width = '0%';
+        }
+      });
     };
   </script>
 </body>
