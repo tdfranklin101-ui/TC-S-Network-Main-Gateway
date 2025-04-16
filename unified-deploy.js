@@ -3,6 +3,8 @@
  * 
  * This script handles both the main application and health checks
  * in a single process to ensure deployment reliability.
+ * 
+ * Updated to include support for watermark backgrounds and enhanced styles.
  */
 
 const http = require('http');
