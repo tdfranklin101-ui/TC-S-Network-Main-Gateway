@@ -119,13 +119,13 @@
     </div>
 
     <div class="wallet-box button-row">
-      <a href="https://crossplatformmobile.tdfrankl.replit.app/wallet" class="btn" target="_blank" rel="noopener noreferrer">Launch Full AI Wallet</a>
-      <a href="https://crossplatformmobile.tdfrankl.replit.app/transfer-demo" class="btn" target="_blank" rel="noopener noreferrer">View 2-Wallet Demo</a>
+      <button class="btn" onclick="showAppStatus('Full AI Wallet')">Launch Full AI Wallet</button>
+      <button class="btn" onclick="showAppStatus('2-Wallet Demo')">View 2-Wallet Demo</button>
       <a href="/signup.html" class="btn">Join the TC-S Network</a>
     </div>
     
     <div class="wallet-box" style="margin-top: 15px; font-size: 0.9rem; color: #666; text-align: center; padding: 10px; background-color: #f5f5f5; border-radius: 8px;">
-      <p><strong>Note:</strong> When using the wallet demos, you may see a security warning. These are development prototypes running on Replit. Click "Show Details" and "Visit this website" to proceed safely.</p>
+      <p><strong>Note:</strong> The wallet app prototypes are currently in development and not publicly available yet. They will be enabled in the production version. In the meantime, you can explore the current solar generation data on the <a href="/solar-generator.html" style="color: #00aa88; font-weight: bold;">Solar Generator</a> page.</p>
     </div>
     
     <!-- Loading modal for the wallet apps -->
@@ -282,6 +282,22 @@
       msg.pitch = 1.1;
       msg.rate = 1;
       window.speechSynthesis.speak(msg);
+    }
+    
+    function showAppStatus(appName) {
+      // Show simple notification that the app is in development
+      const loadingModal = document.getElementById('loading-modal');
+      const loadingTitle = document.getElementById('loading-title');
+      const loadingStatus = document.getElementById('loading-status');
+      
+      loadingModal.style.display = 'flex';
+      loadingTitle.textContent = `${appName} Development Status`;
+      loadingStatus.innerHTML = `The ${appName} is currently in development and not publicly available.<br><br>
+      This feature will be enabled in the production version.<br><br>
+      <a href="/solar-generator.html" style="color: #00aa88; font-weight: bold;">Check out the Solar Generator</a> to see the current-see in action!`;
+      
+      // No progress bar needed
+      document.getElementById('loading-progress').style.width = '0%';
     }
 
     setInterval(() => {
