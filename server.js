@@ -82,20 +82,20 @@ const members = [
     username: 'terry.franklin',
     name: 'Terry D. Franklin',
     joinedDate: '2025-04-10',
-    totalSolar: 5.00,
-    totalDollars: 680000,
+    totalSolar: 7.00,
+    totalDollars: 952000,
     isAnonymous: false,
-    lastDistributionDate: '2025-04-14' // Track last distribution date
+    lastDistributionDate: '2025-04-17' // Track last distribution date
   },
   {
     id: 2,
     username: 'j.franklin',
     name: 'JF',
     joinedDate: '2025-04-11',
-    totalSolar: 4.00,
-    totalDollars: 544000,
+    totalSolar: 6.00,
+    totalDollars: 816000,
     isAnonymous: false,
-    lastDistributionDate: '2025-04-14' // Track last distribution date
+    lastDistributionDate: '2025-04-17' // Track last distribution date
   }
 ];
 
@@ -1942,6 +1942,30 @@ server.listen(PORT, HOST, () => {
   logDistribution('Server started. SOLAR distribution scheduler initialized.');
   
   // Helper function to run a distribution with proper logging
+  // Function to update the static files that store member data
+  const updateMembersFiles = () => {
+    try {
+      // Update the public API file
+      fs.writeFileSync(
+        'public/api/members.json',
+        JSON.stringify(members, null, 2)
+      );
+      
+      // Update the embedded members file
+      fs.writeFileSync(
+        'public/embedded-members',
+        JSON.stringify(members, null, 2)
+      );
+      
+      logDistribution('Updated static member files with new SOLAR totals');
+      return true;
+    } catch (error) {
+      console.error('Error updating member files:', error);
+      logDistribution('ERROR: Failed to update static member files: ' + error.message);
+      return false;
+    }
+  };
+
   const runDistribution = () => {
     logDistribution('Running scheduled SOLAR distribution...');
     const updatedCount = updateMemberDistributions();
@@ -1950,6 +1974,12 @@ server.listen(PORT, HOST, () => {
     const distributionTime = new Date().toISOString();
     const pacificTime = new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' });
     logDistribution(`Distribution completed at ${distributionTime} (${pacificTime} Pacific Time). Updated ${updatedCount} members.`);
+    
+    // Update the static files with new totals
+    const filesUpdated = updateMembersFiles();
+    if (filesUpdated) {
+      logDistribution('Member files updated successfully with new SOLAR totals.');
+    }
     
     // Save a backup of the current members data
     try {
