@@ -81,9 +81,9 @@ const members = [
     id: 1,
     username: 'terry.franklin',
     name: 'Terry D. Franklin',
-    joinedDate: '2025-04-10',
-    totalSolar: 7.00,
-    totalDollars: 952000,
+    joinedDate: '2025-04-09',
+    totalSolar: 8.00,
+    totalDollars: 1088000,
     isAnonymous: false,
     lastDistributionDate: '2025-04-17' // Track last distribution date
   },
@@ -91,9 +91,9 @@ const members = [
     id: 2,
     username: 'j.franklin',
     name: 'JF',
-    joinedDate: '2025-04-11',
-    totalSolar: 6.00,
-    totalDollars: 816000,
+    joinedDate: '2025-04-10',
+    totalSolar: 7.00,
+    totalDollars: 952000,
     isAnonymous: false,
     lastDistributionDate: '2025-04-17' // Track last distribution date
   }
