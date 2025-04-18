@@ -111,21 +111,21 @@ document.addEventListener('DOMContentLoaded', function() {
             id: 1,
             username: "terry.franklin",
             name: "Terry D. Franklin",
-            joinedDate: "2025-04-10",
-            totalSolar: 6.00,
-            totalDollars: 816000,
+            joinedDate: "2025-04-09",
+            totalSolar: 8.00,
+            totalDollars: 1088000,
             isAnonymous: false,
-            lastDistributionDate: "2025-04-16"
+            lastDistributionDate: "2025-04-17"
           },
           {
             id: 2,
             username: "j.franklin",
             name: "JF",
-            joinedDate: "2025-04-11",
-            totalSolar: 5.00,
-            totalDollars: 680000,
+            joinedDate: "2025-04-10",
+            totalSolar: 7.00,
+            totalDollars: 952000,
             isAnonymous: false,
-            lastDistributionDate: "2025-04-16"
+            lastDistributionDate: "2025-04-17"
           }
         ];
         
