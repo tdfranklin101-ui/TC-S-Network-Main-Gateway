@@ -2,7 +2,10 @@
 <header class="site-header">
   <div class="logo-container">
     <a href="/">
-      <img src="/images/solar-logo.png" alt="The Current-See Logo" class="logo-img">
+      <picture>
+        <source srcset="/img/solar-logo.svg" type="image/svg+xml">
+        <img src="/img/solar-logo.png" alt="The Current-See Logo" class="logo-img">
+      </picture>
       <div class="logo-text">The Current-See<br>PBC, Inc.</div>
     </a>
   </div>
@@ -55,9 +58,12 @@
     color: #00573B;
   }
   
+  .logo-container picture,
   .logo-img {
     height: 50px;
+    width: auto;
     margin-right: 1rem;
+    display: block;
   }
   
   .logo-text {
