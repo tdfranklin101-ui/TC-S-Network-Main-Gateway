@@ -164,12 +164,29 @@ document.addEventListener('DOMContentLoaded', function() {
       // Clear any cached data by forcing a fresh reload
       console.log("Fetching fresh members data...");
       
-      // Try to fetch from API with cache-busting parameter
-      const response = await fetch(`/api/members.json?t=${timestamp}`, {
-        cache: 'no-cache',
+      // Force browser to clear its cache for this page
+      if ('caches' in window) {
+        try {
+          const cacheNames = await window.caches.keys();
+          await Promise.all(
+            cacheNames.map(cacheName => {
+              return caches.delete(cacheName);
+            })
+          );
+          console.log("Cleared browser caches");
+        } catch (e) {
+          console.warn("Failed to clear caches:", e);
+        }
+      }
+      
+      // Try to fetch from API with strict cache-busting parameter
+      const response = await fetch(`/api/members.json?nocache=${timestamp}`, {
+        method: 'GET',
+        cache: 'no-store',
         headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
         }
       });
       
@@ -184,12 +201,14 @@ document.addEventListener('DOMContentLoaded', function() {
       console.warn('Failed to load members from API, trying alternative sources...', err);
       
       try {
-        // Try to fetch from embedded data file with cache-busting
-        const embeddedResponse = await fetch(`/embedded-members?t=${timestamp}`, {
-          cache: 'no-cache',
+        // Try to fetch from embedded data file with aggressive cache-busting
+        const embeddedResponse = await fetch(`/embedded-members?nocache=${timestamp}`, {
+          method: 'GET',
+          cache: 'no-store',
           headers: {
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache'
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
           }
         });
         
@@ -203,27 +222,37 @@ document.addEventListener('DOMContentLoaded', function() {
       } catch (err3) {
         console.error('All member data sources failed, using default data', err3);
         
-        // Default data as last resort with BOTH members - correct dates
+        // Default data as last resort with ALL members - correct dates
         const defaultMembers = [
           {
             id: 1,
             username: "terry.franklin",
             name: "Terry D. Franklin",
             joinedDate: "2025-04-09",
-            totalSolar: 8.0000,
-            totalDollars: 1088000,
+            totalSolar: 9.0000,
+            totalDollars: 1224000,
             isAnonymous: false,
-            lastDistributionDate: "2025-04-17"
+            lastDistributionDate: "2025-04-18"
           },
           {
             id: 2,
             username: "j.franklin",
             name: "JF",
             joinedDate: "2025-04-10",
-            totalSolar: 7.0000,
-            totalDollars: 952000,
+            totalSolar: 8.0000,
+            totalDollars: 1088000,
             isAnonymous: false,
-            lastDistributionDate: "2025-04-17"
+            lastDistributionDate: "2025-04-18"
+          },
+          {
+            id: 3,
+            username: "you.are.next",
+            name: "you are next",
+            joinedDate: "2025-04-18",
+            totalSolar: 1.0000,
+            totalDollars: 136000,
+            isAnonymous: false,
+            lastDistributionDate: "2025-04-18"
           }
         ];
         
@@ -239,11 +268,13 @@ document.addEventListener('DOMContentLoaded', function() {
       // Add timestamp to prevent caching
       const timestamp = new Date().getTime();
       
-      const response = await fetch(`/api/member-count?t=${timestamp}`, {
-        cache: 'no-cache',
+      const response = await fetch(`/api/member-count?nocache=${timestamp}`, {
+        method: 'GET',
+        cache: 'no-store',
         headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
         }
       });
       
