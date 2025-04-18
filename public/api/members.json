@@ -18,5 +18,15 @@
     "totalDollars": 1088000,
     "isAnonymous": false,
     "lastDistributionDate": "2025-04-18"
+  },
+  {
+    "id": 3,
+    "username": "you.are.next",
+    "name": "you are next",
+    "joinedDate": "2025-04-18",
+    "totalSolar": 1,
+    "totalDollars": 136000,
+    "isAnonymous": false,
+    "lastDistributionDate": "2025-04-18"
   }
 ]
