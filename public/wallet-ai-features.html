@@ -287,10 +287,215 @@
   </style>
 </head>
 <body>
-  <!-- HEADER_PLACEHOLDER -->
+  <!-- Custom Solar Wallet Header -->
+  <header class="site-header wallet-header">
+    <div class="logo-container">
+      <a href="/">
+        <img src="/images/solar-icon.svg" alt="The Current-See Logo" class="logo-img" onerror="this.src='/img/solar-icon-default.svg'; this.onerror=null;">
+        <div class="logo-text">THE CURRENT-SEE</div>
+      </a>
+    </div>
+    <nav class="main-nav">
+      <button class="mobile-menu-toggle" aria-label="Toggle navigation menu">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </button>
+      <ul class="nav-items">
+        <li><a href="/">HOME</a></li>
+        <li><a href="/prototype.html">PROTOTYPE</a></li>
+        <li><a href="/merch.html">MERCH</a></li>
+        <li><a href="/wallet-ai-features.html" class="active">MY SOLAR</a></li>
+        <li><a href="/wallet-ai-features.html">WALLET</a></li>
+      </ul>
+      <div id="language-selector" class="language-selector"></div>
+    </nav>
+  </header>
+
+  <!-- Wallet Header Styles -->
+  <style>
+    /* Custom Wallet Header Styles */
+    .wallet-header {
+      background-color: #F5A623;
+      padding: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      max-width: 100%;
+      margin: 0;
+      border-bottom: none;
+    }
     
-    <main>
-      <h1 class="page-title">AI Wallet Econometric Features</h1>
+    .wallet-header .logo-text {
+      font-size: 1.2rem;
+      font-weight: 700;
+      line-height: 1.2;
+      color: #0057B8;
+    }
+    
+    .wallet-header .nav-items a {
+      color: #0057B8;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+    
+    .wallet-header .nav-items a:hover,
+    .wallet-header .nav-items a.active {
+      color: #FFFFFF;
+    }
+    
+    .wallet-header .nav-items a::after {
+      background-color: #FFFFFF;
+    }
+    
+    .wallet-header .mobile-menu-toggle .bar {
+      background-color: #0057B8;
+    }
+    
+    @media (max-width: 768px) {
+      .wallet-header .nav-items {
+        background-color: #F5A623;
+      }
+      
+      .wallet-header .nav-items li {
+        margin: 0.5rem 0;
+      }
+    }
+  </style>
+
+  <script>
+    // Mobile menu toggle functionality for wallet header
+    document.addEventListener('DOMContentLoaded', function() {
+      const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
+      const navItems = document.querySelector('.nav-items');
+      
+      if (mobileMenuToggle && navItems) {
+        mobileMenuToggle.addEventListener('click', function() {
+          navItems.classList.toggle('active');
+        });
+      }
+    });
+  </script>
+    
+    <main class="main-container" style="max-width: 1200px; margin: 0 auto; padding: 0 1rem;">
+      <!-- Solar Wallet Dashboard Section -->
+      <section class="feature-section wallet-dashboard">
+        <h1 class="page-title">Solar Wallet</h1>
+        <p class="page-subtitle">Manage your solar energy assets and track your environmental impact</p>
+        
+        <div class="solar-balance-container">
+          <div class="solar-balance-header">Your Solar Balance</div>
+          <div class="solar-balance-amount">10.0000 SOLAR</div>
+          <div class="solar-balance-info">1 SOLAR = 4,913 kWh = $136,000</div>
+        </div>
+        
+        <div class="distribution-history">
+          <h3>Recent Distributions</h3>
+          <div class="distribution-list">
+            <div class="distribution-item">
+              <div class="distribution-date">April 18, 2025</div>
+              <div class="distribution-amount">+1.0000 SOLAR</div>
+            </div>
+            <div class="distribution-item">
+              <div class="distribution-date">April 17, 2025</div>
+              <div class="distribution-amount">+1.0000 SOLAR</div>
+            </div>
+            <div class="distribution-item">
+              <div class="distribution-date">April 16, 2025</div>
+              <div class="distribution-amount">+1.0000 SOLAR</div>
+            </div>
+            <div class="distribution-item">
+              <div class="distribution-date">April 15, 2025</div>
+              <div class="distribution-amount">+1.0000 SOLAR</div>
+            </div>
+            <div class="distribution-item">
+              <div class="distribution-date">April 14, 2025</div>
+              <div class="distribution-amount">+1.0000 SOLAR</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <style>
+        /* Solar Wallet Dashboard Styles */
+        .wallet-dashboard {
+          background-color: #FFFFFF;
+          border-radius: 10px;
+          padding: 2rem;
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+          margin-bottom: 2rem;
+        }
+        
+        .solar-balance-container {
+          background: linear-gradient(135deg, #FFD700, #FFA500);
+          color: #0057B8;
+          padding: 2rem;
+          border-radius: 10px;
+          text-align: center;
+          margin: 1.5rem 0;
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .solar-balance-header {
+          font-size: 1.2rem;
+          font-weight: 600;
+          margin-bottom: 0.5rem;
+        }
+        
+        .solar-balance-amount {
+          font-family: 'Roboto Mono', monospace;
+          font-size: 2.5rem;
+          font-weight: 700;
+          margin: 0.5rem 0;
+        }
+        
+        .solar-balance-info {
+          font-size: 0.9rem;
+          opacity: 0.8;
+          margin-top: 0.5rem;
+        }
+        
+        .distribution-history {
+          margin-top: 2rem;
+        }
+        
+        .distribution-history h3 {
+          color: #0057B8;
+          margin-bottom: 1rem;
+          font-size: 1.4rem;
+        }
+        
+        .distribution-list {
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+        }
+        
+        .distribution-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 0.8rem 1rem;
+          background-color: #F5F5F5;
+          border-radius: 6px;
+          border-left: 4px solid #FFC107;
+        }
+        
+        .distribution-date {
+          color: #666;
+          font-size: 0.9rem;
+        }
+        
+        .distribution-amount {
+          font-family: 'Roboto Mono', monospace;
+          color: #4CAF50;
+          font-weight: 600;
+          font-size: 1.1rem;
+        }
+      </style>
+      
+      <h2 class="page-title">AI Wallet Econometric Features</h2>
       <p class="page-subtitle">Evaluating carbon footprints, energy metrics, and supply chain analytics</p>
       
       <div class="feature-section">
