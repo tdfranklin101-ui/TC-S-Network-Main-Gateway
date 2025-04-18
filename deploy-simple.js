@@ -145,10 +145,23 @@ function updateMembersFiles() {
 // Update embedded-members file (used for quick loading on client)
 function updateEmbeddedMembersFile() {
   try {
+    // Format the members data with 4 decimal places for SOLAR values
+    const formattedMembers = members.map(member => {
+      // Create a copy of the member
+      const formattedMember = {...member};
+      
+      // Format totalSolar to 4 decimal places if it's a number
+      if (typeof formattedMember.totalSolar !== 'undefined') {
+        formattedMember.totalSolar = parseFloat(formattedMember.totalSolar).toFixed(4);
+      }
+      
+      return formattedMember;
+    });
+    
     const embeddedMembersPath = path.join(PUBLIC_DIR, 'embedded-members');
     fs.writeFileSync(embeddedMembersPath, 
-      `window.embeddedMembers = ${JSON.stringify(members)};`);
-    log('Updated embedded-members file');
+      `window.embeddedMembers = ${JSON.stringify(formattedMembers)};`);
+    log('Updated embedded-members file with 4 decimal place SOLAR values');
   } catch (error) {
     log(`Error updating embedded-members file: ${error.message}`);
   }
@@ -163,7 +176,7 @@ function processDailyDistribution() {
     if (member.lastDistributionDate !== today) {
       // Add daily distribution (1 SOLAR per day)
       member.totalSolar += 1;
-      // Format with 4 decimal places
+      // Format with 4 decimal places (1.0000 format)
       member.totalSolar = parseFloat(member.totalSolar.toFixed(4));
       // Calculate dollar value (rounding to whole numbers as requested)
       member.totalDollars = Math.round(member.totalSolar * SOLAR_CONSTANTS.USD_PER_SOLAR);
@@ -349,7 +362,7 @@ app.post('/api/signup', (req, res) => {
     
     // Calculate proper initial SOLAR allocation:
     // 1. Everyone gets 1 SOLAR on the day they join
-    const initialSolar = 1.0000; // Format with 4 decimal places
+    const initialSolar = 1.0000; // Format with 4 decimal places (using 1.0000 format)
     
     const newMember = {
       id: members.length + 1,

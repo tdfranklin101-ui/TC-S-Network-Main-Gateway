@@ -1,89 +1,95 @@
 # The Current-See Deployment Guide
 
-This document outlines the deployment process for The Current-See website on Replit.
+This document provides instructions for deploying The Current-See website to Replit and configuring it with the custom domain www.thecurrentsee.org.
 
-## Deployment Steps
+## Deployment Checklist
 
-1. **Prepare for Deployment**:
-   - Ensure all HTML files have the header and footer placeholders
-   - Verify the solar counter is working properly
-   - Test language translation functionality
-   - Test AI assistant and voice assistant features
-   - Test all pages and navigation
+### Pre-Deployment Steps
 
-2. **Deploy on Replit**:
-   - Use the Replit deployment feature
-   - The deployment uses `main.js` as the entry point (which is linked to `deploy-simple.js`)
-   - The server handles both file serving and health checks
+1. ✅ Synchronized main.js with deploy-simple.js
+2. ✅ Verified health check endpoints are properly configured
+3. ✅ Confirmed SOLAR distribution system is functioning
+4. ✅ Checked all API endpoints are working correctly
+5. ✅ Updated header and footer navigation
 
-3. **Configure Domain**:
-   - Once deployed, configure the custom domain (www.thecurrentsee.org)
-   - Follow Replit's custom domain setup instructions
-   - Update DNS settings on Namecheap
+### Deployment Steps
 
-## Testing Deployment
+1. **Deploy to Replit**
+   - Click the "Deploy" button in the Replit interface
+   - Replit will handle building and deploying the application
+   - The deployment process uses the configuration in main.js
 
-- Use the health check endpoint: `/health`
-- Verify all pages load correctly
-- Test header and footer inclusion
-- Check the solar counter functionality
+2. **Verify Replit Deployment**
+   - Once deployed, Replit will provide a URL (*.replit.app)
+   - Visit this URL and make sure the site loads correctly
+   - You can run the verification script:
+     ```
+     node deployment-verification.js yourdomain.replit.app
+     ```
 
-## Updates and Fixes
+3. **Configure Custom Domain**
+   - In the Replit dashboard, go to your project
+   - Click on the "Deployments" tab
+   - Select "Custom domains"
+   - Add your domain www.thecurrentsee.org
+   - Follow the DNS instructions to point the domain to Replit
 
-### Solar Counter Fix (April 16, 2025)
+4. **DNS Configuration (at Namecheap)**
+   - Log in to your Namecheap account
+   - Go to the Domain List and select thecurrentsee.org
+   - Click "Manage"
+   - Select the "Advanced DNS" tab
+   - Add a CNAME record:
+     - Type: CNAME
+     - Host: www
+     - Value: (your-replit-app-url without https://)
+     - TTL: Automatic
+   - Add URL Redirect record for apex domain:
+     - Type: URL Redirect
+     - Host: @
+     - Value: http://www.thecurrentsee.org/
+     - TTL: Automatic
 
-The solar counter component was updated to address issues with initialization after header/footer injection:
+5. **Verify Custom Domain**
+   - Wait for DNS propagation (can take up to 48 hours)
+   - Visit www.thecurrentsee.org to verify it loads correctly
+   - Test key functionality:
+     - Sign up process
+     - SOLAR counter
+     - Member display
+     - Navigation
+   - You can run the verification script:
+     ```
+     node deployment-verification.js thecurrentsee.org
+     ```
 
-1. **Modified Files**:
-   - `public/js/real_time_solar_counter.js`: Added retry mechanism and improved initialization
-   - `main.js` and `deploy-simple.js`: Enhanced HTML processing to ensure scripts run after DOM is ready
+## Server Health Monitoring
 
-2. **How to Update Existing Deployment**:
-   - Run the included `update-deploy.sh` script which will:
-     - Copy the updated JS files to the deployment directory
-     - Attempt to restart the server if PM2 or systemctl are available
-   - Alternatively, manually redeploy using the Replit interface
+The Current-See server includes built-in health monitoring:
 
-3. **Verifying the Fix**:
-   - Check that the solar counter appears and animates on:
-     - Homepage (index.html)
-     - Solar Generator page (solar-generator.html)
-     - My Solar page (my-solar.html)
-   - Verify the counter shows proper MkWh values (6 decimal places)
-   - Verify monetary values update in real-time
+- `/health` endpoint for direct health checks
+- Root path (`/`) handles deployment health checks
+- Daily SOLAR distribution runs at midnight UTC
+- Member data is automatically updated
+
+## Regular Maintenance
+
+- The system will automatically handle SOLAR distributions
+- New members will receive their initial SOLAR allocation
+- Member data is persisted across server restarts
+- No manual intervention is needed for daily operations
 
 ## Troubleshooting
 
-If you encounter issues:
+If you encounter issues with the deployment:
 
-1. **Header/Footer Not Loading**:
-   - Verify the placeholders exist in the HTML files
-   - Check the includes directory structure
-
-2. **Server Errors**:
-   - Check the logs in the Replit console
-   - Verify port settings (default: 3000)
-
-3. **Solar Counter Issues**:
-   - Verify the solar counter script is included
-   - Check the initialization values
-
-4. **Language Translator Not Working**:
-   - Verify language-translator.js is loaded
-   - Check language-translator-loader.js is included in footer
-   - Ensure Google Translate API is accessible
-   
-5. **AI or Voice Assistant Issues**:
-   - Check that wallet-ai-assistant.js is properly loaded
-   - Verify voice-assistant.js is included
-   - Test speech recognition API browser compatibility
-
-## Maintenance
-
-- Update content through the Replit editor
-- Any significant changes might require re-deployment
-- Monitor logs regularly for potential issues
+1. Check the server logs in Replit
+2. Verify the health endpoint is responding
+3. Make sure the correct port is being used (PORT environment variable or default 3000)
+4. Check DNS configuration if the custom domain is not working
+5. Restart the server if necessary
 
 ## Contact
 
-For deployment assistance, contact: support@thecurrentsee.org
+For technical support with the deployment:
+- Email: hello@thecurrentsee.org
