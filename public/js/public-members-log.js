@@ -10,6 +10,22 @@ document.addEventListener('DOMContentLoaded', function() {
     return;
   }
 
+  // Function to update the member count throughout the site
+  function updateMemberCount(count) {
+    const memberCountElements = document.querySelectorAll('.member-count, #member-count');
+    memberCountElements.forEach(element => {
+      element.textContent = count;
+      
+      // Add a subtle highlight animation
+      element.style.transition = 'background-color 0.5s ease';
+      const originalColor = window.getComputedStyle(element).backgroundColor;
+      element.style.backgroundColor = 'rgba(255, 255, 0, 0.3)';
+      setTimeout(() => {
+        element.style.backgroundColor = originalColor;
+      }, 1000);
+    });
+  }
+  
   // Helper function to format date
   function formatDate(dateString) {
     console.log("Original date string:", dateString);
@@ -69,6 +85,9 @@ document.addEventListener('DOMContentLoaded', function() {
       membersLogContainer.innerHTML = '<p>No members data available</p>';
       return;
     }
+    
+    // Update member count display if element exists
+    updateMemberCount(members.length);
 
     // Clear the container
     membersLogContainer.innerHTML = '';
@@ -136,7 +155,8 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // Try to load from multiple sources with fallbacks
-  async function loadMembers() {
+  // Make loadMembers function global so it can be called from other scripts
+  window.loadMembers = async function() {
     // Add timestamp to prevent caching
     const timestamp = new Date().getTime();
     
@@ -213,6 +233,54 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
+  // Function to just update the member count without loading the full member log
+  window.refreshMemberCount = async function() {
+    try {
+      // Add timestamp to prevent caching
+      const timestamp = new Date().getTime();
+      
+      const response = await fetch(`/api/member-count?t=${timestamp}`, {
+        cache: 'no-cache',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        updateMemberCount(data.count);
+        return data.count;
+      }
+    } catch (err) {
+      console.warn('Failed to refresh member count', err);
+      // If we fail to get the count, try loading full members data instead
+      loadMembers();
+    }
+  };
+  
+  // Function to periodically check and update member count
+  window.startMemberCountUpdater = function(intervalSeconds = 30) {
+    // Update immediately
+    window.refreshMemberCount();
+    
+    // Then set up interval (if not already set)
+    if (!window.memberCountInterval) {
+      window.memberCountInterval = setInterval(() => {
+        window.refreshMemberCount();
+      }, intervalSeconds * 1000);
+      
+      console.log(`Started member count updater, checking every ${intervalSeconds} seconds`);
+    }
+  };
+  
   // Load the members data
-  loadMembers();
+  window.loadMembers();
+  
+  // Start member count updater after a short delay
+  setTimeout(() => {
+    if (typeof window.startMemberCountUpdater === 'function') {
+      window.startMemberCountUpdater(60); // Check every minute
+    }
+  }, 5000);
 });

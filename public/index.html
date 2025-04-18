@@ -33,11 +33,41 @@
             <a href="/business_plan.html" class="btn-secondary">Business Plan</a>
           </div>
           
-          <!-- Prominent Join Button -->
-          <div class="join-button-container">
-            <a href="/signup.html" class="btn-join">
-              Join the 1,000 member prototype, start getting Solars today
-            </a>
+          <!-- Simple Join Form -->
+          <div class="join-form-container" style="margin: 20px 0; max-width: 600px; background: rgba(255, 255, 255, 0.9); border-radius: 10px; padding: 20px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);">
+            <h3 style="margin-top: 0; color: #0057B8; font-size: 1.5rem;">Join Now & Start Getting Solars</h3>
+            
+            <div id="join-success-message" style="display: none; background-color: rgba(123, 193, 68, 0.2); border-left: 4px solid #7bc144; padding: 10px 15px; margin: 10px 0; color: #2c5e1a; border-radius: 4px;">
+              <strong>Welcome to The Current-See!</strong> Your SOLAR journey has begun. Check the Members Log to see your name.
+            </div>
+            
+            <div id="join-error-message" style="display: none; background-color: rgba(231, 76, 60, 0.2); border-left: 4px solid #e74c3c; padding: 10px 15px; margin: 10px 0; color: #c0392b; border-radius: 4px;">
+              <strong>Something went wrong.</strong> <span id="error-details">Please try again.</span>
+            </div>
+            
+            <form id="quick-join-form" style="display: flex; flex-wrap: wrap; gap: 10px;">
+              <div style="flex: 1; min-width: 200px;">
+                <label for="join-name" style="display: block; margin-bottom: 5px; font-weight: 600; color: #444;">Your Name</label>
+                <input type="text" id="join-name" name="name" required 
+                       style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 16px;">
+              </div>
+              
+              <div style="flex: 1; min-width: 200px;">
+                <label for="join-email" style="display: block; margin-bottom: 5px; font-weight: 600; color: #444;">Email Address</label>
+                <input type="email" id="join-email" name="email" required 
+                       style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 16px;">
+              </div>
+              
+              <div style="width: 100%; margin-top: 10px;">
+                <button type="submit" style="background: linear-gradient(to right, #0057B8, #7bc144); color: white; border: none; padding: 12px 20px; font-size: 16px; border-radius: 5px; font-weight: 600; cursor: pointer; width: 100%; transition: all 0.3s ease;">
+                  Join & Start Getting SOLAR
+                </button>
+              </div>
+            </form>
+            
+            <p style="margin-top: 10px; font-size: 14px; color: #666; text-align: center;">
+              Already a member? <a href="/my-solar.html" style="color: #0057B8; text-decoration: none; font-weight: 600;">View your SOLAR</a>
+            </p>
           </div>
         </div>
       </section>
@@ -117,7 +147,7 @@
             <h2>My Solar</h2>
             <p>Sign up to receive daily solar distributions and track your growing solar balance.</p>
             <div class="join-today-button">
-              <a href="/signup.html" class="btn-primary">Join Today</a>
+              <a href="#quick-join-form" class="btn-primary" onclick="document.getElementById('join-name').focus();">Join Today</a>
             </div>
           </div>
         </div>
@@ -161,5 +191,115 @@
 
   <!-- Language Translator -->
   <script src="/js/language-translator.js"></script>
+  
+  <!-- Join Form Submission Script -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const joinForm = document.getElementById('quick-join-form');
+      const successMessage = document.getElementById('join-success-message');
+      const errorMessage = document.getElementById('join-error-message');
+      const errorDetails = document.getElementById('error-details');
+      
+      if (joinForm) {
+        joinForm.addEventListener('submit', function(e) {
+          e.preventDefault();
+          
+          // Get form data
+          const nameInput = document.getElementById('join-name');
+          const emailInput = document.getElementById('join-email');
+          
+          if (!nameInput.value || !emailInput.value) {
+            showError('Please fill in all fields');
+            return;
+          }
+          
+          // Hide previous messages
+          successMessage.style.display = 'none';
+          errorMessage.style.display = 'none';
+          
+          // Prepare form data
+          const formData = {
+            name: nameInput.value,
+            email: emailInput.value
+          };
+          
+          // Show loading state on button
+          const submitButton = joinForm.querySelector('button[type="submit"]');
+          const originalButtonText = submitButton.innerHTML;
+          submitButton.innerHTML = 'Processing...';
+          submitButton.disabled = true;
+          
+          // Send API request
+          fetch('/api/signup', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+          })
+          .then(response => {
+            if (!response.ok) {
+              return response.json().then(data => {
+                throw new Error(data.error || 'Registration failed');
+              });
+            }
+            return response.json();
+          })
+          .then(data => {
+            // Success
+            showSuccess();
+            joinForm.reset();
+            
+            // Update member count immediately
+            if (data.totalMembers && typeof window.refreshMemberCount === 'function') {
+              // Use the dedicated function if available
+              window.refreshMemberCount();
+            } else {
+              // Fallback to manual update
+              const memberCountElement = document.getElementById('member-count');
+              if (memberCountElement && data.member) {
+                // Get current count as a number
+                const currentCount = parseInt(memberCountElement.textContent || '0', 10);
+                // Add 1 or set to the total number if we have it
+                memberCountElement.textContent = data.totalMembers || (currentCount + 1);
+              }
+            }
+            
+            // Refresh the members log after successful signup
+            setTimeout(() => {
+              if (typeof loadMembers === 'function') {
+                loadMembers();
+              } else {
+                location.reload();
+              }
+            }, 2000);
+          })
+          .catch(error => {
+            showError(error.message || 'Failed to join. Please try again.');
+          })
+          .finally(() => {
+            // Reset button state
+            submitButton.innerHTML = originalButtonText;
+            submitButton.disabled = false;
+          });
+        });
+      }
+      
+      function showSuccess() {
+        successMessage.style.display = 'block';
+        errorMessage.style.display = 'none';
+        // Scroll to the success message
+        successMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      
+      function showError(message) {
+        errorMessage.style.display = 'block';
+        successMessage.style.display = 'none';
+        errorDetails.textContent = message || 'Please try again.';
+        // Scroll to the error message
+        errorMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+  </script>
 </body>
 </html>

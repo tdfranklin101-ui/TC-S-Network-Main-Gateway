@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Signup Test</title>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    h1 {
+      color: #0057B8;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    button {
+      background-color: #0057B8;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .result {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 4px;
+    }
+    .success {
+      background-color: #d4edda;
+      border: 1px solid #c3e6cb;
+      color: #155724;
+    }
+    .error {
+      background-color: #f8d7da;
+      border: 1px solid #f5c6cb;
+      color: #721c24;
+    }
+    pre {
+      background: #f8f9fa;
+      padding: 10px;
+      border-radius: 4px;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>Signup API Test</h1>
+  
+  <div class="form-group">
+    <label for="name">Name:</label>
+    <input type="text" id="name" value="Test User">
+  </div>
+  
+  <div class="form-group">
+    <label for="email">Email:</label>
+    <input type="email" id="email" value="test@example.com">
+  </div>
+  
+  <button id="submit">Submit Signup</button>
+  
+  <div id="result" class="result" style="display: none;"></div>
+  
+  <script>
+    document.getElementById('submit').addEventListener('click', function() {
+      const name = document.getElementById('name').value;
+      const email = document.getElementById('email').value;
+      
+      if (!name || !email) {
+        showResult('Please fill in all fields', false);
+        return;
+      }
+      
+      // Clear previous results
+      document.getElementById('result').style.display = 'none';
+      
+      // Disable button during request
+      const submitButton = document.getElementById('submit');
+      submitButton.disabled = true;
+      submitButton.textContent = 'Submitting...';
+      
+      // Send API request
+      fetch('/api/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: name,
+          email: email
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          let message = 'Signup successful!';
+          if (data.totalMembers) {
+            message += `<p>New member count: <strong>${data.totalMembers}</strong></p>`;
+          }
+          message += '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+          showResult(message, true);
+          
+          // Notify the main page to update member count if we're in an iframe
+          try {
+            if (window.parent && window.parent !== window) {
+              window.parent.postMessage({
+                type: 'new-member',
+                count: data.totalMembers
+              }, '*');
+            }
+          } catch (e) {
+            console.log('Could not notify parent window', e);
+          }
+        } else {
+          showResult('Error: ' + data.error, false);
+        }
+      })
+      .catch(error => {
+        showResult('Error: ' + error.message, false);
+      })
+      .finally(() => {
+        // Re-enable button
+        submitButton.disabled = false;
+        submitButton.textContent = 'Submit Signup';
+      });
+    });
+    
+    function showResult(message, isSuccess) {
+      const resultElement = document.getElementById('result');
+      resultElement.innerHTML = message;
+      resultElement.className = 'result ' + (isSuccess ? 'success' : 'error');
+      resultElement.style.display = 'block';
+    }
+  </script>
+</body>
+</html>
