@@ -99,6 +99,35 @@ const members = [
   }
 ];
 
+// Function to update the static files that store member data
+function updateMembersFiles() {
+  try {
+    // Ensure the directories exist
+    if (!fs.existsSync('public/api')) {
+      fs.mkdirSync('public/api', { recursive: true });
+    }
+    
+    // Update the public API file
+    fs.writeFileSync(
+      'public/api/members.json',
+      JSON.stringify(members, null, 2)
+    );
+    
+    // Update the embedded members file
+    fs.writeFileSync(
+      'public/embedded-members',
+      JSON.stringify(members, null, 2)
+    );
+    
+    console.log('Updated static member files with new SOLAR totals');
+    return true;
+  } catch (error) {
+    console.error('Error updating member files:', error);
+    console.log('ERROR: Failed to update static member files: ' + error.message);
+    return false;
+  }
+}
+
 // Function to update member SOLAR distributions
 function updateMemberDistributions() {
   const today = new Date().toISOString().split('T')[0];
@@ -131,6 +160,9 @@ function updateMemberDistributions() {
     const jfSOLAR = members[jfIdx].totalSolar.toFixed(2);
     console.log(`Updating JF's SOLAR value to ${jfSOLAR}`);
   }
+  
+  // Ensure we always update the static files after modifying member data
+  updateMembersFiles();
   
   console.log(`Daily distribution completed: ${distributedCount} members updated`);
   return distributedCount;
@@ -1975,11 +2007,7 @@ server.listen(PORT, HOST, () => {
     const pacificTime = new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' });
     logDistribution(`Distribution completed at ${distributionTime} (${pacificTime} Pacific Time). Updated ${updatedCount} members.`);
     
-    // Update the static files with new totals
-    const filesUpdated = updateMembersFiles();
-    if (filesUpdated) {
-      logDistribution('Member files updated successfully with new SOLAR totals.');
-    }
+    // Files are already updated inside updateMemberDistributions()
     
     // Save a backup of the current members data
     try {

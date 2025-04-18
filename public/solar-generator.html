@@ -61,6 +61,7 @@
             background-color: #f9f9f9;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            position: relative;
         }
         
         .counter-label {
@@ -93,6 +94,38 @@
             margin: 0;
         }
         
+        /* Styles for solar icon */
+        .solar-icon-container {
+            position: absolute;
+            right: 15px;
+            top: 15px;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .solar-icon {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.5));
+            animation: glow 3s infinite alternate;
+        }
+        
+        @keyframes glow {
+            from {
+                filter: drop-shadow(0 0 2px rgba(255, 215, 0, 0.5));
+            }
+            to {
+                filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.8));
+            }
+        }
+        
+        .solar-graphic-counter {
+            overflow: visible;
+        }
+        
         @media (max-width: 768px) {
             .counter-container {
                 flex-direction: column;
@@ -101,6 +134,13 @@
             
             .counter {
                 width: 100%;
+            }
+            
+            .solar-icon-container {
+                position: relative;
+                right: auto;
+                top: auto;
+                margin: 10px auto 0;
             }
         }
     </style>
@@ -125,10 +165,13 @@
                     <div class="counter-label">Million kWh (MkWh)</div>
                 </div>
                 
-                <div class="counter">
+                <div class="counter solar-graphic-counter">
                     <div class="counter-label">Equivalent Monetary Value</div>
                     <div id="money-display" class="counter-value">$0</div>
                     <div class="counter-label">USD</div>
+                    <div class="solar-icon-container">
+                        <img src="/images/solar-icon.svg" alt="Solar Energy Icon" class="solar-icon" />
+                    </div>
                 </div>
             </div>
             
