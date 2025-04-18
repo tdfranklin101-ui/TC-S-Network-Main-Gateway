@@ -25,7 +25,8 @@ const SOLAR_CONSTANTS = {
   METERS_PER_KM2: 1000000, // Square meters per square km
   GLOBAL_POPULATION: 8500000000, // Approximate global population
   SOLAR_PERCENT: 0.01, // 1% allocation for humanity
-  USD_PER_SOLAR: 100, // Current-See conversion rate
+  USD_PER_SOLAR: 136000, // Current-See conversion rate ($136,000 per SOLAR)
+  KWH_PER_SOLAR: 4913, // kWh per SOLAR
   GENERATION_START_DATE: new Date('2025-04-07T00:00:00Z') // Solar tracking start date
 };
 
@@ -81,23 +82,23 @@ function loadMembers() {
       members = [
         {
           id: 1,
-          username: "terry.d.franklin",
+          username: "terry.franklin",
           name: "Terry D. Franklin",
           joinedDate: "2025-04-09",
-          totalSolar: 8.00,
-          totalDollars: 800.00,
+          totalSolar: 9.0000,
+          totalDollars: 1224000,
           isAnonymous: false,
-          lastDistributionDate: "2025-04-16"
+          lastDistributionDate: "2025-04-18"
         },
         {
           id: 2,
-          username: "jf",
+          username: "j.franklin",
           name: "JF",
           joinedDate: "2025-04-10",
-          totalSolar: 7.00,
-          totalDollars: 700.00,
+          totalSolar: 8.0000,
+          totalDollars: 1088000,
           isAnonymous: false,
-          lastDistributionDate: "2025-04-16"
+          lastDistributionDate: "2025-04-18"
         }
       ];
       // Save default members
@@ -162,11 +163,13 @@ function processDailyDistribution() {
     if (member.lastDistributionDate !== today) {
       // Add daily distribution (1 SOLAR per day)
       member.totalSolar += 1;
+      // Format with 4 decimal places
+      member.totalSolar = parseFloat(member.totalSolar.toFixed(4));
       // Calculate dollar value (rounding to whole numbers as requested)
       member.totalDollars = Math.round(member.totalSolar * SOLAR_CONSTANTS.USD_PER_SOLAR);
       member.lastDistributionDate = today;
       updatedCount++;
-      log(`Member ${member.name} received 1 SOLAR, new total: ${member.totalSolar} SOLAR = $${member.totalDollars}`);
+      log(`Member ${member.name} received 1 SOLAR, new total: ${member.totalSolar.toFixed(4)} SOLAR = $${member.totalDollars.toLocaleString()}`);
     }
   });
   
@@ -346,7 +349,7 @@ app.post('/api/signup', (req, res) => {
     
     // Calculate proper initial SOLAR allocation:
     // 1. Everyone gets 1 SOLAR on the day they join
-    const initialSolar = 1.00;
+    const initialSolar = 1.0000; // Format with 4 decimal places
     
     const newMember = {
       id: members.length + 1,
@@ -354,7 +357,7 @@ app.post('/api/signup', (req, res) => {
       name: userData.name,
       email: userData.email,
       joinedDate: today,
-      totalSolar: initialSolar, // Initial allocation
+      totalSolar: initialSolar, // Initial allocation with 4 decimal places
       totalDollars: Math.round(initialSolar * SOLAR_CONSTANTS.USD_PER_SOLAR),
       isAnonymous: userData.isAnonymous || false,
       lastDistributionDate: today // Set initial distribution date
@@ -401,16 +404,28 @@ app.get('/api/solar-data', (req, res) => {
   const totalEnergy = calculateTotalEnergy();
   const totalValue = calculateTotalValue();
   
+  // Calculate total SOLAR tokens
+  const totalSolar = totalValue / SOLAR_CONSTANTS.USD_PER_SOLAR;
+  
   res.json({
     energy: {
       value: totalEnergy,
       unit: 'MkWh'
     },
+    solar: {
+      value: parseFloat(totalSolar.toFixed(4)),
+      formatted: totalSolar.toLocaleString('en-US', {
+        minimumFractionDigits: 4,
+        maximumFractionDigits: 4
+      }),
+      kwhPerSolar: SOLAR_CONSTANTS.KWH_PER_SOLAR,
+      usdPerSolar: SOLAR_CONSTANTS.USD_PER_SOLAR
+    },
     money: {
       value: totalValue,
       formatted: '$' + totalValue.toLocaleString('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
       })
     },
     timestamp: new Date().toISOString()

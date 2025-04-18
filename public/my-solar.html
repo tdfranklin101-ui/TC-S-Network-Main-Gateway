@@ -413,7 +413,7 @@
                 <!-- Solar stats -->
                 <div class="col-md-4">
                     <div class="card stat-card">
-                        <div class="stat-value" id="total-solar">0.00000</div>
+                        <div class="stat-value" id="total-solar">0.0000</div>
                         <div class="stat-label">Total Solar</div>
                     </div>
                 </div>
@@ -596,12 +596,12 @@
                 const calculatedSolar = daysDiff + 0.01918;
                 
                 // Calculate KWh and dollars based on new SOLAR amount
-                const kwhPerSolar = 17700000; // 17.7M kWh per SOLAR
+                const kwhPerSolar = 4913; // 4,913 kWh per SOLAR
                 const usdPerSolar = 136000; // $136,000 per SOLAR
                 const calculatedKwh = calculatedSolar * kwhPerSolar;
                 const calculatedDollars = calculatedSolar * usdPerSolar;
                 
-                document.getElementById('total-solar').textContent = calculatedSolar.toFixed(5);
+                document.getElementById('total-solar').textContent = calculatedSolar.toFixed(4);
                 document.getElementById('total-kwh').textContent = calculatedKwh.toLocaleString(undefined, { maximumFractionDigits: 2 });
                 document.getElementById('total-dollars').textContent = `$${calculatedDollars.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
             }
@@ -648,7 +648,7 @@
                         <div class="row">
                             <div class="col-md-4">
                                 <small class="text-muted">Solar</small>
-                                <div>${Number(dist.solarAmount).toFixed(5)}</div>
+                                <div>${Number(dist.solarAmount).toFixed(4)}</div>
                             </div>
                             <div class="col-md-4">
                                 <small class="text-muted">kWh</small>
@@ -707,7 +707,7 @@
                     <div class="leaderboard-entry">
                         <div class="leaderboard-rank">#${index + 1}</div>
                         <div class="leaderboard-name">${account.displayName}</div>
-                        <div class="leaderboard-value">${calculatedSolar.toFixed(5)} <small>SOLAR</small></div>
+                        <div class="leaderboard-value">${calculatedSolar.toFixed(4)} <small>SOLAR</small></div>
                     </div>
                 `;
             });
