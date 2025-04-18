@@ -23,6 +23,7 @@
       <li><a href="/merch.html">Merchandise</a></li>
       <li><a href="/wallet-ai-features.html">Wallet</a></li>
       <li><a href="/ai-assistant-demo.html">AI Assistant</a></li>
+      <li><a href="/#join-section" class="join-button">Join</a></li>
     </ul>
     <div id="language-selector" class="language-selector"></div>
   </nav>
@@ -107,6 +108,24 @@
   
   .nav-items a:hover::after {
     width: 100%;
+  }
+  
+  /* Special styling for Join button */
+  .nav-items a.join-button {
+    background-color: #4caf50;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+  }
+  
+  .nav-items a.join-button:hover {
+    background-color: #45a049;
+    color: white;
+  }
+  
+  .nav-items a.join-button::after {
+    display: none;
   }
   
   .mobile-menu-toggle {
