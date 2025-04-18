@@ -63,8 +63,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const entryDiv = document.createElement('div');
     entryDiv.className = 'members-log-entry';
 
-    // Format SOLAR with 2 decimal places
-    const solarFormatted = parseFloat(member.totalSolar).toFixed(2);
+    // Format SOLAR with 4 decimal places (showing values like 1.0001)
+    const solarFormatted = parseFloat(member.totalSolar).toFixed(4);
     
     // Format date
     const joinedDate = formatDate(member.joinedDate);
@@ -210,7 +210,7 @@ document.addEventListener('DOMContentLoaded', function() {
             username: "terry.franklin",
             name: "Terry D. Franklin",
             joinedDate: "2025-04-09",
-            totalSolar: 8.00,
+            totalSolar: 8.0000,
             totalDollars: 1088000,
             isAnonymous: false,
             lastDistributionDate: "2025-04-17"
@@ -220,7 +220,7 @@ document.addEventListener('DOMContentLoaded', function() {
             username: "j.franklin",
             name: "JF",
             joinedDate: "2025-04-10",
-            totalSolar: 7.00,
+            totalSolar: 7.0000,
             totalDollars: 952000,
             isAnonymous: false,
             lastDistributionDate: "2025-04-17"
