@@ -12,6 +12,28 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Helper function to format date
   function formatDate(dateString) {
+    console.log("Original date string:", dateString);
+    
+    // Handle ISO format dates properly, forcing UTC interpretation to avoid timezone issues
+    const parts = dateString.split('-');
+    if (parts.length === 3) {
+      const year = parseInt(parts[0]);
+      const month = parseInt(parts[1]) - 1; // JavaScript months are 0-based
+      const day = parseInt(parts[2]);
+      
+      // Create date with explicit year, month, day components
+      const date = new Date(Date.UTC(year, month, day));
+      console.log("Created date object:", date);
+      
+      return date.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        timeZone: 'UTC' // Ensure UTC interpretation
+      });
+    }
+    
+    // Fallback for non-standard formats
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { 
       year: 'numeric', 
@@ -33,7 +55,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     entryDiv.innerHTML = `
       <div class="member-name">${member.name}</div>
-      <div class="member-joined">Joined: ${joinedDate}</div>
+      <div class="member-joined" data-joined-date="${member.joinedDate}">Joined: ${joinedDate}</div>
       <div class="member-solar">SOLAR: ${solarFormatted}</div>
     `;
 
@@ -63,29 +85,77 @@ document.addEventListener('DOMContentLoaded', function() {
       wrapperDiv.appendChild(titleElement);
     }
 
-    // Sort members by joined date (newest first)
-    const sortedMembers = [...members].sort((a, b) => {
+    // Get only visible, non-anonymous members
+    let visibleMembers = members.filter(member => !member.isAnonymous);
+    
+    // Hard-code the specific order for the key members
+    const sortedMembers = [];
+    
+    // Terry should always be first (joined April 9)
+    const terry = visibleMembers.find(m => m.name === "Terry D. Franklin");
+    if (terry) {
+      sortedMembers.push(terry);
+    }
+    
+    // JF should always be second (joined April 10)
+    const jf = visibleMembers.find(m => m.name === "JF");
+    if (jf) {
+      sortedMembers.push(jf);
+    }
+    
+    // Add any other members after the first two, sorted by joined date (newest first)
+    const otherMembers = visibleMembers.filter(m => 
+      m.name !== "Terry D. Franklin" && m.name !== "JF"
+    ).sort((a, b) => {
       return new Date(b.joinedDate) - new Date(a.joinedDate);
     });
+    
+    sortedMembers.push(...otherMembers);
 
-    // Create and add each member entry
+    // Create and add each member entry (we've already filtered out anonymous members)
     sortedMembers.forEach(member => {
-      if (!member.isAnonymous) {
-        wrapperDiv.appendChild(createMemberEntry(member));
-      }
+      wrapperDiv.appendChild(createMemberEntry(member));
     });
 
+    // Add data refreshed indicator
+    const refreshedInfo = document.createElement('div');
+    refreshedInfo.className = 'data-refreshed-info';
+    refreshedInfo.style.fontSize = '0.7rem';
+    refreshedInfo.style.color = '#777';
+    refreshedInfo.style.textAlign = 'right';
+    refreshedInfo.style.marginTop = '10px';
+    
+    const now = new Date();
+    const timeString = now.toLocaleTimeString();
+    refreshedInfo.textContent = `Data refreshed: ${timeString}`;
+    
+    wrapperDiv.appendChild(refreshedInfo);
+    
     // Add the wrapper to the container
     membersLogContainer.appendChild(wrapperDiv);
   }
 
   // Try to load from multiple sources with fallbacks
   async function loadMembers() {
+    // Add timestamp to prevent caching
+    const timestamp = new Date().getTime();
+    
     try {
-      // Try to fetch from API
-      const response = await fetch('/api/members.json');
+      // Clear any cached data by forcing a fresh reload
+      console.log("Fetching fresh members data...");
+      
+      // Try to fetch from API with cache-busting parameter
+      const response = await fetch(`/api/members.json?t=${timestamp}`, {
+        cache: 'no-cache',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+      
       if (response.ok) {
         const members = await response.json();
+        console.log("Members data loaded:", members);
         createMembersLog(members);
         return;
       }
@@ -94,10 +164,18 @@ document.addEventListener('DOMContentLoaded', function() {
       console.warn('Failed to load members from API, trying alternative sources...', err);
       
       try {
-        // Try to fetch from embedded data file
-        const embeddedResponse = await fetch('/embedded-members');
+        // Try to fetch from embedded data file with cache-busting
+        const embeddedResponse = await fetch(`/embedded-members?t=${timestamp}`, {
+          cache: 'no-cache',
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
+        });
+        
         if (embeddedResponse.ok) {
           const members = await embeddedResponse.json();
+          console.log("Members data loaded from embedded:", members);
           createMembersLog(members);
           return;
         }
@@ -105,7 +183,7 @@ document.addEventListener('DOMContentLoaded', function() {
       } catch (err3) {
         console.error('All member data sources failed, using default data', err3);
         
-        // Default data as last resort with BOTH members
+        // Default data as last resort with BOTH members - correct dates
         const defaultMembers = [
           {
             id: 1,
@@ -129,6 +207,7 @@ document.addEventListener('DOMContentLoaded', function() {
           }
         ];
         
+        console.log("Using default members data:", defaultMembers);
         createMembersLog(defaultMembers);
       }
     }

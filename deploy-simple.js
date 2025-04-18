@@ -113,7 +113,40 @@ app.use((req, res, next) => {
 });
 
 // Serve static files
-app.use(express.static(PUBLIC_DIR));
+// Set no-cache headers for member data to prevent stale information
+app.use('/api/members.json', (req, res, next) => {
+  res.set({
+    'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0',
+    'Surrogate-Control': 'no-store'
+  });
+  next();
+});
+
+app.use('/embedded-members', (req, res, next) => {
+  res.set({
+    'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0',
+    'Surrogate-Control': 'no-store'
+  });
+  next();
+});
+
+// Serve static files with cache control for JS files
+app.use(express.static(PUBLIC_DIR, {
+  setHeaders: (res, path) => {
+    // Set no-cache headers for JavaScript files to prevent stale code
+    if (path.endsWith('.js')) {
+      res.set({
+        'Cache-Control': 'no-cache, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      });
+    }
+  }
+}));
 
 // Fallback handler for SPA-like navigation (without using path-to-regexp)
 app.use((req, res) => {
