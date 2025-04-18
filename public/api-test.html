@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Test Page</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .result {
+      margin-top: 20px;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      background-color: #f9f9f9;
+      white-space: pre-wrap;
+    }
+    .success {
+      background-color: #e8f5e9;
+      border-color: #4caf50;
+    }
+    .error {
+      background-color: #ffebee;
+      border-color: #f44336;
+    }
+    button {
+      padding: 10px 15px;
+      background-color: #4caf50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    input, label {
+      display: block;
+      margin-bottom: 10px;
+    }
+    input {
+      padding: 8px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+<body>
+  <h1>API Test Page</h1>
+  
+  <h2>Test Signup Process</h2>
+  <form id="signup-form">
+    <div>
+      <label for="name">Name:</label>
+      <input type="text" id="name" value="Test User" required>
+    </div>
+    <div>
+      <label for="email">Email:</label>
+      <input type="email" id="email" value="test@example.com" required>
+    </div>
+    <button type="submit">Submit Signup</button>
+  </form>
+  
+  <div id="signup-result" class="result"></div>
+  
+  <h2>Check Member Count</h2>
+  <button id="check-count">Check Current Member Count</button>
+  <div id="count-result" class="result"></div>
+  
+  <h2>Get Member List</h2>
+  <button id="get-members">Get All Members</button>
+  <div id="members-result" class="result"></div>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const signupForm = document.getElementById('signup-form');
+      const signupResult = document.getElementById('signup-result');
+      const checkCountBtn = document.getElementById('check-count');
+      const countResult = document.getElementById('count-result');
+      const getMembersBtn = document.getElementById('get-members');
+      const membersResult = document.getElementById('members-result');
+      
+      // Handle signup form submission
+      signupForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const name = document.getElementById('name').value;
+        const email = document.getElementById('email').value;
+        
+        signupResult.textContent = 'Sending request...';
+        signupResult.className = 'result';
+        
+        try {
+          const response = await fetch('/api/signup', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ name, email })
+          });
+          
+          const data = await response.json();
+          
+          if (response.ok) {
+            signupResult.textContent = 'Success!\n' + JSON.stringify(data, null, 2);
+            signupResult.className = 'result success';
+          } else {
+            signupResult.textContent = 'Error!\n' + JSON.stringify(data, null, 2);
+            signupResult.className = 'result error';
+          }
+        } catch (error) {
+          signupResult.textContent = 'Error: ' + error.message;
+          signupResult.className = 'result error';
+        }
+      });
+      
+      // Handle member count check
+      checkCountBtn.addEventListener('click', async function() {
+        countResult.textContent = 'Fetching member count...';
+        countResult.className = 'result';
+        
+        try {
+          const response = await fetch('/api/member-count');
+          const data = await response.json();
+          
+          if (response.ok) {
+            countResult.textContent = 'Current member count: ' + data.count;
+            countResult.className = 'result success';
+          } else {
+            countResult.textContent = 'Error fetching count';
+            countResult.className = 'result error';
+          }
+        } catch (error) {
+          countResult.textContent = 'Error: ' + error.message;
+          countResult.className = 'result error';
+        }
+      });
+      
+      // Handle get all members
+      getMembersBtn.addEventListener('click', async function() {
+        membersResult.textContent = 'Fetching members...';
+        membersResult.className = 'result';
+        
+        try {
+          const response = await fetch('/api/members.json');
+          const data = await response.json();
+          
+          if (response.ok || response.status === 200) {
+            membersResult.textContent = 'Members:\n' + JSON.stringify(data, null, 2);
+            membersResult.className = 'result success';
+          } else {
+            membersResult.textContent = 'Error fetching members';
+            membersResult.className = 'result error';
+          }
+        } catch (error) {
+          membersResult.textContent = 'Error: ' + error.message;
+          membersResult.className = 'result error';
+        }
+      });
+    });
+  </script>
+</body>
+</html>
