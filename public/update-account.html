@@ -86,10 +86,10 @@
                 </div>
                 <div class="menu">
                     <a href="/">Home</a>
-                    <a href="/prototype">Prototype</a>
-                    <a href="/whitepapers">White Papers</a>
-                    <a href="/merch">Merchandise</a>
-                    <a href="/my-solar" class="btn-primary">Join Now</a>
+                    <a href="/prototype.html">Prototype</a>
+                    <a href="/whitepapers.html">White Papers</a>
+                    <a href="/merch.html">Merchandise</a>
+                    <a href="/wallet-ai-features.html" class="btn-primary">My Solar</a>
                 </div>
                 <div class="mobile-menu-toggle">
                     <span></span>
@@ -103,7 +103,7 @@
     <div class="container main-content">
         <div class="update-container">
             <h1 class="text-center mb-4">Update Your Account</h1>
-            <p class="text-center mb-4">Since you registered before our login system was implemented, please add your credentials below.</p>
+            <p class="text-center mb-4">Please update your account information below.</p>
             
             <div class="notification error" id="error-message"></div>
             <div class="notification success" id="success-message"></div>
@@ -141,7 +141,7 @@
                 </div>
                 
                 <div class="text-center mt-3">
-                    <a href="/login">Back to Login</a>
+                    <a href="/wallet-ai-features.html">Back to Wallet</a>
                 </div>
             </form>
         </div>
@@ -159,24 +159,24 @@
                 <div class="footer-column">
                     <h4>Learn More</h4>
                     <ul>
-                        <li><a href="/whitepapers">White Papers</a></li>
-                        <li><a href="/declaration">Solar Declaration</a></li>
-                        <li><a href="/founder_note">Founder's Note</a></li>
+                        <li><a href="/whitepapers.html">White Papers</a></li>
+                        <li><a href="/declaration.html">Solar Declaration</a></li>
+                        <li><a href="/founder_note.html">Founder's Note</a></li>
                     </ul>
                 </div>
                 <div class="footer-column">
                     <h4>Get Involved</h4>
                     <ul>
-                        <li><a href="/my-solar">Join The Current-See</a></li>
-                        <li><a href="/prototype">Try The Prototype</a></li>
-                        <li><a href="/merch">Support With Merch</a></li>
+                        <li><a href="/wallet-ai-features.html">Join The Current-See</a></li>
+                        <li><a href="/prototype.html">Try The Prototype</a></li>
+                        <li><a href="/merch.html">Support With Merch</a></li>
                     </ul>
                 </div>
                 <div class="footer-column">
                     <h4>Links</h4>
                     <ul>
                         <li><a href="/">Home</a></li>
-                        <li><a href="/wallet">Solar Wallet</a></li>
+                        <li><a href="/wallet-ai-features.html">Solar Wallet</a></li>
                         <li><a href="/admin">Admin</a></li>
                     </ul>
                 </div>
@@ -239,10 +239,10 @@
                 });
                 
                 if (response.ok) {
-                    showNotification('success', 'Account updated successfully! You can now login with your new credentials. Redirecting...');
-                    // Redirect to the login page after a short delay
+                    showNotification('success', 'Account updated successfully! Redirecting to your wallet...');
+                    // Redirect to the wallet page after a short delay
                     setTimeout(() => {
-                        window.location.href = '/login';
+                        window.location.href = '/wallet-ai-features.html';
                     }, 3000);
                 } else {
                     const errorData = await response.json();

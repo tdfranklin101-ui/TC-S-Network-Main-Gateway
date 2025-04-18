@@ -245,6 +245,27 @@ app.get('/health', (req, res) => {
   res.status(200).send('OK');
 });
 
+// Redirect paths for removed pages
+app.get('/my-solar', (req, res) => {
+  log('Redirecting /my-solar request to /wallet-ai-features.html');
+  res.redirect('/wallet-ai-features.html');
+});
+
+app.get('/login', (req, res) => {
+  log('Redirecting /login request to /wallet-ai-features.html');
+  res.redirect('/wallet-ai-features.html');
+});
+
+app.get('/register', (req, res) => {
+  log('Redirecting /register request to /wallet-ai-features.html');
+  res.redirect('/wallet-ai-features.html');
+});
+
+app.get('/wallet', (req, res) => {
+  log('Redirecting /wallet request to /wallet-ai-features.html');
+  res.redirect('/wallet-ai-features.html');
+});
+
 // Root endpoint - special handling for deployment health checks
 app.get('/', (req, res, next) => {
   // If it's a health check (no user agent), just return OK

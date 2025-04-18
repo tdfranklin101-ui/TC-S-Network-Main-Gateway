@@ -240,6 +240,27 @@ function log(message) {
   console.log(`[${new Date().toISOString()}] ${message}`);
 }
 
+// Redirect paths for removed pages
+app.get('/my-solar', (req, res) => {
+  log('Redirecting /my-solar request to /wallet-ai-features.html');
+  res.redirect('/wallet-ai-features.html');
+});
+
+app.get('/login', (req, res) => {
+  log('Redirecting /login request to /wallet-ai-features.html');
+  res.redirect('/wallet-ai-features.html');
+});
+
+app.get('/register', (req, res) => {
+  log('Redirecting /register request to /wallet-ai-features.html');
+  res.redirect('/wallet-ai-features.html');
+});
+
+app.get('/wallet', (req, res) => {
+  log('Redirecting /wallet request to /wallet-ai-features.html');
+  res.redirect('/wallet-ai-features.html');
+});
+
 // Health check endpoint - explicit route for monitoring
 app.get('/health', (req, res) => {
   res.status(200).send('OK');
