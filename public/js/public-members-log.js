@@ -179,8 +179,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       }
       
-      // Try to fetch from API with strict cache-busting parameter
-      const response = await fetch(`/api/members.json?nocache=${timestamp}`, {
+      // Try to fetch from API with strict cache-busting parameter and random value
+      const randomValue = Math.random().toString(36).substring(2, 15);
+      const response = await fetch(`/api/members.json?nocache=${timestamp}&random=${randomValue}`, {
         method: 'GET',
         cache: 'no-store',
         headers: {
@@ -202,7 +203,8 @@ document.addEventListener('DOMContentLoaded', function() {
       
       try {
         // Try to fetch from embedded data file with aggressive cache-busting
-        const embeddedResponse = await fetch(`/embedded-members?nocache=${timestamp}`, {
+        const randomValue = Math.random().toString(36).substring(2, 15);
+        const embeddedResponse = await fetch(`/embedded-members?nocache=${timestamp}&random=${randomValue}`, {
           method: 'GET',
           cache: 'no-store',
           headers: {
@@ -222,37 +224,37 @@ document.addEventListener('DOMContentLoaded', function() {
       } catch (err3) {
         console.error('All member data sources failed, using default data', err3);
         
-        // Default data as last resort with ALL members - correct dates
+        // Default data as last resort with ALL members - updated to match current data
         const defaultMembers = [
           {
             id: 1,
             username: "terry.franklin",
             name: "Terry D. Franklin",
             joinedDate: "2025-04-09",
-            totalSolar: 9.0000,
-            totalDollars: 1224000,
+            totalSolar: 10.0000,
+            totalDollars: 1360000,
             isAnonymous: false,
-            lastDistributionDate: "2025-04-18"
+            lastDistributionDate: "2025-04-19"
           },
           {
             id: 2,
             username: "j.franklin",
             name: "JF",
             joinedDate: "2025-04-10",
-            totalSolar: 8.0000,
-            totalDollars: 1088000,
+            totalSolar: 9.0000,
+            totalDollars: 1224000,
             isAnonymous: false,
-            lastDistributionDate: "2025-04-18"
+            lastDistributionDate: "2025-04-19"
           },
           {
             id: 3,
             username: "you.are.next",
             name: "you are next",
             joinedDate: "2025-04-18",
-            totalSolar: 1.0000,
-            totalDollars: 136000,
+            totalSolar: 2.0000,
+            totalDollars: 272000,
             isAnonymous: false,
-            lastDistributionDate: "2025-04-18"
+            lastDistributionDate: "2025-04-19"
           }
         ];
         
@@ -265,10 +267,11 @@ document.addEventListener('DOMContentLoaded', function() {
   // Function to just update the member count without loading the full member log
   window.refreshMemberCount = async function() {
     try {
-      // Add timestamp to prevent caching
+      // Add timestamp and random value to prevent caching
       const timestamp = new Date().getTime();
+      const randomValue = Math.random().toString(36).substring(2, 15);
       
-      const response = await fetch(`/api/member-count?nocache=${timestamp}`, {
+      const response = await fetch(`/api/member-count?nocache=${timestamp}&random=${randomValue}`, {
         method: 'GET',
         cache: 'no-store',
         headers: {
