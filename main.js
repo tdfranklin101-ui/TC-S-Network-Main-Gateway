@@ -545,24 +545,44 @@ app.get('/api/member-count', (req, res) => {
 
 // Serve static files
 // Set no-cache headers for member data to prevent stale information
-app.use('/api/members.json', (req, res, next) => {
+app.get('/api/members.json', (req, res) => {
+  // Add strong cache prevention headers
   res.set({
     'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
     'Pragma': 'no-cache',
     'Expires': '0',
-    'Surrogate-Control': 'no-store'
+    'Surrogate-Control': 'no-store',
+    'Vary': '*'
   });
-  next();
+  
+  // Generate a unique ETag value based on current time
+  const uniqueETag = `W/"${Date.now().toString()}"`;
+  res.set('ETag', uniqueETag);
+  
+  // Return the members data
+  res.json(members);
 });
 
-app.use('/embedded-members', (req, res, next) => {
+// Handle the embedded-members file with dynamic ETag
+app.get('/embedded-members', (req, res) => {
+  const embeddedPath = path.join(PUBLIC_DIR, 'embedded-members');
+  
+  // Set cache prevention headers
   res.set({
     'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
     'Pragma': 'no-cache',
     'Expires': '0',
-    'Surrogate-Control': 'no-store'
+    'Surrogate-Control': 'no-store',
+    'Vary': '*',
+    'Content-Type': 'application/javascript'
   });
-  next();
+  
+  // Generate a unique ETag based on current time
+  const uniqueETag = `W/"${Date.now().toString()}"`;
+  res.set('ETag', uniqueETag);
+  
+  // Send the file content
+  res.sendFile(embeddedPath);
 });
 
 // Serve static files with cache control for JS files
@@ -571,9 +591,12 @@ app.use(express.static(PUBLIC_DIR, {
     // Set no-cache headers for JavaScript files to prevent stale code
     if (path.endsWith('.js')) {
       res.set({
-        'Cache-Control': 'no-cache, must-revalidate',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
         'Pragma': 'no-cache',
-        'Expires': '0'
+        'Expires': '0',
+        'Surrogate-Control': 'no-store',
+        'Vary': '*',
+        'ETag': Date.now().toString() // Dynamic ETag to force revalidation
       });
     }
   }
