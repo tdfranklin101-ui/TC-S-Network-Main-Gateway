@@ -276,6 +276,11 @@ function log(message) {
   console.log(`[${new Date().toISOString()}] ${message}`);
 }
 
+// Health check endpoint - explicit route for monitoring
+app.get('/health', (req, res) => {
+  res.status(200).send('OK');
+});
+
 // Redirect paths for removed pages
 app.get('/my-solar', (req, res) => {
   log('Redirecting /my-solar request to /wallet-ai-features.html');
@@ -295,11 +300,6 @@ app.get('/register', (req, res) => {
 app.get('/wallet', (req, res) => {
   log('Redirecting /wallet request to /wallet-ai-features.html');
   res.redirect('/wallet-ai-features.html');
-});
-
-// Health check endpoint - explicit route for monitoring
-app.get('/health', (req, res) => {
-  res.status(200).send('OK');
 });
 
 // Root endpoint - special handling for deployment health checks
@@ -545,44 +545,24 @@ app.get('/api/member-count', (req, res) => {
 
 // Serve static files
 // Set no-cache headers for member data to prevent stale information
-app.get('/api/members.json', (req, res) => {
-  // Add strong cache prevention headers
+app.use('/api/members.json', (req, res, next) => {
   res.set({
     'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
     'Pragma': 'no-cache',
     'Expires': '0',
-    'Surrogate-Control': 'no-store',
-    'Vary': '*'
+    'Surrogate-Control': 'no-store'
   });
-  
-  // Generate a unique ETag value based on current time
-  const uniqueETag = `W/"${Date.now().toString()}"`;
-  res.set('ETag', uniqueETag);
-  
-  // Return the members data
-  res.json(members);
+  next();
 });
 
-// Handle the embedded-members file with dynamic ETag
-app.get('/embedded-members', (req, res) => {
-  const embeddedPath = path.join(PUBLIC_DIR, 'embedded-members');
-  
-  // Set cache prevention headers
+app.use('/embedded-members', (req, res, next) => {
   res.set({
     'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
     'Pragma': 'no-cache',
     'Expires': '0',
-    'Surrogate-Control': 'no-store',
-    'Vary': '*',
-    'Content-Type': 'application/javascript'
+    'Surrogate-Control': 'no-store'
   });
-  
-  // Generate a unique ETag based on current time
-  const uniqueETag = `W/"${Date.now().toString()}"`;
-  res.set('ETag', uniqueETag);
-  
-  // Send the file content
-  res.sendFile(embeddedPath);
+  next();
 });
 
 // Serve static files with cache control for JS files
@@ -591,12 +571,9 @@ app.use(express.static(PUBLIC_DIR, {
     // Set no-cache headers for JavaScript files to prevent stale code
     if (path.endsWith('.js')) {
       res.set({
-        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Cache-Control': 'no-cache, must-revalidate',
         'Pragma': 'no-cache',
-        'Expires': '0',
-        'Surrogate-Control': 'no-store',
-        'Vary': '*',
-        'ETag': Date.now().toString() // Dynamic ETag to force revalidation
+        'Expires': '0'
       });
     }
   }
