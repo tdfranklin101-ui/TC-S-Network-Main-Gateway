@@ -64,16 +64,44 @@ document.addEventListener('DOMContentLoaded', function() {
     entryDiv.className = 'members-log-entry';
 
     // Format SOLAR with 4 decimal places (showing values like 1.0001)
-    const solarFormatted = parseFloat(member.totalSolar).toFixed(4);
+    // For large numbers (TC-S Solar Reserve), use a more compact format
+    let solarFormatted;
+    if (member.isReserve || member.totalSolar >= 1000000) {
+      // Format large numbers with billion/million notation
+      if (member.totalSolar >= 1000000000) {
+        solarFormatted = (member.totalSolar / 1000000000).toFixed(2) + ' Billion';
+      } else if (member.totalSolar >= 1000000) {
+        solarFormatted = (member.totalSolar / 1000000).toFixed(2) + ' Million';
+      }
+    } else {
+      solarFormatted = parseFloat(member.totalSolar).toFixed(4);
+    }
     
     // Format date
     const joinedDate = formatDate(member.joinedDate);
 
-    entryDiv.innerHTML = `
-      <div class="member-name">${member.name}</div>
-      <div class="member-joined" data-joined-date="${member.joinedDate}">Joined: ${joinedDate}</div>
-      <div class="member-solar">SOLAR: ${solarFormatted}</div>
-    `;
+    // For the Solar Reserve, use a distinct appearance
+    if (member.isReserve || (member.username === "tc-s.reserve" && member.name === "TC-S Solar Reserve")) {
+      entryDiv.className = 'members-log-entry reserve-entry';
+      entryDiv.style.backgroundColor = '#fffbeb'; // Light gold background
+      entryDiv.style.border = '1px solid #ffd700'; // Gold border
+      entryDiv.style.padding = '12px';
+      entryDiv.style.marginBottom = '20px';
+      entryDiv.style.borderRadius = '6px';
+      
+      entryDiv.innerHTML = `
+        <div class="member-name" style="font-size: 1.2em; color: #b8860b; font-weight: bold;">${member.name}</div>
+        <div class="member-joined" data-joined-date="${member.joinedDate}" style="font-style: italic;">Genesis Date: ${joinedDate}</div>
+        <div class="member-solar" style="font-weight: bold; color: #006400; font-size: 1.1em;">SOLAR: ${solarFormatted}</div>
+        <div class="member-notes" style="margin-top: 5px; font-size: 0.9em; color: #666;">${member.notes || 'Genesis Reserve Allocation'}</div>
+      `;
+    } else {
+      entryDiv.innerHTML = `
+        <div class="member-name">${member.name}</div>
+        <div class="member-joined" data-joined-date="${member.joinedDate}">Joined: ${joinedDate}</div>
+        <div class="member-solar">SOLAR: ${solarFormatted}</div>
+      `;
+    }
 
     return entryDiv;
   }
@@ -110,7 +138,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Hard-code the specific order for the key members
     const sortedMembers = [];
     
-    // Separate the placeholder entry
+    // Separate special entries
     const placeholderIndex = visibleMembers.findIndex(m => 
       m.username === "you.are.next" && m.name.toLowerCase().includes("you are next"));
     
@@ -122,7 +150,20 @@ document.addEventListener('DOMContentLoaded', function() {
         !(m.username === "you.are.next" && m.name.toLowerCase().includes("you are next")));
     }
     
-    // Terry should always be first (joined April 9)
+    // TC-S Solar Reserve should always be at the very top
+    const reserve = visibleMembers.find(m => 
+      m.isReserve === true || 
+      (m.username === "tc-s.reserve" && m.name === "TC-S Solar Reserve"));
+    
+    if (reserve) {
+      sortedMembers.push(reserve);
+      // Remove from array to avoid duplicates
+      visibleMembers = visibleMembers.filter(m => 
+        !(m.isReserve === true || 
+          (m.username === "tc-s.reserve" && m.name === "TC-S Solar Reserve")));
+    }
+    
+    // Terry should always be first among regular members (joined April 9)
     const terry = visibleMembers.find(m => m.name === "Terry D. Franklin");
     if (terry) {
       sortedMembers.push(terry);
@@ -130,7 +171,7 @@ document.addEventListener('DOMContentLoaded', function() {
       visibleMembers = visibleMembers.filter(m => m.name !== "Terry D. Franklin");
     }
     
-    // JF should always be second (joined April 10)
+    // JF should always be second among regular members (joined April 10)
     const jf = visibleMembers.find(m => m.name === "JF");
     if (jf) {
       sortedMembers.push(jf);
@@ -245,6 +286,19 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Default data as last resort with ALL members - updated to match current data
         const defaultMembers = [
+          {
+            id: 0,
+            username: "tc-s.reserve",
+            name: "TC-S Solar Reserve",
+            email: "reserve@thecurrentsee.org",
+            joinedDate: "2025-04-07",
+            totalSolar: 10000000000.0000,
+            totalDollars: 10000000000 * 136000, // USD_PER_SOLAR is 136000
+            isAnonymous: false,
+            lastDistributionDate: "2025-04-19",
+            isReserve: true,
+            notes: "Genesis Reserve Allocation"
+          },
           {
             id: 1,
             username: "terry.franklin",

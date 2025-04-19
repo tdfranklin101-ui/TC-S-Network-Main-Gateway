@@ -1,5 +1,18 @@
 [
   {
+    "id": 0,
+    "username": "tc-s.reserve",
+    "name": "TC-S Solar Reserve",
+    "email": "reserve@thecurrentsee.org",
+    "joinedDate": "2025-04-07",
+    "totalSolar": 10000000000,
+    "totalDollars": 1360000000000000,
+    "isAnonymous": false,
+    "lastDistributionDate": "2025-04-19",
+    "isReserve": true,
+    "notes": "Genesis Reserve Allocation"
+  },
+  {
     "id": 1,
     "username": "terry.franklin",
     "name": "Terry D. Franklin",

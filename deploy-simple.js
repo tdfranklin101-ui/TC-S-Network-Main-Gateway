@@ -80,6 +80,37 @@ function loadMembers() {
       members = JSON.parse(membersData);
       log(`Loaded ${members.length} members from file`);
       
+      // Check if there's a TC-S Solar Reserve entry
+      const hasReserve = members.some(m => m.username === "tc-s.reserve" && m.name === "TC-S Solar Reserve");
+      
+      // If no reserve exists, add one
+      if (!hasReserve) {
+        log('Adding TC-S Solar Reserve to members');
+        
+        // Insert at the beginning of the array (id 0 to ensure it's first)
+        members.unshift({
+          id: 0,
+          username: "tc-s.reserve",
+          name: "TC-S Solar Reserve",
+          email: "reserve@thecurrentsee.org",
+          joinedDate: "2025-04-07", // Start from the genesis date
+          totalSolar: 10000000000.0000, // 10 billion Solar
+          totalDollars: 10000000000 * SOLAR_CONSTANTS.USD_PER_SOLAR,
+          isAnonymous: false,
+          lastDistributionDate: today,
+          isReserve: true,
+          notes: "Genesis Reserve Allocation"
+        });
+        
+        // Re-number the IDs to ensure consistency
+        members.forEach((member, index) => {
+          member.id = index;
+        });
+        
+        // Save the updated members list
+        updateMembersFiles();
+      }
+      
       // Check if there's a "You are next" placeholder entry
       const hasPlaceholder = members.some(m => 
         m.username === "you.are.next" && m.name.toLowerCase().includes("you are next"));
@@ -106,6 +137,19 @@ function loadMembers() {
     } else {
       // Initialize with default members if file doesn't exist
       members = [
+        {
+          id: 0,
+          username: "tc-s.reserve",
+          name: "TC-S Solar Reserve",
+          email: "reserve@thecurrentsee.org",
+          joinedDate: "2025-04-07", // Start from the genesis date
+          totalSolar: 10000000000.0000, // 10 billion Solar
+          totalDollars: 10000000000 * SOLAR_CONSTANTS.USD_PER_SOLAR,
+          isAnonymous: false,
+          lastDistributionDate: today,
+          isReserve: true,
+          notes: "Genesis Reserve Allocation"
+        },
         {
           id: 1,
           username: "terry.franklin",
