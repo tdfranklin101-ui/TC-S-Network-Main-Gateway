@@ -80,6 +80,10 @@ function loadMembers() {
       members = JSON.parse(membersData);
       log(`Loaded ${members.length} members from file`);
       
+      // Immediately save all current members to ensure persistence
+      updateMembersFiles();
+      log('Saved current members to ensure persistence at initial login');
+      
       // Check if there's a TC-S Solar Reserve entry
       const hasReserve = members.some(m => m.username === "tc-s.reserve" && m.name === "TC-S Solar Reserve");
       
@@ -216,7 +220,7 @@ function loadMembers() {
           id: 7,
           username: "k.member",
           name: "Kim",
-          email: "kim.contact@thecurrentsee.org",
+          email: "KIMBROWN9999@hotmail.com",
           joinedDate: "2025-04-19",
           totalSolar: 1.0000,
           totalDollars: 136000,
