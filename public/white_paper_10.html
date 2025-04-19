@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>White Paper #10: TC-S Sovereign Framework | The Current-See</title>
+  
+  <!-- SEO tags -->
+  <meta name="description" content="White Paper #10 outlines the TC-S Sovereign Framework for nation-states to implement scalable, programmable digital currencies with mandatory public benefit requirements.">
+  <meta name="keywords" content="TC-S Sovereign Network, digital currency, programmable money, public benefit, nation-state currency">
+  
+  <link rel="stylesheet" href="/css/common.css">
+  
+  <!-- Structured Data for this White Paper -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "White Paper #10: TC-S Sovereign Framework",
+    "description": "This white paper outlines the structure and public benefit requirements of TC-S Sovereign Networks for nation-states.",
+    "author": {
+      "@type": "Organization",
+      "name": "The Current-See PBC, Inc."
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "The Current-See PBC, Inc.",
+      "logo": "https://www.thecurrentsee.org/img/solar-logo.svg"
+    },
+    "datePublished": "2025-04-19",
+    "articleSection": "White Papers"
+  }
+  </script>
+  
+<style>
+    /* White Paper Page Specific Watermark */
+    .white-paper-main {
+        position: relative;
+        overflow: hidden;
+        background-color: var(--bg-light);
+        padding: 2rem 0;
+    }
+    
+    .white-paper-main::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: repeating-conic-gradient(
+            rgba(243, 198, 34, 0.02) 0deg 10deg,
+            rgba(30, 80, 120, 0.03) 10deg 20deg
+        );
+        animation: sun-ray-rotate 240s linear infinite;
+        z-index: 0;
+        opacity: 0.7;
+        pointer-events: none;
+    }
+    
+    .white-paper-container {
+        max-width: 1000px;
+        margin: 3rem auto;
+        padding: 2.5rem;
+        background-color: rgba(255, 255, 255, 0.97);
+        border-radius: 10px;
+        box-shadow: 0 5px 25px rgba(0, 0, 0, 0.1);
+        position: relative;
+        z-index: 1;
+    }
+    
+    .white-paper-title {
+        text-align: center;
+        color: var(--accent-blue);
+        margin-bottom: 1rem;
+    }
+    
+    .white-paper-meta {
+        text-align: center;
+        margin-bottom: 2rem;
+        color: var(--text-light);
+        font-size: 0.9rem;
+    }
+    
+    .white-paper-content {
+        line-height: 1.6;
+        color: var(--text-dark);
+    }
+    
+    .white-paper-content h2 {
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+        color: var(--primary-blue);
+    }
+    
+    .white-paper-content p {
+        margin-bottom: 1rem;
+    }
+    
+    .white-paper-content ul, 
+    .white-paper-content ol {
+        margin-bottom: 1.5rem;
+        padding-left: 1.5rem;
+    }
+    
+    .white-paper-content li {
+        margin-bottom: 0.5rem;
+    }
+    
+    .white-paper-footer {
+        margin-top: 3rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border-light);
+        display: flex;
+        justify-content: space-between;
+    }
+    
+    .white-paper-actions {
+        display: flex;
+        gap: 1rem;
+    }
+    
+    .wp-button {
+        padding: 0.75rem 1.5rem;
+        border-radius: 50px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-download {
+        background-color: var(--primary-color);
+        color: white;
+    }
+    
+    .btn-download:hover {
+        background-color: var(--primary-dark);
+    }
+    
+    .btn-back {
+        background-color: transparent;
+        color: var(--primary-blue);
+        border: 1px solid var(--primary-blue);
+    }
+    
+    .btn-back:hover {
+        background-color: rgba(32, 84, 166, 0.1);
+    }
+    
+    @media (max-width: 768px) {
+        .white-paper-container {
+            margin: 1rem;
+            padding: 1.5rem;
+        }
+        
+        .white-paper-footer {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .white-paper-actions {
+            flex-direction: column;
+            width: 100%;
+        }
+        
+        .wp-button {
+            text-align: center;
+        }
+    }
+</style>
+</head>
+<body>
+<!-- Common Header -->
+<header class="site-header">
+  <div class="logo-container">
+    <a href="/">
+      <picture>
+        <source srcset="/img/solar-logo.svg" type="image/svg+xml">
+        <img src="/img/solar-logo.png" alt="The Current-See Logo" class="logo-img">
+      </picture>
+      <div class="logo-text">The Current-See<br>PBC, Inc.</div>
+    </a>
+  </div>
+  <nav class="main-nav">
+    <button class="mobile-menu-toggle" aria-label="Toggle navigation menu">
+      <span class="bar"></span>
+      <span class="bar"></span>
+      <span class="bar"></span>
+    </button>
+    <ul class="nav-items">
+      <li><a href="/">Home</a></li>
+      <li><a href="/prototype.html">Prototype</a></li>
+      <li><a href="/wallet-ai-features.html">My Solar</a></li>
+      <li><a href="/declaration.html">Solar Declaration</a></li>
+      <li><a href="/founder_note.html">Founder's Note</a></li>
+      <li><a href="/whitepapers.html">White Papers</a></li>
+      <li><a href="/business_plan.html">Business Plan</a></li>
+      <li><a href="/merch.html">Merchandise</a></li>
+      <li><a href="/wallet-ai-features.html">Wallet</a></li>
+      <li><a href="/ai-assistant-demo.html">AI Assistant</a></li>
+      <li><a href="/account-info.html">Account Info</a></li>
+      <li><a href="/#join-section" class="join-button">Join</a></li>
+    </ul>
+    <div id="language-selector" class="language-selector"></div>
+  </nav>
+</header>
+
+<style>
+  /* Header Styles */
+  .site-header {
+    background: linear-gradient(to right, #F5F5F5, #FFFDF0);
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    position: relative;
+    border-bottom: 3px solid #4caf50;
+  }
+  
+  .logo-container {
+    display: flex;
+    align-items: center;
+  }
+  
+  .logo-container a {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: #00573B;
+  }
+  
+  .logo-container picture,
+  .logo-img {
+    height: 50px;
+    width: auto;
+    margin-right: 1rem;
+    display: block;
+  }
+  
+  .logo-text {
+    font-size: 1.2rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #00573B;
+  }
+  
+  .main-nav {
+    display: flex;
+    align-items: center;
+  }
+  
+  .nav-items {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .nav-items li {
+    margin-left: 1.5rem;
+  }
+  
+  .nav-items a {
+    color: #00573B;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s ease;
+    padding: 0.5rem 0;
+    position: relative;
+  }
+  
+  .nav-items a:hover {
+    color: #FFC107;
+  }
+  
+  .nav-items a::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background-color: #FFC107;
+    transition: width 0.3s ease;
+  }
+  
+  .nav-items a:hover::after {
+    width: 100%;
+  }
+  
+  /* Special styling for Join button */
+  .nav-items a.join-button {
+    background-color: #4caf50;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+  }
+  
+  .nav-items a.join-button:hover {
+    background-color: #45a049;
+    color: white;
+  }
+  
+  .nav-items a.join-button::after {
+    display: none;
+  }
+  
+  .mobile-menu-toggle {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+  }
+  
+  .mobile-menu-toggle .bar {
+    display: block;
+    width: 25px;
+    height: 3px;
+    background-color: #00573B;
+    margin: 5px 0;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+  
+  @media (max-width: 768px) {
+    .mobile-menu-toggle {
+      display: block;
+    }
+    
+    .nav-items {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background-color: #FFFFFF;
+      flex-direction: column;
+      padding: 1rem;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      display: none;
+      z-index: 100;
+    }
+    
+    .nav-items.active {
+      display: flex;
+    }
+    
+    .nav-items li {
+      margin: 0.5rem 0;
+    }
+  }
+</style>
+
+<script>
+  // Mobile menu toggle functionality
+  document.addEventListener('DOMContentLoaded', function() {
+    const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
+    const navItems = document.querySelector('.nav-items');
+    
+    if (mobileMenuToggle && navItems) {
+      mobileMenuToggle.addEventListener('click', function() {
+        navItems.classList.toggle('active');
+      });
+    }
+  });
+</script>
+
+<div class="white-paper-main">
+  <div class="white-paper-container">
+    <h1 class="white-paper-title">White Paper #10: TC-S Sovereign Framework</h1>
+    
+    <div class="white-paper-meta">
+        <span>Published: April 19, 2025</span> | 
+        <span>Authors: The Current-See Team</span>
+    </div>
+    
+    <div class="white-paper-content">
+        <h2>Overview</h2>
+        <p>This white paper outlines the structure and public benefit requirements of TC-S Sovereign Networks-private token systems deployed by nation-states to support national currencies. These networks combine AI wallets, branded token issuance, and programmable transactions to modernize government payment infrastructure, while guaranteeing social uplift through embedded public benefit terms.</p>
+
+        <h2>Objective</h2>
+        <p>To enable national governments to implement scalable, programmable, and equitable digital currencies using The Current See TC-S infrastructure, while requiring Public Benefit Corporation (PBC) terms that directly support underserved communities.</p>
+
+        <h2>Architecture</h2>
+        <ul>
+            <li>Licensed national use of TC-S private network infrastructure</li>
+            <li>Nation-state branded tokens (e.g. PesoNet, DinarCoin, CivicToken)</li>
+            <li>Wallets branded by the issuing authority, interoperable with Solar Reserve</li>
+            <li>Regulatory-compliant ledger with programmable distribution logic</li>
+        </ul>
+
+        <h2>Key Functions</h2>
+        <ul>
+            <li>Stimulus Distribution (citizens, families, regions)</li>
+            <li>Food and Shelter Tokens for local vendors</li>
+            <li>School and Education Credits</li>
+            <li>Green Infrastructure and Public Jobs Tokens</li>
+            <li>Optional Solar integration for energy value transition</li>
+        </ul>
+
+        <h2>Public Benefit Clause (PBC Licensing Requirement)</h2>
+        <p>Each sovereign license agreement will include a mandatory PBC clause:</p>
+        <ol>
+            <li>At least 15% of token issuance must be allocated to disadvantaged or underserved populations.</li>
+            <li>Technical assistance and onboarding support must be provided to communities with limited digital infrastructure.</li>
+            <li>A national audit report must be published annually detailing token usage, reach, and social outcomes.</li>
+            <li>All programs must prioritize dignity, accessibility, and voluntary participation.</li>
+        </ol>
+        <p>This ensures that the TC-S Sovereign Network uplifts those historically excluded from financial systems.</p>
+
+        <h2>International Applications</h2>
+        <ul>
+            <li>Small nations piloting national wallets</li>
+            <li>UBI-focused governments exploring modern economic models</li>
+            <li>Disaster-relief and refugee populations requiring portable digital currency</li>
+            <li>African, South American, Southeast Asian economies seeking resilient infrastructure</li>
+        </ul>
+
+        <h2>Governance and Interoperability</h2>
+        <ul>
+            <li>Each sovereign node may operate independently</li>
+            <li>TC-S Central Ledger maintains Solar Reserve reconciliation</li>
+            <li>Interoperability bridge: national currency tokens can be analyzed alongside Solar income</li>
+        </ul>
+
+        <h2>Conclusion</h2>
+        <p>The TC-S Sovereign Framework offers a historic opportunity: to empower nations with programmable monetary infrastructure while embedding systemic equity. These public-private networks represent a generational leap forward-technically and ethically-in the way value is created and distributed.</p>
+    </div>
+    
+    <div class="white-paper-footer">
+        <a href="/whitepapers.html" class="wp-button btn-back">← Back to White Papers</a>
+        
+        <div class="white-paper-actions">
+            <a href="/attached_assets/White_Paper_10_TC-S_Sovereign_Framework.pdf" class="wp-button btn-download" download>Download PDF</a>
+        </div>
+    </div>
+  </div>
+</div>
+
+<!-- Common Footer -->
+<footer class="site-footer">
+  <div class="footer-content">
+    <div class="footer-section about">
+      <h3>The Current-See</h3>
+      <p>A revolutionary organization creating a solar-backed economic system for a more equitable world.</p>
+      <p>The Current-See PBC, Inc.</p>
+      <p><a href="mailto:hello@thecurrentsee.org">hello@thecurrentsee.org</a></p>
+    </div>
+    
+    <div class="footer-section links">
+      <h3>Quick Links</h3>
+      <ul>
+        <li><a href="/">Home</a></li>
+        <li><a href="/declaration.html">Solar Declaration</a></li>
+        <li><a href="/founder_note.html">Founder's Note</a></li>
+        <li><a href="/whitepapers.html">White Papers</a></li>
+        <li><a href="/wallet-ai-features.html">Wallet Features</a></li>
+      </ul>
+    </div>
+    
+    <div class="footer-section join">
+      <h3>Join the Movement</h3>
+      <ul>
+        <li><a href="/contact-us.html">Contact Us</a></li>
+        <li><a href="/#join-section">Sign Up</a></li>
+        <li><a href="/wallet-ai-features.html">My Solar</a></li>
+        <li><a href="/account-info.html">Account Information</a></li>
+      </ul>
+    </div>
+  </div>
+  
+  <div class="footer-bottom">
+    <p>&copy; 2025 The Current-See PBC, Inc. All rights reserved.</p>
+  </div>
+</footer>
+
+<!-- Hidden Google Translate Element -->
+<div id="google_translate_element" style="display: none;"></div>
+
+<!-- Language translator script -->
+<script src="/js/language-translator-loader.js"></script>
+
+<!-- Voice assistant script -->
+<script src="/js/voice-assistant-loader.js"></script>
+
+<style>
+  /* Footer Styles */
+  .site-footer {
+    background-color: #333;
+    color: #fff;
+    padding: 2rem 0 0 0;
+    font-size: 0.9rem;
+  }
+  
+  .footer-content {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+  }
+  
+  .footer-section {
+    flex: 1;
+    margin: 0 1rem 2rem;
+    min-width: 200px;
+  }
+  
+  .footer-section h3 {
+    color: #FFC107;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 0.5rem;
+    font-size: 1.2rem;
+  }
+  
+  .footer-section p {
+    line-height: 1.6;
+    margin-bottom: 0.7rem;
+  }
+  
+  .footer-section a {
+    color: #ADB5BD;
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+  
+  .footer-section a:hover {
+    color: #FFC107;
+  }
+  
+  .footer-section ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .footer-section ul li {
+    margin-bottom: 0.7rem;
+  }
+  
+  .footer-bottom {
+    background-color: #222;
+    padding: 1rem 0;
+    text-align: center;
+    font-size: 0.8rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  
+  .footer-bottom p {
+    margin: 0;
+  }
+  
+  @media (max-width: 768px) {
+    .footer-content {
+      flex-direction: column;
+    }
+    
+    .footer-section {
+      margin: 0 0 1.5rem;
+    }
+  }
+</style>
+</body>
+</html>
