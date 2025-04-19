@@ -111,23 +111,65 @@ function loadMembers() {
           username: "terry.franklin",
           name: "Terry D. Franklin",
           joinedDate: "2025-04-09",
-          totalSolar: 9.0000,
-          totalDollars: 1224000,
+          totalSolar: 10.0000,
+          totalDollars: 1360000,
           isAnonymous: false,
-          lastDistributionDate: "2025-04-18"
+          lastDistributionDate: "2025-04-19"
         },
         {
           id: 2,
           username: "j.franklin",
           name: "JF",
           joinedDate: "2025-04-10",
-          totalSolar: 8.0000,
-          totalDollars: 1088000,
+          totalSolar: 9.0000,
+          totalDollars: 1224000,
           isAnonymous: false,
-          lastDistributionDate: "2025-04-18"
+          lastDistributionDate: "2025-04-19"
         },
         {
           id: 3,
+          username: "d.franklin",
+          name: "Davis",
+          email: "Davisfranklin095@gmail.com",
+          joinedDate: "2025-04-18", 
+          totalSolar: 2.0000,
+          totalDollars: 272000,
+          isAnonymous: false,
+          lastDistributionDate: "2025-04-19"
+        },
+        {
+          id: 4,
+          username: "m.franklin",
+          name: "Miles Franklin",
+          email: "Milesgfranklin9@gmail.com",
+          joinedDate: "2025-04-18",
+          totalSolar: 2.0000,
+          totalDollars: 272000,
+          isAnonymous: false,
+          lastDistributionDate: "2025-04-19"
+        },
+        {
+          id: 5,
+          username: "a.franklin",
+          name: "Arden F",
+          joinedDate: "2025-04-19",
+          totalSolar: 1.0000,
+          totalDollars: 136000,
+          isAnonymous: false,
+          lastDistributionDate: "2025-04-19"
+        },
+        {
+          id: 6,
+          username: "m.hasseman",
+          name: "Marissa Hasseman",
+          joinedDate: "2025-04-19",
+          totalSolar: 1.0000,
+          totalDollars: 136000,
+          isAnonymous: false,
+          lastDistributionDate: "2025-04-19"
+        },
+        {
+          id: 7,
           username: "you.are.next",
           name: "You are next",
           joinedDate: today,
