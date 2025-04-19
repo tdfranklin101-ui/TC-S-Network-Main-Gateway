@@ -110,26 +110,45 @@ document.addEventListener('DOMContentLoaded', function() {
     // Hard-code the specific order for the key members
     const sortedMembers = [];
     
+    // Separate the placeholder entry
+    const placeholderIndex = visibleMembers.findIndex(m => 
+      m.username === "you.are.next" && m.name.toLowerCase().includes("you are next"));
+    
+    let placeholder = null;
+    if (placeholderIndex !== -1) {
+      placeholder = visibleMembers[placeholderIndex];
+      // Remove placeholder from visible members array
+      visibleMembers = visibleMembers.filter(m => 
+        !(m.username === "you.are.next" && m.name.toLowerCase().includes("you are next")));
+    }
+    
     // Terry should always be first (joined April 9)
     const terry = visibleMembers.find(m => m.name === "Terry D. Franklin");
     if (terry) {
       sortedMembers.push(terry);
+      // Remove from array to avoid duplicates
+      visibleMembers = visibleMembers.filter(m => m.name !== "Terry D. Franklin");
     }
     
     // JF should always be second (joined April 10)
     const jf = visibleMembers.find(m => m.name === "JF");
     if (jf) {
       sortedMembers.push(jf);
+      // Remove from array to avoid duplicates
+      visibleMembers = visibleMembers.filter(m => m.name !== "JF");
     }
     
-    // Add any other members after the first two, sorted by joined date (newest first)
-    const otherMembers = visibleMembers.filter(m => 
-      m.name !== "Terry D. Franklin" && m.name !== "JF"
-    ).sort((a, b) => {
-      return new Date(b.joinedDate) - new Date(a.joinedDate);
+    // Add remaining members sorted by joined date (oldest to newest)
+    const otherMembers = visibleMembers.sort((a, b) => {
+      return new Date(a.joinedDate) - new Date(b.joinedDate);
     });
     
     sortedMembers.push(...otherMembers);
+    
+    // Add placeholder at the end if it exists
+    if (placeholder) {
+      sortedMembers.push(placeholder);
+    }
 
     // Create and add each member entry (we've already filtered out anonymous members)
     sortedMembers.forEach(member => {

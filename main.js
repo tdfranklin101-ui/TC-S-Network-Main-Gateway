@@ -440,29 +440,29 @@ app.post('/api/signup', (req, res) => {
     
     log('Creating new member: ' + JSON.stringify(newMember));
     
+    // Remove existing placeholder if it exists
     if (placeholderIndex !== -1) {
-      // Replace placeholder with new member
-      log('Replacing placeholder "You are next" with new member');
-      members[placeholderIndex] = newMember;
-      
-      // Create a new placeholder and add it to the end
-      const newPlaceholder = {
-        id: members.length + 1,
-        username: "you.are.next",
-        name: "You are next",
-        joinedDate: today,
-        totalSolar: initialSolar,
-        totalDollars: Math.round(initialSolar * SOLAR_CONSTANTS.USD_PER_SOLAR),
-        isAnonymous: false,
-        lastDistributionDate: today
-      };
-      
-      // Add new placeholder to members array
-      members.push(newPlaceholder);
-    } else {
-      // Just add the new member if no placeholder exists
-      members.push(newMember);
+      log('Removing existing placeholder to ensure it goes at the end');
+      members.splice(placeholderIndex, 1);
     }
+    
+    // Add the new member
+    members.push(newMember);
+    
+    // Create a new placeholder and add it at the very end
+    const newPlaceholder = {
+      id: members.length + 1,
+      username: "you.are.next",
+      name: "You are next",
+      joinedDate: today,
+      totalSolar: initialSolar,
+      totalDollars: Math.round(initialSolar * SOLAR_CONSTANTS.USD_PER_SOLAR),
+      isAnonymous: false,
+      lastDistributionDate: today
+    };
+    
+    // Add new placeholder as the last entry
+    members.push(newPlaceholder);
     
     // Update the files
     updateMembersFiles();
