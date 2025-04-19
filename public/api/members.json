@@ -4,29 +4,29 @@
     "username": "terry.franklin",
     "name": "Terry D. Franklin",
     "joinedDate": "2025-04-09",
-    "totalSolar": 9,
-    "totalDollars": 1224000,
+    "totalSolar": 10,
+    "totalDollars": 1360000,
     "isAnonymous": false,
-    "lastDistributionDate": "2025-04-18"
+    "lastDistributionDate": "2025-04-19"
   },
   {
     "id": 2,
     "username": "j.franklin",
     "name": "JF",
     "joinedDate": "2025-04-10",
-    "totalSolar": 8,
-    "totalDollars": 1088000,
+    "totalSolar": 9,
+    "totalDollars": 1224000,
     "isAnonymous": false,
-    "lastDistributionDate": "2025-04-18"
+    "lastDistributionDate": "2025-04-19"
   },
   {
     "id": 3,
     "username": "you.are.next",
     "name": "you are next",
     "joinedDate": "2025-04-18",
-    "totalSolar": 1,
-    "totalDollars": 136000,
+    "totalSolar": 2,
+    "totalDollars": 272000,
     "isAnonymous": false,
-    "lastDistributionDate": "2025-04-18"
+    "lastDistributionDate": "2025-04-19"
   }
 ]
