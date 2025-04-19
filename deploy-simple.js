@@ -72,11 +72,37 @@ let members = [];
 // Initialize function to load members data
 function loadMembers() {
   try {
+    const today = new Date().toISOString().split('T')[0];
     const membersFilePath = path.join(PUBLIC_DIR, 'api', 'members.json');
+    
     if (fs.existsSync(membersFilePath)) {
       const membersData = fs.readFileSync(membersFilePath, 'utf8');
       members = JSON.parse(membersData);
       log(`Loaded ${members.length} members from file`);
+      
+      // Check if there's a "You are next" placeholder entry
+      const hasPlaceholder = members.some(m => 
+        m.username === "you.are.next" && m.name.toLowerCase().includes("you are next"));
+      
+      // If no placeholder exists, add one
+      if (!hasPlaceholder) {
+        const placeholderId = members.length + 1;
+        log(`Adding "You are next" placeholder as member #${placeholderId}`);
+        
+        members.push({
+          id: placeholderId,
+          username: "you.are.next",
+          name: "You are next",
+          joinedDate: today,
+          totalSolar: 1.0000,
+          totalDollars: Math.round(1.0000 * SOLAR_CONSTANTS.USD_PER_SOLAR),
+          isAnonymous: false,
+          lastDistributionDate: today
+        });
+        
+        // Save the updated members list
+        updateMembersFiles();
+      }
     } else {
       // Initialize with default members if file doesn't exist
       members = [
@@ -99,6 +125,16 @@ function loadMembers() {
           totalDollars: 1088000,
           isAnonymous: false,
           lastDistributionDate: "2025-04-18"
+        },
+        {
+          id: 3,
+          username: "you.are.next",
+          name: "You are next",
+          joinedDate: today,
+          totalSolar: 1.0000,
+          totalDollars: 136000,
+          isAnonymous: false,
+          lastDistributionDate: today
         }
       ];
       // Save default members
@@ -385,8 +421,13 @@ app.post('/api/signup', (req, res) => {
     // 1. Everyone gets 1 SOLAR on the day they join
     const initialSolar = 1.0000; // Format with 4 decimal places (using 1.0000 format)
     
+    // Check for "You are next" placeholder
+    const placeholderIndex = members.findIndex(m => 
+      m.username === "you.are.next" && m.name.toLowerCase().includes("you are next"));
+    
+    // Generate member object
     const newMember = {
-      id: members.length + 1,
+      id: members.length + (placeholderIndex !== -1 ? 0 : 1), // Adjust ID if replacing placeholder
       username: userData.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '.'),
       name: userData.name,
       email: userData.email,
@@ -399,8 +440,29 @@ app.post('/api/signup', (req, res) => {
     
     log('Creating new member: ' + JSON.stringify(newMember));
     
-    // Add to members array
-    members.push(newMember);
+    if (placeholderIndex !== -1) {
+      // Replace placeholder with new member
+      log('Replacing placeholder "You are next" with new member');
+      members[placeholderIndex] = newMember;
+      
+      // Create a new placeholder and add it to the end
+      const newPlaceholder = {
+        id: members.length + 1,
+        username: "you.are.next",
+        name: "You are next",
+        joinedDate: today,
+        totalSolar: initialSolar,
+        totalDollars: Math.round(initialSolar * SOLAR_CONSTANTS.USD_PER_SOLAR),
+        isAnonymous: false,
+        lastDistributionDate: today
+      };
+      
+      // Add new placeholder to members array
+      members.push(newPlaceholder);
+    } else {
+      // Just add the new member if no placeholder exists
+      members.push(newMember);
+    }
     
     // Update the files
     updateMembersFiles();

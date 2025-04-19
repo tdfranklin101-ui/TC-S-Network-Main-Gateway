@@ -72,11 +72,37 @@ let members = [];
 // Initialize function to load members data
 function loadMembers() {
   try {
+    const today = new Date().toISOString().split('T')[0];
     const membersFilePath = path.join(PUBLIC_DIR, 'api', 'members.json');
+    
     if (fs.existsSync(membersFilePath)) {
       const membersData = fs.readFileSync(membersFilePath, 'utf8');
       members = JSON.parse(membersData);
       log(`Loaded ${members.length} members from file`);
+      
+      // Check if there's a "You are next" placeholder entry
+      const hasPlaceholder = members.some(m => 
+        m.username === "you.are.next" && m.name.toLowerCase().includes("you are next"));
+      
+      // If no placeholder exists, add one
+      if (!hasPlaceholder) {
+        const placeholderId = members.length + 1;
+        log(`Adding "You are next" placeholder as member #${placeholderId}`);
+        
+        members.push({
+          id: placeholderId,
+          username: "you.are.next",
+          name: "You are next",
+          joinedDate: today,
+          totalSolar: 1.0000,
+          totalDollars: Math.round(1.0000 * SOLAR_CONSTANTS.USD_PER_SOLAR),
+          isAnonymous: false,
+          lastDistributionDate: today
+        });
+        
+        // Save the updated members list
+        updateMembersFiles();
+      }
     } else {
       // Initialize with default members if file doesn't exist
       members = [
@@ -99,6 +125,16 @@ function loadMembers() {
           totalDollars: 1088000,
           isAnonymous: false,
           lastDistributionDate: "2025-04-18"
+        },
+        {
+          id: 3,
+          username: "you.are.next",
+          name: "You are next",
+          joinedDate: today,
+          totalSolar: 1.0000,
+          totalDollars: 136000,
+          isAnonymous: false,
+          lastDistributionDate: today
         }
       ];
       // Save default members
