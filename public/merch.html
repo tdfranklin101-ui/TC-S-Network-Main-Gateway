@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Merchandise | The Current-See</title>
+    
+    <!-- VR/XR Specific Discovery -->
+    <link rel="alternate" type="application/json" href="/vr-discovery.json">
+    <meta name="meta-vr-ready" content="true">
+    
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="/style.css">
     <style>
@@ -412,7 +417,7 @@
         <div class="merch-section">
             <div class="row">
                 <div class="col-md-4 mb-4">
-                    <div class="product-card-bg">
+                    <div class="product-card-bg" data-ar-enabled data-model-url="/models/solar-token.usdz" data-model-name="The Current-See T-Shirt">
                         <span class="product-label">New</span>
                         <img src="/solar_tshirt.png" alt="The Current-See T-Shirt" class="product-bg-image">
                         <div class="product-info">
@@ -420,6 +425,7 @@
                             <p class="product-price">$29.99</p>
                             <p class="product-description">Premium organic cotton t-shirt featuring The Current-See logo and Solar Generator artwork.</p>
                             <a href="#" class="btn-primary">Coming Soon</a>
+                            <p class="ar-note" style="font-size: 0.8rem; margin-top: 10px; color: #0057B8;">View in AR on compatible devices</p>
                         </div>
                     </div>
                 </div>
@@ -524,5 +530,8 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- AR/VR Support -->
+    <script src="/js/ar-vr-support.js"></script>
 </body>
 </html>

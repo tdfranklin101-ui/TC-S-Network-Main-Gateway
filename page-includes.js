@@ -42,6 +42,7 @@ function processIncludes(htmlContent, options = {}) {
   // Default paths for includes
   const headerPath = options.headerPath || path.join(__dirname, 'public', 'includes', 'header.html');
   const footerPath = options.footerPath || path.join(__dirname, 'public', 'includes', 'footer.html');
+  const seoMetaPath = options.seoMetaPath || path.join(__dirname, 'public', 'includes', 'seo-meta.html');
   
   // Common CSS file
   const commonCssPath = options.commonCssPath || '/css/common.css';
@@ -56,9 +57,13 @@ function processIncludes(htmlContent, options = {}) {
   // Read header and footer from files with caching
   const header = readWithCache(headerPath, includesCache);
   const footer = readWithCache(footerPath, includesCache);
+  const seoMeta = readWithCache(seoMetaPath, includesCache);
   
   // Language translator script
   const langTranslatorScriptPath = options.langTranslatorScriptPath || '/js/language-translator.js';
+  
+  // Check if the HTML contains the SEO placeholder
+  const needsSeo = htmlContent.includes('<!-- HEADER_SEO_PLACEHOLDER -->');
   
   // Construct the full HTML document
   return `<!DOCTYPE html>
@@ -67,6 +72,9 @@ function processIncludes(htmlContent, options = {}) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${title}</title>
+  
+  <!-- SEO Meta Tags -->
+  ${needsSeo ? seoMeta : ''}
   
   <!-- Common Styles -->
   <link rel="stylesheet" href="${commonCssPath}">
