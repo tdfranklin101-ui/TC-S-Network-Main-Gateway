@@ -117,7 +117,7 @@
         <div class="container">
           <div class="content-overlay">
             <h2>Members Worldwide</h2>
-            <div class="member-count" id="member-count">2</div>
+            <div class="member-count" id="member-count">Loading...</div>
             <p>Join the growing community of solar-powered individuals</p>
           </div>
         </div>
@@ -187,6 +187,17 @@
           mobileNav.classList.toggle('mobile-nav-active');
         });
       }
+      
+      // Initialize member count on page load
+      fetch('/api/member-count?cache=' + Date.now())
+        .then(response => response.json())
+        .then(data => {
+          const memberCountElements = document.querySelectorAll('.member-count, #member-count');
+          memberCountElements.forEach(element => {
+            element.textContent = data.count;
+          });
+        })
+        .catch(error => console.error('Error fetching member count:', error));
     });
   </script>
 

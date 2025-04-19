@@ -469,11 +469,14 @@ app.post('/api/signup', (req, res) => {
     
     log('Current member count: ' + members.length);
     
-    // Return success response
+    // Return success response with accurate member count
+    // The count should exclude the "you are next" placeholder in the count sent to the client
+    const actualMemberCount = members.filter(m => !m.name.toLowerCase().includes("you are next")).length;
+    
     res.status(201).json({ 
       success: true, 
       member: newMember,
-      totalMembers: members.length
+      totalMembers: actualMemberCount
     });
   } catch (e) {
     log('Error processing signup: ' + e.message);
@@ -537,8 +540,11 @@ app.get('/api/member-count', (req, res) => {
     'Surrogate-Control': 'no-store'
   });
   
+  // Calculate actual member count, excluding the "you are next" placeholder
+  const actualMemberCount = members.filter(m => !m.name.toLowerCase().includes("you are next")).length;
+  
   res.json({
-    count: members.length,
+    count: actualMemberCount,
     timestamp: new Date().toISOString()
   });
 });
