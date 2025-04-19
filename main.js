@@ -214,6 +214,17 @@ function loadMembers() {
         },
         {
           id: 7,
+          username: "k.member",
+          name: "Kim",
+          email: "kim.contact@thecurrentsee.org",
+          joinedDate: "2025-04-19",
+          totalSolar: 1.0000,
+          totalDollars: 136000,
+          isAnonymous: false,
+          lastDistributionDate: "2025-04-19"
+        },
+        {
+          id: 8,
           username: "you.are.next",
           name: "You are next",
           joinedDate: today,
