@@ -109,5 +109,16 @@
     "totalDollars": 272000,
     "isAnonymous": false,
     "lastDistributionDate": "2025-04-20"
+  },
+  {
+    "id": 10,
+    "username": "kjm",
+    "name": "KJM",
+    "email": "kjm@example.com",
+    "joinedDate": "2025-04-20",
+    "totalSolar": 1,
+    "totalDollars": 136000,
+    "isAnonymous": false,
+    "lastDistributionDate": "2025-04-20"
   }
 ]
