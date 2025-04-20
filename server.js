@@ -17,7 +17,7 @@ const PORT = process.env.PORT || 3000;
 const HOST = '0.0.0.0';
 const DATABASE_URL = process.env.DATABASE_URL;
 const MAXMIND_LICENSE_KEY = process.env.MAXMIND_LICENSE_KEY;
-const ADMIN_API_TOKEN = process.env.ADMIN_API_TOKEN;
+const ADMIN_API_TOKEN = process.env.ADMIN_API_TOKEN || 'admin-token-2025';
 
 // Solar Constants
 const SOLAR_CONSTANTS = {
@@ -569,6 +569,15 @@ const adminAuthMiddleware = (req, res, next) => {
   // Token is valid, proceed to the route handler
   next();
 };
+
+// Verify admin token endpoint
+app.post('/api/admin/verify-token', adminAuthMiddleware, (req, res) => {
+  // If the middleware passed, the token is valid
+  res.status(200).json({ 
+    valid: true,
+    message: 'Token is valid'
+  });
+});
 
 // Admin route to view system logs
 app.get('/api/admin/logs', adminAuthMiddleware, (req, res) => {
