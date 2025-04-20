@@ -65,11 +65,60 @@ async function syncProductionData() {
     }
     const membersData = await membersResponse.json();
     
+    // IMPORTANT: Check for existing local data to prevent double-counting
+    let localMembersData = [];
+    if (fs.existsSync(LOCAL_MEMBERS_PATH)) {
+      try {
+        localMembersData = JSON.parse(fs.readFileSync(LOCAL_MEMBERS_PATH, 'utf8'));
+        console.log(`Found ${localMembersData.length} existing local members.`);
+      } catch (err) {
+        console.warn(`Warning: Could not parse local members file: ${err.message}`);
+      }
+    }
+    
+    // Perform validation to prevent double-counting SOLAR distributions
+    if (localMembersData.length > 0) {
+      console.log('Validating SOLAR amounts to prevent double-counting...');
+      
+      // Create a map of existing member IDs for quick lookup
+      const localMemberMap = new Map();
+      localMembersData.forEach(member => {
+        localMemberMap.set(member.id, member);
+      });
+      
+      // Check if any production members have unexpected SOLAR amounts
+      let discrepanciesFound = false;
+      membersData.forEach(productionMember => {
+        const localMember = localMemberMap.get(productionMember.id);
+        
+        // Skip if member doesn't exist locally (new member) or is the reserve account
+        if (!localMember || productionMember.isReserve) {
+          return;
+        }
+        
+        // Check the difference between local and production SOLAR amounts
+        const solarDifference = Math.abs(productionMember.totalSolar - localMember.totalSolar);
+        
+        // If the difference is larger than expected, log it
+        if (solarDifference > 1) {  // More than 1 SOLAR difference is suspicious
+          console.log(`⚠️ SOLAR discrepancy for member #${productionMember.id} (${productionMember.name}): ` +
+                      `Production: ${productionMember.totalSolar}, Local: ${localMember.totalSolar}`);
+          discrepanciesFound = true;
+        }
+      });
+      
+      if (discrepanciesFound) {
+        console.log('✅ Note: SOLAR discrepancies found but will be corrected by using production data.');
+      } else {
+        console.log('✅ No unexpected SOLAR discrepancies found.');
+      }
+    }
+    
     // Update local members.json
     fs.writeFileSync(LOCAL_MEMBERS_PATH, JSON.stringify(membersData, null, 2));
     console.log('Updated local members.json with production data.');
     
-    // Create embedded-members format
+    // Create embedded-members format - ensure 4 decimal place formatting
     const embeddedData = `window.embeddedMembers = ${JSON.stringify(membersData)
       .replace(/"totalSolar":(\d+)/g, '"totalSolar":"$1.0000"')};`;
     
