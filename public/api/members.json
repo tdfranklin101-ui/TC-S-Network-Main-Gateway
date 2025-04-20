@@ -5,10 +5,10 @@
     "name": "TC-S Solar Reserve",
     "email": "reserve@thecurrentsee.org",
     "joinedDate": "2025-04-07",
-    "totalSolar": 10000000000,
-    "totalDollars": 1360000000000000,
+    "totalSolar": 10000000001,
+    "totalDollars": 1360000000136000,
     "isAnonymous": false,
-    "lastDistributionDate": "2025-04-19",
+    "lastDistributionDate": "2025-04-20",
     "isReserve": true,
     "notes": "Genesis Reserve Allocation"
   },
@@ -17,20 +17,20 @@
     "username": "terry.franklin",
     "name": "Terry D. Franklin",
     "joinedDate": "2025-04-09",
-    "totalSolar": 10,
-    "totalDollars": 1360000,
+    "totalSolar": 11,
+    "totalDollars": 1496000,
     "isAnonymous": false,
-    "lastDistributionDate": "2025-04-19"
+    "lastDistributionDate": "2025-04-20"
   },
   {
     "id": 2,
     "username": "j.franklin",
     "name": "JF",
     "joinedDate": "2025-04-10",
-    "totalSolar": 9,
-    "totalDollars": 1224000,
+    "totalSolar": 10,
+    "totalDollars": 1360000,
     "isAnonymous": false,
-    "lastDistributionDate": "2025-04-19"
+    "lastDistributionDate": "2025-04-20"
   },
   {
     "id": 3,
@@ -38,10 +38,10 @@
     "name": "Davis",
     "email": "Davisfranklin095@gmail.com",
     "joinedDate": "2025-04-18",
-    "totalSolar": 2,
-    "totalDollars": 272000,
+    "totalSolar": 3,
+    "totalDollars": 408000,
     "isAnonymous": false,
-    "lastDistributionDate": "2025-04-19"
+    "lastDistributionDate": "2025-04-20"
   },
   {
     "id": 4,
@@ -49,30 +49,30 @@
     "name": "Miles Franklin",
     "email": "Milesgfranklin9@gmail.com",
     "joinedDate": "2025-04-18",
-    "totalSolar": 2,
-    "totalDollars": 272000,
+    "totalSolar": 3,
+    "totalDollars": 408000,
     "isAnonymous": false,
-    "lastDistributionDate": "2025-04-19"
+    "lastDistributionDate": "2025-04-20"
   },
   {
     "id": 5,
     "username": "a.franklin",
     "name": "Arden F",
     "joinedDate": "2025-04-19",
-    "totalSolar": 1,
-    "totalDollars": 136000,
+    "totalSolar": 2,
+    "totalDollars": 272000,
     "isAnonymous": false,
-    "lastDistributionDate": "2025-04-19"
+    "lastDistributionDate": "2025-04-20"
   },
   {
     "id": 6,
     "username": "m.hasseman",
     "name": "Marissa Hasseman",
     "joinedDate": "2025-04-19",
-    "totalSolar": 1,
-    "totalDollars": 136000,
+    "totalSolar": 2,
+    "totalDollars": 272000,
     "isAnonymous": false,
-    "lastDistributionDate": "2025-04-19"
+    "lastDistributionDate": "2025-04-20"
   },
   {
     "id": 7,
@@ -80,19 +80,41 @@
     "name": "Kim",
     "email": "KIMBROWN9999@hotmail.com",
     "joinedDate": "2025-04-19",
-    "totalSolar": 1,
-    "totalDollars": 136000,
+    "totalSolar": 2,
+    "totalDollars": 272000,
     "isAnonymous": false,
-    "lastDistributionDate": "2025-04-19"
+    "lastDistributionDate": "2025-04-20"
   },
   {
-    "id": 8,
-    "username": "you.are.next",
-    "name": "You are next",
-    "joinedDate": "2025-04-19",
+    "id": 9,
+    "username": "jeff.elmore",
+    "name": "Jeff Elmore",
+    "email": "jeff.elmore@example.com",
+    "joinedDate": "2025-04-20",
     "totalSolar": 1,
     "totalDollars": 136000,
     "isAnonymous": false,
-    "lastDistributionDate": "2025-04-19"
+    "lastDistributionDate": "2025-04-20"
+  },
+  {
+    "id": 10,
+    "username": "liam.mckay",
+    "name": "Liam McKay",
+    "email": "liam.mckay@example.com",
+    "joinedDate": "2025-04-20",
+    "totalSolar": 1,
+    "totalDollars": 136000,
+    "isAnonymous": false,
+    "lastDistributionDate": "2025-04-20"
+  },
+  {
+    "id": 11,
+    "username": "you.are.next",
+    "name": "You are next",
+    "joinedDate": "2025-04-20",
+    "totalSolar": 1,
+    "totalDollars": 136000,
+    "isAnonymous": false,
+    "lastDistributionDate": "2025-04-20"
   }
 ]

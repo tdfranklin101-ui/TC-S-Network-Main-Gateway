@@ -1540,10 +1540,22 @@ app.post('/api/signup', (req, res) => {
     
     // Calculate new member data
     const today = new Date().toISOString().split('T')[0];
+    
+    // Check if placeholder exists
+    const placeholderIndex = members.findIndex(m => m.name === 'You are next');
+    let nextId = members.length;
+    if (placeholderIndex !== -1) {
+      // Remove placeholder, but we'll add it back later
+      members.splice(placeholderIndex, 1);
+      console.log('Removing existing placeholder to ensure it goes at the end');
+      nextId = members.length + 1;
+    }
+    
     const newMember = {
-      id: members.length + 1,
+      id: nextId,
       username: userData.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '.'),
       name: userData.name,
+      email: userData.email, // Store email
       joinedDate: today,
       totalSolar: 1.00, // Initial allocation
       totalDollars: SOLAR_CONSTANTS.USD_PER_SOLAR,
@@ -1556,12 +1568,28 @@ app.post('/api/signup', (req, res) => {
     // Add to members array
     members.push(newMember);
     
+    // Add back the placeholder at the end
+    members.push({
+      id: members.length + 1,
+      username: 'you.are.next',
+      name: 'You are next',
+      joinedDate: today,
+      totalSolar: 1.00,
+      totalDollars: SOLAR_CONSTANTS.USD_PER_SOLAR,
+      isAnonymous: false,
+      lastDistributionDate: today
+    });
+    
+    // Save to persistent storage
+    updateMembersFiles();
+    
     console.log('Current member count:', members.length);
     
     // Return success response
     res.status(201).json({ 
       success: true, 
-      member: newMember
+      member: newMember,
+      totalMembers: members.length - 1 // Subtract one to exclude the placeholder
     });
   } catch (e) {
     console.error('Error processing signup:', e);
