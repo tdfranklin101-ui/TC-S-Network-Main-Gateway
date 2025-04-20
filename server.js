@@ -81,6 +81,7 @@ const members = [
     id: 1,
     username: 'terry.franklin',
     name: 'Terry D. Franklin',
+    email: 'tdfranklin101@outlook.com',
     joinedDate: '2025-04-09',
     totalSolar: 8.00,
     totalDollars: 1088000,
@@ -91,6 +92,7 @@ const members = [
     id: 2,
     username: 'j.franklin',
     name: 'JF',
+    email: 'aunsun27@icloud.com',
     joinedDate: '2025-04-10',
     totalSolar: 7.00,
     totalDollars: 952000,
@@ -107,16 +109,29 @@ function updateMembersFiles() {
       fs.mkdirSync('public/api', { recursive: true });
     }
     
+    // Format the members data with 4 decimal places for SOLAR values
+    const formattedMembers = members.map(member => {
+      // Create a copy of the member
+      const formattedMember = {...member};
+      
+      // Format totalSolar to 4 decimal places if it's a number
+      if (typeof formattedMember.totalSolar !== 'undefined') {
+        formattedMember.totalSolar = parseFloat(formattedMember.totalSolar).toFixed(4);
+      }
+      
+      return formattedMember;
+    });
+    
     // Update the public API file
     fs.writeFileSync(
       'public/api/members.json',
       JSON.stringify(members, null, 2)
     );
     
-    // Update the embedded members file
+    // Update the embedded members file with the correct JavaScript prefix
     fs.writeFileSync(
       'public/embedded-members',
-      JSON.stringify(members, null, 2)
+      `window.embeddedMembers = ${JSON.stringify(formattedMembers)};`
     );
     
     console.log('Updated static member files with new SOLAR totals');
@@ -339,8 +354,18 @@ app.get('/api/members.json', (req, res) => {
 // Serve the embedded members data with proper content type
 app.get('/embedded-members', (req, res) => {
   updateMemberDistributions();
-  res.setHeader('Content-Type', 'application/json');
-  res.json(members);
+  // Format members with 4 decimal places for SOLAR values
+  const formattedMembers = members.map(member => {
+    const formattedMember = {...member};
+    if (typeof formattedMember.totalSolar !== 'undefined') {
+      formattedMember.totalSolar = parseFloat(formattedMember.totalSolar).toFixed(4);
+    }
+    return formattedMember;
+  });
+  
+  // Set the proper JavaScript content type
+  res.setHeader('Content-Type', 'application/javascript');
+  res.send(`window.embeddedMembers = ${JSON.stringify(formattedMembers)};`);
 });
 
 app.get('/api/members-data', (req, res) => {
@@ -1563,7 +1588,7 @@ app.post('/api/signup', (req, res) => {
       lastDistributionDate: today // Set initial distribution date
     };
     
-    console.log('Creating new member:', newMember);
+    console.log('Creating new member with email:', newMember.email);
     
     // Add to members array
     members.push(newMember);
@@ -1580,8 +1605,23 @@ app.post('/api/signup', (req, res) => {
       lastDistributionDate: today
     });
     
-    // Save to persistent storage
-    updateMembersFiles();
+    // IMMEDIATELY save to persistent storage to ensure emails are preserved
+    const saveResult = updateMembersFiles();
+    console.log('Save result after adding new member:', saveResult ? 'Success' : 'Failed');
+    
+    // Double-check that the members file was saved correctly
+    try {
+      const membersFile = fs.readFileSync('public/api/members.json', 'utf8');
+      const savedMembers = JSON.parse(membersFile);
+      const savedMember = savedMembers.find(m => m.id === newMember.id);
+      if (savedMember && savedMember.email === newMember.email) {
+        console.log('Verified email was correctly saved to members.json');
+      } else {
+        console.warn('Warning: Email verification failed - member may be missing email in saved file');
+      }
+    } catch (verifyErr) {
+      console.error('Error verifying saved member:', verifyErr);
+    }
     
     console.log('Current member count:', members.length);
     
