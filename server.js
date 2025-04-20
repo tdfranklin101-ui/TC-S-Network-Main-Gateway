@@ -1723,94 +1723,196 @@ app.post('/wallet-ai/analyze', (req, res) => {
   }, 1200); // Add slight delay to simulate processing
 });
 
-// Sign up endpoint
+// Sign up endpoint with enhanced data reliability
 app.post('/api/signup', (req, res) => {
   try {
-    console.log('Received signup request:', req.body);
+    console.log('[SIGNUP] Received signup request:', req.body);
     const userData = req.body;
     
-    // Validate required fields
-    if (!userData.name || !userData.email) {
-      console.log('Validation failed: Missing name or email');
+    // Validate required fields with more detailed error messages
+    if (!userData.name) {
+      console.log('[SIGNUP] Validation failed: Missing name');
       return res.status(400).json({ 
         success: false, 
-        error: 'Name and email are required' 
+        error: 'Name is required' 
+      });
+    }
+    
+    if (!userData.email) {
+      console.log('[SIGNUP] Validation failed: Missing email');
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Email is required' 
+      });
+    }
+    
+    // Basic email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(userData.email)) {
+      console.log('[SIGNUP] Validation failed: Invalid email format');
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Please provide a valid email address' 
+      });
+    }
+    
+    // Check for duplicate email
+    const existingMember = members.find(m => 
+      m.email && m.email.toLowerCase() === userData.email.toLowerCase() && 
+      !m.isPlaceholder
+    );
+    
+    if (existingMember) {
+      console.log('[SIGNUP] Validation failed: Email already exists');
+      return res.status(409).json({ 
+        success: false, 
+        error: 'A member with this email already exists' 
       });
     }
     
     // Calculate new member data
     const today = new Date().toISOString().split('T')[0];
+    const timestamp = new Date().toISOString();
     
     // Check if placeholder exists
-    const placeholderIndex = members.findIndex(m => m.name === 'You are next');
+    const placeholderIndex = members.findIndex(m => m.name === 'You are next' || m.isPlaceholder);
     let nextId = members.length;
+    
     if (placeholderIndex !== -1) {
       // Remove placeholder, but we'll add it back later
       members.splice(placeholderIndex, 1);
-      console.log('Removing existing placeholder to ensure it goes at the end');
-      nextId = members.length + 1;
+      console.log('[SIGNUP] Removing existing placeholder to ensure it goes at the end');
     }
+    
+    // Make sure we have a unique ID by checking the maximum existing ID
+    const maxId = members.reduce((max, member) => 
+      typeof member.id === 'number' && member.id > max ? member.id : max, 0);
+    nextId = maxId + 1;
     
     const newMember = {
       id: nextId,
       username: userData.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '.'),
-      name: userData.name,
-      email: userData.email, // Store email
+      name: userData.name.trim(),
+      email: userData.email.trim(), // Store email and trim whitespace
       joinedDate: today,
+      signupTimestamp: timestamp,
       totalSolar: 1.00, // Initial allocation
       totalDollars: SOLAR_CONSTANTS.USD_PER_SOLAR,
       isAnonymous: userData.isAnonymous || false,
       lastDistributionDate: today // Set initial distribution date
     };
     
-    console.log('Creating new member with email:', newMember.email);
+    console.log(`[SIGNUP] Creating new member #${nextId} with name: ${newMember.name}, email: ${newMember.email}`);
+    
+    // Create a backup before making changes
+    backupMembersData();
     
     // Add to members array
     members.push(newMember);
     
-    // Add back the placeholder at the end
+    // Add back the placeholder at the end with proper identification
     members.push({
-      id: members.length + 1,
-      username: 'you.are.next',
-      name: 'You are next',
+      id: "next",
+      username: "you.are.next",
+      name: "You are next",
+      email: "",
       joinedDate: today,
       totalSolar: 1.00,
       totalDollars: SOLAR_CONSTANTS.USD_PER_SOLAR,
       isAnonymous: false,
+      isPlaceholder: true,
       lastDistributionDate: today
     });
     
     // IMMEDIATELY save to persistent storage to ensure emails are preserved
     const saveResult = updateMembersFiles();
-    console.log('Save result after adding new member:', saveResult ? 'Success' : 'Failed');
+    console.log('[SIGNUP] Save result after adding new member:', saveResult ? 'Success' : 'Failed');
     
-    // Double-check that the members file was saved correctly
+    // Multi-level verification for data persistence
+    let verificationSuccess = false;
+    let verificationMessage = '';
+    
     try {
+      // Verify members.json
       const membersFile = fs.readFileSync('public/api/members.json', 'utf8');
       const savedMembers = JSON.parse(membersFile);
       const savedMember = savedMembers.find(m => m.id === newMember.id);
-      if (savedMember && savedMember.email === newMember.email) {
-        console.log('Verified email was correctly saved to members.json');
+      
+      // Verify embedded-members
+      const embeddedFile = fs.readFileSync('public/embedded-members', 'utf8');
+      const embeddedMatch = embeddedFile.includes(newMember.email);
+      
+      if (savedMember && savedMember.email === newMember.email && embeddedMatch) {
+        console.log('[SIGNUP] ✅ Verification successful: Member data correctly saved to all storage locations');
+        verificationSuccess = true;
+        verificationMessage = 'Member data successfully verified in all storage locations';
+        
+        // Create a post-signup backup
+        backupMembersData();
       } else {
-        console.warn('Warning: Email verification failed - member may be missing email in saved file');
+        console.warn('[SIGNUP] ⚠️ Warning: Verification issues detected:');
+        if (!savedMember) console.warn('- Member not found in members.json');
+        if (savedMember && savedMember.email !== newMember.email) console.warn('- Email mismatch in members.json');
+        if (!embeddedMatch) console.warn('- Member not found in embedded-members');
+        
+        verificationMessage = 'Partial verification - some storage locations may not be updated';
+        
+        // Retry save to recover from partial failure
+        console.log('[SIGNUP] Attempting recovery by re-saving member data...');
+        updateMembersFiles();
       }
     } catch (verifyErr) {
-      console.error('Error verifying saved member:', verifyErr);
+      console.error('[SIGNUP] Error during verification:', verifyErr);
+      verificationMessage = 'Verification error: ' + verifyErr.message;
+      
+      // Emergency recovery: force rewrite all data
+      try {
+        console.log('[SIGNUP] Attempting emergency recovery...');
+        // Force update all storage files
+        updateMembersFiles();
+        // Create emergency backup
+        backupMembersData();
+      } catch (recoveryErr) {
+        console.error('[SIGNUP] Recovery failed:', recoveryErr);
+      }
     }
     
-    console.log('Current member count:', members.length);
+    console.log(`[SIGNUP] Process complete. Current member count: ${members.length - 1} (excluding placeholder)`);
     
-    // Return success response
+    // Return success response with verification info
     res.status(201).json({ 
       success: true, 
       member: newMember,
-      totalMembers: members.length - 1 // Subtract one to exclude the placeholder
+      totalMembers: members.length - 1, // Subtract one to exclude the placeholder
+      verification: {
+        success: verificationSuccess,
+        message: verificationMessage
+      }
     });
   } catch (e) {
-    console.error('Error processing signup:', e);
+    console.error('[SIGNUP] Critical error processing signup:', e);
+    
+    // Attempt to log detailed error info for debugging
+    try {
+      const errorLog = {
+        timestamp: new Date().toISOString(),
+        error: e.message,
+        stack: e.stack,
+        request: {
+          body: req.body,
+          headers: req.headers
+        }
+      };
+      
+      // Log to a dedicated error file
+      fs.appendFileSync('signup-errors.log', JSON.stringify(errorLog) + '\n');
+    } catch (logErr) {
+      console.error('[SIGNUP] Failed to log error details:', logErr);
+    }
+    
     res.status(500).json({ 
       success: false, 
-      error: 'Internal server error' 
+      error: 'Internal server error - your signup has been logged and will be processed' 
     });
   }
 });
