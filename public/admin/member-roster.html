@@ -438,6 +438,35 @@
       </table>
     </div>
   </div>
+  
+  <!-- Edit Email Modal -->
+  <div id="edit-email-modal" class="modal">
+    <div class="modal-content" style="max-width: 500px;">
+      <span class="close-modal">&times;</span>
+      <h2>Edit Member Email</h2>
+      <div id="edit-member-name" style="font-size: 1.2rem; margin-bottom: 1rem;"></div>
+      
+      <form id="edit-email-form">
+        <input type="hidden" id="edit-member-id" value="">
+        <div class="form-group">
+          <label for="current-email">Current Email</label>
+          <input type="text" id="current-email" class="form-control" disabled>
+        </div>
+        
+        <div class="form-group">
+          <label for="new-email">New Email</label>
+          <input type="email" id="new-email" class="form-control" required placeholder="Enter new email address">
+        </div>
+        
+        <div id="edit-email-error" style="color: var(--danger); margin-bottom: 1rem; display: none;"></div>
+        
+        <div style="display: flex; justify-content: space-between; margin-top: 1.5rem;">
+          <button type="button" class="admin-button secondary cancel-edit-button">Cancel</button>
+          <button type="submit" class="admin-button save-email-button">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <script>
     // Authentication logic
@@ -628,9 +657,15 @@
             <td>${formatCurrency(member.totalDollars)}</td>
             <td>${formatDate(member.lastDistributionDate)}</td>
             <td>
-              <button class="admin-button view-history-btn" data-member-id="${member.id}" data-member-name="${member.name}">
-                View History
-              </button>
+              <div style="display: flex; gap: 5px;">
+                <button class="admin-button view-history-btn" data-member-id="${member.id}" data-member-name="${member.name}">
+                  View History
+                </button>
+                ${!member.isReserve && member.name !== 'You are next' ? `
+                <button class="admin-button secondary edit-email-btn" data-member-id="${member.id}" data-member-name="${member.name}" data-member-email="${member.email || ''}">
+                  Edit Email
+                </button>` : ''}
+              </div>
             </td>
           </tr>
         `;
@@ -654,6 +689,16 @@
           const memberId = this.getAttribute('data-member-id');
           const memberName = this.getAttribute('data-member-name');
           showDistributionHistory(memberId, memberName);
+        });
+      });
+      
+      // Add event listeners to edit email buttons
+      document.querySelectorAll('.edit-email-btn').forEach(button => {
+        button.addEventListener('click', function() {
+          const memberId = this.getAttribute('data-member-id');
+          const memberName = this.getAttribute('data-member-name');
+          const memberEmail = this.getAttribute('data-member-email');
+          showEditEmailModal(memberId, memberName, memberEmail);
         });
       });
     }
@@ -743,14 +788,108 @@
       historyModal.style.display = 'block';
     }
     
-    closeModal.addEventListener('click', function() {
-      historyModal.style.display = 'none';
+    document.querySelectorAll('.close-modal').forEach(closeBtn => {
+      closeBtn.addEventListener('click', function() {
+        const modal = this.closest('.modal');
+        if (modal) {
+          modal.style.display = 'none';
+        }
+      });
     });
     
     window.addEventListener('click', function(e) {
       if (e.target == historyModal) {
         historyModal.style.display = 'none';
+      } else if (e.target == editEmailModal) {
+        editEmailModal.style.display = 'none';
       }
+    });
+    
+    // Email editing functionality
+    const editEmailModal = document.getElementById('edit-email-modal');
+    const editMemberName = document.getElementById('edit-member-name');
+    const editMemberId = document.getElementById('edit-member-id');
+    const currentEmailInput = document.getElementById('current-email');
+    const newEmailInput = document.getElementById('new-email');
+    const editEmailForm = document.getElementById('edit-email-form');
+    const editEmailError = document.getElementById('edit-email-error');
+    const cancelEditButtons = document.querySelectorAll('.cancel-edit-button');
+    
+    // Show edit email modal
+    function showEditEmailModal(memberId, memberName, memberEmail) {
+      editMemberName.textContent = `Member: ${memberName} (ID: ${memberId})`;
+      editMemberId.value = memberId;
+      currentEmailInput.value = memberEmail || '';
+      newEmailInput.value = memberEmail || '';
+      editEmailError.style.display = 'none';
+      editEmailModal.style.display = 'block';
+    }
+    
+    // Close modal when clicking cancel button
+    cancelEditButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        editEmailModal.style.display = 'none';
+      });
+    });
+    
+    // Process email edit form submission
+    editEmailForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const token = localStorage.getItem('tc-s-admin-token');
+      if (!token) return;
+      
+      const memberId = editMemberId.value;
+      const newEmail = newEmailInput.value.trim();
+      
+      if (!memberId || !newEmail) {
+        editEmailError.textContent = 'Member ID and new email are required';
+        editEmailError.style.display = 'block';
+        return;
+      }
+      
+      if (!newEmail.includes('@')) {
+        editEmailError.textContent = 'Please enter a valid email address';
+        editEmailError.style.display = 'block';
+        return;
+      }
+      
+      // Submit to the server
+      fetch(`/api/admin/members/${memberId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ email: newEmail })
+      })
+      .then(response => {
+        if (!response.ok) {
+          return response.json().then(data => {
+            throw new Error(data.error || 'Failed to update email');
+          });
+        }
+        return response.json();
+      })
+      .then(data => {
+        // Success! Close modal and refresh data
+        editEmailModal.style.display = 'none';
+        loadMemberData(token);
+        
+        // Update the row directly for better UX
+        const row = document.querySelector(`tr[data-member-id="${memberId}"]`);
+        if (row) {
+          const emailCell = row.querySelector('.member-email');
+          if (emailCell) {
+            emailCell.innerHTML = `<a href="mailto:${newEmail}">${newEmail}</a>`;
+          }
+        }
+      })
+      .catch(error => {
+        console.error('Error updating email:', error);
+        editEmailError.textContent = error.message || 'Failed to update email';
+        editEmailError.style.display = 'block';
+      });
     });
     
     // Initialize the admin panel

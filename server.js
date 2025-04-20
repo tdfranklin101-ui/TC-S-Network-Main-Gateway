@@ -766,6 +766,74 @@ app.get('/api/admin/logs', adminAuthMiddleware, (req, res) => {
   }
 });
 
+// API endpoint to update member information
+app.put('/api/admin/members/:memberId', adminAuthMiddleware, (req, res) => {
+  try {
+    const memberId = parseInt(req.params.memberId, 10);
+    const { email } = req.body;
+    
+    // Validate input
+    if (!email || typeof email !== 'string' || !email.includes('@')) {
+      return res.status(400).json({ error: 'Invalid email format' });
+    }
+    
+    // Find member by ID
+    const memberIndex = members.findIndex(m => m.id === memberId);
+    if (memberIndex === -1) {
+      return res.status(404).json({ error: 'Member not found' });
+    }
+    
+    // Skip if it's the reserve account or placeholder
+    if (members[memberIndex].isReserve || members[memberIndex].name === 'You are next') {
+      return res.status(403).json({ error: 'Cannot modify this special account' });
+    }
+
+    // Store old email for logging
+    const oldEmail = members[memberIndex].email;
+    
+    // Update email
+    members[memberIndex].email = email;
+    
+    // Update member files (both members.json and embedded-members)
+    fs.writeFileSync(path.join(PUBLIC_DIR, 'api', 'members.json'), JSON.stringify(members, null, 2));
+    
+    // Update embedded-members file with formatted SOLAR values
+    const formattedMembers = members.map(m => ({
+      ...m,
+      totalSolar: typeof m.totalSolar === 'number' ? m.totalSolar.toFixed(4) : m.totalSolar
+    }));
+    
+    fs.writeFileSync(
+      path.join(PUBLIC_DIR, 'embedded-members'),
+      `window.embeddedMembers = ${JSON.stringify(formattedMembers)};`
+    );
+    
+    // Create a backup
+    const backupDir = path.join(__dirname, 'backup');
+    if (!fs.existsSync(backupDir)) {
+      fs.mkdirSync(backupDir, { recursive: true });
+    }
+    
+    const timestamp = new Date().toISOString().replace(/:/g, '-');
+    fs.writeFileSync(
+      path.join(backupDir, `members_backup_${timestamp}.json`), 
+      JSON.stringify(members, null, 2)
+    );
+    
+    console.log(`Admin updated member #${memberId} (${members[memberIndex].name}) email from ${oldEmail} to ${email}`);
+    
+    return res.status(200).json({ 
+      success: true,
+      message: 'Member information updated successfully',
+      member: members[memberIndex]
+    });
+    
+  } catch (error) {
+    console.error('Error updating member:', error);
+    res.status(500).json({ error: 'Failed to update member information' });
+  }
+});
+
 // Admin route for system diagnostics
 app.get('/api/admin/diagnostics', adminAuthMiddleware, async (req, res) => {
   try {
