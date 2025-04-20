@@ -78,15 +78,27 @@ updateSolarClockData();
 // Member data
 const members = [
   {
+    id: 0,
+    username: 'solar.reserve',
+    name: 'Solar Reserve',
+    email: 'admin@thecurrentsee.org',
+    joinedDate: '2025-04-07',
+    totalSolar: 10000000000,
+    totalDollars: 1360000000000,
+    isAnonymous: false,
+    isReserve: true,
+    lastDistributionDate: '2025-04-20'
+  },
+  {
     id: 1,
     username: 'terry.franklin',
     name: 'Terry D. Franklin',
     email: 'tdfranklin101@outlook.com',
     joinedDate: '2025-04-09',
-    totalSolar: 8.00,
-    totalDollars: 1088000,
+    totalSolar: 11,
+    totalDollars: 1496000,
     isAnonymous: false,
-    lastDistributionDate: '2025-04-17' // Track last distribution date
+    lastDistributionDate: '2025-04-20'
   },
   {
     id: 2,
@@ -94,12 +106,124 @@ const members = [
     name: 'JF',
     email: 'aunsun27@icloud.com',
     joinedDate: '2025-04-10',
-    totalSolar: 7.00,
-    totalDollars: 952000,
+    totalSolar: 10,
+    totalDollars: 1360000,
     isAnonymous: false,
-    lastDistributionDate: '2025-04-17' // Track last distribution date
+    lastDistributionDate: '2025-04-20'
+  },
+  {
+    id: 3,
+    username: 'davis',
+    name: 'Davis',
+    email: 'davis@example.com',
+    joinedDate: '2025-04-18',
+    totalSolar: 3,
+    totalDollars: 408000,
+    isAnonymous: false,
+    lastDistributionDate: '2025-04-20'
+  },
+  {
+    id: 4,
+    username: 'miles.franklin',
+    name: 'Miles Franklin',
+    email: 'miles@example.com',
+    joinedDate: '2025-04-18',
+    totalSolar: 3,
+    totalDollars: 408000,
+    isAnonymous: false,
+    lastDistributionDate: '2025-04-20'
+  },
+  {
+    id: 5,
+    username: 'arden.f',
+    name: 'Arden F',
+    email: 'arden@example.com',
+    joinedDate: '2025-04-19',
+    totalSolar: 2,
+    totalDollars: 272000,
+    isAnonymous: false,
+    lastDistributionDate: '2025-04-20'
+  },
+  {
+    id: 6,
+    username: 'marissa.hasseman',
+    name: 'Marissa Hasseman',
+    email: 'marissa@example.com',
+    joinedDate: '2025-04-19',
+    totalSolar: 2,
+    totalDollars: 272000,
+    isAnonymous: false,
+    lastDistributionDate: '2025-04-20'
+  },
+  {
+    id: 7,
+    username: 'kim',
+    name: 'Kim',
+    email: 'KIMBROWN9999@hotmail.com',
+    joinedDate: '2025-04-19',
+    totalSolar: 2,
+    totalDollars: 272000,
+    isAnonymous: false,
+    lastDistributionDate: '2025-04-20'
+  },
+  {
+    id: 8,
+    username: 'jeff.elmore',
+    name: 'Jeff Elmore',
+    email: 'jeff@example.com',
+    joinedDate: '2025-04-20',
+    totalSolar: 1,
+    totalDollars: 136000,
+    isAnonymous: false,
+    lastDistributionDate: '2025-04-20'
+  },
+  {
+    id: 9,
+    username: 'liam.mckay',
+    name: 'Liam McKay',
+    email: 'liam@example.com',
+    joinedDate: '2025-04-20',
+    totalSolar: 1,
+    totalDollars: 136000,
+    isAnonymous: false,
+    lastDistributionDate: '2025-04-20'
   }
 ];
+
+// Function to create a backup of member data
+function backupMembersData() {
+  try {
+    // Ensure the backup directory exists
+    if (!fs.existsSync('backup')) {
+      fs.mkdirSync('backup', { recursive: true });
+    }
+    
+    const now = new Date();
+    const dateStr = now.toISOString().split('T')[0]; // YYYY-MM-DD format
+    const timeStr = now.toISOString().replace(/[:.]/g, '-').replace('T', '_').slice(0, -1); // YYYY-MM-DD_HH-MM-SS format
+    
+    // Create daily backup file
+    const backupFilename = `backup/members_backup_${dateStr}.json`;
+    fs.writeFileSync(
+      backupFilename,
+      JSON.stringify(members, null, 2)
+    );
+    
+    // Create a timestamped backup to preserve multiple states
+    const timestampedBackupFilename = `backup/members_backup_${timeStr}.json`;
+    fs.writeFileSync(
+      timestampedBackupFilename,
+      JSON.stringify(members, null, 2)
+    );
+    
+    console.log(`Created member data backup: ${backupFilename}`);
+    return true;
+  } catch (error) {
+    console.error('Error creating member data backup:', error);
+    console.log('ERROR: Failed to backup member data: ' + error.message);
+    return false;
+  }
+}
 
 // Function to update the static files that store member data
 function updateMembersFiles() {
@@ -133,6 +257,9 @@ function updateMembersFiles() {
       'public/embedded-members',
       `window.embeddedMembers = ${JSON.stringify(formattedMembers)};`
     );
+    
+    // Create a backup after each update
+    backupMembersData();
     
     console.log('Updated static member files with new SOLAR totals');
     return true;
@@ -336,20 +463,52 @@ app.get('/api/solar-clock', (req, res) => {
 app.get('/api/members', (req, res) => {
   // First update the members with the latest SOLAR distributions
   updateMemberDistributions();
-  res.json(members);
+  // Add the "You are next" placeholder
+  const membersWithPlaceholder = addYouAreNextPlaceholder(members);
+  res.json(membersWithPlaceholder);
 });
 
 app.get('/api/solar-accounts/leaderboard', (req, res) => {
   // First update the members with the latest SOLAR distributions
   updateMemberDistributions();
-  res.json(members);
+  // Add the "You are next" placeholder
+  const membersWithPlaceholder = addYouAreNextPlaceholder(members);
+  res.json(membersWithPlaceholder);
 });
 
 app.get('/api/members.json', (req, res) => {
   // First update the members with the latest SOLAR distributions
   updateMemberDistributions();
-  res.json(members);
+  // Add the "You are next" placeholder
+  const membersWithPlaceholder = addYouAreNextPlaceholder(members);
+  res.json(membersWithPlaceholder);
 });
+
+// Function to add a "You are next" placeholder to the members list
+function addYouAreNextPlaceholder(membersList) {
+  // Create a copy of the members list
+  const membersWithPlaceholder = [...membersList];
+  
+  // Create the "You are next" placeholder
+  const today = new Date().toISOString().split('T')[0];
+  const placeholder = {
+    id: "next",
+    username: "you.are.next",
+    name: "You are next",
+    email: "",
+    joinedDate: today,
+    totalSolar: 1,
+    totalDollars: 136000,
+    isAnonymous: false,
+    isPlaceholder: true,
+    lastDistributionDate: today
+  };
+  
+  // Add the placeholder to the end of the list
+  membersWithPlaceholder.push(placeholder);
+  
+  return membersWithPlaceholder;
+}
 
 // Serve the embedded members data with proper content type
 app.get('/embedded-members', (req, res) => {
@@ -363,29 +522,36 @@ app.get('/embedded-members', (req, res) => {
     return formattedMember;
   });
   
+  // Add the "You are next" placeholder
+  const membersWithPlaceholder = addYouAreNextPlaceholder(formattedMembers);
+  
   // Set the proper JavaScript content type
   res.setHeader('Content-Type', 'application/javascript');
-  res.send(`window.embeddedMembers = ${JSON.stringify(formattedMembers)};`);
+  res.send(`window.embeddedMembers = ${JSON.stringify(membersWithPlaceholder)};`);
 });
 
 app.get('/api/members-data', (req, res) => {
   // Alternative endpoint for JSONP callback support
   updateMemberDistributions();
+  // Add the "You are next" placeholder
+  const membersWithPlaceholder = addYouAreNextPlaceholder(members);
   const callback = req.query.callback;
   if (callback) {
     res.setHeader('Content-Type', 'application/javascript');
-    res.send(`${callback}(${JSON.stringify(members)})`);
+    res.send(`${callback}(${JSON.stringify(membersWithPlaceholder)})`);
   } else {
-    res.json(members);
+    res.json(membersWithPlaceholder);
   }
 });
 
 app.get('/api/members.js', (req, res) => {
   // JSONP endpoint for cross-domain support
   updateMemberDistributions();
+  // Add the "You are next" placeholder
+  const membersWithPlaceholder = addYouAreNextPlaceholder(members);
   const callback = req.query.callback || 'updateMembers';
   res.setHeader('Content-Type', 'application/javascript');
-  res.send(`${callback}(${JSON.stringify(members)})`);
+  res.send(`${callback}(${JSON.stringify(membersWithPlaceholder)})`);
 });
 
 app.get('/api/member-count', (req, res) => {
