@@ -736,6 +736,16 @@ const adminAuthMiddleware = (req, res, next) => {
   next();
 };
 
+// Helper function to verify admin token (standalone)
+function verifyAdminToken(token) {
+  if (!token) return false;
+  
+  // Remove Bearer prefix if present
+  const cleanToken = token.startsWith('Bearer ') ? token.substring(7) : token;
+  
+  return cleanToken === ADMIN_API_TOKEN;
+}
+
 // Verify admin token endpoint
 app.post('/api/admin/verify-token', adminAuthMiddleware, (req, res) => {
   // If the middleware passed, the token is valid
@@ -743,6 +753,17 @@ app.post('/api/admin/verify-token', adminAuthMiddleware, (req, res) => {
     valid: true,
     message: 'Token is valid'
   });
+});
+
+// Alternative admin token verification with query parameter
+app.get('/api/admin/validate', (req, res) => {
+  const token = req.query.token;
+  
+  if (verifyAdminToken(token)) {
+    res.status(200).json({ valid: true, message: 'Token is valid' });
+  } else {
+    res.status(403).json({ valid: false, message: 'Invalid token' });
+  }
 });
 
 // Admin route to view system logs
@@ -2482,6 +2503,73 @@ server.listen(PORT, HOST, () => {
   
   console.log('SOLAR distribution scheduler is active using node-schedule. Will distribute 1 SOLAR per user daily at 00:00 GMT (5:00 PM Pacific Time).');
 
+  // Alternative email update API with query string token (more robust against authentication issues)
+  app.get('/api/members/update', (req, res) => {
+    try {
+      const { token, id, email } = req.query;
+      
+      // Verify the token directly without using middleware
+      if (!verifyAdminToken(token)) {
+        console.log('Invalid token for direct email update API');
+        return res.status(403).json({ error: 'Invalid token' });
+      }
+      
+      const memberId = parseInt(id, 10);
+      
+      console.log(`Direct email update API called for member ID ${memberId}, new email: ${email}`);
+      
+      // Validate input
+      if (!email || typeof email !== 'string' || !email.includes('@')) {
+        return res.status(400).json({ error: 'Invalid email format' });
+      }
+      
+      // Find member by ID
+      const memberIndex = members.findIndex(m => m.id === memberId);
+      if (memberIndex === -1) {
+        return res.status(404).json({ error: 'Member not found' });
+      }
+      
+      // Skip if it's the reserve account or placeholder
+      if (members[memberIndex].isReserve || members[memberIndex].name === 'You are next') {
+        return res.status(403).json({ error: 'Cannot modify this special account' });
+      }
+
+      // Store old email for logging
+      const oldEmail = members[memberIndex].email;
+      
+      // Update email
+      members[memberIndex].email = email;
+      
+      // Update member files
+      updateMembersFiles();
+      
+      // Create a backup with timestamp
+      const backupDir = path.join(__dirname, 'backup');
+      if (!fs.existsSync(backupDir)) {
+        fs.mkdirSync(backupDir, { recursive: true });
+      }
+      
+      const timestamp = new Date().toISOString().replace(/:/g, '-');
+      fs.writeFileSync(
+        path.join(backupDir, `members_backup_direct_update_${timestamp}.json`), 
+        JSON.stringify(members, null, 2)
+      );
+      
+      console.log(`Member ${memberId} email updated from "${oldEmail}" to "${email}" via direct query API`);
+      
+      res.json({ 
+        success: true, 
+        message: 'Email updated successfully',
+        memberId,
+        oldEmail,
+        newEmail: email
+      });
+    } catch (error) {
+      console.error('Error in direct email update API:', error);
+      res.status(500).json({ error: 'Failed to update email' });
+    }
+  });
+  
   // Create a fallback API for member email updates
   app.post('/api/members/:memberId/update-email', adminAuthMiddleware, (req, res) => {
     try {
