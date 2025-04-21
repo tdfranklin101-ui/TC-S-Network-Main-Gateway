@@ -703,20 +703,14 @@ app.get('/api/geolocation', async (req, res) => {
 
 // Admin Routes with token authentication
 const adminAuthMiddleware = (req, res, next) => {
+  console.log('Admin auth middleware called');
   const authHeader = req.headers.authorization;
   
   if (!authHeader) {
+    console.log('Auth header missing');
     return res.status(401).json({ 
       error: 'Authentication required',
       message: 'Missing Authorization header'
-    });
-  }
-  
-  // Check if the token matches the environment variable
-  if (!ADMIN_API_TOKEN) {
-    return res.status(500).json({ 
-      error: 'Server configuration error',
-      message: 'Admin API token not configured'
     });
   }
   
@@ -725,13 +719,19 @@ const adminAuthMiddleware = (req, res, next) => {
     ? authHeader.substring(7) 
     : authHeader;
   
+  console.log(`Token received: "${token}"`);
+  console.log(`Expected token: "${ADMIN_API_TOKEN}"`);
+  
+  // Check if the token matches the environment variable or the fallback
   if (token !== ADMIN_API_TOKEN) {
+    console.log('Token mismatch');
     return res.status(403).json({ 
       error: 'Forbidden',
       message: 'Invalid API token'
     });
   }
   
+  console.log('Admin authentication successful');
   // Token is valid, proceed to the route handler
   next();
 };
