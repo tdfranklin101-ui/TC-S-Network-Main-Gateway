@@ -2481,6 +2481,66 @@ server.listen(PORT, HOST, () => {
   });
   
   console.log('SOLAR distribution scheduler is active using node-schedule. Will distribute 1 SOLAR per user daily at 00:00 GMT (5:00 PM Pacific Time).');
+
+  // Create a fallback API for member email updates
+  app.post('/api/members/:memberId/update-email', adminAuthMiddleware, (req, res) => {
+    try {
+      const memberId = parseInt(req.params.memberId, 10);
+      const { email } = req.body;
+      
+      console.log(`Fallback email update API called for member ID ${memberId}, new email: ${email}`);
+      
+      // Validate input
+      if (!email || typeof email !== 'string' || !email.includes('@')) {
+        return res.status(400).json({ error: 'Invalid email format' });
+      }
+      
+      // Find member by ID
+      const memberIndex = members.findIndex(m => m.id === memberId);
+      if (memberIndex === -1) {
+        return res.status(404).json({ error: 'Member not found' });
+      }
+      
+      // Skip if it's the reserve account or placeholder
+      if (members[memberIndex].isReserve || members[memberIndex].name === 'You are next') {
+        return res.status(403).json({ error: 'Cannot modify this special account' });
+      }
+
+      // Store old email for logging
+      const oldEmail = members[memberIndex].email;
+      
+      // Update email
+      members[memberIndex].email = email;
+      
+      // Update member files
+      updateMembersFiles();
+      
+      // Create a backup with timestamp
+      const backupDir = path.join(__dirname, 'backup');
+      if (!fs.existsSync(backupDir)) {
+        fs.mkdirSync(backupDir, { recursive: true });
+      }
+      
+      const timestamp = new Date().toISOString().replace(/:/g, '-');
+      fs.writeFileSync(
+        path.join(backupDir, `members_backup_email_update_${timestamp}.json`), 
+        JSON.stringify(members, null, 2)
+      );
+      
+      console.log(`Member ${memberId} email updated from "${oldEmail}" to "${email}" via fallback API`);
+      
+      res.json({ 
+        success: true, 
+        message: 'Email updated successfully',
+        memberId,
+        oldEmail,
+        newEmail: email
+      });
+    } catch (error) {
+      console.error('Error in fallback email update API:', error);
+      res.status(500).json({ error: 'Failed to update email' });
+    }
+  });
 });
 
 // Error handling
