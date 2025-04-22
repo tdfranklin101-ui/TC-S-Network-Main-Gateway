@@ -157,6 +157,16 @@
     "lastDistributionDate": "2025-04-22"
   },
   {
+    "id": 16,
+    "username": "you.are.next",
+    "name": "You are next",
+    "joinedDate": "2025-04-22",
+    "totalSolar": 1,
+    "totalDollars": 136000,
+    "isAnonymous": false,
+    "lastDistributionDate": "2025-04-22"
+  },
+  {
     "id": 17,
     "username": "kealani.ventura",
     "name": "Kealani Ventura",
@@ -164,16 +174,6 @@
     "joinedDate": "2025-04-21",
     "totalSolar": 2,
     "totalDollars": 272000,
-    "isAnonymous": false,
-    "lastDistributionDate": "2025-04-22"
-  },
-  {
-    "id": 16,
-    "username": "you.are.next",
-    "name": "You are next",
-    "joinedDate": "2025-04-22",
-    "totalSolar": 1,
-    "totalDollars": 136000,
     "isAnonymous": false,
     "lastDistributionDate": "2025-04-22"
   }

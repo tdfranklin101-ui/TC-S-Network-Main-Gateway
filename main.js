@@ -69,20 +69,252 @@ function calculateTotalValue() {
 // Members data array (loaded from file)
 let members = [];
 
-// Initialize function to load members data
+// Helper function to load members from a specific file path
+function loadMembersFromFile(filePath, backupType = 'primary') {
+  try {
+    if (fs.existsSync(filePath)) {
+      const loadedData = fs.readFileSync(filePath, 'utf8');
+      const loadedMembers = JSON.parse(loadedData);
+      log(`Loaded ${loadedMembers.length} members from ${backupType} file at ${filePath}`);
+      return loadedMembers;
+    }
+  } catch (error) {
+    log(`Error loading ${backupType} members file from ${filePath}: ${error.message}`);
+  }
+  return null;
+}
+
+// Helper function to extract members from the embedded-members JavaScript file
+function extractMembersFromEmbeddedFile(embeddedPath) {
+  try {
+    if (fs.existsSync(embeddedPath)) {
+      const embeddedContent = fs.readFileSync(embeddedPath, 'utf8');
+      // Extract the JSON array from the JavaScript assignment
+      const match = embeddedContent.match(/window\.embeddedMembers\s*=\s*(\[.*\]);/s);
+      if (match && match[1]) {
+        const embeddedMembers = JSON.parse(match[1]);
+        log(`Extracted ${embeddedMembers.length} members from embedded-members file`);
+        return embeddedMembers;
+      }
+    }
+  } catch (error) {
+    log(`Error extracting members from embedded-members file: ${error.message}`);
+  }
+  return null;
+}
+
+// Initialize function to load members data with multiple fallback mechanisms
 function loadMembers() {
   try {
     const today = new Date().toISOString().split('T')[0];
     const membersFilePath = path.join(PUBLIC_DIR, 'api', 'members.json');
+    const embeddedMembersPath = path.join(PUBLIC_DIR, 'embedded-members');
+    const backupDir = path.join(__dirname, 'backup');
     
-    if (fs.existsSync(membersFilePath)) {
-      const membersData = fs.readFileSync(membersFilePath, 'utf8');
-      members = JSON.parse(membersData);
-      log(`Loaded ${members.length} members from file`);
+    // First try the primary members.json file
+    let loadedMembers = loadMembersFromFile(membersFilePath);
+    
+    // If primary file failed or has fewer than expected members, try embedded-members
+    if (!loadedMembers || loadedMembers.length < 13) { // We should have at least 13 members including reserve and others
+      log('Primary members file missing or incomplete, attempting to load from embedded-members');
+      const embeddedMembers = extractMembersFromEmbeddedFile(embeddedMembersPath);
       
-      // Immediately save all current members to ensure persistence
+      if (embeddedMembers && (!loadedMembers || embeddedMembers.length > loadedMembers.length)) {
+        loadedMembers = embeddedMembers;
+        log(`Using ${embeddedMembers.length} members from embedded-members file as it has more records`);
+      }
+    }
+    
+    // If still not found, try backup files
+    if (!loadedMembers || loadedMembers.length < 13) {
+      log('Still missing members, trying backup files');
+      
+      // Try to find all backup files
+      if (fs.existsSync(backupDir)) {
+        const backupFiles = fs.readdirSync(backupDir)
+          .filter(file => file.includes('members_backup') && file.endsWith('.json'))
+          .sort((a, b) => b.localeCompare(a)) // Sort in reverse alphabetical order to get newest first
+          .map(file => path.join(backupDir, file));
+        
+        for (const backupPath of backupFiles) {
+          const backupMembers = loadMembersFromFile(backupPath, 'backup');
+          if (backupMembers && (!loadedMembers || backupMembers.length > loadedMembers.length)) {
+            loadedMembers = backupMembers;
+            log(`Using ${backupMembers.length} members from backup file ${backupPath} as it has more records`);
+            break;
+          }
+        }
+      }
+    }
+    
+    // Use the loaded members if successful
+    if (loadedMembers && loadedMembers.length > 0) {
+      members = loadedMembers;
+      log(`Successfully loaded ${members.length} members`);
+      
+      // Check if we're missing specific known members
+      log(`Running essential member verification for ${members.length} loaded members...`);
+      
+      const knownMembers = {
+        'brianna': { name: 'Brianna', email: 'brianna@example.com', joinedDate: '2025-04-20', totalSolar: 3 },
+        'kealani.ventura': { name: 'Kealani Ventura', email: 'kealani@example.com', joinedDate: '2025-04-21', totalSolar: 2 },
+        'alex': { name: 'Alex', email: 'alex@example.com', joinedDate: '2025-04-21', totalSolar: 2 }
+      };
+      
+      // Enhanced logging for the validation process
+      log(`Verifying presence of ${Object.keys(knownMembers).length} essential members: ${Object.keys(knownMembers).join(', ')}`);
+      
+      // Track members who need recovery
+      const membersToRecover = [];
+      
+      // Check for each known member with enhanced validation
+      for (const [username, data] of Object.entries(knownMembers)) {
+        // Define multiple ways to match a member
+        const nameLower = data.name.toLowerCase();
+        const usernameLower = username.toLowerCase();
+        const emailLower = data.email ? data.email.toLowerCase() : null;
+        
+        // Log the check we're performing
+        log(`Checking for member: username="${username}", name="${data.name}", email=${data.email ? `"${data.email}"` : 'null'}`);
+        
+        // Perform more comprehensive checks with better logging
+        const memberExists = members.some(m => {
+          // Check username (exact and lowercase)
+          const usernameMatch = m.username === username || 
+                               (m.username && m.username.toLowerCase() === usernameLower);
+          
+          // Check name (exact and lowercase)
+          const nameMatch = m.name === data.name || 
+                           (m.name && m.name.toLowerCase() === nameLower);
+          
+          // Check email (if both exist, compare lowercase)
+          const emailMatch = (m.email && emailLower && 
+                             m.email.toLowerCase() === emailLower);
+          
+          return usernameMatch || nameMatch || emailMatch;
+        });
+        
+        if (!memberExists) {
+          log(`RECOVERY NEEDED: Essential member "${data.name}" (${username}) is missing`);
+          membersToRecover.push([username, data]);
+        } else {
+          log(`Verified: ${data.name} exists in member list`);
+        }
+      }
+      
+      // Now recover any missing members
+      if (membersToRecover.length > 0) {
+        log(`Recovering ${membersToRecover.length} missing essential members...`);
+        
+        for (const [username, data] of membersToRecover) {
+          // Calculate next ID - but we'll renumber them all later for consistency
+          const maxId = Math.max(...members.map(m => m.id));
+          const newId = maxId + 1;
+          
+          // Add the missing member
+          const missingMember = {
+            id: newId, // Temporary ID
+            username: username,
+            name: data.name,
+            email: data.email,
+            joinedDate: data.joinedDate,
+            totalSolar: data.totalSolar,
+            totalDollars: Math.round(data.totalSolar * SOLAR_CONSTANTS.USD_PER_SOLAR),
+            isAnonymous: false,
+            lastDistributionDate: new Date().toISOString().split('T')[0] // Today
+          };
+          
+          members.push(missingMember);
+          log(`RESTORED MEMBER: "${data.name}" (temporarily with ID ${newId}) and ${data.totalSolar} SOLAR`);
+        }
+        
+        // Renumber all member IDs for consistency (preserve TC-S Reserve at 0)
+        log(`Renumbering ${members.length} member IDs for consistency`);
+        
+        // First, find the "you are next" entry and remove it temporarily if it exists
+        let placeholderIndex = members.findIndex(m => 
+          m.username === "you.are.next" && m.name.toLowerCase().includes("you are next"));
+        let placeholder = null;
+        
+        if (placeholderIndex !== -1) {
+          placeholder = members.splice(placeholderIndex, 1)[0];
+          log(`Temporarily removed "You are next" placeholder for renumbering`);
+        }
+        
+        // Also identify any reserve entries that should stay at the beginning
+        const reserveEntries = members.filter(m => m.isReserve === true);
+        
+        // Remove reserves from the main array
+        members = members.filter(m => m.isReserve !== true);
+        
+        // Sort non-reserve members by join date
+        members.sort((a, b) => {
+          // Convert strings to dates for proper comparison
+          const dateA = new Date(a.joinedDate);
+          const dateB = new Date(b.joinedDate);
+          return dateA - dateB;
+        });
+        
+        // Add reserves back at the beginning
+        members = [...reserveEntries, ...members];
+        
+        // Renumber all members
+        members.forEach((member, index) => {
+          member.id = index;
+        });
+        
+        // Add placeholder back at the end if it existed
+        if (placeholder) {
+          placeholder.id = members.length;
+          members.push(placeholder);
+          log(`Added "You are next" placeholder back at the end with ID ${placeholder.id}`);
+        }
+        
+        // Save the updated members list immediately after recovery
+        updateMembersFiles();
+        log(`Saved members list with ${members.length} total members after recovery and ID renumbering`);
+      } else {
+        log(`All essential members verified successfully. No recovery needed.`);
+      }
+      
+      // Verify we have a placeholder and it's the last entry
+      let placeholderExists = members.some(m => 
+        m.username === "you.are.next" && m.name.toLowerCase().includes("you are next"));
+      
+      // Check if placeholder is not the last entry
+      const lastMember = members[members.length - 1];
+      const placeholderIsLast = lastMember && 
+                               lastMember.username === "you.are.next" && 
+                               lastMember.name.toLowerCase().includes("you are next");
+      
+      // If placeholder exists but is not last, reposition it
+      if (placeholderExists && !placeholderIsLast) {
+        log('Placeholder exists but is not the last entry, repositioning it');
+        
+        // Find and remove the placeholder
+        const placeholderIndex = members.findIndex(m => 
+          m.username === "you.are.next" && m.name.toLowerCase().includes("you are next"));
+        
+        if (placeholderIndex !== -1) {
+          const placeholder = members.splice(placeholderIndex, 1)[0];
+          members.push(placeholder);
+          log('Moved placeholder to the end of the member list');
+        }
+      }
+      
+      // Create a backup of the successfully loaded members
+      if (!fs.existsSync(backupDir)) {
+        fs.mkdirSync(backupDir, { recursive: true });
+      }
+      
+      const timestamp = new Date().toISOString().replace(/:/g, '-');
+      const backupPath = path.join(backupDir, `members_backup_loaded_${timestamp}.json`);
+      fs.writeFileSync(backupPath, JSON.stringify(members, null, 2));
+      log(`Created backup of ${members.length} successfully loaded members at ${backupPath}`);
+      
+      // Immediately save all current members to ensure persistence in all locations
       updateMembersFiles();
-      log('Saved current members to ensure persistence at initial login');
+      log('Saved current members to all locations to ensure persistence at initial login');
       
       // Check if there's a TC-S Solar Reserve entry
       const hasReserve = members.some(m => m.username === "tc-s.reserve" && m.name === "TC-S Solar Reserve");
@@ -115,12 +347,9 @@ function loadMembers() {
         updateMembersFiles();
       }
       
-      // Check if there's a "You are next" placeholder entry
-      const hasPlaceholder = members.some(m => 
-        m.username === "you.are.next" && m.name.toLowerCase().includes("you are next"));
-      
+      // Check if there's a "You are next" placeholder entry (using variable from above)
       // If no placeholder exists, add one
-      if (!hasPlaceholder) {
+      if (!placeholderExists) {
         const placeholderId = members.length + 1;
         log(`Adding "You are next" placeholder as member #${placeholderId}`);
         
@@ -244,12 +473,73 @@ function loadMembers() {
     
     // Also update the embedded-members file for quick loading
     updateEmbeddedMembersFile();
+    
+    // Finally, check for ID sequential integrity
+    ensureMemberIdIntegrity();
   } catch (error) {
     log(`Error loading members: ${error.message}`);
   }
 }
 
-// Save members data to files
+// New function to check and fix member ID sequential integrity
+function ensureMemberIdIntegrity() {
+  try {
+    // Check if IDs are sequential and consistent
+    const hasIdGaps = members.some((member, index) => {
+      return member.id !== index;
+    });
+    
+    // If there are gaps or non-sequential IDs, fix them
+    if (hasIdGaps) {
+      log(`⚠️ Found non-sequential member IDs, performing automatic correction`);
+      
+      // First handle "you are next" placeholder
+      let placeholder = null;
+      const placeholderIndex = members.findIndex(m => 
+        m.username === "you.are.next" && m.name.toLowerCase().includes("you are next"));
+      
+      if (placeholderIndex !== -1) {
+        placeholder = members.splice(placeholderIndex, 1)[0];
+        log(`Temporarily removed "You are next" placeholder for ID correction`);
+      }
+      
+      // Handle reserve entries
+      const reserveEntries = members.filter(m => m.isReserve === true);
+      members = members.filter(m => m.isReserve !== true);
+      
+      // Sort regular members by join date
+      members.sort((a, b) => {
+        const dateA = new Date(a.joinedDate || '2025-04-22');
+        const dateB = new Date(b.joinedDate || '2025-04-22');
+        return dateA - dateB;
+      });
+      
+      // Add reserves back at the beginning
+      members = [...reserveEntries, ...members];
+      
+      // Renumber all members
+      members.forEach((member, index) => {
+        member.id = index;
+      });
+      
+      // Add placeholder back at the end if it existed
+      if (placeholder) {
+        placeholder.id = members.length;
+        members.push(placeholder);
+      }
+      
+      // Save the corrected member list
+      updateMembersFiles();
+      log(`✓ Successfully corrected member IDs and saved the updated list`);
+    } else {
+      log(`✓ Member IDs are sequential and consistent`);
+    }
+  } catch (error) {
+    log(`Error checking member ID integrity: ${error.message}`);
+  }
+}
+
+// Save members data to all storage locations with backups
 function updateMembersFiles() {
   try {
     // First ensure the api directory exists
@@ -261,18 +551,71 @@ function updateMembersFiles() {
     
     const membersFilePath = path.join(apiDir, 'members.json');
     
+    // Save to primary file
     fs.writeFileSync(membersFilePath, JSON.stringify(members, null, 2));
-    log(`Updated members file with ${members.length} members`);
+    log(`Updated primary members file with ${members.length} members`);
     
     // Also update embedded-members
     updateEmbeddedMembersFile();
     
-    // Verify the file was written successfully
+    // Create daily backup
+    const backupDir = path.join(__dirname, 'backup');
+    if (!fs.existsSync(backupDir)) {
+      fs.mkdirSync(backupDir, { recursive: true });
+    }
+    
+    // Date for daily backup
+    const today = new Date().toISOString().split('T')[0];
+    const dailyBackupPath = path.join(backupDir, `members_backup_${today}.json`);
+    
+    // Save daily backup
+    fs.writeFileSync(dailyBackupPath, JSON.stringify(members, null, 2));
+    log(`Updated daily backup at ${dailyBackupPath}`);
+    
+    // Create timestamped backup
+    const timestamp = new Date().toISOString().replace(/:/g, '-');
+    const timestampedBackupPath = path.join(backupDir, `members_backup_${timestamp}.json`);
+    
+    // Save timestamped backup
+    fs.writeFileSync(timestampedBackupPath, JSON.stringify(members, null, 2));
+    log(`Created timestamped backup at ${timestampedBackupPath}`);
+    
+    // Verify main file was written successfully
     if (fs.existsSync(membersFilePath)) {
       const stats = fs.statSync(membersFilePath);
-      log(`Verified members file: ${stats.size} bytes written at ${new Date(stats.mtime).toISOString()}`);
+      log(`Verified primary members file: ${stats.size} bytes written at ${new Date(stats.mtime).toISOString()}`);
     } else {
-      log(`Warning: Members file not found after write attempt`);
+      log(`Warning: Primary members file not found after write attempt!`);
+      // Try emergency write with different method
+      try {
+        fs.writeFileSync(membersFilePath, JSON.stringify(members, null, 2), { flag: 'w' });
+        log(`Emergency rewrite of primary members file attempted`);
+      } catch (emergencyError) {
+        log(`Emergency rewrite failed: ${emergencyError.message}`);
+      }
+    }
+    
+    // Cleanup old backups (keep last 20)
+    try {
+      const backupFiles = fs.readdirSync(backupDir)
+        .filter(file => file.startsWith('members_backup_') && file.endsWith('.json') && !file.includes(today))
+        .map(file => path.join(backupDir, file))
+        .sort((a, b) => fs.statSync(b).mtime.getTime() - fs.statSync(a).mtime.getTime());
+      
+      // Keep only the 20 most recent non-daily backups
+      if (backupFiles.length > 20) {
+        const filesToDelete = backupFiles.slice(20);
+        filesToDelete.forEach(file => {
+          try {
+            fs.unlinkSync(file);
+            log(`Deleted old backup: ${file}`);
+          } catch (deleteError) {
+            log(`Failed to delete old backup ${file}: ${deleteError.message}`);
+          }
+        });
+      }
+    } catch (cleanupError) {
+      log(`Error during backup cleanup: ${cleanupError.message}`);
     }
   } catch (error) {
     log(`Error updating members files: ${error.message}`);
@@ -376,6 +719,72 @@ app.use(express.urlencoded({ extended: true }));
 function log(message) {
   console.log(`[${new Date().toISOString()}] ${message}`);
 }
+
+// Create a function to handle graceful shutdown
+function gracefulShutdown() {
+  log('SIGTERM or SIGINT received, initiating graceful shutdown...');
+  
+  // Create an emergency backup before shutdown
+  try {
+    log('Creating emergency pre-shutdown backup...');
+    const backupDir = path.join(__dirname, 'backup');
+    if (!fs.existsSync(backupDir)) {
+      fs.mkdirSync(backupDir, { recursive: true });
+    }
+    
+    const timestamp = new Date().toISOString().replace(/:/g, '-');
+    const emergencyBackupPath = path.join(backupDir, `members_backup_pre_shutdown_${timestamp}.json`);
+    
+    // Write the backup with retries
+    let backupSuccess = false;
+    for (let i = 0; i < 3; i++) {
+      try {
+        fs.writeFileSync(emergencyBackupPath, JSON.stringify(members, null, 2), { flag: 'w' });
+        const stats = fs.statSync(emergencyBackupPath);
+        log(`Successfully created emergency pre-shutdown backup: ${stats.size} bytes written at ${new Date(stats.mtime).toISOString()}`);
+        backupSuccess = true;
+        break;
+      } catch (backupError) {
+        log(`Attempt ${i+1} to create emergency backup failed: ${backupError.message}`);
+      }
+    }
+    
+    if (!backupSuccess) {
+      log('WARNING: Failed to create emergency backup before shutdown');
+    }
+    
+    // Also update the standard API file and embedded-members as a last resort
+    try {
+      const membersFilePath = path.join(PUBLIC_DIR, 'api', 'members.json');
+      fs.writeFileSync(membersFilePath, JSON.stringify(members, null, 2), { flag: 'w' });
+      log('Final update of members.json before shutdown');
+      
+      const embeddedMembersPath = path.join(PUBLIC_DIR, 'embedded-members');
+      const formattedMembers = members.map(member => {
+        const formattedMember = {...member};
+        if (typeof formattedMember.totalSolar !== 'undefined') {
+          formattedMember.totalSolar = parseFloat(formattedMember.totalSolar).toFixed(4);
+        }
+        return formattedMember;
+      });
+      
+      fs.writeFileSync(embeddedMembersPath, 
+        `window.embeddedMembers = ${JSON.stringify(formattedMembers)};`, { flag: 'w' });
+      log('Final update of embedded-members before shutdown');
+    } catch (finalError) {
+      log(`Error during final file updates: ${finalError.message}`);
+    }
+  } catch (error) {
+    log(`Error during graceful shutdown: ${error.message}`);
+  }
+  
+  log('Graceful shutdown complete, exiting...');
+  process.exit(0);
+}
+
+// Register shutdown handlers
+process.on('SIGTERM', gracefulShutdown);
+process.on('SIGINT', gracefulShutdown);
 
 // Health check endpoint - explicit route for monitoring
 app.get('/health', (req, res) => {
