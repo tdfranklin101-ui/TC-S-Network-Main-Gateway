@@ -1,58 +1,54 @@
-import { pgTable, serial, text, timestamp, integer, boolean, pgEnum, real } from 'drizzle-orm/pg-core';
+import { pgTable, serial, text, boolean, timestamp, integer, decimal } from 'drizzle-orm/pg-core';
 import { createInsertSchema } from 'drizzle-zod';
 import { z } from 'zod';
-import { relations } from 'drizzle-orm';
 
-// Users table
-export const users = pgTable('users', {
+// Members table schema
+export const members = pgTable('members', {
   id: serial('id').primaryKey(),
   username: text('username').notNull().unique(),
-  email: text('email'),
-  password: text('password').notNull(),
-  joinDate: timestamp('join_date').defaultNow().notNull(),
-  solarBalance: real('solar_balance').default(0).notNull(),
-  lastDistribution: timestamp('last_distribution'),
-  isAdmin: boolean('is_admin').default(false).notNull(),
-});
-
-// Scan history table
-export const productScans = pgTable('product_scans', {
-  id: serial('id').primaryKey(),
-  userId: integer('user_id').references(() => users.id).notNull(),
-  productId: text('product_id').notNull(),
-  productName: text('product_name').notNull(),
-  energyKwh: real('energy_kwh').notNull(),
-  scanMethod: text('scan_method').default('manual').notNull(),
-  latitude: real('latitude'),
-  longitude: real('longitude'),
-  city: text('city'),
-  country: text('country'),
-  timestamp: timestamp('timestamp').defaultNow().notNull(),
+  name: text('name').notNull(),
+  email: text('email').notNull(),
+  joinedDate: text('joined_date').notNull(),
+  totalSolar: decimal('total_solar', { precision: 20, scale: 4 }).notNull().default('1'),
+  totalDollars: decimal('total_dollars', { precision: 20, scale: 2 }).notNull(),
+  isAnonymous: boolean('is_anonymous').notNull().default(false),
+  isReserve: boolean('is_reserve').notNull().default(false),
+  isPlaceholder: boolean('is_placeholder').notNull().default(false),
+  lastDistributionDate: text('last_distribution_date').notNull(),
   notes: text('notes'),
+  signupTimestamp: timestamp('signup_timestamp').defaultNow()
 });
 
-// Relationships
-export const usersRelations = relations(users, ({ many }) => ({
-  productScans: many(productScans),
-}));
+// Define types based on the schema
+export type Member = typeof members.$inferSelect;
+export type InsertMember = typeof members.$inferInsert;
 
-export const productScansRelations = relations(productScans, ({ one }) => ({
-  user: one(users, {
-    fields: [productScans.userId],
-    references: [users.id],
-  }),
-}));
+// Create a validator schema for member insertion
+export const insertMemberSchema = createInsertSchema(members);
 
-// Insert Schemas
-export const insertUserSchema = createInsertSchema(users)
-  .omit({ id: true });
+// Distribution logs table to track all SOLAR distributions
+export const distributionLogs = pgTable('distribution_logs', {
+  id: serial('id').primaryKey(),
+  memberId: integer('member_id').notNull(),
+  distributionDate: text('distribution_date').notNull(),
+  solarAmount: decimal('solar_amount', { precision: 20, scale: 4 }).notNull(),
+  dollarValue: decimal('dollar_value', { precision: 20, scale: 2 }).notNull(),
+  timestamp: timestamp('timestamp').defaultNow()
+});
 
-export const insertProductScanSchema = createInsertSchema(productScans)
-  .omit({ id: true, timestamp: true });
+export type DistributionLog = typeof distributionLogs.$inferSelect;
+export type InsertDistributionLog = typeof distributionLogs.$inferInsert;
+export const insertDistributionLogSchema = createInsertSchema(distributionLogs);
 
-// Types
-export type User = typeof users.$inferSelect;
-export type InsertUser = z.infer<typeof insertUserSchema>;
+// Backup logs table to track database backups
+export const backupLogs = pgTable('backup_logs', {
+  id: serial('id').primaryKey(),
+  backupType: text('backup_type').notNull(), // daily, timestamped, etc.
+  filename: text('filename').notNull(),
+  memberCount: integer('member_count').notNull(),
+  timestamp: timestamp('timestamp').defaultNow()
+});
 
-export type ProductScan = typeof productScans.$inferSelect;
-export type InsertProductScan = z.infer<typeof insertProductScanSchema>;
+export type BackupLog = typeof backupLogs.$inferSelect;
+export type InsertBackupLog = typeof backupLogs.$inferInsert;
+export const insertBackupLogSchema = createInsertSchema(backupLogs);
