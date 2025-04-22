@@ -194,7 +194,7 @@ async function migrateMembers(members) {
           `, [
             memberData.username,
             memberData.name,
-            memberData.email || `${memberData.username}@thecurrentsee.org`,
+            memberData.email || `${memberData.username}@example.com`, // Preserve original emails or use a clearly marked placeholder
             memberData.joinedDate,
             memberData.totalSolar.toString(),
             memberData.totalDollars.toString(),
@@ -214,7 +214,7 @@ async function migrateMembers(members) {
             WHERE username = $10
           `, [
             memberData.name,
-            memberData.email || `${memberData.username}@thecurrentsee.org`,
+            memberData.email || `${memberData.username}@example.com`, // Preserve original emails or use a clearly marked placeholder
             memberData.joinedDate,
             memberData.totalSolar.toString(),
             memberData.totalDollars.toString(),

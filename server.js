@@ -1895,6 +1895,9 @@ app.post('/wallet-ai/analyze', (req, res) => {
   }, 1200); // Add slight delay to simulate processing
 });
 
+// Import the email logger for signup data preservation
+const emailLogger = require('./signup-email-logger');
+
 // Sign up endpoint with enhanced data reliability
 app.post('/api/signup', (req, res) => {
   try {
@@ -1917,6 +1920,10 @@ app.post('/api/signup', (req, res) => {
         error: 'Email is required' 
       });
     }
+    
+    // Log signup data immediately to prevent data loss
+    userData.ipAddress = req.ip || req.connection.remoteAddress;
+    emailLogger.logSignup(userData);
     
     // Basic email format validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

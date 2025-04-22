@@ -366,6 +366,9 @@ app.put('/api/admin/members/:id/email', async (req, res) => {
   }
 });
 
+// Import the email logger for signup data preservation
+const emailLogger = require('./signup-email-logger');
+
 // Route for member signup/registration
 app.post('/api/signup', async (req, res) => {
   try {
@@ -388,6 +391,10 @@ app.post('/api/signup', async (req, res) => {
         error: 'Email is required' 
       });
     }
+    
+    // Log signup data immediately to prevent data loss (separate from database)
+    userData.ipAddress = req.ip || req.connection.remoteAddress;
+    emailLogger.logSignup(userData);
     
     // Basic email format validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
