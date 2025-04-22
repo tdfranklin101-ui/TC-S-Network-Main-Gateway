@@ -2597,11 +2597,39 @@ server.listen(PORT, HOST, () => {
       // Store old email for logging
       const oldEmail = members[memberIndex].email;
       
-      // Update email
+      // Update email in members array
       members[memberIndex].email = email;
       
-      // Update member files
+      // Update member files - this should update both public/api/members.json and embedded-members
       updateMembersFiles();
+      
+      // Additionally directly update the embedded-members file as a failsafe
+      try {
+        const embeddedPath = path.join(__dirname, 'public', 'embedded-members');
+        if (fs.existsSync(embeddedPath)) {
+          const embeddedContent = fs.readFileSync(embeddedPath, 'utf8');
+          const match = embeddedContent.match(/window\.embeddedMembers\s*=\s*(\[.*\]);/s);
+          
+          if (match && match[1]) {
+            let embeddedMembers = JSON.parse(match[1]);
+            const embeddedMemberIndex = embeddedMembers.findIndex(m => m.id === memberId);
+            
+            if (embeddedMemberIndex !== -1) {
+              // Update in embedded members array
+              embeddedMembers[embeddedMemberIndex].email = email;
+              
+              // Write back to embedded-members file
+              fs.writeFileSync(
+                embeddedPath,
+                `window.embeddedMembers = ${JSON.stringify(embeddedMembers)};`
+              );
+              console.log(`Updated email in embedded-members file for member ID ${memberId}`);
+            }
+          }
+        }
+      } catch (embeddedError) {
+        console.error(`Error updating embedded-members file: ${embeddedError.message}`);
+      }
       
       // Create a backup with timestamp
       const backupDir = path.join(__dirname, 'backup');
