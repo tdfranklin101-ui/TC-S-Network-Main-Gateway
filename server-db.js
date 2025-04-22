@@ -106,6 +106,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(createIncludesMiddleware()); // Add page includes middleware
 
+// Import mobile API routes
+const mobileApiRouter = require('./server/mobile-api');
+// Register the mobile API routes under /mobile path
+app.use('/mobile', mobileApiRouter);
+console.log('Mobile API routes registered');
+
 // Function to get all members from database or in-memory
 async function getAllMembers() {
   if (storage) {
