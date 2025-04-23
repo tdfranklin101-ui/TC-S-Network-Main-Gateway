@@ -42,9 +42,10 @@ const Home = () => {
     <div className="font-body bg-white text-[#212529]">
       {/* Hero Section */}
       <header className="hero text-white py-20 text-center relative" style={{ 
-        backgroundImage: 'url(/solar_background.png)', 
+        backgroundImage: 'linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(/solar_background.png)',
         backgroundSize: 'cover', 
-        backgroundPosition: 'center' 
+        backgroundPosition: 'center',
+        textShadow: '2px 2px 4px rgba(0, 0, 0, 0.7)'
       }}>
         <div className="container mx-auto px-4">
           <img src="/branding_logo.png" alt="The Current-See Logo" className="logo w-24 h-24 mx-auto mb-6" />
