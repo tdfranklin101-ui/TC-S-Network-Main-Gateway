@@ -19,7 +19,7 @@ const pool = new Pool({
 const corsOptions = {
   origin: '*', // This allows access from any origin - should be restricted in production
   methods: ['GET', 'POST'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-api-key'],
   credentials: true,
   maxAge: 86400 // 24 hours
 };
@@ -27,16 +27,57 @@ const corsOptions = {
 // Apply CORS specifically for mobile API routes
 router.use(cors(corsOptions));
 
-// Simple API key verification middleware
+// API Key verification middleware
 const verifyApiKey = (req, res, next) => {
   const apiKey = req.headers['x-api-key'] || req.query.api_key;
   
-  // This should be a secure API key verification
-  // For now using a simple check - should be replaced with proper authentication
-  if (!apiKey || apiKey !== process.env.MOBILE_API_KEY) {
+  // Check if the API key matches the expected key from environment variables
+  if (!apiKey || apiKey !== process.env.MOBILE_APP_API_KEY) {
+    return res.status(401).json({
+      success: false,
+      error: 'Unauthorized: Invalid API key'
+    });
+  }
+  
+  next();
+};
+
+// Apply API key verification to all routes except /status
+router.use((req, res, next) => {
+  if (req.path === '/status') {
+    return next();
+  }
+  verifyApiKey(req, res, next);
+});
+
+// Database credentials verification middleware
+const verifyDbCredentials = (req, res, next) => {
+  // Get credentials from request headers or query params
+  const dbHost = req.headers['x-pghost'] || req.query.pghost;
+  const dbUser = req.headers['x-pguser'] || req.query.pguser;
+  const dbPassword = req.headers['x-pgpassword'] || req.query.pgpassword;
+  const dbName = req.headers['x-pgdatabase'] || req.query.pgdatabase;
+  
+  // At minimum, we should check that the username and password match
+  if (!dbUser || !dbPassword || dbUser !== process.env.PGUSER || dbPassword !== process.env.PGPASSWORD) {
     return res.status(401).json({ 
       success: false, 
-      error: 'Unauthorized: Invalid API key'
+      error: 'Unauthorized: Invalid database credentials'
+    });
+  }
+  
+  // We could also verify host and database name for additional security
+  if (dbHost && dbHost !== process.env.PGHOST) {
+    return res.status(401).json({
+      success: false,
+      error: 'Unauthorized: Invalid database host'
+    });
+  }
+  
+  if (dbName && dbName !== process.env.PGDATABASE) {
+    return res.status(401).json({
+      success: false,
+      error: 'Unauthorized: Invalid database name'
     });
   }
   
@@ -52,8 +93,8 @@ router.get('/status', (req, res) => {
   });
 });
 
-// Get all members (with API key protection)
-router.get('/members', verifyApiKey, async (req, res) => {
+// Get all members (with DB credentials verification)
+router.get('/members', verifyDbCredentials, async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT id, username, name, joined_date, total_solar, 
@@ -82,7 +123,7 @@ router.get('/members', verifyApiKey, async (req, res) => {
 });
 
 // Get specific member by ID or username
-router.get('/member/:identifier', verifyApiKey, async (req, res) => {
+router.get('/member/:identifier', verifyDbCredentials, async (req, res) => {
   try {
     const { identifier } = req.params;
     
@@ -142,7 +183,7 @@ router.get('/member/:identifier', verifyApiKey, async (req, res) => {
 });
 
 // Get member's distribution history
-router.get('/member/:id/distributions', verifyApiKey, async (req, res) => {
+router.get('/member/:id/distributions', verifyDbCredentials, async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -168,7 +209,7 @@ router.get('/member/:id/distributions', verifyApiKey, async (req, res) => {
 });
 
 // Mobile authentication endpoint
-router.post('/auth', async (req, res) => {
+router.post('/auth', verifyDbCredentials, async (req, res) => {
   try {
     const { email, authToken } = req.body;
     

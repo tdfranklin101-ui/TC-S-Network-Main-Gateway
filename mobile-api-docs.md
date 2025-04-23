@@ -10,10 +10,20 @@ All API endpoints are accessible under the `/mobile` path on the Current-See ser
 
 ## Authentication
 
-Most endpoints require authentication via an API key. The key should be included in requests using one of these methods:
+Most endpoints require authentication using PostgreSQL database credentials. This ensures the mobile app has secure access to the database. Include the credentials in requests using one of these methods:
 
-1. As an HTTP header: `x-api-key: YOUR_API_KEY`
-2. As a query parameter: `?api_key=YOUR_API_KEY`
+1. As HTTP headers:
+   ```
+   x-pguser: [database username]
+   x-pgpassword: [database password]
+   x-pghost: (optional) [database host]
+   x-pgdatabase: (optional) [database name]
+   ```
+
+2. As query parameters:
+   ```
+   ?pguser=[database username]&pgpassword=[database password]&pghost=[database host]&pgdatabase=[database name]
+   ```
 
 ## Endpoints
 
@@ -114,7 +124,7 @@ Most endpoints require authentication via an API key. The key should be included
 
 **Endpoint:** `/mobile/auth`
 **Method:** POST
-**Authentication:** Not required
+**Authentication:** Required (database credentials)
 **Description:** Authenticates a user with their email and returns a token for further API requests.
 
 **Request Example:**
@@ -154,13 +164,13 @@ All endpoints follow a consistent error response format:
 Common HTTP status codes:
 - 200: Success
 - 400: Bad Request (invalid parameters)
-- 401: Unauthorized (invalid or missing API key)
+- 401: Unauthorized (invalid or missing database credentials)
 - 404: Not Found (resource doesn't exist)
 - 500: Internal Server Error
 
 ## Implementation Example
 
-Here's a simple example of how to call the API from a mobile app:
+Here's a simple example of how to call the API from a mobile app using database credentials:
 
 ```javascript
 // Example using fetch API in JavaScript
@@ -168,11 +178,39 @@ async function getMembersList() {
   const response = await fetch('https://your-current-see-domain.com/mobile/members', {
     method: 'GET',
     headers: {
-      'x-api-key': 'YOUR_API_KEY'
+      'Content-Type': 'application/json',
+      'x-pguser': process.env.PGUSER,
+      'x-pgpassword': process.env.PGPASSWORD,
+      'x-pghost': process.env.PGHOST,
+      'x-pgdatabase': process.env.PGDATABASE
     }
   });
   
   const data = await response.json();
+  return data;
+}
+```
+
+### Authentication Endpoint Example
+
+```javascript
+// Example of authenticating a user
+async function authenticateUser(email) {
+  const response = await fetch('https://your-current-see-domain.com/mobile/auth', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-pguser': process.env.PGUSER,
+      'x-pgpassword': process.env.PGPASSWORD
+    },
+    body: JSON.stringify({ email })
+  });
+  
+  const data = await response.json();
+  if (data.success) {
+    // Store the token for future authenticated requests
+    localStorage.setItem('userToken', data.token);
+  }
   return data;
 }
 ```

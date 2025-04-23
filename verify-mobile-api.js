@@ -1,92 +1,138 @@
 /**
  * Mobile API Verification Script
  * 
- * This script tests the mobile API endpoints to verify they're working correctly.
- * Run this script after setting up the MOBILE_API_KEY environment variable.
+ * This script tests the mobile API endpoints to verify they work
+ * with database credential-based authentication.
  */
 
-const http = require('http');
-const https = require('https');
+const fetch = require('node-fetch');
+const { Pool } = require('pg');
 
-// Configuration
-const BASE_URL = 'http://localhost:3000'; // Change to your server URL
-const API_KEY = process.env.MOBILE_API_KEY;
+// These environment variables should already be set
+const {
+  DATABASE_URL,
+  PGUSER,
+  PGPASSWORD,
+  PGHOST,
+  PGDATABASE,
+  PGPORT
+} = process.env;
 
-// Utility function to make HTTP requests
-function makeRequest(path, method = 'GET') {
-  return new Promise((resolve, reject) => {
-    const url = new URL(path, BASE_URL);
-    const options = {
-      method: method,
-      headers: {
-        'x-api-key': API_KEY
-      }
-    };
+// Base URL for the API - this will need to be updated for production
+const API_BASE_URL = 'http://localhost:3000/mobile';
 
-    console.log(`Making ${method} request to ${url.toString()}`);
-
-    const httpLib = url.protocol === 'https:' ? https : http;
-    const req = httpLib.request(url, options, (res) => {
-      let data = '';
-      res.on('data', (chunk) => {
-        data += chunk;
-      });
-      res.on('end', () => {
-        console.log(`Status: ${res.statusCode}`);
-        try {
-          const jsonResponse = JSON.parse(data);
-          resolve({ statusCode: res.statusCode, body: jsonResponse });
-        } catch (e) {
-          resolve({ statusCode: res.statusCode, body: data });
-        }
-      });
-    });
-
-    req.on('error', (error) => {
-      console.error(`Error making request: ${error.message}`);
-      reject(error);
-    });
-
-    req.end();
-  });
-}
-
-// Main verification function
-async function verifyMobileApi() {
-  console.log('=== Mobile API Verification ===');
-  
-  if (!API_KEY) {
-    console.error('MOBILE_API_KEY environment variable is not set. Please set it first.');
-    process.exit(1);
-  }
-
+// Verify database connection first
+async function verifyDatabaseConnection() {
   try {
-    // Test 1: Check the status endpoint
-    console.log('\n1. Testing /mobile/status endpoint:');
-    const statusResponse = await makeRequest('/mobile/status');
-    console.log(JSON.stringify(statusResponse.body, null, 2));
-
-    // Test 2: Check the members endpoint (protected)
-    console.log('\n2. Testing /mobile/members endpoint:');
-    const membersResponse = await makeRequest('/mobile/members');
-    console.log(`Retrieved ${membersResponse.body.count} members`);
+    const pool = new Pool({
+      connectionString: DATABASE_URL
+    });
     
-    // Test 3: Check a specific member endpoint
-    if (membersResponse.body.members && membersResponse.body.members.length > 0) {
-      const firstMemberId = membersResponse.body.members[0].id;
-      console.log(`\n3. Testing /mobile/member/${firstMemberId} endpoint:`);
-      const memberResponse = await makeRequest(`/mobile/member/${firstMemberId}`);
-      console.log(JSON.stringify(memberResponse.body, null, 2));
-    } else {
-      console.log('\n3. Skipping member endpoint test (no members available)');
+    const result = await pool.query('SELECT 1 as connection_test');
+    if (result.rows[0].connection_test === 1) {
+      console.log('✅ Database connection successful');
+      await pool.end();
+      return true;
     }
-
-    console.log('\n✅ Mobile API verification completed successfully!');
   } catch (error) {
-    console.error('Mobile API verification failed:', error);
-    process.exit(1);
+    console.error('❌ Database connection failed:', error.message);
+    return false;
   }
 }
 
-// Run the verification
-verifyMobileApi().catch(console.error);
+// Test API status endpoint (should be public)
+async function testStatusEndpoint() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/status`);
+    const data = await response.json();
+    
+    if (data.success) {
+      console.log('✅ Status endpoint working:', data.message);
+      return true;
+    } else {
+      console.error('❌ Status endpoint returned unsuccessful response');
+      return false;
+    }
+  } catch (error) {
+    console.error('❌ Status endpoint error:', error.message);
+    return false;
+  }
+}
+
+// Test members endpoint with DB credentials
+async function testMembersEndpoint() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/members`, {
+      method: 'GET',
+      headers: {
+        'x-pguser': PGUSER,
+        'x-pgpassword': PGPASSWORD,
+        'x-pghost': PGHOST,
+        'x-pgdatabase': PGDATABASE
+      }
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      console.log(`✅ Members endpoint working: Retrieved ${data.count} members`);
+      return true;
+    } else {
+      console.error('❌ Members endpoint returned unsuccessful response');
+      return false;
+    }
+  } catch (error) {
+    console.error('❌ Members endpoint error:', error.message);
+    return false;
+  }
+}
+
+// Test the API with an invalid credential to ensure security
+async function testInvalidCredentials() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/members`, {
+      method: 'GET',
+      headers: {
+        'x-pguser': 'invalid_user',
+        'x-pgpassword': 'invalid_password',
+        'x-pghost': PGHOST,
+        'x-pgdatabase': PGDATABASE
+      }
+    });
+    
+    if (response.status === 401) {
+      console.log('✅ Security check passed: Invalid credentials properly rejected');
+      return true;
+    } else {
+      console.error('❌ Security failure: Invalid credentials not rejected');
+      return false;
+    }
+  } catch (error) {
+    // Network errors are not what we're testing for here
+    console.error('❌ Error during invalid credentials test:', error.message);
+    return false;
+  }
+}
+
+// Run all tests
+async function runTests() {
+  console.log('=== Mobile API Verification ===');
+  console.log('Testing connection to database and API endpoints...\n');
+  
+  const dbConnected = await verifyDatabaseConnection();
+  if (!dbConnected) {
+    console.error('❌ Database connection required for further tests. Exiting.');
+    return;
+  }
+  
+  await testStatusEndpoint();
+  await testMembersEndpoint();
+  await testInvalidCredentials();
+  
+  console.log('\n=== Tests Completed ===');
+}
+
+runTests().catch(error => {
+  console.error('Unexpected error during tests:', error);
+  process.exit(1);
+});
