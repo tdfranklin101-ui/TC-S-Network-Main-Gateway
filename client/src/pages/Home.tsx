@@ -70,6 +70,9 @@ const Home = () => {
               Join Waitlist
             </a>
           </div>
+          <p className="mt-4 text-lg text-white" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}>
+            Join the first 1,000 person Solar network
+          </p>
         </div>
       </header>
 
