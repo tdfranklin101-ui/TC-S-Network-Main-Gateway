@@ -8,8 +8,14 @@ const { OpenAI } = require('openai');
 const fs = require('fs');
 const path = require('path');
 
-// Try to load OpenAI API key from separate .env file
+// Try to load OpenAI API key from separate .env file or environment variables
 function loadOpenAIKey() {
+  // First check if NEW_OPENAI_API_KEY is available in environment (highest priority)
+  if (process.env.NEW_OPENAI_API_KEY) {
+    console.log('Using NEW_OPENAI_API_KEY from environment (highest priority)');
+    return process.env.NEW_OPENAI_API_KEY;
+  }
+  
   try {
     // Check if .env.openai exists
     const envPath = path.join(process.cwd(), '.env.openai');
@@ -25,7 +31,7 @@ function loadOpenAIKey() {
     console.error('Error loading OpenAI key from .env.openai:', err.message);
   }
 
-  // Fall back to environment variable
+  // Fall back to original environment variable
   return process.env.OPENAI_API_KEY;
 }
 
@@ -74,11 +80,44 @@ const openai = new OpenAI({
  */
 function hasValidApiKey() {
   const key = cleanApiKey;
-  return !!key && (key.startsWith('sk-') || key.startsWith('-sk-p') || key.startsWith('sk-proj'));
+  return !!key && (
+    key.startsWith('sk-') || 
+    key.startsWith('-sk-p') || 
+    key.startsWith('sk-proj')
+  );
 }
 
 // Global flag to track if we've already logged a key error to avoid spam
 let keyErrorLogged = false;
+
+// Track API working status
+let _apiWorking = null; // null = not tested yet, true = working, false = not working
+
+/**
+ * Check if the OpenAI API is working
+ * @returns {boolean} - Whether the API is working
+ */
+function isApiWorking() {
+  return _apiWorking;
+}
+
+/**
+ * Get the source of the OpenAI API key
+ * @returns {string} - Description of where the API key came from
+ */
+function getKeySource() {
+  if (process.env.NEW_OPENAI_API_KEY) {
+    return 'NEW_OPENAI_API_KEY environment variable';
+  } else if (process.env.OPENAI_API_KEY) {
+    return 'OPENAI_API_KEY environment variable';
+  } else {
+    const envPath = path.join(process.cwd(), '.env.openai');
+    if (fs.existsSync(envPath)) {
+      return '.env.openai configuration file';
+    }
+    return 'Not found';
+  }
+}
 
 /**
  * Get a response from OpenAI for energy-related questions
@@ -329,8 +368,31 @@ Ensure that all tips are practical, specific, and tailored to the user's locatio
   }
 }
 
+// Initialize API working status flag
+console.log('Testing OpenAI connection...');
+try {
+  // Simple test call to check if API is working
+  const testPrompt = 'Hello';
+  openai.chat.completions.create({
+    model: 'gpt-4o',
+    messages: [{ role: 'user', content: testPrompt }],
+    max_tokens: 5
+  }).then(() => {
+    _apiWorking = true;
+    console.log('✓ OpenAI API connection successful');
+  }).catch((err) => {
+    _apiWorking = false;
+    console.error('✗ OpenAI API connection failed:', err.message);
+  });
+} catch (err) {
+  _apiWorking = false;
+  console.error('✗ OpenAI API initialization error:', err.message);
+}
+
 module.exports = {
   getEnergyAssistantResponse,
   analyzeProductEnergy,
-  getPersonalizedEnergyTips
+  getPersonalizedEnergyTips,
+  isApiWorking,
+  getKeySource
 };

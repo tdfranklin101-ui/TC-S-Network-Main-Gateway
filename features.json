@@ -1,0 +1,6 @@
+{
+  "solarClock": true,
+  "database": true,
+  "openai": true,
+  "distributionSystem": true
+}

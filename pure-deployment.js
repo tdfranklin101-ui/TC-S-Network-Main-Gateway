@@ -32,23 +32,38 @@ try {
 
 try {
   if (openAIFeaturesEnabled) {
+    // Check for NEW_OPENAI_API_KEY first
+    if (process.env.NEW_OPENAI_API_KEY) {
+      console.log('Using NEW_OPENAI_API_KEY for OpenAI integration');
+    }
+    
     // First try to load the regular OpenAI service if features are enabled
     try {
       openaiService = require('./openai-service');
       console.log('OpenAI service loaded successfully');
       
       // Test the OpenAI service to ensure it's working properly
-      openaiService.getEnergyAssistantResponse('test').catch(error => {
-        console.error('OpenAI API authentication error:', error.message);
-        // If there's an authentication error, fallback to minimal service
-        try {
-          openaiService = require('./openai-service-minimal');
-          console.log('Minimal OpenAI service loaded as fallback due to API authentication error');
-        } catch (fallbackErr) {
-          console.error('Failed to load minimal OpenAI service:', fallbackErr.message);
-          openaiService = null;
-        }
-      });
+      console.log('Testing OpenAI connection...');
+      openaiService.getEnergyAssistantResponse('test')
+        .then(response => {
+          if (response && response.error) {
+            console.warn('OpenAI API test received error response:', response.message);
+            throw new Error('Authentication failed: ' + (response.details || 'Unknown error'));
+          } else {
+            console.log('✓ OpenAI API connection successful');
+          }
+        })
+        .catch(error => {
+          console.error('OpenAI API authentication error:', error.message);
+          // If there's an authentication error, fallback to minimal service
+          try {
+            openaiService = require('./openai-service-minimal');
+            console.log('Minimal OpenAI service loaded as fallback due to API authentication error');
+          } catch (fallbackErr) {
+            console.error('Failed to load minimal OpenAI service:', fallbackErr.message);
+            openaiService = null;
+          }
+        });
     } catch (err) {
       console.error('Failed to load OpenAI service:', err.message);
       // Try to load the minimal version as fallback
@@ -77,11 +92,12 @@ try {
 
 // Configuration
 const PORT = process.env.PORT || 3000;
+const HOST = '0.0.0.0'; // Use 0.0.0.0 to accept connections from any IP
 const PUBLIC_DIR = path.join(__dirname, 'public');
 
 // Version information
 const APP_VERSION = {
-  version: '1.2.0',
+  version: '1.2.1',
   name: 'The Current-See Pure Deployment Server',
   build: '2025.04.24',
   features: {
@@ -659,9 +675,9 @@ const server = http.createServer(async (req, res) => {
 });
 
 // Start server
-server.listen(PORT, async () => {
+server.listen(PORT, HOST, async () => {
   log(`=== ${APP_VERSION.name} v${APP_VERSION.version} (Build ${APP_VERSION.build}) ===`);
-  log(`Server running on port ${PORT}`);
+  log(`Server running on http://${HOST}:${PORT}`);
   log(`Environment: ${process.env.NODE_ENV || 'development'}`);
   log(`Using custom database URL: ${!!process.env.CURRENTSEE_DB_URL}`);
   

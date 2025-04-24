@@ -1,257 +1,416 @@
 /**
- * The Current-See Comprehensive System Check
+ * The Current-See System Check Utility
  * 
- * This script performs a complete system check across all components:
- * - Version information
- * - Database connection
- * - OpenAI integration
- * - Member data
- * - Solar Generator calculations
- * 
- * Usage: node system-check.js [--verbose]
+ * This script performs a comprehensive check of the system components
+ * including version information, feature flags, essential files,
+ * OpenAI integration, database connection, and Solar Generator status.
  */
 
+// Import required modules
 const fs = require('fs');
 const path = require('path');
 const { Pool } = require('pg');
-const { execSync } = require('child_process');
+const openaiService = require('./openai-service');
 
-// Check for verbose flag
-const verbose = process.argv.includes('--verbose');
+// Configuration
+const TIMEOUT = 10000; // 10 seconds timeout for async operations
 
-// Utility function for consistent logging
-function log(title, message, type = 'info') {
-  const prefix = type === 'info' ? '✅' : type === 'warn' ? '⚠️' : '❌';
-  console.log(`${prefix} ${title}: ${message}`);
+// Colors for console output
+const colors = {
+  reset: '\x1b[0m',
+  bright: '\x1b[1m',
+  dim: '\x1b[2m',
+  green: '\x1b[32m',
+  red: '\x1b[31m',
+  yellow: '\x1b[33m',
+  blue: '\x1b[34m',
+  cyan: '\x1b[36m',
+  gray: '\x1b[90m'
+};
+
+// Check results counter
+let passCount = 0;
+let failCount = 0;
+let warnCount = 0;
+
+/**
+ * Log a message with optional color
+ */
+function log(message, color = colors.reset) {
+  console.log(`${color}${message}${colors.reset}`);
+}
+
+/**
+ * Log a section header
+ */
+function logSection(title) {
+  console.log('\n' + colors.bright + colors.blue + '▓▒░ ' + title + ' ░▒▓' + colors.reset);
+  console.log(colors.dim + '─'.repeat(60) + colors.reset);
+}
+
+/**
+ * Log a check result
+ */
+function logCheck(name, status, message) {
+  let statusSymbol = '';
+  let statusColor = '';
   
-  if (verbose && type === 'error') {
-    console.error('  Detailed error:', message);
+  if (status === 'pass') {
+    statusSymbol = '✓';
+    statusColor = colors.green;
+    passCount++;
+  } else if (status === 'fail') {
+    statusSymbol = '✗';
+    statusColor = colors.red;
+    failCount++;
+  } else if (status === 'warn') {
+    statusSymbol = '⚠';
+    statusColor = colors.yellow;
+    warnCount++;
+  } else {
+    statusSymbol = 'ℹ';
+    statusColor = colors.blue;
+  }
+  
+  console.log(`${statusColor}${statusSymbol} ${colors.bright}${name}${colors.reset}`);
+  if (message) {
+    console.log(`  ${message}`);
   }
 }
 
-async function runSystemCheck() {
-  console.log('\n=== THE CURRENT-SEE COMPREHENSIVE SYSTEM CHECK ===\n');
-  
-  // 1. Check version information
-  console.log('📌 VERSION INFORMATION:');
+/**
+ * Check version information
+ */
+async function checkVersion() {
+  logSection('Version Information');
   
   try {
-    const deploymentFile = path.join(__dirname, 'pure-deployment.js');
-    const data = fs.readFileSync(deploymentFile, 'utf8');
-    const versionRegex = /const APP_VERSION = \{[\s\S]*?version: ['"]([^'"]+)['"][\s\S]*?name: ['"]([^'"]+)['"][\s\S]*?build: ['"]([^'"]+)['"]/;
-    const match = data.match(versionRegex);
+    // Read package.json
+    const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+    logCheck('Package Version', 'pass', `${packageJson.name} v${packageJson.version}`);
     
-    if (match) {
-      log('Application', match[2]);
-      log('Version', `${match[1]} (Build ${match[3]})`);
-      
-      // Extract feature flags
-      const featuresRegex = /features: \{([\s\S]*?)\}/;
-      const featuresMatch = data.match(featuresRegex);
-      
-      if (featuresMatch) {
-        console.log('\n📋 FEATURE FLAGS:');
-        
-        const featureLines = featuresMatch[1].trim().split('\n');
-        for (const line of featureLines) {
-          const featureMatch = line.match(/([a-zA-Z]+):\s*(true|false)/);
-          if (featureMatch) {
-            const feature = featureMatch[1];
-            const enabled = featureMatch[2] === 'true';
-            log(feature, enabled ? 'ENABLED' : 'DISABLED', enabled ? 'info' : 'warn');
-          }
+    // Check for version constant in code files
+    const files = ['index.js', 'server.js', 'pure-deployment.js'];
+    let versionConstFound = false;
+    
+    for (const file of files) {
+      if (fs.existsSync(file)) {
+        const content = fs.readFileSync(file, 'utf8');
+        const versionMatch = content.match(/APP_VERSION[^{]*{[^}]*version:\s*['"]([^'"]+)['"]/);
+        if (versionMatch) {
+          logCheck('App Version', 'pass', `${versionMatch[1]} (from ${file})`);
+          versionConstFound = true;
+          break;
         }
       }
-    } else {
-      log('Version', 'Could not find version information', 'error');
+    }
+    
+    if (!versionConstFound) {
+      logCheck('App Version', 'warn', 'Could not find APP_VERSION constant in code files');
     }
   } catch (err) {
-    log('Version Check', 'Failed', 'error');
-    if (verbose) console.error(err);
+    logCheck('Version Check', 'fail', `Error: ${err.message}`);
   }
+}
+
+/**
+ * Check feature flags
+ */
+async function checkFeatureFlags() {
+  logSection('Feature Flags');
   
-  // 2. Check for essential files
-  console.log('\n🔍 ESSENTIAL FILES:');
+  try {
+    // Check if features.json exists
+    if (!fs.existsSync('features.json')) {
+      logCheck('Features Configuration', 'warn', 'features.json file not found');
+      return;
+    }
+    
+    const features = JSON.parse(fs.readFileSync('features.json', 'utf8'));
+    
+    // List all features
+    Object.entries(features).forEach(([key, value]) => {
+      logCheck(
+        `Feature: ${key}`, 
+        value ? 'pass' : 'warn',
+        value ? 'Enabled' : 'Disabled'
+      );
+    });
+    
+    // Check critical features
+    const criticalFeatures = ['solarClock', 'database', 'openai', 'distributionSystem'];
+    for (const feature of criticalFeatures) {
+      if (features[feature] === undefined) {
+        logCheck(`Critical Feature: ${feature}`, 'warn', 'Not defined in features.json');
+      }
+    }
+  } catch (err) {
+    logCheck('Feature Flags', 'fail', `Error: ${err.message}`);
+  }
+}
+
+/**
+ * Check essential files
+ */
+async function checkEssentialFiles() {
+  logSection('Essential Files');
   
   const essentialFiles = [
-    'pure-deployment.js',
-    'check-status.js',
-    'check-currentsee-db.js',
-    'openai-service.js',
-    'openai-service-minimal.js',
-    '.openai-feature-state.json',
-    '.env.openai'
+    { path: 'pure-deployment.js', description: 'Main deployment server' },
+    { path: 'openai-service.js', description: 'OpenAI integration service' },
+    { path: 'openai-service-minimal.js', description: 'Fallback OpenAI service' },
+    { path: 'db.js', description: 'Database module' },
+    { path: 'server-db.js', description: 'Database functions for server' },
+    { path: 'public/index.html', description: 'Main homepage' },
+    { path: 'public/wallet-ai-features.html', description: 'Wallet & AI features page' }
   ];
   
   for (const file of essentialFiles) {
     try {
-      if (fs.existsSync(path.join(__dirname, file))) {
-        log(file, 'Present');
+      if (fs.existsSync(file.path)) {
+        const stats = fs.statSync(file.path);
+        logCheck(
+          file.path, 
+          'pass', 
+          `${file.description} - ${(stats.size / 1024).toFixed(1)} KB, modified ${stats.mtime.toLocaleString()}`
+        );
       } else {
-        log(file, 'Missing', 'error');
+        logCheck(file.path, 'warn', `${file.description} - File not found`);
       }
     } catch (err) {
-      log(file, 'Error checking', 'error');
+      logCheck(file.path, 'fail', `Error: ${err.message}`);
     }
   }
-  
-  // 3. Check OpenAI integration
-  console.log('\n🤖 OPENAI INTEGRATION:');
-  
-  try {
-    const openaiStateFile = path.join(__dirname, '.openai-feature-state.json');
-    if (fs.existsSync(openaiStateFile)) {
-      const stateData = fs.readFileSync(openaiStateFile, 'utf8');
-      const state = JSON.parse(stateData);
-      const apiWorking = state.apiWorking === true;
-      
-      log('Feature State', apiWorking ? 'ENABLED' : 'DISABLED', apiWorking ? 'info' : 'warn');
-      log('Last Updated', new Date(state.timestamp || 0).toLocaleString());
-    } else {
-      log('Feature State File', 'Missing', 'error');
-    }
-    
-    // Check .env.openai file
-    const envFile = path.join(__dirname, '.env.openai');
-    if (fs.existsSync(envFile)) {
-      const envData = fs.readFileSync(envFile, 'utf8');
-      const keyMatch = envData.match(/OPENAI_API_KEY=(.*)/);
-      
-      if (keyMatch && keyMatch[1]) {
-        const key = keyMatch[1].trim();
-        if (key.startsWith('sk-')) {
-          log('API Key', 'Present', 'info');
-          
-          // Check key type
-          if (key.startsWith('sk-proj-')) {
-            log('Key Type', 'Project-scoped key (sk-proj-*)', 'info');
-          } else {
-            log('Key Type', 'Standard key (sk-*)', 'info');
-          }
-        } else {
-          log('API Key', 'Invalid format', 'error');
-        }
-      } else {
-        log('API Key', 'Not found in .env.openai', 'error');
-      }
-    } else {
-      log('OpenAI Env File', 'Missing', 'error');
-    }
-  } catch (err) {
-    log('OpenAI Check', 'Failed', 'error');
-    if (verbose) console.error(err);
-  }
-  
-  // 4. Check database connection
-  console.log('\n🗄️ DATABASE CONNECTION:');
+}
+
+/**
+ * Check OpenAI integration
+ */
+async function checkOpenAIIntegration() {
+  logSection('OpenAI Integration');
   
   try {
-    // Check for database URLs
-    const hasCustomDbUrl = !!process.env.CURRENTSEE_DB_URL;
-    const hasDefaultDbUrl = !!process.env.DATABASE_URL;
-    
-    log('CURRENTSEE_DB_URL', hasCustomDbUrl ? 'Present' : 'Missing', hasCustomDbUrl ? 'info' : 'warn');
-    log('DATABASE_URL', hasDefaultDbUrl ? 'Present' : 'Missing', hasDefaultDbUrl ? 'info' : 'warn');
-    
-    if (!hasCustomDbUrl && !hasDefaultDbUrl) {
-      log('Database URL', 'No database URL available', 'error');
+    // Check if OpenAI service is available
+    if (!openaiService) {
+      logCheck('OpenAI Service', 'fail', 'OpenAI service module not available');
       return;
     }
     
-    // Try to connect to database
-    const dbUrl = process.env.CURRENTSEE_DB_URL || process.env.DATABASE_URL;
-    const pool = new Pool({
-      connectionString: dbUrl,
-      ssl: {
-        rejectUnauthorized: false
-      }
-    });
+    // Check for .env.openai file
+    if (fs.existsSync('.env.openai')) {
+      logCheck('.env.openai File', 'pass', 'File exists');
+    } else {
+      logCheck('.env.openai File', 'warn', 'File not found');
+    }
     
-    const client = await pool.connect();
-    log('Connection', 'Successful');
+    // Check if API key is available
+    const keySource = openaiService.getKeySource ? openaiService.getKeySource() : 'unknown';
+    logCheck('OpenAI API Key Source', 'info', keySource);
     
-    // Check database info
-    const dbInfoResult = await client.query('SELECT current_database() as db, current_user as user');
-    log('Database', dbInfoResult.rows[0].db);
-    log('User', dbInfoResult.rows[0].user);
-    
-    // Check tables
-    console.log('\n📋 DATABASE TABLES:');
-    
-    // Check members table
-    try {
-      const membersResult = await client.query('SELECT COUNT(*) FROM members');
-      log('Members Table', `${membersResult.rows[0].count} records`);
-      
-      if (parseInt(membersResult.rows[0].count) === 0) {
-        log('Members Table', 'Empty table', 'warn');
-      } else if (membersResult.rows[0].count > 0) {
-        // Show first member
-        const firstMember = await client.query('SELECT id, name, joined_date, total_solar FROM members ORDER BY id ASC LIMIT 1');
-        if (firstMember.rows.length > 0) {
-          const member = firstMember.rows[0];
-          log('First Member', `#${member.id}: ${member.name}, Joined: ${member.joined_date}, SOLAR: ${member.total_solar}`);
+    // Check if isApiWorking function exists
+    if (typeof openaiService.isApiWorking === 'function') {
+      // Wait a moment for the async test to complete if it's still null
+      if (openaiService.isApiWorking() === null) {
+        logCheck('OpenAI API Status', 'info', 'Testing API connection, please wait...');
+        
+        // Wait up to 5 seconds for the connection test to complete
+        for (let i = 0; i < 5; i++) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          if (openaiService.isApiWorking() !== null) break;
         }
       }
-    } catch (err) {
-      log('Members Table', 'Error accessing table', 'error');
-      if (verbose) console.error(err);
-    }
-    
-    client.release();
-    await pool.end();
-  } catch (err) {
-    log('Database Check', 'Failed', 'error');
-    if (verbose) console.error(err);
-  }
-  
-  // 5. Check Solar Generator calculations
-  console.log('\n☀️ SOLAR GENERATOR:');
-  
-  try {
-    // Extract solar constants from deployment file
-    const deploymentFile = path.join(__dirname, 'pure-deployment.js');
-    const data = fs.readFileSync(deploymentFile, 'utf8');
-    
-    const startDateMatch = data.match(/startDate: new Date\(['"]([^'"]+)['"]\)/);
-    const solarValueMatch = data.match(/solarValue: ([0-9]+)/);
-    const solarToEnergyMatch = data.match(/solarToEnergy: ([0-9]+)/);
-    
-    if (startDateMatch && solarValueMatch && solarToEnergyMatch) {
-      const startDate = new Date(startDateMatch[1]);
-      const solarValue = parseInt(solarValueMatch[1]);
-      const solarToEnergy = parseInt(solarToEnergyMatch[1]);
       
-      log('Start Date', startDate.toISOString().split('T')[0]);
-      log('SOLAR Value', `$${solarValue} per SOLAR`);
-      log('Energy Conversion', `${solarToEnergy} kWh per SOLAR`);
-      
-      // Calculate current solar data
-      const now = new Date();
-      const diffTime = Math.abs(now - startDate);
-      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-      const hourlyKwH = 27777.778; // 2/3 of a million kWh per day, distributed hourly
-      const elapsedHours = Math.floor(diffTime / (1000 * 60 * 60));
-      const totalEnergyKwH = elapsedHours * hourlyKwH;
-      const totalEnergyMkWh = (totalEnergyKwH / 1000000).toFixed(6);
-      const totalValue = ((totalEnergyKwH / solarToEnergy) * solarValue).toFixed(2);
-      
-      log('Days Running', diffDays.toString());
-      log('Total Energy', `${totalEnergyMkWh} MkWh`);
-      log('Total Value', `$${totalValue}`);
+      const isWorking = openaiService.isApiWorking();
+      if (isWorking === null) {
+        logCheck('OpenAI API Status', 'warn', 'API connection test did not complete in time');
+      } else {
+        logCheck(
+          'OpenAI API Status', 
+          isWorking ? 'pass' : 'warn',
+          isWorking ? 'API is working' : 'API is not working (fallback mode)'
+        );
+      }
     } else {
-      log('Solar Constants', 'Could not extract solar constants', 'error');
+      logCheck('OpenAI API Status', 'warn', 'Cannot determine API status (isApiWorking function not found)');
+    }
+    
+    // Test a simple API call if we think the API is working
+    const isApiWorking = openaiService.isApiWorking ? openaiService.isApiWorking() : false;
+    if (isApiWorking) {
+      try {
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Request timed out')), TIMEOUT);
+        });
+        
+        const response = await Promise.race([
+          openaiService.getEnergyAssistantResponse('What is solar energy?'),
+          timeoutPromise
+        ]);
+        
+        if (response && typeof response === 'string' && response.length > 50) {
+          logCheck('OpenAI Test Query', 'pass', 'Successfully received response');
+        } else {
+          logCheck('OpenAI Test Query', 'warn', 'Received unexpected response format');
+        }
+      } catch (err) {
+        logCheck('OpenAI Test Query', 'fail', `Error: ${err.message}`);
+      }
     }
   } catch (err) {
-    log('Solar Generator Check', 'Failed', 'error');
-    if (verbose) console.error(err);
+    logCheck('OpenAI Integration', 'fail', `Error: ${err.message}`);
   }
-  
-  console.log('\n=== SYSTEM CHECK COMPLETE ===\n');
 }
 
-// Run the system check
-runSystemCheck().catch(err => {
-  console.error('System check failed with an unhandled error:', err);
-  process.exit(1);
-});
+/**
+ * Check database connection
+ */
+async function checkDatabaseConnection() {
+  logSection('Database Connection');
+  
+  try {
+    // Check if database URL is available
+    const dbUrl = process.env.CURRENTSEE_DB_URL || process.env.DATABASE_URL;
+    if (!dbUrl) {
+      logCheck('Database URL', 'warn', 'No database URL found in environment variables');
+    } else {
+      logCheck('Database URL', 'pass', 'Database URL is defined in environment variables');
+    }
+    
+    // Try to connect to the database
+    let dbPool;
+    try {
+      dbPool = new Pool({
+        connectionString: dbUrl,
+        ssl: {
+          rejectUnauthorized: false
+        }
+      });
+      
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Database connection timed out')), TIMEOUT);
+      });
+      
+      const client = await Promise.race([
+        dbPool.connect(),
+        timeoutPromise
+      ]);
+      
+      logCheck('Database Connection', 'pass', 'Successfully connected to database');
+      
+      // Check database version
+      const versionResult = await client.query('SELECT version()');
+      logCheck('Database Version', 'pass', versionResult.rows[0].version.split(',')[0]);
+      
+      // Check tables
+      const tablesResult = await client.query(
+        "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'"
+      );
+      
+      const tables = tablesResult.rows.map(row => row.table_name);
+      logCheck('Database Tables', 'pass', `Found ${tables.length} tables: ${tables.join(', ')}`);
+      
+      // Check members table specifically
+      if (tables.includes('members')) {
+        const membersResult = await client.query('SELECT COUNT(*) FROM members');
+        logCheck('Members Table', 'pass', `Contains ${membersResult.rows[0].count} records`);
+        
+        // Check for specific key members
+        const reserveResult = await client.query("SELECT * FROM members WHERE name LIKE '%Reserve%' LIMIT 1");
+        if (reserveResult.rows.length > 0) {
+          logCheck('Solar Reserve Account', 'pass', `Found: ${reserveResult.rows[0].name}`);
+        } else {
+          logCheck('Solar Reserve Account', 'warn', 'No Solar Reserve account found in members table');
+        }
+      } else {
+        logCheck('Members Table', 'warn', 'Members table not found in database');
+      }
+      
+      client.release();
+    } catch (err) {
+      logCheck('Database Connection', 'fail', `Error: ${err.message}`);
+    } finally {
+      if (dbPool) {
+        await dbPool.end();
+      }
+    }
+  } catch (err) {
+    logCheck('Database Check', 'fail', `Error: ${err.message}`);
+  }
+}
+
+/**
+ * Check Solar Generator status
+ */
+async function checkSolarGenerator() {
+  logSection('Solar Generator Status');
+  
+  try {
+    // Calculate days since launch (April 7, 2025)
+    const launchDate = new Date('2025-04-07T00:00:00Z');
+    const now = new Date();
+    const daysRunning = Math.floor((now - launchDate) / (24 * 60 * 60 * 1000));
+    
+    logCheck('Days Running', 'pass', `${daysRunning} days since launch (April 7, 2025)`);
+    
+    // Calculate total energy (in MkWh)
+    // 8 billion kWh per day
+    const dailyEnergy = 8;
+    const totalEnergyMkWh = (dailyEnergy * daysRunning) / 1000;
+    logCheck('Total Energy', 'pass', `${totalEnergyMkWh.toFixed(6)} MkWh (${(totalEnergyMkWh * 1000).toFixed(2)} billion kWh)`);
+    
+    // Calculate total dollar value
+    // $136,000 per SOLAR, 1 SOLAR = 4,913 kWh
+    const kWhPerSolar = 4913;
+    const dollarsPerSolar = 136000;
+    const totalSolar = (totalEnergyMkWh * 1000 * 1000 * 1000) / kWhPerSolar;
+    const totalValue = totalSolar * dollarsPerSolar;
+    
+    logCheck('Total Value', 'pass', `$${totalValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}`);
+  } catch (err) {
+    logCheck('Solar Generator Check', 'fail', `Error: ${err.message}`);
+  }
+}
+
+/**
+ * Run all checks
+ */
+async function runAllChecks() {
+  console.log(colors.bright + colors.cyan + '\n■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■' + colors.reset);
+  console.log(colors.bright + colors.cyan + '■     THE CURRENT-SEE SYSTEM CHECK UTILITY                ■' + colors.reset);
+  console.log(colors.bright + colors.cyan + '■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■' + colors.reset);
+  console.log(`\nRunning system check on ${new Date().toLocaleString()}`);
+  
+  try {
+    await checkVersion();
+    await checkFeatureFlags();
+    await checkEssentialFiles();
+    await checkOpenAIIntegration();
+    await checkDatabaseConnection();
+    await checkSolarGenerator();
+    
+    // Print summary
+    logSection('Summary');
+    console.log(`${colors.green}✓ Passed: ${passCount}${colors.reset}`);
+    console.log(`${colors.yellow}⚠ Warnings: ${warnCount}${colors.reset}`);
+    console.log(`${colors.red}✗ Failed: ${failCount}${colors.reset}`);
+    
+    // Final status
+    console.log('\n' + colors.bright + colors.blue + '▓▒░ SYSTEM STATUS ░▒▓' + colors.reset);
+    console.log(colors.dim + '─'.repeat(60) + colors.reset);
+    
+    if (failCount === 0 && warnCount === 0) {
+      console.log(colors.bright + colors.green + '✓ ALL SYSTEMS NOMINAL' + colors.reset);
+    } else if (failCount === 0) {
+      console.log(colors.bright + colors.yellow + '⚠ SYSTEMS OPERATIONAL WITH WARNINGS' + colors.reset);
+    } else {
+      console.log(colors.bright + colors.red + '✗ SYSTEM ISSUES DETECTED' + colors.reset);
+    }
+    
+  } catch (err) {
+    console.error(`\n${colors.red}Error running system check: ${err.message}${colors.reset}`);
+    console.error(err.stack);
+  }
+}
+
+// Run all checks
+runAllChecks();

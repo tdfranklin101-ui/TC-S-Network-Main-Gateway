@@ -1,94 +1,87 @@
-# OpenAI API Integration Guide
+# OpenAI Integration Guide for The Current-See
 
-This guide explains how to set up and troubleshoot the OpenAI API integration for The Current-See website.
+This document provides comprehensive guidance on working with the OpenAI integration in The Current-See platform.
 
-## OpenAI API Key Format
+## Implementation Status
 
-The Current-See supports both traditional and project-scoped OpenAI API keys:
+✅ **OpenAI Integration**: Fully implemented and functional
+✅ **AI Assistant**: Working correctly (responds to energy-related questions)
+✅ **Product Analysis**: Working correctly (analyzes environmental impact of products)
+✅ **Energy Tips**: Working correctly (provides personalized energy recommendations)
 
-- Traditional format: `sk-...` (starts with "sk-" followed by characters)
-- Project-scoped format: `sk-proj-...` (starts with "sk-proj-" followed by characters)
+## API Key Management
 
-## Getting a Valid API Key
+The system supports multiple methods for providing OpenAI API keys, in order of priority:
 
-1. **Sign up for OpenAI API access:**
-   - Go to https://platform.openai.com/signup
-   - Create an account or log in if you already have one
+1. **NEW_OPENAI_API_KEY** environment variable (highest priority)
+2. **OPENAI_API_KEY** environment variable
+3. Key from `.env.openai` file
+4. Key from `openai.key` file
 
-2. **Create an API key:**
-   - Navigate to https://platform.openai.com/api-keys
-   - Click "Create new secret key"
-   - Give your key a name (optional)
-   - Copy the key immediately (you won't be able to see it again)
+The service automatically detects the API key format, supporting both standard OpenAI API keys (`sk-...`) and project-scoped API keys (`sk-proj-...`).
 
-3. **Set up billing (required for API access):**
-   - Go to https://platform.openai.com/account/billing/overview
-   - Set up a payment method
-   - Add credits to your account
+## Verification Tests
 
-## Adding the API Key to The Current-See
+Use the following testing scripts to verify OpenAI integration:
 
-1. Create a file named `.env.openai` in the project root directory
-2. Add your API key in this format: `OPENAI_API_KEY=your_key_here`
-3. Save the file
+1. **Basic AI Assistant Test**: `node test-ai-integration.js`
+2. **Product Analysis Test**: `node test-product-analysis.js`
+3. **Direct OpenAI Connection Test**: `node test-openai-connection.js`
 
-## Testing the Integration
+All tests should respond with detailed output confirming successful API connection and response generation.
 
-Run the following command to test your API key:
+## Fallback System
 
+The OpenAI service includes a robust fallback mechanism:
+
+1. If the OpenAI API is unavailable or returns an error, the system will automatically switch to fallback mode
+2. In fallback mode, a minimal service provides informative responses without requiring API access
+3. The system logs the fallback event but continues normal operation
+
+## Feature Toggle
+
+The OpenAI integration can be toggled on/off using the feature flag system:
+
+```js
+// To disable OpenAI integration
+node set-feature.js openai false
+
+// To enable OpenAI integration
+node set-feature.js openai true
 ```
-node test-openai-integration.js
-```
-
-If everything is working, you should see a successful connection message.
 
 ## Troubleshooting
 
-### Authentication Errors
+If the OpenAI integration is not working as expected:
 
-If you see a 401 error message like:
-```
-401 Incorrect API key provided
-```
+1. **Check API Key**: Ensure a valid API key is available through one of the methods above
+2. **Verify API Status**: Run `node test-openai-connection.js` to verify direct API connectivity
+3. **Check Feature Flag**: Ensure the OpenAI feature is enabled using `node system-check.js`
+4. **Review Logs**: Look for specific error messages in the application logs
+5. **Try Fallback Mode**: If API issues persist, you can temporarily disable the OpenAI integration
 
-This means:
-- Your API key may be invalid
-- Your API key may have usage restrictions
-- Your API key format may be incorrect
+## API Endpoints
 
-**Solutions:**
-1. Generate a new API key at https://platform.openai.com/api-keys
-2. Ensure you've set up billing properly
-3. Check that you've copied the key correctly without any extra characters
+The following API endpoints are available for AI functionality:
 
-### Rate Limit Errors
+- `/api/ai/assistant` - General energy assistant (answers questions about energy concepts)
+- `/api/ai/analyze-product` - Product environmental impact analysis
+- `/api/ai/energy-tips` - Personalized energy-saving recommendations
 
-If you see a 429 error message:
-```
-429 Rate limit exceeded
-```
+## Implementation Notes
 
-This means you've hit your API usage limits. You can:
-1. Wait for your rate limits to reset
-2. Increase your usage tier at https://platform.openai.com/account/billing/limits
+1. The OpenAI integration uses gpt-4o, the latest model available (as of April 2025)
+2. All requests use system prompts that focus the AI on energy-related topics
+3. Temperature settings are optimized for accurate, consistent responses
+4. Error handling includes retries and graceful degradation to fallback mode
+5. Requests include reasonable timeouts to prevent hanging connections
 
-### Graceful Degradation
+## Security Considerations
 
-The Current-See has a built-in fallback system for when the OpenAI API is unavailable. If API authentication fails:
-1. Users will see a message that the AI assistant is in setup mode
-2. The site will continue to function normally in all other aspects
-3. No error messages will be shown to users
-
-## Key Security
-
-- Never share your OpenAI API key publicly
-- Do not commit the `.env.openai` file to version control
-- You can use API key restrictions to limit its usage
-
-## Models Used
-
-The Current-See is configured to use the GPT-4o model for AI interactions. This model provides high-quality responses for energy-related questions and product analysis.
+1. API keys are never exposed to clients or logged in server responses
+2. All requests to OpenAI are made server-side, never directly from client browsers
+3. User queries are sanitized before being sent to the OpenAI API
 
 ---
 
-For additional help, contact The Current-See administrator or visit the [OpenAI Help Center](https://help.openai.com).
+For additional questions or support, contact the development team.

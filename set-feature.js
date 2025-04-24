@@ -1,72 +1,88 @@
 /**
- * The Current-See Feature Flag Utility
+ * The Current-See Feature Toggle Utility
  * 
- * This script enables or disables features in the APP_VERSION object in pure-deployment.js
- * Usage: node set-feature.js [feature] [true|false]
+ * This script enables or disables specific features in the application.
+ * Usage: node set-feature.js <feature> <true|false>
  * Example: node set-feature.js openai false
  */
 
 const fs = require('fs');
 const path = require('path');
 
-// Main deployment file path
-const deploymentFile = path.join(__dirname, 'pure-deployment.js');
+// Available features
+const AVAILABLE_FEATURES = [
+  'solarClock',
+  'database',
+  'openai',
+  'distributionSystem'
+];
 
-// Get arguments
-const feature = process.argv[2];
-const enabled = process.argv[3]?.toLowerCase();
+// Parse command line arguments
+const featureName = process.argv[2];
+const featureValue = process.argv[3];
 
 // Validate arguments
-if (!feature || (enabled !== 'true' && enabled !== 'false')) {
-  console.error('Error: Feature name and enabled status (true or false) are required.');
-  console.log('Usage: node set-feature.js [feature] [true|false]');
-  console.log('Example: node set-feature.js openai false');
-  console.log('\nAvailable features:');
-  console.log('- solarClock');
-  console.log('- database');
-  console.log('- openai');
-  console.log('- distributionSystem');
+if (!featureName || !featureValue) {
+  console.error('Error: Missing required arguments');
+  console.log('\nUsage: node set-feature.js <feature> <true|false>');
+  console.log('Example: node set-feature.js openai false\n');
+  console.log('Available features:');
+  AVAILABLE_FEATURES.forEach(feature => console.log(`- ${feature}`));
   process.exit(1);
 }
 
-// Read deployment file
-fs.readFile(deploymentFile, 'utf8', (err, data) => {
-  if (err) {
-    console.error('Error reading deployment file:', err.message);
+// Validate feature name
+if (!AVAILABLE_FEATURES.includes(featureName)) {
+  console.error(`Error: Unknown feature "${featureName}"`);
+  console.log('\nAvailable features:');
+  AVAILABLE_FEATURES.forEach(feature => console.log(`- ${feature}`));
+  process.exit(1);
+}
+
+// Validate feature value
+const boolValue = featureValue.toLowerCase();
+if (boolValue !== 'true' && boolValue !== 'false') {
+  console.error('Error: Feature value must be either "true" or "false"');
+  process.exit(1);
+}
+
+// Convert string to boolean
+const featureEnabled = boolValue === 'true';
+
+// Path to features.json
+const featuresPath = path.join(__dirname, 'features.json');
+
+// Load existing features or create default
+let features = {};
+if (fs.existsSync(featuresPath)) {
+  try {
+    features = JSON.parse(fs.readFileSync(featuresPath, 'utf8'));
+  } catch (err) {
+    console.error(`Error reading features.json: ${err.message}`);
     process.exit(1);
   }
-
-  // Find feature in APP_VERSION
-  const featureRegex = new RegExp(`(features: {[\\s\\S]*?${feature}: )(true|false)([\\s\\S]*?})`);
-  const match = data.match(featureRegex);
-  
-  if (!match) {
-    console.error(`Error: Could not find feature "${feature}" in the file.`);
-    process.exit(1);
-  }
-
-  // Replace feature flag
-  const updatedContent = data.replace(
-    featureRegex, 
-    `$1${enabled}$3`
-  );
-
-  // Write updated content back to file
-  fs.writeFile(deploymentFile, updatedContent, 'utf8', (err) => {
-    if (err) {
-      console.error('Error writing deployment file:', err.message);
-      process.exit(1);
-    }
-    
-    console.log(`✓ Feature "${feature}" set to "${enabled}" successfully`);
-    
-    // Additional instructions
-    if (feature === 'openai') {
-      if (enabled === 'false') {
-        console.log('\n🔧 Remember to also run: node toggle-openai.js disable');
-      } else {
-        console.log('\n🔧 Remember to also run: node toggle-openai.js enable');
-      }
-    }
+} else {
+  // Create default features
+  AVAILABLE_FEATURES.forEach(feature => {
+    features[feature] = true;
   });
+}
+
+// Update feature
+const oldValue = features[featureName];
+features[featureName] = featureEnabled;
+
+// Write updated features
+try {
+  fs.writeFileSync(featuresPath, JSON.stringify(features, null, 2), 'utf8');
+  console.log(`Feature "${featureName}" ${featureEnabled ? 'enabled' : 'disabled'} (was ${oldValue ? 'enabled' : 'disabled'})`);
+} catch (err) {
+  console.error(`Error writing features.json: ${err.message}`);
+  process.exit(1);
+}
+
+// Display all features
+console.log('\nCurrent feature status:');
+Object.entries(features).forEach(([key, value]) => {
+  console.log(`- ${key}: ${value ? 'enabled' : 'disabled'}`);
 });
