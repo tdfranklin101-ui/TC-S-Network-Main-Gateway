@@ -9,13 +9,15 @@ const { OpenAI } = require('openai');
 async function testOpenAIConnection() {
   console.log('======== Direct OpenAI Connection Test ========\n');
   
-  // Get API key directly from environment
-  const apiKey = process.env.OPENAI_API_KEY;
+  // Get API key directly from environment - prioritize NEW_OPENAI_API_KEY over OPENAI_API_KEY
+  const apiKey = process.env.NEW_OPENAI_API_KEY || process.env.OPENAI_API_KEY;
   
   if (!apiKey) {
     console.error('❌ No OpenAI API key found in environment');
     return;
   }
+  
+  console.log(`Using key: ${process.env.NEW_OPENAI_API_KEY ? 'NEW_OPENAI_API_KEY' : 'OPENAI_API_KEY'}`); 
   
   // Display key format (safely)
   console.log(`API key length: ${apiKey.length} characters`);
