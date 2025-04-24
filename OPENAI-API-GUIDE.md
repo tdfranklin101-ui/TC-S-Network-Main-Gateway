@@ -1,228 +1,104 @@
-# The Current-See OpenAI API Integration Guide
+# OpenAI API Integration Guide for The Current-See Website
 
-This guide explains the new OpenAI-powered API endpoints available in The Current-See application. These endpoints provide AI-driven insights and responses focused on solar energy, carbon footprints, and sustainability.
+This guide explains how to set up and configure the OpenAI API integration for The Current-See website's AI-powered features.
 
-## API Endpoints
+## Features that use OpenAI
 
-### 1. Energy Assistant API
+The Current-See website uses OpenAI for several energy-related AI features:
 
-**Endpoint:** `/api/ai/assistant`  
-**Method:** POST  
-**Description:** Get AI-generated responses to questions about solar energy, The Current-See, and sustainability.
+1. **Energy Assistant**: Answers user questions about solar energy, The Current-See's economic system, and sustainability.
+2. **Product Energy Analysis**: Evaluates products for their energy usage, carbon footprint, and sustainability.
+3. **Personalized Energy Tips**: Provides customized recommendations for energy savings based on user profiles.
 
-**Request Body:**
-```json
-{
-  "query": "How much solar energy has The Current-See generated so far?"
-}
+## Setting up OpenAI API Key
+
+To enable these AI features, you need to configure a standard OpenAI API key:
+
+### Step 1: Create an OpenAI Account
+
+1. Go to https://platform.openai.com/signup
+2. Sign up for an account or log in if you already have one
+
+### Step 2: Get API Key
+
+1. Navigate to https://platform.openai.com/api-keys
+2. Click "Create new secret key"
+3. Give it a name like "Current-See Website"
+4. Copy the generated API key (it will look like "sk-1234abcd..." and be around 51 characters long)
+
+### Step 3: Add the API Key to Environment
+
+Set the API key in the environment:
+
+```
+export OPENAI_API_KEY=your-api-key-here
 ```
 
-**Response:**
-```json
-{
-  "query": "How much solar energy has The Current-See generated so far?",
-  "response": "As of today (April 23, 2025), The Current-See has generated approximately 11.22 million kWh (11.222222 MkWh) of solar energy since its launch on April 7, 2025. This energy generation represents a monetary value of over $310 million, based on the Current-See's valuation of $136,000 per SOLAR token, where each SOLAR represents 4,913 kWh of solar energy.",
-  "timestamp": "2025-04-23T20:45:10.123Z"
-}
+Or add it to the `.env` file:
+
+```
+OPENAI_API_KEY=your-api-key-here
 ```
 
-### 2. Product Energy Analysis API
+## API Key Format
 
-**Endpoint:** `/api/ai/analyze-product`  
-**Method:** POST  
-**Description:** Analyze the energy footprint and sustainability of products.
+The OpenAI API key must be in the correct format:
 
-**Request Body:**
-```json
-{
-  "productInfo": {
-    "name": "Organic Cotton T-Shirt",
-    "type": "Clothing",
-    "materials": "100% organic cotton",
-    "location": "India",
-    "weight": "0.2 kg",
-    "additionalInfo": "Fair trade certified"
-  }
-}
-```
+- **Correct Format**: Standard OpenAI API keys start with `sk-` followed by a random string of letters and numbers
+- **Length**: Around 51 characters total
+- **Example**: `sk-abcdef1234567890ABCDEF1234567890abcdef123456`
 
-**Response:**
-```json
-{
-  "productInfo": {
-    "name": "Organic Cotton T-Shirt",
-    "type": "Clothing",
-    "materials": "100% organic cotton",
-    "location": "India",
-    "weight": "0.2 kg",
-    "additionalInfo": "Fair trade certified"
-  },
-  "analysis": {
-    "energyEstimate": 8.2,
-    "carbonFootprint": 2.1,
-    "solarEquivalent": 0.00167,
-    "insights": [
-      "Organic cotton uses 30% less energy than conventional cotton",
-      "Fair trade certification ensures ethical labor practices",
-      "Local production would reduce transportation emissions"
-    ],
-    "recommendations": [
-      "Look for shirts made with recycled materials",
-      "Consider hemp or bamboo as even more sustainable alternatives",
-      "Extend product life through proper care and washing"
-    ]
-  },
-  "timestamp": "2025-04-23T20:45:30.456Z"
-}
-```
+## Testing the Integration
 
-### 3. Personalized Energy Tips API
-
-**Endpoint:** `/api/ai/energy-tips`  
-**Method:** POST  
-**Description:** Get personalized energy-saving tips based on user profile.
-
-**Request Body:**
-```json
-{
-  "userProfile": {
-    "location": "California",
-    "homeType": "Apartment",
-    "residents": 2,
-    "energyUsage": "Medium",
-    "interests": ["Technology", "Gardening"],
-    "budget": "Moderate"
-  }
-}
-```
-
-**Response:**
-```json
-{
-  "userProfile": {
-    "location": "California",
-    "homeType": "Apartment",
-    "residents": 2,
-    "energyUsage": "Medium",
-    "interests": ["Technology", "Gardening"],
-    "budget": "Moderate"
-  },
-  "tips": {
-    "dailyTips": [
-      "Use smart power strips to eliminate phantom energy use from electronics",
-      "Keep your refrigerator at optimal temperature (38°F) to save energy",
-      "Use natural lighting and LED bulbs to reduce lighting energy consumption"
-    ],
-    "weeklyTips": [
-      "Start a small balcony garden with herbs to reduce food transportation emissions",
-      "Run only full loads in your dishwasher and washing machine"
-    ],
-    "monthlyTips": [
-      "Install a smart thermostat to optimize heating and cooling schedules"
-    ],
-    "potentialSavings": 120,
-    "solarTokens": 0.0244
-  },
-  "timestamp": "2025-04-23T20:45:50.789Z"
-}
-```
-
-## Implementation Examples
-
-### JavaScript Example (Frontend)
-
-```javascript
-// Energy Assistant Example
-async function askEnergyAssistant(question) {
-  const response = await fetch('/api/ai/assistant', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ query: question })
-  });
-  
-  return await response.json();
-}
-
-// Product Analysis Example
-async function analyzeProduct(productInfo) {
-  const response = await fetch('/api/ai/analyze-product', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ productInfo })
-  });
-  
-  return await response.json();
-}
-
-// Energy Tips Example
-async function getPersonalizedTips(userProfile) {
-  const response = await fetch('/api/ai/energy-tips', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ userProfile })
-  });
-  
-  return await response.json();
-}
-```
-
-### cURL Examples
+You can test if the OpenAI integration is working correctly:
 
 ```bash
-# Energy Assistant
-curl -X POST http://localhost:3000/api/ai/assistant \
-  -H "Content-Type: application/json" \
-  -d '{"query": "How much is 1 SOLAR worth?"}'
-
-# Product Analysis
-curl -X POST http://localhost:3000/api/ai/analyze-product \
-  -H "Content-Type: application/json" \
-  -d '{"productInfo": {"name": "Smartphone", "type": "Electronics", "materials": "Glass, aluminum, plastic", "location": "China", "weight": "0.18 kg"}}'
-
-# Energy Tips
-curl -X POST http://localhost:3000/api/ai/energy-tips \
-  -H "Content-Type: application/json" \
-  -d '{"userProfile": {"location": "New York", "homeType": "House", "residents": 4, "energyUsage": "High", "interests": ["Environment", "Cooking"], "budget": "Low"}}'
+node simple-ai-test.js
 ```
 
-## API Status Check
+This script checks:
+1. API key format
+2. Basic Energy Assistant functionality
+3. Product Analysis
+4. Personalized Tips
 
-You can verify if the OpenAI integration is available by checking the health endpoint:
+## Troubleshooting
 
-```bash
-curl http://localhost:3000/health
+### Invalid API Key Format
+
+If you see messages like:
+
+```
+API key format incorrect: false
 ```
 
-The response will include:
+Check that your API key:
+- Starts with "sk-"
+- Is approximately 51 characters long
+- Hasn't been corrupted or modified
 
-```json
-{
-  "status": "ok",
-  "timestamp": "2025-04-23T20:46:10.123Z",
-  "database": "connected",
-  "membersCount": 16,
-  "environment": "development",
-  "usingCustomDbUrl": true,
-  "openai": "available",
-  "apiFeatures": {
-    "ai": true,
-    "solarClock": true,
-    "members": true,
-    "signup": true
-  }
-}
+### Authentication Errors
+
+If you see messages like:
+
+```
+401 Incorrect API key provided
 ```
 
-## Notes on Implementation
+This means OpenAI is rejecting your API key. Possible issues:
+- The key has been revoked
+- The key has reached its usage limit
+- The key is formatted incorrectly
 
-1. The OpenAI integration is server-side only - the API key is never exposed to clients
-2. All API endpoints return structured JSON responses
-3. Error handling is built-in, with appropriate HTTP status codes
-4. The AI features focus specifically on solar energy and sustainability
-5. The Current-See's specific data (start date, SOLAR value, etc.) is incorporated into AI responses
+### Usage Limits
+
+Be aware that OpenAI API usage incurs costs based on:
+- Number of requests
+- Model used (GPT-4o is more expensive than older models)
+- Length of inputs and outputs
+
+Monitor your usage at https://platform.openai.com/usage to avoid unexpected charges.
+
+## Support
+
+If you continue experiencing issues with the OpenAI integration, please contact your system administrator.

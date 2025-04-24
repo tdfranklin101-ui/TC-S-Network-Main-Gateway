@@ -25,10 +25,12 @@ function getCleanApiKey() {
     return rawKey;
   }
   
-  // Handle the sk-proj prefix case
+  // Handle the sk-proj prefix case - extract just the first 51 characters
   if (rawKey.startsWith('sk-proj')) {
-    console.log('Note: Detected sk-proj API key format, using as-is');
-    return rawKey;
+    console.log('Note: Detected sk-proj API key format, extracting first 51 chars');
+    const extractedKey = rawKey.substring(0, 51);
+    console.log(`Extracted key: ${extractedKey.substring(0, 10)}...`);
+    return extractedKey;
   }
   
   return rawKey;
@@ -51,6 +53,9 @@ function hasValidApiKey() {
   return !!key && (key.startsWith('sk-') || key.startsWith('-sk-p') || key.startsWith('sk-proj'));
 }
 
+// Global flag to track if we've already logged a key error to avoid spam
+let keyErrorLogged = false;
+
 /**
  * Get a response from OpenAI for energy-related questions
  * @param {string} query - The user's query
@@ -63,17 +68,18 @@ async function getEnergyAssistantResponse(query) {
       console.error('Missing or invalid OpenAI API key');
       return {
         error: true,
-        message: "The AI service is temporarily unavailable. Please contact support to enable AI features."
+        message: "The AI assistant service is temporarily unavailable. Please contact support to enable AI features."
       };
     }
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024
-      messages: [
-        {
-          role: "system",
-          content: `You are the Current-See Solar Energy Assistant, an expert in solar energy and The Current-See's solar-backed economic system.
-          
+    try {
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024
+        messages: [
+          {
+            role: "system",
+            content: `You are the Current-See Solar Energy Assistant, an expert in solar energy and The Current-See's solar-backed economic system.
+            
 Key facts about The Current-See:
 - The Current-See started on April 7, 2025
 - Each SOLAR token represents 4,913 kWh of solar energy
@@ -83,22 +89,45 @@ Key facts about The Current-See:
 
 Speak in a helpful, informative, and professional tone. Focus your answers on solar energy, economic systems, and sustainability. 
 If asked about topics unrelated to these areas, politely redirect the conversation.`
-        },
-        {
-          role: "user",
-          content: query
-        }
-      ],
-      temperature: 0.7,
-      max_tokens: 500
-    });
+          },
+          {
+            role: "user",
+            content: query
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 500
+      });
 
-    return response.choices[0].message.content;
+      return response.choices[0].message.content;
+    } catch (apiError) {
+      // If this is an auth error and we haven't logged it yet, log it just once
+      if (apiError.message.includes('401') && !keyErrorLogged) {
+        console.error('OpenAI API authentication error:', apiError.message);
+        keyErrorLogged = true;
+      }
+      
+      // For authentication errors, provide a more specific message about API setup
+      if (apiError.message.includes('401')) {
+        return {
+          error: true,
+          message: "The AI assistant is currently in setup mode. Our team is configuring the OpenAI integration.",
+          details: "API key authentication issue"
+        };
+      }
+      
+      // For other errors, provide a general error message
+      return {
+        error: true,
+        message: `I apologize, but I'm currently unable to provide a response. Please try again later.`,
+        details: apiError.message
+      };
+    }
   } catch (error) {
-    console.error('OpenAI API error:', error.message);
+    console.error('OpenAI service error:', error.message);
     return {
       error: true,
-      message: `I apologize, but I'm currently unable to provide a response. Please try again later.`,
+      message: `I apologize, but I'm currently unable to process your request. Please try again later.`,
       details: error.message
     };
   }
@@ -130,13 +159,14 @@ async function analyzeProductEnergy(productInfo) {
       Additional Info: ${productInfo.additionalInfo || 'None'}
     `;
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024
-      messages: [
-        {
-          role: "system",
-          content: `You are an expert in product energy analysis and carbon footprints. Analyze the given product information and provide:
-          
+    try {
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024
+        messages: [
+          {
+            role: "system",
+            content: `You are an expert in product energy analysis and carbon footprints. Analyze the given product information and provide:
+            
 1. Estimated energy used in production (in kWh)
 2. Estimated carbon footprint (in kg CO2e)
 3. Solar energy equivalent (in SOLAR tokens, where 1 SOLAR = 4,913 kWh)
@@ -151,24 +181,48 @@ Format your response as a structured JSON object with the following keys:
 - recommendations: array of strings
 
 Be detailed but realistic in your estimates. If information is missing, make reasonable assumptions based on industry averages but note these assumptions.`
-        },
-        {
-          role: "user",
-          content: productDescription
-        }
-      ],
-      response_format: { type: "json_object" },
-      temperature: 0.5,
-      max_tokens: 1000
-    });
+          },
+          {
+            role: "user",
+            content: productDescription
+          }
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.5,
+        max_tokens: 1000
+      });
 
-    const result = JSON.parse(response.choices[0].message.content);
-    return result;
+      const result = JSON.parse(response.choices[0].message.content);
+      return result;
+    } catch (apiError) {
+      // If this is an auth error and we haven't logged it yet, log it just once
+      if (apiError.message.includes('401') && !keyErrorLogged) {
+        console.error('OpenAI API authentication error:', apiError.message);
+        keyErrorLogged = true;
+      }
+      
+      // For authentication errors, provide a more specific message about API setup
+      if (apiError.message.includes('401')) {
+        return {
+          error: true,
+          message: "The product analysis service is currently in setup mode. Our team is configuring the OpenAI integration.",
+          details: "API key authentication issue"
+        };
+      }
+      
+      // For other errors, provide a general error message
+      return {
+        error: true,
+        message: `Unable to analyze product energy impact. Please try again later.`,
+        details: apiError.message
+      };
+    }
   } catch (error) {
-    console.error('OpenAI product analysis error:', error.message);
+    console.error('OpenAI service error:', error.message);
     return {
       error: true,
-      message: `Unable to analyze product energy impact. Please try again later. (Error: ${error.message})`
+      message: `Unable to process your product analysis request. Please try again later.`,
+      details: error.message
     };
   }
 }
@@ -189,13 +243,14 @@ async function getPersonalizedEnergyTips(userProfile) {
       };
     }
     
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024
-      messages: [
-        {
-          role: "system",
-          content: `You are a personalized energy efficiency advisor. Based on the user's profile, provide tailored energy-saving tips.
-          
+    try {
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024
+        messages: [
+          {
+            role: "system",
+            content: `You are a personalized energy efficiency advisor. Based on the user's profile, provide tailored energy-saving tips.
+            
 Format your response as a JSON object with the following keys:
 - dailyTips: Array of 3 specific daily actions the user can take
 - weeklyTips: Array of 2 weekly habits to develop
@@ -204,24 +259,48 @@ Format your response as a JSON object with the following keys:
 - solarTokens: Equivalent SOLAR tokens (where 1 SOLAR = 4,913 kWh)
 
 Ensure that all tips are practical, specific, and tailored to the user's location, lifestyle, and preferences.`
-        },
-        {
-          role: "user",
-          content: JSON.stringify(userProfile)
-        }
-      ],
-      response_format: { type: "json_object" },
-      temperature: 0.7,
-      max_tokens: 800
-    });
+          },
+          {
+            role: "user",
+            content: JSON.stringify(userProfile)
+          }
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.7,
+        max_tokens: 800
+      });
 
-    const result = JSON.parse(response.choices[0].message.content);
-    return result;
+      const result = JSON.parse(response.choices[0].message.content);
+      return result;
+    } catch (apiError) {
+      // If this is an auth error and we haven't logged it yet, log it just once
+      if (apiError.message.includes('401') && !keyErrorLogged) {
+        console.error('OpenAI API authentication error:', apiError.message);
+        keyErrorLogged = true;
+      }
+      
+      // For authentication errors, provide a more specific message about API setup
+      if (apiError.message.includes('401')) {
+        return {
+          error: true,
+          message: "The energy tips service is currently in setup mode. Our team is configuring the OpenAI integration.",
+          details: "API key authentication issue"
+        };
+      }
+      
+      // For other errors, provide a general error message
+      return {
+        error: true,
+        message: `Unable to generate personalized energy tips. Please try again later.`,
+        details: apiError.message
+      };
+    }
   } catch (error) {
-    console.error('OpenAI personalized tips error:', error.message);
+    console.error('OpenAI service error:', error.message);
     return {
       error: true,
-      message: `Unable to generate personalized energy tips. Please try again later. (Error: ${error.message})`
+      message: `Unable to process your energy tips request. Please try again later.`,
+      details: error.message
     };
   }
 }
