@@ -14,17 +14,83 @@ const url = require('url');
 
 // Import OpenAI service
 let openaiService;
+
+// Check for feature state file
+const OPENAI_STATE_FILE = path.join(__dirname, '.openai-feature-state.json');
+let openAIFeaturesEnabled = false;
+
 try {
-  openaiService = require('./openai-service');
-  console.log('OpenAI service loaded successfully');
+  if (fs.existsSync(OPENAI_STATE_FILE)) {
+    const stateData = fs.readFileSync(OPENAI_STATE_FILE, 'utf8');
+    const state = JSON.parse(stateData);
+    openAIFeaturesEnabled = state.apiWorking === true;
+    console.log(`OpenAI features state from file: ${openAIFeaturesEnabled ? 'ENABLED' : 'DISABLED'}`);
+  }
+} catch (stateError) {
+  console.error('Error reading OpenAI feature state file:', stateError.message);
+}
+
+try {
+  if (openAIFeaturesEnabled) {
+    // First try to load the regular OpenAI service if features are enabled
+    try {
+      openaiService = require('./openai-service');
+      console.log('OpenAI service loaded successfully');
+      
+      // Test the OpenAI service to ensure it's working properly
+      openaiService.getEnergyAssistantResponse('test').catch(error => {
+        console.error('OpenAI API authentication error:', error.message);
+        // If there's an authentication error, fallback to minimal service
+        try {
+          openaiService = require('./openai-service-minimal');
+          console.log('Minimal OpenAI service loaded as fallback due to API authentication error');
+        } catch (fallbackErr) {
+          console.error('Failed to load minimal OpenAI service:', fallbackErr.message);
+          openaiService = null;
+        }
+      });
+    } catch (err) {
+      console.error('Failed to load OpenAI service:', err.message);
+      // Try to load the minimal version as fallback
+      try {
+        openaiService = require('./openai-service-minimal');
+        console.log('Minimal OpenAI service loaded as fallback');
+      } catch (fallbackErr) {
+        console.error('Failed to load minimal OpenAI service:', fallbackErr.message);
+        openaiService = null;
+      }
+    }
+  } else {
+    // If features are disabled, load minimal service in disabled mode
+    try {
+      openaiService = require('./openai-service-minimal');
+      console.log('Minimal OpenAI service loaded (features disabled in configuration)');
+    } catch (err) {
+      console.error('Failed to load minimal OpenAI service:', err.message);
+      openaiService = null;
+    }
+  }
 } catch (err) {
-  console.error('Failed to load OpenAI service:', err.message);
+  console.error('Error in OpenAI service initialization:', err.message);
   openaiService = null;
 }
 
 // Configuration
 const PORT = process.env.PORT || 3000;
 const PUBLIC_DIR = path.join(__dirname, 'public');
+
+// Version information
+const APP_VERSION = {
+  version: '1.2.0',
+  name: 'The Current-See Pure Deployment Server',
+  build: '2025.04.24',
+  features: {
+    solarClock: true,
+    database: true,
+    openai: true,
+    distributionSystem: true
+  }
+};
 
 // Global variables
 let dbPool = null;
@@ -213,6 +279,9 @@ const server = http.createServer(async (req, res) => {
     res.end(JSON.stringify({
       status: 'ok',
       timestamp: new Date().toISOString(),
+      version: APP_VERSION.version,
+      build: APP_VERSION.build,
+      name: APP_VERSION.name,
       database: dbConnected ? 'connected' : 'disconnected',
       membersCount: members.length,
       environment: process.env.NODE_ENV || 'development',
@@ -224,6 +293,20 @@ const server = http.createServer(async (req, res) => {
         members: true,
         signup: dbConnected
       }
+    }));
+    return;
+  }
+  
+  if (pathname === '/api/version') {
+    res.writeHead(200, {'Content-Type': 'application/json'});
+    res.end(JSON.stringify({
+      version: APP_VERSION.version,
+      build: APP_VERSION.build,
+      name: APP_VERSION.name,
+      features: APP_VERSION.features,
+      openaiEnabled: openaiService ? (openaiService.isApiWorking ? openaiService.isApiWorking() : false) : false,
+      dbConnected: dbConnected,
+      timestamp: new Date().toISOString()
     }));
     return;
   }
@@ -384,12 +467,24 @@ const server = http.createServer(async (req, res) => {
       log(`Processing AI assistant query: "${query.substring(0, 30)}..."`);
       const response = await openaiService.getEnergyAssistantResponse(query);
       
-      res.writeHead(200, {'Content-Type': 'application/json'});
-      res.end(JSON.stringify({
-        query: query,
-        response: response,
-        timestamp: new Date().toISOString()
-      }));
+      // Check if the response is an error response
+      if (response && response.error === true) {
+        // This is an error response, return as 503 Service Unavailable
+        res.writeHead(503, {'Content-Type': 'application/json'});
+        res.end(JSON.stringify({
+          query: query,
+          response: response,
+          timestamp: new Date().toISOString()
+        }));
+      } else {
+        // This is a successful response
+        res.writeHead(200, {'Content-Type': 'application/json'});
+        res.end(JSON.stringify({
+          query: query,
+          response: response,
+          timestamp: new Date().toISOString()
+        }));
+      }
     } catch (err) {
       log(`Error in AI assistant: ${err.message}`, true);
       res.writeHead(500, {'Content-Type': 'application/json'});
@@ -425,12 +520,24 @@ const server = http.createServer(async (req, res) => {
       log(`Analyzing product: "${productInfo.name}"`);
       const analysis = await openaiService.analyzeProductEnergy(productInfo);
       
-      res.writeHead(200, {'Content-Type': 'application/json'});
-      res.end(JSON.stringify({
-        productInfo: productInfo,
-        analysis: analysis,
-        timestamp: new Date().toISOString()
-      }));
+      // Check if the response is an error response
+      if (analysis && analysis.error === true) {
+        // This is an error response, return as 503 Service Unavailable
+        res.writeHead(503, {'Content-Type': 'application/json'});
+        res.end(JSON.stringify({
+          productInfo: productInfo,
+          analysis: analysis,
+          timestamp: new Date().toISOString()
+        }));
+      } else {
+        // This is a successful response
+        res.writeHead(200, {'Content-Type': 'application/json'});
+        res.end(JSON.stringify({
+          productInfo: productInfo,
+          analysis: analysis,
+          timestamp: new Date().toISOString()
+        }));
+      }
     } catch (err) {
       log(`Error in product analysis: ${err.message}`, true);
       res.writeHead(500, {'Content-Type': 'application/json'});
@@ -460,12 +567,24 @@ const server = http.createServer(async (req, res) => {
       log(`Generating energy tips for user`);
       const tips = await openaiService.getPersonalizedEnergyTips(userProfile);
       
-      res.writeHead(200, {'Content-Type': 'application/json'});
-      res.end(JSON.stringify({
-        userProfile: userProfile,
-        tips: tips,
-        timestamp: new Date().toISOString()
-      }));
+      // Check if the response is an error response
+      if (tips && tips.error === true) {
+        // This is an error response, return as 503 Service Unavailable
+        res.writeHead(503, {'Content-Type': 'application/json'});
+        res.end(JSON.stringify({
+          userProfile: userProfile,
+          tips: tips,
+          timestamp: new Date().toISOString()
+        }));
+      } else {
+        // This is a successful response
+        res.writeHead(200, {'Content-Type': 'application/json'});
+        res.end(JSON.stringify({
+          userProfile: userProfile,
+          tips: tips,
+          timestamp: new Date().toISOString()
+        }));
+      }
     } catch (err) {
       log(`Error generating energy tips: ${err.message}`, true);
       res.writeHead(500, {'Content-Type': 'application/json'});
@@ -541,10 +660,18 @@ const server = http.createServer(async (req, res) => {
 
 // Start server
 server.listen(PORT, async () => {
-  log('=== The Current-See Pure Deployment Server ===');
+  log(`=== ${APP_VERSION.name} v${APP_VERSION.version} (Build ${APP_VERSION.build}) ===`);
   log(`Server running on port ${PORT}`);
   log(`Environment: ${process.env.NODE_ENV || 'development'}`);
   log(`Using custom database URL: ${!!process.env.CURRENTSEE_DB_URL}`);
+  
+  // Log OpenAI status
+  if (openaiService) {
+    const isEnabled = openaiService.isApiWorking ? openaiService.isApiWorking() : false;
+    log(`OpenAI integration: ${isEnabled ? 'ENABLED' : 'DISABLED (fallback mode)'}`);
+  } else {
+    log('OpenAI integration: NOT AVAILABLE', true);
+  }
   
   // Initialize database
   await initDb();

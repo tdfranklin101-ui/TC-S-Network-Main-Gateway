@@ -1,119 +1,94 @@
-# OpenAI API Integration Guide for The Current-See Website
+# OpenAI API Integration Guide
 
-This guide explains how to set up and configure the OpenAI API integration for The Current-See website's AI-powered features.
+This guide explains how to set up and troubleshoot the OpenAI API integration for The Current-See website.
 
-## Features that use OpenAI
+## OpenAI API Key Format
 
-The Current-See website uses OpenAI for several energy-related AI features:
+The Current-See supports both traditional and project-scoped OpenAI API keys:
 
-1. **Energy Assistant**: Answers user questions about solar energy, The Current-See's economic system, and sustainability.
-2. **Product Energy Analysis**: Evaluates products for their energy usage, carbon footprint, and sustainability.
-3. **Personalized Energy Tips**: Provides customized recommendations for energy savings based on user profiles.
+- Traditional format: `sk-...` (starts with "sk-" followed by characters)
+- Project-scoped format: `sk-proj-...` (starts with "sk-proj-" followed by characters)
 
-## Setting up OpenAI API Key
+## Getting a Valid API Key
 
-To enable these AI features, you need to configure a standard OpenAI API key:
+1. **Sign up for OpenAI API access:**
+   - Go to https://platform.openai.com/signup
+   - Create an account or log in if you already have one
 
-### Step 1: Create an OpenAI Account
+2. **Create an API key:**
+   - Navigate to https://platform.openai.com/api-keys
+   - Click "Create new secret key"
+   - Give your key a name (optional)
+   - Copy the key immediately (you won't be able to see it again)
 
-1. Go to https://platform.openai.com/signup
-2. Sign up for an account or log in if you already have one
+3. **Set up billing (required for API access):**
+   - Go to https://platform.openai.com/account/billing/overview
+   - Set up a payment method
+   - Add credits to your account
 
-### Step 2: Get API Key
+## Adding the API Key to The Current-See
 
-1. Navigate to https://platform.openai.com/api-keys
-2. Click "Create new secret key"
-3. Give it a name like "Current-See Website"
-4. Copy the generated API key (it will look like "sk-1234abcd..." and be around 51 characters long)
-
-### Step 3: Add the API Key
-
-For the Current-See project, we've implemented a dedicated file for the OpenAI API key:
-
-1. Edit the `.env.openai` file:
-   ```
-   # File path: .env.openai
-   OPENAI_API_KEY=your-api-key-here
-   ```
-
-2. Replace `your-api-key-here` with your actual OpenAI API key
+1. Create a file named `.env.openai` in the project root directory
+2. Add your API key in this format: `OPENAI_API_KEY=your_key_here`
 3. Save the file
-
-This approach keeps the OpenAI key separate from other environment variables, making it easier to update or replace.
-
-#### Alternative: Environment Variables
-
-You can also set the API key directly in the environment:
-
-```
-export OPENAI_API_KEY=your-api-key-here
-```
-
-Or add it to a standard `.env` file:
-
-```
-OPENAI_API_KEY=your-api-key-here
-```
-
-## API Key Format
-
-The OpenAI API key must be in the correct format:
-
-- **Correct Format**: Standard OpenAI API keys start with `sk-` followed by a random string of letters and numbers
-- **Length**: Around 51 characters total
-- **Example**: `sk-abcdef1234567890ABCDEF1234567890abcdef123456`
 
 ## Testing the Integration
 
-You can test if the OpenAI integration is working correctly:
+Run the following command to test your API key:
 
-```bash
-node simple-ai-test.js
+```
+node test-openai-integration.js
 ```
 
-This script checks:
-1. API key format
-2. Basic Energy Assistant functionality
-3. Product Analysis
-4. Personalized Tips
+If everything is working, you should see a successful connection message.
 
 ## Troubleshooting
 
-### Invalid API Key Format
-
-If you see messages like:
-
-```
-API key format incorrect: false
-```
-
-Check that your API key:
-- Starts with "sk-"
-- Is approximately 51 characters long
-- Hasn't been corrupted or modified
-
 ### Authentication Errors
 
-If you see messages like:
-
+If you see a 401 error message like:
 ```
 401 Incorrect API key provided
 ```
 
-This means OpenAI is rejecting your API key. Possible issues:
-- The key has been revoked
-- The key has reached its usage limit
-- The key is formatted incorrectly
+This means:
+- Your API key may be invalid
+- Your API key may have usage restrictions
+- Your API key format may be incorrect
 
-### Usage Limits
+**Solutions:**
+1. Generate a new API key at https://platform.openai.com/api-keys
+2. Ensure you've set up billing properly
+3. Check that you've copied the key correctly without any extra characters
 
-Be aware that OpenAI API usage incurs costs based on:
-- Number of requests
-- Model used (GPT-4o is more expensive than older models)
-- Length of inputs and outputs
+### Rate Limit Errors
 
-Monitor your usage at https://platform.openai.com/usage to avoid unexpected charges.
+If you see a 429 error message:
+```
+429 Rate limit exceeded
+```
 
-## Support
+This means you've hit your API usage limits. You can:
+1. Wait for your rate limits to reset
+2. Increase your usage tier at https://platform.openai.com/account/billing/limits
 
-If you continue experiencing issues with the OpenAI integration, please contact your system administrator.
+### Graceful Degradation
+
+The Current-See has a built-in fallback system for when the OpenAI API is unavailable. If API authentication fails:
+1. Users will see a message that the AI assistant is in setup mode
+2. The site will continue to function normally in all other aspects
+3. No error messages will be shown to users
+
+## Key Security
+
+- Never share your OpenAI API key publicly
+- Do not commit the `.env.openai` file to version control
+- You can use API key restrictions to limit its usage
+
+## Models Used
+
+The Current-See is configured to use the GPT-4o model for AI interactions. This model provides high-quality responses for energy-related questions and product analysis.
+
+---
+
+For additional help, contact The Current-See administrator or visit the [OpenAI Help Center](https://help.openai.com).

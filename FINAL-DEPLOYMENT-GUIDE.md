@@ -1,151 +1,229 @@
 # The Current-See Final Deployment Guide
 
-This guide provides step-by-step instructions for deploying The Current-See website to www.thecurrentsee.org using Replit with the custom PostgreSQL database.
+This guide outlines the deployment process for The Current-See website.
+
+> **Current Version: v1.2.0 (Build 2025.04.24)**
+> 
+> For a complete list of changes, refer to CHANGELOG.md
 
 ## Prerequisites
 
-1. The PostgreSQL database connection string (`CURRENTSEE_DB_URL`) must be set as an environment secret
-2. The database should have the members table already set up with at least 16 members
-3. Terry D. Franklin should be member #3 with a joined date of April 9, 2025
-
-## Deployment Scripts
-
-Three main deployment scripts have been created:
-
-1. **`pure-deployment.js`** - The main deployment server
-   - Uses plain Node.js HTTP module to avoid dependencies
-   - Connects to PostgreSQL using `CURRENTSEE_DB_URL`
-   - Includes full API implementation and static file serving
-
-2. **`check-currentsee-db.js`** - Database connection checker
-   - Verifies connectivity to the PostgreSQL database
-   - Shows detailed errors if connection fails
-   - Displays member counts and basic information
-
-3. **`verify-deployment.js`** - Complete deployment verification
-   - Tests database connectivity
-   - Verifies API endpoints
-   - Ensures Solar Generator calculations are working
-
-## Required Environment Secrets
-
-Before deployment, set the following secrets in your Replit environment:
-
-- **`CURRENTSEE_DB_URL`**: The PostgreSQL connection string
-   ```
-   postgresql://neondb_owner:<password>@ep-spring-king-a5uj0576.us-east-2.aws.neon.tech/neondb?sslmode=require
-   ```
-
-- **`OPENAI_API_KEY`**: Your OpenAI API key for AI features
-   ```
-   sk-...
-   ```
+1. **Replit Account**: A Replit account with access to deployment features.
+2. **Domain**: The domain `www.thecurrentsee.org` registered on Namecheap.
+3. **PostgreSQL Database**: Access to the Neon PostgreSQL database with the connection string.
+4. **OpenAI API Key**: (Optional) A valid OpenAI API key for AI assistant features.
 
 ## Deployment Steps
 
-### 1. Check Database Connection
+### 1. Environment Preparation
 
-Run the database checker to verify connectivity:
+Set up the required environment variables:
+
+- `CURRENTSEE_DB_URL`: The PostgreSQL database connection URL.
+- `OPENAI_API_KEY`: (Optional) Your OpenAI API key - can be set in `.env.openai`.
+
+### 2. Database Setup
+
+The PostgreSQL database should include these tables:
+
+- `members`: Stores member information.
+- `distributions`: Tracks SOLAR token distributions.
+- `analytics`: Stores analytics data.
+
+### 3. Deployment Process
+
+1. **Configure deployment settings** in the Replit interface:
+   - Select "Deploy from GitHub" if using GitHub.
+   - Or deploy directly from the Replit environment.
+
+2. **Set up custom domain**:
+   - Configure DNS settings at Namecheap:
+     - Add a CNAME record for `www` pointing to your Replit subdomain.
+     - Add an A record for the apex domain pointing to Replit's IP.
+   - Verify domain ownership in Replit.
+
+3. **Launch deployment**:
+   - Use the `pure-deployment.js` script which is designed for production.
+   - This script handles both static file serving and API endpoints.
+
+### 4. Post-Deployment Configuration
+
+1. **Database Connection**:
+   - Verify database connection using `node check-status.js`.
+   - Ensure the members table is properly loaded.
+
+2. **OpenAI Integration**:
+   - Set up OpenAI API key using `node update-openai-key.js`.
+   - Enable features with `node toggle-openai.js enable`.
+   - Test integration with `node test-openai-integration.js`.
+
+## Server Architecture
+
+The Current-See uses a layered architecture:
 
 ```
-node check-currentsee-db.js
+┌─────────────────────────────────────┐
+│ Pure Deployment Server              │
+├─────────────────────────────────────┤
+│ Static File Serving                 │
+│ API Endpoints                       │
+│ Database Connection                 │
+│ OpenAI Integration (with fallbacks) │
+└─────────────────────────────────────┘
 ```
 
-This should show a successful connection to the database with 16 members.
+### Key Components
 
-### 2. Start the Deployment Server
+**1. Database Integration (`db.js`)**
+- PostgreSQL connection using Neon Serverless
+- Automatic retry and recovery mechanisms
+- Member data management
 
-Launch the main deployment server:
+**2. API Endpoints**
+- `/api/solar-clock`: Real-time solar energy calculations
+- `/api/members`: Member information
+- `/api/signup`: New member registration
+- `/api/ai/*`: AI assistant endpoints (with graceful degradation)
 
-```
-node pure-deployment.js
-```
+**3. OpenAI Integration**
+- AI assistance for energy questions
+- Product energy footprint analysis
+- Graceful fallback mode when API is unavailable
 
-The server will run on port 3000 and automatically connect to the database.
+## Graceful Degradation Strategy
 
-### 3. Verify Deployment
+The Current-See implements a comprehensive graceful degradation strategy:
 
-In a separate terminal, run the verification script:
+1. **Database Connection**:
+   - Automatic retry mechanism for database connections
+   - Fallback to cached data when database is unavailable
 
-```
-node verify-deployment.js
-```
+2. **OpenAI Integration**:
+   - Feature toggle system via `toggle-openai.js`
+   - Automatic fallback to minimal service when API authentication fails
+   - Friendly "in setup" messages instead of showing errors to users
 
-This will test all API endpoints and database access to ensure everything is working correctly.
-
-### 4. Deploy on Replit
-
-Once verification passes, deploy the application on Replit:
-
-1. Go to the "Deployments" tab in your Replit project
-2. Click "Deploy" to deploy the application
-3. Wait for the deployment to complete
-4. Access the deployment URL to verify it's working
-
-### 5. Set Up Custom Domain
-
-After successful deployment:
-
-1. Click "Custom domains" in the Deployments section
-2. Add www.thecurrentsee.org as your custom domain
-3. Update DNS settings at Namecheap as directed by Replit
-4. Wait for DNS propagation (may take 24-48 hours)
-
-## API Endpoints
-
-The deployment provides these API endpoints:
-
-### Standard Endpoints
-- **`/health`** - Server health check
-- **`/api/database/status`** - Database connection status
-- **`/api/solar-clock`** - Solar Generator calculations
-- **`/api/members`** - List of all members
-- **`/api/member/:id`** - Single member details
-- **`/api/signup`** - New member registration
-
-### AI-Powered Endpoints
-- **`/api/ai/assistant`** - Energy Assistant (answers questions about solar energy and The Current-See)
-- **`/api/ai/analyze-product`** - Product Energy Analysis (analyzes energy impact of products)
-- **`/api/ai/energy-tips`** - Personalized Energy Tips (provides tailored energy-saving recommendations)
-
-For more details on the AI endpoints, see the `OPENAI-API-GUIDE.md` file.
+3. **Static Content**:
+   - Always available regardless of API status
+   - Core functionality works without API dependencies
 
 ## Troubleshooting
 
-If you encounter issues:
+### Database Connection Issues
 
-1. **Database Connection Errors**
-   - Verify the `CURRENTSEE_DB_URL` is correctly set
-   - Check that the database is accessible from Replit's IP range
-   - Ensure SSL settings are correct (rejectUnauthorized: false)
+1. **Verify connection string**:
+   ```
+   node check-currentsee-db.js
+   ```
 
-2. **Server Startup Issues**
-   - Check for port conflicts
-   - Verify all dependencies are installed
-   - Look for syntax errors in the deployment scripts
+2. **Check status**:
+   ```
+   node check-status.js
+   ```
 
-3. **Deployment Failures**
-   - Check Replit logs for specific errors
-   - Verify the entry point is correctly set to `pure-deployment.js`
-   - Make sure the server responds to the health check at `/health`
+3. **Reset database connection**:
+   ```
+   node deployment-db-fix.js
+   ```
 
-## Additional Information
+### OpenAI Integration Issues
 
-- Solar Generator calculations use April 7, 2025 as the start date
-- The value of 1 SOLAR is set to $136,000
-- Energy conversion is set to 4,913 kWh per SOLAR
-- Database fallbacks are included for robustness
-- Daily distributions occur at 00:00 GMT (5 PM Pacific Time)
+1. **Check API key**:
+   ```
+   node test-openai-integration.js
+   ```
 
-## Database Backup
+2. **Update API key**:
+   ```
+   node update-openai-key.js
+   ```
 
-The deployment automatically creates a backup of member data when initialized, storing it in `members.json`. This provides a fallback if the database connection is temporarily unavailable.
+3. **Toggle features**:
+   ```
+   node toggle-openai.js enable
+   node toggle-openai.js disable
+   ```
 
-## Next Steps
+4. **Diagnose problems**:
+   ```
+   node openai-key-diagnosis.js
+   ```
 
-After deployment:
+## Monitoring and Maintenance
 
-1. Verify the site is accessible at www.thecurrentsee.org
-2. Test signup functionality
-3. Verify daily distributions are occurring properly
-4. Monitor the Solar Generator calculations
+### Regular Health Checks
+
+For a quick overview of version and status:
+```
+node check-version.js
+```
+
+For comprehensive status information:
+```
+node check-status.js
+```
+
+For a complete system check across all components:
+```
+node system-check.js
+
+# For more detailed error information
+node system-check.js --verbose
+```
+
+Or use the API endpoints directly:
+```
+curl https://www.thecurrentsee.org/health
+curl https://www.thecurrentsee.org/api/version
+curl https://www.thecurrentsee.org/api/database/status
+```
+
+### Version Management
+
+The Current-See now includes comprehensive version tracking and management:
+
+1. **Check current version**:
+   ```
+   curl https://www.thecurrentsee.org/api/version
+   ```
+
+2. **Update version number**:
+   ```
+   node update-version.js 1.2.1 2025.04.25
+   ```
+
+3. **Toggle features**:
+   ```
+   node set-feature.js openai true
+   node set-feature.js database true
+   ```
+
+4. **View changelog**:
+   ```
+   cat CHANGELOG.md
+   ```
+
+For detailed instructions on version management, see:
+```
+cat VERSION-MANAGEMENT.md
+```
+
+### Database Backups
+
+The system automatically exports member data to backup files daily.
+
+### Error Logging
+
+Error logs are stored in the server logs and can be viewed in the Replit console.
+
+## Support
+
+For additional support, contact:
+- Technical Support: admin@thecurrentsee.org
+- Domain Registration: Namecheap support
+- Database Issues: Neon PostgreSQL support
+- OpenAI API: OpenAI support portal
+
+---
+
+© 2025 The Current-See PBC, Inc. All rights reserved.

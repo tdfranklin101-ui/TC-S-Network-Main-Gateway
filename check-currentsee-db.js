@@ -117,4 +117,31 @@ if (require.main === module) {
   });
 }
 
-module.exports = { checkCustomDbUrl };
+/**
+ * Silent check if database is alive - returns true/false without logging
+ * Used by check-version.js and other monitoring tools
+ */
+async function checkIsAlive() {
+  try {
+    const dbUrl = process.env.CURRENTSEE_DB_URL || process.env.DATABASE_URL;
+    if (!dbUrl) return false;
+    
+    const pool = new Pool({
+      connectionString: dbUrl,
+      ssl: {
+        rejectUnauthorized: false
+      }
+    });
+    
+    const client = await pool.connect();
+    await client.query('SELECT 1'); // Simple query to check connection
+    client.release();
+    await pool.end();
+    
+    return true;
+  } catch (err) {
+    return false;
+  }
+}
+
+module.exports = { checkCustomDbUrl, checkIsAlive };
