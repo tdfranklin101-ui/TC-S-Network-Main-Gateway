@@ -420,7 +420,151 @@
   <!-- FOOTER_PLACEHOLDER -->
   
   <script src="/js/ai-assistant-integration.js"></script>
-  <!-- Demo integration replaced with live OpenAI-powered AI Assistant -->
+  <!-- Original demo integration code removed and replaced with live AI integration -->
+    document.addEventListener('DOMContentLoaded', function() {
+      const input = document.getElementById('assistant-input');
+      const sendButton = document.getElementById('send-button');
+      const micButton = document.getElementById('mic-button');
+      const chatWindow = document.getElementById('chat-window');
+      
+      // Initialize the wallet AI assistant
+      const assistant = new WalletAIAssistant({
+        containerId: 'chat-window',
+        triggerButtonId: 'send-button'
+      });
+      
+      // Function to add a message to the chat window
+      function addMessageToChat(message, isUser = false) {
+        const messageElement = document.createElement('div');
+        messageElement.className = `chat-message ${isUser ? 'user' : 'assistant'}`;
+        
+        messageElement.innerHTML = `
+          <div class="message-avatar">${isUser ? '👤' : '🤖'}</div>
+          <div class="message-content">${message}</div>
+        `;
+        
+        chatWindow.appendChild(messageElement);
+        
+        // Scroll to bottom of chat
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+      }
+      
+      // Function to add a loading message
+      function showLoading() {
+        const loadingElement = document.createElement('div');
+        loadingElement.className = 'chat-message assistant loading-message';
+        loadingElement.innerHTML = `
+          <div class="message-avatar">🤖</div>
+          <div class="message-content loading">Thinking</div>
+        `;
+        
+        chatWindow.appendChild(loadingElement);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+        
+        return loadingElement;
+      }
+      
+      // Function to send a query to the assistant
+      async function sendQuery(query) {
+        if (!query.trim()) return;
+        
+        // Add user query to chat
+        addMessageToChat(query, true);
+        
+        // Show loading state
+        const loadingElement = showLoading();
+        
+        try {
+          // Process the query with the assistant (local processing for demo)
+          let response = await assistant.handleWalletQuery(query);
+          
+          // Remove loading message
+          if (loadingElement) {
+            chatWindow.removeChild(loadingElement);
+          }
+          
+          // Display the response
+          if (response) {
+            // Replace newlines with <br> tags for proper HTML formatting
+            response = response.replace(/\n/g, '<br>');
+            addMessageToChat(response);
+          } else {
+            // If no specialized response, use a fallback
+            addMessageToChat(`I don't have specific information about "${query}" yet. I'm specialized in carbon footprints, energy pricing, Buckminster Fuller concepts, and longevity science related to The Current-See. Please try one of the example queries.`);
+          }
+        } catch (error) {
+          console.error('Error processing query:', error);
+          
+          // Remove loading message
+          if (loadingElement) {
+            chatWindow.removeChild(loadingElement);
+          }
+          
+          addMessageToChat("Sorry, I encountered an error processing your request. Please try again.");
+        }
+        
+        // Clear the input
+        input.value = '';
+      }
+      
+      // Send button click event
+      sendButton.addEventListener('click', () => {
+        if (input.value.trim()) {
+          sendQuery(input.value);
+        }
+      });
+      
+      // Enter key event
+      input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && input.value.trim()) {
+          sendQuery(input.value);
+        }
+      });
+      
+      // Example query click events
+      document.querySelectorAll('.example-queries li').forEach(item => {
+        item.addEventListener('click', () => {
+          const query = item.getAttribute('data-query');
+          input.value = query;
+          sendQuery(query);
+        });
+      });
+      
+      // Voice input functionality (simplified for demo)
+      micButton.addEventListener('click', function() {
+        // Check if browser supports speech recognition
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+          const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+          const recognition = new SpeechRecognition();
+          
+          recognition.lang = 'en-US';
+          recognition.interimResults = false;
+          recognition.maxAlternatives = 1;
+          
+          recognition.start();
+          micButton.classList.add('listening');
+          
+          recognition.onresult = function(event) {
+            const transcript = event.results[0][0].transcript;
+            input.value = transcript;
+            sendQuery(transcript);
+          };
+          
+          recognition.onend = function() {
+            micButton.classList.remove('listening');
+          };
+          
+          recognition.onerror = function(event) {
+            micButton.classList.remove('listening');
+            console.error('Speech recognition error:', event.error);
+            alert('Speech recognition error: ' + event.error);
+          };
+        } else {
+          alert('Speech recognition is not supported in your browser. Please type your query instead.');
+        }
+      });
+    });
+  </script>
   
   <div style="text-align: center; margin: 40px 0 20px;">
     <a href="/index.html" style="background-color: #7bc144; color: white; text-decoration: none; font-weight: bold; padding: 0.75rem 1.5rem; border-radius: 50px; display: inline-block;">Return to Home</a>

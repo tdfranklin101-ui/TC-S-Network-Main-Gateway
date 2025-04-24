@@ -11,6 +11,19 @@ document.addEventListener('DOMContentLoaded', function() {
   const micButton = document.getElementById('mic-button');
   const chatWindow = document.getElementById('chat-window');
   
+  // Add welcome message when page loads
+  addMessageToChat(`
+    <p>👋 Welcome to The Current-See AI Assistant!</p>
+    <p>I can help you with questions about:</p>
+    <ul>
+      <li>The Current-See solar-backed economic system</li>
+      <li>Solar energy and sustainability</li>
+      <li>How SOLAR tokens work</li>
+      <li>Daily distribution mechanisms</li>
+    </ul>
+    <p>Feel free to ask a question or try one of the example queries.</p>
+  `);
+  
   // Example queries
   const exampleQueries = document.querySelectorAll('.example-queries li');
   

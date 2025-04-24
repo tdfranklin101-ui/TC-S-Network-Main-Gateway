@@ -401,13 +401,20 @@ const app = express();
 
 // Import page includes system
 const { createIncludesMiddleware } = require('./page-includes');
-console.log('Page includes middleware loaded');
+// Import OpenAI service
+const openaiService = require('./openai-service');
+// Import AI Assistant API
+const { registerAIAssistantRoutes } = require('./server/ai-assistant-api');
+console.log('Page includes middleware, OpenAI service, and AI Assistant API loaded');
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(createIncludesMiddleware()); // Add page includes middleware
+
+// Register AI Assistant routes
+registerAIAssistantRoutes(app);
 
 // Database connection (if available)
 let pool = null;
