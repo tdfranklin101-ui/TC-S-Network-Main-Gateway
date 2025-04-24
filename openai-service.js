@@ -5,10 +5,35 @@
  */
 
 const { OpenAI } = require('openai');
+const fs = require('fs');
+const path = require('path');
+
+// Try to load OpenAI API key from separate .env file
+function loadOpenAIKey() {
+  try {
+    // Check if .env.openai exists
+    const envPath = path.join(process.cwd(), '.env.openai');
+    if (fs.existsSync(envPath)) {
+      console.log('Loading OpenAI API key from .env.openai file');
+      const envContent = fs.readFileSync(envPath, 'utf8');
+      const keyMatch = envContent.match(/OPENAI_API_KEY=([^\r\n]+)/);
+      if (keyMatch && keyMatch[1] && keyMatch[1].trim()) {
+        return keyMatch[1].trim();
+      }
+    }
+  } catch (err) {
+    console.error('Error loading OpenAI key from .env.openai:', err.message);
+  }
+
+  // Fall back to environment variable
+  return process.env.OPENAI_API_KEY;
+}
+
+// Get API key from custom file or environment
+const apiKey = loadOpenAIKey();
 
 // Clean up API key if it has special format
-function getCleanApiKey() {
-  const rawKey = process.env.OPENAI_API_KEY;
+function getCleanApiKey(rawKey) {
   if (!rawKey) return null;
   
   // Handle special case where key starts with "-sk-p"
@@ -37,9 +62,9 @@ function getCleanApiKey() {
 }
 
 // Get cleaned API key
-const cleanApiKey = getCleanApiKey();
+const cleanApiKey = getCleanApiKey(apiKey);
 
-// Initialize OpenAI client with API key from environment
+// Initialize OpenAI client with API key
 const openai = new OpenAI({
   apiKey: cleanApiKey
 });

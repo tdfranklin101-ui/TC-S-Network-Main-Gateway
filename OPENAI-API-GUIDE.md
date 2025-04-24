@@ -26,15 +26,30 @@ To enable these AI features, you need to configure a standard OpenAI API key:
 3. Give it a name like "Current-See Website"
 4. Copy the generated API key (it will look like "sk-1234abcd..." and be around 51 characters long)
 
-### Step 3: Add the API Key to Environment
+### Step 3: Add the API Key
 
-Set the API key in the environment:
+For the Current-See project, we've implemented a dedicated file for the OpenAI API key:
+
+1. Edit the `.env.openai` file:
+   ```
+   # File path: .env.openai
+   OPENAI_API_KEY=your-api-key-here
+   ```
+
+2. Replace `your-api-key-here` with your actual OpenAI API key
+3. Save the file
+
+This approach keeps the OpenAI key separate from other environment variables, making it easier to update or replace.
+
+#### Alternative: Environment Variables
+
+You can also set the API key directly in the environment:
 
 ```
 export OPENAI_API_KEY=your-api-key-here
 ```
 
-Or add it to the `.env` file:
+Or add it to a standard `.env` file:
 
 ```
 OPENAI_API_KEY=your-api-key-here
