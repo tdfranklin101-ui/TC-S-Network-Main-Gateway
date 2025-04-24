@@ -2,7 +2,8 @@
  * The Current-See Pure Deployment Server
  * 
  * This is a minimal deployment server with zero dependencies on path-to-regexp.
- * It's designed to handle the CURRENTSEE_DB_URL environment variable.
+ * It's designed to handle the CURRENTSEE_DB_URL environment variable and
+ * provide OpenAI integration.
  */
 
 const http = require('http');
@@ -10,6 +11,16 @@ const path = require('path');
 const fs = require('fs');
 const { Pool } = require('pg');
 const url = require('url');
+
+// Import OpenAI service
+let openaiService;
+try {
+  openaiService = require('./openai-service');
+  console.log('OpenAI service loaded successfully');
+} catch (err) {
+  console.error('Failed to load OpenAI service:', err.message);
+  openaiService = null;
+}
 
 // Configuration
 const PORT = process.env.PORT || 3000;
@@ -205,7 +216,14 @@ const server = http.createServer(async (req, res) => {
       database: dbConnected ? 'connected' : 'disconnected',
       membersCount: members.length,
       environment: process.env.NODE_ENV || 'development',
-      usingCustomDbUrl: !!process.env.CURRENTSEE_DB_URL
+      usingCustomDbUrl: !!process.env.CURRENTSEE_DB_URL,
+      openai: openaiService ? 'available' : 'unavailable',
+      apiFeatures: {
+        ai: openaiService ? true : false,
+        solarClock: true,
+        members: true,
+        signup: dbConnected
+      }
     }));
     return;
   }
@@ -338,6 +356,123 @@ const server = http.createServer(async (req, res) => {
       log(`Error fetching member ${memberId}: ${err.message}`, true);
       res.writeHead(500, {'Content-Type': 'application/json'});
       res.end(JSON.stringify({ error: 'Server error', message: err.message }));
+    }
+    return;
+  }
+  
+  // OpenAI Energy Assistant Endpoint
+  if (pathname === '/api/ai/assistant' && req.method === 'POST') {
+    try {
+      if (!openaiService) {
+        res.writeHead(503, {'Content-Type': 'application/json'});
+        res.end(JSON.stringify({ 
+          error: 'OpenAI service unavailable',
+          message: 'The AI assistant is currently unavailable. Please try again later.'
+        }));
+        return;
+      }
+
+      const body = await parseBody(req);
+      const query = body.query || '';
+      
+      if (!query) {
+        res.writeHead(400, {'Content-Type': 'application/json'});
+        res.end(JSON.stringify({ error: 'Query is required' }));
+        return;
+      }
+      
+      log(`Processing AI assistant query: "${query.substring(0, 30)}..."`);
+      const response = await openaiService.getEnergyAssistantResponse(query);
+      
+      res.writeHead(200, {'Content-Type': 'application/json'});
+      res.end(JSON.stringify({
+        query: query,
+        response: response,
+        timestamp: new Date().toISOString()
+      }));
+    } catch (err) {
+      log(`Error in AI assistant: ${err.message}`, true);
+      res.writeHead(500, {'Content-Type': 'application/json'});
+      res.end(JSON.stringify({ 
+        error: 'Server error',
+        message: err.message
+      }));
+    }
+    return;
+  }
+  
+  // OpenAI Product Energy Analysis Endpoint
+  if (pathname === '/api/ai/analyze-product' && req.method === 'POST') {
+    try {
+      if (!openaiService) {
+        res.writeHead(503, {'Content-Type': 'application/json'});
+        res.end(JSON.stringify({ 
+          error: 'OpenAI service unavailable',
+          message: 'The AI product analysis service is currently unavailable.'
+        }));
+        return;
+      }
+
+      const body = await parseBody(req);
+      const productInfo = body.productInfo || {};
+      
+      if (!productInfo.name) {
+        res.writeHead(400, {'Content-Type': 'application/json'});
+        res.end(JSON.stringify({ error: 'Product name is required' }));
+        return;
+      }
+      
+      log(`Analyzing product: "${productInfo.name}"`);
+      const analysis = await openaiService.analyzeProductEnergy(productInfo);
+      
+      res.writeHead(200, {'Content-Type': 'application/json'});
+      res.end(JSON.stringify({
+        productInfo: productInfo,
+        analysis: analysis,
+        timestamp: new Date().toISOString()
+      }));
+    } catch (err) {
+      log(`Error in product analysis: ${err.message}`, true);
+      res.writeHead(500, {'Content-Type': 'application/json'});
+      res.end(JSON.stringify({ 
+        error: 'Server error',
+        message: err.message
+      }));
+    }
+    return;
+  }
+  
+  // OpenAI Personalized Energy Tips Endpoint
+  if (pathname === '/api/ai/energy-tips' && req.method === 'POST') {
+    try {
+      if (!openaiService) {
+        res.writeHead(503, {'Content-Type': 'application/json'});
+        res.end(JSON.stringify({ 
+          error: 'OpenAI service unavailable',
+          message: 'The AI energy tips service is currently unavailable.'
+        }));
+        return;
+      }
+
+      const body = await parseBody(req);
+      const userProfile = body.userProfile || {};
+      
+      log(`Generating energy tips for user`);
+      const tips = await openaiService.getPersonalizedEnergyTips(userProfile);
+      
+      res.writeHead(200, {'Content-Type': 'application/json'});
+      res.end(JSON.stringify({
+        userProfile: userProfile,
+        tips: tips,
+        timestamp: new Date().toISOString()
+      }));
+    } catch (err) {
+      log(`Error generating energy tips: ${err.message}`, true);
+      res.writeHead(500, {'Content-Type': 'application/json'});
+      res.end(JSON.stringify({ 
+        error: 'Server error',
+        message: err.message
+      }));
     }
     return;
   }

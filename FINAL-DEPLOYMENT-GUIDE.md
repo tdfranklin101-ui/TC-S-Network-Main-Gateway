@@ -36,6 +36,11 @@ Before deployment, set the following secrets in your Replit environment:
    postgresql://neondb_owner:<password>@ep-spring-king-a5uj0576.us-east-2.aws.neon.tech/neondb?sslmode=require
    ```
 
+- **`OPENAI_API_KEY`**: Your OpenAI API key for AI features
+   ```
+   sk-...
+   ```
+
 ## Deployment Steps
 
 ### 1. Check Database Connection
@@ -90,12 +95,20 @@ After successful deployment:
 
 The deployment provides these API endpoints:
 
+### Standard Endpoints
 - **`/health`** - Server health check
 - **`/api/database/status`** - Database connection status
 - **`/api/solar-clock`** - Solar Generator calculations
 - **`/api/members`** - List of all members
 - **`/api/member/:id`** - Single member details
 - **`/api/signup`** - New member registration
+
+### AI-Powered Endpoints
+- **`/api/ai/assistant`** - Energy Assistant (answers questions about solar energy and The Current-See)
+- **`/api/ai/analyze-product`** - Product Energy Analysis (analyzes energy impact of products)
+- **`/api/ai/energy-tips`** - Personalized Energy Tips (provides tailored energy-saving recommendations)
+
+For more details on the AI endpoints, see the `OPENAI-API-GUIDE.md` file.
 
 ## Troubleshooting
 
