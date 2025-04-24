@@ -1,229 +1,125 @@
 /**
- * The Current-See OpenAI Integration Test
+ * OpenAI Integration Test Script
  * 
- * This script tests the OpenAI integration with the server.
+ * This script tests the integration with OpenAI using the current API key.
+ * It will make a simple request to the OpenAI API and display the response.
  */
 
-const http = require('http');
+// Using direct OpenAI imports to test the raw API connection
+const { OpenAI } = require('openai');
+const fs = require('fs');
+const path = require('path');
 
-// Configuration
-const PORT = 3000;
-const HOST = 'localhost';
-
-// Test parameters
-const testQueries = [
-  "What is The Current-See?",
-  "How much is 1 SOLAR worth?",
-  "How much energy has The Current-See generated since April 7, 2025?"
-];
-
-const testProduct = {
-  name: "Smartphone",
-  type: "Electronics",
-  materials: "Glass, aluminum, lithium battery",
-  location: "China",
-  weight: "0.2 kg",
-  additionalInfo: "Average lifespan 3 years"
+// ANSI colors for better output formatting
+const colors = {
+  reset: '\x1b[0m',
+  red: '\x1b[31m',
+  green: '\x1b[32m',
+  yellow: '\x1b[33m',
+  blue: '\x1b[34m',
+  magenta: '\x1b[35m',
+  cyan: '\x1b[36m',
+  dim: '\x1b[2m',
+  bright: '\x1b[1m'
 };
 
-const testUserProfile = {
-  location: "California",
-  homeType: "House",
-  residents: 3,
-  energyUsage: "High",
-  interests: ["Technology", "Gardening", "Sustainability"],
-  budget: "Moderate"
-};
+console.log(`${colors.cyan}${colors.bright}========== OpenAI API Integration Test ===========${colors.reset}\n`);
 
-// Logger function
-function log(message, isError = false) {
-  const timestamp = new Date().toISOString();
-  const prefix = isError ? '❌ ERROR' : '✓ INFO';
-  console.log(`[${timestamp}] ${prefix}: ${message}`);
+// Load API key from environment or file
+function loadApiKey() {
+  // Try to get from specific .env.openai file first
+  try {
+    const envPath = path.join(process.cwd(), '.env.openai');
+    if (fs.existsSync(envPath)) {
+      console.log(`${colors.dim}Checking .env.openai file for API key...${colors.reset}`);
+      const envContent = fs.readFileSync(envPath, 'utf8');
+      const keyMatch = envContent.match(/OPENAI_API_KEY=([^\r\n]+)/);
+      if (keyMatch && keyMatch[1] && keyMatch[1].trim()) {
+        return keyMatch[1].trim();
+      }
+    }
+  } catch (err) {
+    console.error(`${colors.red}Error reading .env.openai file: ${err.message}${colors.reset}`);
+  }
+  
+  // Fall back to environment variable
+  return process.env.OPENAI_API_KEY;
 }
 
-// Make HTTP request
-async function makeRequest(path, method, body = null) {
-  return new Promise((resolve, reject) => {
-    const options = {
-      hostname: HOST,
-      port: PORT,
-      path,
-      method,
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    };
-
-    const req = http.request(options, (res) => {
-      let data = '';
-      
-      res.on('data', (chunk) => {
-        data += chunk;
-      });
-      
-      res.on('end', () => {
-        try {
-          resolve({
-            statusCode: res.statusCode,
-            headers: res.headers,
-            body: data.length > 0 ? JSON.parse(data) : null
-          });
-        } catch (err) {
-          reject(new Error(`Failed to parse response: ${err.message}, data: ${data}`));
+// Main async function
+async function testOpenAIAPI() {
+  try {
+    const apiKey = loadApiKey();
+    
+    if (!apiKey) {
+      console.error(`${colors.red}No OpenAI API key found in environment or .env.openai file${colors.reset}`);
+      console.log(`${colors.yellow}Please set an API key as OPENAI_API_KEY in the environment or in the .env.openai file${colors.reset}`);
+      return;
+    }
+    
+    console.log(`${colors.blue}API key loaded. First 10 characters: ${apiKey.substring(0, 10)}...${colors.reset}`);
+    console.log(`${colors.blue}API key length: ${apiKey.length} characters${colors.reset}`);
+    console.log(`${colors.blue}API key format: ${apiKey.startsWith('sk-proj') ? 'Project-scoped' : 'User-level'}${colors.reset}`);
+    
+    // Initialize OpenAI client
+    console.log(`\n${colors.yellow}Initializing OpenAI client...${colors.reset}`);
+    const openai = new OpenAI({
+      apiKey: apiKey
+    });
+    
+    // Make a simple test request
+    console.log(`${colors.yellow}Sending test request to OpenAI API...${colors.reset}`);
+    const startTime = Date.now();
+    
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024
+      messages: [
+        {
+          role: "system",
+          content: "You are a helpful assistant for The Current-See solar energy platform."
+        },
+        {
+          role: "user",
+          content: "What is the value of 1 SOLAR token in The Current-See system?"
         }
-      });
+      ],
+      temperature: 0.7,
+      max_tokens: 150
     });
     
-    req.on('error', (err) => {
-      reject(err);
-    });
+    const endTime = Date.now();
+    const responseTime = (endTime - startTime) / 1000;
     
-    if (body) {
-      req.write(JSON.stringify(body));
+    console.log(`\n${colors.green}${colors.bright}✓ API request successful! Response received in ${responseTime.toFixed(2)} seconds.${colors.reset}\n`);
+    console.log(`${colors.magenta}${colors.bright}Response from OpenAI:${colors.reset}`);
+    console.log(`${colors.reset}${response.choices[0].message.content}${colors.reset}\n`);
+    
+    console.log(`${colors.dim}Response metadata:${colors.reset}`);
+    console.log(`${colors.dim}Model: ${response.model}${colors.reset}`);
+    console.log(`${colors.dim}Completion tokens: ${response.usage.completion_tokens}${colors.reset}`);
+    console.log(`${colors.dim}Prompt tokens: ${response.usage.prompt_tokens}${colors.reset}`);
+    console.log(`${colors.dim}Total tokens: ${response.usage.total_tokens}${colors.reset}`);
+    
+  } catch (error) {
+    console.error(`\n${colors.red}${colors.bright}✗ Error testing OpenAI API:${colors.reset}`);
+    console.error(`${colors.red}${error.message}${colors.reset}`);
+    
+    if (error.message.includes('401')) {
+      console.log(`\n${colors.yellow}This appears to be an authentication error. Possible causes:${colors.reset}`);
+      console.log(`${colors.yellow}1. The API key may be invalid or expired${colors.reset}`);
+      console.log(`${colors.yellow}2. The API key may have usage restrictions${colors.reset}`);
+      console.log(`${colors.yellow}3. The API key format may be incorrect${colors.reset}`);
+      console.log(`\n${colors.yellow}Suggestion: Try generating a new API key from https://platform.openai.com/api-keys${colors.reset}`);
+    } else if (error.message.includes('429')) {
+      console.log(`\n${colors.yellow}This appears to be a rate limit error. Possible causes:${colors.reset}`);
+      console.log(`${colors.yellow}1. Your OpenAI account may have reached its rate limits${colors.reset}`);
+      console.log(`${colors.yellow}2. You may not have billing enabled on your OpenAI account${colors.reset}`);
+      console.log(`\n${colors.yellow}Suggestion: Check your usage at https://platform.openai.com/usage${colors.reset}`);
     }
-    
-    req.end();
-  });
-}
-
-// Test health endpoint
-async function testHealth() {
-  log('Testing health endpoint...');
-  try {
-    const response = await makeRequest('/health', 'GET');
-    
-    if (response.statusCode !== 200) {
-      log(`Unexpected status code: ${response.statusCode}`, true);
-      return false;
-    }
-    
-    log(`Health status: ${response.body.status}`);
-    log(`OpenAI status: ${response.body.openai}`);
-    log(`API features: ${JSON.stringify(response.body.apiFeatures)}`);
-    
-    return response.body.openai === 'available';
-  } catch (err) {
-    log(`Health endpoint error: ${err.message}`, true);
-    return false;
+  } finally {
+    console.log(`\n${colors.cyan}${colors.bright}========== Test Complete ===========${colors.reset}`);
   }
 }
 
-// Test assistant endpoint
-async function testAssistant() {
-  log('Testing AI assistant endpoint...');
-  
-  try {
-    for (const query of testQueries) {
-      log(`Sending query: "${query}"`);
-      
-      const response = await makeRequest('/api/ai/assistant', 'POST', { query });
-      
-      if (response.statusCode !== 200) {
-        log(`Unexpected status code: ${response.statusCode}`, true);
-        log(`Response: ${JSON.stringify(response.body)}`, true);
-        continue;
-      }
-      
-      log(`AI response: "${response.body.response.substring(0, 100)}..."`);
-    }
-    
-    log('Assistant endpoint test completed successfully');
-    return true;
-  } catch (err) {
-    log(`Assistant endpoint error: ${err.message}`, true);
-    return false;
-  }
-}
-
-// Test product analysis endpoint
-async function testProductAnalysis() {
-  log('Testing product analysis endpoint...');
-  
-  try {
-    log(`Analyzing product: "${testProduct.name}"`);
-    
-    const response = await makeRequest('/api/ai/analyze-product', 'POST', { 
-      productInfo: testProduct 
-    });
-    
-    if (response.statusCode !== 200) {
-      log(`Unexpected status code: ${response.statusCode}`, true);
-      log(`Response: ${JSON.stringify(response.body)}`, true);
-      return false;
-    }
-    
-    log('Analysis results:');
-    log(`- Energy estimate: ${response.body.analysis.energyEstimate} kWh`);
-    log(`- Carbon footprint: ${response.body.analysis.carbonFootprint} kg CO2e`);
-    log(`- Solar equivalent: ${response.body.analysis.solarEquivalent} SOLAR`);
-    
-    log('Product analysis endpoint test completed successfully');
-    return true;
-  } catch (err) {
-    log(`Product analysis endpoint error: ${err.message}`, true);
-    return false;
-  }
-}
-
-// Test energy tips endpoint
-async function testEnergyTips() {
-  log('Testing energy tips endpoint...');
-  
-  try {
-    log(`Getting tips for user profile in ${testUserProfile.location}`);
-    
-    const response = await makeRequest('/api/ai/energy-tips', 'POST', { 
-      userProfile: testUserProfile 
-    });
-    
-    if (response.statusCode !== 200) {
-      log(`Unexpected status code: ${response.statusCode}`, true);
-      log(`Response: ${JSON.stringify(response.body)}`, true);
-      return false;
-    }
-    
-    log('Energy tips:');
-    log(`- Daily tips: ${response.body.tips.dailyTips.length} tips provided`);
-    log(`- Weekly tips: ${response.body.tips.weeklyTips.length} tips provided`);
-    log(`- Monthly tips: ${response.body.tips.monthlyTips.length} tips provided`);
-    log(`- Potential savings: ${response.body.tips.potentialSavings} kWh per month`);
-    
-    log('Energy tips endpoint test completed successfully');
-    return true;
-  } catch (err) {
-    log(`Energy tips endpoint error: ${err.message}`, true);
-    return false;
-  }
-}
-
-// Run all tests
-async function runTests() {
-  log('=== The Current-See OpenAI Integration Test ===');
-  
-  const healthOk = await testHealth();
-  
-  if (!healthOk) {
-    log('Health check failed, skipping other tests', true);
-    process.exit(1);
-  }
-  
-  const assistantOk = await testAssistant();
-  const productOk = await testProductAnalysis();
-  const tipsOk = await testEnergyTips();
-  
-  if (assistantOk && productOk && tipsOk) {
-    log('✅ ALL TESTS PASSED');
-    log('The OpenAI integration is working correctly!');
-  } else {
-    log('❌ SOME TESTS FAILED', true);
-    log('Please check the logs for details.', true);
-    process.exit(1);
-  }
-}
-
-// Run tests
-runTests().catch(err => {
-  log(`Unhandled error: ${err.message}`, true);
-  process.exit(1);
-});
+// Run the test
+testOpenAIAPI();

@@ -64,27 +64,34 @@ function analyzeKey(key, source) {
   console.log(`${colors.dim}Key length: ${key.length} characters${colors.reset}`);
   console.log(`${colors.dim}Key prefix: ${key.substring(0, 8)}...${colors.reset}`);
   
-  // Check for standard OpenAI key format
-  const isStandardFormat = key.startsWith('sk-') && 
+  // Check for valid OpenAI key formats
+  const isLegacyFormat = key.startsWith('sk-') && 
                           !key.startsWith('sk-proj') && 
                           key.length >= 40 && 
                           key.length <= 70;
+                          
+  const isProjectFormat = key.startsWith('sk-proj');
   
-  if (isStandardFormat) {
-    console.log(`${colors.green}✓ Key has standard OpenAI API format (sk-...)${colors.reset}`);
-  } else {
-    console.log(`${colors.red}✗ Key does not match standard OpenAI API format${colors.reset}`);
+  if (isLegacyFormat) {
+    console.log(`${colors.green}✓ Key has legacy OpenAI API format (sk-...)${colors.reset}`);
+  } else if (isProjectFormat) {
+    console.log(`${colors.green}✓ Key has project-scoped OpenAI API format (sk-proj-...)${colors.reset}`);
+    console.log(`${colors.blue}ℹ As of 2024, OpenAI is now issuing project-scoped keys instead of user-level keys${colors.reset}`);
     
-    if (key.startsWith('sk-proj')) {
-      console.log(`${colors.yellow}! The key starts with 'sk-proj' which suggests it may be a project-specific key from another platform${colors.reset}`);
+    if (key.length > 100) {
+      console.log(`${colors.yellow}! The key is unusually long (${key.length} characters) but may still be valid${colors.reset}`);
     }
+  } else {
+    console.log(`${colors.red}✗ Key does not match any known OpenAI API format${colors.reset}`);
     
     if (key.length > 100) {
       console.log(`${colors.yellow}! The key is unusually long (${key.length} characters)${colors.reset}`);
     }
   }
   
-  return isStandardFormat;
+  const isValidFormat = isLegacyFormat || isProjectFormat;
+  
+  return isValidFormat;
 }
 
 // Provide guidance on how to get a proper OpenAI API key
@@ -93,14 +100,19 @@ function provideGuidance() {
   console.log(`${colors.bright}1. Go to ${colors.cyan}https://platform.openai.com/signup${colors.reset} to create an OpenAI account`);
   console.log(`${colors.bright}2. After logging in, go to ${colors.cyan}https://platform.openai.com/api-keys${colors.reset}`);
   console.log(`${colors.bright}3. Click "Create new secret key" and give it a name${colors.reset}`);
-  console.log(`${colors.bright}4. Copy the generated key (it will start with 'sk-' followed by letters and numbers)${colors.reset}`);
+  console.log(`${colors.bright}4. Copy the generated key (it will start with 'sk-proj-' for most current accounts)${colors.reset}`);
   console.log(`${colors.bright}5. Add the key to your ${colors.cyan}.env.openai${colors.reset} file:${colors.reset}`);
-  console.log(`${colors.dim}   OPENAI_API_KEY=sk-your-key-here${colors.reset}`);
+  console.log(`${colors.dim}   OPENAI_API_KEY=sk-proj-your-key-here${colors.reset}`);
+  
+  console.log(`\n${colors.bright}${colors.blue}Important Notes on OpenAI Key Formats:${colors.reset}`);
+  console.log(`${colors.bright}1. As of 2024, OpenAI issues project-scoped keys (sk-proj-) instead of user-level keys (sk-)${colors.reset}`);
+  console.log(`${colors.bright}2. Project-scoped keys are valid for OpenAI API usage${colors.reset}`);
+  console.log(`${colors.bright}3. These keys may be longer than the older format keys${colors.reset}`);
   
   if (isReplit) {
     console.log(`\n${colors.bright}${colors.yellow}Note for Replit users:${colors.reset}`);
-    console.log(`${colors.bright}1. You might be using a Replit-specific key or auth method${colors.reset}`);
-    console.log(`${colors.bright}2. For OpenAI integration, you need a standard OpenAI API key${colors.reset}`);
+    console.log(`${colors.bright}1. You might be using a Replit-specific OpenAI integration${colors.reset}`);
+    console.log(`${colors.bright}2. For direct OpenAI API integration, you need an OpenAI-issued key${colors.reset}`);
     console.log(`${colors.bright}3. After getting the key, add it to Replit Secrets with the name ${colors.cyan}OPENAI_API_KEY${colors.reset}`);
   }
 }

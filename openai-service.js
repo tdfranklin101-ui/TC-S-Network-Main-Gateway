@@ -50,12 +50,11 @@ function getCleanApiKey(rawKey) {
     return rawKey;
   }
   
-  // Handle the sk-proj prefix case - extract just the first 51 characters
+  // Handle the sk-proj prefix case - this is the new standard for OpenAI project-scoped keys
   if (rawKey.startsWith('sk-proj')) {
-    console.log('Note: Detected sk-proj API key format, extracting first 51 chars');
-    const extractedKey = rawKey.substring(0, 51);
-    console.log(`Extracted key: ${extractedKey.substring(0, 10)}...`);
-    return extractedKey;
+    console.log('Note: Detected sk-proj API key format (project-scoped key)');
+    // No need to modify the key, return as is
+    return rawKey;
   }
   
   return rawKey;
