@@ -44,11 +44,13 @@ function setApiWorking(isWorking) {
   }
 }
 
-// Basic fallback responses
+// Enhanced fallback responses with useful information
 const FALLBACK_RESPONSES = {
-  energy: "I'm sorry, but the AI assistant is currently unavailable. The Current-See Solar Energy system tracks energy generation from renewable sources and allocates it to members. Each SOLAR token represents 4,913 kWh of clean energy.",
-  product: "I'm sorry, but the product analysis service is currently unavailable. The Current-See platform helps track the energy footprint of products and services.",
-  tips: "I'm sorry, but energy tips are currently unavailable. In general, consider using energy-efficient appliances, reducing standby power usage, and investing in renewable energy sources."
+  energy: "The Current-See Solar Energy system tracks energy generation from renewable sources and allocates it to members. Each SOLAR token represents 4,913 kWh of clean energy and has a value of $136,000. The system distributes 1 SOLAR per day to each member at 00:00 GMT (5 PM Pacific Time).",
+  
+  product: "The Current-See platform helps track the energy footprint of products and services. When analyzing products, we consider factors such as manufacturing energy, transportation, usage energy, and end-of-life energy needs. Energy-efficient products typically use 20-30% less energy than standard models and may qualify for energy rebates or incentives.",
+  
+  tips: "To reduce your energy consumption: 1) Replace incandescent bulbs with LEDs to save up to 75% of lighting energy, 2) Use smart power strips to eliminate phantom energy usage from electronics, 3) Program your thermostat to reduce heating/cooling when you're away, 4) Ensure your home is properly insulated, and 5) Consider investing in renewable energy sources like solar panels."
 };
 
 /**
@@ -74,11 +76,15 @@ async function getAIResponse(query, responseType = 'energy') {
   // If API authentication isn't working, use fallback immediately
   if (!apiAuthenticationWorking) {
     console.log('Using fallback response due to known API authentication issues');
-    // Return a more informative error response that can be displayed to users
+    
+    // Instead of just returning an error, provide more helpful fallback responses
+    const fallbackText = FALLBACK_RESPONSES[responseType] || FALLBACK_RESPONSES.energy;
+    
     return {
-      error: true,
-      message: "The AI assistant is currently in setup mode. Our team is configuring the OpenAI integration.",
-      details: "API key authentication issue"
+      text: fallbackText,
+      source: "Current-See Energy Information System (Fallback Mode)",
+      timestamp: new Date().toISOString(),
+      fallback: true
     };
   }
 
