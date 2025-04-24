@@ -97,7 +97,7 @@ const PUBLIC_DIR = path.join(__dirname, 'public');
 
 // Version information
 const APP_VERSION = {
-  version: '1.2.1',
+  version: '1.2.2',
   name: 'The Current-See Pure Deployment Server',
   build: '2025.04.24',
   features: {

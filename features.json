@@ -2,5 +2,6 @@
   "solarClock": true,
   "database": true,
   "openai": true,
-  "distributionSystem": true
+  "distributionSystem": true,
+  "dynamicMembers": true
 }
