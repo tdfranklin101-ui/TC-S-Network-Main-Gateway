@@ -372,6 +372,54 @@ const server = http.createServer(async (req, res) => {
     return;
   }
   
+  // Serve embedded members file as JSON (this endpoint was missing)
+  if (pathname === '/embedded-members') {
+    try {
+      if (members.length === 0 && dbConnected) {
+        // Try to reload members from database
+        try {
+          const client = await dbPool.connect();
+          const result = await client.query('SELECT * FROM members ORDER BY id ASC');
+          members = result.rows;
+          client.release();
+          log(`Reloaded ${members.length} members from database for embedded-members request`);
+        } catch (err) {
+          log(`Error reloading members for embedded-members: ${err.message}`, true);
+        }
+      }
+      
+      // Map to public fields only, same as /api/members endpoint
+      const publicMembers = members.map(member => ({
+        id: member.id,
+        name: member.name,
+        username: member.username || `member${member.id}`,
+        joinedDate: member.joined_date,
+        totalSolar: member.total_solar,
+        totalDollars: member.total_dollars || (member.total_solar * 136000),
+        isAnonymous: member.is_anonymous || false,
+        isReserve: member.is_reserve || (member.name && member.name.toLowerCase().includes('reserve')),
+        lastDistributionDate: member.last_distribution_date || new Date().toISOString().split('T')[0]
+      }));
+      
+      // Add CORS headers
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      
+      res.writeHead(200, {'Content-Type': 'application/json'});
+      res.end(JSON.stringify(publicMembers));
+    } catch (err) {
+      log(`Error serving /embedded-members: ${err.message}`, true);
+      res.writeHead(500, {'Content-Type': 'application/json'});
+      res.end(JSON.stringify({
+        error: 'Server error',
+        message: err.message
+      }));
+    }
+    return;
+  }
+  
   if (pathname === '/api/members') {
     try {
       if (members.length === 0 && dbConnected) {
@@ -387,12 +435,17 @@ const server = http.createServer(async (req, res) => {
         }
       }
       
-      // Map to public fields only
+      // Map to public fields with more detailed information to match client expectations
       const publicMembers = members.map(member => ({
         id: member.id,
         name: member.name,
-        joined_date: member.joined_date,
-        total_solar: member.total_solar
+        username: member.username || `member${member.id}`,
+        joinedDate: member.joined_date,
+        totalSolar: member.total_solar,
+        totalDollars: member.total_dollars || (member.total_solar * 136000),
+        isAnonymous: member.is_anonymous || false,
+        isReserve: member.is_reserve || (member.name && member.name.toLowerCase().includes('reserve')),
+        lastDistributionDate: member.last_distribution_date || new Date().toISOString().split('T')[0]
       }));
       
       res.writeHead(200, {'Content-Type': 'application/json'});
@@ -422,7 +475,7 @@ const server = http.createServer(async (req, res) => {
     try {
       if (dbConnected) {
         const client = await dbPool.connect();
-        const result = await client.query('SELECT id, name, joined_date, total_solar FROM members WHERE id = $1', [memberId]);
+        const result = await client.query('SELECT * FROM members WHERE id = $1', [memberId]);
         client.release();
         
         if (result.rows.length === 0) {
@@ -431,8 +484,23 @@ const server = http.createServer(async (req, res) => {
           return;
         }
         
+        const member = result.rows[0];
+        
+        // Format member data to match client-side expected format
+        const formattedMember = {
+          id: member.id,
+          name: member.name,
+          username: member.username || `member${member.id}`,
+          joinedDate: member.joined_date,
+          totalSolar: member.total_solar,
+          totalDollars: member.total_dollars || (member.total_solar * 136000),
+          isAnonymous: member.is_anonymous || false,
+          isReserve: member.is_reserve || (member.name && member.name.toLowerCase().includes('reserve')),
+          lastDistributionDate: member.last_distribution_date || new Date().toISOString().split('T')[0]
+        };
+        
         res.writeHead(200, {'Content-Type': 'application/json'});
-        res.end(JSON.stringify(result.rows[0]));
+        res.end(JSON.stringify(formattedMember));
       } else {
         // Fallback to memory
         const member = members.find(m => m.id === memberId);
@@ -447,8 +515,13 @@ const server = http.createServer(async (req, res) => {
         res.end(JSON.stringify({
           id: member.id,
           name: member.name,
-          joined_date: member.joined_date,
-          total_solar: member.total_solar
+          username: member.username || `member${member.id}`,
+          joinedDate: member.joined_date,
+          totalSolar: member.total_solar,
+          totalDollars: member.total_dollars || (member.total_solar * 136000),
+          isAnonymous: member.is_anonymous || false,
+          isReserve: member.is_reserve || (member.name && member.name.toLowerCase().includes('reserve')),
+          lastDistributionDate: member.last_distribution_date || new Date().toISOString().split('T')[0]
         }));
       }
     } catch (err) {
