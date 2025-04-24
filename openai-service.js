@@ -6,10 +6,50 @@
 
 const { OpenAI } = require('openai');
 
+// Clean up API key if it has special format
+function getCleanApiKey() {
+  const rawKey = process.env.OPENAI_API_KEY;
+  if (!rawKey) return null;
+  
+  // Handle special case where key starts with "-sk-p"
+  if (rawKey.startsWith('-sk-p')) {
+    console.log('Note: Detected non-standard API key format (-sk-p), attempting to clean');
+    
+    // Try to find and extract a proper API key if embedded in the longer string
+    const standardKeyMatch = rawKey.match(/sk-[a-zA-Z0-9]{48}/);
+    if (standardKeyMatch) {
+      return standardKeyMatch[0];
+    }
+    
+    // If we can't extract a standard key, just return as is (OpenAI will reject it anyway)
+    return rawKey;
+  }
+  
+  // Handle the sk-proj prefix case
+  if (rawKey.startsWith('sk-proj')) {
+    console.log('Note: Detected sk-proj API key format, using as-is');
+    return rawKey;
+  }
+  
+  return rawKey;
+}
+
+// Get cleaned API key
+const cleanApiKey = getCleanApiKey();
+
 // Initialize OpenAI client with API key from environment
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
+  apiKey: cleanApiKey
 });
+
+/**
+ * Check if the API key appears valid
+ * @returns {boolean} - Whether the key appears valid
+ */
+function hasValidApiKey() {
+  const key = cleanApiKey;
+  return !!key && (key.startsWith('sk-') || key.startsWith('-sk-p') || key.startsWith('sk-proj'));
+}
 
 /**
  * Get a response from OpenAI for energy-related questions
@@ -18,9 +58,9 @@ const openai = new OpenAI({
  */
 async function getEnergyAssistantResponse(query) {
   try {
-    // Validate API key format first (very basic check)
-    if (!process.env.OPENAI_API_KEY || !process.env.OPENAI_API_KEY.startsWith('sk-')) {
-      console.error('Invalid OpenAI API key format');
+    // Check if API key is available
+    if (!hasValidApiKey()) {
+      console.error('Missing or invalid OpenAI API key');
       return {
         error: true,
         message: "The AI service is temporarily unavailable. Please contact support to enable AI features."
@@ -71,9 +111,9 @@ If asked about topics unrelated to these areas, politely redirect the conversati
  */
 async function analyzeProductEnergy(productInfo) {
   try {
-    // Validate API key format first (very basic check)
-    if (!process.env.OPENAI_API_KEY || !process.env.OPENAI_API_KEY.startsWith('sk-')) {
-      console.error('Invalid OpenAI API key format');
+    // Check if API key is available
+    if (!hasValidApiKey()) {
+      console.error('Missing or invalid OpenAI API key');
       return {
         error: true,
         message: "The product analysis service is temporarily unavailable. Please contact support to enable AI features."
@@ -140,9 +180,9 @@ Be detailed but realistic in your estimates. If information is missing, make rea
  */
 async function getPersonalizedEnergyTips(userProfile) {
   try {
-    // Validate API key format first (very basic check)
-    if (!process.env.OPENAI_API_KEY || !process.env.OPENAI_API_KEY.startsWith('sk-')) {
-      console.error('Invalid OpenAI API key format');
+    // Check if API key is available
+    if (!hasValidApiKey()) {
+      console.error('Missing or invalid OpenAI API key');
       return {
         error: true,
         message: "The energy tips service is temporarily unavailable. Please contact support to enable AI features."
