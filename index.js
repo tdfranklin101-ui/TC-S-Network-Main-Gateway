@@ -1,209 +1,304 @@
-// Simple standalone server for deployment - NO ESM syntax, pure CommonJS
-const http = require('http');
-const fs = require('fs');
+/**
+ * The Current-See Deployment Server
+ * 
+ * This is the main entry point for the Replit deployment.
+ * It configures a simple Express server to serve static files
+ * and handle health checks for the deployment environment.
+ */
+
+const express = require('express');
 const path = require('path');
+const fs = require('fs');
+const { Pool } = require('pg');
+const cors = require('cors');
+const schedule = require('node-schedule');
 
 // Constants
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000;
 const HOST = '0.0.0.0';
+const DATABASE_URL = process.env.CURRENTSEE_DB_URL || process.env.DATABASE_URL;
+const OPENAI_API_KEY = process.env.NEW_OPENAI_API_KEY || process.env.OPENAI_API_KEY;
 
-// Solar Constants (mirrored from server/solar-constants.ts)
-const SOLAR_CONSTANTS = {
-  TOTAL_SOLAR_KWH_PER_DAY: 4.176e+15,  // Total solar energy hitting Earth daily in kWh
-  MONETIZED_PERCENTAGE: 0.01,          // 1% of total solar energy is monetized
-  GLOBAL_POPULATION: 8.5e+9,           // Global population estimate
-  TEST_GROUP_POPULATION: 1000,         // Initial test group size
-  USD_PER_SOLAR: 136000,               // Value of 1 SOLAR unit in USD
-  
-  // Calculated values (these will be computed in init)
-  monetizedKwh: 0,
-  solarPerPersonKwh: 0,
-  mkwhPerDay: 0,
-  KWH_PER_SECOND: 0,
-  DAILY_SOLAR_DISTRIBUTION: 1, // 1 SOLAR per day per person
-  DAILY_KWH_DISTRIBUTION: 0,
-  DAILY_USD_DISTRIBUTION: 0
-};
+// Configure the app
+const app = express();
+app.use(cors());
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
 
-// Initialize calculated solar values
-function initSolarConstants() {
-  SOLAR_CONSTANTS.monetizedKwh = SOLAR_CONSTANTS.TOTAL_SOLAR_KWH_PER_DAY * SOLAR_CONSTANTS.MONETIZED_PERCENTAGE;
-  SOLAR_CONSTANTS.solarPerPersonKwh = SOLAR_CONSTANTS.monetizedKwh / SOLAR_CONSTANTS.GLOBAL_POPULATION;
-  SOLAR_CONSTANTS.mkwhPerDay = SOLAR_CONSTANTS.monetizedKwh / 1e6;
-  SOLAR_CONSTANTS.KWH_PER_SECOND = SOLAR_CONSTANTS.mkwhPerDay * 1e6 / (24 * 60 * 60);
-  SOLAR_CONSTANTS.DAILY_KWH_DISTRIBUTION = SOLAR_CONSTANTS.solarPerPersonKwh;
-  SOLAR_CONSTANTS.DAILY_USD_DISTRIBUTION = SOLAR_CONSTANTS.DAILY_SOLAR_DISTRIBUTION * SOLAR_CONSTANTS.USD_PER_SOLAR;
+// Global variables
+let members = [];
+let totalEnergy = 0;
+let totalDollars = 0;
+let dbPool = null;
+
+// Database initialization
+function initializeDatabase() {
+  try {
+    if (DATABASE_URL) {
+      console.log('Initializing database connection...');
+      dbPool = new Pool({
+        connectionString: DATABASE_URL,
+        ssl: {
+          rejectUnauthorized: false
+        }
+      });
+      
+      // Test the connection
+      dbPool.query('SELECT NOW()', (err, res) => {
+        if (err) {
+          console.error('Database connection error:', err.message);
+          loadMembersFromFiles();
+        } else {
+          console.log('Database connected successfully');
+          loadMembersFromDatabase();
+        }
+      });
+    } else {
+      console.log('No database URL provided, using file-based storage');
+      loadMembersFromFiles();
+    }
+  } catch (error) {
+    console.error('Failed to initialize database:', error.message);
+    loadMembersFromFiles();
+  }
 }
 
-// Initialize solar constants
-initSolarConstants();
-
-// Base date for solar clock calculations
-const SOLAR_CLOCK_BASE_DATE = new Date('2025-04-07T00:00:00Z');
-
-// Initialize solar clock data
-const solarClockData = {
-  timestamp: new Date().toISOString(),
-  elapsedSeconds: (Date.now() - SOLAR_CLOCK_BASE_DATE.getTime()) / 1000,
-  totalKwh: 0,  // This will be calculated
-  totalDollars: 0,  // This will be calculated
-  kwhPerSecond: SOLAR_CONSTANTS.KWH_PER_SECOND,
-  dollarPerKwh: SOLAR_CONSTANTS.USD_PER_SOLAR / (SOLAR_CONSTANTS.solarPerPersonKwh * 365),
-  dailyKwh: SOLAR_CONSTANTS.monetizedKwh,
-  dailyDollars: SOLAR_CONSTANTS.DAILY_USD_DISTRIBUTION * SOLAR_CONSTANTS.GLOBAL_POPULATION
-};
-
-// Calculate initial solar clock values
-function initSolarClockData() {
-  const now = Date.now();
-  solarClockData.timestamp = new Date().toISOString();
-  solarClockData.elapsedSeconds = (now - SOLAR_CLOCK_BASE_DATE.getTime()) / 1000;
-  solarClockData.totalKwh = solarClockData.elapsedSeconds * SOLAR_CONSTANTS.KWH_PER_SECOND;
-  solarClockData.totalDollars = solarClockData.totalKwh * solarClockData.dollarPerKwh;
+// Load members from database
+async function loadMembersFromDatabase() {
+  try {
+    const result = await dbPool.query('SELECT * FROM members ORDER BY id');
+    members = result.rows.map(member => ({
+      ...member,
+      totalSolar: parseFloat(member.total_solar || 0),
+      totalDollars: parseFloat(member.total_dollars || 0),
+      joinedDate: member.joined_date ? new Date(member.joined_date).toISOString().split('T')[0] : null,
+      lastDistributionDate: member.last_distribution_date ? new Date(member.last_distribution_date).toISOString().split('T')[0] : null
+    }));
+    
+    console.log(`Loaded ${members.length} members from database`);
+    calculateTotals();
+    updateMembersFile();
+    
+    // Schedule distributions
+    setupDistributions();
+  } catch (error) {
+    console.error('Error loading members from database:', error.message);
+    loadMembersFromFiles();
+  }
 }
 
-// Initialize solar clock data
-initSolarClockData();
-
-// MIME types
-const MIME_TYPES = {
-  '.html': 'text/html',
-  '.css': 'text/css',
-  '.js': 'text/javascript',
-  '.json': 'application/json',
-  '.png': 'image/png',
-  '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg',
-  '.gif': 'image/gif',
-  '.svg': 'image/svg+xml',
-  '.pdf': 'application/pdf',
-  '.ico': 'image/x-icon'
-};
-
-// Create a basic HTTP server
-const server = http.createServer((req, res) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-  
-  // Enable CORS for all requests
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  
-  // Handle OPTIONS requests for CORS preflight
-  if (req.method === 'OPTIONS') {
-    res.writeHead(204);
-    return res.end();
-  }
-  
-  // Health check endpoints
-  if (req.url === '/health' || req.url === '/healthz' || req.url === '/health-check') {
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    return res.end(JSON.stringify({ status: 'ok' }));
-  }
-  
-  // Solar clock API endpoint
-  if (req.url === '/api/solar-clock') {
-    // Update the timestamp and calculations to ensure fresh data
-    initSolarClockData();
+// Load members from files as fallback
+function loadMembersFromFiles() {
+  try {
+    const data = fs.readFileSync(path.join(__dirname, 'public/api/members.json'), 'utf8');
+    members = JSON.parse(data);
+    console.log(`Loaded ${members.length} members from file`);
+    calculateTotals();
     
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    return res.end(JSON.stringify(solarClockData));
+    // Schedule distributions
+    setupDistributions();
+  } catch (error) {
+    console.error('Error loading members from file:', error.message);
+    members = [];
+  }
+}
+
+// Calculate total energy and dollars
+function calculateTotals() {
+  totalEnergy = 0;
+  totalDollars = 0;
+  
+  for (const member of members) {
+    totalEnergy += member.totalSolar * 4913; // 4,913 kWh per SOLAR
+    totalDollars += member.totalSolar * 136000; // $136,000 per SOLAR
   }
   
-  // Users and registrants API endpoint - simplified read-only version with static data
-  if (req.url === '/api/users' || req.url === '/api/registrants') {
-    const users = [
-      {
-        id: 1,
-        username: 'terry.franklin',
-        firstName: 'Terry',
-        lastName: 'Franklin',
-        email: 'hello@thecurrentsee.org',
-        joinedDate: '2025-04-10',
-        totalSolar: 1,
-        isAnonymous: false
-      }
-    ];
+  console.log(`Total energy: ${totalEnergy.toFixed(6)} kWh`);
+  console.log(`Total dollars: $${totalDollars.toFixed(2)}`);
+}
+
+// Update members file
+function updateMembersFile() {
+  try {
+    fs.writeFileSync(
+      path.join(__dirname, 'public/api/members.json'),
+      JSON.stringify(members, null, 2)
+    );
+    console.log('Members file updated');
+  } catch (error) {
+    console.error('Error updating members file:', error.message);
+  }
+}
+
+// Setup daily distributions
+function setupDistributions() {
+  // Schedule daily distribution at 00:00 GMT (midnight UTC)
+  schedule.scheduleJob('0 0 * * *', async () => {
+    console.log('Running scheduled distribution at 00:00 GMT');
+    await processDailyDistribution();
+  });
+  
+  console.log('Daily distribution scheduled for 00:00 GMT');
+}
+
+// Process daily distribution
+async function processDailyDistribution() {
+  const today = new Date().toISOString().split('T')[0];
+  
+  try {
+    console.log(`Processing daily distribution for ${today}`);
+    let distributionCount = 0;
     
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    return res.end(JSON.stringify(users));
-  }
-  
-  // Normalize the URL
-  let url = req.url;
-  
-  // Handle root path
-  if (url === '/') {
-    url = '/index.html';
-  }
-  
-  // Remove query parameters
-  url = url.split('?')[0];
-  
-  // Build the file path
-  const filePath = path.join(__dirname, 'public', url);
-  const extname = path.extname(filePath).toLowerCase();
-  
-  // Check if the file exists
-  fs.stat(filePath, (err, stats) => {
-    if (err || !stats.isFile()) {
-      // File not found, try to serve index.html
-      if (url !== '/index.html') {
-        const indexPath = path.join(__dirname, 'public', 'index.html');
-        fs.stat(indexPath, (err, stats) => {
-          if (err || !stats.isFile()) {
-            // If index.html not found, return 200 OK with a simple message
-            res.writeHead(200, { 'Content-Type': 'text/html' });
-            return res.end('<html><body><h1>The Current-See</h1><p>Welcome to the service.</p></body></html>');
-          } else {
-            // Serve index.html instead
-            fs.readFile(indexPath, (err, content) => {
-              if (err) {
-                res.writeHead(500);
-                return res.end('Server Error');
-              }
-              res.writeHead(200, { 'Content-Type': 'text/html' });
-              return res.end(content);
-            });
-          }
-        });
-      } else {
-        // If index.html was requested but not found
-        res.writeHead(200, { 'Content-Type': 'text/html' });
-        return res.end('<html><body><h1>The Current-See</h1><p>Welcome to the service.</p></body></html>');
+    // Process each member
+    for (let i = 0; i < members.length; i++) {
+      const member = members[i];
+      
+      // Skip reserves or members who already received today's distribution
+      if (member.isReserve || member.lastDistributionDate === today) {
+        continue;
       }
-      return;
+      
+      // Add 1 SOLAR per day
+      member.totalSolar += 1;
+      member.totalDollars = member.totalSolar * 136000;
+      member.lastDistributionDate = today;
+      distributionCount++;
+      
+      // Update database if available
+      if (dbPool) {
+        try {
+          await dbPool.query(
+            'UPDATE members SET total_solar = $1, total_dollars = $2, last_distribution_date = $3 WHERE id = $4',
+            [member.totalSolar, member.totalDollars, today, member.id]
+          );
+        } catch (dbError) {
+          console.error(`Database update error for member ${member.id}:`, dbError.message);
+        }
+      }
     }
     
-    // Read and serve the file
-    fs.readFile(filePath, (err, content) => {
-      if (err) {
-        res.writeHead(500);
-        return res.end('Server Error');
-      }
-      
-      // Get content type
-      const contentType = MIME_TYPES[extname] || 'text/plain';
-      
-      // Send the response
-      res.writeHead(200, { 'Content-Type': contentType });
-      return res.end(content);
-    });
+    console.log(`Distributed 1 SOLAR to ${distributionCount} members`);
+    calculateTotals();
+    updateMembersFile();
+  } catch (error) {
+    console.error('Error processing daily distribution:', error.message);
+  }
+}
+
+// API Routes
+
+// Health check endpoint
+app.get(['/', '/health', '/healthz'], (req, res) => {
+  res.status(200).send({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    version: '1.2.1'
   });
 });
 
+// Get total energy and dollars
+app.get('/api/totals', (req, res) => {
+  res.json({
+    totalEnergy: totalEnergy,
+    totalDollars: totalDollars,
+    formattedEnergy: (totalEnergy / 1000000).toFixed(6),
+    formattedDollars: totalDollars.toFixed(2)
+  });
+});
+
+// Get members list
+app.get('/api/members', (req, res) => {
+  res.json(members);
+});
+
+// Get embedded members (for iframe embedding)
+app.get('/embedded-members', (req, res) => {
+  fs.readFile(path.join(__dirname, 'public/embedded-members.html'), 'utf8', (err, data) => {
+    if (err) {
+      return res.status(500).send('Error loading embedded members page');
+    }
+    res.send(data);
+  });
+});
+
+// AI Assistant API endpoint
+app.post('/api/ai-assistant', async (req, res) => {
+  try {
+    if (!OPENAI_API_KEY) {
+      return res.status(500).json({ 
+        error: 'OpenAI API key not configured',
+        message: 'The AI assistant is currently unavailable. Please try again later.'
+      });
+    }
+    
+    const { message, context } = req.body;
+    
+    if (!message) {
+      return res.status(400).json({ error: 'Message is required' });
+    }
+    
+    // Forward to your OpenAI service
+    try {
+      const OpenAI = require('openai');
+      const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
+      
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: "You are an AI assistant for The Current-See, a renewable energy and sustainable finance platform. You help users understand their solar energy investments, explain the Current-See system of distributing SOLAR tokens (each worth 4,913 kWh or $136,000), and provide guidance on sustainable living. Be friendly, informative, and focus on explaining complex energy and financial concepts in simple terms."
+          },
+          { role: "user", content: message }
+        ],
+        temperature: 0.7,
+        max_tokens: 1000
+      });
+      
+      const response = completion.choices[0].message.content;
+      
+      res.json({
+        response: response,
+        source: 'openai'
+      });
+    } catch (openaiError) {
+      console.error('OpenAI API error:', openaiError.message);
+      
+      // Fallback to a simple response if OpenAI fails
+      res.json({
+        response: "I'm sorry, I couldn't process your request at the moment. Please try again later.",
+        source: 'fallback'
+      });
+    }
+  } catch (error) {
+    console.error('AI Assistant error:', error.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Admin routes (token-protected)
+app.use('/api/admin', (req, res, next) => {
+  const token = req.headers['x-api-token'];
+  
+  if (token !== process.env.ADMIN_API_TOKEN) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  
+  next();
+});
+
+// Force a distribution (admin only)
+app.post('/api/admin/distribute', async (req, res) => {
+  try {
+    await processDailyDistribution();
+    res.json({ success: true, message: 'Distribution processed successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Start the server
-server.listen(PORT, HOST, () => {
+app.listen(PORT, HOST, () => {
   console.log(`Server running at http://${HOST}:${PORT}/`);
-});
-
-// Handle server errors
-server.on('error', (error) => {
-  console.error(`Server error: ${error.message}`);
-});
-
-// Handle uncaught exceptions
-process.on('uncaughtException', (error) => {
-  console.error(`Uncaught exception: ${error.message}`);
-  console.error(error.stack);
+  initializeDatabase();
 });
