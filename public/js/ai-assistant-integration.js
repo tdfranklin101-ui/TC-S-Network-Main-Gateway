@@ -2,9 +2,12 @@
  * The Current-See AI Assistant Integration
  * 
  * This file integrates the AI Assistant demo page with the live OpenAI backend.
+ * UPDATED: Now using direct OpenAI API integration with no demo fallbacks.
  */
 
 document.addEventListener('DOMContentLoaded', function() {
+  console.log('AI Assistant Integration loaded - LIVE API VERSION');
+  
   // Elements
   const input = document.getElementById('assistant-input');
   const sendButton = document.getElementById('send-button');
@@ -58,7 +61,7 @@ document.addEventListener('DOMContentLoaded', function() {
     return loadingElement;
   }
   
-  // Function to send a query to the AI assistant
+  // Function to send a query to the AI assistant - USING LIVE API ONLY
   async function sendQuery(query) {
     if (!query.trim()) return;
     
@@ -69,7 +72,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const loadingElement = showLoading();
     
     try {
-      // Send the query to the server
+      console.log('Sending query to LIVE OpenAI API:', query);
+      
+      // Send the query to the server USING LIVE API ENDPOINT
       const response = await fetch('/api/ai/assistant', {
         method: 'POST',
         headers: {
@@ -78,6 +83,8 @@ document.addEventListener('DOMContentLoaded', function() {
         body: JSON.stringify({ query })
       });
       
+      console.log('API response status:', response.status);
+      
       // Remove loading message
       if (loadingElement) {
         chatWindow.removeChild(loadingElement);
@@ -85,6 +92,7 @@ document.addEventListener('DOMContentLoaded', function() {
       
       if (response.ok) {
         const data = await response.json();
+        console.log('API response data:', data);
         
         // The actual response content is in data.response
         let aiResponse = data.response;
@@ -118,7 +126,7 @@ document.addEventListener('DOMContentLoaded', function() {
         `);
       }
     } catch (error) {
-      console.error('Error sending query:', error);
+      console.error('Error sending query to LIVE API:', error);
       
       // Remove loading message
       if (loadingElement) {
