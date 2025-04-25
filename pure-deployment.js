@@ -533,7 +533,7 @@ const server = http.createServer(async (req, res) => {
   }
   
   // OpenAI Energy Assistant Endpoint
-  if (pathname === '/api/ai/assistant' && req.method === 'POST') {
+  if (pathname === '/api/ai-assistant' && req.method === 'POST') {
     try {
       if (!openaiService) {
         res.writeHead(503, {'Content-Type': 'application/json'});
@@ -545,23 +545,23 @@ const server = http.createServer(async (req, res) => {
       }
 
       const body = await parseBody(req);
-      const query = body.query || '';
+      const message = body.message || '';
       
-      if (!query) {
+      if (!message) {
         res.writeHead(400, {'Content-Type': 'application/json'});
-        res.end(JSON.stringify({ error: 'Query is required' }));
+        res.end(JSON.stringify({ error: 'Message is required' }));
         return;
       }
       
-      log(`Processing AI assistant query: "${query.substring(0, 30)}..."`);
-      const response = await openaiService.getEnergyAssistantResponse(query);
+      log(`Processing AI assistant message: "${message.substring(0, 30)}..."`);
+      const response = await openaiService.getEnergyAssistantResponse(message);
       
       // Check if the response is an error response
       if (response && response.error === true) {
         // This is an error response, return as 503 Service Unavailable
         res.writeHead(503, {'Content-Type': 'application/json'});
         res.end(JSON.stringify({
-          query: query,
+          message: message,
           response: response,
           timestamp: new Date().toISOString()
         }));
@@ -569,7 +569,7 @@ const server = http.createServer(async (req, res) => {
         // This is a successful response
         res.writeHead(200, {'Content-Type': 'application/json'});
         res.end(JSON.stringify({
-          query: query,
+          message: message,
           response: response,
           timestamp: new Date().toISOString()
         }));

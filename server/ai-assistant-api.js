@@ -12,21 +12,21 @@ const openaiService = require('../openai-service');
  */
 function registerAIAssistantRoutes(app) {
   // AI Assistant endpoint for the demo page
-  app.post('/api/ai/assistant', async (req, res) => {
+  app.post('/api/ai-assistant', async (req, res) => {
     try {
-      const { query } = req.body;
+      const { message } = req.body;
       
-      if (!query) {
+      if (!message) {
         return res.status(400).json({
-          error: 'Missing query parameter',
-          message: 'Query text is required'
+          error: 'Missing message parameter',
+          message: 'Message text is required'
         });
       }
       
-      console.log(`[AI Assistant] Processing query: "${query}"`);
+      console.log(`[AI Assistant] Processing message: "${message}"`);
       
       // Use OpenAI service to get a response
-      const response = await openaiService.getEnergyAssistantResponse(query);
+      const response = await openaiService.getEnergyAssistantResponse(message);
       
       console.log(`[AI Assistant] Response received (${typeof response})`);
       
