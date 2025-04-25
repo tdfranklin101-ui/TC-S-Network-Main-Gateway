@@ -75,12 +75,12 @@ document.addEventListener('DOMContentLoaded', function() {
       console.log('Sending query to LIVE OpenAI API:', query);
       
       // Send the query to the server USING LIVE API ENDPOINT
-      const response = await fetch('/api/ai/assistant', {
+      const response = await fetch('/api/ai-assistant', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ query })
+        body: JSON.stringify({ message: query })
       });
       
       console.log('API response status:', response.status);
