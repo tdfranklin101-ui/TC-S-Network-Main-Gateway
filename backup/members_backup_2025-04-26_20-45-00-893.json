@@ -283,29 +283,5 @@
     "totalDollars": 680000,
     "joinedDate": "2025-04-21",
     "lastDistributionDate": "2025-04-25"
-  },
-  {
-    "id": 16,
-    "username": "test.user.1745700300887",
-    "name": "Test User",
-    "email": "test_user_1745700300887@example.com",
-    "joinedDate": "2025-04-26",
-    "signupTimestamp": "2025-04-26T20:45:00.893Z",
-    "totalSolar": 1,
-    "totalDollars": 136000,
-    "isAnonymous": false,
-    "lastDistributionDate": "2025-04-26"
-  },
-  {
-    "id": 17,
-    "username": "you.are.next",
-    "name": "You are next",
-    "email": "you.are.next@thecurrentsee.org",
-    "joinedDate": "2025-04-26",
-    "totalSolar": 1,
-    "totalDollars": 136000,
-    "isAnonymous": false,
-    "isPlaceholder": true,
-    "lastDistributionDate": "2025-04-26"
   }
 ]
