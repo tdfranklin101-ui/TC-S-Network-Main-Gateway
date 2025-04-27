@@ -316,7 +316,9 @@
     "totalSolar": 8,
     "totalDollars": 1088000,
     "joinedDate": "2025-04-20",
-    "lastDistributionDate": "2025-04-27"
+    "lastDistributionDate": "2025-04-27",
+    "hidden_from_public": false,
+    "hiddenFromPublic": false
   },
   {
     "id": "next",

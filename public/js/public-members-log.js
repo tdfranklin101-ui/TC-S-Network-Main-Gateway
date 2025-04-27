@@ -132,8 +132,11 @@ document.addEventListener('DOMContentLoaded', function() {
       wrapperDiv.appendChild(titleElement);
     }
 
-    // Get only visible, non-anonymous members
-    let visibleMembers = members.filter(member => !member.isAnonymous);
+    // Get only visible, non-anonymous members and exclude hidden members
+    let visibleMembers = members.filter(member => 
+      !member.isAnonymous && 
+      !member.hidden_from_public && 
+      !member.hiddenFromPublic);
     
     // Hard-code the specific order for the key members
     const sortedMembers = [];
@@ -320,7 +323,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!members) {
       console.log("All data sources failed, using default members data");
       
-      // Hard-coded fallback data with latest values and ALL members including John D
+      // Hard-coded fallback data with latest values and only public members
       members = [
         {
           id: 1,
