@@ -220,26 +220,29 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add timestamp to prevent caching
     const timestamp = new Date().getTime();
     
-    try {
-      // Clear any cached data by forcing a fresh reload
-      console.log("Fetching fresh members data...");
-      
-      // Force browser to clear its cache for this page
-      if ('caches' in window) {
-        try {
-          const cacheNames = await window.caches.keys();
-          await Promise.all(
-            cacheNames.map(cacheName => {
-              return caches.delete(cacheName);
-            })
-          );
-          console.log("Cleared browser caches");
-        } catch (e) {
-          console.warn("Failed to clear caches:", e);
-        }
+    // Clear any cached data by forcing a fresh reload
+    console.log("Fetching fresh members data...");
+    
+    // Force browser to clear its cache for this page
+    if ('caches' in window) {
+      try {
+        const cacheNames = await window.caches.keys();
+        await Promise.all(
+          cacheNames.map(cacheName => {
+            return caches.delete(cacheName);
+          })
+        );
+        console.log("Cleared browser caches");
+      } catch (e) {
+        console.warn("Failed to clear caches:", e);
       }
-      
-      // Try to fetch from API with strict cache-busting parameter and random value
+    }
+    
+    // New clean approach with multiple fallbacks
+    let members = null;
+    
+    // Try loading from API first
+    try {
       const randomValue = Math.random().toString(36).substring(2, 15);
       const response = await fetch(`/api/members.json?nocache=${timestamp}&random=${randomValue}`, {
         method: 'GET',
@@ -252,17 +255,35 @@ document.addEventListener('DOMContentLoaded', function() {
       });
       
       if (response.ok) {
-        const members = await response.json();
-        console.log("Members data loaded:", members);
-        createMembersLog(members);
-        return;
+        members = await response.json();
+        console.log("Members data loaded from API:", members.length, "members found");
       }
-      throw new Error('Failed to fetch from API');
     } catch (err) {
-      console.warn('Failed to load members from API, trying alternative sources...', err);
-      
+      console.warn('API load failed:', err);
+    }
+    
+    // If API failed, try XMLHttpRequest approach
+    if (!members) {
       try {
-        // Try to fetch from embedded data file with aggressive cache-busting
+        const xhr = new XMLHttpRequest();
+        xhr.open('GET', `/api/members.json?forcereload=${timestamp}`, false); // Synchronous for simplicity
+        xhr.setRequestHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        xhr.setRequestHeader('Pragma', 'no-cache');
+        xhr.setRequestHeader('Expires', '0');
+        xhr.send(null);
+        
+        if (xhr.status === 200) {
+          members = JSON.parse(xhr.responseText);
+          console.log("Members data loaded via XHR:", members.length, "members found");
+        }
+      } catch (err) {
+        console.warn('XHR load failed:', err);
+      }
+    }
+    
+    // If both API methods failed, try embedded data
+    if (!members) {
+      try {
         const randomValue = Math.random().toString(36).substring(2, 15);
         const embeddedResponse = await fetch(`/embedded-members?nocache=${timestamp}&random=${randomValue}`, {
           method: 'GET',
@@ -275,66 +296,201 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         if (embeddedResponse.ok) {
-          const members = await embeddedResponse.json();
-          console.log("Members data loaded from embedded:", members);
-          createMembersLog(members);
-          return;
-        }
-        throw new Error('Failed to fetch from embedded data');
-      } catch (err3) {
-        console.error('All member data sources failed, using default data', err3);
-        
-        // Default data as last resort with ALL members - updated to match current data
-        const defaultMembers = [
-          {
-            id: 0,
-            username: "tc-s.reserve",
-            name: "TC-S Solar Reserve",
-            email: "reserve@thecurrentsee.org",
-            joinedDate: "2025-04-07",
-            totalSolar: 10000000000.0000,
-            totalDollars: 10000000000 * 136000, // USD_PER_SOLAR is 136000
-            isAnonymous: false,
-            lastDistributionDate: "2025-04-19",
-            isReserve: true,
-            notes: "Genesis Reserve Allocation"
-          },
-          {
-            id: 1,
-            username: "terry.franklin",
-            name: "Terry D. Franklin",
-            joinedDate: "2025-04-09",
-            totalSolar: 10.0000,
-            totalDollars: 1360000,
-            isAnonymous: false,
-            lastDistributionDate: "2025-04-19"
-          },
-          {
-            id: 2,
-            username: "j.franklin",
-            name: "JF",
-            joinedDate: "2025-04-10",
-            totalSolar: 9.0000,
-            totalDollars: 1224000,
-            isAnonymous: false,
-            lastDistributionDate: "2025-04-19"
-          },
-          {
-            id: 3,
-            username: "you.are.next",
-            name: "you are next",
-            joinedDate: "2025-04-18",
-            totalSolar: 2.0000,
-            totalDollars: 272000,
-            isAnonymous: false,
-            lastDistributionDate: "2025-04-19"
+          const text = await embeddedResponse.text();
+          // Handle the window.embeddedMembers format
+          const startMarker = 'window.embeddedMembers = ';
+          const endMarker = ';';
+          
+          if (text.includes(startMarker)) {
+            const jsonStr = text.substring(
+              text.indexOf(startMarker) + startMarker.length,
+              text.lastIndexOf(endMarker)
+            );
+            
+            members = JSON.parse(jsonStr);
+            console.log("Members data loaded from embedded:", members.length, "members found");
           }
-        ];
-        
-        console.log("Using default members data:", defaultMembers);
-        createMembersLog(defaultMembers);
+        }
+      } catch (err) {
+        console.warn('Embedded data load failed:', err);
       }
     }
+    
+    // If all else failed, use default data as last resort
+    if (!members) {
+      console.log("All data sources failed, using default members data");
+      
+      // Hard-coded fallback data with latest values and ALL members including John D
+      members = [
+        {
+          id: 1,
+          username: "tc-s.reserve",
+          name: "TC-S Solar Reserve",
+          email: "reserve@thecurrentsee.org",
+          joinedDate: "2025-04-07",
+          totalSolar: 10000000002,
+          totalDollars: 1360000000272000,
+          isAnonymous: false,
+          lastDistributionDate: "2025-04-26",
+          isReserve: true,
+          notes: "Genesis Reserve Allocation"
+        },
+        {
+          id: 3,
+          username: "terry.franklin",
+          name: "Terry D. Franklin",
+          joinedDate: "2025-04-09",
+          totalSolar: 19.0000,
+          totalDollars: 2584000,
+          isAnonymous: false,
+          lastDistributionDate: "2025-04-26"
+        },
+        {
+          id: 4,
+          username: "j.franklin",
+          name: "JF",
+          joinedDate: "2025-04-10",
+          totalSolar: 18.0000,
+          totalDollars: 2448000,
+          isAnonymous: false,
+          lastDistributionDate: "2025-04-26"
+        },
+        {
+          id: 5,
+          username: "davis",
+          name: "Davis",
+          joinedDate: "2025-04-18",
+          totalSolar: 10.0000,
+          totalDollars: 1360000,
+          isAnonymous: false,
+          lastDistributionDate: "2025-04-26"
+        },
+        {
+          id: 6,
+          username: "miles.franklin",
+          name: "Miles Franklin",
+          joinedDate: "2025-04-18",
+          totalSolar: 10.0000,
+          totalDollars: 1360000,
+          isAnonymous: false,
+          lastDistributionDate: "2025-04-26"
+        },
+        {
+          id: 7, 
+          username: "arden.f",
+          name: "Arden F",
+          joinedDate: "2025-04-19",
+          totalSolar: 9.0000,
+          totalDollars: 1224000,
+          isAnonymous: false,
+          lastDistributionDate: "2025-04-26"
+        },
+        {
+          id: 8,
+          username: "marissa.hasseman",
+          name: "Marissa Hasseman",
+          joinedDate: "2025-04-19",
+          totalSolar: 9.0000,
+          totalDollars: 1224000,
+          isAnonymous: false,
+          lastDistributionDate: "2025-04-26"
+        },
+        {
+          id: 9,
+          username: "kim",
+          name: "Kim",
+          joinedDate: "2025-04-19",
+          totalSolar: 9.0000,
+          totalDollars: 1224000,
+          isAnonymous: false,
+          lastDistributionDate: "2025-04-26"
+        },
+        {
+          id: 10,
+          username: "jeff.elmore",
+          name: "Jeff Elmore",
+          joinedDate: "2025-04-19",
+          totalSolar: 9.0000,
+          totalDollars: 1224000,
+          isAnonymous: false,
+          lastDistributionDate: "2025-04-26"
+        },
+        {
+          id: 11,
+          username: "liam.mckay",
+          name: "Liam McKay",
+          joinedDate: "2025-04-19",
+          totalSolar: 9.0000,
+          totalDollars: 1224000,
+          isAnonymous: false,
+          lastDistributionDate: "2025-04-26"
+        },
+        {
+          id: 12,
+          username: "kjm",
+          name: "KJM",
+          joinedDate: "2025-04-20",
+          totalSolar: 8.0000,
+          totalDollars: 1088000,
+          isAnonymous: false,
+          lastDistributionDate: "2025-04-26"
+        },
+        {
+          id: 13,
+          username: "brianna",
+          name: "Brianna",
+          joinedDate: "2025-04-20",
+          totalSolar: 8.0000,
+          totalDollars: 1088000,
+          isAnonymous: false,
+          lastDistributionDate: "2025-04-26"
+        },
+        {
+          id: 14,
+          username: "alex",
+          name: "Alex",
+          joinedDate: "2025-04-21",
+          totalSolar: 7.0000,
+          totalDollars: 952000,
+          isAnonymous: false,
+          lastDistributionDate: "2025-04-26"
+        },
+        {
+          id: 15,
+          username: "kealani.ventura",
+          name: "Kealani Ventura",
+          joinedDate: "2025-04-21",
+          totalSolar: 7.0000,
+          totalDollars: 952000,
+          isAnonymous: false,
+          lastDistributionDate: "2025-04-26"
+        },
+        {
+          id: 16,
+          username: "john.d",
+          name: "John D",
+          joinedDate: "2025-04-26",
+          totalSolar: 2.0000,
+          totalDollars: 272000,
+          isAnonymous: false,
+          lastDistributionDate: "2025-04-26"
+        },
+        {
+          id: 17,
+          username: "you.are.next",
+          name: "You are next",
+          joinedDate: "2025-04-27",
+          totalSolar: 1.0000,
+          totalDollars: 136000,
+          isAnonymous: false,
+          isPlaceholder: true,
+          lastDistributionDate: "2025-04-26"
+        }
+      ];
+    }
+    
+    // Create the members log with whatever data we managed to get
+    createMembersLog(members);
   }
 
   // Function to just update the member count without loading the full member log
@@ -362,8 +518,9 @@ document.addEventListener('DOMContentLoaded', function() {
     } catch (err) {
       console.warn('Failed to refresh member count', err);
       // If we fail to get the count, try loading full members data instead
-      loadMembers();
+      window.loadMembers();
     }
+    return 0;
   };
   
   // Function to periodically check and update member count

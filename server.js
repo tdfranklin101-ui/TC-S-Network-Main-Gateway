@@ -569,12 +569,59 @@ app.get('/api/solar-accounts/leaderboard', (req, res) => {
   res.json(membersWithPlaceholder);
 });
 
-app.get('/api/members.json', (req, res) => {
-  // First update the members with the latest SOLAR distributions
-  updateMemberDistributions();
-  // Add the "You are next" placeholder
-  const membersWithPlaceholder = addYouAreNextPlaceholder(members);
-  res.json(membersWithPlaceholder);
+app.get('/api/members.json', async (req, res) => {
+  try {
+    // If database is connected, refresh members directly from database for absolute freshness
+    if (dbPool && database_initialized) {
+      try {
+        const client = await dbPool.connect();
+        const result = await client.query('SELECT * FROM members ORDER BY id ASC');
+        
+        if (result && result.rows && result.rows.length > 0) {
+          // Update the in-memory members array with fresh data
+          members = result.rows.map(row => ({
+            id: row.id,
+            username: row.username,
+            name: row.name,
+            email: row.email,
+            joinedDate: row.joined_date,
+            totalSolar: parseFloat(row.total_solar || 0),
+            totalDollars: parseFloat(row.total_dollars || 0),
+            isAnonymous: row.is_anonymous || false,
+            lastDistributionDate: row.last_distribution_date
+          }));
+          console.log(`Refreshed members directly from database: ${members.length} records`);
+        }
+        client.release();
+      } catch (dbErr) {
+        console.error("Database refresh failed, using memory cache:", dbErr.message);
+      }
+    }
+    
+    // Then update the members with the latest SOLAR distributions
+    updateMemberDistributions();
+    
+    // Add the "You are next" placeholder
+    const membersWithPlaceholder = addYouAreNextPlaceholder(members);
+    
+    // Set aggressive cache prevention headers
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0',
+      'Content-Type': 'application/json'
+    });
+    
+    // Include timestamp for verification
+    res.json({
+      members: membersWithPlaceholder,
+      timestamp: new Date().toISOString(),
+      count: membersWithPlaceholder.length
+    });
+  } catch (error) {
+    console.error("Error serving members JSON:", error);
+    res.status(500).json({ error: "Internal server error", message: error.message });
+  }
 });
 
 // Function to add a "You are next" placeholder to the members list
@@ -604,23 +651,65 @@ function addYouAreNextPlaceholder(membersList) {
 }
 
 // Serve the embedded members data with proper content type
-app.get('/embedded-members', (req, res) => {
-  updateMemberDistributions();
-  // Format members with 4 decimal places for SOLAR values
-  const formattedMembers = members.map(member => {
-    const formattedMember = {...member};
-    if (typeof formattedMember.totalSolar !== 'undefined') {
-      formattedMember.totalSolar = parseFloat(formattedMember.totalSolar).toFixed(4);
+app.get('/embedded-members', async (req, res) => {
+  try {
+    // If database is connected, refresh members directly from database for absolute freshness
+    if (dbPool && database_initialized) {
+      try {
+        const client = await dbPool.connect();
+        const result = await client.query('SELECT * FROM members ORDER BY id ASC');
+        
+        if (result && result.rows && result.rows.length > 0) {
+          // Update the in-memory members array with fresh data
+          members = result.rows.map(row => ({
+            id: row.id,
+            username: row.username,
+            name: row.name,
+            email: row.email,
+            joinedDate: row.joined_date,
+            totalSolar: parseFloat(row.total_solar || 0),
+            totalDollars: parseFloat(row.total_dollars || 0),
+            isAnonymous: row.is_anonymous || false,
+            lastDistributionDate: row.last_distribution_date
+          }));
+          console.log(`Refreshed members directly from database for embedded endpoint: ${members.length} records`);
+        }
+        client.release();
+      } catch (dbErr) {
+        console.error("Database refresh failed for embedded endpoint, using memory cache:", dbErr.message);
+      }
     }
-    return formattedMember;
-  });
-  
-  // Add the "You are next" placeholder
-  const membersWithPlaceholder = addYouAreNextPlaceholder(formattedMembers);
-  
-  // Set the proper JavaScript content type
-  res.setHeader('Content-Type', 'application/javascript');
-  res.send(`window.embeddedMembers = ${JSON.stringify(membersWithPlaceholder)};`);
+    
+    // Update distributions
+    updateMemberDistributions();
+    
+    // Format members with 4 decimal places for SOLAR values
+    const formattedMembers = members.map(member => {
+      const formattedMember = {...member};
+      if (typeof formattedMember.totalSolar !== 'undefined') {
+        formattedMember.totalSolar = parseFloat(formattedMember.totalSolar).toFixed(4);
+      }
+      return formattedMember;
+    });
+    
+    // Add the "You are next" placeholder
+    const membersWithPlaceholder = addYouAreNextPlaceholder(formattedMembers);
+    
+    // Set aggressive cache prevention headers
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0',
+      'Content-Type': 'application/javascript'
+    });
+    
+    // Send with timestamp comment for debugging
+    const timestamp = new Date().toISOString();
+    res.send(`// Data generated at ${timestamp}\nwindow.embeddedMembers = ${JSON.stringify(membersWithPlaceholder)};`);
+  } catch (error) {
+    console.error("Error serving embedded members:", error);
+    res.status(500).send(`// Error serving data\nwindow.embeddedMembers = [];`);
+  }
 });
 
 app.get('/api/members-data', (req, res) => {
@@ -647,8 +736,60 @@ app.get('/api/members.js', (req, res) => {
   res.send(`${callback}(${JSON.stringify(membersWithPlaceholder)})`);
 });
 
-app.get('/api/member-count', (req, res) => {
-  res.json({ count: members.length });
+app.get('/api/member-count', async (req, res) => {
+  try {
+    // If database is connected, get a quick count from the database
+    if (dbPool && database_initialized) {
+      try {
+        const client = await dbPool.connect();
+        const result = await client.query('SELECT COUNT(*) as count FROM members WHERE NOT is_anonymous');
+        
+        if (result && result.rows && result.rows.length > 0) {
+          const count = parseInt(result.rows[0].count, 10);
+          client.release();
+          
+          // Set aggressive cache prevention headers
+          res.set({
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0',
+            'Content-Type': 'application/json'
+          });
+          
+          // Return the count from database
+          return res.json({ 
+            count,
+            source: 'database',
+            timestamp: new Date().toISOString()
+          });
+        }
+        client.release();
+      } catch (dbErr) {
+        console.error("Database member count failed, using memory cache:", dbErr.message);
+      }
+    }
+    
+    // If database count failed, use in-memory count
+    // Filter out any anonymous members or placeholders
+    const visibleMembers = members.filter(m => !m.isAnonymous && !m.isPlaceholder);
+    
+    // Set aggressive cache prevention headers
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0',
+      'Content-Type': 'application/json'
+    });
+    
+    res.json({ 
+      count: visibleMembers.length,
+      source: 'memory',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error("Error getting member count:", error);
+    res.status(500).json({ error: "Failed to get member count" });
+  }
 });
 
 // Load product-energy-service
