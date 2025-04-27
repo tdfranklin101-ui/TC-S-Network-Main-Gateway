@@ -1,8 +1,8 @@
 /**
- * The Current-See - Update SOLAR Totals for All Members
+ * The Current-See - Fix SOLAR Amounts
  * 
- * This script updates all member SOLAR totals based on the 1 SOLAR per day distribution rule
- * from their join date to the current date.
+ * This script corrects the SOLAR amounts based on the proper day count
+ * from join date to April 27, 2025
  */
 
 const fs = require('fs');
@@ -10,7 +10,8 @@ const path = require('path');
 
 // Constants
 const MEMBERS_FILE_PATH = path.join(__dirname, 'public/api/members.json');
-const TODAY = new Date('2025-04-27');
+const EMBEDDED_MEMBERS_PATH = path.join(__dirname, 'public/embedded-members');
+const FINAL_DATE = new Date('2025-04-27');
 const SOLAR_PER_DAY = 1;
 const SOLAR_DOLLAR_VALUE = 136000;
 
@@ -33,9 +34,25 @@ function formatAmount(amount) {
   return amount.toFixed(4);
 }
 
-// Main function
-function updateSolarTotals() {
-  console.log('Updating SOLAR totals based on 1 SOLAR per day since join date...');
+// Update embedded members file
+function updateEmbeddedMembersFile(members) {
+  try {
+    // Create embedded-members file with the correct JavaScript prefix
+    fs.writeFileSync(
+      EMBEDDED_MEMBERS_PATH,
+      `window.embeddedMembers = ${JSON.stringify(members)};`
+    );
+    console.log('Embedded members file updated successfully');
+    return true;
+  } catch (error) {
+    console.error('Error updating embedded members file:', error.message);
+    return false;
+  }
+}
+
+// Main function to fix SOLAR amounts
+function fixSolarAmounts() {
+  console.log('Fixing SOLAR amounts based on correct day count...');
   
   try {
     // Read members file
@@ -46,27 +63,29 @@ function updateSolarTotals() {
     
     // Process each member
     for (const member of members) {
-      // Skip reserves
-      if (member.is_reserve) {
-        console.log(`Skipping reserve account: ${member.name}`);
+      // Skip reserves and placeholders
+      if (member.is_reserve || member.isReserve || member.isPlaceholder) {
+        console.log(`Skipping reserve/placeholder account: ${member.name}`);
         continue;
       }
       
-      const joinDate = member.joined_date;
+      const joinDate = member.joined_date || member.joinedDate;
       if (!joinDate) {
         console.log(`Warning: Member ${member.name} has no join date. Skipping.`);
         continue;
       }
       
-      // Calculate days from join date to today (inclusive)
-      const days = daysBetween(joinDate, TODAY.toISOString().split('T')[0]);
+      // Calculate days from join date to end date (inclusive)
+      const days = daysBetween(joinDate, FINAL_DATE.toISOString().split('T')[0]);
       
       // Calculate correct SOLAR amount
       const correctSolar = days * SOLAR_PER_DAY;
-      const currentSolar = parseFloat(member.total_solar || 0);
+      const currentSolar = parseFloat(member.total_solar || member.totalSolar || 0);
       
+      // If current SOLAR amount doesn't match what it should be
       if (currentSolar !== correctSolar) {
-        console.log(`Updating ${member.name} - Joined: ${joinDate}, Days: ${days}`);
+        console.log(`Updating ${member.name} - Joined: ${joinDate}`);
+        console.log(`  Days since join: ${days} (inclusive)`);
         console.log(`  Current: ${currentSolar} SOLAR, Correct: ${correctSolar} SOLAR`);
         
         // Update SOLAR total
@@ -79,25 +98,30 @@ function updateSolarTotals() {
         member.totalDollars = dollars;
         
         // Update last distribution date
-        member.last_distribution_date = TODAY.toISOString().split('T')[0];
-        member.lastDistributionDate = TODAY.toISOString().split('T')[0];
+        member.last_distribution_date = FINAL_DATE.toISOString().split('T')[0];
+        member.lastDistributionDate = FINAL_DATE.toISOString().split('T')[0];
         
         updateCount++;
+      } else {
+        console.log(`${member.name} already has correct amount: ${correctSolar} SOLAR`);
       }
     }
     
     // Save updated members
     fs.writeFileSync(MEMBERS_FILE_PATH, JSON.stringify(members, null, 2));
     
-    console.log(`SOLAR totals updated for ${updateCount} members.`);
+    // Update embedded members file
+    updateEmbeddedMembersFile(members);
+    
+    console.log(`SOLAR amounts corrected for ${updateCount} members.`);
     console.log('Updated members file saved successfully.');
     
     return { success: true, updated: updateCount };
   } catch (error) {
-    console.error('Error updating SOLAR totals:', error.message);
+    console.error('Error fixing SOLAR amounts:', error.message);
     return { success: false, error: error.message };
   }
 }
 
-// Run the update
-updateSolarTotals();
+// Run the fix
+fixSolarAmounts();
