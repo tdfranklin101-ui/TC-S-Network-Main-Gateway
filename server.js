@@ -405,7 +405,9 @@ const { createIncludesMiddleware } = require('./page-includes');
 const openaiService = require('./openai-service');
 // Import AI Assistant API
 const { registerAIAssistantRoutes } = require('./server/ai-assistant-api');
-console.log('Page includes middleware, OpenAI service, and AI Assistant API loaded');
+// Import Wallet API routes
+const { registerWalletApiRoutes } = require('./wallet-api-routes');
+console.log('Page includes middleware, OpenAI service, AI Assistant API, and Wallet API routes loaded');
 
 // Middleware
 app.use(cors());
@@ -413,8 +415,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(createIncludesMiddleware()); // Add page includes middleware
 
-// Register AI Assistant routes
+// Register API routes
 registerAIAssistantRoutes(app);
+registerWalletApiRoutes(app);
 
 // Database connection (if available)
 let pool = null;
@@ -2065,6 +2068,14 @@ app.post('/api/signup', (req, res) => {
     
     console.log(`[SIGNUP] Process complete. Current member count: ${members.length - 1} (excluding placeholder)`);
     
+    // Notify wallet sync service of the new member
+    try {
+      walletSyncService.notifyNewMember(newMember);
+      console.log(`[SIGNUP] Notified wallet sync service about new member #${newMember.id}`);
+    } catch (notifyErr) {
+      console.error('[SIGNUP] Failed to notify wallet sync service:', notifyErr);
+    }
+    
     // Return success response with verification info
     res.status(201).json({ 
       success: true, 
@@ -2476,13 +2487,23 @@ app.use((req, res) => {
   }
 });
 
+// Import wallet sync service
+const walletSyncService = require('./wallet-sync-service');
+
 // Start the server
 const server = http.createServer(app);
+
+// Initialize WebSocket server for wallet sync
+const wss = walletSyncService.initWalletSyncService(server);
+
+// Start file watcher for real-time updates
+walletSyncService.startFileWatcher();
 
 server.listen(PORT, HOST, () => {
   console.log(`Server running at http://${HOST}:${PORT}/`);
   console.log('Solar Generator is tracking energy since April 7, 2025');
   console.log('Current-See member #1: Terry D. Franklin - Joined April 10, 2025');
+  console.log('Wallet sync service active on ws://HOST:PORT/ws/wallet-sync');
   
   // Set up a daily schedule for distribution at midnight GMT (5:00 PM Pacific Time)
   const DISTRIBUTION_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
