@@ -5,7 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Voice Assistant Demo - The Current-See</title>
   
-  <style>
+  <!-- SEO Meta Tags -->
+  
+  
+  <!-- Common Styles -->
+  <link rel="stylesheet" href="/css/common.css">
+  <link rel="stylesheet" href="/css/components/language-selector.css">
+  
+  <!-- Page-specific styles -->
+  <link rel="stylesheet" href="/css/common.css">
+<link rel="stylesheet" href="/css/components/language-selector.css">
+<style>
     :root {
       --primary-color: #7bc144;
       --primary-dark: #5a9c28;
@@ -163,9 +173,767 @@
       margin-top: 2rem;
     }
   </style>
+
 </head>
 <body>
-  <div class="voice-demo-container">
+  <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Current-See</title>
+  
+  <!-- SEO Meta Tags -->
+  
+  
+  <!-- Common Styles -->
+  <link rel="stylesheet" href="/css/common.css">
+  <link rel="stylesheet" href="/css/components/language-selector.css">
+  
+  <!-- Page-specific styles -->
+  
+</head>
+<body>
+  <!-- Common Header -->
+<header class="site-header">
+  <div class="logo-container">
+    <a href="/">
+      <picture>
+        <source srcset="/img/solar-logo.svg" type="image/svg+xml">
+        <img src="/img/solar-logo.png" alt="The Current-See Logo" class="logo-img">
+      </picture>
+      <div class="logo-text">The Current-See<br>PBC, Inc.</div>
+    </a>
+  </div>
+  <nav class="main-nav">
+    <button class="mobile-menu-toggle" aria-label="Toggle navigation menu">
+      <span class="bar"></span>
+      <span class="bar"></span>
+      <span class="bar"></span>
+    </button>
+    <ul class="nav-items">
+      <li><a href="/">Home</a></li>
+      <li><a href="/prototype.html">Prototype</a></li>
+      <li><a href="/wallet-ai-features.html">My Solar</a></li>
+      <li><a href="/declaration.html">Solar Declaration</a></li>
+      <li><a href="/founder_note.html">Founder's Note</a></li>
+      <li><a href="/whitepapers.html">White Papers</a></li>
+      <li><a href="/business_plan.html">Business Plan</a></li>
+      <li><a href="/merch.html">Merchandise</a></li>
+      <li><a href="/wallet-ai-features.html">Wallet</a></li>
+      <li><a href="/ai-assistant-demo.html">AI Assistant</a></li>
+      <li><a href="/account-info.html">Account Info</a></li>
+      <li><a href="/#join-section" class="join-button">Join</a></li>
+    </ul>
+    <div id="language-selector" class="language-selector"></div>
+  </nav>
+</header>
+
+<style>
+  /* Header Styles */
+  .site-header {
+    background: linear-gradient(to right, #F5F5F5, #FFFDF0);
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    position: relative;
+    border-bottom: 3px solid #4caf50;
+  }
+  
+  .logo-container {
+    display: flex;
+    align-items: center;
+  }
+  
+  .logo-container a {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: #00573B;
+  }
+  
+  .logo-container picture,
+  .logo-img {
+    height: 50px;
+    width: auto;
+    margin-right: 1rem;
+    display: block;
+  }
+  
+  .logo-text {
+    font-size: 1.2rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #00573B;
+  }
+  
+  .main-nav {
+    display: flex;
+    align-items: center;
+  }
+  
+  .nav-items {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .nav-items li {
+    margin-left: 1.5rem;
+  }
+  
+  .nav-items a {
+    color: #00573B;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s ease;
+    padding: 0.5rem 0;
+    position: relative;
+  }
+  
+  .nav-items a:hover {
+    color: #FFC107;
+  }
+  
+  .nav-items a::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background-color: #FFC107;
+    transition: width 0.3s ease;
+  }
+  
+  .nav-items a:hover::after {
+    width: 100%;
+  }
+  
+  /* Special styling for Join button */
+  .nav-items a.join-button {
+    background-color: #4caf50;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+  }
+  
+  .nav-items a.join-button:hover {
+    background-color: #45a049;
+    color: white;
+  }
+  
+  .nav-items a.join-button::after {
+    display: none;
+  }
+  
+  .mobile-menu-toggle {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+  }
+  
+  .mobile-menu-toggle .bar {
+    display: block;
+    width: 25px;
+    height: 3px;
+    background-color: #00573B;
+    margin: 5px 0;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+  
+  @media (max-width: 768px) {
+    .mobile-menu-toggle {
+      display: block;
+    }
+    
+    .nav-items {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background-color: #FFFFFF;
+      flex-direction: column;
+      padding: 1rem;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      display: none;
+      z-index: 100;
+    }
+    
+    .nav-items.active {
+      display: flex;
+    }
+    
+    .nav-items li {
+      margin: 0.5rem 0;
+    }
+  }
+</style>
+
+<script>
+  // Mobile menu toggle functionality
+  document.addEventListener('DOMContentLoaded', function() {
+    const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
+    const navItems = document.querySelector('.nav-items');
+    
+    if (mobileMenuToggle && navItems) {
+      mobileMenuToggle.addEventListener('click', function() {
+        navItems.classList.toggle('active');
+      });
+    }
+  });
+</script>
+  
+  <main>
+    <!-- Common Header -->
+<header class="site-header">
+  <div class="logo-container">
+    <a href="/">
+      <picture>
+        <source srcset="/img/solar-logo.svg" type="image/svg+xml">
+        <img src="/img/solar-logo.png" alt="The Current-See Logo" class="logo-img">
+      </picture>
+      <div class="logo-text">The Current-See<br>PBC, Inc.</div>
+    </a>
+  </div>
+  <nav class="main-nav">
+    <button class="mobile-menu-toggle" aria-label="Toggle navigation menu">
+      <span class="bar"></span>
+      <span class="bar"></span>
+      <span class="bar"></span>
+    </button>
+    <ul class="nav-items">
+      <li><a href="/">Home</a></li>
+      <li><a href="/prototype.html">Prototype</a></li>
+      <li><a href="/wallet-ai-features.html">My Solar</a></li>
+      <li><a href="/declaration.html">Solar Declaration</a></li>
+      <li><a href="/founder_note.html">Founder's Note</a></li>
+      <li><a href="/whitepapers.html">White Papers</a></li>
+      <li><a href="/business_plan.html">Business Plan</a></li>
+      <li><a href="/merch.html">Merchandise</a></li>
+      <li><a href="/wallet-ai-features.html">Wallet</a></li>
+      <li><a href="/ai-assistant-demo.html">AI Assistant</a></li>
+      <li><a href="/account-info.html">Account Info</a></li>
+      <li><a href="/#join-section" class="join-button">Join</a></li>
+    </ul>
+    <div id="language-selector" class="language-selector"></div>
+  </nav>
+</header>
+
+<style>
+  /* Header Styles */
+  .site-header {
+    background: linear-gradient(to right, #F5F5F5, #FFFDF0);
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    position: relative;
+    border-bottom: 3px solid #4caf50;
+  }
+  
+  .logo-container {
+    display: flex;
+    align-items: center;
+  }
+  
+  .logo-container a {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: #00573B;
+  }
+  
+  .logo-container picture,
+  .logo-img {
+    height: 50px;
+    width: auto;
+    margin-right: 1rem;
+    display: block;
+  }
+  
+  .logo-text {
+    font-size: 1.2rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #00573B;
+  }
+  
+  .main-nav {
+    display: flex;
+    align-items: center;
+  }
+  
+  .nav-items {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .nav-items li {
+    margin-left: 1.5rem;
+  }
+  
+  .nav-items a {
+    color: #00573B;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s ease;
+    padding: 0.5rem 0;
+    position: relative;
+  }
+  
+  .nav-items a:hover {
+    color: #FFC107;
+  }
+  
+  .nav-items a::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background-color: #FFC107;
+    transition: width 0.3s ease;
+  }
+  
+  .nav-items a:hover::after {
+    width: 100%;
+  }
+  
+  /* Special styling for Join button */
+  .nav-items a.join-button {
+    background-color: #4caf50;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+  }
+  
+  .nav-items a.join-button:hover {
+    background-color: #45a049;
+    color: white;
+  }
+  
+  .nav-items a.join-button::after {
+    display: none;
+  }
+  
+  .mobile-menu-toggle {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+  }
+  
+  .mobile-menu-toggle .bar {
+    display: block;
+    width: 25px;
+    height: 3px;
+    background-color: #00573B;
+    margin: 5px 0;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+  
+  @media (max-width: 768px) {
+    .mobile-menu-toggle {
+      display: block;
+    }
+    
+    .nav-items {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background-color: #FFFFFF;
+      flex-direction: column;
+      padding: 1rem;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      display: none;
+      z-index: 100;
+    }
+    
+    .nav-items.active {
+      display: flex;
+    }
+    
+    .nav-items li {
+      margin: 0.5rem 0;
+    }
+  }
+</style>
+
+<script>
+  // Mobile menu toggle functionality
+  document.addEventListener('DOMContentLoaded', function() {
+    const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
+    const navItems = document.querySelector('.nav-items');
+    
+    if (mobileMenuToggle && navItems) {
+      mobileMenuToggle.addEventListener('click', function() {
+        navItems.classList.toggle('active');
+      });
+    }
+  });
+</script>
+  </main>
+  
+  <!-- Common Footer -->
+<footer class="site-footer">
+  <div class="footer-content">
+    <div class="footer-section about">
+      <h3>The Current-See</h3>
+      <p>A revolutionary organization creating a solar-backed economic system for a more equitable world.</p>
+      <p>The Current-See PBC, Inc.</p>
+      <p><a href="mailto:hello@thecurrentsee.org">hello@thecurrentsee.org</a></p>
+    </div>
+    
+    <div class="footer-section links">
+      <h3>Quick Links</h3>
+      <ul>
+        <li><a href="/">Home</a></li>
+        <li><a href="/declaration.html">Solar Declaration</a></li>
+        <li><a href="/founder_note.html">Founder's Note</a></li>
+        <li><a href="/whitepapers.html">White Papers</a></li>
+        <li><a href="/wallet-ai-features.html">Wallet Features</a></li>
+      </ul>
+    </div>
+    
+    <div class="footer-section join">
+      <h3>Join the Movement</h3>
+      <ul>
+        <li><a href="/contact-us.html">Contact Us</a></li>
+        <li><a href="/#join-section">Sign Up</a></li>
+        <li><a href="/wallet-ai-features.html">My Solar</a></li>
+        <li><a href="/account-info.html">Account Information</a></li>
+      </ul>
+    </div>
+  </div>
+  
+  <div class="footer-bottom">
+    <p>&copy; 2025 The Current-See PBC, Inc. All rights reserved. <a href="/admin/member-roster.html" style="color: #333; font-size: 0.8em; margin-left: 15px; text-decoration: none;">Admin</a></p>
+  </div>
+</footer>
+
+<!-- Hidden Google Translate Element -->
+<div id="google_translate_element" style="display: none;"></div>
+
+<!-- Language translator script -->
+<script src="/js/language-translator-loader.js"></script>
+
+<!-- Voice assistant script -->
+<script src="/js/voice-assistant-loader.js"></script>
+
+<style>
+  /* Footer Styles */
+  .site-footer {
+    background-color: #333;
+    color: #fff;
+    padding: 2rem 0 0 0;
+    font-size: 0.9rem;
+  }
+  
+  .footer-content {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+  }
+  
+  .footer-section {
+    flex: 1;
+    margin: 0 1rem 2rem;
+    min-width: 200px;
+  }
+  
+  .footer-section h3 {
+    color: #FFC107;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 0.5rem;
+    font-size: 1.2rem;
+  }
+  
+  .footer-section p {
+    line-height: 1.6;
+    margin-bottom: 0.7rem;
+  }
+  
+  .footer-section a {
+    color: #ADB5BD;
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+  
+  .footer-section a:hover {
+    color: #FFC107;
+  }
+  
+  .footer-section ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .footer-section ul li {
+    margin-bottom: 0.7rem;
+  }
+  
+  .footer-bottom {
+    background-color: #222;
+    padding: 1rem 0;
+    text-align: center;
+    font-size: 0.8rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  
+  .footer-bottom p {
+    margin: 0;
+  }
+  
+  @media (max-width: 768px) {
+    .footer-content {
+      flex-direction: column;
+    }
+    
+    .footer-section {
+      margin: 0 0 1.5rem;
+    }
+  }
+</style>
+  
+  <!-- Language Translator -->
+  <script src="/js/language-translator.js"></script>
+  
+  <!-- Page-specific scripts -->
+  <script>
+  // Mobile menu toggle functionality
+  document.addEventListener('DOMContentLoaded', function() {
+    const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
+    const navItems = document.querySelector('.nav-items');
+    
+    if (mobileMenuToggle && navItems) {
+      mobileMenuToggle.addEventListener('click', function() {
+        navItems.classList.toggle('active');
+      });
+    }
+  });
+</script>
+
+</body>
+</html>
+  
+  <main>
+    <!-- Common Header -->
+<header class="site-header">
+  <div class="logo-container">
+    <a href="/">
+      <picture>
+        <source srcset="/img/solar-logo.svg" type="image/svg+xml">
+        <img src="/img/solar-logo.png" alt="The Current-See Logo" class="logo-img">
+      </picture>
+      <div class="logo-text">The Current-See<br>PBC, Inc.</div>
+    </a>
+  </div>
+  <nav class="main-nav">
+    <button class="mobile-menu-toggle" aria-label="Toggle navigation menu">
+      <span class="bar"></span>
+      <span class="bar"></span>
+      <span class="bar"></span>
+    </button>
+    <ul class="nav-items">
+      <li><a href="/">Home</a></li>
+      <li><a href="/prototype.html">Prototype</a></li>
+      <li><a href="/wallet-ai-features.html">My Solar</a></li>
+      <li><a href="/declaration.html">Solar Declaration</a></li>
+      <li><a href="/founder_note.html">Founder's Note</a></li>
+      <li><a href="/whitepapers.html">White Papers</a></li>
+      <li><a href="/business_plan.html">Business Plan</a></li>
+      <li><a href="/merch.html">Merchandise</a></li>
+      <li><a href="/wallet-ai-features.html">Wallet</a></li>
+      <li><a href="/ai-assistant-demo.html">AI Assistant</a></li>
+      <li><a href="/account-info.html">Account Info</a></li>
+      <li><a href="/#join-section" class="join-button">Join</a></li>
+    </ul>
+    <div id="language-selector" class="language-selector"></div>
+  </nav>
+</header>
+
+<style>
+  /* Header Styles */
+  .site-header {
+    background: linear-gradient(to right, #F5F5F5, #FFFDF0);
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    position: relative;
+    border-bottom: 3px solid #4caf50;
+  }
+  
+  .logo-container {
+    display: flex;
+    align-items: center;
+  }
+  
+  .logo-container a {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: #00573B;
+  }
+  
+  .logo-container picture,
+  .logo-img {
+    height: 50px;
+    width: auto;
+    margin-right: 1rem;
+    display: block;
+  }
+  
+  .logo-text {
+    font-size: 1.2rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #00573B;
+  }
+  
+  .main-nav {
+    display: flex;
+    align-items: center;
+  }
+  
+  .nav-items {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .nav-items li {
+    margin-left: 1.5rem;
+  }
+  
+  .nav-items a {
+    color: #00573B;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s ease;
+    padding: 0.5rem 0;
+    position: relative;
+  }
+  
+  .nav-items a:hover {
+    color: #FFC107;
+  }
+  
+  .nav-items a::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background-color: #FFC107;
+    transition: width 0.3s ease;
+  }
+  
+  .nav-items a:hover::after {
+    width: 100%;
+  }
+  
+  /* Special styling for Join button */
+  .nav-items a.join-button {
+    background-color: #4caf50;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+  }
+  
+  .nav-items a.join-button:hover {
+    background-color: #45a049;
+    color: white;
+  }
+  
+  .nav-items a.join-button::after {
+    display: none;
+  }
+  
+  .mobile-menu-toggle {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+  }
+  
+  .mobile-menu-toggle .bar {
+    display: block;
+    width: 25px;
+    height: 3px;
+    background-color: #00573B;
+    margin: 5px 0;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+  
+  @media (max-width: 768px) {
+    .mobile-menu-toggle {
+      display: block;
+    }
+    
+    .nav-items {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background-color: #FFFFFF;
+      flex-direction: column;
+      padding: 1rem;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      display: none;
+      z-index: 100;
+    }
+    
+    .nav-items.active {
+      display: flex;
+    }
+    
+    .nav-items li {
+      margin: 0.5rem 0;
+    }
+  }
+</style>
+
+<script>
+  // Mobile menu toggle functionality
+  document.addEventListener('DOMContentLoaded', function() {
+    const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
+    const navItems = document.querySelector('.nav-items');
+    
+    if (mobileMenuToggle && navItems) {
+      mobileMenuToggle.addEventListener('click', function() {
+        navItems.classList.toggle('active');
+      });
+    }
+  });
+</script>
+  
+  <main>
+    <div class="voice-demo-container">
     <div class="feature-section">
       <h1>Voice-Guided Energy Tracking Assistant</h1>
       <p class="subtitle">Explore The Current-See's multilingual voice assistant with specialized knowledge in solar energy, ecology, and conservation.</p>
@@ -356,5 +1124,697 @@
   <div style="text-align: center; margin: 40px 0 20px;">
     <a href="/index.html" style="background-color: #7bc144; color: white; text-decoration: none; font-weight: bold; padding: 0.75rem 1.5rem; border-radius: 50px; display: inline-block;">Return to Home</a>
   </div>
+  </main>
+  
+  <!-- Common Footer -->
+<footer class="site-footer">
+  <div class="footer-content">
+    <div class="footer-section about">
+      <h3>The Current-See</h3>
+      <p>A revolutionary organization creating a solar-backed economic system for a more equitable world.</p>
+      <p>The Current-See PBC, Inc.</p>
+      <p><a href="mailto:hello@thecurrentsee.org">hello@thecurrentsee.org</a></p>
+    </div>
+    
+    <div class="footer-section links">
+      <h3>Quick Links</h3>
+      <ul>
+        <li><a href="/">Home</a></li>
+        <li><a href="/declaration.html">Solar Declaration</a></li>
+        <li><a href="/founder_note.html">Founder's Note</a></li>
+        <li><a href="/whitepapers.html">White Papers</a></li>
+        <li><a href="/wallet-ai-features.html">Wallet Features</a></li>
+      </ul>
+    </div>
+    
+    <div class="footer-section join">
+      <h3>Join the Movement</h3>
+      <ul>
+        <li><a href="/contact-us.html">Contact Us</a></li>
+        <li><a href="/#join-section">Sign Up</a></li>
+        <li><a href="/wallet-ai-features.html">My Solar</a></li>
+        <li><a href="/account-info.html">Account Information</a></li>
+      </ul>
+    </div>
+  </div>
+  
+  <div class="footer-bottom">
+    <p>&copy; 2025 The Current-See PBC, Inc. All rights reserved. <a href="/admin/member-roster.html" style="color: #333; font-size: 0.8em; margin-left: 15px; text-decoration: none;">Admin</a></p>
+  </div>
+</footer>
+
+<!-- Hidden Google Translate Element -->
+<div id="google_translate_element" style="display: none;"></div>
+
+<!-- Language translator script -->
+<script src="/js/language-translator-loader.js"></script>
+
+<!-- Voice assistant script -->
+<script src="/js/voice-assistant-loader.js"></script>
+
+<style>
+  /* Footer Styles */
+  .site-footer {
+    background-color: #333;
+    color: #fff;
+    padding: 2rem 0 0 0;
+    font-size: 0.9rem;
+  }
+  
+  .footer-content {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+  }
+  
+  .footer-section {
+    flex: 1;
+    margin: 0 1rem 2rem;
+    min-width: 200px;
+  }
+  
+  .footer-section h3 {
+    color: #FFC107;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 0.5rem;
+    font-size: 1.2rem;
+  }
+  
+  .footer-section p {
+    line-height: 1.6;
+    margin-bottom: 0.7rem;
+  }
+  
+  .footer-section a {
+    color: #ADB5BD;
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+  
+  .footer-section a:hover {
+    color: #FFC107;
+  }
+  
+  .footer-section ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .footer-section ul li {
+    margin-bottom: 0.7rem;
+  }
+  
+  .footer-bottom {
+    background-color: #222;
+    padding: 1rem 0;
+    text-align: center;
+    font-size: 0.8rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  
+  .footer-bottom p {
+    margin: 0;
+  }
+  
+  @media (max-width: 768px) {
+    .footer-content {
+      flex-direction: column;
+    }
+    
+    .footer-section {
+      margin: 0 0 1.5rem;
+    }
+  }
+</style>
+  
+  <!-- Language Translator -->
+  <script src="/js/language-translator.js"></script>
+  
+  <!-- Page-specific scripts -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Setup command button listeners
+      document.querySelectorAll('.try-command').forEach(button => {
+        button.addEventListener('click', () => {
+          const command = button.getAttribute('data-command');
+          
+          // Wait for voice assistant to be ready
+          const checkAssistant = setInterval(() => {
+            if (window.voiceAssistant && window.voiceAssistant.state.isInitialized) {
+              clearInterval(checkAssistant);
+              
+              // Process the command directly
+              window.voiceAssistant._processCommand(command);
+            }
+          }, 500);
+        });
+      });
+    });
+  </script>
+  </main>
+  
+  <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Current-See</title>
+  
+  <!-- SEO Meta Tags -->
+  
+  
+  <!-- Common Styles -->
+  <link rel="stylesheet" href="/css/common.css">
+  <link rel="stylesheet" href="/css/components/language-selector.css">
+  
+  <!-- Page-specific styles -->
+  
+</head>
+<body>
+  <!-- Common Header -->
+<header class="site-header">
+  <div class="logo-container">
+    <a href="/">
+      <picture>
+        <source srcset="/img/solar-logo.svg" type="image/svg+xml">
+        <img src="/img/solar-logo.png" alt="The Current-See Logo" class="logo-img">
+      </picture>
+      <div class="logo-text">The Current-See<br>PBC, Inc.</div>
+    </a>
+  </div>
+  <nav class="main-nav">
+    <button class="mobile-menu-toggle" aria-label="Toggle navigation menu">
+      <span class="bar"></span>
+      <span class="bar"></span>
+      <span class="bar"></span>
+    </button>
+    <ul class="nav-items">
+      <li><a href="/">Home</a></li>
+      <li><a href="/prototype.html">Prototype</a></li>
+      <li><a href="/wallet-ai-features.html">My Solar</a></li>
+      <li><a href="/declaration.html">Solar Declaration</a></li>
+      <li><a href="/founder_note.html">Founder's Note</a></li>
+      <li><a href="/whitepapers.html">White Papers</a></li>
+      <li><a href="/business_plan.html">Business Plan</a></li>
+      <li><a href="/merch.html">Merchandise</a></li>
+      <li><a href="/wallet-ai-features.html">Wallet</a></li>
+      <li><a href="/ai-assistant-demo.html">AI Assistant</a></li>
+      <li><a href="/account-info.html">Account Info</a></li>
+      <li><a href="/#join-section" class="join-button">Join</a></li>
+    </ul>
+    <div id="language-selector" class="language-selector"></div>
+  </nav>
+</header>
+
+<style>
+  /* Header Styles */
+  .site-header {
+    background: linear-gradient(to right, #F5F5F5, #FFFDF0);
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    position: relative;
+    border-bottom: 3px solid #4caf50;
+  }
+  
+  .logo-container {
+    display: flex;
+    align-items: center;
+  }
+  
+  .logo-container a {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: #00573B;
+  }
+  
+  .logo-container picture,
+  .logo-img {
+    height: 50px;
+    width: auto;
+    margin-right: 1rem;
+    display: block;
+  }
+  
+  .logo-text {
+    font-size: 1.2rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #00573B;
+  }
+  
+  .main-nav {
+    display: flex;
+    align-items: center;
+  }
+  
+  .nav-items {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .nav-items li {
+    margin-left: 1.5rem;
+  }
+  
+  .nav-items a {
+    color: #00573B;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s ease;
+    padding: 0.5rem 0;
+    position: relative;
+  }
+  
+  .nav-items a:hover {
+    color: #FFC107;
+  }
+  
+  .nav-items a::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background-color: #FFC107;
+    transition: width 0.3s ease;
+  }
+  
+  .nav-items a:hover::after {
+    width: 100%;
+  }
+  
+  /* Special styling for Join button */
+  .nav-items a.join-button {
+    background-color: #4caf50;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+  }
+  
+  .nav-items a.join-button:hover {
+    background-color: #45a049;
+    color: white;
+  }
+  
+  .nav-items a.join-button::after {
+    display: none;
+  }
+  
+  .mobile-menu-toggle {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+  }
+  
+  .mobile-menu-toggle .bar {
+    display: block;
+    width: 25px;
+    height: 3px;
+    background-color: #00573B;
+    margin: 5px 0;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+  
+  @media (max-width: 768px) {
+    .mobile-menu-toggle {
+      display: block;
+    }
+    
+    .nav-items {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background-color: #FFFFFF;
+      flex-direction: column;
+      padding: 1rem;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      display: none;
+      z-index: 100;
+    }
+    
+    .nav-items.active {
+      display: flex;
+    }
+    
+    .nav-items li {
+      margin: 0.5rem 0;
+    }
+  }
+</style>
+
+<script>
+  // Mobile menu toggle functionality
+  document.addEventListener('DOMContentLoaded', function() {
+    const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
+    const navItems = document.querySelector('.nav-items');
+    
+    if (mobileMenuToggle && navItems) {
+      mobileMenuToggle.addEventListener('click', function() {
+        navItems.classList.toggle('active');
+      });
+    }
+  });
+</script>
+  
+  <main>
+    <!-- Common Footer -->
+<footer class="site-footer">
+  <div class="footer-content">
+    <div class="footer-section about">
+      <h3>The Current-See</h3>
+      <p>A revolutionary organization creating a solar-backed economic system for a more equitable world.</p>
+      <p>The Current-See PBC, Inc.</p>
+      <p><a href="mailto:hello@thecurrentsee.org">hello@thecurrentsee.org</a></p>
+    </div>
+    
+    <div class="footer-section links">
+      <h3>Quick Links</h3>
+      <ul>
+        <li><a href="/">Home</a></li>
+        <li><a href="/declaration.html">Solar Declaration</a></li>
+        <li><a href="/founder_note.html">Founder's Note</a></li>
+        <li><a href="/whitepapers.html">White Papers</a></li>
+        <li><a href="/wallet-ai-features.html">Wallet Features</a></li>
+      </ul>
+    </div>
+    
+    <div class="footer-section join">
+      <h3>Join the Movement</h3>
+      <ul>
+        <li><a href="/contact-us.html">Contact Us</a></li>
+        <li><a href="/#join-section">Sign Up</a></li>
+        <li><a href="/wallet-ai-features.html">My Solar</a></li>
+        <li><a href="/account-info.html">Account Information</a></li>
+      </ul>
+    </div>
+  </div>
+  
+  <div class="footer-bottom">
+    <p>&copy; 2025 The Current-See PBC, Inc. All rights reserved. <a href="/admin/member-roster.html" style="color: #333; font-size: 0.8em; margin-left: 15px; text-decoration: none;">Admin</a></p>
+  </div>
+</footer>
+
+<!-- Hidden Google Translate Element -->
+<div id="google_translate_element" style="display: none;"></div>
+
+<!-- Language translator script -->
+<script src="/js/language-translator-loader.js"></script>
+
+<!-- Voice assistant script -->
+<script src="/js/voice-assistant-loader.js"></script>
+
+<style>
+  /* Footer Styles */
+  .site-footer {
+    background-color: #333;
+    color: #fff;
+    padding: 2rem 0 0 0;
+    font-size: 0.9rem;
+  }
+  
+  .footer-content {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+  }
+  
+  .footer-section {
+    flex: 1;
+    margin: 0 1rem 2rem;
+    min-width: 200px;
+  }
+  
+  .footer-section h3 {
+    color: #FFC107;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 0.5rem;
+    font-size: 1.2rem;
+  }
+  
+  .footer-section p {
+    line-height: 1.6;
+    margin-bottom: 0.7rem;
+  }
+  
+  .footer-section a {
+    color: #ADB5BD;
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+  
+  .footer-section a:hover {
+    color: #FFC107;
+  }
+  
+  .footer-section ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .footer-section ul li {
+    margin-bottom: 0.7rem;
+  }
+  
+  .footer-bottom {
+    background-color: #222;
+    padding: 1rem 0;
+    text-align: center;
+    font-size: 0.8rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  
+  .footer-bottom p {
+    margin: 0;
+  }
+  
+  @media (max-width: 768px) {
+    .footer-content {
+      flex-direction: column;
+    }
+    
+    .footer-section {
+      margin: 0 0 1.5rem;
+    }
+  }
+</style>
+  </main>
+  
+  <!-- Common Footer -->
+<footer class="site-footer">
+  <div class="footer-content">
+    <div class="footer-section about">
+      <h3>The Current-See</h3>
+      <p>A revolutionary organization creating a solar-backed economic system for a more equitable world.</p>
+      <p>The Current-See PBC, Inc.</p>
+      <p><a href="mailto:hello@thecurrentsee.org">hello@thecurrentsee.org</a></p>
+    </div>
+    
+    <div class="footer-section links">
+      <h3>Quick Links</h3>
+      <ul>
+        <li><a href="/">Home</a></li>
+        <li><a href="/declaration.html">Solar Declaration</a></li>
+        <li><a href="/founder_note.html">Founder's Note</a></li>
+        <li><a href="/whitepapers.html">White Papers</a></li>
+        <li><a href="/wallet-ai-features.html">Wallet Features</a></li>
+      </ul>
+    </div>
+    
+    <div class="footer-section join">
+      <h3>Join the Movement</h3>
+      <ul>
+        <li><a href="/contact-us.html">Contact Us</a></li>
+        <li><a href="/#join-section">Sign Up</a></li>
+        <li><a href="/wallet-ai-features.html">My Solar</a></li>
+        <li><a href="/account-info.html">Account Information</a></li>
+      </ul>
+    </div>
+  </div>
+  
+  <div class="footer-bottom">
+    <p>&copy; 2025 The Current-See PBC, Inc. All rights reserved. <a href="/admin/member-roster.html" style="color: #333; font-size: 0.8em; margin-left: 15px; text-decoration: none;">Admin</a></p>
+  </div>
+</footer>
+
+<!-- Hidden Google Translate Element -->
+<div id="google_translate_element" style="display: none;"></div>
+
+<!-- Language translator script -->
+<script src="/js/language-translator-loader.js"></script>
+
+<!-- Voice assistant script -->
+<script src="/js/voice-assistant-loader.js"></script>
+
+<style>
+  /* Footer Styles */
+  .site-footer {
+    background-color: #333;
+    color: #fff;
+    padding: 2rem 0 0 0;
+    font-size: 0.9rem;
+  }
+  
+  .footer-content {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+  }
+  
+  .footer-section {
+    flex: 1;
+    margin: 0 1rem 2rem;
+    min-width: 200px;
+  }
+  
+  .footer-section h3 {
+    color: #FFC107;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 0.5rem;
+    font-size: 1.2rem;
+  }
+  
+  .footer-section p {
+    line-height: 1.6;
+    margin-bottom: 0.7rem;
+  }
+  
+  .footer-section a {
+    color: #ADB5BD;
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+  
+  .footer-section a:hover {
+    color: #FFC107;
+  }
+  
+  .footer-section ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .footer-section ul li {
+    margin-bottom: 0.7rem;
+  }
+  
+  .footer-bottom {
+    background-color: #222;
+    padding: 1rem 0;
+    text-align: center;
+    font-size: 0.8rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  
+  .footer-bottom p {
+    margin: 0;
+  }
+  
+  @media (max-width: 768px) {
+    .footer-content {
+      flex-direction: column;
+    }
+    
+    .footer-section {
+      margin: 0 0 1.5rem;
+    }
+  }
+</style>
+  
+  <!-- Language Translator -->
+  <script src="/js/language-translator.js"></script>
+  
+  <!-- Page-specific scripts -->
+  <script src="/js/language-translator-loader.js"></script>
+<script src="/js/voice-assistant-loader.js"></script>
+
+</body>
+</html>
+  
+  <!-- Language Translator -->
+  <script src="/js/language-translator.js"></script>
+  
+  <!-- Page-specific scripts -->
+  <script>
+  // Mobile menu toggle functionality
+  document.addEventListener('DOMContentLoaded', function() {
+    const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
+    const navItems = document.querySelector('.nav-items');
+    
+    if (mobileMenuToggle && navItems) {
+      mobileMenuToggle.addEventListener('click', function() {
+        navItems.classList.toggle('active');
+      });
+    }
+  });
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Setup command button listeners
+      document.querySelectorAll('.try-command').forEach(button => {
+        button.addEventListener('click', () => {
+          const command = button.getAttribute('data-command');
+          
+          // Wait for voice assistant to be ready
+          const checkAssistant = setInterval(() => {
+            if (window.voiceAssistant && window.voiceAssistant.state.isInitialized) {
+              clearInterval(checkAssistant);
+              
+              // Process the command directly
+              window.voiceAssistant._processCommand(command);
+            }
+          }, 500);
+        });
+      });
+    });
+  </script>
+<script src="/js/language-translator-loader.js"></script>
+<script src="/js/voice-assistant-loader.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Setup command button listeners
+      document.querySelectorAll('.try-command').forEach(button => {
+        button.addEventListener('click', () => {
+          const command = button.getAttribute('data-command');
+          
+          // Wait for voice assistant to be ready
+          const checkAssistant = setInterval(() => {
+            if (window.voiceAssistant && window.voiceAssistant.state.isInitialized) {
+              clearInterval(checkAssistant);
+              
+              // Process the command directly
+              window.voiceAssistant._processCommand(command);
+            }
+          }, 500);
+        });
+      });
+    });
+  </script>
+
 </body>
 </html>
