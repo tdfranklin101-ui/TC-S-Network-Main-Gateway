@@ -595,6 +595,14 @@ app.get('/merchandise', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'merch.html'));
 });
 
+app.get('/members-list', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'members-list.html'));
+});
+
+app.get('/members', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'members-list.html'));
+});
+
 app.get('/prototype', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'prototype.html'));
 });

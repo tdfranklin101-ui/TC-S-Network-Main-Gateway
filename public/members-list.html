@@ -3,100 +3,206 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Members Test</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>The Current-See - Members List</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/solar-counter.css">
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 800px;
+    .page-container {
+      max-width: 1200px;
       margin: 0 auto;
-      padding: 20px;
+      padding: 2rem;
     }
-    h1, h2 {
+    
+    h1 {
       color: #0057B8;
+      text-align: center;
+      margin-bottom: 2rem;
+      position: relative;
     }
+    
+    h1::after {
+      content: '';
+      display: block;
+      width: 100px;
+      height: 4px;
+      background-color: #7bc144;
+      margin: 0.5rem auto 0;
+    }
+    
+    .intro-text {
+      text-align: center;
+      margin-bottom: 2rem;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+      line-height: 1.6;
+    }
+    
     #member-count-display {
       font-size: 24px;
       font-weight: bold;
       color: #0057B8;
-      margin: 20px 0;
-      padding: 10px;
+      margin: 20px auto;
+      padding: 15px;
       background-color: #f0f8ff;
-      border-radius: 4px;
+      border-radius: 8px;
       text-align: center;
+      max-width: 400px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      border-left: 5px solid #7bc144;
     }
+    
     .refresh-button {
       background-color: #7bc144;
       color: white;
       border: none;
-      padding: 10px 15px;
+      padding: 12px 20px;
       border-radius: 4px;
       cursor: pointer;
-      margin-bottom: 20px;
+      margin: 0 auto 30px;
+      display: block;
+      font-size: 16px;
+      font-weight: bold;
+      transition: background-color 0.3s ease;
     }
+    
+    .refresh-button:hover {
+      background-color: #6aa53a;
+    }
+    
     .members-container {
       border: 1px solid #ddd;
       border-radius: 8px;
       overflow: hidden;
+      max-width: 900px;
+      margin: 0 auto;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
+    
     .member-item {
-      padding: 15px;
+      padding: 15px 20px;
       border-bottom: 1px solid #eee;
       display: flex;
       align-items: center;
+      transition: background-color 0.2s ease;
     }
+    
+    .member-item:hover {
+      background-color: #f9f9f9;
+    }
+    
     .member-item:last-child {
       border-bottom: none;
     }
+    
     .member-name {
       font-weight: bold;
       font-size: 18px;
       flex: 1;
+      color: #333;
     }
+    
     .member-details {
       display: flex;
       flex-direction: column;
       flex: 2;
     }
+    
     .member-joined, .member-solar {
       margin-bottom: 5px;
       color: #666;
     }
+    
     .member-solar {
       font-weight: bold;
-      color: #7bc144;
+      color: #0057B8;
     }
+    
     .data-refreshed {
       font-size: 12px;
       color: #999;
-      text-align: right;
-      margin-top: 10px;
+      text-align: center;
+      margin-top: 15px;
     }
+    
     .auto-refresh {
       display: flex;
       align-items: center;
+      justify-content: center;
       margin: 20px 0;
     }
+    
     .auto-refresh input {
-      margin-right: 5px;
+      margin-right: 8px;
+      width: 18px;
+      height: 18px;
+    }
+    
+    .auto-refresh label {
+      cursor: pointer;
+      font-size: 16px;
+    }
+    
+    .watermark {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('/images/sunrays-blue.svg') no-repeat center center;
+      background-size: cover;
+      opacity: 0.07;
+      z-index: -1;
+      pointer-events: none;
+    }
+    
+    @media (max-width: 768px) {
+      .member-item {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .member-name {
+        margin-bottom: 10px;
+      }
+      
+      .member-details {
+        width: 100%;
+      }
     }
   </style>
 </head>
 <body>
-  <h1>Members List Test</h1>
+  <div class="watermark"></div>
+  <div id="header-container"></div>
   
-  <div id="member-count-display">
-    Current Member Count: <span id="current-count">Loading...</span>
+  <div class="page-container">
+    <h1>The Current-See Members</h1>
+    
+    <div class="intro-text">
+      <p>This page displays our growing community of members powering The Current-See's solar-backed economy. Each member receives daily distributions of SOLAR as we build a more sustainable and equitable economic system together.</p>
+    </div>
+    
+    <div id="member-count-display">
+      Current Member Count: <span id="current-count">Loading...</span>
+    </div>
+    
+    <div class="auto-refresh">
+      <input type="checkbox" id="auto-refresh" checked>
+      <label for="auto-refresh">Auto-refresh every 30 seconds</label>
+    </div>
+    
+    <button id="refresh-members" class="refresh-button">Refresh Member Data</button>
+    
+    <div id="members-list"></div>
   </div>
   
-  <div class="auto-refresh">
-    <input type="checkbox" id="auto-refresh" checked>
-    <label for="auto-refresh">Auto-refresh every 10 seconds</label>
-  </div>
+  <div id="footer-container"></div>
   
-  <button id="refresh-members" class="refresh-button">Refresh Member Data</button>
-  
-  <div id="members-list"></div>
-  
+  <script src="/js/public-members-log.js"></script>
   <script>
     let autoRefreshInterval;
     
@@ -109,9 +215,9 @@
         const countElement = document.getElementById('current-count');
         
         // Show loading state
-        membersElement.innerHTML = '<p>Loading member data...</p>';
+        membersElement.innerHTML = '<p style="text-align: center;">Loading member data...</p>';
         
-        // Fetch members data
+        // Fetch members data with no-cache settings
         const response = await fetch(`/api/members.json?t=${timestamp}`, {
           cache: 'no-cache',
           headers: {
@@ -127,13 +233,13 @@
         const members = await response.json();
         
         if (!Array.isArray(members) || members.length === 0) {
-          membersElement.innerHTML = '<p>No members data available</p>';
+          membersElement.innerHTML = '<p style="text-align: center;">No members data available</p>';
           return;
         }
         
         // Update member count with highlight
         countElement.style.transition = 'background-color 0.5s ease';
-        countElement.style.backgroundColor = 'rgba(255, 255, 0, 0.5)';
+        countElement.style.backgroundColor = 'rgba(123, 193, 68, 0.3)';
         countElement.textContent = members.length;
         
         setTimeout(() => {
@@ -153,21 +259,29 @@
         // Hard-code the specific order for the key members
         const sortedMembers = [];
         
-        // Terry should always be first (joined April 9)
+        // TC-S Solar Reserve should always come first if present
+        const solarReserve = visibleMembers.find(m => m.name === "TC-S Solar Reserve");
+        if (solarReserve) {
+          sortedMembers.push(solarReserve);
+        }
+        
+        // Terry should always be first non-reserve (joined April 9)
         const terry = visibleMembers.find(m => m.name === "Terry D. Franklin");
         if (terry) {
           sortedMembers.push(terry);
         }
         
-        // JF should always be second (joined April 10)
+        // JF should always be second non-reserve (joined April 10)
         const jf = visibleMembers.find(m => m.name === "JF");
         if (jf) {
           sortedMembers.push(jf);
         }
         
-        // Add any other members after the first two, sorted by joined date (newest first)
+        // Add any other members after the first ones, sorted by joined date (newest first)
         const otherMembers = visibleMembers.filter(m => 
-          m.name !== "Terry D. Franklin" && m.name !== "JF"
+          m.name !== "TC-S Solar Reserve" && 
+          m.name !== "Terry D. Franklin" && 
+          m.name !== "JF"
         ).sort((a, b) => {
           return new Date(b.joinedDate) - new Date(a.joinedDate);
         });
@@ -179,8 +293,11 @@
           const memberElement = document.createElement('div');
           memberElement.className = 'member-item';
           
-          // Format SOLAR with 2 decimal places
-          const solarFormatted = parseFloat(member.totalSolar).toFixed(2);
+          // Format SOLAR with 4 decimal places
+          const solarFormatted = parseFloat(member.totalSolar).toFixed(4);
+          
+          // Calculate dollar value
+          const dollarValue = (parseFloat(member.totalSolar) * 136000).toFixed(2);
           
           // Format date
           const parts = member.joinedDate.split('-');
@@ -200,7 +317,7 @@
             <div class="member-name">${member.name}</div>
             <div class="member-details">
               <div class="member-joined">Joined: ${joinedDate}</div>
-              <div class="member-solar">SOLAR: ${solarFormatted}</div>
+              <div class="member-solar">SOLAR: ${solarFormatted} ($${new Intl.NumberFormat('en-US').format(dollarValue)})</div>
             </div>
           `;
           
@@ -220,7 +337,7 @@
       } catch (error) {
         console.error('Error loading members:', error);
         document.getElementById('members-list').innerHTML = 
-          `<p>Error loading members: ${error.message}</p>`;
+          `<p style="text-align: center; color: #d32f2f;">Error loading members: ${error.message}</p>`;
       }
     }
     
@@ -231,8 +348,8 @@
       function updateAutoRefresh() {
         if (checkbox.checked) {
           if (!autoRefreshInterval) {
-            autoRefreshInterval = setInterval(loadMembers, 10000); // 10 seconds
-            console.log('Auto-refresh enabled, refreshing every 10 seconds');
+            autoRefreshInterval = setInterval(loadMembers, 30000); // 30 seconds
+            console.log('Auto-refresh enabled, refreshing every 30 seconds');
           }
         } else {
           if (autoRefreshInterval) {
@@ -251,6 +368,19 @@
     
     // Load data and setup on page load
     document.addEventListener('DOMContentLoaded', function() {
+      // Load header and footer
+      fetch('/includes/header.html')
+        .then(response => response.text())
+        .then(html => {
+          document.getElementById('header-container').innerHTML = html;
+        });
+      
+      fetch('/includes/footer.html')
+        .then(response => response.text())
+        .then(html => {
+          document.getElementById('footer-container').innerHTML = html;
+        });
+      
       // Load initial data
       loadMembers();
       
