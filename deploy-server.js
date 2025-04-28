@@ -58,7 +58,7 @@ function calculateCurrentSolar(joinDate, currentDate = new Date()) {
 let members = [];
 try {
   // Try to load members from embedded data
-  const embeddedPath = path.join(__dirname, 'public/embedded-members/embedded.json');
+  const embeddedPath = path.join(__dirname, 'public/embedded-members.json');
   
   // Current date for calculation
   const currentDate = new Date();
@@ -260,14 +260,15 @@ try {
     members = processedMembers;
     console.log("Using default members data with current SOLAR totals");
     
-    // Create the embedded members directory and file if they don't exist
-    const embeddedDir = path.join(__dirname, 'public/embedded-members');
-    if (!fs.existsSync(embeddedDir)) {
+    // No need to create directory since we're using a direct file path
+    // Make sure the public directory exists
+    const publicDir = path.join(__dirname, 'public');
+    if (!fs.existsSync(publicDir)) {
       try {
-        fs.mkdirSync(embeddedDir, { recursive: true });
-        console.log("Created embedded-members directory");
+        fs.mkdirSync(publicDir, { recursive: true });
+        console.log("Created public directory");
       } catch (mkdirErr) {
-        console.error("Error creating embedded-members directory:", mkdirErr);
+        console.error("Error creating public directory:", mkdirErr);
       }
     }
     
@@ -779,6 +780,12 @@ app.get('/embedded-members', (req, res) => {
   res.json(members);
 });
 
+app.get('/embedded-members.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.json(members);
+});
+
+// Also maintain backward compatibility with old path
 app.get('/embedded-members/embedded.json', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
   res.json(members);

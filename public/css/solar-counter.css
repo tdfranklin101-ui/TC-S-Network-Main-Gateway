@@ -1,189 +1,87 @@
-/* Solar Counter Styling */
-.solar-generator-section {
-  padding: 3rem 0;
-  background-color: #f9f9f9;
-  position: relative;
-  overflow: hidden;
-}
-
-.solar-generator-section::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: repeating-conic-gradient(
-    rgba(243, 198, 34, 0.04) 0deg 8deg,
-    rgba(243, 198, 34, 0.02) 8deg 16deg
-  );
-  animation: sun-ray-rotate 120s linear infinite;
-  z-index: 0;
-  opacity: 0.8;
-}
-
-@keyframes sun-ray-rotate {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-.solar-counter-container {
-  background: white;
+/* Solar Counter Styles */
+#solar-counter {
+  background-color: rgba(255, 252, 220, 0.9);
   border-radius: 10px;
-  padding: 2rem;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-  margin: 2rem auto;
-  max-width: 800px;
-  position: relative;
-  z-index: 1;
-}
-
-.section-subtitle {
+  padding: 20px;
+  margin: 20px auto;
+  max-width: 600px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  font-family: 'Roboto Mono', monospace;
+  cursor: pointer;
+  transition: all 0.3s ease;
   text-align: center;
-  color: #555;
-  margin-bottom: 1.5rem;
-  font-size: 1.1rem;
 }
 
-.solar-counter-header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #eee;
+#solar-counter:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.15);
 }
 
-.solar-app-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 10px;
-  margin-right: 15px;
-  object-fit: contain;
+#main-counter {
+  font-size: 22px;
+  font-weight: bold;
+  padding: 15px 0;
+  color: #0057B8;
+  line-height: 1.4;
 }
 
-.solar-counter-title {
-  display: flex;
-  align-items: center;
+#counter-details {
+  background-color: rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+  padding: 15px;
+  margin-top: 10px;
+  transition: all 0.5s ease;
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
 }
 
-.solar-counter-title h3 {
-  margin: 0;
-  font-size: 1.4rem;
-  color: #006633;
+.digit-animate {
+  display: inline-block;
+  color: #0057B8;
+  animation: pulse 2s infinite;
 }
 
-.pulse-dot {
-  width: 8px;
-  height: 8px;
-  background-color: #ff0000;
-  border-radius: 50%;
-  margin-left: 10px;
-  animation: pulse 1.5s infinite;
+.digit-highlight {
+  display: inline-block;
+  color: #0057B8;
+  animation: glow 1s infinite;
+  font-weight: bold;
 }
 
 @keyframes pulse {
-  0% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.3;
-    transform: scale(0.8);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
+  0% { opacity: 1; }
+  50% { opacity: 0.7; }
+  100% { opacity: 1; }
 }
 
-.counter-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-  padding: 0.8rem;
-  border-radius: 8px;
-  background-color: #f5f9f5;
+@keyframes glow {
+  0% { text-shadow: 0 0 2px #0057B8; }
+  50% { text-shadow: 0 0 8px #0057B8; }
+  100% { text-shadow: 0 0 2px #0057B8; }
 }
 
-.counter-label {
-  font-weight: 500;
-  color: #333;
-  flex: 1;
+/* Solar icon styles */
+.solar-icon {
+  width: 40px;
+  height: 40px;
+  margin-right: 10px;
+  animation: rotate 10s linear infinite;
 }
 
-.odometer-value {
-  font-family: 'Roboto Mono', monospace;
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: #006633;
-  text-align: right;
-  letter-spacing: 0.5px;
-  flex: 1;
-  transition: color 0.3s ease;
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
-.counter-unit {
-  font-size: 1rem;
-  color: #666;
-  margin-left: 5px;
-}
-
-.counter-info {
-  font-size: 0.9rem;
-  color: #666;
-  text-align: center;
-  margin-top: 1.5rem;
-  padding: 0.8rem;
-  background-color: #f0f8f0;
-  border-radius: 8px;
-}
-
-.view-all-button {
-  text-align: center;
-  margin-top: 1.5rem;
-}
-
+/* Responsive styles */
 @media (max-width: 768px) {
-  .counter-row {
-    flex-direction: column;
-    align-items: flex-start;
+  #solar-counter {
+    max-width: 95%;
+    padding: 15px;
   }
   
-  .odometer-value {
-    margin-top: 0.5rem;
-    font-size: 1.5rem;
-    text-align: left;
+  #main-counter {
+    font-size: 18px;
   }
-}
-
-/* Default solar icon as fallback */
-.img-solar-icon-default {
-  background-color: #006633;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 24px;
-  color: white;
-}
-
-/* Animation for changing digits */
-@keyframes digitPulse {
-  0% { color: #006633; }
-  50% { color: #7bc144; }
-  100% { color: #006633; }
-}
-
-.digit {
-  display: inline-block;
-  transition: transform 0.2s ease;
-}
-
-.digit.changing {
-  animation: digitPulse 0.5s;
-  transform: scale(1.1);
 }
