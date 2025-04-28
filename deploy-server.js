@@ -37,41 +37,92 @@ try {
     members = JSON.parse(fs.readFileSync(embeddedPath, 'utf8'));
     console.log(`Loaded ${members.length} members from embedded data file`);
   } else {
-    // Fallback to the default members
+    // Fallback to the default members - formatted properly for the public members list
     members = [
       {
         id: 1,
+        username: "terry.franklin",
         name: "Terry D. Franklin",
-        joinDate: "2025-04-09",
-        solarBalance: 9.0000,
+        joinedDate: "2025-04-09",
+        totalSolar: 9.0000,
+        totalDollars: 1224000,
+        isAnonymous: false,
         lastDistributionDate: "2025-04-28"
       },
       {
         id: 2,
+        username: "j.franklin",
         name: "JF",
-        joinDate: "2025-04-20",
-        solarBalance: 8.0000,
+        joinedDate: "2025-04-20",
+        totalSolar: 8.0000,
+        totalDollars: 1088000,
+        isAnonymous: false,
+        lastDistributionDate: "2025-04-28"
+      },
+      {
+        id: 3,
+        username: "john.doe",
+        name: "John D",
+        joinedDate: "2025-04-26",
+        totalSolar: 2.0000,
+        totalDollars: 272000,
+        isAnonymous: false,
         lastDistributionDate: "2025-04-28"
       }
     ];
     console.log("Using default members data");
+    
+    // Create the embedded members directory and file if they don't exist
+    const embeddedDir = path.join(__dirname, 'public/embedded-members');
+    if (!fs.existsSync(embeddedDir)) {
+      try {
+        fs.mkdirSync(embeddedDir, { recursive: true });
+        console.log("Created embedded-members directory");
+      } catch (mkdirErr) {
+        console.error("Error creating embedded-members directory:", mkdirErr);
+      }
+    }
+    
+    // Write the default members to the embedded file
+    try {
+      fs.writeFileSync(embeddedPath, JSON.stringify(members, null, 2));
+      console.log("Created default embedded.json file");
+    } catch (writeErr) {
+      console.error("Error writing embedded.json file:", writeErr);
+    }
   }
 } catch (error) {
   console.error("Error loading members data:", error);
-  // Default members as a fallback
+  // Default members as a fallback - formatted for the public members list
   members = [
     {
       id: 1,
+      username: "terry.franklin",
       name: "Terry D. Franklin",
-      joinDate: "2025-04-09",
-      solarBalance: 9.0000,
+      joinedDate: "2025-04-09",
+      totalSolar: 9.0000,
+      totalDollars: 1224000,
+      isAnonymous: false,
       lastDistributionDate: "2025-04-28"
     },
     {
       id: 2,
+      username: "j.franklin",
       name: "JF",
-      joinDate: "2025-04-20",
-      solarBalance: 8.0000,
+      joinedDate: "2025-04-20",
+      totalSolar: 8.0000,
+      totalDollars: 1088000,
+      isAnonymous: false,
+      lastDistributionDate: "2025-04-28"
+    },
+    {
+      id: 3,
+      username: "john.doe",
+      name: "John D",
+      joinedDate: "2025-04-26",
+      totalSolar: 2.0000,
+      totalDollars: 272000,
+      isAnonymous: false,
       lastDistributionDate: "2025-04-28"
     }
   ];
@@ -93,14 +144,24 @@ function updateSolarClockData() {
   const valuePerKwh = 0.12;
   const totalValue = totalKwh * valuePerKwh;
   
-  // Update the solar clock data
+  // Calculate elapsed seconds and other data needed by the frontend
+  const elapsedSeconds = diffSeconds;
+  const dollarPerKwh = valuePerKwh;
+  
+  // Update the solar clock data with everything needed by the frontend
   solarClockData = {
     startDate: '2025-04-07T00:00:00Z',
     totalKwh: totalKwh,
     totalValue: totalValue,
+    totalDollars: totalValue, // Needed by frontend
     kwhPerSolar: 4913,
     valuePerSolar: 136000,
-    lastUpdated: now.toISOString()
+    lastUpdated: now.toISOString(),
+    timestamp: now.toISOString(), // Current time for frontend calculations
+    elapsedSeconds: elapsedSeconds, // Time elapsed since start date
+    kwhPerSecond: kwhPerSecond, // Rate of generation
+    dollarPerKwh: dollarPerKwh, // Conversion rate
+    displayUnit: 'MkWh' // Display in million kWh format
   };
   
   return solarClockData;
