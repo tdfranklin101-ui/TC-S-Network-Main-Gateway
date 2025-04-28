@@ -209,25 +209,13 @@
     <script src="/js/real_time_solar_counter.js"></script>
     <script src="/js/public-members-log.js"></script>
 
+    <!-- Header & Footer Loader -->
+    <script src="/js/load-includes.js"></script>
+    
     <script>
         // The real-time counter script handles all updates automatically
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Solar generator page initialized with real-time counter');
-            
-            // Load header and footer
-            fetch('/includes/header.html')
-                .then(response => response.text())
-                .then(html => {
-                    document.getElementById('header-container').innerHTML = html;
-                })
-                .catch(error => console.error('Error loading header:', error));
-            
-            fetch('/includes/footer.html')
-                .then(response => response.text())
-                .then(html => {
-                    document.getElementById('footer-container').innerHTML = html;
-                })
-                .catch(error => console.error('Error loading footer:', error));
             
             // Start diagnostic animation to show it's working
             const energyDisplay = document.getElementById('energy-display');

@@ -11,7 +11,7 @@
 </head>
 <body>
   <div class="wrapper">
-    <!-- HEADER_PLACEHOLDER -->
+    <div id="header-container"></div>
 
     <main>
       <!-- Hero Section with Solar Ray Watermark -->
@@ -162,23 +162,11 @@
       </section>
     </main>
 
-    <!-- FOOTER_PLACEHOLDER -->
+    <div id="footer-container"></div>
   </div>
 
-  <!-- Mobile Menu Script -->
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
-      const mobileNav = document.querySelector('.mobile-nav');
-      
-      if (mobileMenuToggle && mobileNav) {
-        mobileMenuToggle.addEventListener('click', () => {
-          mobileMenuToggle.classList.toggle('open');
-          mobileNav.classList.toggle('mobile-nav-active');
-        });
-      }
-    });
-  </script>
+  <!-- Header & Footer Loader -->
+  <script src="/js/load-includes.js"></script>
 
   <!-- Real-Time Solar Counter Script -->
   <script src="/js/real_time_solar_counter.js"></script>
