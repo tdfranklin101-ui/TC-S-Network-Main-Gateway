@@ -182,7 +182,38 @@ console.log('Page includes middleware loaded');
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(createIncludesMiddleware()); // Add page includes middleware
+// Custom middleware to process includes
+function processIncludes(req, res, next) {
+  const originalSend = res.send;
+  
+  res.send = function(body) {
+    if (typeof body === 'string' && body.includes('<!-- HEADER_PLACEHOLDER -->')) {
+      try {
+        const headerPath = path.join(__dirname, 'public/includes/header.html');
+        const header = fs.readFileSync(headerPath, 'utf8');
+        body = body.replace('<!-- HEADER_PLACEHOLDER -->', header);
+      } catch (err) {
+        console.error('Error processing header include:', err);
+      }
+    }
+    
+    if (typeof body === 'string' && body.includes('<!-- FOOTER_PLACEHOLDER -->')) {
+      try {
+        const footerPath = path.join(__dirname, 'public/includes/footer.html');
+        const footer = fs.readFileSync(footerPath, 'utf8');
+        body = body.replace('<!-- FOOTER_PLACEHOLDER -->', footer);
+      } catch (err) {
+        console.error('Error processing footer include:', err);
+      }
+    }
+    
+    return originalSend.call(this, body);
+  };
+  
+  next();
+}
+
+app.use(processIncludes); // Add custom includes middleware
 
 // Database connection (if available)
 let pool = null;
