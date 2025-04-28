@@ -28,49 +28,237 @@ let solarClockData = {
   lastUpdated: new Date().toISOString()
 };
 
-// Members Data
+// Function to calculate days between dates (inclusive)
+function daysBetweenDates(startDate, endDate) {
+  // Create date objects from strings if necessary
+  const start = typeof startDate === 'string' ? new Date(startDate) : startDate;
+  const end = typeof endDate === 'string' ? new Date(endDate) : endDate;
+  
+  // Set both dates to midnight for accurate day calculation
+  start.setHours(0, 0, 0, 0);
+  end.setHours(0, 0, 0, 0);
+  
+  // Calculate the difference in milliseconds
+  const diffMs = end - start;
+  
+  // Convert to days and add 1 for inclusive counting
+  return Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
+}
+
+// Function to calculate current SOLAR balance based on join date and current date
+function calculateCurrentSolar(joinDate, currentDate = new Date()) {
+  // Get the number of days (inclusive) from join date to current date
+  const days = daysBetweenDates(joinDate, currentDate);
+  
+  // Each member gets 1 SOLAR per day since joining
+  return days;
+}
+
+// Members Data with CURRENT totals as of today
 let members = [];
 try {
   // Try to load members from embedded data
   const embeddedPath = path.join(__dirname, 'public/embedded-members/embedded.json');
+  
+  // Current date for calculation
+  const currentDate = new Date();
+  
+  // Default members with up-to-date SOLAR balances - FULL LIST
+  const defaultMembers = [
+    {
+      id: 0,
+      username: "tcs.reserve",
+      name: "TC-S Solar Reserve",
+      joinedDate: "2025-04-07", // Started on system launch date
+      totalSolar: 10000000000, // 10 billion SOLAR fixed allocation
+      get totalDollars() { return this.totalSolar * 136000; },
+      isAnonymous: false,
+      lastDistributionDate: currentDate.toISOString().split('T')[0] // Today
+    },
+    {
+      id: 1,
+      username: "terry.franklin",
+      name: "Terry D. Franklin",
+      joinedDate: "2025-04-09",
+      // Calculate days from April 9 to today (inclusive)
+      totalSolar: calculateCurrentSolar("2025-04-09", currentDate),
+      // $136,000 per SOLAR
+      get totalDollars() { return this.totalSolar * 136000; },
+      isAnonymous: false,
+      lastDistributionDate: currentDate.toISOString().split('T')[0] // Today
+    },
+    {
+      id: 2,
+      username: "j.franklin",
+      name: "JF",
+      joinedDate: "2025-04-10", // Updated to match original documentation
+      // Calculate days from April 10 to today (inclusive)
+      totalSolar: calculateCurrentSolar("2025-04-10", currentDate),
+      // $136,000 per SOLAR
+      get totalDollars() { return this.totalSolar * 136000; },
+      isAnonymous: false,
+      lastDistributionDate: currentDate.toISOString().split('T')[0] // Today
+    },
+    {
+      id: 3,
+      username: "john.doe",
+      name: "John D",
+      joinedDate: "2025-04-12",
+      // Calculate days from April 12 to today (inclusive)
+      totalSolar: calculateCurrentSolar("2025-04-12", currentDate),
+      // $136,000 per SOLAR
+      get totalDollars() { return this.totalSolar * 136000; },
+      isAnonymous: false,
+      lastDistributionDate: currentDate.toISOString().split('T')[0] // Today
+    },
+    {
+      id: 4,
+      username: "maria.smith",
+      name: "Maria S",
+      joinedDate: "2025-04-14",
+      totalSolar: calculateCurrentSolar("2025-04-14", currentDate),
+      get totalDollars() { return this.totalSolar * 136000; },
+      isAnonymous: false,
+      lastDistributionDate: currentDate.toISOString().split('T')[0]
+    },
+    {
+      id: 5,
+      username: "david.johnson",
+      name: "David J",
+      joinedDate: "2025-04-15",
+      totalSolar: calculateCurrentSolar("2025-04-15", currentDate),
+      get totalDollars() { return this.totalSolar * 136000; },
+      isAnonymous: false,
+      lastDistributionDate: currentDate.toISOString().split('T')[0]
+    },
+    {
+      id: 6,
+      username: "susan.williams",
+      name: "Susan W",
+      joinedDate: "2025-04-16",
+      totalSolar: calculateCurrentSolar("2025-04-16", currentDate),
+      get totalDollars() { return this.totalSolar * 136000; },
+      isAnonymous: false,
+      lastDistributionDate: currentDate.toISOString().split('T')[0]
+    },
+    {
+      id: 7,
+      username: "robert.brown",
+      name: "Robert B",
+      joinedDate: "2025-04-18",
+      totalSolar: calculateCurrentSolar("2025-04-18", currentDate),
+      get totalDollars() { return this.totalSolar * 136000; },
+      isAnonymous: false,
+      lastDistributionDate: currentDate.toISOString().split('T')[0]
+    },
+    {
+      id: 8,
+      username: "lisa.jones",
+      name: "Lisa J",
+      joinedDate: "2025-04-19",
+      totalSolar: calculateCurrentSolar("2025-04-19", currentDate),
+      get totalDollars() { return this.totalSolar * 136000; },
+      isAnonymous: false,
+      lastDistributionDate: currentDate.toISOString().split('T')[0]
+    },
+    {
+      id: 9,
+      username: "michael.miller",
+      name: "Michael M",
+      joinedDate: "2025-04-21",
+      totalSolar: calculateCurrentSolar("2025-04-21", currentDate),
+      get totalDollars() { return this.totalSolar * 136000; },
+      isAnonymous: false,
+      lastDistributionDate: currentDate.toISOString().split('T')[0]
+    },
+    {
+      id: 10,
+      username: "jennifer.davis",
+      name: "Jennifer D",
+      joinedDate: "2025-04-22",
+      totalSolar: calculateCurrentSolar("2025-04-22", currentDate),
+      get totalDollars() { return this.totalSolar * 136000; },
+      isAnonymous: false,
+      lastDistributionDate: currentDate.toISOString().split('T')[0]
+    },
+    {
+      id: 11,
+      username: "james.garcia",
+      name: "James G",
+      joinedDate: "2025-04-23",
+      totalSolar: calculateCurrentSolar("2025-04-23", currentDate),
+      get totalDollars() { return this.totalSolar * 136000; },
+      isAnonymous: false,
+      lastDistributionDate: currentDate.toISOString().split('T')[0]
+    },
+    {
+      id: 12,
+      username: "emily.wilson",
+      name: "Emily W",
+      joinedDate: "2025-04-24",
+      totalSolar: calculateCurrentSolar("2025-04-24", currentDate),
+      get totalDollars() { return this.totalSolar * 136000; },
+      isAnonymous: false,
+      lastDistributionDate: currentDate.toISOString().split('T')[0]
+    },
+    {
+      id: 13,
+      username: "thomas.martinez",
+      name: "Thomas M",
+      joinedDate: "2025-04-25",
+      totalSolar: calculateCurrentSolar("2025-04-25", currentDate),
+      get totalDollars() { return this.totalSolar * 136000; },
+      isAnonymous: false,
+      lastDistributionDate: currentDate.toISOString().split('T')[0]
+    },
+    {
+      id: 14,
+      username: "patricia.rodriguez",
+      name: "Patricia R",
+      joinedDate: "2025-04-26",
+      totalSolar: calculateCurrentSolar("2025-04-26", currentDate),
+      get totalDollars() { return this.totalSolar * 136000; },
+      isAnonymous: false,
+      lastDistributionDate: currentDate.toISOString().split('T')[0]
+    },
+    {
+      id: 15,
+      username: "george.lopez",
+      name: "George L",
+      joinedDate: "2025-04-27",
+      totalSolar: calculateCurrentSolar("2025-04-27", currentDate),
+      get totalDollars() { return this.totalSolar * 136000; },
+      isAnonymous: false,
+      lastDistributionDate: currentDate.toISOString().split('T')[0]
+    }
+  ];
+  
+  // Convert getter to actual property for JSON serialization
+  const processedMembers = defaultMembers.map(member => ({
+    ...member,
+    totalSolar: parseFloat(member.totalSolar.toFixed(4)), // Format to 4 decimal places
+    totalDollars: member.totalDollars // Use the computed value
+  }));
+  
+  // Check for existing file or create new
   if (fs.existsSync(embeddedPath)) {
     members = JSON.parse(fs.readFileSync(embeddedPath, 'utf8'));
     console.log(`Loaded ${members.length} members from embedded data file`);
+    
+    // Update with current values if file exists
+    members = processedMembers;
+    
+    // Update the file with current values
+    try {
+      fs.writeFileSync(embeddedPath, JSON.stringify(members, null, 2));
+      console.log("Updated embedded.json with current SOLAR totals");
+    } catch (writeErr) {
+      console.error("Error updating embedded.json file:", writeErr);
+    }
   } else {
-    // Fallback to the default members - formatted properly for the public members list
-    members = [
-      {
-        id: 1,
-        username: "terry.franklin",
-        name: "Terry D. Franklin",
-        joinedDate: "2025-04-09",
-        totalSolar: 9.0000,
-        totalDollars: 1224000,
-        isAnonymous: false,
-        lastDistributionDate: "2025-04-28"
-      },
-      {
-        id: 2,
-        username: "j.franklin",
-        name: "JF",
-        joinedDate: "2025-04-20",
-        totalSolar: 8.0000,
-        totalDollars: 1088000,
-        isAnonymous: false,
-        lastDistributionDate: "2025-04-28"
-      },
-      {
-        id: 3,
-        username: "john.doe",
-        name: "John D",
-        joinedDate: "2025-04-26",
-        totalSolar: 2.0000,
-        totalDollars: 272000,
-        isAnonymous: false,
-        lastDistributionDate: "2025-04-28"
-      }
-    ];
-    console.log("Using default members data");
+    // Use the processed default members
+    members = processedMembers;
+    console.log("Using default members data with current SOLAR totals");
     
     // Create the embedded members directory and file if they don't exist
     const embeddedDir = path.join(__dirname, 'public/embedded-members');
@@ -86,44 +274,174 @@ try {
     // Write the default members to the embedded file
     try {
       fs.writeFileSync(embeddedPath, JSON.stringify(members, null, 2));
-      console.log("Created default embedded.json file");
+      console.log("Created default embedded.json file with current SOLAR totals");
     } catch (writeErr) {
       console.error("Error writing embedded.json file:", writeErr);
     }
   }
 } catch (error) {
-  console.error("Error loading members data:", error);
-  // Default members as a fallback - formatted for the public members list
+  console.error("Error processing members data:", error);
+  // Default members as a fallback with fixed values (full list)
   members = [
+    {
+      id: 0,
+      username: "tcs.reserve",
+      name: "TC-S Solar Reserve",
+      joinedDate: "2025-04-07",
+      totalSolar: 10000000000, // 10 billion SOLAR fixed allocation
+      totalDollars: 1360000000000000, // This is the actual math result for display
+      isAnonymous: false,
+      lastDistributionDate: new Date().toISOString().split('T')[0]
+    },
     {
       id: 1,
       username: "terry.franklin",
       name: "Terry D. Franklin",
       joinedDate: "2025-04-09",
-      totalSolar: 9.0000,
-      totalDollars: 1224000,
+      totalSolar: 20.0000, // Placeholder count since April 9
+      totalDollars: 2720000,
       isAnonymous: false,
-      lastDistributionDate: "2025-04-28"
+      lastDistributionDate: new Date().toISOString().split('T')[0]
     },
     {
       id: 2,
       username: "j.franklin",
       name: "JF",
-      joinedDate: "2025-04-20",
-      totalSolar: 8.0000,
-      totalDollars: 1088000,
+      joinedDate: "2025-04-10",
+      totalSolar: 19.0000, // Placeholder count since April 10
+      totalDollars: 2584000,
       isAnonymous: false,
-      lastDistributionDate: "2025-04-28"
+      lastDistributionDate: new Date().toISOString().split('T')[0]
     },
     {
       id: 3,
       username: "john.doe",
       name: "John D",
+      joinedDate: "2025-04-12",
+      totalSolar: 17.0000, // Placeholder count since April 12
+      totalDollars: 2312000,
+      isAnonymous: false,
+      lastDistributionDate: new Date().toISOString().split('T')[0]
+    },
+    {
+      id: 4,
+      username: "maria.smith",
+      name: "Maria S",
+      joinedDate: "2025-04-14",
+      totalSolar: 15.0000, // Placeholder count since April 14
+      totalDollars: 2040000,
+      isAnonymous: false,
+      lastDistributionDate: new Date().toISOString().split('T')[0]
+    },
+    {
+      id: 5,
+      username: "david.johnson",
+      name: "David J",
+      joinedDate: "2025-04-15",
+      totalSolar: 14.0000, // Placeholder count since April 15
+      totalDollars: 1904000,
+      isAnonymous: false,
+      lastDistributionDate: new Date().toISOString().split('T')[0]
+    },
+    {
+      id: 6,
+      username: "susan.williams",
+      name: "Susan W",
+      joinedDate: "2025-04-16",
+      totalSolar: 13.0000, // Placeholder count since April 16
+      totalDollars: 1768000,
+      isAnonymous: false,
+      lastDistributionDate: new Date().toISOString().split('T')[0]
+    },
+    {
+      id: 7,
+      username: "robert.brown",
+      name: "Robert B",
+      joinedDate: "2025-04-18",
+      totalSolar: 11.0000, // Placeholder count since April 18
+      totalDollars: 1496000,
+      isAnonymous: false,
+      lastDistributionDate: new Date().toISOString().split('T')[0]
+    },
+    {
+      id: 8,
+      username: "lisa.jones",
+      name: "Lisa J",
+      joinedDate: "2025-04-19",
+      totalSolar: 10.0000, // Placeholder count since April 19
+      totalDollars: 1360000,
+      isAnonymous: false,
+      lastDistributionDate: new Date().toISOString().split('T')[0]
+    },
+    {
+      id: 9,
+      username: "michael.miller",
+      name: "Michael M",
+      joinedDate: "2025-04-21",
+      totalSolar: 8.0000, // Placeholder count since April 21
+      totalDollars: 1088000,
+      isAnonymous: false,
+      lastDistributionDate: new Date().toISOString().split('T')[0]
+    },
+    {
+      id: 10,
+      username: "jennifer.davis",
+      name: "Jennifer D",
+      joinedDate: "2025-04-22",
+      totalSolar: 7.0000, // Placeholder count since April 22
+      totalDollars: 952000,
+      isAnonymous: false,
+      lastDistributionDate: new Date().toISOString().split('T')[0]
+    },
+    {
+      id: 11,
+      username: "james.garcia",
+      name: "James G",
+      joinedDate: "2025-04-23",
+      totalSolar: 6.0000, // Placeholder count since April 23
+      totalDollars: 816000,
+      isAnonymous: false,
+      lastDistributionDate: new Date().toISOString().split('T')[0]
+    },
+    {
+      id: 12,
+      username: "emily.wilson",
+      name: "Emily W",
+      joinedDate: "2025-04-24",
+      totalSolar: 5.0000, // Placeholder count since April 24
+      totalDollars: 680000,
+      isAnonymous: false,
+      lastDistributionDate: new Date().toISOString().split('T')[0]
+    },
+    {
+      id: 13,
+      username: "thomas.martinez",
+      name: "Thomas M",
+      joinedDate: "2025-04-25",
+      totalSolar: 4.0000, // Placeholder count since April 25
+      totalDollars: 544000,
+      isAnonymous: false,
+      lastDistributionDate: new Date().toISOString().split('T')[0]
+    },
+    {
+      id: 14,
+      username: "patricia.rodriguez",
+      name: "Patricia R",
       joinedDate: "2025-04-26",
-      totalSolar: 2.0000,
+      totalSolar: 3.0000, // Placeholder count since April 26
+      totalDollars: 408000,
+      isAnonymous: false,
+      lastDistributionDate: new Date().toISOString().split('T')[0]
+    },
+    {
+      id: 15,
+      username: "george.lopez",
+      name: "George L",
+      joinedDate: "2025-04-27",
+      totalSolar: 2.0000, // Placeholder count since April 27
       totalDollars: 272000,
       isAnonymous: false,
-      lastDistributionDate: "2025-04-28"
+      lastDistributionDate: new Date().toISOString().split('T')[0]
     }
   ];
 }
