@@ -494,32 +494,48 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Simple middleware for page includes
+// Enhanced middleware for page includes
 app.use((req, res, next) => {
   const originalSend = res.send;
   
   res.send = function(body) {
     if (typeof body === 'string') {
-      // Process header includes
-      if (body.includes('<!-- HEADER_PLACEHOLDER -->')) {
-        try {
-          const headerPath = path.join(__dirname, 'public/includes/header.html');
-          const header = fs.readFileSync(headerPath, 'utf8');
-          body = body.replace('<!-- HEADER_PLACEHOLDER -->', header);
-        } catch (err) {
-          console.error('Error including header:', err);
-        }
+      // Get the header content
+      let headerContent = '';
+      try {
+        const headerPath = path.join(__dirname, 'public/includes/header.html');
+        headerContent = fs.readFileSync(headerPath, 'utf8');
+      } catch (err) {
+        console.error('Error reading header file:', err);
       }
       
-      // Process footer includes
+      // Get the footer content
+      let footerContent = '';
+      try {
+        const footerPath = path.join(__dirname, 'public/includes/footer.html');
+        footerContent = fs.readFileSync(footerPath, 'utf8');
+      } catch (err) {
+        console.error('Error reading footer file:', err);
+      }
+      
+      // Process header placeholder (comment-based)
+      if (body.includes('<!-- HEADER_PLACEHOLDER -->')) {
+        body = body.replace('<!-- HEADER_PLACEHOLDER -->', headerContent);
+      }
+      
+      // Process footer placeholder (comment-based)
       if (body.includes('<!-- FOOTER_PLACEHOLDER -->')) {
-        try {
-          const footerPath = path.join(__dirname, 'public/includes/footer.html');
-          const footer = fs.readFileSync(footerPath, 'utf8');
-          body = body.replace('<!-- FOOTER_PLACEHOLDER -->', footer);
-        } catch (err) {
-          console.error('Error including footer:', err);
-        }
+        body = body.replace('<!-- FOOTER_PLACEHOLDER -->', footerContent);
+      }
+      
+      // Process header container (div-based)
+      if (body.includes('<div id="header-container"></div>')) {
+        body = body.replace('<div id="header-container"></div>', `<div id="header-container">${headerContent}</div>`);
+      }
+      
+      // Process footer container (div-based)
+      if (body.includes('<div id="footer-container"></div>')) {
+        body = body.replace('<div id="footer-container"></div>', `<div id="footer-container">${footerContent}</div>`);
       }
     }
     
