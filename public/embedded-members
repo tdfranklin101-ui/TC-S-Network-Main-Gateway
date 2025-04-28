@@ -1,7 +1,22 @@
-window.embeddedMembers = [
-  { id: 1, name: "Terry D. Franklin", joined_date: "2025-04-09", solar_amount: 19 },
-  { id: 2, name: "JF", joined_date: "2025-04-10", solar_amount: 18 },
-  { id: 3, name: "Davis", joined_date: "2025-04-18", solar_amount: 10 },
-  { id: 4, name: "Miles Franklin", joined_date: "2025-04-18", solar_amount: 10 },
-  { id: 5, name: "John D", joined_date: "2025-04-26", solar_amount: 2 }
-];
+[
+  {
+    "id": 1,
+    "username": "terry.franklin",
+    "name": "Terry D. Franklin",
+    "joinedDate": "2025-04-09",
+    "totalSolar": 9,
+    "totalDollars": 1224000,
+    "isAnonymous": false,
+    "lastDistributionDate": "2025-04-28"
+  },
+  {
+    "id": 2,
+    "username": "j.franklin",
+    "name": "JF",
+    "joinedDate": "2025-04-10",
+    "totalSolar": 8,
+    "totalDollars": 1088000,
+    "isAnonymous": false,
+    "lastDistributionDate": "2025-04-28"
+  }
+]

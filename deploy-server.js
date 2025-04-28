@@ -1,57 +1,132 @@
 /**
- * The Current-See Deployment Server
+ * The Current-See Deployment-Ready Server
  * 
- * This is a specialized deployment version of the server designed for maximum
- * stability and reliable operation on Replit. It handles proper port binding
- * and ensures clean startup/shutdown.
+ * This file is specifically designed for Replit deployments
+ * with minimal dependencies and maximum reliability.
  */
 
-// Import core server functionality
-const server = require('./server.js');
-
-// Additional health check endpoint for deployment monitoring
 const http = require('http');
+const fs = require('fs');
+const path = require('path');
+const express = require('express');
+const cors = require('cors');
+const { Pool } = require('pg');
+
+// Constants
 const PORT = process.env.PORT || 3000;
+const HOST = '0.0.0.0';
+const DATABASE_URL = process.env.DATABASE_URL;
+const CURRENTSEE_DB_URL = process.env.CURRENTSEE_DB_URL;
 
-// Create a basic health check server that responds to all requests
-const healthServer = http.createServer((req, res) => {
-  // Log the health check request
-  console.log(`[${new Date().toISOString()}] Health check received: ${req.method} ${req.url}`);
+// Create Express app
+const app = express();
+
+// Basic configuration
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Simple middleware for page includes
+app.use((req, res, next) => {
+  const originalSend = res.send;
   
-  // Always respond with 200 OK for the health check
-  res.writeHead(200, { 'Content-Type': 'text/plain' });
-  res.end('The Current-See Service is running.');
+  res.send = function(body) {
+    if (typeof body === 'string') {
+      // Process header includes
+      if (body.includes('<!-- HEADER_PLACEHOLDER -->')) {
+        try {
+          const headerPath = path.join(__dirname, 'public/includes/header.html');
+          const header = fs.readFileSync(headerPath, 'utf8');
+          body = body.replace('<!-- HEADER_PLACEHOLDER -->', header);
+        } catch (err) {
+          console.error('Error including header:', err);
+        }
+      }
+      
+      // Process footer includes
+      if (body.includes('<!-- FOOTER_PLACEHOLDER -->')) {
+        try {
+          const footerPath = path.join(__dirname, 'public/includes/footer.html');
+          const footer = fs.readFileSync(footerPath, 'utf8');
+          body = body.replace('<!-- FOOTER_PLACEHOLDER -->', footer);
+        } catch (err) {
+          console.error('Error including footer:', err);
+        }
+      }
+    }
+    
+    return originalSend.call(this, body);
+  };
+  
+  next();
 });
 
-// Set up proper shutdown handling
-process.on('SIGTERM', () => {
-  console.log('[INFO] SIGTERM received, shutting down gracefully...');
-  // Add any cleanup logic here
-  process.exit(0);
+// Static files
+app.use(express.static('public'));
+
+// Health check routes (high priority)
+app.get(['/health', '/healthz', '/_health'], (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    message: 'The Current-See server is running'
+  });
 });
 
-process.on('SIGINT', () => {
-  console.log('[INFO] SIGINT received, shutting down gracefully...');
-  // Add any cleanup logic here
-  process.exit(0);
+// Specific routes to ensure correct file serving
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Handle uncaught exceptions to prevent crashes
+app.get('/home', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/my-solar', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'wallet-ai-features.html'));
+});
+
+app.get('/merchandise', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'merchandise.html'));
+});
+
+app.get('/about', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'about.html'));
+});
+
+app.get('/solar-generator', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'solar-generator.html'));
+});
+
+// Catch-all route for any other paths
+app.use((req, res) => {
+  // Check if the file exists in public directory
+  const filePath = path.join(__dirname, 'public', req.path);
+  
+  if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+    res.sendFile(filePath);
+  } else {
+    // Fall back to index.html
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  }
+});
+
+// Start the server
+const server = http.createServer(app);
+
+server.listen(PORT, HOST, () => {
+  console.log(`Deployment server running at http://${HOST}:${PORT}/`);
+});
+
+// Error handling
+server.on('error', (err) => {
+  console.error('Server error:', err);
+});
+
 process.on('uncaughtException', (err) => {
-  console.error('[ERROR] Uncaught exception:', err);
-  // Keep the server running despite the error
+  console.error('Uncaught exception:', err);
 });
 
-// Handle unhandled promise rejections
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('[ERROR] Unhandled rejection at:', promise, 'reason:', reason);
-  // Keep the server running despite the rejection
+  console.error('Unhandled rejection at:', promise, 'reason:', reason);
 });
-
-// Start the server and notify when ready
-healthServer.listen(PORT, '0.0.0.0', () => {
-  console.log(`[${new Date().toISOString()}] The Current-See Deployment Server is running on port ${PORT}`);
-  console.log(`[${new Date().toISOString()}] Health check endpoint active at http://0.0.0.0:${PORT}/`);
-});
-
-console.log(`The Current-See Deployment Server has been initialized`);
