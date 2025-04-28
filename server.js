@@ -10,6 +10,7 @@ const http = require('http');
 const path = require('path');
 const cors = require('cors');
 const fs = require('fs');
+const pageIncludes = require('./page-includes');
 
 // Constants
 const PORT = process.env.PORT || 3000;
@@ -21,6 +22,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(pageIncludes.createIncludesMiddleware());
 
 // Serve static files from the public directory
 app.use(express.static(path.join(__dirname, 'public')));
@@ -36,12 +38,48 @@ function log(message, isError = false) {
   logFile.write(entry + '\n');
 }
 
+// HTML Template Processor
+function processHtmlTemplate(filePath, res) {
+  try {
+    let html = fs.readFileSync(filePath, 'utf8');
+    
+    // Replace header placeholder
+    if (html.includes('<!-- HEADER_PLACEHOLDER -->')) {
+      let headerPath = path.join(__dirname, 'public/includes/header.html');
+      if (!fs.existsSync(headerPath)) {
+        headerPath = path.join(__dirname, 'public/templates/header.html');
+      }
+      if (fs.existsSync(headerPath)) {
+        const header = fs.readFileSync(headerPath, 'utf8');
+        html = html.replace('<!-- HEADER_PLACEHOLDER -->', header);
+      }
+    }
+    
+    // Replace footer placeholder
+    if (html.includes('<!-- FOOTER_PLACEHOLDER -->')) {
+      let footerPath = path.join(__dirname, 'public/includes/footer.html');
+      if (!fs.existsSync(footerPath)) {
+        footerPath = path.join(__dirname, 'public/templates/footer.html');
+      }
+      if (fs.existsSync(footerPath)) {
+        const footer = fs.readFileSync(footerPath, 'utf8');
+        html = html.replace('<!-- FOOTER_PLACEHOLDER -->', footer);
+      }
+    }
+    
+    res.send(html);
+  } catch (err) {
+    log(`Error processing HTML template: ${err.message}`, true);
+    res.status(500).send('Server error');
+  }
+}
+
 // Health check at root path (for Replit deployment)
 app.get('/', (req, res) => {
   if (req.headers.accept && req.headers.accept.includes('application/json')) {
     return res.json({ status: 'healthy' });
   }
-  res.sendFile(path.join(__dirname, 'public/index.html'));
+  processHtmlTemplate(path.join(__dirname, 'public/index.html'), res);
 });
 
 // Health check endpoint
@@ -76,6 +114,27 @@ app.get('/api/members.json', (req, res) => {
   }
 });
 
+// Member count API endpoint
+app.get('/api/member-count', (req, res) => {
+  try {
+    const membersFile = path.join(__dirname, 'public/embedded-members');
+    if (fs.existsSync(membersFile)) {
+      const data = fs.readFileSync(membersFile, 'utf8');
+      const membersMatch = data.match(/window\.embeddedMembers\s*=\s*(\[.*?\]);/s);
+      if (membersMatch && membersMatch[1]) {
+        const members = JSON.parse(membersMatch[1]);
+        return res.json({ count: members.length });
+      }
+    }
+    
+    // Fallback data
+    res.json({ count: 5 });
+  } catch (err) {
+    log(`Error in /api/member-count: ${err.message}`, true);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 // Solar data API endpoint (simple, no parameters)
 app.get('/api/solar-data', (req, res) => {
   try {
@@ -106,9 +165,46 @@ app.get('/api/solar-data', (req, res) => {
   }
 });
 
+// Define HTML page routes
+const htmlPages = [
+  'about', 'wallet', 'wallet-ai-features', 'prototype', 'whitepapers',
+  'business_plan', 'declaration', 'founder_note', 'mission', 'our-technology',
+  'roadmap', 'governance', 'solar-generator', 'research', 'solar-calculator',
+  'faq', 'glossary', 'merch', 'app', 'energy-scanner', 'api', 'members',
+  'stories', 'partners', 'events', 'blog', 'news', 'contact', 'terms',
+  'privacy', 'cookies'
+];
+
+// Register routes for each HTML page
+htmlPages.forEach(page => {
+  app.get(`/${page}.html`, (req, res) => {
+    const filePath = path.join(__dirname, `public/${page}.html`);
+    if (fs.existsSync(filePath)) {
+      processHtmlTemplate(filePath, res);
+    } else {
+      // If the specific page doesn't exist, create a temporary placeholder
+      const placeholderPath = path.join(__dirname, 'public/placeholder.html');
+      if (fs.existsSync(placeholderPath)) {
+        processHtmlTemplate(placeholderPath, res);
+      } else {
+        res.status(404).send('Page not found');
+      }
+    }
+  });
+});
+
 // Catchall route - serve index.html without route parameters
 app.use((req, res) => {
-  res.sendFile(path.join(__dirname, 'public/index.html'));
+  if (req.url.endsWith('.html')) {
+    const filePath = path.join(__dirname, 'public', req.url);
+    if (fs.existsSync(filePath)) {
+      processHtmlTemplate(filePath, res);
+    } else {
+      res.status(404).send('Page not found');
+    }
+  } else {
+    processHtmlTemplate(path.join(__dirname, 'public/index.html'), res);
+  }
 });
 
 // Create HTTP server

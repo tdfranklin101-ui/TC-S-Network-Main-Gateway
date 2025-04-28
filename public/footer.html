@@ -1,0 +1,175 @@
+<footer class="main-footer">
+  <div class="container">
+    <div class="footer-columns">
+      <div class="footer-column">
+        <h3>The Current-See</h3>
+        <ul>
+          <li><a href="/">Home</a></li>
+          <li><a href="/about.html">About Us</a></li>
+          <li><a href="/declaration.html">Solar Declaration</a></li>
+          <li><a href="/founder_note.html">Founder's Note</a></li>
+          <li><a href="/contact.html">Contact</a></li>
+        </ul>
+      </div>
+      
+      <div class="footer-column">
+        <h3>Resources</h3>
+        <ul>
+          <li><a href="/whitepapers.html">White Papers</a></li>
+          <li><a href="/business_plan.html">Business Plan</a></li>
+          <li><a href="/research.html">Research</a></li>
+          <li><a href="/faq.html">FAQ</a></li>
+          <li><a href="/glossary.html">Glossary</a></li>
+        </ul>
+      </div>
+      
+      <div class="footer-column">
+        <h3>Products</h3>
+        <ul>
+          <li><a href="/app.html">Mobile App</a></li>
+          <li><a href="/wallet.html">Solar Wallet</a></li>
+          <li><a href="/prototype.html">Prototype</a></li>
+          <li><a href="/merch.html">Merchandise</a></li>
+        </ul>
+      </div>
+      
+      <div class="footer-column">
+        <h3>Community</h3>
+        <ul>
+          <li><a href="/members.html">Members</a></li>
+          <li><a href="/partners.html">Partners</a></li>
+          <li><a href="/events.html">Events</a></li>
+          <li><a href="/blog.html">Blog</a></li>
+        </ul>
+      </div>
+      
+      <div class="footer-column">
+        <h3>Connect</h3>
+        <div class="social-icons">
+          <a href="https://twitter.com/thecurrentsee" target="_blank" rel="noopener noreferrer" class="social-icon twitter">
+            <img src="/img/social/twitter.svg" alt="Twitter" onerror="this.src='/img/social/twitter.png'; this.onerror=null;">
+          </a>
+          <a href="https://facebook.com/thecurrentsee" target="_blank" rel="noopener noreferrer" class="social-icon facebook">
+            <img src="/img/social/facebook.svg" alt="Facebook" onerror="this.src='/img/social/facebook.png'; this.onerror=null;">
+          </a>
+          <a href="https://instagram.com/thecurrentsee" target="_blank" rel="noopener noreferrer" class="social-icon instagram">
+            <img src="/img/social/instagram.svg" alt="Instagram" onerror="this.src='/img/social/instagram.png'; this.onerror=null;">
+          </a>
+          <a href="https://linkedin.com/company/thecurrentsee" target="_blank" rel="noopener noreferrer" class="social-icon linkedin">
+            <img src="/img/social/linkedin.svg" alt="LinkedIn" onerror="this.src='/img/social/linkedin.png'; this.onerror=null;">
+          </a>
+          <a href="https://youtube.com/c/thecurrentsee" target="_blank" rel="noopener noreferrer" class="social-icon youtube">
+            <img src="/img/social/youtube.svg" alt="YouTube" onerror="this.src='/img/social/youtube.png'; this.onerror=null;">
+          </a>
+        </div>
+        <div class="footer-signup">
+          <p>Join our newsletter:</p>
+          <form action="/api/newsletter" method="post" class="newsletter-form">
+            <input type="email" name="email" placeholder="Your email" required>
+            <button type="submit">Subscribe</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    
+    <div class="footer-bottom">
+      <div class="footer-copyright">
+        &copy; 2025 The Current-See PBC, Inc. All rights reserved.
+      </div>
+      <div class="footer-links">
+        <a href="/terms.html">Terms of Service</a>
+        <a href="/privacy.html">Privacy Policy</a>
+        <a href="/cookies.html">Cookie Policy</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- Dropdown Menu Script -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Desktop dropdown menu
+    const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
+    
+    dropdownToggles.forEach(toggle => {
+      toggle.addEventListener('click', function(e) {
+        e.preventDefault();
+        const parent = this.parentElement;
+        parent.classList.toggle('dropdown-open');
+        
+        // Close other open dropdowns
+        dropdownToggles.forEach(otherToggle => {
+          if (otherToggle !== toggle) {
+            otherToggle.parentElement.classList.remove('dropdown-open');
+          }
+        });
+      });
+    });
+    
+    // Mobile dropdown menu
+    const mobileDropdownToggles = document.querySelectorAll('.mobile-dropdown-toggle');
+    
+    mobileDropdownToggles.forEach(toggle => {
+      toggle.addEventListener('click', function(e) {
+        e.preventDefault();
+        const parent = this.parentElement;
+        parent.classList.toggle('mobile-dropdown-open');
+        
+        // Don't close other dropdowns on mobile for better UX
+      });
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+      const isDropdownToggle = e.target.classList.contains('dropdown-toggle');
+      const isInDropdown = e.target.closest('.dropdown-menu');
+      
+      if (!isDropdownToggle && !isInDropdown) {
+        dropdownToggles.forEach(toggle => {
+          toggle.parentElement.classList.remove('dropdown-open');
+        });
+      }
+    });
+    
+    // Language selector
+    const languageToggle = document.querySelector('.language-toggle');
+    const languageDropdown = document.querySelector('.language-dropdown');
+    
+    if (languageToggle && languageDropdown) {
+      languageToggle.addEventListener('click', function() {
+        languageDropdown.classList.toggle('show-language-dropdown');
+      });
+      
+      // Close language dropdown when clicking outside
+      document.addEventListener('click', function(e) {
+        if (!e.target.closest('.language-selector')) {
+          languageDropdown.classList.remove('show-language-dropdown');
+        }
+      });
+      
+      // Language selection
+      const languageOptions = document.querySelectorAll('.language-dropdown a');
+      languageOptions.forEach(option => {
+        option.addEventListener('click', function(e) {
+          e.preventDefault();
+          const lang = this.getAttribute('data-lang');
+          languageToggle.textContent = lang.toUpperCase();
+          
+          // Remove active class from all options
+          languageOptions.forEach(opt => opt.classList.remove('active'));
+          
+          // Add active class to selected option
+          this.classList.add('active');
+          
+          // Close the dropdown
+          languageDropdown.classList.remove('show-language-dropdown');
+          
+          // Set the language (assuming you have a function to handle this)
+          if (typeof setLanguage === 'function') {
+            setLanguage(lang);
+          }
+        });
+      });
+    }
+  });
+</script>

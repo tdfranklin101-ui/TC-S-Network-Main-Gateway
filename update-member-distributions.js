@@ -1,7 +1,7 @@
 /**
- * The Current-See - April 27 Distribution Update
+ * The Current-See - April 28 Distribution Update
  * 
- * This script updates distribution amounts for specific members to include the 4/27/2025 distribution
+ * This script updates distribution amounts for specific members to include the 4/28/2025 distribution
  * and restores the John D test user to the system
  */
 
@@ -11,7 +11,7 @@ const path = require('path');
 // Constants
 const MEMBERS_FILE_PATH = path.join(__dirname, 'public/api/members.json');
 const EMBEDDED_MEMBERS_PATH = path.join(__dirname, 'public/embedded-members');
-const TODAY = new Date('2025-04-27');
+const TODAY = new Date('2025-04-28');
 const SOLAR_PER_DAY = 1;
 const SOLAR_DOLLAR_VALUE = 136000;
 
@@ -103,7 +103,7 @@ function restoreJohnDTestUser() {
 
 // Function to update distribution amounts
 function updateDistributions() {
-  console.log('Updating distribution amounts for April 27, 2025...');
+  console.log('Updating distribution amounts for April 28, 2025...');
   
   try {
     // Read members file
@@ -112,7 +112,7 @@ function updateDistributions() {
     
     let updateCount = 0;
     
-    // Range of users to update (Terry D Franklin to Liam McKay)
+    // Range of users to update (all active members)
     const targetUsers = [
       "Terry D. Franklin",
       "JF",
@@ -121,7 +121,8 @@ function updateDistributions() {
       "Arden F",
       "Marissa Hasseman",
       "Chris Bently",
-      "Liam McKay"
+      "Liam McKay",
+      "John D"
     ];
     
     // Process each member
@@ -133,13 +134,13 @@ function updateDistributions() {
       
       // Check if this member is in our target list
       if (targetUsers.includes(member.name)) {
-        // Check if already updated for 4/27
-        if (member.last_distribution_date === "2025-04-27" || member.lastDistributionDate === "2025-04-27") {
-          console.log(`Member ${member.name} already updated for 4/27/2025`);
+        // Check if already updated for 4/28
+        if (member.last_distribution_date === "2025-04-28" || member.lastDistributionDate === "2025-04-28") {
+          console.log(`Member ${member.name} already updated for 4/28/2025`);
           continue;
         }
         
-        console.log(`Updating ${member.name} to include 4/27/2025 distribution`);
+        console.log(`Updating ${member.name} to include 4/28/2025 distribution`);
         
         // Get current SOLAR amount
         const currentSolar = parseFloat(member.total_solar || member.totalSolar || 0);
