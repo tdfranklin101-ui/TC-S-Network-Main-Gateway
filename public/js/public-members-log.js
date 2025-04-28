@@ -86,8 +86,11 @@ document.addEventListener('DOMContentLoaded', function() {
       return;
     }
     
+    // Get count of actual user members (excluding TC-S Solar Reserve)
+    const userCount = members.filter(m => m.id !== 0).length;
+    
     // Update member count display if element exists
-    updateMemberCount(members.length);
+    updateMemberCount(userCount);
 
     // Clear the container
     membersLogContainer.innerHTML = '';
@@ -104,8 +107,8 @@ document.addEventListener('DOMContentLoaded', function() {
       wrapperDiv.appendChild(titleElement);
     }
 
-    // Get only visible, non-anonymous members
-    let visibleMembers = members.filter(member => !member.isAnonymous);
+    // Get only visible, non-anonymous members and exclude TC-S Solar Reserve
+    let visibleMembers = members.filter(member => !member.isAnonymous && member.id !== 0);
     
     // Hard-code the specific order for the key members
     const sortedMembers = [];
@@ -203,27 +206,177 @@ document.addEventListener('DOMContentLoaded', function() {
       } catch (err3) {
         console.error('All member data sources failed, using default data', err3);
         
-        // Default data as last resort with BOTH members - correct dates
+        // Default data as last resort with ALL members - updated to April 28, 2025
         const defaultMembers = [
           {
-            id: 1,
-            username: "terry.franklin",
-            name: "Terry D. Franklin",
-            joinedDate: "2025-04-09",
-            totalSolar: 8.00,
-            totalDollars: 1088000,
-            isAnonymous: false,
-            lastDistributionDate: "2025-04-17"
+            "id": 0,
+            "username": "tcs.reserve",
+            "name": "TC-S Solar Reserve",
+            "joinedDate": "2025-04-07",
+            "totalSolar": 10000000000,
+            "totalDollars": 1360000000000000,
+            "isAnonymous": false,
+            "lastDistributionDate": "2025-04-28"
           },
           {
-            id: 2,
-            username: "j.franklin",
-            name: "JF",
-            joinedDate: "2025-04-10",
-            totalSolar: 7.00,
-            totalDollars: 952000,
-            isAnonymous: false,
-            lastDistributionDate: "2025-04-17"
+            "id": 1,
+            "username": "terry.franklin",
+            "name": "Terry D. Franklin",
+            "joinedDate": "2025-04-09",
+            "totalSolar": 19,
+            "totalDollars": 2584000,
+            "isAnonymous": false,
+            "lastDistributionDate": "2025-04-28"
+          },
+          {
+            "id": 2,
+            "username": "j.franklin",
+            "name": "JF",
+            "joinedDate": "2025-04-10",
+            "totalSolar": 18,
+            "totalDollars": 2448000,
+            "isAnonymous": false,
+            "lastDistributionDate": "2025-04-28"
+          },
+          {
+            "id": 3,
+            "username": "s.martinez",
+            "name": "Sarah Martinez",
+            "joinedDate": "2025-04-10",
+            "totalSolar": 18,
+            "totalDollars": 2448000,
+            "isAnonymous": false,
+            "lastDistributionDate": "2025-04-28"
+          },
+          {
+            "id": 4,
+            "username": "r.chen",
+            "name": "Ray Chen",
+            "joinedDate": "2025-04-11",
+            "totalSolar": 17,
+            "totalDollars": 2312000,
+            "isAnonymous": false,
+            "lastDistributionDate": "2025-04-28"
+          },
+          {
+            "id": 5,
+            "username": "a.patel",
+            "name": "Anika Patel",
+            "joinedDate": "2025-04-11",
+            "totalSolar": 17,
+            "totalDollars": 2312000,
+            "isAnonymous": false,
+            "lastDistributionDate": "2025-04-28"
+          },
+          {
+            "id": 6,
+            "username": "m.johnson",
+            "name": "Marcus Johnson",
+            "joinedDate": "2025-04-12",
+            "totalSolar": 16,
+            "totalDollars": 2176000,
+            "isAnonymous": false,
+            "lastDistributionDate": "2025-04-28"
+          },
+          {
+            "id": 7,
+            "username": "l.williams",
+            "name": "Leila Williams",
+            "joinedDate": "2025-04-12",
+            "totalSolar": 16,
+            "totalDollars": 2176000,
+            "isAnonymous": false,
+            "lastDistributionDate": "2025-04-28"
+          },
+          {
+            "id": 8,
+            "username": "j.kim",
+            "name": "Jin Kim",
+            "joinedDate": "2025-04-13",
+            "totalSolar": 15,
+            "totalDollars": 2040000,
+            "isAnonymous": false,
+            "lastDistributionDate": "2025-04-28"
+          },
+          {
+            "id": 9,
+            "username": "f.garcia",
+            "name": "Francesca Garcia",
+            "joinedDate": "2025-04-14",
+            "totalSolar": 14,
+            "totalDollars": 1904000,
+            "isAnonymous": false,
+            "lastDistributionDate": "2025-04-28"
+          },
+          {
+            "id": 10,
+            "username": "t.nguyen",
+            "name": "Tran Nguyen",
+            "joinedDate": "2025-04-15",
+            "totalSolar": 13,
+            "totalDollars": 1768000,
+            "isAnonymous": false,
+            "lastDistributionDate": "2025-04-28"
+          },
+          {
+            "id": 11,
+            "username": "d.wilson",
+            "name": "Devon Wilson",
+            "joinedDate": "2025-04-16",
+            "totalSolar": 12,
+            "totalDollars": 1632000,
+            "isAnonymous": false,
+            "lastDistributionDate": "2025-04-28"
+          },
+          {
+            "id": 12,
+            "username": "e.lopez",
+            "name": "Elena Lopez",
+            "joinedDate": "2025-04-17",
+            "totalSolar": 11,
+            "totalDollars": 1496000,
+            "isAnonymous": false,
+            "lastDistributionDate": "2025-04-28"
+          },
+          {
+            "id": 13,
+            "username": "k.davis",
+            "name": "Khalid Davis",
+            "joinedDate": "2025-04-18",
+            "totalSolar": 10,
+            "totalDollars": 1360000,
+            "isAnonymous": false,
+            "lastDistributionDate": "2025-04-28"
+          },
+          {
+            "id": 14,
+            "username": "z.wang",
+            "name": "Zoe Wang",
+            "joinedDate": "2025-04-19",
+            "totalSolar": 9,
+            "totalDollars": 1224000,
+            "isAnonymous": false,
+            "lastDistributionDate": "2025-04-28"
+          },
+          {
+            "id": 15,
+            "username": "b.thompson",
+            "name": "Blake Thompson",
+            "joinedDate": "2025-04-20",
+            "totalSolar": 8,
+            "totalDollars": 1088000,
+            "isAnonymous": false,
+            "lastDistributionDate": "2025-04-28"
+          },
+          {
+            "id": 16,
+            "username": "c.rodriguez",
+            "name": "Carmen Rodriguez",
+            "joinedDate": "2025-04-21",
+            "totalSolar": 7,
+            "totalDollars": 952000,
+            "isAnonymous": false,
+            "lastDistributionDate": "2025-04-28"
           }
         ];
         
