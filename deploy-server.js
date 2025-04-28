@@ -54,232 +54,363 @@ function calculateCurrentSolar(joinDate, currentDate = new Date()) {
   return days;
 }
 
+// Function to parse CSV file and extract member data
+function loadMembersFromCSV(filePath, currentDate = new Date()) {
+  try {
+    if (!fs.existsSync(filePath)) {
+      console.error(`CSV file not found: ${filePath}`);
+      return null;
+    }
+    
+    const csvData = fs.readFileSync(filePath, 'utf8');
+    const lines = csvData.split('\n');
+    
+    // Skip header line
+    const header = lines[0];
+    const members = [];
+    
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (line === '') continue;
+      
+      // Handle quoted fields properly
+      const fields = [];
+      let inQuote = false;
+      let currentField = '';
+      
+      for (let j = 0; j < line.length; j++) {
+        const char = line[j];
+        
+        if (char === '"') {
+          inQuote = !inQuote;
+        } else if (char === ',' && !inQuote) {
+          fields.push(currentField);
+          currentField = '';
+        } else {
+          currentField += char;
+        }
+      }
+      
+      // Add the last field
+      fields.push(currentField);
+      
+      if (fields.length < 11) continue; // Skip invalid lines
+      
+      // Extract member data from CSV fields
+      const [id, username, name, email, joinedDate, totalSolar, totalDollars, isAnonymous, isReserve, isPlaceholder, lastDistributionDate] = fields;
+      
+      const member = {
+        id: parseInt(id, 10), 
+        username: username.replace(/"/g, ''),
+        name: name.replace(/"/g, ''),
+        joinedDate: joinedDate.replace(/"/g, ''),
+        totalSolar: parseFloat(totalSolar),
+        totalDollars: parseFloat(totalDollars),
+        isAnonymous: isAnonymous.toLowerCase() === 'true',
+        isReserve: isReserve && isReserve.toLowerCase() === 'true',
+        lastDistributionDate: lastDistributionDate.replace(/"/g, '') || currentDate.toISOString().split('T')[0]
+      };
+      
+      members.push(member);
+    }
+    
+    console.log(`Successfully loaded ${members.length} members from CSV file`);
+    return members;
+  } catch (error) {
+    console.error(`Error parsing CSV file: ${error.message}`);
+    return null;
+  }
+}
+
+// Update members with current SOLAR totals based on join date
+function updateMembersWithCurrentTotals(members, currentDate = new Date()) {
+  return members.map(member => {
+    // Skip updating reserve accounts or accounts with fixed values
+    if (member.isReserve || member.username.includes('reserve')) {
+      return {
+        ...member,
+        // Ensure totalDollars is calculated as a numeric value
+        totalDollars: member.totalSolar * 136000
+      };
+    }
+
+    // Calculate current SOLAR based on join date
+    const totalSolar = calculateCurrentSolar(member.joinedDate, currentDate);
+    
+    return {
+      ...member,
+      totalSolar: parseFloat(totalSolar.toFixed(4)),
+      totalDollars: parseFloat((totalSolar * 136000).toFixed(2))
+    };
+  });
+}
+
 // Members Data with CURRENT totals as of today
 let members = [];
-try {
-  // Try to load members from embedded data
-  const embeddedPath = path.join(__dirname, 'public/embedded-members.json');
+// Try to load members from embedded data
+const embeddedPath = path.join(__dirname, 'public/embedded-members.json');
+const csvPath = path.join(__dirname, 'members_export.csv');
+
+// Current date for calculation
+const currentDate = new Date();
+
+// Define main function to load members data
+function loadMembersData() {
+  let localMembers = [];
   
-  // Current date for calculation
-  const currentDate = new Date();
-  
-  // Default members with up-to-date SOLAR balances - FULL LIST
-  const defaultMembers = [
-    {
-      id: 0,
-      username: "tcs.reserve",
-      name: "TC-S Solar Reserve",
-      joinedDate: "2025-04-07", // Started on system launch date
-      totalSolar: 10000000000, // 10 billion SOLAR fixed allocation
-      get totalDollars() { return this.totalSolar * 136000; },
-      isAnonymous: false,
-      lastDistributionDate: currentDate.toISOString().split('T')[0] // Today
-    },
-    {
-      id: 1,
-      username: "terry.franklin",
-      name: "Terry D. Franklin",
-      joinedDate: "2025-04-09",
-      // Calculate days from April 9 to today (inclusive)
-      totalSolar: calculateCurrentSolar("2025-04-09", currentDate),
-      // $136,000 per SOLAR
-      get totalDollars() { return this.totalSolar * 136000; },
-      isAnonymous: false,
-      lastDistributionDate: currentDate.toISOString().split('T')[0] // Today
-    },
-    {
-      id: 2,
-      username: "j.franklin",
-      name: "JF",
-      joinedDate: "2025-04-10", // Updated to match original documentation
-      // Calculate days from April 10 to today (inclusive)
-      totalSolar: calculateCurrentSolar("2025-04-10", currentDate),
-      // $136,000 per SOLAR
-      get totalDollars() { return this.totalSolar * 136000; },
-      isAnonymous: false,
-      lastDistributionDate: currentDate.toISOString().split('T')[0] // Today
-    },
-    {
-      id: 3,
-      username: "john.doe",
-      name: "John D",
-      joinedDate: "2025-04-12",
-      // Calculate days from April 12 to today (inclusive)
-      totalSolar: calculateCurrentSolar("2025-04-12", currentDate),
-      // $136,000 per SOLAR
-      get totalDollars() { return this.totalSolar * 136000; },
-      isAnonymous: false,
-      lastDistributionDate: currentDate.toISOString().split('T')[0] // Today
-    },
-    {
-      id: 4,
-      username: "maria.smith",
-      name: "Maria S",
-      joinedDate: "2025-04-14",
-      totalSolar: calculateCurrentSolar("2025-04-14", currentDate),
-      get totalDollars() { return this.totalSolar * 136000; },
-      isAnonymous: false,
-      lastDistributionDate: currentDate.toISOString().split('T')[0]
-    },
-    {
-      id: 5,
-      username: "david.johnson",
-      name: "David J",
-      joinedDate: "2025-04-15",
-      totalSolar: calculateCurrentSolar("2025-04-15", currentDate),
-      get totalDollars() { return this.totalSolar * 136000; },
-      isAnonymous: false,
-      lastDistributionDate: currentDate.toISOString().split('T')[0]
-    },
-    {
-      id: 6,
-      username: "susan.williams",
-      name: "Susan W",
-      joinedDate: "2025-04-16",
-      totalSolar: calculateCurrentSolar("2025-04-16", currentDate),
-      get totalDollars() { return this.totalSolar * 136000; },
-      isAnonymous: false,
-      lastDistributionDate: currentDate.toISOString().split('T')[0]
-    },
-    {
-      id: 7,
-      username: "robert.brown",
-      name: "Robert B",
-      joinedDate: "2025-04-18",
-      totalSolar: calculateCurrentSolar("2025-04-18", currentDate),
-      get totalDollars() { return this.totalSolar * 136000; },
-      isAnonymous: false,
-      lastDistributionDate: currentDate.toISOString().split('T')[0]
-    },
-    {
-      id: 8,
-      username: "lisa.jones",
-      name: "Lisa J",
-      joinedDate: "2025-04-19",
-      totalSolar: calculateCurrentSolar("2025-04-19", currentDate),
-      get totalDollars() { return this.totalSolar * 136000; },
-      isAnonymous: false,
-      lastDistributionDate: currentDate.toISOString().split('T')[0]
-    },
-    {
-      id: 9,
-      username: "michael.miller",
-      name: "Michael M",
-      joinedDate: "2025-04-21",
-      totalSolar: calculateCurrentSolar("2025-04-21", currentDate),
-      get totalDollars() { return this.totalSolar * 136000; },
-      isAnonymous: false,
-      lastDistributionDate: currentDate.toISOString().split('T')[0]
-    },
-    {
-      id: 10,
-      username: "jennifer.davis",
-      name: "Jennifer D",
-      joinedDate: "2025-04-22",
-      totalSolar: calculateCurrentSolar("2025-04-22", currentDate),
-      get totalDollars() { return this.totalSolar * 136000; },
-      isAnonymous: false,
-      lastDistributionDate: currentDate.toISOString().split('T')[0]
-    },
-    {
-      id: 11,
-      username: "james.garcia",
-      name: "James G",
-      joinedDate: "2025-04-23",
-      totalSolar: calculateCurrentSolar("2025-04-23", currentDate),
-      get totalDollars() { return this.totalSolar * 136000; },
-      isAnonymous: false,
-      lastDistributionDate: currentDate.toISOString().split('T')[0]
-    },
-    {
-      id: 12,
-      username: "emily.wilson",
-      name: "Emily W",
-      joinedDate: "2025-04-24",
-      totalSolar: calculateCurrentSolar("2025-04-24", currentDate),
-      get totalDollars() { return this.totalSolar * 136000; },
-      isAnonymous: false,
-      lastDistributionDate: currentDate.toISOString().split('T')[0]
-    },
-    {
-      id: 13,
-      username: "thomas.martinez",
-      name: "Thomas M",
-      joinedDate: "2025-04-25",
-      totalSolar: calculateCurrentSolar("2025-04-25", currentDate),
-      get totalDollars() { return this.totalSolar * 136000; },
-      isAnonymous: false,
-      lastDistributionDate: currentDate.toISOString().split('T')[0]
-    },
-    {
-      id: 14,
-      username: "patricia.rodriguez",
-      name: "Patricia R",
-      joinedDate: "2025-04-26",
-      totalSolar: calculateCurrentSolar("2025-04-26", currentDate),
-      get totalDollars() { return this.totalSolar * 136000; },
-      isAnonymous: false,
-      lastDistributionDate: currentDate.toISOString().split('T')[0]
-    },
-    {
-      id: 15,
-      username: "george.lopez",
-      name: "George L",
-      joinedDate: "2025-04-27",
-      totalSolar: calculateCurrentSolar("2025-04-27", currentDate),
-      get totalDollars() { return this.totalSolar * 136000; },
-      isAnonymous: false,
-      lastDistributionDate: currentDate.toISOString().split('T')[0]
-    }
-  ];
-  
-  // Convert getter to actual property for JSON serialization
-  const processedMembers = defaultMembers.map(member => ({
-    ...member,
-    totalSolar: parseFloat(member.totalSolar.toFixed(4)), // Format to 4 decimal places
-    totalDollars: member.totalDollars // Use the computed value
-  }));
-  
-  // Check for existing file or create new
-  if (fs.existsSync(embeddedPath)) {
-    members = JSON.parse(fs.readFileSync(embeddedPath, 'utf8'));
-    console.log(`Loaded ${members.length} members from embedded data file`);
+  try {
+    // Attempt to load members from CSV file
+    const csvMembers = loadMembersFromCSV(csvPath, currentDate);
     
-    // Update with current values if file exists
-    members = processedMembers;
-    
-    // Update the file with current values
-    try {
-      fs.writeFileSync(embeddedPath, JSON.stringify(members, null, 2));
-      console.log("Updated embedded.json with current SOLAR totals");
-    } catch (writeErr) {
-      console.error("Error updating embedded.json file:", writeErr);
-    }
-  } else {
-    // Use the processed default members
-    members = processedMembers;
-    console.log("Using default members data with current SOLAR totals");
-    
-    // No need to create directory since we're using a direct file path
-    // Make sure the public directory exists
-    const publicDir = path.join(__dirname, 'public');
-    if (!fs.existsSync(publicDir)) {
+    // Process CSV members if available
+    if (csvMembers && csvMembers.length > 0) {
+      // Update with current totals
+      const processedMembers = updateMembersWithCurrentTotals(csvMembers, currentDate);
+      localMembers = processedMembers;
+      console.log(`Loaded and updated ${localMembers.length} members from CSV file`);
+      
+      // Update the file with current values
       try {
-        fs.mkdirSync(publicDir, { recursive: true });
-        console.log("Created public directory");
-      } catch (mkdirErr) {
-        console.error("Error creating public directory:", mkdirErr);
+        fs.writeFileSync(embeddedPath, JSON.stringify(localMembers, null, 2));
+        console.log("Updated embedded.json with current SOLAR totals from CSV data");
+      } catch (writeErr) {
+        console.error("Error updating embedded.json file:", writeErr);
+      }
+    } else {
+      // We only get here if CSV loading failed
+      console.log("CSV loading failed, using default hardcoded members");
+      
+      // Default members with up-to-date SOLAR balances - FULL LIST
+      const defaultMembers = [
+        {
+          id: 0,
+          username: "tcs.reserve",
+          name: "TC-S Solar Reserve",
+          joinedDate: "2025-04-07", // Started on system launch date
+          totalSolar: 10000000000, // 10 billion SOLAR fixed allocation
+          get totalDollars() { return this.totalSolar * 136000; },
+          isAnonymous: false,
+          lastDistributionDate: currentDate.toISOString().split('T')[0] // Today
+        },
+        {
+          id: 1,
+          username: "terry.franklin",
+          name: "Terry D. Franklin",
+          joinedDate: "2025-04-09",
+          // Calculate days from April 9 to today (inclusive)
+          totalSolar: calculateCurrentSolar("2025-04-09", currentDate),
+          // $136,000 per SOLAR
+          get totalDollars() { return this.totalSolar * 136000; },
+          isAnonymous: false,
+          lastDistributionDate: currentDate.toISOString().split('T')[0] // Today
+        },
+        {
+          id: 2,
+          username: "j.franklin",
+          name: "JF",
+          joinedDate: "2025-04-10", // Updated to match original documentation
+          // Calculate days from April 10 to today (inclusive)
+          totalSolar: calculateCurrentSolar("2025-04-10", currentDate),
+          // $136,000 per SOLAR
+          get totalDollars() { return this.totalSolar * 136000; },
+          isAnonymous: false,
+          lastDistributionDate: currentDate.toISOString().split('T')[0] // Today
+        },
+        {
+          id: 3,
+          username: "john.doe",
+          name: "John D",
+          joinedDate: "2025-04-12",
+          // Calculate days from April 12 to today (inclusive)
+          totalSolar: calculateCurrentSolar("2025-04-12", currentDate),
+          // $136,000 per SOLAR
+          get totalDollars() { return this.totalSolar * 136000; },
+          isAnonymous: false,
+          lastDistributionDate: currentDate.toISOString().split('T')[0] // Today
+        },
+        {
+          id: 4,
+          username: "maria.smith",
+          name: "Maria S",
+          joinedDate: "2025-04-14",
+          totalSolar: calculateCurrentSolar("2025-04-14", currentDate),
+          get totalDollars() { return this.totalSolar * 136000; },
+          isAnonymous: false,
+          lastDistributionDate: currentDate.toISOString().split('T')[0]
+        },
+        {
+          id: 5,
+          username: "david.johnson",
+          name: "David J",
+          joinedDate: "2025-04-15",
+          totalSolar: calculateCurrentSolar("2025-04-15", currentDate),
+          get totalDollars() { return this.totalSolar * 136000; },
+          isAnonymous: false,
+          lastDistributionDate: currentDate.toISOString().split('T')[0]
+        },
+        {
+          id: 6,
+          username: "susan.williams",
+          name: "Susan W",
+          joinedDate: "2025-04-16",
+          totalSolar: calculateCurrentSolar("2025-04-16", currentDate),
+          get totalDollars() { return this.totalSolar * 136000; },
+          isAnonymous: false,
+          lastDistributionDate: currentDate.toISOString().split('T')[0]
+        },
+        {
+          id: 7,
+          username: "robert.brown",
+          name: "Robert B",
+          joinedDate: "2025-04-18",
+          totalSolar: calculateCurrentSolar("2025-04-18", currentDate),
+          get totalDollars() { return this.totalSolar * 136000; },
+          isAnonymous: false,
+          lastDistributionDate: currentDate.toISOString().split('T')[0]
+        },
+        {
+          id: 8,
+          username: "lisa.jones",
+          name: "Lisa J",
+          joinedDate: "2025-04-19",
+          totalSolar: calculateCurrentSolar("2025-04-19", currentDate),
+          get totalDollars() { return this.totalSolar * 136000; },
+          isAnonymous: false,
+          lastDistributionDate: currentDate.toISOString().split('T')[0]
+        },
+        {
+          id: 9,
+          username: "michael.miller",
+          name: "Michael M",
+          joinedDate: "2025-04-21",
+          totalSolar: calculateCurrentSolar("2025-04-21", currentDate),
+          get totalDollars() { return this.totalSolar * 136000; },
+          isAnonymous: false,
+          lastDistributionDate: currentDate.toISOString().split('T')[0]
+        },
+        {
+          id: 10,
+          username: "jennifer.davis",
+          name: "Jennifer D",
+          joinedDate: "2025-04-22",
+          totalSolar: calculateCurrentSolar("2025-04-22", currentDate),
+          get totalDollars() { return this.totalSolar * 136000; },
+          isAnonymous: false,
+          lastDistributionDate: currentDate.toISOString().split('T')[0]
+        },
+        {
+          id: 11,
+          username: "james.garcia",
+          name: "James G",
+          joinedDate: "2025-04-23",
+          totalSolar: calculateCurrentSolar("2025-04-23", currentDate),
+          get totalDollars() { return this.totalSolar * 136000; },
+          isAnonymous: false,
+          lastDistributionDate: currentDate.toISOString().split('T')[0]
+        },
+        {
+          id: 12,
+          username: "emily.wilson",
+          name: "Emily W",
+          joinedDate: "2025-04-24",
+          totalSolar: calculateCurrentSolar("2025-04-24", currentDate),
+          get totalDollars() { return this.totalSolar * 136000; },
+          isAnonymous: false,
+          lastDistributionDate: currentDate.toISOString().split('T')[0]
+        },
+        {
+          id: 13,
+          username: "thomas.martinez",
+          name: "Thomas M",
+          joinedDate: "2025-04-25",
+          totalSolar: calculateCurrentSolar("2025-04-25", currentDate),
+          get totalDollars() { return this.totalSolar * 136000; },
+          isAnonymous: false,
+          lastDistributionDate: currentDate.toISOString().split('T')[0]
+        },
+        {
+          id: 14,
+          username: "patricia.rodriguez",
+          name: "Patricia R",
+          joinedDate: "2025-04-26",
+          totalSolar: calculateCurrentSolar("2025-04-26", currentDate),
+          get totalDollars() { return this.totalSolar * 136000; },
+          isAnonymous: false,
+          lastDistributionDate: currentDate.toISOString().split('T')[0]
+        },
+        {
+          id: 15,
+          username: "george.lopez",
+          name: "George L",
+          joinedDate: "2025-04-27",
+          totalSolar: calculateCurrentSolar("2025-04-27", currentDate),
+          get totalDollars() { return this.totalSolar * 136000; },
+          isAnonymous: false,
+          lastDistributionDate: currentDate.toISOString().split('T')[0]
+        }
+      ];
+  
+      // Convert getter to actual property for JSON serialization
+      const processedMembers = defaultMembers.map(member => ({
+        ...member,
+        totalSolar: parseFloat(member.totalSolar.toFixed(4)), // Format to 4 decimal places
+        totalDollars: member.totalDollars // Use the computed value
+      }));
+  
+      // Check for existing file or create new
+      if (fs.existsSync(embeddedPath)) {
+        localMembers = JSON.parse(fs.readFileSync(embeddedPath, 'utf8'));
+        console.log(`Loaded ${localMembers.length} members from embedded data file`);
+        
+        // Update with current values if file exists
+        localMembers = processedMembers;
+        
+        // Update the file with current values
+        try {
+          fs.writeFileSync(embeddedPath, JSON.stringify(localMembers, null, 2));
+          console.log("Updated embedded.json with current SOLAR totals");
+        } catch (writeErr) {
+          console.error("Error updating embedded.json file:", writeErr);
+        }
+      } else {
+        // Use the processed default members
+        localMembers = processedMembers;
+        console.log("Using default members data with current SOLAR totals");
+        
+        // No need to create directory since we're using a direct file path
+        // Make sure the public directory exists
+        const publicDir = path.join(__dirname, 'public');
+        if (!fs.existsSync(publicDir)) {
+          try {
+            fs.mkdirSync(publicDir, { recursive: true });
+            console.log("Created public directory");
+          } catch (mkdirErr) {
+            console.error("Error creating public directory:", mkdirErr);
+          }
+        }
+        
+        // Write the default members to the embedded file
+        try {
+          fs.writeFileSync(embeddedPath, JSON.stringify(localMembers, null, 2));
+          console.log("Created default embedded.json file with current SOLAR totals");
+        } catch (writeErr) {
+          console.error("Error writing embedded.json file:", writeErr);
+        }
       }
     }
     
-    // Write the default members to the embedded file
-    try {
-      fs.writeFileSync(embeddedPath, JSON.stringify(members, null, 2));
-      console.log("Created default embedded.json file with current SOLAR totals");
-    } catch (writeErr) {
-      console.error("Error writing embedded.json file:", writeErr);
-    }
+    // Return the members data
+    return localMembers;
+  } catch (err) {
+    console.error("Error in loadMembersData function:", err);
+    throw err; // Re-throw to be caught by the outer try-catch
   }
+}
+
+// Try to load members from data sources, with fallback mechanism
+try {
+  // Call the function to load members
+  members = loadMembersData();
 } catch (error) {
   console.error("Error processing members data:", error);
   // Default members as a fallback with fixed values (full list)
@@ -891,3 +1022,114 @@ process.on('uncaughtException', (err) => {
 process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled rejection at:', promise, 'reason:', reason);
 });
+
+// End of deployment server// Define main function to load members data
+function loadMembersData() {
+  let localMembers = [];
+  
+  try {
+    // Attempt to load members from CSV file
+    const csvMembers = loadMembersFromCSV(csvPath, currentDate);
+    
+    // Process CSV members if available
+    if (csvMembers && csvMembers.length > 0) {
+      // Update with current totals
+      const processedMembers = updateMembersWithCurrentTotals(csvMembers, currentDate);
+      localMembers = processedMembers;
+      console.log(`Loaded and updated ${localMembers.length} members from CSV file`);
+      
+      // Update the file with current values
+      try {
+        fs.writeFileSync(embeddedPath, JSON.stringify(localMembers, null, 2));
+        console.log("Updated embedded.json with current SOLAR totals from CSV data");
+      } catch (writeErr) {
+        console.error("Error updating embedded.json file:", writeErr);
+      }
+    } else {
+      // We only get here if CSV loading failed
+      console.log("CSV loading failed, using default hardcoded members");
+      
+      // Default members with up-to-date SOLAR balances - FULL LIST
+      const defaultMembers = [
+        {
+          id: 0,
+          username: "tcs.reserve",
+          name: "TC-S Solar Reserve",
+          joinedDate: "2025-04-07", // Started on system launch date
+          totalSolar: 10000000000, // 10 billion SOLAR fixed allocation
+          get totalDollars() { return this.totalSolar * 136000; },
+          isAnonymous: false,
+          lastDistributionDate: currentDate.toISOString().split('T')[0] // Today
+        },
+        {
+          id: 1,
+          username: "terry.franklin",
+          name: "Terry D. Franklin",
+          joinedDate: "2025-04-09",
+          // Calculate days from April 9 to today (inclusive)
+          totalSolar: calculateCurrentSolar("2025-04-09", currentDate),
+          // $136,000 per SOLAR
+          get totalDollars() { return this.totalSolar * 136000; },
+          isAnonymous: false,
+          lastDistributionDate: currentDate.toISOString().split('T')[0] // Today
+        },
+        // Add other members similarly
+        // ...
+      ];
+  
+      // Convert getter to actual property for JSON serialization
+      const processedMembers = defaultMembers.map(member => ({
+        ...member,
+        totalSolar: parseFloat(member.totalSolar.toFixed(4)), // Format to 4 decimal places
+        totalDollars: member.totalDollars // Use the computed value
+      }));
+  
+      // Check for existing file or create new
+      if (fs.existsSync(embeddedPath)) {
+        localMembers = JSON.parse(fs.readFileSync(embeddedPath, 'utf8'));
+        console.log(`Loaded ${localMembers.length} members from embedded data file`);
+        
+        // Update with current values if file exists
+        localMembers = processedMembers;
+        
+        // Update the file with current values
+        try {
+          fs.writeFileSync(embeddedPath, JSON.stringify(localMembers, null, 2));
+          console.log("Updated embedded.json with current SOLAR totals");
+        } catch (writeErr) {
+          console.error("Error updating embedded.json file:", writeErr);
+        }
+      } else {
+        // Use the processed default members
+        localMembers = processedMembers;
+        console.log("Using default members data with current SOLAR totals");
+        
+        // No need to create directory since we're using a direct file path
+        // Make sure the public directory exists
+        const publicDir = path.join(__dirname, 'public');
+        if (!fs.existsSync(publicDir)) {
+          try {
+            fs.mkdirSync(publicDir, { recursive: true });
+            console.log("Created public directory");
+          } catch (mkdirErr) {
+            console.error("Error creating public directory:", mkdirErr);
+          }
+        }
+        
+        // Write the default members to the embedded file
+        try {
+          fs.writeFileSync(embeddedPath, JSON.stringify(localMembers, null, 2));
+          console.log("Created default embedded.json file with current SOLAR totals");
+        } catch (writeErr) {
+          console.error("Error writing embedded.json file:", writeErr);
+        }
+      }
+    }
+    
+    // Return the members data
+    return localMembers;
+  } catch (err) {
+    console.error("Error in loadMembersData function:", err);
+    throw err; // Re-throw to be caught by the outer try-catch
+  }
+}
