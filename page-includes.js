@@ -1,3 +1,8 @@
+/**
+ * Page Includes Processor
+ * 
+ * This module handles the processing of include directives in HTML files.
+ */
 
 const fs = require('fs');
 const path = require('path');
@@ -38,33 +43,4 @@ function processIncludes(content) {
   return content;
 }
 
-/**
- * Create middleware for Express that processes HTML includes
- * @returns {Function} Express middleware function
- */
-function createIncludesMiddleware() {
-  return (req, res, next) => {
-    // Only intercept HTML files
-    if (!req.path.endsWith('.html') && req.path !== '/') {
-      return next();
-    }
-    
-    // Store original send function
-    const originalSend = res.send;
-    
-    // Override send method to inject includes for HTML responses
-    res.send = function(body) {
-      // Only process HTML content
-      if (typeof body === 'string' && body.includes('<!DOCTYPE html>')) {
-        body = processIncludes(body);
-      }
-      
-      // Call original send with modified body
-      return originalSend.call(this, body);
-    };
-    
-    next();
-  };
-}
-
-module.exports = { processIncludes, createIncludesMiddleware };
+module.exports = { processIncludes };
