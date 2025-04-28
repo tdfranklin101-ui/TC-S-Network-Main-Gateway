@@ -215,6 +215,7 @@ server.listen(PORT, '0.0.0.0', () => {
   log(`=== The Current-See Minimal Server ===`);
   log(`Server running on http://0.0.0.0:${PORT}`);
   log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  log(`Page includes middleware loaded and ready`);
 });
 
 // Export server for testing
