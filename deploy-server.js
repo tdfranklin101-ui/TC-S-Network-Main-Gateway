@@ -13,7 +13,7 @@ const cors = require('cors');
 const { Pool } = require('pg');
 
 // Constants
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001; // Using 3001 to avoid conflicts
 const HOST = '0.0.0.0';
 const DATABASE_URL = process.env.DATABASE_URL;
 const CURRENTSEE_DB_URL = process.env.CURRENTSEE_DB_URL;

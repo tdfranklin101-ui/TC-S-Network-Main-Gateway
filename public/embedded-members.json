@@ -174,5 +174,28 @@
     "isAnonymous": false,
     "isReserve": false,
     "lastDistributionDate": "2025-04-22"
+  },
+  {
+    "id": 17,
+    "username": "john.doe",
+    "name": "John D",
+    "joinedDate": "2025-04-12",
+    "totalSolar": 18,
+    "totalDollars": 2448000,
+    "isAnonymous": false,
+    "isReserve": false,
+    "lastDistributionDate": "2025-04-29"
+  },
+  {
+    "id": 18,
+    "username": "placeholder.member",
+    "name": "Future Member",
+    "joinedDate": "2025-04-29",
+    "totalSolar": 0,
+    "totalDollars": 0,
+    "isAnonymous": false,
+    "isReserve": false,
+    "isPlaceholder": true,
+    "lastDistributionDate": "2025-04-29"
   }
 ]
