@@ -61,20 +61,44 @@ document.addEventListener('DOMContentLoaded', function() {
   // Create member entry element
   function createMemberEntry(member) {
     const entryDiv = document.createElement('div');
-    entryDiv.className = 'members-log-entry';
-
-    // Format SOLAR with 2 decimal places
-    const solarFormatted = parseFloat(member.totalSolar).toFixed(2);
     
-    // Format date
-    const joinedDate = formatDate(member.joinedDate);
-
-    entryDiv.innerHTML = `
-      <div class="member-name">${member.name}</div>
-      <div class="member-joined" data-joined-date="${member.joinedDate}">Joined: ${joinedDate}</div>
-      <div class="member-solar">SOLAR: ${solarFormatted}</div>
-    `;
-
+    // Check if we're on the distribution page
+    const isDistributionPage = window.location.pathname.includes('distribution');
+    
+    if (isDistributionPage) {
+      entryDiv.className = 'member-item';
+      
+      // Format SOLAR with 2 decimal places
+      const solarFormatted = parseFloat(member.totalSolar).toFixed(2);
+      
+      // Format date
+      const joinedDate = formatDate(member.joinedDate);
+      
+      // Create simpler format for distribution page
+      entryDiv.innerHTML = `
+        <div class="member-name">${member.name}</div>
+        <div class="member-details">
+          <div class="joined-date">Joined: ${joinedDate}</div>
+          <div class="solar-amount">SOLAR: ${solarFormatted}</div>
+        </div>
+      `;
+    } else {
+      entryDiv.className = 'members-log-entry';
+      
+      // Format SOLAR with 2 decimal places
+      const solarFormatted = parseFloat(member.totalSolar).toFixed(2);
+      
+      // Format date
+      const joinedDate = formatDate(member.joinedDate);
+      
+      // Standard format for other pages
+      entryDiv.innerHTML = `
+        <div class="member-name">${member.name}</div>
+        <div class="member-joined" data-joined-date="${member.joinedDate}">Joined: ${joinedDate}</div>
+        <div class="member-solar">SOLAR: ${solarFormatted}</div>
+      `;
+    }
+    
     return entryDiv;
   }
 
@@ -95,12 +119,21 @@ document.addEventListener('DOMContentLoaded', function() {
     // Clear the container
     membersLogContainer.innerHTML = '';
 
+    // Check if we're on the distribution page
+    const isDistributionPage = window.location.pathname.includes('distribution');
+    
     // Create a wrapper div
     const wrapperDiv = document.createElement('div');
-    wrapperDiv.className = 'members-log-container';
+    
+    // Different class based on page
+    if (isDistributionPage) {
+      wrapperDiv.className = 'distribution-members';
+    } else {
+      wrapperDiv.className = 'members-log-container';
+    }
 
-    // Add a title if needed
-    if (!document.querySelector('.members-log-section h2')) {
+    // Add a title if needed, but not on distribution page (it already has one)
+    if (!document.querySelector('.members-log-section h2') && !isDistributionPage) {
       const titleElement = document.createElement('h2');
       titleElement.className = 'members-log-title';
       titleElement.textContent = 'Public Members Log';
@@ -148,22 +181,34 @@ document.addEventListener('DOMContentLoaded', function() {
     
     sortedMembers.push(...otherMembers);
 
+    // Limit to just 2-3 members on distribution page to match screenshot
+    const membersToShow = isDistributionPage ? sortedMembers.slice(0, 2) : sortedMembers;
+    
     // Create and add each member entry (we've already filtered out anonymous members)
-    sortedMembers.forEach(member => {
+    membersToShow.forEach(member => {
       wrapperDiv.appendChild(createMemberEntry(member));
     });
 
     // Add data refreshed indicator
     const refreshedInfo = document.createElement('div');
-    refreshedInfo.className = 'data-refreshed-info';
-    refreshedInfo.style.fontSize = '0.7rem';
-    refreshedInfo.style.color = '#777';
-    refreshedInfo.style.textAlign = 'right';
-    refreshedInfo.style.marginTop = '10px';
     
-    const now = new Date();
-    const timeString = now.toLocaleTimeString();
-    refreshedInfo.textContent = `Data refreshed: ${timeString}`;
+    // Style differently based on page
+    if (isDistributionPage) {
+      refreshedInfo.className = 'data-refreshed';
+      const now = new Date();
+      const timeString = now.toLocaleTimeString();
+      refreshedInfo.textContent = `Data refreshed: ${timeString}`;
+    } else {
+      refreshedInfo.className = 'data-refreshed-info';
+      refreshedInfo.style.fontSize = '0.7rem';
+      refreshedInfo.style.color = '#777';
+      refreshedInfo.style.textAlign = 'right';
+      refreshedInfo.style.marginTop = '10px';
+      
+      const now = new Date();
+      const timeString = now.toLocaleTimeString();
+      refreshedInfo.textContent = `Data refreshed: ${timeString}`;
+    }
     
     wrapperDiv.appendChild(refreshedInfo);
     

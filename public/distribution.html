@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>The Current-See - Public Members Distribution</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f8fa;
+    }
+    
+    .distribution-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1rem;
+    }
+    
+    .page-header {
+      background-color: #66a832;
+      color: white;
+      padding: 1.5rem 1rem;
+      text-align: center;
+      border-radius: 0 0 8px 8px;
+    }
+    
+    .page-header h1 {
+      margin: 0;
+      font-size: 2rem;
+      font-weight: 800;
+    }
+    
+    .page-content {
+      margin-top: 2rem;
+    }
+    
+    .distribution-card {
+      background-color: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    
+    .member-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 1.2rem 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .member-item:last-child {
+      border-bottom: none;
+    }
+    
+    .member-name {
+      font-weight: 700;
+      font-size: 1.2rem;
+      color: #333;
+    }
+    
+    .member-details {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+    
+    .joined-date {
+      color: #666;
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    .solar-amount {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #66a832;
+    }
+    
+    .data-refreshed {
+      text-align: right;
+      font-size: 0.75rem;
+      color: #888;
+      margin-top: 1rem;
+      font-style: italic;
+    }
+    
+    .watermark {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('/images/sunrays-green.svg') no-repeat center center;
+      background-size: cover;
+      opacity: 0.07;
+      z-index: -1;
+      pointer-events: none;
+    }
+    
+    @media (max-width: 768px) {
+      .page-header h1 {
+        font-size: 1.8rem;
+      }
+      
+      .member-item {
+        flex-direction: column;
+      }
+      
+      .member-details {
+        align-items: flex-start;
+        margin-top: 0.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="watermark"></div>
+  <div id="header-container"></div>
+  
+  <div class="distribution-container">
+    <div class="page-header">
+      <h1>Public Members Log</h1>
+    </div>
+    
+    <div class="page-content">
+      <div class="distribution-card">
+        <div id="public-members-log">
+          <!-- Member data will be loaded here via JavaScript -->
+          <p style="text-align: center;">Loading members data...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div id="footer-container"></div>
+  
+  <!-- Load header and footer -->
+  <script src="/js/load-includes.js"></script>
+  
+  <!-- Load public members log -->
+  <script src="/js/public-members-log.js"></script>
+  
+  <!-- Distribution ledger script -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const membersLogContainer = document.getElementById('public-members-log');
+      
+      async function loadDistributionLedger() {
+        try {
+          // Add timestamp to prevent caching
+          const timestamp = new Date().getTime();
+          membersLogContainer.innerHTML = '<p style="text-align: center;">Loading distribution ledger...</p>';
+          
+          // Fetch distribution ledger data with cache-busting
+          const response = await fetch(`/api/distribution-ledger?t=${timestamp}`, {
+            cache: 'no-cache',
+            headers: {
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache'
+            }
+          });
+          
+          if (!response.ok) {
+            throw new Error('Failed to fetch distribution ledger');
+          }
+          
+          const data = await response.json();
+          const { distributions, timestamp: responseTimestamp } = data;
+          
+          // Clear the container
+          membersLogContainer.innerHTML = '';
+          
+          // Create the distribution ledger UI
+          const wrapperDiv = document.createElement('div');
+          wrapperDiv.className = 'distribution-members';
+          
+          // Get Terry and JF as the first two members
+          const terry = distributions.find(d => d.name === "Terry D. Franklin");
+          const jf = distributions.find(d => d.name === "JF");
+          
+          // Create special ordered array with Terry and JF first, followed by others
+          const orderedDistributions = [];
+          if (terry) orderedDistributions.push(terry);
+          if (jf) orderedDistributions.push(jf);
+          
+          // Limit to two members for the distribution page
+          for (let i = 0; i < 2; i++) {
+            if (orderedDistributions[i]) {
+              const distribution = orderedDistributions[i];
+              const memberElement = document.createElement('div');
+              memberElement.className = 'member-item';
+              
+              // Format date
+              const parts = distribution.joinedDate.split('-');
+              const date = new Date(Date.UTC(
+                parseInt(parts[0]), 
+                parseInt(parts[1]) - 1, 
+                parseInt(parts[2])
+              ));
+              const joinedDate = date.toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                timeZone: 'UTC'
+              });
+              
+              // Create member item HTML
+              memberElement.innerHTML = `
+                <div class="member-name">${distribution.name}</div>
+                <div class="member-details">
+                  <div class="joined-date">Joined: ${joinedDate}</div>
+                  <div class="solar-amount">SOLAR: ${distribution.totalSolar}</div>
+                </div>
+              `;
+              
+              wrapperDiv.appendChild(memberElement);
+            }
+          }
+          
+          // Add data refreshed timestamp
+          const refreshedInfo = document.createElement('div');
+          refreshedInfo.className = 'data-refreshed';
+          const responseDate = new Date(responseTimestamp);
+          refreshedInfo.textContent = `Data refreshed: ${responseDate.toLocaleTimeString()}`;
+          wrapperDiv.appendChild(refreshedInfo);
+          
+          // Add to container
+          membersLogContainer.appendChild(wrapperDiv);
+        } catch (error) {
+          console.error('Error loading distribution ledger:', error);
+          membersLogContainer.innerHTML = `
+            <p style="text-align: center; color: #d32f2f;">
+              Error loading distribution ledger: ${error.message}
+            </p>
+          `;
+          
+          // Fall back to regular member loading as backup
+          if (window.loadMembers) {
+            setTimeout(() => {
+              window.loadMembers();
+            }, 2000);
+          }
+        }
+      }
+      
+      // Initial load
+      loadDistributionLedger();
+      
+      // Set up auto-refresh every 30 seconds
+      setInterval(function() {
+        loadDistributionLedger();
+      }, 30000);
+      
+      // Also hook into the existing loadMembers as fallback
+      if (window.loadMembers) {
+        const originalLoadMembers = window.loadMembers;
+        window.loadMembers = function() {
+          // Try the distribution ledger first
+          loadDistributionLedger().catch(() => {
+            // Fall back to original if distribution ledger fails
+            originalLoadMembers();
+          });
+        };
+      }
+    });
+  </script>
+</body>
+</html>

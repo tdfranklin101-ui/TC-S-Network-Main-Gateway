@@ -800,6 +800,10 @@ app.get('/members', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'members-list.html'));
 });
 
+app.get('/distribution', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'distribution.html'));
+});
+
 app.get('/prototype', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'prototype.html'));
 });
@@ -965,6 +969,60 @@ app.get('/admin/member-roster', (req, res) => {
 app.get('/api/solar-clock', (req, res) => {
   updateSolarClockData();
   res.json(solarClockData);
+});
+
+// Distribution ledger API endpoint
+app.get('/api/distribution-ledger', (req, res) => {
+  try {
+    // Calculate daily distributions for all members
+    const distributionData = members.map(member => {
+      // Skip special accounts like TC-S Solar Reserve
+      if (member.id === 0 || member.isReserve === true) {
+        return null;
+      }
+      
+      // Get the member details
+      const joinedDate = new Date(member.joinedDate);
+      const lastDistributionDate = member.lastDistributionDate 
+        ? new Date(member.lastDistributionDate)
+        : new Date();
+      
+      // Calculate days between dates
+      const days = daysBetweenDates(joinedDate, lastDistributionDate);
+      
+      // Calculate SOLAR amount (1 SOLAR per day)
+      const solarAmount = days;
+      
+      // Calculate dollar value
+      const dollarValue = solarAmount * 136000;
+      
+      // Create distribution record
+      return {
+        id: member.id,
+        name: member.name,
+        joinedDate: member.joinedDate,
+        lastDistributionDate: member.lastDistributionDate,
+        daysActive: days,
+        totalSolar: solarAmount.toFixed(2),
+        totalDollars: dollarValue.toFixed(2)
+      };
+    }).filter(Boolean); // Remove null entries
+    
+    // Add timestamp for cache-busting
+    const responseData = {
+      timestamp: new Date().toISOString(),
+      distributions: distributionData
+    };
+    
+    // Set CORS headers
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Cache-Control', 'no-cache');
+    
+    res.json(responseData);
+  } catch (error) {
+    console.error('Error generating distribution ledger:', error);
+    res.status(500).json({ error: 'Failed to generate distribution ledger' });
+  }
 });
 
 app.get('/api/members', (req, res) => {
