@@ -918,50 +918,56 @@ app.get('/api/solar-clock', (req, res) => {
 });
 
 app.get('/api/members', (req, res) => {
-  res.json(members);
+  // Use the helper function to serialize members
+  res.json(serializeMembers(members));
 });
 
 app.get('/api/solar-accounts/leaderboard', (req, res) => {
-  res.json(members);
+  // Use the helper function to serialize members
+  res.json(serializeMembers(members));
 });
 
 app.get('/api/members.json', (req, res) => {
-  res.json(members);
+  // Use the helper function to serialize members
+  res.json(serializeMembers(members));
 });
 
 // Serve the embedded members data with proper content type
 app.get('/embedded-members', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
-  res.json(members);
+  // Use the helper function to serialize members
+  res.json(serializeMembers(members));
 });
 
 app.get('/embedded-members.json', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
-  res.json(members);
+  res.json(serializeMembers(members));
 });
 
 // Also maintain backward compatibility with old path
 app.get('/embedded-members/embedded.json', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
-  res.json(members);
+  res.json(serializeMembers(members));
 });
 
 app.get('/api/members-data', (req, res) => {
   // Alternative endpoint for JSONP callback support
+  const serializedMembers = serializeMembers(members);
   const callback = req.query.callback;
   if (callback) {
     res.setHeader('Content-Type', 'application/javascript');
-    res.send(`${callback}(${JSON.stringify(members)})`);
+    res.send(`${callback}(${JSON.stringify(serializedMembers)})`);
   } else {
-    res.json(members);
+    res.json(serializedMembers);
   }
 });
 
 app.get('/api/members.js', (req, res) => {
   // JSONP endpoint for cross-domain support
+  const serializedMembers = serializeMembers(members);
   const callback = req.query.callback || 'updateMembers';
   res.setHeader('Content-Type', 'application/javascript');
-  res.send(`${callback}(${JSON.stringify(members)})`);
+  res.send(`${callback}(${JSON.stringify(serializedMembers)})`);
 });
 
 app.get('/api/member-count', (req, res) => {
@@ -1003,6 +1009,51 @@ app.use((req, res) => {
   }
 });
 
+// Helper function to serialize members data for JSON responses
+// This ensures getter properties like totalDollars are properly handled
+function serializeMembers(membersArray) {
+  return membersArray.map(member => {
+    // Create a plain object with all properties resolved
+    const serialized = { ...member };
+    
+    // Ensure totalDollars is a number, not a getter
+    if (typeof member.totalDollars === 'function' || 
+        Object.getOwnPropertyDescriptor(member, 'totalDollars')?.get) {
+      serialized.totalDollars = member.totalSolar * 136000;
+    }
+    
+    return serialized;
+  });
+}
+
+// Helper to safely serialize a single member object
+function serializeMember(member) {
+  // Create a plain object with all properties resolved
+  const serialized = { ...member };
+  
+  // Ensure totalDollars is a number, not a getter
+  if (typeof member.totalDollars === 'function' || 
+      Object.getOwnPropertyDescriptor(member, 'totalDollars')?.get) {
+    serialized.totalDollars = member.totalSolar * 136000;
+  }
+  
+  return serialized;
+}
+
+// Helper to safely write member data to a file 
+function writeSafelyToFile(filePath, data, message = "Updated file") {
+  try {
+    // Make sure we properly serialize any getter properties before writing to file
+    const serializedData = Array.isArray(data) ? serializeMembers(data) : serializeMember(data);
+    fs.writeFileSync(filePath, JSON.stringify(serializedData, null, 2));
+    console.log(message);
+    return true;
+  } catch (err) {
+    console.error(`Error writing to file ${filePath}:`, err);
+    return false;
+  }
+}
+
 // Start the server
 const server = http.createServer(app);
 
@@ -1023,7 +1074,22 @@ process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled rejection at:', promise, 'reason:', reason);
 });
 
-// End of deployment server// Define main function to load members data
+// End of deployment server
+
+// Function to process CSV members safely
+function processCSVMembers(csvMembers, currentDate) {
+  // First update with current totals
+  const updatedMembers = updateMembersWithCurrentTotals(csvMembers, currentDate);
+  
+  // Then ensure all computed properties are properly serialized
+  return serializeMembers(updatedMembers).map(member => ({
+    ...member,
+    // Format totalSolar to 4 decimal places for consistency
+    totalSolar: parseFloat(member.totalSolar.toFixed(4))
+  }));
+}
+
+// Define main function to load members data
 function loadMembersData() {
   let localMembers = [];
   
@@ -1033,18 +1099,17 @@ function loadMembersData() {
     
     // Process CSV members if available
     if (csvMembers && csvMembers.length > 0) {
-      // Update with current totals
-      const processedMembers = updateMembersWithCurrentTotals(csvMembers, currentDate);
+      // Use our specialized function to properly process and serialize members
+      const processedMembers = processCSVMembers(csvMembers, currentDate);
       localMembers = processedMembers;
       console.log(`Loaded and updated ${localMembers.length} members from CSV file`);
       
-      // Update the file with current values
-      try {
-        fs.writeFileSync(embeddedPath, JSON.stringify(localMembers, null, 2));
-        console.log("Updated embedded.json with current SOLAR totals from CSV data");
-      } catch (writeErr) {
-        console.error("Error updating embedded.json file:", writeErr);
-      }
+      // Update the file with current values using safe write helper
+      writeSafelyToFile(
+        embeddedPath, 
+        localMembers, 
+        "Updated embedded.json with current SOLAR totals from CSV data"
+      );
     } else {
       // We only get here if CSV loading failed
       console.log("CSV loading failed, using default hardcoded members");
@@ -1077,34 +1142,37 @@ function loadMembersData() {
         // ...
       ];
   
-      // Convert getter to actual property for JSON serialization
-      const processedMembers = defaultMembers.map(member => ({
+      // Use our serialization helper to properly handle all properties
+      const processedMembers = serializeMembers(defaultMembers).map(member => ({
         ...member,
-        totalSolar: parseFloat(member.totalSolar.toFixed(4)), // Format to 4 decimal places
-        totalDollars: member.totalDollars // Use the computed value
+        // Format totalSolar to 4 decimal places for consistency
+        totalSolar: parseFloat(member.totalSolar.toFixed(4))
       }));
   
       // Check for existing file or create new
       if (fs.existsSync(embeddedPath)) {
-        localMembers = JSON.parse(fs.readFileSync(embeddedPath, 'utf8'));
-        console.log(`Loaded ${localMembers.length} members from embedded data file`);
-        
-        // Update with current values if file exists
-        localMembers = processedMembers;
-        
-        // Update the file with current values
         try {
-          fs.writeFileSync(embeddedPath, JSON.stringify(localMembers, null, 2));
-          console.log("Updated embedded.json with current SOLAR totals");
-        } catch (writeErr) {
-          console.error("Error updating embedded.json file:", writeErr);
+          const existingMembers = JSON.parse(fs.readFileSync(embeddedPath, 'utf8'));
+          console.log(`Loaded ${existingMembers.length} members from embedded data file`);
+          
+          // Update with current values
+          localMembers = processedMembers;
+          
+          // Update the file with current values using safe write helper
+          writeSafelyToFile(
+            embeddedPath, 
+            localMembers, 
+            "Updated embedded.json with current SOLAR totals"
+          );
+        } catch (readErr) {
+          console.error("Error reading embedded.json file:", readErr);
+          localMembers = processedMembers;
         }
       } else {
         // Use the processed default members
         localMembers = processedMembers;
         console.log("Using default members data with current SOLAR totals");
         
-        // No need to create directory since we're using a direct file path
         // Make sure the public directory exists
         const publicDir = path.join(__dirname, 'public');
         if (!fs.existsSync(publicDir)) {
@@ -1116,13 +1184,12 @@ function loadMembersData() {
           }
         }
         
-        // Write the default members to the embedded file
-        try {
-          fs.writeFileSync(embeddedPath, JSON.stringify(localMembers, null, 2));
-          console.log("Created default embedded.json file with current SOLAR totals");
-        } catch (writeErr) {
-          console.error("Error writing embedded.json file:", writeErr);
-        }
+        // Write the default members to the embedded file using safe write helper
+        writeSafelyToFile(
+          embeddedPath, 
+          localMembers, 
+          "Created default embedded.json file with current SOLAR totals"
+        );
       }
     }
     
