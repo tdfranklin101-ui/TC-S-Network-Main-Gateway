@@ -974,6 +974,9 @@ app.get('/api/solar-clock', (req, res) => {
 // Distribution ledger API endpoint
 app.get('/api/distribution-ledger', (req, res) => {
   try {
+    // Get current date for all calculations
+    const currentDate = new Date();
+    
     // Calculate daily distributions for all members
     const distributionData = members.map(member => {
       // Skip special accounts like TC-S Solar Reserve
@@ -981,47 +984,59 @@ app.get('/api/distribution-ledger', (req, res) => {
         return null;
       }
       
-      // Get the member details
+      // Get the member details - ensure proper date parsing
       const joinedDate = new Date(member.joinedDate);
-      const lastDistributionDate = member.lastDistributionDate 
-        ? new Date(member.lastDistributionDate)
-        : new Date();
       
-      // Calculate days between dates
-      const days = daysBetweenDates(joinedDate, lastDistributionDate);
+      // Use current date for real-time calculations
+      const calcDate = currentDate;
+      
+      // Calculate days between joined date and now
+      const days = daysBetweenDates(joinedDate, calcDate);
       
       // Calculate SOLAR amount (1 SOLAR per day)
       const solarAmount = days;
       
-      // Calculate dollar value
+      // Calculate dollar value ($136,000 per SOLAR)
       const dollarValue = solarAmount * 136000;
       
-      // Create distribution record
+      // Calculate kWh value (4,913 kWh per SOLAR)
+      const kwhValue = solarAmount * 4913;
+      
+      // Create distribution record with all details
       return {
         id: member.id,
         name: member.name,
         joinedDate: member.joinedDate,
-        lastDistributionDate: member.lastDistributionDate,
+        lastDistributionDate: currentDate.toISOString().split('T')[0],
         daysActive: days,
-        totalSolar: solarAmount.toFixed(2),
-        totalDollars: dollarValue.toFixed(2)
+        totalSolar: solarAmount.toFixed(4),       // 4 decimal places
+        totalDollars: dollarValue.toFixed(2),     // 2 decimal places for currency
+        totalKwh: kwhValue.toFixed(2),            // 2 decimal places for energy
+        solarPerDay: 1.0                          // Current daily distribution rate
       };
     }).filter(Boolean); // Remove null entries
     
-    // Add timestamp for cache-busting
+    // Add timestamp for cache-busting and additional information
     const responseData = {
-      timestamp: new Date().toISOString(),
-      distributions: distributionData
+      timestamp: currentDate.toISOString(),
+      distributions: distributionData,
+      totalMembers: distributionData.length,
+      totalDistributedSolar: distributionData.reduce((sum, d) => sum + parseFloat(d.totalSolar), 0).toFixed(4),
+      latestDistributionDate: currentDate.toISOString().split('T')[0]
     };
     
-    // Set CORS headers
+    // Set CORS and cache control headers
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Cache-Control', 'no-cache');
     
     res.json(responseData);
   } catch (error) {
     console.error('Error generating distribution ledger:', error);
-    res.status(500).json({ error: 'Failed to generate distribution ledger' });
+    res.status(500).json({ 
+      error: 'Failed to generate distribution ledger',
+      message: error.message,
+      timestamp: new Date().toISOString()
+    });
   }
 });
 

@@ -181,8 +181,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     sortedMembers.push(...otherMembers);
 
-    // Limit to just 2-3 members on distribution page to match screenshot
-    const membersToShow = isDistributionPage ? sortedMembers.slice(0, 2) : sortedMembers;
+    // Show all members on all pages
+    const membersToShow = sortedMembers;
     
     // Create and add each member entry (we've already filtered out anonymous members)
     membersToShow.forEach(member => {

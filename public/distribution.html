@@ -30,6 +30,80 @@
       border-radius: 0 0 8px 8px;
     }
     
+    /* Enhanced member display for distribution page */
+    .distribution-members {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      margin-top: 2rem;
+      max-width: 1000px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    
+    .distribution-members .member-item {
+      background-color: #f9f9f9;
+      border-radius: 8px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: transform 0.2s, box-shadow 0.2s;
+      border-left: 5px solid #1c7e45;
+    }
+    
+    .distribution-members .member-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    
+    .distribution-members .member-name {
+      font-size: 1.4rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: #1c7e45;
+    }
+    
+    .distribution-members .member-details {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.75rem;
+      font-size: 0.95rem;
+    }
+    
+    .distribution-members .joined-date,
+    .distribution-members .days-active,
+    .distribution-members .solar-amount,
+    .distribution-members .dollar-value,
+    .distribution-members .kwh-value {
+      background-color: rgba(28, 126, 69, 0.05);
+      padding: 0.5rem 0.75rem;
+      border-radius: 4px;
+    }
+    
+    .distribution-members .solar-amount {
+      font-weight: 600;
+      color: #1c7e45;
+    }
+    
+    .distribution-members .dollar-value {
+      font-weight: 600;
+      color: #0a5d9a;
+    }
+    
+    .distribution-members .data-refreshed {
+      margin-top: 1.5rem;
+      text-align: right;
+      font-size: 0.75rem;
+      color: #777;
+      font-style: italic;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .distribution-members .member-details {
+        grid-template-columns: 1fr;
+      }
+    }
+    
     .page-header h1 {
       margin: 0;
       font-size: 2rem;
@@ -191,39 +265,49 @@
           if (terry) orderedDistributions.push(terry);
           if (jf) orderedDistributions.push(jf);
           
-          // Limit to two members for the distribution page
-          for (let i = 0; i < 2; i++) {
-            if (orderedDistributions[i]) {
-              const distribution = orderedDistributions[i];
-              const memberElement = document.createElement('div');
-              memberElement.className = 'member-item';
-              
-              // Format date
-              const parts = distribution.joinedDate.split('-');
-              const date = new Date(Date.UTC(
-                parseInt(parts[0]), 
-                parseInt(parts[1]) - 1, 
-                parseInt(parts[2])
-              ));
-              const joinedDate = date.toLocaleDateString('en-US', { 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric',
-                timeZone: 'UTC'
-              });
-              
-              // Create member item HTML
-              memberElement.innerHTML = `
-                <div class="member-name">${distribution.name}</div>
-                <div class="member-details">
-                  <div class="joined-date">Joined: ${joinedDate}</div>
-                  <div class="solar-amount">SOLAR: ${distribution.totalSolar}</div>
-                </div>
-              `;
-              
-              wrapperDiv.appendChild(memberElement);
-            }
-          }
+          // Get other members, sorted by joined date (newest first)
+          const otherMembers = distributions.filter(d => 
+            d.name !== "Terry D. Franklin" && d.name !== "JF"
+          ).sort((a, b) => {
+            return new Date(b.joinedDate) - new Date(a.joinedDate);
+          });
+          
+          // Add other members to the display order after Terry and JF
+          orderedDistributions.push(...otherMembers);
+          
+          // Display ALL members
+          orderedDistributions.forEach(distribution => {
+            const memberElement = document.createElement('div');
+            memberElement.className = 'member-item';
+            
+            // Format date
+            const parts = distribution.joinedDate.split('-');
+            const date = new Date(Date.UTC(
+              parseInt(parts[0]), 
+              parseInt(parts[1]) - 1, 
+              parseInt(parts[2])
+            ));
+            const joinedDate = date.toLocaleDateString('en-US', { 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric',
+              timeZone: 'UTC'
+            });
+            
+            // Create member item HTML with more detailed information
+            memberElement.innerHTML = `
+              <div class="member-name">${distribution.name}</div>
+              <div class="member-details">
+                <div class="joined-date">Joined: ${joinedDate}</div>
+                <div class="days-active">Days Active: ${distribution.daysActive}</div>
+                <div class="solar-amount">SOLAR: ${parseFloat(distribution.totalSolar).toFixed(4)}</div>
+                <div class="dollar-value">USD Value: $${parseInt(distribution.totalDollars).toLocaleString()}</div>
+                <div class="kwh-value">Energy: ${parseInt(distribution.totalKwh).toLocaleString()} kWh</div>
+              </div>
+            `;
+            
+            wrapperDiv.appendChild(memberElement);
+          });
           
           // Add data refreshed timestamp
           const refreshedInfo = document.createElement('div');
