@@ -219,21 +219,45 @@
         // Show loading state
         membersElement.innerHTML = '<p style="text-align: center;">Loading member data...</p>';
         
-        // Fetch members data with no-cache settings
-        const response = await fetch(`/api/members.json?t=${timestamp}`, {
-          cache: 'no-cache',
-          headers: {
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache'
-          }
-        });
+        // Fetch members data with fallback mechanism
+        let members;
         
-        if (!response.ok) {
-          throw new Error('Failed to fetch member data');
+        // Try to fetch from primary API first
+        try {
+          const response = await fetch(`/api/members.json?t=${timestamp}`, {
+            cache: 'no-cache',
+            headers: {
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache'
+            }
+          });
+          
+          if (response.ok) {
+            members = await response.json();
+          } else {
+            console.warn('Primary API fetch failed, trying fallback...');
+            throw new Error('Primary API failed');
+          }
+        } catch (primaryError) {
+          // Fallback to embedded members endpoint
+          console.log('Trying fallback to embedded-members endpoint...');
+          const fallbackResponse = await fetch(`/embedded-members?t=${timestamp}`, {
+            cache: 'no-cache',
+            headers: {
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache'
+            }
+          });
+          
+          if (!fallbackResponse.ok) {
+            console.error('Fallback fetch also failed');
+            throw new Error('Failed to fetch member data from all sources');
+          }
+          
+          members = await fallbackResponse.json();
         }
         
-        const members = await response.json();
-        
+        // Validate members data
         if (!Array.isArray(members) || members.length === 0) {
           membersElement.innerHTML = '<p style="text-align: center;">No members data available</p>';
           return;

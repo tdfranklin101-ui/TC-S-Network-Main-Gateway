@@ -17,12 +17,12 @@ document.addEventListener('DOMContentLoaded', function() {
         // Initialize mobile menu after header is loaded
         setTimeout(() => {
           const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
-          const mobileNav = document.querySelector('.mobile-nav');
+          const navItems = document.querySelector('.nav-items');
           
-          if (mobileMenuToggle && mobileNav) {
+          if (mobileMenuToggle && navItems) {
             mobileMenuToggle.addEventListener('click', () => {
+              navItems.classList.toggle('active');
               mobileMenuToggle.classList.toggle('open');
-              mobileNav.classList.toggle('mobile-nav-active');
             });
           }
         }, 100);

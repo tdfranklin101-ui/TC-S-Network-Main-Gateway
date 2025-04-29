@@ -1,9 +1,12 @@
 /**
- * The Current-See Application Entry Point
+ * The Current-See Website Main Entry Point
  * 
- * This file serves as the entry point for Replit deployments.
- * It loads the minimal server to avoid route configuration issues.
+ * This file serves as the primary entry point for The Current-See website
+ * It launches the run-deployment.js script which manages the server with
+ * automatic restart capability.
  */
 
-// Use the minimal server for production deployments
-require('./server');
+console.log('Starting The Current-See deployment system...');
+
+// Use require to execute the deployment script
+require('./run-deployment.js');

@@ -147,6 +147,19 @@
     transition: transform 0.3s ease, opacity 0.3s ease;
   }
   
+  /* Mobile menu toggle animation */
+  .mobile-menu-toggle.open .bar:nth-child(1) {
+    transform: translateY(8px) rotate(45deg);
+  }
+  
+  .mobile-menu-toggle.open .bar:nth-child(2) {
+    opacity: 0;
+  }
+  
+  .mobile-menu-toggle.open .bar:nth-child(3) {
+    transform: translateY(-8px) rotate(-45deg);
+  }
+  
   @media (max-width: 768px) {
     .mobile-menu-toggle {
       display: block;
@@ -184,6 +197,7 @@
     if (mobileMenuToggle && navItems) {
       mobileMenuToggle.addEventListener('click', function() {
         navItems.classList.toggle('active');
+        mobileMenuToggle.classList.toggle('open');
       });
     }
   });
