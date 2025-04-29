@@ -107,8 +107,18 @@ document.addEventListener('DOMContentLoaded', function() {
       wrapperDiv.appendChild(titleElement);
     }
 
-    // Get only visible, non-anonymous members and exclude TC-S Solar Reserve
-    let visibleMembers = members.filter(member => !member.isAnonymous && member.id !== 0);
+    // Get only visible, non-anonymous members - note that we're using numeric or string ID comparison
+    // for maximum compatibility, handling both numeric and string ID formats
+    let visibleMembers = members.filter(member => {
+      const memberId = parseInt(member.id);
+      return !member.isAnonymous && 
+             // Include all members except ID 0 (for compatibility with older data format)
+             memberId !== 0 && 
+             // Also exclude members that have isReserve flag set to true
+             member.isReserve !== true;
+    });
+    
+    console.log("Filtering members for display. Total:", members.length, "Visible:", visibleMembers.length);
     
     // Hard-code the specific order for the key members
     const sortedMembers = [];
@@ -117,12 +127,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const terry = visibleMembers.find(m => m.name === "Terry D. Franklin");
     if (terry) {
       sortedMembers.push(terry);
+      console.log("Found Terry Franklin in members data");
     }
     
     // JF should always be second (joined April 10)
     const jf = visibleMembers.find(m => m.name === "JF");
     if (jf) {
       sortedMembers.push(jf);
+      console.log("Found JF in members data");
     }
     
     // Add any other members after the first two, sorted by joined date (newest first)
@@ -131,6 +143,8 @@ document.addEventListener('DOMContentLoaded', function() {
     ).sort((a, b) => {
       return new Date(b.joinedDate) - new Date(a.joinedDate);
     });
+    
+    console.log("Found", otherMembers.length, "additional members to display");
     
     sortedMembers.push(...otherMembers);
 

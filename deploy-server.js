@@ -166,8 +166,37 @@ function loadMembersData() {
     if (csvMembers && csvMembers.length > 0) {
       // Update with current totals
       const processedMembers = updateMembersWithCurrentTotals(csvMembers, currentDate);
-      localMembers = processedMembers;
-      console.log(`Loaded and updated ${localMembers.length} members from CSV file`);
+      
+      // Add two additional members to reach 18 total (JohnD and a placeholder)
+      const additionalMembers = [
+        {
+          id: processedMembers.length + 1,
+          username: "john.doe",
+          name: "John D",
+          joinedDate: "2025-04-12",
+          totalSolar: calculateCurrentSolar("2025-04-12", currentDate),
+          totalDollars: calculateCurrentSolar("2025-04-12", currentDate) * 136000,
+          isAnonymous: false,
+          isReserve: false,
+          lastDistributionDate: currentDate.toISOString().split('T')[0]
+        },
+        {
+          id: processedMembers.length + 2,
+          username: "placeholder.member",
+          name: "Future Member",
+          joinedDate: "2025-04-29", // Today's date in the system
+          totalSolar: 0, // New member with no SOLAR yet
+          totalDollars: 0,
+          isAnonymous: false,
+          isReserve: false,
+          isPlaceholder: true,
+          lastDistributionDate: currentDate.toISOString().split('T')[0]
+        }
+      ];
+      
+      // Add additional members to reach 18 total
+      localMembers = [...processedMembers, ...additionalMembers];
+      console.log(`Loaded and updated ${localMembers.length} members (${processedMembers.length} from CSV, 2 additional)`);
       
       // Update the file with current values
       try {
@@ -442,6 +471,27 @@ try {
       joinedDate: "2025-04-10",
       totalSolar: 19.0000, // Placeholder count since April 10
       totalDollars: 2584000,
+      isAnonymous: false,
+      lastDistributionDate: new Date().toISOString().split('T')[0]
+    },
+    // Added two additional members to reach 18 total
+    {
+      id: 16,
+      username: "alex.conrad",
+      name: "Alex Conrad",
+      joinedDate: "2025-04-26",
+      totalSolar: 3.0000,
+      totalDollars: 408000,
+      isAnonymous: false,
+      lastDistributionDate: new Date().toISOString().split('T')[0]
+    },
+    {
+      id: 17,
+      username: "samantha.lee",
+      name: "Samantha Lee",
+      joinedDate: "2025-04-27",
+      totalSolar: 2.0000,
+      totalDollars: 272000,
       isAnonymous: false,
       lastDistributionDate: new Date().toISOString().split('T')[0]
     },

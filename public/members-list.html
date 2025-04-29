@@ -255,8 +255,14 @@
         const container = document.createElement('div');
         container.className = 'members-container';
         
-        // Get only visible, non-anonymous members
-        let visibleMembers = members.filter(member => !member.isAnonymous);
+        // Get only visible, non-anonymous members and filter out reserve accounts
+        let visibleMembers = members.filter(member => {
+          return !member.isAnonymous && 
+                 // Also exclude members that have isReserve flag set to true
+                 member.isReserve !== true;
+        });
+        
+        console.log("Filtering members for display. Total:", members.length, "Visible:", visibleMembers.length);
         
         // Hard-code the specific order for the key members
         const sortedMembers = [];
