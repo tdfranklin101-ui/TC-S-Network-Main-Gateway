@@ -1,91 +1,134 @@
 /**
- * The Current-See Deployment Launcher
+ * The Current-See Deployment Runner
  * 
- * This script is the main entry point for deploying the application
- * on Replit. It sets up proper environment and launches the server
- * with restart capability.
+ * This is the main entry point for the Replit deployment.
+ * It handles starting the server and setting up necessary environment.
  */
 
-const { spawn } = require('child_process');
-const path = require('path');
 const fs = require('fs');
+const path = require('path');
+const { execSync, spawn } = require('child_process');
 
 // Configuration
+const SERVER_SCRIPT = 'deploy-server.js';
+const HEALTH_SCRIPT = 'health.js';
+const LOG_FILE = 'deployment-server.log';
 const PORT = process.env.PORT || 3001;
-const HOST = '0.0.0.0';
-const RESTART_SCRIPT = 'server-restart.js';
 
-// Log startup info
-console.log('===========================================');
-console.log('  THE CURRENT-SEE DEPLOYMENT LAUNCHER');
-console.log('===========================================');
-console.log(`Starting deployment using port ${PORT}...`);
+// Helper function to log messages
+function log(message, isError = false) {
+  const timestamp = new Date().toISOString();
+  const logMessage = `[${timestamp}] ${message}`;
+  
+  if (isError) {
+    console.error(logMessage);
+  } else {
+    console.log(logMessage);
+  }
+  
+  // Also append to log file
+  fs.appendFileSync(LOG_FILE, `${logMessage}\n`);
+}
 
-// Check if we need to force kill an existing server
-const pidFile = path.join(__dirname, 'deploy-server.pid');
-if (fs.existsSync(pidFile)) {
+// Main function to run the deployment
+async function runDeployment() {
+  log('Starting The Current-See deployment...');
+  
+  // Check if necessary files exist
+  if (!fs.existsSync(SERVER_SCRIPT)) {
+    log(`Error: ${SERVER_SCRIPT} not found`, true);
+    process.exit(1);
+  }
+  
+  // Check if data directory exists, create if not
+  const dataDir = path.join(__dirname, 'data');
+  if (!fs.existsSync(dataDir)) {
+    log('Creating data directory...');
+    fs.mkdirSync(dataDir, { recursive: true });
+  }
+  
+  // Ensure the public directory and embedded-members.json exist
+  const publicDir = path.join(__dirname, 'public');
+  const embeddedPath = path.join(publicDir, 'embedded-members.json');
+  
+  if (!fs.existsSync(publicDir)) {
+    log('Error: public directory not found', true);
+    process.exit(1);
+  }
+  
+  // Log environment information
+  log(`Environment: ${process.env.NODE_ENV || 'production'}`);
+  log(`Server port: ${PORT}`);
+  
   try {
-    const pid = parseInt(fs.readFileSync(pidFile, 'utf8').trim(), 10);
-    console.log(`Found existing server process (PID: ${pid}), attempting to terminate...`);
+    // Start the main server
+    log('Starting deployment server...');
     
-    try {
-      process.kill(pid, 'SIGTERM');
-      console.log(`Successfully sent SIGTERM to process ${pid}`);
-    } catch (killErr) {
-      console.log(`Process ${pid} may not be running: ${killErr.message}`);
+    const server = spawn('node', [SERVER_SCRIPT], {
+      env: { ...process.env, PORT },
+      stdio: 'inherit'
+    });
+    
+    server.on('error', (err) => {
+      log(`Server error: ${err.message}`, true);
+    });
+    
+    server.on('exit', (code, signal) => {
+      if (code !== 0) {
+        log(`Server exited with code ${code} and signal ${signal}`, true);
+        
+        // Try to restart the server after a delay
+        log('Attempting to restart server in 5 seconds...');
+        setTimeout(() => {
+          runDeployment();
+        }, 5000);
+      }
+    });
+    
+    // Log successful start
+    log('Deployment server started successfully');
+    
+    // Use health check script as fallback
+    if (fs.existsSync(HEALTH_SCRIPT)) {
+      // Start health check as a separate process (only if main server fails)
+      server.on('exit', () => {
+        log('Starting health check server as fallback...');
+        
+        const healthServer = spawn('node', [HEALTH_SCRIPT], {
+          env: { ...process.env, PORT },
+          stdio: 'inherit'
+        });
+        
+        healthServer.on('error', (err) => {
+          log(`Health server error: ${err.message}`, true);
+        });
+      });
     }
-    
-    // Remove stale PID file
-    fs.unlinkSync(pidFile);
-  } catch (err) {
-    console.error(`Error handling existing PID file: ${err.message}`);
+  } catch (error) {
+    log(`Failed to start deployment: ${error.message}`, true);
+    process.exit(1);
   }
 }
 
-// Prepare environment variables
-const envVars = {
-  ...process.env,
-  PORT,
-  HOST,
-  NODE_ENV: 'production'
-};
-
-// Start the restart monitor
-console.log(`Starting server monitor with restart capability...`);
-const monitor = spawn('node', [RESTART_SCRIPT], {
-  env: envVars,
-  stdio: 'inherit',
-  detached: false
-});
-
-// Handle monitor process events
-monitor.on('error', (err) => {
-  console.error(`Failed to start server monitor: ${err.message}`);
-  process.exit(1);
-});
-
-// Log success
-console.log(`Server monitor started with PID ${monitor.pid}`);
-console.log('===========================================');
-console.log('Server is now running. Press Ctrl+C to stop.');
-console.log('===========================================');
-
-// Keep the process alive
-process.stdin.resume();
-
-// Handle termination signals
+// Handle process signals
 process.on('SIGINT', () => {
-  console.log('Received SIGINT (Ctrl+C). Stopping all processes...');
-  if (monitor) {
-    monitor.kill('SIGINT');
-  }
+  log('Received SIGINT signal, shutting down...');
   process.exit(0);
 });
 
 process.on('SIGTERM', () => {
-  console.log('Received SIGTERM. Stopping all processes...');
-  if (monitor) {
-    monitor.kill('SIGTERM');
-  }
+  log('Received SIGTERM signal, shutting down...');
   process.exit(0);
 });
+
+// Handle uncaught exceptions and unhandled rejections
+process.on('uncaughtException', (err) => {
+  log(`Uncaught exception: ${err.stack}`, true);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  log(`Unhandled rejection at: ${promise}, reason: ${reason}`, true);
+});
+
+// Start the deployment
+runDeployment();

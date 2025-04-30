@@ -1,28 +1,37 @@
 /**
- * Simple Health Check Server for Replit Deployments
+ * The Current-See Deployment Health Check
  * 
- * This standalone server responds to health checks on port 3000
- * which is what Replit expects for deployments.
+ * This file is a simple health check for the Replit deployment.
+ * It will respond to HTTP requests with a 200 OK status.
  */
 
 const http = require('http');
 
-// Create a simple HTTP server
+// Create health check server
 const server = http.createServer((req, res) => {
-  // Log request details
-  console.log(`Health check received: ${req.method} ${req.url}`);
-  
-  // Respond with 200 OK
-  res.writeHead(200, {'Content-Type': 'application/json'});
+  res.statusCode = 200;
+  res.setHeader('Content-Type', 'application/json');
   res.end(JSON.stringify({
     status: 'ok',
     timestamp: new Date().toISOString(),
-    message: 'The Current-See health check passed'
+    app: 'The Current-See',
+    api_endpoints: [
+      '/api/members.json',
+      '/api/distribution-ledger',
+      '/api/solar-clock'
+    ]
   }));
 });
 
-// Listen on port 3000 (Replit's default deployment port)
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`Health check server running on port ${PORT}`);
+// Listen on the port provided by Replit or fallback to 3001
+const PORT = process.env.PORT || 3001;
+const HOST = '0.0.0.0';
+
+server.listen(PORT, HOST, () => {
+  console.log(`Health check server running at http://${HOST}:${PORT}/`);
+});
+
+// Log any errors
+server.on('error', (err) => {
+  console.error('Health check server error:', err);
 });

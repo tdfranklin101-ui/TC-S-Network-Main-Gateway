@@ -1,140 +1,137 @@
 /**
- * The Current-See Server Restart Handler
+ * The Current-See Server Restart Utility
  * 
- * This script ensures the server stays running even if it crashes.
- * It's specifically designed for deployment on Replit.
+ * This script helps manage the deployment server process.
+ * It can start, stop, and restart the server.
  */
 
-const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const { exec, spawn } = require('child_process');
 
 // Configuration
-const SERVER_FILE = 'deploy-server.js';
+const SERVER_SCRIPT = 'deploy-server.js';
+const PID_FILE = 'deploy-server.pid';
 const LOG_FILE = 'deploy-server.log';
-const MAX_RESTARTS = 10;
-const RESTART_DELAY = 5000; // 5 seconds
 
-// Tracking
-let restartCount = 0;
-let lastRestartTime = Date.now();
-let serverProcess = null;
-
-// Create log file directory if it doesn't exist
-const logDir = path.dirname(LOG_FILE);
-if (logDir !== '.' && !fs.existsSync(logDir)) {
-  fs.mkdirSync(logDir, { recursive: true });
-}
-
-// Log function with timestamp
+// Helper function to log messages
 function log(message) {
   const timestamp = new Date().toISOString();
-  const logMessage = `[${timestamp}] ${message}\n`;
+  console.log(`[${timestamp}] ${message}`);
   
-  // Log to console
-  console.log(message);
-  
-  // Append to log file
-  fs.appendFileSync(LOG_FILE, logMessage);
+  // Also append to log file
+  fs.appendFileSync('deployment-helper.log', `[${timestamp}] ${message}\n`);
 }
 
-// Start the server process
+// Check if server is running
+function isServerRunning() {
+  if (!fs.existsSync(PID_FILE)) {
+    return false;
+  }
+  
+  const pid = parseInt(fs.readFileSync(PID_FILE, 'utf8').trim());
+  
+  try {
+    // Send signal 0 to check if process exists
+    process.kill(pid, 0);
+    return true;
+  } catch (e) {
+    // Process doesn't exist
+    return false;
+  }
+}
+
+// Start the server
 function startServer() {
-  log(`Starting server (attempt ${restartCount + 1} of ${MAX_RESTARTS})...`);
+  if (isServerRunning()) {
+    log('Server is already running');
+    return;
+  }
   
-  // Spawn Node.js process with the server file
-  serverProcess = spawn('node', [SERVER_FILE], {
-    stdio: 'pipe', // Capture stdout and stderr
-    detached: false
+  log('Starting server...');
+  
+  // Open log file for writing
+  const out = fs.openSync(LOG_FILE, 'a');
+  const err = fs.openSync(LOG_FILE, 'a');
+  
+  // Spawn server process
+  const child = spawn('node', [SERVER_SCRIPT], {
+    detached: true,
+    stdio: ['ignore', out, err]
   });
   
-  // Save the process ID to a file for external management
-  fs.writeFileSync('deploy-server.pid', serverProcess.pid.toString());
+  // Write PID to file
+  fs.writeFileSync(PID_FILE, child.pid.toString());
   
-  // Log server output
-  serverProcess.stdout.on('data', (data) => {
-    const output = data.toString().trim();
-    if (output) {
-      log(`SERVER: ${output}`);
-    }
-  });
+  // Detach the child process
+  child.unref();
   
-  // Log server errors
-  serverProcess.stderr.on('data', (data) => {
-    const output = data.toString().trim();
-    if (output) {
-      log(`SERVER ERROR: ${output}`);
-    }
-  });
+  log(`Server started with PID ${child.pid}`);
+}
+
+// Stop the server
+function stopServer() {
+  if (!isServerRunning()) {
+    log('Server is not running');
+    return;
+  }
   
-  // Handle server exit
-  serverProcess.on('exit', (code, signal) => {
-    const exitReason = signal ? `signal ${signal}` : `code ${code}`;
-    log(`Server exited with ${exitReason}`);
+  const pid = parseInt(fs.readFileSync(PID_FILE, 'utf8').trim());
+  
+  log(`Stopping server with PID ${pid}...`);
+  
+  try {
+    process.kill(pid);
+    fs.unlinkSync(PID_FILE);
+    log('Server stopped');
+  } catch (e) {
+    log(`Error stopping server: ${e.message}`);
     
-    // Remove PID file
-    try {
-      fs.unlinkSync('deploy-server.pid');
-    } catch (err) {
-      // Ignore if file doesn't exist
+    // Clean up PID file if process doesn't exist
+    if (e.code === 'ESRCH') {
+      fs.unlinkSync(PID_FILE);
+      log('Removed stale PID file');
     }
-    
-    // Restart server if not explicitly killed
-    if (code !== 0 && restartCount < MAX_RESTARTS) {
-      // Check if we're restarting too quickly
-      const now = Date.now();
-      const timeSinceLastRestart = now - lastRestartTime;
-      
-      if (timeSinceLastRestart < RESTART_DELAY) {
-        const waitTime = RESTART_DELAY - timeSinceLastRestart;
-        log(`Waiting ${waitTime}ms before restart to prevent rapid cycling...`);
-        setTimeout(restartServer, waitTime);
-      } else {
-        restartServer();
-      }
-    } else if (restartCount >= MAX_RESTARTS) {
-      log('Maximum restart attempts reached. Server will not be restarted.');
-    }
-  });
-  
-  log(`Server started with PID ${serverProcess.pid}`);
+  }
 }
 
 // Restart the server
 function restartServer() {
-  restartCount++;
-  lastRestartTime = Date.now();
-  startServer();
+  log('Restarting server...');
+  stopServer();
+  
+  // Wait a moment for the server to stop
+  setTimeout(() => {
+    startServer();
+  }, 2000);
 }
 
-// Handle process signals
-process.on('SIGINT', () => {
-  log('Received SIGINT (Ctrl+C). Stopping server...');
-  if (serverProcess) {
-    serverProcess.kill('SIGINT');
-  }
-  process.exit(0);
-});
-
-process.on('SIGTERM', () => {
-  log('Received SIGTERM. Stopping server...');
-  if (serverProcess) {
-    serverProcess.kill('SIGTERM');
-  }
-  process.exit(0);
-});
-
-// Handle uncaught exceptions in the monitor process
-process.on('uncaughtException', (err) => {
-  log(`MONITOR ERROR: Uncaught exception: ${err.message}`);
-  log(err.stack);
+// Process command line arguments
+function processCommand() {
+  const command = process.argv[2];
   
-  // Try to keep the server running even if the monitor has an issue
-  if (!serverProcess || serverProcess.exitCode !== null) {
-    restartServer();
+  switch (command) {
+    case 'start':
+      startServer();
+      break;
+    case 'stop':
+      stopServer();
+      break;
+    case 'restart':
+      restartServer();
+      break;
+    case 'status':
+      if (isServerRunning()) {
+        const pid = parseInt(fs.readFileSync(PID_FILE, 'utf8').trim());
+        log(`Server is running with PID ${pid}`);
+      } else {
+        log('Server is not running');
+      }
+      break;
+    default:
+      log('Usage: node server-restart.js [start|stop|restart|status]');
   }
-});
+}
 
-// Start the server initially
-log('=== THE CURRENT-SEE SERVER MONITOR STARTED ===');
-startServer();
+// Execute command
+processCommand();

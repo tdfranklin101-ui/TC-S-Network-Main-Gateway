@@ -1,84 +1,84 @@
 # The Current-See Deployment Instructions
 
-## Setup Replit Deployments
+This document outlines the steps to deploy The Current-See website to your custom domain (www.thecurrentsee.org).
 
-1. **Setup Run Command**:
-   - In Replit, go to the "Secrets" tab
-   - Add the startup command as a secret with the key `RUN` and value `node run-deployment.js`
+## Deployment Steps
 
-2. **Required Dependencies**:
-   - The following Node.js packages should be installed:
-     - express
-     - cors
-     - body-parser
-     - pg
-     - express-session
-   - Install any missing dependencies with the package manager
+### 1. Pre-Deployment Checklist
 
-3. **Configure Environment Variables**:
-   - Set the following environment variables:
-     - `PORT`: 3001
-     - `HOST`: 0.0.0.0
+Ensure the following items are complete before deployment:
 
-4. **Deploy Application**:
-   - Click the "Deploy" button in Replit
-   - Wait for the build process to complete
-   - Your application will be deployed to a `.replit.app` domain
+- [x] All HTML files are properly structured and responsive
+- [x] JavaScript functions are working correctly for member loading and SOLAR calculations
+- [x] API endpoints are correctly set up (/api/members, /api/distribution-ledger, etc.)
+- [x] All static assets (images, CSS, JS) are included
+- [x] Distribution page displays all members with correct SOLAR values (1 SOLAR per day since join date)
 
-## Setup Custom Domain
+### 2. Deployment Process on Replit
 
-1. **Connect Domain in Replit**:
-   - Go to the "Deployments" tab in your Replit
-   - Click "Custom domain"
+1. **Configure Replit Deployment**
+   - From your Replit project, click on the "Deployment" tab in the sidebar
+   - Click "Deploy to Replit"
+   - Set your deployment name: `thecurrentsee`
+
+2. **Configure Domain**
+   - In the Replit deployment settings, select "Custom Domain"
    - Enter your domain: `www.thecurrentsee.org`
-   - Follow the provided instructions to update your DNS settings
+   - Follow the instructions to set up DNS records at your Namecheap account
+   - Add these records to your Namecheap DNS settings:
+     * Type: CNAME
+     * Host: www
+     * Value: thecurrentsee.repl.co.
+     * TTL: Automatic
 
-2. **Update DNS at Namecheap**:
-   - Log in to your Namecheap account
-   - Go to the Domain List and select thecurrentsee.org
-   - Click "Manage" and navigate to "Advanced DNS"
-   - Add CNAME records as instructed by Replit
-   - Wait for DNS propagation (may take up to 24-48 hours)
+3. **Environment Configuration**
+   - Make sure the following environment variables are set in the deployment:
+     * `PORT=3001` (this is the port the server runs on internally)
+   - Note that Replit handles port mapping to port 443 (HTTPS) automatically
 
-## Troubleshooting
+4. **Deploy the Application**
+   - Use the `deploy-server.js` as your entry point
+   - Command to run: `node deploy-server.js`
+   - Click "Deploy"
 
-If you experience issues during deployment:
+### 3. Post-Deployment Verification
 
-1. **Server Not Starting**:
-   - Check `deploy-server.log` for error messages
-   - Ensure all required environment variables are set
-   - Verify the PORT isn't being used by another service
+After deployment completes, verify the following:
 
-2. **Members List Not Working**:
-   - Verify the existence of `public/embedded-members.json`
-   - Check that all API endpoints are functioning correctly in the logs
+1. **Website Accessibility**
+   - Ensure the website is accessible via HTTPS: `https://www.thecurrentsee.org`
+   - Verify all pages load correctly
 
-3. **Navigation or Display Issues**:
-   - Clear browser cache or try in incognito mode
-   - Check for console errors in the browser developer tools
+2. **API Functionality**
+   - Test the member data API: `https://www.thecurrentsee.org/api/members.json`
+   - Test the distribution ledger API: `https://www.thecurrentsee.org/api/distribution-ledger`
 
-4. **White Papers Missing**:
-   - Ensure all white paper HTML files exist in the public directory
-   - Verify links on whitepapers.html are correctly pointing to the files
+3. **Content Verification**
+   - Verify the Solar Generator counter is updating correctly
+   - Verify the distribution page shows all members with correct SOLAR values
+   - Check all other pages for proper formatting and content
 
-## Maintenance
+### 4. Troubleshooting
 
-For ongoing maintenance of the site:
+If you encounter issues during deployment:
 
-1. **Update Member Data**:
-   - Edit the `members_export.csv` file with new member information
-   - Redeploy the application to update the embedded data
+1. **Server Not Starting**
+   - Check server logs in the Replit deployment console
+   - Verify the port configuration (should be 3001 internally)
 
-2. **Add New Content**:
-   - Add new files to the appropriate directories in `/public`
-   - Update navigation links in `/public/includes/header.html`
+2. **Domain Not Resolving**
+   - Verify DNS settings at Namecheap are correctly configured
+   - DNS propagation can take up to 24-48 hours
 
-3. **Check Logs**:
-   - Monitor `deploy-server.log` for any issues or errors
-   - Address any recurring problems as needed
+3. **API Endpoints Not Working**
+   - Check server logs for API-specific errors
+   - Verify CORS settings if connecting from external applications
 
-4. **Restart Server**:
-   - If needed, restart the server by stopping and starting the Replit
-   - The auto-restart functionality should handle most crash scenarios
+## Maintenance Notes
 
-For additional technical support, contact your development team.
+- The server includes automatic daily distribution calculations at midnight GMT
+- Member data is automatically updated with real-time SOLAR totals
+- All members receive 1 SOLAR per day since their join date
+- SOLAR values are displayed with 4 decimal places
+- Dollar values are calculated at $136,000 per SOLAR
+- Energy values are calculated at 4,913 kWh per SOLAR

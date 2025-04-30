@@ -965,6 +965,34 @@ app.get('/admin/member-roster', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin/member-roster.html'));
 });
 
+// Health check endpoint for deployment verification
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    app: 'The Current-See',
+    version: '1.0.0'
+  });
+});
+
+// Root path handler for deployment verification
+app.get('/', (req, res, next) => {
+  // Check if a specific file is requested or if it's just the root path
+  if (req.path === '/') {
+    // Look for index.html in the public directory
+    const indexPath = path.join(__dirname, 'public', 'index.html');
+    if (fs.existsSync(indexPath)) {
+      res.sendFile(indexPath);
+    } else {
+      // If index.html doesn't exist, send a simple response for health check
+      res.status(200).send('The Current-See is running. Visit /solar-generator to see the main page.');
+    }
+  } else {
+    // For other paths, continue to the next middleware
+    next();
+  }
+});
+
 // API Endpoints essential for website functionality
 app.get('/api/solar-clock', (req, res) => {
   updateSolarClockData();

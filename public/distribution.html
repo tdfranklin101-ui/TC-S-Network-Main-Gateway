@@ -48,6 +48,9 @@
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
       transition: transform 0.2s, box-shadow 0.2s;
       border-left: 5px solid #1c7e45;
+      display: flex;
+      flex-direction: column;
+      border-bottom: none;
     }
     
     .distribution-members .member-item:hover {
@@ -67,6 +70,7 @@
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 0.75rem;
       font-size: 0.95rem;
+      align-items: start;
     }
     
     .distribution-members .joined-date,
@@ -122,7 +126,8 @@
       margin-bottom: 2rem;
     }
     
-    .member-item {
+    /* Default styles for older design - these won't affect the enhanced distribution-members class */
+    .distribution-card .member-item:not(.distribution-members .member-item) {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
@@ -130,35 +135,35 @@
       border-bottom: 1px solid #f0f0f0;
     }
     
-    .member-item:last-child {
+    .distribution-card .member-item:not(.distribution-members .member-item):last-child {
       border-bottom: none;
     }
     
-    .member-name {
+    .distribution-card .member-name:not(.distribution-members .member-name) {
       font-weight: 700;
       font-size: 1.2rem;
       color: #333;
     }
     
-    .member-details {
+    .distribution-card .member-details:not(.distribution-members .member-details) {
       display: flex;
       flex-direction: column;
       align-items: flex-end;
     }
     
-    .joined-date {
+    .distribution-card .joined-date:not(.distribution-members .joined-date) {
       color: #666;
       font-size: 0.9rem;
       margin-bottom: 0.5rem;
     }
     
-    .solar-amount {
+    .distribution-card .solar-amount:not(.distribution-members .solar-amount) {
       font-size: 1.2rem;
       font-weight: 700;
       color: #66a832;
     }
     
-    .data-refreshed {
+    .distribution-card .data-refreshed:not(.distribution-members .data-refreshed) {
       text-align: right;
       font-size: 0.75rem;
       color: #888;
@@ -256,24 +261,25 @@
           const wrapperDiv = document.createElement('div');
           wrapperDiv.className = 'distribution-members';
           
-          // Get Terry and JF as the first two members
-          const terry = distributions.find(d => d.name === "Terry D. Franklin");
-          const jf = distributions.find(d => d.name === "JF");
+          // Special order: Put Terry and JF first if they exist
+          let orderedDistributions = [...distributions]; // Start with ALL members
           
-          // Create special ordered array with Terry and JF first, followed by others
-          const orderedDistributions = [];
-          if (terry) orderedDistributions.push(terry);
-          if (jf) orderedDistributions.push(jf);
-          
-          // Get other members, sorted by joined date (newest first)
-          const otherMembers = distributions.filter(d => 
-            d.name !== "Terry D. Franklin" && d.name !== "JF"
-          ).sort((a, b) => {
+          // Sort members by a custom order: Terry first, JF second, then others by join date (newest first)
+          orderedDistributions.sort((a, b) => {
+            // Terry always comes first
+            if (a.name === "Terry D. Franklin") return -1;
+            if (b.name === "Terry D. Franklin") return 1;
+            
+            // JF comes second
+            if (a.name === "JF") return -1;
+            if (b.name === "JF") return 1;
+            
+            // Otherwise sort by joined date (newest first)
             return new Date(b.joinedDate) - new Date(a.joinedDate);
           });
           
-          // Add other members to the display order after Terry and JF
-          orderedDistributions.push(...otherMembers);
+          // Log to console how many members we're displaying
+          console.log(`Displaying ${orderedDistributions.length} members in total`);
           
           // Display ALL members
           orderedDistributions.forEach(distribution => {
