@@ -1,0 +1,18 @@
+id,username,name,joinedDate,totalSolar,totalDollars,isAnonymous,lastDistributionDate,isReserve
+0,tcs.reserve,TC-S Solar Reserve,2025-04-07,10000000000,1360000000000000,false,2025-04-30,true
+1,terry.franklin,Terry D. Franklin,2025-04-09,22,2992000,false,2025-04-30,false
+2,j.franklin,JF,2025-04-10,21,2856000,false,2025-04-30,false
+3,s.martinez,Sarah Martinez,2025-04-10,21,2856000,false,2025-04-30,false
+4,r.chen,Ray Chen,2025-04-11,20,2720000,false,2025-04-30,false
+5,a.patel,Anika Patel,2025-04-11,20,2720000,false,2025-04-30,false
+6,m.johnson,Marcus Johnson,2025-04-12,19,2584000,false,2025-04-30,false
+7,l.williams,Leila Williams,2025-04-12,19,2584000,false,2025-04-30,false
+8,j.kim,Jin Kim,2025-04-13,18,2448000,false,2025-04-30,false
+9,f.garcia,Francesca Garcia,2025-04-14,17,2312000,false,2025-04-30,false
+10,t.nguyen,Tran Nguyen,2025-04-15,16,2176000,false,2025-04-30,false
+11,d.wilson,Devon Wilson,2025-04-16,15,2040000,false,2025-04-30,false
+12,e.lopez,Elena Lopez,2025-04-17,14,1904000,false,2025-04-30,false
+13,k.davis,Khalid Davis,2025-04-18,13,1768000,false,2025-04-30,false
+14,z.wang,Zoe Wang,2025-04-19,12,1632000,false,2025-04-30,false
+15,b.thompson,Blake Thompson,2025-04-20,11,1496000,false,2025-04-30,false
+16,c.rodriguez,Carmen Rodriguez,2025-04-21,10,1360000,false,2025-04-30,false
