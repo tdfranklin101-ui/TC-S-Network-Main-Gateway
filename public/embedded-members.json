@@ -30,7 +30,8 @@
     "totalDollars": 2992000,
     "isAnonymous": false,
     "isReserve": false,
-    "lastDistributionDate": "2025-04-22"
+    "lastDistributionDate": "2025-04-30",
+    "totalKwh": 108086
   },
   {
     "id": 4,
@@ -41,7 +42,8 @@
     "totalDollars": 2856000,
     "isAnonymous": false,
     "isReserve": false,
-    "lastDistributionDate": "2025-04-22"
+    "lastDistributionDate": "2025-04-30",
+    "totalKwh": 103173
   },
   {
     "id": 5,
@@ -52,7 +54,8 @@
     "totalDollars": 1768000,
     "isAnonymous": false,
     "isReserve": false,
-    "lastDistributionDate": "2025-04-22"
+    "lastDistributionDate": "2025-04-30",
+    "totalKwh": 63869
   },
   {
     "id": 6,
@@ -63,7 +66,8 @@
     "totalDollars": 1768000,
     "isAnonymous": false,
     "isReserve": false,
-    "lastDistributionDate": "2025-04-22"
+    "lastDistributionDate": "2025-04-30",
+    "totalKwh": 63869
   },
   {
     "id": 7,
@@ -74,7 +78,8 @@
     "totalDollars": 1632000,
     "isAnonymous": false,
     "isReserve": false,
-    "lastDistributionDate": "2025-04-22"
+    "lastDistributionDate": "2025-04-30",
+    "totalKwh": 58956
   },
   {
     "id": 8,
@@ -85,7 +90,8 @@
     "totalDollars": 1632000,
     "isAnonymous": false,
     "isReserve": false,
-    "lastDistributionDate": "2025-04-22"
+    "lastDistributionDate": "2025-04-30",
+    "totalKwh": 58956
   },
   {
     "id": 9,
@@ -96,7 +102,8 @@
     "totalDollars": 1632000,
     "isAnonymous": false,
     "isReserve": false,
-    "lastDistributionDate": "2025-04-22"
+    "lastDistributionDate": "2025-04-30",
+    "totalKwh": 58956
   },
   {
     "id": 10,
@@ -107,7 +114,8 @@
     "totalDollars": 1632000,
     "isAnonymous": false,
     "isReserve": false,
-    "lastDistributionDate": "2025-04-22"
+    "lastDistributionDate": "2025-04-30",
+    "totalKwh": 58956
   },
   {
     "id": 11,
@@ -118,7 +126,8 @@
     "totalDollars": 1632000,
     "isAnonymous": false,
     "isReserve": false,
-    "lastDistributionDate": "2025-04-22"
+    "lastDistributionDate": "2025-04-30",
+    "totalKwh": 58956
   },
   {
     "id": 12,
@@ -129,7 +138,8 @@
     "totalDollars": 1496000,
     "isAnonymous": false,
     "isReserve": false,
-    "lastDistributionDate": "2025-04-22"
+    "lastDistributionDate": "2025-04-30",
+    "totalKwh": 54043
   },
   {
     "id": 13,
@@ -140,7 +150,8 @@
     "totalDollars": 1496000,
     "isAnonymous": false,
     "isReserve": false,
-    "lastDistributionDate": "2025-04-22"
+    "lastDistributionDate": "2025-04-30",
+    "totalKwh": 54043
   },
   {
     "id": 14,
@@ -151,7 +162,8 @@
     "totalDollars": 1360000,
     "isAnonymous": false,
     "isReserve": false,
-    "lastDistributionDate": "2025-04-22"
+    "lastDistributionDate": "2025-04-30",
+    "totalKwh": 49130
   },
   {
     "id": 15,
@@ -162,7 +174,8 @@
     "totalDollars": 1360000,
     "isAnonymous": false,
     "isReserve": false,
-    "lastDistributionDate": "2025-04-22"
+    "lastDistributionDate": "2025-04-30",
+    "totalKwh": 49130
   },
   {
     "id": 16,
@@ -173,6 +186,7 @@
     "totalDollars": 1224000,
     "isAnonymous": false,
     "isReserve": false,
-    "lastDistributionDate": "2025-04-22"
+    "lastDistributionDate": "2025-04-30",
+    "totalKwh": 44217
   }
 ]

@@ -282,8 +282,8 @@ document.addEventListener('DOMContentLoaded', function() {
             "username": "terry.franklin",
             "name": "Terry D. Franklin",
             "joinedDate": "2025-04-09",
-            "totalSolar": 19,
-            "totalDollars": 2584000,
+            "totalSolar": 22,
+            "totalDollars": 2992000,
             "isAnonymous": false,
             "lastDistributionDate": "2025-04-28"
           },
@@ -292,8 +292,8 @@ document.addEventListener('DOMContentLoaded', function() {
             "username": "j.franklin",
             "name": "JF",
             "joinedDate": "2025-04-10",
-            "totalSolar": 18,
-            "totalDollars": 2448000,
+            "totalSolar": 21,
+            "totalDollars": 2856000,
             "isAnonymous": false,
             "lastDistributionDate": "2025-04-28"
           },
