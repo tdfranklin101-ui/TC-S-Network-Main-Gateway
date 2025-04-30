@@ -1,134 +1,67 @@
 /**
  * The Current-See Deployment Runner
  * 
- * This is the main entry point for the Replit deployment.
- * It handles starting the server and setting up necessary environment.
+ * This script launches the fixed deployment server
+ * for Replit deployment with proper health checks.
  */
 
+const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
-const { execSync, spawn } = require('child_process');
 
 // Configuration
-const SERVER_SCRIPT = 'deploy-server.js';
-const HEALTH_SCRIPT = 'health.js';
-const LOG_FILE = 'deployment-server.log';
-const PORT = process.env.PORT || 3001;
+const SERVER_SCRIPT = path.join(__dirname, 'deploy-server-fixed.js');
+const LOG_FILE = path.join(__dirname, 'deployment.log');
 
-// Helper function to log messages
-function log(message, isError = false) {
-  const timestamp = new Date().toISOString();
-  const logMessage = `[${timestamp}] ${message}`;
-  
-  if (isError) {
-    console.error(logMessage);
-  } else {
-    console.log(logMessage);
-  }
-  
-  // Also append to log file
-  fs.appendFileSync(LOG_FILE, `${logMessage}\n`);
+// Ensure the script exists
+if (!fs.existsSync(SERVER_SCRIPT)) {
+  console.error(`ERROR: Server script not found: ${SERVER_SCRIPT}`);
+  process.exit(1);
 }
 
-// Main function to run the deployment
-async function runDeployment() {
-  log('Starting The Current-See deployment...');
-  
-  // Check if necessary files exist
-  if (!fs.existsSync(SERVER_SCRIPT)) {
-    log(`Error: ${SERVER_SCRIPT} not found`, true);
-    process.exit(1);
-  }
-  
-  // Check if data directory exists, create if not
-  const dataDir = path.join(__dirname, 'data');
-  if (!fs.existsSync(dataDir)) {
-    log('Creating data directory...');
-    fs.mkdirSync(dataDir, { recursive: true });
-  }
-  
-  // Ensure the public directory and embedded-members.json exist
-  const publicDir = path.join(__dirname, 'public');
-  const embeddedPath = path.join(publicDir, 'embedded-members.json');
-  
-  if (!fs.existsSync(publicDir)) {
-    log('Error: public directory not found', true);
-    process.exit(1);
-  }
-  
-  // Log environment information
-  log(`Environment: ${process.env.NODE_ENV || 'production'}`);
-  log(`Server port: ${PORT}`);
-  
-  try {
-    // Start the main server
-    log('Starting deployment server...');
-    
-    const server = spawn('node', [SERVER_SCRIPT], {
-      env: { ...process.env, PORT },
-      stdio: 'inherit'
-    });
-    
-    server.on('error', (err) => {
-      log(`Server error: ${err.message}`, true);
-    });
-    
-    server.on('exit', (code, signal) => {
-      if (code !== 0) {
-        log(`Server exited with code ${code} and signal ${signal}`, true);
-        
-        // Try to restart the server after a delay
-        log('Attempting to restart server in 5 seconds...');
-        setTimeout(() => {
-          runDeployment();
-        }, 5000);
-      }
-    });
-    
-    // Log successful start
-    log('Deployment server started successfully');
-    
-    // Use health check script as fallback
-    if (fs.existsSync(HEALTH_SCRIPT)) {
-      // Start health check as a separate process (only if main server fails)
-      server.on('exit', () => {
-        log('Starting health check server as fallback...');
-        
-        const healthServer = spawn('node', [HEALTH_SCRIPT], {
-          env: { ...process.env, PORT },
-          stdio: 'inherit'
-        });
-        
-        healthServer.on('error', (err) => {
-          log(`Health server error: ${err.message}`, true);
-        });
-      });
-    }
-  } catch (error) {
-    log(`Failed to start deployment: ${error.message}`, true);
-    process.exit(1);
-  }
-}
+// Start the server process
+console.log(`Starting The Current-See deployment server from: ${SERVER_SCRIPT}`);
+console.log(`Logs will be written to: ${LOG_FILE}`);
 
-// Handle process signals
-process.on('SIGINT', () => {
-  log('Received SIGINT signal, shutting down...');
-  process.exit(0);
+// Open log file stream
+const logStream = fs.createWriteStream(LOG_FILE, { flags: 'a' });
+
+// Get current timestamp
+const timestamp = new Date().toISOString();
+logStream.write(`\n\n--- DEPLOYMENT STARTED AT ${timestamp} ---\n`);
+
+// Spawn the server process
+const server = spawn('node', [SERVER_SCRIPT], {
+  env: {
+    ...process.env,
+    PORT: process.env.PORT || '3001' // Use environment PORT or default to 3001
+  }
 });
 
-process.on('SIGTERM', () => {
-  log('Received SIGTERM signal, shutting down...');
-  process.exit(0);
+// Log process ID
+logStream.write(`Server process ID: ${server.pid}\n`);
+
+// Handle stdout
+server.stdout.on('data', (data) => {
+  const output = data.toString();
+  process.stdout.write(output);
+  logStream.write(output);
 });
 
-// Handle uncaught exceptions and unhandled rejections
-process.on('uncaughtException', (err) => {
-  log(`Uncaught exception: ${err.stack}`, true);
+// Handle stderr
+server.stderr.on('data', (data) => {
+  const output = data.toString();
+  process.stderr.write(output);
+  logStream.write(`ERROR: ${output}`);
 });
 
-process.on('unhandledRejection', (reason, promise) => {
-  log(`Unhandled rejection at: ${promise}, reason: ${reason}`, true);
+// Handle process exit
+server.on('close', (code) => {
+  const exitMessage = `Server process exited with code ${code}`;
+  console.log(exitMessage);
+  logStream.write(`${exitMessage}\n`);
+  logStream.end();
 });
 
-// Start the deployment
-runDeployment();
+// Log startup complete
+console.log('Deployment runner started successfully');
