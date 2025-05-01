@@ -238,11 +238,63 @@ function loadMembersData() {
 // Function to save members data to embedded JSON file
 function saveEmbeddedMembersFile(membersList) {
   try {
+    // Verify the data before saving
+    if (!Array.isArray(membersList) || membersList.length === 0) {
+      throw new Error('Invalid member data: must be non-empty array');
+    }
+    
+    // Ensure the data has the required fields for key members
+    const terry = membersList.find(m => m.name === "Terry D. Franklin");
+    const jf = membersList.find(m => m.name === "JF");
+    const solarReserve = membersList.find(m => m.name === "TC-S Solar Reserve");
+    
+    if (!terry || !jf || !solarReserve) {
+      console.warn('Warning: Key members missing from data, validating integrity before save');
+    }
+    
+    // Create backup of current file if it exists
     const embeddedPath = './public/embedded-members.json';
+    if (fs.existsSync(embeddedPath)) {
+      // Create a backup directory if it doesn't exist
+      const backupDir = './backup';
+      if (!fs.existsSync(backupDir)) {
+        fs.mkdirSync(backupDir, { recursive: true });
+      }
+      
+      // Create backup with timestamp
+      const backupPath = `${backupDir}/embedded-members-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+      fs.copyFileSync(embeddedPath, backupPath);
+      console.log(`Created backup of members file at ${backupPath}`);
+    }
+    
+    // Write the new data
     fs.writeFileSync(embeddedPath, JSON.stringify(membersList, null, 2), 'utf8');
     console.log(`Updated embedded-members.json with current SOLAR totals`);
+    
+    // Verify the file was written correctly by reading it back
+    try {
+      const savedData = JSON.parse(fs.readFileSync(embeddedPath, 'utf8'));
+      if (!Array.isArray(savedData) || savedData.length !== membersList.length) {
+        throw new Error('Verification failed: saved data doesn\'t match original');
+      }
+      console.log(`Verified saved data: contains ${savedData.length} members`);
+    } catch (verifyError) {
+      console.error(`Error verifying saved file: ${verifyError.message}`);
+      // If verification fails, try one more time
+      fs.writeFileSync(embeddedPath, JSON.stringify(membersList, null, 2), 'utf8');
+      console.log('Second attempt to update embedded-members.json completed');
+    }
   } catch (error) {
     console.error(`Error saving embedded members file: ${error.message}`);
+    
+    // Try an alternative save method if the main one fails
+    try {
+      const alternativePath = './public/embedded-members-backup.json';
+      fs.writeFileSync(alternativePath, JSON.stringify(membersList, null, 2), 'utf8');
+      console.log(`Saved backup data to ${alternativePath} as fallback`);
+    } catch (backupError) {
+      console.error(`Failed to save backup data: ${backupError.message}`);
+    }
   }
 }
 

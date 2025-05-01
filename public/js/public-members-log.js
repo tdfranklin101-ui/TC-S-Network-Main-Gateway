@@ -221,32 +221,45 @@ document.addEventListener('DOMContentLoaded', function() {
   window.loadMembers = async function() {
     // Add timestamp to prevent caching
     const timestamp = new Date().getTime();
+    let fetchErrors = [];
     
     try {
       // Clear any cached data by forcing a fresh reload
       console.log("Fetching fresh members data...");
       
-      // Try to fetch from API with cache-busting parameter
-      const response = await fetch(`/api/members.json?t=${timestamp}`, {
-        cache: 'no-cache',
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        }
-      });
-      
-      if (response.ok) {
-        const members = await response.json();
-        console.log("Members data loaded:", members);
-        createMembersLog(members);
-        return;
-      }
-      throw new Error('Failed to fetch from API');
-    } catch (err) {
-      console.warn('Failed to load members from API, trying alternative sources...', err);
-      
+      // Strategy 1: First try the primary API endpoint
       try {
-        // Try to fetch from embedded data file with cache-busting
+        console.log("Trying primary API endpoint...");
+        const response = await fetch(`/api/members.json?t=${timestamp}`, {
+          cache: 'no-cache',
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
+        });
+        
+        if (response.ok) {
+          const members = await response.json();
+          if (Array.isArray(members) && members.length > 0) {
+            console.log(`Members data loaded from API: ${members.length} members`);
+            createMembersLog(members);
+            return;
+          } else {
+            console.warn("API returned empty or invalid data");
+            fetchErrors.push("API returned empty data");
+          }
+        } else {
+          console.warn(`API fetch failed with status: ${response.status}`);
+          fetchErrors.push(`API: ${response.status}`);
+        }
+      } catch (apiError) {
+        console.warn("API fetch error:", apiError);
+        fetchErrors.push(`API error: ${apiError.message}`);
+      }
+      
+      // Strategy 2: Try the embedded-members endpoint
+      try {
+        console.log("Trying embedded-members endpoint...");
         const embeddedResponse = await fetch(`/embedded-members?t=${timestamp}`, {
           cache: 'no-cache',
           headers: {
@@ -257,185 +270,244 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (embeddedResponse.ok) {
           const members = await embeddedResponse.json();
-          console.log("Members data loaded from embedded:", members);
-          createMembersLog(members);
-          return;
+          if (Array.isArray(members) && members.length > 0) {
+            console.log(`Members data loaded from embedded endpoint: ${members.length} members`);
+            createMembersLog(members);
+            return;
+          } else {
+            console.warn("Embedded endpoint returned empty or invalid data");
+            fetchErrors.push("Embedded endpoint returned empty data");
+          }
+        } else {
+          console.warn(`Embedded endpoint fetch failed with status: ${embeddedResponse.status}`);
+          fetchErrors.push(`Embedded endpoint: ${embeddedResponse.status}`);
         }
-        throw new Error('Failed to fetch from embedded data');
-      } catch (err3) {
-        console.error('All member data sources failed, using default data', err3);
+      } catch (embeddedError) {
+        console.warn("Embedded endpoint error:", embeddedError);
+        fetchErrors.push(`Embedded error: ${embeddedError.message}`);
+      }
+      
+      // Strategy 3: Try direct access to the JSON file
+      try {
+        console.log("Trying direct JSON file access...");
+        const jsonResponse = await fetch(`/embedded-members.json?t=${timestamp}`, {
+          cache: 'no-cache',
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
+        });
         
-        // Default data as last resort with ALL members - updated to April 28, 2025
-        const defaultMembers = [
+        if (jsonResponse.ok) {
+          const members = await jsonResponse.json();
+          if (Array.isArray(members) && members.length > 0) {
+            console.log(`Members data loaded from JSON file: ${members.length} members`);
+            createMembersLog(members);
+            return;
+          } else {
+            console.warn("JSON file contained empty or invalid data");
+            fetchErrors.push("JSON file contained empty data");
+          }
+        } else {
+          console.warn(`JSON file fetch failed with status: ${jsonResponse.status}`);
+          fetchErrors.push(`JSON file: ${jsonResponse.status}`);
+        }
+      } catch (jsonError) {
+        console.warn("JSON file error:", jsonError);
+        fetchErrors.push(`JSON file error: ${jsonError.message}`);
+      }
+      
+      // If all dynamic sources failed, fall back to default data
+      console.error('All member data sources failed:', fetchErrors);
+      
+      // Default data as last resort with ALL members - updated to May 1, 2025
+      const defaultMembers = [
           {
             "id": 0,
             "username": "tcs.reserve",
             "name": "TC-S Solar Reserve",
             "joinedDate": "2025-04-07",
-            "totalSolar": 10000000000,
-            "totalDollars": 1360000000000000,
-            "isAnonymous": false,
-            "lastDistributionDate": "2025-04-28"
+            "totalSolar": "10000000000",
+            "totalDollars": "1360000000000000",
+            "isAnonymous": "false",
+            "lastDistributionDate": "2025-05-01",
+            "isReserve": true
           },
           {
             "id": 1,
             "username": "terry.franklin",
             "name": "Terry D. Franklin",
             "joinedDate": "2025-04-09",
-            "totalSolar": 22,
-            "totalDollars": 2992000,
-            "isAnonymous": false,
-            "lastDistributionDate": "2025-04-28"
+            "totalSolar": "22",
+            "totalDollars": "2992000",
+            "isAnonymous": "false",
+            "lastDistributionDate": "2025-05-01",
+            "isReserve": "false"
           },
           {
             "id": 2,
             "username": "j.franklin",
             "name": "JF",
             "joinedDate": "2025-04-10",
-            "totalSolar": 21,
-            "totalDollars": 2856000,
-            "isAnonymous": false,
-            "lastDistributionDate": "2025-04-28"
+            "totalSolar": "21",
+            "totalDollars": "2856000",
+            "isAnonymous": "false",
+            "lastDistributionDate": "2025-05-01",
+            "isReserve": "false"
           },
           {
             "id": 3,
             "username": "s.martinez",
             "name": "Sarah Martinez",
             "joinedDate": "2025-04-10",
-            "totalSolar": 18,
-            "totalDollars": 2448000,
-            "isAnonymous": false,
-            "lastDistributionDate": "2025-04-28"
+            "totalSolar": "21",
+            "totalDollars": "2856000",
+            "isAnonymous": "false",
+            "lastDistributionDate": "2025-05-01",
+            "isReserve": "false"
           },
           {
             "id": 4,
             "username": "r.chen",
             "name": "Ray Chen",
             "joinedDate": "2025-04-11",
-            "totalSolar": 17,
-            "totalDollars": 2312000,
-            "isAnonymous": false,
-            "lastDistributionDate": "2025-04-28"
+            "totalSolar": "20",
+            "totalDollars": "2720000",
+            "isAnonymous": "false",
+            "lastDistributionDate": "2025-05-01",
+            "isReserve": "false"
           },
           {
             "id": 5,
             "username": "a.patel",
             "name": "Anika Patel",
             "joinedDate": "2025-04-11",
-            "totalSolar": 17,
-            "totalDollars": 2312000,
-            "isAnonymous": false,
-            "lastDistributionDate": "2025-04-28"
+            "totalSolar": "20",
+            "totalDollars": "2720000",
+            "isAnonymous": "false",
+            "lastDistributionDate": "2025-05-01",
+            "isReserve": "false"
           },
           {
             "id": 6,
             "username": "m.johnson",
             "name": "Marcus Johnson",
             "joinedDate": "2025-04-12",
-            "totalSolar": 16,
-            "totalDollars": 2176000,
-            "isAnonymous": false,
-            "lastDistributionDate": "2025-04-28"
+            "totalSolar": "19",
+            "totalDollars": "2584000",
+            "isAnonymous": "false",
+            "lastDistributionDate": "2025-05-01",
+            "isReserve": "false"
           },
           {
             "id": 7,
             "username": "l.williams",
             "name": "Leila Williams",
             "joinedDate": "2025-04-12",
-            "totalSolar": 16,
-            "totalDollars": 2176000,
-            "isAnonymous": false,
-            "lastDistributionDate": "2025-04-28"
+            "totalSolar": "19",
+            "totalDollars": "2584000",
+            "isAnonymous": "false",
+            "lastDistributionDate": "2025-05-01",
+            "isReserve": "false"
           },
           {
             "id": 8,
             "username": "j.kim",
             "name": "Jin Kim",
             "joinedDate": "2025-04-13",
-            "totalSolar": 15,
-            "totalDollars": 2040000,
-            "isAnonymous": false,
-            "lastDistributionDate": "2025-04-28"
+            "totalSolar": "18",
+            "totalDollars": "2448000",
+            "isAnonymous": "false",
+            "lastDistributionDate": "2025-05-01",
+            "isReserve": "false"
           },
           {
             "id": 9,
             "username": "f.garcia",
             "name": "Francesca Garcia",
             "joinedDate": "2025-04-14",
-            "totalSolar": 14,
-            "totalDollars": 1904000,
-            "isAnonymous": false,
-            "lastDistributionDate": "2025-04-28"
+            "totalSolar": "17",
+            "totalDollars": "2312000",
+            "isAnonymous": "false",
+            "lastDistributionDate": "2025-05-01",
+            "isReserve": "false"
           },
           {
             "id": 10,
             "username": "t.nguyen",
             "name": "Tran Nguyen",
             "joinedDate": "2025-04-15",
-            "totalSolar": 13,
-            "totalDollars": 1768000,
-            "isAnonymous": false,
-            "lastDistributionDate": "2025-04-28"
+            "totalSolar": "16",
+            "totalDollars": "2176000",
+            "isAnonymous": "false",
+            "lastDistributionDate": "2025-05-01",
+            "isReserve": "false"
           },
           {
             "id": 11,
             "username": "d.wilson",
             "name": "Devon Wilson",
             "joinedDate": "2025-04-16",
-            "totalSolar": 12,
-            "totalDollars": 1632000,
-            "isAnonymous": false,
-            "lastDistributionDate": "2025-04-28"
+            "totalSolar": "15",
+            "totalDollars": "2040000",
+            "isAnonymous": "false",
+            "lastDistributionDate": "2025-05-01",
+            "isReserve": "false"
           },
           {
             "id": 12,
             "username": "e.lopez",
             "name": "Elena Lopez",
             "joinedDate": "2025-04-17",
-            "totalSolar": 11,
-            "totalDollars": 1496000,
-            "isAnonymous": false,
-            "lastDistributionDate": "2025-04-28"
+            "totalSolar": "14",
+            "totalDollars": "1904000",
+            "isAnonymous": "false",
+            "lastDistributionDate": "2025-05-01",
+            "isReserve": "false"
           },
           {
             "id": 13,
             "username": "k.davis",
             "name": "Khalid Davis",
             "joinedDate": "2025-04-18",
-            "totalSolar": 10,
-            "totalDollars": 1360000,
-            "isAnonymous": false,
-            "lastDistributionDate": "2025-04-28"
+            "totalSolar": "13",
+            "totalDollars": "1768000",
+            "isAnonymous": "false",
+            "lastDistributionDate": "2025-05-01",
+            "isReserve": "false"
           },
           {
             "id": 14,
             "username": "z.wang",
             "name": "Zoe Wang",
             "joinedDate": "2025-04-19",
-            "totalSolar": 9,
-            "totalDollars": 1224000,
-            "isAnonymous": false,
-            "lastDistributionDate": "2025-04-28"
+            "totalSolar": "12",
+            "totalDollars": "1632000",
+            "isAnonymous": "false",
+            "lastDistributionDate": "2025-05-01",
+            "isReserve": "false"
           },
           {
             "id": 15,
             "username": "b.thompson",
             "name": "Blake Thompson",
             "joinedDate": "2025-04-20",
-            "totalSolar": 8,
-            "totalDollars": 1088000,
-            "isAnonymous": false,
-            "lastDistributionDate": "2025-04-28"
+            "totalSolar": "11",
+            "totalDollars": "1496000",
+            "isAnonymous": "false",
+            "lastDistributionDate": "2025-05-01",
+            "isReserve": "false"
           },
           {
             "id": 16,
             "username": "c.rodriguez",
             "name": "Carmen Rodriguez",
             "joinedDate": "2025-04-21",
-            "totalSolar": 7,
-            "totalDollars": 952000,
-            "isAnonymous": false,
-            "lastDistributionDate": "2025-04-28"
+            "totalSolar": "10",
+            "totalDollars": "1360000",
+            "isAnonymous": "false",
+            "lastDistributionDate": "2025-05-01",
+            "isReserve": "false"
           }
         ];
         

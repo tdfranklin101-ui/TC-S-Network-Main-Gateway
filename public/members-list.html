@@ -197,6 +197,8 @@
     
     <button id="refresh-members" class="refresh-button">Refresh Member Data</button>
     
+    <div id="data-source-indicator" style="text-align: center; margin: 10px 0; font-size: 12px; color: #666;"></div>
+    
     <div id="members-list"></div>
   </div>
   
@@ -219,11 +221,19 @@
         // Show loading state
         membersElement.innerHTML = '<p style="text-align: center;">Loading member data...</p>';
         
+        // Clear data source indicator
+        document.getElementById('data-source-indicator').innerHTML = 
+          '<span style="color: #666;">Checking data sources...</span>';
+        
         // Fetch members data with fallback mechanism
         let members;
         
-        // Try to fetch from primary API first
+        // Multiple data fetching strategy with enhanced logging
+        let fetchErrors = [];
+        
+        // Try to fetch from primary API endpoint first
         try {
+          console.log('Attempting to fetch from primary API endpoint...');
           const response = await fetch(`/api/members.json?t=${timestamp}`, {
             cache: 'no-cache',
             headers: {
@@ -234,33 +244,120 @@
           
           if (response.ok) {
             members = await response.json();
+            console.log('Successfully fetched data from primary API endpoint');
+            
+            if (!Array.isArray(members) || members.length === 0) {
+              console.warn('Primary API returned empty or invalid data');
+              throw new Error('Primary API returned invalid data');
+            }
+            
+            // Update data source indicator
+            document.getElementById('data-source-indicator').innerHTML = 
+              '<span style="background-color: #e6f7e6; padding: 3px 8px; border-radius: 4px; border: 1px solid #a3d9a3;">✓ Live Data from API</span>';
+            
+            // Log how many members were received
+            console.log(`Received ${members.length} members from primary API`);
           } else {
-            console.warn('Primary API fetch failed, trying fallback...');
+            console.warn(`Primary API fetch failed with status: ${response.status}`);
+            fetchErrors.push(`Primary API: ${response.status} ${response.statusText}`);
             throw new Error('Primary API failed');
           }
         } catch (primaryError) {
-          // Fallback to embedded members endpoint
-          console.log('Trying fallback to embedded-members endpoint...');
-          const fallbackResponse = await fetch(`/embedded-members?t=${timestamp}`, {
-            cache: 'no-cache',
-            headers: {
-              'Cache-Control': 'no-cache',
-              'Pragma': 'no-cache'
+          // Try the embedded-members endpoint as first fallback
+          try {
+            console.log('Trying fallback to embedded-members endpoint...');
+            const fallbackResponse = await fetch(`/embedded-members?t=${timestamp}`, {
+              cache: 'no-cache',
+              headers: {
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache'
+              }
+            });
+            
+            if (fallbackResponse.ok) {
+              members = await fallbackResponse.json();
+              console.log('Successfully fetched data from embedded-members endpoint');
+              
+              if (!Array.isArray(members) || members.length === 0) {
+                console.warn('Embedded endpoint returned empty or invalid data');
+                throw new Error('Embedded endpoint returned invalid data');
+              }
+              
+              // Update data source indicator
+              document.getElementById('data-source-indicator').innerHTML = 
+                '<span style="background-color: #fff4e5; padding: 3px 8px; border-radius: 4px; border: 1px solid #ffd799;">⚠️ Using embedded endpoint (API unavailable)</span>';
+              
+              // Log how many members were received
+              console.log(`Received ${members.length} members from embedded endpoint`);
+            } else {
+              console.error(`Embedded-members fetch failed with status: ${fallbackResponse.status}`);
+              fetchErrors.push(`Embedded endpoint: ${fallbackResponse.status} ${fallbackResponse.statusText}`);
+              throw new Error('Embedded-members fetch failed');
             }
-          });
-          
-          if (!fallbackResponse.ok) {
-            console.error('Fallback fetch also failed');
-            throw new Error('Failed to fetch member data from all sources');
+          } catch (embeddedError) {
+            // Try directly accessing the embedded JSON file as second fallback
+            try {
+              console.log('Trying fallback to direct JSON file...');
+              const fileResponse = await fetch(`/embedded-members.json?t=${timestamp}`, {
+                cache: 'no-cache',
+                headers: {
+                  'Cache-Control': 'no-cache',
+                  'Pragma': 'no-cache'
+                }
+              });
+              
+              if (fileResponse.ok) {
+                members = await fileResponse.json();
+                console.log('Successfully fetched data from JSON file');
+                
+                if (!Array.isArray(members) || members.length === 0) {
+                  console.warn('JSON file contained empty or invalid data');
+                  throw new Error('JSON file contained invalid data');
+                }
+                
+                // Update data source indicator
+                document.getElementById('data-source-indicator').innerHTML = 
+                  '<span style="background-color: #ffecec; padding: 3px 8px; border-radius: 4px; border: 1px solid #ffb3b3;">⚠️ Using static fallback data (API & endpoints unavailable)</span>';
+                
+                // Log how many members were received
+                console.log(`Received ${members.length} members from JSON file`);
+              } else {
+                console.error(`JSON file fetch failed with status: ${fileResponse.status}`);
+                fetchErrors.push(`JSON file: ${fileResponse.status} ${fileResponse.statusText}`);
+                throw new Error('JSON file fetch failed');
+              }
+            } catch (fileError) {
+              console.error('All data sources failed:', fetchErrors);
+              throw new Error(`All data sources failed: ${fetchErrors.join(', ')}`);
+            }
           }
-          
-          members = await fallbackResponse.json();
         }
         
         // Validate members data
         if (!Array.isArray(members) || members.length === 0) {
           membersElement.innerHTML = '<p style="text-align: center;">No members data available</p>';
+          console.error("Empty or invalid members data received");
           return;
+        }
+        
+        console.log("Successfully loaded members data with timestamp:", new Date().toISOString());
+        console.log("Terry data check - exists in raw data:", members.some(m => m.name === "Terry D. Franklin"));
+        console.log("JF data check - exists in raw data:", members.some(m => m.name === "JF"));
+        
+        // Check data integrity by inspecting key members
+        const terryCheck = members.find(m => m.name === "Terry D. Franklin");
+        const jfCheck = members.find(m => m.name === "JF");
+        
+        if (terryCheck) {
+          console.log("Terry data:", {
+            id: terryCheck.id,
+            solarAmount: terryCheck.totalSolar,
+            dollarValue: terryCheck.totalDollars,
+            joinDate: terryCheck.joinedDate,
+            lastUpdated: terryCheck.lastDistributionDate
+          });
+        } else {
+          console.warn("Terry data missing from members data");
         }
         
         // Update member count with highlight
@@ -286,7 +383,7 @@
                  member.isReserve !== true;
         });
         
-        console.log("Filtering members for display. Total:", members.length, "Visible:", visibleMembers.length);
+        console.log("Filtering members for display. Total:", members.length, "Visible:", visibleMembers.length, "Timestamp:", new Date().toISOString());
         
         // Hard-code the specific order for the key members
         const sortedMembers = [];
@@ -301,12 +398,26 @@
         const terry = visibleMembers.find(m => m.name === "Terry D. Franklin");
         if (terry) {
           sortedMembers.push(terry);
+          console.log("Found Terry Franklin in members data", {
+            totalSolar: terry.totalSolar,
+            joinDate: terry.joinedDate,
+            lastDistribution: terry.lastDistributionDate
+          });
+        } else {
+          console.warn("Terry Franklin not found in members data");
         }
         
         // JF should always be second non-reserve (joined April 10)
         const jf = visibleMembers.find(m => m.name === "JF");
         if (jf) {
           sortedMembers.push(jf);
+          console.log("Found JF in members data", {
+            totalSolar: jf.totalSolar,
+            joinDate: jf.joinedDate,
+            lastDistribution: jf.lastDistributionDate
+          });
+        } else {
+          console.warn("JF not found in members data");
         }
         
         // Add any other members after the first ones, sorted by joined date (newest first)
@@ -370,6 +481,8 @@
         console.error('Error loading members:', error);
         document.getElementById('members-list').innerHTML = 
           `<p style="text-align: center; color: #d32f2f;">Error loading members: ${error.message}</p>`;
+        document.getElementById('data-source-indicator').innerHTML = 
+          '<span style="background-color: #ffecec; padding: 3px 8px; border-radius: 4px; border: 1px solid #ffb3b3;">❌ All data sources failed</span>';
       }
     }
     
