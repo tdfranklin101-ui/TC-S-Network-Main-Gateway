@@ -206,7 +206,8 @@
   
   <!-- Header & Footer Loader -->
   <script src="/js/load-includes.js"></script>
-  <script src="/js/public-members-log.js"></script>
+  <!-- Using fixed members log script to include TC-S Solar Reserve -->
+  <script src="/js/fixed-members-log.js"></script>
   <script>
     let autoRefreshInterval;
     
@@ -376,11 +377,10 @@
         const container = document.createElement('div');
         container.className = 'members-container';
         
-        // Get only visible, non-anonymous members and filter out reserve accounts
+        // Get visible, non-anonymous members - include reserve accounts for public display
         let visibleMembers = members.filter(member => {
-          return !member.isAnonymous && 
-                 // Also exclude members that have isReserve flag set to true
-                 member.isReserve !== true;
+          return !member.isAnonymous; 
+          // No longer excluding reserve accounts - we want to show TC-S Solar Reserve
         });
         
         console.log("Filtering members for display. Total:", members.length, "Visible:", visibleMembers.length, "Timestamp:", new Date().toISOString());

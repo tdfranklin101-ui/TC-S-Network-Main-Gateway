@@ -1,21 +1,34 @@
 /**
- * The Current-See Production Stable Server
+ * The Current-See Production Stable Server (FIXED)
  * 
- * This file is specifically designed for Replit deployments
- * with correct SOLAR calculations (1 SOLAR per day) and enhanced error handling
+ * This file ensures all API endpoints consistently return the complete member list
+ * including the TC-S Solar Reserve
  */
 
-const http = require('http');
-const fs = require('fs');
-const path = require('path');
+// Import required modules
 const express = require('express');
 const cors = require('cors');
+const fs = require('fs');
+const http = require('http');
+const path = require('path');
+// No longer using csvtojson library, implemented our own CSV parsing
 
-// Constants
-const PORT = process.env.PORT || 3001; // Using 3001 to avoid conflicts
+// Set up Express application
+const app = express();
+
+// Configuration
+const PORT = process.env.PORT || 3001;
 const HOST = '0.0.0.0';
 
-// Setup error handling for uncaught exceptions
+// Configure CORS to allow mobile app access
+app.use(cors());
+
+// Configure body parsing and static file serving
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static('public'));
+
+// Error handling for uncaught exceptions
 process.on('uncaughtException', (err) => {
   console.error('Uncaught exception:', err);
   // Continue running despite errors
@@ -58,42 +71,41 @@ function loadMembersFromCSV(filePath, currentDate = new Date()) {
   try {
     // Check if the file exists
     if (!fs.existsSync(filePath)) {
-      console.warn(`CSV file not found: ${filePath}`);
+      console.error(`CSV file not found: ${filePath}`);
       return [];
     }
     
-    // Read the contents of the CSV file
-    const csvContent = fs.readFileSync(filePath, 'utf8');
+    // Read the CSV file
+    const csvData = fs.readFileSync(filePath, 'utf8');
     
-    // Split the content into lines
-    const lines = csvContent.split('\n');
+    // Parse CSV to JSON
+    const lines = csvData.trim().split('\n');
+    const headers = lines[0].split(',').map(h => h.trim());
     
-    // Extract header and data rows
-    const header = lines[0].split(',');
-    const dataRows = lines.slice(1);
-    
-    // Process each row into a member object
-    const members = dataRows
-      .filter(row => row.trim() !== '') // Skip empty rows
-      .map(row => {
-        const values = row.split(',');
-        
-        // Create an object with properties from CSV
+    // Process each line (skipping header)
+    const members = [];
+    for (let i = 1; i < lines.length; i++) {
+      const values = lines[i].split(',').map(v => v.trim());
+      
+      // Create member object from CSV row
+      if (values.length >= headers.length) {
         const member = {};
-        header.forEach((key, index) => {
-          member[key.trim()] = values[index] ? values[index].trim() : '';
-        });
         
-        // Handle numeric IDs
-        member.id = parseInt(member.id, 10);
-        
-        // Set proper flags for reserve account
-        if (member.id === 0 || member.name === "TC-S Solar Reserve") {
-          member.isReserve = true;
+        // Map CSV columns to object properties
+        for (let j = 0; j < headers.length; j++) {
+          member[headers[j]] = values[j];
         }
         
-        return member;
-      });
+        // Ensure numeric ID
+        member.id = parseInt(member.id, 10);
+        
+        // Convert string flags to booleans
+        member.isAnonymous = member.isAnonymous === 'true';
+        member.isReserve = member.isReserve === 'true';
+        
+        members.push(member);
+      }
+    }
     
     console.log(`Successfully loaded ${members.length} members from CSV file`);
     return members;
@@ -126,7 +138,7 @@ function updateMembersWithCurrentTotals(members, currentDate = new Date()) {
   });
 }
 
-// Members data storage
+// Global members array
 let members = [];
 
 // Function to load members data with fallbacks
@@ -200,180 +212,135 @@ function loadMembersData() {
       }
     ];
     
-    // Update the rest of the members with calculated values
-    members = updateMembersWithCurrentTotals(defaultMembers);
-    console.log(`Loaded and updated ${members.length} default members`);
+    // Use default data
+    members = defaultMembers;
+    console.log(`Using default data with ${members.length} members`);
     
-    // Save to embedded file
+    // Save to embedded file to ensure it exists
     saveEmbeddedMembersFile(members);
   } catch (error) {
-    console.error(`Error in loadMembersData: ${error.message}`);
-    
-    // Use basic fallback data with VERIFIED values
-    members = [
-      {
-        "id": 1,
-        "username": "terry.franklin",
-        "name": "Terry D. Franklin",
-        "joinedDate": "2025-04-09",
-        "totalSolar": 22,
-        "totalDollars": 2992000,
-        "isAnonymous": false,
-        "lastDistributionDate": "2025-04-30"
-      },
-      {
-        "id": 2,
-        "username": "j.franklin",
-        "name": "JF",
-        "joinedDate": "2025-04-10",
-        "totalSolar": 21,
-        "totalDollars": 2856000,
-        "isAnonymous": false,
-        "lastDistributionDate": "2025-04-30"
-      }
-    ];
+    console.error(`Error loading members data: ${error.message}`);
+    // Ensure members is at least an empty array to prevent crashes
+    members = [];
   }
 }
 
-// Function to save members data to embedded JSON file
+// Function to save the embedded members file
 function saveEmbeddedMembersFile(membersList) {
   try {
-    // Verify the data before saving
+    // Verify we have member data to save (basic check)
     if (!Array.isArray(membersList) || membersList.length === 0) {
-      throw new Error('Invalid member data: must be non-empty array');
+      console.error('Cannot save empty or invalid members list');
+      return false;
     }
     
-    // Ensure the data has the required fields for key members
-    const terry = membersList.find(m => m.name === "Terry D. Franklin");
-    const jf = membersList.find(m => m.name === "JF");
-    const solarReserve = membersList.find(m => m.name === "TC-S Solar Reserve");
+    // Check for critical members (Terry, JF)
+    const hasTerry = membersList.some(m => m.name === "Terry D. Franklin");
+    const hasJF = membersList.some(m => m.name === "JF");
     
-    if (!terry || !jf || !solarReserve) {
-      console.warn('Warning: Key members missing from data, validating integrity before save');
+    if (!hasTerry || !hasJF) {
+      console.warn('Member list appears to be missing critical members');
     }
     
-    // Create backup of current file if it exists
-    const embeddedPath = './public/embedded-members.json';
-    if (fs.existsSync(embeddedPath)) {
-      // Create a backup directory if it doesn't exist
-      const backupDir = './backup';
-      if (!fs.existsSync(backupDir)) {
-        fs.mkdirSync(backupDir, { recursive: true });
-      }
-      
-      // Create backup with timestamp
-      const backupPath = `${backupDir}/embedded-members-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
-      fs.copyFileSync(embeddedPath, backupPath);
-      console.log(`Created backup of members file at ${backupPath}`);
+    // Create backup directory if it doesn't exist
+    if (!fs.existsSync('./backup')) {
+      fs.mkdirSync('./backup');
     }
     
-    // Write the new data
-    fs.writeFileSync(embeddedPath, JSON.stringify(membersList, null, 2), 'utf8');
-    console.log(`Updated embedded-members.json with current SOLAR totals`);
+    // Create timestamped backup
+    const timestamp = new Date().toISOString().replace(/:/g, '-');
+    const backupPath = `./backup/embedded-members-${timestamp}.json`;
     
-    // Verify the file was written correctly by reading it back
+    // Create backup first (if previous file exists)
     try {
-      const savedData = JSON.parse(fs.readFileSync(embeddedPath, 'utf8'));
-      if (!Array.isArray(savedData) || savedData.length !== membersList.length) {
-        throw new Error('Verification failed: saved data doesn\'t match original');
+      if (fs.existsSync('./public/embedded-members.json')) {
+        fs.copyFileSync('./public/embedded-members.json', backupPath);
+        console.log(`Created backup of members file at ${backupPath}`);
       }
-      console.log(`Verified saved data: contains ${savedData.length} members`);
+    } catch (backupError) {
+      console.error(`Error creating backup: ${backupError.message}`);
+      // Continue with save despite backup error
+    }
+    
+    // Save the file
+    fs.writeFileSync('./public/embedded-members.json', JSON.stringify(membersList, null, 2));
+    console.log('Updated embedded-members.json with current SOLAR totals');
+    
+    // Verify the saved file
+    try {
+      const savedContent = fs.readFileSync('./public/embedded-members.json', 'utf8');
+      const savedMembers = JSON.parse(savedContent);
+      console.log(`Verified saved data: contains ${savedMembers.length} members`);
+      return true;
     } catch (verifyError) {
-      console.error(`Error verifying saved file: ${verifyError.message}`);
-      // If verification fails, try one more time
-      fs.writeFileSync(embeddedPath, JSON.stringify(membersList, null, 2), 'utf8');
-      console.log('Second attempt to update embedded-members.json completed');
+      console.error(`Error verifying saved data: ${verifyError.message}`);
+      return false;
     }
   } catch (error) {
     console.error(`Error saving embedded members file: ${error.message}`);
-    
-    // Try an alternative save method if the main one fails
-    try {
-      const alternativePath = './public/embedded-members-backup.json';
-      fs.writeFileSync(alternativePath, JSON.stringify(membersList, null, 2), 'utf8');
-      console.log(`Saved backup data to ${alternativePath} as fallback`);
-    } catch (backupError) {
-      console.error(`Failed to save backup data: ${backupError.message}`);
-    }
+    return false;
   }
 }
 
 // Function to calculate Solar Clock data
 function calculateSolarData() {
-  try {
-    // Get the start date of the solar clock
-    const startDate = new Date(solarClockData.startDate);
-    const currentDate = new Date();
-    
-    // Calculate the total days since start
-    const totalDays = daysBetweenDates(startDate, currentDate);
-    
-    // Get total member count excluding reserve accounts
-    const memberCount = members.filter(m => m.id !== 0 && !m.isReserve).length;
-    
-    // Calculate total SOLAR distributed (1 per day per member)
-    let totalSolar = 0;
-    
-    // Sum up all member SOLAR amounts
-    members.forEach(member => {
-      if (member.id !== 0 && !member.isReserve) {
-        totalSolar += parseFloat(member.totalSolar);
-      }
-    });
-    
-    // Calculate total kWh (4,913 kWh per SOLAR)
-    const totalKwh = totalSolar * solarClockData.kwhPerSolar;
-    
-    // Calculate total value ($136,000 per SOLAR)
-    const totalValue = totalSolar * solarClockData.valuePerSolar;
-    
-    // Update the solar clock data
-    solarClockData = {
-      ...solarClockData,
-      totalSolar,
-      totalKwh,
-      totalValue,
-      memberCount,
-      totalDays,
-      lastUpdated: currentDate.toISOString()
-    };
-    
-    return solarClockData;
-  } catch (error) {
-    console.error(`Error calculating solar data: ${error.message}`);
-    return solarClockData;
+  // Use the specified start date
+  const startDate = new Date(solarClockData.startDate);
+  const currentDate = new Date();
+  
+  // Calculate days since start (April 7, 2025)
+  const daysSinceStart = daysBetweenDates(startDate, currentDate);
+  
+  // Calculate total energy (members * days * kWhPerSolar)
+  // Count only non-reserve members for the calculation
+  const activeMembers = members.filter(m => m.id !== 0 && !m.isReserve);
+  
+  // Calculate total distributed SOLAR
+  let totalSolar = 0;
+  for (const member of activeMembers) {
+    const joinDate = new Date(member.joinedDate);
+    totalSolar += daysBetweenDates(joinDate, currentDate);
   }
+  
+  // 4,913 kWh per SOLAR
+  const totalKwh = totalSolar * solarClockData.kwhPerSolar;
+  
+  // $136,000 per SOLAR
+  const totalValue = totalSolar * solarClockData.valuePerSolar;
+  
+  // Update solar clock data
+  solarClockData = {
+    ...solarClockData,
+    totalKwh: totalKwh,
+    totalValue: totalValue,
+    activeMembers: activeMembers.length,
+    totalSolar: totalSolar,
+    daysSinceStart: daysSinceStart,
+    lastUpdated: currentDate.toISOString()
+  };
+  
+  return solarClockData;
 }
 
-// Initialize the app
-const app = express();
+// =====================
+// API ROUTES
+// =====================
 
-// CORS middleware
-app.use(cors());
-
-// Middleware for JSON parsing
-app.use(express.json());
-
-// Middleware for URL-encoded form data
-app.use(express.urlencoded({ extended: true }));
-
-// Static file serving middleware
-app.use(express.static('public'));
-
-// Health check route for Replit deployments (respond to root path)
+// Health check routes - respond to all of these to ensure deployed app stays running
 app.get('/', (req, res) => {
-  // Serve index.html for the root path
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.send('The Current-See Server is running');
 });
 
-// Health check route for Cloud Run
 app.get('/health', (req, res) => {
-  res.status(200).send('OK');
+  res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-// API endpoint for solar clock data
+app.get('/healthz', (req, res) => {
+  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
+// API endpoint for the solar clock
 app.get('/api/solar-clock', (req, res) => {
-  // Recalculate solar data before sending
   const updatedData = calculateSolarData();
   res.json(updatedData);
 });
@@ -381,7 +348,7 @@ app.get('/api/solar-clock', (req, res) => {
 // API endpoint for a formatted members.json file
 app.get('/api/members.json', (req, res) => {
   // Return all members in JSON format, ensure we're not filtering anything
-  console.log(`[DEBUG] /api/members.json returning ${members.length} members (including TC-S Solar Reserve)`);
+  console.log(`[DEBUG] /api/members.json returning ${members.length} members`);
   res.json(members);
 });
 
@@ -446,23 +413,25 @@ app.get('/api/distribution-ledger', (req, res) => {
   }
 });
 
-// API endpoint for members data
+// API endpoint for members data - return ALL members
 app.get('/api/members', (req, res) => {
   // Return all members including reserve accounts - this is needed for the members list
+  console.log(`[DEBUG] /api/members returning ${members.length} members`);
   res.json(members);
 });
 
-// API endpoint for member count
+// API endpoint for member count - return only regular users
 app.get('/api/member-count', (req, res) => {
   // Count only user members (not reserves) for the counter display
   const userCount = members.filter(m => m.id !== 0 && !m.isReserve).length;
+  console.log(`[DEBUG] /api/member-count returning count: ${userCount}`);
   res.json({ count: userCount });
 });
 
 // API endpoint for embedded members - same format as the embedded-members.json file
 app.get('/embedded-members', (req, res) => {
   // Make sure to send the full members array
-  console.log(`[DEBUG] /embedded-members returning ${members.length} members (including TC-S Solar Reserve)`);
+  console.log(`[DEBUG] /embedded-members returning ${members.length} members`);
   res.json(members);
 });
 
