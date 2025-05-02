@@ -1,17 +1,4 @@
-#!/usr/bin/env node
-
-/**
- * Simple Health Check Script for Replit Deployments
- * 
- * This file is an executable script that responds to health checks
- * which is what Replit expects for deployments.
- */
-
-console.log('Status: 200 OK');
-console.log('Content-Type: application/json');
-console.log('');
-console.log(JSON.stringify({
-  status: 'ok',
-  timestamp: new Date().toISOString(),
-  message: 'The Current-See health check passed'
-}));
+#!/bin/bash
+# This is a special file that Replit will look for to perform health checks
+# It executes our health check script
+node replit-health-handler.js

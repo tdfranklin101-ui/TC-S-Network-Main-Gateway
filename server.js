@@ -17,7 +17,7 @@ const PORT = process.env.PORT || 3000;
 const HOST = '0.0.0.0';
 const DATABASE_URL = process.env.DATABASE_URL;
 const MAXMIND_LICENSE_KEY = process.env.MAXMIND_LICENSE_KEY;
-const ADMIN_API_TOKEN = process.env.ADMIN_API_TOKEN;
+const ADMIN_API_TOKEN = process.env.ADMIN_API_TOKEN || 'admin-token-2025';
 
 // Solar Constants
 const SOLAR_CONSTANTS = {
@@ -75,29 +75,238 @@ function updateSolarClockData() {
 // Initial update
 updateSolarClockData();
 
-// Member data
-const members = [
+// Default members in case no persistent data is found
+const defaultMembers = [
+  {
+    id: 0,
+    username: 'solar.reserve',
+    name: 'Solar Reserve',
+    email: 'admin@thecurrentsee.org',
+    joinedDate: '2025-04-07',
+    totalSolar: 10000000000,
+    totalDollars: 1360000000000,
+    isAnonymous: false,
+    isReserve: true,
+    lastDistributionDate: '2025-04-20'
+  },
   {
     id: 1,
     username: 'terry.franklin',
     name: 'Terry D. Franklin',
+    email: 'tdfranklin101@outlook.com',
     joinedDate: '2025-04-09',
-    totalSolar: 8.00,
-    totalDollars: 1088000,
+    totalSolar: 11,
+    totalDollars: 1496000,
     isAnonymous: false,
-    lastDistributionDate: '2025-04-17' // Track last distribution date
+    lastDistributionDate: '2025-04-20'
   },
   {
     id: 2,
-    username: 'j.franklin',
+    username: 'jf',
     name: 'JF',
+    email: 'aunsun27@icloud.com',
     joinedDate: '2025-04-10',
-    totalSolar: 7.00,
-    totalDollars: 952000,
+    totalSolar: 10,
+    totalDollars: 1360000,
     isAnonymous: false,
-    lastDistributionDate: '2025-04-17' // Track last distribution date
+    lastDistributionDate: '2025-04-20'
+  },
+  {
+    id: 3,
+    username: 'davis',
+    name: 'Davis',
+    email: 'Davisfranklin095@gmail.com',
+    joinedDate: '2025-04-18',
+    totalSolar: 3,
+    totalDollars: 408000,
+    isAnonymous: false,
+    lastDistributionDate: '2025-04-20'
+  },
+  {
+    id: 4,
+    username: 'miles.franklin',
+    name: 'Miles Franklin',
+    email: 'Milesgfranklin9@gmail.com',
+    joinedDate: '2025-04-18',
+    totalSolar: 3,
+    totalDollars: 408000,
+    isAnonymous: false,
+    lastDistributionDate: '2025-04-20'
+  },
+  {
+    id: 5,
+    username: 'arden.f',
+    name: 'Arden F',
+    email: 'arden@example.com',
+    joinedDate: '2025-04-19',
+    totalSolar: 2,
+    totalDollars: 272000,
+    isAnonymous: false,
+    lastDistributionDate: '2025-04-20'
+  },
+  {
+    id: 6,
+    username: 'marissa.hasseman',
+    name: 'Marissa Hasseman',
+    email: 'marissa@example.com',
+    joinedDate: '2025-04-19',
+    totalSolar: 2,
+    totalDollars: 272000,
+    isAnonymous: false,
+    lastDistributionDate: '2025-04-20'
+  },
+  {
+    id: 7,
+    username: 'kim',
+    name: 'Kim',
+    email: 'KIMBROWN9999@hotmail.com',
+    joinedDate: '2025-04-19',
+    totalSolar: 2,
+    totalDollars: 272000,
+    isAnonymous: false,
+    lastDistributionDate: '2025-04-20'
+  },
+  {
+    id: 8,
+    username: 'jeff.elmore',
+    name: 'Jeff Elmore',
+    email: 'jeff@example.com',
+    joinedDate: '2025-04-20',
+    totalSolar: 1,
+    totalDollars: 136000,
+    isAnonymous: false,
+    lastDistributionDate: '2025-04-20'
+  },
+  {
+    id: 9,
+    username: 'liam.mckay',
+    name: 'Liam McKay',
+    email: 'liam@example.com',
+    joinedDate: '2025-04-20',
+    totalSolar: 1,
+    totalDollars: 136000,
+    isAnonymous: false,
+    lastDistributionDate: '2025-04-20'
   }
 ];
+
+// Function to load members from storage
+function loadMembersFromStorage() {
+  try {
+    console.log('Attempting to load members from persistent storage...');
+    const membersFilePath = 'public/api/members.json';
+    const embeddedMembersPath = 'public/embedded-members';
+    const backupDir = 'backup';
+    
+    // Track which file we loaded from for logging
+    let sourceFile = 'none';
+    
+    // First try to load from members.json
+    if (fs.existsSync(membersFilePath)) {
+      try {
+        const data = fs.readFileSync(membersFilePath, 'utf8');
+        const loadedMembers = JSON.parse(data);
+        if (loadedMembers && loadedMembers.length > 0) {
+          console.log(`Loaded ${loadedMembers.length} members from members.json`);
+          sourceFile = 'members.json';
+          return { members: loadedMembers, source: sourceFile };
+        }
+      } catch (err) {
+        console.error(`Error loading from members.json: ${err.message}`);
+      }
+    }
+    
+    // Then try embedded-members
+    if (fs.existsSync(embeddedMembersPath)) {
+      try {
+        const data = fs.readFileSync(embeddedMembersPath, 'utf8');
+        const match = data.match(/window\.embeddedMembers\s*=\s*(\[.*\]);/s);
+        if (match && match[1]) {
+          const loadedMembers = JSON.parse(match[1]);
+          if (loadedMembers && loadedMembers.length > 0) {
+            console.log(`Loaded ${loadedMembers.length} members from embedded-members`);
+            sourceFile = 'embedded-members';
+            return { members: loadedMembers, source: sourceFile };
+          }
+        }
+      } catch (err) {
+        console.error(`Error loading from embedded-members: ${err.message}`);
+      }
+    }
+    
+    // Finally try backups
+    if (fs.existsSync(backupDir)) {
+      const backupFiles = fs.readdirSync(backupDir)
+        .filter(file => file.includes('members_backup') && file.endsWith('.json'))
+        .sort((a, b) => b.localeCompare(a)); // Sort newest first
+      
+      for (const backupFile of backupFiles) {
+        const backupPath = path.join(backupDir, backupFile);
+        try {
+          const data = fs.readFileSync(backupPath, 'utf8');
+          const loadedMembers = JSON.parse(data);
+          if (loadedMembers && loadedMembers.length > 0) {
+            console.log(`Loaded ${loadedMembers.length} members from backup: ${backupFile}`);
+            sourceFile = backupFile;
+            return { members: loadedMembers, source: sourceFile };
+          }
+        } catch (err) {
+          console.error(`Error loading from backup ${backupFile}: ${err.message}`);
+        }
+      }
+    }
+    
+    // If we couldn't load from any source, return default members
+    console.log('No valid member data found in storage, using default members');
+    return { members: defaultMembers, source: 'defaults' };
+  } catch (err) {
+    console.error(`Critical error loading members: ${err.message}`);
+    return { members: defaultMembers, source: 'defaults (after error)' };
+  }
+}
+
+// Load members from persistent storage or use defaults
+const loadResult = loadMembersFromStorage();
+const members = loadResult.members;
+console.log(`Loaded ${members.length} members from ${loadResult.source}`);
+
+// Ensure members are properly saved after loading
+updateMembersFiles();
+
+// Function to create a backup of member data
+function backupMembersData() {
+  try {
+    // Ensure the backup directory exists
+    if (!fs.existsSync('backup')) {
+      fs.mkdirSync('backup', { recursive: true });
+    }
+    
+    const now = new Date();
+    const dateStr = now.toISOString().split('T')[0]; // YYYY-MM-DD format
+    const timeStr = now.toISOString().replace(/[:.]/g, '-').replace('T', '_').slice(0, -1); // YYYY-MM-DD_HH-MM-SS format
+    
+    // Create daily backup file
+    const backupFilename = `backup/members_backup_${dateStr}.json`;
+    fs.writeFileSync(
+      backupFilename,
+      JSON.stringify(members, null, 2)
+    );
+    
+    // Create a timestamped backup to preserve multiple states
+    const timestampedBackupFilename = `backup/members_backup_${timeStr}.json`;
+    fs.writeFileSync(
+      timestampedBackupFilename,
+      JSON.stringify(members, null, 2)
+    );
+    
+    console.log(`Created member data backup: ${backupFilename}`);
+    return true;
+  } catch (error) {
+    console.error('Error creating member data backup:', error);
+    console.log('ERROR: Failed to backup member data: ' + error.message);
+    return false;
+  }
+}
 
 // Function to update the static files that store member data
 function updateMembersFiles() {
@@ -107,17 +316,33 @@ function updateMembersFiles() {
       fs.mkdirSync('public/api', { recursive: true });
     }
     
+    // Format the members data with 4 decimal places for SOLAR values
+    const formattedMembers = members.map(member => {
+      // Create a copy of the member
+      const formattedMember = {...member};
+      
+      // Format totalSolar to 4 decimal places if it's a number
+      if (typeof formattedMember.totalSolar !== 'undefined') {
+        formattedMember.totalSolar = parseFloat(formattedMember.totalSolar).toFixed(4);
+      }
+      
+      return formattedMember;
+    });
+    
     // Update the public API file
     fs.writeFileSync(
       'public/api/members.json',
       JSON.stringify(members, null, 2)
     );
     
-    // Update the embedded members file
+    // Update the embedded members file with the correct JavaScript prefix
     fs.writeFileSync(
       'public/embedded-members',
-      JSON.stringify(members, null, 2)
+      `window.embeddedMembers = ${JSON.stringify(formattedMembers)};`
     );
+    
+    // Create a backup after each update
+    backupMembersData();
     
     console.log('Updated static member files with new SOLAR totals');
     return true;
@@ -176,13 +401,23 @@ const app = express();
 
 // Import page includes system
 const { createIncludesMiddleware } = require('./page-includes');
-console.log('Page includes middleware loaded');
+// Import OpenAI service
+const openaiService = require('./openai-service');
+// Import AI Assistant API
+const { registerAIAssistantRoutes } = require('./server/ai-assistant-api');
+// Import Wallet API routes
+const { registerWalletApiRoutes } = require('./wallet-api-routes');
+console.log('Page includes middleware, OpenAI service, AI Assistant API, and Wallet API routes loaded');
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(createIncludesMiddleware()); // Add enhanced includes middleware
+app.use(createIncludesMiddleware()); // Add page includes middleware
+
+// Register API routes
+registerAIAssistantRoutes(app);
+registerWalletApiRoutes(app);
 
 // Database connection (if available)
 let pool = null;
@@ -321,50 +556,240 @@ app.get('/api/solar-clock', (req, res) => {
 app.get('/api/members', (req, res) => {
   // First update the members with the latest SOLAR distributions
   updateMemberDistributions();
-  res.json(members);
+  // Add the "You are next" placeholder
+  const membersWithPlaceholder = addYouAreNextPlaceholder(members);
+  res.json(membersWithPlaceholder);
 });
 
 app.get('/api/solar-accounts/leaderboard', (req, res) => {
   // First update the members with the latest SOLAR distributions
   updateMemberDistributions();
-  res.json(members);
+  // Add the "You are next" placeholder
+  const membersWithPlaceholder = addYouAreNextPlaceholder(members);
+  res.json(membersWithPlaceholder);
 });
 
-app.get('/api/members.json', (req, res) => {
-  // First update the members with the latest SOLAR distributions
-  updateMemberDistributions();
-  res.json(members);
+app.get('/api/members.json', async (req, res) => {
+  try {
+    // If database is connected, refresh members directly from database for absolute freshness
+    if (dbPool && database_initialized) {
+      try {
+        const client = await dbPool.connect();
+        const result = await client.query('SELECT * FROM members ORDER BY id ASC');
+        
+        if (result && result.rows && result.rows.length > 0) {
+          // Update the in-memory members array with fresh data
+          members = result.rows.map(row => ({
+            id: row.id,
+            username: row.username,
+            name: row.name,
+            email: row.email,
+            joinedDate: row.joined_date,
+            totalSolar: parseFloat(row.total_solar || 0),
+            totalDollars: parseFloat(row.total_dollars || 0),
+            isAnonymous: row.is_anonymous || false,
+            lastDistributionDate: row.last_distribution_date
+          }));
+          console.log(`Refreshed members directly from database: ${members.length} records`);
+        }
+        client.release();
+      } catch (dbErr) {
+        console.error("Database refresh failed, using memory cache:", dbErr.message);
+      }
+    }
+    
+    // Then update the members with the latest SOLAR distributions
+    updateMemberDistributions();
+    
+    // Add the "You are next" placeholder
+    const membersWithPlaceholder = addYouAreNextPlaceholder(members);
+    
+    // Set aggressive cache prevention headers
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0',
+      'Content-Type': 'application/json'
+    });
+    
+    // Include timestamp for verification
+    res.json({
+      members: membersWithPlaceholder,
+      timestamp: new Date().toISOString(),
+      count: membersWithPlaceholder.length
+    });
+  } catch (error) {
+    console.error("Error serving members JSON:", error);
+    res.status(500).json({ error: "Internal server error", message: error.message });
+  }
 });
+
+// Function to add a "You are next" placeholder to the members list
+function addYouAreNextPlaceholder(membersList) {
+  // Create a copy of the members list
+  const membersWithPlaceholder = [...membersList];
+  
+  // Create the "You are next" placeholder
+  const today = new Date().toISOString().split('T')[0];
+  const placeholder = {
+    id: "next",
+    username: "you.are.next",
+    name: "You are next",
+    email: "",
+    joinedDate: today,
+    totalSolar: 1,
+    totalDollars: 136000,
+    isAnonymous: false,
+    isPlaceholder: true,
+    lastDistributionDate: today
+  };
+  
+  // Add the placeholder to the end of the list
+  membersWithPlaceholder.push(placeholder);
+  
+  return membersWithPlaceholder;
+}
 
 // Serve the embedded members data with proper content type
-app.get('/embedded-members', (req, res) => {
-  updateMemberDistributions();
-  res.setHeader('Content-Type', 'application/json');
-  res.json(members);
+app.get('/embedded-members', async (req, res) => {
+  try {
+    // If database is connected, refresh members directly from database for absolute freshness
+    if (dbPool && database_initialized) {
+      try {
+        const client = await dbPool.connect();
+        const result = await client.query('SELECT * FROM members ORDER BY id ASC');
+        
+        if (result && result.rows && result.rows.length > 0) {
+          // Update the in-memory members array with fresh data
+          members = result.rows.map(row => ({
+            id: row.id,
+            username: row.username,
+            name: row.name,
+            email: row.email,
+            joinedDate: row.joined_date,
+            totalSolar: parseFloat(row.total_solar || 0),
+            totalDollars: parseFloat(row.total_dollars || 0),
+            isAnonymous: row.is_anonymous || false,
+            lastDistributionDate: row.last_distribution_date
+          }));
+          console.log(`Refreshed members directly from database for embedded endpoint: ${members.length} records`);
+        }
+        client.release();
+      } catch (dbErr) {
+        console.error("Database refresh failed for embedded endpoint, using memory cache:", dbErr.message);
+      }
+    }
+    
+    // Update distributions
+    updateMemberDistributions();
+    
+    // Format members with 4 decimal places for SOLAR values
+    const formattedMembers = members.map(member => {
+      const formattedMember = {...member};
+      if (typeof formattedMember.totalSolar !== 'undefined') {
+        formattedMember.totalSolar = parseFloat(formattedMember.totalSolar).toFixed(4);
+      }
+      return formattedMember;
+    });
+    
+    // Add the "You are next" placeholder
+    const membersWithPlaceholder = addYouAreNextPlaceholder(formattedMembers);
+    
+    // Set aggressive cache prevention headers
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0',
+      'Content-Type': 'application/javascript'
+    });
+    
+    // Send with timestamp comment for debugging
+    const timestamp = new Date().toISOString();
+    res.send(`// Data generated at ${timestamp}\nwindow.embeddedMembers = ${JSON.stringify(membersWithPlaceholder)};`);
+  } catch (error) {
+    console.error("Error serving embedded members:", error);
+    res.status(500).send(`// Error serving data\nwindow.embeddedMembers = [];`);
+  }
 });
 
 app.get('/api/members-data', (req, res) => {
   // Alternative endpoint for JSONP callback support
   updateMemberDistributions();
+  // Add the "You are next" placeholder
+  const membersWithPlaceholder = addYouAreNextPlaceholder(members);
   const callback = req.query.callback;
   if (callback) {
     res.setHeader('Content-Type', 'application/javascript');
-    res.send(`${callback}(${JSON.stringify(members)})`);
+    res.send(`${callback}(${JSON.stringify(membersWithPlaceholder)})`);
   } else {
-    res.json(members);
+    res.json(membersWithPlaceholder);
   }
 });
 
 app.get('/api/members.js', (req, res) => {
   // JSONP endpoint for cross-domain support
   updateMemberDistributions();
+  // Add the "You are next" placeholder
+  const membersWithPlaceholder = addYouAreNextPlaceholder(members);
   const callback = req.query.callback || 'updateMembers';
   res.setHeader('Content-Type', 'application/javascript');
-  res.send(`${callback}(${JSON.stringify(members)})`);
+  res.send(`${callback}(${JSON.stringify(membersWithPlaceholder)})`);
 });
 
-app.get('/api/member-count', (req, res) => {
-  res.json({ count: members.length });
+app.get('/api/member-count', async (req, res) => {
+  try {
+    // If database is connected, get a quick count from the database
+    if (dbPool && database_initialized) {
+      try {
+        const client = await dbPool.connect();
+        const result = await client.query('SELECT COUNT(*) as count FROM members WHERE NOT is_anonymous');
+        
+        if (result && result.rows && result.rows.length > 0) {
+          const count = parseInt(result.rows[0].count, 10);
+          client.release();
+          
+          // Set aggressive cache prevention headers
+          res.set({
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0',
+            'Content-Type': 'application/json'
+          });
+          
+          // Return the count from database
+          return res.json({ 
+            count,
+            source: 'database',
+            timestamp: new Date().toISOString()
+          });
+        }
+        client.release();
+      } catch (dbErr) {
+        console.error("Database member count failed, using memory cache:", dbErr.message);
+      }
+    }
+    
+    // If database count failed, use in-memory count
+    // Filter out any anonymous members or placeholders
+    const visibleMembers = members.filter(m => !m.isAnonymous && !m.isPlaceholder);
+    
+    // Set aggressive cache prevention headers
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0',
+      'Content-Type': 'application/json'
+    });
+    
+    res.json({ 
+      count: visibleMembers.length,
+      source: 'memory',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error("Error getting member count:", error);
+    res.status(500).json({ error: "Failed to get member count" });
+  }
 });
 
 // Load product-energy-service
@@ -512,20 +937,14 @@ app.get('/api/geolocation', async (req, res) => {
 
 // Admin Routes with token authentication
 const adminAuthMiddleware = (req, res, next) => {
+  console.log('Admin auth middleware called');
   const authHeader = req.headers.authorization;
   
   if (!authHeader) {
+    console.log('Auth header missing');
     return res.status(401).json({ 
       error: 'Authentication required',
       message: 'Missing Authorization header'
-    });
-  }
-  
-  // Check if the token matches the environment variable
-  if (!ADMIN_API_TOKEN) {
-    return res.status(500).json({ 
-      error: 'Server configuration error',
-      message: 'Admin API token not configured'
     });
   }
   
@@ -534,16 +953,52 @@ const adminAuthMiddleware = (req, res, next) => {
     ? authHeader.substring(7) 
     : authHeader;
   
+  console.log(`Token received: "${token}"`);
+  console.log(`Expected token: "${ADMIN_API_TOKEN}"`);
+  
+  // Check if the token matches the environment variable or the fallback
   if (token !== ADMIN_API_TOKEN) {
+    console.log('Token mismatch');
     return res.status(403).json({ 
       error: 'Forbidden',
       message: 'Invalid API token'
     });
   }
   
+  console.log('Admin authentication successful');
   // Token is valid, proceed to the route handler
   next();
 };
+
+// Helper function to verify admin token (standalone)
+function verifyAdminToken(token) {
+  if (!token) return false;
+  
+  // Remove Bearer prefix if present
+  const cleanToken = token.startsWith('Bearer ') ? token.substring(7) : token;
+  
+  return cleanToken === ADMIN_API_TOKEN;
+}
+
+// Verify admin token endpoint
+app.post('/api/admin/verify-token', adminAuthMiddleware, (req, res) => {
+  // If the middleware passed, the token is valid
+  res.status(200).json({ 
+    valid: true,
+    message: 'Token is valid'
+  });
+});
+
+// Alternative admin token verification with query parameter
+app.get('/api/admin/validate', (req, res) => {
+  const token = req.query.token;
+  
+  if (verifyAdminToken(token)) {
+    res.status(200).json({ valid: true, message: 'Token is valid' });
+  } else {
+    res.status(403).json({ valid: false, message: 'Invalid token' });
+  }
+});
 
 // Admin route to view system logs
 app.get('/api/admin/logs', adminAuthMiddleware, (req, res) => {
@@ -563,6 +1018,74 @@ app.get('/api/admin/logs', adminAuthMiddleware, (req, res) => {
   } catch (error) {
     console.error('Error getting admin logs:', error);
     res.status(500).json({ error: 'Failed to retrieve logs' });
+  }
+});
+
+// API endpoint to update member information
+app.put('/api/admin/members/:memberId', adminAuthMiddleware, (req, res) => {
+  try {
+    const memberId = parseInt(req.params.memberId, 10);
+    const { email } = req.body;
+    
+    // Validate input
+    if (!email || typeof email !== 'string' || !email.includes('@')) {
+      return res.status(400).json({ error: 'Invalid email format' });
+    }
+    
+    // Find member by ID
+    const memberIndex = members.findIndex(m => m.id === memberId);
+    if (memberIndex === -1) {
+      return res.status(404).json({ error: 'Member not found' });
+    }
+    
+    // Skip if it's the reserve account or placeholder
+    if (members[memberIndex].isReserve || members[memberIndex].name === 'You are next') {
+      return res.status(403).json({ error: 'Cannot modify this special account' });
+    }
+
+    // Store old email for logging
+    const oldEmail = members[memberIndex].email;
+    
+    // Update email
+    members[memberIndex].email = email;
+    
+    // Update member files (both members.json and embedded-members)
+    fs.writeFileSync(path.join(PUBLIC_DIR, 'api', 'members.json'), JSON.stringify(members, null, 2));
+    
+    // Update embedded-members file with formatted SOLAR values
+    const formattedMembers = members.map(m => ({
+      ...m,
+      totalSolar: typeof m.totalSolar === 'number' ? m.totalSolar.toFixed(4) : m.totalSolar
+    }));
+    
+    fs.writeFileSync(
+      path.join(PUBLIC_DIR, 'embedded-members'),
+      `window.embeddedMembers = ${JSON.stringify(formattedMembers)};`
+    );
+    
+    // Create a backup
+    const backupDir = path.join(__dirname, 'backup');
+    if (!fs.existsSync(backupDir)) {
+      fs.mkdirSync(backupDir, { recursive: true });
+    }
+    
+    const timestamp = new Date().toISOString().replace(/:/g, '-');
+    fs.writeFileSync(
+      path.join(backupDir, `members_backup_${timestamp}.json`), 
+      JSON.stringify(members, null, 2)
+    );
+    
+    console.log(`Admin updated member #${memberId} (${members[memberIndex].name}) email from ${oldEmail} to ${email}`);
+    
+    return res.status(200).json({ 
+      success: true,
+      message: 'Member information updated successfully',
+      member: members[memberIndex]
+    });
+    
+  } catch (error) {
+    console.error('Error updating member:', error);
+    res.status(500).json({ error: 'Failed to update member information' });
   }
 });
 
@@ -1523,51 +2046,211 @@ app.post('/wallet-ai/analyze', (req, res) => {
   }, 1200); // Add slight delay to simulate processing
 });
 
-// Sign up endpoint
+// Import the email logger for signup data preservation
+const emailLogger = require('./signup-email-logger');
+
+// Sign up endpoint with enhanced data reliability
 app.post('/api/signup', (req, res) => {
   try {
-    console.log('Received signup request:', req.body);
+    console.log('[SIGNUP] Received signup request:', req.body);
     const userData = req.body;
     
-    // Validate required fields
-    if (!userData.name || !userData.email) {
-      console.log('Validation failed: Missing name or email');
+    // Validate required fields with more detailed error messages
+    if (!userData.name) {
+      console.log('[SIGNUP] Validation failed: Missing name');
       return res.status(400).json({ 
         success: false, 
-        error: 'Name and email are required' 
+        error: 'Name is required' 
+      });
+    }
+    
+    if (!userData.email) {
+      console.log('[SIGNUP] Validation failed: Missing email');
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Email is required' 
+      });
+    }
+    
+    // Log signup data immediately to prevent data loss
+    userData.ipAddress = req.ip || req.connection.remoteAddress;
+    emailLogger.logSignup(userData);
+    
+    // Basic email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(userData.email)) {
+      console.log('[SIGNUP] Validation failed: Invalid email format');
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Please provide a valid email address' 
+      });
+    }
+    
+    // Check for duplicate email
+    const existingMember = members.find(m => 
+      m.email && m.email.toLowerCase() === userData.email.toLowerCase() && 
+      !m.isPlaceholder
+    );
+    
+    if (existingMember) {
+      console.log('[SIGNUP] Validation failed: Email already exists');
+      return res.status(409).json({ 
+        success: false, 
+        error: 'A member with this email already exists' 
       });
     }
     
     // Calculate new member data
     const today = new Date().toISOString().split('T')[0];
+    const timestamp = new Date().toISOString();
+    
+    // Check if placeholder exists
+    const placeholderIndex = members.findIndex(m => m.name === 'You are next' || m.isPlaceholder);
+    let nextId = members.length;
+    
+    if (placeholderIndex !== -1) {
+      // Remove placeholder, but we'll add it back later
+      members.splice(placeholderIndex, 1);
+      console.log('[SIGNUP] Removing existing placeholder to ensure it goes at the end');
+    }
+    
+    // Make sure we have a unique ID by checking the maximum existing ID
+    const maxId = members.reduce((max, member) => 
+      typeof member.id === 'number' && member.id > max ? member.id : max, 0);
+    nextId = maxId + 1;
+    
     const newMember = {
-      id: members.length + 1,
+      id: nextId,
       username: userData.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '.'),
-      name: userData.name,
+      name: userData.name.trim(),
+      email: userData.email.trim(), // Store email and trim whitespace
       joinedDate: today,
+      signupTimestamp: timestamp,
       totalSolar: 1.00, // Initial allocation
       totalDollars: SOLAR_CONSTANTS.USD_PER_SOLAR,
       isAnonymous: userData.isAnonymous || false,
       lastDistributionDate: today // Set initial distribution date
     };
     
-    console.log('Creating new member:', newMember);
+    console.log(`[SIGNUP] Creating new member #${nextId} with name: ${newMember.name}, email: ${newMember.email}`);
+    
+    // Create a backup before making changes
+    backupMembersData();
     
     // Add to members array
     members.push(newMember);
     
-    console.log('Current member count:', members.length);
+    // Add back the placeholder at the end with proper identification
+    members.push({
+      id: "next",
+      username: "you.are.next",
+      name: "You are next",
+      email: "",
+      joinedDate: today,
+      totalSolar: 1.00,
+      totalDollars: SOLAR_CONSTANTS.USD_PER_SOLAR,
+      isAnonymous: false,
+      isPlaceholder: true,
+      lastDistributionDate: today
+    });
     
-    // Return success response
+    // IMMEDIATELY save to persistent storage to ensure emails are preserved
+    const saveResult = updateMembersFiles();
+    console.log('[SIGNUP] Save result after adding new member:', saveResult ? 'Success' : 'Failed');
+    
+    // Multi-level verification for data persistence
+    let verificationSuccess = false;
+    let verificationMessage = '';
+    
+    try {
+      // Verify members.json
+      const membersFile = fs.readFileSync('public/api/members.json', 'utf8');
+      const savedMembers = JSON.parse(membersFile);
+      const savedMember = savedMembers.find(m => m.id === newMember.id);
+      
+      // Verify embedded-members
+      const embeddedFile = fs.readFileSync('public/embedded-members', 'utf8');
+      const embeddedMatch = embeddedFile.includes(newMember.email);
+      
+      if (savedMember && savedMember.email === newMember.email && embeddedMatch) {
+        console.log('[SIGNUP] ✅ Verification successful: Member data correctly saved to all storage locations');
+        verificationSuccess = true;
+        verificationMessage = 'Member data successfully verified in all storage locations';
+        
+        // Create a post-signup backup
+        backupMembersData();
+      } else {
+        console.warn('[SIGNUP] ⚠️ Warning: Verification issues detected:');
+        if (!savedMember) console.warn('- Member not found in members.json');
+        if (savedMember && savedMember.email !== newMember.email) console.warn('- Email mismatch in members.json');
+        if (!embeddedMatch) console.warn('- Member not found in embedded-members');
+        
+        verificationMessage = 'Partial verification - some storage locations may not be updated';
+        
+        // Retry save to recover from partial failure
+        console.log('[SIGNUP] Attempting recovery by re-saving member data...');
+        updateMembersFiles();
+      }
+    } catch (verifyErr) {
+      console.error('[SIGNUP] Error during verification:', verifyErr);
+      verificationMessage = 'Verification error: ' + verifyErr.message;
+      
+      // Emergency recovery: force rewrite all data
+      try {
+        console.log('[SIGNUP] Attempting emergency recovery...');
+        // Force update all storage files
+        updateMembersFiles();
+        // Create emergency backup
+        backupMembersData();
+      } catch (recoveryErr) {
+        console.error('[SIGNUP] Recovery failed:', recoveryErr);
+      }
+    }
+    
+    console.log(`[SIGNUP] Process complete. Current member count: ${members.length - 1} (excluding placeholder)`);
+    
+    // Notify wallet sync service of the new member
+    try {
+      walletSyncService.notifyNewMember(newMember);
+      console.log(`[SIGNUP] Notified wallet sync service about new member #${newMember.id}`);
+    } catch (notifyErr) {
+      console.error('[SIGNUP] Failed to notify wallet sync service:', notifyErr);
+    }
+    
+    // Return success response with verification info
     res.status(201).json({ 
       success: true, 
-      member: newMember
+      member: newMember,
+      totalMembers: members.length - 1, // Subtract one to exclude the placeholder
+      verification: {
+        success: verificationSuccess,
+        message: verificationMessage
+      }
     });
   } catch (e) {
-    console.error('Error processing signup:', e);
+    console.error('[SIGNUP] Critical error processing signup:', e);
+    
+    // Attempt to log detailed error info for debugging
+    try {
+      const errorLog = {
+        timestamp: new Date().toISOString(),
+        error: e.message,
+        stack: e.stack,
+        request: {
+          body: req.body,
+          headers: req.headers
+        }
+      };
+      
+      // Log to a dedicated error file
+      fs.appendFileSync('signup-errors.log', JSON.stringify(errorLog) + '\n');
+    } catch (logErr) {
+      console.error('[SIGNUP] Failed to log error details:', logErr);
+    }
+    
     res.status(500).json({ 
       success: false, 
-      error: 'Internal server error' 
+      error: 'Internal server error - your signup has been logged and will be processed' 
     });
   }
 });
@@ -1945,13 +2628,23 @@ app.use((req, res) => {
   }
 });
 
+// Import wallet sync service
+const walletSyncService = require('./wallet-sync-service');
+
 // Start the server
 const server = http.createServer(app);
+
+// Initialize WebSocket server for wallet sync
+const wss = walletSyncService.initWalletSyncService(server);
+
+// Start file watcher for real-time updates
+walletSyncService.startFileWatcher();
 
 server.listen(PORT, HOST, () => {
   console.log(`Server running at http://${HOST}:${PORT}/`);
   console.log('Solar Generator is tracking energy since April 7, 2025');
   console.log('Current-See member #1: Terry D. Franklin - Joined April 10, 2025');
+  console.log('Wallet sync service active on ws://HOST:PORT/ws/wallet-sync');
   
   // Set up a daily schedule for distribution at midnight GMT (5:00 PM Pacific Time)
   const DISTRIBUTION_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
@@ -2068,6 +2761,161 @@ server.listen(PORT, HOST, () => {
   });
   
   console.log('SOLAR distribution scheduler is active using node-schedule. Will distribute 1 SOLAR per user daily at 00:00 GMT (5:00 PM Pacific Time).');
+
+  // Alternative email update API with query string token (more robust against authentication issues)
+  app.get('/api/members/update', (req, res) => {
+    try {
+      const { token, id, email } = req.query;
+      
+      // Verify the token directly without using middleware
+      if (!verifyAdminToken(token)) {
+        console.log('Invalid token for direct email update API');
+        return res.status(403).json({ error: 'Invalid token' });
+      }
+      
+      const memberId = parseInt(id, 10);
+      
+      console.log(`Direct email update API called for member ID ${memberId}, new email: ${email}`);
+      
+      // Validate input
+      if (!email || typeof email !== 'string' || !email.includes('@')) {
+        return res.status(400).json({ error: 'Invalid email format' });
+      }
+      
+      // Find member by ID
+      const memberIndex = members.findIndex(m => m.id === memberId);
+      if (memberIndex === -1) {
+        return res.status(404).json({ error: 'Member not found' });
+      }
+      
+      // Skip if it's the reserve account or placeholder
+      if (members[memberIndex].isReserve || members[memberIndex].name === 'You are next') {
+        return res.status(403).json({ error: 'Cannot modify this special account' });
+      }
+
+      // Store old email for logging
+      const oldEmail = members[memberIndex].email;
+      
+      // Update email
+      members[memberIndex].email = email;
+      
+      // Update member files
+      updateMembersFiles();
+      
+      // Create a backup with timestamp
+      const backupDir = path.join(__dirname, 'backup');
+      if (!fs.existsSync(backupDir)) {
+        fs.mkdirSync(backupDir, { recursive: true });
+      }
+      
+      const timestamp = new Date().toISOString().replace(/:/g, '-');
+      fs.writeFileSync(
+        path.join(backupDir, `members_backup_direct_update_${timestamp}.json`), 
+        JSON.stringify(members, null, 2)
+      );
+      
+      console.log(`Member ${memberId} email updated from "${oldEmail}" to "${email}" via direct query API`);
+      
+      res.json({ 
+        success: true, 
+        message: 'Email updated successfully',
+        memberId,
+        oldEmail,
+        newEmail: email
+      });
+    } catch (error) {
+      console.error('Error in direct email update API:', error);
+      res.status(500).json({ error: 'Failed to update email' });
+    }
+  });
+  
+  // Create a fallback API for member email updates
+  app.post('/api/members/:memberId/update-email', adminAuthMiddleware, (req, res) => {
+    try {
+      const memberId = parseInt(req.params.memberId, 10);
+      const { email } = req.body;
+      
+      console.log(`Fallback email update API called for member ID ${memberId}, new email: ${email}`);
+      
+      // Validate input
+      if (!email || typeof email !== 'string' || !email.includes('@')) {
+        return res.status(400).json({ error: 'Invalid email format' });
+      }
+      
+      // Find member by ID
+      const memberIndex = members.findIndex(m => m.id === memberId);
+      if (memberIndex === -1) {
+        return res.status(404).json({ error: 'Member not found' });
+      }
+      
+      // Skip if it's the reserve account or placeholder
+      if (members[memberIndex].isReserve || members[memberIndex].name === 'You are next') {
+        return res.status(403).json({ error: 'Cannot modify this special account' });
+      }
+
+      // Store old email for logging
+      const oldEmail = members[memberIndex].email;
+      
+      // Update email in members array
+      members[memberIndex].email = email;
+      
+      // Update member files - this should update both public/api/members.json and embedded-members
+      updateMembersFiles();
+      
+      // Additionally directly update the embedded-members file as a failsafe
+      try {
+        const embeddedPath = path.join(__dirname, 'public', 'embedded-members');
+        if (fs.existsSync(embeddedPath)) {
+          const embeddedContent = fs.readFileSync(embeddedPath, 'utf8');
+          const match = embeddedContent.match(/window\.embeddedMembers\s*=\s*(\[.*\]);/s);
+          
+          if (match && match[1]) {
+            let embeddedMembers = JSON.parse(match[1]);
+            const embeddedMemberIndex = embeddedMembers.findIndex(m => m.id === memberId);
+            
+            if (embeddedMemberIndex !== -1) {
+              // Update in embedded members array
+              embeddedMembers[embeddedMemberIndex].email = email;
+              
+              // Write back to embedded-members file
+              fs.writeFileSync(
+                embeddedPath,
+                `window.embeddedMembers = ${JSON.stringify(embeddedMembers)};`
+              );
+              console.log(`Updated email in embedded-members file for member ID ${memberId}`);
+            }
+          }
+        }
+      } catch (embeddedError) {
+        console.error(`Error updating embedded-members file: ${embeddedError.message}`);
+      }
+      
+      // Create a backup with timestamp
+      const backupDir = path.join(__dirname, 'backup');
+      if (!fs.existsSync(backupDir)) {
+        fs.mkdirSync(backupDir, { recursive: true });
+      }
+      
+      const timestamp = new Date().toISOString().replace(/:/g, '-');
+      fs.writeFileSync(
+        path.join(backupDir, `members_backup_email_update_${timestamp}.json`), 
+        JSON.stringify(members, null, 2)
+      );
+      
+      console.log(`Member ${memberId} email updated from "${oldEmail}" to "${email}" via fallback API`);
+      
+      res.json({ 
+        success: true, 
+        message: 'Email updated successfully',
+        memberId,
+        oldEmail,
+        newEmail: email
+      });
+    } catch (error) {
+      console.error('Error in fallback email update API:', error);
+      res.status(500).json({ error: 'Failed to update email' });
+    }
+  });
 });
 
 // Error handling

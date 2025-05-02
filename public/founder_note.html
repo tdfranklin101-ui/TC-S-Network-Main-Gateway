@@ -152,7 +152,51 @@
 </head>
 <body>
   <div class="wrapper">
-    <div id="header-container"></div>
+    <!-- Header Begin -->
+    <header>
+      <div class="header-container container">
+        <div class="logo-container">
+          <a href="/">
+            <img src="/solar_coin.png" alt="The Current-See Logo" class="logo">
+            <span class="logo-text">The Current-See</span>
+          </a>
+        </div>
+        
+        <!-- Desktop Navigation -->
+        <nav class="desktop-nav">
+          <ul>
+            <li><a href="/" class="nav-link">Home</a></li>
+            <li><a href="/declaration.html" class="nav-link">Solar Declaration</a></li>
+            <li><a href="/founder_note.html" class="nav-link active">Founder's Note</a></li>
+            <li><a href="/whitepapers.html" class="nav-link">White Papers</a></li>
+            <li><a href="/demo-features.html" class="nav-link">Features</a></li>
+            <li><a href="/wallet-ai-features.html" class="nav-link">AI Wallet</a></li>
+            <li><a href="https://current-see-wallet-demo.replit.app" class="nav-link" target="_blank">Wallet Demo</a></li>
+          </ul>
+        </nav>
+        
+        <!-- Mobile Menu Toggle -->
+        <button class="mobile-menu-toggle" aria-label="Toggle mobile menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+      
+      <!-- Mobile Navigation -->
+      <div class="mobile-nav">
+        <ul>
+          <li><a href="/" class="nav-link">Home</a></li>
+          <li><a href="/declaration.html" class="nav-link">Solar Declaration</a></li>
+          <li><a href="/founder_note.html" class="nav-link active">Founder's Note</a></li>
+          <li><a href="/whitepapers.html" class="nav-link">White Papers</a></li>
+          <li><a href="/demo-features.html" class="nav-link">Features</a></li>
+          <li><a href="/wallet-ai-features.html" class="nav-link">AI Wallet</a></li>
+          <li><a href="https://current-see-wallet-demo.replit.app" class="nav-link" target="_blank">Wallet Demo</a></li>
+        </ul>
+      </div>
+    </header>
+    <!-- Header End -->
     
     <main class="founders-note-main">
       <div class="note-container">
@@ -188,10 +232,54 @@
 </div>
     </main>
     
-    <div id="footer-container"></div>
+    <!-- Footer Begin -->
+    <footer>
+      <div class="container">
+        <div class="footer-columns">
+          <div class="footer-column">
+            <h3>About Us</h3>
+            <p>The Current-See is a revolutionary organization creating a solar-backed economic system for a more equitable world.</p>
+          </div>
+          <div class="footer-column">
+            <h3>Resources</h3>
+            <ul>
+              <li><a href="/declaration.html">Solar Declaration</a></li>
+              <li><a href="/founder_note.html">Founder's Note</a></li>
+              <li><a href="/whitepapers.html">White Papers</a></li>
+              <li><a href="/demo-features.html">Features</a></li>
+            </ul>
+          </div>
+          <div class="footer-column">
+            <h3>Connect</h3>
+            <ul>
+              <li><a href="/contact.html">Contact Us</a></li>
+              <li><a href="/signup.html">Sign Up</a></li>
+              <!-- Login removed - will be added with future ID verification -->
+              <li><a href="https://www.1028atoms.com" target="_blank">1028 Atoms</a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <p>&copy; 2025 The Current-See PBC, Inc. All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
+    <!-- Footer End -->
   </div>
   
-  <!-- Header & Footer Loader -->
-  <script src="/js/load-includes.js"></script>
+  <!-- Mobile Menu Toggle Script -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
+      const mobileNav = document.querySelector('.mobile-nav');
+      
+      if (mobileMenuToggle && mobileNav) {
+        mobileMenuToggle.addEventListener('click', function() {
+          mobileNav.classList.toggle('active');
+          mobileMenuToggle.classList.toggle('active');
+        });
+      }
+    });
+  </script>
 </body>
 </html>

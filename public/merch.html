@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Merchandise | The Current-See</title>
+    
+    <!-- VR/XR Specific Discovery -->
+    <link rel="alternate" type="application/json" href="/vr-discovery.json">
+    <meta name="meta-vr-ready" content="true">
+    
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="/style.css">
     <style>
@@ -379,7 +384,23 @@
     </style>
 </head>
 <body>
-    <div id="header-container"></div>
+    <div class="container">
+        <header>
+            <a href="/" class="logo">
+                <img src="/solar_spinner.png" alt="The Current-See Logo" />
+                <span class="logo-text">The Current-See</span>
+            </a>
+            <nav>
+                <ul>
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/prototype.html">Prototype</a></li>
+                    <li><a href="/merch.html" class="active">Merch</a></li>
+                    <li><a href="/wallet-ai-features.html">My Solar</a></li>
+                    <li><a href="/wallet-ai-features.html">Wallet</a></li>
+                </ul>
+            </nav>
+        </header>
+    </div>
 
     <div class="container">
         <div class="page-header">
@@ -390,13 +411,13 @@
         <div class="coming-soon">
             <h2>Solar Store Coming Soon</h2>
             <p>We're finalizing our merchandise offerings! Check back soon to purchase Current-See branded apparel and accessories that help support our mission.</p>
-            <a href="/my-solar" class="btn-primary">Join Our Waitlist</a>
+            <a href="/wallet-ai-features.html" class="btn-primary">Join Our Waitlist</a>
         </div>
 
         <div class="merch-section">
             <div class="row">
                 <div class="col-md-4 mb-4">
-                    <div class="product-card-bg">
+                    <div class="product-card-bg" data-ar-enabled data-model-url="/models/solar-token.usdz" data-model-name="The Current-See T-Shirt">
                         <span class="product-label">New</span>
                         <img src="/solar_tshirt.png" alt="The Current-See T-Shirt" class="product-bg-image">
                         <div class="product-info">
@@ -404,6 +425,7 @@
                             <p class="product-price">$29.99</p>
                             <p class="product-description">Premium organic cotton t-shirt featuring The Current-See logo and Solar Generator artwork.</p>
                             <a href="#" class="btn-primary">Coming Soon</a>
+                            <p class="ar-note" style="font-size: 0.8rem; margin-top: 10px; color: #0057B8;">View in AR on compatible devices</p>
                         </div>
                     </div>
                 </div>
@@ -467,10 +489,49 @@
         </div>
     </div>
 
-    <div id="footer-container"></div>
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h4>The Current-See</h4>
+                    <p>A new global economy backed by the Sun.<br>One Solar. One Earth. Daily.</p>
+                    <p style="margin-top: 10px;">The Current-See PBC, Inc.<br>
+                    <a href="mailto:hello@thecurrentsee.org">hello@thecurrentsee.org</a></p>
+                </div>
+                <div class="footer-column">
+                    <h4>Learn More</h4>
+                    <ul>
+                        <li><a href="/whitepapers.html">White Papers</a></li>
+                        <li><a href="/declaration.html">Solar Declaration</a></li>
+                        <li><a href="/founder_note.html">Founder's Note</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>Get Involved</h4>
+                    <ul>
+                        <li><a href="/wallet-ai-features.html">Join The Current-See</a></li>
+                        <li><a href="/prototype.html">Try The Prototype</a></li>
+                        <li><a href="/merch.html">Support With Merch</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>Links</h4>
+                    <ul>
+                        <li><a href="/">Home</a></li>
+                        <li><a href="/wallet-ai-features.html">Solar Wallet</a></li>
+                        <li><a href="/admin">Admin</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="copyright">
+                &copy; 2025 The Current-See PBC, Inc. All rights reserved.
+            </div>
+        </div>
+    </footer>
 
-    <!-- Header & Footer Loader -->
-    <script src="/js/load-includes.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- AR/VR Support -->
+    <script src="/js/ar-vr-support.js"></script>
 </body>
 </html>

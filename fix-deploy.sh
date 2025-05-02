@@ -1,77 +1,69 @@
 #!/bin/bash
-# The Current-See Deployment Fix Script
-# 
-# This script prepares the environment for deployment to Replit Cloud Run by:
-# 1. Verifying environment variables
-# 2. Creating a health check endpoint
-# 3. Ensuring the server responds to root path requests
-# 4. Setting up proper PORT configuration
-# 5. Creating deployment status files
 
-# Set script to exit on error
+# Fix deployment script for The Current-See
+# Completely eliminates ESM/CommonJS issues by ensuring pure CommonJS
+
 set -e
 
-echo "=== The Current-See Deployment Fix ==="
-echo "Starting deployment preparation..."
+echo "Creating pure CommonJS deployment package..."
 
-# Check environment variables
-if [ -f .env.openai ]; then
-  echo "Loading environment from .env.openai"
-  export $(grep -v '^#' .env.openai | xargs)
-fi
+# Create a clean deployment directory
+rm -rf pure-deploy
+mkdir -p pure-deploy/public/js
+mkdir -p pure-deploy/public/images
+mkdir -p pure-deploy/public/css
 
-# Verify database URL exists
-if [ -z "$CURRENTSEE_DB_URL" ] && [ -z "$DATABASE_URL" ]; then
-  echo "WARNING: No database URL found. Using memory storage."
-fi
+# Copy the server.cjs file as the main file
+echo "Setting up pure CommonJS server..."
+cp server.cjs pure-deploy/server.js
+cp server.cjs pure-deploy/index.js
+cp server.cjs pure-deploy/main.js
 
-# Create deployment status file
-echo '{"name":"The Current-See Deployment","version":"1.2.3","deploymentReady":true}' > deployment-status.json
-echo "Created deployment status file"
+# Create health check files using pure CommonJS
+echo "Creating CommonJS health check files..."
+cp health.cjs pure-deploy/health.js
+cp health.cjs pure-deploy/healthz.js
+cp health.cjs pure-deploy/health-check.js
+cp final-health-check.cjs pure-deploy/final-health-check.js
 
-# Ensure we have the deployable server
-if [ ! -f deployable-server.js ]; then
-  echo "ERROR: deployable-server.js not found"
-  exit 1
-fi
+# Create simple shell scripts
+echo "#!/bin/sh\nnode server.js" > pure-deploy/start.sh
+chmod +x pure-deploy/start.sh
 
-# Set execution permissions
-chmod +x check-deploy.sh
-echo "Set execution permissions for check-deploy.sh"
+# Copy all static files
+echo "Copying static files..."
+cp -r public/* pure-deploy/public/
 
-# Create a simple health check responder
-cat > health.js << 'EOF'
-const http = require('http');
-const PORT = process.env.PORT || 3000;
-
-const server = http.createServer((req, res) => {
-  res.writeHead(200, { 'Content-Type': 'application/json' });
-  res.end(JSON.stringify({
-    status: 'healthy',
-    timestamp: new Date().toISOString()
-  }));
-});
-
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`Health check server running on port ${PORT}`);
-});
+# Create a strictly CommonJS package.json
+echo "Creating CommonJS package.json..."
+cat > pure-deploy/package.json << EOF
+{
+  "name": "thecurrentsee-deployment",
+  "version": "1.0.0",
+  "description": "The Current-See Deployment",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "private": true
+}
 EOF
-echo "Created health.js for backup health checks"
 
-# Update main.js to point to the deployable server
-cat > main.js << 'EOF'
-/**
- * The Current-See Deployment Entry Point
- */
-require('./deployable-server');
-EOF
-echo "Updated main.js to use deployable-server.js"
+# Create simple health check shell scripts
+echo "#!/bin/sh\nnode health.js" > pure-deploy/health
+chmod +x pure-deploy/health
+echo "#!/bin/sh\nnode health.js" > pure-deploy/healthz
+chmod +x pure-deploy/healthz
 
-# Create a healthz file for Google Cloud Run
-echo '#!/usr/bin/env node' > healthz
-echo 'console.log("Health check passed");' >> healthz
-chmod +x healthz
-echo "Created healthz executable for Cloud Run"
+# Package everything up
+echo "Creating deployment archive..."
+cd pure-deploy
+zip -r ../pure-deployment.zip . -x "*.git*" "*.DS_Store"
+cd ..
 
-echo "Deployment preparation complete!"
-echo "You can now deploy the application to Replit"
+echo "Pure CommonJS deployment package created: pure-deployment.zip"
+echo "Upload this file for deployment to ensure no ESM/CommonJS conflicts"

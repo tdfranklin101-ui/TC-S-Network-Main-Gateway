@@ -3,7 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>The Current-See</title>
+  <title>The Current-See - Solar-Backed Global Economic System</title>
+  
+  <!-- Import SEO Meta Tags -->
+  <!-- HEADER_SEO_PLACEHOLDER -->
+  
+  <!-- VR/XR Specific Discovery -->
+  <link rel="alternate" type="application/json" href="/vr-discovery.json">
+  <meta name="facebook-domain-verification" content="verification_token">
+  <meta name="meta-vr-ready" content="true">
+  
   <link rel="stylesheet" href="/css/common.css">
   <link rel="stylesheet" href="/css/components/language-selector.css">
   <link rel="stylesheet" href="/css/solar-counter.css">
@@ -11,7 +20,7 @@
 </head>
 <body>
   <div class="wrapper">
-    <div id="header-container"></div>
+    <!-- HEADER_PLACEHOLDER -->
 
     <main>
       <!-- Hero Section with Solar Ray Watermark -->
@@ -66,7 +75,7 @@
             </form>
             
             <p style="margin-top: 10px; font-size: 14px; color: #666; text-align: center;">
-              Already a member? <a href="/my-solar.html" style="color: #0057B8; text-decoration: none; font-weight: 600;">View your SOLAR</a>
+              Already a member? <a href="/wallet-ai-features.html" style="color: #0057B8; text-decoration: none; font-weight: 600;">View your SOLAR</a>
             </p>
           </div>
         </div>
@@ -108,7 +117,7 @@
         <div class="container">
           <div class="content-overlay">
             <h2>Members Worldwide</h2>
-            <div class="member-count" id="member-count">2</div>
+            <div class="member-count" id="member-count">Loading...</div>
             <p>Join the growing community of solar-powered individuals</p>
           </div>
         </div>
@@ -147,7 +156,8 @@
             <h2>My Solar</h2>
             <p>Sign up to receive daily solar distributions and track your growing solar balance.</p>
             <div class="join-today-button">
-              <a href="#quick-join-form" class="btn-primary" onclick="document.getElementById('join-name').focus();">Join Today</a>
+              <a href="/wallet-ai-features.html" class="btn-primary">View My Solar</a>
+              <a href="#quick-join-form" class="btn-secondary ml-2" onclick="document.getElementById('join-name').focus();" style="margin-left: 10px;">Join Today</a>
             </div>
           </div>
         </div>
@@ -162,11 +172,34 @@
       </section>
     </main>
 
-    <div id="footer-container"></div>
+    <!-- FOOTER_PLACEHOLDER -->
   </div>
 
-  <!-- Header & Footer Loader -->
-  <script src="/js/load-includes.js"></script>
+  <!-- Mobile Menu Script -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
+      const mobileNav = document.querySelector('.mobile-nav');
+      
+      if (mobileMenuToggle && mobileNav) {
+        mobileMenuToggle.addEventListener('click', () => {
+          mobileMenuToggle.classList.toggle('open');
+          mobileNav.classList.toggle('mobile-nav-active');
+        });
+      }
+      
+      // Initialize member count on page load
+      fetch('/api/member-count?cache=' + Date.now())
+        .then(response => response.json())
+        .then(data => {
+          const memberCountElements = document.querySelectorAll('.member-count, #member-count');
+          memberCountElements.forEach(element => {
+            element.textContent = data.count;
+          });
+        })
+        .catch(error => console.error('Error fetching member count:', error));
+    });
+  </script>
 
   <!-- Real-Time Solar Counter Script -->
   <script src="/js/real_time_solar_counter.js"></script>
@@ -179,6 +212,9 @@
 
   <!-- Language Translator -->
   <script src="/js/language-translator.js"></script>
+  
+  <!-- AR/VR Support -->
+  <script src="/js/ar-vr-support.js"></script>
   
   <!-- Join Form Submission Script -->
   <script>
