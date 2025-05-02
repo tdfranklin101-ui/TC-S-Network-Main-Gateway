@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Sun circle -->
+  <circle cx="100" cy="100" r="50" fill="#FFD700" />
+  
+  <!-- Sun rays -->
+  <g>
+    <!-- 12 rays around the sun -->
+    <path d="M100,30 L100,5" stroke="#FFD700" stroke-width="8" stroke-linecap="round" />
+    <path d="M135,38 L152,17" stroke="#FFD700" stroke-width="8" stroke-linecap="round" />
+    <path d="M162,65 L187,48" stroke="#FFD700" stroke-width="8" stroke-linecap="round" />
+    <path d="M170,100 L195,100" stroke="#FFD700" stroke-width="8" stroke-linecap="round" />
+    <path d="M162,135 L187,152" stroke="#FFD700" stroke-width="8" stroke-linecap="round" />
+    <path d="M135,162 L152,183" stroke="#FFD700" stroke-width="8" stroke-linecap="round" />
+    <path d="M100,170 L100,195" stroke="#FFD700" stroke-width="8" stroke-linecap="round" />
+    <path d="M65,162 L48,183" stroke="#FFD700" stroke-width="8" stroke-linecap="round" />
+    <path d="M38,135 L17,152" stroke="#FFD700" stroke-width="8" stroke-linecap="round" />
+    <path d="M30,100 L5,100" stroke="#FFD700" stroke-width="8" stroke-linecap="round" />
+    <path d="M38,65 L17,48" stroke="#FFD700" stroke-width="8" stroke-linecap="round" />
+    <path d="M65,38 L48,17" stroke="#FFD700" stroke-width="8" stroke-linecap="round" />
+  </g>
+  
+  <!-- Energy symbol -->
+  <path d="M95,75 L80,100 L100,100 L85,125" stroke="#7bc144" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  <path d="M105,75 L120,100 L100,100 L115,125" stroke="#7bc144" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  
+  <!-- Currency symbol $ overlay in middle -->
+  <text x="100" y="105" font-family="Arial, sans-serif" font-weight="bold" font-size="30" text-anchor="middle" fill="#006633">$</text>
+</svg>

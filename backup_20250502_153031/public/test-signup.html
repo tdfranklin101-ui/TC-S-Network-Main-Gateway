@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Signup</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    h1 {
+      color: #0057B8;
+    }
+    .form-container {
+      border: 1px solid #ddd;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: #0057B8;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .result {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 4px;
+    }
+    .success {
+      background-color: #d4edda;
+      border: 1px solid #c3e6cb;
+      color: #155724;
+    }
+    .error {
+      background-color: #f8d7da;
+      border: 1px solid #f5c6cb;
+      color: #721c24;
+    }
+    pre {
+      background: #f8f9fa;
+      padding: 10px;
+      border-radius: 4px;
+      overflow-x: auto;
+    }
+    #member-count-display {
+      font-size: 24px;
+      font-weight: bold;
+      color: #0057B8;
+      margin: 20px 0;
+      padding: 10px;
+      background-color: #f0f8ff;
+      border-radius: 4px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h1>Member Signup Test</h1>
+  
+  <div id="member-count-display">
+    Current Member Count: <span id="current-count">Loading...</span>
+  </div>
+  
+  <div class="form-container">
+    <h2>Create New Member</h2>
+    <div class="form-group">
+      <label for="name">Name:</label>
+      <input type="text" id="name" value="Test User">
+    </div>
+    
+    <div class="form-group">
+      <label for="email">Email:</label>
+      <input type="email" id="email" value="test@example.com">
+    </div>
+    
+    <button id="submit">Submit Signup</button>
+    
+    <div id="result" class="result" style="display: none;"></div>
+  </div>
+  
+  <button id="refresh-count">Refresh Member Count</button>
+  
+  <script>
+    // Function to load current member count
+    async function loadMemberCount() {
+      try {
+        const timestamp = new Date().getTime();
+        const response = await fetch(`/api/member-count?t=${timestamp}`, {
+          cache: 'no-cache',
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          const countElement = document.getElementById('current-count');
+          
+          // Highlight the change with animation
+          countElement.style.transition = 'background-color 0.5s ease';
+          countElement.style.backgroundColor = 'rgba(255, 255, 0, 0.5)';
+          countElement.textContent = data.count;
+          
+          setTimeout(() => {
+            countElement.style.backgroundColor = 'transparent';
+          }, 1000);
+          
+          return data.count;
+        }
+        throw new Error('Failed to fetch member count');
+      } catch (err) {
+        console.error('Error loading member count:', err);
+        document.getElementById('current-count').textContent = 'Error';
+      }
+    }
+    
+    // Load member count on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      loadMemberCount();
+      
+      // Refresh button
+      document.getElementById('refresh-count').addEventListener('click', loadMemberCount);
+      
+      // Signup form
+      const submitButton = document.getElementById('submit');
+      submitButton.addEventListener('click', async function() {
+        const name = document.getElementById('name').value;
+        const email = document.getElementById('email').value;
+        
+        if (!name || !email) {
+          showResult('Please fill in all fields', false);
+          return;
+        }
+        
+        // Clear previous results
+        document.getElementById('result').style.display = 'none';
+        
+        // Disable button during request
+        submitButton.disabled = true;
+        submitButton.textContent = 'Submitting...';
+        
+        try {
+          // Send API request
+          const response = await fetch('/api/signup', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              name: name,
+              email: email
+            })
+          });
+          
+          const data = await response.json();
+          
+          if (data.success) {
+            let message = 'Signup successful!';
+            if (data.totalMembers) {
+              message += `<p>New member count: <strong>${data.totalMembers}</strong></p>`;
+            }
+            message += '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+            showResult(message, true);
+            
+            // Update the count display
+            loadMemberCount();
+            
+            // Reset form
+            document.getElementById('name').value = 'Test User ' + Math.floor(Math.random() * 1000);
+            document.getElementById('email').value = 'test' + Math.floor(Math.random() * 1000) + '@example.com';
+          } else {
+            showResult('Error: ' + data.error, false);
+          }
+        } catch (error) {
+          showResult('Error: ' + error.message, false);
+        } finally {
+          // Re-enable button
+          submitButton.disabled = false;
+          submitButton.textContent = 'Submit Signup';
+        }
+      });
+    });
+    
+    function showResult(message, isSuccess) {
+      const resultElement = document.getElementById('result');
+      resultElement.innerHTML = message;
+      resultElement.className = 'result ' + (isSuccess ? 'success' : 'error');
+      resultElement.style.display = 'block';
+      
+      // Scroll to the result
+      resultElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  </script>
+</body>
+</html>

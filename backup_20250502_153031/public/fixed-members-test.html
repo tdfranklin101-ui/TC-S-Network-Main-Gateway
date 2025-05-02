@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fixed Members Display Test - The Current-See</title>
+  <link rel="stylesheet" href="/css/common.css">
+  <style>
+    /* Special styling for reserve accounts */
+    .reserve-account {
+      background-color: rgba(221, 245, 255, 0.3);
+      border-left: 4px solid #2196F3;
+      margin-bottom: 20px;
+    }
+    
+    .member-separator {
+      display: flex;
+      align-items: center;
+      margin: 20px 0;
+      color: #777;
+    }
+    
+    .member-separator hr {
+      flex-grow: 1;
+      border: none;
+      height: 1px;
+      background-color: #ddd;
+    }
+    
+    .member-separator span {
+      padding: 0 10px;
+      font-size: 0.9rem;
+      font-weight: bold;
+    }
+    
+    /* Members log entry styling */
+    .members-log-entry {
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      padding: 15px;
+      margin-bottom: 15px;
+      transition: transform 0.2s ease;
+    }
+    
+    .members-log-entry:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    
+    .member-name {
+      font-weight: bold;
+      font-size: 1.1rem;
+      margin-bottom: 5px;
+      color: #0057B8;
+    }
+    
+    .member-joined {
+      color: #666;
+      font-size: 0.9rem;
+      margin-bottom: 5px;
+    }
+    
+    .member-solar {
+      font-family: 'Roboto Mono', monospace;
+      color: #333;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <header>
+      <div class="container">
+        <h1>Fixed Members Display Test</h1>
+        <p>This page tests the fixed members display logic to verify all members including the TC-S Solar Reserve are shown correctly.</p>
+      </div>
+    </header>
+
+    <main>
+      <div class="container">
+        <section class="members-log-section">
+          <h2>Complete Members List</h2>
+          <p>This list should include the TC-S Solar Reserve as the first entry:</p>
+          
+          <!-- Members log container will be populated by JavaScript -->
+          <div id="public-members-log"></div>
+          
+          <div class="data-source-info">
+            <h3>Data Source Indicator</h3>
+            <p>Color codes indicate data source:</p>
+            <ul>
+              <li><span style="display:inline-block; width:15px; height:15px; background-color:#4CAF50; border-radius:50%; margin-right:5px;"></span> Green: Live data from API</li>
+              <li><span style="display:inline-block; width:15px; height:15px; background-color:#FFC107; border-radius:50%; margin-right:5px;"></span> Yellow: Data from embedded-members endpoint</li>
+              <li><span style="display:inline-block; width:15px; height:15px; background-color:#2196F3; border-radius:50%; margin-right:5px;"></span> Blue: Data from embedded-members.json file</li>
+              <li><span style="display:inline-block; width:15px; height:15px; background-color:#F44336; border-radius:50%; margin-right:5px;"></span> Red: Fallback data (API unavailable)</li>
+            </ul>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer>
+      <div class="container">
+        <p>&copy; 2025 The Current-See PBC, Inc. All rights reserved.</p>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Load our fixed members log script -->
+  <script src="/js/fixed-members-log.js"></script>
+</body>
+</html>

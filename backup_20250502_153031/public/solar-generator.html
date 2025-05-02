@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar Generator | The Current-See</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/css/common.css">
+    <link rel="stylesheet" href="/css/solar-counter.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* Solar Generator Page Specific Watermark */
+        .solar-generator-main {
+            position: relative;
+            overflow: hidden;
+            background-color: var(--bg-light);
+            padding: 2rem 0;
+        }
+        
+        .solar-generator-main::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: repeating-conic-gradient(
+                rgba(243, 198, 34, 0.04) 0deg 8deg,
+                rgba(243, 198, 34, 0.02) 8deg 16deg
+            );
+            animation: sun-ray-rotate 120s linear infinite;
+            z-index: 0;
+            opacity: 0.8;
+            pointer-events: none;
+        }
+        
+        .solar-generator-section {
+            padding: 3rem 1rem;
+            text-align: center;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            max-width: 1200px;
+            margin: 2rem auto;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .counter-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+        
+        .counter {
+            flex: 1;
+            min-width: 300px;
+            padding: 2rem;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            position: relative;
+        }
+        
+        .counter-label {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 0.5rem;
+        }
+        
+        .counter-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #7bc144;
+            margin: 1rem 0;
+        }
+        
+        .solar-equation {
+            text-align: center;
+            padding: 1.5rem;
+            margin: 0 auto 2rem;
+            max-width: 1200px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .solar-equation p {
+            font-size: 1.1rem;
+            color: #333;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        /* Styles for solar icon */
+        .solar-icon-container {
+            position: absolute;
+            right: 15px;
+            top: 15px;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .solar-icon {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.5));
+            animation: glow 3s infinite alternate;
+        }
+        
+        @keyframes glow {
+            from {
+                filter: drop-shadow(0 0 2px rgba(255, 215, 0, 0.5));
+            }
+            to {
+                filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.8));
+            }
+        }
+        
+        .solar-graphic-counter {
+            overflow: visible;
+        }
+        
+        @media (max-width: 768px) {
+            .counter-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .counter {
+                width: 100%;
+            }
+            
+            .solar-icon-container {
+                position: relative;
+                right: auto;
+                top: auto;
+                margin: 10px auto 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="header-container"></div>
+
+    <section class="hero-solar">
+        <div class="container">
+            <h1>The Current-See: Solar Generator</h1>
+            <p class="subtitle">Prototype of a solar-backed global economic system - Making the power of the sun accessible to everyone</p>
+        </div>
+    </section>
+
+    <div class="solar-generator-main sun-ray-watermark">
+      <div class="container">
+        <div class="solar-generator-section">
+            <div class="counter-container">
+                <div class="counter">
+                    <div class="counter-label">Solar Energy Generated Since April 7, 2025 (12:00 AM GMT)</div>
+                    <div id="energy-display" class="counter-value">0.000000</div>
+                    <div class="counter-label">Million kWh (MkWh)</div>
+                </div>
+                
+                <div class="counter solar-graphic-counter">
+                    <div class="counter-label">Equivalent Monetary Value</div>
+                    <div id="money-display" class="counter-value">$0</div>
+                    <div class="counter-label">USD</div>
+                    <div class="solar-icon-container">
+                        <img src="/img/solar-icon-default.svg" alt="Solar Energy Icon" class="solar-icon" onerror="this.src='/img/solar-conversion-icon.svg';" />
+                    </div>
+                </div>
+            </div>
+            
+            <div class="solar-equation">
+                <p>1 Solar = 4,913 kWh (based on 1% of Earth's solar input divided among 8.5B people)</p>
+            </div>
+            
+            <div class="cta-section">
+                <h2>Ready to be part of the solar revolution?</h2>
+                <p>Sign up today to secure your daily solar allocation and track your personal solar generation.</p>
+                <a href="/signup.html" class="btn-primary">Join The Current-See</a>
+            </div>
+        </div>
+    </div>
+    </div> <!-- Close solar-generator-main div -->
+
+    <section class="public-members-section">
+        <div class="container">
+            <div class="members-log-container">
+                <h2 class="members-log-title">Public Members Log</h2>
+                <div id="public-members-log"></div>
+            </div>
+        </div>
+    </section>
+
+    <div style="text-align: center; margin: 3rem 0;">
+        <a href="/" style="display: inline-block; background-color: #2054a6; color: white; font-weight: 700; padding: 1.2rem 2.5rem; border-radius: 50px; text-decoration: none; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(32, 84, 166, 0.3); font-size: 1.1rem; letter-spacing: 0.5px;">
+          <span style="display: inline-block; margin-right: 8px;">⬅</span> Return to Home Page
+        </a>
+    </div>
+    
+    <div id="footer-container"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/real_time_solar_counter.js"></script>
+    <script src="/js/public-members-log.js"></script>
+
+    <!-- Header & Footer Loader -->
+    <script src="/js/load-includes.js"></script>
+    
+    <script>
+        // The real-time counter script handles all updates automatically
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Solar generator page initialized with real-time counter');
+            
+            // Start diagnostic animation to show it's working
+            const energyDisplay = document.getElementById('energy-display');
+            const moneyDisplay = document.getElementById('money-display');
+            
+            if (energyDisplay && moneyDisplay) {
+                // Brief flash to show it's active
+                energyDisplay.style.transition = 'color 0.5s ease';
+                moneyDisplay.style.transition = 'color 0.5s ease';
+                
+                energyDisplay.style.color = '#FFD700';
+                moneyDisplay.style.color = '#FFD700';
+                
+                setTimeout(() => {
+                    energyDisplay.style.color = '#7bc144';
+                    moneyDisplay.style.color = '#7bc144';
+                }, 500);
+            }
+        });
+    </script>
+</body>
+</html>
