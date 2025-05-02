@@ -46,7 +46,7 @@ app.get('/api/solar-generator', (req, res) => {
   const secondsElapsed = Math.floor(timeDiffMs / 1000);
   
   // Solar generation rate calculation
-  const kwhPerSolar = 17700000; // 17.7M kWh per SOLAR
+  const kwhPerSolar = 4913; // 4,913 kWh per SOLAR
   const dollarPerSolar = 136000; // $136,000 per SOLAR
   const solarPerSecond = 1 / (24 * 60 * 60); // 1 SOLAR per day
   
