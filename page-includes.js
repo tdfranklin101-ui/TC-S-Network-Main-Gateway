@@ -48,6 +48,10 @@ function processIncludes(htmlContent, options = {}) {
   const commonCssPath = options.commonCssPath || '/css/common.css';
   const langSelectorCssPath = options.langSelectorCssPath || '/css/components/language-selector.css';
   
+  // Common JS files
+  const solarGeneratorRefreshPath = '/js/solar-generator-refresh.js';
+  const publicMembersLogPath = '/js/public-members-log.js';
+  
   // Extract title, body content, and any custom styles or scripts
   const title = extractTitle(htmlContent) || 'The Current-See';
   const bodyContent = extractBodyContent(htmlContent);
@@ -82,6 +86,10 @@ function processIncludes(htmlContent, options = {}) {
   
   <!-- Page-specific styles -->
   ${customCss}
+  
+  <!-- Auto-refresh data scripts -->
+  <script src="${solarGeneratorRefreshPath}" defer></script>
+  <script src="${publicMembersLogPath}" defer></script>
 </head>
 <body>
   ${header}

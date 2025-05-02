@@ -2631,6 +2631,12 @@ app.use((req, res) => {
 // Import wallet sync service
 const walletSyncService = require('./wallet-sync-service');
 
+// Import OpenAI-powered solar distribution system
+const { initializeSolarDistribution } = require('./solar-distribution-integration');
+
+// Import Solar-Conversion-Clock synchronization system
+const solarConversionSync = require('./solar-conversion-sync');
+
 // Start the server
 const server = http.createServer(app);
 
@@ -2691,18 +2697,49 @@ server.listen(PORT, HOST, () => {
     }
   };
 
-  const runDistribution = () => {
+  const runDistribution = async () => {
     logDistribution('Running scheduled SOLAR distribution...');
-    const updatedCount = updateMemberDistributions();
     
-    // Log detailed distribution results
-    const distributionTime = new Date().toISOString();
-    const pacificTime = new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' });
-    logDistribution(`Distribution completed at ${distributionTime} (${pacificTime} Pacific Time). Updated ${updatedCount} members.`);
+    // Check if OpenAI API key is available for enhanced distribution
+    if (process.env.OPENAI_API_KEY) {
+      try {
+        // Import the runDistributionNow function dynamically to avoid circular dependencies
+        const { runDistributionNow } = require('./solar-distribution-scheduler');
+        
+        logDistribution('Using OpenAI-powered distribution system...');
+        const result = await runDistributionNow();
+        
+        if (result.success) {
+          // Log detailed distribution results
+          const distributionTime = new Date().toISOString();
+          const pacificTime = new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' });
+          logDistribution(`Distribution completed at ${distributionTime} (${pacificTime} Pacific Time). Updated ${result.updated} members with OpenAI verification.`);
+          
+          // Files are already updated inside the OpenAI distribution process
+        } else {
+          // If OpenAI distribution fails, fall back to the standard distribution
+          logDistribution(`OpenAI distribution failed: ${result.error}. Falling back to standard distribution.`);
+          const updatedCount = updateMemberDistributions();
+          logDistribution(`Fallback distribution completed. Updated ${updatedCount} members.`);
+        }
+      } catch (error) {
+        // If any error occurs with OpenAI distribution, fall back to standard distribution
+        logDistribution(`Error during OpenAI distribution: ${error.message}. Falling back to standard distribution.`);
+        const updatedCount = updateMemberDistributions();
+        logDistribution(`Fallback distribution completed. Updated ${updatedCount} members.`);
+      }
+    } else {
+      // If no OpenAI API key, use standard distribution
+      logDistribution('OPENAI_API_KEY not found. Using standard distribution system.');
+      const updatedCount = updateMemberDistributions();
+      
+      // Log detailed distribution results
+      const distributionTime = new Date().toISOString();
+      const pacificTime = new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' });
+      logDistribution(`Distribution completed at ${distributionTime} (${pacificTime} Pacific Time). Updated ${updatedCount} members.`);
+    }
     
-    // Files are already updated inside updateMemberDistributions()
-    
-    // Save a backup of the current members data
+    // Save a backup of the current members data regardless of distribution method
     try {
       fs.writeFileSync(
         `members_backup_${new Date().toISOString().replace(/[:.]/g, '-')}.json`,
@@ -2716,9 +2753,9 @@ server.listen(PORT, HOST, () => {
   
   // Set up a precise scheduler for 5:00 PM Pacific Time (00:00 GMT) using node-schedule
   // This runs every day at exactly 5:00 PM Pacific Time (12h format = 5PM)
-  const distributionJob = schedule.scheduleJob('0 17 * * *', function() {
+  const distributionJob = schedule.scheduleJob('0 17 * * *', async function() {
     logDistribution('Scheduled SOLAR distribution triggered at 5:00 PM Pacific Time (00:00 GMT)');
-    runDistribution();
+    await runDistribution();
   });
   
   // Check if we need to run distribution immediately
@@ -2728,7 +2765,10 @@ server.listen(PORT, HOST, () => {
   
   if (pstHour === '17' && parseInt(pstMinute) < 5) {
     logDistribution('Server started within 5 minutes of distribution time - running immediate distribution');
-    runDistribution();
+    // Need to use async/await here as well
+    (async () => {
+      await runDistribution();
+    })();
   } else {
     // Format next distribution time
     const nextDistribution = new Date();
@@ -2760,7 +2800,20 @@ server.listen(PORT, HOST, () => {
     logDistribution(`Health check: Server up and running. ${members.length} members in system.`);
   });
   
-  console.log('SOLAR distribution scheduler is active using node-schedule. Will distribute 1 SOLAR per user daily at 00:00 GMT (5:00 PM Pacific Time).');
+  // Initialize OpenAI-powered distribution system if API key is available
+  const openaiApiKey = process.env.NEW_OPENAI_API_KEY || process.env.OPENAI_API_KEY;
+  if (openaiApiKey) {
+    // Initialize the OpenAI distribution system
+    initializeSolarDistribution();
+    console.log('OpenAI-powered SOLAR distribution scheduler is active. Will distribute 1 SOLAR per user daily at 00:00 GMT (5:00 PM Pacific Time).');
+  } else {
+    console.log('SOLAR distribution scheduler is active using node-schedule. Will distribute 1 SOLAR per user daily at 00:00 GMT (5:00 PM Pacific Time).');
+  }
+  
+  // Initialize the Solar-Conversion-Clock synchronization system
+  // This ensures the website automatically updates after the Solar-Conversion-Clock triggers a distribution
+  solarConversionSync.initFileWatchers();
+  console.log('Solar-Conversion-Clock synchronization system is active. Website will update automatically after distributions.');
 
   // Alternative email update API with query string token (more robust against authentication issues)
   app.get('/api/members/update', (req, res) => {
