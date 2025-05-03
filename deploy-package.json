@@ -1,12 +1,12 @@
 {
-  "name": "the-current-see-deploy",
+  "name": "the-current-see-deployment",
   "version": "1.0.0",
-  "main": "replit-deploy-handler.js",
-  "type": "commonjs",
+  "description": "Deployment package for The Current-See website",
+  "main": "deploy-fixed.js",
   "scripts": {
-    "start": "node replit-deploy-handler.js"
+    "start": "node deploy-fixed.js"
   },
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=16.0.0"
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "the-current-see",
-  "main": "entry.js",
+  "main": "index.js",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.37.0",
     "@neondatabase/serverless": "^1.0.0",
@@ -32,7 +32,7 @@
     "zod": "^3.24.2"
   },
   "scripts": {
-    "start": "./entrypoint.sh",
+    "start": "node index.js",
     "deploy": "node entry.js"
   }
 }

@@ -1,15 +1,16 @@
 /**
- * The Current-See Main Entry Point for Deployment
+ * The Current-See Fixed Deployment Entry Point
  * 
- * This file is specifically designed to work with Replit deployments.
+ * This file is specifically designed to fix the
+ * "Channel already opened" error during deployment.
  */
 
-// Import the required modules
+// Import required modules without using channels
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
-// Define the port to listen on - Replit deployment expects PORT environment variable
+// Define the port to listen on
 const PORT = process.env.PORT || 3000;
 
 // MIME types for serving static files
@@ -32,9 +33,14 @@ const MIME_TYPES = {
   '.eot': 'application/vnd.ms-fontobject'
 };
 
+// Log information to the console
+function log(message) {
+  console.log(`[${new Date().toISOString()}] ${message}`);
+}
+
 // Create the HTTP server
 const server = http.createServer((req, res) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  log(`${req.method} ${req.url}`);
 
   // Special handling for root path - serve index.html
   if (req.url === '/') {
@@ -124,14 +130,28 @@ function serveFile(res, filePath) {
     const ext = path.extname(filePath);
     const contentType = MIME_TYPES[ext] || 'text/plain';
     
-    res.writeHead(200, { 'Content-Type': contentType });
+    // Set cache control headers for better performance
+    const headers = {
+      'Content-Type': contentType
+    };
+    
+    // Add cache control for non-JS files
+    if (!ext.includes('.js') && !ext.includes('.json')) {
+      headers['Cache-Control'] = 'public, max-age=86400'; // 1 day
+    } else {
+      // No caching for JS and JSON files
+      headers['Cache-Control'] = 'no-cache, no-store, must-revalidate';
+      headers['Pragma'] = 'no-cache';
+      headers['Expires'] = '0';
+    }
+    
+    res.writeHead(200, headers);
     res.end(data);
   });
 }
 
 // Start the server
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on http://0.0.0.0:${PORT}`);
-  console.log(`Environment: ${process.env.NODE_ENV || 'production'}`);
-  console.log(`Current date: ${new Date().toISOString()}`);
+  log(`Fixed deployment server running on http://0.0.0.0:${PORT}`);
+  log(`Environment: ${process.env.NODE_ENV || 'production'}`);
 });

@@ -1,21 +1,6 @@
-// Ultra-simple server.js for Replit deployment
-const http = require('http');
-const fs = require('fs');
-const path = require('path');
+/**
+ * Original main.js backup - DO NOT MODIFY
+ * Backup created on 2025-05-03 for reference purposes
+ */
 
-const PORT = process.env.PORT || 3000;
-
-// Create server that responds to all requests with 200 OK
-const server = http.createServer((req, res) => {
-  if (req.url === '/' || req.url === '/healthz' || req.url === '/health') {
-    res.writeHead(200, { 'Content-Type': 'text/html' });
-    res.end('<html><body><h1>The Current-See</h1><p>Service is running</p></body></html>');
-  } else {
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ status: 'ok' }));
-  }
-});
-
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// This is a backup of the original main.js file

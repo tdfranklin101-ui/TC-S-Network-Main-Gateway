@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+# Run script for The Current-See deployment
+echo "Starting The Current-See..."
+echo "Date: $(date)"
+
+# Set environment variables
+export NODE_ENV=production
+
+# Kill any existing Node.js processes to avoid channel conflicts
+pkill -f node 2>/dev/null || echo "No existing Node.js processes found"
+
+# Wait a moment for channels to clear
+sleep 2
+
+# Run the application using the fixed deployment file
+node deploy-fixed.js
