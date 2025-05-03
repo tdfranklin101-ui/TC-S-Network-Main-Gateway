@@ -1,69 +1,78 @@
 /**
- * The Current-See Deployment Verification Script
+ * The Current-See Deployment Verification
  * 
- * This script can be run after deployment to verify key functionality is working
- * Usage: node deployment-verification.js [hostname]
+ * This script verifies the deployed website is functioning correctly
+ * by checking various endpoints and functionality.
  */
 
-const https = require('https');
 const http = require('http');
+const https = require('https');
+const fs = require('fs');
 
-// Get hostname from command line or use default
-const input = process.argv[2] || 'thecurrentsee.org';
-let hostname, port, useHttps;
+// Configuration
+const BASE_URL = process.env.VERIFY_URL || 'http://localhost:3000';
+const USE_HTTPS = BASE_URL.startsWith('https://');
+const client = USE_HTTPS ? https : http;
 
-// Handle different input formats (hostname:port or just hostname)
-if (input.includes(':')) {
-  [hostname, port] = input.split(':');
-  useHttps = false;
-} else {
-  hostname = input;
-  port = useHttps ? 443 : 3000;
-  useHttps = !input.includes('localhost');
+// Color codes for console output
+const colors = {
+  reset: '\x1b[0m',
+  red: '\x1b[31m',
+  green: '\x1b[32m',
+  yellow: '\x1b[33m',
+  blue: '\x1b[34m',
+  magenta: '\x1b[35m',
+  cyan: '\x1b[36m',
+  white: '\x1b[37m',
+};
+
+// Log a message with color
+function log(message, type = 'info') {
+  const timestamp = new Date().toISOString();
+  let color = colors.reset;
+  
+  switch (type) {
+    case 'success':
+      color = colors.green;
+      break;
+    case 'error':
+      color = colors.red;
+      break;
+    case 'warning':
+      color = colors.yellow;
+      break;
+    case 'info':
+      color = colors.blue;
+      break;
+  }
+  
+  console.log(`${color}[${timestamp}] ${message}${colors.reset}`);
 }
 
-console.log(`\nStarting verification for ${hostname}${port ? ':'+port : ''} using ${useHttps ? 'HTTPS' : 'HTTP'}...`);
-
-// Function to make a request
-function makeRequest(path, method = 'GET', data = null) {
+// Make a request to the specified endpoint
+function makeRequest(endpoint, method = 'GET') {
   return new Promise((resolve, reject) => {
-    const options = {
-      hostname,
-      port: port || (useHttps ? 443 : 3000),
-      path,
-      method,
-      headers: {
-        'User-Agent': 'Current-See-Verification-Script/1.0',
-        'Content-Type': 'application/json'
-      }
-    };
-
-    const protocol = useHttps ? https : http;
+    const url = `${BASE_URL}${endpoint}`;
+    log(`Requesting ${method} ${url}`, 'info');
     
-    const req = protocol.request(options, (res) => {
-      let responseData = '';
+    const options = {
+      method,
+      timeout: 10000, // 10 second timeout
+    };
+    
+    const req = client.request(url, options, (res) => {
+      let data = '';
       
       res.on('data', (chunk) => {
-        responseData += chunk;
+        data += chunk;
       });
       
       res.on('end', () => {
-        try {
-          const result = {
-            statusCode: res.statusCode,
-            headers: res.headers,
-            data: responseData
-          };
-          
-          if (responseData && 
-              (responseData.startsWith('{') || responseData.startsWith('['))) {
-            result.json = JSON.parse(responseData);
-          }
-          
-          resolve(result);
-        } catch (error) {
-          reject(error);
-        }
+        resolve({
+          statusCode: res.statusCode,
+          headers: res.headers,
+          data: data,
+        });
       });
     });
     
@@ -71,63 +80,123 @@ function makeRequest(path, method = 'GET', data = null) {
       reject(error);
     });
     
-    if (data) {
-      req.write(typeof data === 'string' ? data : JSON.stringify(data));
-    }
+    req.on('timeout', () => {
+      req.destroy();
+      reject(new Error(`Request to ${url} timed out`));
+    });
     
     req.end();
   });
 }
 
-// Main verification function
-async function verifyDeployment() {
+// Check if the main site is available
+async function checkMainSite() {
   try {
-    // 1. Check health endpoint
-    console.log('\nVerifying health endpoint...');
-    const healthCheck = await makeRequest('/health');
-    const healthStatus = healthCheck.statusCode === 200 ? 'OK' : 'FAILED';
-    console.log(`Health check: ${healthStatus} (${healthCheck.statusCode})`);
-    
-    // 2. Check homepage loads
-    console.log('\nVerifying homepage loads...');
-    const homepage = await makeRequest('/');
-    const homepageStatus = homepage.statusCode === 200 ? 'OK' : 'FAILED';
-    console.log(`Homepage: ${homepageStatus} (${homepage.statusCode})`);
-    
-    // 3. Check member count API
-    console.log('\nVerifying member count API...');
-    try {
-      const memberCount = await makeRequest('/api/member-count');
-      if (memberCount.json && typeof memberCount.json.count === 'number') {
-        console.log(`Member count API: OK - ${memberCount.json.count} members`);
-      } else {
-        console.log(`Member count API: FAILED - Invalid response format`);
-      }
-    } catch (error) {
-      console.log(`Member count API: FAILED - ${error.message}`);
+    const response = await makeRequest('/');
+    if (response.statusCode === 200) {
+      log('✅ Main site is available', 'success');
+      return true;
+    } else {
+      log(`❌ Main site returned status ${response.statusCode}`, 'error');
+      return false;
     }
-    
-    // 4. Check solar data API
-    console.log('\nVerifying solar data API...');
-    try {
-      const solarData = await makeRequest('/api/solar-data');
-      if (solarData.json && solarData.json.energy && solarData.json.solar) {
-        console.log(`Solar data API: OK - Energy: ${solarData.json.energy.value} ${solarData.json.energy.unit}`);
-        console.log(`                    Solar tokens: ${solarData.json.solar.formatted}`);
-        console.log(`                    Value: ${solarData.json.money.formatted}`);
-      } else {
-        console.log(`Solar data API: FAILED - Invalid response format`);
-      }
-    } catch (error) {
-      console.log(`Solar data API: FAILED - ${error.message}`);
-    }
-    
-    console.log('\nVerification complete!');
-    
   } catch (error) {
-    console.error('Verification failed:', error);
+    log(`❌ Error checking main site: ${error.message}`, 'error');
+    return false;
   }
 }
 
+// Check if the health endpoint is working
+async function checkHealthEndpoint() {
+  try {
+    const response = await makeRequest('/health');
+    if (response.statusCode === 200) {
+      log('✅ Health endpoint is working', 'success');
+      return true;
+    } else {
+      log(`❌ Health endpoint returned status ${response.statusCode}`, 'error');
+      return false;
+    }
+  } catch (error) {
+    log(`❌ Error checking health endpoint: ${error.message}`, 'error');
+    return false;
+  }
+}
+
+// Check if the system status API is working
+async function checkSystemStatusAPI() {
+  try {
+    const response = await makeRequest('/api/system/status');
+    if (response.statusCode === 200) {
+      const data = JSON.parse(response.data);
+      log(`✅ System status API working. Status: ${data.status}`, 'success');
+      log(`   Database available: ${data.hasDatabase}`, data.hasDatabase ? 'success' : 'warning');
+      log(`   OpenAI available: ${data.hasOpenAI}`, data.hasOpenAI ? 'success' : 'warning');
+      return true;
+    } else {
+      log(`❌ System status API returned status ${response.statusCode}`, 'error');
+      return false;
+    }
+  } catch (error) {
+    log(`❌ Error checking system status API: ${error.message}`, 'error');
+    return false;
+  }
+}
+
+// Check if the member count API is working
+async function checkMemberCountAPI() {
+  try {
+    const response = await makeRequest('/api/member-count');
+    if (response.statusCode === 200) {
+      const data = JSON.parse(response.data);
+      log(`✅ Member count API working. Count: ${data.count}`, 'success');
+      return true;
+    } else {
+      log(`❌ Member count API returned status ${response.statusCode}`, 'error');
+      return false;
+    }
+  } catch (error) {
+    log(`❌ Error checking member count API: ${error.message}`, 'error');
+    return false;
+  }
+}
+
+// Run all checks
+async function runVerification() {
+  log('-------------------------------------------------', 'info');
+  log(`🔍 Starting verification of ${BASE_URL}`, 'info');
+  log('-------------------------------------------------', 'info');
+  
+  let success = true;
+  
+  success = await checkMainSite() && success;
+  success = await checkHealthEndpoint() && success;
+  success = await checkSystemStatusAPI() && success;
+  success = await checkMemberCountAPI() && success;
+  
+  log('-------------------------------------------------', 'info');
+  
+  if (success) {
+    log('✅ All verification checks passed!', 'success');
+    log('The Current-See is deployed and working correctly', 'success');
+  } else {
+    log('❌ Some verification checks failed', 'error');
+    log('Please check the logs above for details', 'error');
+  }
+  
+  log('-------------------------------------------------', 'info');
+  log('Next steps:', 'info');
+  log('1. Visit the website to confirm functionality', 'info');
+  log('2. Test the Solar Generator counter', 'info');
+  log('3. Verify member data is displaying correctly', 'info');
+  log('4. Visit the admin dashboard to confirm it\'s working', 'info');
+  log('-------------------------------------------------', 'info');
+  
+  return success;
+}
+
 // Run the verification
-verifyDeployment();
+runVerification().catch((error) => {
+  log(`❌ Unhandled error during verification: ${error.message}`, 'error');
+  process.exit(1);
+});

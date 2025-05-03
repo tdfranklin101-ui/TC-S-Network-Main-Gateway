@@ -1,10 +1,14 @@
 /**
- * Standalone Health Check for The Current-See
+ * Health Check for The Current-See Deployment
  * 
- * This is a minimal health check module designed specifically for
- * Replit Cloud Run deployments. It responds to requests on port 3000
- * with a 200 OK status for successful health verification.
+ * This file helps Replit verify the application is running correctly
  */
 
-// Simply require the main healthz.js file
-require('./healthz');
+module.exports = async function(req, res) {
+  res.status(200).json({
+    status: 'healthy',
+    service: 'The Current-See',
+    version: '1.0.0',
+    timestamp: new Date().toISOString()
+  });
+};
