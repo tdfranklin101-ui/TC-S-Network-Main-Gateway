@@ -1,1 +1,1 @@
-web: node deploy-fixed.js
+web: node simple-deploy.js
