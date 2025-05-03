@@ -1,0 +1,11 @@
+{
+  "timestamp": "2025-05-02T23:26:39.732Z",
+  "version": "1.0.0",
+  "features": {
+    "solarDistribution": true,
+    "autoUpdate": true,
+    "openAiIntegration": true,
+    "cacheManagement": true
+  },
+  "deployReady": true
+}

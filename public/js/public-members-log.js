@@ -70,24 +70,30 @@
     // Add the updated members to the table
     members.forEach(member => {
       // Skip the reserve account in public tables
-      if (member.isReserve) return;
+      if (member.isReserve || member.is_reserve) return;
       
       const row = document.createElement('tr');
       
       // Format the join date
       let joinDate = 'N/A';
-      if (member.joinDate) {
-        joinDate = new Date(member.joinDate).toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric'
-        });
+      // Try different property names for join date
+      const dateProperty = member.joinDate || member.joinedDate || member.joined_date;
+      if (dateProperty) {
+        try {
+          joinDate = new Date(dateProperty).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+          });
+        } catch (e) {
+          console.error('Error formatting date:', e);
+        }
       }
       
       // Format the solar amount with 4 decimal places
-      const solarAmount = typeof member.solarAmount === 'number' 
-        ? member.solarAmount.toFixed(4)
-        : 'N/A';
+      const solarAmount = typeof member.totalSolar === 'number' 
+        ? member.totalSolar.toFixed(4)
+        : (member.total_solar || 'N/A');
       
       // Create the row content with the member data
       row.innerHTML = `
@@ -119,8 +125,8 @@
     // Update member info elements
     updateElementText('member-name', member.name);
     updateElementText('member-id-display', member.id);
-    updateElementText('member-join-date', formatDate(member.joinDate));
-    updateElementText('member-solar-amount', formatSolar(member.solarAmount));
+    updateElementText('member-join-date', formatDate(member.joinDate || member.joinedDate || member.joined_date));
+    updateElementText('member-solar-amount', formatSolar(member.totalSolar || parseFloat(member.total_solar)));
     
     // Update any progress bars or visual indicators
     updateProgressBars(member);
@@ -131,12 +137,17 @@
    */
   function updateMemberCounters(members) {
     // Update total members count (excluding reserve account)
-    const activeMembers = members.filter(m => !m.isReserve).length;
+    const activeMembers = members.filter(m => !(m.isReserve || m.is_reserve)).length;
     updateElementText('total-members-count', activeMembers);
     
     // Update the total SOLAR distributed
     const totalSolar = members.reduce((sum, member) => {
-      return sum + (typeof member.solarAmount === 'number' ? member.solarAmount : 0);
+      if (typeof member.totalSolar === 'number') {
+        return sum + member.totalSolar;
+      } else if (member.total_solar) {
+        return sum + parseFloat(member.total_solar);
+      }
+      return sum;
     }, 0);
     
     updateElementText('total-solar-distributed', formatSolar(totalSolar));
@@ -198,9 +209,16 @@
     const progressBar = document.getElementById('solar-progress-bar');
     if (!progressBar) return;
     
-    if (typeof member.solarAmount === 'number') {
+    let solarValue = 0;
+    if (typeof member.totalSolar === 'number') {
+      solarValue = member.totalSolar;
+    } else if (member.total_solar) {
+      solarValue = parseFloat(member.total_solar);
+    }
+    
+    if (!isNaN(solarValue)) {
       // Progress is based on solar amount - you can modify this calculation as needed
-      const progress = Math.min(100, member.solarAmount * 10); // Eg: 10 solar = 100%
+      const progress = Math.min(100, solarValue * 10); // Eg: 10 solar = 100%
       progressBar.style.width = `${progress}%`;
       progressBar.setAttribute('aria-valuenow', progress);
     }
