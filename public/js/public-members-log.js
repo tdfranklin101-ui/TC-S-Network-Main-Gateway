@@ -58,11 +58,48 @@
    * Update the members table display
    */
   function updateMembersDisplay(members) {
-    const membersTable = document.getElementById('members-table');
-    if (!membersTable) return;
+    // Get the container
+    const publicMembersLogContainer = document.getElementById('public-members-log');
+    if (!publicMembersLogContainer) return;
     
-    const tableBody = membersTable.querySelector('tbody');
-    if (!tableBody) return;
+    // Check if table exists, otherwise create it
+    let membersTable = document.getElementById('members-table');
+    let tableBody;
+    
+    if (!membersTable) {
+      // Create the table structure if it doesn't exist
+      membersTable = document.createElement('table');
+      membersTable.id = 'members-table';
+      membersTable.className = 'members-table';
+      
+      // Create table header
+      const tableHeader = document.createElement('thead');
+      tableHeader.innerHTML = `
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Join Date</th>
+          <th>SOLAR Balance</th>
+        </tr>
+      `;
+      
+      // Create table body
+      tableBody = document.createElement('tbody');
+      
+      // Assemble the table
+      membersTable.appendChild(tableHeader);
+      membersTable.appendChild(tableBody);
+      
+      // Add table to container
+      publicMembersLogContainer.innerHTML = ''; // Clear any existing content
+      publicMembersLogContainer.appendChild(membersTable);
+    } else {
+      tableBody = membersTable.querySelector('tbody');
+      if (!tableBody) {
+        tableBody = document.createElement('tbody');
+        membersTable.appendChild(tableBody);
+      }
+    }
     
     // Clear the current table rows
     tableBody.innerHTML = '';
@@ -105,6 +142,42 @@
       
       tableBody.appendChild(row);
     });
+    
+    // Add some basic styling if no CSS exists for the table
+    if (!document.querySelector('style#members-table-style')) {
+      const style = document.createElement('style');
+      style.id = 'members-table-style';
+      style.innerHTML = `
+        .members-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin: 20px 0;
+          font-size: 0.9em;
+          box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+          border-radius: 8px;
+          overflow: hidden;
+        }
+        .members-table thead tr {
+          background-color: #0057B8;
+          color: #ffffff;
+          text-align: left;
+        }
+        .members-table th,
+        .members-table td {
+          padding: 12px 15px;
+        }
+        .members-table tbody tr {
+          border-bottom: 1px solid #dddddd;
+        }
+        .members-table tbody tr:nth-of-type(even) {
+          background-color: #f3f3f3;
+        }
+        .members-table tbody tr:last-of-type {
+          border-bottom: 2px solid #0057B8;
+        }
+      `;
+      document.head.appendChild(style);
+    }
   }
   
   /**
