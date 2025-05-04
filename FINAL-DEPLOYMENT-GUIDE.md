@@ -1,130 +1,229 @@
-# The Current-See - Final Deployment Guide
+# The Current-See Final Deployment Guide
 
-This guide provides step-by-step instructions for deploying The Current-See website to Replit with a custom domain.
+This guide outlines the deployment process for The Current-See website.
 
-## Pre-Deployment Checklist
+> **Current Version: v1.2.0 (Build 2025.04.24)**
+> 
+> For a complete list of changes, refer to CHANGELOG.md
 
-1. Ensure your code is working correctly in the Replit development environment
-2. Make sure all required environment variables are set in Replit Secrets:
-   - `CURRENTSEE_DB_URL` - PostgreSQL connection string
-   - `OPENAI_API_KEY` or `NEW_OPENAI_API_KEY` - API key for OpenAI integration
-   - `NODE_ENV` - Set to "production"
-3. Verify the Procfile contains: `web: node simple-deploy.js`
-4. Confirm all HTML, CSS, and JavaScript files are in the `/public` directory
+## Prerequisites
 
-## Deployment Process
+1. **Replit Account**: A Replit account with access to deployment features.
+2. **Domain**: The domain `www.thecurrentsee.org` registered on Namecheap.
+3. **PostgreSQL Database**: Access to the Neon PostgreSQL database with the connection string.
+4. **OpenAI API Key**: (Optional) A valid OpenAI API key for AI assistant features.
 
-### Step 1: Clean Up the Environment
+## Deployment Steps
 
-First, stop any running processes to prevent channel conflicts:
+### 1. Environment Preparation
 
-1. Click on the "Shell" tab in Replit
-2. Run this command to stop all Node.js processes:
-   ```bash
-   pkill -f node || echo "No processes to kill"
-   ```
-3. Wait 5-10 seconds for all channels to properly close
+Set up the required environment variables:
 
-### Step 2: Test the Deployment Server Locally
+- `CURRENTSEE_DB_URL`: The PostgreSQL database connection URL.
+- `OPENAI_API_KEY`: (Optional) Your OpenAI API key - can be set in `.env.openai`.
 
-Before deploying, test that the ultra-minimal server works correctly:
+### 2. Database Setup
 
-1. In the Shell, run:
-   ```bash
-   node simple-deploy.js
-   ```
-2. Wait for the server to start and check the console output for any errors
-3. Test the website in the Webview tab to ensure everything loads correctly
-4. Press Ctrl+C to stop the server when you're done testing
+The PostgreSQL database should include these tables:
 
-### Step 3: Deploy to Replit
+- `members`: Stores member information.
+- `distributions`: Tracks SOLAR token distributions.
+- `analytics`: Stores analytics data.
 
-Now you're ready to deploy your application:
+### 3. Deployment Process
 
-1. Click the "Deploy" button in the sidebar
-2. Choose "Web Service" as the deployment type
-3. Select "Node.js" as the language
-4. Use the default settings for the rest of the options
-5. Click "Deploy" to start the deployment process
+1. **Configure deployment settings** in the Replit interface:
+   - Select "Deploy from GitHub" if using GitHub.
+   - Or deploy directly from the Replit environment.
 
-### Step 4: Set Up Custom Domain
+2. **Set up custom domain**:
+   - Configure DNS settings at Namecheap:
+     - Add a CNAME record for `www` pointing to your Replit subdomain.
+     - Add an A record for the apex domain pointing to Replit's IP.
+   - Verify domain ownership in Replit.
 
-To use your www.thecurrentsee.org domain:
+3. **Launch deployment**:
+   - Use the `pure-deployment.js` script which is designed for production.
+   - This script handles both static file serving and API endpoints.
 
-1. In the Replit deployment settings, click "Add Custom Domain"
-2. Enter `www.thecurrentsee.org` as your domain
-3. Follow the DNS configuration instructions provided by Replit
-4. For Namecheap:
-   - Log in to your Namecheap account
-   - Go to your domain's DNS settings
-   - Add the CNAME records exactly as instructed by Replit
-   - Wait 15-30 minutes for DNS propagation
+### 4. Post-Deployment Configuration
 
-### Step 5: Verify the Deployment
+1. **Database Connection**:
+   - Verify database connection using `node check-status.js`.
+   - Ensure the members table is properly loaded.
 
-After deployment is complete:
+2. **OpenAI Integration**:
+   - Set up OpenAI API key using `node update-openai-key.js`.
+   - Enable features with `node toggle-openai.js enable`.
+   - Test integration with `node test-openai-integration.js`.
 
-1. Visit your Replit deployment URL to ensure everything is working
-2. Check that the health endpoints are responding:
-   - `https://[your-repl-url]/health`
-   - `https://[your-repl-url]/healthz`
-3. Test your custom domain once DNS has propagated:
-   - `https://www.thecurrentsee.org`
+## Server Architecture
+
+The Current-See uses a layered architecture:
+
+```
+┌─────────────────────────────────────┐
+│ Pure Deployment Server              │
+├─────────────────────────────────────┤
+│ Static File Serving                 │
+│ API Endpoints                       │
+│ Database Connection                 │
+│ OpenAI Integration (with fallbacks) │
+└─────────────────────────────────────┘
+```
+
+### Key Components
+
+**1. Database Integration (`db.js`)**
+- PostgreSQL connection using Neon Serverless
+- Automatic retry and recovery mechanisms
+- Member data management
+
+**2. API Endpoints**
+- `/api/solar-clock`: Real-time solar energy calculations
+- `/api/members`: Member information
+- `/api/signup`: New member registration
+- `/api/ai/*`: AI assistant endpoints (with graceful degradation)
+
+**3. OpenAI Integration**
+- AI assistance for energy questions
+- Product energy footprint analysis
+- Graceful fallback mode when API is unavailable
+
+## Graceful Degradation Strategy
+
+The Current-See implements a comprehensive graceful degradation strategy:
+
+1. **Database Connection**:
+   - Automatic retry mechanism for database connections
+   - Fallback to cached data when database is unavailable
+
+2. **OpenAI Integration**:
+   - Feature toggle system via `toggle-openai.js`
+   - Automatic fallback to minimal service when API authentication fails
+   - Friendly "in setup" messages instead of showing errors to users
+
+3. **Static Content**:
+   - Always available regardless of API status
+   - Core functionality works without API dependencies
 
 ## Troubleshooting
 
-If you encounter deployment issues:
+### Database Connection Issues
 
-### "Channel already opened" Error
-
-If you see `Channel with name module:nodejs-20/packager:upmNodejs already opened`:
-
-1. Stop your Repl completely (click the stop button)
-2. Wait 30 seconds for all processes to fully terminate
-3. Clean up the environment using the commands in Step 1
-4. Try deploying again using `simple-deploy.js`
-
-### Deployment Fails to Start
-
-If the deployment fails to start:
-
-1. Check the Replit logs for specific error messages
-2. Verify your Procfile is correct and points to `simple-deploy.js`
-3. Ensure your PostgreSQL database is accessible from Replit
-4. Check that all environment variables are properly set
-
-### Website Loads but Features Don't Work
-
-If the basic website loads but some features don't work:
-
-1. Check browser console for JavaScript errors
-2. Verify that the API endpoints like `/api/members.json` are working
-3. Test the OpenAI integration with a simple query
-4. Check database connectivity from the deployment
-
-## Manual Deployment Recovery
-
-If all else fails, you can try this manual recovery process:
-
-1. In the Shell, run:
-   ```bash
-   cd /home/runner/${REPL_SLUG}
-   pkill -f node
-   rm -f nohup.out
-   sleep 5
-   nohup node simple-deploy.js &
+1. **Verify connection string**:
    ```
-2. This will start the server manually in a way that avoids channel conflicts
+   node check-currentsee-db.js
+   ```
 
-Remember to check the logs at `nohup.out` if you use this approach.
+2. **Check status**:
+   ```
+   node check-status.js
+   ```
 
-## Maintaining Your Deployment
+3. **Reset database connection**:
+   ```
+   node deployment-db-fix.js
+   ```
 
-Once deployed successfully:
+### OpenAI Integration Issues
 
-1. Make updates to your code in the development environment
-2. Test thoroughly before redeploying
-3. Follow the same deployment process for updates
-4. Consider setting up automatic deployments for future updates
+1. **Check API key**:
+   ```
+   node test-openai-integration.js
+   ```
 
-For any persistent issues, please check the Replit documentation or reach out to Replit support.
+2. **Update API key**:
+   ```
+   node update-openai-key.js
+   ```
+
+3. **Toggle features**:
+   ```
+   node toggle-openai.js enable
+   node toggle-openai.js disable
+   ```
+
+4. **Diagnose problems**:
+   ```
+   node openai-key-diagnosis.js
+   ```
+
+## Monitoring and Maintenance
+
+### Regular Health Checks
+
+For a quick overview of version and status:
+```
+node check-version.js
+```
+
+For comprehensive status information:
+```
+node check-status.js
+```
+
+For a complete system check across all components:
+```
+node system-check.js
+
+# For more detailed error information
+node system-check.js --verbose
+```
+
+Or use the API endpoints directly:
+```
+curl https://www.thecurrentsee.org/health
+curl https://www.thecurrentsee.org/api/version
+curl https://www.thecurrentsee.org/api/database/status
+```
+
+### Version Management
+
+The Current-See now includes comprehensive version tracking and management:
+
+1. **Check current version**:
+   ```
+   curl https://www.thecurrentsee.org/api/version
+   ```
+
+2. **Update version number**:
+   ```
+   node update-version.js 1.2.1 2025.04.25
+   ```
+
+3. **Toggle features**:
+   ```
+   node set-feature.js openai true
+   node set-feature.js database true
+   ```
+
+4. **View changelog**:
+   ```
+   cat CHANGELOG.md
+   ```
+
+For detailed instructions on version management, see:
+```
+cat VERSION-MANAGEMENT.md
+```
+
+### Database Backups
+
+The system automatically exports member data to backup files daily.
+
+### Error Logging
+
+Error logs are stored in the server logs and can be viewed in the Replit console.
+
+## Support
+
+For additional support, contact:
+- Technical Support: admin@thecurrentsee.org
+- Domain Registration: Namecheap support
+- Database Issues: Neon PostgreSQL support
+- OpenAI API: OpenAI support portal
+
+---
+
+© 2025 The Current-See PBC, Inc. All rights reserved.

@@ -1,28 +1,57 @@
 /**
  * The Current-See Deployment Verification Script
  * 
- * This script verifies that a deployment of The Current-See is working correctly
- * by checking all critical endpoints and functionality.
- * 
- * Usage: 
- *  node verify-deployment.js [base-url]
- *  Example: node verify-deployment.js https://www.thecurrentsee.org
+ * This script checks if the deployment server is running correctly
+ * and verifies database connectivity.
  */
 
 const http = require('http');
-const https = require('https');
+const { Pool } = require('pg');
 
-// Get the base URL from command line arguments
-const baseUrl = process.argv[2] || 'http://localhost:3000';
-console.log(`Verifying deployment at ${baseUrl}...`);
+async function verifyServer() {
+  console.log('=== The Current-See Deployment Verification ===');
+  
+  // Check if server is running
+  try {
+    const healthResponse = await makeRequest('/health');
+    console.log('✅ Server is running');
+    console.log(`Database status: ${healthResponse.database}`);
+    console.log(`Members count: ${healthResponse.membersCount}`);
+    console.log(`Using custom DB URL: ${healthResponse.usingCustomDbUrl}`);
+    
+    // Check solar clock
+    const solarResponse = await makeRequest('/api/solar-clock');
+    console.log('\n✅ Solar Generator is working');
+    console.log(`Days running: ${solarResponse.daysRunning}`);
+    console.log(`Total energy: ${solarResponse.totalEnergy} MkWh`);
+    console.log(`Total value: $${solarResponse.totalValue}`);
+    
+    // Check members API
+    const membersResponse = await makeRequest('/api/members');
+    console.log(`\n✅ Members API is working (${membersResponse.length} members)`);
+    console.log('First few members:');
+    membersResponse.slice(0, 5).forEach(member => {
+      console.log(`  ${member.id}: ${member.name} (${member.total_solar} SOLAR)`);
+    });
+    
+    return true;
+  } catch (err) {
+    console.error(`❌ ERROR: ${err.message}`);
+    return false;
+  }
+}
 
-// Function to make an HTTP/HTTPS request
+// Function to make HTTP requests
 function makeRequest(path) {
   return new Promise((resolve, reject) => {
-    const url = new URL(path, baseUrl);
-    const client = url.protocol === 'https:' ? https : http;
+    const options = {
+      hostname: 'localhost',
+      port: 3000,
+      path,
+      method: 'GET',
+    };
     
-    const req = client.get(url, (res) => {
+    const req = http.request(options, (res) => {
       let data = '';
       
       res.on('data', (chunk) => {
@@ -30,156 +59,92 @@ function makeRequest(path) {
       });
       
       res.on('end', () => {
-        resolve({
-          statusCode: res.statusCode,
-          data: data
-        });
+        try {
+          if (res.statusCode !== 200) {
+            reject(new Error(`HTTP error ${res.statusCode}: ${data}`));
+            return;
+          }
+          
+          const jsonData = JSON.parse(data);
+          resolve(jsonData);
+        } catch (err) {
+          reject(new Error(`Failed to parse response: ${err.message}`));
+        }
       });
     });
     
-    req.on('error', (error) => {
-      reject(error);
+    req.on('error', (err) => {
+      reject(new Error(`Request failed: ${err.message}`));
     });
     
     req.end();
   });
 }
 
-// Log with color
-function log(message, type = 'info') {
-  const colors = {
-    info: '\x1b[36m', // Cyan
-    success: '\x1b[32m', // Green
-    warning: '\x1b[33m', // Yellow
-    error: '\x1b[31m' // Red
-  };
+// Check database connection directly
+async function verifyDatabase() {
+  const dbUrl = process.env.CURRENTSEE_DB_URL || process.env.DATABASE_URL;
+  if (!dbUrl) {
+    console.error('❌ No database URL found in environment');
+    return false;
+  }
   
-  const color = colors[type] || colors.info;
-  console.log(`${color}${message}\x1b[0m`);
-}
-
-// Check if the health endpoint is working
-async function checkHealthEndpoint() {
-  try {
-    const response = await makeRequest('/health');
-    if (response.statusCode === 200) {
-      log('✅ Health endpoint is working', 'success');
-      
-      // Also check the healthz endpoint for cloud platforms
-      try {
-        const healthzResponse = await makeRequest('/healthz');
-        if (healthzResponse.statusCode === 200) {
-          log('✅ Healthz endpoint is working', 'success');
-        } else {
-          log(`⚠️ Healthz endpoint returned status ${healthzResponse.statusCode}`, 'warning');
-        }
-      } catch (healthzError) {
-        log(`⚠️ Warning checking healthz endpoint: ${healthzError.message}`, 'warning');
-      }
-      
-      return true;
-    } else {
-      log(`❌ Health endpoint returned status ${response.statusCode}`, 'error');
-      return false;
-    }
-  } catch (error) {
-    log(`❌ Error checking health endpoint: ${error.message}`, 'error');
-    return false;
-  }
-}
-
-// Check if the homepage is loading
-async function checkHomepage() {
-  try {
-    const response = await makeRequest('/');
-    if (response.statusCode === 200) {
-      log('✅ Homepage is loading', 'success');
-      return true;
-    } else {
-      log(`❌ Homepage returned status ${response.statusCode}`, 'error');
-      return false;
-    }
-  } catch (error) {
-    log(`❌ Error checking homepage: ${error.message}`, 'error');
-    return false;
-  }
-}
-
-// Check if the member count API is working
-async function checkMemberCountAPI() {
-  try {
-    const response = await makeRequest('/api/member-count');
-    if (response.statusCode === 200) {
-      try {
-        const data = JSON.parse(response.data);
-        log(`✅ Member count API is working (count: ${data.count})`, 'success');
-        return true;
-      } catch (parseError) {
-        log(`❌ Error parsing member count response: ${parseError.message}`, 'error');
-        return false;
-      }
-    } else {
-      log(`❌ Member count API returned status ${response.statusCode}`, 'error');
-      return false;
-    }
-  } catch (error) {
-    log(`❌ Error checking member count API: ${error.message}`, 'error');
-    return false;
-  }
-}
-
-// Check if the system status API is working
-async function checkSystemStatusAPI() {
-  try {
-    const response = await makeRequest('/api/system/status');
-    if (response.statusCode === 200) {
-      try {
-        const data = JSON.parse(response.data);
-        log(`✅ System status API is working (status: ${data.status})`, 'success');
-        log(`   Environment: ${data.environment}`, 'info');
-        log(`   Has Database: ${data.hasDatabase}`, 'info');
-        log(`   Has OpenAI: ${data.hasOpenAI}`, 'info');
-        return true;
-      } catch (parseError) {
-        log(`❌ Error parsing system status response: ${parseError.message}`, 'error');
-        return false;
-      }
-    } else {
-      log(`❌ System status API returned status ${response.statusCode}`, 'error');
-      return false;
-    }
-  } catch (error) {
-    log(`❌ Error checking system status API: ${error.message}`, 'error');
-    return false;
-  }
-}
-
-// Run all checks
-async function runChecks() {
-  const results = {
-    health: await checkHealthEndpoint(),
-    homepage: await checkHomepage(),
-    memberCount: await checkMemberCountAPI(),
-    systemStatus: await checkSystemStatusAPI()
-  };
+  console.log(`\nVerifying direct database connection...`);
+  console.log(`Using URL: ${dbUrl.replace(/:[^:]*@/, ':***@')}`);
   
-  // Print summary
-  log('\n----- VERIFICATION SUMMARY -----', 'info');
-  const successCount = Object.values(results).filter(result => result).length;
-  const totalChecks = Object.values(results).length;
+  try {
+    const pool = new Pool({
+      connectionString: dbUrl,
+      ssl: {
+        rejectUnauthorized: false
+      }
+    });
+    
+    const client = await pool.connect();
+    console.log('✅ Direct database connection successful');
+    
+    const result = await client.query('SELECT current_database() as db, current_user as user');
+    console.log(`Connected to: ${result.rows[0].db} as user: ${result.rows[0].user}`);
+    
+    const membersResult = await client.query('SELECT COUNT(*) FROM members');
+    console.log(`Found ${membersResult.rows[0].count} members in database`);
+    
+    client.release();
+    await pool.end();
+    
+    return true;
+  } catch (err) {
+    console.error(`❌ Database connection error: ${err.message}`);
+    return false;
+  }
+}
+
+// Wait for a specified time
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Run verification
+async function main() {
+  console.log('Waiting for server to fully initialize...');
+  // Wait 5 seconds for the server to fully initialize
+  await delay(5000);
   
-  if (successCount === totalChecks) {
-    log(`✅ All checks passed! (${successCount}/${totalChecks})`, 'success');
+  const serverOk = await verifyServer();
+  const dbOk = await verifyDatabase();
+  
+  if (serverOk && dbOk) {
+    console.log('\n✅ DEPLOYMENT VERIFICATION PASSED');
+    console.log('The Current-See is ready for deployment!');
   } else {
-    log(`⚠️ ${successCount}/${totalChecks} checks passed`, 'warning');
+    console.log('\n❌ DEPLOYMENT VERIFICATION FAILED');
+    console.log('Please fix the issues before deploying.');
   }
   
-  return successCount === totalChecks;
+  process.exit(serverOk && dbOk ? 0 : 1);
 }
 
-// Run the verification
-runChecks().then(success => {
-  if (!success) {
-    process.exit(1);
-  }
+main().catch(err => {
+  console.error(`Unhandled error: ${err.message}`);
+  process.exit(1);
 });
