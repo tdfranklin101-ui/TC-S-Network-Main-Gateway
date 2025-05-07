@@ -43,6 +43,7 @@ function initSolarCounter() {
   // Reference to the counter elements
   const energyDisplay = document.getElementById('energy-display');
   const moneyDisplay = document.getElementById('money-display');
+  const solarDisplay = document.getElementById('solar-display');
   
   if (!energyDisplay || !moneyDisplay) {
     console.error("Solar counter elements not found! Will retry in 1 second...");
@@ -81,6 +82,16 @@ function updateCounter(baseDate, kwhPerSecond, dollarPerKwh) {
   // Convert to MkWh (Million kWh) for display
   const currentMkWh = totalKwh / 1000000;
   
+  // Calculate SOLAR conversion (1 SOLAR = 4,913 kWh)
+  const kwhPerSOLAR = 4913;
+  let totalSOLAR = totalKwh / kwhPerSOLAR;
+  
+  // Ensure we don't have any rounding errors for whole number display
+  if (totalSOLAR > 1000000) {
+    // For very large numbers, we may need to handle scientific notation
+    totalSOLAR = parseFloat(totalSOLAR.toFixed(4));
+  }
+  
   // Format values with proper precision
   const formattedMkWh = formatWithDigitAnimation(
     currentMkWh.toFixed(6), 
@@ -94,6 +105,17 @@ function updateCounter(baseDate, kwhPerSecond, dollarPerKwh) {
     }),
     document.getElementById('money-display')
   );
+  
+  // Format SOLAR value with 4 decimal places in W.0001 format
+  const solarDisplay = document.getElementById('solar-display');
+  if (solarDisplay) {
+    // Format with exactly 4 decimal places (W.0001 format)
+    const formattedSolar = totalSOLAR.toFixed(4);
+    formatWithDigitAnimation(
+      formattedSolar,
+      solarDisplay
+    );
+  }
   
   // Request next animation frame
   requestAnimationFrame(() => updateCounter(baseDate, kwhPerSecond, dollarPerKwh));
