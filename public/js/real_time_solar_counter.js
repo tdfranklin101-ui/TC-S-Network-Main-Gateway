@@ -92,20 +92,24 @@ function updateCounter(baseDate, kwhPerSecond, dollarPerKwh) {
     totalSOLAR = parseFloat(totalSOLAR.toFixed(4));
   }
   
-  // Update the kWh to SOLAR conversion display
+  // Calculate SOLAR values per kWh and USD for the conversion displays
+  const kwhPerSOLARFormatted = kwhPerSOLAR.toLocaleString('en-US');
+  const dollarPerSOLARFormatted = (dollarPerKwh * kwhPerSOLAR).toLocaleString('en-US');
+  
+  // Animate the kWh to SOLAR conversion at the bottom of the page
   const kwhConversionDisplay = document.getElementById('kwh-conversion-display');
   if (kwhConversionDisplay) {
     const formattedKwhConversion = formatWithDigitAnimation(
-      '1 SOLAR = 4,913 kWh',
+      `1 SOLAR = ${kwhPerSOLARFormatted} kWh`,
       kwhConversionDisplay
     );
   }
   
-  // Update the dollar conversion display
+  // Animate the dollar to SOLAR conversion at the bottom of the page
   const dollarConversionDisplay = document.getElementById('dollar-conversion-display');
   if (dollarConversionDisplay) {
     const formattedDollarConversion = formatWithDigitAnimation(
-      '1 SOLAR = $136,000 USD',
+      `1 SOLAR = $${dollarPerSOLARFormatted} USD`,
       dollarConversionDisplay
     );
   }
