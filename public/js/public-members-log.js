@@ -122,11 +122,11 @@ document.addEventListener('DOMContentLoaded', function() {
       sortedMembers.push(jf);
     }
     
-    // Add any other members after the first two, sorted by joined date (newest first)
+    // Add any other members after the first two, sorted by joined date (oldest first)
     const otherMembers = visibleMembers.filter(m => 
       m.name !== "Terry D. Franklin" && m.name !== "JF"
     ).sort((a, b) => {
-      return new Date(b.joinedDate) - new Date(a.joinedDate);
+      return new Date(a.joinedDate) - new Date(b.joinedDate);
     });
     
     sortedMembers.push(...otherMembers);
