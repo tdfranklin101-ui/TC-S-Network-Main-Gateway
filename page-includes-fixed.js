@@ -33,83 +33,7 @@ function readWithCache(filePath, cache) {
 }
 
 /**
- * Processes an HTML file to include header and footer
- * @param {string} htmlContent - The HTML content to process
- * @param {object} options - Optional parameters for customization
- * @returns {string} - The processed HTML with header and footer
- */
-function processIncludes(htmlContent, options = {}) {
-  // Check if we should use simplified processing (direct placeholder replacement)
-  if (options.simplifiedMode || 
-      htmlContent.includes('<!-- HEADER_PLACEHOLDER -->') || 
-      htmlContent.includes('<!-- FOOTER_PLACEHOLDER -->')) {
-    return processSimpleIncludes(htmlContent, options);
-  }
-  
-  // Default paths for includes
-  const headerPath = options.headerPath || path.join(__dirname, 'public', 'includes', 'header.html');
-  const footerPath = options.footerPath || path.join(__dirname, 'public', 'includes', 'footer.html');
-  const seoMetaPath = options.seoMetaPath || path.join(__dirname, 'public', 'includes', 'seo-meta.html');
-  
-  // Common CSS file
-  const commonCssPath = options.commonCssPath || '/css/common.css';
-  const langSelectorCssPath = options.langSelectorCssPath || '/css/components/language-selector.css';
-  
-  // Extract title, body content, and any custom styles or scripts
-  const title = extractTitle(htmlContent) || 'The Current-See';
-  const bodyContent = extractBodyContent(htmlContent);
-  const customCss = extractCustomCss(htmlContent);
-  const customScripts = extractCustomScripts(htmlContent);
-  
-  // Read header and footer from files with caching
-  const header = readWithCache(headerPath, includesCache);
-  const footer = readWithCache(footerPath, includesCache);
-  const seoMeta = readWithCache(seoMetaPath, includesCache);
-  
-  // Language translator script
-  const langTranslatorScriptPath = options.langTranslatorScriptPath || '/js/language-translator.js';
-  
-  // Check if the HTML contains the SEO placeholder
-  const needsSeo = htmlContent.includes('<!-- HEADER_SEO_PLACEHOLDER -->');
-  
-  // Construct the full HTML document
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${title}</title>
-  
-  <!-- SEO Meta Tags -->
-  ${needsSeo ? seoMeta : ''}
-  
-  <!-- Common Styles -->
-  <link rel="stylesheet" href="${commonCssPath}">
-  <link rel="stylesheet" href="${langSelectorCssPath}">
-  
-  <!-- Page-specific styles -->
-  ${customCss}
-</head>
-<body>
-  ${header}
-  
-  <main>
-    ${bodyContent}
-  </main>
-  
-  ${footer}
-  
-  <!-- Language Translator -->
-  <script src="${langTranslatorScriptPath}"></script>
-  
-  <!-- Page-specific scripts -->
-  ${customScripts}
-</body>
-</html>`;
-}
-
-/**
- * Process HTML includes with a simpler approach (direct placeholder replacement)
+ * Process HTML includes with a direct placeholder replacement approach
  * @param {string} html - The HTML content to process
  * @param {object} options - Optional parameters
  * @returns {string} - The processed HTML with replacements
@@ -230,6 +154,83 @@ function extractCustomScripts(html) {
   }
   
   return result;
+}
+
+/**
+ * Processes an HTML file to include header and footer
+ * @param {string} htmlContent - The HTML content to process
+ * @param {object} options - Optional parameters for customization
+ * @returns {string} - The processed HTML with header and footer
+ */
+function processIncludes(htmlContent, options = {}) {
+  // Check if we should use simplified processing (direct placeholder replacement)
+  if (options.simplifiedMode || 
+      htmlContent.includes('<!-- HEADER_PLACEHOLDER -->') || 
+      htmlContent.includes('<!-- FOOTER_PLACEHOLDER -->') ||
+      htmlContent.includes('<!-- #include')) {
+    return processSimpleIncludes(htmlContent, options);
+  }
+  
+  // Default paths for includes
+  const headerPath = options.headerPath || path.join(__dirname, 'public', 'includes', 'header.html');
+  const footerPath = options.footerPath || path.join(__dirname, 'public', 'includes', 'footer.html');
+  const seoMetaPath = options.seoMetaPath || path.join(__dirname, 'public', 'includes', 'seo-meta.html');
+  
+  // Common CSS file
+  const commonCssPath = options.commonCssPath || '/css/common.css';
+  const langSelectorCssPath = options.langSelectorCssPath || '/css/components/language-selector.css';
+  
+  // Extract title, body content, and any custom styles or scripts
+  const title = extractTitle(htmlContent) || 'The Current-See';
+  const bodyContent = extractBodyContent(htmlContent);
+  const customCss = extractCustomCss(htmlContent);
+  const customScripts = extractCustomScripts(htmlContent);
+  
+  // Read header and footer from files with caching
+  const header = readWithCache(headerPath, includesCache);
+  const footer = readWithCache(footerPath, includesCache);
+  const seoMeta = readWithCache(seoMetaPath, includesCache);
+  
+  // Language translator script
+  const langTranslatorScriptPath = options.langTranslatorScriptPath || '/js/language-translator.js';
+  
+  // Check if the HTML contains the SEO placeholder
+  const needsSeo = htmlContent.includes('<!-- HEADER_SEO_PLACEHOLDER -->');
+  
+  // Construct the full HTML document
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${title}</title>
+  
+  <!-- SEO Meta Tags -->
+  ${needsSeo ? seoMeta : ''}
+  
+  <!-- Common Styles -->
+  <link rel="stylesheet" href="${commonCssPath}">
+  <link rel="stylesheet" href="${langSelectorCssPath}">
+  
+  <!-- Page-specific styles -->
+  ${customCss}
+</head>
+<body>
+  ${header}
+  
+  <main>
+    ${bodyContent}
+  </main>
+  
+  ${footer}
+  
+  <!-- Language Translator -->
+  <script src="${langTranslatorScriptPath}"></script>
+  
+  <!-- Page-specific scripts -->
+  ${customScripts}
+</body>
+</html>`;
 }
 
 /**

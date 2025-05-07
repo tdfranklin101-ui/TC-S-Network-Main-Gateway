@@ -10,6 +10,7 @@ const path = require('path');
 const { Pool } = require('pg');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const { createIncludesMiddleware } = require('./page-includes');
 
 // Create Express app
 const app = express();
@@ -20,6 +21,7 @@ app.use(express.static('public'));
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(createIncludesMiddleware()); // Add page includes middleware
 
 // Global variables
 let dbPool = null;
@@ -254,23 +256,39 @@ app.get('/mobile/status', (req, res) => {
   });
 });
 
-// Root path for deployment compatibility
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+// Import page includes module
+const pageIncludes = require('./page-includes');
+const fs = require('fs');
 
-// Catchall route for SPA
-app.get('*', (req, res) => {
-  // Skip API requests
-  if (req.url.startsWith('/api/') || req.url.startsWith('/mobile/')) {
-    return res.status(404).json({
-      error: 'API endpoint not found',
-      path: req.url
-    });
+// Custom middleware to handle HTML file serving with includes processing
+app.use((req, res, next) => {
+  // Skip API requests and non-GET requests
+  if (req.method !== 'GET' || req.path.startsWith('/api/') || req.path.startsWith('/mobile/')) {
+    return next();
   }
   
-  // Send index.html for all other routes (SPA support)
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  try {
+    // Handle root path
+    const requestPath = req.path === '/' ? '/index.html' : req.path;
+    
+    // Check if this is an HTML request
+    if (requestPath.endsWith('.html')) {
+      const filePath = path.join(__dirname, 'public', requestPath);
+      
+      // Check if the file exists
+      if (fs.existsSync(filePath)) {
+        const htmlContent = fs.readFileSync(filePath, 'utf8');
+        const processedHtml = pageIncludes.processIncludes(htmlContent);
+        return res.send(processedHtml);
+      }
+    }
+    
+    // Continue to next middleware if not an HTML file or file doesn't exist
+    next();
+  } catch (err) {
+    log(`Error processing HTML: ${err.message}`, true);
+    next();
+  }
 });
 
 // Start server
