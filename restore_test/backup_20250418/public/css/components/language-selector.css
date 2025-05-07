@@ -1,0 +1,162 @@
+/* Language Selector Component Styles */
+
+.language-selector {
+  position: relative;
+  margin-left: 1rem;
+  z-index: 100;
+}
+
+.language-dropdown-toggle {
+  display: flex;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: inherit;
+}
+
+.language-dropdown-toggle:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.language-flag {
+  font-size: 1.2rem;
+  margin-right: 0.4rem;
+}
+
+.language-name {
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.language-arrow {
+  font-size: 0.6rem;
+  margin-left: 0.4rem;
+  transition: transform 0.2s ease;
+}
+
+.language-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 150px;
+  max-height: 0;
+  overflow: hidden;
+  background-color: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  transition: max-height 0.3s ease, padding 0.3s ease;
+  z-index: 101;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.language-dropdown-menu.show {
+  max-height: 300px;
+  padding: 0.5rem 0;
+  opacity: 1;
+  visibility: visible;
+}
+
+.language-option {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  text-decoration: none;
+  color: #333;
+}
+
+.language-option:hover {
+  background-color: #f5f5f5;
+}
+
+.language-option .language-flag {
+  margin-right: 0.5rem;
+}
+
+.language-option .language-name {
+  font-size: 0.9rem;
+}
+
+/* Additional Media Queries */
+@media (max-width: 768px) {
+  .language-selector {
+    margin-left: 0.5rem;
+  }
+  
+  .language-dropdown-toggle {
+    padding: 0.2rem 0.4rem;
+  }
+  
+  .language-name {
+    display: none;
+  }
+  
+  .language-dropdown-toggle .language-flag {
+    margin-right: 0;
+  }
+  
+  .language-dropdown-toggle .language-arrow {
+    margin-left: 0.2rem;
+  }
+}
+
+/* Styles for RTL languages */
+.rtl .language-selector {
+  margin-right: 1rem;
+  margin-left: 0;
+}
+
+.rtl .language-flag {
+  margin-left: 0.4rem;
+  margin-right: 0;
+}
+
+.rtl .language-arrow {
+  margin-right: 0.4rem;
+  margin-left: 0;
+}
+
+.rtl .language-dropdown-menu {
+  left: 0;
+  right: auto;
+}
+
+/* Google Translate API Fixes */
+.goog-te-banner-frame.skiptranslate {
+  display: none !important;
+}
+
+body {
+  top: 0 !important;
+}
+
+#google_translate_element {
+  display: none !important;
+}
+
+/* Fix for Google Translate widget */
+.goog-te-gadget {
+  font-size: 0 !important;
+}
+
+.goog-te-gadget div {
+  display: inline-block !important;
+}
+
+.goog-te-menu-value span {
+  display: none !important;
+}
+
+.goog-te-menu-value span:first-child {
+  display: inline !important;
+}
+
+.goog-te-menu-value:before {
+  content: '\00a0\00a0\25bc';
+}

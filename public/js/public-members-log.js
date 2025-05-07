@@ -63,45 +63,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const entryDiv = document.createElement('div');
     entryDiv.className = 'members-log-entry';
 
-    // Format SOLAR with 4 decimal places (showing values like 1.0001)
-    // For large numbers (TC-S Solar Reserve), use a more compact format
-    let solarFormatted;
-    if (member.isReserve || member.totalSolar >= 1000000) {
-      // Format large numbers with billion/million notation
-      if (member.totalSolar >= 1000000000) {
-        solarFormatted = (member.totalSolar / 1000000000).toFixed(2) + ' Billion';
-      } else if (member.totalSolar >= 1000000) {
-        solarFormatted = (member.totalSolar / 1000000).toFixed(2) + ' Million';
-      }
-    } else {
-      solarFormatted = parseFloat(member.totalSolar).toFixed(4);
-    }
+    // Format SOLAR with 2 decimal places
+    const solarFormatted = parseFloat(member.totalSolar).toFixed(2);
     
     // Format date
     const joinedDate = formatDate(member.joinedDate);
 
-    // For the Solar Reserve, use a distinct appearance
-    if (member.isReserve || (member.username === "tc-s.reserve" && member.name === "TC-S Solar Reserve")) {
-      entryDiv.className = 'members-log-entry reserve-entry';
-      entryDiv.style.backgroundColor = '#fffbeb'; // Light gold background
-      entryDiv.style.border = '1px solid #ffd700'; // Gold border
-      entryDiv.style.padding = '12px';
-      entryDiv.style.marginBottom = '20px';
-      entryDiv.style.borderRadius = '6px';
-      
-      entryDiv.innerHTML = `
-        <div class="member-name" style="font-size: 1.2em; color: #b8860b; font-weight: bold;">${member.name}</div>
-        <div class="member-joined" data-joined-date="${member.joinedDate}" style="font-style: italic;">Genesis Date: ${joinedDate}</div>
-        <div class="member-solar" style="font-weight: bold; color: #006400; font-size: 1.1em;">SOLAR: ${solarFormatted}</div>
-        <div class="member-notes" style="margin-top: 5px; font-size: 0.9em; color: #666;">${member.notes || 'Genesis Reserve Allocation'}</div>
-      `;
-    } else {
-      entryDiv.innerHTML = `
-        <div class="member-name">${member.name}</div>
-        <div class="member-joined" data-joined-date="${member.joinedDate}">Joined: ${joinedDate}</div>
-        <div class="member-solar">SOLAR: ${solarFormatted}</div>
-      `;
-    }
+    entryDiv.innerHTML = `
+      <div class="member-name">${member.name}</div>
+      <div class="member-joined" data-joined-date="${member.joinedDate}">Joined: ${joinedDate}</div>
+      <div class="member-solar">SOLAR: ${solarFormatted}</div>
+    `;
 
     return entryDiv;
   }
@@ -138,58 +110,26 @@ document.addEventListener('DOMContentLoaded', function() {
     // Hard-code the specific order for the key members
     const sortedMembers = [];
     
-    // Separate special entries
-    const placeholderIndex = visibleMembers.findIndex(m => 
-      m.username === "you.are.next" && m.name.toLowerCase().includes("you are next"));
-    
-    let placeholder = null;
-    if (placeholderIndex !== -1) {
-      placeholder = visibleMembers[placeholderIndex];
-      // Remove placeholder from visible members array
-      visibleMembers = visibleMembers.filter(m => 
-        !(m.username === "you.are.next" && m.name.toLowerCase().includes("you are next")));
-    }
-    
-    // TC-S Solar Reserve should always be at the very top
-    const reserve = visibleMembers.find(m => 
-      m.isReserve === true || 
-      (m.username === "tc-s.reserve" && m.name === "TC-S Solar Reserve"));
-    
-    if (reserve) {
-      sortedMembers.push(reserve);
-      // Remove from array to avoid duplicates
-      visibleMembers = visibleMembers.filter(m => 
-        !(m.isReserve === true || 
-          (m.username === "tc-s.reserve" && m.name === "TC-S Solar Reserve")));
-    }
-    
-    // Terry should always be first among regular members (joined April 9)
+    // Terry should always be first (joined April 9)
     const terry = visibleMembers.find(m => m.name === "Terry D. Franklin");
     if (terry) {
       sortedMembers.push(terry);
-      // Remove from array to avoid duplicates
-      visibleMembers = visibleMembers.filter(m => m.name !== "Terry D. Franklin");
     }
     
-    // JF should always be second among regular members (joined April 10)
+    // JF should always be second (joined April 10)
     const jf = visibleMembers.find(m => m.name === "JF");
     if (jf) {
       sortedMembers.push(jf);
-      // Remove from array to avoid duplicates
-      visibleMembers = visibleMembers.filter(m => m.name !== "JF");
     }
     
-    // Add remaining members sorted by joined date (oldest to newest)
-    const otherMembers = visibleMembers.sort((a, b) => {
-      return new Date(a.joinedDate) - new Date(b.joinedDate);
+    // Add any other members after the first two, sorted by joined date (newest first)
+    const otherMembers = visibleMembers.filter(m => 
+      m.name !== "Terry D. Franklin" && m.name !== "JF"
+    ).sort((a, b) => {
+      return new Date(b.joinedDate) - new Date(a.joinedDate);
     });
     
     sortedMembers.push(...otherMembers);
-    
-    // Add placeholder at the end if it exists
-    if (placeholder) {
-      sortedMembers.push(placeholder);
-    }
 
     // Create and add each member entry (we've already filtered out anonymous members)
     sortedMembers.forEach(member => {
@@ -220,293 +160,90 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add timestamp to prevent caching
     const timestamp = new Date().getTime();
     
-    // Clear any cached data by forcing a fresh reload
-    console.log("Fetching fresh members data...");
-    
-    // Force browser to clear its cache for this page
-    if ('caches' in window) {
-      try {
-        const cacheNames = await window.caches.keys();
-        await Promise.all(
-          cacheNames.map(cacheName => {
-            return caches.delete(cacheName);
-          })
-        );
-        console.log("Cleared browser caches");
-      } catch (e) {
-        console.warn("Failed to clear caches:", e);
-      }
-    }
-    
-    // New clean approach with multiple fallbacks
-    let members = null;
-    
-    // Try loading from API first
     try {
-      const randomValue = Math.random().toString(36).substring(2, 15);
-      const response = await fetch(`/api/members.json?nocache=${timestamp}&random=${randomValue}`, {
-        method: 'GET',
-        cache: 'no-store',
+      // Clear any cached data by forcing a fresh reload
+      console.log("Fetching fresh members data...");
+      
+      // Try to fetch from API with cache-busting parameter
+      const response = await fetch(`/api/members.json?t=${timestamp}`, {
+        cache: 'no-cache',
         headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
         }
       });
       
       if (response.ok) {
-        members = await response.json();
-        console.log("Members data loaded from API:", members.length, "members found");
+        const members = await response.json();
+        console.log("Members data loaded:", members);
+        createMembersLog(members);
+        return;
       }
+      throw new Error('Failed to fetch from API');
     } catch (err) {
-      console.warn('API load failed:', err);
-    }
-    
-    // If API failed, try XMLHttpRequest approach
-    if (!members) {
+      console.warn('Failed to load members from API, trying alternative sources...', err);
+      
       try {
-        const xhr = new XMLHttpRequest();
-        xhr.open('GET', `/api/members.json?forcereload=${timestamp}`, false); // Synchronous for simplicity
-        xhr.setRequestHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-        xhr.setRequestHeader('Pragma', 'no-cache');
-        xhr.setRequestHeader('Expires', '0');
-        xhr.send(null);
-        
-        if (xhr.status === 200) {
-          members = JSON.parse(xhr.responseText);
-          console.log("Members data loaded via XHR:", members.length, "members found");
-        }
-      } catch (err) {
-        console.warn('XHR load failed:', err);
-      }
-    }
-    
-    // If both API methods failed, try embedded data
-    if (!members) {
-      try {
-        const randomValue = Math.random().toString(36).substring(2, 15);
-        const embeddedResponse = await fetch(`/embedded-members?nocache=${timestamp}&random=${randomValue}`, {
-          method: 'GET',
-          cache: 'no-store',
+        // Try to fetch from embedded data file with cache-busting
+        const embeddedResponse = await fetch(`/embedded-members?t=${timestamp}`, {
+          cache: 'no-cache',
           headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0'
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
           }
         });
         
         if (embeddedResponse.ok) {
-          const text = await embeddedResponse.text();
-          // Handle the window.embeddedMembers format
-          const startMarker = 'window.embeddedMembers = ';
-          const endMarker = ';';
-          
-          if (text.includes(startMarker)) {
-            const jsonStr = text.substring(
-              text.indexOf(startMarker) + startMarker.length,
-              text.lastIndexOf(endMarker)
-            );
-            
-            members = JSON.parse(jsonStr);
-            console.log("Members data loaded from embedded:", members.length, "members found");
-          }
+          const members = await embeddedResponse.json();
+          console.log("Members data loaded from embedded:", members);
+          createMembersLog(members);
+          return;
         }
-      } catch (err) {
-        console.warn('Embedded data load failed:', err);
+        throw new Error('Failed to fetch from embedded data');
+      } catch (err3) {
+        console.error('All member data sources failed, using default data', err3);
+        
+        // Default data as last resort with BOTH members - correct dates
+        const defaultMembers = [
+          {
+            id: 1,
+            username: "terry.franklin",
+            name: "Terry D. Franklin",
+            joinedDate: "2025-04-09",
+            totalSolar: 8.00,
+            totalDollars: 1088000,
+            isAnonymous: false,
+            lastDistributionDate: "2025-04-17"
+          },
+          {
+            id: 2,
+            username: "j.franklin",
+            name: "JF",
+            joinedDate: "2025-04-10",
+            totalSolar: 7.00,
+            totalDollars: 952000,
+            isAnonymous: false,
+            lastDistributionDate: "2025-04-17"
+          }
+        ];
+        
+        console.log("Using default members data:", defaultMembers);
+        createMembersLog(defaultMembers);
       }
     }
-    
-    // If all else failed, use default data as last resort
-    if (!members) {
-      console.log("All data sources failed, using default members data");
-      
-      // Hard-coded fallback data with latest values and ALL members including John D
-      members = [
-        {
-          id: 1,
-          username: "tc-s.reserve",
-          name: "TC-S Solar Reserve",
-          email: "reserve@thecurrentsee.org",
-          joinedDate: "2025-04-07",
-          totalSolar: 10000000002,
-          totalDollars: 1360000000272000,
-          isAnonymous: false,
-          lastDistributionDate: "2025-04-26",
-          isReserve: true,
-          notes: "Genesis Reserve Allocation"
-        },
-        {
-          id: 3,
-          username: "terry.franklin",
-          name: "Terry D. Franklin",
-          joinedDate: "2025-04-09",
-          totalSolar: 19.0000,
-          totalDollars: 2584000,
-          isAnonymous: false,
-          lastDistributionDate: "2025-04-26"
-        },
-        {
-          id: 4,
-          username: "j.franklin",
-          name: "JF",
-          joinedDate: "2025-04-10",
-          totalSolar: 18.0000,
-          totalDollars: 2448000,
-          isAnonymous: false,
-          lastDistributionDate: "2025-04-26"
-        },
-        {
-          id: 5,
-          username: "davis",
-          name: "Davis",
-          joinedDate: "2025-04-18",
-          totalSolar: 10.0000,
-          totalDollars: 1360000,
-          isAnonymous: false,
-          lastDistributionDate: "2025-04-26"
-        },
-        {
-          id: 6,
-          username: "miles.franklin",
-          name: "Miles Franklin",
-          joinedDate: "2025-04-18",
-          totalSolar: 10.0000,
-          totalDollars: 1360000,
-          isAnonymous: false,
-          lastDistributionDate: "2025-04-26"
-        },
-        {
-          id: 7, 
-          username: "arden.f",
-          name: "Arden F",
-          joinedDate: "2025-04-19",
-          totalSolar: 9.0000,
-          totalDollars: 1224000,
-          isAnonymous: false,
-          lastDistributionDate: "2025-04-26"
-        },
-        {
-          id: 8,
-          username: "marissa.hasseman",
-          name: "Marissa Hasseman",
-          joinedDate: "2025-04-19",
-          totalSolar: 9.0000,
-          totalDollars: 1224000,
-          isAnonymous: false,
-          lastDistributionDate: "2025-04-26"
-        },
-        {
-          id: 9,
-          username: "kim",
-          name: "Kim",
-          joinedDate: "2025-04-19",
-          totalSolar: 9.0000,
-          totalDollars: 1224000,
-          isAnonymous: false,
-          lastDistributionDate: "2025-04-26"
-        },
-        {
-          id: 10,
-          username: "jeff.elmore",
-          name: "Jeff Elmore",
-          joinedDate: "2025-04-19",
-          totalSolar: 9.0000,
-          totalDollars: 1224000,
-          isAnonymous: false,
-          lastDistributionDate: "2025-04-26"
-        },
-        {
-          id: 11,
-          username: "liam.mckay",
-          name: "Liam McKay",
-          joinedDate: "2025-04-19",
-          totalSolar: 9.0000,
-          totalDollars: 1224000,
-          isAnonymous: false,
-          lastDistributionDate: "2025-04-26"
-        },
-        {
-          id: 12,
-          username: "kjm",
-          name: "KJM",
-          joinedDate: "2025-04-20",
-          totalSolar: 8.0000,
-          totalDollars: 1088000,
-          isAnonymous: false,
-          lastDistributionDate: "2025-04-26"
-        },
-        {
-          id: 13,
-          username: "brianna",
-          name: "Brianna",
-          joinedDate: "2025-04-20",
-          totalSolar: 8.0000,
-          totalDollars: 1088000,
-          isAnonymous: false,
-          lastDistributionDate: "2025-04-26"
-        },
-        {
-          id: 14,
-          username: "alex",
-          name: "Alex",
-          joinedDate: "2025-04-21",
-          totalSolar: 7.0000,
-          totalDollars: 952000,
-          isAnonymous: false,
-          lastDistributionDate: "2025-04-26"
-        },
-        {
-          id: 15,
-          username: "kealani.ventura",
-          name: "Kealani Ventura",
-          joinedDate: "2025-04-21",
-          totalSolar: 7.0000,
-          totalDollars: 952000,
-          isAnonymous: false,
-          lastDistributionDate: "2025-04-26"
-        },
-        {
-          id: 16,
-          username: "john.d",
-          name: "John D",
-          joinedDate: "2025-04-26",
-          totalSolar: 2.0000,
-          totalDollars: 272000,
-          isAnonymous: false,
-          lastDistributionDate: "2025-04-26"
-        },
-        {
-          id: 17,
-          username: "you.are.next",
-          name: "You are next",
-          joinedDate: "2025-04-27",
-          totalSolar: 1.0000,
-          totalDollars: 136000,
-          isAnonymous: false,
-          isPlaceholder: true,
-          lastDistributionDate: "2025-04-26"
-        }
-      ];
-    }
-    
-    // Create the members log with whatever data we managed to get
-    createMembersLog(members);
   }
 
   // Function to just update the member count without loading the full member log
   window.refreshMemberCount = async function() {
     try {
-      // Add timestamp and random value to prevent caching
+      // Add timestamp to prevent caching
       const timestamp = new Date().getTime();
-      const randomValue = Math.random().toString(36).substring(2, 15);
       
-      const response = await fetch(`/api/member-count?nocache=${timestamp}&random=${randomValue}`, {
-        method: 'GET',
-        cache: 'no-store',
+      const response = await fetch(`/api/member-count?t=${timestamp}`, {
+        cache: 'no-cache',
         headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
         }
       });
       
@@ -518,9 +255,8 @@ document.addEventListener('DOMContentLoaded', function() {
     } catch (err) {
       console.warn('Failed to refresh member count', err);
       // If we fail to get the count, try loading full members data instead
-      window.loadMembers();
+      loadMembers();
     }
-    return 0;
   };
   
   // Function to periodically check and update member count

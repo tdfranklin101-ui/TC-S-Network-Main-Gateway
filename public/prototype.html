@@ -579,7 +579,7 @@
     <ul class="nav-items">
       <li><a href="/">Home</a></li>
       <li><a href="/prototype.html" class="active">Prototype</a></li>
-
+      <li><a href="/my-solar.html">My Solar</a></li>
       <li><a href="/declaration.html">Solar Declaration</a></li>
       <li><a href="/founder_note.html">Founder's Note</a></li>
       <li><a href="/whitepapers.html">White Papers</a></li>
@@ -848,7 +848,7 @@
         <div class="cta-section">
             <h2>Ready to Participate?</h2>
             <p>Join our growing community and start receiving your daily solar distributions. Be part of the movement to create a more equitable and sustainable global economy.</p>
-            <a href="/#join-section" class="btn-primary">Create Your Solar Account</a>
+            <a href="/my-solar" class="btn-primary">Create Your Solar Account</a>
             <div style="margin-top: 30px;">
                 <a href="/" class="btn-return">Return to Home</a>
             </div>
@@ -875,17 +875,17 @@
                 <div class="footer-column">
                     <h4>Get Involved</h4>
                     <ul>
-                        <li><a href="/#join-section">Join The Current-See</a></li>
-                        <li><a href="/prototype.html">Try The Prototype</a></li>
-                        <li><a href="/merch.html">Support With Merch</a></li>
+                        <li><a href="/my-solar">Join The Current-See</a></li>
+                        <li><a href="/prototype">Try The Prototype</a></li>
+                        <li><a href="/merch">Support With Merch</a></li>
                     </ul>
                 </div>
                 <div class="footer-column">
                     <h4>Links</h4>
                     <ul>
                         <li><a href="/">Home</a></li>
-                        <li><a href="/wallet-ai-features.html">Solar Wallet</a></li>
-                        <li><a href="/admin/dashboard.html">Admin</a></li>
+                        <li><a href="/wallet">Solar Wallet</a></li>
+                        <li><a href="/admin">Admin</a></li>
                     </ul>
                 </div>
             </div>
@@ -1005,7 +1005,7 @@
                 allUsers = data.map(account => ({
                     id: account.id,
                     username: account.displayName || account.accountNumber,
-                    solarBalance: parseFloat(account.totalSolar).toFixed(4),
+                    solarBalance: parseFloat(account.totalSolar).toFixed(5),
                     joinedDate: new Date(account.joinedDate || account.createdAt)
                 }));
                 
@@ -1180,7 +1180,9 @@
                     <div class="row">
                         <div class="col-3" style="width: 20%; flex: 0 0 20%; color: #0057B8;">#${user.id}</div>
                         <div class="col-5" style="width: 50%; flex: 0 0 50%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #0057B8;">${user.username}</div>
-                        <div class="col-4" style="width: 30%; flex: 0 0 30%; text-align: right; color: #0057B8;">${user.solarBalance} SOLAR</div>
+                        <div class="col-4" style="width: 30%; flex: 0 0 30%; text-align: right; color: #0057B8;">${user
+  <!-- HEADER_PLACEHOLDER -->
+  .solarBalance} SOLAR</div>
                     </div>
                 `;
                 userContainer.appendChild(userElement);
@@ -1256,7 +1258,7 @@
         // Solar Spender Button interaction
         document.getElementById('solar-spender-button').addEventListener('click', function() {
             // Redirect to the wallet page instead of scrolling to iframe
-            window.location.href = '/wallet-ai-features.html';
+            window.location.href = '/wallet.html';
             
             // The code below is commented out as it won't execute due to the redirect
             /*
@@ -1279,5 +1281,8 @@
         // Initialize user display
         displayUsers();
     </script>
+
+<!-- FOOTER_PLACEHOLDER -->
+
 </body>
 </html>

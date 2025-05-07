@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merchandise | The Current-See</title>
+    
+    <!-- VR/XR Specific Discovery -->
+    <link rel="alternate" type="application/json" href="/vr-discovery.json">
+    <meta name="meta-vr-ready" content="true">
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #FF8C00, #FFD700);
+            background-attachment: fixed;
+            color: #fff;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        header {
+            padding: 20px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            color: white;
+            text-decoration: none;
+        }
+        
+        .logo img {
+            width: 50px;
+            height: 50px;
+            margin-right: 10px;
+        }
+        
+        .logo-text {
+            font-size: 24px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        
+        nav li {
+            margin-left: 30px;
+        }
+        
+        nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 16px;
+            text-transform: uppercase;
+            padding: 5px 0;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        nav a:hover {
+            color: #fff;
+        }
+        
+        nav a::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            background-color: white;
+            bottom: 0;
+            left: 0;
+            transition: width 0.3s ease;
+        }
+        
+        nav a:hover::after {
+            width: 100%;
+        }
+        
+        .page-header {
+            text-align: center;
+            padding: 60px 0 40px;
+        }
+        
+        .page-header h1 {
+            font-size: 4rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: white;
+            text-transform: uppercase;
+        }
+        
+        .page-header p {
+            font-size: 1.3rem;
+            max-width: 800px;
+            margin: 0 auto 30px;
+            color: white;
+        }
+        
+        .merch-section {
+            padding-bottom: 80px;
+        }
+        
+        .product-card {
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 30px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            height: 100%;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .product-image {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+        }
+        
+        .product-info {
+            padding: 20px;
+        }
+        
+        .product-name {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: white;
+        }
+        
+        .product-price {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: white;
+        }
+        
+        .product-description {
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 20px;
+        }
+        
+        .product-label {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background-color: #FF8C00;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            z-index: 1;
+        }
+        
+        .btn-primary {
+            background-color: white;
+            color: #FF8C00;
+            border: none;
+            padding: 8px 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 30px;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-primary:hover {
+            background-color: #FF8C00;
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-return {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            margin-top: 20px;
+        }
+        
+        .btn-return:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+            border-color: white;
+            color: white;
+        }
+        
+        .coming-soon {
+            text-align: center;
+            padding: 40px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            margin-bottom: 60px;
+        }
+        
+        .coming-soon h2 {
+            font-size: 2.2rem;
+            margin-bottom: 20px;
+            color: white;
+        }
+        
+        .coming-soon p {
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin: 0 auto 30px;
+            color: white;
+        }
+        
+        .benefits-section {
+            padding: 60px 0;
+            background-color: rgba(255, 255, 255, 0.1);
+            margin-bottom: 60px;
+            border-radius: 10px;
+        }
+        
+        .benefits-section h2 {
+            font-size: 2.2rem;
+            margin-bottom: 40px;
+            color: white;
+            text-align: center;
+        }
+        
+        .benefit-item {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .benefit-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: white;
+        }
+        
+        .benefit-item h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: white;
+        }
+        
+        .benefit-item p {
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        footer {
+            background-color: #000;
+            color: white;
+            padding: 50px 0 20px;
+            text-align: center;
+        }
+        
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
+        
+        .footer-column {
+            flex: 1;
+            min-width: 250px;
+            margin-bottom: 30px;
+            text-align: left;
+        }
+        
+        .footer-column h4 {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            position: relative;
+            padding-bottom: 10px;
+        }
+        
+        .footer-column h4::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 40px;
+            height: 2px;
+            background-color: #FF8C00;
+        }
+        
+        .footer-column ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .footer-column ul li {
+            margin-bottom: 10px;
+        }
+        
+        .footer-column a {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .footer-column a:hover {
+            color: #FF8C00;
+            text-decoration: none;
+        }
+        
+        .copyright {
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .logo {
+                margin-bottom: 20px;
+            }
+            
+            nav ul {
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            
+            nav li {
+                margin: 10px 15px;
+            }
+            
+            .page-header h1 {
+                font-size: 3rem;
+            }
+            
+            .footer-content {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .footer-column h4::after {
+                left: 50%;
+                transform: translateX(-50%);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="/" class="logo">
+                <img src="/solar_spinner.png" alt="The Current-See Logo" />
+                <span class="logo-text">The Current-See</span>
+            </a>
+            <nav>
+                <ul>
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/prototype.html">Prototype</a></li>
+                    <li><a href="/merch.html" class="active">Merch</a></li>
+                    <li><a href="/wallet-ai-features.html">My Solar</a></li>
+                    <li><a href="/wallet-ai-features.html">Wallet</a></li>
+                </ul>
+            </nav>
+        </header>
+    </div>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>Merchandise</h1>
+            <p>Support our mission by purchasing exclusive Current-See branded merchandise</p>
+        </div>
+
+        <div class="coming-soon">
+            <h2>Solar Store Coming Soon</h2>
+            <p>We're finalizing our merchandise offerings! Check back soon to purchase Current-See branded apparel and accessories that help support our mission.</p>
+            <a href="/wallet-ai-features.html" class="btn-primary">Join Our Waitlist</a>
+        </div>
+
+        <div class="merch-section">
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <div class="product-card-bg" data-ar-enabled data-model-url="/models/solar-token.usdz" data-model-name="The Current-See T-Shirt">
+                        <span class="product-label">New</span>
+                        <img src="/solar_tshirt.png" alt="The Current-See T-Shirt" class="product-bg-image">
+                        <div class="product-info">
+                            <h3 class="product-name">The Current-See T-Shirt</h3>
+                            <p class="product-price">$29.99</p>
+                            <p class="product-description">Premium organic cotton t-shirt featuring The Current-See logo and Solar Generator artwork.</p>
+                            <a href="#" class="btn-primary">Coming Soon</a>
+                            <p class="ar-note" style="font-size: 0.8rem; margin-top: 10px; color: #0057B8;">View in AR on compatible devices</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="product-card-bg">
+                        <img src="/solar_coin.png" alt="Solar Coin Physical Token" class="product-bg-image">
+                        <div class="product-info">
+                            <h3 class="product-name">Solar Coin Token</h3>
+                            <p class="product-price">$19.99</p>
+                            <p class="product-description">Commemorative physical Solar Coin token crafted from sustainable materials.</p>
+                            <a href="#" class="btn-primary">Coming Soon</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="product-card-bg">
+                        <span class="product-label">Limited</span>
+                        <img src="/solar_spinner.png" alt="Solar Journal" class="product-bg-image">
+                        <div class="product-info">
+                            <h3 class="product-name">Solar Journal</h3>
+                            <p class="product-price">$24.99</p>
+                            <p class="product-description">Eco-friendly journal with recycled paper featuring solar energy facts and tracking pages.</p>
+                            <a href="#" class="btn-primary">Coming Soon</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="benefits-section">
+            <div class="container">
+                <h2>Why Buy Our Merchandise?</h2>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="benefit-item">
+                            <div class="benefit-icon">🌱</div>
+                            <h3>Support Sustainability</h3>
+                            <p>All our products are made with eco-friendly materials and sustainable manufacturing processes.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="benefit-item">
+                            <div class="benefit-icon">🔄</div>
+                            <h3>Fund Development</h3>
+                            <p>Proceeds go directly to funding the development of our solar-backed economic system.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="benefit-item">
+                            <div class="benefit-icon">💬</div>
+                            <h3>Spread the Word</h3>
+                            <p>Wearing our merch helps start conversations about solar energy and a more equitable economy.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="text-center mb-5">
+            <a href="/" class="btn-return">Return to Home</a>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h4>The Current-See</h4>
+                    <p>A new global economy backed by the Sun.<br>One Solar. One Earth. Daily.</p>
+                    <p style="margin-top: 10px;">The Current-See PBC, Inc.<br>
+                    <a href="mailto:hello@thecurrentsee.org">hello@thecurrentsee.org</a></p>
+                </div>
+                <div class="footer-column">
+                    <h4>Learn More</h4>
+                    <ul>
+                        <li><a href="/whitepapers.html">White Papers</a></li>
+                        <li><a href="/declaration.html">Solar Declaration</a></li>
+                        <li><a href="/founder_note.html">Founder's Note</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>Get Involved</h4>
+                    <ul>
+                        <li><a href="/wallet-ai-features.html">Join The Current-See</a></li>
+                        <li><a href="/prototype.html">Try The Prototype</a></li>
+                        <li><a href="/merch.html">Support With Merch</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>Links</h4>
+                    <ul>
+                        <li><a href="/">Home</a></li>
+                        <li><a href="/wallet-ai-features.html">Solar Wallet</a></li>
+                        <li><a href="/admin">Admin</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="copyright">
+                &copy; 2025 The Current-See PBC, Inc. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- AR/VR Support -->
+    <script src="/js/ar-vr-support.js"></script>
+</body>
+</html>

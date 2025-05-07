@@ -1,134 +1,158 @@
 /**
  * The Current-See Header/Footer Fix Script
  * 
- * This is a lightweight script designed to quickly verify that headers
- * and footers are working correctly in the deployment.
+ * This script will automatically add the header and footer placeholders
+ * to all HTML files that are missing them.
  */
 
-const express = require('express');
-const path = require('path');
 const fs = require('fs');
+const path = require('path');
 
-// Create Express app
-const app = express();
-const PORT = process.env.PORT || 3000;
+const PUBLIC_DIR = path.join(__dirname, 'public');
+const INCLUDES_DIR = path.join(PUBLIC_DIR, 'includes');
 
-// Logger
+// Logging function
 function log(message, isError = false) {
   const timestamp = new Date().toISOString();
   const prefix = isError ? '❌ ERROR' : '✓ INFO';
   console.log(`[${timestamp}] ${prefix}: ${message}`);
 }
 
-// Process HTML includes (simplified version)
+// Get all HTML files
+function getAllHtmlFiles(dir) {
+  const results = [];
+  const list = fs.readdirSync(dir);
+  
+  list.forEach(file => {
+    const fullPath = path.join(dir, file);
+    const stat = fs.statSync(fullPath);
+    
+    if (stat && stat.isDirectory() && !fullPath.includes('node_modules')) {
+      // Recurse into subdirectories, but skip node_modules
+      results.push(...getAllHtmlFiles(fullPath));
+    } else if (fullPath.endsWith('.html')) {
+      results.push(fullPath);
+    }
+  });
+  
+  return results;
+}
+
+// Process HTML files to add header/footer placeholders
+function addHeaderFooterPlaceholders() {
+  const htmlFiles = getAllHtmlFiles(PUBLIC_DIR);
+  log(`Found ${htmlFiles.length} HTML files to process`);
+  
+  let updatedCount = 0;
+  
+  htmlFiles.forEach(filePath => {
+    try {
+      let content = fs.readFileSync(filePath, 'utf8');
+      let modified = false;
+      
+      // Check if file has <head> but no HEADER_PLACEHOLDER
+      if (content.includes('<head>') && !content.includes('<!-- HEADER_PLACEHOLDER -->')) {
+        // Add header placeholder after any meta tags but before other content
+        let headEndPos = content.indexOf('</head>');
+        if (headEndPos !== -1) {
+          // Find a good position to insert the header placeholder
+          // Typically after meta tags, title, etc.
+          const metaTagEnd = Math.max(
+            content.lastIndexOf('</title>'),
+            content.lastIndexOf('"/>'),
+            content.lastIndexOf('">'),
+          );
+          
+          const insertPos = metaTagEnd !== -1 ? metaTagEnd + 8 : content.indexOf('<head>') + 6;
+          
+          content = content.slice(0, insertPos) + 
+                   '\n  <!-- HEADER_PLACEHOLDER -->\n  ' + 
+                   content.slice(insertPos);
+          modified = true;
+        }
+      }
+      
+      // Check if file has </body> but no FOOTER_PLACEHOLDER
+      if (content.includes('</body>') && !content.includes('<!-- FOOTER_PLACEHOLDER -->')) {
+        // Add footer placeholder before </body> tag
+        const bodyEndPos = content.lastIndexOf('</body>');
+        if (bodyEndPos !== -1) {
+          content = content.slice(0, bodyEndPos) + 
+                   '\n<!-- FOOTER_PLACEHOLDER -->\n\n' + 
+                   content.slice(bodyEndPos);
+          modified = true;
+        }
+      }
+      
+      // Save changes if modified
+      if (modified) {
+        fs.writeFileSync(filePath, content);
+        updatedCount++;
+        log(`Updated: ${path.relative(__dirname, filePath)}`);
+      }
+    } catch (error) {
+      log(`Error processing ${filePath}: ${error.message}`, true);
+    }
+  });
+  
+  log(`Updated ${updatedCount} out of ${htmlFiles.length} HTML files`);
+  
+  return updatedCount;
+}
+
+// Process includes in HTML content
 function processIncludes(html) {
   try {
-    const headerPath = path.join(__dirname, 'public', 'includes', 'header.html');
-    const footerPath = path.join(__dirname, 'public', 'includes', 'footer.html');
-    const seoMetaPath = path.join(__dirname, 'public', 'includes', 'seo-meta.html');
+    const header = fs.readFileSync(path.join(INCLUDES_DIR, 'header.html'), 'utf8');
+    const footer = fs.readFileSync(path.join(INCLUDES_DIR, 'footer.html'), 'utf8');
     
-    let headerContent = '';
-    let footerContent = '';
-    let seoMetaContent = '';
-    
-    // Read header content
-    if (fs.existsSync(headerPath)) {
-      headerContent = fs.readFileSync(headerPath, 'utf8');
-      log('Header file loaded successfully');
-    } else {
-      log(`Header file not found at ${headerPath}`, true);
-    }
-    
-    // Read footer content
-    if (fs.existsSync(footerPath)) {
-      footerContent = fs.readFileSync(footerPath, 'utf8');
-      log('Footer file loaded successfully');
-    } else {
-      log(`Footer file not found at ${footerPath}`, true);
-    }
-    
-    // Read SEO meta content
-    if (fs.existsSync(seoMetaPath)) {
-      seoMetaContent = fs.readFileSync(seoMetaPath, 'utf8');
-      log('SEO meta file loaded successfully');
-    } else {
-      log(`SEO meta file not found at ${seoMetaPath}`, true);
-    }
-    
-    // Replace all placeholder variations
-    html = html.replace(/<!-- HEADER_PLACEHOLDER -->/g, headerContent);
-    html = html.replace(/<!-- #include file="includes\/header.html" -->/g, headerContent);
-    html = html.replace(/<!-- includes\/header.html -->/g, headerContent);
-    
-    html = html.replace(/<!-- FOOTER_PLACEHOLDER -->/g, footerContent);
-    html = html.replace(/<!-- #include file="includes\/footer.html" -->/g, footerContent);
-    html = html.replace(/<!-- includes\/footer.html -->/g, footerContent);
-    
-    html = html.replace(/<!-- HEADER_SEO_PLACEHOLDER -->/g, seoMetaContent);
-    html = html.replace(/<!-- #include file="includes\/seo-meta.html" -->/g, seoMetaContent);
-    html = html.replace(/<!-- includes\/seo-meta.html -->/g, seoMetaContent);
+    // Replace placeholders with actual content
+    html = html.replace('<!-- HEADER_PLACEHOLDER -->', header);
+    html = html.replace('<!-- FOOTER_PLACEHOLDER -->', footer);
     
     return html;
-  } catch (err) {
-    log(`Error processing includes: ${err.message}`, true);
+  } catch (error) {
+    log(`Error processing includes: ${error.message}`, true);
     return html;
   }
 }
 
-// Static file middleware with HTML processing
-app.use((req, res, next) => {
-  if (req.method === 'GET' && req.path.endsWith('.html')) {
-    const filePath = path.join(__dirname, 'public', req.path);
-    
-    if (fs.existsSync(filePath)) {
-      try {
-        let htmlContent = fs.readFileSync(filePath, 'utf8');
-        htmlContent = processIncludes(htmlContent);
-        return res.send(htmlContent);
-      } catch (err) {
-        log(`Error processing ${req.path}: ${err.message}`, true);
-      }
-    }
+// Main function
+function main() {
+  log('Starting header/footer fix script');
+  
+  // Verify that includes directory and files exist
+  if (!fs.existsSync(INCLUDES_DIR)) {
+    log(`Includes directory not found at ${INCLUDES_DIR}`, true);
+    return;
   }
   
-  next();
-});
-
-// Serve static files
-app.use(express.static('public'));
-
-// Root path handler with HTML processing
-app.get('/', (req, res) => {
-  try {
-    let htmlContent = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8');
-    htmlContent = processIncludes(htmlContent);
-    res.send(htmlContent);
-  } catch (err) {
-    log(`Error serving index.html: ${err.message}`, true);
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  const headerPath = path.join(INCLUDES_DIR, 'header.html');
+  const footerPath = path.join(INCLUDES_DIR, 'footer.html');
+  
+  if (!fs.existsSync(headerPath)) {
+    log(`Header file not found at ${headerPath}`, true);
+    return;
   }
-});
-
-// Start server
-app.listen(PORT, () => {
-  log('=== The Current-See Header/Footer Fix Server ===');
-  log(`Server running on port ${PORT}`);
   
-  // Check for header and footer files
-  const headerPath = path.join(__dirname, 'public', 'includes', 'header.html');
-  const footerPath = path.join(__dirname, 'public', 'includes', 'footer.html');
+  if (!fs.existsSync(footerPath)) {
+    log(`Footer file not found at ${footerPath}`, true);
+    return;
+  }
   
-  if (fs.existsSync(headerPath)) {
-    log('Header file found');
+  log('Found header and footer files');
+  
+  // Add placeholders to HTML files
+  const updatedCount = addHeaderFooterPlaceholders();
+  
+  if (updatedCount > 0) {
+    log('Successfully updated HTML files with header/footer placeholders');
   } else {
-    log('Header file NOT found', true);
+    log('No HTML files needed updating');
   }
   
-  if (fs.existsSync(footerPath)) {
-    log('Footer file found');
-  } else {
-    log('Footer file NOT found', true);
-  }
-  
-  log('Ready to serve pages with header and footer includes');
-});
+  log('Header/footer fix script completed');
+}
+
+// Run main function
+main();

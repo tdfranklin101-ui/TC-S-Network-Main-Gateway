@@ -72,170 +72,33 @@ let members = [];
 // Initialize function to load members data
 function loadMembers() {
   try {
-    const today = new Date().toISOString().split('T')[0];
     const membersFilePath = path.join(PUBLIC_DIR, 'api', 'members.json');
-    
     if (fs.existsSync(membersFilePath)) {
       const membersData = fs.readFileSync(membersFilePath, 'utf8');
       members = JSON.parse(membersData);
       log(`Loaded ${members.length} members from file`);
-      
-      // Immediately save all current members to ensure persistence
-      updateMembersFiles();
-      log('Saved current members to ensure persistence at initial login');
-      
-      // Check if there's a TC-S Solar Reserve entry
-      const hasReserve = members.some(m => m.username === "tc-s.reserve" && m.name === "TC-S Solar Reserve");
-      
-      // If no reserve exists, add one
-      if (!hasReserve) {
-        log('Adding TC-S Solar Reserve to members');
-        
-        // Insert at the beginning of the array (id 0 to ensure it's first)
-        members.unshift({
-          id: 0,
-          username: "tc-s.reserve",
-          name: "TC-S Solar Reserve",
-          email: "reserve@thecurrentsee.org",
-          joinedDate: "2025-04-07", // Start from the genesis date
-          totalSolar: 10000000000.0000, // 10 billion Solar
-          totalDollars: 10000000000 * SOLAR_CONSTANTS.USD_PER_SOLAR,
-          isAnonymous: false,
-          lastDistributionDate: today,
-          isReserve: true,
-          notes: "Genesis Reserve Allocation"
-        });
-        
-        // Re-number the IDs to ensure consistency
-        members.forEach((member, index) => {
-          member.id = index;
-        });
-        
-        // Save the updated members list
-        updateMembersFiles();
-      }
-      
-      // Check if there's a "You are next" placeholder entry
-      const hasPlaceholder = members.some(m => 
-        m.username === "you.are.next" && m.name.toLowerCase().includes("you are next"));
-      
-      // If no placeholder exists, add one
-      if (!hasPlaceholder) {
-        const placeholderId = members.length + 1;
-        log(`Adding "You are next" placeholder as member #${placeholderId}`);
-        
-        members.push({
-          id: placeholderId,
-          username: "you.are.next",
-          name: "You are next",
-          joinedDate: today,
-          totalSolar: 1.0000,
-          totalDollars: Math.round(1.0000 * SOLAR_CONSTANTS.USD_PER_SOLAR),
-          isAnonymous: false,
-          lastDistributionDate: today
-        });
-        
-        // Save the updated members list
-        updateMembersFiles();
-      }
     } else {
       // Initialize with default members if file doesn't exist
       members = [
-        {
-          id: 0,
-          username: "tc-s.reserve",
-          name: "TC-S Solar Reserve",
-          email: "reserve@thecurrentsee.org",
-          joinedDate: "2025-04-07", // Start from the genesis date
-          totalSolar: 10000000000.0000, // 10 billion Solar
-          totalDollars: 10000000000 * SOLAR_CONSTANTS.USD_PER_SOLAR,
-          isAnonymous: false,
-          lastDistributionDate: today,
-          isReserve: true,
-          notes: "Genesis Reserve Allocation"
-        },
         {
           id: 1,
           username: "terry.franklin",
           name: "Terry D. Franklin",
           joinedDate: "2025-04-09",
-          totalSolar: 10.0000,
-          totalDollars: 1360000,
+          totalSolar: 9.0000,
+          totalDollars: 1224000,
           isAnonymous: false,
-          lastDistributionDate: "2025-04-19"
+          lastDistributionDate: "2025-04-18"
         },
         {
           id: 2,
           username: "j.franklin",
           name: "JF",
           joinedDate: "2025-04-10",
-          totalSolar: 9.0000,
-          totalDollars: 1224000,
+          totalSolar: 8.0000,
+          totalDollars: 1088000,
           isAnonymous: false,
-          lastDistributionDate: "2025-04-19"
-        },
-        {
-          id: 3,
-          username: "d.franklin",
-          name: "Davis",
-          email: "Davisfranklin095@gmail.com",
-          joinedDate: "2025-04-18", 
-          totalSolar: 2.0000,
-          totalDollars: 272000,
-          isAnonymous: false,
-          lastDistributionDate: "2025-04-19"
-        },
-        {
-          id: 4,
-          username: "m.franklin",
-          name: "Miles Franklin",
-          email: "Milesgfranklin9@gmail.com",
-          joinedDate: "2025-04-18",
-          totalSolar: 2.0000,
-          totalDollars: 272000,
-          isAnonymous: false,
-          lastDistributionDate: "2025-04-19"
-        },
-        {
-          id: 5,
-          username: "a.franklin",
-          name: "Arden F",
-          joinedDate: "2025-04-19",
-          totalSolar: 1.0000,
-          totalDollars: 136000,
-          isAnonymous: false,
-          lastDistributionDate: "2025-04-19"
-        },
-        {
-          id: 6,
-          username: "m.hasseman",
-          name: "Marissa Hasseman",
-          joinedDate: "2025-04-19",
-          totalSolar: 1.0000,
-          totalDollars: 136000,
-          isAnonymous: false,
-          lastDistributionDate: "2025-04-19"
-        },
-        {
-          id: 7,
-          username: "k.member",
-          name: "Kim",
-          email: "KIMBROWN9999@hotmail.com",
-          joinedDate: "2025-04-19",
-          totalSolar: 1.0000,
-          totalDollars: 136000,
-          isAnonymous: false,
-          lastDistributionDate: "2025-04-19"
-        },
-        {
-          id: 8,
-          username: "you.are.next",
-          name: "You are next",
-          joinedDate: today,
-          totalSolar: 1.0000,
-          totalDollars: 136000,
-          isAnonymous: false,
-          lastDistributionDate: today
+          lastDistributionDate: "2025-04-18"
         }
       ];
       // Save default members
@@ -282,23 +145,10 @@ function updateMembersFiles() {
 // Update embedded-members file (used for quick loading on client)
 function updateEmbeddedMembersFile() {
   try {
-    // Format the members data with 4 decimal places for SOLAR values
-    const formattedMembers = members.map(member => {
-      // Create a copy of the member
-      const formattedMember = {...member};
-      
-      // Format totalSolar to 4 decimal places if it's a number
-      if (typeof formattedMember.totalSolar !== 'undefined') {
-        formattedMember.totalSolar = parseFloat(formattedMember.totalSolar).toFixed(4);
-      }
-      
-      return formattedMember;
-    });
-    
     const embeddedMembersPath = path.join(PUBLIC_DIR, 'embedded-members');
     fs.writeFileSync(embeddedMembersPath, 
-      `window.embeddedMembers = ${JSON.stringify(formattedMembers)};`);
-    log('Updated embedded-members file with 4 decimal place SOLAR values');
+      `window.embeddedMembers = ${JSON.stringify(members)};`);
+    log('Updated embedded-members file');
   } catch (error) {
     log(`Error updating embedded-members file: ${error.message}`);
   }
@@ -313,7 +163,7 @@ function processDailyDistribution() {
     if (member.lastDistributionDate !== today) {
       // Add daily distribution (1 SOLAR per day)
       member.totalSolar += 1;
-      // Format with 4 decimal places (1.0000 format)
+      // Format with 4 decimal places
       member.totalSolar = parseFloat(member.totalSolar.toFixed(4));
       // Calculate dollar value (rounding to whole numbers as requested)
       member.totalDollars = Math.round(member.totalSolar * SOLAR_CONSTANTS.USD_PER_SOLAR);
@@ -380,27 +230,6 @@ function log(message) {
 // Health check endpoint - explicit route for monitoring
 app.get('/health', (req, res) => {
   res.status(200).send('OK');
-});
-
-// Redirect paths for removed pages
-app.get('/my-solar', (req, res) => {
-  log('Redirecting /my-solar request to /wallet-ai-features.html');
-  res.redirect('/wallet-ai-features.html');
-});
-
-app.get('/login', (req, res) => {
-  log('Redirecting /login request to /wallet-ai-features.html');
-  res.redirect('/wallet-ai-features.html');
-});
-
-app.get('/register', (req, res) => {
-  log('Redirecting /register request to /wallet-ai-features.html');
-  res.redirect('/wallet-ai-features.html');
-});
-
-app.get('/wallet', (req, res) => {
-  log('Redirecting /wallet request to /wallet-ai-features.html');
-  res.redirect('/wallet-ai-features.html');
 });
 
 // Root endpoint - special handling for deployment health checks
@@ -520,15 +349,10 @@ app.post('/api/signup', (req, res) => {
     
     // Calculate proper initial SOLAR allocation:
     // 1. Everyone gets 1 SOLAR on the day they join
-    const initialSolar = 1.0000; // Format with 4 decimal places (using 1.0000 format)
+    const initialSolar = 1.0000; // Format with 4 decimal places
     
-    // Check for "You are next" placeholder
-    const placeholderIndex = members.findIndex(m => 
-      m.username === "you.are.next" && m.name.toLowerCase().includes("you are next"));
-    
-    // Generate member object
     const newMember = {
-      id: members.length + (placeholderIndex !== -1 ? 0 : 1), // Adjust ID if replacing placeholder
+      id: members.length + 1,
       username: userData.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '.'),
       name: userData.name,
       email: userData.email,
@@ -541,43 +365,19 @@ app.post('/api/signup', (req, res) => {
     
     log('Creating new member: ' + JSON.stringify(newMember));
     
-    // Remove existing placeholder if it exists
-    if (placeholderIndex !== -1) {
-      log('Removing existing placeholder to ensure it goes at the end');
-      members.splice(placeholderIndex, 1);
-    }
-    
-    // Add the new member
+    // Add to members array
     members.push(newMember);
-    
-    // Create a new placeholder and add it at the very end
-    const newPlaceholder = {
-      id: members.length + 1,
-      username: "you.are.next",
-      name: "You are next",
-      joinedDate: today,
-      totalSolar: initialSolar,
-      totalDollars: Math.round(initialSolar * SOLAR_CONSTANTS.USD_PER_SOLAR),
-      isAnonymous: false,
-      lastDistributionDate: today
-    };
-    
-    // Add new placeholder as the last entry
-    members.push(newPlaceholder);
     
     // Update the files
     updateMembersFiles();
     
     log('Current member count: ' + members.length);
     
-    // Return success response with accurate member count
-    // The count should exclude the "you are next" placeholder in the count sent to the client
-    const actualMemberCount = members.filter(m => !m.name.toLowerCase().includes("you are next")).length;
-    
+    // Return success response
     res.status(201).json({ 
       success: true, 
       member: newMember,
-      totalMembers: actualMemberCount
+      totalMembers: members.length
     });
   } catch (e) {
     log('Error processing signup: ' + e.message);
@@ -641,11 +441,8 @@ app.get('/api/member-count', (req, res) => {
     'Surrogate-Control': 'no-store'
   });
   
-  // Calculate actual member count, excluding the "you are next" placeholder
-  const actualMemberCount = members.filter(m => !m.name.toLowerCase().includes("you are next")).length;
-  
   res.json({
-    count: actualMemberCount,
+    count: members.length,
     timestamp: new Date().toISOString()
   });
 });

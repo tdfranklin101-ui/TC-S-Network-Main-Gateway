@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Current-See Solar Declaration</title>
+  
+  <!-- Import SEO Meta Tags -->
+  <!-- HEADER_SEO_PLACEHOLDER -->
+  
+  <link rel="stylesheet" href="/css/common.css">
+  
+  <style>
+  .declaration-container {
+    max-width: 1200px;
+    margin: 3rem auto;
+    padding: 3.5rem;
+    background-color: rgba(255, 255, 255, 0.98);
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: 8.5 / 11;
+  }
+  
+  .declaration-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 8px;
+    background: linear-gradient(90deg, #7bc144, #f3c622);
+  }
+  
+  /* Declaration page specific sun ray watermark */
+  .declaration-main {
+    position: relative;
+    overflow: hidden;
+    background-color: var(--bg-light);
+  }
+  
+  .declaration-main::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: repeating-conic-gradient(
+      rgba(255, 215, 0, 0.02) 0deg 15deg,
+      rgba(255, 215, 0, 0.03) 15deg 30deg
+    );
+    animation: sun-ray-rotate 300s linear infinite;
+    z-index: 0;
+    opacity: 0.4;
+    pointer-events: none;
+  }
+  
+  .declaration-title {
+    color: #333;
+    margin-bottom: 2rem;
+    text-align: center;
+    font-size: 2.4rem;
+    font-weight: 700;
+  }
+  
+  .declaration-subtitle {
+    text-align: center;
+    font-style: italic;
+    margin-bottom: 3rem;
+    color: #555;
+  }
+  
+  .declaration-content {
+    line-height: 1.8;
+    font-size: 1.1rem;
+    color: #333;
+  }
+  
+  .declaration-content p {
+    margin-bottom: 1.5rem;
+  }
+  
+  .quote {
+    background-color: rgba(243, 198, 34, 0.1);
+    border-left: 4px solid #f3c622;
+    padding: 1.5rem;
+    margin: 2rem 0;
+    font-style: italic;
+    color: #555;
+    font-size: 1.2rem;
+  }
+  
+  .back-btn {
+    display: block;
+    width: fit-content;
+    margin: 2rem auto;
+    background-color: #7bc144;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: background-color 0.3s;
+    text-align: center;
+  }
+  
+  .back-btn:hover {
+    background-color: #669f33;
+  }
+  
+  @media (max-width: 768px) {
+    .declaration-container {
+      margin: 1rem auto;
+      padding: 2rem 1.5rem;
+      max-width: 90%;
+      aspect-ratio: auto; /* Allow natural aspect ratio */
+    }
+    
+    .declaration-title {
+      font-size: 1.8rem;
+    }
+    
+    .back-btn {
+      margin: 1.5rem auto;
+    }
+  }
+</style>
+</head>
+<body>
+  <div class="wrapper">
+    <!-- Header Begin -->
+    <header>
+      <div class="header-container container">
+        <div class="logo-container">
+          <a href="/">
+            <img src="/solar_coin.png" alt="The Current-See Logo" class="logo">
+            <span class="logo-text">The Current-See</span>
+          </a>
+        </div>
+        
+        <!-- Desktop Navigation -->
+        <nav class="desktop-nav">
+          <ul>
+            <li><a href="/" class="nav-link">Home</a></li>
+            <li><a href="/declaration.html" class="nav-link active">Solar Declaration</a></li>
+            <li><a href="/founder_note.html" class="nav-link">Founder's Note</a></li>
+            <li><a href="/whitepapers.html" class="nav-link">White Papers</a></li>
+            <li><a href="/demo-features.html" class="nav-link">Features</a></li>
+            <li><a href="/wallet-ai-features.html" class="nav-link">AI Wallet</a></li>
+            <li><a href="https://current-see-wallet-demo.replit.app" class="nav-link" target="_blank">Wallet Demo</a></li>
+          </ul>
+        </nav>
+        
+        <!-- Mobile Menu Toggle -->
+        <button class="mobile-menu-toggle" aria-label="Toggle mobile menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+      
+      <!-- Mobile Navigation -->
+      <div class="mobile-nav">
+        <ul>
+          <li><a href="/" class="nav-link">Home</a></li>
+          <li><a href="/declaration.html" class="nav-link active">Solar Declaration</a></li>
+          <li><a href="/founder_note.html" class="nav-link">Founder's Note</a></li>
+          <li><a href="/whitepapers.html" class="nav-link">White Papers</a></li>
+          <li><a href="/demo-features.html" class="nav-link">Features</a></li>
+          <li><a href="/wallet-ai-features.html" class="nav-link">AI Wallet</a></li>
+          <li><a href="https://current-see-wallet-demo.replit.app" class="nav-link" target="_blank">Wallet Demo</a></li>
+        </ul>
+      </div>
+    </header>
+    <!-- Header End -->
+    
+    <main class="declaration-main">
+      <div class="declaration-container">
+  <h1 class="declaration-title">The Solar Declaration</h1>
+  <div class="declaration-subtitle">A Foundation for a Solar-Backed Economy</div>
+  
+  <div class="declaration-content">
+    <p>We, the founders and members of The Current-See, declare that the Sun's energy is the rightful inheritance of all people on Earth. With this declaration, we establish a new economic system based on the fundamental truth that the Sun's daily energy input to our planet represents a renewable, sustainable, and abundant resource that belongs to all humanity.</p>
+    
+    <div class="quote">
+      "The Sun shines equally on all people. Its energy should flow to all people equally."
+    </div>
+    
+    <p>We hold these principles to be self-evident:</p>
+    
+    <p>1. <strong>Solar Energy as a Universal Right:</strong> The Sun's energy is not owned by any nation, corporation, or individual. It is a universal resource that should benefit all people equally.</p>
+    
+    <p>2. <strong>Equal Solar Distributions:</strong> Every person on Earth is entitled to an equal share of the monetized value of the Sun's daily energy input to our planet.</p>
+    
+    <p>3. <strong>Scientific Measurement:</strong> Solar distributions shall be based on rigorous scientific measurements of solar energy reaching Earth, initially calculated as 1% of the total daily input converted to kilowatt-hours.</p>
+    
+    <p>4. <strong>Daily Renewal:</strong> Solar distributions shall occur daily, reflecting the continuous nature of solar energy input to our planet.</p>
+    
+    <p>5. <strong>Transparent Accounting:</strong> All Solar accounts shall be maintained in a transparent, verifiable manner to ensure trust and accountability.</p>
+    
+    <p>6. <strong>Environmental Alignment:</strong> The solar-backed economic system shall fundamentally align human economic activity with environmental sustainability.</p>
+    
+    <p>7. <strong>Economic Inclusion:</strong> The solar-backed economic system shall provide basic economic participation to all people, regardless of nationality, gender, race, or socioeconomic status.</p>
+    
+    <p>8. <strong>Technological Implementation:</strong> We will utilize appropriate technologies to ensure efficient, secure, and accessible distribution of Solar currency to all participants.</p>
+    
+    <p>9. <strong>Global Scale:</strong> While beginning as a prototype, the solar economic system is designed to scale to include all people on Earth.</p>
+    
+    <p>10. <strong>Peaceful Transition:</strong> The implementation of this system shall occur through peaceful, voluntary participation and gradual adoption, respecting existing economic structures while offering a transformative alternative.</p>
+    
+    <p>In signing this declaration through our participation in The Current-See prototype, we commit to building and supporting an economic system where solar energy becomes the foundation of universal prosperity and environmental sustainability.</p>
+    
+    <p>One Solar. One Earth. Daily.</p>
+
+    <div style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid rgba(243, 198, 34, 0.3);">
+      <h3 style="text-align: center; margin-bottom: 1.5rem; color: #333;">Official Certification</h3>
+      
+      <p><strong>The Current-See PBC, Inc.</strong> hereby certifies that the <strong>Solar Clock</strong> was officially activated at <strong>00:00 GMT on April 7, 2025</strong>, marking the beginning of solar value generation and recording.</p>
+      
+      <p>By activating the Solar Clock, we declared the right to tokenize <strong>1%</strong> of Earth's daily solar input—equivalent to <strong>1.74 petawatts</strong>—as a publicly recorded, freely distributable energy-denominated asset, known as the <strong>Solar</strong>.</p>
+      
+      <p>This certification marks the <strong>moment of origination</strong>—the first official recording of value derived from a natural, measurable planetary resource. The Solar is not extracted—it is recognized, quantified, and allocated. It is value without depletion.</p>
+      
+      <div style="text-align: right; margin-top: 2rem;">
+        <p><strong>Terry D. Franklin</strong><br>
+        Founder, The Current-See PBC, Inc.<br>
+        TC-S Network<br>
+        April 9, 2025</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="text-align: center; margin: 3rem 0;">
+  <a href="/" style="display: inline-block; background-color: #2054a6; color: white; font-weight: 700; padding: 1.2rem 2.5rem; border-radius: 50px; text-decoration: none; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(32, 84, 166, 0.3); font-size: 1.1rem; letter-spacing: 0.5px;">
+    <span style="display: inline-block; margin-right: 8px;">⬅</span> Return to Home Page
+  </a>
+</div>
+    </main>
+    
+    <!-- Footer Begin -->
+    <footer>
+      <div class="container">
+        <div class="footer-columns">
+          <div class="footer-column">
+            <h3>About Us</h3>
+            <p>The Current-See is a revolutionary organization creating a solar-backed economic system for a more equitable world.</p>
+          </div>
+          <div class="footer-column">
+            <h3>Resources</h3>
+            <ul>
+              <li><a href="/declaration.html">Solar Declaration</a></li>
+              <li><a href="/founder_note.html">Founder's Note</a></li>
+              <li><a href="/whitepapers.html">White Papers</a></li>
+              <li><a href="/demo-features.html">Features</a></li>
+            </ul>
+          </div>
+          <div class="footer-column">
+            <h3>Connect</h3>
+            <ul>
+              <li><a href="/contact.html">Contact Us</a></li>
+              <li><a href="/signup.html">Sign Up</a></li>
+              <!-- Login removed - will be added with future ID verification -->
+              <li><a href="https://www.1028atoms.com" target="_blank">1028 Atoms</a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <p>&copy; 2025 The Current-See PBC, Inc. All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
+    <!-- Footer End -->
+  </div>
+  
+  <!-- Mobile Menu Toggle Script -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
+      const mobileNav = document.querySelector('.mobile-nav');
+      
+      if (mobileMenuToggle && mobileNav) {
+        mobileMenuToggle.addEventListener('click', function() {
+          mobileNav.classList.toggle('active');
+          mobileMenuToggle.classList.toggle('active');
+        });
+      }
+    });
+  </script>
+</body>
+</html>
