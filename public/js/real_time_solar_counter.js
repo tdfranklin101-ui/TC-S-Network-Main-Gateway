@@ -92,6 +92,24 @@ function updateCounter(baseDate, kwhPerSecond, dollarPerKwh) {
     totalSOLAR = parseFloat(totalSOLAR.toFixed(4));
   }
   
+  // Update the kWh to SOLAR conversion display
+  const kwhConversionDisplay = document.getElementById('kwh-conversion-display');
+  if (kwhConversionDisplay) {
+    const formattedKwhConversion = formatWithDigitAnimation(
+      '1 SOLAR = 4,913 kWh',
+      kwhConversionDisplay
+    );
+  }
+  
+  // Update the dollar conversion display
+  const dollarConversionDisplay = document.getElementById('dollar-conversion-display');
+  if (dollarConversionDisplay) {
+    const formattedDollarConversion = formatWithDigitAnimation(
+      '1 SOLAR = $136,000 USD',
+      dollarConversionDisplay
+    );
+  }
+  
   // Format values with proper precision
   const formattedMkWh = formatWithDigitAnimation(
     currentMkWh.toFixed(6), 

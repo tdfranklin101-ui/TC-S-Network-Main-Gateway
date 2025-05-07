@@ -115,6 +115,36 @@
             margin: 0;
         }
         
+        .solar-equation .dynamic-counter {
+            font-size: 1.2rem;
+            color: #2054a6;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+        
+        .solar-equation .description-text {
+            font-size: 0.9rem;
+            color: #666;
+            font-weight: 400;
+            margin-bottom: 1rem;
+        }
+        
+        .solar-equation .digit {
+            display: inline-block;
+            min-width: 0.8em;
+            text-align: center;
+        }
+        
+        .solar-equation .digit.changing {
+            animation: pulse 0.5s ease-in-out;
+        }
+        
+        @keyframes pulse {
+            0% { color: #2054a6; }
+            50% { color: #7bc144; }
+            100% { color: #2054a6; }
+        }
+        
         /* Styles for solar icon */
         .solar-icon-container {
             position: absolute;
@@ -214,8 +244,9 @@
             </div>
             
             <div class="solar-equation">
-                <p>1 Solar = 4,913 kWh (based on 1% of Earth's solar input divided among 8.5B people)</p>
-                <p>1 Solar = $136,000 USD</p>
+                <p id="kwh-conversion-display" class="dynamic-counter">1 Solar = 4,913 kWh</p>
+                <p class="description-text">(based on 1% of Earth's solar input divided among 8.5B people)</p>
+                <p id="dollar-conversion-display" class="dynamic-counter">1 Solar = $136,000 USD</p>
             </div>
             
             <div class="cta-section">
