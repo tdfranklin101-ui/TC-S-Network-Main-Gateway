@@ -128,7 +128,7 @@ function updateCounter(baseDate, kwhPerSecond, dollarPerKwh) {
     document.getElementById('money-display')
   );
   
-  // Format SOLAR value with 4 decimal places in W.0001 format for instantaneous display
+  // Format SOLAR value with 4 decimal places in W.0001 format
   const solarDisplay = document.getElementById('solar-display');
   if (solarDisplay) {
     // Format with exactly 4 decimal places (W.0001 format)
@@ -136,19 +136,6 @@ function updateCounter(baseDate, kwhPerSecond, dollarPerKwh) {
     formatWithDigitAnimation(
       formattedSolar,
       solarDisplay
-    );
-  }
-  
-  // Calculate total SOLAR units generated since starting date
-  const totalSolarDisplay = document.getElementById('total-solar-display');
-  if (totalSolarDisplay) {
-    // Calculate total SOLAR units (MkWh / kWhPerSOLAR)
-    const totalSolarUnits = currentMkWh * 1000000 / kwhPerSOLAR;
-    // Format with exactly 4 decimal places (W.0001 format)
-    const formattedTotalSolar = totalSolarUnits.toFixed(4);
-    formatWithDigitAnimation(
-      formattedTotalSolar,
-      totalSolarDisplay
     );
   }
   
