@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page Not Found | The Current-See</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/css/common.css">
+    <style>
+        /* 404 Page Specific Watermark */
+        .not-found-main {
+            position: relative;
+            overflow: hidden;
+            background-color: var(--bg-light);
+            padding: 2rem 0;
+            min-height: 600px;
+        }
+        
+        .not-found-main::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: repeating-conic-gradient(
+                rgba(163, 198, 243, 0.04) 0deg 8deg,
+                rgba(163, 198, 243, 0.02) 8deg 16deg
+            );
+            animation: sun-ray-rotate 120s linear infinite;
+            z-index: 0;
+            opacity: 0.8;
+            pointer-events: none;
+        }
+        
+        .not-found-content {
+            position: relative;
+            z-index: 1;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            padding: 3rem;
+            text-align: center;
+            max-width: 800px;
+            margin: 3rem auto;
+        }
+        
+        .not-found-content h1 {
+            color: var(--primary-color);
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+        
+        .not-found-content p {
+            color: #555;
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .home-button {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .home-button:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .solar-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 2rem;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <nav class="navbar navbar-expand-lg">
+                <div class="container-fluid">
+                    <a class="navbar-brand" href="/">
+                        <img src="/images/logo.png" alt="The Current-See Logo" class="logo">
+                    </a>
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="collapse navbar-collapse" id="navbarNav">
+                        <ul class="navbar-nav ms-auto">
+                            <li class="nav-item">
+                                <a class="nav-link" href="/">Home</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/declaration.html">Declaration</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/solar-generator.html">Solar Generator</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/wallet-ai-features.html">My Solar</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/whitepapers.html">Whitepapers</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <section class="hero-not-found">
+        <div class="container">
+            <h1>Page Not Found</h1>
+            <p class="subtitle">The page you're looking for doesn't exist in The Current-See network.</p>
+        </div>
+    </section>
+
+    <div class="not-found-main">
+        <div class="container">
+            <div class="not-found-content">
+                <svg class="solar-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#f3c622" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </svg>
+                <h1>404</h1>
+                <p>The solar path you're looking for seems to have wandered off our grid.</p>
+                <p>Let's redirect your energy to a more productive route.</p>
+                <a href="/" class="home-button">Return to Home</a>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <h4>The Current-See</h4>
+                    <p>A solar-backed global economic system</p>
+                </div>
+                <div class="col-md-4">
+                    <h4>Quick Links</h4>
+                    <ul class="footer-links">
+                        <li><a href="/">Home</a></li>
+                        <li><a href="/solar-generator.html">Solar Generator</a></li>
+                        <li><a href="/wallet-ai-features.html">My Solar</a></li>
+                        <li><a href="/whitepapers.html">Whitepapers</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <h4>Contact</h4>
+                    <p>info@thecurrentsee.org</p>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2025 The Current-See PBC, Inc. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
