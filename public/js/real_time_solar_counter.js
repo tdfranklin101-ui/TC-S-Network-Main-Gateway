@@ -155,3 +155,55 @@ function updateCounter(baseDate, kwhPerSecond, dollarPerKwh) {
   // Request next animation frame
   requestAnimationFrame(() => updateCounter(baseDate, kwhPerSecond, dollarPerKwh));
 }
+
+function formatWithDigitAnimation(value, element) {
+  if (!element) return value;
+  
+  const newValue = value.toString();
+  const oldValue = element.getAttribute('data-value') || '0';
+  
+  // Store new value for next comparison
+  element.setAttribute('data-value', newValue);
+  
+  // If this is the first render, just set the text
+  if (oldValue === '0') {
+    element.textContent = newValue;
+    return newValue;
+  }
+  
+  // Create a new display with animated digits
+  let html = '';
+  const digitRegex = /(\d|\.|\,|\$)/g;
+  
+  for (let i = 0; i < newValue.length; i++) {
+    const char = newValue[i];
+    
+    // Check if this digit changed
+    const changed = (i < oldValue.length) ? (char !== oldValue[i]) : true;
+    
+    if (char.match(digitRegex)) {
+      // It's a digit, decimal point, comma, or currency symbol
+      if (changed && char.match(/\d/)) {
+        // Only digits get animation, not separators or currency symbols
+        html += `<span class="digit changing">${char}</span>`;
+      } else {
+        html += `<span class="digit">${char}</span>`;
+      }
+    } else {
+      // Other characters
+      html += char;
+    }
+  }
+  
+  element.innerHTML = html;
+  
+  // Clear animation classes after the animation completes
+  setTimeout(() => {
+    const changingDigits = element.querySelectorAll('.changing');
+    changingDigits.forEach(digit => {
+      digit.classList.remove('changing');
+    });
+  }, 500);
+  
+  return newValue;
+}
