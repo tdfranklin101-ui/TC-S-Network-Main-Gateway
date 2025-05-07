@@ -89,11 +89,34 @@ function updateMembersFile() {
       member.totalSolar = totalSolar;
       member.total_solar = formatAmount(totalSolar);
       member.totalDollars = totalDollars;
-      member.total_dollars = formatAmount(totalDollars) + ".0000";
+      member.total_dollars = formatAmount(totalDollars);
       member.lastDistributionDate = currentDateStr;
       member.last_distribution_date = currentDateStr;
       
       log(`Updated ${member.name}: ${days} days = ${totalSolar} SOLAR = $${totalDollars.toLocaleString()}`);
+    });
+    
+    // Sort members by join date (earliest first)
+    members.sort((a, b) => {
+      // Keep reserves at the top
+      if ((a.is_reserve || a.isReserve) && !(b.is_reserve || b.isReserve)) return -1;
+      if (!(a.is_reserve || a.isReserve) && (b.is_reserve || b.isReserve)) return 1;
+      
+      // Keep placeholder at the bottom
+      if ((a.is_placeholder || a.isPlaceholder) && !(b.is_placeholder || b.isPlaceholder)) return 1;
+      if (!(a.is_placeholder || a.isPlaceholder) && (b.is_placeholder || b.isPlaceholder)) return -1;
+      
+      // Sort by join date for regular members
+      const dateA = a.joined_date || a.joinedDate || '9999-99-99';
+      const dateB = b.joined_date || b.joinedDate || '9999-99-99';
+      
+      return dateA.localeCompare(dateB);
+    });
+    
+    log('Sorted members by join date (earliest first)');
+    members.forEach((member, index) => {
+      const joinDate = member.joined_date || member.joinedDate || 'No Date';
+      log(`${index + 1}. ${member.name} - Joined: ${joinDate}`);
     });
 
     // Create api directory if it doesn't exist

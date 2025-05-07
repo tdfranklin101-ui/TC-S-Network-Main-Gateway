@@ -8,15 +8,18 @@
  */
 
 const express = require('express');
-const path = require('path');
 const fs = require('fs');
-const bodyParser = require('body-parser');
+const path = require('path');
+const cors = require('cors');
+const serveStatic = require('serve-static');
 
-// Create express app
+// Create Express app
 const app = express();
 const PORT = process.env.PORT || 3000;
-const PUBLIC_DIR = path.join(__dirname, 'public');
-const INCLUDES_DIR = path.join(PUBLIC_DIR, 'includes');
+
+// Setup middleware
+app.use(cors());
+app.use(express.json());
 
 // Logging function
 function log(message, isError = false) {
@@ -25,88 +28,65 @@ function log(message, isError = false) {
   console.log(`[${timestamp}] ${prefix}: ${message}`);
 }
 
-// Setup middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Health check endpoint for Replit deployments
+app.get('/', (req, res) => {
+  res.status(200).send('The Current-See Server is running correctly');
+});
 
-// Health check route
+// Health check for Replit cloud
 app.get('/health', (req, res) => {
+  res.status(200).send('Healthy');
+});
+
+// Health check for additional compatibility
+app.get('/healthz', (req, res) => {
   res.status(200).send('OK');
 });
 
-// Root path handler - for deployment health checks
-app.get('/', (req, res, next) => {
-  // If it's a health check (no user agent), just return OK
-  if (!req.headers['user-agent']) {
-    return res.status(200).send('OK');
+// Serve static files from the public directory
+app.use(serveStatic(path.join(__dirname, 'public'), {
+  index: ['index.html'],
+  setHeaders: (res, filePath) => {
+    // Set cache control headers for static assets
+    if (filePath.endsWith('.html')) {
+      // Don't cache HTML files
+      res.setHeader('Cache-Control', 'no-cache');
+    } else if (filePath.match(/\.(css|js|png|jpg|jpeg|gif|ico|svg)$/)) {
+      // Cache static assets for 1 hour
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+    }
   }
-  
-  // For normal users, serve the index.html file with header/footer injected
+}));
+
+// API endpoint to verify member data is accessible
+app.get('/api/check-members', (req, res) => {
   try {
-    let indexContent = fs.readFileSync(path.join(PUBLIC_DIR, 'index.html'), 'utf8');
-    
-    // Try to inject header and footer
-    try {
-      const header = fs.readFileSync(path.join(INCLUDES_DIR, 'header.html'), 'utf8');
-      const footer = fs.readFileSync(path.join(INCLUDES_DIR, 'footer.html'), 'utf8');
-      
-      indexContent = indexContent.replace('<!-- HEADER_PLACEHOLDER -->', header);
-      indexContent = indexContent.replace('<!-- FOOTER_PLACEHOLDER -->', footer);
-    } catch (includeError) {
-      log(`Warning: Could not inject header/footer: ${includeError.message}`);
+    const membersFilePath = path.join(__dirname, 'public', 'api', 'members.json');
+    if (fs.existsSync(membersFilePath)) {
+      const membersData = JSON.parse(fs.readFileSync(membersFilePath, 'utf8'));
+      res.json({ 
+        success: true, 
+        memberCount: membersData.length,
+        message: 'Members data is accessible'
+      });
+    } else {
+      res.status(404).json({ 
+        success: false, 
+        message: 'Members file not found'
+      });
     }
-    
-    res.set('Content-Type', 'text/html');
-    res.send(indexContent);
   } catch (error) {
-    log(`Error serving index.html: ${error.message}`, true);
-    next();
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error accessing members data',
+      error: error.message
+    });
   }
-});
-
-// Handle HTML files with header/footer injection
-app.use((req, res, next) => {
-  if (!req.path.endsWith('.html')) {
-    return next();
-  }
-  
-  try {
-    const filePath = path.join(PUBLIC_DIR, req.path);
-    
-    if (!fs.existsSync(filePath)) {
-      return next();
-    }
-    
-    let content = fs.readFileSync(filePath, 'utf8');
-    
-    // Try to inject header and footer
-    try {
-      const header = fs.readFileSync(path.join(INCLUDES_DIR, 'header.html'), 'utf8');
-      const footer = fs.readFileSync(path.join(INCLUDES_DIR, 'footer.html'), 'utf8');
-      
-      content = content.replace('<!-- HEADER_PLACEHOLDER -->', header);
-      content = content.replace('<!-- FOOTER_PLACEHOLDER -->', footer);
-    } catch (includeError) {
-      log(`Warning: Could not inject header/footer for ${req.path}: ${includeError.message}`);
-    }
-    
-    res.set('Content-Type', 'text/html');
-    res.send(content);
-  } catch (error) {
-    log(`Error processing HTML file ${req.path}: ${error.message}`, true);
-    next();
-  }
-});
-
-// Static file serving
-app.use(express.static(PUBLIC_DIR));
-
-// Final 404 handler
-app.use((req, res) => {
-  res.status(404).send('File not found');
 });
 
 // Start the server
-app.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, () => {
   log(`Server running on port ${PORT}`);
+  log(`Health check available at http://localhost:${PORT}/healthz`);
+  log(`Main application at http://localhost:${PORT}/`);
 });
