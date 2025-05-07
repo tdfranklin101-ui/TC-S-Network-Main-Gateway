@@ -8,81 +8,105 @@
  */
 
 const express = require('express');
-const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
+const bodyParser = require('body-parser');
 
-// Create Express app
+// Create express app
 const app = express();
 const PORT = process.env.PORT || 3000;
+const PUBLIC_DIR = path.join(__dirname, 'public');
+const INCLUDES_DIR = path.join(PUBLIC_DIR, 'includes');
 
-// Middleware
-app.use(cors());
+// Logging function
+function log(message, isError = false) {
+  const timestamp = new Date().toISOString();
+  const prefix = isError ? '❌ ERROR' : '✓ INFO';
+  console.log(`[${timestamp}] ${prefix}: ${message}`);
+}
+
+// Setup middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Health check endpoint
-app.get('/', (req, res) => {
-  res.status(200).json({
-    status: 'healthy',
-    service: 'The Current-See',
-    timestamp: new Date().toISOString()
-  });
+// Health check route
+app.get('/health', (req, res) => {
+  res.status(200).send('OK');
 });
 
-// Serve static files from the public directory
-app.use(express.static(path.join(__dirname, 'public')));
-
-// API routes (mock for deployment testing)
-app.get('/api/user', (req, res) => {
-  res.status(401).json({ error: 'Authentication required' });
-});
-
-app.get('/api/solar-generator', (req, res) => {
-  // Generate solar data based on time since April 7, 2025
-  const startDate = new Date('2025-04-07T00:00:00Z');
-  const currentDate = new Date();
-  const timeDiffMs = currentDate.getTime() - startDate.getTime();
-  const secondsElapsed = Math.floor(timeDiffMs / 1000);
+// Root path handler - for deployment health checks
+app.get('/', (req, res, next) => {
+  // If it's a health check (no user agent), just return OK
+  if (!req.headers['user-agent']) {
+    return res.status(200).send('OK');
+  }
   
-  // Solar generation rate calculation
-  const kwhPerSolar = 17700000; // 17.7M kWh per SOLAR
-  const dollarPerSolar = 136000; // $136,000 per SOLAR
-  const solarPerSecond = 1 / (24 * 60 * 60); // 1 SOLAR per day
-  
-  const totalSolar = solarPerSecond * secondsElapsed;
-  const totalKwh = totalSolar * kwhPerSolar;
-  const totalDollars = totalSolar * dollarPerSolar;
-  
-  res.json({
-    startDate: startDate.toISOString(),
-    currentDate: currentDate.toISOString(),
-    secondsElapsed,
-    totalSolar,
-    totalKwh,
-    totalDollars
-  });
-});
-
-// Fallback handler for SPA routing
-app.get('*', (req, res) => {
-  // Check if the request is for an HTML file or a URL path
-  if (req.headers.accept && req.headers.accept.includes('text/html')) {
-    // If the file exists, serve it directly
-    const filePath = path.join(__dirname, 'public', req.path);
-    if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
-      return res.sendFile(filePath);
+  // For normal users, serve the index.html file with header/footer injected
+  try {
+    let indexContent = fs.readFileSync(path.join(PUBLIC_DIR, 'index.html'), 'utf8');
+    
+    // Try to inject header and footer
+    try {
+      const header = fs.readFileSync(path.join(INCLUDES_DIR, 'header.html'), 'utf8');
+      const footer = fs.readFileSync(path.join(INCLUDES_DIR, 'footer.html'), 'utf8');
+      
+      indexContent = indexContent.replace('<!-- HEADER_PLACEHOLDER -->', header);
+      indexContent = indexContent.replace('<!-- FOOTER_PLACEHOLDER -->', footer);
+    } catch (includeError) {
+      log(`Warning: Could not inject header/footer: ${includeError.message}`);
     }
     
-    // Otherwise, serve index.html for client-side routing
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-  } else {
-    // For non-HTML requests (like API calls), return 404
-    res.status(404).json({ error: 'Not found' });
+    res.set('Content-Type', 'text/html');
+    res.send(indexContent);
+  } catch (error) {
+    log(`Error serving index.html: ${error.message}`, true);
+    next();
   }
+});
+
+// Handle HTML files with header/footer injection
+app.use((req, res, next) => {
+  if (!req.path.endsWith('.html')) {
+    return next();
+  }
+  
+  try {
+    const filePath = path.join(PUBLIC_DIR, req.path);
+    
+    if (!fs.existsSync(filePath)) {
+      return next();
+    }
+    
+    let content = fs.readFileSync(filePath, 'utf8');
+    
+    // Try to inject header and footer
+    try {
+      const header = fs.readFileSync(path.join(INCLUDES_DIR, 'header.html'), 'utf8');
+      const footer = fs.readFileSync(path.join(INCLUDES_DIR, 'footer.html'), 'utf8');
+      
+      content = content.replace('<!-- HEADER_PLACEHOLDER -->', header);
+      content = content.replace('<!-- FOOTER_PLACEHOLDER -->', footer);
+    } catch (includeError) {
+      log(`Warning: Could not inject header/footer for ${req.path}: ${includeError.message}`);
+    }
+    
+    res.set('Content-Type', 'text/html');
+    res.send(content);
+  } catch (error) {
+    log(`Error processing HTML file ${req.path}: ${error.message}`, true);
+    next();
+  }
+});
+
+// Static file serving
+app.use(express.static(PUBLIC_DIR));
+
+// Final 404 handler
+app.use((req, res) => {
+  res.status(404).send('File not found');
 });
 
 // Start the server
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on http://0.0.0.0:${PORT}`);
+  log(`Server running on port ${PORT}`);
 });
