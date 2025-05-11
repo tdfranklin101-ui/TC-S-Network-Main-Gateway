@@ -71,8 +71,25 @@ document.addEventListener('DOMContentLoaded', function() {
       // Use scientific notation for the reserve entries to display number appropriately
       solarFormatted = (member.total_solar || member.totalSolar).toString();
     } else {
-      // Force parse exact value from total_solar (string with 4 decimals) to ensure accuracy
-      const solarValue = parseFloat(member.total_solar || member.totalSolar || "0");
+      // Handle all possible formats of solar values with robust fallbacks
+      let solarValue = 0;
+      
+      // Check all possible property names and formats
+      if (typeof member.total_solar === 'string' && member.total_solar) {
+        solarValue = parseFloat(member.total_solar);
+      } else if (typeof member.total_solar === 'number') {
+        solarValue = member.total_solar;
+      } else if (typeof member.totalSolar === 'string' && member.totalSolar) {
+        solarValue = parseFloat(member.totalSolar);
+      } else if (typeof member.totalSolar === 'number') {
+        solarValue = member.totalSolar;
+      }
+      
+      // Additional validation - ensure we have a valid number
+      if (isNaN(solarValue)) {
+        console.warn(`Invalid solar value for member ${member.name}, defaulting to 0`);
+        solarValue = 0;
+      }
       
       // Format regular members with 2 decimal places for display
       solarFormatted = solarValue.toFixed(2);
@@ -99,8 +116,17 @@ document.addEventListener('DOMContentLoaded', function() {
       return;
     }
     
+    // Filter out reserve accounts and placeholders for the count
+    const actualMemberCount = members.filter(m => 
+      !m.is_reserve && 
+      m.name !== "You are next" && 
+      m.id !== "next" && 
+      !m.isPlaceholder && 
+      !m.is_placeholder
+    ).length;
+    
     // Update member count display if element exists
-    updateMemberCount(members.length);
+    updateMemberCount(actualMemberCount);
 
     // Clear the container
     membersLogContainer.innerHTML = '';
@@ -317,14 +343,62 @@ document.addEventListener('DOMContentLoaded', function() {
     return null;
   };
 
-  // Initialize by loading members data
-  loadMembers();
+  // Force a fresh load of members data
+  if (window.EMBEDDED_MEMBERS) {
+    console.log("Using embedded members data:", window.EMBEDDED_MEMBERS.length, "members");
+    
+    // Immediately show the embedded members
+    createMembersLog(window.EMBEDDED_MEMBERS);
+    
+    // Then try to load fresh data in the background
+    setTimeout(() => {
+      loadMembers().catch(err => {
+        console.warn("Background refresh failed:", err);
+      });
+    }, 1000);
+  } else {
+    // No embedded data, load directly
+    loadMembers();
+  }
   
-  // Set up automatic refresh every 60 seconds if on a relevant page
+  // Set up refresh button click handler
+  const refreshButton = document.getElementById('refresh-members-btn');
+  if (refreshButton) {
+    console.log('Setting up refresh button click handler');
+    refreshButton.addEventListener('click', function() {
+      this.innerHTML = '<span style="margin-right: 5px;">↻</span> Refreshing...';
+      this.disabled = true;
+      
+      try {
+        loadMembers()
+          .catch(err => {
+            console.error("Error refreshing members:", err);
+            // Show error message briefly
+            this.innerHTML = '<span style="margin-right: 5px;">⚠️</span> Error refreshing';
+          })
+          .finally(() => {
+            // Always restore button state after a short delay
+            setTimeout(() => {
+              this.innerHTML = '<span style="margin-right: 5px;">↻</span> Refresh Members List';
+              this.disabled = false;
+            }, 1000);
+          });
+      } catch (err) {
+        // Catch any synchronous errors
+        console.error("Sync error refreshing members:", err);
+        this.innerHTML = '<span style="margin-right: 5px;">↻</span> Refresh Members List';
+        this.disabled = false;
+      }
+    });
+  } else {
+    console.log('Refresh button not found on page');
+  }
+  
+  // Set up automatic refresh every 30 seconds if on a relevant page
   if (window.location.pathname.includes('solar-generator') || 
       window.location.pathname === '/' || 
       window.location.pathname === '/index.html') {
     console.log('Setting up automatic refresh for members data');
-    setInterval(loadMembers, 60000); // Refresh every 60 seconds
+    setInterval(loadMembers, 30000); // Refresh every 30 seconds
   }
 });
