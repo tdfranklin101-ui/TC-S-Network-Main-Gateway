@@ -2,6 +2,19 @@
 
 All notable changes to The Current-See project will be documented in this file.
 
+## v1.2.1 (2025.05.11)
+
+### Added
+- Added support for new member "Erin Lee" with proper data formatting
+- Improved refresh button functionality on members list with proper error handling
+- Enhanced embedded data loading with multiple fallback methods
+
+### Fixed
+- Resolved members list display inconsistencies across all pages
+- Fixed SOLAR amount formatting to handle both property naming conventions
+- Improved error resilience in public members log display
+- Updated member capitalization for consistency
+
 ## v1.2.0 (2025.04.24)
 
 ### Added
