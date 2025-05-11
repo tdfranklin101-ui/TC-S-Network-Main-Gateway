@@ -319,6 +319,22 @@
     "last_distribution_date": "2025-05-07"
   },
   {
+    "id": 17,
+    "username": "erin.lee",
+    "name": "Erin lee",
+    "email": "erin.lee@example.com",
+    "joinedDate": "2025-05-11",
+    "signupTimestamp": "2025-05-11T09:00:00.000Z",
+    "totalSolar": 1,
+    "totalDollars": 136000,
+    "isAnonymous": false,
+    "lastDistributionDate": "2025-05-11",
+    "joined_date": "2025-05-11",
+    "total_solar": "1.0000",
+    "total_dollars": "136000.0000",
+    "last_distribution_date": "2025-05-11"
+  },
+  {
     "id": "next",
     "username": "you.are.next",
     "name": "You are next",
