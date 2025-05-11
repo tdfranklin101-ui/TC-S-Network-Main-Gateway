@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Current-See Members List</title>
+  <link rel="stylesheet" href="/css/common.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background-color: #f9f9f9;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    .header {
+      background-color: #0057B8;
+      color: white;
+      padding: 20px;
+      text-align: center;
+      border-radius: 8px;
+      margin-bottom: 30px;
+      background-image: linear-gradient(135deg, #0057B8, #2E7BC4);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    h1 {
+      margin: 0;
+      font-size: 32px;
+    }
+    
+    .refresh-button {
+      background-color: #7bc144;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .refresh-button:hover {
+      background-color: #68a639;
+    }
+    
+    .refresh-icon {
+      display: inline-block;
+      margin-right: 8px;
+    }
+    
+    .members-container {
+      background-color: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    
+    .members-log-entry {
+      padding: 15px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    
+    .members-log-entry:last-child {
+      border-bottom: none;
+    }
+    
+    .member-name {
+      font-weight: bold;
+      font-size: 18px;
+      flex: 1;
+      min-width: 200px;
+    }
+    
+    .member-joined {
+      color: #666;
+      margin-right: 20px;
+      min-width: 200px;
+    }
+    
+    .member-solar {
+      color: #7bc144;
+      font-weight: bold;
+      min-width: 120px;
+      text-align: right;
+    }
+    
+    .data-refreshed-info {
+      text-align: right;
+      color: #999;
+      font-size: 12px;
+      margin-top: 15px;
+    }
+    
+    .home-button {
+      display: inline-block;
+      background-color: #0057B8;
+      color: white;
+      text-decoration: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      margin-top: 20px;
+      transition: background-color 0.3s;
+    }
+    
+    .home-button:hover {
+      background-color: #003d82;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .spinning {
+      animation: spin 1s linear infinite;
+    }
+    
+    @media (max-width: 768px) {
+      .members-log-entry {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .member-name, .member-joined, .member-solar {
+        margin-bottom: 5px;
+        min-width: auto;
+        width: 100%;
+      }
+      
+      .member-solar {
+        text-align: left;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>The Current-See Members</h1>
+    <p>All registered participants in our solar-based economic system</p>
+  </div>
+  
+  <div class="refresh-container">
+    <button id="refresh-members-btn" class="refresh-button">
+      <span class="refresh-icon">↻</span> Refresh Members List
+    </button>
+  </div>
+  
+  <div class="members-container">
+    <div id="public-members-log">
+      <!-- This will be populated by JavaScript -->
+      <div style="text-align: center; padding: 20px;">
+        <div style="display: inline-block; border: 4px solid #f3f3f3; border-top: 4px solid #7bc144; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite;"></div>
+        <p>Loading members data...</p>
+      </div>
+    </div>
+  </div>
+  
+  <div style="text-align: center; margin-top: 30px;">
+    <a href="/" class="home-button">← Return to Home</a>
+  </div>
+
+  <!-- Include embedded members data first so it's available to the members log script -->
+  <script src="/embedded-members?v=20250511-1"></script>
+  <script src="/js/public-members-log.js?v=20250511-1"></script>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Set up refresh button for members list
+      const refreshButton = document.getElementById('refresh-members-btn');
+      if (refreshButton) {
+        refreshButton.addEventListener('click', function() {
+          // Show loading spinner on button
+          const originalText = this.innerHTML;
+          this.innerHTML = '<span class="refresh-icon spinning">↻</span> Loading...';
+          this.disabled = true;
+          
+          // Clear any cached variables
+          if (window.EMBEDDED_MEMBERS) {
+            delete window.EMBEDDED_MEMBERS;
+          }
+          
+          // Force clear browser cache for these resources
+          const cacheTimestamp = Date.now();
+          
+          // Load the embedded members script fresh
+          const embeddedScript = document.createElement('script');
+          embeddedScript.src = `/embedded-members?v=${cacheTimestamp}`;
+          document.head.appendChild(embeddedScript);
+          
+          // Wait for script to load before refreshing members
+          embeddedScript.onload = function() {
+            // Call the loadMembers function after a short delay
+            setTimeout(() => {
+              if (typeof window.loadMembers === 'function') {
+                window.loadMembers().then(() => {
+                  // Restore button state
+                  refreshButton.innerHTML = originalText;
+                  refreshButton.disabled = false;
+                }).catch(err => {
+                  console.error('Error refreshing members:', err);
+                  refreshButton.innerHTML = originalText;
+                  refreshButton.disabled = false;
+                });
+              } else {
+                console.error('loadMembers function not found');
+                refreshButton.innerHTML = originalText;
+                refreshButton.disabled = false;
+              }
+            }, 500);
+          };
+        });
+      }
+    });
+  </script>
+</body>
+</html>
