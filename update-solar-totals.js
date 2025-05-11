@@ -1,158 +1,157 @@
 /**
- * Update SOLAR Totals Script
+ * The Current-See - Update SOLAR Totals
  * 
- * This script updates SOLAR totals for all members based on their join date
- * calculating 1 SOLAR per day from join date to current date.
+ * This script updates all members' SOLAR totals based on 1 SOLAR per day
+ * since their join date (inclusive of join date).
  */
 
 const fs = require('fs');
 const path = require('path');
 
+// Constants for SOLAR calculations
+const SOLAR_CONSTANTS = {
+  USD_PER_SOLAR: 136000, // $136,000 per SOLAR
+  KWH_PER_SOLAR: 4913    // 4,913 kWh per SOLAR
+};
+
+// Path constants
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const MEMBERS_FILE = path.join(PUBLIC_DIR, 'api', 'members.json');
 const EMBEDDED_MEMBERS_FILE = path.join(PUBLIC_DIR, 'embedded-members');
 
-// Constants
-const SOLAR_VALUE_USD = 136000; // $136,000 per SOLAR
-
-// Logging function
-function log(message, isError = false) {
-  const timestamp = new Date().toISOString();
-  const prefix = isError ? '❌ ERROR' : '✓ INFO';
-  console.log(`[${timestamp}] ${prefix}: ${message}`);
-}
-
-// Calculate days between two dates (inclusive)
+// Calculate days between dates (inclusive)
 function daysBetween(startDate, endDate) {
-  // Convert dates to Date objects if they are strings
-  if (typeof startDate === 'string') {
-    startDate = new Date(startDate);
-  }
-  if (typeof endDate === 'string') {
-    endDate = new Date(endDate);
-  }
+  // Parse dates if they are strings
+  const start = typeof startDate === 'string' ? new Date(startDate) : startDate;
+  const end = typeof endDate === 'string' ? new Date(endDate) : endDate;
   
-  // Reset time part for accurate day calculation
-  startDate.setHours(0, 0, 0, 0);
-  endDate.setHours(0, 0, 0, 0);
+  // Reset time to midnight to count full days only
+  start.setHours(0, 0, 0, 0);
+  end.setHours(0, 0, 0, 0);
   
-  // Calculate difference in days (add 1 for inclusive count)
-  const diffTime = Math.abs(endDate - startDate);
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  // Calculate difference in days, then add 1 to make it inclusive
+  const diffInTime = end.getTime() - start.getTime();
+  const diffInDays = Math.floor(diffInTime / (1000 * 60 * 60 * 24));
   
-  // Return days + 1 for inclusive count (the day they joined counts as a day)
-  return diffDays + 1;
+  // Add 1 for inclusive counting (the join date counts as day 1)
+  return diffInDays + 1;
 }
 
-// Format amount to 4 decimal places
+// Format number with 4 decimal places
 function formatAmount(amount) {
   return parseFloat(amount).toFixed(4);
 }
 
-// Update members file with accurate SOLAR totals
-function updateMembersFile() {
+// Update embedded members file
+function updateEmbeddedMembersFile(members) {
   try {
-    // Read members from backup
-    const backupMembersPath = path.join(__dirname, 'pre_restore_backup_20250507_190621', 'public', 'api', 'members.json');
-    const backupMembersData = fs.readFileSync(backupMembersPath, 'utf8');
-    let members = JSON.parse(backupMembersData);
+    fs.writeFileSync(EMBEDDED_MEMBERS_FILE, 
+      `const EMBEDDED_MEMBERS = ${JSON.stringify(members)};`);
+    console.log('Updated embedded-members file');
+  } catch (error) {
+    console.error(`Error updating embedded-members file: ${error.message}`);
+  }
+}
 
-    // Current date
-    const currentDate = new Date();
-    const currentDateStr = currentDate.toISOString().split('T')[0]; // YYYY-MM-DD
-
-    // Update SOLAR totals for each member
-    members.forEach(member => {
-      if (member.is_reserve || member.isReserve) {
-        // Skip reserve accounts - keep their original values
-        log(`Skipping reserve account: ${member.name}`);
-        return;
-      }
-      
-      // Get join date
-      const joinDate = member.joined_date || member.joinedDate;
-      if (!joinDate) {
-        log(`Member ${member.name} has no join date, skipping`, true);
-        return;
-      }
-      
-      // Calculate days since join date (inclusive)
-      const days = daysBetween(joinDate, currentDate);
-      
-      // Each day is 1 SOLAR
-      const totalSolar = days;
-      
-      // Calculate dollar value
-      const totalDollars = totalSolar * SOLAR_VALUE_USD;
-      
-      // Update values for both formats (some entries use different property names)
-      member.totalSolar = totalSolar;
-      member.total_solar = formatAmount(totalSolar);
-      member.totalDollars = totalDollars;
-      member.total_dollars = formatAmount(totalDollars);
-      member.lastDistributionDate = currentDateStr;
-      member.last_distribution_date = currentDateStr;
-      
-      log(`Updated ${member.name}: ${days} days = ${totalSolar} SOLAR = $${totalDollars.toLocaleString()}`);
-    });
-    
-    // Sort members by join date (earliest first)
-    members.sort((a, b) => {
-      // Keep reserves at the top
-      if ((a.is_reserve || a.isReserve) && !(b.is_reserve || b.isReserve)) return -1;
-      if (!(a.is_reserve || a.isReserve) && (b.is_reserve || b.isReserve)) return 1;
-      
-      // Keep placeholder at the bottom
-      if ((a.is_placeholder || a.isPlaceholder) && !(b.is_placeholder || b.isPlaceholder)) return 1;
-      if (!(a.is_placeholder || a.isPlaceholder) && (b.is_placeholder || b.isPlaceholder)) return -1;
-      
-      // Sort by join date for regular members
-      const dateA = a.joined_date || a.joinedDate || '9999-99-99';
-      const dateB = b.joined_date || b.joinedDate || '9999-99-99';
-      
-      return dateA.localeCompare(dateB);
-    });
-    
-    log('Sorted members by join date (earliest first)');
-    members.forEach((member, index) => {
-      const joinDate = member.joined_date || member.joinedDate || 'No Date';
-      log(`${index + 1}. ${member.name} - Joined: ${joinDate}`);
-    });
-
-    // Create api directory if it doesn't exist
-    const apiDir = path.join(PUBLIC_DIR, 'api');
-    if (!fs.existsSync(apiDir)) {
-      fs.mkdirSync(apiDir, { recursive: true });
-      log(`Created API directory: ${apiDir}`);
+// Main function to fix SOLAR amounts
+function updateSolarTotals() {
+  try {
+    // Check if members file exists
+    if (!fs.existsSync(MEMBERS_FILE)) {
+      console.error(`Members file not found at ${MEMBERS_FILE}`);
+      return;
     }
-
-    // Write updated members back to file
+    
+    // Read members data
+    const membersData = fs.readFileSync(MEMBERS_FILE, 'utf8');
+    const members = JSON.parse(membersData);
+    console.log(`Loaded ${members.length} members from ${MEMBERS_FILE}`);
+    
+    // Get today's date
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Track members that need updates
+    let updatedCount = 0;
+    let unchangedCount = 0;
+    let reserveCount = 0;
+    
+    // Process each member
+    members.forEach(member => {
+      // Skip the "You are next" placeholder and reserve accounts
+      if (member.id === 'next' || member.name === 'You are next' || 
+          member.is_placeholder === true || member.isPlaceholder === true ||
+          member.is_reserve === true || member.isReserve === true) {
+        
+        if (member.is_reserve === true || member.isReserve === true) {
+          reserveCount++;
+        }
+        
+        return; // Skip this entry
+      }
+      
+      // Get joined date (either camelCase or snake_case)
+      const joinDateStr = member.joinedDate || member.joined_date;
+      
+      if (!joinDateStr) {
+        console.warn(`Member ${member.name} has no join date, skipping`);
+        return;
+      }
+      
+      // Calculate days since joining
+      const joinDate = new Date(joinDateStr);
+      const daysSinceJoining = daysBetween(joinDate, today);
+      
+      // New total should be equal to number of days since joining (inclusive)
+      const newTotal = daysSinceJoining;
+      
+      // Get current total
+      const currentTotal = parseFloat(member.totalSolar || member.total_solar || 0);
+      
+      // Check if update is needed
+      if (Math.abs(currentTotal - newTotal) < 0.0001) {
+        unchangedCount++;
+        return; // No update needed
+      }
+      
+      // Update totals
+      member.totalSolar = newTotal;
+      member.total_solar = formatAmount(newTotal);
+      
+      // Update dollar values
+      const dollarValue = newTotal * SOLAR_CONSTANTS.USD_PER_SOLAR;
+      member.totalDollars = dollarValue;
+      member.total_dollars = formatAmount(dollarValue);
+      
+      // Set last distribution date to today
+      const todayStr = today.toISOString().split('T')[0];
+      member.lastDistributionDate = todayStr;
+      member.last_distribution_date = todayStr;
+      
+      updatedCount++;
+      console.log(`Updated ${member.name}: ${currentTotal} -> ${newTotal} SOLAR (${daysSinceJoining} days since ${joinDateStr})`);
+    });
+    
+    // Save updated members
     fs.writeFileSync(MEMBERS_FILE, JSON.stringify(members, null, 2));
-    log(`Updated ${members.length} members in ${MEMBERS_FILE}`);
-
-    // Update embedded-members file
-    const embeddedData = `const EMBEDDED_MEMBERS = ${JSON.stringify(members, null, 2)};`;
-    fs.writeFileSync(EMBEDDED_MEMBERS_FILE, embeddedData);
-    log(`Updated embedded members file: ${EMBEDDED_MEMBERS_FILE}`);
-
-    return members;
+    console.log(`Saved updated members to ${MEMBERS_FILE}`);
+    
+    // Update embedded members file
+    updateEmbeddedMembersFile(members);
+    
+    // Log summary
+    console.log(`
+=== SUMMARY ===
+Updated members: ${updatedCount}
+Unchanged members: ${unchangedCount}
+Skipped reserve accounts: ${reserveCount}
+Total members processed: ${members.length}
+    `);
+    
   } catch (error) {
-    log(`Error updating members: ${error.message}`, true);
-    throw error;
+    console.error(`Error updating SOLAR totals: ${error.message}`);
   }
 }
 
-// Main function
-function main() {
-  log('Starting SOLAR totals update...');
-  
-  try {
-    const updatedMembers = updateMembersFile();
-    log(`Successfully updated SOLAR totals for ${updatedMembers.length} members based on join date`);
-  } catch (error) {
-    log(`Failed to update SOLAR totals: ${error.message}`, true);
-  }
-}
-
-// Run the main function
-main();
+// Run the update
+updateSolarTotals();
