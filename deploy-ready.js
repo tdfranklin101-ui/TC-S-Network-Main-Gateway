@@ -35,6 +35,7 @@ const PORT = process.env.PORT || 3000;
 // Setup middleware
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Logging function
 function log(message, isError = false) {
@@ -95,6 +96,116 @@ app.get('/api/check-members', (req, res) => {
       success: false, 
       message: 'Error accessing members data',
       error: error.message
+    });
+  }
+});
+
+// API endpoint to handle member signup
+app.post('/api/signup', (req, res) => {
+  try {
+    // Validate required fields
+    const { name, email } = req.body;
+    
+    if (!name || !email) {
+      return res.status(400).json({
+        success: false,
+        error: 'Name and email are required'
+      });
+    }
+    
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid email format'
+      });
+    }
+    
+    // Check if email already exists
+    const existingMember = members.find(member => 
+      member.email === email && 
+      !member.is_placeholder && 
+      member.id !== 'next'
+    );
+    
+    if (existingMember) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email already registered'
+      });
+    }
+    
+    // Generate username from name (lowercase, no spaces)
+    const username = name.toLowerCase()
+      .replace(/\s+/g, '.')
+      .replace(/[^a-z0-9.]/g, '');
+    
+    // Find the highest existing ID to ensure uniqueness
+    const highestId = members.reduce((max, member) => {
+      const id = typeof member.id === 'number' ? member.id : 0;
+      return id > max ? id : max;
+    }, 0);
+    
+    // Create new member with today's date
+    const today = new Date();
+    const joinDate = today.toISOString().split('T')[0];
+    
+    const newMember = {
+      id: highestId + 1,
+      username: `${username}.${Date.now() % 10000}`,
+      name: name,
+      email: email,
+      joinedDate: joinDate,
+      joined_date: joinDate,
+      signupTimestamp: today.toISOString(),
+      signup_timestamp: today.toISOString(),
+      totalSolar: 1,
+      total_solar: "1.0000",
+      totalDollars: SOLAR_CONSTANTS.USD_PER_SOLAR,
+      total_dollars: SOLAR_CONSTANTS.USD_PER_SOLAR.toString(),
+      isAnonymous: false,
+      is_anonymous: false,
+      isPlaceholder: false,
+      is_placeholder: false,
+      lastDistributionDate: joinDate,
+      last_distribution_date: joinDate
+    };
+    
+    // Find index of placeholder "You are next" entry
+    const placeholderIndex = members.findIndex(m => m.id === 'next' || m.name === 'You are next');
+    
+    if (placeholderIndex !== -1) {
+      // Insert new member before placeholder
+      members.splice(placeholderIndex, 0, newMember);
+    } else {
+      // If placeholder doesn't exist, just add to the end
+      members.push(newMember);
+    }
+    
+    // Update files with new member
+    updateMembersFiles();
+    
+    // Log the successful signup
+    log(`New member registered: ${name} (${email}) with ID ${newMember.id}`);
+    
+    // Return success response
+    res.status(201).json({
+      success: true,
+      message: 'Registration successful!',
+      member: {
+        id: newMember.id,
+        name: newMember.name,
+        joinDate: newMember.joinedDate,
+        totalSolar: newMember.totalSolar
+      }
+    });
+    
+  } catch (error) {
+    log(`Error during signup: ${error.message}`, true);
+    res.status(500).json({
+      success: false,
+      error: 'Registration failed. Please try again later.'
     });
   }
 });
