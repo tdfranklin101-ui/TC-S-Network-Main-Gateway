@@ -192,6 +192,11 @@
         <div class="container">
             <div class="members-log-container">
                 <h2 class="members-log-title">Public Members Log</h2>
+                <div style="text-align: right; margin-bottom: 10px;">
+                    <button id="refresh-members-btn" style="background-color: #7bc144; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 14px;">
+                        <span style="margin-right: 5px;">↻</span> Refresh Members List
+                    </button>
+                </div>
                 <div id="public-members-log"></div>
             </div>
         </div>
@@ -206,10 +211,10 @@
     <!-- FOOTER_PLACEHOLDER -->
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="/js/real_time_solar_counter.js"></script>
+    <script src="/js/real_time_solar_counter.js?v=20250511"></script>
     <!-- Include embedded members data first so it's available to the members log script -->
-    <script src="/embedded-members"></script>
-    <script src="/js/public-members-log.js"></script>
+    <script src="/embedded-members?v=20250511"></script>
+    <script src="/js/public-members-log.js?v=20250511"></script>
 
     <script>
         // The real-time counter script handles all updates automatically
@@ -232,6 +237,65 @@
                     energyDisplay.style.color = '#7bc144';
                     moneyDisplay.style.color = '#7bc144';
                 }, 500);
+            }
+            
+            // Set up refresh button for members list
+            const refreshButton = document.getElementById('refresh-members-btn');
+            if (refreshButton) {
+                refreshButton.addEventListener('click', function() {
+                    // Show loading spinner on button
+                    const originalText = this.innerHTML;
+                    this.innerHTML = '<span style="display: inline-block; animation: spin 1s linear infinite;">↻</span> Loading...';
+                    this.disabled = true;
+                    
+                    // Clear any cached variables
+                    if (window.EMBEDDED_MEMBERS) {
+                        delete window.EMBEDDED_MEMBERS;
+                    }
+                    
+                    // Force clear browser cache for these resources
+                    const cacheTimestamp = Date.now();
+                    
+                    // Load the embedded members script fresh
+                    const embeddedScript = document.createElement('script');
+                    embeddedScript.src = `/embedded-members?v=${cacheTimestamp}`;
+                    document.head.appendChild(embeddedScript);
+                    
+                    // Wait for script to load before refreshing members
+                    embeddedScript.onload = function() {
+                        // Call the loadMembers function after a short delay
+                        setTimeout(() => {
+                            if (typeof window.loadMembers === 'function') {
+                                window.loadMembers().then(() => {
+                                    // Restore button state
+                                    refreshButton.innerHTML = originalText;
+                                    refreshButton.disabled = false;
+                                }).catch(err => {
+                                    console.error('Error refreshing members:', err);
+                                    refreshButton.innerHTML = originalText;
+                                    refreshButton.disabled = false;
+                                });
+                            } else {
+                                console.error('loadMembers function not found');
+                                refreshButton.innerHTML = originalText;
+                                refreshButton.disabled = false;
+                            }
+                        }, 500);
+                    };
+                    
+                    // Add a style for the spinning animation
+                    if (!document.getElementById('spin-animation')) {
+                        const style = document.createElement('style');
+                        style.id = 'spin-animation';
+                        style.textContent = `
+                            @keyframes spin {
+                                0% { transform: rotate(0deg); }
+                                100% { transform: rotate(360deg); }
+                            }
+                        `;
+                        document.head.appendChild(style);
+                    }
+                });
             }
         });
     </script>

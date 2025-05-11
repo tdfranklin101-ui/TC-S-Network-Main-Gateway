@@ -340,13 +340,13 @@
     "name": "You are next",
     "email": "you.are.next@thecurrentsee.org",
     "joinedDate": "2025-04-27",
-    "totalSolar": 11,
-    "totalDollars": 1496000,
+    "totalSolar": 12,
+    "totalDollars": 1632000,
     "isAnonymous": false,
     "isPlaceholder": true,
-    "lastDistributionDate": "2025-05-07",
-    "total_solar": "11.0000",
-    "total_dollars": "1496000.0000",
-    "last_distribution_date": "2025-05-07"
+    "lastDistributionDate": "2025-05-11",
+    "total_solar": "12.0000",
+    "total_dollars": "1632000.0000",
+    "last_distribution_date": "2025-05-11"
   }
 ]

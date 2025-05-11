@@ -184,7 +184,9 @@
   <script src="/js/real_time_solar_counter.js"></script>
 
   <!-- Public Members Log Script -->
-  <script src="/js/public-members-log.js"></script>
+  <!-- Include embedded members data first so it's available to the members log script -->
+  <script src="/embedded-members?v=20250511"></script>
+  <script src="/js/public-members-log.js?v=20250511"></script>
   
   <!-- Voice Assistant Script -->
   <script src="/js/voice-assistant.js"></script>
