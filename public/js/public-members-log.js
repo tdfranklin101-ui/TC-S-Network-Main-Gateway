@@ -49,13 +49,7 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     }
     
-    // Fallback for non-standard formats
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    });
+    return dateString; // Return as-is if not in expected format
   }
 
   // Create member entry element
@@ -71,19 +65,27 @@ document.addEventListener('DOMContentLoaded', function() {
       type: typeof member.totalSolar
     });
     
-    // Force parse exact value from total_solar (string with 4 decimals) to ensure accuracy
-    const solarValue = parseFloat(member.total_solar || member.totalSolar);
+    // CRUCIAL: For TC-S Solar Reserve and Solar Reserve, we need special formatting
+    let solarFormatted;
+    if (member.name === "TC-S Solar Reserve" || member.name === "Solar Reserve") {
+      // Use scientific notation for the reserve entries to display number appropriately
+      solarFormatted = (member.total_solar || member.totalSolar).toString();
+    } else {
+      // Force parse exact value from total_solar (string with 4 decimals) to ensure accuracy
+      const solarValue = parseFloat(member.total_solar || member.totalSolar || "0");
+      
+      // Format regular members with 2 decimal places for display
+      solarFormatted = solarValue.toFixed(2);
+    }
     
-    // Format SOLAR with 2 decimal places for display
-    const solarFormatted = solarValue.toFixed(2);
-    
-    // Format date
-    const joinedDate = formatDate(member.joinedDate);
+    // Format date using consistent UTC approach
+    const joinedDate = formatDate(member.joinedDate || member.joined_date);
 
+    // Create the HTML with additional data attributes for debugging
     entryDiv.innerHTML = `
-      <div class="member-name">${member.name}</div>
-      <div class="member-joined" data-joined-date="${member.joinedDate}">Joined: ${joinedDate}</div>
-      <div class="member-solar">SOLAR: ${solarFormatted}</div>
+      <div class="member-name" data-id="${member.id}">${member.name}</div>
+      <div class="member-joined" data-joined-date="${member.joinedDate || member.joined_date}">Joined: ${joinedDate}</div>
+      <div class="member-solar" data-value="${member.total_solar || member.totalSolar}">SOLAR: ${solarFormatted}</div>
     `;
 
     return entryDiv;
@@ -147,7 +149,7 @@ document.addEventListener('DOMContentLoaded', function() {
       m.id !== "next" && 
       m.isPlaceholder !== true
     ).sort((a, b) => {
-      return new Date(a.joinedDate) - new Date(b.joinedDate);
+      return new Date(a.joinedDate || a.joined_date) - new Date(b.joinedDate || b.joined_date);
     });
     
     // Add the regular members
@@ -158,7 +160,7 @@ document.addEventListener('DOMContentLoaded', function() {
       sortedMembers.push(youAreNext);
     }
 
-    // Create and add each member entry (we've already filtered out anonymous members)
+    // Add each member entry to the wrapper
     sortedMembers.forEach(member => {
       wrapperDiv.appendChild(createMemberEntry(member));
     });
@@ -187,78 +189,106 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add timestamp to prevent caching
     const timestamp = new Date().getTime();
     
-    try {
-      // Clear any cached data by forcing a fresh reload
-      console.log("Fetching fresh members data...");
-      
-      // Try to fetch from API with cache-busting parameter
-      const response = await fetch(`/api/members.json?t=${timestamp}`, {
-        cache: 'no-cache',
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
+    console.log('=== LOADING MEMBERS DATA (UPDATED VERSION) ===');
+    
+    // Define an array of data sources to try in sequence
+    const dataSources = [
+      {
+        name: 'Direct API fetch (members.json)',
+        fetch: async () => {
+          console.log("Trying direct API fetch from /api/members.json...");
+          const response = await fetch(`/api/members.json?t=${timestamp}`, {
+            cache: 'no-cache',
+            headers: {
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache'
+            }
+          });
+          
+          if (!response.ok) throw new Error('API response not OK');
+          return await response.json();
         }
-      });
-      
-      if (response.ok) {
-        const members = await response.json();
-        console.log("Members data loaded:", members);
+      },
+      {
+        name: 'EMBEDDED_MEMBERS global variable',
+        fetch: async () => {
+          console.log("Trying EMBEDDED_MEMBERS global variable...");
+          if (!window.EMBEDDED_MEMBERS || !Array.isArray(window.EMBEDDED_MEMBERS)) {
+            throw new Error('EMBEDDED_MEMBERS not available or not an array');
+          }
+          return window.EMBEDDED_MEMBERS;
+        }
+      },
+      {
+        name: 'Embedded members file (JavaScript)',
+        fetch: async () => {
+          console.log("Trying to fetch embedded-members file...");
+          const response = await fetch(`/embedded-members?t=${timestamp}`, {
+            cache: 'no-cache',
+            headers: {
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache'
+            }
+          });
+          
+          if (!response.ok) throw new Error('Embedded file response not OK');
+          
+          // Parse the JavaScript content
+          const text = await response.text();
+          
+          // Use script injection to evaluate
+          const tempScript = document.createElement('script');
+          tempScript.textContent = text;
+          document.head.appendChild(tempScript);
+          document.head.removeChild(tempScript);
+          
+          if (!window.EMBEDDED_MEMBERS || !Array.isArray(window.EMBEDDED_MEMBERS)) {
+            throw new Error('Failed to parse embedded members file');
+          }
+          
+          return window.EMBEDDED_MEMBERS;
+        }
+      }
+    ];
+    
+    // Try each data source in sequence
+    for (const source of dataSources) {
+      try {
+        console.log(`Attempting to load members from: ${source.name}`);
+        const members = await source.fetch();
+        
+        if (!members || !Array.isArray(members) || members.length === 0) {
+          console.warn(`${source.name} returned empty or invalid data`);
+          continue;
+        }
+        
+        console.log(`Successfully loaded ${members.length} members from ${source.name}`);
+        console.log("First few members:", members.slice(0, 3));
+        
+        // Success - create the members log display
         createMembersLog(members);
         return;
-      }
-      throw new Error('Failed to fetch from API');
-    } catch (err) {
-      console.warn('Failed to load members from API, trying alternative sources...', err);
-      
-      try {
-        // Try to fetch from embedded data file with cache-busting
-        const embeddedResponse = await fetch(`/embedded-members?t=${timestamp}`, {
-          cache: 'no-cache',
-          headers: {
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache'
-          }
-        });
-        
-        if (embeddedResponse.ok) {
-          const members = await embeddedResponse.json();
-          console.log("Members data loaded from embedded:", members);
-          createMembersLog(members);
-          return;
-        }
-        throw new Error('Failed to fetch from embedded data');
-      } catch (err3) {
-        console.error('All member data sources failed, using default data', err3);
-        
-        // Default data as last resort with BOTH members - correct dates
-        const defaultMembers = [
-          {
-            id: 1,
-            username: "terry.franklin",
-            name: "Terry D. Franklin",
-            joinedDate: "2025-04-09",
-            totalSolar: 8.00,
-            totalDollars: 1088000,
-            isAnonymous: false,
-            lastDistributionDate: "2025-04-17"
-          },
-          {
-            id: 2,
-            username: "j.franklin",
-            name: "JF",
-            joinedDate: "2025-04-10",
-            totalSolar: 7.00,
-            totalDollars: 952000,
-            isAnonymous: false,
-            lastDistributionDate: "2025-04-17"
-          }
-        ];
-        
-        console.log("Using default members data:", defaultMembers);
-        createMembersLog(defaultMembers);
+      } catch (error) {
+        console.warn(`Failed to load members from ${source.name}:`, error);
       }
     }
-  }
+    
+    // If we get here, all sources failed
+    console.error('All member data sources failed');
+    
+    // Show error message to the user
+    if (membersLogContainer) {
+      membersLogContainer.innerHTML = `
+        <div style="padding: 20px; background-color: #fff3cd; border: 1px solid #ffeeba; border-radius: 4px; margin: 20px 0;">
+          <h3 style="color: #856404; margin-top: 0;">Unable to Load Member Data</h3>
+          <p>We encountered a problem loading the member list. This might be due to connectivity issues or a temporary server problem.</p>
+          <button onclick="window.loadMembers()" style="background-color: #7bc144; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">
+            Try Again
+          </button>
+        </div>
+      `;
+    }
+  };
 
   // Function to just update the member count without loading the full member log
   window.refreshMemberCount = async function() {
@@ -284,30 +314,17 @@ document.addEventListener('DOMContentLoaded', function() {
       // If we fail to get the count, try loading full members data instead
       loadMembers();
     }
+    return null;
   };
+
+  // Initialize by loading members data
+  loadMembers();
   
-  // Function to periodically check and update member count
-  window.startMemberCountUpdater = function(intervalSeconds = 30) {
-    // Update immediately
-    window.refreshMemberCount();
-    
-    // Then set up interval (if not already set)
-    if (!window.memberCountInterval) {
-      window.memberCountInterval = setInterval(() => {
-        window.refreshMemberCount();
-      }, intervalSeconds * 1000);
-      
-      console.log(`Started member count updater, checking every ${intervalSeconds} seconds`);
-    }
-  };
-  
-  // Load the members data
-  window.loadMembers();
-  
-  // Start member count updater after a short delay
-  setTimeout(() => {
-    if (typeof window.startMemberCountUpdater === 'function') {
-      window.startMemberCountUpdater(60); // Check every minute
-    }
-  }, 5000);
+  // Set up automatic refresh every 60 seconds if on a relevant page
+  if (window.location.pathname.includes('solar-generator') || 
+      window.location.pathname === '/' || 
+      window.location.pathname === '/index.html') {
+    console.log('Setting up automatic refresh for members data');
+    setInterval(loadMembers, 60000); // Refresh every 60 seconds
+  }
 });
