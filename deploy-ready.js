@@ -172,15 +172,23 @@ app.post('/api/signup', (req, res) => {
       last_distribution_date: joinDate
     };
     
-    // Find index of placeholder "You are next" entry
-    const placeholderIndex = members.findIndex(m => m.id === 'next' || m.name === 'You are next');
+    // First remove "You are next" placeholder if it exists
+    const placeholderIndex = members.findIndex(m => 
+      m.id === 'next' || m.name === 'You are next' || m.isPlaceholder === true || m.is_placeholder === true
+    );
     
+    let placeholder = null;
     if (placeholderIndex !== -1) {
-      // Insert new member before placeholder
-      members.splice(placeholderIndex, 0, newMember);
-    } else {
-      // If placeholder doesn't exist, just add to the end
-      members.push(newMember);
+      // Save the placeholder for later re-insertion
+      placeholder = members.splice(placeholderIndex, 1)[0];
+    }
+    
+    // Add the new member to the end of the list
+    members.push(newMember);
+    
+    // Add the "You are next" placeholder back at the end if it existed
+    if (placeholder) {
+      members.push(placeholder);
     }
     
     // Update files with new member

@@ -122,14 +122,30 @@ document.addEventListener('DOMContentLoaded', function() {
       sortedMembers.push(jf);
     }
     
+    // Find "You are next" placeholder
+    const youAreNext = visibleMembers.find(m => 
+      m.name === "You are next" || m.id === "next" || m.isPlaceholder === true
+    );
+    
     // Add any other members after the first two, sorted by joined date (oldest first)
+    // Exclude both TDF, JF, and "You are next" from this set
     const otherMembers = visibleMembers.filter(m => 
-      m.name !== "Terry D. Franklin" && m.name !== "JF"
+      m.name !== "Terry D. Franklin" && 
+      m.name !== "JF" && 
+      m.name !== "You are next" && 
+      m.id !== "next" && 
+      m.isPlaceholder !== true
     ).sort((a, b) => {
       return new Date(a.joinedDate) - new Date(b.joinedDate);
     });
     
+    // Add the regular members
     sortedMembers.push(...otherMembers);
+    
+    // Add "You are next" at the very end if it exists
+    if (youAreNext) {
+      sortedMembers.push(youAreNext);
+    }
 
     // Create and add each member entry (we've already filtered out anonymous members)
     sortedMembers.forEach(member => {
