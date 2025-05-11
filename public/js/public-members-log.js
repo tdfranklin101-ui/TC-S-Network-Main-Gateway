@@ -63,8 +63,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const entryDiv = document.createElement('div');
     entryDiv.className = 'members-log-entry';
 
-    // Format SOLAR with 2 decimal places
-    const solarFormatted = parseFloat(member.totalSolar).toFixed(2);
+    // Get SOLAR value, checking both formats to ensure we get the correct value
+    // For debugging
+    console.log(`Member ${member.name} data:`, {
+      totalSolar: member.totalSolar,
+      total_solar: member.total_solar,
+      type: typeof member.totalSolar
+    });
+    
+    // Force parse exact value from total_solar (string with 4 decimals) to ensure accuracy
+    const solarValue = parseFloat(member.total_solar || member.totalSolar);
+    
+    // Format SOLAR with 2 decimal places for display
+    const solarFormatted = solarValue.toFixed(2);
     
     // Format date
     const joinedDate = formatDate(member.joinedDate);
