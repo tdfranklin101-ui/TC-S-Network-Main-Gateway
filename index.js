@@ -1,9 +1,8 @@
 /**
- * The Current-See Deployment Server
+ * The Current-See Deployment Entrypoint
  * 
- * This server is designed to handle Replit deployments with proper
- * health checks and port configuration.
+ * This is the main entry point for the deployed application
  */
 
-// Simply require and run the deployment-ready server
+// Load the deployment-ready server
 require('./deploy-ready.js');
