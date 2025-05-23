@@ -44,6 +44,7 @@
   --gradient-subtle: linear-gradient(135deg, #f9f9f9, #d8eed6);
   --gradient-wallet: linear-gradient(135deg, #4CAF50, #2E7D32);
   --gradient-success: linear-gradient(135deg, #0057B8, #7bc144);
+  --gradient-book: linear-gradient(135deg, #3498db, #9b59b6);
   
   /* Text colors for high contrast */
   --text-on-light: #333333; /* Dark text on light backgrounds */
@@ -784,6 +785,11 @@ footer {
 
 .bg-gradient-success {
   background: var(--gradient-success);
+  color: var(--text-on-dark);
+}
+
+.bg-gradient-book {
+  background: var(--gradient-book);
   color: var(--text-on-dark);
 }
 
