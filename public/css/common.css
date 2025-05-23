@@ -937,6 +937,18 @@ footer {
   margin-bottom: 1.5rem;
 }
 
+.book-title {
+  font-style: italic;
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+}
+
+.book-author {
+  font-size: 0.95rem;
+  margin-bottom: 1.5rem;
+}
+
 .content-overlay .btn-primary {
   margin-top: 0.5rem;
 }
