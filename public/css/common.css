@@ -45,6 +45,7 @@
   --gradient-wallet: linear-gradient(135deg, #4CAF50, #2E7D32);
   --gradient-success: linear-gradient(135deg, #0057B8, #7bc144);
   --gradient-book: linear-gradient(135deg, #3498db, #9b59b6);
+  --gradient-video: linear-gradient(135deg, #e74c3c, #c0392b);
   
   /* Text colors for high contrast */
   --text-on-light: #333333; /* Dark text on light backgrounds */
@@ -790,6 +791,11 @@ footer {
 
 .bg-gradient-book {
   background: var(--gradient-book);
+  color: var(--text-on-dark);
+}
+
+.bg-gradient-video {
+  background: var(--gradient-video);
   color: var(--text-on-dark);
 }
 
