@@ -1,424 +1,368 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Current-See - Solar-Backed Worldwide Economy</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="/css/common.css">
-    
-    <style>
-        /* Additional styles specific to header that don't warrant being in common.css */
-        .navbar-brand {
-            display: flex;
-            align-items: center;
-        }
-        
-        .navbar-brand img {
-            margin-right: 10px;
-        }
-        
-        @media (max-width: 768px) {
-            .navbar-brand img {
-                width: 30px;
-                height: 30px;
-            }
-        }
-        
-        /* Hidden elements for solar_counter.js */
-        .hidden-counters {
-            display: none;
-        }
-        
-        /* Language selector styling */
-        #languageDropdown img {
-            margin-right: 5px;
-            border-radius: 2px;
-            vertical-align: middle;
-        }
-        
-        #google-translate-dropdown .dropdown-item {
-            display: flex;
-            align-items: center;
-            padding: 0.4rem 1rem;
-        }
-        
-        #google-translate-dropdown .dropdown-item img {
-            margin-right: 8px;
-            border-radius: 2px;
-        }
-        
-        /* Hide Google Translate widget bar */
-        .goog-te-banner-frame {
-            display: none !important;
-        }
-        
-        body {
-            top: 0 !important;
-        }
-        
-        .goog-te-gadget {
-            height: 0;
-            overflow: hidden;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Current-See</title>
+  <link rel="stylesheet" href="/css/common.css">
+  <link rel="stylesheet" href="/css/components/language-selector.css">
+  <link rel="stylesheet" href="/css/solar-counter.css">
+  <link rel="stylesheet" href="/css/global-solar-counter.css">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg">
+  <div class="wrapper">
+    <!-- HEADER_PLACEHOLDER -->
+
+    <main>
+      <!-- Hero Section with Solar Ray Watermark -->
+      <section class="hero-solar">
         <div class="container">
-            <a class="navbar-brand" href="/">
-                <img src="/branding_logo.png" alt="The Current-See Logo" width="30" height="30" style="margin-right: 5px;">
-                The Current-See
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/">Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/prototype.html">Prototype</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/solar-generator">Solar Generator</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/merch.html">Merchandise</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/wallet.html">My Solar</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/signup.html">Join</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/declaration.html">Solar Declaration</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/founder_note.html">Founder's Note</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/whitepapers.html">White Papers</a>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            More
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <li><a class="dropdown-item" href="/admin.html">Admin</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="languageDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <img src="https://cdn.jsdelivr.net/npm/flag-icon-css@3.5.0/flags/4x3/us.svg" width="20" height="15" alt="English" id="selected-language-flag"> Language
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown" id="google-translate-dropdown">
-                            <li><a class="dropdown-item" href="#" data-lang="en"><img src="https://cdn.jsdelivr.net/npm/flag-icon-css@3.5.0/flags/4x3/us.svg" width="20" height="15" alt="English"> English</a></li>
-                            <li><a class="dropdown-item" href="#" data-lang="es"><img src="https://cdn.jsdelivr.net/npm/flag-icon-css@3.5.0/flags/4x3/es.svg" width="20" height="15" alt="Spanish"> Español</a></li>
-                            <li><a class="dropdown-item" href="#" data-lang="fr"><img src="https://cdn.jsdelivr.net/npm/flag-icon-css@3.5.0/flags/4x3/fr.svg" width="20" height="15" alt="French"> Français</a></li>
-                            <li><a class="dropdown-item" href="#" data-lang="de"><img src="https://cdn.jsdelivr.net/npm/flag-icon-css@3.5.0/flags/4x3/de.svg" width="20" height="15" alt="German"> Deutsch</a></li>
-                            <li><a class="dropdown-item" href="#" data-lang="zh-CN"><img src="https://cdn.jsdelivr.net/npm/flag-icon-css@3.5.0/flags/4x3/cn.svg" width="20" height="15" alt="Chinese"> 中文</a></li>
-                            <li><a class="dropdown-item" href="#" data-lang="ja"><img src="https://cdn.jsdelivr.net/npm/flag-icon-css@3.5.0/flags/4x3/jp.svg" width="20" height="15" alt="Japanese"> 日本語</a></li>
-                            <li><a class="dropdown-item" href="#" data-lang="ko"><img src="https://cdn.jsdelivr.net/npm/flag-icon-css@3.5.0/flags/4x3/kr.svg" width="20" height="15" alt="Korean"> 한국어</a></li>
-                            <li><a class="dropdown-item" href="#" data-lang="ar"><img src="https://cdn.jsdelivr.net/npm/flag-icon-css@3.5.0/flags/4x3/sa.svg" width="20" height="15" alt="Arabic"> العربية</a></li>
-                            <li><a class="dropdown-item" href="#" data-lang="ru"><img src="https://cdn.jsdelivr.net/npm/flag-icon-css@3.5.0/flags/4x3/ru.svg" width="20" height="15" alt="Russian"> Русский</a></li>
-                            <li><a class="dropdown-item" href="#" data-lang="pt"><img src="https://cdn.jsdelivr.net/npm/flag-icon-css@3.5.0/flags/4x3/pt.svg" width="20" height="15" alt="Portuguese"> Português</a></li>
-                        </ul>
-                    </li>
-                </ul>
+          <div class="solar-counter-header">
+            <img src="/img/solar-conversion-icon.svg" alt="Solar Conversion" class="solar-app-icon" onerror="this.src='/img/solar-icon-default.svg'; this.onerror=null;">
+            <div class="solar-counter-title">
+              <h1>Welcome to The Current-See</h1>
+              <div class="pulse-dot"></div>
             </div>
-        </div>
-    </nav>
-    
-    
-<section class="hero">
-    <div class="container">
-        <h1 style="color: var(--accent-blue);">Welcome to The Current-See</h1>
-        <p style="color: var(--primary-blue);">Empowering a Planet of Billionaires with Solar Currency</p>
-        <div class="cta-buttons">
+          </div>
+          <p>Empowering a Planet of Billionaires with Solar Currency</p>
+          <div class="cta-buttons">
             <a href="/wallet.html" class="btn-primary">My Solar</a>
             <a href="/declaration.html" class="btn-secondary">Solar Declaration</a>
             <a href="/founder_note.html" class="btn-secondary">Founder's Note</a>
             <a href="/whitepapers.html" class="btn-secondary">White Papers</a>
-        </div>
-        
-        <!-- Prominent Join Button -->
-        <div class="join-button-container" style="margin-top: 30px; text-align: center;">
-            <a href="/signup.html" class="btn-join">
-                Join the 1,000 member prototype, start getting Solars today
-            </a>
-        </div>
-    </div>
-</section>
-
-<section class="solar-counter-section">
-    <div class="container">
-        <div class="solar-counter-container">
-            <h2 class="counter-title">Solar Generator</h2>
-            <div id="solar-counter" class="solar-counter-display">
-                <div class="counter-row">
-                    <div class="counter-label">Energy Generated:</div>
-                    <div class="counter-value"><span id="energy-display">Loading...</span> MkWh</div>
-                </div>
-                <div class="counter-row">
-                    <div class="counter-label">Value Created:</div>
-                    <div class="counter-value" id="money-display">Loading...</div>
-                </div>
-            </div>
-            <p class="mt-4" style="color: var(--primary-blue);">One Solar = 4,913 kWh (based on 1% of Earth's solar input divided among 8.5B people)</p>
-            <p><a href="/solar-generator" class="btn-primary mt-3">View Full Solar Generator</a></p>
-        </div>
-    </div>
-</section>
-
-<section class="member-counter-section">
-    <div class="container">
-        <div class="member-counter-container">
-            <h2 class="counter-title">Members Worldwide</h2>
-            <div id="member-counter" class="counter-value">Loading...</div>
-            <p style="color: var(--primary-blue);">Join the growing community of solar-powered individuals</p>
-        </div>
-    </div>
-</section>
-
-<section class="main-sections">
-    <div class="container">
-        <div class="row">
-            <div class="col-md-4 mb-4">
-                <div class="section-card">
-                    <img src="/solar_coin.png" alt="Prototype" style="max-width: 100px; height: auto;">
-                    <div class="section-content">
-                        <h3>Prototype</h3>
-                        <p>Experience our working prototype and see the future of solar-backed currency in action.</p>
-                        <a href="/prototype.html" class="btn-primary">Try Demo</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4 mb-4">
-                <div class="section-card">
-                    <img src="/solar_tshirt.png" alt="Merchandise" style="max-width: 100px; height: auto;">
-                    <div class="section-content">
-                        <h3>Merchandise</h3>
-                        <p>Support our mission by purchasing exclusive Current-See branded merchandise.</p>
-                        <a href="/merch.html" class="btn-primary">Shop Now</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4 mb-4">
-                <div class="section-card">
-                    <img src="/solar_background.png" alt="My Solar" style="max-width: 100px; height: auto;">
-                    <div class="section-content">
-                        <h3>My Solar</h3>
-                        <p>Sign up to receive daily solar distributions and track your growing solar balance.</p>
-                        <a href="/wallet.html" class="btn-primary">Join Today</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<section class="public-members-section">
-    <div class="container">
-        <div class="members-log-container">
-            <h2 class="members-log-title">Public Members Log</h2>
-            <div id="public-members-log"></div>
-        </div>
-    </div>
-</section>
-
-<section class="site-index-section">
-    <div class="container">
-        <div class="site-index-container">
-            <h2 class="site-index-title">Complete Site Index</h2>
-            <div class="site-index-grid">
-                <div class="site-index-column">
-                    <h3>Core Sections</h3>
-                    <ul>
-                        <li><a href="/">Home Page</a></li>
-                        <li><a href="/prototype.html">Prototype Demo</a></li>
-                        <li><a href="/solar-generator">Solar Generator</a></li>
-                        <li><a href="/merch.html">Current-See Merchandise</a></li>
-                        <li><a href="/wallet.html">My Solar Account</a></li>
-                    </ul>
-                </div>
-                <div class="site-index-column">
-                    <h3>Documentation</h3>
-                    <ul>
-                        <li><a href="/declaration.html">Solar Declaration</a></li>
-                        <li><a href="/whitepapers.html">White Papers</a></li>
-                        <li><a href="/founder_note.html">Founder's Note</a></li>
-                    </ul>
-                </div>
-                <div class="site-index-column">
-                    <h3>Coming Soon</h3>
-                    <ul>
-                        <li><span style="color: var(--primary-blue);">Solar Wallet Prototype</span></li>
-                        <li><span style="color: var(--primary-blue);">Interactive Visualization</span></li>
-                        <li><span style="color: var(--primary-blue);">Global Impact Dashboard</span></li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-    
-    <footer>
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-column">
-                    <h4>The Current-See</h4>
-                    <p>A new global economy backed by the Sun.<br>One Solar. One Earth. Daily.</p>
-                    <p style="margin-top: 10px;">The Current-See PBC, Inc.<br>
-                    <a href="mailto:hello@thecurrentsee.org" style="color:white; font-weight:700;">hello@thecurrentsee.org</a></p>
-                </div>
-                <div class="footer-column">
-                    <h4>Learn More</h4>
-                    <ul>
-                        <li><a href="/whitepapers.html">White Papers</a></li>
-                        <li><a href="/declaration.html">Solar Declaration</a></li>
-                        <li><a href="/founder_note.html">Founder's Note</a></li>
-                    </ul>
-                </div>
-                <div class="footer-column">
-                    <h4>Get Involved</h4>
-                    <ul>
-                        <li><a href="/wallet.html">Join The Current-See</a></li>
-                        <li><a href="/prototype.html">Try The Prototype</a></li>
-                        <li><a href="/merch.html">Support With Merch</a></li>
-                    </ul>
-                </div>
-                <div class="footer-column">
-                    <h4>Links</h4>
-                    <ul>
-                        <li><a href="/">Home</a></li>
-                        <li><a href="/admin.html">Admin</a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="copyright">
-                &copy; 2025 The Current-See PBC, Inc. All rights reserved.
-            </div>
-        </div>
-    </footer>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="/solar_counter.js"></script>
-    <script src="/js/public-members-log.js"></script>
-
-    <!-- Hidden elements for solar_counter.js -->
-    <div class="hidden-counters">
-        <div id="energy-counter"></div>
-        <div id="money-counter"></div>
-    </div>
-
-    <!-- Google Translate Element (hidden) -->
-    <div id="google_translate_element" style="display: none;"></div>
-
-<script>
-    // Google Translate Implementation
-    function googleTranslateElementInit() {
-        new google.translate.TranslateElement({
-            pageLanguage: 'en',
-            autoDisplay: false,
-            includedLanguages: 'ar,zh-CN,en,fr,de,ja,ko,pt,ru,es',
-            layout: google.translate.TranslateElement.InlineLayout.SIMPLE
-        }, 'google_translate_element');
-    }
-
-    // Handle language selection from our custom dropdown
-    document.addEventListener('DOMContentLoaded', function() {
-        // Get all language dropdown items
-        const languageItems = document.querySelectorAll('#google-translate-dropdown .dropdown-item');
-        
-        // Add click event to each language option
-        languageItems.forEach(item => {
-            item.addEventListener('click', function(e) {
-                e.preventDefault();
-                const lang = this.getAttribute('data-lang');
-                
-                // Update the selected language flag
-                const flagImg = this.querySelector('img').src;
-                document.getElementById('selected-language-flag').src = flagImg;
-                
-                // Trigger Google Translate
-                if (lang === 'en') {
-                    // For English, we reset to original
-                    const googleSelect = document.querySelector('.goog-te-combo');
-                    if (googleSelect) {
-                        googleSelect.value = '';
-                        googleSelect.dispatchEvent(new Event('change'));
-                    } else {
-                        // If Google Translate not yet loaded, reload the page
-                        location.reload();
-                    }
-                } else {
-                    // For other languages, use Google translate
-                    const googleDiv = document.querySelector('.goog-te-combo');
-                    if (googleDiv) {
-                        googleDiv.value = lang;
-                        googleDiv.dispatchEvent(new Event('change'));
-                    } else {
-                        // If Google Translate not loaded yet, load script
-                        loadGoogleTranslate();
-                        // And try again after a short delay
-                        setTimeout(() => {
-                            const retrySelect = document.querySelector('.goog-te-combo');
-                            if (retrySelect) {
-                                retrySelect.value = lang;
-                                retrySelect.dispatchEvent(new Event('change'));
-                            }
-                        }, 1000);
-                    }
-                }
-            });
-        });
-        
-        // Initial load of Google Translate script
-        loadGoogleTranslate();
-    });
-    
-    // Function to load Google Translate script
-    function loadGoogleTranslate() {
-        if (!window.google || !window.google.translate) {
-            const script = document.createElement('script');
-            script.src = '//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
-            document.head.appendChild(script);
-        }
-    }
-
-    // Fetch member count from API
-    document.addEventListener('DOMContentLoaded', function() {
-        fetchMemberCount();
-    });
-    
-    async function fetchMemberCount() {
-        try {
-            const response = await fetch('/api/member-count');
-            const data = await response.json();
+            <a href="/business_plan.html" class="btn-secondary">Business Plan</a>
+          </div>
+          
+          <!-- Simple Join Form -->
+          <div class="join-form-container" style="margin: 20px 0; max-width: 600px; background: rgba(255, 255, 255, 0.9); border-radius: 10px; padding: 20px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);">
+            <h3 style="margin-top: 0; color: #0057B8; font-size: 1.5rem;">Join Now & Start Getting Solars</h3>
             
-            // Update member counter with actual count
-            const memberCountElement = document.getElementById('member-counter');
-            if (memberCountElement) {
-                memberCountElement.textContent = data.count.toLocaleString();
-                
-                // Add animation effect
-                memberCountElement.classList.add('counter-highlight');
-                setTimeout(() => {
-                    memberCountElement.classList.remove('counter-highlight');
-                }, 1500);
+            <div id="join-success-message" style="display: none; background-color: rgba(123, 193, 68, 0.2); border-left: 4px solid #7bc144; padding: 10px 15px; margin: 10px 0; color: #2c5e1a; border-radius: 4px;">
+              <strong>Welcome to The Current-See!</strong> Your SOLAR journey has begun. Check the Members Log to see your name.
+            </div>
+            
+            <div id="join-error-message" style="display: none; background-color: rgba(231, 76, 60, 0.2); border-left: 4px solid #e74c3c; padding: 10px 15px; margin: 10px 0; color: #c0392b; border-radius: 4px;">
+              <strong>Something went wrong.</strong> <span id="error-details">Please try again.</span>
+            </div>
+            
+            <form id="quick-join-form" style="display: flex; flex-wrap: wrap; gap: 10px;">
+              <div style="flex: 1; min-width: 200px;">
+                <label for="join-name" style="display: block; margin-bottom: 5px; font-weight: 600; color: #444;">Your Name</label>
+                <input type="text" id="join-name" name="name" required 
+                       style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 16px;">
+              </div>
+              
+              <div style="flex: 1; min-width: 200px;">
+                <label for="join-email" style="display: block; margin-bottom: 5px; font-weight: 600; color: #444;">Email Address</label>
+                <input type="email" id="join-email" name="email" required 
+                       style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 16px;">
+              </div>
+              
+              <div style="width: 100%; margin-top: 10px;">
+                <button type="submit" style="background: linear-gradient(to right, #0057B8, #7bc144); color: white; border: none; padding: 12px 20px; font-size: 16px; border-radius: 5px; font-weight: 600; cursor: pointer; width: 100%; transition: all 0.3s ease;">
+                  Join & Start Getting SOLAR
+                </button>
+              </div>
+            </form>
+            
+            <p style="margin-top: 10px; font-size: 14px; color: #666; text-align: center;">
+              Already a member? <a href="/my-solar.html" style="color: #0057B8; text-decoration: none; font-weight: 600;">View your SOLAR</a>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Solar Generator Section -->
+      <section class="solar-generator-section">
+        <div class="container">
+          <h2>Solar Generator</h2>
+          <p class="section-subtitle">Powered by Solar-Conversion App</p>
+          <div class="solar-counter-container">
+            <div class="solar-counter-header">
+              <img src="/img/solar-conversion-icon.svg" alt="Solar Conversion" class="solar-app-icon" onerror="this.src='/img/solar-icon-default.svg'; this.onerror=null;">
+              <div class="solar-counter-title">
+                <h3>Live Solar Generation</h3>
+                <div class="pulse-dot"></div>
+              </div>
+            </div>
+            <div class="counter-row">
+              <div class="counter-label">Energy Generated Since April 7, 2025:</div>
+              <div id="energy-display" class="counter-value odometer-value">0.000000</div> <span class="counter-unit">MkWh</span>
+            </div>
+            <div class="counter-row">
+              <div class="counter-label">Value Created:</div>
+              <div id="money-display" class="counter-value odometer-value">$0</div>
+            </div>
+            <div class="counter-info" id="kwh-rate-display">
+              1 Solar = 4,913 kWh (based on 1% of Earth's solar input divided among 8.5B people)
+            </div>
+          </div>
+          <div class="view-all-button">
+            <a href="/solar-generator.html" class="btn-secondary">View Full Solar Generator</a>
+          </div>
+        </div>
+      </section>
+
+      <!-- Members Section -->
+      <section class="members-section sun-ray-watermark bg-gradient-subtle">
+        <div class="container">
+          <div class="content-overlay">
+            <h2>Members Worldwide</h2>
+            <div class="member-count" id="member-count">2</div>
+            <p>Join the growing community of solar-powered individuals</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Global Solar Counter Section -->
+      <section class="global-solar-section sun-ray-watermark bg-gradient-solar">
+        <div class="container">
+          <div class="content-overlay">
+            <h2 class="text-center">LIVE Solar Generation</h2>
+            
+            <div class="global-counter-container">
+              <div class="global-counter-row">
+                <div class="global-counter-label">Total SOLAR Generated Since April 7, 2025:</div>
+                <div class="global-counter-value"><span id="global-solar-count">0.0000</span></div>
+              </div>
+              
+              <div class="global-counter-row">
+                <div class="global-counter-label">Energy Generated:</div>
+                <div class="global-counter-value"><span id="global-energy-count">0.000000</span> MkWh</div>
+              </div>
+              
+              <div class="global-counter-row">
+                <div class="global-counter-label">Value Created:</div>
+                <div class="global-counter-value"><span id="global-value-count">$0.00</span></div>
+              </div>
+              
+              <div class="global-counter-info">
+                1 Solar = 4,913 kWh (based on 1% of Earth's solar input divided among 8.5B people)
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TC-S Wallet Section -->
+      <section class="wallet-section sun-ray-watermark bg-gradient-success">
+        <div class="container">
+          <div class="content-overlay">
+            <h2>TC-S AI Wallet Now Available!</h2>
+            <p>Experience our brand new AI-powered wallet to manage your SOLAR allocations with intelligent features.</p>
+            <div class="demo-button">
+              <a href="https://cross-platform-mobile-tdfranklin101.replit.app/welcome-orientation.html" class="btn-primary" style="background: linear-gradient(to right, #7bc144, #0057B8); font-weight: bold;">Join TC-S Wallet</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Book Section -->
+      <section class="book-section sun-ray-watermark bg-gradient-book">
+        <div class="container">
+          <div class="content-overlay">
+            <h2>The Solar Standard</h2>
+            <p class="book-title">"The Solar Standard - The Currency For Abundance"</p>
+            <p class="book-author">by: Terry D. Franklin and TC-S Agent #0001 (May 2025)</p>
+            <div class="shop-button">
+              <a href="https://books2read.com/u/4jx87l" class="btn-primary" target="_blank" rel="noopener noreferrer">Get the Book</a>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <!-- Podcast Section -->
+      <section class="podcast-section sun-ray-watermark bg-gradient-podcast">
+        <div class="container">
+          <div class="content-overlay">
+            <h2>Podcast Discussion</h2>
+            <p>Listen to our in-depth discussion about the Solar Standard and how it's revolutionizing energy economics.</p>
+            <div class="podcast-button">
+              <a href="https://youtu.be/FUXafe7HuTg?si=N3hLi6sYOaHQGCDI" class="btn-primary" target="_blank" rel="noopener noreferrer">Listen Now</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Merchandise Section -->
+      <section class="merchandise-section sun-ray-watermark bg-gradient-solar">
+        <div class="container">
+          <div class="content-overlay">
+            <h2>Merchandise</h2>
+            <p>Support our mission by purchasing exclusive Current-See branded merchandise.</p>
+            <div class="shop-button">
+              <a href="/merch.html" class="btn-primary">Shop Now</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- My Solar Section -->
+      <section class="my-solar-section sun-ray-watermark bg-gradient-wallet">
+        <div class="container">
+          <div class="content-overlay">
+            <h2>My Solar</h2>
+            <p>Sign up to receive daily solar distributions and track your growing solar balance.</p>
+            <div class="join-today-button">
+              <a href="#quick-join-form" class="btn-primary" onclick="document.getElementById('join-name').focus();">Join Today</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Public Members Log -->
+      <section class="members-log-section bg-gradient-subtle">
+        <div class="container">
+          <h2>Public Members Log</h2>
+          <div id="public-members-log"></div>
+        </div>
+      </section>
+    </main>
+
+    <!-- FOOTER_PLACEHOLDER -->
+  </div>
+
+  <!-- Mobile Menu Script -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
+      const mobileNav = document.querySelector('.mobile-nav');
+      
+      if (mobileMenuToggle && mobileNav) {
+        mobileMenuToggle.addEventListener('click', () => {
+          mobileMenuToggle.classList.toggle('open');
+          mobileNav.classList.toggle('mobile-nav-active');
+        });
+      }
+    });
+  </script>
+
+  <!-- Real-Time Solar Counter Script -->
+  <script src="/js/real_time_solar_counter.js"></script>
+  
+  <!-- Global Solar Counter Script -->
+  <script src="/js/global-solar-counter.js"></script>
+
+  <!-- Public Members Log Script -->
+  <!-- Include embedded members data first so it's available to the members log script -->
+  <script src="/embedded-members?v=20250511"></script>
+  <script src="/js/public-members-log.js?v=20250511"></script>
+  
+  <!-- Voice Assistant Script -->
+  <script src="/js/voice-assistant.js"></script>
+
+  <!-- Language Translator -->
+  <script src="/js/language-translator.js"></script>
+  
+  <!-- Join Form Submission Script -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const joinForm = document.getElementById('quick-join-form');
+      const successMessage = document.getElementById('join-success-message');
+      const errorMessage = document.getElementById('join-error-message');
+      const errorDetails = document.getElementById('error-details');
+      
+      if (joinForm) {
+        joinForm.addEventListener('submit', function(e) {
+          e.preventDefault();
+          
+          // Get form data
+          const nameInput = document.getElementById('join-name');
+          const emailInput = document.getElementById('join-email');
+          
+          if (!nameInput.value || !emailInput.value) {
+            showError('Please fill in all fields');
+            return;
+          }
+          
+          // Hide previous messages
+          successMessage.style.display = 'none';
+          errorMessage.style.display = 'none';
+          
+          // Prepare form data
+          const formData = {
+            name: nameInput.value,
+            email: emailInput.value
+          };
+          
+          // Show loading state on button
+          const submitButton = joinForm.querySelector('button[type="submit"]');
+          const originalButtonText = submitButton.innerHTML;
+          submitButton.innerHTML = 'Processing...';
+          submitButton.disabled = true;
+          
+          // Send API request
+          fetch('/api/signup', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+          })
+          .then(response => {
+            if (!response.ok) {
+              return response.json().then(data => {
+                throw new Error(data.error || 'Registration failed');
+              });
             }
-        } catch (error) {
-            console.error('Error fetching member count:', error);
-            // Fallback if there's an error
-            const memberCountElement = document.getElementById('member-counter');
-            if (memberCountElement) {
-                memberCountElement.textContent = 'Join Today!';
+            return response.json();
+          })
+          .then(data => {
+            // Success
+            showSuccess();
+            joinForm.reset();
+            
+            // Update member count immediately
+            if (data.totalMembers && typeof window.refreshMemberCount === 'function') {
+              // Use the dedicated function if available
+              window.refreshMemberCount();
+            } else {
+              // Fallback to manual update
+              const memberCountElement = document.getElementById('member-count');
+              if (memberCountElement && data.member) {
+                // Get current count as a number
+                const currentCount = parseInt(memberCountElement.textContent || '0', 10);
+                // Add 1 or set to the total number if we have it
+                memberCountElement.textContent = data.totalMembers || (currentCount + 1);
+              }
             }
-        }
-    }
-</script>
+            
+            // Refresh the members log after successful signup
+            setTimeout(() => {
+              if (typeof loadMembers === 'function') {
+                loadMembers();
+              } else {
+                location.reload();
+              }
+            }, 2000);
+          })
+          .catch(error => {
+            showError(error.message || 'Failed to join. Please try again.');
+          })
+          .finally(() => {
+            // Reset button state
+            submitButton.innerHTML = originalButtonText;
+            submitButton.disabled = false;
+          });
+        });
+      }
+      
+      function showSuccess() {
+        successMessage.style.display = 'block';
+        errorMessage.style.display = 'none';
+        // Scroll to the success message
+        successMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      
+      function showError(message) {
+        errorMessage.style.display = 'block';
+        successMessage.style.display = 'none';
+        errorDetails.textContent = message || 'Please try again.';
+        // Scroll to the error message
+        errorMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+  </script>
 </body>
 </html>
