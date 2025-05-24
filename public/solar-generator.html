@@ -166,9 +166,9 @@
                 </div>
                 
                 <div class="counter solar-graphic-counter">
-                    <div class="counter-label">Equivalent Monetary Value</div>
-                    <div id="money-display" class="counter-value">$0</div>
-                    <div class="counter-label">USD</div>
+                    <div class="counter-label">Equivalent SOLAR Units</div>
+                    <div id="solar-display" class="counter-value">0.0000</div>
+                    <div class="counter-label">SOLAR</div>
                     <div class="solar-icon-container">
                         <img src="/img/solar-icon-default.svg" alt="Solar Energy Icon" class="solar-icon" onerror="this.src='/img/solar-conversion-icon.svg';" />
                     </div>
@@ -177,6 +177,7 @@
             
             <div class="solar-equation">
                 <p>1 Solar = 4,913 kWh (based on 1% of Earth's solar input divided among 8.5B people)</p>
+                <p><span id="kwh-rate-display"></span></p>
             </div>
             
             <div class="cta-section">
@@ -223,19 +224,19 @@
             
             // Start diagnostic animation to show it's working
             const energyDisplay = document.getElementById('energy-display');
-            const moneyDisplay = document.getElementById('money-display');
+            const solarDisplay = document.getElementById('solar-display');
             
-            if (energyDisplay && moneyDisplay) {
+            if (energyDisplay && solarDisplay) {
                 // Brief flash to show it's active
                 energyDisplay.style.transition = 'color 0.5s ease';
-                moneyDisplay.style.transition = 'color 0.5s ease';
+                solarDisplay.style.transition = 'color 0.5s ease';
                 
                 energyDisplay.style.color = '#FFD700';
-                moneyDisplay.style.color = '#FFD700';
+                solarDisplay.style.color = '#FFD700';
                 
                 setTimeout(() => {
                     energyDisplay.style.color = '#7bc144';
-                    moneyDisplay.style.color = '#7bc144';
+                    solarDisplay.style.color = '#7bc144';
                 }, 500);
             }
             

@@ -57,16 +57,15 @@ function initSolarCounter() {
   // 4,913 kWh per SOLAR per day = 0.056863425925926 kWh per second per person
   // World population of 8.5 billion = 483,333,333.5 kWh per second total
   const kwhPerSecond = 483333333.5; // kWh generated per second globally
-  const kwhPerSolar = 4913; // kWh per SOLAR unit
   
   console.log("Solar counter starting with base date:", baseDate);
   console.log("kWh per second:", kwhPerSecond);
   
   // Start counter animation
-  updateCounter(baseDate, kwhPerSecond, kwhPerSolar);
+  updateCounter(baseDate, kwhPerSecond);
 }
 
-function updateCounter(baseDate, kwhPerSecond, kwhPerSolar) {
+function updateCounter(baseDate, kwhPerSecond) {
   // Calculate elapsed time since base date
   const currentTime = new Date();
   const elapsedMs = currentTime.getTime() - baseDate.getTime();
@@ -78,29 +77,26 @@ function updateCounter(baseDate, kwhPerSecond, kwhPerSolar) {
   // Convert to MkWh (Million kWh) for display
   const currentMkWh = totalKwh / 1000000;
   
-  // Format value with proper precision for energy display
+  // Format value with proper precision
   const formattedMkWh = formatWithDigitAnimation(
     currentMkWh.toFixed(6), 
     document.getElementById('energy-display')
   );
   
   // Calculate SOLAR units (1 SOLAR = 4,913 kWh)
-  const totalSolar = totalKwh / kwhPerSolar;
+  const totalSolar = totalKwh / 4913;
   
   // Calculate and update solar units counter if element exists
   const solarDisplay = document.getElementById('solar-display');
   if (solarDisplay) {
-    // Format SOLAR with W.0000 format (billions with 4 decimal places)
-    const formattedSolar = formatWithDigitAnimation(
-      (totalSolar >= 1000000000 ? 
-       (totalSolar / 1000000000).toFixed(4) + ' B' : 
-       totalSolar.toFixed(4)),
+    formatWithDigitAnimation(
+      totalSolar.toFixed(4),
       solarDisplay
     );
   }
   
   // Request next animation frame
-  requestAnimationFrame(() => updateCounter(baseDate, kwhPerSecond, kwhPerSolar));
+  requestAnimationFrame(() => updateCounter(baseDate, kwhPerSecond));
 }
 
 function formatWithDigitAnimation(value, element) {
