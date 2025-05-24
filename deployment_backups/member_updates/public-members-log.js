@@ -367,143 +367,25 @@ document.addEventListener('DOMContentLoaded', function() {
       // Add timestamp to prevent caching
       const timestamp = new Date().getTime();
       
-      // Try multiple approaches to get the member count
-      
-      // First try the dedicated API endpoint if it exists
-      try {
-        const response = await fetch(`/api/member-count?t=${timestamp}`, {
-          cache: 'no-cache',
-          headers: {
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache'
-          }
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          updateMemberCount(data.count);
-          return data.count;
+      const response = await fetch(`/api/member-count?t=${timestamp}`, {
+        cache: 'no-cache',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
         }
-      } catch (error) {
-        console.log("Member count API not available, trying alternatives...");
-      }
+      });
       
-      // If API fails, try to count from members list
-      try {
-        const membersResponse = await fetch(`/api/members.json?t=${timestamp}`, {
-          cache: 'no-cache',
-          headers: {
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache'
-          }
-        });
-        
-        if (membersResponse.ok) {
-          const members = await membersResponse.json();
-          if (Array.isArray(members)) {
-            // Filter out reserve accounts and placeholders for the count
-            const actualMemberCount = members.filter(m => 
-              !m.is_reserve && 
-              m.name !== "You are next" && 
-              m.id !== "next" && 
-              !m.isPlaceholder && 
-              !m.is_placeholder
-            ).length;
-            
-            updateMemberCount(actualMemberCount);
-            return actualMemberCount;
-          }
-        }
-      } catch (error) {
-        console.warn("Could not fetch members list for counting", error);
-      }
-      
-      // Final fallback: try embedded data
-      if (window.EMBEDDED_MEMBERS && Array.isArray(window.EMBEDDED_MEMBERS)) {
-        const actualMemberCount = window.EMBEDDED_MEMBERS.filter(m => 
-          !m.is_reserve && 
-          m.name !== "You are next" && 
-          m.id !== "next" && 
-          !m.isPlaceholder && 
-          !m.is_placeholder
-        ).length;
-        
-        updateMemberCount(actualMemberCount);
-        return actualMemberCount;
+      if (response.ok) {
+        const data = await response.json();
+        updateMemberCount(data.count);
+        return data.count;
       }
     } catch (err) {
-      console.warn('Failed to refresh member count through all methods', err);
-      // If all else fails, try loading full members data instead
+      console.warn('Failed to refresh member count', err);
+      // If we fail to get the count, try loading full members data instead
       loadMembers();
     }
     return null;
-  };
-  
-  // Function to create a standalone member counter that can be placed anywhere
-  window.createStandaloneMemberCounter = function(containerId) {
-    const container = document.getElementById(containerId);
-    if (!container) return;
-    
-    // Try to get count from various sources
-    let memberCount = 0;
-    
-    if (typeof window.lastKnownMemberCount === 'number') {
-      memberCount = window.lastKnownMemberCount;
-    } else if (window.EMBEDDED_MEMBERS && Array.isArray(window.EMBEDDED_MEMBERS)) {
-      memberCount = window.EMBEDDED_MEMBERS.filter(m => 
-        !m.is_reserve && 
-        m.name !== "You are next" && 
-        m.id !== "next" && 
-        !m.isPlaceholder && 
-        !m.is_placeholder
-      ).length;
-    }
-    
-    // Create the counter UI
-    const counterDiv = document.createElement('div');
-    counterDiv.className = 'standalone-member-counter';
-    counterDiv.style.textAlign = 'center';
-    counterDiv.style.padding = '15px';
-    counterDiv.style.backgroundColor = 'rgba(0, 87, 184, 0.05)';
-    counterDiv.style.borderRadius = '10px';
-    counterDiv.style.boxShadow = '0 3px 8px rgba(0, 0, 0, 0.05)';
-    
-    counterDiv.innerHTML = `
-      <div style="font-size: 1.2rem; color: #555;">Current Members</div>
-      <div id="standalone-count-value" style="font-size: 2.5rem; font-weight: bold; color: #0057B8; margin: 10px 0; font-family: 'Roboto Mono', monospace;">${memberCount}</div>
-      <div style="margin-top: 10px;">
-        <a href="https://cross-platform-mobile-tdfranklin101.replit.app/welcome-orientation.html" 
-           style="display: inline-block; padding: 5px 15px; background: linear-gradient(to right, #7bc144, #0057B8); 
-                  color: white; text-decoration: none; border-radius: 20px; font-weight: bold; font-size: 0.8rem;">
-          Join Now
-        </a>
-      </div>
-    `;
-    
-    container.appendChild(counterDiv);
-    
-    // Set up auto-refresh
-    setInterval(() => {
-      refreshMemberCount().then(count => {
-        if (count) {
-          const countElement = document.getElementById('standalone-count-value');
-          if (countElement) {
-            countElement.textContent = count;
-            
-            // Add a highlight animation
-            countElement.style.transition = 'color 0.5s ease';
-            const originalColor = countElement.style.color || '#0057B8';
-            countElement.style.color = '#7bc144';
-            setTimeout(() => {
-              countElement.style.color = originalColor;
-            }, 1000);
-          }
-        }
-      }).catch(console.error);
-    }, 60000); // Refresh every minute
-    
-    // Do an immediate refresh
-    refreshMemberCount().catch(console.error);
   };
 
   // Force a fresh load of members data
