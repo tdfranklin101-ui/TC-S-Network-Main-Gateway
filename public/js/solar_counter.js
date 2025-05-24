@@ -168,11 +168,11 @@ function updateCounter(initialData) {
     
     // Add kWh generated since the data was fetched - ensure this is increasing
     const additionalKwh = secondsSinceFetch * initialData.kwhPerSecond;
-    const additionalDollars = additionalKwh * initialData.dollarPerKwh;
+    // Dollar value references removed as requested
     
     // Current total values
     const currentKwh = initialData.totalKwh + additionalKwh;
-    const currentDollars = initialData.totalDollars + additionalDollars;
+    // Dollar calculations removed as requested
     
     // Total elapsed seconds since base date (April 7, 2025)
     const totalElapsedSeconds = initialData.elapsedSeconds + secondsSinceFetch;
@@ -189,10 +189,7 @@ function updateCounter(initialData) {
         maximumFractionDigits: 6
     });
     
-    const formattedDollars = currentDollars.toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-    });
+    // Dollar value formatting removed as requested
     
     // Update main counter
     const mainCounter = document.getElementById('main-counter');
@@ -202,7 +199,7 @@ function updateCounter(initialData) {
         
         // Generate HTML with spans for each character to enable animation of changing digits
         const mkwhParts = formattedMkWh.split('');
-        const dollarParts = formattedDollars.split('');
+        // Dollar parts removed as requested
         
         let mkwhHtml = '';
         for (let i = 0; i < mkwhParts.length; i++) {
@@ -219,14 +216,7 @@ function updateCounter(initialData) {
             }
         }
         
-        let dollarHtml = '';
-        for (let i = 0; i < dollarParts.length; i++) {
-            // Animate the cents in dollar value too
-            const isAnimated = i >= dollarParts.length - 2;
-            dollarHtml += isAnimated 
-                ? `<span class="digit-animate">${dollarParts[i]}</span>` 
-                : `<span>${dollarParts[i]}</span>`;
-        }
+        // Dollar HTML generation removed as requested
         
         // Add enhanced styling for digit animation
         if (!document.getElementById('digit-animation-style')) {

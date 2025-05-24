@@ -10,7 +10,7 @@ const START_DATE = new Date('2025-04-07T00:00:00Z');
 const SOLAR_PER_DAY = 8.5 * 1000000000; // 8.5 billion
 const SOLAR_PER_SECOND = SOLAR_PER_DAY / (24 * 60 * 60);
 const KWH_PER_SOLAR = 4913;
-const DOLLARS_PER_SOLAR = 136000;
+// Dollar conversion removed as requested
 
 // Variables for the rolling animation
 let targetSolarValue = 0;
@@ -24,10 +24,7 @@ function formatNumber(num, decimals = 4) {
   return wholePart.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") + "." + decimalPart;
 }
 
-// Format currency with commas and 2 decimal places
-function formatCurrency(amount) {
-  return "$" + amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-}
+// Currency formatting removed as requested
 
 // Calculate the total SOLAR generated since start date
 function calculateTotalSolar() {
@@ -41,10 +38,7 @@ function calculateEnergy(solar) {
   return solar * KWH_PER_SOLAR / 1000000; // Convert to million kWh
 }
 
-// Calculate value in dollars
-function calculateValue(solar) {
-  return solar * DOLLARS_PER_SOLAR;
-}
+// Dollar value calculation removed as requested
 
 // Update counter display with rolling animation
 function updateCounterWithAnimation() {
@@ -70,7 +64,7 @@ function updateCounterWithAnimation() {
   
   // Calculate derived values
   const energy = calculateEnergy(currentDisplayValue);
-  const value = calculateValue(currentDisplayValue);
+  // Dollar value calculation removed
   
   // Update display elements
   if (document.getElementById('global-solar-count')) {
@@ -81,9 +75,7 @@ function updateCounterWithAnimation() {
     document.getElementById('global-energy-count').textContent = formatNumber(energy, 6);
   }
   
-  if (document.getElementById('global-value-count')) {
-    document.getElementById('global-value-count').textContent = formatCurrency(value.toFixed(2));
-  }
+  // Dollar value display removed as requested
   
   // Continue animation
   animationFrameId = requestAnimationFrame(updateCounterWithAnimation);

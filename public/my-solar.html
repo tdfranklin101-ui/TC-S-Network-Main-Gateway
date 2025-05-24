@@ -557,10 +557,7 @@
                             <div class="counter-label">Energy Generated Since April 7, 2025:</div>
                             <div id="energy-display" class="counter-value odometer-value">0.000000</div> <span class="counter-unit">MkWh</span>
                         </div>
-                        <div class="counter-row">
-                            <div class="counter-label">Value Created:</div>
-                            <div id="money-display" class="counter-value odometer-value">$0</div>
-                        </div>
+                        <!-- Value Created row removed as requested -->
                         <div class="counter-info" id="kwh-rate-display">
                             1 Solar = 4,913 kWh (based on 1% of Earth's solar input divided among 8.5B people)
                         </div>
@@ -582,12 +579,7 @@
                         <div class="stat-label">Total kWh</div>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="card stat-card">
-                        <div class="stat-value" id="total-dollars">$0.00</div>
-                        <div class="stat-label">Total Value (USD)</div>
-                    </div>
-                </div>
+                <!-- Total Value card removed as requested -->
             </div>
 
             <div class="row mt-4">
@@ -754,15 +746,13 @@
                 // 1 SOLAR per day + 0.01918 initial bonus
                 const calculatedSolar = daysDiff + 0.01918;
                 
-                // Calculate KWh and dollars based on new SOLAR amount
+                // Calculate KWh based on new SOLAR amount
                 const kwhPerSolar = 4913; // 4,913 kWh per SOLAR
-                const usdPerSolar = 136000; // $136,000 per SOLAR
                 const calculatedKwh = calculatedSolar * kwhPerSolar;
-                const calculatedDollars = calculatedSolar * usdPerSolar;
                 
                 document.getElementById('total-solar').textContent = calculatedSolar.toFixed(4);
                 document.getElementById('total-kwh').textContent = calculatedKwh.toLocaleString(undefined, { maximumFractionDigits: 2 });
-                document.getElementById('total-dollars').textContent = `$${calculatedDollars.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+                // Dollar values removed as requested
             }
         }
 
@@ -788,7 +778,7 @@
             if (distributions.length === 0) {
                 container.innerHTML = `
                     <div class="alert alert-info">
-                        You don't have any distributions yet. Distributions of 1 SOLAR (and its equivalent in kWh and USD) are credited daily to your account.
+                        You don't have any distributions yet. Distributions of 1 SOLAR (and its equivalent in kWh) are credited daily to your account.
                     </div>
                 `;
                 return;
@@ -813,10 +803,7 @@
                                 <small class="text-muted">kWh</small>
                                 <div>${Number(dist.kwhAmount).toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
                             </div>
-                            <div class="col-md-4">
-                                <small class="text-muted">Value (USD)</small>
-                                <div>$${Number(dist.dollarValue).toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
-                            </div>
+                            <!-- Dollar value column removed as requested -->
                         </div>
                     </div>
                 `;

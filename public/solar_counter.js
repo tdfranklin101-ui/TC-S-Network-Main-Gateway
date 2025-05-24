@@ -81,10 +81,13 @@ function initCounter(data) {
     return;
   }
   
-  if (!energyDisplay || !moneyDisplay) {
-    console.error('Counter display elements not found');
+  if (!energyDisplay) {
+    console.error('Energy display element not found');
     return;
   }
+  
+  // Money display is now optional (removed from UI)
+  const hasMoneyDisplay = moneyDisplay !== null;
   
   styleCounter(energyDisplay);
   styleCounter(moneyDisplay);
@@ -97,18 +100,18 @@ function initCounter(data) {
   
   // Display initial values
   energyCounter.textContent = formatMkwh(currentKwh / 1000000);
-  moneyCounter.textContent = formatDollars(currentDollars);
+  if (moneyCounter) moneyCounter.textContent = formatDollars(currentDollars);
   
   energyDisplay.textContent = formatMkwh(currentKwh / 1000000);
-  moneyDisplay.textContent = formatDollars(currentDollars);
+  if (moneyDisplay) moneyDisplay.textContent = formatDollars(currentDollars);
   
   // Add highlight effect
   energyDisplay.classList.add('counter-highlight');
-  moneyDisplay.classList.add('counter-highlight');
+  if (moneyDisplay) moneyDisplay.classList.add('counter-highlight');
   
   setTimeout(() => {
     energyDisplay.classList.remove('counter-highlight');
-    moneyDisplay.classList.remove('counter-highlight');
+    if (moneyDisplay) moneyDisplay.classList.remove('counter-highlight');
   }, 1500);
   
   // Set as initialized
@@ -135,12 +138,19 @@ function updateCounter(data) {
   lastUpdateTime = Date.now();
   
   // Add highlight effect
-  if (energyDisplay && moneyDisplay) {
+  if (energyDisplay) {
     energyDisplay.classList.add('counter-highlight');
-    moneyDisplay.classList.add('counter-highlight');
     
     setTimeout(() => {
       energyDisplay.classList.remove('counter-highlight');
+    }, 1500);
+  }
+  
+  // Apply to money display only if it exists
+  if (moneyDisplay) {
+    moneyDisplay.classList.add('counter-highlight');
+    
+    setTimeout(() => {
       moneyDisplay.classList.remove('counter-highlight');
     }, 1500);
   }
@@ -171,6 +181,7 @@ function animateCounters(timestamp) {
     energyDisplay.textContent = formatMkwh(interpolatedKwh / 1000000);
   }
   
+  // Money display has been removed from UI, but keep compatibility for other pages
   if (moneyDisplay) {
     moneyDisplay.textContent = formatDollars(interpolatedDollars);
   }

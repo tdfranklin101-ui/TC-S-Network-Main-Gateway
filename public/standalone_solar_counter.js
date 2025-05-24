@@ -57,10 +57,12 @@ function initCounter() {
   memberDisplay = document.getElementById('member-count');
   individualsDisplay = document.getElementById('solar-per-individual');
   
-  if (!energyDisplay || !moneyDisplay) {
-    console.error('Counter display elements not found');
+  if (!energyDisplay) {
+    console.error('Energy display element not found');
     return;
   }
+  
+  // Money display is now optional (removed from UI)
   
   // Add styles programmatically
   const style = document.createElement('style');
