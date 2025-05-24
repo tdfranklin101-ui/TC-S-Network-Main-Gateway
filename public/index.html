@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="/css/common.css">
   <link rel="stylesheet" href="/css/components/language-selector.css">
   <link rel="stylesheet" href="/css/solar-counter.css">
+  <link rel="stylesheet" href="/css/global-solar-counter.css">
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -114,6 +115,36 @@
         </div>
       </section>
 
+      <!-- Global Solar Counter Section -->
+      <section class="global-solar-section sun-ray-watermark bg-gradient-solar">
+        <div class="container">
+          <div class="content-overlay">
+            <h2 class="text-center">LIVE Solar Generation</h2>
+            
+            <div class="global-counter-container">
+              <div class="global-counter-row">
+                <div class="global-counter-label">Total SOLAR Generated Since April 7, 2025:</div>
+                <div class="global-counter-value"><span id="global-solar-count">0.0000</span></div>
+              </div>
+              
+              <div class="global-counter-row">
+                <div class="global-counter-label">Energy Generated:</div>
+                <div class="global-counter-value"><span id="global-energy-count">0.000000</span> MkWh</div>
+              </div>
+              
+              <div class="global-counter-row">
+                <div class="global-counter-label">Value Created:</div>
+                <div class="global-counter-value"><span id="global-value-count">$0.00</span></div>
+              </div>
+              
+              <div class="global-counter-info">
+                1 Solar = 4,913 kWh (based on 1% of Earth's solar input divided among 8.5B people)
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- TC-S Wallet Section -->
       <section class="wallet-section sun-ray-watermark bg-gradient-success">
         <div class="container">
@@ -209,6 +240,9 @@
 
   <!-- Real-Time Solar Counter Script -->
   <script src="/js/real_time_solar_counter.js"></script>
+  
+  <!-- Global Solar Counter Script -->
+  <script src="/js/global-solar-counter.js"></script>
 
   <!-- Public Members Log Script -->
   <!-- Include embedded members data first so it's available to the members log script -->
