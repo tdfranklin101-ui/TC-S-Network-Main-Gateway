@@ -16,7 +16,6 @@ const serveStatic = require('serve-static');
 
 // Constants for SOLAR calculations
 const SOLAR_CONSTANTS = {
-  USD_PER_SOLAR: 136000, // $136,000 per SOLAR
   KWH_PER_SOLAR: 4913    // 4,913 kWh per SOLAR
 };
 
@@ -162,8 +161,7 @@ app.post('/api/signup', (req, res) => {
       signup_timestamp: today.toISOString(),
       totalSolar: 1,
       total_solar: "1.0000",
-      totalDollars: SOLAR_CONSTANTS.USD_PER_SOLAR,
-      total_dollars: SOLAR_CONSTANTS.USD_PER_SOLAR.toString(),
+      // Dollar references removed as requested
       isAnonymous: false,
       is_anonymous: false,
       isPlaceholder: false,
@@ -284,9 +282,8 @@ function processDailyDistribution() {
       member.total_solar = newTotal.toFixed(4);
       
       // Calculate dollar value
-      const dollarValue = newTotal * SOLAR_CONSTANTS.USD_PER_SOLAR;
-      member.totalDollars = dollarValue;
-      member.total_dollars = dollarValue.toFixed(4);
+      // Dollar value calculation removed as requested
+      // Dollar values removed as requested
       
       // Update lastDistributionDate (both formats)
       member.lastDistributionDate = today;

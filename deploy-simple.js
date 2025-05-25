@@ -25,7 +25,7 @@ const SOLAR_CONSTANTS = {
   METERS_PER_KM2: 1000000, // Square meters per square km
   GLOBAL_POPULATION: 8500000000, // Approximate global population
   SOLAR_PERCENT: 0.01, // 1% allocation for humanity
-  USD_PER_SOLAR: 136000, // Current-See conversion rate ($136,000 per SOLAR)
+  // USD_PER_SOLAR reference removed
   KWH_PER_SOLAR: 4913, // kWh per SOLAR
   GENERATION_START_DATE: new Date('2025-04-07T00:00:00Z') // Solar tracking start date
 };
@@ -63,7 +63,7 @@ function calculateTotalValue() {
   const totalSolar = totalEnergy / kwhPerSolar;
   
   // Calculate value in USD
-  return totalSolar * SOLAR_CONSTANTS.USD_PER_SOLAR;
+  return 0; // Dollar value calculation removed as requested
 }
 
 // Members data array (loaded from file)
