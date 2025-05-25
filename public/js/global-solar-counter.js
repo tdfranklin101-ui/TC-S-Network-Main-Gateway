@@ -19,9 +19,11 @@ let animationFrameId = null;
 
 // Format number with commas and 4 decimal places
 function formatNumber(num, decimals = 4) {
-  const wholePart = Math.floor(num);
-  const decimalPart = (num - wholePart).toFixed(decimals).substring(2);
-  return wholePart.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") + "." + decimalPart;
+  // Use toLocaleString for consistent formatting of large numbers
+  return num.toLocaleString('en-US', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals
+  });
 }
 
 // Currency formatting removed as requested
