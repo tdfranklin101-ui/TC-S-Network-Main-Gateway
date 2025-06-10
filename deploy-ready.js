@@ -290,7 +290,7 @@ function processDailyDistribution() {
       member.last_distribution_date = today;
       
       updatedCount++;
-      log(`Member ${member.name} received 1 SOLAR, new total: ${newTotal.toFixed(4)} SOLAR = $${dollarValue.toLocaleString()}`);
+      log(`Member ${member.name} received 1 SOLAR, new total: ${newTotal.toFixed(4)} SOLAR`);
     }
   });
   
