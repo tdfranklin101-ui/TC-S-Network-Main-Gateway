@@ -344,10 +344,11 @@ function setupScheduledTasks() {
 }
 
 // Start the server
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   log(`Server running on port ${PORT}`);
-  log(`Health check available at http://localhost:${PORT}/healthz`);
-  log(`Main application at http://localhost:${PORT}/`);
+  log(`Health check available at http://0.0.0.0:${PORT}/healthz`);
+  log(`Main application at http://0.0.0.0:${PORT}/`);
+  log(`Private network page at http://0.0.0.0:${PORT}/private-network`);
   
   // Load members data
   loadMembers();
