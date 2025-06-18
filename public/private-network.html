@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TC-S Private Network - The Current-See</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/global-solar-counter.css">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <style>
+        .private-network-container {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .coming-soon-header {
+            background: linear-gradient(135deg, #ff6600, #ff8533);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .coming-soon-header h1 {
+            font-size: 2.5rem;
+            margin: 0 0 0.5rem 0;
+        }
+        
+        .coming-soon-header h2 {
+            font-size: 1.3rem;
+            margin: 0;
+            opacity: 0.9;
+        }
+        
+        .highlight {
+            color: #ff6600;
+            font-weight: bold;
+        }
+        
+        .section-title {
+            font-size: 1.4rem;
+            font-weight: bold;
+            margin: 2rem 0 1rem 0;
+            color: #0057B8;
+        }
+        
+        .feature-list {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+        
+        .feature-list ul {
+            margin: 0;
+            padding-left: 1.5rem;
+        }
+        
+        .feature-list li {
+            margin: 0.5rem 0;
+            color: #333;
+        }
+        
+        .cta-section {
+            background: linear-gradient(135deg, #7bc144, #0057B8);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            text-align: center;
+            margin: 2rem 0;
+        }
+        
+        .cta-section a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        
+        .cta-section a:hover {
+            text-decoration: underline;
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-bottom: 2rem;
+            color: #0057B8;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div id="header-placeholder"></div>
+
+    <main>
+        <div class="private-network-container">
+            <a href="/" class="back-link">← Back to Homepage</a>
+            
+            <div class="coming-soon-header">
+                <h1>⚡ COMING SOON: The TC-S Private Network</h1>
+                <h2>Your Event. Your Currency. Instant Engagement. Zero Friction.</h2>
+            </div>
+
+            <p><span class="highlight">Imagine this:</span><br>
+            Your next event has its own digital currency.<br>
+            Your guests use their phones to trade, tip, buy, and unlock perks.<br>
+            Your vendors sell out. Your audience stays longer. Your dashboard shows everything.<br><br>
+            Now imagine it's all live in minutes—and it's building a better world while it runs.</p>
+
+            <div class="section-title">💥 What's the TC-S Private Network?</div>
+            <p>A fully loaded, solar-aligned token platform for <strong>sporting events, festivals, markets, pop-ups, retreats</strong> and <strong>venues of all sizes</strong>.</p>
+            
+            <div class="feature-list">
+                <ul>
+                    <li>Create your own branded token</li>
+                    <li>Launch a built-in wallet and market for guests and vendors</li>
+                    <li>Track everything in real time</li>
+                    <li>Gamify, reward, and electrify your crowd</li>
+                </ul>
+            </div>
+            
+            <p>All powered by an AI-assisted dashboard and launched from a simple online form.</p>
+
+            <div class="section-title">🌍 Why It Matters</div>
+            <p>This isn't just about better events.<br>
+            This is step one in a <strong>global solar-based basic income system</strong>.<br><br>
+            Every private network supports the greater mission:<br>
+            <em>Replacing scarcity economics with something brighter.</em></p>
+
+            <div class="section-title">🚀 You're Invited</div>
+            <p>The first wave of networks will get:</p>
+            
+            <div class="feature-list">
+                <ul>
+                    <li>Early access + support</li>
+                    <li>Feature showcases</li>
+                    <li>Official "Pioneer" recognition in the global rollout</li>
+                </ul>
+            </div>
+
+            <div class="cta-section">
+                <p><a href="mailto:hello@thecurrentsee.org">Apply now by emailing: hello@thecurrentsee.org</a></p>
+                <p>Let's build something powerful—and solar.</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <div id="footer-placeholder"></div>
+
+    <!-- Load header and footer -->
+    <script>
+        fetch('includes/header.html')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('header-placeholder').innerHTML = data;
+            });
+
+        fetch('includes/footer.html')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('footer-placeholder').innerHTML = data;
+            });
+    </script>
+</body>
+</html>
