@@ -232,6 +232,30 @@ app.get('/health', (req, res) => {
   res.status(200).send('OK');
 });
 
+// Private network page route
+app.get('/private-network', (req, res) => {
+  try {
+    let privateNetworkContent = fs.readFileSync(path.join(PUBLIC_DIR, 'private-network.html'), 'utf8');
+    
+    // Try to inject header and footer
+    try {
+      const header = fs.readFileSync(path.join(INCLUDES_DIR, 'header.html'), 'utf8');
+      const footer = fs.readFileSync(path.join(INCLUDES_DIR, 'footer.html'), 'utf8');
+      
+      // Replace placeholders
+      privateNetworkContent = privateNetworkContent.replace('<div id="header-placeholder"></div>', header);
+      privateNetworkContent = privateNetworkContent.replace('<div id="footer-placeholder"></div>', footer);
+    } catch (includeError) {
+      log(`Warning: Could not inject header/footer: ${includeError.message}`);
+    }
+    
+    res.send(privateNetworkContent);
+  } catch (error) {
+    log(`Error serving private-network page: ${error.message}`);
+    res.status(404).send('Private network page not found');
+  }
+});
+
 // Root endpoint - special handling for deployment health checks
 app.get('/', (req, res, next) => {
   // If it's a health check (no user agent), just return OK
