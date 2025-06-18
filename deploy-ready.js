@@ -43,9 +43,14 @@ function log(message, isError = false) {
   console.log(`[${timestamp}] ${prefix}: ${message}`);
 }
 
-// Health check endpoint for Replit deployments
+// Homepage route
 app.get('/', (req, res) => {
-  res.status(200).send('The Current-See Server is running correctly');
+  res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
+});
+
+// Private network page route
+app.get('/private-network', (req, res) => {
+  res.sendFile(path.join(PUBLIC_DIR, 'private-network.html'));
 });
 
 // Health check for Replit cloud
