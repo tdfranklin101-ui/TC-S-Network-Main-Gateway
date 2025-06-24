@@ -256,6 +256,30 @@ app.get('/private-network', (req, res) => {
   }
 });
 
+// Q&A Meaning and Purpose page route
+app.get('/qa-meaning-purpose', (req, res) => {
+  try {
+    let qaContent = fs.readFileSync(path.join(PUBLIC_DIR, 'qa-meaning-purpose.html'), 'utf8');
+    
+    // Try to inject header and footer
+    try {
+      const header = fs.readFileSync(path.join(INCLUDES_DIR, 'header.html'), 'utf8');
+      const footer = fs.readFileSync(path.join(INCLUDES_DIR, 'footer.html'), 'utf8');
+      
+      // Replace placeholders
+      qaContent = qaContent.replace('<div id="header-placeholder"></div>', header);
+      qaContent = qaContent.replace('<div id="footer-placeholder"></div>', footer);
+    } catch (includeError) {
+      log(`Warning: Could not inject header/footer: ${includeError.message}`);
+    }
+    
+    res.send(qaContent);
+  } catch (error) {
+    log(`Error serving qa-meaning-purpose page: ${error.message}`);
+    res.status(404).send('Page not found');
+  }
+});
+
 // Root endpoint - special handling for deployment health checks
 app.get('/', (req, res, next) => {
   // If it's a health check (no user agent), just return OK
