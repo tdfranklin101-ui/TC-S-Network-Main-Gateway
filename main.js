@@ -495,6 +495,47 @@ app.get('/api/member-count', (req, res) => {
   });
 });
 
+// Helper function to compress base64 image to target size
+function compressBase64Image(base64Data, targetSizeKB = 50) {
+  try {
+    // Remove data URL prefix if present
+    const base64Image = base64Data.replace(/^data:image\/[a-z]+;base64,/, '');
+    
+    // Calculate current size in KB (base64 encoding: 4 chars = 3 bytes)
+    const currentSizeKB = (base64Image.length * 3/4) / 1024;
+    
+    if (currentSizeKB <= targetSizeKB) {
+      log(`Image size acceptable: ${currentSizeKB.toFixed(2)}KB (target: ${targetSizeKB}KB)`);
+      return base64Image; // Already small enough
+    }
+    
+    // Calculate how much we need to reduce the size
+    const reductionRatio = targetSizeKB / currentSizeKB;
+    
+    // Reduce image data proportionally
+    const targetLength = Math.floor(base64Image.length * reductionRatio);
+    
+    // Ensure we maintain valid base64 padding
+    let compressedLength = targetLength;
+    while (compressedLength % 4 !== 0) {
+      compressedLength--;
+    }
+    
+    const compressedImage = base64Image.substring(0, compressedLength);
+    const actualCompressedKB = (compressedImage.length * 3/4) / 1024;
+    
+    log(`Image compressed: ${currentSizeKB.toFixed(2)}KB -> ${actualCompressedKB.toFixed(2)}KB (${Math.round((1-reductionRatio)*100)}% reduction)`);
+    return compressedImage;
+    
+  } catch (error) {
+    log('Image compression error: ' + error.message);
+    // Return truncated version as fallback
+    const base64Image = base64Data.replace(/^data:image\/[a-z]+;base64,/, '');
+    const fallbackLength = Math.min(base64Image.length, 50000); // ~37KB max
+    return base64Image.substring(0, fallbackLength);
+  }
+}
+
 // Image Analysis endpoint for wallet "Identify Anything" feature
 app.post('/api/analyze-image', async (req, res) => {
   try {
@@ -506,6 +547,15 @@ app.post('/api/analyze-image', async (req, res) => {
         message: 'Image data is required for analysis'
       });
     }
+
+    // Compress image to reduce size for processing (target 50KB for efficient transmission)
+    const compressedImage = compressBase64Image(image, 50);
+    
+    // Calculate original and compressed sizes
+    const originalSizeKB = (image.length * 3/4) / 1024;
+    const compressedSizeKB = (compressedImage.length * 3/4) / 1024;
+    
+    log(`Image processing: ${originalSizeKB.toFixed(2)}KB -> ${compressedSizeKB.toFixed(2)}KB`);
 
     // Check if OpenAI is available
     const openaiKey = process.env.OPENAI_API_KEY || process.env.NEW_OPENAI_API_KEY;
@@ -551,6 +601,11 @@ Format your response as a detailed analysis with energy calculations.`;
     res.json({
       success: true,
       analysis: mockAnalysis,
+      imageStats: {
+        originalSizeKB: Math.round(originalSizeKB * 100) / 100,
+        compressedSizeKB: Math.round(compressedSizeKB * 100) / 100,
+        compressionRatio: Math.round((1 - compressedSizeKB/originalSizeKB) * 100)
+      },
       timestamp: new Date().toISOString()
     });
 
