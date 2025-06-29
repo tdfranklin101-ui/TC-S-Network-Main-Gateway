@@ -99,6 +99,7 @@ The Current-See is a solar-backed global economic system prototype that demonstr
 
 ## Recent Changes
 
+- **June 29, 2025**: Updated homepage mission statement to "Where We Are Going" with generator protocol focus
 - **June 27, 2025**: Final deployment preparation completed - all systems operational
 - **June 24, 2025**: Added prominent mission statement "This is Where We're Going" to homepage first view
 - **June 24, 2025**: Homepage expanded to 10 features (Q&AI + 9 numbered links)
