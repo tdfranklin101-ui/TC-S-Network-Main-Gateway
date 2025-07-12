@@ -36,7 +36,7 @@ class PIPAudioPlayer {
                 <div class="solar-graphic">☀️</div>
                 <div class="pip-title">Going deep - an early look at the TC-S Network</div>
                 <div class="pip-audio-controls">
-                    <audio controls preload="none" crossorigin="anonymous">
+                    <audio controls preload="none" id="pip-audio">
                         <source src="/audio/The Current-See_ Solar Energy for Universal Basic Income_1752340053171.wav" type="audio/wav">
                         Your browser does not support the audio element.
                     </audio>
@@ -204,16 +204,15 @@ class PIPAudioPlayer {
         
         playBtn.addEventListener('click', () => {
             if (this.audioElement.paused) {
-                // Load audio if not already loaded
-                if (this.audioElement.readyState === 0) {
-                    this.audioElement.load();
-                }
-                
-                this.audioElement.play().catch(e => {
-                    console.error('Play failed:', e);
+                // Simple play with user interaction
+                this.audioElement.play().then(() => {
+                    console.log('Audio playing');
+                }).catch(error => {
+                    console.error('Playback failed:', error);
+                    // Show user instructions
                     const titleElement = this.pipElement.querySelector('.pip-title');
-                    titleElement.textContent = 'Audio playback failed - try again';
-                    titleElement.style.color = '#e74c3c';
+                    titleElement.textContent = 'Click the audio controls below to play';
+                    titleElement.style.color = '#f39c12';
                 });
             } else {
                 this.audioElement.pause();
@@ -285,6 +284,52 @@ class PIPAudioPlayer {
         const titleElement = this.pipElement.querySelector('.pip-title');
         titleElement.textContent = 'Going deep - an early look at the TC-S Network';
         titleElement.style.color = '#ecf0f1';
+    }
+    
+    tryAlternativeAudio() {
+        console.log('Trying alternative audio loading...');
+        
+        // Create a new audio element
+        const newAudio = document.createElement('audio');
+        newAudio.controls = true;
+        newAudio.preload = 'auto';
+        
+        // Try different approaches
+        const audioSrc = '/audio/The Current-See_ Solar Energy for Universal Basic Income_1752340053171.wav';
+        
+        // Test if file exists
+        fetch(audioSrc, { method: 'HEAD' })
+            .then(response => {
+                console.log('Audio file status:', response.status);
+                console.log('Audio file headers:', response.headers);
+                if (response.ok) {
+                    newAudio.src = audioSrc;
+                    newAudio.load();
+                    
+                    // Replace the old audio element
+                    const audioControls = this.pipElement.querySelector('.pip-audio-controls');
+                    audioControls.replaceChild(newAudio, this.audioElement);
+                    this.audioElement = newAudio;
+                    
+                    // Re-attach event listeners
+                    this.setupAudioEvents();
+                } else {
+                    console.error('Audio file not accessible:', response.status);
+                }
+            })
+            .catch(error => {
+                console.error('Failed to check audio file:', error);
+            });
+    }
+    
+    setupAudioEvents() {
+        this.audioElement.addEventListener('play', this.onAudioPlay.bind(this));
+        this.audioElement.addEventListener('pause', this.onAudioPause.bind(this));
+        this.audioElement.addEventListener('ended', this.onAudioEnded.bind(this));
+        this.audioElement.addEventListener('error', this.onAudioError.bind(this));
+        this.audioElement.addEventListener('canplaythrough', this.onAudioReady.bind(this));
+        this.audioElement.addEventListener('loadstart', this.onAudioLoadStart.bind(this));
+        this.audioElement.addEventListener('loadedmetadata', this.onMetadataLoaded.bind(this));
     }
 }
 

@@ -19,6 +19,22 @@
     </audio>
     
     <script>
+        // Test direct file access
+        fetch('/audio/The Current-See_ Solar Energy for Universal Basic Income_1752340053171.wav', {method: 'HEAD'})
+            .then(r => console.log('File check result:', r.status, r.headers))
+            .catch(e => console.error('File check failed:', e));
+            
+        // Simple test play button
+        const testPlayBtn = document.createElement('button');
+        testPlayBtn.textContent = 'Direct Play Test';
+        testPlayBtn.onclick = () => {
+            const audio = document.getElementById('audioTest');
+            audio.play().catch(e => console.error('Direct play failed:', e));
+        };
+        document.body.appendChild(testPlayBtn);
+    </script>
+    
+    <script>
         const audio = document.getElementById('audioTest');
         const status = document.getElementById('status');
         const testBtn = document.getElementById('testBtn');
