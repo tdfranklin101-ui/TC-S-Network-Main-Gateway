@@ -99,6 +99,7 @@ The Current-See is a solar-backed global economic system prototype that demonstr
 
 ## Recent Changes
 
+- **June 29, 2025**: Added "Going deep" audio wave file to homepage with contrasting dark background design
 - **June 29, 2025**: Added development progress section to private network page with commission interface screenshot
 - **June 29, 2025**: Added TC-SVR Game link #6 to homepage connecting to Pika video for immersive solar gaming
 - **June 29, 2025**: Added image compression (2MB -> 50KB) for wallet photo analysis efficiency
