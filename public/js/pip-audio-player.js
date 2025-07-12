@@ -36,7 +36,7 @@ class PIPAudioPlayer {
                 <div class="solar-graphic">☀️</div>
                 <div class="pip-title">Going deep - an early look at the TC-S Network</div>
                 <div class="pip-audio-controls">
-                    <audio controls>
+                    <audio controls preload="none" crossorigin="anonymous">
                         <source src="/audio/The Current-See_ Solar Energy for Universal Basic Income_1752340053171.wav" type="audio/wav">
                         Your browser does not support the audio element.
                     </audio>
@@ -71,6 +71,10 @@ class PIPAudioPlayer {
         this.audioElement.addEventListener('play', this.onAudioPlay.bind(this));
         this.audioElement.addEventListener('pause', this.onAudioPause.bind(this));
         this.audioElement.addEventListener('ended', this.onAudioEnded.bind(this));
+        this.audioElement.addEventListener('error', this.onAudioError.bind(this));
+        this.audioElement.addEventListener('canplaythrough', this.onAudioReady.bind(this));
+        this.audioElement.addEventListener('loadstart', this.onAudioLoadStart.bind(this));
+        this.audioElement.addEventListener('loadedmetadata', this.onMetadataLoaded.bind(this));
         
         // Prevent context menu on player
         this.pipElement.addEventListener('contextmenu', (e) => e.preventDefault());
@@ -169,6 +173,63 @@ class PIPAudioPlayer {
     
     show() {
         this.pipElement.classList.add('active');
+        // Try to load the audio when showing
+        if (this.audioElement) {
+            console.log('Loading audio element...');
+            
+            // Add play button functionality immediately
+            const playBtn = this.createPlayButton();
+            const audioControls = this.pipElement.querySelector('.pip-audio-controls');
+            audioControls.insertBefore(playBtn, audioControls.firstChild);
+            
+            // Load audio
+            this.audioElement.load();
+        }
+    }
+    
+    createPlayButton() {
+        const playBtn = document.createElement('button');
+        playBtn.innerHTML = '▶️ Play Audio';
+        playBtn.style.cssText = `
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-bottom: 10px;
+            width: 100%;
+        `;
+        
+        playBtn.addEventListener('click', () => {
+            if (this.audioElement.paused) {
+                // Load audio if not already loaded
+                if (this.audioElement.readyState === 0) {
+                    this.audioElement.load();
+                }
+                
+                this.audioElement.play().catch(e => {
+                    console.error('Play failed:', e);
+                    const titleElement = this.pipElement.querySelector('.pip-title');
+                    titleElement.textContent = 'Audio playback failed - try again';
+                    titleElement.style.color = '#e74c3c';
+                });
+            } else {
+                this.audioElement.pause();
+            }
+        });
+        
+        // Update button text based on audio state
+        this.audioElement.addEventListener('play', () => {
+            playBtn.innerHTML = '⏸️ Pause Audio';
+        });
+        
+        this.audioElement.addEventListener('pause', () => {
+            playBtn.innerHTML = '▶️ Play Audio';
+        });
+        
+        return playBtn;
     }
     
     hide() {
@@ -196,6 +257,34 @@ class PIPAudioPlayer {
     onAudioEnded() {
         const solarGraphic = this.pipElement.querySelector('.solar-graphic');
         solarGraphic.style.animationPlayState = 'paused';
+    }
+    
+    onAudioError(e) {
+        console.error('Audio error:', e);
+        const titleElement = this.pipElement.querySelector('.pip-title');
+        titleElement.textContent = 'Audio loading error - please try again';
+        titleElement.style.color = '#e74c3c';
+    }
+    
+    onAudioReady() {
+        console.log('Audio ready to play');
+        const titleElement = this.pipElement.querySelector('.pip-title');
+        titleElement.textContent = 'TC-S Network Deep Dive';
+        titleElement.style.color = '#ecf0f1';
+    }
+    
+    onAudioLoadStart() {
+        console.log('Audio started loading');
+        const titleElement = this.pipElement.querySelector('.pip-title');
+        titleElement.textContent = 'Loading audio...';
+        titleElement.style.color = '#3498db';
+    }
+    
+    onMetadataLoaded() {
+        console.log('Audio metadata loaded, duration:', this.audioElement.duration);
+        const titleElement = this.pipElement.querySelector('.pip-title');
+        titleElement.textContent = 'Going deep - an early look at the TC-S Network';
+        titleElement.style.color = '#ecf0f1';
     }
 }
 
