@@ -1,57 +1,139 @@
 /**
- * The Current-See Deployment Server
+ * Simple Deployment Server for The Current-See
  * 
- * This is a specialized deployment version of the server designed for maximum
- * stability and reliable operation on Replit. It handles proper port binding
- * and ensures clean startup/shutdown.
+ * This server is designed to work reliably in deployment environments
+ * with proper health checks and port configuration.
  */
 
-// Import core server functionality
-const server = require('./server.js');
+const express = require('express');
+const path = require('path');
+const fs = require('fs');
 
-// Additional health check endpoint for deployment monitoring
-const http = require('http');
+const app = express();
 const PORT = process.env.PORT || 3000;
+const PUBLIC_DIR = path.join(__dirname, 'public');
 
-// Create a basic health check server that responds to all requests
-const healthServer = http.createServer((req, res) => {
-  // Log the health check request
-  console.log(`[${new Date().toISOString()}] Health check received: ${req.method} ${req.url}`);
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// CORS for development
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
   
-  // Always respond with 200 OK for the health check
-  res.writeHead(200, { 'Content-Type': 'text/plain' });
-  res.end('The Current-See Service is running.');
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200);
+  } else {
+    next();
+  }
 });
 
-// Set up proper shutdown handling
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
+// Root endpoint - health check for deployment
+app.get('/', (req, res) => {
+  // For deployment health checks (no user agent)
+  if (!req.headers['user-agent']) {
+    return res.status(200).send('OK');
+  }
+  
+  // For browsers, serve the main page
+  try {
+    const indexPath = path.join(PUBLIC_DIR, 'index.html');
+    if (fs.existsSync(indexPath)) {
+      res.sendFile(indexPath);
+    } else {
+      res.status(200).send(`
+        <html>
+          <head><title>The Current-See</title></head>
+          <body>
+            <h1>The Current-See</h1>
+            <p>Solar-backed universal basic income platform</p>
+            <p>Server running on port ${PORT}</p>
+          </body>
+        </html>
+      `);
+    }
+  } catch (error) {
+    res.status(500).send('Server Error');
+  }
+});
+
+// API endpoints
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'healthy', port: PORT });
+});
+
+app.get('/api/members', (req, res) => {
+  try {
+    const membersPath = path.join(PUBLIC_DIR, 'api', 'members.json');
+    if (fs.existsSync(membersPath)) {
+      const members = JSON.parse(fs.readFileSync(membersPath, 'utf8'));
+      res.json(members);
+    } else {
+      res.json([]);
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to load members' });
+  }
+});
+
+app.get('/api/solar-clock', (req, res) => {
+  const startDate = new Date('2025-04-07T00:00:00Z');
+  const now = new Date();
+  const elapsed = (now - startDate) / 1000; // seconds
+  const elapsedHours = elapsed / 3600;
+  
+  // Simple energy calculation
+  const totalEnergy = elapsedHours * 27748140000 * 0.01; // Simplified
+  const totalEnergyMkwh = totalEnergy / 1000000;
+  
+  res.json({
+    totalEnergyMkwh: totalEnergyMkwh.toFixed(6),
+    totalValue: (totalEnergyMkwh * 1000000 / 4913 * 136000).toFixed(2),
+    elapsedHours: elapsedHours.toFixed(2),
+    timestamp: now.toISOString()
+  });
+});
+
+// Serve static files
+app.use(express.static(PUBLIC_DIR, {
+  setHeaders: (res, path) => {
+    if (path.endsWith('.js') || path.endsWith('.css')) {
+      res.set('Cache-Control', 'no-cache');
+    }
+  }
+}));
+
+// Catch-all handler
+app.use((req, res) => {
+  res.status(404).send('Page not found');
+});
+
+// Start server
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`[${new Date().toISOString()}] The Current-See deployment server running on port ${PORT}`);
+  console.log(`[${new Date().toISOString()}] Health check: http://localhost:${PORT}/health`);
+});
+
+// Graceful shutdown
 process.on('SIGTERM', () => {
-  console.log('[INFO] SIGTERM received, shutting down gracefully...');
-  // Add any cleanup logic here
-  process.exit(0);
+  console.log('SIGTERM received, shutting down gracefully...');
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
 });
 
 process.on('SIGINT', () => {
-  console.log('[INFO] SIGINT received, shutting down gracefully...');
-  // Add any cleanup logic here
-  process.exit(0);
+  console.log('SIGINT received, shutting down gracefully...');
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
 });
-
-// Handle uncaught exceptions to prevent crashes
-process.on('uncaughtException', (err) => {
-  console.error('[ERROR] Uncaught exception:', err);
-  // Keep the server running despite the error
-});
-
-// Handle unhandled promise rejections
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('[ERROR] Unhandled rejection at:', promise, 'reason:', reason);
-  // Keep the server running despite the rejection
-});
-
-// Start the server and notify when ready
-healthServer.listen(PORT, '0.0.0.0', () => {
-  console.log(`[${new Date().toISOString()}] The Current-See Deployment Server is running on port ${PORT}`);
-  console.log(`[${new Date().toISOString()}] Health check endpoint active at http://0.0.0.0:${PORT}/`);
-});
-
-console.log(`The Current-See Deployment Server has been initialized`);
