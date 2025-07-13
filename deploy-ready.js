@@ -63,6 +63,51 @@ app.get('/healthz', (req, res) => {
   res.status(200).send('OK');
 });
 
+// Specific audio file serving with proper headers for streaming
+app.get('/audio/:filename', (req, res) => {
+  const filename = req.params.filename;
+  const audioPath = path.join(__dirname, 'public', 'audio', filename);
+  
+  console.log('Audio request for:', filename);
+  
+  if (!fs.existsSync(audioPath)) {
+    console.error('Audio file not found:', audioPath);
+    return res.status(404).send('Audio file not found');
+  }
+  
+  const stat = fs.statSync(audioPath);
+  const range = req.headers.range;
+  
+  if (range) {
+    // Handle range requests for audio streaming
+    const parts = range.replace(/bytes=/, "").split("-");
+    const start = parseInt(parts[0], 10);
+    const end = parts[1] ? parseInt(parts[1], 10) : stat.size - 1;
+    const chunksize = (end - start) + 1;
+    
+    const file = fs.createReadStream(audioPath, { start, end });
+    const head = {
+      'Content-Range': `bytes ${start}-${end}/${stat.size}`,
+      'Accept-Ranges': 'bytes',
+      'Content-Length': chunksize,
+      'Content-Type': 'audio/wav',
+    };
+    
+    res.writeHead(206, head);
+    file.pipe(res);
+  } else {
+    // Serve the entire file
+    const head = {
+      'Content-Length': stat.size,
+      'Content-Type': 'audio/wav',
+      'Accept-Ranges': 'bytes',
+    };
+    
+    res.writeHead(200, head);
+    fs.createReadStream(audioPath).pipe(res);
+  }
+});
+
 // Serve static files from the public directory
 app.use(serveStatic(path.join(__dirname, 'public'), {
   index: ['index.html'],
@@ -73,6 +118,10 @@ app.use(serveStatic(path.join(__dirname, 'public'), {
       res.setHeader('Cache-Control', 'no-cache');
     } else if (filePath.match(/\.(css|js|png|jpg|jpeg|gif|ico|svg)$/)) {
       // Cache static assets for 1 hour
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+    } else if (filePath.match(/\.(wav|mp3|ogg)$/)) {
+      // Audio files need special headers for streaming
+      res.setHeader('Accept-Ranges', 'bytes');
       res.setHeader('Cache-Control', 'public, max-age=3600');
     }
   }

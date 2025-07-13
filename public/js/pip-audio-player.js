@@ -36,8 +36,9 @@ class PIPAudioPlayer {
                 <div class="solar-graphic">☀️</div>
                 <div class="pip-title">Going deep - an early look at the TC-S Network</div>
                 <div class="pip-audio-controls">
-                    <audio controls preload="none" id="pip-audio">
-                        <source src="/audio/The Current-See_ Solar Energy for Universal Basic Income_1752340053171.wav" type="audio/wav">
+                    <audio controls preload="metadata" id="pip-audio">
+                        <source src="./audio/The Current-See_ Solar Energy for Universal Basic Income_1752340053171.wav" type="audio/wav">
+                        <source src="audio/The Current-See_ Solar Energy for Universal Basic Income_1752340053171.wav" type="audio/wav">
                         Your browser does not support the audio element.
                     </audio>
                 </div>
@@ -260,9 +261,26 @@ class PIPAudioPlayer {
     
     onAudioError(e) {
         console.error('Audio error:', e);
+        console.error('Audio error details:', {
+            error: e.target.error,
+            networkState: e.target.networkState,
+            readyState: e.target.readyState,
+            src: e.target.src,
+            currentSrc: e.target.currentSrc
+        });
+        
         const titleElement = this.pipElement.querySelector('.pip-title');
         titleElement.textContent = 'Audio loading error - please try again';
         titleElement.style.color = '#e74c3c';
+        
+        // Try to reload audio with different path
+        if (e.target.src.includes('./audio/')) {
+            console.log('Trying alternative audio path...');
+            setTimeout(() => {
+                e.target.src = 'audio/The Current-See_ Solar Energy for Universal Basic Income_1752340053171.wav';
+                e.target.load();
+            }, 1000);
+        }
     }
     
     onAudioReady() {
