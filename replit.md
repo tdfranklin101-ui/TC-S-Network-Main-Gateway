@@ -103,6 +103,7 @@ The Current-See is a solar-backed global economic system prototype that demonstr
 - **July 12, 2025**: Fixed PIP audio player playback issues - audio now plays properly with enhanced error handling
 - **July 12, 2025**: Added comprehensive audio diagnostics and user interaction improvements
 - **July 12, 2025**: Added audio streaming server with proper range request handling for WAV file playback
+- **July 12, 2025**: Fixed production WAV audio playback by correcting file paths to absolute URLs
 - **June 29, 2025**: Added picture-in-picture audio player with solar graphic for background listening while browsing
 - **June 29, 2025**: Added "Going deep" audio wave file to homepage with contrasting dark background design
 - **June 29, 2025**: Added development progress section to private network page with commission interface screenshot

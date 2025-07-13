@@ -474,5 +474,32 @@
       }
     });
   </script>
+  
+  <!-- Production Audio Fix -->
+  <script>
+    // Production audio fix - ensure absolute paths for audio files
+    document.addEventListener('DOMContentLoaded', function() {
+      const audioElements = document.querySelectorAll('audio');
+      audioElements.forEach(audio => {
+        const sources = audio.querySelectorAll('source');
+        sources.forEach(source => {
+          if (source.src.includes('Current-See_') && !source.src.startsWith('/audio/')) {
+            source.src = '/audio/The Current-See_ Solar Energy for Universal Basic Income_1752340053171.wav';
+          }
+        });
+        
+        audio.addEventListener('error', function(e) {
+          console.error('Audio error in production:', e);
+          // Try recovery with absolute path
+          if (this.src && !this.src.includes('/audio/')) {
+            this.src = '/audio/The Current-See_ Solar Energy for Universal Basic Income_1752340053171.wav';
+            this.load();
+          }
+        });
+        
+        audio.load();
+      });
+    });
+  </script>
 </body>
 </html>
