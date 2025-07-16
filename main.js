@@ -33,6 +33,32 @@ app.get('/private-network', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'private-network.html'));
 });
 
+// QA meaning purpose route  
+app.get('/qa-meaning-purpose', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'qa-meaning-purpose.html'));
+});
+
+// Other essential routes
+app.get('/wallet.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'wallet.html'));
+});
+
+app.get('/declaration.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'declaration.html'));
+});
+
+app.get('/founder_note.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'founder_note.html'));
+});
+
+app.get('/whitepapers.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'whitepapers.html'));
+});
+
+app.get('/business_plan.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'business_plan.html'));
+});
+
 // Members API
 app.get('/api/members', (req, res) => {
   try {
