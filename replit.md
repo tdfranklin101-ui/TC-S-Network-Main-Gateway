@@ -99,6 +99,7 @@ The Current-See is a solar-backed global economic system prototype that demonstr
 
 ## Recent Changes
 
+- **July 14, 2025**: Added contact information header to homepage with company details and email
 - **July 14, 2025**: Added D-ID AI agent to homepage with interactive avatar and voice capabilities
 - **July 14, 2025**: Created ultra-reliable deployment server (main.js) after 1+ hour deployment delay
 - **July 14, 2025**: Simplified server architecture to resolve Replit deployment port configuration issues
