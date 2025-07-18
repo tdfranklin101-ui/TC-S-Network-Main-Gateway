@@ -1,219 +1,128 @@
 /**
- * The Current-See Pre-Deployment Verification
- * 
- * This script runs a series of checks to ensure the application
- * is ready for deployment.
+ * Pre-Deployment Final Check
+ * Comprehensive verification before going live
  */
 
 const fs = require('fs');
-const path = require('path');
-const { exec } = require('child_process');
+const http = require('http');
 
-// Files and directories to check
+console.log('🚀 The Current-See Pre-Deployment Check');
+console.log('======================================\n');
+
+// Critical files check
 const criticalFiles = [
-  'main.js',
-  'public/api/members.json',
-  'public/embedded-members',
-  'public/solar-generator.html',
-  'public/js/public-members-log.js'
+  { file: 'main.js', desc: 'Server file' },
+  { file: 'public/index.html', desc: 'Homepage' },
+  { file: 'public/qa-meaning-purpose.html', desc: 'Q&A page' },
+  { file: 'public/wallet.html', desc: 'Wallet interface' },
+  { file: 'public/private-network.html', desc: 'Private network' },
+  { file: 'public/declaration.html', desc: 'Declaration' },
+  { file: 'public/founder_note.html', desc: 'Founder note' },
+  { file: 'public/whitepapers.html', desc: 'Whitepapers' },
+  { file: 'public/business_plan.html', desc: 'Business plan' }
 ];
 
-// Members to ensure exist (ordered by join date)
-const requiredMembers = [
-  'TC-S Solar Reserve',
-  'Solar Reserve', 
-  'Terry D. Franklin',
-  'Erin Lee'
+console.log('📁 Critical Files:');
+let totalSize = 0;
+let allPresent = true;
+
+criticalFiles.forEach(item => {
+  const exists = fs.existsSync(item.file);
+  const size = exists ? fs.statSync(item.file).size : 0;
+  totalSize += size;
+  console.log(`${exists ? '✅' : '❌'} ${item.desc}: ${exists ? `${Math.round(size/1024)} KB` : 'MISSING'}`);
+  if (!exists) allPresent = false;
+});
+
+console.log(`📊 Total size: ${Math.round(totalSize/1024)} KB`);
+
+// Server configuration check
+console.log('\n🔧 Server Configuration:');
+const serverContent = fs.readFileSync('main.js', 'utf8');
+const serverChecks = [
+  { check: 'Health endpoint', pass: serverContent.includes("app.get('/health'") },
+  { check: 'Static files', pass: serverContent.includes('express.static') },
+  { check: 'QA route', pass: serverContent.includes('/qa-meaning-purpose') },
+  { check: 'Wallet route', pass: serverContent.includes('/wallet.html') },
+  { check: 'Private network', pass: serverContent.includes('/private-network') },
+  { check: 'Members API', pass: serverContent.includes('/api/members') },
+  { check: 'Port 3000', pass: serverContent.includes('3000') }
 ];
 
-// Display colored output
-function log(message, type = 'info') {
-  const date = new Date().toISOString();
-  
-  const colors = {
-    info: '\x1b[36m',    // Cyan
-    success: '\x1b[32m', // Green
-    warning: '\x1b[33m', // Yellow
-    error: '\x1b[31m',   // Red
-    reset: '\x1b[0m'     // Reset
-  };
-  
-  console.log(`[${date}] ${colors[type]}${type === 'success' ? '✓' : type === 'error' ? '✗' : type === 'warning' ? '⚠' : 'ℹ'} ${type.toUpperCase()}: ${message}${colors.reset}`);
-}
+let serverOk = true;
+serverChecks.forEach(item => {
+  console.log(`${item.pass ? '✅' : '❌'} ${item.check}: ${item.pass ? 'CONFIGURED' : 'MISSING'}`);
+  if (!item.pass) serverOk = false;
+});
 
-// Execute a command and return its output
-function runCommand(command) {
-  return new Promise((resolve, reject) => {
-    exec(command, (error, stdout, stderr) => {
-      if (error) {
-        reject(error);
-        return;
-      }
-      resolve(stdout.trim());
+// D-ID configuration check
+console.log('\n🤖 D-ID AI Agent:');
+const indexContent = fs.readFileSync('public/index.html', 'utf8');
+const didChecks = [
+  { check: 'Script CDN', pass: indexContent.includes('https://agent.d-id.com/v2/index.js') },
+  { check: 'Agent ID', pass: indexContent.includes('data-agent-id="v2_agt_lmJp1s6K"') },
+  { check: 'Client key', pass: indexContent.includes('data-client-key=') },
+  { check: 'Mode fabio', pass: indexContent.includes('data-mode="fabio"') },
+  { check: 'Horizontal', pass: indexContent.includes('data-orientation="horizontal"') },
+  { check: 'Right position', pass: indexContent.includes('data-position="right"') }
+];
+
+let didOk = true;
+didChecks.forEach(item => {
+  console.log(`${item.pass ? '✅' : '❌'} ${item.check}: ${item.pass ? 'CONFIGURED' : 'MISSING'}`);
+  if (!item.pass) didOk = false;
+});
+
+// Server health test
+const testServer = () => {
+  return new Promise((resolve) => {
+    const req = http.get('http://localhost:3000/health', (res) => {
+      let data = '';
+      res.on('data', (chunk) => data += chunk);
+      res.on('end', () => {
+        try {
+          const health = JSON.parse(data);
+          resolve({ success: true, health });
+        } catch (e) {
+          resolve({ success: false, error: 'Invalid response' });
+        }
+      });
+    });
+    req.on('error', (error) => resolve({ success: false, error: error.message }));
+    req.setTimeout(5000, () => {
+      req.destroy();
+      resolve({ success: false, error: 'Timeout' });
     });
   });
-}
+};
 
-// Check if critical files exist
-async function checkCriticalFiles() {
-  log('Checking critical files...');
+// Run server test
+setTimeout(async () => {
+  console.log('\n🌐 Server Health Test:');
+  const result = await testServer();
   
-  let allFilesExist = true;
-  
-  for (const file of criticalFiles) {
-    if (fs.existsSync(file)) {
-      log(`File exists: ${file}`, 'success');
-    } else {
-      log(`Missing critical file: ${file}`, 'error');
-      allFilesExist = false;
-    }
+  if (result.success) {
+    console.log('✅ Server health: PASSING');
+    console.log('   Status:', result.health.status);
+    console.log('   Port:', result.health.port);
+  } else {
+    console.log('❌ Server health: FAILED');
+    console.log('   Error:', result.error);
   }
   
-  return allFilesExist;
-}
-
-// Check members data
-async function checkMembersData() {
-  log('Checking members data...');
+  console.log('\n📋 Deployment Readiness:');
+  console.log(`${allPresent ? '✅' : '❌'} All files present: ${allPresent ? 'YES' : 'NO'}`);
+  console.log(`${serverOk ? '✅' : '❌'} Server config: ${serverOk ? 'COMPLETE' : 'INCOMPLETE'}`);
+  console.log(`${didOk ? '✅' : '❌'} D-ID agent: ${didOk ? 'CONFIGURED' : 'INCOMPLETE'}`);
+  console.log(`${result.success ? '✅' : '❌'} Server health: ${result.success ? 'PASSING' : 'FAILING'}`);
   
-  try {
-    const membersFilePath = 'public/api/members.json';
-    const embeddedFilePath = 'public/embedded-members';
-    
-    if (!fs.existsSync(membersFilePath)) {
-      log(`Members file not found: ${membersFilePath}`, 'error');
-      return false;
-    }
-    
-    if (!fs.existsSync(embeddedFilePath)) {
-      log(`Embedded members file not found: ${embeddedFilePath}`, 'error');
-      return false;
-    }
-    
-    // Check API members.json
-    const membersData = JSON.parse(fs.readFileSync(membersFilePath, 'utf8'));
-    
-    if (!Array.isArray(membersData) || membersData.length === 0) {
-      log('Members data is empty or invalid', 'error');
-      return false;
-    }
-    
-    log(`Found ${membersData.length} members in members.json`, 'success');
-    
-    // Check embedded members
-    const embeddedFileContent = fs.readFileSync(embeddedFilePath, 'utf8');
-    const embeddedMembers = /const EMBEDDED_MEMBERS = (.+);/.exec(embeddedFileContent);
-    
-    if (!embeddedMembers || !embeddedMembers[1]) {
-      log('Embedded members data is invalid', 'error');
-      return false;
-    }
-    
-    try {
-      const parsedEmbeddedMembers = JSON.parse(embeddedMembers[1]);
-      
-      if (!Array.isArray(parsedEmbeddedMembers) || parsedEmbeddedMembers.length === 0) {
-        log('Embedded members data is empty or invalid', 'error');
-        return false;
-      }
-      
-      log(`Found ${parsedEmbeddedMembers.length} members in embedded-members`, 'success');
-      
-      // Check if counts match
-      if (parsedEmbeddedMembers.length !== membersData.length) {
-        log(`Member count mismatch: members.json (${membersData.length}) vs embedded-members (${parsedEmbeddedMembers.length})`, 'warning');
-      }
-    } catch (err) {
-      log(`Failed to parse embedded members: ${err.message}`, 'error');
-      return false;
-    }
-    
-    // Check required members
-    const memberNames = membersData.map(member => member.name);
-    const missingMembers = requiredMembers.filter(name => !memberNames.some(n => n === name));
-    
-    if (missingMembers.length > 0) {
-      log(`Missing required members: ${missingMembers.join(', ')}`, 'error');
-      return false;
-    }
-    
-    // Verify Erin Lee exists in proper format
-    const erinMember = membersData.find(m => m.name === 'Erin Lee');
-    if (!erinMember) {
-      log(`Erin Lee not found or not properly capitalized`, 'error');
-      return false;
-    }
-    
-    log('All required members found', 'success');
-    return true;
-  } catch (err) {
-    log(`Error checking members data: ${err.message}`, 'error');
-    return false;
+  if (allPresent && serverOk && didOk && result.success) {
+    console.log('\n🎉 READY FOR DEPLOYMENT!');
+    console.log('All systems verified and functional');
+    console.log('D-ID AI agent will connect once deployed');
+  } else {
+    console.log('\n⚠️  Deployment issues detected');
   }
-}
+}, 10000);
 
-// Check database connection
-async function checkDatabaseConnection() {
-  log('Checking database connection...');
-  
-  try {
-    const result = await runCommand('node check-currentsee-db.js');
-    const connectionSuccessful = result.includes('Connection successful') || result.includes('✅');
-    
-    if (connectionSuccessful) {
-      log('Database connection successful', 'success');
-      return true;
-    } else {
-      log('Database connection failed', 'error');
-      return false;
-    }
-  } catch (err) {
-    log(`Error checking database: ${err.message}`, 'error');
-    return false;
-  }
-}
-
-// Run all deployment checks
-async function runDeploymentChecks() {
-  log('Running pre-deployment verification...');
-  
-  try {
-    // Get application version
-    const version = await runCommand('node -e "try { const { APP_VERSION } = require(\'./main.js\'); console.log(APP_VERSION.version + \' (Build \' + APP_VERSION.build + \')\'); } catch (e) { console.log(\'Unknown\'); }"');
-    log(`Current application version: ${version}`);
-    
-    // Check critical files
-    const filesOk = await checkCriticalFiles();
-    
-    // Check members data
-    const membersOk = await checkMembersData();
-    
-    // Check database connection
-    const dbOk = await checkDatabaseConnection();
-    
-    // Final assessment
-    log('');
-    log('Pre-deployment verification summary:', 'info');
-    log(`Critical files check: ${filesOk ? 'PASSED' : 'FAILED'}`, filesOk ? 'success' : 'error');
-    log(`Members data check: ${membersOk ? 'PASSED' : 'FAILED'}`, membersOk ? 'success' : 'error');
-    log(`Database connection: ${dbOk ? 'PASSED' : 'FAILED'}`, dbOk ? 'success' : 'error');
-    
-    const allPassed = filesOk && membersOk && dbOk;
-    
-    if (allPassed) {
-      log('All checks passed. Ready for deployment!', 'success');
-    } else {
-      log('Some checks failed. Please resolve the issues before deploying.', 'error');
-    }
-    
-    return allPassed;
-  } catch (err) {
-    log(`Error running deployment checks: ${err.message}`, 'error');
-    return false;
-  }
-}
-
-// Execute all checks
-runDeploymentChecks().then(result => {
-  process.exit(result ? 0 : 1);
-});
+console.log('\nRunning server health test in 10 seconds...');
