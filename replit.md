@@ -99,7 +99,7 @@ The Current-See is a solar-backed global economic system prototype that demonstr
 
 ## Recent Changes
 
-- **July 18, 2025**: AI Assistant reset completed - D-ID agent configuration verified and server operations confirmed
+- **July 18, 2025**: D-ID agent issue identified - removed outdated embed code and created setup instructions for fresh agent
 - **July 18, 2025**: Final deployment preparation completed - all systems verified and ready for production launch
 - **July 16, 2025**: Server restart completed after deployment interruption - confirmed running on port 3000
 - **July 16, 2025**: Deployment preparation completed - all systems verified and ready for production
