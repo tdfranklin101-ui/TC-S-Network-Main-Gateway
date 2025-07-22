@@ -335,4 +335,6 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ The Current-See server running on port ${PORT}`);
   console.log(`📡 Health check: http://0.0.0.0:${PORT}/health`);
   console.log(`🌐 Website: http://0.0.0.0:${PORT}/`);
+  console.log(`🎯 Kid Solar: http://0.0.0.0:${PORT}/wallet.html`);
+  console.log(`🚀 DEPLOYMENT READY - ${new Date().toISOString()}`);
 });
