@@ -1,0 +1,21 @@
+{
+  "version": "2.1.1",
+  "redeploymentDate": "2025-06-01T23:36:33.372Z",
+  "changes": [
+    "Business Plan updated to V2 with comprehensive 16-section structure",
+    "New Business Plan V2 PDF added and linked",
+    "Table of contents with navigation links added",
+    "Counter display optimized for full number visibility",
+    "All dollar value references removed",
+    "TC-S AI Item Energy Expert Prototype link added to homepage"
+  ],
+  "files_updated": [
+    "public/business_plan.html",
+    "public/The_Current-See_Business_Plan_V2.pdf",
+    "public/index.html",
+    "public/css/global-solar-counter.css",
+    "public/js/global-solar-counter.js"
+  ],
+  "target_domain": "www.thecurrentsee.org",
+  "ready_for_deployment": true
+}

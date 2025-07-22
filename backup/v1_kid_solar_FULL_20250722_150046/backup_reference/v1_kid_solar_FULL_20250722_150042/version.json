@@ -1,0 +1,13 @@
+{
+  "version": "2.1.0",
+  "lastUpdated": "2025-06-01T18:11:16.180Z",
+  "deployment": "live",
+  "features": [
+    "Counter display optimized for full number visibility",
+    "All dollar value references removed",
+    "TC-S AI Item Energy Expert Prototype link added",
+    "Production OpenAI fixes included",
+    "Marketplace artifact management improved"
+  ],
+  "target": "www.thecurrentsee.org"
+}

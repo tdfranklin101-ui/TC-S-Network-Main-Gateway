@@ -1,9 +1,10 @@
 # V1 Kid Solar Reference Guide
 
 ## Backup Information
-- **Backup Created**: July 22, 2025, 14:58 UTC
-- **Backup Location**: `backup/v1_kid_solar_20250722_145844/`
-- **Compressed Archive**: `backup/v1_kid_solar_20250722_145844.tar.gz` (18MB)
+- **Initial Backup**: July 22, 2025, 14:58 UTC - `backup/v1_kid_solar_20250722_145844/` (18MB)
+- **FULL WEBSITE BACKUP**: July 22, 2025, 15:00 UTC - `backup/v1_kid_solar_FULL_20250722_150046/` (156MB)
+- **Complete Archive**: `backup/v1_kid_solar_FULL_20250722_150046.tar.gz` (150MB)
+- **Files Backed Up**: 821 files including all website assets, configurations, and dependencies
 
 ## V1 Kid Solar Implementation Summary
 
