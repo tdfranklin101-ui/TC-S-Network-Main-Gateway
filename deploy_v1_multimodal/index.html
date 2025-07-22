@@ -506,132 +506,331 @@
         data-position="right">
   </script>
 
-  <!-- Multimodal Photo Upload for D-ID Agent -->
-  <input type="file" id="didAgentPhotoInput" accept="image/*" style="display: none;" onchange="handleDidAgentPhotoUpload(this)">
+  <!-- Native Multimodal Interface for D-ID Agent -->
+  <input type="file" id="didMultimodalInput" accept="image/*,video/*,audio/*,*" style="display: none;" onchange="handleDidMultimodalUpload(this)">
+  
+  <!-- Multimodal Menu Overlay -->
+  <div id="multimodalMenu" style="
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    padding: 15px;
+    display: none;
+    z-index: 999999;
+    min-width: 300px;
+  ">
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; text-align: center;">
+      <div onclick="openCamera()" style="cursor: pointer; padding: 10px; border-radius: 15px; transition: all 0.2s;">
+        <div style="font-size: 24px; margin-bottom: 5px;">📷</div>
+        <div style="font-size: 12px; color: #666;">Camera</div>
+      </div>
+      <div onclick="openVideo()" style="cursor: pointer; padding: 10px; border-radius: 15px; transition: all 0.2s;">
+        <div style="font-size: 24px; margin-bottom: 5px;">🎥</div>
+        <div style="font-size: 12px; color: #666;">Video</div>
+      </div>
+      <div onclick="openPhotoLibrary()" style="cursor: pointer; padding: 10px; border-radius: 15px; transition: all 0.2s;">
+        <div style="font-size: 24px; margin-bottom: 5px;">🖼️</div>
+        <div style="font-size: 12px; color: #666;">Photos</div>
+      </div>
+      <div onclick="openFiles()" style="cursor: pointer; padding: 10px; border-radius: 15px; transition: all 0.2s;">
+        <div style="font-size: 24px; margin-bottom: 5px;">📁</div>
+        <div style="font-size: 12px; color: #666;">Files</div>
+      </div>
+    </div>
+    <div style="text-align: center; margin-top: 10px;">
+      <button onclick="closeMultimodalMenu()" style="background: #f0f0f0; border: none; padding: 8px 20px; border-radius: 15px; font-size: 12px; cursor: pointer;">
+        Cancel
+      </button>
+    </div>
+  </div>
   
   <script>
-    // Add multimodal photo upload button to D-ID agent text input
-    function addMultimodalButton() {
+    // Add native multimodal "+" button to D-ID agent
+    function addNativeMultimodalButton() {
       setTimeout(() => {
-        // Look for D-ID agent text input area
-        const didAgentContainers = document.querySelectorAll('div, iframe');
-        let textInputFound = false;
+        console.log('🔍 Looking for D-ID agent text input...');
         
-        // Try to find and enhance the D-ID text input
-        for (const container of didAgentContainers) {
-          // Look for text input elements within or around the D-ID agent
-          const textInputs = container.querySelectorAll ? 
-            container.querySelectorAll('input[type="text"], textarea, [contenteditable]') : [];
-            
-          if (textInputs.length > 0) {
-            textInputs.forEach(input => {
-              if (input.placeholder && (input.placeholder.toLowerCase().includes('message') || 
-                  input.placeholder.toLowerCase().includes('type') || 
-                  input.placeholder.toLowerCase().includes('chat'))) {
-                
-                // Don't add button if already exists
-                if (input.parentElement && input.parentElement.querySelector('.multimodal-photo-btn')) {
-                  return;
-                }
-                
-                // Create photo upload button
-                const photoBtn = document.createElement('button');
-                photoBtn.innerHTML = '📷+';
-                photoBtn.className = 'multimodal-photo-btn';
-                photoBtn.style.cssText = `
-                  position: absolute;
-                  right: 10px;
-                  top: 50%;
-                  transform: translateY(-50%);
-                  background: #FF6B35;
-                  color: white;
-                  border: none;
-                  border-radius: 50%;
-                  width: 32px;
-                  height: 32px;
-                  font-size: 14px;
-                  cursor: pointer;
-                  z-index: 999999;
-                  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-                `;
-                photoBtn.title = 'Upload photo to Kid Solar';
-                photoBtn.onclick = (e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  document.getElementById('didAgentPhotoInput').click();
-                };
-                
-                // Make parent container relative if needed
-                if (input.parentElement) {
-                  const parent = input.parentElement;
-                  if (getComputedStyle(parent).position === 'static') {
-                    parent.style.position = 'relative';
-                  }
-                  parent.appendChild(photoBtn);
-                  textInputFound = true;
-                }
-              }
-            });
+        // Enhanced detection for D-ID agent elements
+        const possibleInputs = document.querySelectorAll('input, textarea, [contenteditable], [data-testid*="input"], [placeholder]');
+        let targetInput = null;
+        
+        // Find the most likely D-ID agent input
+        for (const input of possibleInputs) {
+          const placeholder = input.placeholder || input.getAttribute('aria-label') || '';
+          const parent = input.closest('div, section, form');
+          
+          if (placeholder.toLowerCase().includes('type') || 
+              placeholder.toLowerCase().includes('message') || 
+              placeholder.toLowerCase().includes('chat') ||
+              parent && parent.textContent.toLowerCase().includes('chat')) {
+            targetInput = input;
+            console.log('✅ Found D-ID agent input:', placeholder);
+            break;
           }
         }
         
-        // If no text input found, retry after a delay
-        if (!textInputFound) {
-          setTimeout(addMultimodalButton, 2000);
+        // Also check for any iframe that might contain the D-ID agent
+        const iframes = document.querySelectorAll('iframe');
+        for (const iframe of iframes) {
+          try {
+            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+            const iframeInputs = iframeDoc.querySelectorAll('input, textarea, [contenteditable]');
+            if (iframeInputs.length > 0) {
+              targetInput = iframeInputs[0];
+              console.log('✅ Found input in iframe');
+              break;
+            }
+          } catch (e) {
+            // Cross-origin iframe, skip
+          }
         }
-      }, 1000);
+        
+        if (targetInput && !targetInput.parentElement.querySelector('.native-multimodal-btn')) {
+          console.log('🔧 Adding native multimodal button...');
+          
+          // Create the native "+" button
+          const plusBtn = document.createElement('button');
+          plusBtn.innerHTML = '+';
+          plusBtn.className = 'native-multimodal-btn';
+          plusBtn.style.cssText = `
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #333;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 999998;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+          `;
+          
+          plusBtn.onmouseover = () => {
+            plusBtn.style.background = '#555';
+            plusBtn.style.transform = 'translateY(-50%) scale(1.1)';
+          };
+          
+          plusBtn.onmouseout = () => {
+            plusBtn.style.background = '#333';
+            plusBtn.style.transform = 'translateY(-50%) scale(1)';
+          };
+          
+          plusBtn.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleMultimodalMenu();
+          };
+          
+          // Make parent container relative and adjust for button
+          const parent = targetInput.parentElement;
+          if (getComputedStyle(parent).position === 'static') {
+            parent.style.position = 'relative';
+          }
+          
+          // Adjust input padding to make room for button
+          targetInput.style.paddingLeft = '45px';
+          
+          parent.appendChild(plusBtn);
+          console.log('✅ Native multimodal button added successfully');
+          
+          return true;
+        }
+        
+        // Retry if not found
+        setTimeout(addNativeMultimodalButton, 2000);
+      }, 1500);
     }
     
-    function handleDidAgentPhotoUpload(input) {
+    function toggleMultimodalMenu() {
+      const menu = document.getElementById('multimodalMenu');
+      if (menu.style.display === 'none' || !menu.style.display) {
+        menu.style.display = 'block';
+        // Add click outside to close
+        setTimeout(() => {
+          document.addEventListener('click', handleClickOutside);
+        }, 100);
+      } else {
+        closeMultimodalMenu();
+      }
+    }
+    
+    function closeMultimodalMenu() {
+      document.getElementById('multimodalMenu').style.display = 'none';
+      document.removeEventListener('click', handleClickOutside);
+    }
+    
+    function handleClickOutside(event) {
+      const menu = document.getElementById('multimodalMenu');
+      const button = document.querySelector('.native-multimodal-btn');
+      if (!menu.contains(event.target) && !button.contains(event.target)) {
+        closeMultimodalMenu();
+      }
+    }
+    
+    function openCamera() {
+      closeMultimodalMenu();
+      const input = document.getElementById('didMultimodalInput');
+      input.accept = 'image/*';
+      input.capture = 'environment';
+      input.click();
+    }
+    
+    function openVideo() {
+      closeMultimodalMenu();
+      const input = document.getElementById('didMultimodalInput');
+      input.accept = 'video/*';
+      input.capture = 'environment';
+      input.click();
+    }
+    
+    function openPhotoLibrary() {
+      closeMultimodalMenu();
+      const input = document.getElementById('didMultimodalInput');
+      input.accept = 'image/*';
+      input.removeAttribute('capture');
+      input.click();
+    }
+    
+    function openFiles() {
+      closeMultimodalMenu();
+      const input = document.getElementById('didMultimodalInput');
+      input.accept = '*';
+      input.removeAttribute('capture');
+      input.click();
+    }
+    
+    function handleDidMultimodalUpload(input) {
       if (input.files && input.files[0]) {
         const file = input.files[0];
+        console.log('📁 File selected:', file.name, file.type);
         
-        // Create FormData for photo analysis
+        // Show loading state
+        showUploadProgress(file.name);
+        
+        // Create FormData for analysis
         const formData = new FormData();
-        formData.append('photo', file);
+        formData.append('file', file);
+        formData.append('type', file.type.split('/')[0]); // image, video, audio, etc.
         
-        // Send to Kid Solar analysis API
+        // Send to Kid Solar multimodal analysis API
         fetch('/api/kid-solar-analysis', {
           method: 'POST',
           body: formData
         })
         .then(response => response.json())
         .then(data => {
-          // Send analysis result to D-ID agent if possible
-          const textInputs = document.querySelectorAll('input[type="text"], textarea, [contenteditable]');
-          for (const input of textInputs) {
-            if (input.placeholder && input.placeholder.toLowerCase().includes('message')) {
-              input.value = `Photo Analysis: ${data.analysis}`;
-              input.focus();
-              
-              // Try to trigger send if there's a send button
-              const sendBtns = document.querySelectorAll('button');
-              for (const btn of sendBtns) {
-                if (btn.textContent && (btn.textContent.toLowerCase().includes('send') || 
-                    btn.innerHTML.includes('arrow') || btn.innerHTML.includes('➤'))) {
-                  setTimeout(() => btn.click(), 500);
-                  break;
-                }
-              }
-              break;
-            }
-          }
+          hideUploadProgress();
+          // Send analysis to D-ID agent
+          sendToDidAgent(`Kid Solar Analysis: ${data.analysis || data.message}`);
         })
         .catch(error => {
-          console.error('Photo analysis failed:', error);
-          alert('Photo analysis failed. Please try again.');
+          hideUploadProgress();
+          console.error('Analysis failed:', error);
+          sendToDidAgent(`I received a ${file.type} file but had trouble analyzing it. Can you tell me what you'd like to know about it?`);
         });
         
-        // Clear the input
+        // Clear input
         input.value = '';
       }
     }
     
-    // Initialize multimodal button when D-ID agent loads
-    document.addEventListener('DOMContentLoaded', addMultimodalButton);
+    function showUploadProgress(filename) {
+      const existingProgress = document.getElementById('uploadProgress');
+      if (existingProgress) existingProgress.remove();
+      
+      const progress = document.createElement('div');
+      progress.id = 'uploadProgress';
+      progress.style.cssText = `
+        position: fixed;
+        bottom: 100px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0,0,0,0.8);
+        color: white;
+        padding: 15px 25px;
+        border-radius: 25px;
+        font-size: 14px;
+        z-index: 999999;
+      `;
+      progress.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 20px; height: 20px; border: 2px solid #ccc; border-top: 2px solid white; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+          <span>Analyzing ${filename}...</span>
+        </div>
+      `;
+      document.body.appendChild(progress);
+      
+      // Add spin animation
+      const style = document.createElement('style');
+      style.textContent = `
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `;
+      document.head.appendChild(style);
+    }
     
-    // Also try after D-ID script loads
-    setTimeout(addMultimodalButton, 3000);
+    function hideUploadProgress() {
+      const progress = document.getElementById('uploadProgress');
+      if (progress) progress.remove();
+    }
+    
+    function sendToDidAgent(message) {
+      // Find D-ID agent input and send message
+      const inputs = document.querySelectorAll('input, textarea, [contenteditable]');
+      for (const input of inputs) {
+        const placeholder = input.placeholder || input.getAttribute('aria-label') || '';
+        if (placeholder.toLowerCase().includes('type') || 
+            placeholder.toLowerCase().includes('message') || 
+            placeholder.toLowerCase().includes('chat')) {
+          
+          if (input.contentEditable === 'true') {
+            input.innerHTML = message;
+          } else {
+            input.value = message;
+          }
+          input.focus();
+          
+          // Trigger input event
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          
+          // Try to find and click send button
+          setTimeout(() => {
+            const sendBtns = document.querySelectorAll('button');
+            for (const btn of sendBtns) {
+              const btnText = btn.textContent || btn.innerHTML || '';
+              if (btnText.toLowerCase().includes('send') || 
+                  btnText.includes('▶') || 
+                  btnText.includes('➤') ||
+                  btnText.includes('→')) {
+                btn.click();
+                console.log('✅ Message sent to D-ID agent');
+                break;
+              }
+            }
+          }, 300);
+          break;
+        }
+      }
+    }
+    
+    // Initialize when page loads
+    document.addEventListener('DOMContentLoaded', addNativeMultimodalButton);
+    setTimeout(addNativeMultimodalButton, 3000);
+    setTimeout(addNativeMultimodalButton, 6000); // Multiple attempts
   </script>
 </body>
 </html>
