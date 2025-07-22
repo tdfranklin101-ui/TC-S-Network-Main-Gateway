@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Current-See - Multimodal Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        .upload-area {
+            background: rgba(255,255,255,0.1);
+            border: 2px dashed rgba(255,255,255,0.3);
+            border-radius: 10px;
+            padding: 40px;
+            margin: 20px 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .upload-area:hover {
+            background: rgba(255,255,255,0.2);
+            border-color: rgba(255,255,255,0.5);
+        }
+        .upload-btn {
+            background: #ff6b35;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 18px;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s ease;
+        }
+        .upload-btn:hover {
+            background: #e55a2b;
+            transform: translateY(-2px);
+        }
+        .result {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: left;
+            display: none;
+        }
+        .loading {
+            display: none;
+            color: #ff6b35;
+        }
+        #fileInput {
+            display: none;
+        }
+        .floating-btn {
+            position: fixed;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #ff6b35;
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            border-radius: 50px;
+            font-size: 16px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(255,107,53,0.3);
+            animation: float 3s ease-in-out infinite;
+            z-index: 1000;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(-50%) translateX(0px); }
+            50% { transform: translateY(-50%) translateX(-10px); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌞 The Current-See Platform</h1>
+        <h2>Kid Solar (TC-S S0001) - Multimodal Test</h2>
+        <p>Upload a photo to test the multimodal analysis functionality</p>
+        
+        <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+            <h3>📷 Click to Upload Photo</h3>
+            <p>Kid Solar will analyze your image for energy insights</p>
+            <input type="file" id="fileInput" accept="image/*" />
+        </div>
+        
+        <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+            📷 Upload Photo to Kid Solar
+        </button>
+        
+        <div class="loading" id="loading">
+            🔄 Kid Solar is analyzing your photo...
+        </div>
+        
+        <div class="result" id="result">
+            <h3>🌞 Kid Solar Analysis:</h3>
+            <div id="analysis-content"></div>
+        </div>
+    </div>
+    
+    <button class="floating-btn" onclick="document.getElementById('fileInput').click()">
+        📷 Upload Photo to Kid Solar
+    </button>
+
+    <script>
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const formData = new FormData();
+            formData.append('photo', file);
+            
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('result').style.display = 'none';
+            
+            fetch('/api/photo-analysis', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loading').style.display = 'none';
+                
+                if (data.error) {
+                    document.getElementById('analysis-content').innerHTML = 
+                        `<p style="color: #ff6b6b;">Error: ${data.error}</p>`;
+                } else {
+                    document.getElementById('analysis-content').innerHTML = 
+                        `<p>${data.analysis}</p>`;
+                }
+                
+                document.getElementById('result').style.display = 'block';
+            })
+            .catch(error => {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('analysis-content').innerHTML = 
+                    `<p style="color: #ff6b6b;">Error: ${error.message}</p>`;
+                document.getElementById('result').style.display = 'block';
+            });
+        });
+    </script>
+</body>
+</html>
