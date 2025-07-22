@@ -432,6 +432,68 @@
             padding: 20px 30px;
             border-top: 1px solid #eee;
         }
+
+        /* Kid Solar Modal Styling */
+        .upload-area {
+            border: 2px dashed #ddd;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            min-height: 200px;
+            position: relative;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary-color);
+            background-color: rgba(255, 140, 0, 0.05);
+        }
+
+        .upload-area.dragover {
+            border-color: var(--primary-color);
+            background-color: rgba(255, 140, 0, 0.1);
+        }
+
+        .upload-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+
+        .preview-container {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .preview-container img,
+        .preview-container video {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .preview-info {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .input-section {
+            min-height: 250px;
+        }
+
+        .btn-group .btn-check:checked + .btn {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        #loadingIndicator .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
         
         .form-control {
             border-radius: 8px;
@@ -835,6 +897,15 @@
             <button class="btn-primary" data-bs-toggle="modal" data-bs-target="#supportModal">Make a Contribution</button>
         </div>
         
+        <!-- Kid Solar Multimodal Input Section -->
+        <div class="support-section">
+            <h3 class="support-title">Kid Solar (TC-S S0001) - Multimodal AI Assistant</h3>
+            <p class="support-description">
+                Upload photos, videos, or text to get AI-powered energy analysis and SOLAR token equivalents. Perfect for learning about sustainability!
+            </p>
+            <button class="btn-primary" data-bs-toggle="modal" data-bs-target="#kidSolarModal">Launch Kid Solar AI</button>
+        </div>
+
         <div class="text-center mb-5">
             <a href="/wallet-prototype.html" class="btn-primary me-3">Launch Full Wallet</a>
             <a href="/transfer-demo.html" class="btn-secondary me-3">2-Wallet Demo</a>
@@ -1012,6 +1083,165 @@
         </div>
     </div>
 
+    <!-- Kid Solar Multimodal Modal -->
+    <div class="modal fade" id="kidSolarModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, #FF8C00, #FFD700);">
+                    <h5 class="modal-title text-white">
+                        <i class="fas fa-child me-2"></i>Kid Solar (TC-S S0001) - Multimodal AI Assistant
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Input Type Selector -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="inputType" id="photoInput" checked>
+                                <label class="btn btn-outline-primary" for="photoInput">
+                                    <i class="fas fa-camera me-2"></i>Photo Analysis
+                                </label>
+                                
+                                <input type="radio" class="btn-check" name="inputType" id="videoInput">
+                                <label class="btn btn-outline-primary" for="videoInput">
+                                    <i class="fas fa-video me-2"></i>Video Analysis
+                                </label>
+                                
+                                <input type="radio" class="btn-check" name="inputType" id="textInput">
+                                <label class="btn btn-outline-primary" for="textInput">
+                                    <i class="fas fa-keyboard me-2"></i>Text Query
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Photo Input Section -->
+                    <div id="photoSection" class="input-section">
+                        <div class="upload-area" id="photoUploadArea">
+                            <div class="upload-content text-center p-4">
+                                <i class="fas fa-cloud-upload-alt fa-3x text-primary mb-3"></i>
+                                <h5>Upload a Photo for Analysis</h5>
+                                <p class="text-muted">Drag & drop an image or click to browse</p>
+                                <input type="file" id="photoFile" accept="image/*" class="d-none">
+                                <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('photoFile').click()">
+                                    <i class="fas fa-folder-open me-2"></i>Choose Photo
+                                </button>
+                            </div>
+                            <div class="preview-container" id="photoPreview" style="display: none;">
+                                <img id="photoPreviewImg" class="img-fluid rounded" alt="Preview">
+                                <div class="preview-info mt-2">
+                                    <span class="badge bg-info" id="photoFileInfo"></span>
+                                    <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="clearPhotoPreview()">
+                                        <i class="fas fa-times"></i> Remove
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Video Input Section -->
+                    <div id="videoSection" class="input-section" style="display: none;">
+                        <div class="upload-area" id="videoUploadArea">
+                            <div class="upload-content text-center p-4">
+                                <i class="fas fa-film fa-3x text-primary mb-3"></i>
+                                <h5>Upload a Video for Analysis</h5>
+                                <p class="text-muted">Supports MP4, WebM, AVI (max 50MB)</p>
+                                <input type="file" id="videoFile" accept="video/*" class="d-none">
+                                <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('videoFile').click()">
+                                    <i class="fas fa-folder-open me-2"></i>Choose Video
+                                </button>
+                            </div>
+                            <div class="preview-container" id="videoPreview" style="display: none;">
+                                <video id="videoPreviewVid" class="w-100 rounded" controls style="max-height: 300px;"></video>
+                                <div class="preview-info mt-2">
+                                    <span class="badge bg-info" id="videoFileInfo"></span>
+                                    <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="clearVideoPreview()">
+                                        <i class="fas fa-times"></i> Remove
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Text Input Section -->
+                    <div id="textSection" class="input-section" style="display: none;">
+                        <div class="form-group">
+                            <label for="textQuery" class="form-label">
+                                <i class="fas fa-question-circle me-2"></i>Ask Kid Solar anything about energy and sustainability:
+                            </label>
+                            <textarea id="textQuery" class="form-control" rows="4" 
+                                placeholder="Example: How much energy does my school use? What's the carbon footprint of my bicycle? How do solar panels work?"></textarea>
+                            <div class="form-text">
+                                Kid Solar can help you understand energy consumption, environmental impact, and sustainability concepts!
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Analysis Button -->
+                    <div class="text-center mt-4">
+                        <button id="analyzeBtn" class="btn btn-primary btn-lg" onclick="startAnalysis()">
+                            <i class="fas fa-magic me-2"></i>Analyze with Kid Solar AI
+                        </button>
+                    </div>
+
+                    <!-- Results Section -->
+                    <div id="resultsSection" class="mt-4" style="display: none;">
+                        <div class="card">
+                            <div class="card-header bg-success text-white">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-robot me-2"></i>Kid Solar Analysis Results
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="analysisResults">
+                                    <!-- Results will be populated here -->
+                                </div>
+                                <div class="row mt-3">
+                                    <div class="col-md-4">
+                                        <div class="text-center p-3 bg-light rounded">
+                                            <i class="fas fa-bolt text-warning fa-2x mb-2"></i>
+                                            <div class="h5 mb-1" id="energyValue">--</div>
+                                            <small class="text-muted">kWh Equivalent</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="text-center p-3 bg-light rounded">
+                                            <i class="fas fa-coins text-primary fa-2x mb-2"></i>
+                                            <div class="h5 mb-1" id="solarValue">--</div>
+                                            <small class="text-muted">SOLAR Tokens</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="text-center p-3 bg-light rounded">
+                                            <i class="fas fa-leaf text-success fa-2x mb-2"></i>
+                                            <div class="h5 mb-1" id="carbonValue">--</div>
+                                            <small class="text-muted">CO2 Impact</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Loading Indicator -->
+                    <div id="loadingIndicator" class="text-center mt-4" style="display: none;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Analyzing...</span>
+                        </div>
+                        <p class="mt-2">Kid Solar is analyzing your input...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-outline-primary" onclick="clearAllInputs()">
+                        <i class="fas fa-refresh me-2"></i>Start Over
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Support Modal -->
     <div class="modal fade" id="supportModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
@@ -1131,8 +1361,6 @@
             // Show feedback
             const originalHTML = this.innerHTML;
             this.innerHTML = '<i class="fas fa-check"></i>';
-  <!-- HEADER_PLACEHOLDER -->
-  
             this.classList.add('btn-success');
             this.classList.remove('btn-outline-primary');
             
@@ -1142,6 +1370,226 @@
                 this.classList.add('btn-outline-primary');
             }, 2000);
         });
+
+        // Kid Solar Multimodal Functions
+        function switchInputType() {
+            const photoInput = document.getElementById('photoInput');
+            const videoInput = document.getElementById('videoInput');
+            const textInput = document.getElementById('textInput');
+            
+            const photoSection = document.getElementById('photoSection');
+            const videoSection = document.getElementById('videoSection');
+            const textSection = document.getElementById('textSection');
+            
+            // Hide all sections
+            photoSection.style.display = 'none';
+            videoSection.style.display = 'none';
+            textSection.style.display = 'none';
+            
+            // Show selected section
+            if (photoInput.checked) {
+                photoSection.style.display = 'block';
+            } else if (videoInput.checked) {
+                videoSection.style.display = 'block';
+            } else if (textInput.checked) {
+                textSection.style.display = 'block';
+            }
+        }
+
+        // Add event listeners for input type switching
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('photoInput').addEventListener('change', switchInputType);
+            document.getElementById('videoInput').addEventListener('change', switchInputType);
+            document.getElementById('textInput').addEventListener('change', switchInputType);
+        });
+
+        // Photo file handling
+        document.getElementById('photoFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                handlePhotoUpload(file);
+            }
+        });
+
+        function handlePhotoUpload(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById('photoPreview');
+                const img = document.getElementById('photoPreviewImg');
+                const info = document.getElementById('photoFileInfo');
+                
+                img.src = e.target.result;
+                info.textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+                preview.style.display = 'block';
+                document.getElementById('photoUploadArea').querySelector('.upload-content').style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function clearPhotoPreview() {
+            document.getElementById('photoPreview').style.display = 'none';
+            document.getElementById('photoUploadArea').querySelector('.upload-content').style.display = 'block';
+            document.getElementById('photoFile').value = '';
+        }
+
+        // Video file handling
+        document.getElementById('videoFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                handleVideoUpload(file);
+            }
+        });
+
+        function handleVideoUpload(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById('videoPreview');
+                const video = document.getElementById('videoPreviewVid');
+                const info = document.getElementById('videoFileInfo');
+                
+                video.src = e.target.result;
+                info.textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+                preview.style.display = 'block';
+                document.getElementById('videoUploadArea').querySelector('.upload-content').style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function clearVideoPreview() {
+            document.getElementById('videoPreview').style.display = 'none';
+            document.getElementById('videoUploadArea').querySelector('.upload-content').style.display = 'block';
+            document.getElementById('videoFile').value = '';
+        }
+
+        function clearAllInputs() {
+            clearPhotoPreview();
+            clearVideoPreview();
+            document.getElementById('textQuery').value = '';
+            document.getElementById('resultsSection').style.display = 'none';
+            document.getElementById('loadingIndicator').style.display = 'none';
+            
+            // Reset to photo input
+            document.getElementById('photoInput').checked = true;
+            switchInputType();
+        }
+
+        async function startAnalysis() {
+            const photoInput = document.getElementById('photoInput');
+            const videoInput = document.getElementById('videoInput');
+            const textInput = document.getElementById('textInput');
+            
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const resultsSection = document.getElementById('resultsSection');
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            
+            // Show loading
+            loadingIndicator.style.display = 'block';
+            resultsSection.style.display = 'none';
+            analyzeBtn.disabled = true;
+            
+            try {
+                let analysisData = {};
+                
+                if (photoInput.checked) {
+                    const photoFile = document.getElementById('photoFile').files[0];
+                    if (!photoFile) {
+                        throw new Error('Please select a photo to analyze');
+                    }
+                    analysisData = await analyzePhoto(photoFile);
+                } else if (videoInput.checked) {
+                    const videoFile = document.getElementById('videoFile').files[0];
+                    if (!videoFile) {
+                        throw new Error('Please select a video to analyze');
+                    }
+                    analysisData = await analyzeVideo(videoFile);
+                } else if (textInput.checked) {
+                    const textQuery = document.getElementById('textQuery').value.trim();
+                    if (!textQuery) {
+                        throw new Error('Please enter a question for Kid Solar');
+                    }
+                    analysisData = await analyzeText(textQuery);
+                }
+                
+                displayResults(analysisData);
+                
+            } catch (error) {
+                alert('Analysis failed: ' + error.message);
+            } finally {
+                loadingIndicator.style.display = 'none';
+                analyzeBtn.disabled = false;
+            }
+        }
+
+        async function analyzePhoto(file) {
+            const formData = new FormData();
+            formData.append('photo', file);
+            formData.append('type', 'photo');
+            
+            const response = await fetch('/api/kid-solar-analysis', {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!response.ok) {
+                throw new Error('Photo analysis failed');
+            }
+            
+            return await response.json();
+        }
+
+        async function analyzeVideo(file) {
+            const formData = new FormData();
+            formData.append('video', file);
+            formData.append('type', 'video');
+            
+            const response = await fetch('/api/kid-solar-analysis', {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!response.ok) {
+                throw new Error('Video analysis failed');
+            }
+            
+            return await response.json();
+        }
+
+        async function analyzeText(query) {
+            const response = await fetch('/api/kid-solar-analysis', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    type: 'text',
+                    query: query
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error('Text analysis failed');
+            }
+            
+            return await response.json();
+        }
+
+        function displayResults(data) {
+            const resultsSection = document.getElementById('resultsSection');
+            const analysisResults = document.getElementById('analysisResults');
+            const energyValue = document.getElementById('energyValue');
+            const solarValue = document.getElementById('solarValue');
+            const carbonValue = document.getElementById('carbonValue');
+            
+            // Display main analysis text
+            analysisResults.innerHTML = `<p class="mb-0">${data.analysis}</p>`;
+            
+            // Display metrics
+            energyValue.textContent = data.energy_kwh || '--';
+            solarValue.textContent = data.solar_tokens || '--';
+            carbonValue.textContent = data.carbon_footprint || '--';
+            
+            resultsSection.style.display = 'block';
+        }
     </script>
 
 <!-- FOOTER_PLACEHOLDER -->
