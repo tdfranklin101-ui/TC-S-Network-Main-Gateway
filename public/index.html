@@ -494,6 +494,49 @@
     });
   </script>
 
+  <!-- Multimodal Kid Solar Interface -->
+  <div id="kid-solar-multimodal" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: none;">
+    <div style="background: linear-gradient(135deg, #4CAF50, #81C784); border-radius: 15px; padding: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); color: white; max-width: 300px;">
+      <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 10px;">
+        <h6 style="margin: 0; font-weight: bold;">Kid Solar Multimodal</h6>
+        <button onclick="closeKidSolarMultimodal()" style="background: none; border: none; color: white; font-size: 18px; cursor: pointer; padding: 0; margin-left: auto;">&times;</button>
+      </div>
+      
+      <!-- Input Type Selector -->
+      <div style="margin-bottom: 10px;">
+        <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+          <button onclick="setKidSolarMode('photo')" id="photo-mode-btn" style="flex: 1; padding: 8px; border: none; border-radius: 8px; background: rgba(255,255,255,0.3); color: white; cursor: pointer; font-size: 12px;">📷 Photo</button>
+          <button onclick="setKidSolarMode('video')" id="video-mode-btn" style="flex: 1; padding: 8px; border: none; border-radius: 8px; background: rgba(255,255,255,0.2); color: white; cursor: pointer; font-size: 12px;">🎥 Video</button>
+          <button onclick="setKidSolarMode('text')" id="text-mode-btn" style="flex: 1; padding: 8px; border: none; border-radius: 8px; background: rgba(255,255,255,0.2); color: white; cursor: pointer; font-size: 12px;">💬 Chat</button>
+        </div>
+      </div>
+
+      <!-- Photo Upload -->
+      <div id="photo-upload-section" style="display: block;">
+        <input type="file" id="kid-solar-photo" accept="image/*" style="width: 100%; padding: 8px; border: none; border-radius: 8px; margin-bottom: 10px; font-size: 12px;">
+        <button onclick="analyzeKidSolarPhoto()" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.9); color: #2E7D32; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Analyze Photo</button>
+      </div>
+
+      <!-- Video Upload -->
+      <div id="video-upload-section" style="display: none;">
+        <input type="file" id="kid-solar-video" accept="video/*" style="width: 100%; padding: 8px; border: none; border-radius: 8px; margin-bottom: 10px; font-size: 12px;">
+        <button onclick="analyzeKidSolarVideo()" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.9); color: #2E7D32; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Analyze Video</button>
+      </div>
+
+      <!-- Text Input -->
+      <div id="text-input-section" style="display: none;">
+        <textarea id="kid-solar-text" placeholder="Ask Kid Solar about energy..." style="width: 100%; padding: 8px; border: none; border-radius: 8px; margin-bottom: 10px; height: 60px; resize: none; font-size: 12px;"></textarea>
+        <button onclick="analyzeKidSolarText()" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.9); color: #2E7D32; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Ask Kid Solar</button>
+      </div>
+
+      <!-- Loading indicator -->
+      <div id="kid-solar-loading" style="display: none; text-align: center; margin-top: 10px;">
+        <div style="display: inline-block; width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 1s ease-in-out infinite;"></div>
+        <p style="margin: 5px 0 0 0; font-size: 12px;">Kid Solar is thinking...</p>
+      </div>
+    </div>
+  </div>
+
   <!-- D-ID AI Agent -->
   <script type="module"
         src="https://agent.d-id.com/v2/index.js"
@@ -503,7 +546,191 @@
         data-name="did-agent"
         data-monitor="true"
         data-orientation="horizontal"
-        data-position="right">
+        data-position="right"
+        data-on-ready="initKidSolarEnhancement">
+  </script>
+
+  <!-- Kid Solar Multimodal Scripts -->
+  <script>
+    let kidSolarMode = 'photo';
+    
+    // CSS animation for loading spinner
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    `;
+    document.head.appendChild(style);
+
+    function initKidSolarEnhancement() {
+      // Add multimodal button to D-ID interface
+      setTimeout(() => {
+        const didContainer = document.querySelector('[data-name="did-agent"]');
+        if (didContainer) {
+          const multiModalBtn = document.createElement('button');
+          multiModalBtn.innerHTML = '🎯 Multimodal';
+          multiModalBtn.style.cssText = 'position: absolute; top: 10px; left: 10px; background: #4CAF50; color: white; border: none; padding: 8px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; z-index: 10000;';
+          multiModalBtn.onclick = showKidSolarMultimodal;
+          didContainer.style.position = 'relative';
+          didContainer.appendChild(multiModalBtn);
+        }
+      }, 2000);
+    }
+
+    function showKidSolarMultimodal() {
+      document.getElementById('kid-solar-multimodal').style.display = 'block';
+    }
+
+    function closeKidSolarMultimodal() {
+      document.getElementById('kid-solar-multimodal').style.display = 'none';
+    }
+
+    function setKidSolarMode(mode) {
+      kidSolarMode = mode;
+      
+      // Update button styles
+      ['photo', 'video', 'text'].forEach(m => {
+        const btn = document.getElementById(m + '-mode-btn');
+        btn.style.background = m === mode ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.2)';
+      });
+      
+      // Show/hide sections
+      document.getElementById('photo-upload-section').style.display = mode === 'photo' ? 'block' : 'none';
+      document.getElementById('video-upload-section').style.display = mode === 'video' ? 'block' : 'none';
+      document.getElementById('text-input-section').style.display = mode === 'text' ? 'block' : 'none';
+    }
+
+    async function analyzeKidSolarPhoto() {
+      const fileInput = document.getElementById('kid-solar-photo');
+      const file = fileInput.files[0];
+      
+      if (!file) {
+        alert('Please select a photo first!');
+        return;
+      }
+
+      showKidSolarLoading(true);
+      
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('type', 'photo');
+        
+        const response = await fetch('/api/kid-solar-analysis', {
+          method: 'POST',
+          body: formData
+        });
+        
+        const result = await response.json();
+        speakToKidSolar(result.analysis);
+        
+      } catch (error) {
+        console.error('Kid Solar photo analysis error:', error);
+        speakToKidSolar("I had trouble analyzing that photo, but I can see you're interested in learning about energy! Try asking me a question instead.");
+      } finally {
+        showKidSolarLoading(false);
+      }
+    }
+
+    async function analyzeKidSolarVideo() {
+      const fileInput = document.getElementById('kid-solar-video');
+      const file = fileInput.files[0];
+      
+      if (!file) {
+        alert('Please select a video first!');
+        return;
+      }
+
+      showKidSolarLoading(true);
+      
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('type', 'video');
+        
+        const response = await fetch('/api/kid-solar-analysis', {
+          method: 'POST',
+          body: formData
+        });
+        
+        const result = await response.json();
+        speakToKidSolar(result.analysis);
+        
+      } catch (error) {
+        console.error('Kid Solar video analysis error:', error);
+        speakToKidSolar("I had trouble analyzing that video, but I love that you're exploring energy topics! What would you like to learn about?");
+      } finally {
+        showKidSolarLoading(false);
+      }
+    }
+
+    async function analyzeKidSolarText() {
+      const textInput = document.getElementById('kid-solar-text');
+      const query = textInput.value.trim();
+      
+      if (!query) {
+        alert('Please type a question first!');
+        return;
+      }
+
+      showKidSolarLoading(true);
+      
+      try {
+        const response = await fetch('/api/kid-solar-analysis', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            type: 'text',
+            query: query
+          })
+        });
+        
+        const result = await response.json();
+        speakToKidSolar(result.analysis);
+        textInput.value = '';
+        
+      } catch (error) {
+        console.error('Kid Solar text analysis error:', error);
+        speakToKidSolar("Great question! I love talking about energy and solar power. Solar energy comes from the sun and helps power our world in amazing ways!");
+      } finally {
+        showKidSolarLoading(false);
+      }
+    }
+
+    function speakToKidSolar(message) {
+      // Send message to D-ID agent
+      const didAgent = window.didAgent || window.D_ID?.getAgent?.('did-agent');
+      if (didAgent && didAgent.speak) {
+        didAgent.speak({ 
+          text: `Hi! I'm Kid Solar! ${message}`, 
+          audio: true 
+        });
+      }
+      
+      // Also send to chat if available
+      const event = new CustomEvent('kid-solar-message', { 
+        detail: { message: message } 
+      });
+      document.dispatchEvent(event);
+      
+      // Close multimodal interface
+      setTimeout(() => {
+        closeKidSolarMultimodal();
+      }, 1000);
+    }
+
+    function showKidSolarLoading(show) {
+      document.getElementById('kid-solar-loading').style.display = show ? 'block' : 'none';
+    }
+
+    // Initialize when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+      setKidSolarMode('photo');
+    });
   </script>
 </body>
 </html>

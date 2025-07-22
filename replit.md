@@ -99,6 +99,7 @@ The Current-See is a solar-backed global economic system prototype that demonstr
 
 ## Recent Changes
 
+- **July 22, 2025**: Enhanced floating Kid Solar with multimodal interface - added photo/video upload and text input directly to the D-ID agent on homepage
 - **July 22, 2025**: Deployment preparation completed - optimized main.js server, created DEPLOYMENT_READY.md checklist, and deploy.sh script for production launch
 - **July 22, 2025**: Created FULL website backup (backup/v1_kid_solar_FULL_20250722_150046/) - 821 files, 156MB complete website preservation including Kid Solar V1 D-ID integration
 - **July 22, 2025**: Integrated Kid Solar (TC-S S0001) with D-ID visual avatar - multimodal AI assistant now includes voice and visual responses alongside photo, video, and text analysis capabilities
