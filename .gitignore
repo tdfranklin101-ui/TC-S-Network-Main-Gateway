@@ -1,6 +1,30 @@
-node_modules
-dist
-.DS_Store
-server/public
-vite.config.ts.*
-*.tar.gz
+# Deployment optimization - exclude large directories
+backup/
+backup_*/
+deployment_backups/
+current_backup*/
+pre_restore_*/
+temp_extract/
+logs/
+*.log
+*.pid
+
+# Large asset directories (keep essential files only)
+attached_assets/*.wav
+attached_assets/*.mp4
+attached_assets/*.mov
+attached_assets/*.pdf
+
+# Development files
+node_modules/
+.env.local
+test_*
+debug_*
+
+# Keep essential files
+!attached_assets/requirements*.txt
+!public/
+!main.js
+!deploy-lightweight.js
+!package.json
+!replit.md
