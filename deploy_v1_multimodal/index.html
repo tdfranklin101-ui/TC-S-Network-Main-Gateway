@@ -777,35 +777,25 @@
         .then(data => {
           hideUploadProgress();
           
-          // Format the analysis for Kid Solar with enhanced context
+          // Format the analysis with "What Kid Solar sees:" prefix
           const analysisText = data.analysis || data.message || 'Analysis completed';
           const energyInfo = data.energy_kwh ? 
-            `This relates to approximately ${data.energy_kwh} kWh of energy and ${data.solar_tokens} SOLAR tokens. ` : '';
+            ` This relates to approximately ${data.energy_kwh} kWh of energy and ${data.solar_tokens} SOLAR tokens.` : '';
           
-          const kidSolarMessage = `Hi! I'm Kid Solar (TC-S S0001)! I analyzed your image: ${analysisText}. ${energyInfo}This connects to our solar energy mission - would you like me to explain how this relates to renewable energy and sustainability?`;
+          const kidSolarMessage = `What Kid Solar sees: ${analysisText}.${energyInfo} This connects to our solar energy mission and sustainability goals.`;
           
-          // Send analysis to D-ID agent with enhanced wrapper
-          sendToDidAgent(kidSolarMessage);
+          // Post the formatted message directly into D-ID text input
+          postToDidTextInput(kidSolarMessage);
           
-          // Also try direct API call to D-ID agent if available
-          try {
-            if (window.parent && window.parent.postMessage) {
-              window.parent.postMessage({
-                type: 'KID_SOLAR_ANALYSIS',
-                message: kidSolarMessage,
-                timestamp: Date.now()
-              }, '*');
-            }
-          } catch (e) {
-            console.log('📡 Direct D-ID API call not available');
-          }
-          
-          console.log('📊 Kid Solar analysis completed:', data);
+          console.log('📊 Analysis ready for Kid Solar:', data);
         })
         .catch(error => {
           hideUploadProgress();
           console.error('Analysis failed:', error);
-          sendToDidAgent(`I received a ${file.type} file but had trouble analyzing it. Can you tell me what you'd like to know about it?`);
+          
+          // Post error message to D-ID text input
+          const errorMessage = `What Kid Solar sees: I received a ${file.type} file but had trouble analyzing it. Please tell me what you'd like to know about it and I'll help explain the energy aspects!`;
+          postToDidTextInput(errorMessage);
         });
         
         // Clear input
@@ -855,249 +845,125 @@
       if (progress) progress.remove();
     }
     
-    // Enhanced D-ID Agent Wrapper for Kid Solar
-    let didAgentInstance = null;
-    
-    function initializeDidAgentWrapper() {
-      // Wait for D-ID agent to load
-      const checkForDidAgent = () => {
-        const didFrame = document.querySelector('iframe[src*="d-id.com"]') || 
-                        document.querySelector('[data-name="did-agent"]') ||
-                        document.querySelector('#did-agent');
-        
-        if (didFrame) {
-          console.log('🎯 D-ID agent frame detected');
-          setupDidAgentCommunication();
-          return true;
-        }
-        return false;
-      };
+    // Simple D-ID Text Input Handler for Kid Solar
+    function postToDidTextInput(message) {
+      console.log('📝 Posting analysis to D-ID text input:', message);
       
-      if (!checkForDidAgent()) {
-        // Keep checking for D-ID agent to load
-        const intervalId = setInterval(() => {
-          if (checkForDidAgent()) {
-            clearInterval(intervalId);
-          }
-        }, 1000);
-        
-        // Stop checking after 30 seconds
-        setTimeout(() => clearInterval(intervalId), 30000);
-      }
-    }
-    
-    function setupDidAgentCommunication() {
-      // Monitor for input fields within D-ID agent
-      const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-          if (mutation.addedNodes.length) {
-            // Check for new input elements
-            const inputs = document.querySelectorAll('input, textarea, [contenteditable]');
-            inputs.forEach(input => {
-              if (!input.hasAttribute('data-kid-solar-monitored')) {
-                input.setAttribute('data-kid-solar-monitored', 'true');
-                console.log('📝 Monitoring new input for Kid Solar');
-              }
-            });
-          }
-        });
-      });
-      
-      observer.observe(document.body, { 
-        childList: true, 
-        subtree: true 
-      });
-    }
-    
-    function sendToDidAgent(message) {
-      console.log('🎤 Sending to Kid Solar D-ID agent:', message);
-      
-      // Try multiple methods to send message to D-ID agent
-      let success = false;
-      
-      // Method 1: Direct iframe communication
-      const didFrame = document.querySelector('iframe[src*="d-id.com"]');
-      if (didFrame && didFrame.contentWindow) {
-        try {
-          didFrame.contentWindow.postMessage({
-            type: 'USER_MESSAGE',
-            message: message
-          }, '*');
-          console.log('📨 Message sent via iframe postMessage');
-          success = true;
-        } catch (e) {
-          console.log('⚠️ Iframe communication blocked:', e.message);
-        }
-      }
-      
-      // Method 2: Enhanced input field detection and injection
+      // Wait a moment for D-ID agent to fully load
       setTimeout(() => {
         const inputs = document.querySelectorAll('input, textarea, [contenteditable], div[role="textbox"]');
         let didInput = null;
         
-        // Look for D-ID specific elements with broader search
+        // Find the most likely D-ID text input
         for (const input of inputs) {
-          const element = input.closest('iframe') || 
-                          input.closest('[data-name="did-agent"]') || 
-                          input.closest('.did-agent') || 
-                          input.closest('#did-agent') ||
-                          input.closest('[class*="did"]') ||
-                          input.closest('[id*="did"]');
+          // Check if it's visible and likely a text input
+          const rect = input.getBoundingClientRect();
+          const isVisible = rect.width > 0 && rect.height > 0 && 
+                           getComputedStyle(input).display !== 'none' &&
+                           getComputedStyle(input).visibility !== 'hidden';
           
-          if (element) {
-            didInput = input;
-            console.log('🎯 Found D-ID agent input via element search');
-            break;
+          if (isVisible) {
+            const placeholder = (input.placeholder || '').toLowerCase();
+            const ariaLabel = (input.getAttribute('aria-label') || '').toLowerCase();
+            const inputType = input.type || '';
+            
+            // Look for chat/message-like inputs
+            if (inputType === 'text' || input.tagName === 'TEXTAREA' || input.contentEditable === 'true') {
+              if (placeholder.includes('type') || placeholder.includes('message') || 
+                  placeholder.includes('chat') || placeholder.includes('ask') ||
+                  ariaLabel.includes('type') || ariaLabel.includes('message') || 
+                  ariaLabel.includes('chat') || ariaLabel.includes('ask')) {
+                didInput = input;
+                console.log('💬 Found D-ID text input:', placeholder || ariaLabel || 'unlabeled');
+                break;
+              }
+            }
           }
         }
         
-        // Fallback: look for any visible text input
+        // If no specific input found, try the most recent visible text input
         if (!didInput) {
           for (const input of inputs) {
             const rect = input.getBoundingClientRect();
-            const isVisible = rect.width > 0 && rect.height > 0 && 
-                             getComputedStyle(input).display !== 'none' &&
-                             getComputedStyle(input).visibility !== 'hidden';
+            const isVisible = rect.width > 0 && rect.height > 0;
             
             if (isVisible && (input.type === 'text' || input.tagName === 'TEXTAREA' || input.contentEditable === 'true')) {
-              const placeholder = (input.placeholder || '').toLowerCase();
-              const ariaLabel = (input.getAttribute('aria-label') || '').toLowerCase();
-              
-              if (placeholder.includes('type') || placeholder.includes('message') || 
-                  ariaLabel.includes('type') || ariaLabel.includes('message') ||
-                  placeholder.includes('chat') || ariaLabel.includes('chat')) {
-                didInput = input;
-                console.log('💬 Found visible chat input:', placeholder || ariaLabel);
-                break;
-              }
+              didInput = input;
+              console.log('🎯 Using visible text input as fallback');
+              break;
             }
           }
         }
         
         if (didInput) {
-          // Clear and set the message
+          // Clear existing content and set the message
           if (didInput.contentEditable === 'true') {
-            didInput.innerHTML = '';
-            didInput.textContent = message;
             didInput.innerHTML = message;
+            didInput.textContent = message;
           } else {
-            didInput.value = '';
             didInput.value = message;
           }
           
+          // Focus on the input and trigger events
           didInput.focus();
+          didInput.dispatchEvent(new Event('input', { bubbles: true }));
+          didInput.dispatchEvent(new Event('change', { bubbles: true }));
           
-          // Trigger comprehensive events
-          const events = ['input', 'change', 'keyup', 'keydown', 'paste', 'blur', 'focus'];
-          events.forEach(eventType => {
-            const event = new Event(eventType, { bubbles: true, cancelable: true });
-            if (eventType === 'keyup' || eventType === 'keydown') {
-              event.key = 'Enter';
-              event.keyCode = 13;
-            }
-            didInput.dispatchEvent(event);
-          });
+          // Show success message
+          showAnalysisPosted(true);
           
-          // Enhanced send button detection with delay
-          setTimeout(() => {
-            const buttons = document.querySelectorAll('button, [role="button"], input[type="submit"], [onclick], [class*="send"], [id*="send"]');
-            for (const btn of buttons) {
-              const btnText = (btn.textContent || btn.innerHTML || btn.value || '').toLowerCase();
-              const btnClass = (btn.className || '').toLowerCase();
-              const btnId = (btn.id || '').toLowerCase();
-              const btnTitle = (btn.title || '').toLowerCase();
-              
-              if (btnText.includes('send') || btnText.includes('submit') || btnText.includes('go') ||
-                  btnText.includes('▶') || btnText.includes('➤') || btnText.includes('→') ||
-                  btnClass.includes('send') || btnClass.includes('submit') ||
-                  btnId.includes('send') || btnId.includes('submit') ||
-                  btnTitle.includes('send')) {
-                
-                // Trigger click with multiple methods
-                btn.click();
-                btn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
-                
-                console.log('✅ Message sent to Kid Solar D-ID agent via button:', btnText || btnClass || btnId);
-                success = true;
-                
-                // Show confirmation
-                showKidSolarConfirmation(true);
-                break;
-              }
-            }
-            
-            if (!success) {
-              // Try pressing Enter on the input
-              const enterEvent = new KeyboardEvent('keydown', {
-                key: 'Enter',
-                keyCode: 13,
-                bubbles: true,
-                cancelable: true
-              });
-              didInput.dispatchEvent(enterEvent);
-              
-              const enterUpEvent = new KeyboardEvent('keyup', {
-                key: 'Enter',
-                keyCode: 13,
-                bubbles: true,
-                cancelable: true
-              });
-              didInput.dispatchEvent(enterUpEvent);
-              
-              success = true;
-              showKidSolarConfirmation(true);
-            }
-          }, 1000);
-          
+          console.log('✅ Analysis posted to D-ID input - ready for you to send!');
         } else {
-          console.log('❌ Could not find D-ID agent input field');
-          showKidSolarConfirmation(false);
+          console.log('❌ Could not find D-ID text input');
+          showAnalysisPosted(false);
         }
-      }, 500);
+      }, 1000);
     }
     
-    function showKidSolarConfirmation(success) {
-      const confirmation = document.createElement('div');
-      confirmation.style.cssText = `
+    function showAnalysisPosted(success) {
+      const notification = document.createElement('div');
+      notification.style.cssText = `
         position: fixed;
         bottom: 150px;
         left: 50%;
         transform: translateX(-50%);
         background: ${success ? 'rgba(34, 197, 94, 0.9)' : 'rgba(239, 68, 68, 0.9)'};
         color: white;
-        padding: 10px 20px;
-        border-radius: 20px;
+        padding: 12px 24px;
+        border-radius: 25px;
         font-size: 14px;
         z-index: 999999;
-        animation: fadeInOut 4s forwards;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        animation: slideUp 0.3s ease-out;
       `;
       
-      confirmation.textContent = success ? 
-        '✅ Analysis sent to Kid Solar!' : 
-        '⚠️ Please manually type analysis to Kid Solar';
+      notification.textContent = success ? 
+        '✅ Analysis ready in text box - click send when ready!' : 
+        '❌ Could not find text input - please copy analysis manually';
       
-      document.body.appendChild(confirmation);
+      document.body.appendChild(notification);
       
-      // Add animation style
-      if (!document.getElementById('kidSolarAnimation')) {
+      // Add slide animation
+      if (!document.getElementById('slideUpAnimation')) {
         const style = document.createElement('style');
-        style.id = 'kidSolarAnimation';
+        style.id = 'slideUpAnimation';
         style.textContent = `
-          @keyframes fadeInOut {
-            0% { opacity: 0; transform: translateX(-50%) translateY(20px); }
-            20% { opacity: 1; transform: translateX(-50%) translateY(0); }
-            80% { opacity: 1; transform: translateX(-50%) translateY(0); }
-            100% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+          @keyframes slideUp {
+            from { opacity: 0; transform: translateX(-50%) translateY(30px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
           }
         `;
         document.head.appendChild(style);
       }
       
-      setTimeout(() => confirmation.remove(), 4000);
+      // Remove after 5 seconds
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.style.animation = 'slideUp 0.3s ease-out reverse';
+          setTimeout(() => notification.remove(), 300);
+        }
+      }, 5000);
     }
-    
-    // Initialize the D-ID wrapper when page loads
-    document.addEventListener('DOMContentLoaded', initializeDidAgentWrapper);
     
     // Initialize when page loads
     document.addEventListener('DOMContentLoaded', addNativeMultimodalButton);
