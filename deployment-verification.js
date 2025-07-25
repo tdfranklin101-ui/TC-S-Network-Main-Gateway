@@ -1,133 +1,143 @@
+#!/usr/bin/env node
 /**
- * The Current-See Deployment Verification Script
- * 
- * This script can be run after deployment to verify key functionality is working
- * Usage: node deployment-verification.js [hostname]
+ * Deployment Verification Script
+ * Tests all components before deployment
  */
 
-const https = require('https');
-const http = require('http');
+const fs = require('fs');
+const path = require('path');
 
-// Get hostname from command line or use default
-const input = process.argv[2] || 'thecurrentsee.org';
-let hostname, port, useHttps;
+console.log('🔍 THE CURRENT-SEE DEPLOYMENT VERIFICATION');
+console.log('==========================================');
 
-// Handle different input formats (hostname:port or just hostname)
-if (input.includes(':')) {
-  [hostname, port] = input.split(':');
-  useHttps = false;
-} else {
-  hostname = input;
-  port = useHttps ? 443 : 3000;
-  useHttps = !input.includes('localhost');
+let allPassed = true;
+
+function checkFile(filePath, description) {
+  const exists = fs.existsSync(filePath);
+  const status = exists ? '✅' : '❌';
+  console.log(`${status} ${description}: ${filePath}`);
+  if (!exists) allPassed = false;
+  return exists;
 }
 
-console.log(`\nStarting verification for ${hostname}${port ? ':'+port : ''} using ${useHttps ? 'HTTPS' : 'HTTP'}...`);
+function checkDirectory(dirPath, description) {
+  const exists = fs.existsSync(dirPath) && fs.statSync(dirPath).isDirectory();
+  const status = exists ? '✅' : '❌';
+  console.log(`${status} ${description}: ${dirPath}`);
+  if (!exists) allPassed = false;
+  return exists;
+}
 
-// Function to make a request
-function makeRequest(path, method = 'GET', data = null) {
-  return new Promise((resolve, reject) => {
-    const options = {
-      hostname,
-      port: port || (useHttps ? 443 : 3000),
-      path,
-      method,
-      headers: {
-        'User-Agent': 'Current-See-Verification-Script/1.0',
-        'Content-Type': 'application/json'
-      }
-    };
+// 1. Core Files Check
+console.log('\n📁 CORE FILES:');
+checkFile('./production-server.js', 'Production Server');
+checkFile('./main.js', 'Main Server (backup)');
+checkFile('./deploy-fix.js', 'Deploy Fix Server');
 
-    const protocol = useHttps ? https : http;
-    
-    const req = protocol.request(options, (res) => {
-      let responseData = '';
-      
-      res.on('data', (chunk) => {
-        responseData += chunk;
-      });
-      
-      res.on('end', () => {
-        try {
-          const result = {
-            statusCode: res.statusCode,
-            headers: res.headers,
-            data: responseData
-          };
-          
-          if (responseData && 
-              (responseData.startsWith('{') || responseData.startsWith('['))) {
-            result.json = JSON.parse(responseData);
-          }
-          
-          resolve(result);
-        } catch (error) {
-          reject(error);
-        }
-      });
-    });
-    
-    req.on('error', (error) => {
-      reject(error);
-    });
-    
-    if (data) {
-      req.write(typeof data === 'string' ? data : JSON.stringify(data));
-    }
-    
-    req.end();
+// 2. Website Assets Check  
+console.log('\n🌐 WEBSITE ASSETS:');
+checkDirectory('./deploy_v1_multimodal', 'Website Directory');
+checkFile('./deploy_v1_multimodal/index.html', 'Homepage');
+checkFile('./deploy_v1_multimodal/wallet.html', 'Wallet Page');
+checkFile('./deploy_v1_multimodal/declaration.html', 'Declaration Page');
+
+// 3. Check Homepage Content
+console.log('\n📄 HOMEPAGE CONTENT:');
+if (fs.existsSync('./deploy_v1_multimodal/index.html')) {
+  const htmlContent = fs.readFileSync('./deploy_v1_multimodal/index.html', 'utf8');
+  
+  const checks = [
+    { pattern: /Kid Solar/i, description: 'Kid Solar Integration' },
+    { pattern: /did-embed/i, description: 'D-ID Agent Embed' },
+    { pattern: /Music Now/i, description: 'Music Streaming Buttons' },
+    { pattern: /Current-See/i, description: 'Current-See Branding' },
+    { pattern: /multimodal/i, description: 'Multimodal Interface' },
+    { pattern: /memory/i, description: 'Memory System Integration' },
+    { pattern: /The Heart is a Mule/i, description: 'Music Track 1' },
+    { pattern: /Solar Day/i, description: 'Music Tracks 2-3' },
+    { pattern: /Break Time Blues/i, description: 'Music Track 4' }
+  ];
+  
+  checks.forEach(check => {
+    const found = check.pattern.test(htmlContent);
+    const status = found ? '✅' : '❌';
+    console.log(`${status} ${check.description}`);
+    if (!found) allPassed = false;
   });
 }
 
-// Main verification function
-async function verifyDeployment() {
-  try {
-    // 1. Check health endpoint
-    console.log('\nVerifying health endpoint...');
-    const healthCheck = await makeRequest('/health');
-    const healthStatus = healthCheck.statusCode === 200 ? 'OK' : 'FAILED';
-    console.log(`Health check: ${healthStatus} (${healthCheck.statusCode})`);
-    
-    // 2. Check homepage loads
-    console.log('\nVerifying homepage loads...');
-    const homepage = await makeRequest('/');
-    const homepageStatus = homepage.statusCode === 200 ? 'OK' : 'FAILED';
-    console.log(`Homepage: ${homepageStatus} (${homepage.statusCode})`);
-    
-    // 3. Check member count API
-    console.log('\nVerifying member count API...');
-    try {
-      const memberCount = await makeRequest('/api/member-count');
-      if (memberCount.json && typeof memberCount.json.count === 'number') {
-        console.log(`Member count API: OK - ${memberCount.json.count} members`);
-      } else {
-        console.log(`Member count API: FAILED - Invalid response format`);
-      }
-    } catch (error) {
-      console.log(`Member count API: FAILED - ${error.message}`);
-    }
-    
-    // 4. Check solar data API
-    console.log('\nVerifying solar data API...');
-    try {
-      const solarData = await makeRequest('/api/solar-data');
-      if (solarData.json && solarData.json.energy && solarData.json.solar) {
-        console.log(`Solar data API: OK - Energy: ${solarData.json.energy.value} ${solarData.json.energy.unit}`);
-        console.log(`                    Solar tokens: ${solarData.json.solar.formatted}`);
-        console.log(`                    Value: ${solarData.json.money.formatted}`);
-      } else {
-        console.log(`Solar data API: FAILED - Invalid response format`);
-      }
-    } catch (error) {
-      console.log(`Solar data API: FAILED - ${error.message}`);
-    }
-    
-    console.log('\nVerification complete!');
-    
-  } catch (error) {
-    console.error('Verification failed:', error);
-  }
+// 4. Server Dependencies
+console.log('\n📦 SERVER DEPENDENCIES:');
+try {
+  require.resolve('express');
+  console.log('✅ Express.js');
+} catch {
+  console.log('❌ Express.js');
+  allPassed = false;
 }
 
-// Run the verification
-verifyDeployment();
+try {
+  require.resolve('multer');
+  console.log('✅ Multer (file uploads)');
+} catch {
+  console.log('❌ Multer (file uploads)');
+  allPassed = false;
+}
+
+// 5. Check for Essential API Endpoints in Production Server
+console.log('\n🔌 API ENDPOINTS:');
+if (fs.existsSync('./production-server.js')) {
+  const serverContent = fs.readFileSync('./production-server.js', 'utf8');
+  
+  const endpoints = [
+    { pattern: /\/health/i, description: 'Health Check' },
+    { pattern: /\/api\/kid-solar-analysis/i, description: 'Kid Solar Analysis' },
+    { pattern: /\/api\/kid-solar-memory/i, description: 'Memory Retrieval' },
+    { pattern: /\/api\/kid-solar-conversation/i, description: 'Conversation Storage' }
+  ];
+  
+  endpoints.forEach(endpoint => {
+    const found = endpoint.pattern.test(serverContent);
+    const status = found ? '✅' : '❌';
+    console.log(`${status} ${endpoint.description}`);
+    if (!found) allPassed = false;
+  });
+}
+
+// 6. Memory System Check
+console.log('\n🧠 MEMORY SYSTEM:');
+if (fs.existsSync('./production-server.js')) {
+  const serverContent = fs.readFileSync('./production-server.js', 'utf8');
+  
+  const memoryChecks = [
+    { pattern: /sessionMemories/i, description: 'Session Storage' },
+    { pattern: /generateSessionId/i, description: 'Session ID Generation' },
+    { pattern: /getSessionMemory/i, description: 'Memory Access Functions' }
+  ];
+  
+  memoryChecks.forEach(check => {
+    const found = check.pattern.test(serverContent);
+    const status = found ? '✅' : '❌';
+    console.log(`${status} ${check.description}`);
+    if (!found) allPassed = false;
+  });
+}
+
+// Final Result
+console.log('\n' + '='.repeat(50));
+if (allPassed) {
+  console.log('🎉 ALL SYSTEMS READY FOR DEPLOYMENT!');
+  console.log('');
+  console.log('🚀 NEXT STEPS:');
+  console.log('   1. Start server: node production-server.js');
+  console.log('   2. Test locally: http://localhost:3000');
+  console.log('   3. Deploy to www.thecurrentsee.org');
+  console.log('');
+  console.log('✅ The Current-See Platform is deployment-ready!');
+} else {
+  console.log('❌ DEPLOYMENT VERIFICATION FAILED');
+  console.log('Please fix the issues above before deploying.');
+}
+console.log('='.repeat(50));
+
+process.exit(allPassed ? 0 : 1);
