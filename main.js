@@ -11,11 +11,27 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Serve static files from deploy_v1_multimodal directory
-app.use(express.static(path.join(__dirname, 'deploy_v1_multimodal')));
+// Serve static files from deploy_v1_multimodal directory with proper MIME types
+app.use(express.static(path.join(__dirname, 'deploy_v1_multimodal'), {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.html')) {
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    } else if (filePath.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript');
+    } else if (filePath.endsWith('.css')) {
+      res.setHeader('Content-Type', 'text/css');
+    } else if (filePath.endsWith('.mp3')) {
+      res.setHeader('Content-Type', 'audio/mpeg');
+    }
+  }
+}));
 
 // Root route serves the main index.html from deploy_v1_multimodal
 app.get('/', (req, res) => {
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   res.sendFile(path.join(__dirname, 'deploy_v1_multimodal', 'index.html'));
 });
 
