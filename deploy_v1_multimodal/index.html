@@ -241,6 +241,18 @@
                 </div>
                 <span style="color: #0057B8; font-weight: bold;">→</span>
               </a>
+              
+              <!-- Music Now Button -->
+              <button onclick="playMusic()" style="display: flex; align-items: center; text-decoration: none; padding: 12px; border-radius: 8px; background: linear-gradient(to right, rgba(255, 140, 0, 0.1), rgba(218, 165, 32, 0.1)); border: 1px solid rgba(255, 140, 0, 0.3); transition: all 0.3s ease; cursor: pointer; width: 100%; border: none;">
+                <div style="background: linear-gradient(to right, #ff8c00, #daa520); width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-right: 15px;">
+                  <span style="color: white; font-weight: bold;">🎵</span>
+                </div>
+                <div style="flex: 1; text-align: left;">
+                  <h4 style="margin: 0 0 5px 0; color: #ff8c00;">Music Now</h4>
+                  <p style="margin: 0; color: #555; font-size: 14px;">The Heart is a Mule (by Robert Hunter, Allen Ginsberg and William Burroughs)</p>
+                </div>
+                <span style="color: #ff8c00; font-weight: bold;">♪</span>
+              </button>
             </div>
           </div>
         </div>
@@ -834,6 +846,33 @@
       addNativeMultimodalButton();
     });
     observer.observe(document.body, { childList: true, subtree: true });
+    
+    // Music player functionality
+    let currentAudio = null;
+    
+    function playMusic() {
+      const musicUrl = 'https://storage.aisongmaker.io/audio/10db8911-0b74-4675-ba62-02182c1d7f6b.mp3';
+      
+      // Stop any currently playing audio
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio = null;
+      }
+      
+      // Create and play new audio
+      currentAudio = new Audio(musicUrl);
+      currentAudio.play().then(() => {
+        console.log('🎵 Playing: The Heart is a Mule');
+      }).catch(error => {
+        console.error('Audio playback failed:', error);
+        alert('Unable to play music. Please check your internet connection.');
+      });
+      
+      // Reset when finished
+      currentAudio.addEventListener('ended', () => {
+        currentAudio = null;
+      });
+    }
   </script>
 </body>
 </html>

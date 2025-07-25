@@ -99,6 +99,8 @@ The Current-See is a solar-backed global economic system prototype that demonstr
 
 ## Recent Changes
 
+- **July 25, 2025**: Added "Music Now" button to homepage - Integrated streaming of "The Heart is a Mule" by Robert Hunter, Allen Ginsberg and William Burroughs with orange gradient design and direct MP3 playback
+- **July 25, 2025**: Re-embedded D-ID agent with updated configuration - Changed to "fabio" mode with horizontal orientation and right positioning for improved user experience
 - **July 22, 2025**: NATIVE MULTIMODAL INTERFACE COMPLETE - Added ChatGPT-style "+" button with Camera/Video/Photos/Files menu integrated into D-ID agent text input
 - **July 22, 2025**: Added prominent multimodal photo buttons - orange floating "Upload Photo to Kid Solar" button with animation plus D-ID integration button for maximum visibility
 - **July 22, 2025**: Enhanced floating Kid Solar with multimodal interface - added photo/video upload and text input directly to the D-ID agent on homepage
