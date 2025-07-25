@@ -116,8 +116,8 @@ app.post('/api/kid-solar-generate-image', async (req, res) => {
       });
     }
 
-    // Kid Solar educational enhancement
-    const enhancedPrompt = `Educational illustration for children: ${prompt}. Bright, colorful, cartoon style showing renewable energy concepts in a fun, engaging way suitable for kids learning about solar power and sustainability.`;
+    // Kid Solar genius cool enhancement
+    const enhancedPrompt = `Sleek modern illustration: ${prompt}. Cool tech aesthetic, futuristic design, vibrant colors, showing renewable energy concepts with a genius young innovator vibe. Think Tesla meets cutting-edge sustainability tech.`;
     
     console.log('🎨 Generating:', enhancedPrompt.substring(0, 80) + '...');
 
