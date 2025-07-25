@@ -763,12 +763,20 @@
         // Show loading state
         showUploadProgress(file.name);
         
-        // Create FormData for analysis
+        // Get or create session ID for memory
+        let sessionId = localStorage.getItem('kidSolarSessionId');
+        if (!sessionId) {
+          sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+          localStorage.setItem('kidSolarSessionId', sessionId);
+        }
+        
+        // Create FormData for analysis with memory
         const formData = new FormData();
         formData.append('file', file);
+        formData.append('sessionId', sessionId);
         formData.append('type', file.type.split('/')[0]); // image, video, audio, etc.
         
-        // Send to Kid Solar multimodal analysis API
+        // Send to Kid Solar multimodal analysis API with memory
         fetch('/api/kid-solar-analysis', {
           method: 'POST',
           body: formData
@@ -777,17 +785,33 @@
         .then(data => {
           hideUploadProgress();
           
-          // Format the analysis with "What Kid Solar sees:" prefix
+          // Format the analysis with "What Kid Solar sees:" prefix and memory context
           const analysisText = data.analysis || data.message || 'Analysis completed';
           const energyInfo = data.energy_kwh ? 
             ` This relates to approximately ${data.energy_kwh} kWh of energy and ${data.solar_tokens} SOLAR tokens.` : '';
           
-          const kidSolarMessage = `What Kid Solar sees: ${analysisText}.${energyInfo} This connects to our solar energy mission and sustainability goals.`;
+          const memoryInfo = data.memoryContext ? 
+            ` (Memory: ${data.memoryContext.totalImages} images analyzed, ${data.memoryContext.sessionAge} minutes active)` : '';
+          
+          const kidSolarMessage = `What Kid Solar sees: ${analysisText}.${energyInfo} This connects to our solar energy mission and sustainability goals.${memoryInfo}`;
+          
+          // Store conversation in memory
+          if (data.sessionId) {
+            fetch('/api/kid-solar-conversation', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                sessionId: data.sessionId,
+                messageType: 'system',
+                messageText: `Analysis posted to D-ID: ${kidSolarMessage}`
+              })
+            }).catch(e => console.log('Memory storage failed:', e));
+          }
           
           // Post the formatted message directly into D-ID text input
           postToDidTextInput(kidSolarMessage);
           
-          console.log('📊 Analysis ready for Kid Solar:', data);
+          console.log('📊 Analysis ready for Kid Solar with memory:', data);
         })
         .catch(error => {
           hideUploadProgress();

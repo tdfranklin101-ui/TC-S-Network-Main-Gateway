@@ -1,54 +1,80 @@
-import { pgTable, serial, text, boolean, timestamp, integer, decimal } from 'drizzle-orm/pg-core';
-import { createInsertSchema } from 'drizzle-zod';
-import { z } from 'zod';
+import { sql } from 'drizzle-orm';
+import {
+  index,
+  jsonb,
+  pgTable,
+  timestamp,
+  varchar,
+  text,
+  integer,
+  boolean,
+} from "drizzle-orm/pg-core";
+import { createInsertSchema } from "drizzle-zod";
+import { z } from "zod";
 
-// Members table schema
-export const members = pgTable('members', {
-  id: serial('id').primaryKey(),
-  username: text('username').notNull().unique(),
-  name: text('name').notNull(),
-  email: text('email').notNull(),
-  joinedDate: text('joined_date').notNull(),
-  totalSolar: decimal('total_solar', { precision: 20, scale: 4 }).notNull().default('1'),
-  totalDollars: decimal('total_dollars', { precision: 20, scale: 2 }).notNull(),
-  isAnonymous: boolean('is_anonymous').notNull().default(false),
-  isReserve: boolean('is_reserve').notNull().default(false),
-  isPlaceholder: boolean('is_placeholder').notNull().default(false),
-  lastDistributionDate: text('last_distribution_date').notNull(),
-  notes: text('notes'),
-  signupTimestamp: timestamp('signup_timestamp').defaultNow()
+// Kid Solar Memory Sessions
+export const kidSolarSessions = pgTable("kid_solar_sessions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sessionId: varchar("session_id").notNull(),
+  userId: varchar("user_id"), // Optional user identification
+  startTime: timestamp("start_time").defaultNow(),
+  lastActivity: timestamp("last_activity").defaultNow(),
+  isActive: boolean("is_active").default(true),
 });
 
-// Define types based on the schema
-export type Member = typeof members.$inferSelect;
-export type InsertMember = typeof members.$inferInsert;
-
-// Create a validator schema for member insertion
-export const insertMemberSchema = createInsertSchema(members);
-
-// Distribution logs table to track all SOLAR distributions
-export const distributionLogs = pgTable('distribution_logs', {
-  id: serial('id').primaryKey(),
-  memberId: integer('member_id').notNull(),
-  distributionDate: text('distribution_date').notNull(),
-  solarAmount: decimal('solar_amount', { precision: 20, scale: 4 }).notNull(),
-  dollarValue: decimal('dollar_value', { precision: 20, scale: 2 }).notNull(),
-  timestamp: timestamp('timestamp').defaultNow()
+// Kid Solar Memory Entries (images and analyses)
+export const kidSolarMemories = pgTable("kid_solar_memories", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sessionId: varchar("session_id").references(() => kidSolarSessions.id),
+  memoryType: varchar("memory_type").notNull(), // 'image', 'text', 'analysis'
+  imageUrl: varchar("image_url"), // For uploaded images
+  imageBase64: text("image_base64"), // Base64 encoded image data
+  fileName: varchar("file_name"),
+  fileType: varchar("file_type"),
+  analysisText: text("analysis_text"), // OpenAI analysis results
+  userMessage: text("user_message"), // User's accompanying text
+  kidSolarResponse: text("kid_solar_response"), // Kid Solar's response
+  energyKwh: varchar("energy_kwh"), // Energy calculation
+  solarTokens: varchar("solar_tokens"), // SOLAR token calculation
+  timestamp: timestamp("timestamp").defaultNow(),
+  metadata: jsonb("metadata"), // Additional context data
 });
 
-export type DistributionLog = typeof distributionLogs.$inferSelect;
-export type InsertDistributionLog = typeof distributionLogs.$inferInsert;
-export const insertDistributionLogSchema = createInsertSchema(distributionLogs);
-
-// Backup logs table to track database backups
-export const backupLogs = pgTable('backup_logs', {
-  id: serial('id').primaryKey(),
-  backupType: text('backup_type').notNull(), // daily, timestamped, etc.
-  filename: text('filename').notNull(),
-  memberCount: integer('member_count').notNull(),
-  timestamp: timestamp('timestamp').defaultNow()
+// Conversation History
+export const kidSolarConversations = pgTable("kid_solar_conversations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sessionId: varchar("session_id").references(() => kidSolarSessions.id),
+  memoryId: varchar("memory_id").references(() => kidSolarMemories.id),
+  messageType: varchar("message_type").notNull(), // 'user', 'kid_solar', 'system'
+  messageText: text("message_text").notNull(),
+  timestamp: timestamp("timestamp").defaultNow(),
 });
 
-export type BackupLog = typeof backupLogs.$inferSelect;
-export type InsertBackupLog = typeof backupLogs.$inferInsert;
-export const insertBackupLogSchema = createInsertSchema(backupLogs);
+// Insert schemas
+export const insertKidSolarSessionSchema = createInsertSchema(kidSolarSessions);
+export const insertKidSolarMemorySchema = createInsertSchema(kidSolarMemories);
+export const insertKidSolarConversationSchema = createInsertSchema(kidSolarConversations);
+
+// Select types
+export type KidSolarSession = typeof kidSolarSessions.$inferSelect;
+export type KidSolarMemory = typeof kidSolarMemories.$inferSelect;
+export type KidSolarConversation = typeof kidSolarConversations.$inferSelect;
+
+// Insert types
+export type InsertKidSolarSession = z.infer<typeof insertKidSolarSessionSchema>;
+export type InsertKidSolarMemory = z.infer<typeof insertKidSolarMemorySchema>;
+export type InsertKidSolarConversation = z.infer<typeof insertKidSolarConversationSchema>;
+
+// Existing user tables (if they exist)
+export const users = pgTable("users", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: varchar("email").unique(),
+  firstName: varchar("first_name"),
+  lastName: varchar("last_name"),
+  profileImageUrl: varchar("profile_image_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type User = typeof users.$inferSelect;
+export type InsertUser = typeof users.$inferInsert;
