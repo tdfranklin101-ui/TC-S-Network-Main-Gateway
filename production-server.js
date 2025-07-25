@@ -145,7 +145,7 @@ app.get('/health', (req, res) => {
 });
 
 // KID SOLAR PHOTO ANALYSIS API
-app.post('/api/kid-solar-analysis', upload.single('photo'), async (req, res) => {
+app.post('/api/kid-solar-analysis', upload.single('file'), async (req, res) => {
   console.log('🧠 Kid Solar photo analysis requested');
   
   try {

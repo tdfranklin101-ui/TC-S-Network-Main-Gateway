@@ -781,44 +781,60 @@
           method: 'POST',
           body: formData
         })
-        .then(response => response.json())
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+          return response.json();
+        })
         .then(data => {
           hideUploadProgress();
+          console.log('🧠 Kid Solar analysis received:', data);
           
-          // Format the analysis with "What Kid Solar sees:" prefix and memory context
-          const analysisText = data.analysis || data.message || 'Analysis completed';
-          const energyInfo = data.energy_kwh ? 
-            ` This relates to approximately ${data.energy_kwh} kWh of energy and ${data.solar_tokens} SOLAR tokens.` : '';
-          
-          const memoryInfo = data.memoryContext ? 
-            ` (Memory: ${data.memoryContext.totalImages} images analyzed, ${data.memoryContext.sessionAge} minutes active)` : '';
-          
-          const kidSolarMessage = `What Kid Solar sees: ${analysisText}.${energyInfo} This connects to our solar energy mission and sustainability goals.${memoryInfo}`;
-          
-          // Store conversation in memory
-          if (data.sessionId) {
-            fetch('/api/kid-solar-conversation', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                sessionId: data.sessionId,
-                messageType: 'system',
-                messageText: `Analysis posted to D-ID: ${kidSolarMessage}`
-              })
-            }).catch(e => console.log('Memory storage failed:', e));
+          if (data.success) {
+            // Format the analysis with "What Kid Solar sees:" prefix and memory context
+            const analysisText = data.analysis || 'Analysis completed';
+            const energyInfo = data.energy_kwh ? 
+              ` This relates to approximately ${data.energy_kwh} kWh of energy and ${data.solar_tokens} SOLAR tokens.` : '';
+            
+            const memoryInfo = data.memoryStats ? 
+              ` (Memory: ${data.memoryStats.totalImages} images analyzed, ${data.memoryStats.sessionAge} minutes active)` : '';
+            
+            const kidSolarMessage = `Kid Solar Analysis: ${analysisText}${energyInfo} This connects to our solar energy mission and sustainability goals.${memoryInfo}`;
+            
+            // Store conversation in memory
+            if (data.sessionId) {
+              fetch('/api/kid-solar-conversation', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  sessionId: data.sessionId,
+                  messageType: 'analysis',
+                  messageText: kidSolarMessage
+                })
+              }).catch(e => console.log('Memory storage failed:', e));
+            }
+            
+            // Post the formatted message directly into D-ID text input
+            postToDidTextInput(kidSolarMessage);
+            
+            // Show success notification
+            showNotification(`Analysis complete! ${data.energy_kwh || 0} kWh = ${data.solar_tokens || 0} SOLAR tokens`, 'success');
+            
+            console.log('✅ Analysis posted to Kid Solar text input:', kidSolarMessage);
+          } else {
+            throw new Error(data.error || 'Analysis failed');
           }
-          
-          // Post the formatted message directly into D-ID text input
-          postToDidTextInput(kidSolarMessage);
-          
-          console.log('📊 Analysis ready for Kid Solar with memory:', data);
         })
         .catch(error => {
           hideUploadProgress();
           console.error('Analysis failed:', error);
           
-          // Post error message to D-ID text input
-          const errorMessage = `What Kid Solar sees: I received a ${file.type} file but had trouble analyzing it. Please tell me what you'd like to know about it and I'll help explain the energy aspects!`;
+          // Show error notification
+          showNotification('Analysis failed: ' + error.message, 'error');
+          
+          // Post error guidance to D-ID text input
+          const errorMessage = `Kid Solar Analysis: I received a ${file.type} file but had trouble analyzing it. Please tell me what you'd like to know about it and I'll help explain the energy aspects!`;
           postToDidTextInput(errorMessage);
         });
         
@@ -1001,14 +1017,18 @@
       }, 1000);
     }
     
-    function showAnalysisPosted(success) {
+    function showNotification(message, type = 'info') {
       const notification = document.createElement('div');
+      const backgroundColor = type === 'success' ? 'rgba(34, 197, 94, 0.9)' : 
+                            type === 'error' ? 'rgba(239, 68, 68, 0.9)' : 
+                            'rgba(59, 130, 246, 0.9)';
+      
       notification.style.cssText = `
         position: fixed;
         bottom: 150px;
         left: 50%;
         transform: translateX(-50%);
-        background: ${success ? 'rgba(34, 197, 94, 0.9)' : 'rgba(239, 68, 68, 0.9)'};
+        background: ${backgroundColor};
         color: white;
         padding: 12px 24px;
         border-radius: 25px;
@@ -1016,11 +1036,28 @@
         z-index: 999999;
         box-shadow: 0 4px 20px rgba(0,0,0,0.3);
         animation: slideUp 0.3s ease-out;
+        max-width: 300px;
+        text-align: center;
       `;
       
-      notification.textContent = success ? 
-        '✅ Analysis ready in text box - click send when ready!' : 
-        '❌ Could not find text input - please copy analysis manually';
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      
+      // Auto-remove after 5 seconds
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.style.animation = 'slideUp 0.3s ease-out reverse';
+          setTimeout(() => notification.remove(), 300);
+        }
+      }, 5000);
+    }
+
+    function showAnalysisPosted(success) {
+      showNotification(
+        success ? 'Analysis ready in text box - click send when ready!' : 
+                 'Could not find text input - please copy analysis manually',
+        success ? 'success' : 'error'
+      );
       
       document.body.appendChild(notification);
       
