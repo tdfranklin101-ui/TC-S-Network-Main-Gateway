@@ -100,8 +100,55 @@ app.post('/api/kid-solar-analysis', upload.single('file'), async (req, res) => {
     
     contextPrompt += "Analyze this image with focus on energy efficiency, solar potential, sustainability, and environmental impact. Be educational and engaging.";
 
-    // Mock OpenAI analysis (replace with actual OpenAI call)
-    const analysis = `I can see this image shows renewable energy infrastructure. The solar panels are positioned optimally for sun exposure, and this installation could generate significant clean energy. This connects directly to our mission of sustainable energy distribution.`;
+    // OpenAI analysis with memory context
+    const openaiApiKey = process.env.OPENAI_API_KEY || process.env.NEW_OPENAI_API_KEY;
+    let analysis = `I can see this image shows renewable energy infrastructure. The solar panels are positioned optimally for sun exposure, and this installation could generate significant clean energy.`;
+    
+    if (openaiApiKey) {
+      try {
+        const OpenAI = require('openai');
+        const openai = new OpenAI({ apiKey: openaiApiKey });
+        
+        const messages = [
+          {
+            role: "system",
+            content: `You are Kid Solar (TC-S S0001), an expert AI assistant focused on solar energy, sustainability, and environmental education. ${contextPrompt} Always be educational, engaging, and focused on renewable energy connections.`
+          },
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: "Analyze this image with focus on energy efficiency, solar potential, sustainability, and environmental impact. Be educational and connect everything to solar energy and sustainability goals."
+              },
+              {
+                type: "image_url",
+                image_url: {
+                  url: `data:${file.mimetype};base64,${base64Data}`
+                }
+              }
+            ]
+          }
+        ];
+        
+        const response = await openai.chat.completions.create({
+          model: "gpt-4o",
+          messages: messages,
+          max_tokens: 400,
+          temperature: 0.7
+        });
+        
+        analysis = response.choices[0].message.content;
+        console.log('✅ OpenAI analysis with memory context completed');
+        
+      } catch (error) {
+        console.error('OpenAI API error:', error.message);
+        analysis = `I can analyze this image and see renewable energy potential. The infrastructure shown could contribute to sustainable energy goals. ${memory.images.length > 0 ? 'Based on our previous discussions, this connects to the solar systems we\'ve explored together.' : ''}`;
+      }
+    } else {
+      console.log('⚠️ OpenAI API key not found, using contextual fallback');
+      analysis = `I can analyze this image and see renewable energy potential. ${memory.images.length > 0 ? `Building on our previous ${memory.images.length} image analyses, this shows similar sustainable energy characteristics.` : 'This connects to solar energy and sustainability principles.'}`;
+    }
     
     // Calculate mock energy values
     const energyKwh = (Math.random() * 5000 + 1000).toFixed(0);
@@ -229,6 +276,147 @@ app.post('/api/kid-solar-conversation', (req, res) => {
   } catch (error) {
     console.error('Conversation storage error:', error);
     res.status(500).json({ error: 'Failed to store conversation' });
+  }
+});
+
+// Kid Solar Context API - Provides memory context for D-ID agent
+app.get('/api/kid-solar-context/:sessionId', (req, res) => {
+  try {
+    const sessionId = req.params.sessionId;
+    const memory = sessionMemories.get(sessionId);
+    
+    if (!memory) {
+      return res.json({
+        context: "I'm Kid Solar (TC-S S0001), ready to help with solar energy and sustainability questions!",
+        hasMemory: false
+      });
+    }
+    
+    let context = "Kid Solar's Memory Context: ";
+    
+    // Recent image analyses
+    if (memory.images.length > 0) {
+      const recentImages = memory.images.slice(-3);
+      context += `I've analyzed ${memory.images.length} images in our session. Recent ones: `;
+      recentImages.forEach((img, index) => {
+        context += `${index + 1}. ${img.fileName} (${img.energyKwh} kWh potential). `;
+      });
+    }
+    
+    // Recent conversations
+    if (memory.conversations.length > 0) {
+      const recentConversations = memory.conversations.slice(-5);
+      context += "Recent discussion points: ";
+      recentConversations.forEach(conv => {
+        if (conv.type === 'user') {
+          context += `User mentioned: ${conv.message.substring(0, 50)}... `;
+        }
+      });
+    }
+    
+    context += `Total session time: ${Math.floor((new Date() - memory.created) / 1000 / 60)} minutes. I can reference all of this in my responses.`;
+    
+    res.json({
+      context: context,
+      hasMemory: true,
+      stats: {
+        totalImages: memory.images.length,
+        totalConversations: memory.conversations.length,
+        sessionDuration: Math.floor((new Date() - memory.created) / 1000 / 60)
+      }
+    });
+    
+  } catch (error) {
+    console.error('Context retrieval error:', error);
+    res.status(500).json({ error: 'Failed to retrieve context' });
+  }
+});
+
+// Enhanced D-ID Agent Integration API
+app.post('/api/kid-solar-respond', async (req, res) => {
+  try {
+    const { sessionId, userMessage, imageContext } = req.body;
+    
+    if (!sessionId || !userMessage) {
+      return res.status(400).json({ error: 'Missing sessionId or userMessage' });
+    }
+    
+    const memory = getSessionMemory(sessionId);
+    
+    // Store user message
+    memory.conversations.push({
+      type: 'user',
+      message: userMessage,
+      timestamp: new Date()
+    });
+    
+    // Build comprehensive context for Kid Solar
+    let systemPrompt = "You are Kid Solar (TC-S S0001), an expert AI assistant focused on solar energy, sustainability, and environmental education. ";
+    
+    // Add memory context
+    if (memory.images.length > 0) {
+      systemPrompt += `Session memory: You've analyzed ${memory.images.length} images. Recent analyses: `;
+      memory.images.slice(-3).forEach((img, index) => {
+        systemPrompt += `${index + 1}. ${img.fileName}: ${img.analysis} (${img.energyKwh} kWh potential). `;
+      });
+    }
+    
+    if (memory.conversations.length > 1) {
+      systemPrompt += "Recent conversation: ";
+      memory.conversations.slice(-5).forEach(conv => {
+        systemPrompt += `${conv.type}: ${conv.message} `;
+      });
+    }
+    
+    systemPrompt += "Use this context to provide more intelligent, connected responses about solar energy and sustainability.";
+    
+    // Generate response with OpenAI
+    const openaiApiKey = process.env.OPENAI_API_KEY || process.env.NEW_OPENAI_API_KEY;
+    let kidSolarResponse = "Thanks for your message! I'm here to help with solar energy and sustainability questions.";
+    
+    if (openaiApiKey) {
+      try {
+        const OpenAI = require('openai');
+        const openai = new OpenAI({ apiKey: openaiApiKey });
+        
+        const response = await openai.chat.completions.create({
+          model: "gpt-4o",
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userMessage }
+          ],
+          max_tokens: 300,
+          temperature: 0.8
+        });
+        
+        kidSolarResponse = response.choices[0].message.content;
+        
+      } catch (error) {
+        console.error('Kid Solar response generation error:', error);
+        kidSolarResponse = `I understand your question about "${userMessage.substring(0, 50)}...". ${memory.images.length > 0 ? `Based on the ${memory.images.length} images we've discussed, ` : ''}Let me help you understand the solar energy connections here!`;
+      }
+    }
+    
+    // Store Kid Solar's response
+    memory.conversations.push({
+      type: 'kid_solar',
+      message: kidSolarResponse,
+      timestamp: new Date()
+    });
+    
+    res.json({
+      success: true,
+      response: kidSolarResponse,
+      sessionContext: {
+        totalImages: memory.images.length,
+        totalConversations: memory.conversations.length,
+        sessionDuration: Math.floor((new Date() - memory.created) / 1000 / 60)
+      }
+    });
+    
+  } catch (error) {
+    console.error('Kid Solar response error:', error);
+    res.status(500).json({ error: 'Failed to generate response' });
   }
 });
 

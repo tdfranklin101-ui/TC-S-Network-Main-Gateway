@@ -869,6 +869,63 @@
       if (progress) progress.remove();
     }
     
+    // Enhanced D-ID Integration with Memory Context
+    function initializeKidSolarMemoryIntegration() {
+      // Listen for D-ID agent messages to store in memory
+      window.addEventListener('message', async (event) => {
+        if (event.data && event.data.type === 'did-agent-response') {
+          const sessionId = localStorage.getItem('kidSolarSessionId');
+          if (sessionId && event.data.message) {
+            // Store Kid Solar's D-ID response in memory
+            try {
+              await fetch('/api/kid-solar-conversation', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  sessionId: sessionId,
+                  messageType: 'kid_solar',
+                  messageText: event.data.message
+                })
+              });
+              console.log('🧠 Kid Solar response stored in memory');
+            } catch (e) {
+              console.log('Memory storage failed:', e);
+            }
+          }
+        }
+      });
+      
+      // Hook into D-ID input to capture user messages
+      document.addEventListener('keydown', async (event) => {
+        if (event.key === 'Enter' && !event.shiftKey) {
+          const target = event.target;
+          if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.contentEditable === 'true')) {
+            const message = target.value || target.textContent;
+            if (message && message.trim()) {
+              const sessionId = localStorage.getItem('kidSolarSessionId');
+              if (sessionId) {
+                // Store user message and get enhanced response
+                try {
+                  await fetch('/api/kid-solar-conversation', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      sessionId: sessionId,
+                      messageType: 'user',
+                      messageText: message.trim()
+                    })
+                  });
+                  console.log('🧠 User message stored in memory');
+                } catch (e) {
+                  console.log('Memory storage failed:', e);
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+    
     // Simple D-ID Text Input Handler for Kid Solar
     function postToDidTextInput(message) {
       console.log('📝 Posting analysis to D-ID text input:', message);
@@ -988,6 +1045,12 @@
         }
       }, 5000);
     }
+    
+    // Initialize memory integration when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+      initializeKidSolarMemoryIntegration();
+      console.log('🧠 Kid Solar memory integration initialized');
+    });
     
     // Initialize when page loads
     document.addEventListener('DOMContentLoaded', addNativeMultimodalButton);
