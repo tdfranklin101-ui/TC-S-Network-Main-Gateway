@@ -72,7 +72,7 @@ app.post('/api/kid-solar-analysis', upload.single('file'), (req, res) => {
     const energyKwh = Math.floor(Math.random() * 5000 + 1000);
     const solarTokens = (energyKwh / 4913).toFixed(6);
     
-    const analysis = `I see serious renewable energy potential here! This tech could generate approximately ${energyKwh} kWh of clean power - that's ${solarTokens} SOLAR tokens in our economic system. The engineering possibilities are incredible!`;
+    const analysis = `Fascinating intersection of materials science and energy physics here. I'm calculating approximately ${energyKwh} kWh potential - that's ${solarTokens} SOLAR tokens. The thermodynamic efficiency patterns remind me of Carnot cycles, but with quantum photovoltaic applications. This could integrate with my blockchain energy distribution theories.`;
 
     console.log(`✅ Analysis: ${energyKwh} kWh = ${solarTokens} SOLAR`);
 
@@ -113,8 +113,8 @@ app.post('/api/kid-solar-generate-image', async (req, res) => {
       });
     }
 
-    // Kid Solar GENIUS COOL enhancement - Tesla meets cutting-edge sustainability
-    const enhancedPrompt = `Ultra-modern tech visualization: ${prompt}. Sleek futuristic design, electric blue and neon accents, cutting-edge renewable energy technology, genius innovator aesthetic. Think Tesla cybertruck meets advanced sustainable tech. Cool, sophisticated, high-tech vibes.`;
+    // Kid Solar polymathic genius enhancement - cross-disciplinary innovation
+    const enhancedPrompt = `Polymathic genius visualization: ${prompt}. Fusion of physics, engineering, economics, and sustainability. Sleek quantum-tech aesthetic with mathematical equations floating in holographic displays, advanced materials science, biomimetic design elements. Think Da Vinci meets Elon Musk meets quantum computing. Intellectual sophistication with cutting-edge innovation.`;
     
     console.log('🎨 Generating genius visual...');
 
@@ -134,7 +134,7 @@ app.post('/api/kid-solar-generate-image', async (req, res) => {
       success: true,
       imageUrl: imageUrl,
       prompt: enhancedPrompt,
-      message: 'Kid Solar engineered a cutting-edge visualization!'
+      message: 'I synthesized a polymathic visualization bridging multiple disciplines!'
     });
 
   } catch (error) {
@@ -156,15 +156,17 @@ app.post('/api/kid-solar-suggest-image', async (req, res) => {
     const lowerText = (text || '').toLowerCase();
     
     if (lowerText.includes('solar') || lowerText.includes('energy')) {
-      suggestion = 'Holographic solar panel array with electric blue energy streams and advanced tech interfaces';
+      suggestion = 'Quantum photovoltaic array with mathematical equations floating in holographic space, showing photon-electron interactions and efficiency algorithms';
     } else if (lowerText.includes('wind') || lowerText.includes('turbine')) {
-      suggestion = 'Futuristic wind turbines with neon accents and energy flow visualization in sleek modern design';
+      suggestion = 'Biomimetic wind harvester inspired by bird wing aerodynamics, with fluid dynamics equations and energy conversion mathematics visible';
     } else if (lowerText.includes('battery') || lowerText.includes('storage')) {
-      suggestion = 'Advanced battery storage system with glowing energy cores and holographic power displays';
+      suggestion = 'Molecular-level energy storage visualization showing lithium ion pathways, quantum tunneling effects, and thermodynamic cycles';
+    } else if (lowerText.includes('economics') || lowerText.includes('token')) {
+      suggestion = 'Energy-economics fusion diagram with blockchain networks connecting to renewable sources, game theory matrices, and market dynamics';
     } else if (lowerText.includes('city') || lowerText.includes('urban')) {
-      suggestion = 'Smart city powered by renewable energy with cool lighting effects and tech integration';
+      suggestion = 'Systems theory visualization of urban energy flows, showing network topology, feedback loops, and optimization algorithms';
     } else {
-      suggestion = 'Cutting-edge renewable energy landscape with futuristic tech and genius innovation vibes';
+      suggestion = 'Cross-disciplinary innovation landscape merging physics, economics, biology, and engineering with mathematical beauty';
     }
 
     res.json({
@@ -172,8 +174,8 @@ app.post('/api/kid-solar-suggest-image', async (req, res) => {
       suggestion: suggestion,
       canGenerate: !!openai,
       message: openai ? 
-        'Kid Solar suggests: Want me to engineer this visualization?' :
-        'Kid Solar suggests this concept (generation currently offline)'
+        'My polymathic analysis suggests this visualization. Shall I synthesize the cross-disciplinary elements?' :
+        'I can conceptualize this interdisciplinary approach (visualization synthesis currently offline)'
     });
 
   } catch (error) {
