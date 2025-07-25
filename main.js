@@ -13,9 +13,9 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Memory storage for file uploads
-const storage = multer.memoryStorage();
+const multerStorage = multer.memoryStorage();
 const upload = multer({ 
-  storage: storage,
+  storage: multerStorage,
   limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
 });
 
@@ -456,12 +456,7 @@ routes.forEach(route => {
   });
 });
 
-// Kid Solar multimodal analysis endpoint
-const multer = require('multer');
-const upload = multer({ 
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 }
-});
+// Kid Solar multimodal analysis endpoint (using upload defined above)
 
 app.use(express.json());
 
