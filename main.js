@@ -428,14 +428,19 @@ app.post('/api/memory/conversation', (req, res) => {
   res.json({ success: true, memoryId: memory.id });
 });
 
-// Kid Solar conversation endpoint (matches frontend)
+// Kid Solar conversation endpoint with memory-enhanced responses
 app.post('/api/kid-solar-conversation', (req, res) => {
-  const { sessionId, messageType, messageText } = req.body;
+  const { sessionId, messageType, messageText, requestEnhancedResponse } = req.body;
   
   if (!sessionId || !messageText) {
     return res.status(400).json({ error: 'Session ID and message text required' });
   }
   
+  // Get conversation history for context
+  const conversationHistory = kidSolarMemory.getSessionMemories(sessionId);
+  const memoryStats = kidSolarMemory.getMemoryStats(sessionId);
+  
+  // Store the current conversation
   const memory = kidSolarMemory.storeMemory(sessionId, {
     type: 'conversation',
     messageType: messageType || 'chat',
@@ -443,7 +448,121 @@ app.post('/api/kid-solar-conversation', (req, res) => {
     analysisText: messageText
   });
   
-  res.json({ success: true, memoryId: memory.id });
+  // If enhanced response requested, provide memory-enriched context
+  let enhancedResponse = null;
+  if (requestEnhancedResponse && conversationHistory.length > 0) {
+    const recentInteractions = conversationHistory.slice(-5).map(m => {
+      if (m.type === 'image') {
+        return `Image Analysis: ${m.fileName} - ${m.analysisText?.substring(0, 100)}...`;
+      } else if (m.type === 'conversation') {
+        return `Chat: ${m.userMessage?.substring(0, 80)}...`;
+      }
+      return `${m.type}: ${m.analysisText?.substring(0, 80) || 'interaction'}...`;
+    }).join('\n');
+    
+    enhancedResponse = {
+      contextSummary: `Session context: ${memoryStats.totalImages} images analyzed, ${memoryStats.conversations} conversations, active for ${memoryStats.sessionAge} minutes`,
+      recentHistory: recentInteractions,
+      suggestedTopics: [
+        'Discuss previous image analysis',
+        'Build on renewable energy concepts',
+        'Explore sustainability connections'
+      ],
+      memoryIntegration: `I remember our previous interactions and can build educational continuity based on ${conversationHistory.length} stored memories.`
+    };
+  }
+  
+  res.json({ 
+    success: true, 
+    memoryId: memory.id,
+    memoryStats: memoryStats,
+    enhancedResponse: enhancedResponse
+  });
+});
+
+// Enhanced chat endpoint that uses memory for intelligent responses
+app.post('/api/kid-solar-chat', async (req, res) => {
+  const { sessionId, userMessage } = req.body;
+  
+  if (!sessionId || !userMessage) {
+    return res.status(400).json({ error: 'Session ID and message required' });
+  }
+  
+  try {
+    // Get conversation history for context
+    const conversationHistory = kidSolarMemory.getSessionMemories(sessionId);
+    const session = kidSolarMemory.getOrCreateSession(sessionId);
+    
+    // Build context from previous interactions
+    const memoryContext = conversationHistory.slice(-8).map(m => {
+      if (m.type === 'image') {
+        return `Previous image: ${m.fileName} - Analysis: ${m.analysisText?.substring(0, 150)}`;
+      } else if (m.type === 'conversation') {
+        return `Previous chat - User: ${m.userMessage} | Response: ${m.kidSolarResponse || 'responded'}`;
+      }
+      return `Previous ${m.type}: ${m.analysisText?.substring(0, 100)}`;
+    }).join('\n\n');
+
+    let response = '';
+    
+    // Use OpenAI with memory context if available
+    if (openai && process.env.OPENAI_API_KEY) {
+      try {
+        const completion = await openai.chat.completions.create({
+          model: "gpt-4o",
+          messages: [
+            {
+              role: "system",
+              content: `You are Kid Solar (TC-S S0001), a polymathic AI assistant with persistent memory and educational continuity. You help users understand renewable energy, sustainability, and environmental topics.
+
+MEMORY CONTEXT FROM PREVIOUS INTERACTIONS:
+${memoryContext || 'This is our first interaction.'}
+
+Use this context to provide personalized, continuous education that builds on previous conversations. Reference past images or discussions when relevant. Maintain your polymathic expertise while demonstrating memory continuity.`
+            },
+            {
+              role: "user", 
+              content: userMessage
+            }
+          ],
+          max_tokens: 800
+        });
+        
+        response = completion.choices[0].message.content;
+        
+      } catch (openaiError) {
+        console.warn('OpenAI chat failed:', openaiError.message);
+        response = `I remember our previous interactions (${conversationHistory.length} stored memories) and can build on them. ${userMessage.includes('?') ? 'Let me help answer that based on our conversation history.' : 'I\'m here to continue our educational journey about renewable energy and sustainability.'} What would you like to explore further?`;
+      }
+    } else {
+      // Memory-aware fallback response
+      response = `Based on our previous interactions (${conversationHistory.length} memories stored), I can help continue our discussion about renewable energy and sustainability. ${memoryContext ? 'I remember we\'ve discussed related topics before.' : ''} How can I help you explore this further?`;
+    }
+    
+    // Store the AI response in memory
+    const memory = kidSolarMemory.storeMemory(sessionId, {
+      type: 'conversation',
+      messageType: 'ai_response',
+      userMessage: userMessage,
+      kidSolarResponse: response,
+      analysisText: `User: ${userMessage}\nKid Solar: ${response}`
+    });
+    
+    res.json({
+      success: true,
+      response: response,
+      memoryId: memory.id,
+      memoryStats: kidSolarMemory.getMemoryStats(sessionId),
+      contextUsed: !!memoryContext
+    });
+    
+  } catch (error) {
+    console.error('Kid Solar chat error:', error);
+    res.status(500).json({ 
+      error: 'Chat processing failed', 
+      details: error.message 
+    });
+  }
 });
 
 // Persistent conversation stream access endpoints

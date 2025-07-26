@@ -949,18 +949,26 @@
         if (event.data && event.data.type === 'did-agent-response') {
           const sessionId = localStorage.getItem('kidSolarSessionId');
           if (sessionId && event.data.message) {
-            // Store Kid Solar's D-ID response in memory
+            // Store Kid Solar's D-ID response in memory with context
             try {
-              await fetch('/api/kid-solar-conversation', {
+              const response = await fetch('/api/kid-solar-conversation', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                   sessionId: sessionId,
                   messageType: 'kid_solar',
-                  messageText: event.data.message
+                  messageText: event.data.message,
+                  requestEnhancedResponse: false // Kid Solar responses don't need enhancement
                 })
               });
+              
+              const result = await response.json();
               console.log('🧠 Kid Solar response stored in memory');
+              
+              // Update memory stats display if needed
+              if (result.memoryStats) {
+                updateMemoryDisplay(result.memoryStats);
+              }
             } catch (e) {
               console.log('Memory storage failed:', e);
             }
@@ -977,18 +985,32 @@
             if (message && message.trim()) {
               const sessionId = localStorage.getItem('kidSolarSessionId');
               if (sessionId) {
-                // Store user message and get enhanced response
+                // Store user message and get enhanced response with memory context
                 try {
-                  await fetch('/api/kid-solar-conversation', {
+                  const response = await fetch('/api/kid-solar-conversation', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                       sessionId: sessionId,
                       messageType: 'user',
-                      messageText: message.trim()
+                      messageText: message.trim(),
+                      requestEnhancedResponse: true
                     })
                   });
+                  
+                  const result = await response.json();
                   console.log('🧠 User message stored in memory');
+                  
+                  // Show memory context if available
+                  if (result.enhancedResponse) {
+                    console.log('📚 Memory Context:', result.enhancedResponse.contextSummary);
+                    console.log('🔗 Recent History:', result.enhancedResponse.recentHistory);
+                    
+                    // Optional: Show memory integration notification
+                    if (result.memoryStats.total > 1) {
+                      showNotification(`Memory: ${result.memoryStats.total} interactions remembered`, 'info');
+                    }
+                  }
                 } catch (e) {
                   console.log('Memory storage failed:', e);
                 }
