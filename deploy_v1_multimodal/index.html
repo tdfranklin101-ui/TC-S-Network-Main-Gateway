@@ -554,6 +554,63 @@
         data-position="right">
   </script>
 
+  <!-- Kid Solar Analysis Display -->
+  <div id="analysisDisplay" style="
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    width: 300px;
+    background: white;
+    border: 2px solid #ff6b35;
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 8px 25px rgba(255, 107, 53, 0.3);
+    z-index: 999998;
+    display: none;
+    font-family: Arial, sans-serif;
+  ">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+      <h4 style="margin: 0; color: #ff6b35; font-size: 16px;">Kid Solar Analysis</h4>
+      <button onclick="closeAnalysisDisplay()" style="background: none; border: none; font-size: 18px; cursor: pointer; color: #666;">×</button>
+    </div>
+    <textarea id="copyableAnalysis" readonly style="
+      width: 100%;
+      height: 100px;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-family: Arial;
+      color: #333;
+      background: #f9f9f9;
+      resize: vertical;
+      margin-bottom: 10px;
+    " placeholder="Analysis will appear here..."></textarea>
+    <div style="display: flex; gap: 8px;">
+      <button onclick="copyAnalysisText()" style="
+        flex: 1;
+        background: #ff6b35;
+        color: white;
+        padding: 8px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 12px;
+      ">📋 Copy</button>
+      <button onclick="sendAnalysisToKidSolar()" style="
+        flex: 1;
+        background: #28a745;
+        color: white;
+        padding: 8px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 12px;
+      ">💬 Send to Kid Solar</button>
+    </div>
+  </div>
+
   <!-- Native Multimodal Interface for D-ID Agent -->
   <input type="file" id="didMultimodalInput" accept="image/*,video/*,audio/*,*" style="display: none;" onchange="handleDidMultimodalUpload(this)">
   
@@ -1262,6 +1319,65 @@
       currentAudio.addEventListener('ended', () => {
         currentAudio = null;
       });
+    }
+
+    // Kid Solar Analysis Display Functions
+    function showAnalysisDisplay(analysis) {
+      const display = document.getElementById('analysisDisplay');
+      const textarea = document.getElementById('copyableAnalysis');
+      
+      textarea.value = analysis;
+      display.style.display = 'block';
+      
+      console.log('📋 Analysis displayed in copyable text area');
+    }
+
+    function closeAnalysisDisplay() {
+      document.getElementById('analysisDisplay').style.display = 'none';
+    }
+
+    function copyAnalysisText() {
+      const textarea = document.getElementById('copyableAnalysis');
+      textarea.select();
+      textarea.setSelectionRange(0, 99999); // For mobile devices
+      
+      try {
+        document.execCommand('copy');
+        console.log('📋 Analysis copied to clipboard');
+        
+        // Visual feedback
+        const button = event.target;
+        const originalText = button.textContent;
+        button.textContent = '✓ Copied!';
+        button.style.background = '#28a745';
+        
+        setTimeout(() => {
+          button.textContent = originalText;
+          button.style.background = '#ff6b35';
+        }, 2000);
+        
+      } catch (err) {
+        console.error('Copy failed:', err);
+        alert('Copy failed. Please select the text manually.');
+      }
+    }
+
+    function sendAnalysisToKidSolar() {
+      const analysis = document.getElementById('copyableAnalysis').value;
+      if (analysis) {
+        // Send to D-ID agent input
+        sendDidMessage(analysis);
+        console.log('💬 Analysis sent to Kid Solar');
+        
+        // Visual feedback
+        const button = event.target;
+        const originalText = button.textContent;
+        button.textContent = '✓ Sent!';
+        
+        setTimeout(() => {
+          button.textContent = originalText;
+        }, 2000);
+      }
     }
   </script>
 </body>
