@@ -58,6 +58,14 @@ class KidSolarMemory {
   }
 
   createSession(sessionId, userId = null) {
+    // Check if session already exists to prevent overwriting
+    if (this.sessions.has(sessionId)) {
+      console.log(`📋 Session ${sessionId} already exists, updating activity`);
+      const existingSession = this.sessions.get(sessionId);
+      existingSession.lastActivity = new Date();
+      return existingSession;
+    }
+    
     const session = {
       sessionId,
       userId,
@@ -67,6 +75,8 @@ class KidSolarMemory {
       memories: []
     };
     this.sessions.set(sessionId, session);
+    
+    console.log(`🔄 New session created: ${sessionId} (Total active: ${this.sessions.size})`);
     return session;
   }
 
@@ -119,12 +129,21 @@ class KidSolarMemory {
       // Ensure directory exists
       if (!fs.existsSync(streamDir)) {
         fs.mkdirSync(streamDir, { recursive: true });
+        console.log(`📁 Created conversations directory`);
       }
       
       // Load existing stream or create new
       let stream = [];
       if (fs.existsSync(streamFile)) {
-        stream = JSON.parse(fs.readFileSync(streamFile, 'utf8'));
+        try {
+          stream = JSON.parse(fs.readFileSync(streamFile, 'utf8'));
+          console.log(`📖 Loaded existing stream for ${sessionId} with ${stream.length} entries`);
+        } catch (parseError) {
+          console.warn(`⚠️ Stream file corrupted for ${sessionId}, creating new stream`);
+          stream = [];
+        }
+      } else {
+        console.log(`🆕 Creating new stream file for session: ${sessionId}`);
       }
       
       // Append new memory to stream
@@ -135,12 +154,16 @@ class KidSolarMemory {
         sessionStats: this.getMemoryStats(sessionId)
       });
       
-      // Save updated stream
-      fs.writeFileSync(streamFile, JSON.stringify(stream, null, 2));
+      // Save updated stream with error handling
+      try {
+        fs.writeFileSync(streamFile, JSON.stringify(stream, null, 2));
+        console.log(`💾 Stream saved: ${streamFile} (${stream.length} total entries)`);
+      } catch (writeError) {
+        console.error(`❌ Failed to save stream for ${sessionId}:`, writeError.message);
+      }
       
-      console.log(`💾 Conversation stream saved: ${streamFile}`);
     } catch (error) {
-      console.log('Stream save error:', error);
+      console.error(`❌ Stream save error for ${sessionId}:`, error.message);
     }
   }
 
