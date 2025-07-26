@@ -3,10 +3,11 @@
 ## Server Status: VERIFIED ✅
 
 ### Production Server Configuration
-- **File**: `production-server.js` (stable, no routing conflicts)
+- **File**: `main.js` (deployment entry point, matches .replit config)
 - **Port**: 3000 (configurable via environment)
 - **Status**: Running and responsive
 - **Target**: www.thecurrentsee.org
+- **Autoscale Issue**: Resolved by using correct entry point
 
 ### Core Features Operational ✅
 - [x] Kid Solar AI Assistant with polymathic intelligence
@@ -35,7 +36,7 @@
 
 ### Deployment Command
 ```bash
-PORT=3000 node production-server.js
+PORT=3000 node main.js
 ```
 
 ### Environment Requirements
