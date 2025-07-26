@@ -178,6 +178,21 @@ class KidSolarMemory {
     return this.memories.filter(m => m.sessionId === sessionId);
   }
 
+  // NEW: Get ALL memories across all sessions for cross-session continuity
+  getAllMemories() {
+    return this.memories;
+  }
+
+  // NEW: Get user's complete conversation history across all sessions
+  getUserHistoryAcrossSessions(userId = null) {
+    if (userId) {
+      return this.memories.filter(m => m.userId === userId);
+    } else {
+      // If no userId, return all memories (for single-user scenarios)
+      return this.memories;
+    }
+  }
+
   getMemoryStats(sessionId) {
     const memories = this.getSessionMemories(sessionId);
     return {
@@ -498,12 +513,13 @@ app.post('/api/kid-solar-chat', async (req, res) => {
   }
   
   try {
-    // Get conversation history for context
-    const conversationHistory = kidSolarMemory.getSessionMemories(sessionId);
+    // Get conversation history for context - BOTH current session AND all previous sessions
+    const currentSessionHistory = kidSolarMemory.getSessionMemories(sessionId);
+    const allUserHistory = kidSolarMemory.getAllMemories(); // Cross-session memory access
     const session = kidSolarMemory.getOrCreateSession(sessionId);
     
-    // Build context from previous interactions
-    const memoryContext = conversationHistory.slice(-8).map(m => {
+    // Build comprehensive context from ALL previous interactions (cross-session)
+    const memoryContext = allUserHistory.slice(-12).map(m => {
       if (m.type === 'image') {
         return `Previous image: ${m.fileName} - Analysis: ${m.analysisText?.substring(0, 150)}`;
       } else if (m.type === 'conversation') {
@@ -522,12 +538,15 @@ app.post('/api/kid-solar-chat', async (req, res) => {
           messages: [
             {
               role: "system",
-              content: `You are Kid Solar (TC-S S0001), a polymathic AI assistant with persistent memory and educational continuity. You help users understand renewable energy, sustainability, and environmental topics.
+              content: `You are Kid Solar (TC-S S0001), a polymathic AI assistant with persistent memory and educational continuity across ALL sessions. You help users understand renewable energy, sustainability, and environmental topics.
 
-MEMORY CONTEXT FROM PREVIOUS INTERACTIONS:
+COMPLETE MEMORY HISTORY (ALL PREVIOUS SESSIONS):
 ${memoryContext || 'This is our first interaction.'}
 
-Use this context to provide personalized, continuous education that builds on previous conversations. Reference past images or discussions when relevant. Maintain your polymathic expertise while demonstrating memory continuity.`
+Current Session: ${sessionId}
+Total Previous Interactions: ${allUserHistory.length}
+
+You can remember and reference ANY previous conversation, image analysis, or interaction from ANY session. Use this complete history to provide personalized, continuous education that builds on ALL past conversations. Reference specific past sessions, images, or discussions when relevant. Maintain your polymathic expertise while demonstrating cross-session memory continuity.`
             },
             {
               role: "user", 
