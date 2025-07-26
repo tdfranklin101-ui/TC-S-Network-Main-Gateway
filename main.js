@@ -603,7 +603,7 @@ app.get('/api/memory-observers', (req, res) => {
   });
 });
 
-// DALL-E image generation endpoint
+// DALL-E image generation endpoint - Kid Solar decides when to create images
 app.post('/api/generate-image', async (req, res) => {
   console.log('🎨 Kid Solar DALL-E Generation...');
   
@@ -649,6 +649,152 @@ app.post('/api/generate-image', async (req, res) => {
     console.error('DALL-E Generation Error:', error);
     res.status(500).json({ 
       error: 'Image generation failed', 
+      details: error.message 
+    });
+  }
+});
+
+// Enhanced chat endpoint that can autonomously decide to generate images
+app.post('/api/kid-solar-chat-with-vision', async (req, res) => {
+  const { sessionId, userMessage } = req.body;
+  
+  if (!sessionId || !userMessage) {
+    return res.status(400).json({ error: 'Session ID and message required' });
+  }
+  
+  try {
+    // Get conversation history for context
+    const conversationHistory = kidSolarMemory.getSessionMemories(sessionId);
+    const session = kidSolarMemory.getOrCreateSession(sessionId);
+    
+    // Build context from previous interactions
+    const memoryContext = conversationHistory.slice(-8).map(m => {
+      if (m.type === 'image') {
+        return `Previous image: ${m.fileName} - Analysis: ${m.analysisText?.substring(0, 150)}`;
+      } else if (m.type === 'conversation') {
+        return `Previous chat - User: ${m.userMessage} | Response: ${m.kidSolarResponse || 'responded'}`;
+      } else if (m.type === 'generated_image') {
+        return `Generated image: ${m.prompt} - Image created to help explain concept`;
+      }
+      return `Previous ${m.type}: ${m.analysisText?.substring(0, 100)}`;
+    }).join('\n\n');
+
+    let response = '';
+    let shouldGenerateImage = false;
+    let imagePrompt = '';
+    
+    // Use OpenAI with memory context and image decision capability
+    if (openai && process.env.OPENAI_API_KEY) {
+      try {
+        const completion = await openai.chat.completions.create({
+          model: "gpt-4o",
+          messages: [
+            {
+              role: "system",
+              content: `You are Kid Solar (TC-S S0001), a polymathic AI assistant with DALL-E image generation capabilities. You help users understand renewable energy, sustainability, and environmental topics.
+
+MEMORY CONTEXT FROM PREVIOUS INTERACTIONS:
+${memoryContext || 'This is our first interaction.'}
+
+You can autonomously decide when an image would help explain a concept. If you determine an image would be educational, respond with your explanation AND add at the end:
+
+IMAGE_GENERATION: [detailed prompt for DALL-E educational image]
+
+Examples of when to generate images:
+- Explaining solar panel technology
+- Showing renewable energy systems
+- Visualizing sustainability concepts
+- Demonstrating scientific principles
+
+Use this capability to enhance education with visual learning tools. Be selective - only generate images when they genuinely help explanation.`
+            },
+            {
+              role: "user", 
+              content: userMessage
+            }
+          ],
+          max_tokens: 1000
+        });
+        
+        response = completion.choices[0].message.content;
+        
+        // Check if Kid Solar decided to generate an image
+        const imageMatch = response.match(/IMAGE_GENERATION:\s*(.+?)$/m);
+        if (imageMatch) {
+          shouldGenerateImage = true;
+          imagePrompt = imageMatch[1].trim();
+          // Remove the IMAGE_GENERATION line from response
+          response = response.replace(/IMAGE_GENERATION:\s*.+$/m, '').trim();
+        }
+        
+      } catch (openaiError) {
+        console.warn('OpenAI chat failed:', openaiError.message);
+        response = `I remember our previous interactions (${conversationHistory.length} stored memories) and can build on them. ${userMessage.includes('?') ? 'Let me help answer that based on our conversation history.' : 'I\'m here to continue our educational journey about renewable energy and sustainability.'} What would you like to explore further?`;
+      }
+    } else {
+      // Memory-aware fallback response
+      response = `Based on our previous interactions (${conversationHistory.length} memories stored), I can help continue our discussion about renewable energy and sustainability. ${memoryContext ? 'I remember we\'ve discussed related topics before.' : ''} How can I help you explore this further?`;
+    }
+    
+    // Store the AI response in memory
+    const memory = kidSolarMemory.storeMemory(sessionId, {
+      type: 'conversation',
+      messageType: 'ai_response_with_vision',
+      userMessage: userMessage,
+      kidSolarResponse: response,
+      analysisText: `User: ${userMessage}\nKid Solar: ${response}`,
+      decidedToGenerateImage: shouldGenerateImage,
+      imagePrompt: imagePrompt || null
+    });
+    
+    let generatedImageUrl = null;
+    
+    // Generate image if Kid Solar decided it would help
+    if (shouldGenerateImage && imagePrompt && openai) {
+      try {
+        const imageResponse = await openai.images.generate({
+          model: "dall-e-3",
+          prompt: `Kid Solar educational visual: ${imagePrompt}. Style: genius cool innovator, Tesla meets cutting-edge sustainability tech, sleek futuristic sophisticated aesthetic.`,
+          n: 1,
+          size: "1024x1024",
+          quality: "standard"
+        });
+        
+        generatedImageUrl = imageResponse.data[0].url;
+        
+        // Store generated image in memory
+        kidSolarMemory.storeMemory(sessionId, {
+          type: 'generated_image',
+          prompt: imagePrompt,
+          imageUrl: generatedImageUrl,
+          analysisText: `Auto-generated image to help explain: ${imagePrompt}`,
+          generatedInResponseTo: userMessage
+        });
+        
+        console.log('🎨 Kid Solar autonomously generated educational image:', imagePrompt);
+        
+      } catch (imageError) {
+        console.warn('Image generation failed:', imageError.message);
+      }
+    }
+    
+    res.json({
+      success: true,
+      response: response,
+      memoryId: memory.id,
+      memoryStats: kidSolarMemory.getMemoryStats(sessionId),
+      contextUsed: !!memoryContext,
+      generatedImage: generatedImageUrl ? {
+        url: generatedImageUrl,
+        prompt: imagePrompt,
+        reason: 'Kid Solar decided this image would help explain the concept'
+      } : null
+    });
+    
+  } catch (error) {
+    console.error('Kid Solar chat with vision error:', error);
+    res.status(500).json({ 
+      error: 'Chat processing failed', 
       details: error.message 
     });
   }
