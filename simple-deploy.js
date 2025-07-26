@@ -131,7 +131,7 @@ app.get('/bridge', (req, res) => {
 });
 
 // Catch-all route - serve index.html for any unmatched routes
-app.get('*', (req, res) => {
+app.get('/*', (req, res) => {
   res.sendFile(path.join(__dirname, 'deploy_v1_multimodal', 'index.html'));
 });
 
