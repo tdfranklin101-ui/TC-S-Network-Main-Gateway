@@ -1,0 +1,21 @@
+[
+  {
+    "timestamp": "2025-07-26T17:19:42.780Z",
+    "type": "conversation",
+    "data": {
+      "id": "1753550382780",
+      "sessionId": "test-session-123",
+      "timestamp": "2025-07-26T17:19:42.780Z",
+      "type": "conversation",
+      "messageType": "session_start",
+      "userMessage": "D-ID agent delivered opening statement - session initialized",
+      "analysisText": "D-ID agent delivered opening statement - session initialized"
+    },
+    "sessionStats": {
+      "total": 1,
+      "images": 0,
+      "conversations": 1,
+      "lastActivity": "2025-07-26T17:19:42.780Z"
+    }
+  }
+]
