@@ -4,6 +4,12 @@ const multer = require('multer');
 const fs = require('fs');
 const OpenAI = require('openai');
 
+// Ensure uploads directory exists
+if (!fs.existsSync('uploads')) {
+  fs.mkdirSync('uploads', { recursive: true });
+  console.log('📁 Created uploads directory');
+}
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -195,12 +201,15 @@ class KidSolarMemory {
 
   getMemoryStats(sessionId) {
     const memories = this.getSessionMemories(sessionId);
-    return {
+    const stats = {
       total: memories.length,
       images: memories.filter(m => m.type === 'image').length,
       conversations: memories.filter(m => m.type === 'conversation').length,
       lastActivity: memories.length > 0 ? memories[memories.length - 1].timestamp : null
     };
+    
+    console.log(`📊 Memory Stats for ${sessionId}: ${stats.images} images, ${stats.conversations} conversations`);
+    return stats;
   }
 }
 
@@ -365,6 +374,7 @@ BREAKTHROUGH: This represents true AI vision - beyond pattern recognition to gen
     }
 
     // Store in memory system
+    console.log(`🖼️ Storing image memory: ${req.file.originalname} in session ${sessionId}`);
     const memory = kidSolarMemory.storeMemory(sessionId, {
       type: 'image',
       fileName: req.file.originalname,
@@ -375,6 +385,8 @@ BREAKTHROUGH: This represents true AI vision - beyond pattern recognition to gen
       userMessage: userMessage,
       imageSize: req.file.size
     });
+    
+    console.log(`✅ Image memory stored with ID: ${memory.id}`);
 
     // Clean up uploaded file
     try {
