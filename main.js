@@ -25,12 +25,30 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || process.env.NEW_OPENAI_API_KEY
 });
 
-// Kid Solar Memory System (in-memory for deployment)
+// Kid Solar Memory System (enhanced with persistent observer)
 class KidSolarMemory {
   constructor() {
     this.sessions = new Map();
     this.memories = [];
     this.conversations = [];
+    this.observers = new Set(); // Observer pattern for external monitoring
+    this.persistentLog = []; // Backup conversation stream
+  }
+
+  // Observer Pattern - External systems can watch conversation streams
+  addObserver(observer) {
+    this.observers.add(observer);
+    return () => this.observers.delete(observer); // Return unsubscribe function
+  }
+
+  notifyObservers(event, data) {
+    for (const observer of this.observers) {
+      try {
+        observer(event, data);
+      } catch (error) {
+        console.log('Observer error:', error);
+      }
+    }
   }
 
   createSession(sessionId, userId = null) {
@@ -64,11 +82,96 @@ class KidSolarMemory {
     };
     this.memories.push(memory);
     
+    // Add to persistent log for external systems
+    this.persistentLog.push({
+      ...memory,
+      eventType: 'memory_stored',
+      source: 'kid_solar_memory'
+    });
+    
     const session = this.sessions.get(sessionId);
     if (session) {
       session.memories.push(memory);
+      session.lastActivity = new Date();
     }
+    
+    // Notify observers of new memory
+    this.notifyObservers('memory_stored', memory);
+    
+    // Auto-save conversation stream to file system
+    this.saveConversationStream(sessionId, memory);
+    
     return memory;
+  }
+
+  // Persistent conversation stream to file system
+  saveConversationStream(sessionId, memory) {
+    try {
+      const streamFile = `conversations/session_${sessionId}_stream.json`;
+      const streamDir = path.dirname(streamFile);
+      
+      // Ensure directory exists
+      if (!fs.existsSync(streamDir)) {
+        fs.mkdirSync(streamDir, { recursive: true });
+      }
+      
+      // Load existing stream or create new
+      let stream = [];
+      if (fs.existsSync(streamFile)) {
+        stream = JSON.parse(fs.readFileSync(streamFile, 'utf8'));
+      }
+      
+      // Append new memory to stream
+      stream.push({
+        timestamp: memory.timestamp,
+        type: memory.type,
+        data: memory,
+        sessionStats: this.getMemoryStats(sessionId)
+      });
+      
+      // Save updated stream
+      fs.writeFileSync(streamFile, JSON.stringify(stream, null, 2));
+      
+      console.log(`💾 Conversation stream saved: ${streamFile}`);
+    } catch (error) {
+      console.log('Stream save error:', error);
+    }
+  }
+
+  // Get persistent conversation stream for external analysis
+  getConversationStream(sessionId) {
+    try {
+      const streamFile = `conversations/session_${sessionId}_stream.json`;
+      if (fs.existsSync(streamFile)) {
+        return JSON.parse(fs.readFileSync(streamFile, 'utf8'));
+      }
+    } catch (error) {
+      console.log('Stream read error:', error);
+    }
+    return [];
+  }
+
+  // Get all conversation streams (for analytics/monitoring)
+  getAllConversationStreams() {
+    try {
+      const conversationsDir = 'conversations';
+      if (!fs.existsSync(conversationsDir)) return {};
+      
+      const streams = {};
+      const files = fs.readdirSync(conversationsDir);
+      
+      for (const file of files) {
+        if (file.endsWith('_stream.json')) {
+          const sessionId = file.replace('session_', '').replace('_stream.json', '');
+          streams[sessionId] = this.getConversationStream(sessionId);
+        }
+      }
+      
+      return streams;
+    } catch (error) {
+      console.log('All streams read error:', error);
+      return {};
+    }
   }
 
   getSessionMemories(sessionId) {
@@ -87,6 +190,33 @@ class KidSolarMemory {
 }
 
 const kidSolarMemory = new KidSolarMemory();
+
+// External Observer Example - Conversation Analytics
+const conversationAnalytics = (event, data) => {
+  console.log(`📊 Analytics Observer: ${event}`, {
+    sessionId: data.sessionId,
+    type: data.type,
+    timestamp: data.timestamp,
+    hasAnalysis: !!data.analysisText
+  });
+  
+  // Could send to external analytics service
+  // analytics.track('kid_solar_interaction', data);
+};
+
+// External Observer Example - Real-time Monitoring Dashboard
+const realtimeMonitor = (event, data) => {
+  console.log(`🔍 Monitor Observer: ${event} - Session ${data.sessionId}`);
+  
+  // Could push to WebSocket for real-time dashboard
+  // if (wsConnections.size > 0) {
+  //   broadcast({ type: 'conversation_update', data });
+  // }
+};
+
+// Register observers for persistent monitoring
+kidSolarMemory.addObserver(conversationAnalytics);
+kidSolarMemory.addObserver(realtimeMonitor);
 
 console.log('🚀 Current-See Platform Starting...');
 console.log('🧠 Kid Solar: AI Visual Cortex Active');
@@ -314,6 +444,44 @@ app.post('/api/kid-solar-conversation', (req, res) => {
   });
   
   res.json({ success: true, memoryId: memory.id });
+});
+
+// Persistent conversation stream access endpoints
+app.get('/api/conversation-stream/:sessionId', (req, res) => {
+  const { sessionId } = req.params;
+  const stream = kidSolarMemory.getConversationStream(sessionId);
+  res.json({ 
+    sessionId, 
+    stream,
+    totalMessages: stream.length,
+    lastActivity: stream[stream.length - 1]?.timestamp || null
+  });
+});
+
+app.get('/api/conversation-streams', (req, res) => {
+  const allStreams = kidSolarMemory.getAllConversationStreams();
+  const summary = Object.keys(allStreams).map(sessionId => ({
+    sessionId,
+    messageCount: allStreams[sessionId].length,
+    lastActivity: allStreams[sessionId][allStreams[sessionId].length - 1]?.timestamp || null,
+    types: [...new Set(allStreams[sessionId].map(m => m.type))]
+  }));
+  
+  res.json({ 
+    totalSessions: summary.length, 
+    sessions: summary,
+    fullStreams: allStreams
+  });
+});
+
+// Observer status and management
+app.get('/api/memory-observers', (req, res) => {
+  res.json({
+    activeObservers: kidSolarMemory.observers.size,
+    persistentLogEntries: kidSolarMemory.persistentLog.length,
+    observerTypes: ['conversationAnalytics', 'realtimeMonitor'],
+    capabilities: ['file_system_persistence', 'real_time_monitoring', 'analytics_tracking']
+  });
 });
 
 // DALL-E image generation endpoint
