@@ -109,7 +109,7 @@ app.get('/health', (req, res) => {
 });
 
 // Kid Solar photo analysis with AI Visual Cortex and Memory
-app.post('/api/analyze-photo', upload.single('file'), async (req, res) => {
+app.post('/api/kid-solar-analysis', upload.single('file'), async (req, res) => {
   console.log('🧠 Kid Solar Visual Cortex + Memory Processing...');
   
   try {
@@ -243,8 +243,8 @@ BREAKTHROUGH: This represents true AI vision - beyond pattern recognition to gen
     res.json({ 
       success: true, 
       analysis: analysis,
-      energyKwh: energyKwh,
-      solarTokens: solarTokens,
+      energy_kwh: energyKwh,
+      solar_tokens: solarTokens,
       visualCortexLayers: 5,
       memoryStats: memoryStats,
       sessionId: sessionId,
@@ -293,6 +293,24 @@ app.post('/api/memory/conversation', (req, res) => {
     userMessage,
     kidSolarResponse,
     analysisText: `User: ${userMessage}\nKid Solar: ${kidSolarResponse}`
+  });
+  
+  res.json({ success: true, memoryId: memory.id });
+});
+
+// Kid Solar conversation endpoint (matches frontend)
+app.post('/api/kid-solar-conversation', (req, res) => {
+  const { sessionId, messageType, messageText } = req.body;
+  
+  if (!sessionId || !messageText) {
+    return res.status(400).json({ error: 'Session ID and message text required' });
+  }
+  
+  const memory = kidSolarMemory.storeMemory(sessionId, {
+    type: 'conversation',
+    messageType: messageType || 'chat',
+    userMessage: messageText,
+    analysisText: messageText
   });
   
   res.json({ success: true, memoryId: memory.id });
