@@ -1241,8 +1241,86 @@
       console.log('🧠 Kid Solar memory integration initialized');
     });
     
+    // Initialize Kid Solar session when D-ID agent loads
+    async function initializeKidSolarSession() {
+      console.log('🚀 Initializing Kid Solar session...');
+      
+      const sessionId = localStorage.getItem('kidSolarSessionId') || `session-${Date.now()}`;
+      localStorage.setItem('kidSolarSessionId', sessionId);
+      
+      try {
+        const response = await fetch('/api/kid-solar-conversation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId: sessionId,
+            messageType: 'session_start',
+            messageText: 'D-ID agent delivered opening statement - session initialized'
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          console.log('✅ Kid Solar session initialized:', sessionId);
+          showNotification(`Kid Solar memory system active - Session: ${sessionId.substring(0, 8)}...`, 'success');
+        }
+      } catch (error) {
+        console.log('Session initialization error:', error);
+      }
+    }
+
+    // Monitor for D-ID agent activity and trigger session start
+    function monitorDidAgentForSessionStart() {
+      let sessionStarted = false;
+      let checkCount = 0;
+      const maxChecks = 30; // Check for 30 seconds
+      
+      const checkForAgent = setInterval(() => {
+        checkCount++;
+        
+        // Look for any sign that D-ID agent is active
+        const agentElements = document.querySelectorAll('[data-agent-id], iframe, div[role="dialog"], div[role="application"]');
+        const hasVisibleElements = Array.from(agentElements).some(el => {
+          const rect = el.getBoundingClientRect();
+          return rect.width > 0 && rect.height > 0;
+        });
+        
+        // Also check for any chat-like interfaces
+        const chatElements = document.querySelectorAll('input[type="text"], textarea, [contenteditable="true"], div[role="textbox"]');
+        const hasChatInterface = Array.from(chatElements).some(el => {
+          const rect = el.getBoundingClientRect();
+          const placeholder = (el.placeholder || '').toLowerCase();
+          const ariaLabel = (el.getAttribute('aria-label') || '').toLowerCase();
+          
+          return rect.width > 0 && rect.height > 0 && 
+                 (placeholder.includes('type') || placeholder.includes('message') || 
+                  placeholder.includes('chat') || ariaLabel.includes('type') ||
+                  ariaLabel.includes('message') || ariaLabel.includes('chat'));
+        });
+        
+        if ((hasVisibleElements || hasChatInterface) && !sessionStarted) {
+          sessionStarted = true;
+          console.log('🎯 D-ID agent detected - triggering session start');
+          initializeKidSolarSession();
+          clearInterval(checkForAgent);
+        }
+        
+        if (checkCount >= maxChecks) {
+          console.log('⏰ Session monitoring timeout - initializing anyway');
+          if (!sessionStarted) {
+            initializeKidSolarSession();
+          }
+          clearInterval(checkForAgent);
+        }
+      }, 1000);
+    }
+
     // Initialize when page loads
-    document.addEventListener('DOMContentLoaded', addNativeMultimodalButton);
+    document.addEventListener('DOMContentLoaded', () => {
+      addNativeMultimodalButton();
+      monitorDidAgentForSessionStart();
+    });
     setTimeout(addNativeMultimodalButton, 2000);
     setTimeout(addNativeMultimodalButton, 4000);
     setTimeout(addNativeMultimodalButton, 6000);

@@ -448,6 +448,15 @@ app.post('/api/kid-solar-conversation', (req, res) => {
     analysisText: messageText
   });
   
+  // Log session start events prominently
+  if (messageType === 'session_start') {
+    console.log(`🚀 NEW KID SOLAR SESSION STARTED: ${sessionId}`);
+    console.log(`🧠 Memory system initialized for user interaction`);
+    console.log(`📊 Session tracking active - all interactions will be remembered`);
+  } else {
+    console.log(`💾 Memory stored: ${messageType || 'conversation'} for session ${sessionId}`);
+  }
+  
   // If enhanced response requested, provide memory-enriched context
   let enhancedResponse = null;
   if (requestEnhancedResponse && conversationHistory.length > 0) {
