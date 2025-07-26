@@ -96,6 +96,22 @@ app.get('/api/solar-clock', (req, res) => {
   });
 });
 
+// Bridge endpoint - Connect Current-See with 1028 Atoms
+app.get('/bridge', (req, res) => {
+  res.json({
+    message: "Bridge found and crossed!",
+    connection: "The Current-See ↔ 1028 Atoms",
+    founder: "Terry D. Franklin",
+    vision: "Systems thinking applied to humanity's greatest challenges",
+    domains: {
+      currentSee: "Solar energy economics and sustainable systems",
+      atoms1028: "Longevity research and health optimization"
+    },
+    integration: "Energy and health are fundamentally connected - Kid Solar bridges both domains",
+    crossingComplete: true
+  });
+});
+
 // Catch-all route - serve index.html for any unmatched routes
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'deploy_v1_multimodal', 'index.html'));
