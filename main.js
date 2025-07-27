@@ -1171,6 +1171,11 @@ app.get('/analytics', (req, res) => {
   res.sendFile(path.join(__dirname, 'public-dashboard.html'));
 });
 
+// Alternative route for dashboard
+app.get('/dash', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public-dashboard.html'));
+});
+
 // Website Usage Analytics API Endpoints
 app.get('/api/website-analytics', (req, res) => {
   const stats = websiteAnalytics.getUsageStats();
