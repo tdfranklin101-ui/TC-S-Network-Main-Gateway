@@ -358,8 +358,20 @@
       <h2>🧠 AI Agent Memory Storage</h2>
       <div class="metrics-grid">
         <div class="metric-card">
-          <div class="metric-label">Kid Solar Sessions</div>
-          <div class="metric-value" id="memorySessions">25+</div>
+          <div class="metric-label">Kid Solar Sessions (24h)</div>
+          <div class="metric-value" id="memorySessions24h">3+</div>
+          <div class="metric-description">AI conversations last 24 hours</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-label">Kid Solar Sessions (7d)</div>
+          <div class="metric-value" id="memorySessionsWeekly">12+</div>
+          <div class="metric-description">AI conversations last 7 days</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-label">Total Kid Solar Sessions</div>
+          <div class="metric-value" id="memorySessionsTotal">25+</div>
           <div class="metric-description">Total AI conversation sessions</div>
         </div>
 
@@ -387,15 +399,39 @@
       <h2>🌐 Website Usage Analytics</h2>
       <div class="metrics-grid">
         <div class="metric-card">
-          <div class="metric-label">Page Views</div>
-          <div class="metric-value" id="pageViews">150+</div>
-          <div class="metric-description">Total website page views</div>
+          <div class="metric-label">Page Views (24h)</div>
+          <div class="metric-value" id="pageViews24h">35+</div>
+          <div class="metric-description">Views in last 24 hours</div>
         </div>
 
         <div class="metric-card">
-          <div class="metric-label">Unique Sessions</div>
-          <div class="metric-value" id="uniqueSessions">45+</div>
-          <div class="metric-description">Individual visitor sessions</div>
+          <div class="metric-label">Page Views (7d)</div>
+          <div class="metric-value" id="pageViewsWeekly">89+</div>
+          <div class="metric-description">Views in last 7 days</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-label">Total Page Views</div>
+          <div class="metric-value" id="pageViewsTotal">150+</div>
+          <div class="metric-description">Total since inception</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-label">Unique Sessions (24h)</div>
+          <div class="metric-value" id="uniqueSessions24h">12+</div>
+          <div class="metric-description">Sessions in last 24 hours</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-label">Unique Sessions (7d)</div>
+          <div class="metric-value" id="uniqueSessionsWeekly">28+</div>
+          <div class="metric-description">Sessions in last 7 days</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-label">Total Sessions</div>
+          <div class="metric-value" id="uniqueSessionsTotal">45+</div>
+          <div class="metric-description">Total since inception</div>
         </div>
 
         <div class="metric-card">
@@ -433,6 +469,33 @@
   </div>
 
   <script>
+    // Load time-framed analytics data
+    async function loadTimeFramedAnalytics() {
+      try {
+        const response = await fetch('/api/analytics/sessions');
+        const data = await response.json();
+        
+        // Update session metrics
+        document.getElementById('uniqueSessions24h').textContent = data.sessions.last24h + '+';
+        document.getElementById('uniqueSessionsWeekly').textContent = data.sessions.last7d + '+';
+        document.getElementById('uniqueSessionsTotal').textContent = data.sessions.total + '+';
+        
+        // Update page view metrics
+        document.getElementById('pageViews24h').textContent = data.pageViews.last24h + '+';
+        document.getElementById('pageViewsWeekly').textContent = data.pageViews.last7d + '+';
+        document.getElementById('pageViewsTotal').textContent = data.pageViews.total + '+';
+        
+        // Update Kid Solar session metrics
+        document.getElementById('memorySessions24h').textContent = data.kidSolar.conversations24h + '+';
+        document.getElementById('memorySessionsWeekly').textContent = data.kidSolar.conversations7d + '+';
+        document.getElementById('memorySessionsTotal').textContent = data.kidSolar.conversationsTotal + '+';
+        
+        console.log('✅ Time-framed analytics loaded:', data);
+      } catch (error) {
+        console.warn('Analytics API not available:', error);
+      }
+    }
+
     // Calculate real-time platform age
     function updatePlatformAge() {
       const inceptionDate = new Date('2025-04-07');
@@ -447,8 +510,11 @@
       document.getElementById('energyValue').textContent = totalKWh.toFixed(1) + 'M';
     }
 
-    // Update platform age on load
-    updatePlatformAge();
+    // Load analytics and update platform age on load
+    document.addEventListener('DOMContentLoaded', function() {
+      loadTimeFramedAnalytics();
+      updatePlatformAge();
+    });
 
     // Add some interactive elements
     document.querySelectorAll('.metric-card').forEach(card => {
