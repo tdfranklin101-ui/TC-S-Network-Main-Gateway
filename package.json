@@ -8,6 +8,7 @@
     "@replit/vite-plugin-runtime-error-modal": "^0.0.3",
     "@replit/vite-plugin-shadcn-theme-json": "^0.0.4",
     "@tailwindcss/typography": "^0.5.16",
+    "@types/express": "^5.0.3",
     "@vitejs/plugin-react": "^4.3.4",
     "body-parser": "^2.2.0",
     "connect-pg-simple": "^10.0.0",

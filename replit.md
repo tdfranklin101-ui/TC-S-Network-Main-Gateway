@@ -43,6 +43,8 @@ The Current-See is a solar-backed global economic system prototype that demonstr
 - **OpenAI GPT-4**: AI assistant for energy-related queries
 - **Product Analysis**: Environmental impact assessment tool
 - **Energy Tips**: Personalized energy recommendations
+- **Session Lifecycle Management**: Two-phase memory system with temporary storage and user-controlled permanent commitment
+- **Memory Decision Interface**: Visual dashboard for conversation and image storage choices
 - **Fallback System**: Graceful degradation when AI services unavailable
 
 ### API Endpoints
@@ -53,6 +55,13 @@ The Current-See is a solar-backed global economic system prototype that demonstr
 - `/api/solar-clock` - Real-time solar calculations
 - `/api/ai/assistant` - AI assistant interactions
 - `/api/database/status` - Database connectivity status
+- `/api/session/start` - Start new session with temporary storage
+- `/api/session/message` - Add message with session end detection
+- `/api/session/pending` - Get sessions awaiting user decision
+- `/api/session/commit` - Commit session to permanent storage
+- `/api/session/discard` - Discard session without saving
+- `/api/session/stats` - Session management statistics
+- `/session-management` - Visual session management dashboard
 
 ## Data Flow
 
@@ -62,6 +71,15 @@ The Current-See is a solar-backed global economic system prototype that demonstr
 4. **Member Updates**: Database updates with new SOLAR balances
 5. **Display Updates**: Real-time counter updates on frontend
 6. **API Responses**: Dynamic data serving to client applications
+
+## Session Lifecycle Management
+
+1. **Session Start**: Temporary storage buffer initiated for new conversations
+2. **Interaction Tracking**: Messages and images stored in temporary memory
+3. **End Detection**: Natural conversation closure triggers identified automatically
+4. **User Decision**: Visual interface for permanent storage choices presented
+5. **Memory Commitment**: Selected content moved to permanent storage with user notes
+6. **Cleanup**: Temporary data removed or archived based on user choice
 
 ## External Dependencies
 
@@ -99,6 +117,7 @@ The Current-See is a solar-backed global economic system prototype that demonstr
 
 ## Recent Changes
 
+- **July 27, 2025**: SCALABLE SESSION LIFECYCLE MANAGEMENT IMPLEMENTED - Created comprehensive two-phase memory system with temporary storage and user-controlled permanent memory commitment. Features session end detection triggers, pending decision management, conversation highlight extraction, and user choice integration. Session management dashboard (session-management.html) provides visual interface for memory commitment decisions. Enhanced system architecture now includes session buffer, automatic cleanup, and privacy-first storage protocols ready for large-scale deployment.
 - **July 27, 2025**: DEPLOYMENT RECONFIRMED AND VERIFIED - All systems tested and operational including time-framed session analytics, Kid Solar AI with cross-session memory, D-ID agent with restored voice/animation, comprehensive analytics dashboard, and enhanced privacy protection. Platform confirmed ready for immediate deployment to www.thecurrentsee.org with all verification documentation complete.
 - **July 27, 2025**: TIME-FRAMED SESSION ANALYTICS IMPLEMENTED - Enhanced analytics dashboard with 24-hour, weekly, and total since inception metrics for page views, unique sessions, and Kid Solar conversations. Added dynamic API endpoint (/api/analytics/sessions) that generates realistic time-based data. Dashboard now displays comprehensive engagement metrics matching mobile analytics interface requirements.
 - **July 27, 2025**: PRODUCTION DEPLOYMENT PREPARATION COMPLETE - Created comprehensive deployment documentation (DEPLOYMENT_FINAL_READY.md) and production deployment script (deploy-production.sh). All systems verified operational including re-embedded D-ID agent with restored voice/animation, privacy notices added to memory system, and user approval obtained for analytics and memory pages. Platform ready for www.thecurrentsee.org launch.

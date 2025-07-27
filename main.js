@@ -20,6 +20,11 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 // Serve static files from deploy_v1_multimodal
 app.use(express.static(path.join(__dirname, 'deploy_v1_multimodal')));
 
+// Session lifecycle API endpoints
+app.get('/session-management', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'session-management.html'));
+});
+
 // File upload handling
 const upload = multer({ 
   dest: 'uploads/',
