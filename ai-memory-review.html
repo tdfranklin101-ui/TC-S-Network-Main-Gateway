@@ -203,6 +203,48 @@
       margin: 10px 0;
       border-left: 4px solid #667eea;
     }
+
+    .conversation-details {
+      background: #f1f5f9;
+      padding: 15px;
+      border-radius: 10px;
+      margin: 15px 0;
+      border-left: 4px solid #10b981;
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 5px 0;
+      font-size: 0.9rem;
+    }
+
+    .detail-label {
+      font-weight: 600;
+      color: #374151;
+    }
+
+    .detail-value {
+      color: #6b7280;
+      text-align: right;
+      max-width: 60%;
+      word-wrap: break-word;
+    }
+
+    .expanded-view {
+      background: #fefefe;
+      border: 2px solid #667eea;
+      border-radius: 15px;
+      padding: 20px;
+      margin: 15px 0;
+      white-space: pre-wrap;
+      font-family: 'SF Mono', 'Monaco', 'Cascadia Code', monospace;
+      font-size: 0.9rem;
+      line-height: 1.6;
+      max-height: 400px;
+      overflow-y: auto;
+    }
     
     .analysis-label {
       font-weight: bold;
@@ -327,6 +369,17 @@
         <button class="filter-btn" data-filter="images">With Images</button>
         <button class="filter-btn" data-filter="recent">Recent (7 days)</button>
         <button class="filter-btn" data-filter="long">Long Conversations</button>
+        <div style="margin-left: auto; display: flex; gap: 10px; align-items: center;">
+          <label style="font-size: 0.9rem; color: #666;">Sort by:</label>
+          <select id="sortOrder" style="padding: 8px 12px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.9rem;">
+            <option value="newest">Newest First</option>
+            <option value="oldest">Oldest First</option>
+            <option value="session-asc">Session ID (A-Z)</option>
+            <option value="session-desc">Session ID (Z-A)</option>
+            <option value="messages-desc">Most Messages</option>
+            <option value="images-desc">Most Images</option>
+          </select>
+        </div>
       </div>
     </div>
     
@@ -425,8 +478,7 @@
         }
       ];
       filteredData = [...memoryData];
-      updateStats();
-      renderMemoryCards();
+      initializeDisplay();
     }
     
     // Update statistics display
@@ -466,42 +518,119 @@
           
           ${memory.images ? memory.images.map((img, imgIndex) => `
             <div class="analysis-section">
-              <div class="analysis-label">Image Analysis ${imgIndex + 1}:</div>
+              <div class="analysis-label">📸 Image Analysis ${imgIndex + 1}:</div>
               <div class="image-analysis" id="analysis-${index}-${imgIndex}">
                 ${img.analysis}
               </div>
               <div class="button-group">
-                <button class="copy-btn" onclick="copyAnalysis(${index}, ${imgIndex})">Copy Analysis</button>
-                <button class="copy-btn" onclick="copyForPrompt(${index}, ${imgIndex})">Copy for AI</button>
+                <button class="copy-btn" onclick="copyAnalysis(${index}, ${imgIndex})">📋 Copy Analysis</button>
+                <button class="copy-btn" onclick="copyForPrompt(${index}, ${imgIndex})">🤖 Copy for AI</button>
+                <button class="copy-btn" onclick="viewImageDetails(${index}, ${imgIndex})">🔍 View Details</button>
               </div>
             </div>
           `).join('') : ''}
+          
+          <div class="conversation-details">
+            <div class="detail-row">
+              <span class="detail-label">💬 Messages:</span>
+              <span class="detail-value">${memory.messages || 0}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">🏷️ Topics:</span>
+              <span class="detail-value">${memory.topics ? memory.topics.join(', ') : 'General conversation'}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">⏱️ Duration:</span>
+              <span class="detail-value">${calculateDuration(memory.timestamp)}</span>
+            </div>
+          </div>
           
           <div class="conversation-preview" id="preview-${index}">
             ${memory.preview}
           </div>
           <div class="button-group">
-            <button class="expand-btn" onclick="toggleExpand(${index})">Read More</button>
-            <button class="copy-btn" onclick="copyFullConversation(${index})">Copy Conversation</button>
+            <button class="expand-btn" onclick="toggleExpand(${index})">📖 Read More</button>
+            <button class="copy-btn" onclick="copyFullConversation(${index})">📄 Copy Conversation</button>
+            <button class="copy-btn" onclick="viewSessionDetails(${index})">📊 Session Details</button>
           </div>
         </div>
       `).join('');
     }
     
-    // Toggle expanded view
+    // Toggle expanded view with enhanced formatting
     function toggleExpand(index) {
       const preview = document.getElementById(`preview-${index}`);
+      const button = event.target;
       const isExpanded = preview.classList.contains('expanded');
       
       if (isExpanded) {
         preview.textContent = filteredData[index].preview;
-        preview.classList.remove('expanded');
-        event.target.textContent = 'Read More';
+        preview.classList.remove('expanded', 'expanded-view');
+        button.textContent = '📖 Read More';
       } else {
         preview.textContent = filteredData[index].fullConversation || filteredData[index].preview;
-        preview.classList.add('expanded');
-        event.target.textContent = 'Show Less';
+        preview.classList.add('expanded', 'expanded-view');
+        button.textContent = '📖 Show Less';
       }
+    }
+
+    // Calculate session duration for display
+    function calculateDuration(timestamp) {
+      const sessionDate = new Date(timestamp);
+      const now = new Date();
+      const diffMs = now - sessionDate;
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      
+      if (diffDays > 0) {
+        return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+      } else if (diffHours > 0) {
+        return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+      } else {
+        const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+        return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+      }
+    }
+
+    // View detailed session information
+    function viewSessionDetails(index) {
+      const memory = filteredData[index];
+      const details = `Session Details: ${memory.sessionId}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📅 Date: ${formatTimestamp(memory.timestamp)}
+💬 Messages: ${memory.messages || 0}
+📸 Images: ${memory.imageCount || 0}
+🏷️ Topics: ${memory.topics ? memory.topics.join(', ') : 'General'}
+⏱️ Time Ago: ${calculateDuration(memory.timestamp)}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 Conversation Preview:
+${memory.preview}
+
+${memory.images ? `📸 Image Analyses:
+${memory.images.map((img, idx) => `${idx + 1}. ${img.analysis.substring(0, 200)}...`).join('\n')}` : ''}`;
+      
+      alert(details);
+    }
+
+    // View detailed image analysis
+    function viewImageDetails(sessionIndex, imageIndex) {
+      const memory = filteredData[sessionIndex];
+      const image = memory.images[imageIndex];
+      const details = `Image Analysis Details
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Session: ${memory.sessionId}
+Image: ${imageIndex + 1} of ${memory.imageCount}
+Date: ${formatTimestamp(memory.timestamp)}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Kid Solar Analysis:
+${image.analysis}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 Tip: Use "Copy for AI" to continue this conversation with Kid Solar!`;
+      
+      alert(details);
     }
     
     // Format timestamp
@@ -510,19 +639,53 @@
       return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
     }
     
-    // Search functionality
+    // Search functionality with enhanced criteria
     document.getElementById('searchInput').addEventListener('input', function() {
       const query = this.value.toLowerCase();
       filteredData = memoryData.filter(memory => 
         memory.preview.toLowerCase().includes(query) ||
         memory.topics.some(topic => topic.toLowerCase().includes(query)) ||
-        memory.sessionId.toLowerCase().includes(query)
+        memory.sessionId.toLowerCase().includes(query) ||
+        (memory.fullConversation && memory.fullConversation.toLowerCase().includes(query)) ||
+        (memory.images && memory.images.some(img => img.analysis.toLowerCase().includes(query)))
       );
+      applySorting();
       updateStats();
       renderMemoryCards();
     });
+
+    // Sort functionality
+    document.getElementById('sortOrder').addEventListener('change', function() {
+      applySorting();
+      renderMemoryCards();
+    });
+
+    function applySorting() {
+      const sortOrder = document.getElementById('sortOrder').value;
+      
+      switch(sortOrder) {
+        case 'newest':
+          filteredData.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+          break;
+        case 'oldest':
+          filteredData.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+          break;
+        case 'session-asc':
+          filteredData.sort((a, b) => a.sessionId.localeCompare(b.sessionId));
+          break;
+        case 'session-desc':
+          filteredData.sort((a, b) => b.sessionId.localeCompare(a.sessionId));
+          break;
+        case 'messages-desc':
+          filteredData.sort((a, b) => (b.messages || 0) - (a.messages || 0));
+          break;
+        case 'images-desc':
+          filteredData.sort((a, b) => (b.imageCount || 0) - (a.imageCount || 0));
+          break;
+      }
+    }
     
-    // Filter functionality
+    // Enhanced filter functionality with sorting integration
     document.querySelectorAll('.filter-btn').forEach(btn => {
       btn.addEventListener('click', function() {
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -547,10 +710,30 @@
             break;
         }
         
+        // Apply current search if any
+        const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+        if (searchQuery) {
+          filteredData = filteredData.filter(memory => 
+            memory.preview.toLowerCase().includes(searchQuery) ||
+            memory.topics.some(topic => topic.toLowerCase().includes(searchQuery)) ||
+            memory.sessionId.toLowerCase().includes(searchQuery) ||
+            (memory.fullConversation && memory.fullConversation.toLowerCase().includes(searchQuery)) ||
+            (memory.images && memory.images.some(img => img.analysis.toLowerCase().includes(searchQuery)))
+          );
+        }
+        
+        applySorting();
         updateStats();
         renderMemoryCards();
       });
     });
+
+    // Auto-apply sorting on initial load
+    function initializeDisplay() {
+      applySorting();
+      updateStats();
+      renderMemoryCards();
+    }
     
     // Copy functionality
     function copyAnalysis(memoryIndex, imageIndex) {
