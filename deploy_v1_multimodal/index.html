@@ -1556,5 +1556,78 @@
       }
     }
   </script>
+
+  <!-- Anonymous Session Tracking - tracks "when and how long" without identifying "who" -->
+  <script>
+    // Generate unique session ID for anonymous tracking
+    function generateSessionId() {
+      return 'anon_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    }
+
+    // Get or create session ID (survives page refresh, resets on browser close)
+    function getSessionId() {
+      let sessionId = sessionStorage.getItem('kid_solar_session_id');
+      if (!sessionId) {
+        sessionId = generateSessionId();
+        sessionStorage.setItem('kid_solar_session_id', sessionId);
+        console.log('🆔 Anonymous session created:', sessionId);
+      }
+      return sessionId;
+    }
+
+    // Track user interaction with Kid Solar
+    function trackKidSolarInteraction(interactionType, data = {}) {
+      const sessionId = getSessionId();
+      
+      fetch('/api/session-activity', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId,
+          interactionType,
+          timestamp: new Date().toISOString(),
+          userAgent: navigator.userAgent.substring(0, 100), // Truncated for privacy
+          ...data
+        })
+      }).catch(e => console.log('Session tracking failed:', e));
+    }
+
+    // Initialize session tracking
+    document.addEventListener('DOMContentLoaded', function() {
+      trackKidSolarInteraction('page_view', { page: 'homepage' });
+      
+      // Track when user starts interacting with Kid Solar
+      const didAgent = document.querySelector('[data-name="did-agent"]');
+      if (didAgent) {
+        didAgent.addEventListener('click', () => {
+          trackKidSolarInteraction('kid_solar_engaged');
+        });
+      }
+
+      // Track file uploads
+      const originalUploadFunctions = [window.analyzePhoto, window.handleDidMultimodalUpload];
+      originalUploadFunctions.forEach(func => {
+        if (func) {
+          const original = func;
+          window[func.name] = function(...args) {
+            trackKidSolarInteraction('file_upload', { 
+              type: args[0] ? args[0].type || 'unknown' : 'unknown' 
+            });
+            return original.apply(this, args);
+          };
+        }
+      });
+
+      // Track page unload to calculate session duration
+      window.addEventListener('beforeunload', () => {
+        trackKidSolarInteraction('session_end');
+      });
+
+      console.log('📊 Anonymous session tracking active - recording when and how long users interact');
+    });
+
+    // Make session ID available globally for other functions
+    window.getKidSolarSessionId = getSessionId;
+  </script>
 </body>
 </html>

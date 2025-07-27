@@ -63,6 +63,7 @@ class KidSolarMemory {
       console.log(`📋 Session ${sessionId} already exists, updating activity`);
       const existingSession = this.sessions.get(sessionId);
       existingSession.lastActivity = new Date();
+      existingSession.interactionCount++;
       return existingSession;
     }
     
@@ -72,6 +73,9 @@ class KidSolarMemory {
       startTime: new Date(),
       lastActivity: new Date(),
       isActive: true,
+      interactionCount: 1,
+      totalDuration: 0,
+      deviceInfo: null,
       memories: []
     };
     this.sessions.set(sessionId, session);
@@ -84,9 +88,44 @@ class KidSolarMemory {
     if (this.sessions.has(sessionId)) {
       const session = this.sessions.get(sessionId);
       session.lastActivity = new Date();
+      session.interactionCount++;
       return session;
     }
     return this.createSession(sessionId, userId);
+  }
+
+  // Calculate session duration in minutes
+  getSessionDuration(sessionId) {
+    const session = this.sessions.get(sessionId);
+    if (!session) return 0;
+    const duration = (session.lastActivity - session.startTime) / (1000 * 60);
+    return Math.round(duration * 100) / 100; // Round to 2 decimal places
+  }
+
+  // Get anonymous usage analytics
+  getUsageAnalytics() {
+    const now = new Date();
+    const activeSessions = Array.from(this.sessions.values()).filter(session => {
+      const timeSinceLastActivity = (now - session.lastActivity) / (1000 * 60);
+      return timeSinceLastActivity < 30; // Active if used within last 30 minutes
+    });
+
+    const allSessions = Array.from(this.sessions.values());
+    const totalInteractions = allSessions.reduce((sum, session) => sum + session.interactionCount, 0);
+    const averageDuration = allSessions.length > 0 
+      ? allSessions.reduce((sum, session) => sum + this.getSessionDuration(session.sessionId), 0) / allSessions.length
+      : 0;
+
+    return {
+      currentActiveSessions: activeSessions.length,
+      totalSessions: allSessions.length,
+      totalInteractions,
+      averageSessionDuration: Math.round(averageDuration * 100) / 100,
+      totalMemories: this.memories.length,
+      lastActivity: allSessions.length > 0 
+        ? Math.max(...allSessions.map(s => s.lastActivity.getTime()))
+        : null
+    };
   }
 
   storeMemory(sessionId, memoryData) {
@@ -861,6 +900,82 @@ Use this capability to enhance education with visual learning tools. Be selectiv
       details: error.message 
     });
   }
+});
+
+// Session activity tracking endpoint - records anonymous user interactions
+app.post('/api/session-activity', (req, res) => {
+  const { sessionId, interactionType, timestamp, userAgent, ...data } = req.body;
+  
+  if (!sessionId || !interactionType) {
+    return res.status(400).json({ error: 'Session ID and interaction type required' });
+  }
+
+  try {
+    // Create or update session with interaction data
+    const session = kidSolarMemory.getOrCreateSession(sessionId);
+    
+    // Store the interaction in memory
+    kidSolarMemory.storeMemory(sessionId, {
+      type: 'session_activity',
+      interactionType,
+      timestamp: new Date(timestamp || Date.now()),
+      userAgent: userAgent ? userAgent.substring(0, 100) : null, // Truncated for privacy
+      ...data
+    });
+
+    console.log(`📊 Session activity tracked: ${sessionId.substring(0, 12)}... -> ${interactionType}`);
+    
+    res.json({ 
+      success: true, 
+      sessionId: sessionId.substring(0, 12) + '...', // Masked for privacy
+      tracked: interactionType 
+    });
+    
+  } catch (error) {
+    console.error('Session tracking error:', error);
+    res.status(500).json({ 
+      error: 'Session tracking failed', 
+      details: error.message 
+    });
+  }
+});
+
+// Anonymous usage analytics endpoint - tracks "when and how long" without identifying "who"
+app.get('/api/usage-analytics', (req, res) => {
+  try {
+    const analytics = kidSolarMemory.getUsageAnalytics();
+    res.json({
+      success: true,
+      analytics: {
+        ...analytics,
+        timestamp: new Date().toISOString(),
+        privacyNote: "Anonymous session tracking - no personal identification"
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      error: 'Analytics retrieval failed', 
+      details: error.message 
+    });
+  }
+});
+
+// Enhanced health check with usage stats
+app.get('/health', (req, res) => {
+  const timestamp = new Date().toISOString();
+  const analytics = kidSolarMemory.getUsageAnalytics();
+  res.json({ 
+    status: 'operational',
+    timestamp,
+    message: '🚀 Current-See Platform LIVE',
+    version: '1.0.0',
+    usage: {
+      activeSessions: analytics.currentActiveSessions,
+      totalSessions: analytics.totalSessions,
+      totalInteractions: analytics.totalInteractions,
+      averageSessionDuration: analytics.averageSessionDuration
+    }
+  });
 });
 
 // Platform bridge endpoint
