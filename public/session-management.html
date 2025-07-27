@@ -301,6 +301,74 @@
             background: #0984e3;
         }
 
+        .retention-notice {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-size: 0.9rem;
+        }
+
+        .default-retention-display {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .retention-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            color: #155724;
+        }
+
+        .checkmark {
+            background: #28a745;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .deletion-override {
+            border-top: 2px solid #dc3545;
+            padding-top: 20px;
+        }
+
+        .warning-box {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .override-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn:disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
         @media (max-width: 768px) {
             .container {
                 margin: 10px;
@@ -378,36 +446,62 @@
     <div class="decision-modal" id="decisionModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title">💾 Save Session to Permanent Memory?</h3>
+                <h3 class="modal-title">🧠 Memory Storage - Default: Keep Everything</h3>
                 <p id="modalSessionInfo">Session details will appear here</p>
+                <div class="retention-notice">
+                    <strong>Default Behavior:</strong> All conversations and images will be automatically saved to permanent memory.
+                </div>
             </div>
 
-            <div class="checkbox-group">
-                <label>
-                    <input type="checkbox" id="saveConversation" checked>
-                    Save conversation messages
-                </label>
-                <label>
-                    <input type="checkbox" id="saveImages" checked>
-                    Save image analyses
-                </label>
-                <label>
-                    <input type="checkbox" id="saveHighlightsOnly">
-                    Save highlights only (vs. full conversation)
-                </label>
+            <div class="default-retention-display">
+                <div class="retention-item">
+                    <span class="checkmark">✓</span> Conversations will be saved
+                </div>
+                <div class="retention-item">
+                    <span class="checkmark">✓</span> Images and analyses will be saved
+                </div>
+                <div class="retention-item">
+                    <span class="checkmark">✓</span> Complete session preserved
+                </div>
             </div>
 
             <div style="margin: 15px 0;">
                 <label for="userNotes" style="display: block; margin-bottom: 5px; font-weight: bold;">
-                    Personal notes about this session:
+                    Add personal notes (optional):
                 </label>
-                <textarea id="userNotes" class="textarea" placeholder="Optional notes about what you learned or want to remember..."></textarea>
+                <textarea id="userNotes" class="textarea" placeholder="Personal notes about what you learned or want to remember..."></textarea>
             </div>
 
             <div class="action-buttons">
-                <button class="btn btn-success" onclick="commitSession()">💾 Save to Memory</button>
-                <button class="btn btn-danger" onclick="discardSession()">🗑️ Discard Session</button>
+                <button class="btn btn-success" onclick="confirmRetention()">✓ Keep Memory (Default)</button>
+                <button class="btn btn-warning" onclick="startDeletionProcess()">⚠️ Delete Memory (2-Step Override)</button>
                 <button class="btn btn-primary" onclick="closeModal()">❌ Cancel</button>
+            </div>
+
+            <!-- 2-Step Deletion Override (Initially Hidden) -->
+            <div id="deletionOverride" class="deletion-override" style="display: none; margin-top: 20px;">
+                <div class="warning-box">
+                    <h4 style="color: #e74c3c; margin-bottom: 10px;">⚠️ Deletion Override - Confirmation Required</h4>
+                    <p style="margin-bottom: 15px;">This will permanently delete all conversation data. This action cannot be undone.</p>
+                    
+                    <div class="checkbox-group">
+                        <label>
+                            <input type="checkbox" id="confirmDelete1" onchange="checkDeletionConfirm()"> 
+                            I understand this will permanently delete the conversation
+                        </label>
+                        <label>
+                            <input type="checkbox" id="confirmDelete2" onchange="checkDeletionConfirm()"> 
+                            I want to proceed with deletion (no recovery possible)
+                        </label>
+                    </div>
+                    
+                    <div class="override-buttons" style="margin-top: 15px;">
+                        <button class="btn btn-danger" onclick="finalDeletion()" disabled id="finalDeleteBtn">
+                            🗑️ Confirm Permanent Deletion
+                        </button>
+                        <button class="btn btn-success" onclick="cancelDeletion()">↩️ Cancel - Keep Memory</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -655,6 +749,101 @@
             alert.textContent = message;
             document.body.appendChild(alert);
             setTimeout(() => alert.remove(), 5000);
+        }
+
+        // ========================================
+        // RETENTION-FIRST MEMORY MANAGEMENT
+        // ========================================
+
+        // Confirm retention (default behavior)
+        async function confirmRetention() {
+            if (!currentSessionId) return;
+
+            const userNotes = document.getElementById('userNotes').value;
+
+            try {
+                const response = await fetch('/api/session/commit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sessionId: currentSessionId,
+                        saveConversation: true,  // Default: save everything
+                        saveImages: true,        // Default: save everything
+                        saveHighlightsOnly: false, // Default: save full conversation
+                        userNotes
+                    })
+                });
+
+                if (!response.ok) throw new Error('Failed to save memory');
+
+                showSuccess('Memory saved successfully - all conversations and images preserved');
+                closeModal();
+                loadAllData();
+            } catch (error) {
+                console.error('Error saving memory:', error);
+                showError('Failed to save memory');
+            }
+        }
+
+        // Start 2-step deletion process
+        function startDeletionProcess() {
+            // Hide main action buttons and show deletion override
+            const actionButtons = document.querySelector('.action-buttons');
+            if (actionButtons) actionButtons.style.display = 'none';
+            
+            const deletionOverride = document.getElementById('deletionOverride');
+            if (deletionOverride) deletionOverride.style.display = 'block';
+            
+            // Reset checkboxes
+            const confirm1 = document.getElementById('confirmDelete1');
+            const confirm2 = document.getElementById('confirmDelete2');
+            const finalBtn = document.getElementById('finalDeleteBtn');
+            
+            if (confirm1) confirm1.checked = false;
+            if (confirm2) confirm2.checked = false;
+            if (finalBtn) finalBtn.disabled = true;
+        }
+
+        // Check deletion confirmation checkboxes
+        function checkDeletionConfirm() {
+            const confirm1 = document.getElementById('confirmDelete1');
+            const confirm2 = document.getElementById('confirmDelete2');
+            const finalBtn = document.getElementById('finalDeleteBtn');
+            
+            if (confirm1 && confirm2 && finalBtn) {
+                finalBtn.disabled = !(confirm1.checked && confirm2.checked);
+            }
+        }
+
+        // Cancel deletion and return to retention
+        function cancelDeletion() {
+            const deletionOverride = document.getElementById('deletionOverride');
+            const actionButtons = document.querySelector('.action-buttons');
+            
+            if (deletionOverride) deletionOverride.style.display = 'none';
+            if (actionButtons) actionButtons.style.display = 'flex';
+        }
+
+        // Final deletion after 2-step confirmation
+        async function finalDeletion() {
+            if (!currentSessionId) return;
+
+            try {
+                const response = await fetch('/api/session/discard', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId: currentSessionId })
+                });
+
+                if (!response.ok) throw new Error('Failed to delete memory');
+
+                showSuccess('Memory permanently deleted - conversation data removed and cannot be recovered');
+                closeModal();
+                loadAllData();
+            } catch (error) {
+                console.error('Error deleting memory:', error);
+                showError('Failed to delete memory');
+            }
         }
 
         // Close modal when clicking outside
