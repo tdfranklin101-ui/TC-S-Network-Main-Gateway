@@ -196,6 +196,20 @@
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
+
+    .platform-info {
+      background: linear-gradient(135deg, #1e3a8a 0%, #059669 100%);
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      color: white;
+      text-align: center;
+    }
+
+    .inception-info {
+      font-size: 16px;
+      opacity: 0.95;
+    }
   </style>
 </head>
 <body>
@@ -224,41 +238,80 @@
     </div>
 
     <div id="dashboardContent" style="display: none;">
-      <div class="metrics-grid">
-        <div class="metric-card">
-          <div class="metric-label">Active Sessions</div>
-          <div class="metric-value" id="activeSessions">-</div>
-          <div class="metric-description">Users active in last 30 minutes</div>
+      <div class="activity-section">
+        <h2>📊 Platform Overview Since Inception</h2>
+        <div class="platform-info">
+          <div class="inception-info">
+            <strong>Platform Launched:</strong> April 7, 2025 | 
+            <strong>First Members:</strong> April 22, 2025 | 
+            <strong>Current Value:</strong> $80M+ distributed
+          </div>
         </div>
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-label">Platform Age</div>
+            <div class="metric-value" id="platformAge">-</div>
+            <div class="metric-description">Days since inception (April 7, 2025)</div>
+          </div>
 
-        <div class="metric-card">
-          <div class="metric-label">Total Sessions</div>
-          <div class="metric-value" id="totalSessions">-</div>
-          <div class="metric-description">All-time unique sessions</div>
+          <div class="metric-card">
+            <div class="metric-label">Total Members</div>
+            <div class="metric-value" id="totalMembers">-</div>
+            <div class="metric-description">Registered community members</div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-label">SOLAR Distributed</div>
+            <div class="metric-value" id="totalSolarDistributed">-</div>
+            <div class="metric-description">Total SOLAR tokens earned</div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-label">Member Growth Rate</div>
+            <div class="metric-value" id="memberGrowthRate">-</div>
+            <div class="metric-description">New members per day average</div>
+          </div>
         </div>
+      </div>
 
-        <div class="metric-card">
-          <div class="metric-label">Total Interactions</div>
-          <div class="metric-value" id="totalInteractions">-</div>
-          <div class="metric-description">All Kid Solar interactions</div>
-        </div>
+      <div class="activity-section">
+        <h2>⚡ Current Session Analytics</h2>
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-label">Active Sessions</div>
+            <div class="metric-value" id="activeSessions">-</div>
+            <div class="metric-description">Users active in last 30 minutes</div>
+          </div>
 
-        <div class="metric-card">
-          <div class="metric-label">Avg Session Duration</div>
-          <div class="metric-value" id="avgDuration">-</div>
-          <div class="metric-description">Minutes per session</div>
-        </div>
+          <div class="metric-card">
+            <div class="metric-label">Total Sessions</div>
+            <div class="metric-value" id="totalSessions">-</div>
+            <div class="metric-description">All-time unique sessions</div>
+          </div>
 
-        <div class="metric-card">
-          <div class="metric-label">Total Memories</div>
-          <div class="metric-value" id="totalMemories">-</div>
-          <div class="metric-description">Conversations & images stored</div>
-        </div>
+          <div class="metric-card">
+            <div class="metric-label">Total Interactions</div>
+            <div class="metric-value" id="totalInteractions">-</div>
+            <div class="metric-description">All Kid Solar interactions</div>
+          </div>
 
-        <div class="metric-card">
-          <div class="metric-label">Last Activity</div>
-          <div class="metric-value" id="lastActivity">-</div>
-          <div class="metric-description">Time since last interaction</div>
+          <div class="metric-card">
+            <div class="metric-label">Avg Session Duration</div>
+            <div class="metric-value" id="avgDuration">-</div>
+            <div class="metric-description">Minutes per session</div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-label">Total Memories</div>
+            <div class="metric-value" id="totalMemories">-</div>
+            <div class="metric-description">Conversations & images stored</div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-label">Last Activity</div>
+            <div class="metric-value" id="lastActivity">-</div>
+            <div class="metric-description">Time since last interaction</div>
+          </div>
         </div>
       </div>
 
@@ -330,6 +383,18 @@
     }
 
     function updateMetrics(analytics) {
+      // Historical metrics from platform inception
+      if (analytics.historical) {
+        const hist = analytics.historical;
+        document.getElementById('platformAge').textContent = hist.platformAgeDays + ' days';
+        document.getElementById('totalMembers').textContent = hist.totalMembers;
+        document.getElementById('totalSolarDistributed').textContent = 
+          hist.totalSolarDistributed.toFixed(1) + ' SOLAR';
+        document.getElementById('memberGrowthRate').textContent = 
+          hist.memberGrowthRate.toFixed(2) + '/day';
+      }
+      
+      // Current session metrics
       document.getElementById('activeSessions').textContent = analytics.currentActiveSessions || 0;
       document.getElementById('totalSessions').textContent = analytics.totalSessions || 0;
       document.getElementById('totalInteractions').textContent = analytics.totalInteractions || 0;
