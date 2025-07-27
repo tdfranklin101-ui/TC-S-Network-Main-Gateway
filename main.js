@@ -1031,6 +1031,10 @@ app.get('/founder_note', (req, res) => {
   res.sendFile(path.join(__dirname, 'deploy_v1_multimodal', 'founder_note.html'));
 });
 
+app.get('/dashboard', (req, res) => {
+  res.sendFile(path.join(__dirname, 'deploy_v1_multimodal', 'dashboard.html'));
+});
+
 // Other static files
 app.use('/assets', express.static(path.join(__dirname, 'deploy_v1_multimodal', 'assets')));
 
