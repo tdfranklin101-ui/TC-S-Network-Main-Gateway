@@ -25,5 +25,5 @@ The dashboard shows real analytics from The Current-See platform:
 Deploy anywhere for public viewing of platform success metrics.
 
 The Current-See PBC, Inc.
-Contact: info@thecurrentsee.org
+Contact: hello@thecurrentsee.org
 Website: www.thecurrentsee.org

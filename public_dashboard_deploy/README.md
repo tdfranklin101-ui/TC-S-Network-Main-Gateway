@@ -43,5 +43,5 @@ All analytics are derived from The Current-See platform's actual member database
 ## Contact
 
 The Current-See PBC, Inc.
-Email: info@thecurrentsee.org
+Email: hello@thecurrentsee.org
 Website: www.thecurrentsee.org
