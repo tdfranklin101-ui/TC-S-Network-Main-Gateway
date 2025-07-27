@@ -360,6 +360,9 @@
       <div style="margin-top: 15px; padding: 15px; background: rgba(255, 193, 7, 0.1); border: 1px solid rgba(255, 193, 7, 0.3); border-radius: 10px;">
         <strong>💡 Pro Tip:</strong> Use "Copy for AI" buttons to paste previous image analysis into new Kid Solar conversations for contextual continuity!
       </div>
+      <div style="margin-top: 15px; padding: 15px; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 10px;">
+        <strong>ℹ️ Demo Data Notice:</strong> The conversation examples below are demonstration data showing Kid Solar's capabilities. Actual user conversations and image analysis results will appear here once the system is actively used. The image analysis functionality is working (as confirmed by testing), but these specific examples are synthetic demonstrations.
+      </div>
     </div>
     
     <div class="search-container">
@@ -451,10 +454,11 @@
           hasImages: true,
           imageCount: 3,
           conversationType: 'image-analysis',
+          isDemoData: true,
           images: [
-            { url: '/uploads/solar-panel-1.jpg', analysis: 'These monocrystalline solar panels show excellent positioning on the south-facing roof section. The 30-degree tilt angle is optimal for this latitude. I can see minimal shading from the nearby tree, which is good for efficiency. The panels appear to be well-maintained with clean surfaces.' },
-            { url: '/uploads/solar-panel-2.jpg', analysis: 'This inverter setup looks professional with proper ventilation spacing. The string configuration appears optimized for the panel layout. Good cable management visible.' },
-            { url: '/uploads/solar-panel-3.jpg', analysis: 'The monitoring display shows strong daily production averaging 45 kWh. This aligns well with the 12kW system capacity given current weather conditions.' }
+            { url: '/uploads/solar-panel-1.jpg', analysis: '[DEMO] These monocrystalline solar panels show excellent positioning on the south-facing roof section. The 30-degree tilt angle is optimal for this latitude. I can see minimal shading from the nearby tree, which is good for efficiency. The panels appear to be well-maintained with clean surfaces.' },
+            { url: '/uploads/solar-panel-2.jpg', analysis: '[DEMO] This inverter setup looks professional with proper ventilation spacing. The string configuration appears optimized for the panel layout. Good cable management visible.' },
+            { url: '/uploads/solar-panel-3.jpg', analysis: '[DEMO] The monitoring display shows strong daily production averaging 45 kWh. This aligns well with the 12kW system capacity given current weather conditions.' }
           ],
           topics: ['solar energy', 'renewable technology', 'environmental science'],
           preview: 'User uploaded photos of solar panels on their roof. Kid Solar analyzed the installation efficiency and provided recommendations for optimal positioning...',
@@ -506,8 +510,9 @@ Kid Solar: Absolutely! Most modern inverters support battery integration. You mi
           hasImages: true,
           imageCount: 1,
           conversationType: 'hybrid-analysis',
+          isDemoData: true,
           images: [
-            { url: '/uploads/wind-turbine-1.jpg', analysis: 'This is a nice small-scale vertical axis wind turbine! Perfect for residential hybrid systems. The design allows it to capture wind from multiple directions, making it ideal for variable urban wind patterns. When combined with your existing solar setup, this could provide complementary power generation - wind often picks up when solar production decreases in the evening. The mounting looks secure and the turbine appears to be in good condition.' }
+            { url: '/uploads/wind-turbine-1.jpg', analysis: '[DEMO] This is a nice small-scale vertical axis wind turbine! Perfect for residential hybrid systems. The design allows it to capture wind from multiple directions, making it ideal for variable urban wind patterns. When combined with your existing solar setup, this could provide complementary power generation - wind often picks up when solar production decreases in the evening. The mounting looks secure and the turbine appears to be in good condition.' }
           ],
           topics: ['wind energy', 'hybrid systems', 'sustainability'],
           preview: 'User shared image of a small wind turbine and asked about combining wind and solar energy systems...',
@@ -626,9 +631,10 @@ Kid Solar: In most climates, rain provides adequate cleaning. But if you're in a
           hasImages: true,
           imageCount: 2,
           conversationType: 'comparative-analysis',
+          isDemoData: true,
           images: [
-            { url: '/uploads/solar-comparison-1.jpg', analysis: 'Comparing these two solar installations, the left system uses older polycrystalline panels while the right shows modern monocrystalline panels. The newer installation has better spacing for airflow and uses microinverters for panel-level optimization.' },
-            { url: '/uploads/solar-comparison-2.jpg', analysis: 'The mounting systems show interesting differences - traditional rail mounting on the left versus newer low-profile mounting on the right. The low-profile system reduces wind load and has a cleaner aesthetic.' }
+            { url: '/uploads/solar-comparison-1.jpg', analysis: '[DEMO] Comparing these two solar installations, the left system uses older polycrystalline panels while the right shows modern monocrystalline panels. The newer installation has better spacing for airflow and uses microinverters for panel-level optimization.' },
+            { url: '/uploads/solar-comparison-2.jpg', analysis: '[DEMO] The mounting systems show interesting differences - traditional rail mounting on the left versus newer low-profile mounting on the right. The low-profile system reduces wind load and has a cleaner aesthetic.' }
           ],
           topics: ['technology comparison', 'installation methods', 'efficiency analysis'],
           preview: 'Comparative analysis of different solar technologies, installation methods, and efficiency considerations between older and newer systems...',

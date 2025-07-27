@@ -1,6 +1,6 @@
 run = "node main.js"
 entrypoint = "main.js"
-modules = ["nodejs-20", "python-3.11", "postgresql-16"]
+modules = ["nodejs-20", "python-3.11", "postgresql-16", "python3"]
 
 [nix]
 channel = "stable-22_11"
