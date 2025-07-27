@@ -369,6 +369,7 @@
         <button class="filter-btn" data-filter="images">With Images</button>
         <button class="filter-btn" data-filter="recent">Recent (7 days)</button>
         <button class="filter-btn" data-filter="long">Long Conversations</button>
+        <button class="filter-btn" data-filter="conversations">Text Only</button>
         <div style="margin-left: auto; display: flex; gap: 10px; align-items: center;">
           <label style="font-size: 0.9rem; color: #666;">Sort by:</label>
           <select id="sortOrder" style="padding: 8px 12px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.9rem;">
@@ -378,6 +379,7 @@
             <option value="session-desc">Session ID (Z-A)</option>
             <option value="messages-desc">Most Messages</option>
             <option value="images-desc">Most Images</option>
+            <option value="conversation-type">By Type</option>
           </select>
         </div>
       </div>
@@ -398,7 +400,11 @@
       </div>
       <div class="stat-item">
         <h3 id="avgSession">0</h3>
-        <p>Avg Session Length</p>
+        <p>Avg Messages/Session</p>
+      </div>
+      <div class="stat-item">
+        <h3 id="conversationTypes">0</h3>
+        <p>Conversation Types</p>
       </div>
     </div>
     
@@ -435,15 +441,16 @@
       }
     }
     
-    // Demo data for when API is not available
+    // Demo data for when API is not available - Enhanced with 25+ conversation sessions
     function loadDemoData() {
       memoryData = [
         {
           sessionId: 'kid-solar-001',
-          timestamp: '2025-01-26T10:30:00Z',
+          timestamp: '2025-01-27T10:30:00Z',
           messages: 15,
           hasImages: true,
           imageCount: 3,
+          conversationType: 'image-analysis',
           images: [
             { url: '/uploads/solar-panel-1.jpg', analysis: 'These monocrystalline solar panels show excellent positioning on the south-facing roof section. The 30-degree tilt angle is optimal for this latitude. I can see minimal shading from the nearby tree, which is good for efficiency. The panels appear to be well-maintained with clean surfaces.' },
             { url: '/uploads/solar-panel-2.jpg', analysis: 'This inverter setup looks professional with proper ventilation spacing. The string configuration appears optimized for the panel layout. Good cable management visible.' },
@@ -451,30 +458,241 @@
           ],
           topics: ['solar energy', 'renewable technology', 'environmental science'],
           preview: 'User uploaded photos of solar panels on their roof. Kid Solar analyzed the installation efficiency and provided recommendations for optimal positioning...',
-          fullConversation: 'User: Can you analyze these solar panels on my roof?\nKid Solar: I can see three different types of panels in your photos. The monocrystalline panels on the south-facing section are positioned optimally...'
+          fullConversation: `User: Can you analyze these solar panels on my roof?
+
+Kid Solar: I can see three different types of panels in your photos. The monocrystalline panels on the south-facing section are positioned optimally with that 30-degree tilt angle - that's perfect for your latitude! 
+
+User: What about the efficiency? Are they producing well?
+
+Kid Solar: From your monitoring display, I can see you're averaging 45 kWh daily, which aligns perfectly with your 12kW system capacity. The minimal tree shading is excellent - you've clearly thought this through well.
+
+User: Any improvements I could make?
+
+Kid Solar: The setup looks professional overall. Your inverter has proper ventilation and the cable management is clean. One suggestion: consider adding a small weather monitoring station to track how weather patterns affect your production curves.
+
+User: That's a great idea! How would that help?
+
+Kid Solar: Weather data helps optimize your energy usage patterns. You could automatically run high-energy appliances during peak production periods and better predict when to rely on stored battery power.`
         },
         {
           sessionId: 'kid-solar-002',
-          timestamp: '2025-01-25T14:15:00Z',
-          messages: 8,
+          timestamp: '2025-01-26T14:15:00Z',
+          messages: 12,
           hasImages: false,
           imageCount: 0,
-          topics: ['energy storage', 'battery technology'],
-          preview: 'Discussion about home energy storage solutions and battery backup systems for solar installations...',
-          fullConversation: 'User: What are the best battery options for solar?\nKid Solar: For residential solar installations, lithium-ion batteries like Tesla Powerwall or LG Chem offer excellent...'
+          conversationType: 'educational',
+          topics: ['energy storage', 'battery technology', 'grid independence'],
+          preview: 'Deep discussion about home energy storage solutions, battery backup systems, and achieving grid independence...',
+          fullConversation: `User: What are the best battery options for solar?
+
+Kid Solar: For residential solar installations, lithium-ion batteries offer the best combination of efficiency, lifespan, and safety. The Tesla Powerwall 3 and LG Chem RESU series are excellent choices.
+
+User: How much storage do I need?
+
+Kid Solar: That depends on your daily energy consumption and desired backup duration. For an average home using 30 kWh daily, I'd recommend 20-25 kWh of storage - enough for essential loads during a 1-2 day outage.
+
+User: What about cost vs savings?
+
+Kid Solar: Initial investment runs $15,000-25,000 installed, but you'll see 20-30% reduction in grid dependency. With time-of-use rates and backup value, payback is typically 8-12 years.
+
+User: Can I add batteries to my existing solar system?
+
+Kid Solar: Absolutely! Most modern inverters support battery integration. You might need a hybrid inverter upgrade, but your existing panels and mounting are perfectly compatible.`
         },
         {
           sessionId: 'kid-solar-003',
-          timestamp: '2025-01-24T09:45:00Z',
+          timestamp: '2025-01-25T09:45:00Z',
           messages: 22,
           hasImages: true,
           imageCount: 1,
+          conversationType: 'hybrid-analysis',
           images: [
             { url: '/uploads/wind-turbine-1.jpg', analysis: 'This is a nice small-scale vertical axis wind turbine! Perfect for residential hybrid systems. The design allows it to capture wind from multiple directions, making it ideal for variable urban wind patterns. When combined with your existing solar setup, this could provide complementary power generation - wind often picks up when solar production decreases in the evening. The mounting looks secure and the turbine appears to be in good condition.' }
           ],
           topics: ['wind energy', 'hybrid systems', 'sustainability'],
           preview: 'User shared image of a small wind turbine and asked about combining wind and solar energy systems...',
-          fullConversation: 'User: Can I combine this wind turbine with my solar setup?\nKid Solar: Absolutely! Hybrid renewable systems are fantastic. Looking at your turbine image...'
+          fullConversation: `User: Can I combine this wind turbine with my solar setup?
+
+Kid Solar: Absolutely! Hybrid renewable systems are fantastic. Looking at your vertical axis wind turbine, it's perfect for residential applications. The beauty is that wind and solar complement each other - wind often picks up when solar production decreases in the evening.
+
+User: Will they interfere with each other?
+
+Kid Solar: Not at all! They can share the same electrical infrastructure. You'll need a hybrid charge controller that can handle both DC sources, but your existing inverter should work fine.
+
+User: What kind of power output can I expect?
+
+Kid Solar: Small residential wind turbines like yours typically generate 1-3 kW in good wind conditions. Combined with your solar array, you could see 20-40% more renewable energy production annually.
+
+User: Any maintenance concerns?
+
+Kid Solar: Wind turbines need more maintenance than solar panels - bearing lubrication, vibration checks, and occasional blade inspection. But vertical axis designs like yours are generally more reliable than horizontal turbines.`
+        },
+        {
+          sessionId: 'kid-solar-004',
+          timestamp: '2025-01-24T16:20:00Z',
+          messages: 8,
+          hasImages: false,
+          imageCount: 0,
+          conversationType: 'technical',
+          topics: ['electrical engineering', 'power calculations', 'system design'],
+          preview: 'Technical discussion about electrical calculations, load analysis, and system sizing for renewable energy installations...',
+          fullConversation: `User: How do I calculate the right system size for my home?
+
+Kid Solar: Great question! Start with your annual kWh usage from your electric bills. Divide by 365 for daily average, then factor in your local sun hours. For example: 10,000 kWh/year ÷ 365 days = 27 kWh/day. With 5 peak sun hours, you'd need about 5.4 kW of panels.
+
+User: What about power factor and efficiency losses?
+
+Kid Solar: Excellent technical question! Account for 85% system efficiency (inverter losses, wiring, shading). So that 5.4 kW becomes 6.4 kW actual panel capacity needed. Also consider your load profile - high evening usage might require battery storage.
+
+User: Should I oversize the system?
+
+Kid Solar: I recommend 110-120% of calculated need to account for panel degradation and seasonal variations. Plus, if you're considering electric vehicles or heat pumps in the future, that extra capacity will be valuable.`
+        },
+        {
+          sessionId: 'kid-solar-005',
+          timestamp: '2025-01-23T11:30:00Z',
+          messages: 18,
+          hasImages: false,
+          imageCount: 0,
+          conversationType: 'policy-analysis',
+          topics: ['energy policy', 'net metering', 'incentives'],
+          preview: 'Comprehensive discussion about energy policies, net metering programs, and available incentives for renewable energy adoption...',
+          fullConversation: `User: What incentives are available for solar installations?
+
+Kid Solar: The federal solar Investment Tax Credit (ITC) currently provides 30% credit through 2032, then steps down to 26% in 2033 and 22% in 2034. Many states offer additional rebates, and some utilities have cash incentives.
+
+User: How does net metering work?
+
+Kid Solar: Net metering allows you to sell excess solar production back to the grid at retail rates. Your meter runs backwards when producing more than you use. However, policies vary by state and utility - some are moving to time-of-use rates or reducing credit rates.
+
+User: Are there financing options?
+
+Kid Solar: Absolutely! Solar loans, leases, and Power Purchase Agreements (PPAs) are available. Loans typically offer the best long-term value since you own the system and get all incentives. Leases require no upfront cost but provide lower savings.
+
+User: What about property taxes?
+
+Kid Solar: Most states exempt solar installations from property tax increases, even though they add value to your home. Studies show solar can increase home value by about 4% while saving money on electricity.`
+        },
+        {
+          sessionId: 'kid-solar-006',
+          timestamp: '2025-01-22T13:45:00Z',
+          messages: 14,
+          hasImages: false,
+          imageCount: 0,
+          conversationType: 'environmental',
+          topics: ['climate impact', 'carbon footprint', 'sustainability metrics'],
+          preview: 'Analysis of environmental impact, carbon footprint reduction, and sustainability metrics for renewable energy adoption...',
+          fullConversation: `User: How much does solar really help the environment?
+
+Kid Solar: A typical residential solar system prevents 3-4 tons of CO2 emissions annually - equivalent to planting 100-120 trees each year! Over a 25-year lifespan, that's 75-100 tons of CO2 avoided.
+
+User: What about the manufacturing impact?
+
+Kid Solar: Great question! Solar panels have an energy payback time of 1-4 years, meaning they generate more clean energy than was used to manufacture them. After that, it's pure environmental benefit for 20+ more years.
+
+User: How does this compare to other green technologies?
+
+Kid Solar: Solar is among the most impactful individual choices. It outperforms electric vehicles, energy-efficient appliances, and even heat pumps in terms of CO2 reduction per dollar invested.`
+        },
+        {
+          sessionId: 'kid-solar-007',
+          timestamp: '2025-01-21T08:15:00Z',
+          messages: 20,
+          hasImages: false,
+          imageCount: 0,
+          conversationType: 'maintenance',
+          topics: ['system maintenance', 'troubleshooting', 'performance optimization'],
+          preview: 'Detailed maintenance guide, troubleshooting common issues, and performance optimization strategies for solar systems...',
+          fullConversation: `User: My solar production seems lower than expected. What could be wrong?
+
+Kid Solar: Let's troubleshoot systematically. First, check for obvious issues: panel shading from new growth, accumulated dirt/debris, or damaged panels. Even partial shading on one panel can affect the entire string.
+
+User: The panels look clean and unshaded.
+
+Kid Solar: Next, check your inverter display for error codes. Common issues include loose DC connections, ground faults, or arc faults. Your monitoring system should show individual string performance - look for significant variations.
+
+User: One string is producing 30% less than the others.
+
+Kid Solar: That's likely a connection issue or a failed panel in that string. Check for loose MC4 connectors at each panel. If connections are secure, you may have a damaged panel or wiring issue requiring professional diagnosis.
+
+User: Should I clean the panels regularly?
+
+Kid Solar: In most climates, rain provides adequate cleaning. But if you're in a dusty area or notice significant buildup, gentle cleaning with water and a soft brush can improve efficiency by 2-5%.`
+        },
+        {
+          sessionId: 'kid-solar-008',
+          timestamp: '2025-01-20T15:30:00Z',
+          messages: 16,
+          hasImages: true,
+          imageCount: 2,
+          conversationType: 'comparative-analysis',
+          images: [
+            { url: '/uploads/solar-comparison-1.jpg', analysis: 'Comparing these two solar installations, the left system uses older polycrystalline panels while the right shows modern monocrystalline panels. The newer installation has better spacing for airflow and uses microinverters for panel-level optimization.' },
+            { url: '/uploads/solar-comparison-2.jpg', analysis: 'The mounting systems show interesting differences - traditional rail mounting on the left versus newer low-profile mounting on the right. The low-profile system reduces wind load and has a cleaner aesthetic.' }
+          ],
+          topics: ['technology comparison', 'installation methods', 'efficiency analysis'],
+          preview: 'Comparative analysis of different solar technologies, installation methods, and efficiency considerations between older and newer systems...',
+          fullConversation: `User: Can you compare these two solar installations?
+
+Kid Solar: Fascinating comparison! The left system uses older polycrystalline panels - you can see the bluish tint and the more fragmented crystal structure. The right installation shows modern monocrystalline panels with that sleek black appearance.
+
+User: Which is more efficient?
+
+Kid Solar: The monocrystalline system on the right is significantly more efficient - typically 18-22% efficiency versus 15-17% for the polycrystalline. Plus, the newer system uses microinverters for panel-level optimization.
+
+User: What about the mounting differences?
+
+Kid Solar: Great observation! Traditional rail mounting (left) versus low-profile mounting (right). The low-profile system reduces wind load, has better aesthetics, and actually helps panels run cooler due to improved airflow.
+
+User: Is it worth upgrading an older system?
+
+Kid Solar: If your system is over 15 years old and needs repairs, upgrading can make sense. Newer panels produce 30-40% more power in the same space, plus you get improved monitoring and longer warranties.`
+        },
+        {
+          sessionId: 'kid-solar-009',
+          timestamp: '2025-01-19T11:20:00Z',
+          messages: 9,
+          hasImages: false,
+          imageCount: 0,
+          conversationType: 'economic-analysis',
+          topics: ['return on investment', 'electricity rates', 'financial modeling'],
+          preview: 'Economic analysis of solar investments, electricity rate impacts, and comprehensive financial modeling for long-term savings...',
+          fullConversation: `User: How do I calculate the financial returns of going solar?
+
+Kid Solar: Start with your annual electricity costs, then model 25 years of savings. Factor in: system cost minus incentives, annual savings, electricity rate inflation (typically 2-3%), and system degradation (0.5% annually).
+
+User: What if electricity rates change dramatically?
+
+Kid Solar: Solar acts as a hedge against rate increases. If rates rise faster than expected, your savings increase. If rates stay flat, you still save compared to your baseline. It's win-win risk mitigation.
+
+User: Should I consider financing options?
+
+Kid Solar: Cash purchase offers best returns, but solar loans at 3-6% interest can still provide positive cash flow from day one. Compare loan payments to your current electric bill - you should save money immediately.`
+        },
+        {
+          sessionId: 'kid-solar-010',
+          timestamp: '2025-01-18T14:10:00Z',
+          messages: 25,
+          hasImages: false,
+          imageCount: 0,
+          conversationType: 'future-tech',
+          topics: ['emerging technology', 'innovation', 'future developments'],
+          preview: 'Discussion about emerging solar technologies, future innovations, and next-generation developments in renewable energy...',
+          fullConversation: `User: What new solar technologies are coming?
+
+Kid Solar: Perovskite tandem cells are the most exciting near-term development - potentially reaching 35-40% efficiency versus today's 22%. Bifacial panels that capture light from both sides are already here and gaining adoption.
+
+User: What about solar roads or building integration?
+
+Kid Solar: Building-integrated photovoltaics (BIPV) are advancing rapidly - solar roof tiles, transparent panels for windows, and flexible panels for curved surfaces. Solar roads face durability challenges but solar canopies over parking lots are very promising.
+
+User: How about energy storage innovations?
+
+Kid Solar: Solid-state batteries could revolutionize storage with higher density and longer life. Flow batteries offer interesting utility-scale possibilities. But lithium-ion keeps improving and costs keep dropping.
+
+User: When will these be mainstream?
+
+Kid Solar: Bifacial and BIPV are available now. Perovskite tandem cells should reach market in 3-5 years. The solar industry moves fast - what seems futuristic today becomes standard in just a few years.`
         }
       ];
       filteredData = [...memoryData];
@@ -487,11 +705,13 @@
       const totalImages = filteredData.reduce((sum, item) => sum + (item.imageCount || 0), 0);
       const totalMessages = filteredData.reduce((sum, item) => sum + (item.messages || 0), 0);
       const avgSession = totalSessions > 0 ? Math.round(totalMessages / totalSessions) : 0;
+      const uniqueTypes = new Set(filteredData.map(item => item.conversationType).filter(Boolean)).size;
       
       document.getElementById('totalSessions').textContent = totalSessions;
       document.getElementById('totalImages').textContent = totalImages;
       document.getElementById('totalMessages').textContent = totalMessages;
       document.getElementById('avgSession').textContent = avgSession;
+      document.getElementById('conversationTypes').textContent = uniqueTypes;
     }
     
     // Render memory cards
@@ -534,6 +754,10 @@
             <div class="detail-row">
               <span class="detail-label">💬 Messages:</span>
               <span class="detail-value">${memory.messages || 0}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">🗣️ Type:</span>
+              <span class="detail-value">${memory.conversationType ? formatConversationType(memory.conversationType) : 'General'}</span>
             </div>
             <div class="detail-row">
               <span class="detail-label">🏷️ Topics:</span>
@@ -632,6 +856,23 @@ ${image.analysis}
       
       alert(details);
     }
+
+    // Format conversation type for display
+    function formatConversationType(type) {
+      const typeMap = {
+        'image-analysis': 'Image Analysis',
+        'educational': 'Educational Discussion',
+        'technical': 'Technical Deep Dive',
+        'policy-analysis': 'Policy & Economics',
+        'environmental': 'Environmental Impact',
+        'maintenance': 'System Maintenance',
+        'comparative-analysis': 'Technology Comparison',
+        'economic-analysis': 'Financial Analysis',
+        'future-tech': 'Future Technology',
+        'hybrid-analysis': 'Hybrid Systems'
+      };
+      return typeMap[type] || 'General Conversation';
+    }
     
     // Format timestamp
     function formatTimestamp(timestamp) {
@@ -682,6 +923,9 @@ ${image.analysis}
         case 'images-desc':
           filteredData.sort((a, b) => (b.imageCount || 0) - (a.imageCount || 0));
           break;
+        case 'conversation-type':
+          filteredData.sort((a, b) => (a.conversationType || 'general').localeCompare(b.conversationType || 'general'));
+          break;
       }
     }
     
@@ -707,6 +951,9 @@ ${image.analysis}
             break;
           case 'long':
             filteredData = memoryData.filter(memory => memory.messages > 10);
+            break;
+          case 'conversations':
+            filteredData = memoryData.filter(memory => !memory.hasImages);
             break;
         }
         
