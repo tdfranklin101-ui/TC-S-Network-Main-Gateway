@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Agent Memory Storage - Kid Solar Conversations</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      color: #333;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    .header {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 15px;
+      padding: 30px;
+      margin-bottom: 30px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+    
+    .header h1 {
+      color: #4a5568;
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+    }
+    
+    .header p {
+      color: #718096;
+      font-size: 1.1rem;
+    }
+    
+    .search-container {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 15px;
+      padding: 25px;
+      margin-bottom: 30px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+    
+    .search-box {
+      width: 100%;
+      padding: 15px 20px;
+      font-size: 1rem;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      outline: none;
+      transition: border-color 0.3s ease;
+    }
+    
+    .search-box:focus {
+      border-color: #667eea;
+    }
+    
+    .filters {
+      display: flex;
+      gap: 15px;
+      margin-top: 15px;
+      flex-wrap: wrap;
+    }
+    
+    .filter-btn {
+      padding: 8px 16px;
+      background: #f7fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 0.9rem;
+    }
+    
+    .filter-btn:hover, .filter-btn.active {
+      background: #667eea;
+      color: white;
+      border-color: #667eea;
+    }
+    
+    .memory-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .memory-card {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease;
+    }
+    
+    .memory-card:hover {
+      transform: translateY(-5px);
+    }
+    
+    .memory-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .session-id {
+      background: linear-gradient(45deg, #667eea, #764ba2);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 15px;
+      font-size: 0.8rem;
+      font-weight: bold;
+    }
+    
+    .timestamp {
+      color: #718096;
+      font-size: 0.85rem;
+    }
+    
+    .conversation-preview {
+      color: #4a5568;
+      line-height: 1.5;
+      margin-bottom: 15px;
+      max-height: 150px;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    .conversation-preview.expanded {
+      max-height: none;
+    }
+    
+    .expand-btn {
+      background: linear-gradient(45deg, #48bb78, #38b2ac);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: transform 0.2s ease;
+    }
+    
+    .expand-btn:hover {
+      transform: scale(1.05);
+    }
+    
+    .image-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: #ffeaa7;
+      color: #2d3436;
+      padding: 4px 8px;
+      border-radius: 10px;
+      font-size: 0.8rem;
+      margin-bottom: 10px;
+    }
+    
+    .stats-bar {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      display: flex;
+      justify-content: space-around;
+      text-align: center;
+    }
+    
+    .stat-item h3 {
+      color: #667eea;
+      font-size: 2rem;
+      margin-bottom: 5px;
+    }
+    
+    .stat-item p {
+      color: #718096;
+      font-size: 0.9rem;
+    }
+    
+    .back-btn {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      background: rgba(255, 255, 255, 0.9);
+      color: #4a5568;
+      padding: 10px 20px;
+      border-radius: 25px;
+      text-decoration: none;
+      font-weight: bold;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s ease;
+    }
+    
+    .back-btn:hover {
+      transform: translateY(-2px);
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #718096;
+    }
+    
+    .no-results {
+      text-align: center;
+      padding: 40px;
+      color: #718096;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 15px;
+      margin-top: 20px;
+    }
+    
+    @media (max-width: 768px) {
+      .container {
+        padding: 10px;
+      }
+      
+      .header h1 {
+        font-size: 2rem;
+      }
+      
+      .filters {
+        justify-content: center;
+      }
+      
+      .stats-bar {
+        flex-direction: column;
+        gap: 15px;
+      }
+      
+      .memory-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <a href="/analytics" class="back-btn">← Back to Dashboard</a>
+  
+  <div class="container">
+    <div class="header">
+      <h1>🧠 AI Agent Memory Storage</h1>
+      <p>Kid Solar Conversations & Learning History</p>
+    </div>
+    
+    <div class="search-container">
+      <input type="text" class="search-box" placeholder="Search conversations, topics, or image descriptions..." id="searchInput">
+      <div class="filters">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="images">With Images</button>
+        <button class="filter-btn" data-filter="recent">Recent (7 days)</button>
+        <button class="filter-btn" data-filter="long">Long Conversations</button>
+      </div>
+    </div>
+    
+    <div class="stats-bar">
+      <div class="stat-item">
+        <h3 id="totalSessions">0</h3>
+        <p>Total Sessions</p>
+      </div>
+      <div class="stat-item">
+        <h3 id="totalImages">0</h3>
+        <p>Images Analyzed</p>
+      </div>
+      <div class="stat-item">
+        <h3 id="totalMessages">0</h3>
+        <p>Total Messages</p>
+      </div>
+      <div class="stat-item">
+        <h3 id="avgSession">0</h3>
+        <p>Avg Session Length</p>
+      </div>
+    </div>
+    
+    <div id="memoryContainer" class="memory-grid">
+      <div class="loading">Loading memory storage...</div>
+    </div>
+    
+    <div id="noResults" class="no-results" style="display: none;">
+      <h3>No conversations found</h3>
+      <p>Try adjusting your search or filter criteria</p>
+    </div>
+  </div>
+
+  <script>
+    let memoryData = [];
+    let filteredData = [];
+    
+    // Load memory data from server
+    async function loadMemoryData() {
+      try {
+        const response = await fetch('/api/kid-solar-memory/all');
+        if (response.ok) {
+          memoryData = await response.json();
+          filteredData = [...memoryData];
+          updateStats();
+          renderMemoryCards();
+        } else {
+          // Fallback to demo data if API not available
+          loadDemoData();
+        }
+      } catch (error) {
+        console.log('Using demo data due to:', error.message);
+        loadDemoData();
+      }
+    }
+    
+    // Demo data for when API is not available
+    function loadDemoData() {
+      memoryData = [
+        {
+          sessionId: 'kid-solar-001',
+          timestamp: '2025-01-26T10:30:00Z',
+          messages: 15,
+          hasImages: true,
+          imageCount: 3,
+          topics: ['solar energy', 'renewable technology', 'environmental science'],
+          preview: 'User uploaded photos of solar panels on their roof. Kid Solar analyzed the installation efficiency and provided recommendations for optimal positioning...',
+          fullConversation: 'User: Can you analyze these solar panels on my roof?\nKid Solar: I can see three different types of panels in your photos. The monocrystalline panels on the south-facing section are positioned optimally...'
+        },
+        {
+          sessionId: 'kid-solar-002',
+          timestamp: '2025-01-25T14:15:00Z',
+          messages: 8,
+          hasImages: false,
+          imageCount: 0,
+          topics: ['energy storage', 'battery technology'],
+          preview: 'Discussion about home energy storage solutions and battery backup systems for solar installations...',
+          fullConversation: 'User: What are the best battery options for solar?\nKid Solar: For residential solar installations, lithium-ion batteries like Tesla Powerwall or LG Chem offer excellent...'
+        },
+        {
+          sessionId: 'kid-solar-003',
+          timestamp: '2025-01-24T09:45:00Z',
+          messages: 22,
+          hasImages: true,
+          imageCount: 1,
+          topics: ['wind energy', 'hybrid systems', 'sustainability'],
+          preview: 'User shared image of a small wind turbine and asked about combining wind and solar energy systems...',
+          fullConversation: 'User: Can I combine this wind turbine with my solar setup?\nKid Solar: Absolutely! Hybrid renewable systems are fantastic. Looking at your turbine image...'
+        }
+      ];
+      filteredData = [...memoryData];
+      updateStats();
+      renderMemoryCards();
+    }
+    
+    // Update statistics display
+    function updateStats() {
+      const totalSessions = filteredData.length;
+      const totalImages = filteredData.reduce((sum, item) => sum + (item.imageCount || 0), 0);
+      const totalMessages = filteredData.reduce((sum, item) => sum + (item.messages || 0), 0);
+      const avgSession = totalSessions > 0 ? Math.round(totalMessages / totalSessions) : 0;
+      
+      document.getElementById('totalSessions').textContent = totalSessions;
+      document.getElementById('totalImages').textContent = totalImages;
+      document.getElementById('totalMessages').textContent = totalMessages;
+      document.getElementById('avgSession').textContent = avgSession;
+    }
+    
+    // Render memory cards
+    function renderMemoryCards() {
+      const container = document.getElementById('memoryContainer');
+      const noResults = document.getElementById('noResults');
+      
+      if (filteredData.length === 0) {
+        container.style.display = 'none';
+        noResults.style.display = 'block';
+        return;
+      }
+      
+      container.style.display = 'grid';
+      noResults.style.display = 'none';
+      
+      container.innerHTML = filteredData.map((memory, index) => `
+        <div class="memory-card">
+          <div class="memory-header">
+            <span class="session-id">${memory.sessionId}</span>
+            <span class="timestamp">${formatTimestamp(memory.timestamp)}</span>
+          </div>
+          ${memory.hasImages ? `<div class="image-indicator">📸 ${memory.imageCount} image${memory.imageCount > 1 ? 's' : ''} analyzed</div>` : ''}
+          <div class="conversation-preview" id="preview-${index}">
+            ${memory.preview}
+          </div>
+          <button class="expand-btn" onclick="toggleExpand(${index})">Read More</button>
+        </div>
+      `).join('');
+    }
+    
+    // Toggle expanded view
+    function toggleExpand(index) {
+      const preview = document.getElementById(`preview-${index}`);
+      const isExpanded = preview.classList.contains('expanded');
+      
+      if (isExpanded) {
+        preview.textContent = filteredData[index].preview;
+        preview.classList.remove('expanded');
+        event.target.textContent = 'Read More';
+      } else {
+        preview.textContent = filteredData[index].fullConversation || filteredData[index].preview;
+        preview.classList.add('expanded');
+        event.target.textContent = 'Show Less';
+      }
+    }
+    
+    // Format timestamp
+    function formatTimestamp(timestamp) {
+      const date = new Date(timestamp);
+      return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    }
+    
+    // Search functionality
+    document.getElementById('searchInput').addEventListener('input', function() {
+      const query = this.value.toLowerCase();
+      filteredData = memoryData.filter(memory => 
+        memory.preview.toLowerCase().includes(query) ||
+        memory.topics.some(topic => topic.toLowerCase().includes(query)) ||
+        memory.sessionId.toLowerCase().includes(query)
+      );
+      updateStats();
+      renderMemoryCards();
+    });
+    
+    // Filter functionality
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        
+        const filter = this.dataset.filter;
+        const now = new Date();
+        const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        
+        switch(filter) {
+          case 'all':
+            filteredData = [...memoryData];
+            break;
+          case 'images':
+            filteredData = memoryData.filter(memory => memory.hasImages);
+            break;
+          case 'recent':
+            filteredData = memoryData.filter(memory => new Date(memory.timestamp) > sevenDaysAgo);
+            break;
+          case 'long':
+            filteredData = memoryData.filter(memory => memory.messages > 10);
+            break;
+        }
+        
+        updateStats();
+        renderMemoryCards();
+      });
+    });
+    
+    // Initialize
+    loadMemoryData();
+  </script>
+</body>
+</html>

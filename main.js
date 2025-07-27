@@ -1176,6 +1176,11 @@ app.get('/dash', (req, res) => {
   res.sendFile(path.join(__dirname, 'public-dashboard.html'));
 });
 
+// AI Memory Review page
+app.get('/ai-memory-review', (req, res) => {
+  res.sendFile(path.join(__dirname, 'ai-memory-review.html'));
+});
+
 // Website Usage Analytics API Endpoints
 app.get('/api/website-analytics', (req, res) => {
   const stats = websiteAnalytics.getUsageStats();
