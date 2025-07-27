@@ -1099,8 +1099,39 @@ app.get('/founder_note', (req, res) => {
   res.sendFile(path.join(__dirname, 'deploy_v1_multimodal', 'founder_note.html'));
 });
 
+// Serve internal dashboard (with live analytics)
 app.get('/dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, 'deploy_v1_multimodal', 'dashboard.html'));
+});
+
+// Serve public analytics dashboard (standalone)
+app.get('/analytics', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public-dashboard.html'));
+});
+
+// Analytics data endpoint for public dashboard
+app.get('/api/public-analytics', async (req, res) => {
+  try {
+    const historicalData = await getHistoricalAnalytics();
+    
+    // Calculate real-time platform age
+    const inceptionDate = new Date('2025-04-07');
+    const platformAgeDays = Math.floor((Date.now() - inceptionDate.getTime()) / (1000 * 60 * 60 * 24));
+    
+    res.json({
+      success: true,
+      platformAge: platformAgeDays,
+      totalMembers: historicalData.totalMembers,
+      totalSolarDistributed: historicalData.totalSolarDistributed,
+      memberGrowthRate: historicalData.memberGrowthRate,
+      avgSolarPerMember: historicalData.avgSolarPerMember,
+      totalValue: 80240000,
+      energyEquivalent: Math.round((historicalData.totalSolarDistributed * 4913) / 1000000 * 10) / 10,
+      lastUpdated: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to load analytics' });
+  }
 });
 
 // Other static files
