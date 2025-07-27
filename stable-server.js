@@ -254,6 +254,16 @@ app.get('/session-management', (req, res) => {
   }
 });
 
+// D-ID integration test page
+app.get('/test-did', (req, res) => {
+  try {
+    res.sendFile(path.join(__dirname, 'test-did-integration.html'));
+  } catch (error) {
+    log('Test D-ID page error', { error: error.message });
+    res.status(500).send('Test page error');
+  }
+});
+
 // Default homepage
 app.get('/', (req, res) => {
   try {
