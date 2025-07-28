@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Memory Storage Connection</title>
+</head>
+<body>
+    <h1>Memory Storage Connection Test</h1>
+    <div id="status">Testing...</div>
+    <div id="data"></div>
+    
+    <script>
+        async function testConnection() {
+            try {
+                const response = await fetch('/api/kid-solar-memory/all');
+                const data = await response.json();
+                
+                document.getElementById('status').innerHTML = 
+                    `<p>✅ Connection successful!</p>
+                     <p>Total Sessions: ${data.totalSessions}</p>
+                     <p>Total Conversations: ${data.totalConversations}</p>
+                     <p>Conversations Found: ${data.conversations.length}</p>`;
+                
+                document.getElementById('data').innerHTML = 
+                    '<h2>Conversation Data:</h2><pre>' + 
+                    JSON.stringify(data, null, 2) + 
+                    '</pre>';
+                    
+            } catch (error) {
+                document.getElementById('status').innerHTML = 
+                    `<p>❌ Connection failed: ${error.message}</p>`;
+            }
+        }
+        
+        testConnection();
+    </script>
+</body>
+</html>

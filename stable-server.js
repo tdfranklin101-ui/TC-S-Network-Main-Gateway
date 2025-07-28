@@ -242,7 +242,7 @@ app.get('/api/usage-analytics', (req, res) => {
 // Session management interface
 app.get('/session-management', (req, res) => {
   try {
-    const sessionManagementPath = path.join(__dirname, 'public', 'session-management.html');
+    const sessionManagementPath = path.join(__dirname, 'session-management.html');
     if (fs.existsSync(sessionManagementPath)) {
       res.sendFile(sessionManagementPath);
     } else {
@@ -254,12 +254,104 @@ app.get('/session-management', (req, res) => {
   }
 });
 
+// Memory storage page
+app.get('/memory-storage', (req, res) => {
+  try {
+    res.sendFile(path.join(__dirname, 'ai-memory-review.html'));
+  } catch (error) {
+    log('Memory storage page error', { error: error.message });
+    res.status(500).send('Error loading memory storage');
+  }
+});
+
+// API endpoint for Kid Solar memory data
+app.get('/api/kid-solar-memory/all', (req, res) => {
+  try {
+    log('Memory API called', { path: req.path });
+    
+    // Check if conversations directory exists
+    if (!fs.existsSync('conversations/')) {
+      log('Conversations directory not found');
+      return res.json({
+        conversations: [],
+        analytics: analytics.getAnalytics(),
+        totalSessions: 0,
+        totalConversations: 0,
+        timestamp: new Date().toISOString(),
+        note: 'No conversations directory found'
+      });
+    }
+    
+    const conversationFiles = fs.readdirSync('conversations/')
+      .filter(file => file.endsWith('.json'))
+      .map(file => {
+        try {
+          const filePath = path.join('conversations', file);
+          const content = fs.readFileSync(filePath, 'utf8');
+          const conversation = JSON.parse(content);
+          
+          return {
+            sessionId: conversation.sessionId,
+            conversationId: conversation.id,
+            timestamp: conversation.timestamp,
+            messageType: conversation.messageType,
+            messageText: conversation.messageText,
+            retentionFirst: conversation.retentionFirst,
+            hasImages: conversation.messageType?.includes('photo') || conversation.messageType?.includes('image') || conversation.messageType?.includes('identify'),
+            conversationType: conversation.messageType === 'identify_anything_analysis' ? 'identify-anything' : 
+                            conversation.messageType === 'photo_analysis' ? 'photo-analysis' : 'conversation',
+            messages: 1, // Each file represents one message
+            isDemoData: false
+          };
+        } catch (error) {
+          log('Error reading conversation file', { file, error: error.message });
+          return null;
+        }
+      })
+      .filter(conv => conv !== null);
+    
+    // Get analytics for additional context
+    const analyticsData = analytics.getAnalytics();
+    
+    res.json({
+      conversations: conversationFiles,
+      analytics: analyticsData,
+      totalSessions: analyticsData.totalSessions,
+      totalConversations: conversationFiles.length,
+      timestamp: new Date().toISOString()
+    });
+    
+    log('Memory data served', { 
+      conversationCount: conversationFiles.length,
+      totalSessions: analyticsData.totalSessions 
+    });
+    
+  } catch (error) {
+    log('Memory API error', { error: error.message });
+    res.status(500).json({
+      error: 'Failed to load memory data',
+      details: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 // D-ID integration test page
 app.get('/test-did', (req, res) => {
   try {
     res.sendFile(path.join(__dirname, 'test-did-integration.html'));
   } catch (error) {
     log('Test D-ID page error', { error: error.message });
+    res.status(500).send('Test page error');
+  }
+});
+
+// Test memory connection page
+app.get('/test-memory', (req, res) => {
+  try {
+    res.sendFile(path.join(__dirname, 'test-memory-connection.html'));
+  } catch (error) {
+    log('Test memory connection error', { error: error.message });
     res.status(500).send('Test page error');
   }
 });

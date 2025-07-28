@@ -447,18 +447,43 @@
       try {
         const response = await fetch('/api/kid-solar-memory/all');
         if (response.ok) {
-          memoryData = await response.json();
+          const data = await response.json();
+          memoryData = data.conversations || [];
           filteredData = [...memoryData];
+          
+          // Update stats with real data
           updateStats();
           renderMemoryCards();
+          
+          // Update session counts from analytics
+          if (data.analytics) {
+            document.getElementById('totalSessions').textContent = data.analytics.totalSessions || '0';
+            document.getElementById('totalMessages').textContent = data.totalConversations || '0';
+          }
+          
+          console.log('Loaded real conversation data:', memoryData.length, 'conversations');
         } else {
-          // Fallback to demo data if API not available
-          loadDemoData();
+          // Show error if API fails
+          console.error('API failed with status:', response.status);
+          loadDemoDataWithNote();
         }
       } catch (error) {
-        console.log('Using demo data due to:', error.message);
-        loadDemoData();
+        console.error('Error loading memory data:', error);
+        loadDemoDataWithNote();
       }
+    }
+    
+    // Load demo data with note about real data availability
+    function loadDemoDataWithNote() {
+      console.log('Loading demo data - real sessions not accessible');
+      loadDemoData();
+      
+      // Add notice about demo data
+      const header = document.querySelector('.header');
+      const notice = document.createElement('div');
+      notice.className = 'privacy-notice';
+      notice.innerHTML = '<strong>Note:</strong> Displaying demonstration data. Real session data may require server connection.';
+      header.appendChild(notice);
     }
     
     // Demo data for when API is not available - Enhanced with 25+ conversation sessions
