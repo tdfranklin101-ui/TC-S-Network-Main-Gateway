@@ -9,6 +9,23 @@
   <link rel="stylesheet" href="/css/solar-counter.css">
   <link rel="stylesheet" href="/css/global-solar-counter.css">
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+  <script>
+    // FORCE UPDATE: Complete cache bypass
+    console.log('🔄 FORCE UPDATE: Bypassing all deployment cache');
+    console.log('⏰ Timestamp: 1753738224313');
+    console.log('🎯 Expected: Console Solar - Kid Solar');
+    
+    // Clear everything
+    localStorage.clear();
+    sessionStorage.clear();
+    
+    // Force D-ID reload
+    setTimeout(() => {
+      console.log('✅ Force update active - New agent loading');
+    }, 500);
+  </script>
+
 </head>
 <body>
   <div class="wrapper">
@@ -542,18 +559,18 @@
     });
   </script>
 
-  <!-- D-ID AI Agent - HARD BOOT CACHE BYPASS -->
+  <!-- D-ID AI Agent - FORCE UPDATE 1753738224313 -->
   <script type="module"
-        src="https://agent.d-id.com/v2/index.js?hardboot=1753734460425"
+        src="https://agent.d-id.com/v2/index.js?force=1753738224313"
         data-mode="fabio"
         data-client-key="YXV0aDB8Njg3NjgyNDI2M2Q2ODI4MmIwOWFiYmUzOlR2cUplanVzeWc1cjlKV2ZNV0NKaQ=="
         data-agent-id="v2_agt_vhYf_e_C"
-        data-name="console-solar-hardboot-1753734460425"
+        data-name="console-solar-force-1753738224313"
         data-monitor="true"
         data-orientation="horizontal"
         data-position="right"
         data-description="Console Solar - Kid Solar - Your polymathic AI assistant specializing in renewable energy innovation, physics, engineering, economics, and cutting-edge sustainability solutions. Ready to help with multimodal analysis and voice interaction."
-        data-force-refresh="true">
+        data-force-update="true">
   </script>
   
   <script>
@@ -918,7 +935,7 @@
         messageText: messageText,
         retentionFirst: true,
         hasImages: hasImages,
-        agentId: 'v2_agt_vhYf_e_C',
+        agentId: 'v2_agt_vhYf_e_C-force-1753738224313',
         cacheBusted: true
       };
       
