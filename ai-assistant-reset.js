@@ -28,12 +28,13 @@ console.log('\n3. Verifying D-ID AI Agent configuration...');
 const indexContent = fs.readFileSync('public/index.html', 'utf8');
 const checks = [
   { name: 'D-ID Script', check: indexContent.includes('https://agent.d-id.com/v2/index.js') },
-  { name: 'Agent ID', check: indexContent.includes('data-agent-id="v2_agt_lmJp1s6K"') },
-  { name: 'Client Key', check: indexContent.includes('data-client-key="Z29vZ2xlLW9hdXRoMnwxMDcyNjAyNzY5Njc4NTMyMjY1MjM6NEt2UC1nU1hRZmFDUTJvcUZKdzY2"') },
+  { name: 'Agent ID', check: indexContent.includes('data-agent-id="v2_agt_vhYf_e_C"') },
+  { name: 'Client Key', check: indexContent.includes('data-client-key="YXV0aDB8Njg3NjgyNDI2M2Q2ODI4MmIwOWFiYmUzOlR2cUplanVzeWc1cjlKV2ZNV0NKaQ=="') },
   { name: 'Mode Fabio', check: indexContent.includes('data-mode="fabio"') },
   { name: 'Monitor True', check: indexContent.includes('data-monitor="true"') },
   { name: 'Horizontal Orientation', check: indexContent.includes('data-orientation="horizontal"') },
-  { name: 'Right Position', check: indexContent.includes('data-position="right"') }
+  { name: 'Right Position', check: indexContent.includes('data-position="right"
+        data-description="Console Solar - Kid Solar - Your polymathic AI assistant specializing in renewable energy innovation, physics, engineering, economics, and cutting-edge sustainability solutions."') }
 ];
 
 checks.forEach(item => {

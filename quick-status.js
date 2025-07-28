@@ -25,7 +25,7 @@ files.forEach(file => {
 
 // Check D-ID configuration
 const indexContent = fs.readFileSync('public/index.html', 'utf8');
-const hasDidAgent = indexContent.includes('data-agent-id="v2_agt_lmJp1s6K"');
+const hasDidAgent = indexContent.includes('data-agent-id="v2_agt_vhYf_e_C"');
 console.log(`${hasDidAgent ? '✅' : '❌'} D-ID AI Agent configured`);
 
 // Check server routes

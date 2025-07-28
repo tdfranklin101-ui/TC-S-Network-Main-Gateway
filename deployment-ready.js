@@ -67,11 +67,12 @@ const checkDidConfig = () => {
   
   const checks = [
     { name: 'Script CDN', test: content.includes('https://agent.d-id.com/v2/index.js') },
-    { name: 'Agent ID', test: content.includes('data-agent-id="v2_agt_lmJp1s6K"') },
+    { name: 'Agent ID', test: content.includes('data-agent-id="v2_agt_vhYf_e_C"') },
     { name: 'Client Key', test: content.includes('data-client-key=') },
     { name: 'Mode (fabio)', test: content.includes('data-mode="fabio"') },
     { name: 'Orientation', test: content.includes('data-orientation="horizontal"') },
-    { name: 'Position', test: content.includes('data-position="right"') }
+    { name: 'Position', test: content.includes('data-position="right"
+        data-description="Console Solar - Kid Solar - Your polymathic AI assistant specializing in renewable energy innovation, physics, engineering, economics, and cutting-edge sustainability solutions."') }
   ];
   
   let allConfigured = true;

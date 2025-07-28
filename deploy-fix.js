@@ -75,7 +75,7 @@ app.get('/health', (req, res) => {
     version: 'v1_multimodal_with_memory',
     features: {
       website: 'full-homepage',
-      kidSolar: 'v2_agt_lmJp1s6K',
+      kidSolar: 'v2_agt_vhYf_e_C',
       memory: 'persistent-sessions',
       multimodal: 'photo-video-analysis',
       music: '4-track-streaming'

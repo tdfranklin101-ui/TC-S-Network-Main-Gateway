@@ -46,11 +46,12 @@ const content = fs.readFileSync(indexPath, 'utf8');
 
 const agentChecks = [
   { check: 'Script loaded from CDN', test: content.includes('https://agent.d-id.com/v2/index.js') },
-  { check: 'Agent ID configured', test: content.includes('data-agent-id="v2_agt_lmJp1s6K"') },
+  { check: 'Agent ID configured', test: content.includes('data-agent-id="v2_agt_vhYf_e_C"') },
   { check: 'Client key present', test: content.includes('data-client-key=') },
   { check: 'Mode set to fabio', test: content.includes('data-mode="fabio"') },
   { check: 'Horizontal orientation', test: content.includes('data-orientation="horizontal"') },
-  { check: 'Position set to right', test: content.includes('data-position="right"') }
+  { check: 'Position set to right', test: content.includes('data-position="right"
+        data-description="Console Solar - Kid Solar - Your polymathic AI assistant specializing in renewable energy innovation, physics, engineering, economics, and cutting-edge sustainability solutions."') }
 ];
 
 agentChecks.forEach(item => {

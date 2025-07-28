@@ -21,8 +21,9 @@ const checks = [
   { name: 'Mode Fabio', test: indexContent.includes('data-mode="fabio"') },
   { name: 'Monitor Enabled', test: indexContent.includes('data-monitor="true"') },
   { name: 'Horizontal Orientation', test: indexContent.includes('data-orientation="horizontal"') },
-  { name: 'Right Position', test: indexContent.includes('data-position="right"') },
-  { name: 'Agent Name', test: indexContent.includes('data-name="did-agent"') }
+  { name: 'Right Position', test: indexContent.includes('data-position="right"
+        data-description="Console Solar - Kid Solar - Your polymathic AI assistant specializing in renewable energy innovation, physics, engineering, economics, and cutting-edge sustainability solutions."') },
+  { name: 'Agent Name', test: indexContent.includes('data-name="console-solar-agent"') }
 ];
 
 let allChecks = true;
@@ -91,7 +92,7 @@ setTimeout(async () => {
   if (allChecks && result.success && result.hasAgent) {
     console.log('\n🎉 D-ID AGENT SUCCESSFULLY RE-EMBEDDED!');
     console.log('✅ Fresh credentials integrated');
-    console.log('✅ Agent v2_agt_lmJp1s6K active');
+    console.log('✅ Agent v2_agt_vhYf_e_C active');
     console.log('✅ Ready for production deployment');
   } else {
     console.log('\n⚠️  Integration issues detected');

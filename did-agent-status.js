@@ -18,11 +18,12 @@ const content = fs.readFileSync(indexPath, 'utf8');
 // Extract agent configuration
 const agentConfig = {
   script: content.includes('https://agent.d-id.com/v2/index.js'),
-  agentId: content.includes('data-agent-id="v2_agt_lmJp1s6K"'),
-  clientKey: content.includes('data-client-key="Z29vZ2xlLW9hdXRoMnwxMDcyNjAyNzY5Njc4NTMyMjY1MjM6NEt2UC1nU1hRZmFDUTJvcUZKdzY2"'),
+  agentId: content.includes('data-agent-id="v2_agt_vhYf_e_C"'),
+  clientKey: content.includes('data-client-key="YXV0aDB8Njg3NjgyNDI2M2Q2ODI4MmIwOWFiYmUzOlR2cUplanVzeWc1cjlKV2ZNV0NKaQ=="'),
   mode: content.includes('data-mode="fabio"'),
   orientation: content.includes('data-orientation="horizontal"'),
-  position: content.includes('data-position="right"'),
+  position: content.includes('data-position="right"
+        data-description="Console Solar - Kid Solar - Your polymathic AI assistant specializing in renewable energy innovation, physics, engineering, economics, and cutting-edge sustainability solutions."'),
   monitor: content.includes('data-monitor="true"')
 };
 
@@ -37,7 +38,7 @@ console.log('\n🔍 Common Issues Analysis:');
 
 if (agentConfig.script && agentConfig.agentId && agentConfig.clientKey) {
   console.log('✅ Core configuration: COMPLETE');
-  console.log('ℹ️  Agent ID: v2_agt_lmJp1s6K');
+  console.log('ℹ️  Agent ID: v2_agt_vhYf_e_C');
   console.log('ℹ️  Mode: fabio (horizontal orientation)');
   console.log('ℹ️  Position: right side of screen');
   

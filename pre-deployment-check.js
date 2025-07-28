@@ -60,11 +60,12 @@ console.log('\n🤖 D-ID AI Agent:');
 const indexContent = fs.readFileSync('public/index.html', 'utf8');
 const didChecks = [
   { check: 'Script CDN', pass: indexContent.includes('https://agent.d-id.com/v2/index.js') },
-  { check: 'Agent ID', pass: indexContent.includes('data-agent-id="v2_agt_lmJp1s6K"') },
+  { check: 'Agent ID', pass: indexContent.includes('data-agent-id="v2_agt_vhYf_e_C"') },
   { check: 'Client key', pass: indexContent.includes('data-client-key=') },
   { check: 'Mode fabio', pass: indexContent.includes('data-mode="fabio"') },
   { check: 'Horizontal', pass: indexContent.includes('data-orientation="horizontal"') },
-  { check: 'Right position', pass: indexContent.includes('data-position="right"') }
+  { check: 'Right position', pass: indexContent.includes('data-position="right"
+        data-description="Console Solar - Kid Solar - Your polymathic AI assistant specializing in renewable energy innovation, physics, engineering, economics, and cutting-edge sustainability solutions."') }
 ];
 
 let didOk = true;

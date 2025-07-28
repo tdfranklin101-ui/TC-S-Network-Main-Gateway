@@ -18,7 +18,7 @@ const filesToUpdate = [
 
 // Old agent credentials to replace
 const oldCredentials = {
-  agentId: 'v2_agt_lmJp1s6K',
+  agentId: 'v2_agt_vhYf_e_C',
   clientKey: 'Z29vZ2xlLW9hdXRoMnwxMDcyNjAyNzY5Mjc4NTMyMjY1MjM6NEt2UC1nU1hRZmFDUTJvcUZKdzY2',
   name: 'did-agent'
 };
@@ -37,13 +37,13 @@ filesToUpdate.forEach(filePath => {
     let content = fs.readFileSync(filePath, 'utf8');
     
     // Replace all old agent ID references
-    content = content.replace(/v2_agt_lmJp1s6K/g, newCredentials.agentId);
+    content = content.replace(/v2_agt_vhYf_e_C/g, newCredentials.agentId);
     
     // Replace all old client key references
-    content = content.replace(/Z29vZ2xlLW9hdXRoMnwxMDcyNjAyNzY5Njc4NTMyMjY1MjM6NEt2UC1nU1hRZmFDUTJvcUZKdzY2/g, newCredentials.clientKey);
+    content = content.replace(/YXV0aDB8Njg3NjgyNDI2M2Q2ODI4MmIwOWFiYmUzOlR2cUplanVzeWc1cjlKV2ZNV0NKaQ==/g, newCredentials.clientKey);
     
     // Replace agent names
-    content = content.replace(/data-name="did-agent"/g, `data-name="${newCredentials.name}"`);
+    content = content.replace(/data-name="console-solar-agent"/g, `data-name="${newCredentials.name}"`);
     
     // Add description if missing
     if (content.includes('data-agent-id="v2_agt_vhYf_e_C"') && !content.includes('data-description=')) {
@@ -54,7 +54,7 @@ filesToUpdate.forEach(filePath => {
     }
     
     // Update console log references
-    content = content.replace(/TC-S Agent S0001/g, 'Console Solar - Kid Solar');
+    content = content.replace(/Console Solar - Kid Solar/g, 'Console Solar - Kid Solar');
     content = content.replace(/TCS/g, 'Console Solar');
     
     fs.writeFileSync(filePath, content);

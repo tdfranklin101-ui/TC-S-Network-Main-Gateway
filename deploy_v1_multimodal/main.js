@@ -28,7 +28,7 @@ app.get('/health', (req, res) => {
     status: 'healthy',
     timestamp: new Date().toISOString(),
     service: 'Current-See V1 Multimodal',
-    kidSolar: 'v2_agt_lmJp1s6K active'
+    kidSolar: 'v2_agt_vhYf_e_C active'
   });
 });
 

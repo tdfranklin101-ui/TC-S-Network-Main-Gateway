@@ -38,11 +38,12 @@ const testDidConfig = () => {
   
   return {
     script: content.includes('https://agent.d-id.com/v2/index.js'),
-    agentId: content.includes('data-agent-id="v2_agt_lmJp1s6K"'),
+    agentId: content.includes('data-agent-id="v2_agt_vhYf_e_C"'),
     clientKey: content.includes('data-client-key='),
     mode: content.includes('data-mode="fabio"'),
     orientation: content.includes('data-orientation="horizontal"'),
-    position: content.includes('data-position="right"')
+    position: content.includes('data-position="right"
+        data-description="Console Solar - Kid Solar - Your polymathic AI assistant specializing in renewable energy innovation, physics, engineering, economics, and cutting-edge sustainability solutions."')
   };
 };
 

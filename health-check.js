@@ -81,7 +81,7 @@ async function checkHealth() {
   const indexPath = path.join(__dirname, 'public', 'index.html');
   if (fs.existsSync(indexPath)) {
     const content = fs.readFileSync(indexPath, 'utf8');
-    const hasAgent = content.includes('data-agent-id="v2_agt_lmJp1s6K"');
+    const hasAgent = content.includes('data-agent-id="v2_agt_vhYf_e_C"');
     const hasScript = content.includes('https://agent.d-id.com/v2/index.js');
     
     if (hasAgent && hasScript) {
