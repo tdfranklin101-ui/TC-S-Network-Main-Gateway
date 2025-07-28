@@ -254,13 +254,23 @@ app.get('/session-management', (req, res) => {
   }
 });
 
-// Memory storage page
+// Memory storage page - Enhanced version
 app.get('/memory-storage', (req, res) => {
   try {
-    res.sendFile(path.join(__dirname, 'ai-memory-review.html'));
+    res.sendFile(path.join(__dirname, 'memory-storage-enhanced.html'));
   } catch (error) {
     log('Memory storage page error', { error: error.message });
     res.status(500).send('Error loading memory storage');
+  }
+});
+
+// Legacy memory storage page
+app.get('/memory-storage-legacy', (req, res) => {
+  try {
+    res.sendFile(path.join(__dirname, 'ai-memory-review.html'));
+  } catch (error) {
+    log('Legacy memory storage page error', { error: error.message });
+    res.status(500).send('Error loading legacy memory storage');
   }
 });
 
