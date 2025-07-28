@@ -542,16 +542,17 @@
     });
   </script>
 
-  <!-- D-ID AI Agent - Voice & Animation Restored -->
+  <!-- D-ID AI Agent - CACHE CLEARED - New Integration v2_agt_vhYf_e_C -->
   <script type="module"
-        src="https://agent.d-id.com/v2/index.js"
+        src="https://agent.d-id.com/v2/index.js?v=20250728-2"
         data-mode="fabio"
         data-client-key="YXV0aDB8Njg3NjgyNDI2M2Q2ODI4MmIwOWFiYmUzOlR2cUplanVzeWc1cjlKV2ZNV0NKaQ=="
         data-agent-id="v2_agt_vhYf_e_C"
-        data-name="kid-solar-agent-v2"
+        data-name="kid-solar-agent-cache-cleared"
         data-monitor="true"
         data-orientation="horizontal"
-        data-position="right">
+        data-position="right"
+        data-force-reload="true">
   </script>
 
   <!-- Native Multimodal Interface for D-ID Agent -->
@@ -877,31 +878,68 @@
     setTimeout(addNativeMultimodalButton, 4000);
     setTimeout(addNativeMultimodalButton, 6000);
     
-    // Enhanced D-ID conversation capture for analytics
+    // Enhanced D-ID conversation capture for persistent memory routing
     function logToMemorySystem(messageType, messageText, hasImages = false) {
       const sessionData = {
-        sessionId: 'session-' + Date.now(),
+        sessionId: 'did-session-' + Date.now(),
         timestamp: new Date().toISOString(),
         messageType: messageType,
         messageText: messageText,
         retentionFirst: true,
-        hasImages: hasImages
+        hasImages: hasImages,
+        agentId: 'v2_agt_vhYf_e_C',
+        cacheBusted: true
       };
       
+      // Force memory routing for new agent
       fetch('/api/session/message', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        },
         body: JSON.stringify(sessionData)
       }).then(response => {
         if (response.ok) {
-          console.log('✅ D-ID conversation logged to memory system');
+          console.log('✅ NEW D-ID Agent v2_agt_vhYf_e_C logged to persistent memory');
+          return response.json();
         }
+      }).then(data => {
+        console.log('🧠 Memory routing confirmed:', data);
       }).catch(error => {
-        console.error('❌ Failed to log D-ID conversation:', error);
+        console.error('❌ Failed to route to persistent memory:', error);
       });
     }
     
-    // Monitor D-ID agent for conversation capture
+    // Force D-ID cache clearing and new agent loading
+    function forceDidAgentReload() {
+      // Clear any existing D-ID elements
+      const existingAgents = document.querySelectorAll('[data-agent-id]');
+      existingAgents.forEach(agent => {
+        console.log('🗑️ Removing cached D-ID agent:', agent);
+        agent.remove();
+      });
+      
+      // Clear D-ID related localStorage/sessionStorage
+      Object.keys(localStorage).forEach(key => {
+        if (key.includes('did') || key.includes('d-id')) {
+          localStorage.removeItem(key);
+          console.log('🧹 Cleared localStorage:', key);
+        }
+      });
+      
+      Object.keys(sessionStorage).forEach(key => {
+        if (key.includes('did') || key.includes('d-id')) {
+          sessionStorage.removeItem(key);
+          console.log('🧹 Cleared sessionStorage:', key);
+        }
+      });
+      
+      console.log('✅ D-ID cache cleared - New agent v2_agt_vhYf_e_C will load fresh');
+    }
+    
+    // Monitor D-ID agent for conversation capture with new credentials
     function monitorDidAgent() {
       // Listen for D-ID events if available
       if (typeof window.postMessage === 'function') {
@@ -911,6 +949,21 @@
           }
         });
       }
+      
+      // Log new agent integration
+      console.log('🎤 Monitoring D-ID agent v2_agt_vhYf_e_C for voice & animation');
+    }
+    
+    // Force cache clearing on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      forceDidAgentReload();
+    });
+    
+    // Clear cache immediately if already loaded
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', forceDidAgentReload);
+    } else {
+      forceDidAgentReload();
     }
     
     // Also watch for new elements being added (D-ID agent might load later)
