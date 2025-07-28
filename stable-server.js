@@ -302,14 +302,21 @@ app.get('/api/kid-solar-memory/all', (req, res) => {
           
           return {
             sessionId: conversation.sessionId,
-            conversationId: conversation.id,
+            conversationId: conversation.conversationId || conversation.id,
             timestamp: conversation.timestamp,
             messageType: conversation.messageType,
             messageText: conversation.messageText,
             retentionFirst: conversation.retentionFirst,
+            agentId: conversation.agentId,
+            cacheBusted: conversation.cacheBusted,
+            isNewAgent: conversation.agentId === 'v2_agt_vhYf_e_C',
             hasImages: conversation.messageType?.includes('photo') || conversation.messageType?.includes('image') || conversation.messageType?.includes('identify'),
             conversationType: conversation.messageType === 'identify_anything_analysis' ? 'identify-anything' : 
-                            conversation.messageType === 'photo_analysis' ? 'photo-analysis' : 'conversation',
+                            conversation.messageType === 'photo_analysis' ? 'photo-analysis' : 
+                            conversation.messageType === 'did_conversation' ? 'D-ID Voice Chat' : 
+                            conversation.conversationType || 'conversation',
+            highlight: conversation.highlight || (conversation.agentId === 'v2_agt_vhYf_e_C' ? 'New D-ID Agent Integration' : ''),
+            educational: conversation.educational || '',
             messages: 1, // Each file represents one message
             isDemoData: false
           };

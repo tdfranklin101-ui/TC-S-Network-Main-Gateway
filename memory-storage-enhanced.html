@@ -211,29 +211,39 @@
   <script>
     let allConversations = [];
     
-    // Load and display memory data
+    // Load and display memory data with cache busting
     async function loadMemoryData() {
       try {
-        console.log('Loading memory data from API...');
-        const response = await fetch('/api/kid-solar-memory/all');
+        console.log('🔄 Loading memory data with cache busting...');
+        const response = await fetch(`/api/kid-solar-memory/all?t=${Date.now()}`, {
+          method: 'GET',
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
+        });
         
         if (!response.ok) {
           throw new Error(`API error: ${response.status}`);
         }
         
         const data = await response.json();
-        console.log('Memory API response:', data);
+        console.log('🧠 Memory API response:', data);
         
         if (data.conversations && Array.isArray(data.conversations)) {
           allConversations = data.conversations;
           updateStats(data);
           renderConversations();
-          console.log(`Loaded ${allConversations.length} conversations successfully`);
+          console.log(`✅ Loaded ${allConversations.length} conversations successfully`);
+          
+          // Show refresh indicator
+          const refreshTime = new Date().toLocaleTimeString();
+          document.querySelector('.header p').innerHTML = `Complete conversation history - Last updated: ${refreshTime}`;
         } else {
           throw new Error('Invalid data format from API');
         }
       } catch (error) {
-        console.error('Failed to load memory data:', error);
+        console.error('❌ Failed to load memory data:', error);
         document.getElementById('memoryGrid').innerHTML = `
           <div class="loading">
             Failed to load memory data: ${error.message}<br>
@@ -372,8 +382,40 @@ Storage: ${conv.retentionFirst ? 'Permanent' : 'Standard'}`;
       }, 2000);
     }
     
+    // Auto-refresh every 30 seconds to capture new D-ID conversations
+    function startAutoRefresh() {
+      console.log('🔄 Starting auto-refresh for new D-ID conversations...');
+      setInterval(() => {
+        console.log('⏰ Auto-refreshing memory data...');
+        loadMemoryData();
+      }, 30000); // Refresh every 30 seconds
+    }
+    
+    // Manual refresh button
+    function addRefreshButton() {
+      const header = document.querySelector('.header');
+      const refreshButton = document.createElement('button');
+      refreshButton.innerHTML = '🔄 Refresh Memory';
+      refreshButton.style.cssText = `
+        background: #667eea;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        margin-top: 15px;
+        font-size: 14px;
+      `;
+      refreshButton.onclick = loadMemoryData;
+      header.appendChild(refreshButton);
+    }
+    
     // Initialize on page load
-    document.addEventListener('DOMContentLoaded', loadMemoryData);
+    document.addEventListener('DOMContentLoaded', () => {
+      loadMemoryData();
+      addRefreshButton();
+      startAutoRefresh();
+    });
   </script>
 </body>
 </html>

@@ -891,7 +891,9 @@
         cacheBusted: true
       };
       
-      // Force memory routing for new agent
+      // Force memory routing for new agent with enhanced logging
+      console.log('📤 Sending to memory system:', sessionData);
+      
       fetch('/api/session/message', {
         method: 'POST',
         headers: { 
@@ -901,12 +903,26 @@
         },
         body: JSON.stringify(sessionData)
       }).then(response => {
+        console.log('📡 Memory API response status:', response.status);
         if (response.ok) {
           console.log('✅ NEW D-ID Agent v2_agt_vhYf_e_C logged to persistent memory');
           return response.json();
+        } else {
+          throw new Error(`Memory API error: ${response.status}`);
         }
       }).then(data => {
         console.log('🧠 Memory routing confirmed:', data);
+        console.log('💾 Conversation ID:', data.conversationId);
+        
+        // Trigger immediate memory refresh if on memory page
+        if (window.location.pathname.includes('memory-storage')) {
+          console.log('🔄 Triggering memory page refresh...');
+          setTimeout(() => {
+            if (typeof loadMemoryData === 'function') {
+              loadMemoryData();
+            }
+          }, 1000);
+        }
       }).catch(error => {
         console.error('❌ Failed to route to persistent memory:', error);
       });
