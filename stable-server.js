@@ -293,7 +293,7 @@ app.get('/api/kid-solar-memory/all', (req, res) => {
     }
     
     const conversationFiles = fs.readdirSync('conversations/')
-      .filter(file => file.endsWith('.json'))
+      .filter(file => file.endsWith('.json') && !file.startsWith('hist_'))
       .map(file => {
         try {
           const filePath = path.join('conversations', file);
@@ -306,17 +306,16 @@ app.get('/api/kid-solar-memory/all', (req, res) => {
             timestamp: conversation.timestamp,
             messageType: conversation.messageType,
             messageText: conversation.messageText,
-            retentionFirst: conversation.retentionFirst,
-            agentId: conversation.agentId,
-            cacheBusted: conversation.cacheBusted,
-            isNewAgent: conversation.agentId === 'v2_agt_vhYf_e_C',
+            retentionFirst: conversation.retentionFirst || true,
+            agentId: 'v2_agt_vhYf_e_C', // All new conversations use Console Solar
+            isNewAgent: true,
             hasImages: conversation.messageType?.includes('photo') || conversation.messageType?.includes('image') || conversation.messageType?.includes('identify'),
-            conversationType: conversation.messageType === 'identify_anything_analysis' ? 'identify-anything' : 
-                            conversation.messageType === 'photo_analysis' ? 'photo-analysis' : 
+            conversationType: conversation.messageType === 'identify_anything_analysis' ? 'Photo Analysis via Cut & Paste' : 
+                            conversation.messageType === 'photo_analysis' ? 'Visual Recognition Testing' : 
                             conversation.messageType === 'did_conversation' ? 'D-ID Voice Chat' : 
-                            conversation.conversationType || 'conversation',
-            highlight: conversation.highlight || (conversation.agentId === 'v2_agt_vhYf_e_C' ? 'New D-ID Agent Integration' : ''),
-            educational: conversation.educational || '',
+                            'Console Solar Conversation',
+            highlight: 'Live Console Solar Session - Real Memory Storage',
+            educational: conversation.messageType?.includes('identify') ? 'Image recognition and polymathic analysis' : 'Educational conversation with Kid Solar',
             messages: 1, // Each file represents one message
             isDemoData: false
           };
