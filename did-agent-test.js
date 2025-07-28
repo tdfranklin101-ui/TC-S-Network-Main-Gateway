@@ -16,8 +16,8 @@ const indexContent = fs.readFileSync('public/index.html', 'utf8');
 
 const checks = [
   { name: 'D-ID Script CDN', test: indexContent.includes('https://agent.d-id.com/v2/index.js') },
-  { name: 'Agent ID v2_agt_lmJp1s6K', test: indexContent.includes('data-agent-id="v2_agt_lmJp1s6K"') },
-  { name: 'Client Key Present', test: indexContent.includes('data-client-key="Z29vZ2xlLW9hdXRoMnwxMDcyNjAyNzY5Njc4NTMyMjY1MjM6NEt2UC1nU1hRZmFDUTJvcUZKdzY2"') },
+  { name: 'Agent ID v2_agt_vhYf_e_C', test: indexContent.includes('data-agent-id="v2_agt_vhYf_e_C"') },
+  { name: 'Client Key Present', test: indexContent.includes('data-client-key="YXV0aDB8Njg3NjgyNDI2M2Q2ODI4MmIwOWFiYmUzOlR2cUplanVzeWc1cjlKV2ZNV0NKaQ=="') },
   { name: 'Mode Fabio', test: indexContent.includes('data-mode="fabio"') },
   { name: 'Monitor Enabled', test: indexContent.includes('data-monitor="true"') },
   { name: 'Horizontal Orientation', test: indexContent.includes('data-orientation="horizontal"') },
@@ -52,8 +52,8 @@ setTimeout(async () => {
         res.on('data', (chunk) => data += chunk);
         res.on('end', () => {
           const hasAgent = data.includes('agent.d-id.com/v2/index.js');
-          const hasAgentId = data.includes('v2_agt_lmJp1s6K');
-          const hasClientKey = data.includes('Z29vZ2xlLW9hdXRoMnwxMDcyNjAyNzY5Njc4NTMyMjY1MjM6NEt2UC1nU1hRZmFDUTJvcUZKdzY2');
+          const hasAgentId = data.includes('v2_agt_vhYf_e_C');
+          const hasClientKey = data.includes('YXV0aDB8Njg3NjgyNDI2M2Q2ODI4MmIwOWFiYmUzOlR2cUplanVzeWc1cjlKV2ZNV0NKaQ==');
           resolve({ 
             success: res.statusCode === 200, 
             hasAgent,
