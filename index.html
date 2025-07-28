@@ -542,13 +542,13 @@
     });
   </script>
 
-  <!-- D-ID AI Agent - Re-embedded for fresh session -->
+  <!-- D-ID AI Agent - NEW INTEGRATION for Voice & Animation Restoration -->
   <script type="module"
         src="https://agent.d-id.com/v2/index.js"
         data-mode="fabio"
-        data-client-key="Z29vZ2xlLW9hdXRoMnwxMDcyNjAyNzY5Njc4NTMyMjY1MjM6NEt2UC1nU1hRZmFDUTJvcUZKdzY2"
-        data-agent-id="v2_agt_lmJp1s6K"
-        data-name="did-agent-refreshed"
+        data-client-key="PASTE_NEW_CLIENT_KEY_HERE"
+        data-agent-id="PASTE_NEW_AGENT_ID_HERE"
+        data-name="kid-solar-agent-v2"
         data-monitor="true"
         data-orientation="horizontal"
         data-position="right">
@@ -877,9 +877,46 @@
     setTimeout(addNativeMultimodalButton, 4000);
     setTimeout(addNativeMultimodalButton, 6000);
     
+    // Enhanced D-ID conversation capture for analytics
+    function logToMemorySystem(messageType, messageText, hasImages = false) {
+      const sessionData = {
+        sessionId: 'session-' + Date.now(),
+        timestamp: new Date().toISOString(),
+        messageType: messageType,
+        messageText: messageText,
+        retentionFirst: true,
+        hasImages: hasImages
+      };
+      
+      fetch('/api/session/message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sessionData)
+      }).then(response => {
+        if (response.ok) {
+          console.log('✅ D-ID conversation logged to memory system');
+        }
+      }).catch(error => {
+        console.error('❌ Failed to log D-ID conversation:', error);
+      });
+    }
+    
+    // Monitor D-ID agent for conversation capture
+    function monitorDidAgent() {
+      // Listen for D-ID events if available
+      if (typeof window.postMessage === 'function') {
+        window.addEventListener('message', (event) => {
+          if (event.data && event.data.type === 'did-agent-message') {
+            logToMemorySystem('did_conversation', event.data.message);
+          }
+        });
+      }
+    }
+    
     // Also watch for new elements being added (D-ID agent might load later)
     const observer = new MutationObserver(() => {
       addNativeMultimodalButton();
+      monitorDidAgent();
     });
     observer.observe(document.body, { childList: true, subtree: true });
     
