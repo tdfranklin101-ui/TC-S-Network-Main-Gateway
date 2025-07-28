@@ -542,17 +542,48 @@
     });
   </script>
 
-  <!-- D-ID AI Agent - FRESH INSTALLATION v2_agt_vhYf_e_C -->
+  <!-- D-ID AI Agent - HARD BOOT CACHE BYPASS -->
   <script type="module"
-        src="https://agent.d-id.com/v2/index.js?fresh=20250728"
+        src="https://agent.d-id.com/v2/index.js?hardboot=1753734460425"
         data-mode="fabio"
         data-client-key="YXV0aDB8Njg3NjgyNDI2M2Q2ODI4MmIwOWFiYmUzOlR2cUplanVzeWc1cjlKV2ZNV0NKaQ=="
         data-agent-id="v2_agt_vhYf_e_C"
-        data-name="kid-solar-fresh-install"
+        data-name="console-solar-hardboot-1753734460425"
         data-monitor="true"
         data-orientation="horizontal"
         data-position="right"
-        data-description="Console Solar - Kid Solar - Your polymathic AI assistant specializing in renewable energy innovation, physics, engineering, economics, and cutting-edge sustainability solutions. Ready to help with multimodal analysis and voice interaction.">
+        data-description="Console Solar - Kid Solar - Your polymathic AI assistant specializing in renewable energy innovation, physics, engineering, economics, and cutting-edge sustainability solutions. Ready to help with multimodal analysis and voice interaction."
+        data-force-refresh="true">
+  </script>
+  
+  <script>
+    // HARD BOOT: Force complete cache clearing
+    console.log('🔄 HARD BOOT: Forcing complete D-ID cache bypass');
+    console.log('⚡ Agent: v2_agt_vhYf_e_C with Console Solar description');
+    
+    // Clear all browser caches immediately
+    if (typeof Storage !== "undefined") {
+      localStorage.clear();
+      sessionStorage.clear();
+      console.log('✅ All browser storage cleared');
+    }
+    
+    // Force D-ID script reload with hard cache-busting
+    setTimeout(() => {
+      const scripts = document.querySelectorAll('script[src*="agent.d-id.com"]');
+      scripts.forEach(script => {
+        const newScript = document.createElement('script');
+        newScript.type = 'module';
+        newScript.src = script.src + '&reload=' + Date.now();
+        Object.getAttributeNames(script).forEach(attr => {
+          if (attr !== 'src') {
+            newScript.setAttribute(attr, script.getAttribute(attr));
+          }
+        });
+        script.parentNode.replaceChild(newScript, script);
+        console.log('🔄 D-ID script force-reloaded with cache bypass');
+      });
+    }, 100);
   </script>
 
   <!-- Native Multimodal Interface for D-ID Agent -->

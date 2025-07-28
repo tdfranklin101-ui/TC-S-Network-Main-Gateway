@@ -1,4 +1,0 @@
-run = "node health.cjs"
-
-[nix]
-channel = "stable-23_11"
