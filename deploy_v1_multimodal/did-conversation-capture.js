@@ -64,7 +64,9 @@ class DidConversationCapture {
       // Listen for Enter key or form submission
       input.addEventListener('keypress', (e) => {
         if (e.key === 'Enter' && input.value.trim()) {
-          this.captureUserInput(input.value.trim());
+          const userInput = input.value.trim();
+          console.log('🎯 User input detected via Enter key:', userInput);
+          this.captureUserInput(userInput);
         }
       });
       
@@ -72,6 +74,15 @@ class DidConversationCapture {
       input.addEventListener('input', (e) => {
         if (e.target.value.trim()) {
           this.lastUserInput = e.target.value.trim();
+        }
+      });
+      
+      // Also listen for blur events (when user clicks away) 
+      input.addEventListener('blur', (e) => {
+        if (e.target.value.trim() && e.target.value.trim() !== this.lastUserInput) {
+          const userInput = e.target.value.trim();
+          console.log('🎯 User input detected via blur event:', userInput);
+          this.captureUserInput(userInput);
         }
       });
     });
@@ -142,21 +153,51 @@ class DidConversationCapture {
   }
   
   isLikelyAgentResponse(text) {
-    // Heuristics to identify Console Solar responses
-    const agentKeywords = [
-      'solar', 'energy', 'renewable', 'sustainability', 'photovoltaic',
-      'Hi there', 'Hello', 'I\'m Console Solar', 'Kid Solar', 'TC-S',
-      'current-see', 'polymathic', 'assistant', 'efficiency'
+    // Enhanced heuristics based on REAL Console Solar conversation patterns
+    const consoleKeywords = [
+      'Hello Human', 'The SUN!', 'Diamond Polymath', 'Kid Solar', 'Console Solar',
+      'fantastic voyage', 'Rockin it this way', 'candy apple shimmer',
+      'capture the essence', 'rhythmic rap', 'blending wisdom',
+      'symphony of words', 'lyrical magic', 'brainstorm',
+      'memory system active', 'Session:', 'polymath', 'conversations in our rap'
     ];
     
-    const hasKeywords = agentKeywords.some(keyword => 
+    const energyKeywords = [
+      'solar', 'energy', 'renewable', 'sustainability', 'photovoltaic',
+      'current-see', 'assistant', 'efficiency', 'polymathic'
+    ];
+    
+    const greetingPatterns = [
+      'Hello', 'Hi there', 'What\'s up', 'Hey', 'Greetings'
+    ];
+    
+    // Check for Console Solar specific patterns
+    const hasConsolePattern = consoleKeywords.some(keyword => 
       text.toLowerCase().includes(keyword.toLowerCase())
     );
     
-    const hasProperLength = text.length > 30 && text.length < 2000;
-    const hasProperStructure = text.includes(' ') && !text.includes('\n\n\n');
+    // Check for energy-related content
+    const hasEnergyContent = energyKeywords.some(keyword => 
+      text.toLowerCase().includes(keyword.toLowerCase())
+    );
     
-    return hasKeywords && hasProperLength && hasProperStructure;
+    // Check for greeting patterns
+    const hasGreeting = greetingPatterns.some(pattern => 
+      text.toLowerCase().includes(pattern.toLowerCase())
+    );
+    
+    // Console Solar often uses creative, enthusiastic language
+    const hasCreativeStyle = /[!]{1,3}/.test(text) || 
+                            text.includes('fantastic') || 
+                            text.includes('amazing') ||
+                            text.includes('brilliant');
+    
+    const hasProperLength = text.length > 20 && text.length < 3000;
+    const hasProperStructure = text.includes(' ');
+    
+    // Must have Console-specific patterns OR (energy content + greeting/creative style)
+    return hasProperLength && hasProperStructure && 
+           (hasConsolePattern || (hasEnergyContent && (hasGreeting || hasCreativeStyle)));
   }
   
   listenForDidMessages() {
@@ -195,14 +236,34 @@ class DidConversationCapture {
   captureAgentResponse(response) {
     if (response && response !== this.lastAgentResponse && response.length > 20) {
       this.lastAgentResponse = response;
-      console.log('🤖 Console Solar response captured:', response.substring(0, 100) + '...');
       
-      // Store the response
-      this.storeConversation('agent', response);
+      // Enhanced logging for Console Solar responses
+      const responsePreview = response.substring(0, 150) + (response.length > 150 ? '...' : '');
+      console.log('🤖 Console Solar response captured:', responsePreview);
       
-      // Create conversation pair if we have both user input and agent response
-      if (this.lastUserInput) {
-        this.createConversationPair(this.lastUserInput, response);
+      // Check if this looks like a real Console Solar response
+      if (this.isLikelyAgentResponse(response)) {
+        console.log('✅ Verified as authentic Console Solar response');
+        
+        // Store with enhanced metadata
+        this.storeConversation('agent', response, {
+          responseType: 'authentic_console_solar',
+          detectionMethod: 'pattern_matched',
+          confidence: 'high'
+        });
+        
+        // Create conversation pair if we have both user input and agent response
+        if (this.lastUserInput) {
+          this.createConversationPair(this.lastUserInput, response);
+        }
+      } else {
+        console.log('⚠️ Response captured but low confidence for Console Solar pattern');
+        // Still store but mark as uncertain
+        this.storeConversation('agent', response, {
+          responseType: 'possible_console_solar',
+          detectionMethod: 'length_based',
+          confidence: 'medium'
+        });
       }
     }
   }
@@ -246,7 +307,7 @@ class DidConversationCapture {
     });
   }
   
-  storeConversation(type, text) {
+  storeConversation(type, text, metadata = {}) {
     const conversation = {
       id: `${type}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       sessionId: this.sessionId,
@@ -255,7 +316,8 @@ class DidConversationCapture {
       messageType: type === 'user' ? 'user_input' : 'agent_response',
       messageText: text,
       captureSource: 'did_agent_conversation',
-      captureProof: 'real_session_interaction'
+      captureProof: 'real_session_interaction',
+      ...metadata // Include additional metadata like confidence, detection method
     };
     
     this.sendToServer(conversation);
