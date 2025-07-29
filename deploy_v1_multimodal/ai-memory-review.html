@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AI Agent Memory Storage - Kid Solar Conversations</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <style>
     * {
       margin: 0;
@@ -446,10 +449,12 @@
     async function loadMemoryData() {
       try {
         // First, try to load real conversation data
-        const response = await fetch('/api/kid-solar-memory/all', {
+        const response = await fetch(`/api/kid-solar-memory/all?t=${Date.now()}`, {
           cache: 'no-cache',
           headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate'
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
           }
         });
         
@@ -474,11 +479,12 @@
             
             filteredData = [...memoryData];
             
-            // Remove demo data notice and show real data
+            // Remove demo data notice and show real data with timestamp
             const demoNotices = document.querySelectorAll('.privacy-notice');
+            const loadTime = new Date().toLocaleString();
             demoNotices.forEach(notice => {
-              if (notice.innerHTML.includes('demonstration data')) {
-                notice.innerHTML = `<strong>✅ Live Data:</strong> Showing ${memoryData.length} real Console Solar conversations. Data updates in real-time from conversation capture system.`;
+              if (notice.innerHTML.includes('demonstration data') || notice.innerHTML.includes('Live Data') || notice.innerHTML.includes('randomized')) {
+                notice.innerHTML = `<strong>🟢 LIVE DATA LOADED:</strong> Showing ${memoryData.length} real Console Solar conversations from API. Last updated: ${loadTime}. Cache-busted for fresh data.`;
                 notice.style.background = 'rgba(34, 197, 94, 0.1)';
                 notice.style.borderColor = 'rgba(34, 197, 94, 0.3)';
                 notice.style.color = '#166534';
