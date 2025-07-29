@@ -1722,12 +1722,44 @@
             },
             body: JSON.stringify(conversationData)
           })
-          .then(response => response.json())
+          .then(response => {
+            console.log('📡 API Response Status:', response.status);
+            return response.json();
+          })
           .then(data => {
-            console.log(`✅ Test ${conv.messageType} stored:`, data.conversationId);
+            console.log(`✅ Test ${conv.messageType} stored:`, data.conversationId || data);
             
             if (index === testConversations.length - 1) {
               console.log('🎯 Test complete - both user and agent messages stored');
+              console.log('📝 Visit /analytics to view stored conversations');
+              
+              // Show completion notification
+              const notification = document.createElement('div');
+              notification.style.cssText = `
+                position: fixed;
+                top: 200px;
+                right: 20px;
+                background: linear-gradient(45deg, #22c55e, #16a34a);
+                color: white;
+                padding: 15px 20px;
+                border-radius: 10px;
+                z-index: 10001;
+                font-size: 14px;
+                box-shadow: 0 4px 15px rgba(34,197,94,0.3);
+              `;
+              notification.innerHTML = `
+                <div style="font-weight: bold;">✅ Test Complete!</div>
+                <div style="font-size: 12px; margin-top: 5px;">4 conversations stored</div>
+                <div style="font-size: 12px;">Visit /analytics to view</div>
+              `;
+              
+              document.body.appendChild(notification);
+              
+              setTimeout(() => {
+                if (notification.parentNode) {
+                  notification.remove();
+                }
+              }, 8000);
               
               // Force memory page refresh if open
               setTimeout(() => {
@@ -1740,6 +1772,7 @@
           })
           .catch(error => {
             console.error('❌ Test storage failed:', error);
+            console.error('❌ Error details:', error.message);
           });
           
         }, index * 1000);

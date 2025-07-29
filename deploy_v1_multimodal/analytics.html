@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Storage - Console Solar Conversations</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin: 0;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .stats-bar {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+            color: white;
+        }
+        
+        .stat {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        .conversations-grid {
+            display: grid;
+            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        }
+        
+        .conversation-card {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.2s ease;
+        }
+        
+        .conversation-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .conversation-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .conversation-type {
+            font-weight: bold;
+            color: #4a5568;
+            font-size: 1.1rem;
+        }
+        
+        .conversation-time {
+            font-size: 0.85rem;
+            color: #718096;
+        }
+        
+        .conversation-preview {
+            color: #2d3748;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            max-height: 100px;
+            overflow: hidden;
+        }
+        
+        .conversation-meta {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .meta-badge {
+            background: #e2e8f0;
+            color: #4a5568;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .meta-badge.agent {
+            background: #fed7d7;
+            color: #c53030;
+        }
+        
+        .meta-badge.user {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+        
+        .meta-badge.test {
+            background: #feebc8;
+            color: #c05621;
+        }
+        
+        .conversation-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: background-color 0.2s ease;
+        }
+        
+        .btn-view {
+            background: #4299e1;
+            color: white;
+        }
+        
+        .btn-view:hover {
+            background: #3182ce;
+        }
+        
+        .loading {
+            text-align: center;
+            color: white;
+            font-size: 1.2rem;
+            margin: 50px 0;
+        }
+        
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .refresh-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid rgba(255,255,255,0.3);
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin: 20px auto;
+            display: block;
+            transition: all 0.2s ease;
+        }
+        
+        .refresh-btn:hover {
+            background: rgba(255,255,255,0.3);
+            border-color: rgba(255,255,255,0.5);
+        }
+        
+        @media (max-width: 768px) {
+            .stats-bar {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .conversations-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧠 Memory Storage</h1>
+            <p>Console Solar Conversation Archive - Real-Time Data</p>
+        </div>
+        
+        <div class="stats-bar" id="statsBar">
+            <div class="stat">
+                <div class="stat-number" id="totalCount">-</div>
+                <div class="stat-label">Total Conversations</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number" id="realCount">-</div>
+                <div class="stat-label">Real Sessions</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number" id="testCount">-</div>
+                <div class="stat-label">Test Demonstrations</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number" id="agentVersion">v2_agt_vhYf_e_C</div>
+                <div class="stat-label">Console Solar Agent</div>
+            </div>
+        </div>
+        
+        <button class="refresh-btn" onclick="loadConversations()">🔄 Refresh Memory Data</button>
+        
+        <div id="loadingState" class="loading">
+            <div class="loading-spinner"></div>
+            Loading Console Solar conversations...
+        </div>
+        
+        <div id="errorState" class="error" style="display: none;">
+            <h3>⚠️ Memory System Error</h3>
+            <p>Unable to load conversation data. Click refresh to try again.</p>
+        </div>
+        
+        <div id="conversationsGrid" class="conversations-grid"></div>
+    </div>
+
+    <script>
+        console.log('🧠 Memory Storage page loaded - fetching real conversation data...');
+        
+        let conversations = [];
+        
+        async function loadConversations() {
+            console.log('📡 Loading conversations from memory API...');
+            
+            const loadingState = document.getElementById('loadingState');
+            const errorState = document.getElementById('errorState');
+            const conversationsGrid = document.getElementById('conversationsGrid');
+            
+            loadingState.style.display = 'block';
+            errorState.style.display = 'none';
+            conversationsGrid.innerHTML = '';
+            
+            try {
+                const response = await fetch('/api/kid-solar-memory/all', {
+                    cache: 'no-cache',
+                    headers: {
+                        'Cache-Control': 'no-cache, no-store, must-revalidate'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('✅ Memory data loaded:', data);
+                
+                conversations = data.conversations || [];
+                
+                // Update stats
+                updateStats(data);
+                
+                // Render conversations
+                renderConversations();
+                
+                loadingState.style.display = 'none';
+                
+            } catch (error) {
+                console.error('❌ Failed to load conversations:', error);
+                loadingState.style.display = 'none';
+                errorState.style.display = 'block';
+                errorState.innerHTML = `
+                    <h3>⚠️ Memory System Error</h3>
+                    <p>Unable to load conversation data: ${error.message}</p>
+                    <p>Check console for details.</p>
+                `;
+            }
+        }
+        
+        function updateStats(data) {
+            document.getElementById('totalCount').textContent = data.totalConversations || 0;
+            document.getElementById('realCount').textContent = data.realConversations || 0;
+            document.getElementById('testCount').textContent = data.testConversations || 0;
+            
+            // Update agent version if provided
+            if (data.agentVersion) {
+                document.getElementById('agentVersion').textContent = data.agentVersion;
+            }
+        }
+        
+        function renderConversations() {
+            const grid = document.getElementById('conversationsGrid');
+            
+            if (conversations.length === 0) {
+                grid.innerHTML = `
+                    <div class="conversation-card">
+                        <div class="conversation-header">
+                            <div class="conversation-type">No Conversations Found</div>
+                        </div>
+                        <div class="conversation-preview">
+                            Click the "🧪 Test D-ID Capture" button on the homepage to create sample conversations.
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            grid.innerHTML = conversations.map(conv => `
+                <div class="conversation-card">
+                    <div class="conversation-header">
+                        <div class="conversation-type">${conv.conversationType || 'Console Solar Session'}</div>
+                        <div class="conversation-time">${formatTime(conv.timestamp)}</div>
+                    </div>
+                    
+                    <div class="conversation-preview">
+                        ${conv.preview || conv.messageText || 'No preview available'}
+                    </div>
+                    
+                    <div class="conversation-meta">
+                        <span class="meta-badge ${getMessageTypeBadgeClass(conv.messageType)}">
+                            ${formatMessageType(conv.messageType)}
+                        </span>
+                        ${conv.captureProof === 'inline_test_demonstration' ? 
+                            '<span class="meta-badge test">Test Demonstration</span>' : 
+                            '<span class="meta-badge">Real Session</span>'
+                        }
+                        ${conv.hasImages ? '<span class="meta-badge">📷 Images</span>' : ''}
+                    </div>
+                    
+                    <div class="conversation-actions">
+                        <button class="btn btn-view" onclick="viewConversation('${conv.id}')">
+                            View Details
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function getMessageTypeBadgeClass(messageType) {
+            if (messageType?.includes('agent') || messageType?.includes('did')) return 'agent';
+            if (messageType?.includes('user')) return 'user';
+            return '';
+        }
+        
+        function formatMessageType(messageType) {
+            const typeMap = {
+                'user_input': 'User Message',
+                'did_agent_response': 'Console Solar Response',
+                'did_conversation': 'D-ID Voice Chat',
+                'photo_analysis': 'Photo Analysis',
+                'identify_anything_analysis': 'Image Recognition',
+                'system_status': 'System Status'
+            };
+            return typeMap[messageType] || messageType || 'Conversation';
+        }
+        
+        function formatTime(timestamp) {
+            if (!timestamp) return 'Unknown time';
+            
+            try {
+                const date = new Date(timestamp);
+                return date.toLocaleString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } catch (e) {
+                return 'Invalid date';
+            }
+        }
+        
+        function viewConversation(id) {
+            const conv = conversations.find(c => c.id === id);
+            if (!conv) return;
+            
+            alert(`Conversation Details:\n\nType: ${conv.conversationType}\nMessage: ${conv.fullConversation || conv.messageText}\nSession: ${conv.sessionId}\nTimestamp: ${conv.timestamp}`);
+        }
+        
+        // Auto-refresh every 30 seconds
+        setInterval(loadConversations, 30000);
+        
+        // Load conversations when page loads
+        document.addEventListener('DOMContentLoaded', loadConversations);
+        
+        console.log('🎯 Memory Storage system initialized - real data only');
+    </script>
+</body>
+</html>
