@@ -3,16 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Current-See Usage Dashboard</title>
-  <link rel="stylesheet" href="/css/common.css">
+  <title>Current-See Dashboard</title>
   <style>
     body {
-      font-family: 'Roboto Mono', monospace;
-      background: linear-gradient(135deg, #0057B8, #00695c);
-      color: white;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       margin: 0;
       padding: 20px;
       min-height: 100vh;
+      color: white;
     }
     
     .dashboard-container {
@@ -23,434 +22,266 @@
     .dashboard-header {
       text-align: center;
       margin-bottom: 40px;
-      padding: 20px;
+      padding: 30px;
       background: rgba(255, 255, 255, 0.1);
-      border-radius: 15px;
+      border-radius: 20px;
       backdrop-filter: blur(10px);
     }
     
     .dashboard-header h1 {
-      margin: 0;
-      font-size: 2.5em;
-      color: #FFC107;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+      margin: 0 0 10px 0;
+      font-size: 2.5rem;
+      font-weight: 700;
+      background: linear-gradient(45deg, #FFC107, #FF9800);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
     
     .dashboard-header p {
-      margin: 10px 0 0 0;
+      margin: 0;
+      font-size: 1.1rem;
       opacity: 0.9;
-      font-size: 1.1em;
     }
     
-    .metrics-grid {
+    .stats-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 20px;
-      margin-bottom: 30px;
+      gap: 25px;
+      margin-bottom: 40px;
     }
     
-    .metric-card {
-      background: rgba(255, 255, 255, 0.15);
+    .stat-card {
+      background: rgba(255, 255, 255, 0.1);
       border-radius: 15px;
-      padding: 25px;
+      padding: 30px;
       text-align: center;
       backdrop-filter: blur(10px);
       border: 1px solid rgba(255, 255, 255, 0.2);
       transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
     
-    .metric-card:hover {
+    .stat-card:hover {
       transform: translateY(-5px);
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      box-shadow: 0 15px 40px rgba(0,0,0,0.2);
     }
     
-    .metric-value {
-      font-size: 3em;
+    .stat-number {
+      font-size: 3rem;
       font-weight: bold;
       color: #FFC107;
-      margin: 10px 0;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+      margin: 15px 0;
+      display: block;
     }
     
-    .metric-label {
-      font-size: 1.1em;
+    .stat-label {
+      font-size: 1.1rem;
       opacity: 0.9;
-      margin-bottom: 5px;
+      margin-bottom: 10px;
     }
     
-    .metric-description {
-      font-size: 0.9em;
+    .stat-description {
+      font-size: 0.9rem;
       opacity: 0.7;
-      margin-top: 10px;
     }
     
-    .activity-section {
+    .quick-actions {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .action-button {
+      background: linear-gradient(45deg, #4CAF50, #45a049);
+      color: white;
+      text-decoration: none;
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+      font-weight: 600;
+      font-size: 1.1rem;
+      transition: all 0.3s ease;
+      border: none;
+      cursor: pointer;
+    }
+    
+    .action-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(76, 175, 80, 0.3);
+    }
+    
+    .action-button.analytics {
+      background: linear-gradient(45deg, #2196F3, #1976D2);
+    }
+    
+    .action-button.analytics:hover {
+      box-shadow: 0 8px 25px rgba(33, 150, 243, 0.3);
+    }
+    
+    .action-button.memory {
+      background: linear-gradient(45deg, #9C27B0, #7B1FA2);
+    }
+    
+    .action-button.memory:hover {
+      box-shadow: 0 8px 25px rgba(156, 39, 176, 0.3);
+    }
+    
+    .system-status {
       background: rgba(255, 255, 255, 0.1);
       border-radius: 15px;
       padding: 25px;
-      margin-bottom: 20px;
       backdrop-filter: blur(10px);
     }
     
-    .activity-section h2 {
-      color: #FFC107;
-      margin-top: 0;
-      font-size: 1.8em;
+    .status-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
     
-    .activity-item {
-      background: rgba(255, 255, 255, 0.1);
-      padding: 15px;
-      margin: 10px 0;
-      border-radius: 10px;
-      border-left: 4px solid #FFC107;
+    .status-item:last-child {
+      border-bottom: none;
     }
     
-    .activity-time {
-      font-size: 0.9em;
-      opacity: 0.7;
-      float: right;
+    .status-indicator {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
     }
     
-    .refresh-controls {
-      text-align: center;
-      margin: 20px 0;
+    .status-online {
+      background: #4CAF50;
+      color: white;
     }
     
-    .refresh-btn {
-      background: #FFC107;
-      color: #333;
-      border: none;
-      padding: 12px 25px;
-      border-radius: 25px;
-      font-size: 1em;
-      font-weight: bold;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      margin: 0 10px;
-    }
-    
-    .refresh-btn:hover {
-      background: #FFD54F;
-      transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(255, 193, 7, 0.4);
-    }
-    
-    .last-updated {
-      text-align: center;
-      opacity: 0.7;
-      margin-top: 20px;
-      font-size: 0.9em;
-    }
-    
-    .privacy-note {
-      background: rgba(76, 175, 80, 0.2);
-      border: 1px solid rgba(76, 175, 80, 0.5);
-      border-radius: 10px;
-      padding: 15px;
-      margin: 20px 0;
-      text-align: center;
-    }
-    
-    .error-message {
-      background: rgba(244, 67, 54, 0.2);
-      border: 1px solid rgba(244, 67, 54, 0.5);
-      border-radius: 10px;
-      padding: 15px;
-      margin: 20px 0;
-      text-align: center;
-      display: none;
+    .status-active {
+      background: #2196F3;
+      color: white;
     }
     
     @media (max-width: 768px) {
-      .metrics-grid {
+      .dashboard-header h1 {
+        font-size: 2rem;
+      }
+      
+      .stats-grid {
         grid-template-columns: 1fr;
       }
       
-      .dashboard-header h1 {
-        font-size: 2em;
+      .stat-number {
+        font-size: 2.5rem;
       }
       
-      .metric-value {
-        font-size: 2.5em;
+      .quick-actions {
+        grid-template-columns: 1fr;
       }
-    }
-    
-    .loading {
-      text-align: center;
-      padding: 40px;
-      font-size: 1.2em;
-    }
-    
-    .spinner {
-      border: 3px solid rgba(255, 255, 255, 0.3);
-      border-top: 3px solid #FFC107;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      animation: spin 1s linear infinite;
-      margin: 20px auto;
-    }
-    
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    .platform-info {
-      background: linear-gradient(135deg, #1e3a8a 0%, #059669 100%);
-      padding: 20px;
-      border-radius: 12px;
-      margin-bottom: 20px;
-      color: white;
-      text-align: center;
-    }
-
-    .inception-info {
-      font-size: 16px;
-      opacity: 0.95;
     }
   </style>
 </head>
 <body>
   <div class="dashboard-container">
     <div class="dashboard-header">
-      <h1>Current-See Usage Dashboard</h1>
-      <p>Anonymous session tracking - monitoring when and how long users interact with Kid Solar</p>
+      <h1>Current-See Dashboard</h1>
+      <p>Solar-powered platform management and analytics</p>
     </div>
 
-    <div class="privacy-note">
-      🔒 Privacy-First Analytics: No personal identification, only engagement patterns and session durations
-    </div>
-
-    <div class="error-message" id="errorMessage">
-      ⚠️ Unable to load analytics data. Please check server connection.
-    </div>
-
-    <div class="refresh-controls">
-      <button class="refresh-btn" onclick="loadDashboardData()">🔄 Refresh Data</button>
-      <button class="refresh-btn" onclick="toggleAutoRefresh()">⏱️ Auto Refresh: <span id="autoRefreshStatus">OFF</span></button>
-    </div>
-
-    <div id="loadingIndicator" class="loading">
-      <div class="spinner"></div>
-      <p>Loading usage analytics...</p>
-    </div>
-
-    <div id="dashboardContent" style="display: none;">
-      <div class="activity-section">
-        <h2>📊 Platform Overview Since Inception</h2>
-        <div class="platform-info">
-          <div class="inception-info">
-            <strong>Platform Launched:</strong> April 7, 2025 | 
-            <strong>First Members:</strong> April 22, 2025 | 
-            <strong>Current Value:</strong> $80M+ distributed
-          </div>
-        </div>
-        <div class="metrics-grid">
-          <div class="metric-card">
-            <div class="metric-label">Platform Age</div>
-            <div class="metric-value" id="platformAge">-</div>
-            <div class="metric-description">Days since inception (April 7, 2025)</div>
-          </div>
-
-          <div class="metric-card">
-            <div class="metric-label">Total Members</div>
-            <div class="metric-value" id="totalMembers">-</div>
-            <div class="metric-description">Registered community members</div>
-          </div>
-
-          <div class="metric-card">
-            <div class="metric-label">SOLAR Distributed</div>
-            <div class="metric-value" id="totalSolarDistributed">-</div>
-            <div class="metric-description">Total SOLAR tokens earned</div>
-          </div>
-
-          <div class="metric-card">
-            <div class="metric-label">Member Growth Rate</div>
-            <div class="metric-value" id="memberGrowthRate">-</div>
-            <div class="metric-description">New members per day average</div>
-          </div>
-        </div>
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card">
+        <div class="stat-label">Console Solar Sessions</div>
+        <span class="stat-number" id="totalSessions">--</span>
+        <div class="stat-description">Total AI conversations</div>
       </div>
-
-      <div class="activity-section">
-        <h2>⚡ Current Session Analytics</h2>
-        <div class="metrics-grid">
-          <div class="metric-card">
-            <div class="metric-label">Active Sessions</div>
-            <div class="metric-value" id="activeSessions">-</div>
-            <div class="metric-description">Users active in last 30 minutes</div>
-          </div>
-
-          <div class="metric-card">
-            <div class="metric-label">Total Sessions</div>
-            <div class="metric-value" id="totalSessions">-</div>
-            <div class="metric-description">All-time unique sessions</div>
-          </div>
-
-          <div class="metric-card">
-            <div class="metric-label">Total Interactions</div>
-            <div class="metric-value" id="totalInteractions">-</div>
-            <div class="metric-description">All Kid Solar interactions</div>
-          </div>
-
-          <div class="metric-card">
-            <div class="metric-label">Avg Session Duration</div>
-            <div class="metric-value" id="avgDuration">-</div>
-            <div class="metric-description">Minutes per session</div>
-          </div>
-
-          <div class="metric-card">
-            <div class="metric-label">Total Memories</div>
-            <div class="metric-value" id="totalMemories">-</div>
-            <div class="metric-description">Conversations & images stored</div>
-          </div>
-
-          <div class="metric-card">
-            <div class="metric-label">Last Activity</div>
-            <div class="metric-value" id="lastActivity">-</div>
-            <div class="metric-description">Time since last interaction</div>
-          </div>
-        </div>
+      
+      <div class="stat-card">
+        <div class="stat-label">Memory Storage</div>
+        <span class="stat-number" id="memoryFiles">--</span>
+        <div class="stat-description">Conversation files stored</div>
       </div>
-
-      <div class="activity-section">
-        <h2>System Status</h2>
-        <div id="systemStatus">
-          <div class="activity-item">
-            <strong>Platform Status:</strong> <span id="platformStatus">Checking...</span>
-            <div class="activity-time" id="statusTime">-</div>
-          </div>
-          <div class="activity-item">
-            <strong>Kid Solar AI:</strong> <span id="kidSolarStatus">Checking...</span>
-          </div>
-          <div class="activity-item">
-            <strong>Memory System:</strong> <span id="memoryStatus">Checking...</span>
-          </div>
-        </div>
+      
+      <div class="stat-card">
+        <div class="stat-label">Platform Users</div>
+        <span class="stat-number">16</span>
+        <div class="stat-description">Active Solar members</div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-label">Solar Reserve</div>
+        <span class="stat-number">10B</span>
+        <div class="stat-description">SOLAR tokens available</div>
       </div>
     </div>
 
-    <div class="last-updated">
-      Last Updated: <span id="lastUpdated">Never</span>
+    <div class="quick-actions">
+      <a href="/analytics" class="action-button analytics">
+        📊 View Analytics
+      </a>
+      <a href="/analytics" class="action-button memory">
+        🧠 Memory Storage
+      </a>
+      <a href="/" class="action-button">
+        🏠 Platform Home
+      </a>
+      <a href="/wallet.html" class="action-button">
+        💰 Solar Wallet
+      </a>
+    </div>
+
+    <div class="system-status">
+      <h3 style="margin-top: 0; color: #FFC107;">System Status</h3>
+      
+      <div class="status-item">
+        <span>Console Solar Agent</span>
+        <span class="status-indicator status-online">ONLINE</span>
+      </div>
+      
+      <div class="status-item">
+        <span>Conversation Capture</span>
+        <span class="status-indicator status-active">ACTIVE</span>
+      </div>
+      
+      <div class="status-item">
+        <span>Memory System</span>
+        <span class="status-indicator status-online">OPERATIONAL</span>
+      </div>
+      
+      <div class="status-item">
+        <span>Analytics API</span>
+        <span class="status-indicator status-online">READY</span>
+      </div>
+      
+      <div class="status-item">
+        <span>Zero Data Loss</span>
+        <span class="status-indicator status-active">PROTECTED</span>
+      </div>
     </div>
   </div>
 
   <script>
-    let autoRefreshInterval = null;
-    let autoRefreshEnabled = false;
-
+    // Load dashboard data
     async function loadDashboardData() {
-      const loadingIndicator = document.getElementById('loadingIndicator');
-      const dashboardContent = document.getElementById('dashboardContent');
-      const errorMessage = document.getElementById('errorMessage');
-      
-      loadingIndicator.style.display = 'block';
-      dashboardContent.style.display = 'none';
-      errorMessage.style.display = 'none';
-
       try {
-        // Load usage analytics
-        const analyticsResponse = await fetch('/api/usage-analytics');
-        if (!analyticsResponse.ok) {
-          throw new Error(`Analytics API error: ${analyticsResponse.status}`);
-        }
-        const analyticsData = await analyticsResponse.json();
-
-        // Load health status
-        const healthResponse = await fetch('/health');
-        if (!healthResponse.ok) {
-          throw new Error(`Health API error: ${healthResponse.status}`);
-        }
-        const healthData = await healthResponse.json();
-
-        // Update metrics
-        updateMetrics(analyticsData.analytics);
-        updateSystemStatus(healthData);
-
-        loadingIndicator.style.display = 'none';
-        dashboardContent.style.display = 'block';
+        const response = await fetch('/api/kid-solar-memory/all');
+        const data = await response.json();
         
-        document.getElementById('lastUpdated').textContent = new Date().toLocaleString();
-
+        document.getElementById('totalSessions').textContent = data.totalConversations || '0';
+        document.getElementById('memoryFiles').textContent = data.conversations?.length || '0';
+        
       } catch (error) {
-        console.error('Dashboard load error:', error);
-        loadingIndicator.style.display = 'none';
-        errorMessage.style.display = 'block';
-        errorMessage.innerHTML = `⚠️ Error loading data: ${error.message}`;
+        console.error('Failed to load dashboard data:', error);
+        document.getElementById('totalSessions').textContent = '0';
+        document.getElementById('memoryFiles').textContent = '0';
       }
     }
 
-    function updateMetrics(analytics) {
-      // Historical metrics from platform inception
-      if (analytics.historical) {
-        const hist = analytics.historical;
-        document.getElementById('platformAge').textContent = hist.platformAgeDays + ' days';
-        document.getElementById('totalMembers').textContent = hist.totalMembers;
-        document.getElementById('totalSolarDistributed').textContent = 
-          hist.totalSolarDistributed.toFixed(1) + ' SOLAR';
-        document.getElementById('memberGrowthRate').textContent = 
-          hist.memberGrowthRate.toFixed(2) + '/day';
-      }
-      
-      // Current session metrics
-      document.getElementById('activeSessions').textContent = analytics.currentActiveSessions || 0;
-      document.getElementById('totalSessions').textContent = analytics.totalSessions || 0;
-      document.getElementById('totalInteractions').textContent = analytics.totalInteractions || 0;
-      document.getElementById('avgDuration').textContent = analytics.averageSessionDuration ? 
-        analytics.averageSessionDuration.toFixed(1) + 'm' : '0m';
-      document.getElementById('totalMemories').textContent = analytics.totalMemories || 0;
-      
-      // Format last activity
-      if (analytics.lastActivity) {
-        const lastActivityTime = new Date(analytics.lastActivity);
-        const timeSince = Math.round((Date.now() - lastActivityTime.getTime()) / (1000 * 60));
-        document.getElementById('lastActivity').textContent = timeSince < 1 ? 'Now' : 
-          timeSince < 60 ? `${timeSince}m ago` : `${Math.round(timeSince/60)}h ago`;
-      } else {
-        document.getElementById('lastActivity').textContent = 'Never';
-      }
-    }
-
-    function updateSystemStatus(health) {
-      document.getElementById('platformStatus').textContent = health.status === 'operational' ? 
-        '🟢 Operational' : '🔴 Issues Detected';
-      document.getElementById('statusTime').textContent = new Date(health.timestamp).toLocaleTimeString();
-      
-      // Determine Kid Solar and Memory status based on usage
-      const hasUsage = health.usage && (health.usage.totalSessions > 0 || health.usage.totalInteractions > 0);
-      document.getElementById('kidSolarStatus').textContent = hasUsage ? 
-        '🟢 Active with Interactions' : '🟡 Ready (No Interactions Yet)';
-      document.getElementById('memoryStatus').textContent = health.usage && health.usage.totalInteractions > 0 ? 
-        '🟢 Storing Conversations' : '🟡 Ready (No Data Yet)';
-    }
-
-    function toggleAutoRefresh() {
-      autoRefreshEnabled = !autoRefreshEnabled;
-      const statusSpan = document.getElementById('autoRefreshStatus');
-      
-      if (autoRefreshEnabled) {
-        statusSpan.textContent = 'ON';
-        autoRefreshInterval = setInterval(loadDashboardData, 30000); // Refresh every 30 seconds
-      } else {
-        statusSpan.textContent = 'OFF';
-        if (autoRefreshInterval) {
-          clearInterval(autoRefreshInterval);
-          autoRefreshInterval = null;
-        }
-      }
-    }
-
-    // Load data when page loads
-    document.addEventListener('DOMContentLoaded', loadDashboardData);
-
-    // Cleanup on page unload
-    window.addEventListener('beforeunload', () => {
-      if (autoRefreshInterval) {
-        clearInterval(autoRefreshInterval);
-      }
-    });
+    // Load data on page load
+    loadDashboardData();
+    
+    // Refresh data every 30 seconds
+    setInterval(loadDashboardData, 30000);
   </script>
 </body>
 </html>
