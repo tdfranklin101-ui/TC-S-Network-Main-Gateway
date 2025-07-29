@@ -1630,5 +1630,35 @@
     // Make session ID available globally for other functions
     window.getKidSolarSessionId = getSessionId;
   </script>
+
+  <!-- D-ID Capture Test System -->
+  <script>
+    console.log('🎯 Loading D-ID capture test system...');
+    
+    // Load test system after page loads
+    setTimeout(() => {
+      const testScript = document.createElement('script');
+      testScript.src = '/test-did-capture.js';
+      testScript.onload = () => {
+        console.log('✅ D-ID capture test system loaded');
+        console.log('🧪 Look for test button in top-right corner');
+      };
+      testScript.onerror = () => {
+        console.log('⚠️ Test script loading failed - manual test mode');
+      };
+      document.head.appendChild(testScript);
+    }, 3000);
+    
+    // Also add capture system
+    setTimeout(() => {
+      const captureScript = document.createElement('script');
+      captureScript.src = '/did-text-capture.js';
+      captureScript.onload = () => {
+        console.log('✅ D-ID text capture monitoring active');
+      };
+      document.head.appendChild(captureScript);
+    }, 4000);
+  </script>
+
 </body>
 </html>

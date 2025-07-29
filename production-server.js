@@ -22,6 +22,16 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 // Serve static files from deploy folder
 app.use(express.static(path.join(__dirname, 'deploy_v1_multimodal')));
 
+// Serve D-ID text capture script
+app.get('/did-text-capture.js', (req, res) => {
+  res.sendFile(path.join(__dirname, 'did-text-capture.js'));
+});
+
+// Serve test capture script
+app.get('/test-did-capture.js', (req, res) => {
+  res.sendFile(path.join(__dirname, 'test-did-capture.js'));
+});
+
 // Memory status page
 app.get('/memory-status', (req, res) => {
   res.sendFile(path.join(__dirname, 'memory-status-display.html'));
