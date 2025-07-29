@@ -6,7 +6,9 @@ const app = express();
 const PORT = 3000;
 
 app.use(express.json());
-app.use(express.static('deploy_v1_multimodal'));
+
+// Define API routes BEFORE static files to ensure they take priority
+// This prevents static files from overriding our dynamic routes
 
 // API endpoint to get real conversation data
 app.get('/api/kid-solar-memory/all', (req, res) => {
@@ -139,6 +141,20 @@ app.get('/test-fresh-browser', (req, res) => {
 app.get('/health', (req, res) => {
   res.json({ status: 'healthy', server: 'simple', timestamp: new Date().toISOString() });
 });
+
+// Serve static files AFTER defining all routes to prevent conflicts
+// This ensures our dynamic routes take priority over static files
+app.use(express.static('deploy_v1_multimodal', {
+  index: false,  // Prevent serving index.html for directories
+  setHeaders: (res, path) => {
+    // Add cache-busting headers for HTML files
+    if (path.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    }
+  }
+}));
 
 app.listen(PORT, () => {
   console.log(`🚀 Simple Server running on port ${PORT}`);
