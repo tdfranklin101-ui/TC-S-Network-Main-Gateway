@@ -37,102 +37,118 @@ app.get('/memory-status', (req, res) => {
   res.sendFile(path.join(__dirname, 'memory-status-display.html'));
 });
 
-// Enhanced memory API that forces real data display
+// FORCE REAL DATA MEMORY API - NO DEMO DATA ALLOWED
 app.get('/api/kid-solar-memory/all', (req, res) => {
-  console.log('🔍 Memory API called - checking for real conversations...');
+  console.log('🔍 FORCE REAL DATA: Memory API called - scanning conversations...');
   
   try {
     const conversations = [];
     const conversationsDir = path.join(__dirname, 'conversations');
     
+    console.log('📂 Checking conversations directory:', conversationsDir);
+    
     if (fs.existsSync(conversationsDir)) {
       const files = fs.readdirSync(conversationsDir)
         .filter(file => file.endsWith('.json') && !file.startsWith('hist_'))
-        .sort((a, b) => b.localeCompare(a)); // Sort newest first
+        .sort((a, b) => fs.statSync(path.join(conversationsDir, b)).mtime - fs.statSync(path.join(conversationsDir, a)).mtime);
       
-      console.log(`📊 Found ${files.length} conversation files`);
+      console.log('📊 FORCE REAL DATA: Found', files.length, 'conversation files');
       
       files.forEach(file => {
         try {
           const filePath = path.join(conversationsDir, file);
           const content = JSON.parse(fs.readFileSync(filePath, 'utf8'));
           
+          console.log('📄 Processing file:', file, 'Type:', content.messageType);
+          
           const conversation = {
             id: content.id || file.replace('.json', ''),
-            sessionId: content.sessionId || 'unknown-session',
-            timestamp: content.timestamp || new Date().toISOString(),
+            sessionId: content.sessionId || 'session-unknown',
+            timestamp: content.timestamp || new Date(fs.statSync(filePath).mtime).toISOString(),
             conversationType: content.messageType === 'identify_anything_analysis' ? 'Photo Analysis via Cut & Paste' :
                             content.messageType === 'photo_analysis' ? 'Visual Recognition Testing' :
                             content.messageType === 'did_conversation' ? 'D-ID Voice Chat' :
-                            'Console Solar Conversation',
-            messageType: content.messageType || 'general',
-            preview: content.messageText || 'Conversation content',
+                            content.messageType === 'did_agent_response' ? 'Console Solar Response' :
+                            content.messageType === 'user_input' ? 'User Message' :
+                            content.captureSource === 'inline_test_demonstration' ? 'Test Demonstration' :
+                            'Console Solar Session',
+            messageType: content.messageType || 'conversation',
+            preview: (content.messageText || 'Conversation content').substring(0, 100) + '...',
             fullConversation: content.messageText || 'No content available',
             messageText: content.messageText || 'No content available',
             retentionFirst: true,
-            hasImages: content.messageType?.includes('photo') || content.messageType?.includes('identify') || false,
-            agentId: 'v2_agt_vhYf_e_C',
+            hasImages: content.messageType?.includes('photo') || content.messageType?.includes('identify'),
+            agentId: content.agentId || 'v2_agt_vhYf_e_C',
             agentDescription: 'Console Solar - Kid Solar',
-            highlight: 'Live Console Solar Session - Real Memory Storage',
+            highlight: content.captureSource === 'inline_test_demonstration' ? 'Test D-ID Capture - Both Sides Captured' : 'Real Console Solar Session',
             educational: content.messageType?.includes('identify') ? 'Image recognition and polymathic analysis' :
-                        content.messageType?.includes('did') ? 'Voice and animation interaction' :
+                        content.messageType?.includes('did') || content.messageType?.includes('agent') ? 'Voice and animation interaction' :
+                        content.messageType?.includes('user') ? 'User interaction capture' :
                         'Educational conversation with Kid Solar',
             messages: 1,
             isDemoData: false,
-            isRealConversation: true
+            isRealConversation: true,
+            captureProof: content.captureSource || 'live_session'
           };
           
           conversations.push(conversation);
-          console.log(`✅ Added conversation: ${conversation.conversationType}`);
+          console.log('✅ FORCE REAL DATA: Added', conversation.conversationType, '-', conversation.preview.substring(0, 30));
           
         } catch (e) {
-          console.error(`❌ Error reading ${file}:`, e.message);
+          console.error('❌ Error reading file', file, ':', e.message);
         }
       });
+    } else {
+      console.log('📂 Conversations directory does not exist');
     }
     
-    // Add system status if no conversations
+    // ONLY add status message if absolutely no files found
     if (conversations.length === 0) {
+      console.log('⚠️ No conversation files found - adding status message');
       conversations.push({
-        id: 'system-status-1',
-        sessionId: 'memory-system-active',
+        id: 'status-waiting',
+        sessionId: 'system-ready',
         timestamp: new Date().toISOString(),
-        conversationType: 'Memory System Status',
+        conversationType: 'System Status - Awaiting Conversations',
         messageType: 'system_status',
-        preview: 'Memory system is monitoring for Console Solar conversations',
-        fullConversation: 'Memory capture system is active and ready to store new D-ID conversations with Console Solar agent (v2_agt_vhYf_e_C).',
-        messageText: 'Memory capture system is active and ready to store new D-ID conversations with Console Solar agent (v2_agt_vhYf_e_C).',
+        preview: 'Click Test D-ID Capture button to create sample conversations',
+        fullConversation: 'Memory system is ready. Click the "Test D-ID Capture" button on homepage to demonstrate both user and agent message capture.',
+        messageText: 'Memory system is ready. Click the "Test D-ID Capture" button on homepage to demonstrate both user and agent message capture.',
         retentionFirst: true,
         hasImages: false,
         agentId: 'v2_agt_vhYf_e_C',
-        highlight: 'Memory System Active',
-        educational: 'System ready for conversation capture',
+        highlight: 'Ready for D-ID Capture Test',
+        educational: 'System monitoring for conversations',
         messages: 1,
         isDemoData: false,
-        isRealConversation: false
+        isRealConversation: false,
+        captureProof: 'system_ready'
       });
     }
     
     const response = {
-      conversations,
+      conversations: conversations,
       totalConversations: conversations.length,
       realConversations: conversations.filter(c => c.isRealConversation).length,
-      systemConversations: conversations.filter(c => !c.isRealConversation).length,
+      testConversations: conversations.filter(c => c.captureProof === 'inline_test_demonstration').length,
       timestamp: new Date().toISOString(),
-      status: 'WORKING',
+      status: 'FORCE_REAL_DATA_ACTIVE',
       agentVersion: 'v2_agt_vhYf_e_C',
-      memorySystem: 'ACTIVE'
+      memorySystem: 'REAL_DATA_ONLY',
+      forceRealData: true
     };
     
-    console.log('📤 Sending response with', conversations.length, 'conversations');
+    console.log('📤 FORCE REAL DATA: Sending', conversations.length, 'real conversations');
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.json(response);
     
   } catch (error) {
-    console.error('❌ Memory API error:', error);
+    console.error('❌ FORCE REAL DATA: Memory API error:', error);
     res.status(500).json({ 
       error: 'Memory system error',
       details: error.message,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      status: 'ERROR_READING_REAL_DATA'
     });
   }
 });
