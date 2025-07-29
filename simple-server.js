@@ -108,6 +108,11 @@ app.post('/api/kid-solar-conversation', (req, res) => {
   }
 });
 
+// AI Memory Review page route  
+app.get('/ai-memory-review', (req, res) => {
+  res.sendFile(path.join(__dirname, 'deploy_v1_multimodal', 'ai-memory-review.html'));
+});
+
 app.get('/health', (req, res) => {
   res.json({ status: 'healthy', server: 'simple', timestamp: new Date().toISOString() });
 });
