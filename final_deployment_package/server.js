@@ -272,6 +272,13 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // Dashboard route
+  if (pathname === '/dashboard') {
+    const dashboardPath = path.join(__dirname, 'deploy_v1_multimodal', 'dashboard.html');
+    sendFile(res, dashboardPath);
+    return;
+  }
+
   // Static file serving
   let staticPath;
   if (pathname === '/') {
