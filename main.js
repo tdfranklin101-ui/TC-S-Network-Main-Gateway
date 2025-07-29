@@ -1266,6 +1266,45 @@ app.get('/api/public-analytics', async (req, res) => {
   }
 });
 
+// Enhanced API endpoint for Kid Solar conversation storage
+app.post('/api/kid-solar-conversation', (req, res) => {
+  const { sessionId, messageType, messageText, userInput, agentResponse, conversationType, captureSource, captureProof } = req.body;
+  
+  try {
+    const conversationData = {
+      id: req.body.id || `conv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      sessionId: sessionId || 'unknown',
+      timestamp: new Date().toISOString(),
+      conversationType: conversationType || 'Console Solar Session', 
+      messageType: messageType || 'conversation',
+      messageText: messageText || userInput || agentResponse || 'No message content',
+      userInput: userInput || null,
+      agentResponse: agentResponse || null,
+      captureSource: captureSource || 'conversation_api',
+      captureProof: captureProof || 'real_session'
+    };
+    
+    // Store in conversations directory
+    const filename = `${conversationData.id}.json`;
+    const filepath = path.join(__dirname, 'conversations', filename);
+    
+    fs.writeFileSync(filepath, JSON.stringify(conversationData, null, 2));
+    
+    console.log(`✅ Real Console Solar conversation stored: ${filename}`);
+    console.log(`📝 Content preview: ${(conversationData.messageText || '').substring(0, 100)}...`);
+    
+    res.json({ 
+      success: true, 
+      conversationId: conversationData.id,
+      message: 'Console Solar conversation captured and stored'
+    });
+    
+  } catch (error) {
+    console.error('❌ Failed to store Console Solar conversation:', error);
+    res.status(500).json({ error: 'Failed to store conversation' });
+  }
+});
+
 // API endpoint to get real conversation data for analytics page
 app.get('/api/kid-solar-memory/all', (req, res) => {
   console.log('📡 Memory API called');
