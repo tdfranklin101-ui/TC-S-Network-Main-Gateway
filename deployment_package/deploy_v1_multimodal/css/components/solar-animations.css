@@ -1,0 +1,287 @@
+/**
+ * Solar Animations CSS
+ * 
+ * This file contains solar-themed animations for loading states
+ * and interactive elements throughout the Current-See application.
+ */
+
+/* Solar Spinner - Rotating Sun with Orbiting Elements */
+.solar-spinner {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin: 30px auto;
+}
+
+.solar-spinner-sun {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 40px;
+  height: 40px;
+  margin-top: -20px;
+  margin-left: -20px;
+  background: linear-gradient(135deg, #ffb700, #ffd500);
+  border-radius: 50%;
+  box-shadow: 0 0 15px rgba(255, 183, 0, 0.7);
+  animation: solar-pulse 2s ease-in-out infinite;
+}
+
+.solar-spinner-sun::after {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: -5px;
+  right: -5px;
+  bottom: -5px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 183, 0, 0.3);
+  animation: solar-spin 6s linear infinite;
+}
+
+.solar-spinner-orbit {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 1px dashed rgba(255, 183, 0, 0.4);
+  animation: solar-spin 20s linear infinite;
+}
+
+.solar-spinner-planet {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.solar-spinner-planet-1 {
+  background-color: #7bc144;
+  top: 0;
+  left: 50%;
+  margin-left: -5px;
+  animation: solar-orbit-1 6s linear infinite;
+}
+
+.solar-spinner-planet-2 {
+  background-color: #4a90e2;
+  top: 50%;
+  left: 0;
+  margin-top: -5px;
+  animation: solar-orbit-2 8s linear infinite;
+}
+
+.solar-spinner-planet-3 {
+  background-color: #ff8c42;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  margin-top: -10px;
+  animation: solar-orbit-3 10s linear infinite;
+}
+
+@keyframes solar-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.9; }
+}
+
+@keyframes solar-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes solar-orbit-1 {
+  0% { transform: rotate(0deg) translateX(40px) rotate(0deg); }
+  100% { transform: rotate(360deg) translateX(40px) rotate(-360deg); }
+}
+
+@keyframes solar-orbit-2 {
+  0% { transform: rotate(90deg) translateX(40px) rotate(-90deg); }
+  100% { transform: rotate(450deg) translateX(40px) rotate(-450deg); }
+}
+
+@keyframes solar-orbit-3 {
+  0% { transform: rotate(180deg) translateX(40px) rotate(-180deg); }
+  100% { transform: rotate(540deg) translateX(40px) rotate(-540deg); }
+}
+
+/* Solar Rays - Background animation for panels */
+.solar-rays-bg {
+  position: relative;
+  overflow: hidden;
+}
+
+.solar-rays-bg::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  right: -50%;
+  bottom: -50%;
+  background: radial-gradient(ellipse at center, 
+    rgba(255, 236, 153, 0.4) 0%,
+    rgba(255, 236, 153, 0) 70%);
+  z-index: -1;
+  animation: solar-rays-rotate 60s linear infinite;
+}
+
+@keyframes solar-rays-rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Solar Pulse Button Animation */
+.solar-pulse-button {
+  position: relative;
+}
+
+.solar-pulse-button::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: inherit;
+  background: rgba(255, 183, 0, 0.4);
+  z-index: -1;
+  animation: solar-button-pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes solar-button-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.15); opacity: 0; }
+}
+
+/* Solar Progress Bar */
+.solar-progress-container {
+  width: 100%;
+  height: 10px;
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 5px;
+  overflow: hidden;
+  margin: 10px 0;
+}
+
+.solar-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #ffb700, #7bc144);
+  border-radius: 5px;
+  transition: width 0.5s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.solar-progress-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: solar-progress-shine 1.5s linear infinite;
+  transform: translateX(-100%);
+}
+
+@keyframes solar-progress-shine {
+  100% { transform: translateX(100%); }
+}
+
+/* Solar Token Particle Animation */
+.solar-token-particle-area {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 150px;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.solar-token-particle {
+  position: absolute;
+  bottom: 0;
+  width: 12px;
+  height: 12px;
+  background: radial-gradient(circle, #ffeb99 30%, #ffb700 80%);
+  border-radius: 50%;
+  animation: solar-token-float 5s ease-out forwards;
+  opacity: 0;
+}
+
+@keyframes solar-token-float {
+  0% { transform: translateY(0) translateX(0); opacity: 0; }
+  10% { opacity: 1; }
+  80% { opacity: 0.8; }
+  100% { transform: translateY(-150px) translateX(var(--x-end, 20px)); opacity: 0; }
+}
+
+/* Solar Notification Pop */
+.solar-notification {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 15px 20px;
+  background: white;
+  border-left: 4px solid #ffb700;
+  border-radius: 4px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  transform: translateX(120%);
+  animation: solar-notification-slide 5s ease forwards;
+  z-index: 1000;
+}
+
+.solar-notification-title {
+  font-weight: bold;
+  margin-bottom: 5px;
+  color: #333;
+}
+
+.solar-notification-message {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+@keyframes solar-notification-slide {
+  0% { transform: translateX(120%); }
+  10%, 90% { transform: translateX(0); }
+  100% { transform: translateX(120%); }
+}
+
+/* Solar Loading Text animation */
+.solar-loading-text {
+  position: relative;
+  display: inline-block;
+}
+
+.solar-loading-text::after {
+  content: '...';
+  position: absolute;
+  animation: solar-loading-dots 1.5s infinite;
+  opacity: 0;
+}
+
+@keyframes solar-loading-dots {
+  0% { content: '.'; opacity: 1; }
+  33% { content: '..'; opacity: 1; }
+  66% { content: '...'; opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* Solar Hover Effect */
+.solar-hover-effect {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.solar-hover-effect:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}

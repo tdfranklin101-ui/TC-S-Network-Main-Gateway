@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="500" height="500" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="500" height="500" fill="#f0de4d" />
+  
+  <!-- Sun -->
+  <circle cx="250" cy="250" r="120" fill="#f9b233" />
+  <path d="M250 100 L270 150 L320 130 L290 180 L340 200 L290 220 L320 270 L270 250 L250 300 L230 250 L180 270 L210 220 L160 200 L210 180 L180 130 L230 150 Z" fill="#f9b233" stroke="#f9b233" stroke-width="2" />
+  
+  <!-- Green orbit -->
+  <path d="M250,420 C 400,350 400,150 250,80 C 100,150 100,350 250,420 Z" fill="none" stroke="#4caf50" stroke-width="20" />
+</svg>

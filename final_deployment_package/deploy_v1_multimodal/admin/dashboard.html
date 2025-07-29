@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - The Current-See</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+    <style>
+        :root {
+            --primary: #0057B8;
+            --secondary: #D4AF37;
+            --dark: #333;
+            --light: #f8f9fa;
+            --success: #28a745;
+            --sidebar-width: 250px;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--dark);
+            background-color: var(--light);
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--primary);
+            color: white;
+            padding: 1.5rem 0;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            overflow-y: auto;
+        }
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 1.5rem 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 1.5rem;
+        }
+        
+        .logo {
+            width: 40px;
+            height: auto;
+            margin-right: 10px;
+        }
+        
+        .logo-text {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        
+        .nav-list {
+            list-style: none;
+        }
+        
+        .nav-item {
+            margin-bottom: 0.5rem;
+        }
+        
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1.5rem;
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        
+        .nav-link i {
+            width: 20px;
+            margin-right: 10px;
+            text-align: center;
+        }
+        
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            padding: 2rem;
+        }
+        
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .page-title {
+            color: var(--primary);
+            font-size: 1.75rem;
+        }
+        
+        .logout-btn {
+            background: none;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .logout-btn i {
+            margin-right: 0.5rem;
+        }
+        
+        /* Dashboard Panels */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stats-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .stats-icon {
+            width: 50px;
+            height: 50px;
+            background-color: rgba(0, 87, 184, 0.1);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            margin-right: 1rem;
+            font-size: 1.5rem;
+        }
+        
+        .stats-info h3 {
+            font-size: 1.75rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .stats-info p {
+            color: #777;
+            font-size: 0.9rem;
+        }
+        
+        /* Tabs */
+        .tabs {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+        
+        .tab-nav {
+            display: flex;
+            background-color: #f5f5f5;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .tab-btn {
+            padding: 1rem 1.5rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            opacity: 0.7;
+            position: relative;
+        }
+        
+        .tab-btn.active {
+            opacity: 1;
+        }
+        
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background-color: var(--primary);
+        }
+        
+        .tab-content {
+            padding: 1.5rem;
+        }
+        
+        .tab-pane {
+            display: none;
+        }
+        
+        .tab-pane.active {
+            display: block;
+        }
+        
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .data-table th,
+        .data-table td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .data-table th {
+            background-color: #f5f5f5;
+            font-weight: 600;
+        }
+        
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        /* Solar Clock */
+        .solar-clock {
+            background: linear-gradient(135deg, #0057B8, #004090);
+            color: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .solar-amount {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 1rem 0;
+            color: var(--secondary);
+        }
+        
+        .solar-info {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 1.5rem;
+        }
+        
+        .solar-info-item {
+            text-align: center;
+        }
+        
+        .solar-info-value {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        
+        .solar-info-label {
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+        
+        /* Wallet Section (Future) */
+        .wallet-placeholder {
+            padding: 2rem;
+            text-align: center;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            border: 2px dashed #ddd;
+        }
+        
+        .wallet-placeholder i {
+            font-size: 3rem;
+            color: #ccc;
+            margin-bottom: 1rem;
+        }
+        
+        .wallet-placeholder h3 {
+            color: #888;
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 70px;
+                padding: 1rem 0;
+            }
+            
+            .logo-text, .nav-link span {
+                display: none;
+            }
+            
+            .logo-container {
+                justify-content: center;
+                padding: 0 0 1rem;
+            }
+            
+            .logo {
+                margin-right: 0;
+            }
+            
+            .nav-link {
+                justify-content: center;
+                padding: 0.75rem;
+            }
+            
+            .nav-link i {
+                margin-right: 0;
+                font-size: 1.25rem;
+            }
+            
+            .main-content {
+                margin-left: 70px;
+                padding: 1.5rem;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo-container">
+            <img src="/branding_logo.png" alt="Logo" class="logo">
+            <span class="logo-text">Current-See</span>
+        </div>
+        
+        <ul class="nav-list">
+            <li class="nav-item">
+                <a href="#dashboard" class="nav-link active" data-tab="dashboard-tab">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#waitlist" class="nav-link" data-tab="waitlist-tab">
+                    <i class="fas fa-user-plus"></i>
+                    <span>Waitlist</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#solar-clock" class="nav-link" data-tab="solarclock-tab">
+                    <i class="fas fa-sun"></i>
+                    <span>Solar Clock</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#wallet" class="nav-link" data-tab="wallet-tab">
+                    <i class="fas fa-wallet"></i>
+                    <span>Wallet (Future)</span>
+                </a>
+            </li>
+        </ul>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="page-header">
+            <h1 class="page-title">Admin Dashboard</h1>
+            <button id="logout-btn" class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
+        
+        <!-- Dashboard Stats -->
+        <div class="tab-pane active" id="dashboard-tab">
+            <div class="dashboard-grid">
+                <div class="stats-card">
+                    <div class="stats-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stats-info">
+                        <h3 id="waitlist-count">0</h3>
+                        <p>Total Waitlist Signups</p>
+                    </div>
+                </div>
+                
+                <div class="stats-card">
+                    <div class="stats-icon">
+                        <i class="fas fa-sun"></i>
+                    </div>
+                    <div class="stats-info">
+                        <h3 id="solar-value">0</h3>
+                        <p>Solar Value (USD)</p>
+                    </div>
+                </div>
+                
+                <div class="stats-card">
+                    <div class="stats-icon">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <div class="stats-info">
+                        <h3 id="solar-kwh">0</h3>
+                        <p>kWh Generated</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Signups -->
+            <div class="tabs">
+                <div class="tab-nav">
+                    <button class="tab-btn active" data-target="recent-signups">Recent Signups</button>
+                    <button class="tab-btn" data-target="solar-status">Solar Status</button>
+                </div>
+                
+                <div class="tab-content">
+                    <div class="tab-pane active" id="recent-signups">
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Signup Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recent-signups-body">
+                                    <!-- Will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-pane" id="solar-status">
+                        <div class="solar-clock">
+                            <h3>Current Solar Value</h3>
+                            <div class="solar-amount" id="solar-amount">$136,000</div>
+                            <p>1 Solar = 17.7M kWh of energy</p>
+                            
+                            <div class="solar-info">
+                                <div class="solar-info-item">
+                                    <div class="solar-info-value" id="total-energy">17.7M</div>
+                                    <div class="solar-info-label">kWh</div>
+                                </div>
+                                <div class="solar-info-item">
+                                    <div class="solar-info-value" id="dollar-value">$136,000</div>
+                                    <div class="solar-info-label">USD Value</div>
+                                </div>
+                                <div class="solar-info-item">
+                                    <div class="solar-info-value" id="solar-time">24h</div>
+                                    <div class="solar-info-label">Time Period</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Waitlist Tab -->
+        <div class="tab-pane" id="waitlist-tab">
+            <div class="tabs">
+                <div class="tab-nav">
+                    <button class="tab-btn active" data-target="all-signups">All Signups</button>
+                    <button class="tab-btn" data-target="export-data">Export Data</button>
+                </div>
+                
+                <div class="tab-content">
+                    <div class="tab-pane active" id="all-signups">
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Signup Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="all-signups-body">
+                                    <!-- Will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-pane" id="export-data">
+                        <div style="text-align: center; padding: 2rem;">
+                            <button id="export-csv" style="
+                                background-color: var(--primary);
+                                color: white;
+                                border: none;
+                                padding: 0.75rem 1.5rem;
+                                border-radius: 4px;
+                                font-size: 1rem;
+                                cursor: pointer;
+                                display: inline-flex;
+                                align-items: center;
+                            ">
+                                <i class="fas fa-download" style="margin-right: 0.5rem;"></i>
+                                Export to CSV
+                            </button>
+                            <p style="margin-top: 1rem; color: #666;">
+                                Download the complete waitlist data as a CSV file for further analysis.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Solar Clock Tab -->
+        <div class="tab-pane" id="solarclock-tab">
+            <div class="solar-clock" style="margin-bottom: 2rem;">
+                <h3>Solar Clock</h3>
+                <div class="solar-amount" id="solar-amount-clock">$136,000</div>
+                <p>1 Solar = 17.7M kWh of energy</p>
+                
+                <div class="solar-info">
+                    <div class="solar-info-item">
+                        <div class="solar-info-value" id="total-energy-clock">17.7M</div>
+                        <div class="solar-info-label">kWh</div>
+                    </div>
+                    <div class="solar-info-item">
+                        <div class="solar-info-value" id="dollar-value-clock">$136,000</div>
+                        <div class="solar-info-label">USD Value</div>
+                    </div>
+                    <div class="solar-info-item">
+                        <div class="solar-info-value" id="solar-time-clock">24h</div>
+                        <div class="solar-info-label">Time Period</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tabs">
+                <div class="tab-nav">
+                    <button class="tab-btn active" data-target="solar-info">Solar Information</button>
+                    <button class="tab-btn" data-target="solar-settings">Settings</button>
+                </div>
+                
+                <div class="tab-content">
+                    <div class="tab-pane active" id="solar-info">
+                        <div style="padding: 1rem;">
+                            <h3 style="margin-bottom: 1rem;">About the Solar Clock</h3>
+                            <p style="margin-bottom: 1rem;">
+                                The Solar Clock represents the continuous generation of solar energy and its equivalent monetary value. The Current-See system uses this model to back its economic framework.
+                            </p>
+                            <p style="margin-bottom: 1rem;">
+                                <strong>Current Configuration:</strong>
+                            </p>
+                            <ul style="list-style: none; margin-bottom: 1.5rem;">
+                                <li style="margin-bottom: 0.5rem;">• 1 Solar = 17.7 million kWh</li>
+                                <li style="margin-bottom: 0.5rem;">• Value per Solar = $136,000 USD</li>
+                                <li style="margin-bottom: 0.5rem;">• Generation Period = 24 hours (daily)</li>
+                            </ul>
+                            <p>
+                                This value represents the approximate energy output of sunlight hitting Earth's surface over a 24-hour period and its equivalent value at current electricity rates.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-pane" id="solar-settings">
+                        <div style="padding: 1rem;">
+                            <h3 style="margin-bottom: 1rem;">Solar Clock Settings</h3>
+                            <p style="margin-bottom: 1.5rem; color: #666;">
+                                These settings determine how the Solar Clock calculates and displays values.
+                            </p>
+                            
+                            <form id="solar-settings-form">
+                                <div style="margin-bottom: 1rem;">
+                                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">kWh per Solar</label>
+                                    <input type="number" id="kwh-per-solar" value="17700000" style="
+                                        width: 100%;
+                                        padding: 0.75rem;
+                                        border: 1px solid #ddd;
+                                        border-radius: 4px;
+                                        font-size: 1rem;
+                                    ">
+                                </div>
+                                
+                                <div style="margin-bottom: 1rem;">
+                                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">USD Value per Solar</label>
+                                    <input type="number" id="usd-per-solar" value="136000" style="
+                                        width: 100%;
+                                        padding: 0.75rem;
+                                        border: 1px solid #ddd;
+                                        border-radius: 4px;
+                                        font-size: 1rem;
+                                    ">
+                                </div>
+                                
+                                <div style="margin-bottom: 1.5rem;">
+                                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Generation Period (hours)</label>
+                                    <input type="number" id="generation-period" value="24" style="
+                                        width: 100%;
+                                        padding: 0.75rem;
+                                        border: 1px solid #ddd;
+                                        border-radius: 4px;
+                                        font-size: 1rem;
+                                    ">
+                                </div>
+                                
+                                <button type="submit" style="
+                                    background-color: var(--primary);
+                                    color: white;
+                                    border: none;
+                                    padding: 0.75rem 1.5rem;
+                                    border-radius: 4px;
+                                    font-size: 1rem;
+                                    cursor: pointer;
+                                ">
+                                    Save Settings
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Wallet Tab (Future) -->
+        <div class="tab-pane" id="wallet-tab">
+            <div class="wallet-placeholder">
+                <i class="fas fa-wallet"></i>
+ 
+  <!-- HEADER_PLACEHOLDER -->
+                 <h3>Wallet Integration Coming Soon</h3>
+                <p>The wallet feature is currently under development and will be available in a future update.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Authentication Check
+        fetch('/admin/check-auth')
+            .then(response => {
+                if (!response.ok) {
+                    window.location.href = '/admin/login';
+                }
+            });
+        
+        // DOM Elements
+        const navLinks = document.querySelectorAll('.nav-link');
+        const tabPanes = document.querySelectorAll('.tab-pane');
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const waitlistCountEl = document.getElementById('waitlist-count');
+        const recentSignupsBody = document.getElementById('recent-signups-body');
+        const allSignupsBody = document.getElementById('all-signups-body');
+        const exportCsvBtn = document.getElementById('export-csv');
+        const solarSettingsForm = document.getElementById('solar-settings-form');
+        
+        // Solar Clock Elements
+        const solarValueEl = document.getElementById('solar-value');
+        const solarKwhEl = document.getElementById('solar-kwh');
+        const solarAmountEl = document.getElementById('solar-amount');
+        const solarAmountClockEl = document.getElementById('solar-amount-clock');
+        const totalEnergyEl = document.getElementById('total-energy');
+        const dollarValueEl = document.getElementById('dollar-value');
+        const solarTimeEl = document.getElementById('solar-time');
+        const totalEnergyClockEl = document.getElementById('total-energy-clock');
+        const dollarValueClockEl = document.getElementById('dollar-value-clock');
+        const solarTimeClockEl = document.getElementById('solar-time-clock');
+        
+        // Tab Navigation
+        navLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Remove active class from all links and add to clicked link
+                navLinks.forEach(navLink => navLink.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Hide all tab panes
+                tabPanes.forEach(pane => pane.classList.remove('active'));
+                
+                // Show the corresponding tab pane
+                const tabId = this.getAttribute('data-tab');
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+        
+        // Inner Tabs
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Get parent tab content
+                const tabContent = this.closest('.tab-nav').nextElementSibling;
+                
+                // Remove active class from all buttons in this tab
+                this.parentNode.querySelectorAll('.tab-btn').forEach(tabBtn => {
+                    tabBtn.classList.remove('active');
+                });
+                
+                // Add active class to clicked button
+                this.classList.add('active');
+                
+                // Hide all panes in this tab content
+                tabContent.querySelectorAll('.tab-pane').forEach(pane => {
+                    pane.classList.remove('active');
+                });
+                
+                // Show the target pane
+                const targetId = this.getAttribute('data-target');
+                tabContent.querySelector(`#${targetId}`).classList.add('active');
+            });
+        });
+        
+        // Logout
+        logoutBtn.addEventListener('click', function() {
+            fetch('/admin/logout', { method: 'POST' })
+                .then(() => {
+                    window.location.href = '/admin/login';
+                });
+        });
+        
+        // Load Waitlist Data
+        function loadWaitlistData() {
+            fetch('/admin/waitlist-data')
+                .then(response => response.json())
+                .then(data => {
+                    // Update waitlist count
+                    waitlistCountEl.textContent = data.length;
+                    
+                    // Clear existing data
+                    recentSignupsBody.innerHTML = '';
+                    allSignupsBody.innerHTML = '';
+                    
+                    // Sort by date (newest first)
+                    data.sort((a, b) => new Date(b.date) - new Date(a.date));
+                    
+                    // Populate recent signups (latest 5)
+                    const recentData = data.slice(0, 5);
+                    recentData.forEach(entry => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${entry.name || 'N/A'}</td>
+                            <td>${entry.email || 'N/A'}</td>
+                            <td>${new Date(entry.date).toLocaleDateString()}</td>
+                        `;
+                        recentSignupsBody.appendChild(row);
+                    });
+                    
+                    // Populate all signups
+                    data.forEach(entry => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${entry.name || 'N/A'}</td>
+                            <td>${entry.email || 'N/A'}</td>
+                            <td>${new Date(entry.date).toLocaleDateString()}</td>
+                        `;
+                        allSignupsBody.appendChild(row);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading waitlist data:', error);
+                });
+        }
+        
+        // Export CSV
+        exportCsvBtn.addEventListener('click', function() {
+            fetch('/admin/export-waitlist')
+                .then(response => response.blob())
+                .then(blob => {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = 'waitlist-data.csv';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                })
+                .catch(error => {
+                    console.error('Error exporting CSV:', error);
+                });
+        });
+        
+        // Solar Settings Form
+        solarSettingsForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const kwhPerSolar = document.getElementById('kwh-per-solar').value;
+            const usdPerSolar = document.getElementById('usd-per-solar').value;
+            const generationPeriod = document.getElementById('generation-period').value;
+            
+            // Save settings to localStorage for now (in a real app, this would be saved to a server)
+            localStorage.setItem('kwhPerSolar', kwhPerSolar);
+            localStorage.setItem('usdPerSolar', usdPerSolar);
+            localStorage.setItem('generationPeriod', generationPeriod);
+            
+            // Update the solar clock display
+            updateSolarClock();
+            
+            alert('Settings saved successfully!');
+        });
+        
+        // Update Solar Clock
+        function updateSolarClock() {
+            // Get settings (default values if not set)
+            const kwhPerSolar = localStorage.getItem('kwhPerSolar') || 17700000;
+            const usdPerSolar = localStorage.getItem('usdPerSolar') || 136000;
+            const generationPeriod = localStorage.getItem('generationPeriod') || 24;
+            
+            // Format values for display
+            const formattedKwh = formatNumber(kwhPerSolar);
+            const formattedUsd = formatCurrency(usdPerSolar);
+            
+            // Update display
+            solarValueEl.textContent = formattedUsd;
+            solarKwhEl.textContent = formattedKwh;
+            solarAmountEl.textContent = formattedUsd;
+            solarAmountClockEl.textContent = formattedUsd;
+            totalEnergyEl.textContent = formattedKwh;
+            dollarValueEl.textContent = formattedUsd;
+            solarTimeEl.textContent = `${generationPeriod}h`;
+            totalEnergyClockEl.textContent = formattedKwh;
+            dollarValueClockEl.textContent = formattedUsd;
+            solarTimeClockEl.textContent = `${generationPeriod}h`;
+        }
+        
+        // Format number with abbreviation (K, M, B)
+        function formatNumber(num) {
+            num = parseFloat(num);
+            if (num >= 1000000000) {
+                return (num / 1000000000).toFixed(1) + 'B';
+            }
+            if (num >= 1000000) {
+                return (num / 1000000).toFixed(1) + 'M';
+            }
+            if (num >= 1000) {
+                return (num / 1000).toFixed(1) + 'K';
+            }
+            return num.toString();
+        }
+        
+        // Format currency
+        function formatCurrency(num) {
+            num = parseFloat(num);
+            return '$' + formatNumber(num);
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadWaitlistData();
+            updateSolarClock();
+            
+            // Refresh data periodically (every 30 seconds)
+            setInterval(loadWaitlistData, 30000);
+        });
+    </script>
+
+<!-- FOOTER_PLACEHOLDER -->
+
+</body>
+</html>
