@@ -108,9 +108,14 @@ app.post('/api/kid-solar-conversation', (req, res) => {
   }
 });
 
-// AI Memory Review page route  
-app.get('/ai-memory-review', (req, res) => {
+// Analytics page route (dynamic memory data)
+app.get('/analytics', (req, res) => {
   res.sendFile(path.join(__dirname, 'deploy_v1_multimodal', 'ai-memory-review.html'));
+});
+
+// Legacy route redirect to analytics
+app.get('/ai-memory-review', (req, res) => {
+  res.redirect('/analytics');
 });
 
 app.get('/health', (req, res) => {
