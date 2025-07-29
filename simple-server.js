@@ -108,14 +108,32 @@ app.post('/api/kid-solar-conversation', (req, res) => {
   }
 });
 
-// Analytics page route (dynamic memory data)
+// Analytics page route (dynamic memory data) - ALWAYS serve the dynamic version
 app.get('/analytics', (req, res) => {
+  console.log('📊 Serving DYNAMIC analytics page with API integration');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.sendFile(path.join(__dirname, 'deploy_v1_multimodal', 'ai-memory-review.html'));
+});
+
+// New route for explicit dynamic analytics
+app.get('/analytics-dynamic', (req, res) => {
+  console.log('📊 Serving EXPLICIT DYNAMIC analytics page');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   res.sendFile(path.join(__dirname, 'deploy_v1_multimodal', 'ai-memory-review.html'));
 });
 
 // Legacy route redirect to analytics
 app.get('/ai-memory-review', (req, res) => {
   res.redirect('/analytics');
+});
+
+// Test page for fresh browser verification
+app.get('/test-fresh-browser', (req, res) => {
+  res.sendFile(path.join(__dirname, 'test-fresh-browser.html'));
 });
 
 app.get('/health', (req, res) => {
