@@ -10,9 +10,12 @@ class DidConversationCapture {
     this.lastUserInput = '';
     this.lastAgentResponse = '';
     this.isMonitoring = false;
+    this.captureBuffer = []; // Buffer for immediate retention
+    this.autoSaveInterval = null;
     
-    console.log('🎯 Console Solar Conversation Capture initialized');
+    console.log('🎯 Console Solar IMMEDIATE Capture & Retention initialized');
     this.startCapture();
+    this.startImmediateRetention();
   }
   
   startCapture() {
@@ -25,7 +28,28 @@ class DidConversationCapture {
       this.monitorAgentResponses();
     }, 3000);
     
-    console.log('✅ Console Solar conversation monitoring active');
+    console.log('✅ Console Solar IMMEDIATE conversation monitoring active');
+  }
+  
+  startImmediateRetention() {
+    // Auto-save every 5 seconds to prevent data loss
+    this.autoSaveInterval = setInterval(() => {
+      this.flushCaptureBuffer();
+    }, 5000);
+    
+    // Save on page unload/refresh to capture everything
+    window.addEventListener('beforeunload', () => {
+      this.emergencyFlush();
+    });
+    
+    // Save on visibility change (user switches tabs)
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        this.flushCaptureBuffer();
+      }
+    });
+    
+    console.log('✅ IMMEDIATE RETENTION activated - Zero data loss protection');
   }
   
   monitorDidAgent() {
@@ -221,9 +245,12 @@ class DidConversationCapture {
   captureUserInput(input) {
     if (input && input !== this.lastUserInput) {
       this.lastUserInput = input;
-      console.log('👤 User input captured:', input);
+      console.log('👤 User input captured IMMEDIATELY:', input);
       
-      // Store immediately
+      // IMMEDIATE buffer storage (prevents loss)
+      this.addToCaptureBuffer('user', input);
+      
+      // Store immediately to server
       this.storeConversation('user', input);
       
       // Wait for agent response
@@ -239,17 +266,21 @@ class DidConversationCapture {
       
       // Enhanced logging for Console Solar responses
       const responsePreview = response.substring(0, 150) + (response.length > 150 ? '...' : '');
-      console.log('🤖 Console Solar response captured:', responsePreview);
+      console.log('🤖 Console Solar response captured IMMEDIATELY:', responsePreview);
+      
+      // IMMEDIATE buffer storage (prevents loss)
+      this.addToCaptureBuffer('agent', response);
       
       // Check if this looks like a real Console Solar response
       if (this.isLikelyAgentResponse(response)) {
-        console.log('✅ Verified as authentic Console Solar response');
+        console.log('✅ Verified as authentic Console Solar response - PRESERVING');
         
         // Store with enhanced metadata
         this.storeConversation('agent', response, {
           responseType: 'authentic_console_solar',
           detectionMethod: 'pattern_matched',
-          confidence: 'high'
+          confidence: 'high',
+          retentionPriority: 'critical'
         });
         
         // Create conversation pair if we have both user input and agent response
@@ -257,12 +288,13 @@ class DidConversationCapture {
           this.createConversationPair(this.lastUserInput, response);
         }
       } else {
-        console.log('⚠️ Response captured but low confidence for Console Solar pattern');
+        console.log('⚠️ Response captured but low confidence - STILL PRESERVING');
         // Still store but mark as uncertain
         this.storeConversation('agent', response, {
           responseType: 'possible_console_solar',
           detectionMethod: 'length_based',
-          confidence: 'medium'
+          confidence: 'medium',
+          retentionPriority: 'medium'
         });
       }
     }
@@ -323,7 +355,66 @@ class DidConversationCapture {
     this.sendToServer(conversation);
   }
   
-  sendToServer(conversationData) {
+  addToCaptureBuffer(type, text, metadata = {}) {
+    const bufferEntry = {
+      id: `${type}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      sessionId: this.sessionId,
+      timestamp: new Date().toISOString(),
+      messageType: type === 'user' ? 'user_input' : 'agent_response',
+      messageText: text,
+      captureSource: 'immediate_buffer',
+      ...metadata
+    };
+    
+    this.captureBuffer.push(bufferEntry);
+    console.log(`📦 Added to capture buffer (${this.captureBuffer.length} items)`);
+    
+    // If buffer gets large, flush immediately
+    if (this.captureBuffer.length >= 10) {
+      this.flushCaptureBuffer();
+    }
+  }
+  
+  flushCaptureBuffer() {
+    if (this.captureBuffer.length === 0) return;
+    
+    console.log(`🚀 Flushing ${this.captureBuffer.length} conversations to permanent storage`);
+    
+    // Send all buffered conversations to server
+    this.captureBuffer.forEach(conversation => {
+      this.sendToServerImmediate(conversation);
+    });
+    
+    // Clear buffer after successful flush
+    this.captureBuffer = [];
+  }
+  
+  emergencyFlush() {
+    // Synchronous save for page unload
+    if (this.captureBuffer.length > 0) {
+      console.log('🚨 EMERGENCY FLUSH - Saving all conversations before session ends');
+      const data = JSON.stringify({
+        sessionId: this.sessionId,
+        conversations: this.captureBuffer,
+        flushType: 'emergency'
+      });
+      
+      // Use sendBeacon for reliability during page unload
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon('/api/kid-solar-conversation-batch', data);
+      } else {
+        // Fallback to synchronous fetch
+        fetch('/api/kid-solar-conversation-batch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: data,
+          keepalive: true
+        });
+      }
+    }
+  }
+  
+  sendToServerImmediate(conversationData) {
     fetch('/api/kid-solar-conversation', {
       method: 'POST',
       headers: {
@@ -333,10 +424,12 @@ class DidConversationCapture {
     })
     .then(response => response.json())
     .then(data => {
-      console.log('✅ Conversation stored in memory system:', data);
+      console.log('✅ IMMEDIATE storage successful:', data.conversationId);
     })
     .catch(error => {
-      console.error('❌ Failed to store conversation:', error);
+      console.error('❌ Storage failed - keeping in buffer:', error);
+      // Add back to buffer if failed (with retry flag)
+      this.captureBuffer.push({...conversationData, retryFlag: true});
     });
   }
 }

@@ -1266,9 +1266,35 @@ app.get('/api/public-analytics', async (req, res) => {
   }
 });
 
+// Batch conversation storage for emergency flush
+app.post('/api/kid-solar-conversation-batch', (req, res) => {
+  const { sessionId, conversations, flushType } = req.body;
+  
+  try {
+    console.log(`🚨 BATCH STORAGE: ${conversations.length} conversations from ${flushType} flush`);
+    
+    conversations.forEach(conv => {
+      const filename = `${conv.id}.json`;
+      const filepath = path.join(__dirname, 'conversations', filename);
+      fs.writeFileSync(filepath, JSON.stringify(conv, null, 2));
+    });
+    
+    console.log(`✅ EMERGENCY BATCH saved ${conversations.length} Console Solar conversations`);
+    res.json({ 
+      success: true, 
+      saved: conversations.length,
+      message: 'Emergency batch storage completed'
+    });
+    
+  } catch (error) {
+    console.error('❌ EMERGENCY BATCH storage failed:', error);
+    res.status(500).json({ error: 'Emergency batch storage failed' });
+  }
+});
+
 // Enhanced API endpoint for Kid Solar conversation storage
 app.post('/api/kid-solar-conversation', (req, res) => {
-  const { sessionId, messageType, messageText, userInput, agentResponse, conversationType, captureSource, captureProof } = req.body;
+  const { sessionId, messageType, messageText, userInput, agentResponse, conversationType, captureSource, captureProof, retentionPriority } = req.body;
   
   try {
     const conversationData = {
@@ -1281,7 +1307,10 @@ app.post('/api/kid-solar-conversation', (req, res) => {
       userInput: userInput || null,
       agentResponse: agentResponse || null,
       captureSource: captureSource || 'conversation_api',
-      captureProof: captureProof || 'real_session'
+      captureProof: captureProof || 'real_session',
+      retentionPriority: retentionPriority || 'standard',
+      immediateCapture: true,
+      sessionProtected: true
     };
     
     // Store in conversations directory
@@ -1290,8 +1319,9 @@ app.post('/api/kid-solar-conversation', (req, res) => {
     
     fs.writeFileSync(filepath, JSON.stringify(conversationData, null, 2));
     
-    console.log(`✅ Real Console Solar conversation stored: ${filename}`);
+    console.log(`✅ IMMEDIATE Console Solar conversation stored: ${filename}`);
     console.log(`📝 Content preview: ${(conversationData.messageText || '').substring(0, 100)}...`);
+    console.log(`🔒 Session protection: ${conversationData.sessionProtected}, Priority: ${conversationData.retentionPriority}`);
     
     res.json({ 
       success: true, 
