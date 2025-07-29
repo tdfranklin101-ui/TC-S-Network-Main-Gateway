@@ -17,8 +17,7 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// Serve static files from deploy_v1_multimodal
-app.use(express.static(path.join(__dirname, 'deploy_v1_multimodal')));
+// NOTE: Static files are served AFTER routes are defined to prevent route conflicts
 
 // Session lifecycle API endpoints
 app.get('/session-management', (req, res) => {
@@ -1209,7 +1208,11 @@ app.get('/api/analytics/sessions', (req, res) => {
 
 // Serve public analytics dashboard (standalone)
 app.get('/analytics', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public-dashboard.html'));
+  console.log('📊 Serving DYNAMIC analytics page with API integration');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.sendFile(path.join(__dirname, 'deploy_v1_multimodal', 'ai-memory-review.html'));
 });
 
 // Alternative route for dashboard
@@ -1287,6 +1290,19 @@ app.get('/api/analytics-combined', async (req, res) => {
     res.status(500).json({ error: 'Failed to load combined analytics' });
   }
 });
+
+// Serve static files AFTER defining all routes to prevent conflicts
+app.use(express.static(path.join(__dirname, 'deploy_v1_multimodal'), {
+  index: false,  // Prevent serving index.html for directories
+  setHeaders: (res, path) => {
+    // Add cache-busting headers for HTML files
+    if (path.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    }
+  }
+}));
 
 // Other static files
 app.use('/assets', express.static(path.join(__dirname, 'deploy_v1_multimodal', 'assets')));
