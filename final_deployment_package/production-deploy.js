@@ -286,6 +286,7 @@ const server = http.createServer((req, res) => {
   const routes = {
     '/': 'index.html',
     '/dashboard': 'dashboard.html',
+    '/analytics-dashboard': 'analytics-dashboard.html',
     '/analytics': 'ai-memory-review.html',
     '/wallet': 'wallet.html',
     '/wallet.html': 'wallet.html',

@@ -642,7 +642,22 @@
       
       console.log('📊 Analytics tracking initialized for homepage');
     });
-
+    
+    function handleClickOutside(event) {
+      const menu = document.getElementById('multimodalMenu');
+      const button = document.querySelector('.native-multimodal-btn');
+      if (!menu.contains(event.target) && !button.contains(event.target)) {
+        closeMultimodalMenu();
+      }
+    }
+    
+    function openCamera() {
+      closeMultimodalMenu();
+      const input = document.getElementById('didMultimodalInput');
+      input.accept = 'image/*';
+      input.capture = 'environment';
+      input.click();
+    }
     
     function openVideo() {
       closeMultimodalMenu();

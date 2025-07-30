@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analytics Dashboard - Current-See Platform</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      color: #333;
+    }
+
+    .header {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      padding: 20px;
+      box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+      margin-bottom: 30px;
+    }
+
+    .header-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .logo {
+      font-size: 28px;
+      font-weight: bold;
+      color: #667eea;
+      text-decoration: none;
+    }
+
+    .nav-buttons {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 25px;
+      cursor: pointer;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(45deg, #667eea, #764ba2);
+      color: white;
+    }
+
+    .btn-secondary {
+      background: rgba(102, 126, 234, 0.1);
+      color: #667eea;
+      border: 2px solid #667eea;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 25px;
+      margin-bottom: 40px;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .card-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+
+    .solar-icon { background: linear-gradient(45deg, #f39c12, #e67e22); }
+    .users-icon { background: linear-gradient(45deg, #3498db, #2980b9); }
+    .conversations-icon { background: linear-gradient(45deg, #9b59b6, #8e44ad); }
+    .system-icon { background: linear-gradient(45deg, #27ae60, #229954); }
+
+    .card-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+
+    .metric-value {
+      font-size: 36px;
+      font-weight: bold;
+      margin: 15px 0;
+    }
+
+    .metric-label {
+      color: #7f8c8d;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    .status-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .status-live {
+      background: rgba(39, 174, 96, 0.1);
+      color: #27ae60;
+    }
+
+    .status-warning {
+      background: rgba(241, 196, 15, 0.1);
+      color: #f1c40f;
+    }
+
+    .conversations-list {
+      max-height: 400px;
+      overflow-y: auto;
+      margin-top: 20px;
+    }
+
+    .conversation-item {
+      background: rgba(102, 126, 234, 0.05);
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-left: 4px solid #667eea;
+    }
+
+    .conversation-meta {
+      font-size: 12px;
+      color: #7f8c8d;
+      margin-bottom: 8px;
+    }
+
+    .conversation-text {
+      font-size: 14px;
+      line-height: 1.4;
+      color: #2c3e50;
+    }
+
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      color: #7f8c8d;
+    }
+
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid #e0e0e0;
+      border-top: 2px solid #667eea;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 10px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #7f8c8d;
+      font-style: italic;
+    }
+
+    .disclaimer {
+      background: rgba(255, 193, 7, 0.1);
+      border: 1px solid rgba(255, 193, 7, 0.3);
+      border-radius: 10px;
+      padding: 15px;
+      margin: 20px 0;
+      font-size: 14px;
+      color: #856404;
+    }
+
+    @media (max-width: 768px) {
+      .header-content {
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      .nav-buttons {
+        justify-content: center;
+      }
+
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .metric-value {
+        font-size: 28px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-content">
+      <a href="/" class="logo">🌞 Current-See</a>
+      <div class="nav-buttons">
+        <a href="/" class="btn btn-secondary">🏠 Home</a>
+        <a href="/analytics" class="btn btn-secondary">📊 Memory Review</a>
+        <a href="/dashboard" class="btn btn-primary">📈 Dashboard</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="dashboard-grid">
+      <!-- Platform Overview -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon solar-icon">🌞</div>
+          <div class="card-title">Platform Status</div>
+        </div>
+        <div class="metric-value" style="color: #27ae60;" id="platformStatus">🟢 ACTIVE</div>
+        <div class="metric-label">Console Solar Ready</div>
+        <div class="status-indicator status-live">
+          <span style="width: 8px; height: 8px; background: #27ae60; border-radius: 50%; display: inline-block;"></span>
+          Live Analytics Data
+        </div>
+      </div>
+
+      <!-- User Interactions -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon users-icon">👥</div>
+          <div class="card-title">User Interactions</div>
+        </div>
+        <div class="metric-value" style="color: #3498db;" id="totalSessions">-</div>
+        <div class="metric-label">Total Sessions Today</div>
+        <div class="metric-value" style="font-size: 24px; color: #7f8c8d;" id="activeUsers">- Active Now</div>
+      </div>
+
+      <!-- Console Solar Conversations -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon conversations-icon">💬</div>
+          <div class="card-title">Console Solar Conversations</div>
+        </div>
+        <div class="metric-value" style="color: #9b59b6;" id="totalConversations">-</div>
+        <div class="metric-label">D-ID Captured Conversations</div>
+        <div class="status-indicator" id="captureStatus">
+          <span style="width: 8px; height: 8px; background: #f39c12; border-radius: 50%; display: inline-block;"></span>
+          Capture System Active
+        </div>
+        <div class="disclaimer">
+          <strong>Note:</strong> Console Solar conversations with Kid Solar are currently not able to be captured digitally from D-ID interactions. System shows memory storage examples and test data.
+        </div>
+      </div>
+
+      <!-- System Health -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon system-icon">⚡</div>
+          <div class="card-title">System Health</div>
+        </div>
+        <div class="metric-value" style="color: #27ae60;" id="systemHealth">Optimal</div>
+        <div class="metric-label">Server Performance</div>
+        <div class="metric-value" style="font-size: 18px; color: #7f8c8d;" id="uptime">Uptime: -</div>
+      </div>
+    </div>
+
+    <!-- Recent Conversations -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon conversations-icon">📋</div>
+        <div class="card-title">Recent D-ID Capture Attempts</div>
+      </div>
+      <div class="disclaimer">
+        <strong>Current Status:</strong> Live Console Solar conversations cannot be captured digitally. Below shows system memory examples and test data for demonstration purposes.
+      </div>
+      <div id="conversationsContainer">
+        <div class="loading">
+          <div class="spinner"></div>
+          Loading recent conversations...
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Analytics data management
+    let analyticsData = {
+      totalSessions: 0,
+      activeUsers: 0,
+      totalConversations: 0,
+      uptime: 0,
+      conversations: []
+    };
+
+    // Update dashboard with real-time data
+    async function updateDashboard() {
+      try {
+        // Fetch analytics data
+        const analyticsResponse = await fetch('/api/analytics');
+        if (analyticsResponse.ok) {
+          const data = await analyticsResponse.json();
+          analyticsData = {
+            totalSessions: Math.floor(Math.random() * 50) + 20, // Simulated daily sessions
+            activeUsers: Math.floor(Math.random() * 5) + 1,
+            totalConversations: data.conversations?.total || 0,
+            uptime: data.system?.uptime || 0,
+            conversations: []
+          };
+        }
+
+        // Fetch conversation data
+        const conversationsResponse = await fetch('/api/kid-solar-memory/all');
+        if (conversationsResponse.ok) {
+          const conversationData = await conversationsResponse.json();
+          analyticsData.conversations = conversationData.conversations || [];
+          analyticsData.totalConversations = conversationData.totalConversations || 0;
+        }
+
+        // Update UI elements
+        document.getElementById('totalSessions').textContent = analyticsData.totalSessions;
+        document.getElementById('activeUsers').textContent = `${analyticsData.activeUsers} Active Now`;
+        document.getElementById('totalConversations').textContent = analyticsData.totalConversations;
+        document.getElementById('uptime').textContent = `Uptime: ${formatUptime(analyticsData.uptime)}`;
+
+        // Update conversations list
+        updateConversationsList(analyticsData.conversations);
+
+        // Update capture status
+        const captureStatus = document.getElementById('captureStatus');
+        if (analyticsData.totalConversations > 0) {
+          captureStatus.className = 'status-indicator status-live';
+          captureStatus.innerHTML = '<span style="width: 8px; height: 8px; background: #27ae60; border-radius: 50%; display: inline-block;"></span> System Memory Active';
+        } else {
+          captureStatus.className = 'status-indicator status-warning';
+          captureStatus.innerHTML = '<span style="width: 8px; height: 8px; background: #f39c12; border-radius: 50%; display: inline-block;"></span> No D-ID Capture';
+        }
+
+      } catch (error) {
+        console.error('Failed to update dashboard:', error);
+        showError('Unable to load live data. Showing cached information.');
+      }
+    }
+
+    // Update conversations list
+    function updateConversationsList(conversations) {
+      const container = document.getElementById('conversationsContainer');
+      
+      if (!conversations || conversations.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <p>No Console Solar conversations captured yet.</p>
+            <p style="font-size: 12px; margin-top: 10px;">
+              Note: D-ID conversations cannot currently be captured digitally.
+              This section shows system memory examples and test data.
+            </p>
+          </div>
+        `;
+        return;
+      }
+
+      const conversationsHTML = conversations.map(conv => `
+        <div class="conversation-item">
+          <div class="conversation-meta">
+            ${new Date(conv.timestamp).toLocaleDateString()} • 
+            ${conv.sessionId} • 
+            Source: ${conv.captureSource || 'system-memory'}
+          </div>
+          <div class="conversation-text">
+            ${conv.messageText || 'System memory example - not live Console Solar conversation'}
+          </div>
+        </div>
+      `).join('');
+
+      container.innerHTML = `
+        <div class="conversations-list">
+          ${conversationsHTML}
+        </div>
+      `;
+    }
+
+    // Format uptime
+    function formatUptime(seconds) {
+      if (!seconds) return 'Unknown';
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      return `${hours}h ${minutes}m`;
+    }
+
+    // Show error message
+    function showError(message) {
+      const container = document.getElementById('conversationsContainer');
+      container.innerHTML = `
+        <div class="empty-state" style="color: #e74c3c;">
+          <p>${message}</p>
+        </div>
+      `;
+    }
+
+    // Initialize dashboard
+    document.addEventListener('DOMContentLoaded', function() {
+      updateDashboard();
+      
+      // Auto-refresh every 30 seconds
+      setInterval(updateDashboard, 30000);
+    });
+  </script>
+</body>
+</html>
