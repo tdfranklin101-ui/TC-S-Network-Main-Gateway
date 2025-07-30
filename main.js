@@ -18,10 +18,24 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // NOTE: Static files are served AFTER routes are defined to prevent route conflicts
+// Serve fixed homepage with all 5 critical fixes
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'final_deployment_package', 'deploy_v1_multimodal', 'index.html'));
+});
 
 // Session lifecycle API endpoints
 app.get('/session-management', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'session-management.html'));
+});
+
+// CRITICAL FIX: Analytics dashboard route (Issue #1)
+app.get('/analytics-dashboard', (req, res) => {
+  res.sendFile(path.join(__dirname, 'final_deployment_package', 'deploy_v1_multimodal', 'analytics-dashboard.html'));
+});
+
+// Memory review route
+app.get('/analytics', (req, res) => {
+  res.sendFile(path.join(__dirname, 'final_deployment_package', 'deploy_v1_multimodal', 'ai-memory-review.html'));
 });
 
 // File upload handling
