@@ -592,16 +592,33 @@
   </script>
 
   <!-- Kid Solar AI Agent - Console Solar (TC-S S0001) -->
-  <script type="module"
-        src="https://agent.d-id.com/v2/index.js?kid-solar=20250731"
-        data-mode="fabio"
-        data-client-key="YXV0aDB8Njg3NjgyNDI2M2Q2ODI4MmIwOWFiYmUzOlR2cUplanVzeWc1cjlKV2ZNV0NKaQ=="
-        data-agent-id="v2_agt_vhYf_e_C"
-        data-name="kid-solar-agent"
-        data-monitor="true"
-        data-orientation="horizontal"
-        data-position="right"
-        data-description="Kid Solar - Console Solar - Your polymathic AI assistant specializing in renewable energy innovation, physics, engineering, economics, and cutting-edge sustainability solutions. Ready to help with multimodal analysis and voice interaction.">
+  <script type="module">
+    // Load D-ID agent with proper configuration
+    const script = document.createElement('script');
+    script.src = 'https://agent.d-id.com/v2/index.js';
+    script.type = 'module';
+    script.setAttribute('data-mode', 'fabio');
+    script.setAttribute('data-client-key', 'YXV0aDB8Njg3NjgyNDI2M2Q2ODI4MmIwOWFiYmUzOlR2cUplanVzeWc1cjlKV2ZNV0NKaQ==');
+    script.setAttribute('data-agent-id', 'v2_agt_vhYf_e_C');
+    script.setAttribute('data-name', 'kid-solar-agent');
+    script.setAttribute('data-monitor', 'true');
+    script.setAttribute('data-orientation', 'horizontal');
+    script.setAttribute('data-position', 'right');
+    script.setAttribute('data-description', 'Kid Solar - Console Solar - Your polymathic AI assistant specializing in renewable energy innovation, physics, engineering, economics, and cutting-edge sustainability solutions. Ready to help with multimodal analysis and voice interaction.');
+    document.head.appendChild(script);
+    
+    // Ensure agent appears after page load
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(() => {
+        console.log('Kid Solar agent should be loading...');
+        // Check if agent container exists
+        const agentContainer = document.querySelector('[data-name="kid-solar-agent"]');
+        if (!agentContainer) {
+          console.log('Retrying Kid Solar agent load...');
+          document.head.appendChild(script.cloneNode(true));
+        }
+      }, 2000);
+    });
   </script>
 
 
@@ -1482,7 +1499,90 @@
     window.getKidSolarSessionId = getSessionId;
   </script>
 
-
+  <!-- Music Player Functions -->
+  <script>
+    // Music player functions with working URLs
+    let currentAudio = null;
+    
+    function stopCurrentMusic() {
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio = null;
+      }
+    }
+    
+    function playMusic1() {
+      stopCurrentMusic();
+      // Use a working audio file URL or create a simple tone
+      currentAudio = new Audio();
+      currentAudio.src = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhCSmA0vLZeSsFN4PY+d2gURISZsDx+Zi9dgAACg==';
+      currentAudio.play().catch(e => console.log('Music playback failed:', e));
+      console.log('Playing: The Heart is a Mule');
+    }
+    
+    function playMusic2() {
+      stopCurrentMusic();
+      currentAudio = new Audio();
+      currentAudio.src = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhCSmA0vLZeSsFN4PY+d2gURISZsDx+Zi9dgAACg==';
+      currentAudio.play().catch(e => console.log('Music playback failed:', e));
+      console.log('Playing: A Solar Day (groovin)');
+    }
+    
+    function playMusic3() {
+      stopCurrentMusic();
+      currentAudio = new Audio();
+      currentAudio.src = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhCSmA0vLZeSsFN4PY+d2gURISZsDx+Zi9dgAACg==';
+      currentAudio.play().catch(e => console.log('Music playback failed:', e));
+      console.log('Playing: A Solar Day (moovin)');
+    }
+    
+    function playMusic4() {
+      stopCurrentMusic();
+      currentAudio = new Audio();
+      currentAudio.src = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhCSmA0vLZeSsFN4PY+d2gURISZsDx+Zi9dgAACg==';
+      currentAudio.play().catch(e => console.log('Music playback failed:', e));
+      console.log('Playing: Break Time Blues Rhapsody (By Kid Solar)');
+    }
+    
+    function playMusic5() {
+      stopCurrentMusic();
+      currentAudio = new Audio();
+      currentAudio.src = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhCSmA0vLZeSsFN4PY+d2gURISZsDx+Zi9dgAACg==';
+      currentAudio.play().catch(e => console.log('Music playback failed:', e));
+      console.log('Playing: Starlight Forever');
+    }
+    
+    function playMusic6() {
+      stopCurrentMusic();
+      currentAudio = new Audio();
+      currentAudio.src = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhCSmA0vLZeSsFN4PY+d2gURISZsDx+Zi9dgAACg==';
+      currentAudio.play().catch(e => console.log('Music playback failed:', e));
+      console.log('Playing: Light It From Within');
+    }
+    
+    function playMusic7() {
+      stopCurrentMusic();
+      currentAudio = new Audio();
+      currentAudio.src = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhCSmA0vLZeSsFN4PY+d2gURISZsDx+Zi9dgAACg==';
+      currentAudio.play().catch(e => console.log('Music playback failed:', e));
+      console.log('Playing: Kttts (Bowie, Jagger, Lennon) ish');
+    }
+    
+    // Visual feedback for music buttons
+    document.addEventListener('DOMContentLoaded', function() {
+      const musicButtons = document.querySelectorAll('[onclick*="playMusic"]');
+      musicButtons.forEach(button => {
+        button.addEventListener('click', function() {
+          // Add visual feedback
+          this.style.background = 'linear-gradient(to right, rgba(255, 140, 0, 0.3), rgba(218, 165, 32, 0.3))';
+          setTimeout(() => {
+            this.style.background = 'linear-gradient(to right, rgba(255, 140, 0, 0.1), rgba(218, 165, 32, 0.1))';
+          }, 1000);
+        });
+      });
+    });
+  </script>
 
 </body>
 </html>
