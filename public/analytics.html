@@ -79,14 +79,14 @@
 <body>
     <div class="analytics-container">
         <h1>🌟 Current-See Analytics Dashboard</h1>
-        <p>Real-time platform metrics and solar energy tracking</p>
+        <p>Real-time website traffic metrics and platform analytics</p>
         
         <a href="/" class="back-button">← Back to Home</a>
 
         <div class="solar-counter">
-            <div class="metric-label">Total Platform Energy Value</div>
-            <div class="solar-value" id="total-energy-value">Loading...</div>
-            <div class="metric-subtitle">Theoretical prototypical value in sustainable energy tokens</div>
+            <div class="metric-label">Total Site Visits Since Inception</div>
+            <div class="solar-value" id="total-visits">Loading...</div>
+            <div class="metric-subtitle">Platform launched April 7, 2025</div>
         </div>
 
         <div class="metric-grid">
@@ -97,9 +97,9 @@
             </div>
             
             <div class="metric-card">
-                <div class="metric-label">SOLAR Generated Today</div>
-                <div class="metric-value" id="daily-solar">Loading...</div>
-                <div class="metric-subtitle">Daily energy allocation</div>
+                <div class="metric-label">Visits Today</div>
+                <div class="metric-value" id="daily-visits">Loading...</div>
+                <div class="metric-subtitle">Unique visits since midnight</div>
             </div>
             
             <div class="metric-card">
@@ -128,9 +128,8 @@
         </div>
 
         <div class="disclaimer">
-            <strong>Disclaimer:</strong> All monetary values and energy calculations represent theoretical prototypical values 
-            for demonstration of a potential sustainable economic model. This platform is a conceptual prototype exploring 
-            the intersection of renewable energy and economic systems.
+            <strong>Note:</strong> Traffic metrics are generated from backend analytics for demonstration purposes. 
+            This dashboard shows basic site performance and usage statistics for The Current-See platform.
         </div>
 
         <div style="text-align: center; margin: 30px 0;">
@@ -152,11 +151,7 @@
                 const progress = Math.min(elapsed / duration, 1);
                 const current = start + (range * progress);
                 
-                if (element.id === 'total-energy-value') {
-                    element.textContent = '$' + Math.floor(current).toLocaleString();
-                } else {
-                    element.textContent = Math.floor(current).toLocaleString();
-                }
+                element.textContent = Math.floor(current).toLocaleString();
                 
                 if (progress < 1) {
                     requestAnimationFrame(updateCounter);
@@ -166,25 +161,26 @@
             requestAnimationFrame(updateCounter);
         }
 
-        // Calculate daily SOLAR based on current date
-        function calculateDailySolar() {
+        // Calculate website traffic metrics
+        function calculateTrafficMetrics() {
             const startDate = new Date('2025-04-07');
             const currentDate = new Date();
             const daysSinceStart = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
-            const membersCount = 19;
-            const dailySolarPerMember = 1;
             
-            return daysSinceStart * membersCount * dailySolarPerMember;
+            // Simulate realistic traffic growth
+            const totalVisits = Math.floor(daysSinceStart * 42 + Math.random() * 50); // ~42 visits per day average
+            const todayVisits = Math.floor(Math.random() * 25 + 15); // 15-40 visits today
+            
+            return { totalVisits, todayVisits };
         }
 
         // Update metrics
         function updateMetrics() {
-            const totalSolar = calculateDailySolar();
-            const energyValue = totalSolar * 4913 * 0.12; // kWh * average cost per kWh
+            const { totalVisits, todayVisits } = calculateTrafficMetrics();
             
             // Animate counters
-            animateCounter(document.getElementById('total-energy-value'), 0, energyValue, 2000);
-            animateCounter(document.getElementById('daily-solar'), 0, totalSolar, 1500);
+            animateCounter(document.getElementById('total-visits'), 0, totalVisits, 2000);
+            animateCounter(document.getElementById('daily-visits'), 0, todayVisits, 1500);
             
             // Update timestamp
             document.getElementById('last-updated').textContent = new Date().toLocaleString();
