@@ -103,6 +103,45 @@ const server = http.createServer((req, res) => {
       return;
     }
 
+    // D-ID Streaming Conversation Capture Endpoint
+    if (pathname === '/api/conversation-stream' && req.method === 'POST') {
+      let body = '';
+      req.on('data', chunk => body += chunk.toString());
+      req.on('end', () => {
+        try {
+          const conversationData = JSON.parse(body);
+          
+          // Save to conversations directory with timestamp
+          const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+          const filename = `console_solar_stream_${timestamp}.json`;
+          const conversationsDir = path.join(fixedFilesPath, 'conversations');
+          
+          // Create conversations directory if it doesn't exist
+          if (!fs.existsSync(conversationsDir)) {
+            fs.mkdirSync(conversationsDir, { recursive: true });
+          }
+          
+          const filepath = path.join(conversationsDir, filename);
+          fs.writeFileSync(filepath, JSON.stringify(conversationData, null, 2));
+          
+          console.log(`📡 Streaming conversation saved: ${filename}`);
+          console.log(`💬 Content: ${conversationData.content ? conversationData.content.substring(0, 100) : 'No content'}`);
+          
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ 
+            success: true, 
+            filename: filename,
+            timestamp: conversationData.timestamp 
+          }));
+        } catch (error) {
+          console.error('Error saving streaming conversation:', error);
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Failed to save conversation data' }));
+        }
+      });
+      return;
+    }
+
     res.writeHead(404, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: 'API endpoint not found' }));
     return;
