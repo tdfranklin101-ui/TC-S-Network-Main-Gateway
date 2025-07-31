@@ -79,9 +79,18 @@ const server = http.createServer((req, res) => {
   // API endpoints
   if (pathname.startsWith('/api/')) {
     if (pathname === '/api/members') {
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ members: [], message: 'Production API ready' }));
-      return;
+      try {
+        const membersDataPath = path.join(fixedFilesPath, 'api', 'members.json');
+        const membersData = JSON.parse(fs.readFileSync(membersDataPath, 'utf8'));
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(membersData));
+        return;
+      } catch (error) {
+        console.error('Error loading members:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Unable to load member data', details: error.message }));
+        return;
+      }
     }
     
     if (pathname === '/api/solar-clock') {
