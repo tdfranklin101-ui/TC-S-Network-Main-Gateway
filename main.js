@@ -36,11 +36,6 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // Security headers
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
-
   // Health check endpoint
   if (pathname === '/health') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -48,10 +43,8 @@ const server = http.createServer(async (req, res) => {
       status: 'healthy',
       timestamp: new Date().toISOString(),
       service: 'Current-See Production Server',
-      consoleSolar: 'active',
-      enhancedCapture: 'operational',
-      deployment: 'PRODUCTION',
       version: '1.0.0',
+      deployment: 'PRODUCTION',
       uptime: process.uptime(),
       port: PORT,
       streamingCaptureActive: true
@@ -61,21 +54,21 @@ const server = http.createServer(async (req, res) => {
 
   // Homepage route
   if (pathname === '/') {
-    const indexPath = path.join(__dirname, 'public/index.html');
+    const indexPath = path.join(__dirname, 'index.html');
     serveFile(res, indexPath, 'text/html');
     return;
   }
 
   // Analytics dashboard route
   if (pathname === '/analytics-dashboard') {
-    const analyticsPath = path.join(__dirname, 'public/analytics-dashboard.html');
+    const analyticsPath = path.join(__dirname, 'analytics-dashboard.html');
     serveFile(res, analyticsPath, 'text/html');
     return;
   }
 
   // Memory review route  
   if (pathname === '/analytics') {
-    const memoryPath = path.join(__dirname, 'public/ai-memory-review.html');
+    const memoryPath = path.join(__dirname, 'ai-memory-review.html');
     serveFile(res, memoryPath, 'text/html');
     return;
   }
