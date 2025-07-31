@@ -1,140 +1,154 @@
-// Simple Deployment Server - The Current-See Platform
+// Working Deployment Server - The Current-See Platform
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
-// Use PORT from environment or default to 3000
 const PORT = process.env.PORT || 3000;
-const TIMESTAMP = Date.now();
 
-console.log(`Starting deployment server on port ${PORT}`);
-console.log(`Cache-bust timestamp: ${TIMESTAMP}`);
+console.log('🚀 Starting The Current-See Server...');
+console.log(`📡 Port: ${PORT}`);
+console.log(`📁 Directory: ${__dirname}`);
 
-// Create server
+// Verify files exist
+const indexPath = path.join(__dirname, 'public', 'index.html');
+console.log(`📄 Index file: ${fs.existsSync(indexPath) ? 'EXISTS' : 'MISSING'}`);
+
+if (fs.existsSync(indexPath)) {
+  const content = fs.readFileSync(indexPath, 'utf8');
+  const musicCount = (content.match(/function playMusic\d/g) || []).length;
+  const hasAgent = content.includes('v2_agt_vhYf_e_C');
+  console.log(`🎵 Music functions found: ${musicCount}`);
+  console.log(`🤖 D-ID agent found: ${hasAgent}`);
+}
+
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
   const pathname = url.pathname;
   
-  // Aggressive cache clearing
+  // Clear cache headers
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
-  res.setHeader('X-Timestamp', TIMESTAMP);
+  res.setHeader('Access-Control-Allow-Origin', '*');
   
   console.log(`${new Date().toISOString()} ${req.method} ${pathname}`);
 
-  // Health check
+  // Health endpoint
   if (pathname === '/health') {
-    // Check content
-    const indexPath = path.join(__dirname, 'public', 'index.html');
-    let musicFunctions = 0;
-    let didAgent = false;
+    let healthData = {
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      server: 'working-deployment',
+      content: { musicFunctions: 0, didAgent: false }
+    };
     
     try {
       if (fs.existsSync(indexPath)) {
-        const content = fs.readFileSync(indexPath, 'utf8');
-        musicFunctions = (content.match(/function playMusic\d/g) || []).length;
-        didAgent = content.includes('v2_agt_vhYf_e_C');
+        const html = fs.readFileSync(indexPath, 'utf8');
+        healthData.content.musicFunctions = (html.match(/function playMusic\d/g) || []).length;
+        healthData.content.didAgent = html.includes('v2_agt_vhYf_e_C');
       }
     } catch (e) {
       console.error('Health check error:', e);
     }
     
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({
-      status: 'healthy',
-      timestamp: new Date().toISOString(),
-      cacheBust: TIMESTAMP,
-      content: {
-        musicFunctions,
-        didAgent
-      }
-    }));
+    res.end(JSON.stringify(healthData, null, 2));
     return;
   }
 
-  // Homepage
-  if (pathname === '/' || pathname === '/index.html') {
-    const indexPath = path.join(__dirname, 'public', 'index.html');
-    
+  // Root path
+  if (pathname === '/') {
     try {
       if (fs.existsSync(indexPath)) {
-        const content = fs.readFileSync(indexPath, 'utf8');
-        
-        // Verify content
-        const musicCount = (content.match(/function playMusic\d/g) || []).length;
-        const hasAgent = content.includes('v2_agt_vhYf_e_C');
-        
-        console.log(`Serving homepage - Music: ${musicCount}, Agent: ${hasAgent}`);
-        
-        // Add cache-busting
-        const enhanced = content.replace(
-          '<head>',
-          `<head>
-          <meta http-equiv="Cache-Control" content="no-cache">
-          <meta http-equiv="Pragma" content="no-cache">
-          <meta http-equiv="Expires" content="0">
-          <!-- DEPLOY: ${TIMESTAMP} Music:${musicCount} Agent:${hasAgent} -->`
-        );
-        
+        const html = fs.readFileSync(indexPath, 'utf8');
+        console.log(`📤 Serving homepage (${html.length} bytes)`);
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-        res.end(enhanced);
+        res.end(html);
       } else {
+        console.error('❌ Index file not found');
         res.writeHead(404, { 'Content-Type': 'text/plain' });
-        res.end('Homepage not found');
+        res.end('Index file not found at: ' + indexPath);
       }
     } catch (error) {
-      console.error('Homepage error:', error);
+      console.error('❌ Homepage error:', error);
       res.writeHead(500, { 'Content-Type': 'text/plain' });
-      res.end('Server error');
+      res.end('Server error: ' + error.message);
     }
     return;
   }
 
-  // Static files
-  if (pathname.startsWith('/public/') || pathname.match(/\.(css|js|png|jpg|gif|ico)$/)) {
-    let filePath = pathname.startsWith('/public/') 
-      ? path.join(__dirname, pathname)
-      : path.join(__dirname, 'public', pathname);
+  // Static files from public directory
+  if (pathname.startsWith('/') && pathname !== '/') {
+    const filePath = path.join(__dirname, 'public', pathname);
     
     try {
-      if (fs.existsSync(filePath)) {
-        const ext = path.extname(filePath);
+      if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+        const ext = path.extname(filePath).toLowerCase();
         const mimeTypes = {
+          '.html': 'text/html',
           '.css': 'text/css',
           '.js': 'application/javascript',
+          '.json': 'application/json',
           '.png': 'image/png',
           '.jpg': 'image/jpeg',
+          '.jpeg': 'image/jpeg',
           '.gif': 'image/gif',
+          '.svg': 'image/svg+xml',
           '.ico': 'image/x-icon'
         };
         
         const contentType = mimeTypes[ext] || 'text/plain';
-        const content = fs.readFileSync(filePath);
+        const fileContent = fs.readFileSync(filePath);
         
         res.writeHead(200, { 'Content-Type': contentType });
-        res.end(content);
+        res.end(fileContent);
+        console.log(`📤 Served static file: ${pathname}`);
       } else {
         res.writeHead(404, { 'Content-Type': 'text/plain' });
-        res.end('File not found');
+        res.end('File not found: ' + pathname);
+        console.log(`❌ File not found: ${pathname}`);
       }
     } catch (error) {
-      console.error('Static file error:', error);
+      console.error('❌ Static file error:', error);
       res.writeHead(500, { 'Content-Type': 'text/plain' });
-      res.end('File error');
+      res.end('File error: ' + error.message);
     }
     return;
   }
 
   // 404 for everything else
   res.writeHead(404, { 'Content-Type': 'text/plain' });
-  res.end('Not found');
+  res.end('Not found: ' + pathname);
 });
 
-// Start server
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`✅ Deployment server running on port ${PORT}`);
-  console.log(`🎵 Checking for music functions...`);
-  console.log(`🤖 Checking for D-ID agent...`);
-  console.log(`🔄 Cache-bust active: ${TIMESTAMP}`);
+server.listen(PORT, '0.0.0.0', (err) => {
+  if (err) {
+    console.error('❌ Server failed to start:', err);
+    process.exit(1);
+  }
+  
+  console.log(`✅ Server running on http://0.0.0.0:${PORT}`);
+  console.log(`🌐 Ready for deployment`);
+  console.log('📋 Available endpoints:');
+  console.log('  - / (homepage)');
+  console.log('  - /health (server status)');
+  console.log('========================================');
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('🛑 SIGTERM received, shutting down...');
+  server.close(() => {
+    console.log('✅ Server closed');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('🛑 SIGINT received, shutting down...');
+  server.close(() => {
+    console.log('✅ Server closed');
+    process.exit(0);
+  });
 });

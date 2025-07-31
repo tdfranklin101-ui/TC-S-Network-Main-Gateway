@@ -1,82 +1,154 @@
-#!/usr/bin/env node
-
-const express = require('express');
+// Working Deployment Server - The Current-See Platform
+const http = require('http');
+const fs = require('fs');
 const path = require('path');
-const multer = require('multer');
 
-const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Basic middleware
-app.use(express.static('public'));
-app.use(express.json());
+console.log('🚀 Starting The Current-See Server...');
+console.log(`📡 Port: ${PORT}`);
+console.log(`📁 Directory: ${__dirname}`);
 
-// File upload setup
-const upload = multer({ 
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 }
-});
+// Verify files exist
+const indexPath = path.join(__dirname, 'public', 'index.html');
+console.log(`📄 Index file: ${fs.existsSync(indexPath) ? 'EXISTS' : 'MISSING'}`);
 
-// Health check
-app.get('/health', (req, res) => {
-  res.json({
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    service: 'Current-See Working Server'
-  });
-});
+if (fs.existsSync(indexPath)) {
+  const content = fs.readFileSync(indexPath, 'utf8');
+  const musicCount = (content.match(/function playMusic\d/g) || []).length;
+  const hasAgent = content.includes('v2_agt_vhYf_e_C');
+  console.log(`🎵 Music functions found: ${musicCount}`);
+  console.log(`🤖 D-ID agent found: ${hasAgent}`);
+}
 
-// Basic routes
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+const server = http.createServer((req, res) => {
+  const url = new URL(req.url, `http://${req.headers.host}`);
+  const pathname = url.pathname;
+  
+  // Clear cache headers
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  
+  console.log(`${new Date().toISOString()} ${req.method} ${pathname}`);
 
-app.get('/test', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'multimodal-test.html'));
-});
-
-// Multimodal photo upload endpoint (simplified for testing)
-app.post('/api/photo-analysis', upload.single('photo'), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ error: 'No photo uploaded' });
-    }
-
-    // Simplified response for testing deployment
-    res.json({
-      analysis: "Hello! I'm Kid Solar (TC-S S0001). I can see your photo! The multimodal interface is working. In the full version, I'll provide detailed energy analysis using OpenAI GPT-4o. This confirms the upload functionality is operational!",
+  // Health endpoint
+  if (pathname === '/health') {
+    let healthData = {
+      status: 'healthy',
       timestamp: new Date().toISOString(),
-      fileSize: req.file.size,
-      fileType: req.file.mimetype
-    });
-
-  } catch (error) {
-    res.status(500).json({ 
-      error: 'Analysis failed',
-      message: error.message 
-    });
+      server: 'working-deployment',
+      content: { musicFunctions: 0, didAgent: false }
+    };
+    
+    try {
+      if (fs.existsSync(indexPath)) {
+        const html = fs.readFileSync(indexPath, 'utf8');
+        healthData.content.musicFunctions = (html.match(/function playMusic\d/g) || []).length;
+        healthData.content.didAgent = html.includes('v2_agt_vhYf_e_C');
+      }
+    } catch (e) {
+      console.error('Health check error:', e);
+    }
+    
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(healthData, null, 2));
+    return;
   }
+
+  // Root path
+  if (pathname === '/') {
+    try {
+      if (fs.existsSync(indexPath)) {
+        const html = fs.readFileSync(indexPath, 'utf8');
+        console.log(`📤 Serving homepage (${html.length} bytes)`);
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end(html);
+      } else {
+        console.error('❌ Index file not found');
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.end('Index file not found at: ' + indexPath);
+      }
+    } catch (error) {
+      console.error('❌ Homepage error:', error);
+      res.writeHead(500, { 'Content-Type': 'text/plain' });
+      res.end('Server error: ' + error.message);
+    }
+    return;
+  }
+
+  // Static files from public directory
+  if (pathname.startsWith('/') && pathname !== '/') {
+    const filePath = path.join(__dirname, 'public', pathname);
+    
+    try {
+      if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+        const ext = path.extname(filePath).toLowerCase();
+        const mimeTypes = {
+          '.html': 'text/html',
+          '.css': 'text/css',
+          '.js': 'application/javascript',
+          '.json': 'application/json',
+          '.png': 'image/png',
+          '.jpg': 'image/jpeg',
+          '.jpeg': 'image/jpeg',
+          '.gif': 'image/gif',
+          '.svg': 'image/svg+xml',
+          '.ico': 'image/x-icon'
+        };
+        
+        const contentType = mimeTypes[ext] || 'text/plain';
+        const fileContent = fs.readFileSync(filePath);
+        
+        res.writeHead(200, { 'Content-Type': contentType });
+        res.end(fileContent);
+        console.log(`📤 Served static file: ${pathname}`);
+      } else {
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.end('File not found: ' + pathname);
+        console.log(`❌ File not found: ${pathname}`);
+      }
+    } catch (error) {
+      console.error('❌ Static file error:', error);
+      res.writeHead(500, { 'Content-Type': 'text/plain' });
+      res.end('File error: ' + error.message);
+    }
+    return;
+  }
+
+  // 404 for everything else
+  res.writeHead(404, { 'Content-Type': 'text/plain' });
+  res.end('Not found: ' + pathname);
 });
 
-// Error handling
-app.use((err, req, res, next) => {
-  console.error('Server error:', err);
-  res.status(500).json({ error: 'Internal server error' });
+server.listen(PORT, '0.0.0.0', (err) => {
+  if (err) {
+    console.error('❌ Server failed to start:', err);
+    process.exit(1);
+  }
+  
+  console.log(`✅ Server running on http://0.0.0.0:${PORT}`);
+  console.log(`🌐 Ready for deployment`);
+  console.log('📋 Available endpoints:');
+  console.log('  - / (homepage)');
+  console.log('  - /health (server status)');
+  console.log('========================================');
 });
 
-// Start server
-const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log(`✅ Current-See Working Server running on port ${PORT}`);
-  console.log(`🌐 Access at: http://0.0.0.0:${PORT}`);
-  console.log(`📸 Test multimodal: Upload a photo to see Kid Solar respond`);
-});
-
-// Handle shutdown gracefully
+// Graceful shutdown
 process.on('SIGTERM', () => {
-  console.log('SIGTERM received, shutting down gracefully');
+  console.log('🛑 SIGTERM received, shutting down...');
   server.close(() => {
-    console.log('Process terminated');
+    console.log('✅ Server closed');
+    process.exit(0);
   });
 });
 
-module.exports = app;
+process.on('SIGINT', () => {
+  console.log('🛑 SIGINT received, shutting down...');
+  server.close(() => {
+    console.log('✅ Server closed');
+    process.exit(0);
+  });
+});
