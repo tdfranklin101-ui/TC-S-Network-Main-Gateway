@@ -1,12 +1,8 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const url = require('url');
 
 const PORT = process.env.PORT || 3000;
-
-// PRODUCTION FIX: Serve corrected files with all 5 critical fixes
-const fixedFilesPath = path.join(__dirname, 'final_deployment_package', 'deploy_v1_multimodal');
 
 // MIME types for static files
 const mimeTypes = {
@@ -19,26 +15,28 @@ const mimeTypes = {
   '.jpeg': 'image/jpeg',
   '.gif': 'image/gif',
   '.svg': 'image/svg+xml',
+  '.ico': 'image/x-icon',
+  '.mp3': 'audio/mpeg',
+  '.wav': 'audio/wav',
   '.pdf': 'application/pdf'
 };
 
-const server = http.createServer((req, res) => {
-  const parsedUrl = url.parse(req.url, true);
-  const pathname = parsedUrl.pathname;
+const server = http.createServer(async (req, res) => {
+  const url = new URL(req.url, `http://${req.headers.host}`);
+  const pathname = url.pathname;
 
-  // Set CORS headers
+  // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-  // Handle OPTIONS preflight
   if (req.method === 'OPTIONS') {
     res.writeHead(200);
     res.end();
     return;
   }
 
-  // Route handling
+  // Health check endpoint
   if (pathname === '/health') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({
@@ -48,42 +46,99 @@ const server = http.createServer((req, res) => {
       version: '1.0.0',
       deployment: 'PRODUCTION',
       uptime: process.uptime(),
-      fixedFiles: fs.existsSync(fixedFilesPath),
       port: PORT,
-      allFixesActive: true
+      streamingCaptureActive: true
     }));
     return;
   }
 
-  // Homepage route - serve fixed index.html
+  // Homepage route
   if (pathname === '/') {
-    const indexPath = path.join(fixedFilesPath, 'index.html');
+    const indexPath = path.join(__dirname, 'index.html');
     serveFile(res, indexPath, 'text/html');
     return;
   }
 
-  // Analytics dashboard route (Fix #1)
+  // Analytics dashboard route
   if (pathname === '/analytics-dashboard') {
-    const analyticsPath = path.join(fixedFilesPath, 'analytics-dashboard.html');
+    const analyticsPath = path.join(__dirname, 'analytics-dashboard.html');
     serveFile(res, analyticsPath, 'text/html');
     return;
   }
 
   // Memory review route  
   if (pathname === '/analytics') {
-    const memoryPath = path.join(fixedFilesPath, 'ai-memory-review.html');
+    const memoryPath = path.join(__dirname, 'ai-memory-review.html');
     serveFile(res, memoryPath, 'text/html');
     return;
   }
 
   // API endpoints
   if (pathname.startsWith('/api/')) {
+    // Enhanced conversation capture endpoint for Console Solar responses
+    if (pathname === '/api/enhanced-conversation-capture') {
+      let body = '';
+      req.on('data', chunk => {
+        body += chunk.toString();
+      });
+      
+      req.on('end', () => {
+        try {
+          const data = JSON.parse(body);
+          console.log('Enhanced Console Solar response captured:', data.responseText ? data.responseText.substring(0, 100) + '...' : 'No text');
+          
+          // Store conversation data with enhanced metadata
+          const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+          const filename = `conversations/console_solar_${timestamp}_${data.source}.json`;
+          const fullPath = path.join(__dirname, filename);
+          
+          // Ensure conversations directory exists
+          const conversationsDir = path.join(__dirname, 'conversations');
+          if (!fs.existsSync(conversationsDir)) {
+            fs.mkdirSync(conversationsDir, { recursive: true });
+          }
+          
+          // Enhanced data structure for Console Solar responses
+          const enhancedData = {
+            ...data,
+            captureMethod: 'enhanced-audio-capture',
+            processingTimestamp: new Date().toISOString(),
+            responseLength: data.responseText ? data.responseText.length : 0,
+            qualityScore: data.responseText && data.responseText.length > 50 ? 'high' : 'low'
+          };
+          
+          fs.writeFileSync(fullPath, JSON.stringify(enhancedData, null, 2));
+          
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ 
+            success: true, 
+            stored: filename,
+            responseLength: enhancedData.responseLength,
+            qualityScore: enhancedData.qualityScore
+          }));
+        } catch (error) {
+          console.error('Enhanced capture error:', error);
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Invalid request data' }));
+        }
+      });
+      return;
+    }
+    
     if (pathname === '/api/members') {
       try {
-        const membersDataPath = path.join(fixedFilesPath, 'api', 'members.json');
+        const membersDataPath = path.join(__dirname, 'api', 'members.json');
         const membersData = JSON.parse(fs.readFileSync(membersDataPath, 'utf8'));
+        
+        // Format response to match expected structure
+        const response = {
+          members: membersData,
+          totalMembers: membersData.length,
+          lastUpdated: new Date().toISOString()
+        };
+        
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(membersData));
+        res.end(JSON.stringify(response));
         return;
       } catch (error) {
         console.error('Error loading members:', error);
@@ -114,7 +169,7 @@ const server = http.createServer((req, res) => {
           // Save to conversations directory with timestamp
           const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
           const filename = `console_solar_stream_${timestamp}.json`;
-          const conversationsDir = path.join(fixedFilesPath, 'conversations');
+          const conversationsDir = path.join(__dirname, 'conversations');
           
           // Create conversations directory if it doesn't exist
           if (!fs.existsSync(conversationsDir)) {
@@ -145,7 +200,7 @@ const server = http.createServer((req, res) => {
     // Kid Solar Memory API - Load streaming conversations for memory page
     if (pathname === '/api/kid-solar-memory/all') {
       try {
-        const conversationsDir = path.join(fixedFilesPath, 'conversations');
+        const conversationsDir = path.join(__dirname, 'conversations');
         let conversations = [];
         let totalMessages = 0;
         let uniqueSessions = new Set();
@@ -225,8 +280,8 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // Static files from corrected deployment package
-  const filePath = path.join(fixedFilesPath, pathname);
+  // Static files
+  const filePath = path.join(__dirname, pathname);
   
   if (fs.existsSync(filePath) && !fs.statSync(filePath).isDirectory()) {
     const ext = path.extname(filePath);
@@ -271,7 +326,7 @@ function getConversationType(conversationData) {
 }
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log('✅ PRODUCTION SERVER WITH D-ID STREAMING CAPTURE READY');
+  console.log('✅ CURRENT-SEE PRODUCTION SERVER WITH D-ID STREAMING CAPTURE');
   console.log(`📡 Server: http://localhost:${PORT}`);
   console.log('🎬 D-ID Streaming Features Active:');
   console.log('   📡 /api/conversation-stream - Real-time D-ID capture');
@@ -279,7 +334,7 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log('   🗂️  Conversations stored in /conversations/ directory');
   console.log('   🔗 Memory page automatically shows streaming conversations');
   console.log('==============================');
-  console.log('🚀 DEPLOYMENT READY - STREAMING CAPTURE ACTIVE!');
+  console.log('🚀 READY FOR WWW.THECURRENTSEE.ORG DEPLOYMENT!');
 });
 
 // Graceful shutdown

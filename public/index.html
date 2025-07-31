@@ -29,6 +29,7 @@
               <a href="/whitepapers.html" style="color: #FFC107; text-decoration: none; margin: 0 10px; font-size: 0.9em;">White Papers</a>
               <a href="/declaration.html" style="color: #FFC107; text-decoration: none; margin: 0 10px; font-size: 0.9em;">Declaration</a>
               <a href="/founder_note.html" style="color: #FFC107; text-decoration: none; margin: 0 10px; font-size: 0.9em;">Founder's Note</a>
+              <a href="/analytics-dashboard" style="background: linear-gradient(45deg, #4CAF50, #2196F3); color: white; text-decoration: none; padding: 6px 12px; border-radius: 15px; font-size: 0.8em; font-weight: bold; margin: 0 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: transform 0.2s ease;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">📊 Dashboard</a>
             </div>
           </div>
         </div>
@@ -195,7 +196,7 @@
               </a>
               
               <!-- TC-SVR Game Link -->
-              <a href="https://pika.art/video/4be0181a-b6f5-4418-a1c6-18a18bcf7987" target="_blank" style="display: flex; align-items: center; text-decoration: none; padding: 12px; border-radius: 8px; background: linear-gradient(to right, rgba(123, 193, 68, 0.1), rgba(0, 87, 184, 0.1)); border: 1px solid rgba(123, 193, 68, 0.3); transition: all 0.3s ease;">
+              <a href="https://pika.art/video/4be0181a-b6f5-4418-a1c6-18a18bcf7987" target="_blank" style="display: flex; align-items: center; text-decoration: none; padding: 12px; border-radius: 8px; background: linear-gradient(to right, rgba(123, 193, 68, 0.1), rgba(0, 87, 184, 0.1)); border: 1px solid rgba(123, 193, 68, 0.3); transition: all 0.3s ease; margin-bottom: 10px;">
                 <div style="background: linear-gradient(to right, #7bc144, #0057B8); width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-right: 15px;">
                   <span style="color: white; font-weight: bold;">6</span>
                 </div>
@@ -204,6 +205,18 @@
                   <p style="margin: 0; color: #555; font-size: 14px;">Coming Soon - Immersive solar-powered gaming experience</p>
                 </div>
                 <span style="color: #0057B8; font-weight: bold;">→</span>
+              </a>
+              
+              <!-- Growing Volts like trees Video -->
+              <a href="https://pika.art/video/4d1c8e0f-ff1d-4cdf-8d2e-5346d34b210c" target="_blank" style="display: flex; align-items: center; text-decoration: none; padding: 12px; border-radius: 8px; background: linear-gradient(to right, rgba(34, 139, 34, 0.1), rgba(50, 205, 50, 0.1)); border: 1px solid rgba(34, 139, 34, 0.3); transition: all 0.3s ease; color: inherit; margin-bottom: 10px;">
+                <div style="background: linear-gradient(to right, #228B22, #32CD32); width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-right: 15px;">
+                  <span style="color: white; font-weight: bold;">🌳</span>
+                </div>
+                <div style="flex: 1;">
+                  <h4 style="margin: 0 0 5px 0; color: #228B22;">Growing Volts like trees...Solar biomicary</h4>
+                  <p style="margin: 0; color: #555; font-size: 14px;">(Prompt by Kid Solar) Watch energy grow naturally like trees</p>
+                </div>
+                <span style="color: #228B22; font-weight: bold;">→</span>
               </a>
               
               <!-- TC-S Network Commissioning Link -->
@@ -242,7 +255,79 @@
                 <span style="color: #0057B8; font-weight: bold;">→</span>
               </a>
               
-              <!-- Music Now Button - Kttts -->
+              <!-- Music Now Button 1 -->
+              <button onclick="playMusic1()" style="display: flex; align-items: center; text-decoration: none; padding: 12px; border-radius: 8px; background: linear-gradient(to right, rgba(255, 140, 0, 0.1), rgba(218, 165, 32, 0.1)); border: 1px solid rgba(255, 140, 0, 0.3); transition: all 0.3s ease; cursor: pointer; width: 100%; border: none; margin-bottom: 10px;">
+                <div style="background: linear-gradient(to right, #ff8c00, #daa520); width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-right: 15px;">
+                  <span style="color: white; font-weight: bold;">🎵</span>
+                </div>
+                <div style="flex: 1; text-align: left;">
+                  <h4 style="margin: 0 0 5px 0; color: #ff8c00;">Music Now</h4>
+                  <p style="margin: 0; color: #555; font-size: 14px;">The Heart is a Mule (by Robert Hunter, Allen Ginsberg and William Burroughs (ish))</p>
+                </div>
+                <span style="color: #ff8c00; font-weight: bold;">♪</span>
+              </button>
+              
+              <!-- Music Now Button 2 -->
+              <button onclick="playMusic2()" style="display: flex; align-items: center; text-decoration: none; padding: 12px; border-radius: 8px; background: linear-gradient(to right, rgba(255, 140, 0, 0.1), rgba(218, 165, 32, 0.1)); border: 1px solid rgba(255, 140, 0, 0.3); transition: all 0.3s ease; cursor: pointer; width: 100%; border: none; margin-bottom: 10px;">
+                <div style="background: linear-gradient(to right, #ff8c00, #daa520); width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-right: 15px;">
+                  <span style="color: white; font-weight: bold;">🎶</span>
+                </div>
+                <div style="flex: 1; text-align: left;">
+                  <h4 style="margin: 0 0 5px 0; color: #ff8c00;">Music Now</h4>
+                  <p style="margin: 0; color: #555; font-size: 14px;">A Solar Day (groovin)</p>
+                </div>
+                <span style="color: #ff8c00; font-weight: bold;">♪</span>
+              </button>
+              
+              <!-- Music Now Button 3 -->
+              <button onclick="playMusic3()" style="display: flex; align-items: center; text-decoration: none; padding: 12px; border-radius: 8px; background: linear-gradient(to right, rgba(255, 140, 0, 0.1), rgba(218, 165, 32, 0.1)); border: 1px solid rgba(255, 140, 0, 0.3); transition: all 0.3s ease; cursor: pointer; width: 100%; border: none; margin-bottom: 10px;">
+                <div style="background: linear-gradient(to right, #ff8c00, #daa520); width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-right: 15px;">
+                  <span style="color: white; font-weight: bold;">🎼</span>
+                </div>
+                <div style="flex: 1; text-align: left;">
+                  <h4 style="margin: 0 0 5px 0; color: #ff8c00;">Music Now</h4>
+                  <p style="margin: 0; color: #555; font-size: 14px;">A Solar Day (moovin)</p>
+                </div>
+                <span style="color: #ff8c00; font-weight: bold;">♪</span>
+              </button>
+              
+              <!-- Music Now Button 4 -->
+              <button onclick="playMusic4()" style="display: flex; align-items: center; text-decoration: none; padding: 12px; border-radius: 8px; background: linear-gradient(to right, rgba(255, 140, 0, 0.1), rgba(218, 165, 32, 0.1)); border: 1px solid rgba(255, 140, 0, 0.3); transition: all 0.3s ease; cursor: pointer; width: 100%; border: none; margin-bottom: 10px;">
+                <div style="background: linear-gradient(to right, #ff8c00, #daa520); width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-right: 15px;">
+                  <span style="color: white; font-weight: bold;">🎺</span>
+                </div>
+                <div style="flex: 1; text-align: left;">
+                  <h4 style="margin: 0 0 5px 0; color: #ff8c00;">Music Now</h4>
+                  <p style="margin: 0; color: #555; font-size: 14px;">Break Time Blues Rhapsody (By Kid Solar)</p>
+                </div>
+                <span style="color: #ff8c00; font-weight: bold;">♪</span>
+              </button>
+              
+              <!-- Music Now Button 5 -->
+              <button onclick="playMusic5()" style="display: flex; align-items: center; text-decoration: none; padding: 12px; border-radius: 8px; background: linear-gradient(to right, rgba(255, 140, 0, 0.1), rgba(218, 165, 32, 0.1)); border: 1px solid rgba(255, 140, 0, 0.3); transition: all 0.3s ease; cursor: pointer; width: 100%; border: none; margin-bottom: 10px;">
+                <div style="background: linear-gradient(to right, #ff8c00, #daa520); width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-right: 15px;">
+                  <span style="color: white; font-weight: bold;">⭐</span>
+                </div>
+                <div style="flex: 1; text-align: left;">
+                  <h4 style="margin: 0 0 5px 0; color: #ff8c00;">Music Now</h4>
+                  <p style="margin: 0; color: #555; font-size: 14px;">Starlight Forever</p>
+                </div>
+                <span style="color: #ff8c00; font-weight: bold;">♪</span>
+              </button>
+              
+              <!-- Music Now Button 6 -->
+              <button onclick="playMusic6()" style="display: flex; align-items: center; text-decoration: none; padding: 12px; border-radius: 8px; background: linear-gradient(to right, rgba(255, 140, 0, 0.1), rgba(218, 165, 32, 0.1)); border: 1px solid rgba(255, 140, 0, 0.3); transition: all 0.3s ease; cursor: pointer; width: 100%; border: none; margin-bottom: 10px;">
+                <div style="background: linear-gradient(to right, #ff8c00, #daa520); width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-right: 15px;">
+                  <span style="color: white; font-weight: bold;">💡</span>
+                </div>
+                <div style="flex: 1; text-align: left;">
+                  <h4 style="margin: 0 0 5px 0; color: #ff8c00;">Music Now</h4>
+                  <p style="margin: 0; color: #555; font-size: 14px;">Light It From Within</p>
+                </div>
+                <span style="color: #ff8c00; font-weight: bold;">♪</span>
+              </button>
+              
+              <!-- Music Now Button 7 -->
               <button onclick="playMusic7()" style="display: flex; align-items: center; text-decoration: none; padding: 12px; border-radius: 8px; background: linear-gradient(to right, rgba(255, 140, 0, 0.1), rgba(218, 165, 32, 0.1)); border: 1px solid rgba(255, 140, 0, 0.3); transition: all 0.3s ease; cursor: pointer; width: 100%; border: none;">
                 <div style="background: linear-gradient(to right, #ff8c00, #daa520); width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-right: 15px;">
                   <span style="color: white; font-weight: bold;">🎤</span>
@@ -277,7 +362,7 @@
             </div>
             <!-- Value Created row removed as requested -->
             <div class="counter-info" id="kwh-rate-display">
-              1 Solar = 4,913 kWh (based on 1% of Earth's solar input divided among 8.5B people)
+              1 Solar = 4,913 kWh (prototypical theoretical value based on 1% of Earth's solar input divided among 8.5B people)
             </div>
           </div>
           <div class="view-all-button">
@@ -317,7 +402,7 @@
               <!-- Value Created row removed as requested -->
               
               <div class="global-counter-info">
-                1 Solar = 4,913 kWh (based on 1% of Earth's solar input divided among 8.5B people)
+                1 Solar = 4,913 kWh (prototypical theoretical value based on 1% of Earth's solar input divided among 8.5B people)
               </div>
             </div>
           </div>
@@ -506,325 +591,619 @@
     });
   </script>
 
-
-
-  <!-- Multimodal Kid Solar Interface -->
-  <div id="kid-solar-multimodal" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: none;">
-    <div style="background: linear-gradient(135deg, #4CAF50, #81C784); border-radius: 15px; padding: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); color: white; max-width: 300px;">
-      <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 10px;">
-        <h6 style="margin: 0; font-weight: bold;">Kid Solar Multimodal</h6>
-        <button onclick="closeKidSolarMultimodal()" style="background: none; border: none; color: white; font-size: 18px; cursor: pointer; padding: 0; margin-left: auto;">&times;</button>
-      </div>
-      
-      <!-- Input Type Selector -->
-      <div style="margin-bottom: 10px;">
-        <div style="display: flex; gap: 5px; margin-bottom: 10px;">
-          <button onclick="setKidSolarMode('photo')" id="photo-mode-btn" style="flex: 1; padding: 8px; border: none; border-radius: 8px; background: rgba(255,255,255,0.3); color: white; cursor: pointer; font-size: 12px;">📷 Photo</button>
-          <button onclick="setKidSolarMode('video')" id="video-mode-btn" style="flex: 1; padding: 8px; border: none; border-radius: 8px; background: rgba(255,255,255,0.2); color: white; cursor: pointer; font-size: 12px;">🎥 Video</button>
-          <button onclick="setKidSolarMode('text')" id="text-mode-btn" style="flex: 1; padding: 8px; border: none; border-radius: 8px; background: rgba(255,255,255,0.2); color: white; cursor: pointer; font-size: 12px;">💬 Chat</button>
-        </div>
-      </div>
-
-      <!-- Photo Upload -->
-      <div id="photo-upload-section" style="display: block;">
-        <input type="file" id="kid-solar-photo" accept="image/*" style="width: 100%; padding: 8px; border: none; border-radius: 8px; margin-bottom: 10px; font-size: 12px;">
-        <button onclick="analyzeKidSolarPhoto()" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.9); color: #2E7D32; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Analyze Photo</button>
-      </div>
-
-      <!-- Video Upload -->
-      <div id="video-upload-section" style="display: none;">
-        <input type="file" id="kid-solar-video" accept="video/*" style="width: 100%; padding: 8px; border: none; border-radius: 8px; margin-bottom: 10px; font-size: 12px;">
-        <button onclick="analyzeKidSolarVideo()" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.9); color: #2E7D32; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Analyze Video</button>
-      </div>
-
-      <!-- Text Input -->
-      <div id="text-input-section" style="display: none;">
-        <textarea id="kid-solar-text" placeholder="Ask Kid Solar about energy..." style="width: 100%; padding: 8px; border: none; border-radius: 8px; margin-bottom: 10px; height: 60px; resize: none; font-size: 12px;"></textarea>
-        <button onclick="analyzeKidSolarText()" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.9); color: #2E7D32; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Ask Kid Solar</button>
-      </div>
-
-      <!-- Loading indicator -->
-      <div id="kid-solar-loading" style="display: none; text-align: center; margin-top: 10px;">
-        <div style="display: inline-block; width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 1s ease-in-out infinite;"></div>
-        <p style="margin: 5px 0 0 0; font-size: 12px;">Kid Solar is thinking...</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- D-ID AI Agent -->
+  <!-- D-ID AI Agent - Console Solar (Fresh Embedding Ready) -->
   <script type="module"
         src="https://agent.d-id.com/v2/index.js"
         data-mode="fabio"
         data-client-key="YXV0aDB8Njg3NjgyNDI2M2Q2ODI4MmIwOWFiYmUzOlR2cUplanVzeWc1cjlKV2ZNV0NKaQ=="
         data-agent-id="v2_agt_vhYf_e_C"
         data-name="did-agent"
-        data-description="Console Solar - Kid Solar - Your polymathic AI assistant specializing in renewable energy innovation, physics, engineering, economics, and cutting-edge sustainability solutions."
         data-monitor="true"
         data-orientation="horizontal"
-        data-position="right"
-        data-on-ready="initKidSolarEnhancement">
+        data-position="right">
   </script>
 
-  <!-- Kid Solar Multimodal Scripts -->
-  <script>
-    let kidSolarMode = 'photo';
-    
-    // CSS animations for loading spinner and floating button
-    const style = document.createElement('style');
-    style.textContent = `
-      @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-      }
-      @keyframes float {
-        0% { transform: translateY(0px); }
-        50% { transform: translateY(-10px); }
-        100% { transform: translateY(0px); }
-      }
-    `;
-    document.head.appendChild(style);
+  <!-- Console Solar Conversation Capture System -->
+  <script src="enhanced-did-capture.js"></script>
+  
+  <!-- D-ID Streaming JSON Capture (Innovative Approach) -->
+  <script src="d-id-streaming-capture.js"></script>
+  
+  <!-- Advanced Network-Level D-ID Interceptor -->
+  <script src="d-id-network-interceptor.js"></script>
 
-    function initKidSolarEnhancement() {
-      // Add multimodal button to D-ID interface with multiple attempts
-      let attempts = 0;
-      const maxAttempts = 10;
+  <!-- Note: Multimodal features removed as requested (non-functional) -->
+  
+  <script>
+    // Multimodal functions removed as requested (non-functional)
+    
+    // Anonymous session tracking for platform analytics
+    let sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    let sessionStartTime = Date.now();
+    let interactionCount = 0;
+
+    function trackKidSolarInteraction(action, additionalData = {}) {
+      interactionCount++;
       
-      function addMultimodalButton() {
-        attempts++;
-        console.log(`Attempting to add multimodal button (attempt ${attempts})`);
+      const data = {
+        sessionId: sessionId,
+        timestamp: new Date().toISOString(),
+        action: action,
+        timeFromStart: Date.now() - sessionStartTime,
+        interactionNumber: interactionCount,
+        userAgent: navigator.userAgent,
+        ...additionalData
+      };
+
+      // Send to analytics endpoint
+      fetch('/api/analytics/interaction', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      }).catch(error => {
+        console.log('📊 Analytics tracking failed (offline mode)');
+      });
+    }
+
+    function getSessionId() {
+      return sessionId;
+    }
+
+    // Track page load
+    document.addEventListener('DOMContentLoaded', function() {
+      trackKidSolarInteraction('page_load', { 
+        page: window.location.pathname,
+        referrer: document.referrer
+      });
+      
+      console.log('📊 Analytics tracking initialized for homepage');
+    });
+
+    
+    function openVideo() {
+      closeMultimodalMenu();
+      const input = document.getElementById('didMultimodalInput');
+      input.accept = 'video/*';
+      input.capture = 'environment';
+      input.click();
+    }
+    
+    function openPhotoLibrary() {
+      closeMultimodalMenu();
+      const input = document.getElementById('didMultimodalInput');
+      input.accept = 'image/*';
+      input.removeAttribute('capture');
+      input.click();
+    }
+    
+    function openFiles() {
+      closeMultimodalMenu();
+      const input = document.getElementById('didMultimodalInput');
+      input.accept = '*';
+      input.removeAttribute('capture');
+      input.click();
+    }
+    
+    function handleDidMultimodalUpload(input) {
+      if (input.files && input.files[0]) {
+        const file = input.files[0];
+        console.log('📁 File selected:', file.name, file.type);
         
-        // Try multiple selectors for D-ID container
-        const selectors = [
-          '[data-name="console-solar-agent"]',
-          '.did-container',
-          'iframe[src*="d-id"]',
-          'div[id*="did"]',
-          '.d-id-agent'
-        ];
+        // Show loading state
+        showUploadProgress(file.name);
         
-        let didContainer = null;
-        for (const selector of selectors) {
-          didContainer = document.querySelector(selector);
-          if (didContainer) {
-            console.log(`Found D-ID container with selector: ${selector}`);
-            break;
+        // Get or create session ID for memory
+        let sessionId = localStorage.getItem('kidSolarSessionId');
+        if (!sessionId) {
+          sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+          localStorage.setItem('kidSolarSessionId', sessionId);
+        }
+        
+        // Create FormData for analysis with memory
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('sessionId', sessionId);
+        formData.append('type', file.type.split('/')[0]); // image, video, audio, etc.
+        
+        // Send to Kid Solar multimodal analysis API with memory
+        fetch('/api/kid-solar-analysis', {
+          method: 'POST',
+          body: formData
+        })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          hideUploadProgress();
+          console.log('🧠 Kid Solar analysis received:', data);
+          
+          if (data.success) {
+            // Format the analysis with "What Kid Solar sees:" prefix and memory context
+            const analysisText = data.analysis || 'Analysis completed';
+            const energyInfo = data.energy_kwh ? 
+              ` This relates to approximately ${data.energy_kwh} kWh of energy and ${data.solar_tokens} SOLAR tokens.` : '';
+            
+            const memoryInfo = data.memoryStats ? 
+              ` (Memory: ${data.memoryStats.totalImages} images analyzed, ${data.memoryStats.sessionAge} minutes active)` : '';
+            
+            const kidSolarMessage = `Kid Solar Analysis: ${analysisText}${energyInfo} This connects to our solar energy mission and sustainability goals.${memoryInfo}`;
+            
+            // Store conversation in memory
+            if (data.sessionId) {
+              fetch('/api/kid-solar-conversation', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  sessionId: data.sessionId,
+                  messageType: 'analysis',
+                  messageText: kidSolarMessage
+                })
+              }).catch(e => console.log('Memory storage failed:', e));
+            }
+            
+            // Post the formatted message directly into D-ID text input
+            postToDidTextInput(kidSolarMessage);
+            
+            // Show success notification
+            showNotification(`Analysis complete! ${data.energy_kwh || 0} kWh = ${data.solar_tokens || 0} SOLAR tokens`, 'success');
+            
+            console.log('✅ Analysis posted to Kid Solar text input:', kidSolarMessage);
+          } else {
+            throw new Error(data.error || 'Analysis failed');
+          }
+        })
+        .catch(error => {
+          hideUploadProgress();
+          console.error('Analysis failed:', error);
+          
+          // Show error notification
+          showNotification('Analysis failed: ' + error.message, 'error');
+          
+          // Post error guidance to D-ID text input
+          const errorMessage = `Kid Solar Analysis: I received a ${file.type} file but had trouble analyzing it. Please tell me what you'd like to know about it and I'll help explain the energy aspects!`;
+          postToDidTextInput(errorMessage);
+        });
+        
+        // Clear input
+        input.value = '';
+      }
+    }
+    
+    function showUploadProgress(filename) {
+      const existingProgress = document.getElementById('uploadProgress');
+      if (existingProgress) existingProgress.remove();
+      
+      const progress = document.createElement('div');
+      progress.id = 'uploadProgress';
+      progress.style.cssText = `
+        position: fixed;
+        bottom: 100px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0,0,0,0.8);
+        color: white;
+        padding: 15px 25px;
+        border-radius: 25px;
+        font-size: 14px;
+        z-index: 999999;
+      `;
+      progress.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 20px; height: 20px; border: 2px solid #ccc; border-top: 2px solid white; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+          <span>Analyzing ${filename}...</span>
+        </div>
+      `;
+      document.body.appendChild(progress);
+      
+      // Add spin animation
+      const style = document.createElement('style');
+      style.textContent = `
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+    
+    function hideUploadProgress() {
+      const progress = document.getElementById('uploadProgress');
+      if (progress) progress.remove();
+    }
+    
+    // Enhanced D-ID Integration with Memory Context
+    function initializeKidSolarMemoryIntegration() {
+      // Listen for D-ID agent messages to store in memory
+      window.addEventListener('message', async (event) => {
+        if (event.data && event.data.type === 'did-agent-response') {
+          const sessionId = localStorage.getItem('kidSolarSessionId');
+          if (sessionId && event.data.message) {
+            // Store Kid Solar's D-ID response in memory with context
+            try {
+              const response = await fetch('/api/kid-solar-conversation', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  sessionId: sessionId,
+                  messageType: 'kid_solar',
+                  messageText: event.data.message,
+                  requestEnhancedResponse: false // Kid Solar responses don't need enhancement
+                })
+              });
+              
+              const result = await response.json();
+              console.log('🧠 Kid Solar response stored in memory');
+              
+              // Update memory stats display if needed
+              if (result.memoryStats) {
+                updateMemoryDisplay(result.memoryStats);
+              }
+            } catch (e) {
+              console.log('Memory storage failed:', e);
+            }
+          }
+        }
+      });
+      
+      // Hook into D-ID input to capture user messages
+      document.addEventListener('keydown', async (event) => {
+        if (event.key === 'Enter' && !event.shiftKey) {
+          const target = event.target;
+          if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.contentEditable === 'true')) {
+            const message = target.value || target.textContent;
+            if (message && message.trim()) {
+              const sessionId = localStorage.getItem('kidSolarSessionId');
+              if (sessionId) {
+                // Store user message and get enhanced response with memory context
+                try {
+                  const response = await fetch('/api/kid-solar-conversation', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      sessionId: sessionId,
+                      messageType: 'user',
+                      messageText: message.trim(),
+                      requestEnhancedResponse: true
+                    })
+                  });
+                  
+                  const result = await response.json();
+                  console.log('🧠 User message stored in memory');
+                  
+                  // Show memory context if available
+                  if (result.enhancedResponse) {
+                    console.log('📚 Memory Context:', result.enhancedResponse.contextSummary);
+                    console.log('🔗 Recent History:', result.enhancedResponse.recentHistory);
+                    
+                    // Optional: Show memory integration notification
+                    if (result.memoryStats.total > 1) {
+                      showNotification(`Memory: ${result.memoryStats.total} interactions remembered`, 'info');
+                    }
+                  }
+                } catch (e) {
+                  console.log('Memory storage failed:', e);
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+    
+    // KID SOLAR DALL-E IMAGE GENERATION
+    function generateKidSolarImage(prompt, context = '') {
+      console.log('🎨 Kid Solar generating educational image:', prompt);
+      
+      showNotification('Kid Solar is creating an educational image...', 'info');
+      
+      fetch('/api/kid-solar-generate-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: prompt,
+          context: context,
+          sessionId: localStorage.getItem('kidSolarSessionId') || ''
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          console.log('✅ Kid Solar image generated:', data.imageUrl);
+          
+          // Display the generated image
+          displayKidSolarImage(data.imageUrl, data.prompt);
+          
+          // Post to D-ID about the image
+          const message = `Kid Solar created an educational image: "${data.prompt}". This visual helps explain our renewable energy concepts in a fun, engaging way!`;
+          postToDidTextInput(message);
+          
+          showNotification('Kid Solar created an educational image!', 'success');
+        } else {
+          console.error('Image generation failed:', data.error);
+          showNotification('Kid Solar couldn\'t create the image: ' + data.error, 'error');
+        }
+      })
+      .catch(error => {
+        console.error('Image generation error:', error);
+        showNotification('Kid Solar image generation failed', 'error');
+      });
+    }
+    
+    function displayKidSolarImage(imageUrl, prompt) {
+      const overlay = document.createElement('div');
+      overlay.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.8); z-index: 1000000;
+        display: flex; align-items: center; justify-content: center; padding: 20px;
+      `;
+      
+      const container = document.createElement('div');
+      container.style.cssText = `
+        background: white; border-radius: 15px; padding: 20px;
+        max-width: 90%; max-height: 90%; text-align: center;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      `;
+      
+      container.innerHTML = `
+        <h3 style="margin: 0 0 15px 0; color: #333;">Kid Solar's Educational Image</h3>
+        <img src="${imageUrl}" style="max-width: 100%; max-height: 400px; border-radius: 10px; margin-bottom: 15px;" alt="Generated Image">
+        <p style="margin: 10px 0; color: #666; font-size: 14px;">${prompt}</p>
+        <button onclick="this.closest('.overlay').remove()" style="
+          background: linear-gradient(45deg, #ff8c00, #ffa500); color: white; border: none;
+          padding: 10px 20px; border-radius: 25px; cursor: pointer; font-weight: bold;
+        ">Close</button>
+      `;
+      
+      overlay.className = 'overlay';
+      overlay.appendChild(container);
+      document.body.appendChild(overlay);
+      
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) overlay.remove();
+      });
+    }
+
+    // Simple D-ID Text Input Handler for Kid Solar
+    function postToDidTextInput(message) {
+      console.log('📝 Posting analysis to D-ID text input:', message);
+      
+      // Wait a moment for D-ID agent to fully load
+      setTimeout(() => {
+        const inputs = document.querySelectorAll('input, textarea, [contenteditable], div[role="textbox"]');
+        let didInput = null;
+        
+        // Find the most likely D-ID text input
+        for (const input of inputs) {
+          // Check if it's visible and likely a text input
+          const rect = input.getBoundingClientRect();
+          const isVisible = rect.width > 0 && rect.height > 0 && 
+                           getComputedStyle(input).display !== 'none' &&
+                           getComputedStyle(input).visibility !== 'hidden';
+          
+          if (isVisible) {
+            const placeholder = (input.placeholder || '').toLowerCase();
+            const ariaLabel = (input.getAttribute('aria-label') || '').toLowerCase();
+            const inputType = input.type || '';
+            
+            // Look for chat/message-like inputs
+            if (inputType === 'text' || input.tagName === 'TEXTAREA' || input.contentEditable === 'true') {
+              if (placeholder.includes('type') || placeholder.includes('message') || 
+                  placeholder.includes('chat') || placeholder.includes('ask') ||
+                  ariaLabel.includes('type') || ariaLabel.includes('message') || 
+                  ariaLabel.includes('chat') || ariaLabel.includes('ask')) {
+                didInput = input;
+                console.log('💬 Found D-ID text input:', placeholder || ariaLabel || 'unlabeled');
+                break;
+              }
+            }
           }
         }
         
-        // Also try finding by looking for any iframe or container
-        if (!didContainer) {
-          const allContainers = document.querySelectorAll('div, iframe');
-          for (const container of allContainers) {
-            if (container.getAttribute && 
-                (container.getAttribute('data-name') === 'did-agent' ||
-                 container.src && container.src.includes('d-id') ||
-                 container.className && container.className.includes('did'))) {
-              didContainer = container;
-              console.log('Found D-ID container by attribute search');
+        // If no specific input found, try the most recent visible text input
+        if (!didInput) {
+          for (const input of inputs) {
+            const rect = input.getBoundingClientRect();
+            const isVisible = rect.width > 0 && rect.height > 0;
+            
+            if (isVisible && (input.type === 'text' || input.tagName === 'TEXTAREA' || input.contentEditable === 'true')) {
+              didInput = input;
+              console.log('🎯 Using visible text input as fallback');
               break;
             }
           }
         }
         
-        if (didContainer) {
-          // Remove existing button if any
-          const existingBtn = didContainer.querySelector('.kid-solar-multimodal-btn');
-          if (existingBtn) existingBtn.remove();
+        if (didInput) {
+          // Clear existing content and set the message
+          if (didInput.contentEditable === 'true') {
+            didInput.innerHTML = message;
+            didInput.textContent = message;
+          } else {
+            didInput.value = message;
+          }
           
-          const multiModalBtn = document.createElement('button');
-          multiModalBtn.innerHTML = '📷 Photo Upload';
-          multiModalBtn.className = 'kid-solar-multimodal-btn';
-          multiModalBtn.style.cssText = 'position: fixed; top: 120px; right: 20px; background: #FF6B35; color: white; border: none; padding: 12px 16px; border-radius: 25px; font-size: 14px; font-weight: bold; cursor: pointer; z-index: 99999; box-shadow: 0 4px 12px rgba(0,0,0,0.3); animation: pulse 2s infinite;';
-          multiModalBtn.onclick = showKidSolarMultimodal;
+          // Focus on the input and trigger events
+          didInput.focus();
+          didInput.dispatchEvent(new Event('input', { bubbles: true }));
+          didInput.dispatchEvent(new Event('change', { bubbles: true }));
           
-          // Add directly to body for maximum visibility
-          document.body.appendChild(multiModalBtn);
-          console.log('✅ Multimodal button added successfully');
+          // Show success message
+          showAnalysisPosted(true);
           
-          // Add pulse animation
-          const pulseStyle = document.createElement('style');
-          pulseStyle.textContent = `
-            @keyframes pulse {
-              0% { transform: scale(1); }
-              50% { transform: scale(1.05); }
-              100% { transform: scale(1); }
-            }
-          `;
-          document.head.appendChild(pulseStyle);
-          
-          return true;
-        } else if (attempts < maxAttempts) {
-          console.log(`D-ID container not found, retrying in 1 second (attempt ${attempts}/${maxAttempts})`);
-          setTimeout(addMultimodalButton, 1000);
+          console.log('✅ Analysis posted to D-ID input - ready for you to send!');
         } else {
-          console.log('❌ Could not find D-ID container after maximum attempts');
-          // Add button anyway as fallback
-          const fallbackBtn = document.createElement('button');
-          fallbackBtn.innerHTML = '📷 Kid Solar Photos';
-          fallbackBtn.className = 'kid-solar-multimodal-btn';
-          fallbackBtn.style.cssText = 'position: fixed; top: 120px; right: 20px; background: #FF6B35; color: white; border: none; padding: 12px 16px; border-radius: 25px; font-size: 14px; font-weight: bold; cursor: pointer; z-index: 99999; box-shadow: 0 4px 12px rgba(0,0,0,0.3);';
-          fallbackBtn.onclick = showKidSolarMultimodal;
-          document.body.appendChild(fallbackBtn);
-          console.log('✅ Fallback multimodal button added');
+          console.log('❌ Could not find D-ID text input');
+          showAnalysisPosted(false);
         }
+      }, 1000);
+    }
+    
+    function showNotification(message, type = 'info') {
+      const notification = document.createElement('div');
+      const backgroundColor = type === 'success' ? 'rgba(34, 197, 94, 0.9)' : 
+                            type === 'error' ? 'rgba(239, 68, 68, 0.9)' : 
+                            'rgba(59, 130, 246, 0.9)';
+      
+      notification.style.cssText = `
+        position: fixed;
+        bottom: 150px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: ${backgroundColor};
+        color: white;
+        padding: 12px 24px;
+        border-radius: 25px;
+        font-size: 14px;
+        z-index: 999999;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        animation: slideUp 0.3s ease-out;
+        max-width: 300px;
+        text-align: center;
+      `;
+      
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      
+      // Auto-remove after 5 seconds
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.style.animation = 'slideUp 0.3s ease-out reverse';
+          setTimeout(() => notification.remove(), 300);
+        }
+      }, 5000);
+    }
+
+    function showAnalysisPosted(success) {
+      showNotification(
+        success ? 'Analysis ready in text box - click send when ready!' : 
+                 'Could not find text input - please copy analysis manually',
+        success ? 'success' : 'error'
+      );
+      
+      document.body.appendChild(notification);
+      
+      // Add slide animation
+      if (!document.getElementById('slideUpAnimation')) {
+        const style = document.createElement('style');
+        style.id = 'slideUpAnimation';
+        style.textContent = `
+          @keyframes slideUp {
+            from { opacity: 0; transform: translateX(-50%) translateY(30px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+          }
+        `;
+        document.head.appendChild(style);
       }
       
-      // Start attempting to add button
-      setTimeout(addMultimodalButton, 1000);
+      // Remove after 5 seconds
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.style.animation = 'slideUp 0.3s ease-out reverse';
+          setTimeout(() => notification.remove(), 300);
+        }
+      }, 5000);
     }
-
-    function showKidSolarMultimodal() {
-      document.getElementById('kid-solar-multimodal').style.display = 'block';
-    }
-
-    function closeKidSolarMultimodal() {
-      document.getElementById('kid-solar-multimodal').style.display = 'none';
-    }
-
-    function setKidSolarMode(mode) {
-      kidSolarMode = mode;
+    
+    // Initialize memory integration when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+      initializeKidSolarMemoryIntegration();
+      console.log('🧠 Kid Solar memory integration initialized');
+    });
+    
+    // Initialize Kid Solar session when D-ID agent loads
+    async function initializeKidSolarSession() {
+      console.log('🚀 Initializing Kid Solar session...');
       
-      // Update button styles
-      ['photo', 'video', 'text'].forEach(m => {
-        const btn = document.getElementById(m + '-mode-btn');
-        btn.style.background = m === mode ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.2)';
-      });
-      
-      // Show/hide sections
-      document.getElementById('photo-upload-section').style.display = mode === 'photo' ? 'block' : 'none';
-      document.getElementById('video-upload-section').style.display = mode === 'video' ? 'block' : 'none';
-      document.getElementById('text-input-section').style.display = mode === 'text' ? 'block' : 'none';
-    }
-
-    async function analyzeKidSolarPhoto() {
-      const fileInput = document.getElementById('kid-solar-photo');
-      const file = fileInput.files[0];
-      
-      if (!file) {
-        alert('Please select a photo first!');
-        return;
-      }
-
-      showKidSolarLoading(true);
+      const sessionId = localStorage.getItem('kidSolarSessionId') || `session-${Date.now()}`;
+      localStorage.setItem('kidSolarSessionId', sessionId);
       
       try {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('type', 'photo');
-        
-        const response = await fetch('/api/kid-solar-analysis', {
+        const response = await fetch('/api/kid-solar-conversation', {
           method: 'POST',
-          body: formData
-        });
-        
-        const result = await response.json();
-        speakToKidSolar(result.analysis);
-        
-      } catch (error) {
-        console.error('Kid Solar photo analysis error:', error);
-        speakToKidSolar("I had trouble analyzing that photo, but I can see you're interested in learning about energy! Try asking me a question instead.");
-      } finally {
-        showKidSolarLoading(false);
-      }
-    }
-
-    async function analyzeKidSolarVideo() {
-      const fileInput = document.getElementById('kid-solar-video');
-      const file = fileInput.files[0];
-      
-      if (!file) {
-        alert('Please select a video first!');
-        return;
-      }
-
-      showKidSolarLoading(true);
-      
-      try {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('type', 'video');
-        
-        const response = await fetch('/api/kid-solar-analysis', {
-          method: 'POST',
-          body: formData
-        });
-        
-        const result = await response.json();
-        speakToKidSolar(result.analysis);
-        
-      } catch (error) {
-        console.error('Kid Solar video analysis error:', error);
-        speakToKidSolar("I had trouble analyzing that video, but I love that you're exploring energy topics! What would you like to learn about?");
-      } finally {
-        showKidSolarLoading(false);
-      }
-    }
-
-    async function analyzeKidSolarText() {
-      const textInput = document.getElementById('kid-solar-text');
-      const query = textInput.value.trim();
-      
-      if (!query) {
-        alert('Please type a question first!');
-        return;
-      }
-
-      showKidSolarLoading(true);
-      
-      try {
-        const response = await fetch('/api/kid-solar-analysis', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            type: 'text',
-            query: query
+            sessionId: sessionId,
+            messageType: 'session_start',
+            messageText: 'D-ID agent delivered opening statement - session initialized'
           })
         });
         
         const result = await response.json();
-        speakToKidSolar(result.analysis);
-        textInput.value = '';
         
+        if (result.success) {
+          console.log('✅ Kid Solar session initialized:', sessionId);
+          showNotification(`Kid Solar memory system active - Session: ${sessionId.substring(0, 8)}...`, 'success');
+        }
       } catch (error) {
-        console.error('Kid Solar text analysis error:', error);
-        speakToKidSolar("Great question! I love talking about energy and solar power. Solar energy comes from the sun and helps power our world in amazing ways!");
-      } finally {
-        showKidSolarLoading(false);
+        console.log('Session initialization error:', error);
       }
     }
 
-    function speakToKidSolar(message) {
-      // Send message to D-ID agent
-      const didAgent = window.didAgent || window.D_ID?.getAgent?.('did-agent');
-      if (didAgent && didAgent.speak) {
-        didAgent.speak({ 
-          text: `Hi! I'm Kid Solar! ${message}`, 
-          audio: true 
+    // Monitor for D-ID agent activity and trigger session start
+    function monitorDidAgentForSessionStart() {
+      let sessionStarted = false;
+      let checkCount = 0;
+      const maxChecks = 30; // Check for 30 seconds
+      
+      const checkForAgent = setInterval(() => {
+        checkCount++;
+        
+        // Look for any sign that D-ID agent is active
+        const agentElements = document.querySelectorAll('[data-agent-id], iframe, div[role="dialog"], div[role="application"]');
+        const hasVisibleElements = Array.from(agentElements).some(el => {
+          const rect = el.getBoundingClientRect();
+          return rect.width > 0 && rect.height > 0;
         });
-      }
-      
-      // Also send to chat if available
-      const event = new CustomEvent('kid-solar-message', { 
-        detail: { message: message } 
-      });
-      document.dispatchEvent(event);
-      
-      // Close multimodal interface
-      setTimeout(() => {
-        closeKidSolarMultimodal();
+        
+        // Also check for any chat-like interfaces
+        const chatElements = document.querySelectorAll('input[type="text"], textarea, [contenteditable="true"], div[role="textbox"]');
+        const hasChatInterface = Array.from(chatElements).some(el => {
+          const rect = el.getBoundingClientRect();
+          const placeholder = (el.placeholder || '').toLowerCase();
+          const ariaLabel = (el.getAttribute('aria-label') || '').toLowerCase();
+          
+          return rect.width > 0 && rect.height > 0 && 
+                 (placeholder.includes('type') || placeholder.includes('message') || 
+                  placeholder.includes('chat') || ariaLabel.includes('type') ||
+                  ariaLabel.includes('message') || ariaLabel.includes('chat'));
+        });
+        
+        if ((hasVisibleElements || hasChatInterface) && !sessionStarted) {
+          sessionStarted = true;
+          console.log('🎯 D-ID agent detected - triggering session start');
+          initializeKidSolarSession();
+          clearInterval(checkForAgent);
+        }
+        
+        if (checkCount >= maxChecks) {
+          console.log('⏰ Session monitoring timeout - initializing anyway');
+          if (!sessionStarted) {
+            initializeKidSolarSession();
+          }
+          clearInterval(checkForAgent);
+        }
       }, 1000);
-    }
-
-    function showKidSolarLoading(show) {
-      document.getElementById('kid-solar-loading').style.display = show ? 'block' : 'none';
     }
 
     // Initialize when page loads
     document.addEventListener('DOMContentLoaded', () => {
-      setKidSolarMode('photo');
+      addNativeMultimodalButton();
+      monitorDidAgentForSessionStart();
     });
+    setTimeout(addNativeMultimodalButton, 2000);
+    setTimeout(addNativeMultimodalButton, 4000);
+    setTimeout(addNativeMultimodalButton, 6000);
+    
+    // Also watch for new elements being added (D-ID agent might load later)
+    const observer = new MutationObserver(() => {
+      addNativeMultimodalButton();
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
     
     // Music player functionality
     let currentAudio = null;
@@ -834,6 +1213,126 @@
         currentAudio.pause();
         currentAudio = null;
       }
+    }
+    
+    function playMusic1() {
+      const musicUrl = 'https://storage.aisongmaker.io/audio/10db8911-0b74-4675-ba62-02182c1d7f6b.mp3';
+      
+      stopCurrentAudio();
+      
+      // Create and play new audio
+      currentAudio = new Audio(musicUrl);
+      currentAudio.play().then(() => {
+        console.log('🎵 Playing: The Heart is a Mule (by Robert Hunter, Allen Ginsberg and William Burroughs (ish))');
+      }).catch(error => {
+        console.error('Audio playback failed:', error);
+        alert('Unable to play music. Please check your internet connection.');
+      });
+      
+      // Reset when finished
+      currentAudio.addEventListener('ended', () => {
+        currentAudio = null;
+      });
+    }
+    
+    function playMusic2() {
+      const musicUrl = 'https://storage.aisongmaker.io/audio/418add3e-c1a5-4a76-b361-14d6a11794fe.mp3';
+      
+      stopCurrentAudio();
+      
+      // Create and play new audio
+      currentAudio = new Audio(musicUrl);
+      currentAudio.play().then(() => {
+        console.log('🎶 Playing: A Solar Day (groovin)');
+      }).catch(error => {
+        console.error('Audio playback failed:', error);
+        alert('Unable to play music. Please check your internet connection.');
+      });
+      
+      // Reset when finished
+      currentAudio.addEventListener('ended', () => {
+        currentAudio = null;
+      });
+    }
+    
+    function playMusic3() {
+      const musicUrl = 'https://storage.aisongmaker.io/audio/a2647129-991f-4105-aad2-e45210005bef.mp3';
+      
+      stopCurrentAudio();
+      
+      // Create and play new audio
+      currentAudio = new Audio(musicUrl);
+      currentAudio.play().then(() => {
+        console.log('🎼 Playing: A Solar Day (moovin)');
+      }).catch(error => {
+        console.error('Audio playback failed:', error);
+        alert('Unable to play music. Please check your internet connection.');
+      });
+      
+      // Reset when finished
+      currentAudio.addEventListener('ended', () => {
+        currentAudio = null;
+      });
+    }
+    
+    function playMusic4() {
+      const musicUrl = 'https://storage.aisongmaker.io/audio/09de8c9d-25a7-4b38-a6bd-c27b7de4629e.mp3';
+      
+      stopCurrentAudio();
+      
+      // Create and play new audio
+      currentAudio = new Audio(musicUrl);
+      currentAudio.play().then(() => {
+        console.log('🎺 Playing: Break Time Blues Rhapsody (By Kid Solar)');
+      }).catch(error => {
+        console.error('Audio playback failed:', error);
+        alert('Unable to play music. Please check your internet connection.');
+      });
+      
+      // Reset when finished
+      currentAudio.addEventListener('ended', () => {
+        currentAudio = null;
+      });
+    }
+    
+    function playMusic5() {
+      const musicUrl = 'https://storage.aisongmaker.io/audio/c51b1f15-eff7-41fb-b778-b1b9d914ce3a.mp3';
+      
+      stopCurrentAudio();
+      
+      // Create and play new audio
+      currentAudio = new Audio(musicUrl);
+      currentAudio.play().then(() => {
+        console.log('⭐ Playing: Starlight Forever');
+      }).catch(error => {
+        console.error('Audio playback failed:', error);
+        alert('Unable to play music. Please check your internet connection.');
+      });
+      
+      // Reset when finished
+      currentAudio.addEventListener('ended', () => {
+        currentAudio = null;
+      });
+    }
+    
+    function playMusic6() {
+      const musicUrl = 'https://storage.aisongmaker.io/audio/ab1612d5-ccf4-4b4a-ab92-21b77bebdd46.mp3';
+      
+      stopCurrentAudio();
+      
+      // Create and play new audio
+      currentAudio = new Audio(musicUrl);
+      currentAudio.play().then(() => {
+        console.log('💡 Playing: Light It From Within');
+      }).catch(error => {
+        console.error('Audio playback failed:', error);
+        alert('Unable to play music. Please check your internet connection.');
+      });
+      
+      // Reset when finished
+      currentAudio.addEventListener('ended', () => {
+        currentAudio = null;
+      });
     }
     
     function playMusic7() {
@@ -855,6 +1354,147 @@
         currentAudio = null;
       });
     }
+
+    // Kid Solar Analysis Display Functions
+    function showAnalysisDisplay(analysis) {
+      const display = document.getElementById('analysisDisplay');
+      const textarea = document.getElementById('copyableAnalysis');
+      
+      textarea.value = analysis;
+      display.style.display = 'block';
+      
+      console.log('📋 Analysis displayed in copyable text area');
+    }
+
+    function closeAnalysisDisplay() {
+      document.getElementById('analysisDisplay').style.display = 'none';
+    }
+
+    function copyAnalysisText() {
+      const textarea = document.getElementById('copyableAnalysis');
+      textarea.select();
+      textarea.setSelectionRange(0, 99999); // For mobile devices
+      
+      try {
+        document.execCommand('copy');
+        console.log('📋 Analysis copied to clipboard');
+        
+        // Visual feedback
+        const button = event.target;
+        const originalText = button.textContent;
+        button.textContent = '✓ Copied!';
+        button.style.background = '#28a745';
+        
+        setTimeout(() => {
+          button.textContent = originalText;
+          button.style.background = '#ff6b35';
+        }, 2000);
+        
+      } catch (err) {
+        console.error('Copy failed:', err);
+        alert('Copy failed. Please select the text manually.');
+      }
+    }
+
+    function sendAnalysisToKidSolar() {
+      const analysis = document.getElementById('copyableAnalysis').value;
+      if (analysis) {
+        // Send to D-ID agent input
+        sendDidMessage(analysis);
+        console.log('💬 Analysis sent to Kid Solar');
+        
+        // Visual feedback
+        const button = event.target;
+        const originalText = button.textContent;
+        button.textContent = '✓ Sent!';
+        
+        setTimeout(() => {
+          button.textContent = originalText;
+        }, 2000);
+      }
+    }
   </script>
+
+  <!-- Anonymous Session Tracking - tracks "when and how long" without identifying "who" -->
+  <script>
+    // Generate unique session ID for anonymous tracking
+    function generateSessionId() {
+      return 'anon_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    }
+
+    // Get or create session ID (survives page refresh, resets on browser close)
+    function getSessionId() {
+      let sessionId = sessionStorage.getItem('kid_solar_session_id');
+      if (!sessionId) {
+        sessionId = generateSessionId();
+        sessionStorage.setItem('kid_solar_session_id', sessionId);
+        console.log('🆔 Anonymous session created:', sessionId);
+      }
+      return sessionId;
+    }
+
+    // Track user interaction with Kid Solar
+    function trackKidSolarInteraction(interactionType, data = {}) {
+      const sessionId = getSessionId();
+      
+      fetch('/api/session-activity', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId,
+          interactionType,
+          timestamp: new Date().toISOString(),
+          userAgent: navigator.userAgent.substring(0, 100), // Truncated for privacy
+          ...data
+        })
+      }).catch(e => console.log('Session tracking failed:', e));
+    }
+
+    // Initialize session tracking
+    document.addEventListener('DOMContentLoaded', function() {
+      trackKidSolarInteraction('page_view', { page: 'homepage' });
+      
+      // Track when user starts interacting with Kid Solar
+      const didAgent = document.querySelector('[data-name="did-agent"]');
+      if (didAgent) {
+        didAgent.addEventListener('click', () => {
+          trackKidSolarInteraction('kid_solar_engaged');
+        });
+      }
+
+      // Track file uploads
+      const originalUploadFunctions = [window.analyzePhoto, window.handleDidMultimodalUpload];
+      originalUploadFunctions.forEach(func => {
+        if (func) {
+          const original = func;
+          window[func.name] = function(...args) {
+            trackKidSolarInteraction('file_upload', { 
+              type: args[0] ? args[0].type || 'unknown' : 'unknown' 
+            });
+            return original.apply(this, args);
+          };
+        }
+      });
+
+      // Track page unload to calculate session duration
+      window.addEventListener('beforeunload', () => {
+        trackKidSolarInteraction('session_end');
+      });
+
+      console.log('📊 Anonymous session tracking active - recording when and how long users interact');
+    });
+
+    // Make session ID available globally for other functions
+    window.getKidSolarSessionId = getSessionId;
+  </script>
+
+  <!-- Enhanced D-ID Audio Capture System -->
+  <script src="enhanced-did-audio-capture.js"></script>
+  <script>
+    console.log('✅ Enhanced Audio Capture System loaded');
+    console.log('🎤 Multiple capture methods active for Console Solar responses');
+    console.log('📝 View captured conversations at /analytics');
+  </script>
+
 </body>
 </html>

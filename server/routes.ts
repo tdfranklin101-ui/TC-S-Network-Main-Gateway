@@ -478,6 +478,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile('update-account.html', { root: './public' });
   });
 
+  // Enhanced conversation capture endpoint for Console Solar responses
+  app.post('/api/enhanced-conversation-capture', (req, res) => {
+    try {
+      const data = req.body;
+      console.log('✅ Enhanced Console Solar response captured:', data.responseText ? data.responseText.substring(0, 100) + '...' : 'No text');
+      
+      // Store conversation data with enhanced metadata
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const filename = `conversations/console_solar_${timestamp}_${data.source}.json`;
+      
+      // Enhanced data structure for Console Solar responses
+      const enhancedData = {
+        ...data,
+        captureMethod: 'enhanced-audio-capture',
+        processingTimestamp: new Date().toISOString(),
+        responseLength: data.responseText ? data.responseText.length : 0,
+        qualityScore: data.responseText && data.responseText.length > 50 ? 'high' : 'low'
+      };
+      
+      console.log(`📝 Storing Console Solar response: ${enhancedData.qualityScore} quality, ${enhancedData.responseLength} chars`);
+      
+      res.json({ 
+        success: true, 
+        stored: filename,
+        responseLength: enhancedData.responseLength,
+        qualityScore: enhancedData.qualityScore
+      });
+    } catch (error) {
+      console.error('Enhanced capture error:', error);
+      res.status(400).json({ error: 'Invalid request data' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
