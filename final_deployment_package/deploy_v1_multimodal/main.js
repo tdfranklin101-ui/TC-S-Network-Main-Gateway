@@ -79,8 +79,16 @@ const server = http.createServer(async (req, res) => {
       try {
         const membersDataPath = path.join(__dirname, 'api', 'members.json');
         const membersData = JSON.parse(fs.readFileSync(membersDataPath, 'utf8'));
+        
+        // Format response to match expected structure
+        const response = {
+          members: membersData,
+          totalMembers: membersData.length,
+          lastUpdated: new Date().toISOString()
+        };
+        
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(membersData));
+        res.end(JSON.stringify(response));
         return;
       } catch (error) {
         console.error('Error loading members:', error);
