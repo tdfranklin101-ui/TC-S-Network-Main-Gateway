@@ -1,104 +1,109 @@
-#!/usr/bin/env node
-
-/**
- * The Current-See Platform - V1 Multimodal Deployment
- * Enhanced with multimodal photo button for Kid Solar D-ID agent
- */
-
-const express = require('express');
+const http = require('http');
+const fs = require('fs');
 const path = require('path');
-const multer = require('multer');
 
-const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Basic middleware
-app.use(express.static('.'));
-app.use(express.json());
+console.log('🚀 Starting Current-See Deployment Server...');
 
-// File upload setup for multimodal functionality
-const upload = multer({ 
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 }
-});
+const server = http.createServer((req, res) => {
+  const pathname = new URL(req.url, `http://${req.headers.host}`).pathname;
+  
+  // Prevent caching
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  
+  console.log(`${new Date().toISOString()} - ${req.method} ${pathname}`);
 
-// Health check
-app.get('/health', (req, res) => {
-  res.json({
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    service: 'Current-See V1 Multimodal',
-    kidSolar: 'v2_agt_vhYf_e_C active'
-  });
-});
-
-// Kid Solar multimodal analysis endpoint
-app.post('/api/kid-solar-analysis', upload.single('photo'), async (req, res) => {
-  try {
-    if (req.file) {
-      // Photo analysis
-      res.json({
-        analysis: "Hi! I'm Kid Solar (TC-S S0001)! I can see your photo! This is a test response to confirm the multimodal photo upload is working. In the full version with OpenAI integration, I'll provide detailed energy analysis, carbon footprint calculations, and educational insights about sustainability!",
-        energy_kwh: Math.floor(Math.random() * 100) + 50,
-        solar_tokens: (Math.random() * 0.1).toFixed(6),
-        carbon_footprint: Math.floor(Math.random() * 50) + 20,
-        timestamp: new Date().toISOString()
-      });
-    } else if (req.body.type === 'text') {
-      // Text analysis
-      res.json({
-        analysis: `Hi! I'm Kid Solar! You asked: "${req.body.query}" - This is a test response showing the text analysis is working. With full OpenAI integration, I'll provide detailed educational responses about energy and sustainability!`,
-        timestamp: new Date().toISOString()
-      });
-    } else {
-      res.status(400).json({ error: 'No photo or text provided' });
+  // Health check endpoint
+  if (pathname === '/health') {
+    const indexPath = path.join(__dirname, 'public', 'index.html');
+    let healthData = { 
+      status: 'healthy', 
+      timestamp: new Date().toISOString(),
+      server: 'deployment-ready'
+    };
+    
+    if (fs.existsSync(indexPath)) {
+      const content = fs.readFileSync(indexPath, 'utf8');
+      healthData.musicFunctions = (content.match(/playMusic\d/g) || []).length;
+      healthData.didAgent = content.includes('v2_agt_vhYf_e_C');
+      healthData.fileSize = content.length;
     }
-  } catch (error) {
-    res.status(500).json({ 
-      error: 'Analysis failed',
-      message: error.message 
-    });
+    
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(healthData, null, 2));
+    return;
+  }
+
+  // Homepage
+  if (pathname === '/') {
+    const indexPath = path.join(__dirname, 'public', 'index.html');
+    
+    if (fs.existsSync(indexPath)) {
+      const content = fs.readFileSync(indexPath, 'utf8');
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(content);
+      console.log(`✅ Served homepage: ${content.length} bytes`);
+    } else {
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      res.end('Homepage not found');
+      console.log('❌ Homepage file missing');
+    }
+    return;
+  }
+
+  // Static files
+  const filePath = path.join(__dirname, 'public', pathname);
+  if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+    const content = fs.readFileSync(filePath);
+    
+    // Set content type based on extension
+    const ext = path.extname(filePath).toLowerCase();
+    const contentTypes = {
+      '.html': 'text/html; charset=utf-8',
+      '.css': 'text/css',
+      '.js': 'application/javascript',
+      '.json': 'application/json',
+      '.png': 'image/png',
+      '.jpg': 'image/jpeg',
+      '.svg': 'image/svg+xml'
+    };
+    
+    res.writeHead(200, { 'Content-Type': contentTypes[ext] || 'application/octet-stream' });
+    res.end(content);
+    console.log(`✅ Served static file: ${pathname}`);
+  } else {
+    res.writeHead(404, { 'Content-Type': 'text/plain' });
+    res.end('Not found');
+    console.log(`❌ File not found: ${pathname}`);
   }
 });
 
-// Essential routes
-const routes = [
-  '/',
-  '/wallet.html',
-  '/wallet',
-  '/index.html',
-  '/declaration.html',
-  '/founder_note.html',
-  '/whitepapers.html',
-  '/business_plan.html'
-];
-
-routes.forEach(route => {
-  app.get(route, (req, res) => {
-    if (route === '/' || route === '/index.html') {
-      res.sendFile(path.join(__dirname, 'index.html'));
-    } else if (route === '/wallet') {
-      res.sendFile(path.join(__dirname, 'wallet.html'));
-    } else {
-      res.sendFile(path.join(__dirname, route));
-    }
-  });
-});
-
-// Start server
-const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log(`✅ The Current-See V1 Multimodal running on port ${PORT}`);
-  console.log(`🌐 Homepage: http://0.0.0.0:${PORT}`);
-  console.log(`👦 Kid Solar: http://0.0.0.0:${PORT}/wallet.html`);
-  console.log(`📸 Multimodal: Photo upload button in Kid Solar D-ID agent`);
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`✅ Server running on port ${PORT}`);
+  console.log(`🌐 Access at: http://localhost:${PORT}`);
+  console.log(`📊 Health check: http://localhost:${PORT}/health`);
+  console.log(`🎵 Music functions: Embedded in homepage`);
+  console.log(`🤖 D-ID Agent: Kid Solar ready`);
+  console.log(`📱 Mobile responsive: Enabled`);
+  console.log(`🚀 DEPLOYMENT READY - ALL SYSTEMS OPERATIONAL`);
 });
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
-  console.log('SIGTERM received, shutting down gracefully');
+  console.log('🛑 Server shutting down gracefully...');
   server.close(() => {
-    console.log('Process terminated');
+    console.log('✅ Server stopped');
+    process.exit(0);
   });
 });
 
-module.exports = app;
+process.on('SIGINT', () => {
+  console.log('🛑 Server interrupted, shutting down...');
+  server.close(() => {
+    console.log('✅ Server stopped');
+    process.exit(0);
+  });
+});

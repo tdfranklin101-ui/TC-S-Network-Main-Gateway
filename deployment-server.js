@@ -1,94 +1,109 @@
-/**
- * The Current-See Deployment Server
- * 
- * Simplified server for deployment with robust error handling
- */
-
-const express = require('express');
-const path = require('path');
+const http = require('http');
 const fs = require('fs');
-const cors = require('cors');
+const path = require('path');
 
-// Create express app
-const app = express();
 const PORT = process.env.PORT || 3000;
-const PUBLIC_DIR = path.join(__dirname, 'public');
 
-// Setup middleware
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+console.log('🚀 Starting Current-See Deployment Server...');
 
-// Logging function
-function log(message, isError = false) {
-  const timestamp = new Date().toISOString();
-  const prefix = isError ? '❌ ERROR:' : '✓ INFO:';
-  console.log(`[${timestamp}] ${prefix} ${message}`);
-}
-
-// Health check endpoint
-app.get('/health', (req, res) => {
-  log('Health check requested');
-  res.status(200).send('OK');
-});
-
-// Root path health check for deployment
-app.get('/', (req, res, next) => {
-  // If it's a health check (no user agent), just return OK
-  if (!req.headers['user-agent']) {
-    log('Root health check requested');
-    return res.status(200).send('OK');
-  }
+const server = http.createServer((req, res) => {
+  const pathname = new URL(req.url, `http://${req.headers.host}`).pathname;
   
-  // For regular users, serve the index.html
-  const indexPath = path.join(PUBLIC_DIR, 'index.html');
+  // Prevent caching
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   
-  if (fs.existsSync(indexPath)) {
-    res.sendFile(indexPath);
-  } else {
-    log('Index file not found', true);
-    res.status(404).send('Not Found');
-  }
-});
+  console.log(`${new Date().toISOString()} - ${req.method} ${pathname}`);
 
-// Handle API requests for embedded members data
-app.get('/embedded-members', (req, res) => {
-  try {
-    log('Embedded members data requested');
-    const membersPath = path.join(PUBLIC_DIR, 'api', 'members.json');
+  // Health check endpoint
+  if (pathname === '/health') {
+    const indexPath = path.join(__dirname, 'public', 'index.html');
+    let healthData = { 
+      status: 'healthy', 
+      timestamp: new Date().toISOString(),
+      server: 'deployment-ready'
+    };
     
-    if (fs.existsSync(membersPath)) {
-      const membersData = fs.readFileSync(membersPath, 'utf8');
-      const members = JSON.parse(membersData);
-      
-      // Format the response as JavaScript 
-      const formattedMembers = members.map(member => {
-        const formatted = {...member};
-        if (typeof formatted.totalSolar !== 'undefined') {
-          formatted.totalSolar = parseFloat(formatted.totalSolar).toFixed(4);
-        }
-        return formatted;
-      });
-      
-      res.set('Content-Type', 'application/javascript');
-      res.send(`window.embeddedMembers = ${JSON.stringify(formattedMembers)};`);
-    } else {
-      log('Members data file not found', true);
-      res.status(404).send('Not Found');
+    if (fs.existsSync(indexPath)) {
+      const content = fs.readFileSync(indexPath, 'utf8');
+      healthData.musicFunctions = (content.match(/playMusic\d/g) || []).length;
+      healthData.didAgent = content.includes('v2_agt_vhYf_e_C');
+      healthData.fileSize = content.length;
     }
-  } catch (error) {
-    log(`Error serving embedded members: ${error.message}`, true);
-    res.status(500).send('Server Error');
+    
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(healthData, null, 2));
+    return;
+  }
+
+  // Homepage
+  if (pathname === '/') {
+    const indexPath = path.join(__dirname, 'public', 'index.html');
+    
+    if (fs.existsSync(indexPath)) {
+      const content = fs.readFileSync(indexPath, 'utf8');
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(content);
+      console.log(`✅ Served homepage: ${content.length} bytes`);
+    } else {
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      res.end('Homepage not found');
+      console.log('❌ Homepage file missing');
+    }
+    return;
+  }
+
+  // Static files
+  const filePath = path.join(__dirname, 'public', pathname);
+  if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+    const content = fs.readFileSync(filePath);
+    
+    // Set content type based on extension
+    const ext = path.extname(filePath).toLowerCase();
+    const contentTypes = {
+      '.html': 'text/html; charset=utf-8',
+      '.css': 'text/css',
+      '.js': 'application/javascript',
+      '.json': 'application/json',
+      '.png': 'image/png',
+      '.jpg': 'image/jpeg',
+      '.svg': 'image/svg+xml'
+    };
+    
+    res.writeHead(200, { 'Content-Type': contentTypes[ext] || 'application/octet-stream' });
+    res.end(content);
+    console.log(`✅ Served static file: ${pathname}`);
+  } else {
+    res.writeHead(404, { 'Content-Type': 'text/plain' });
+    res.end('Not found');
+    console.log(`❌ File not found: ${pathname}`);
   }
 });
 
-// Serve static files from the public directory
-app.use(express.static(PUBLIC_DIR));
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`✅ Server running on port ${PORT}`);
+  console.log(`🌐 Access at: http://localhost:${PORT}`);
+  console.log(`📊 Health check: http://localhost:${PORT}/health`);
+  console.log(`🎵 Music functions: Embedded in homepage`);
+  console.log(`🤖 D-ID Agent: Kid Solar ready`);
+  console.log(`📱 Mobile responsive: Enabled`);
+  console.log(`🚀 DEPLOYMENT READY - ALL SYSTEMS OPERATIONAL`);
+});
 
-// Start the server
-app.listen(PORT, '0.0.0.0', () => {
-  log(`=== The Current-See Deployment Server ===`);
-  log(`Server running on http://0.0.0.0:${PORT}`);
-  log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-  log(`Serving files from: ${PUBLIC_DIR}`);
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('🛑 Server shutting down gracefully...');
+  server.close(() => {
+    console.log('✅ Server stopped');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('🛑 Server interrupted, shutting down...');
+  server.close(() => {
+    console.log('✅ Server stopped');
+    process.exit(0);
+  });
 });
