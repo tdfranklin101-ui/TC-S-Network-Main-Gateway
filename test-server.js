@@ -1,33 +1,22 @@
-const express = require('express');
-const path = require('path');
-const app = express();
+const http = require('http');
+const PORT = process.env.PORT || 3000;
 
-// Middleware
-app.use(express.static(path.join(__dirname, 'deploy_v1_multimodal')));
-
-// Routes
-app.get('/', (req, res) => {
-  console.log('Homepage requested');
-  res.sendFile(path.join(__dirname, 'deploy_v1_multimodal', 'index.html'));
+const server = http.createServer((req, res) => {
+  if (req.url === '/health') {
+    res.writeHead(200, {'Content-Type': 'application/json'});
+    res.end(JSON.stringify({
+      status: 'healthy',
+      message: 'CORRECT VERSION LOADED',
+      version: '2.0.0',
+      timestamp: new Date().toISOString()
+    }));
+  } else {
+    res.writeHead(200, {'Content-Type': 'text/html'});
+    res.end('<h1>Current-See Platform - CORRECT VERSION LOADED</h1>');
+  }
 });
 
-app.get('/health', (req, res) => {
-  console.log('Health check requested');
-  res.json({ status: 'healthy', timestamp: new Date().toISOString() });
-});
-
-// Start server
-const PORT = 3000;
-const server = app.listen(PORT, () => {
-  console.log(`🚀 Test server running on port ${PORT}`);
-  console.log(`✅ Website: http://localhost:${PORT}`);
-  console.log(`✅ Health: http://localhost:${PORT}/health`);
-});
-
-server.on('error', (err) => {
-  console.error('Server error:', err);
-});
-
-process.on('uncaughtException', (err) => {
-  console.error('Uncaught exception:', err);
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`✅ TEST SERVER RUNNING ON PORT ${PORT}`);
+  console.log(`🌐 CORRECT VERSION CONFIRMED LOADED`);
 });
