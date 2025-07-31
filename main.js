@@ -142,6 +142,84 @@ const server = http.createServer((req, res) => {
       return;
     }
 
+    // Kid Solar Memory API - Load streaming conversations for memory page
+    if (pathname === '/api/kid-solar-memory/all') {
+      try {
+        const conversationsDir = path.join(fixedFilesPath, 'conversations');
+        let conversations = [];
+        let totalMessages = 0;
+        let uniqueSessions = new Set();
+
+        // Check if conversations directory exists and load streaming conversations
+        if (fs.existsSync(conversationsDir)) {
+          const files = fs.readdirSync(conversationsDir)
+            .filter(f => f.endsWith('.json'))
+            .sort((a, b) => {
+              // Sort by timestamp in filename (newest first)
+              const timeA = a.match(/(\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2})/);
+              const timeB = b.match(/(\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2})/);
+              if (timeA && timeB) {
+                return timeB[1].localeCompare(timeA[1]);
+              }
+              return b.localeCompare(a);
+            });
+
+          // Load conversation files and format for memory page
+          files.forEach(filename => {
+            try {
+              const filepath = path.join(conversationsDir, filename);
+              const conversationData = JSON.parse(fs.readFileSync(filepath, 'utf8'));
+              
+              // Format conversation for memory page display
+              const memoryEntry = {
+                sessionId: conversationData.id || filename.replace('.json', ''),
+                timestamp: conversationData.timestamp || new Date().toISOString(),
+                conversationType: getConversationType(conversationData),
+                content: conversationData.content || 'Streaming conversation captured',
+                source: conversationData.source || 'did_streaming',
+                agent_id: conversationData.agent_id || conversationData.metadata?.agent_id || 'console_solar',
+                messages: 1,
+                filename: filename
+              };
+              
+              conversations.push(memoryEntry);
+              totalMessages += memoryEntry.messages;
+              uniqueSessions.add(memoryEntry.sessionId);
+              
+            } catch (fileError) {
+              console.log(`Error loading conversation file ${filename}:`, fileError);
+            }
+          });
+        }
+
+        const memoryResponse = {
+          totalConversations: conversations.length,
+          totalMessages: totalMessages,
+          uniqueSessions: uniqueSessions.size,
+          conversations: conversations,
+          lastUpdated: new Date().toISOString(),
+          status: conversations.length > 0 ? 'active' : 'waiting_for_conversations',
+          source: 'streaming_capture'
+        };
+
+        console.log(`📋 Memory API serving ${conversations.length} streaming conversations`);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(memoryResponse));
+        return;
+        
+      } catch (error) {
+        console.error('Error loading memory data:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ 
+          error: 'Failed to load memory data',
+          totalConversations: 0,
+          conversations: [],
+          status: 'error'
+        }));
+        return;
+      }
+    }
+
     res.writeHead(404, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: 'API endpoint not found' }));
     return;
@@ -179,17 +257,29 @@ function serveFile(res, filePath, contentType) {
   }
 }
 
+// Helper function for conversation type detection
+function getConversationType(conversationData) {
+  if (!conversationData) return 'general';
+  
+  const content = (conversationData.content || '').toLowerCase();
+  const source = (conversationData.source || '').toLowerCase();
+  
+  if (source.includes('streaming') || source.includes('did')) return 'console_solar_chat';
+  if (content.includes('image') || content.includes('photo')) return 'photo_analysis';
+  if (content.includes('identify')) return 'identify_anything';
+  return 'general_conversation';
+}
+
 server.listen(PORT, '0.0.0.0', () => {
-  console.log('✅ STABLE PRODUCTION SERVER READY');
+  console.log('✅ PRODUCTION SERVER WITH D-ID STREAMING CAPTURE READY');
   console.log(`📡 Server: http://localhost:${PORT}`);
-  console.log('🔧 All 5 Critical Fixes Active:');
-  console.log('   1. Dashboard routing fixed (/analytics-dashboard)');
-  console.log('   2. Analytics dashboard restored');
-  console.log('   3. Memory documentation updated');
-  console.log('   4. Multimodal features removed');
-  console.log('   5. USD disclaimers added');
+  console.log('🎬 D-ID Streaming Features Active:');
+  console.log('   📡 /api/conversation-stream - Real-time D-ID capture');
+  console.log('   📋 /api/kid-solar-memory/all - Memory page integration');
+  console.log('   🗂️  Conversations stored in /conversations/ directory');
+  console.log('   🔗 Memory page automatically shows streaming conversations');
   console.log('==============================');
-  console.log('🚀 READY FOR DEPLOYMENT!');
+  console.log('🚀 DEPLOYMENT READY - STREAMING CAPTURE ACTIVE!');
 });
 
 // Graceful shutdown
