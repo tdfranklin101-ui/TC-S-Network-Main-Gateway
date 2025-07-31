@@ -75,6 +75,56 @@ const server = http.createServer(async (req, res) => {
 
   // API endpoints
   if (pathname.startsWith('/api/')) {
+    // Enhanced conversation capture endpoint for Console Solar responses
+    if (pathname === '/api/enhanced-conversation-capture') {
+      let body = '';
+      req.on('data', chunk => {
+        body += chunk.toString();
+      });
+      
+      req.on('end', () => {
+        try {
+          const data = JSON.parse(body);
+          console.log('Enhanced Console Solar response captured:', data.responseText ? data.responseText.substring(0, 100) + '...' : 'No text');
+          
+          // Store conversation data with enhanced metadata
+          const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+          const filename = `conversations/console_solar_${timestamp}_${data.source}.json`;
+          const fullPath = path.join(__dirname, filename);
+          
+          // Ensure conversations directory exists
+          const conversationsDir = path.join(__dirname, 'conversations');
+          if (!fs.existsSync(conversationsDir)) {
+            fs.mkdirSync(conversationsDir, { recursive: true });
+          }
+          
+          // Enhanced data structure for Console Solar responses
+          const enhancedData = {
+            ...data,
+            captureMethod: 'enhanced-audio-capture',
+            processingTimestamp: new Date().toISOString(),
+            responseLength: data.responseText ? data.responseText.length : 0,
+            qualityScore: data.responseText && data.responseText.length > 50 ? 'high' : 'low'
+          };
+          
+          fs.writeFileSync(fullPath, JSON.stringify(enhancedData, null, 2));
+          
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ 
+            success: true, 
+            stored: filename,
+            responseLength: enhancedData.responseLength,
+            qualityScore: enhancedData.qualityScore
+          }));
+        } catch (error) {
+          console.error('Enhanced capture error:', error);
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Invalid request data' }));
+        }
+      });
+      return;
+    }
+    
     if (pathname === '/api/members') {
       try {
         const membersDataPath = path.join(__dirname, 'api', 'members.json');
