@@ -32,6 +32,18 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Members API endpoint
+app.get('/api/members', (req, res) => {
+  try {
+    const fs = require('fs');
+    const membersData = JSON.parse(fs.readFileSync('./api/members.json', 'utf8'));
+    res.json(membersData);
+  } catch (error) {
+    console.error('Error loading members:', error);
+    res.status(500).json({ error: 'Unable to load member data' });
+  }
+});
+
 // Kid Solar multimodal analysis endpoint
 app.post('/api/kid-solar-analysis', upload.single('photo'), async (req, res) => {
   try {
