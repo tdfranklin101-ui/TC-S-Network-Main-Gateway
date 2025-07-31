@@ -36,6 +36,11 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Security headers
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+
   // Health check endpoint
   if (pathname === '/health') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -43,6 +48,9 @@ const server = http.createServer(async (req, res) => {
       status: 'healthy',
       timestamp: new Date().toISOString(),
       service: 'Current-See Production Server',
+      consoleSolar: 'active',
+      enhancedCapture: 'operational',
+      deployment: 'ready',
       version: '1.0.0',
       deployment: 'PRODUCTION',
       uptime: process.uptime(),
