@@ -55,7 +55,9 @@ const server = http.createServer((req, res) => {
   }
 
   // Static files
-  const filePath = path.join(__dirname, 'public', pathname);
+  let filePath = path.join(__dirname, 'public', pathname);
+  
+  // Try direct file first
   if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
     const content = fs.readFileSync(filePath);
     
@@ -75,9 +77,18 @@ const server = http.createServer((req, res) => {
     res.end(content);
     console.log(`✅ Served static file: ${pathname}`);
   } else {
-    res.writeHead(404, { 'Content-Type': 'text/plain' });
-    res.end('Not found');
-    console.log(`❌ File not found: ${pathname}`);
+    // Try adding .html extension for extensionless URLs
+    const htmlFilePath = path.join(__dirname, 'public', pathname + '.html');
+    if (fs.existsSync(htmlFilePath) && fs.statSync(htmlFilePath).isFile()) {
+      const content = fs.readFileSync(htmlFilePath, 'utf8');
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(content);
+      console.log(`✅ Served HTML file: ${pathname}.html`);
+    } else {
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      res.end('Not found');
+      console.log(`❌ File not found: ${pathname}`);
+    }
   }
 });
 
