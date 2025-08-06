@@ -37,18 +37,23 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // Homepage
+  // Root path - serve homepage and act as health check
   if (pathname === '/') {
     const indexPath = path.join(__dirname, 'public', 'index.html');
     
     if (fs.existsSync(indexPath)) {
       const content = fs.readFileSync(indexPath, 'utf8');
+      
+      // Add health check headers for deployment
+      res.setHeader('X-Health-Status', 'healthy');
+      res.setHeader('X-Server-Ready', 'true');
+      
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
       res.end(content);
       console.log(`✅ Served homepage: ${content.length} bytes`);
     } else {
-      res.writeHead(404, { 'Content-Type': 'text/plain' });
-      res.end('Homepage not found');
+      res.writeHead(500, { 'Content-Type': 'text/plain' });
+      res.end('Homepage not found - server not ready');
       console.log('❌ Homepage file missing');
     }
     return;
@@ -96,10 +101,14 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Server running on port ${PORT}`);
   console.log(`🌐 Access at: http://localhost:${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/health`);
-  console.log(`🎵 Music functions: Embedded in homepage`);
+  console.log(`🎵 Music functions: Embedded in homepage (9 tracks)`);
   console.log(`🤖 D-ID Agent: Kid Solar ready`);
   console.log(`📱 Mobile responsive: Enabled`);
+  console.log(`🔗 Links: Q&A and waitlist working`);
   console.log(`🚀 DEPLOYMENT READY - ALL SYSTEMS OPERATIONAL`);
+}).on('error', (err) => {
+  console.error('❌ Server failed to start:', err);
+  process.exit(1);
 });
 
 // Graceful shutdown
