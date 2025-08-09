@@ -13,11 +13,9 @@
 <body>
   <!-- Network Commissioning Popup -->
   <div id="commissioningPopup" style="
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 10000;
+    position: relative;
+    width: 100%;
+    z-index: 1000;
     background: linear-gradient(135deg, #FFA726 0%, #FFB74D 50%, #FFCC02 100%);
     border-bottom: 3px solid #FF8F00;
     box-shadow: 0 4px 20px rgba(255, 152, 0, 0.4);
@@ -25,6 +23,7 @@
     transform: translateY(-100%);
     transition: transform 0.5s ease-out;
     animation: slideDown 0.8s ease-out 0.5s forwards;
+    margin-bottom: 0;
   ">
     <div style="max-width: 1200px; margin: 0 auto; display: flex; align-items: center; gap: 20px; position: relative;">
       <!-- Close Button -->
@@ -126,6 +125,22 @@
 
   <!-- Popup Animation Styles -->
   <style>
+    /* Add sparkly background to popup when visible */
+    #commissioningPopup.sparkly {
+      background: linear-gradient(135deg, #FFA726 0%, #FFB74D 25%, #FFCC02 50%, #FFD54F 75%, #FFEB3B 100%);
+      background-size: 200% 200%;
+      animation: sparkleShine 3s ease-in-out infinite, slideDown 0.8s ease-out 0.5s forwards;
+    }
+    
+    @keyframes sparkleShine {
+      0%, 100% {
+        background-position: 0% 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+    }
+    
     @keyframes slideDown {
       to {
         transform: translateY(0);
@@ -197,6 +212,11 @@
       localStorage.setItem('commissioningPopupClosed', Date.now().toString());
     }
     
+    function showSparklyPopup() {
+      const popup = document.getElementById('commissioningPopup');
+      popup.classList.add('sparkly');
+    }
+    
     // Check if popup should be shown
     document.addEventListener('DOMContentLoaded', function() {
       const lastClosed = localStorage.getItem('commissioningPopupClosed');
@@ -205,6 +225,11 @@
       if (lastClosed && parseInt(lastClosed) > oneDayAgo) {
         // Hide popup if closed within last 24 hours
         document.getElementById('commissioningPopup').style.display = 'none';
+      } else {
+        // Show sparkly effect after slide animation
+        setTimeout(() => {
+          showSparklyPopup();
+        }, 1300);
       }
     });
   </script>
