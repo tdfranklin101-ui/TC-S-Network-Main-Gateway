@@ -20,10 +20,12 @@
     border-bottom: 3px solid #FF8F00;
     box-shadow: 0 4px 20px rgba(255, 152, 0, 0.4);
     padding: 15px 20px;
-    transform: translateY(-100%);
+    transform: translateY(0);
     transition: transform 0.5s ease-out;
-    animation: slideDown 0.8s ease-out 0.5s forwards;
+    animation: slideDown 0.8s ease-out 0.1s forwards;
     margin-bottom: 0;
+    opacity: 1;
+    display: block;
   ">
     <div style="max-width: 1200px; margin: 0 auto; display: flex; align-items: center; gap: 20px; position: relative;">
       <!-- Minimize/Restore Button -->
@@ -143,8 +145,13 @@
     }
     
     @keyframes slideDown {
+      from {
+        transform: translateY(-20px);
+        opacity: 0.8;
+      }
       to {
         transform: translateY(0);
+        opacity: 1;
       }
     }
     
@@ -267,27 +274,38 @@
     document.addEventListener('DOMContentLoaded', function() {
       const popup = document.getElementById('commissioningPopup');
       const button = document.getElementById('popupToggleBtn');
+      
+      // Clear any old localStorage that might be hiding popup
+      // localStorage.removeItem('commissioningPopupClosed'); // Uncomment to reset
+      
       const lastClosed = localStorage.getItem('commissioningPopupClosed');
       const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
       
+      // Always show popup for now - debugging
+      popup.style.display = 'block';
+      popup.style.opacity = '1';
+      
       if (lastClosed && parseInt(lastClosed) > oneDayAgo) {
-        // Hide popup if closed within last 24 hours
-        popup.style.display = 'none';
-      } else {
-        // Check if was minimized
-        const wasMinimized = localStorage.getItem('commissioningPopupMinimized');
-        if (wasMinimized === 'true') {
-          popup.classList.add('minimized');
-          button.innerHTML = '+';
-          button.title = 'Restore popup';
-          isMinimized = true;
-        }
-        
-        // Show sparkly effect after slide animation
-        setTimeout(() => {
-          showSparklyPopup();
-        }, 1300);
+        // Hide popup if closed within last 24 hours (disabled for debugging)
+        // popup.style.display = 'none';
+        console.log('Popup was closed within 24 hours, but showing anyway for debugging');
       }
+      
+      // Check if was minimized
+      const wasMinimized = localStorage.getItem('commissioningPopupMinimized');
+      if (wasMinimized === 'true') {
+        popup.classList.add('minimized');
+        button.innerHTML = '+';
+        button.title = 'Restore popup';
+        isMinimized = true;
+      }
+      
+      // Show sparkly effect after slide animation
+      setTimeout(() => {
+        showSparklyPopup();
+      }, 200);
+      
+      console.log('Popup initialized and should be visible');
     });
   </script>
 
