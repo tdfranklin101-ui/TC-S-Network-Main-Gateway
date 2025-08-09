@@ -11,45 +11,17 @@
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <!-- Network Commissioning Popup -->
-  <div id="commissioningPopup" style="
+  <!-- Network Commissioning Message Block -->
+  <div id="commissioningBlock" style="
     position: relative;
     width: 100%;
-    z-index: 1000;
-    background: linear-gradient(135deg, #FFA726 0%, #FFB74D 50%, #FFCC02 100%);
+    background: linear-gradient(135deg, #FFA726 0%, #FFB74D 25%, #FFCC02 50%, #FFD54F 75%, #FFEB3B 100%);
     border-bottom: 3px solid #FF8F00;
     box-shadow: 0 4px 20px rgba(255, 152, 0, 0.4);
     padding: 15px 20px;
-    transform: translateY(0);
-    transition: transform 0.5s ease-out;
-    animation: slideDown 0.8s ease-out 0.1s forwards;
     margin-bottom: 0;
-    opacity: 1;
-    display: block;
   ">
     <div style="max-width: 1200px; margin: 0 auto; display: flex; align-items: center; gap: 20px; position: relative;">
-      <!-- Minimize/Restore Button -->
-      <button id="popupToggleBtn" onclick="toggleCommissioningPopup()" style="
-        position: absolute;
-        right: -10px;
-        top: -10px;
-        background: rgba(255, 255, 255, 0.9);
-        border: 2px solid #FF8F00;
-        border-radius: 50%;
-        width: 30px;
-        height: 30px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        font-weight: bold;
-        color: #FF8F00;
-        font-size: 14px;
-        transition: all 0.2s ease;
-        z-index: 10001;
-      " onmouseover="this.style.background='#FF8F00'; this.style.color='white'" onmouseout="this.style.background='rgba(255,255,255,0.9)'; this.style.color='#FF8F00'" title="Minimize popup">
-        −
-      </button>
       
       <!-- Solar Sunny Graphic -->
       <div class="solar-graphic" style="
@@ -93,8 +65,8 @@
       </div>
       
       <!-- Message Content -->
-      <div id="popupContent" style="flex: 1; color: #1A237E; min-height: 50px; display: flex; flex-direction: column; justify-content: center;">
-        <h3 id="popupTitle" style="
+      <div style="flex: 1; color: #1A237E; min-height: 50px; display: flex; flex-direction: column; justify-content: center;">
+        <h3 style="
           margin: 0 0 8px 0;
           font-size: 1.4em;
           font-weight: bold;
@@ -103,7 +75,7 @@
         ">
           🌅 From sunrise to your own network in under 5 minutes
         </h3>
-        <p id="popupMainMessage" style="
+        <p style="
           margin: 0 0 8px 0;
           font-size: 1.1em;
           font-weight: 600;
@@ -112,7 +84,7 @@
         ">
           <span style="color: #0D47A1;">The Current-See Network Commissioning</span> is coming
         </p>
-        <p id="popupKidSolarMessage" style="
+        <p style="
           margin: 0;
           font-size: 1.0em;
           font-weight: 500;
@@ -126,35 +98,8 @@
     </div>
   </div>
 
-  <!-- Popup Animation Styles -->
+  <!-- Message Block Styles -->
   <style>
-    /* Add sparkly background to popup when visible */
-    #commissioningPopup.sparkly {
-      background: linear-gradient(135deg, #FFA726 0%, #FFB74D 25%, #FFCC02 50%, #FFD54F 75%, #FFEB3B 100%);
-      background-size: 200% 200%;
-      animation: sparkleShine 3s ease-in-out infinite, slideDown 0.8s ease-out 0.5s forwards;
-    }
-    
-    @keyframes sparkleShine {
-      0%, 100% {
-        background-position: 0% 50%;
-      }
-      50% {
-        background-position: 100% 50%;
-      }
-    }
-    
-    @keyframes slideDown {
-      from {
-        transform: translateY(-20px);
-        opacity: 0.8;
-      }
-      to {
-        transform: translateY(0);
-        opacity: 1;
-      }
-    }
-    
     @keyframes solarPulse {
       0%, 100% {
         transform: scale(1);
@@ -182,130 +127,37 @@
       }
     }
     
-    /* Minimized state styles */
-    #commissioningPopup.minimized {
-      padding: 8px 20px !important;
-    }
-    
-    #commissioningPopup.minimized #popupTitle,
-    #commissioningPopup.minimized #popupMainMessage {
-      display: none;
-    }
-    
-    #commissioningPopup.minimized #popupKidSolarMessage {
-      font-size: 0.95em !important;
-      margin: 0 !important;
-      text-align: center;
-    }
-    
-    #commissioningPopup.minimized .solar-graphic {
-      width: 40px !important;
-      height: 40px !important;
-    }
-    
     /* Mobile Responsiveness */
     @media (max-width: 768px) {
-      #commissioningPopup {
+      #commissioningBlock {
         padding: 12px 15px !important;
       }
       
-      #commissioningPopup > div {
+      #commissioningBlock > div {
         gap: 15px !important;
       }
       
-      #commissioningPopup h3 {
+      #commissioningBlock h3 {
         font-size: 1.1em !important;
       }
       
-      #commissioningPopup p {
+      #commissioningBlock p {
         font-size: 1em !important;
       }
       
-      #commissioningPopup .solar-graphic {
+      #commissioningBlock .solar-graphic {
         width: 60px !important;
         height: 60px !important;
-      }
-      
-      #commissioningPopup.minimized {
-        padding: 6px 15px !important;
-      }
-      
-      #commissioningPopup.minimized #popupKidSolarMessage {
-        font-size: 0.85em !important;
       }
     }
   </style>
 
-  <!-- Popup JavaScript -->
+  <!-- Message Block JavaScript -->
   <script>
-    let isMinimized = false;
-    
-    function toggleCommissioningPopup() {
-      const popup = document.getElementById('commissioningPopup');
-      const button = document.getElementById('popupToggleBtn');
-      
-      if (!isMinimized) {
-        // Minimize
-        popup.classList.add('minimized');
-        button.innerHTML = '+';
-        button.title = 'Restore popup';
-        isMinimized = true;
-        
-        // Remember minimized state
-        localStorage.setItem('commissioningPopupMinimized', 'true');
-      } else {
-        // Restore
-        popup.classList.remove('minimized');
-        button.innerHTML = '−';
-        button.title = 'Minimize popup';
-        isMinimized = false;
-        
-        // Remove minimized state
-        localStorage.removeItem('commissioningPopupMinimized');
-      }
-    }
-    
-    function showSparklyPopup() {
-      const popup = document.getElementById('commissioningPopup');
-      popup.classList.add('sparkly');
-    }
-    
-    // Check if popup should be shown and initialize state
+    // Simple message block - no complex interactions needed
     document.addEventListener('DOMContentLoaded', function() {
-      const popup = document.getElementById('commissioningPopup');
-      const button = document.getElementById('popupToggleBtn');
-      
-      // Clear any old localStorage that might be hiding popup
-      // localStorage.removeItem('commissioningPopupClosed'); // Uncomment to reset
-      
-      const lastClosed = localStorage.getItem('commissioningPopupClosed');
-      const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
-      
-      // Always show popup for now - debugging
-      popup.style.display = 'block';
-      popup.style.opacity = '1';
-      
-      if (lastClosed && parseInt(lastClosed) > oneDayAgo) {
-        // Hide popup if closed within last 24 hours (disabled for debugging)
-        // popup.style.display = 'none';
-        console.log('Popup was closed within 24 hours, but showing anyway for debugging');
-      }
-      
-      // Check if was minimized
-      const wasMinimized = localStorage.getItem('commissioningPopupMinimized');
-      if (wasMinimized === 'true') {
-        popup.classList.add('minimized');
-        button.innerHTML = '+';
-        button.title = 'Restore popup';
-        isMinimized = true;
-      }
-      
-      // Show sparkly effect after slide animation
-      setTimeout(() => {
-        showSparklyPopup();
-      }, 200);
-      
-      console.log('Popup initialized and should be visible');
+      const messageBlock = document.getElementById('commissioningBlock');
+      console.log('Network commissioning message block loaded');
     });
   </script>
 
