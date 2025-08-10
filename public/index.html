@@ -524,6 +524,18 @@
                 </div>
                 <span style="color: #ff8c00; font-weight: bold;">♪</span>
               </button>
+              
+              <!-- Music Now Button 10 - We Said So -->
+              <button onclick="playMusic10()" style="display: flex; align-items: center; text-decoration: none; padding: 12px; border-radius: 8px; background: linear-gradient(to right, rgba(255, 140, 0, 0.1), rgba(218, 165, 32, 0.1)); border: 1px solid rgba(255, 140, 0, 0.3); transition: all 0.3s ease; cursor: pointer; width: 100%; border: none; margin-bottom: 10px;">
+                <div style="background: linear-gradient(to right, #ff8c00, #daa520); width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-right: 15px;">
+                  <span style="color: white; font-weight: bold;">💬</span>
+                </div>
+                <div style="flex: 1; text-align: left;">
+                  <h4 style="margin: 0 0 5px 0; color: #ff8c00;">Music Now</h4>
+                  <p style="margin: 0; color: #555; font-size: 14px;">We Said So</p>
+                </div>
+                <span style="color: #ff8c00; font-weight: bold;">♪</span>
+              </button>
             </div>
           </div>
         </div>
@@ -1748,6 +1760,26 @@
       currentAudio = new Audio(musicUrl);
       currentAudio.play().then(() => {
         console.log('🔩 Playing: Steel In His Soul');
+      }).catch(error => {
+        console.error('Audio playback failed:', error);
+        alert('Unable to play music. Please check your internet connection.');
+      });
+      
+      // Reset when finished
+      currentAudio.addEventListener('ended', () => {
+        currentAudio = null;
+      });
+    }
+    
+    function playMusic10() {
+      const musicUrl = 'https://storage.aisongmaker.io/audio/11802549-7cf8-4d4c-a708-44f04804f2ab.mp3';
+      
+      stopCurrentAudio();
+      
+      // Create and play new audio
+      currentAudio = new Audio(musicUrl);
+      currentAudio.play().then(() => {
+        console.log('💬 Playing: We Said So');
       }).catch(error => {
         console.error('Audio playback failed:', error);
         alert('Unable to play music. Please check your internet connection.');
