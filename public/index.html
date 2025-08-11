@@ -572,6 +572,51 @@
         </div>
       </section>
 
+      <!-- Educational Content Section -->
+      <section class="educational-section" style="padding: 50px 0; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: white;">
+        <div class="container" style="max-width: 800px; margin: 0 auto; padding: 0 20px;">
+          <h2 style="text-align: center; color: #FFD700; margin-bottom: 15px; font-size: 2.5em; font-weight: bold;">Solar Education with Master Yoda</h2>
+          <p style="text-align: center; color: #ccc; margin-bottom: 40px; font-size: 1.2em;">Wisdom about solar energy, the Force provides</p>
+          
+          <div style="background: rgba(255, 255, 255, 0.1); padding: 30px; border-radius: 20px; backdrop-filter: blur(10px); border: 2px solid rgba(255, 215, 0, 0.3);">
+            <div style="position: relative; width: 100%; height: 0; padding-bottom: 56.25%; border-radius: 15px; overflow: hidden; background: #000;">
+              <iframe 
+                src="https://studio.d-id.com/share?id=598f2f37b2025521e500374cabc11a0b" 
+                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; border-radius: 15px;"
+                frameborder="0" 
+                allowfullscreen
+                title="Yoda Explains Solar Rays">
+              </iframe>
+            </div>
+            
+            <div style="margin-top: 25px; text-align: center;">
+              <h3 style="color: #FFD700; margin-bottom: 10px; font-size: 1.5em;">🌟 "Solar Rays, Strong in the Force They Are"</h3>
+              <p style="color: #ddd; font-size: 1.1em; line-height: 1.6; margin-bottom: 15px;">
+                Master Yoda shares ancient wisdom about the power of solar energy and its connection to the cosmic force that binds the universe together.
+              </p>
+              
+              <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin-top: 20px;">
+                <a href="https://studio.d-id.com/share?id=598f2f37b2025521e500374cabc11a0b" 
+                   target="_blank" 
+                   style="background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); color: #1a1a2e; padding: 12px 24px; border-radius: 25px; text-decoration: none; font-weight: bold; transition: transform 0.3s; display: inline-block;">
+                  🎬 Watch Full Video
+                </a>
+                <button onclick="askYodaAboutSolar()" 
+                        style="background: linear-gradient(135deg, #0057B8 0%, #0066CC 100%); color: white; padding: 12px 24px; border-radius: 25px; border: none; font-weight: bold; cursor: pointer; transition: transform 0.3s;">
+                  🤖 Ask Kid Solar About This
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <div style="text-align: center; margin-top: 30px; padding: 20px; background: rgba(255, 215, 0, 0.1); border-radius: 15px; border: 1px solid rgba(255, 215, 0, 0.3);">
+            <p style="color: #FFD700; font-style: italic; font-size: 1.1em; margin: 0;">
+              "Luminous beings are we, not this crude matter. Solar energy, part of the living Force it is."
+            </p>
+          </div>
+        </div>
+      </section>
+
       <!-- Solar Generator Section -->
       <section class="solar-generator-section">
         <div class="container">
@@ -1880,6 +1925,24 @@
           button.textContent = originalText;
         }, 2000);
       }
+    }
+
+    // Yoda solar education integration
+    function askYodaAboutSolar() {
+      const yodaQuestion = "Tell me about Yoda's wisdom on solar energy and how it connects to the Force. What can we learn from his perspective on renewable energy?";
+      sendDidMessage(yodaQuestion);
+      console.log('🌟 Yoda solar wisdom question sent to Kid Solar');
+      
+      // Visual feedback
+      const button = event.target;
+      const originalText = button.textContent;
+      button.textContent = '✓ Question Sent!';
+      button.style.transform = 'scale(0.95)';
+      
+      setTimeout(() => {
+        button.textContent = originalText;
+        button.style.transform = 'scale(1)';
+      }, 2000);
     }
 
     // Signup form functionality
