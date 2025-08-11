@@ -110,6 +110,21 @@
         }
       }
     </style>
+    
+    <script>
+      function toggleDetails(section) {
+        const details = document.getElementById(section + 'Details');
+        const arrow = document.getElementById(section + 'Arrow');
+        
+        if (details.style.display === 'none' || details.style.display === '') {
+          details.style.display = 'block';
+          arrow.innerHTML = '▲';
+        } else {
+          details.style.display = 'none';
+          arrow.innerHTML = '▼';
+        }
+      }
+    </script>
 
     <main>
       <!-- Hero Section with Solar Ray Watermark -->
@@ -135,41 +150,35 @@
           <div class="features-container" style="margin: 20px 0; max-width: 600px; background: rgba(255, 255, 255, 0.9); border-radius: 10px; padding: 20px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);">
             <h3 style="margin-top: 0; color: #0057B8; font-size: 1.5rem;">Join The Current-See Network</h3>
             
-            <!-- Where We Are Going -->
-            <div style="margin: 30px 0; padding: 25px; background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(123, 193, 68, 0.1)); border-radius: 15px; border: 2px solid rgba(255, 193, 7, 0.3); box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
-              <h2 style="color: #00695c; margin-top: 0; text-align: center; font-size: 1.8em; margin-bottom: 20px;">Where We Are Going</h2>
-              
-              <div style="color: #333; font-size: 16px; line-height: 1.5;">
-                <p style="font-size: 1.1em; margin-bottom: 15px;">
-                  We are building a universal clean energy economy—where renewable generation isn't just measured but becomes prosperity everyone can access.
-                </p>
-                
-                <p style="font-size: 1.1em; margin-bottom: 15px;">
-                  <strong>Our next milestone:</strong><br>
-                  Launching the <strong>generator protocol</strong>, a simple system that allows any renewable energy producer—from a single rooftop to a utility-scale array—to claim verified renewable value and distribute it directly into the hands of individuals, merchants, and communities.
-                </p>
-                
-                <p style="font-size: 1.1em; margin-bottom: 15px;">
-                  With this protocol, every kilowatt-hour produced can be turned into Solar—an auditable, spendable currency that circulates in a real marketplace of goods and services.
-                </p>
-                
-                <ul style="font-size: 1.1em; line-height: 1.5; padding-left: 20px; margin-bottom: 15px;">
-                  <li>✅ Verified renewable generation</li>
-                  <li>✅ Automatic tokenization</li>
-                  <li>✅ Transparent wealth distribution</li>
-                </ul>
-                
-                <p style="font-size: 1.1em; margin-bottom: 15px;">
-                  This is the foundation for a regenerative, shared economy where clean energy isn't a corporate asset but a universal resource.
-                </p>
-                
-                <p style="font-size: 1.1em; margin-bottom: 20px; text-align: center;">
-                  🌿 <em>Be part of the first network that transforms renewable power into prosperity—for everyone.</em>
-                </p>
-                
-                <div style="text-align: center;">
-                  <a href="/private-network" style="display: inline-block; padding: 12px 20px; background: #00695c; color: #fff; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; transition: background 0.3s ease;">Join the Waiting List</a>
+            <!-- Where We Are Going - Compact Version -->
+            <div style="margin: 10px 0; cursor: pointer;" onclick="toggleDetails('whereWeAreGoing')">
+              <div style="display: flex; align-items: center; text-decoration: none; padding: 12px; border-radius: 8px; background: linear-gradient(to right, rgba(123, 193, 68, 0.1), rgba(0, 87, 184, 0.1)); border: 1px solid rgba(123, 193, 68, 0.3); transition: all 0.3s ease;">
+                <div style="background: linear-gradient(to right, #7bc144, #0057B8); width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-right: 15px;">
+                  <span style="color: white; font-weight: bold;">🚀</span>
                 </div>
+                <div style="flex: 1;">
+                  <h4 style="margin: 0 0 5px 0; color: #0057B8;">Where We Are Going</h4>
+                  <p style="margin: 0; color: #555; font-size: 14px;">Building a universal clean energy economy</p>
+                </div>
+                <span id="whereWeAreGoingArrow" style="color: #0057B8; font-weight: bold;">▼</span>
+              </div>
+            </div>
+            
+            <!-- Expanded Details (Hidden by default) -->
+            <div id="whereWeAreGoingDetails" style="display: none; margin: 10px 0; padding: 15px; background: rgba(123, 193, 68, 0.05); border-radius: 8px; border: 1px solid rgba(123, 193, 68, 0.2);">
+              <p style="font-size: 14px; margin-bottom: 10px; color: #333;">
+                We are building a universal clean energy economy—where renewable generation isn't just measured but becomes prosperity everyone can access.
+              </p>
+              <p style="font-size: 14px; margin-bottom: 10px; color: #333;">
+                <strong>Our next milestone:</strong> Launching the generator protocol, a simple system that allows any renewable energy producer to claim verified renewable value and distribute it directly to individuals, merchants, and communities.
+              </p>
+              <ul style="font-size: 14px; line-height: 1.5; padding-left: 20px; margin-bottom: 10px; color: #333;">
+                <li>✅ Verified renewable generation</li>
+                <li>✅ Automatic tokenization</li>
+                <li>✅ Transparent wealth distribution</li>
+              </ul>
+              <div style="text-align: center; margin-top: 15px;">
+                <a href="/private-network" style="display: inline-block; padding: 10px 15px; background: #00695c; color: #fff; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 14px; transition: background 0.3s ease;">Join the Waiting List</a>
               </div>
             </div>
             
@@ -190,19 +199,29 @@
                 <span style="color: #0057B8; font-weight: bold;">→</span>
               </a>
               
-              <!-- Q & AI Link (Top of List) -->
-              <div style="margin-bottom: 20px; padding: 20px; background: linear-gradient(135deg, rgba(123, 193, 68, 0.05), rgba(0, 87, 184, 0.05)); border-radius: 12px; border: 2px solid rgba(123, 193, 68, 0.2);">
-                <a href="/qa-meaning-purpose" style="display: flex; align-items: center; text-decoration: none; transition: all 0.3s ease;">
-                  <div style="background: linear-gradient(135deg, #7bc144, #0057B8); width: 50px; height: 50px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-right: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
-                    <span style="color: white; font-weight: bold; font-size: 18px;">Q&AI</span>
-                  </div>
-                  <div style="flex: 1;">
-                    <h3 style="margin: 0 0 8px 0; color: #0057B8; font-size: 1.4em;">Q & AI - Meaning and Purpose</h3>
-                    <p style="margin: 0; color: #555; font-size: 15px; font-style: italic;">"I, a human, asked the AI LLM, a machine, about the human condition…"</p>
-                  </div>
-                  <span style="color: #0057B8; font-weight: bold; font-size: 20px;">→</span>
-                </a>
-              </div>
+              <!-- Yoda Solar Education Link -->
+              <a href="https://studio.d-id.com/share?id=598f2f37b2025521e500374cabc11a0b" style="display: flex; align-items: center; text-decoration: none; padding: 12px; border-radius: 8px; background: linear-gradient(to right, rgba(255, 215, 0, 0.1), rgba(255, 165, 0, 0.1)); border: 1px solid rgba(255, 215, 0, 0.3); transition: all 0.3s ease;">
+                <div style="background: linear-gradient(to right, #FFD700, #FFA500); width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-right: 15px;">
+                  <span style="color: white; font-weight: bold;">🧙</span>
+                </div>
+                <div style="flex: 1;">
+                  <h4 style="margin: 0 0 5px 0; color: #0057B8;">Master Yoda Solar Wisdom</h4>
+                  <p style="margin: 0; color: #555; font-size: 14px;">Solar rays and the Force explained</p>
+                </div>
+                <span style="color: #0057B8; font-weight: bold;">→</span>
+              </a>
+              
+              <!-- Q & AI Link -->
+              <a href="/qa-meaning-purpose" style="display: flex; align-items: center; text-decoration: none; padding: 12px; border-radius: 8px; background: linear-gradient(to right, rgba(123, 193, 68, 0.1), rgba(0, 87, 184, 0.1)); border: 1px solid rgba(123, 193, 68, 0.3); transition: all 0.3s ease;">
+                <div style="background: linear-gradient(to right, #7bc144, #0057B8); width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-right: 15px;">
+                  <span style="color: white; font-weight: bold;">Q&A</span>
+                </div>
+                <div style="flex: 1;">
+                  <h4 style="margin: 0 0 5px 0; color: #0057B8;">Q & AI - Meaning and Purpose</h4>
+                  <p style="margin: 0; color: #555; font-size: 14px;">Human condition through AI perspective</p>
+                </div>
+                <span style="color: #0057B8; font-weight: bold;">→</span>
+              </a>
               
               <!-- Wallet Link -->
               <a href="https://cross-platform-mobile-tdfranklin101.replit.app/welcome-orientation.html" style="display: flex; align-items: center; text-decoration: none; padding: 12px; border-radius: 8px; background: linear-gradient(to right, rgba(123, 193, 68, 0.1), rgba(0, 87, 184, 0.1)); border: 1px solid rgba(123, 193, 68, 0.3); transition: all 0.3s ease;">
@@ -479,48 +498,7 @@
         </div>
       </section>
 
-      <!-- Educational Content Section -->
-      <section class="educational-section" style="padding: 30px 0; background: #1a1a2e; color: white;">
-        <div class="container" style="max-width: 800px; margin: 0 auto; padding: 0 20px;">
-          <h2 style="text-align: center; color: #FFD700; margin-bottom: 10px; font-size: 1.8em;">Solar Education with Master Yoda</h2>
-          <p style="text-align: center; color: #ccc; margin-bottom: 30px; font-size: 1em;">Wisdom about solar energy, the Force provides</p>
-          
-          <div style="background: rgba(255, 255, 255, 0.1); padding: 30px; border-radius: 15px; border: 1px solid rgba(255, 215, 0, 0.3);">
-            <div style="position: relative; width: 100%; height: 0; padding-bottom: 56.25%; border-radius: 10px; overflow: hidden; background: #000; margin-bottom: 20px;">
-              <iframe 
-                src="https://studio.d-id.com/share?id=598f2f37b2025521e500374cabc11a0b" 
-                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;"
-                frameborder="0" 
-                allowfullscreen
-                title="Yoda Explains Solar Rays">
-              </iframe>
-            </div>
-            
-            <div style="text-align: center;">
-              <h3 style="color: #FFD700; margin: 0 0 10px 0; font-size: 1.4em;">Solar Rays and the Force</h3>
-              <p style="color: #ddd; margin: 0 0 20px 0; font-size: 1em;">Master Yoda explains solar energy's cosmic connection</p>
-              
-              <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-                <a href="https://studio.d-id.com/share?id=598f2f37b2025521e500374cabc11a0b" 
-                   target="_blank" 
-                   style="display: flex; align-items: center; padding: 10px 20px; background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); color: #1a1a2e; border-radius: 8px; text-decoration: none; font-weight: bold; transition: all 0.3s;">
-                  🎬 Watch Video
-                </a>
-                <button onclick="askYodaAboutSolar()" 
-                        style="display: flex; align-items: center; padding: 10px 20px; background: linear-gradient(135deg, #0057B8 0%, #0066CC 100%); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.3s;">
-                  🤖 Ask Kid Solar
-                </button>
-              </div>
-            </div>
-          </div>
-          
-          <div style="text-align: center; margin-top: 20px; padding: 15px; background: rgba(255, 215, 0, 0.1); border-radius: 8px; border: 1px solid rgba(255, 215, 0, 0.3);">
-            <p style="color: #FFD700; font-style: italic; margin: 0;">
-              "Solar energy, part of the living Force it is." - Master Yoda
-            </p>
-          </div>
-        </div>
-      </section>
+
 
       <!-- Community Gallery Section -->
       <section class="community-gallery-section" style="padding: 30px 0; background: #f8f9fa; border-top: 1px solid #0057B8;">
