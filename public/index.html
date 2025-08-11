@@ -12,86 +12,20 @@
 </head>
 <body>
   <!-- Network Commissioning Message Block -->
-  <div id="commissioningBlock" style="
-    position: relative;
-    width: 100%;
-    background: linear-gradient(135deg, #FFA726 0%, #FFB74D 25%, #FFCC02 50%, #FFD54F 75%, #FFEB3B 100%);
-    border-bottom: 3px solid #FF8F00;
-    box-shadow: 0 4px 20px rgba(255, 152, 0, 0.4);
-    padding: 15px 20px;
-    margin-bottom: 0;
-  ">
-    <div style="max-width: 1200px; margin: 0 auto; display: flex; align-items: center; gap: 20px; position: relative;">
+  <div id="commissioningBlock" style="width: 100%; background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); border-bottom: 2px solid #FF8F00; padding: 12px 20px; margin-bottom: 0;">
+    <div style="max-width: 1200px; margin: 0 auto; display: flex; align-items: center; gap: 15px;">
       
-      <!-- Solar Sunny Graphic -->
-      <div class="solar-graphic" style="
-        flex-shrink: 0;
-        width: 80px;
-        height: 80px;
-        position: relative;
-        animation: solarPulse 3s ease-in-out infinite;
-        transition: all 0.3s ease;
-      ">
-        <!-- Sun -->
-        <div style="
-          width: 60px;
-          height: 60px;
-          background: radial-gradient(circle, #FFEB3B 20%, #FFC107 70%, #FF8F00 100%);
-          border-radius: 50%;
-          position: absolute;
-          top: 10px;
-          left: 10px;
-          box-shadow: 0 0 20px rgba(255, 193, 7, 0.8), inset 0 0 10px rgba(255, 235, 59, 0.5);
-          animation: sunGlow 2s ease-in-out infinite alternate;
-        "></div>
-        
-        <!-- Sun Rays -->
-        <div style="
-          position: absolute;
-          width: 80px;
-          height: 80px;
-          animation: rotate 8s linear infinite;
-        ">
-          <!-- Ray lines -->
-          <div style="position: absolute; top: 0; left: 50%; width: 3px; height: 15px; background: #FFEB3B; transform: translateX(-50%); border-radius: 2px;"></div>
-          <div style="position: absolute; top: 0; right: 15px; width: 3px; height: 15px; background: #FFEB3B; transform: rotate(45deg); border-radius: 2px;"></div>
-          <div style="position: absolute; top: 50%; right: 0; width: 15px; height: 3px; background: #FFEB3B; transform: translateY(-50%); border-radius: 2px;"></div>
-          <div style="position: absolute; bottom: 15px; right: 15px; width: 3px; height: 15px; background: #FFEB3B; transform: rotate(-45deg); border-radius: 2px;"></div>
-          <div style="position: absolute; bottom: 0; left: 50%; width: 3px; height: 15px; background: #FFEB3B; transform: translateX(-50%); border-radius: 2px;"></div>
-          <div style="position: absolute; bottom: 15px; left: 15px; width: 3px; height: 15px; background: #FFEB3B; transform: rotate(45deg); border-radius: 2px;"></div>
-          <div style="position: absolute; top: 50%; left: 0; width: 15px; height: 3px; background: #FFEB3B; transform: translateY(-50%); border-radius: 2px;"></div>
-          <div style="position: absolute; top: 15px; left: 15px; width: 3px; height: 15px; background: #FFEB3B; transform: rotate(-45deg); border-radius: 2px;"></div>
-        </div>
+      <!-- Solar Icon -->
+      <div style="flex-shrink: 0; width: 50px; height: 50px; background: linear-gradient(135deg, #FF8F00, #FFEB3B); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+        <span style="color: white; font-size: 24px;">☀️</span>
       </div>
       
       <!-- Message Content -->
-      <div style="flex: 1; color: #1A237E; min-height: 50px; display: flex; flex-direction: column; justify-content: center;">
-        <h3 style="
-          margin: 0 0 8px 0;
-          font-size: 1.4em;
-          font-weight: bold;
-          text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
-          line-height: 1.2;
-        ">
-          🌅 From sunrise to your own network in under 5 minutes
+      <div style="flex: 1; color: #1A237E;">
+        <h3 style="margin: 0 0 5px 0; font-size: 1.2em; font-weight: bold;">
+          TC-S Network Commissioning is Coming
         </h3>
-        <p style="
-          margin: 0 0 8px 0;
-          font-size: 1.1em;
-          font-weight: 600;
-          text-shadow: 0 1px 2px rgba(255, 255, 255, 0.6);
-          line-height: 1.3;
-        ">
-          <span style="color: #0D47A1;">The Current-See Network Commissioning</span> is coming
-        </p>
-        <p style="
-          margin: 0;
-          font-size: 1.0em;
-          font-weight: 500;
-          text-shadow: 0 1px 2px rgba(255, 255, 255, 0.6);
-          line-height: 1.2;
-          color: #1565C0;
-        ">
+        <p style="margin: 0; font-size: 1em; color: #0D47A1;">
           Ask Kid Solar about the TC-S Network's mission
         </p>
       </div>
@@ -100,41 +34,14 @@
 
   <!-- Message Block Styles -->
   <style>
-    @keyframes solarPulse {
-      0%, 100% {
-        transform: scale(1);
-      }
-      50% {
-        transform: scale(1.1);
-      }
-    }
-    
-    @keyframes sunGlow {
-      from {
-        box-shadow: 0 0 20px rgba(255, 193, 7, 0.8), inset 0 0 10px rgba(255, 235, 59, 0.5);
-      }
-      to {
-        box-shadow: 0 0 30px rgba(255, 193, 7, 1), inset 0 0 15px rgba(255, 235, 59, 0.8);
-      }
-    }
-    
-    @keyframes rotate {
-      from {
-        transform: rotate(0deg);
-      }
-      to {
-        transform: rotate(360deg);
-      }
-    }
-    
     /* Mobile Responsiveness */
     @media (max-width: 768px) {
       #commissioningBlock {
-        padding: 12px 15px !important;
+        padding: 10px 15px !important;
       }
       
       #commissioningBlock > div {
-        gap: 15px !important;
+        gap: 10px !important;
       }
       
       #commissioningBlock h3 {
@@ -142,7 +49,7 @@
       }
       
       #commissioningBlock p {
-        font-size: 1em !important;
+        font-size: 0.9em !important;
       }
       
       #commissioningBlock .solar-graphic {
@@ -542,41 +449,41 @@
       </section>
 
       <!-- Signup Section -->
-      <section class="signup-section" style="padding: 40px 0; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-top: 2px solid #0057B8;">
+      <section class="signup-section" style="padding: 30px 0; background: #f8f9fa; border-top: 1px solid #0057B8;">
         <div class="container" style="max-width: 600px; margin: 0 auto; padding: 0 20px;">
-          <h2 style="text-align: center; color: #0057B8; margin-bottom: 10px; font-size: 2.2em; font-weight: bold;">Join The Current-See Network</h2>
-          <p style="text-align: center; color: #666; margin-bottom: 30px; font-size: 1.1em;">Be part of the solar-powered economic revolution</p>
+          <h2 style="text-align: center; color: #0057B8; margin-bottom: 10px; font-size: 1.6em;">Join The Current-See Network</h2>
+          <p style="text-align: center; color: #666; margin-bottom: 30px; font-size: 1em;">Be part of the solar-powered economic revolution</p>
           
-          <form id="signupForm" style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 8px 25px rgba(0, 87, 184, 0.1); border: 2px solid rgba(0, 87, 184, 0.1);">
-            <div style="margin-bottom: 20px;">
-              <label for="signupName" style="display: block; margin-bottom: 8px; color: #333; font-weight: 600; font-size: 1.1em;">Full Name *</label>
-              <input type="text" id="signupName" name="name" required style="width: 100%; padding: 15px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; transition: border-color 0.3s; box-sizing: border-box;" placeholder="Enter your full name">
+          <form id="signupForm" style="background: white; padding: 20px; border-radius: 8px; border: 1px solid rgba(0, 87, 184, 0.2);">
+            <div style="margin-bottom: 15px;">
+              <label for="signupName" style="display: block; margin-bottom: 5px; color: #333; font-weight: 600;">Full Name *</label>
+              <input type="text" id="signupName" name="name" required style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; box-sizing: border-box;" placeholder="Enter your full name">
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+              <label for="signupAddress" style="display: block; margin-bottom: 5px; color: #333; font-weight: 600;">Address *</label>
+              <textarea id="signupAddress" name="address" required style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; box-sizing: border-box; min-height: 60px; resize: vertical;" placeholder="Enter your full address"></textarea>
             </div>
             
             <div style="margin-bottom: 20px;">
-              <label for="signupAddress" style="display: block; margin-bottom: 8px; color: #333; font-weight: 600; font-size: 1.1em;">Address *</label>
-              <textarea id="signupAddress" name="address" required style="width: 100%; padding: 15px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; transition: border-color 0.3s; box-sizing: border-box; min-height: 80px; resize: vertical;" placeholder="Enter your full address (street, city, state/province, country)"></textarea>
+              <label for="signupEmail" style="display: block; margin-bottom: 5px; color: #333; font-weight: 600;">Email (Optional)</label>
+              <input type="email" id="signupEmail" name="email" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; box-sizing: border-box;" placeholder="Enter your email address">
             </div>
             
-            <div style="margin-bottom: 25px;">
-              <label for="signupEmail" style="display: block; margin-bottom: 8px; color: #333; font-weight: 600; font-size: 1.1em;">Email (Optional)</label>
-              <input type="email" id="signupEmail" name="email" style="width: 100%; padding: 15px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; transition: border-color 0.3s; box-sizing: border-box;" placeholder="Enter your email address">
-            </div>
-            
-            <button type="submit" style="width: 100%; background: linear-gradient(135deg, #0057B8 0%, #0066CC 100%); color: white; border: none; padding: 18px; border-radius: 10px; font-size: 1.2em; font-weight: bold; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(0, 87, 184, 0.3);">
+            <button type="submit" style="width: 100%; background: linear-gradient(135deg, #0057B8 0%, #0066CC 100%); color: white; border: none; padding: 12px; border-radius: 6px; font-size: 1em; font-weight: bold; cursor: pointer; transition: all 0.3s;">
               Join the Network
             </button>
             
-            <div id="signupMessage" style="margin-top: 15px; padding: 12px; border-radius: 8px; display: none; text-align: center; font-weight: 600;"></div>
+            <div id="signupMessage" style="margin-top: 10px; padding: 10px; border-radius: 6px; display: none; text-align: center; font-weight: 600;"></div>
           </form>
         </div>
       </section>
 
       <!-- Educational Content Section -->
-      <section class="educational-section" style="padding: 50px 0; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: white;">
+      <section class="educational-section" style="padding: 30px 0; background: #1a1a2e; color: white;">
         <div class="container" style="max-width: 800px; margin: 0 auto; padding: 0 20px;">
-          <h2 style="text-align: center; color: #FFD700; margin-bottom: 15px; font-size: 2.5em; font-weight: bold;">Solar Education with Master Yoda</h2>
-          <p style="text-align: center; color: #ccc; margin-bottom: 40px; font-size: 1.2em;">Wisdom about solar energy, the Force provides</p>
+          <h2 style="text-align: center; color: #FFD700; margin-bottom: 10px; font-size: 1.8em;">Solar Education with Master Yoda</h2>
+          <p style="text-align: center; color: #ccc; margin-bottom: 30px; font-size: 1em;">Wisdom about solar energy, the Force provides</p>
           
           <div style="background: rgba(255, 255, 255, 0.1); padding: 30px; border-radius: 15px; border: 1px solid rgba(255, 215, 0, 0.3);">
             <div style="position: relative; width: 100%; height: 0; padding-bottom: 56.25%; border-radius: 10px; overflow: hidden; background: #000; margin-bottom: 20px;">
@@ -616,10 +523,10 @@
       </section>
 
       <!-- Community Gallery Section -->
-      <section class="community-gallery-section" style="padding: 50px 0; background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); border-top: 2px solid #0057B8;">
+      <section class="community-gallery-section" style="padding: 30px 0; background: #f8f9fa; border-top: 1px solid #0057B8;">
         <div class="container" style="max-width: 900px; margin: 0 auto; padding: 0 20px;">
-          <h2 style="text-align: center; color: #0057B8; margin-bottom: 15px; font-size: 2.3em; font-weight: bold;">Community Solar Gallery</h2>
-          <p style="text-align: center; color: #666; margin-bottom: 40px; font-size: 1.1em;">Share your solar journey with The Current-See Network</p>
+          <h2 style="text-align: center; color: #0057B8; margin-bottom: 10px; font-size: 1.6em;">Community Solar Gallery</h2>
+          <p style="text-align: center; color: #666; margin-bottom: 30px; font-size: 1em;">Share your solar journey with The Current-See Network</p>
           
           <div style="background: white; padding: 20px; border-radius: 10px; border: 1px solid rgba(0, 87, 184, 0.2);">
             <!-- Featured Image Section -->
