@@ -579,30 +579,14 @@
           <p style="text-align: center; color: #ccc; margin-bottom: 40px; font-size: 1.2em;">Wisdom about solar energy, the Force provides</p>
           
           <div style="background: rgba(255, 255, 255, 0.1); padding: 30px; border-radius: 20px; backdrop-filter: blur(10px); border: 2px solid rgba(255, 215, 0, 0.3);">
-            <div style="position: relative; width: 100%; border-radius: 15px; overflow: hidden; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 40px; text-align: center;">
-              <div style="background: rgba(255, 215, 0, 0.1); border: 2px solid rgba(255, 215, 0, 0.3); border-radius: 15px; padding: 30px; margin-bottom: 20px;">
-                <div style="font-size: 4em; margin-bottom: 15px;">🌟</div>
-                <h3 style="color: #FFD700; margin-bottom: 15px; font-size: 1.8em;">Master Yoda's Solar Wisdom</h3>
-                <p style="color: #ddd; font-size: 1.2em; margin-bottom: 20px; line-height: 1.6;">
-                  "Strong with the Force, solar energy is. Connect with the cosmic power, you must."
-                </p>
-                <a href="https://share.icloud.com/photos/034ioQQ4oodLuEIyM4eVvTXXA" 
-                   target="_blank" 
-                   style="display: inline-block; background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); color: #1a1a2e; padding: 18px 35px; border-radius: 30px; text-decoration: none; font-weight: bold; font-size: 1.2em; transition: all 0.3s; box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);">
-                  🪐 View Yoda's Solar Message
-                </a>
-              </div>
-              
-              <div style="display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
-                <button onclick="askYodaWisdom()" 
-                        style="background: linear-gradient(135deg, #0057B8 0%, #0066CC 100%); color: white; padding: 15px 25px; border-radius: 25px; border: none; font-weight: bold; cursor: pointer; transition: all 0.3s;">
-                  🤖 Ask About Solar Wisdom
-                </button>
-                <button onclick="requestYodaGuidance()" 
-                        style="background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); color: white; padding: 15px 25px; border-radius: 25px; border: none; font-weight: bold; cursor: pointer; transition: all 0.3s;">
-                  🌱 Request Force Guidance
-                </button>
-              </div>
+            <div style="position: relative; width: 100%; height: 0; padding-bottom: 56.25%; border-radius: 15px; overflow: hidden; background: #000;">
+              <iframe 
+                src="https://studio.d-id.com/share?id=598f2f37b2025521e500374cabc11a0b" 
+                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; border-radius: 15px;"
+                frameborder="0" 
+                allowfullscreen
+                title="Yoda Explains Solar Rays">
+              </iframe>
             </div>
             
             <div style="margin-top: 25px; text-align: center;">
@@ -611,17 +595,16 @@
                 Master Yoda shares ancient wisdom about the power of solar energy and its connection to the cosmic force that binds the universe together.
               </p>
               
-              <div style="margin-top: 25px; text-align: center;">
-                <p style="color: #ddd; font-size: 1.1em; line-height: 1.6; margin-bottom: 20px;">
-                  Click the link above to access Master Yoda's exclusive solar wisdom from the iCloud gallery. 
-                  Experience the Force of renewable energy through ancient Jedi teachings.
-                </p>
-                
-                <div style="background: rgba(255, 215, 0, 0.1); padding: 15px; border-radius: 10px; border: 1px solid rgba(255, 215, 0, 0.3); margin-top: 20px;">
-                  <p style="color: #FFD700; font-style: italic; font-size: 1em; margin: 0;">
-                    "When you access the link, ready you will be, to learn the ways of solar energy."
-                  </p>
-                </div>
+              <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin-top: 20px;">
+                <a href="https://studio.d-id.com/share?id=598f2f37b2025521e500374cabc11a0b" 
+                   target="_blank" 
+                   style="background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); color: #1a1a2e; padding: 12px 24px; border-radius: 25px; text-decoration: none; font-weight: bold; transition: transform 0.3s; display: inline-block;">
+                  🎬 Watch Full Video
+                </a>
+                <button onclick="askYodaAboutSolar()" 
+                        style="background: linear-gradient(135deg, #0057B8 0%, #0066CC 100%); color: white; padding: 12px 24px; border-radius: 25px; border: none; font-weight: bold; cursor: pointer; transition: transform 0.3s;">
+                  🤖 Ask Kid Solar About This
+                </button>
               </div>
             </div>
           </div>
@@ -2013,38 +1996,21 @@
     }
 
     // Yoda solar education integration
-    function askYodaWisdom() {
-      const yodaQuestion = "I just viewed Master Yoda's solar wisdom from the iCloud link. Can you share insights about how solar energy connects to the Force and what we can learn from Jedi teachings about renewable energy?";
+    function askYodaAboutSolar() {
+      const yodaQuestion = "Tell me about Yoda's wisdom on solar energy and how it connects to the Force. What can we learn from his perspective on renewable energy?";
       sendDidMessage(yodaQuestion);
       console.log('🌟 Yoda solar wisdom question sent to Kid Solar');
       
       // Visual feedback
       const button = event.target;
       const originalText = button.textContent;
-      button.textContent = '✓ Wisdom Requested!';
+      button.textContent = '✓ Question Sent!';
       button.style.transform = 'scale(0.95)';
       
       setTimeout(() => {
         button.textContent = originalText;
         button.style.transform = 'scale(1)';
       }, 2000);
-    }
-
-    function requestYodaGuidance() {
-      const guidanceQuestion = "Master Yoda, guide me in understanding how the Force of solar energy can help create a sustainable future. What ancient wisdom applies to modern renewable energy?";
-      sendDidMessage(guidanceQuestion);
-      console.log('🌱 Yoda guidance request sent to Kid Solar');
-      
-      // Visual feedback
-      const button = event.target;
-      const originalText = button.textContent;
-      button.textContent = '✓ Guidance Sought!';
-      button.style.transform = 'scale(0.95)';
-      
-      setTimeout(() => {
-        button.textContent = originalText;
-        button.style.transform = 'scale(1)';
-      }, 2500);
     }
 
     // Community Gallery Functions
