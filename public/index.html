@@ -541,6 +541,37 @@
         </div>
       </section>
 
+      <!-- Signup Section -->
+      <section class="signup-section" style="padding: 40px 0; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-top: 2px solid #0057B8;">
+        <div class="container" style="max-width: 600px; margin: 0 auto; padding: 0 20px;">
+          <h2 style="text-align: center; color: #0057B8; margin-bottom: 10px; font-size: 2.2em; font-weight: bold;">Join The Current-See Network</h2>
+          <p style="text-align: center; color: #666; margin-bottom: 30px; font-size: 1.1em;">Be part of the solar-powered economic revolution</p>
+          
+          <form id="signupForm" style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 8px 25px rgba(0, 87, 184, 0.1); border: 2px solid rgba(0, 87, 184, 0.1);">
+            <div style="margin-bottom: 20px;">
+              <label for="signupName" style="display: block; margin-bottom: 8px; color: #333; font-weight: 600; font-size: 1.1em;">Full Name *</label>
+              <input type="text" id="signupName" name="name" required style="width: 100%; padding: 15px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; transition: border-color 0.3s; box-sizing: border-box;" placeholder="Enter your full name">
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+              <label for="signupAddress" style="display: block; margin-bottom: 8px; color: #333; font-weight: 600; font-size: 1.1em;">Address *</label>
+              <textarea id="signupAddress" name="address" required style="width: 100%; padding: 15px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; transition: border-color 0.3s; box-sizing: border-box; min-height: 80px; resize: vertical;" placeholder="Enter your full address (street, city, state/province, country)"></textarea>
+            </div>
+            
+            <div style="margin-bottom: 25px;">
+              <label for="signupEmail" style="display: block; margin-bottom: 8px; color: #333; font-weight: 600; font-size: 1.1em;">Email (Optional)</label>
+              <input type="email" id="signupEmail" name="email" style="width: 100%; padding: 15px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; transition: border-color 0.3s; box-sizing: border-box;" placeholder="Enter your email address">
+            </div>
+            
+            <button type="submit" style="width: 100%; background: linear-gradient(135deg, #0057B8 0%, #0066CC 100%); color: white; border: none; padding: 18px; border-radius: 10px; font-size: 1.2em; font-weight: bold; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(0, 87, 184, 0.3);">
+              Join the Network
+            </button>
+            
+            <div id="signupMessage" style="margin-top: 15px; padding: 12px; border-radius: 8px; display: none; text-align: center; font-weight: 600;"></div>
+          </form>
+        </div>
+      </section>
+
       <!-- Solar Generator Section -->
       <section class="solar-generator-section">
         <div class="container">
@@ -1570,6 +1601,7 @@
     document.addEventListener('DOMContentLoaded', () => {
       addNativeMultimodalButton();
       monitorDidAgentForSessionStart();
+      initializeSignupForm();
     });
     setTimeout(addNativeMultimodalButton, 2000);
     setTimeout(addNativeMultimodalButton, 4000);
@@ -1847,6 +1879,61 @@
         setTimeout(() => {
           button.textContent = originalText;
         }, 2000);
+      }
+    }
+
+    // Signup form functionality
+    function initializeSignupForm() {
+      const form = document.getElementById('signupForm');
+      const messageDiv = document.getElementById('signupMessage');
+      
+      if (form) {
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          
+          const submitBtn = form.querySelector('button[type="submit"]');
+          const originalText = submitBtn.textContent;
+          submitBtn.textContent = 'Joining...';
+          submitBtn.disabled = true;
+          
+          const formData = {
+            name: document.getElementById('signupName').value,
+            address: document.getElementById('signupAddress').value,
+            email: document.getElementById('signupEmail').value
+          };
+          
+          try {
+            const response = await fetch('/api/signup', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(formData)
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+              messageDiv.style.display = 'block';
+              messageDiv.style.background = '#d4edda';
+              messageDiv.style.color = '#155724';
+              messageDiv.style.border = '1px solid #c3e6cb';
+              messageDiv.textContent = '✅ Welcome to The Current-See Network! Your signup has been recorded.';
+              form.reset();
+              console.log('✅ Signup successful:', result.id);
+            } else {
+              throw new Error(result.error || 'Signup failed');
+            }
+          } catch (error) {
+            messageDiv.style.display = 'block';
+            messageDiv.style.background = '#f8d7da';
+            messageDiv.style.color = '#721c24';
+            messageDiv.style.border = '1px solid #f5c6cb';
+            messageDiv.textContent = '❌ Signup failed. Please try again.';
+            console.error('❌ Signup error:', error);
+          } finally {
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+          }
+        });
       }
     }
   </script>

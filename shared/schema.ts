@@ -83,6 +83,15 @@ export type InsertKidSolarMemory = z.infer<typeof insertKidSolarMemorySchema>;
 export type InsertKidSolarConversation = z.infer<typeof insertKidSolarConversationSchema>;
 export type InsertKidSolarSessionBuffer = z.infer<typeof insertKidSolarSessionBufferSchema>;
 
+// User signup table
+export const signups = pgTable("signups", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  address: text("address").notNull(),
+  email: varchar("email"),
+  timestamp: timestamp("timestamp").defaultNow(),
+});
+
 // Existing user tables (if they exist)
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -94,5 +103,13 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Insert schemas
+export const insertSignupSchema = createInsertSchema(signups);
+
+// Select types
+export type Signup = typeof signups.$inferSelect;
 export type User = typeof users.$inferSelect;
+
+// Insert types
+export type InsertSignup = z.infer<typeof insertSignupSchema>;
 export type InsertUser = typeof users.$inferInsert;
