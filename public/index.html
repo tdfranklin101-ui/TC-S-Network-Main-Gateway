@@ -11,20 +11,33 @@
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <!-- Atomic Animation Video Background -->
-  <video 
-    class="video-background" 
-    autoplay 
-    muted 
-    loop 
-    playsinline 
-    preload="auto"
-    style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -10; opacity: 0.4; object-fit: cover; pointer-events: none; display: block !important;"
-  >
-    <source src="/atomic-background.mp4" type="video/mp4">
-    <source src="atomic-background.mp4" type="video/mp4">
-    Your browser does not support the video tag.
-  </video>
+  <!-- Atomic Animation Background with CSS Fallback -->
+  <div class="atomic-background-container" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -2; pointer-events: none; opacity: 0.6;">
+    <video 
+      class="video-background" 
+      autoplay 
+      muted 
+      loop 
+      playsinline 
+      preload="metadata"
+      style="width: 100%; height: 100%; object-fit: cover; display: block;"
+      onloadstart="console.log('Video loading...')"
+      oncanplay="console.log('Video ready'); this.play();"
+      onerror="console.error('Video error:', this.error); document.querySelector('.atomic-fallback').style.display='block';"
+    >
+      <source src="atomic-background.mp4" type="video/mp4">
+      <source src="/atomic-background.mp4" type="video/mp4">
+    </video>
+    <!-- CSS Animation Fallback -->
+    <div class="atomic-fallback" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 30% 30%, rgba(0,255,65,0.1) 0%, transparent 50%), radial-gradient(circle at 70% 70%, rgba(0,255,65,0.15) 0%, transparent 50%); animation: atomicPulse 4s ease-in-out infinite;"></div>
+  </div>
+  
+  <style>
+    @keyframes atomicPulse {
+      0%, 100% { opacity: 0.3; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(1.1); }
+    }
+  </style>
 
   <!-- Network Commissioning Message Block -->
   <div id="commissioningBlock" style="width: 100%; background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); border-bottom: 2px solid #FF8F00; padding: 12px 20px; margin-bottom: 0;">
@@ -178,7 +191,7 @@
           </div>
           
           <!-- Feature Links Box -->
-          <div class="features-container" style="margin: 20px 0; max-width: 600px; background: linear-gradient(135deg, #4CAF50, #8BC34A, #FFC107); border-radius: 10px; padding: 20px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);">
+          <div class="features-container" style="margin: 20px 0; max-width: 600px; background: rgba(255, 255, 255, 0.95); border-radius: 10px; padding: 20px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);">
             <h3 style="margin-top: 0; color: #0057B8; font-size: 1.5rem;">Join The Current-See Network</h3>
             
             <!-- Where We Are Going - Compact Version -->

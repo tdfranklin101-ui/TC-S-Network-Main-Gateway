@@ -89,8 +89,8 @@ body {
   left: 0;
   width: 100vw;
   height: 100vh;
-  z-index: -1;
-  opacity: 1.0;
+  z-index: -2;
+  opacity: 0.6;
   object-fit: cover;
   pointer-events: none;
   display: block !important;
@@ -640,10 +640,10 @@ footer {
   overflow: hidden;
 }
 
-/* Hero with Transparent Background for Atomic Animation Visibility */
+/* Hero with Green Background Restored */
 .hero-solar {
-  background: transparent;
-  color: var(--text-on-dark);
+  background: var(--gradient-primary);
+  color: var(--text-on-green);
   position: relative;
   overflow: hidden;
   padding: 2rem 0;
@@ -659,7 +659,20 @@ footer {
 }
 
 .hero-solar::before {
-  display: none;
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: repeating-conic-gradient(
+    rgba(255, 215, 0, 0.1) 0deg 10deg,
+    rgba(255, 255, 255, 0.05) 10deg 20deg
+  );
+  animation: sun-ray-rotate 120s linear infinite;
+  z-index: 1;
+  opacity: 0.3;
+  pointer-events: none;
 }
 
 .hero-content {
