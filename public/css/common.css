@@ -90,14 +90,16 @@ body {
   width: 100vw;
   height: 100vh;
   z-index: -10;
-  opacity: 0.15;
+  opacity: 0.25;
   object-fit: cover;
   pointer-events: none;
+  display: block;
 }
 
-/* Ensure video displays on all browsers */
+/* Enhanced cross-browser video support */
 video.video-background {
-  display: block;
+  display: block !important;
+  visibility: visible;
 }
 
 /* Global Sun Ray Watermark */
