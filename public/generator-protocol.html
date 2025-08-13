@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Generator Protocol Beta - The Current-See</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: #0b0d10;
+      color: #e9eef5;
+    }
+    a { color: #8ad1ff; text-decoration: none; }
+    .site-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      border-bottom: 1px solid #1a1f26;
+      background: #0e1116;
+    }
+    .brand { font-weight: 700; letter-spacing: .3px; }
+    .container { max-width: 980px; margin: 24px auto; padding: 0 16px; }
+    .prototype-banner {
+      position: sticky;
+      top: 0;
+      z-index: 99;
+      width: 100%;
+      padding: 10px 16px;
+      background: #2c1f00;
+      border-bottom: 2px solid #ffb545;
+      color: #ffd78a;
+      text-align: center;
+      font-weight: 600;
+    }
+    .hero { padding: 48px 0; }
+    .hero h1 { font-size: 28px; margin: 0 0 8px; }
+    .card {
+      background: #0e1319;
+      border: 1px solid #1a1f26;
+      border-radius: 12px;
+      padding: 20px;
+      margin: 16px 0;
+    }
+    .grid-2, .grid-3 {
+      display: grid;
+      gap: 12px;
+    }
+    .grid-2 { grid-template-columns: repeat(2, 1fr); }
+    .grid-3 { grid-template-columns: repeat(3, 1fr); }
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 14px;
+    }
+    input, select, button {
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid #2a323d;
+      background: #0a0e13;
+      color: #e9eef5;
+    }
+    input::placeholder { color: #6f7b8a; }
+    .btn {
+      background: #151c26;
+      border: 1px solid #2c3642;
+      cursor: pointer;
+    }
+    .btn:hover { border-color: #3a4654; }
+    .btn.primary {
+      background: #0f5fff;
+      border-color: #0f5fff;
+      color: white;
+    }
+    .actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .preview {
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #0a1016;
+      border: 1px solid #1b2530;
+      white-space: pre-wrap;
+      line-height: 1.45;
+    }
+    .hidden { display: none; }
+    @media (max-width: 780px) {
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="prototype-banner">
+    🚧 PROTOTYPE ONLY — Not live system • Demo purposes only • No real transactions
+  </div>
+
+  <header class="site-header">
+    <div class="brand">The Current‑See</div>
+    <nav>
+      <a href="/" class="btn">← Back to Home</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <h1>Generator Protocol — Beta Prototype</h1>
+      <p class="intro">
+        Configure renewable energy generators to mint <strong>RECs</strong> and <strong>Carbon Credits</strong>, 
+        then receive payouts in <strong>USD</strong> and <strong>Solar Rays</strong>. This prototype demonstrates 
+        the technical framework for our upcoming Generator Protocol launch.
+      </p>
+    </section>
+
+    <!-- Generator Onboarding Form -->
+    <div class="card">
+      <h2>Generator Registration</h2>
+      <form id="onboardForm">
+        <div class="grid-2">
+          <label>
+            Generator Name
+            <input type="text" name="generatorName" placeholder="Solar Farm Alpha" required>
+          </label>
+          <label>
+            Location
+            <input type="text" name="location" placeholder="Austin, TX" required>
+          </label>
+        </div>
+
+        <div class="grid-3">
+          <label>
+            Technology
+            <select name="tech" required>
+              <option value="">Select technology</option>
+              <option value="Solar PV">Solar PV</option>
+              <option value="Wind">Wind</option>
+              <option value="Hydro">Hydro</option>
+              <option value="Biomass">Biomass</option>
+              <option value="Geothermal">Geothermal</option>
+            </select>
+          </label>
+          <label>
+            Capacity (kW)
+            <input type="number" name="capacityKw" placeholder="1000" required>
+          </label>
+          <label>
+            Est. Annual Output (MWh)
+            <input type="number" name="estMwh" placeholder="2000" step="0.01" required>
+          </label>
+        </div>
+
+        <label>
+          Grid Emission Factor (tCO₂e/MWh)
+          <input type="number" name="gridEF" placeholder="0.5" step="0.001" value="0.5" required>
+        </label>
+
+        <h3>Instrument Split Configuration</h3>
+        <div class="grid-2">
+          <label>
+            REC Percentage
+            <input type="range" id="recPct" name="recPct" min="0" max="100" value="50">
+            <span id="recPctDisplay">50%</span>
+          </label>
+          <label>
+            Carbon Credit Percentage
+            <input type="range" id="ccPct" name="ccPct" min="0" max="100" value="50">
+            <span id="ccPctDisplay">50%</span>
+          </label>
+        </div>
+
+        <h3>Commissioner Configuration</h3>
+        <label>
+          Commissioner Present?
+          <select id="commissionerPresent" name="commissionerPresent" required>
+            <option value="">Choose option</option>
+            <option value="yes">Yes - Private Network (Fork A)</option>
+            <option value="no">No - Generator as Commissioner (Fork B)</option>
+          </select>
+        </label>
+
+        <div id="noCommModeWrap" class="hidden">
+          <label>
+            No-Commissioner Mode
+            <select name="noCommissionerMode">
+              <option value="KEEP">KEEP - Retain commissioner portion</option>
+              <option value="DONATE_GBI">DONATE_GBI - Donate to Global Basic Income</option>
+            </select>
+          </label>
+        </div>
+
+        <h3>Payout Configuration</h3>
+        <div class="grid-2">
+          <label>
+            USD Percentage
+            <input type="range" id="usdPct" name="usdPct" min="0" max="100" value="70">
+            <span id="usdPctDisplay">70%</span>
+          </label>
+          <label>
+            Solar Rays Percentage
+            <input type="range" id="raysPct" name="raysPct" min="0" max="100" value="30">
+            <span id="raysPctDisplay">30%</span>
+          </label>
+        </div>
+
+        <div class="actions">
+          <button type="submit" class="btn primary">Generate Preview</button>
+        </div>
+      </form>
+
+      <div id="preview" class="preview hidden"></div>
+    </div>
+
+    <!-- Mock Sale Calculator -->
+    <div class="card">
+      <h2>Sale Calculator (Mock)</h2>
+      <form id="calcForm">
+        <div class="grid-3">
+          <label>
+            Instrument Type
+            <select name="instrument" required>
+              <option value="">Select type</option>
+              <option value="REC">REC</option>
+              <option value="CC">Carbon Credit</option>
+            </select>
+          </label>
+          <label>
+            Quantity
+            <input type="number" name="quantity" placeholder="100" step="0.01" required>
+          </label>
+          <label>
+            Market Price ($/unit)
+            <input type="number" name="marketPrice" placeholder="45.00" step="0.01" required>
+          </label>
+        </div>
+
+        <div class="actions">
+          <button type="submit" class="btn primary">Calculate Sale</button>
+        </div>
+      </form>
+
+      <div id="calcPreview" class="preview hidden"></div>
+    </div>
+
+    <!-- Important Notes -->
+    <div class="card">
+      <h2>Important Notes</h2>
+      <ul>
+        <li><strong>Prototype Only:</strong> This is a demonstration interface. No real transactions occur.</li>
+        <li><strong>TC-S Role:</strong> Acts purely as software infrastructure provider, not as funding source.</li>
+        <li><strong>Mutual Exclusivity:</strong> Per-kWh split between RECs and Carbon Credits ensures no double-counting.</li>
+        <li><strong>Flexible Splits:</strong> Supports any percentage split (e.g., 55% REC / 45% CC).</li>
+        <li><strong>Dual Payout:</strong> Receive earnings in both traditional USD and Solar Rays currency.</li>
+      </ul>
+    </div>
+  </main>
+
+  <script>
+    (() => {
+      const recPct = document.getElementById('recPct');
+      const ccPct = document.getElementById('ccPct');
+      const usdPct = document.getElementById('usdPct');
+      const raysPct = document.getElementById('raysPct');
+      const recPctDisplay = document.getElementById('recPctDisplay');
+      const ccPctDisplay = document.getElementById('ccPctDisplay');
+      const usdPctDisplay = document.getElementById('usdPctDisplay');
+      const raysPctDisplay = document.getElementById('raysPctDisplay');
+      const commissionerPresent = document.getElementById('commissionerPresent');
+      const noCommModeWrap = document.getElementById('noCommModeWrap');
+      const onboardForm = document.getElementById('onboardForm');
+      const preview = document.getElementById('preview');
+      const calcForm = document.getElementById('calcForm');
+      const calcPreview = document.getElementById('calcPreview');
+
+      function updateDisplay(slider, display) {
+        display.textContent = slider.value + '%';
+      }
+
+      function clampSplits(a, b, aDisplay, bDisplay) {
+        let aVal = parseInt(a.value || '0', 10);
+        let bVal = 100 - aVal;
+        b.value = String(bVal);
+        updateDisplay(a, aDisplay);
+        updateDisplay(b, bDisplay);
+      }
+
+      function clampPayouts(a, b, aDisplay, bDisplay) {
+        let aVal = parseInt(a.value || '0', 10);
+        let bVal = 100 - aVal;
+        b.value = String(bVal);
+        updateDisplay(a, aDisplay);
+        updateDisplay(b, bDisplay);
+      }
+
+      // Initialize displays
+      updateDisplay(recPct, recPctDisplay);
+      updateDisplay(ccPct, ccPctDisplay);
+      updateDisplay(usdPct, usdPctDisplay);
+      updateDisplay(raysPct, raysPctDisplay);
+
+      ['input', 'change'].forEach(evt => {
+        recPct.addEventListener(evt, () => clampSplits(recPct, ccPct, recPctDisplay, ccPctDisplay));
+        ccPct.addEventListener(evt, () => clampSplits(ccPct, recPct, ccPctDisplay, recPctDisplay));
+        usdPct.addEventListener(evt, () => clampPayouts(usdPct, raysPct, usdPctDisplay, raysPctDisplay));
+        raysPct.addEventListener(evt, () => clampPayouts(raysPct, usdPct, raysPctDisplay, usdPctDisplay));
+      });
+
+      commissionerPresent.addEventListener('change', () => {
+        noCommModeWrap.classList.toggle('hidden', commissionerPresent.value !== 'no');
+      });
+
+      onboardForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const data = Object.fromEntries(new FormData(onboardForm).entries());
+        const cap = Number(data.capacityKw || 0);
+        const estMwh = Number(data.estMwh || 0);
+        const ef = Number(data.gridEF || 0);
+        const rec = Number(data.recPct || 0)/100;
+        const cc = Number(data.ccPct || 0)/100;
+
+        const recMwh = estMwh * rec;
+        const ccMwh = estMwh * cc;
+        const ccTons = ccMwh * ef;
+
+        const fork = data.commissionerPresent === 'yes' ? 'A' : 'B';
+        const noComm = fork === 'B' ? (data.noCommissionerMode || 'KEEP') : '-';
+        const usd = Number(data.usdPct || 0);
+        const rays = Number(data.raysPct || 0);
+
+        const out = [
+          `Facility: ${data.generatorName} • ${data.location} • ${data.tech}`,
+          `Capacity: ${cap} kW • Est. Annual Output: ${estMwh.toFixed(2)} MWh`,
+          `Grid EF: ${ef.toFixed(3)} tCO₂e/MWh`,
+          ``,
+          `Split: REC ${Math.round(rec*100)}% / CC ${Math.round(cc*100)}%`,
+          `→ REC side: ${recMwh.toFixed(2)} MWh ⇒ ${recMwh.toFixed(2)} RECs (1 REC/MWh)`,
+          `→ CC side: ${ccMwh.toFixed(2)} MWh × ${ef.toFixed(3)} = ${ccTons.toFixed(3)} tCO₂e`,
+          ``,
+          `Fork: ${fork === 'A' ? 'Private Network (Commissioner present)' : 'No Commissioner (Generator-as-Commissioner)'}`,
+          `${fork === 'B' ? `No‑Commissioner Mode: ${noComm}` : ''}`,
+          `Payout Mix: USD ${usd}% / Solar Rays ${rays}%`,
+          ``,
+          `⚠️ PROTOTYPE PREVIEW — Not live system`
+        ].join('\n');
+
+        preview.textContent = out;
+        preview.classList.remove('hidden');
+      });
+
+      calcForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const data = Object.fromEntries(new FormData(calcForm).entries());
+        const qty = Number(data.quantity || 0);
+        const price = Number(data.marketPrice || 0);
+        const total = qty * price;
+        const commission = total * 0.05; // 5% commission
+        const net = total - commission;
+
+        const out = [
+          `Mock Sale Calculation:`,
+          ``,
+          `Instrument: ${data.instrument}`,
+          `Quantity: ${qty} units`,
+          `Market Price: $${price.toFixed(2)} per unit`,
+          ``,
+          `Gross Sale: $${total.toFixed(2)}`,
+          `TC-S Commission (5%): $${commission.toFixed(2)}`,
+          `Net to Generator: $${net.toFixed(2)}`,
+          ``,
+          `⚠️ MOCK CALCULATION — Not live system`
+        ].join('\n');
+
+        calcPreview.textContent = out;
+        calcPreview.classList.remove('hidden');
+      });
+    })();
+  </script>
+</body>
+</html>
