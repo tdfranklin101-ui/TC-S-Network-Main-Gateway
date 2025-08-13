@@ -138,19 +138,31 @@
         }
       }
       
-      /* Neon Green Pulsating Animation */
-      @keyframes neonPulse {
+      /* Crisp Neon Green Glow Animation */
+      @keyframes neonGlow {
         0% {
-          text-shadow: 0 0 10px #00ff41, 0 0 20px #00ff41, 0 0 30px #00ff41;
-          opacity: 1;
+          text-shadow: 
+            0 0 5px #00ff41,
+            0 0 10px #00ff41,
+            0 0 15px #00ff41,
+            0 0 20px #00ff41;
+          filter: brightness(1);
         }
         50% {
-          text-shadow: 0 0 15px #00ff41, 0 0 30px #00ff41, 0 0 45px #00ff41;
-          opacity: 0.8;
+          text-shadow: 
+            0 0 8px #00ff41,
+            0 0 16px #00ff41,
+            0 0 24px #00ff41,
+            0 0 32px #00ff41;
+          filter: brightness(1.2);
         }
         100% {
-          text-shadow: 0 0 10px #00ff41, 0 0 20px #00ff41, 0 0 30px #00ff41;
-          opacity: 1;
+          text-shadow: 
+            0 0 5px #00ff41,
+            0 0 10px #00ff41,
+            0 0 15px #00ff41,
+            0 0 20px #00ff41;
+          filter: brightness(1);
         }
       }
     </style>
@@ -177,7 +189,7 @@
           <div class="solar-counter-header" style="background: rgba(0, 0, 0, 0.05); backdrop-filter: blur(2px); border-radius: 20px;">
             <img src="/img/solar-conversion-icon.svg" alt="Solar Conversion" class="solar-app-icon" onerror="this.src='/img/solar-icon-default.svg'; this.onerror=null;">
             <div class="solar-counter-title">
-              <h1 class="neon-pulse" style="color: #00ff41; text-shadow: 0 0 15px #00ff41, 0 0 30px #00ff41, 0 0 45px #00ff41, 0 0 60px #00ff41; animation: neonPulse 2s infinite ease-in-out; font-weight: bold; position: relative; z-index: 10;">Welcome to The Current-See</h1>
+              <h1 class="neon-glow" style="color: #00ff41; text-shadow: 0 0 5px #00ff41, 0 0 10px #00ff41, 0 0 15px #00ff41, 0 0 20px #00ff41; animation: neonGlow 2.5s infinite ease-in-out; font-weight: bold; position: relative; z-index: 10; letter-spacing: 1px;">Welcome to The Current-See</h1>
               <div class="pulse-dot"></div>
             </div>
           </div>

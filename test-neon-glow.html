@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Neon Green Glow Test</title>
+    <style>
+        body { 
+            background: #1a1a1a; 
+            padding: 50px; 
+            font-family: 'Arial', sans-serif; 
+        }
+        
+        .neon-green-glow-animated {
+            color: #00ff41 !important;
+            text-shadow: 0 0 5px #00ff41, 0 0 10px #00ff41, 0 0 15px #00ff41, 0 0 20px #00ff41 !important;
+            letter-spacing: 1px;
+            animation: neonGlowPulse 2.5s infinite ease-in-out;
+            font-size: 3em;
+            text-align: center;
+            margin: 50px 0;
+        }
+
+        @keyframes neonGlowPulse {
+            0% {
+                text-shadow: 0 0 5px #00ff41, 0 0 10px #00ff41, 0 0 15px #00ff41, 0 0 20px #00ff41;
+                filter: brightness(1);
+            }
+            50% {
+                text-shadow: 0 0 8px #00ff41, 0 0 16px #00ff41, 0 0 24px #00ff41, 0 0 32px #00ff41;
+                filter: brightness(1.2);
+            }
+            100% {
+                text-shadow: 0 0 5px #00ff41, 0 0 10px #00ff41, 0 0 15px #00ff41, 0 0 20px #00ff41;
+                filter: brightness(1);
+            }
+        }
+        
+        .comparison {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 50px;
+        }
+        
+        .blurry {
+            color: #00ff41;
+            text-shadow: 0 0 20px #00ff41;
+            filter: blur(1px);
+            font-size: 2em;
+        }
+        
+        .crisp {
+            color: #00ff41;
+            text-shadow: 0 0 5px #00ff41, 0 0 10px #00ff41, 0 0 15px #00ff41, 0 0 20px #00ff41;
+            font-size: 2em;
+        }
+    </style>
+</head>
+<body>
+    <h1 class="neon-green-glow-animated">CRISP NEON GREEN GLOW</h1>
+    
+    <div class="comparison">
+        <div>
+            <h3 style="color: white;">Blurry (Old):</h3>
+            <div class="blurry">Blurry Text</div>
+        </div>
+        <div>
+            <h3 style="color: white;">Crisp (New):</h3>
+            <div class="crisp">Crisp Text</div>
+        </div>
+    </div>
+    
+    <p style="color: #ccc; text-align: center; margin-top: 50px;">
+        The new implementation uses multi-layered text-shadow without blur filters<br>
+        for sharp, professional neon signage effect
+    </p>
+</body>
+</html>

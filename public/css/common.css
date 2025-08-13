@@ -58,6 +58,10 @@
   --sun-ray-color: rgba(255, 215, 0, 0.04); /* Very subtle gold color */
   --sun-ray-highlight: rgba(255, 215, 0, 0.08); /* Slightly stronger highlight */
   
+  /* Neon Green Glow System */
+  --neon-green: #00ff41;
+  --neon-green-glow: 0 0 5px #00ff41, 0 0 10px #00ff41, 0 0 15px #00ff41, 0 0 20px #00ff41;
+  
   /* Misc */
   --border-radius: 8px;
   --box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
@@ -699,6 +703,48 @@ footer {
   gap: 1rem;
   justify-content: center;
   flex-wrap: wrap;
+}
+
+/* Neon Green Glow Classes */
+.neon-green-glow {
+  color: var(--neon-green) !important;
+  text-shadow: var(--neon-green-glow) !important;
+  letter-spacing: 1px;
+  filter: brightness(1);
+}
+
+.neon-green-glow-animated {
+  color: var(--neon-green) !important;
+  text-shadow: var(--neon-green-glow) !important;
+  letter-spacing: 1px;
+  animation: neonGlowPulse 2.5s infinite ease-in-out;
+}
+
+@keyframes neonGlowPulse {
+  0% {
+    text-shadow: 
+      0 0 5px #00ff41,
+      0 0 10px #00ff41,
+      0 0 15px #00ff41,
+      0 0 20px #00ff41;
+    filter: brightness(1);
+  }
+  50% {
+    text-shadow: 
+      0 0 8px #00ff41,
+      0 0 16px #00ff41,
+      0 0 24px #00ff41,
+      0 0 32px #00ff41;
+    filter: brightness(1.2);
+  }
+  100% {
+    text-shadow: 
+      0 0 5px #00ff41,
+      0 0 10px #00ff41,
+      0 0 15px #00ff41,
+      0 0 20px #00ff41;
+    filter: brightness(1);
+  }
 }
 
 /* Animations */
