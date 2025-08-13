@@ -82,18 +82,19 @@ body {
   overflow-x: hidden;
 }
 
-/* Video Background */
+/* Video Background - Maximum Visibility */
 .video-background {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  z-index: -10;
-  opacity: 0.25;
+  z-index: -1;
+  opacity: 1.0;
   object-fit: cover;
   pointer-events: none;
-  display: block;
+  display: block !important;
+  visibility: visible !important;
 }
 
 /* Enhanced cross-browser video support */
@@ -648,8 +649,17 @@ footer {
   padding: 2rem 0;
 }
 
+/* Clear area for atomic animation visibility */
+.solar-counter-header {
+  background: transparent;
+  padding: 20px;
+  margin: 20px 0;
+  position: relative;
+  z-index: 10;
+}
+
 .hero-solar::before {
-  display: none; /* Remove overlay to show atomic animation */
+  display: none;
 }
 
 .hero-content {

@@ -1,68 +1,55 @@
-# ATOMIC ANIMATION VISIBILITY FIX - COMPLETED
+# ATOMIC ANIMATION VISIBILITY FIX - IN PROGRESS  
 ## Date: August 13, 2025
 
-## Issue Description
-User reported that the atomic animation video background was not visible behind the neon green title. The animation was being blocked by background styling in the title area, preventing the intended visual effect of seeing both the atomic animation and neon green letters together.
+## Current Status: IMPLEMENTING HYBRID APPROACH
 
-## Root Cause Analysis
-The `hero-solar` section had opaque background styling that completely blocked the atomic animation video:
-- **Primary gradient background**: `var(--gradient-primary)` created solid color overlay
-- **Pseudo-element overlay**: `::before` element with rotating sun ray pattern
-- **Z-index layering**: Content positioned above atomic video background
+### User Feedback
+- Animation still not visible despite technical implementation
+- Current state shows "green blocks" instead of animation
+- Request: Restore green gradients throughout site EXCEPT for atomic animation area
+- Two-phase approach: Get animation working first, then enhance title
 
-## Solution Applied
+### Changes Applied
 
-### 1. Removed Hero Background
-```css
-.hero-solar {
-  background: transparent; /* Changed from gradient */
-  color: var(--text-on-dark); /* Adjusted for dark video background */
-  position: relative;
-  overflow: hidden;
-  padding: 2rem 0;
-}
-```
+#### 1. Enhanced Atomic Video Background
+- **Increased Opacity**: Changed from 0.25 to 0.6 for better visibility
+- **Z-index**: Maintained at -10 (behind all content)
+- **Full Coverage**: 100vw x 100vh with object-fit: cover
 
-### 2. Disabled Overlay Element
-```css
-.hero-solar::before {
-  display: none; /* Removed sun ray overlay */
-}
-```
+#### 2. Restored Green Gradient Background
+- **Hero Section**: Restored `var(--gradient-primary)` background  
+- **Color Scheme**: Using `--text-on-green` for proper contrast
+- **Sun Ray Overlay**: Added subtle rotating pattern for visual depth
 
-### 3. Enhanced Text Contrast
-- Changed text color to `--text-on-dark` for better visibility against atomic video
-- Maintained neon green pulsing animation for the main title
-- Preserved all other styling and functionality
+#### 3. Created Transparent Title Area
+- **Solar Counter Header**: Made transparent with subtle backdrop blur
+- **Enhanced Neon Text**: Increased text shadow layers (4 levels) with stronger glow
+- **Z-index Layering**: Title at z-index 10 above video background
+- **Backdrop Filter**: Added blur(2px) for subtle depth while maintaining transparency
 
-## Technical Implementation Details
+#### 4. Visual Strategy
+**Background Layers (bottom to top):**
+- Layer -10: Atomic animation video (0.6 opacity)
+- Layer 1: Green gradient background with sun ray pattern
+- Layer 5: Transparent title container with backdrop blur
+- Layer 10: Neon green title text with enhanced glow
 
-### Atomic Video Background Configuration
-- **Position**: Fixed, full viewport coverage
-- **Z-index**: -10 (behind all content)
-- **Opacity**: 0.4 for subtle background effect
-- **Sources**: Multiple source paths for browser compatibility
+### Expected Result
+- Green gradients restored throughout entire site 
+- Atomic animation visible specifically behind/through transparent title area
+- Enhanced neon green text with stronger glow effect against video background
+- Professional layered visual depth with scientific credibility
 
-### Neon Green Title Animation
-- **Color**: #00ff41 with glowing text shadow
-- **Animation**: 2-second infinite pulsing cycle
-- **Layering**: Positioned above transparent background
+### Testing Status
+- Server operational with changes applied
+- Video background enhanced (0.6 opacity, 3.3MB atomic animation)
+- Green gradients restored to hero section  
+- Title area made transparent with enhanced text effects
 
-### Visual Result
-The atomic animation is now visible behind all content, particularly the neon green title area, creating the intended scientific atmosphere while maintaining the striking neon green text effect.
+### Next Steps if Issue Persists
+1. Increase video opacity further (0.8-1.0)
+2. Remove any remaining background overlays in title area
+3. Test different video source paths for browser compatibility
+4. Consider alternative atomic animation placement or format
 
-## User Experience Enhancement
-- **Scientific Theme**: Atomic molecular animation supports platform credibility  
-- **Visual Depth**: Video background adds dynamic movement behind static content
-- **Neon Aesthetics**: Green animated title remains prominent against video backdrop
-- **Professional Presentation**: Balanced opacity ensures content readability
-
-## Verification Status
-✅ Hero section background made transparent
-✅ Sun ray overlay disabled 
-✅ Text contrast adjusted for dark video background
-✅ Atomic animation video serving correctly (opacity 0.4)
-✅ Neon green title animation preserved
-✅ Server operational with changes applied
-
-The atomic animation should now be clearly visible behind the neon green "Welcome to The Current-See" title, creating the intended layered visual effect of scientific animation with glowing text overlay.
+The hybrid approach maintains platform's green gradient aesthetic while creating a specific transparent window for atomic animation visibility behind the neon title.
