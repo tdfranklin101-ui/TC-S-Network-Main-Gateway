@@ -109,6 +109,22 @@
           font-size: 0.8em !important;
         }
       }
+      
+      /* Neon Green Pulsating Animation */
+      @keyframes neonPulse {
+        0% {
+          text-shadow: 0 0 10px #00ff41, 0 0 20px #00ff41, 0 0 30px #00ff41;
+          opacity: 1;
+        }
+        50% {
+          text-shadow: 0 0 15px #00ff41, 0 0 30px #00ff41, 0 0 45px #00ff41;
+          opacity: 0.8;
+        }
+        100% {
+          text-shadow: 0 0 10px #00ff41, 0 0 20px #00ff41, 0 0 30px #00ff41;
+          opacity: 1;
+        }
+      }
     </style>
     
     <script>
@@ -679,51 +695,51 @@
       <!-- Credits Section -->
       <section id="credits" style="background:#0b0f14;color:#e6edf3;padding:36px 20px">
         <div style="max-width:900px;margin:0 auto;line-height:1.6">
-          <h2 style="margin:0 0 8px;font-weight:800;letter-spacing:.3px">The Current-See Credits</h2>
+          <h2 class="neon-pulse" style="margin:0 0 8px;font-weight:800;letter-spacing:.3px;color:#00ff41;text-shadow:0 0 10px #00ff41,0 0 20px #00ff41,0 0 30px #00ff41;animation:neonPulse 2s infinite ease-in-out;">The Current-See Credits</h2>
           <p style="opacity:.85;margin:0 0 18px">
             The genesis and growth of <em>The Current-See</em> blends human vision with AI craft — led by
             <strong>Terry D. Franklin (TDF)</strong> and <strong>Kid Solar</strong> — and powered by brilliant partners below.
             Thank you to our <strong>5,000+ viewers</strong> for fueling the journey.
           </p>
 
-          <h3 style="margin:18px 0 8px;opacity:.9">Executive Vision</h3>
+          <h3 class="neon-pulse" style="margin:18px 0 8px;color:#00ff41;text-shadow:0 0 8px #00ff41,0 0 16px #00ff41,0 0 24px #00ff41;animation:neonPulse 2s infinite ease-in-out;">Executive Vision</h3>
           <ul style="list-style:none;padding:0;margin:0 0 18px">
             <li><strong>Terry D. Franklin (TDF)</strong> — Founder & Vision Architect</li>
             <li><strong>Kid Solar</strong> — TC-S Agent S0001, Diamond Polymorph</li>
           </ul>
 
-          <h3 style="margin:18px 0 8px;opacity:.9">Creative & Technical Partners</h3>
+          <h3 class="neon-pulse" style="margin:18px 0 8px;color:#00ff41;text-shadow:0 0 8px #00ff41,0 0 16px #00ff41,0 0 24px #00ff41;animation:neonPulse 2s infinite ease-in-out;">Creative & Technical Partners</h3>
           <ul style="list-style:none;padding:0;margin:0">
             <li>
-              <a href="https://replit.com" target="_blank" rel="noopener" style="color:#9dd1ff;text-decoration:none;">Claude at Replit</a>
+              <a href="https://replit.com" target="_blank" rel="noopener" style="color:#9dd1ff;text-decoration:none;">Claude at Replit (https://replit.com)</a>
               — AI engineering + Node/Express builds
             </li>
             <li>
-              <a href="https://www.anthropic.com" target="_blank" rel="noopener" style="color:#9dd1ff;text-decoration:none;">Anthropic (Claude)</a>
+              <a href="https://www.anthropic.com" target="_blank" rel="noopener" style="color:#9dd1ff;text-decoration:none;">Anthropic (Claude) (https://www.anthropic.com)</a>
               — Model partner
             </li>
             <li>
-              <a href="https://openai.com" target="_blank" rel="noopener" style="color:#9dd1ff;text-decoration:none;">OpenAI</a>
+              <a href="https://openai.com" target="_blank" rel="noopener" style="color:#9dd1ff;text-decoration:none;">OpenAI (https://openai.com)</a>
               — Core intelligence & tooling
             </li>
             <li>
-              <a href="https://pika.art" target="_blank" rel="noopener" style="color:#9dd1ff;text-decoration:none;">Pika</a>
+              <a href="https://pika.art" target="_blank" rel="noopener" style="color:#9dd1ff;text-decoration:none;">Pika (https://pika.art)</a>
               — Motion design & video generation
             </li>
             <li>
-              <a href="https://www.d-id.com" target="_blank" rel="noopener" style="color:#9dd1ff;text-decoration:none;">D-ID</a>
+              <a href="https://www.d-id.com" target="_blank" rel="noopener" style="color:#9dd1ff;text-decoration:none;">D-ID (https://www.d-id.com)</a>
               — Conversational avatars & video presence
             </li>
             <li>
-              <a href="https://aws.amazon.com" target="_blank" rel="noopener" style="color:#9dd1ff;text-decoration:none;">AWS</a>
+              <a href="https://aws.amazon.com" target="_blank" rel="noopener" style="color:#9dd1ff;text-decoration:none;">AWS (https://aws.amazon.com)</a>
               — Cloud + automation backbone
             </li>
             <li>
-              <a href="https://supabase.com" target="_blank" rel="noopener" style="color:#9dd1ff;text-decoration:none;">Supabase</a>
+              <a href="https://supabase.com" target="_blank" rel="noopener" style="color:#9dd1ff;text-decoration:none;">Supabase (https://supabase.com)</a>
               — Realtime database services
             </li>
             <li>
-              <a href="https://www.aisongmaker.io/tools/lyrics-to-song" target="_blank" rel="noopener" style="color:#9dd1ff;text-decoration:none;">AiSongs (AI Song Maker)</a>
+              <a href="https://www.aisongmaker.io/tools/lyrics-to-song" target="_blank" rel="noopener" style="color:#9dd1ff;text-decoration:none;">AiSongs (AI Song Maker) (https://www.aisongmaker.io/tools/lyrics-to-song)</a>
               — Lyrics-to-song generation tool
             </li>
           </ul>
