@@ -644,10 +644,10 @@ footer {
   overflow: hidden;
 }
 
-/* Hero with Green Background Restored */
+/* Hero Section - Transparent to Show Video Animation */
 .hero-solar {
-  background: var(--gradient-primary);
-  color: var(--text-on-green);
+  background: transparent; /* Removed green background to show atomic video */
+  color: #333; /* Dark text for readability over video */
   position: relative;
   overflow: hidden;
   padding: 2rem 0;
@@ -662,22 +662,7 @@ footer {
   z-index: 10;
 }
 
-.hero-solar::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: repeating-conic-gradient(
-    rgba(255, 215, 0, 0.1) 0deg 10deg,
-    rgba(255, 255, 255, 0.05) 10deg 20deg
-  );
-  animation: sun-ray-rotate 120s linear infinite;
-  z-index: 1;
-  opacity: 0.3;
-  pointer-events: none;
-}
+/* Removed sun-ray overlay to show atomic video clearly */
 
 .hero-content {
   max-width: 800px;
