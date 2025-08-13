@@ -12,8 +12,8 @@
 </head>
 <body>
   <!-- Atomic Animation Background with CSS Fallback -->
-  <!-- ATOMIC VIDEO TEST: Moved to higher z-index and increased opacity -->
-  <div class="atomic-background-container" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 5; pointer-events: none; opacity: 1; background: #222;">
+  <!-- ATOMIC VIDEO: Positioned behind content only -->
+  <div class="atomic-background-container" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; pointer-events: none; opacity: 0.8;">
     <video 
       class="video-background" 
       autoplay 
@@ -21,23 +21,41 @@
       loop 
       playsinline 
       preload="auto"
-      style="width: 100%; height: 100%; object-fit: cover; display: block; background: #000;"
+      style="width: 100%; height: 100%; object-fit: cover; display: block;"
       onloadstart="console.log('🎬 Video loading...')"
       oncanplay="console.log('✅ Video ready'); this.play();"
       onplay="console.log('▶️ Video is playing!');"
       onerror="console.error('❌ Video error:', this.error); document.querySelector('.atomic-fallback').style.display='block';"
     >
+      <source src="atomic-background.mp4" type="video/mp4">
       <source src="/atomic-background.mp4" type="video/mp4">
-      <source src="./atomic-background.mp4" type="video/mp4">
     </video>
-    <!-- CSS Animation Fallback -->
-    <div class="atomic-fallback" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 30% 30%, rgba(0,255,65,0.1) 0%, transparent 50%), radial-gradient(circle at 70% 70%, rgba(0,255,65,0.15) 0%, transparent 50%); animation: atomicPulse 5s ease-in-out infinite;"></div>
+    <!-- CSS Animation Fallback - Always Active for Testing -->
+    <div class="atomic-fallback" style="display: block; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 30% 30%, rgba(0,255,65,0.2) 0%, transparent 50%), radial-gradient(circle at 70% 70%, rgba(0,255,65,0.3) 0%, transparent 50%), radial-gradient(circle at 50% 50%, rgba(255,255,255,0.1) 0%, transparent 30%); animation: atomicPulse 5s ease-in-out infinite;"></div>
   </div>
   
   <style>
     @keyframes atomicPulse {
-      0%, 100% { opacity: 0.3; transform: scale(1); }
-      50% { opacity: 0.6; transform: scale(1.1); }
+      0%, 100% { 
+        opacity: 0.4; 
+        transform: scale(1) rotate(0deg); 
+        filter: brightness(1);
+      }
+      25% { 
+        opacity: 0.6; 
+        transform: scale(1.1) rotate(90deg); 
+        filter: brightness(1.2);
+      }
+      50% { 
+        opacity: 0.8; 
+        transform: scale(1.2) rotate(180deg); 
+        filter: brightness(1.5);
+      }
+      75% { 
+        opacity: 0.6; 
+        transform: scale(1.1) rotate(270deg); 
+        filter: brightness(1.2);
+      }
     }
     
     /* Enhanced atomic animation for video element */
@@ -195,10 +213,11 @@
     </script>
 
     <main>
-      <!-- Hero Section with Atomic Video Animation Only -->
+      <!-- Hero Section with Atomic Video Animation -->
       <section class="hero-solar">
-        <!-- VIDEO TEST: No title overlay to isolate animation visibility -->
-          <p>Empowering a Planet of Billionaires with Solar Currency</p>
+        <div class="container">
+          <h1 style="color: #00ff41; font-size: 3rem; margin: 2rem 0; text-align: center; position: relative; z-index: 10;">Welcome to The Current-See</h1>
+          <p style="color: #333; font-size: 1.2rem; text-align: center; margin: 1rem 0;">Empowering a Planet of Billionaires with Solar Currency</p>
           <div class="cta-buttons">
             <a href="/wallet.html" class="btn-primary">My Solar</a>
             <a href="/declaration.html" class="btn-secondary">Solar Declaration</a>

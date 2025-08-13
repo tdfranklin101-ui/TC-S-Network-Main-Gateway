@@ -36,20 +36,23 @@
 <body>
     <div class="video-container">
         <video 
-            autoplay 
             muted 
             loop 
             playsinline 
-            preload="auto"
+            preload="metadata"
+            controls
             onloadstart="console.log('🎬 Test video loading...')"
-            oncanplay="console.log('✅ Test video ready'); this.play();"
+            onloadeddata="console.log('📁 Video data loaded')"
+            oncanplay="console.log('✅ Test video ready'); console.log('Video duration:', this.duration, 'seconds');"
             onplay="console.log('▶️ Test video playing!');"
             onended="console.log('🔄 Test video ended');"
-            onerror="console.error('❌ Test video error:', this.error);"
+            onerror="console.error('❌ Test video error:', this.error?.message || 'Unknown error');"
+            onstalled="console.log('⏸️ Video stalled');"
+            onwaiting="console.log('⏳ Video waiting');"
         >
+            <source src="atomic-background.mp4" type="video/mp4">
             <source src="/atomic-background.mp4" type="video/mp4">
-            <source src="./atomic-background.mp4" type="video/mp4">
-            Video not supported
+            Video not supported - Try clicking play manually
         </video>
     </div>
     <div class="test-text">
