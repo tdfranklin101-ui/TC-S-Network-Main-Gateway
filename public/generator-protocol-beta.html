@@ -123,11 +123,41 @@
         </div>
         <div class="actions">
           <button type="submit" class="btn">Compute Mock Delta</button>
-          <!-- NEW: Agreement Buttons -->
-          <button type="button" id="openPpa" class="btn secondary">Open PPA (Mock)</button>
-          <button type="button" id="openRecPa" class="btn secondary">Open REC Purchase Agreement (Mock)</button>
         </div>
       </form>
+      <pre id="calcPreview" class="preview hidden"></pre>
+    </section>
+
+    <section class="card">
+      <h2>3) Sample Agreements</h2>
+      <p>Review and sign the sample legal documents for the Generator Protocol workflow:</p>
+      <div class="actions">
+        <!-- Agreement Buttons -->
+        <button type="button" id="openPpa" class="btn secondary">Sample PPA Agreement</button>
+        <button type="button" id="openRecPa" class="btn secondary">Sample REC Purchase Agreement</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>4) Protocol Summary</h2>
+      <div class="preview" style="display: block;">
+TC-S Generator Protocol Flow:
+
+1. Generator onboarding with facility details and REC/CC split configuration
+2. Sample period calculations showing PPA base payments and market delta
+3. Legal agreements:
+   • PPA (Power Purchase Agreement) - Generator ↔ Commissioner/TC-S
+   • REC Purchase Agreement - REC Buyer ↔ Generator via TC-S facilitation
+
+Key Features:
+✓ Transparent value routing with no TC-S custody of funds
+✓ Auto-syncing percentage splits with validation (REC + CC = 100%)
+✓ Commissioner presence toggle for Private vs GBI Network operation
+✓ USD/Solar Rays payout mixing for flexible compensation
+✓ Digital signature workflow with canvas-based signature pads
+
+Note: This is a prototype demonstration only - no live transactions
+      </div>
       <pre id="calcPreview" class="preview hidden"></pre>
     </section>
 
