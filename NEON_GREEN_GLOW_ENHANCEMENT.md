@@ -57,14 +57,14 @@
 ✅ **Sharp Edges**: No blur effect, maintains crisp letter boundaries  
 ✅ **Layered Glow**: Multiple shadow layers create depth without blur  
 ✅ **Brightness Control**: Uses filter brightness instead of opacity changes  
-✅ **Extended Duration**: 2.5s animation for smoother, less jarring effect  
+✅ **Extended Duration**: 5s animation for slower, more relaxed pulsing effect  
 ✅ **Letter Spacing**: Improves individual character visibility  
 
 ### Technical Specifications:
 - **Base Color**: #00ff41 (bright neon green)
 - **Glow Layers**: 4 concentric shadows (5px, 10px, 15px, 20px)
 - **Animation**: Brightness and shadow intensity variation
-- **Duration**: 2.5 seconds infinite ease-in-out
+- **Duration**: 5 seconds infinite ease-in-out (updated per user request)
 - **Compatibility**: Works across all modern browsers
 
 ### Visual Result:

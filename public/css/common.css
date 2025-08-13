@@ -717,7 +717,7 @@ footer {
   color: var(--neon-green) !important;
   text-shadow: var(--neon-green-glow) !important;
   letter-spacing: 1px;
-  animation: neonGlowPulse 2.5s infinite ease-in-out;
+  animation: neonGlowPulse 5s infinite ease-in-out;
 }
 
 @keyframes neonGlowPulse {

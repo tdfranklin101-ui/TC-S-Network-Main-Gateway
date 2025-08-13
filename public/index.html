@@ -29,13 +29,23 @@
       <source src="/atomic-background.mp4" type="video/mp4">
     </video>
     <!-- CSS Animation Fallback -->
-    <div class="atomic-fallback" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 30% 30%, rgba(0,255,65,0.1) 0%, transparent 50%), radial-gradient(circle at 70% 70%, rgba(0,255,65,0.15) 0%, transparent 50%); animation: atomicPulse 4s ease-in-out infinite;"></div>
+    <div class="atomic-fallback" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 30% 30%, rgba(0,255,65,0.1) 0%, transparent 50%), radial-gradient(circle at 70% 70%, rgba(0,255,65,0.15) 0%, transparent 50%); animation: atomicPulse 5s ease-in-out infinite;"></div>
   </div>
   
   <style>
     @keyframes atomicPulse {
       0%, 100% { opacity: 0.3; transform: scale(1); }
       50% { opacity: 0.6; transform: scale(1.1); }
+    }
+    
+    /* Enhanced atomic animation for video element */
+    .video-background {
+      animation: atomicVideoEffect 5s ease-in-out infinite;
+    }
+    
+    @keyframes atomicVideoEffect {
+      0%, 100% { opacity: 0.6; filter: brightness(1); }
+      50% { opacity: 0.8; filter: brightness(1.2); }
     }
   </style>
 
@@ -189,7 +199,7 @@
           <div class="solar-counter-header" style="background: rgba(0, 0, 0, 0.05); backdrop-filter: blur(2px); border-radius: 20px;">
             <img src="/img/solar-conversion-icon.svg" alt="Solar Conversion" class="solar-app-icon" onerror="this.src='/img/solar-icon-default.svg'; this.onerror=null;">
             <div class="solar-counter-title">
-              <h1 class="neon-glow" style="color: #00ff41; text-shadow: 0 0 5px #00ff41, 0 0 10px #00ff41, 0 0 15px #00ff41, 0 0 20px #00ff41; animation: neonGlow 2.5s infinite ease-in-out; font-weight: bold; position: relative; z-index: 10; letter-spacing: 1px;">Welcome to The Current-See</h1>
+              <h1 class="neon-glow" style="color: #00ff41; text-shadow: 0 0 5px #00ff41, 0 0 10px #00ff41, 0 0 15px #00ff41, 0 0 20px #00ff41; animation: neonGlow 5s infinite ease-in-out; font-weight: bold; position: relative; z-index: 10; letter-spacing: 1px;">Welcome to The Current-See</h1>
               <div class="pulse-dot"></div>
             </div>
           </div>

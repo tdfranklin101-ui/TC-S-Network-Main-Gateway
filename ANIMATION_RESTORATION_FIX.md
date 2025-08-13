@@ -37,6 +37,18 @@ Created CSS-based atomic animation that displays if video fails:
 }
 ```
 
+### 5. Enhanced Video Animation (5-Second Loop)
+Added CSS animation overlay for the video element:
+```css
+@keyframes atomicVideoEffect {
+  0%, 100% { opacity: 0.6; filter: brightness(1); }
+  50% { opacity: 0.8; filter: brightness(1.2); }
+}
+```
+- **Duration**: 5 seconds infinite loop (per user request)
+- **Effect**: Gentle opacity and brightness pulsing
+- **Smooth Transitions**: Gradual brightness changes enhance atomic effect
+
 ## Technical Specifications
 - **Video File**: 3.3MB atomic-background.mp4 confirmed present
 - **Primary Source**: `/atomic-background.mp4` 
