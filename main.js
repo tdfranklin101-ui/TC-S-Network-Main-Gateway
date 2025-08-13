@@ -208,7 +208,11 @@ const server = http.createServer(async (req, res) => {
       '.json': 'application/json',
       '.png': 'image/png',
       '.jpg': 'image/jpeg',
-      '.svg': 'image/svg+xml'
+      '.jpeg': 'image/jpeg',
+      '.svg': 'image/svg+xml',
+      '.mp4': 'video/mp4',
+      '.webm': 'video/webm',
+      '.mov': 'video/quicktime'
     };
     
     res.writeHead(200, { 'Content-Type': contentTypes[ext] || 'application/octet-stream' });
