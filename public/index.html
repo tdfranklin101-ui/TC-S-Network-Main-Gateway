@@ -213,7 +213,34 @@
     </script>
 
     <main>
-      <!-- Hero Section with Atomic Video Animation -->
+      <!-- Atomic Video Test Block -->
+      <section style="padding: 2rem 0; background: #222; text-align: center;">
+        <div class="container">
+          <h2 style="color: #00ff41; margin-bottom: 1rem;">ATOMIC VIDEO TEST BLOCK</h2>
+          <div style="max-width: 600px; margin: 0 auto; border: 2px solid #00ff41; border-radius: 10px; overflow: hidden; background: #000;">
+            <video 
+              controls
+              muted
+              loop
+              playsinline
+              style="width: 100%; height: auto; display: block;"
+              oncanplay="console.log('✅ Inline video ready');"
+              onplay="console.log('▶️ Inline video playing');"
+              onerror="console.error('❌ Inline video error:', this.error);"
+            >
+              <source src="atomic-background.mp4" type="video/mp4">
+              <source src="/atomic-background.mp4" type="video/mp4">
+              Video not supported
+            </video>
+          </div>
+          <p style="color: white; margin-top: 1rem;">This should show the 1→2→4→16 atomic animation</p>
+          <p style="color: #00ff41; font-size: 0.9rem;">
+            <a href="/atomic-video-standalone.html" style="color: #00ff41;">View Full Standalone Test</a>
+          </p>
+        </div>
+      </section>
+
+      <!-- Hero Section -->  
       <section class="hero-solar">
         <div class="container">
           <h1 style="color: #00ff41; font-size: 3rem; margin: 2rem 0; text-align: center; position: relative; z-index: 10;">Welcome to The Current-See</h1>
