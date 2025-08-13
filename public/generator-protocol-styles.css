@@ -33,11 +33,13 @@ input,select,button{padding:10px 12px;border:1px solid var(--line);border-radius
 .small{color:var(--muted);font-size:12px;line-height:1.4}
 
 /* modal */
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px}
-.modal-card{width:min(960px,96vw);background:#0f141a;border:1px solid var(--line);border-radius:14px;box-shadow:0 10px 40px rgba(0,0,0,.5)}
-.modal-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line)}
-.modal-body{padding:16px}
-.icon{background:#1a232e;border:1px solid var(--line);border-radius:8px;color:var(--ink)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;padding:16px;z-index:10000;backdrop-filter:blur(3px)}
+.modal.hidden{display:none !important}
+.modal-card{width:min(960px,96vw);max-height:90vh;overflow-y:auto;background:#0f141a;border:1px solid var(--line);border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.8);position:relative;z-index:10001}
+.modal-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line);background:#0f141a;position:sticky;top:0;z-index:10002}
+.modal-body{padding:16px;position:relative;z-index:1}
+.icon{background:#1a232e;border:1px solid var(--line);border-radius:8px;color:var(--ink);cursor:pointer;transition:all 0.2s}
+.icon:hover{background:var(--line);color:var(--ink)}
 .siggrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:10px}
 .siglabel{font-size:12px;color:var(--muted);margin-bottom:6px}
 .sigpad{width:100%;background:#0a0e14;border:1px dashed var(--line);border-radius:8px;touch-action:none}

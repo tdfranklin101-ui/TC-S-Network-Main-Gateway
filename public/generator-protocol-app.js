@@ -115,9 +115,29 @@
   });
 
   // ---------- Modal + Signature Pads ----------
-  // Basic modal open/close
-  function openModal(id){ const el = document.getElementById(id); el.classList.remove('hidden'); el.setAttribute('aria-hidden','false'); }
-  function closeModal(id){ const el = document.getElementById(id); el.classList.add('hidden'); el.setAttribute('aria-hidden','true'); }
+  // Enhanced modal management to prevent overlays
+  function openModal(id){ 
+    // Close any other open modals first
+    document.querySelectorAll('.modal').forEach(m => {
+      m.classList.add('hidden');
+      m.setAttribute('aria-hidden', 'true');
+    });
+    
+    const el = document.getElementById(id); 
+    el.classList.remove('hidden'); 
+    el.setAttribute('aria-hidden','false');
+    
+    // Prevent body scroll when modal is open
+    document.body.style.overflow = 'hidden';
+  }
+  function closeModal(id){ 
+    const el = document.getElementById(id); 
+    el.classList.add('hidden'); 
+    el.setAttribute('aria-hidden','true');
+    
+    // Restore body scroll
+    document.body.style.overflow = 'auto';
+  }
 
   document.body.addEventListener('click', (e) => {
     const closeId = e.target.getAttribute('data-close');
