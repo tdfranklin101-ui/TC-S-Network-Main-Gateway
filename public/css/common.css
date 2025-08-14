@@ -1420,3 +1420,43 @@ body {
   z-index: 4;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
+
+/* Stable Frame System - Prevents Floating */
+body {
+  overflow-x: hidden;
+  position: relative;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Video Stabilization */
+video {
+  will-change: auto;
+  transform-origin: center;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Stable Layout Container */
+.container {
+  position: relative;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Prevent Layout Shifts */
+section {
+  position: relative;
+  contain: layout;
+}
+
+/* Stabilize hero section */
+.hero-solar {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
