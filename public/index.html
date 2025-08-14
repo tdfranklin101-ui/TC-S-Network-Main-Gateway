@@ -193,10 +193,11 @@
     </script>
 
     <main>
-      <!-- Hero Section with Atomic Background Animation -->
-      <section class="hero-solar" style="position: relative; min-height: 100vh; overflow: hidden;">
-        <!-- Atomic Background Animation -->
-        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;">
+      <!-- Hero Section with Full-Screen Atomic Animation -->
+      <section class="hero-solar" style="position: relative; min-height: 100vh; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+        
+        <!-- Full-Screen Atomic Video Background -->
+        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;">
           <!-- Pika AI Atomic Animation - Vibrating atoms 1→2→4→16→64 -->
           <video 
             id="pikaAtomicVideo"
@@ -205,7 +206,7 @@
             loop 
             playsinline 
             preload="auto"
-            style="width: 100%; height: 100%; object-fit: cover; opacity: 0.7;"
+            style="width: 100%; height: 100%; object-fit: cover; opacity: 0.6;"
             onloadstart="console.log('🎬 Pika atomic video loading...')"
             oncanplay="console.log('✅ Pika atomic video ready'); this.play();"
             onplay="console.log('▶️ Pika atomic video playing!');"
@@ -218,10 +219,15 @@
           <div id="css-atomic-fallback" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 30% 30%, rgba(0,255,65,0.2) 0%, transparent 50%), radial-gradient(circle at 70% 70%, rgba(0,255,65,0.3) 0%, transparent 50%), radial-gradient(circle at 50% 50%, rgba(255,255,255,0.1) 0%, transparent 30%); animation: atomicPulse 5s ease-in-out infinite;"></div>
         </div>
         
-        <!-- Hero Content -->
-        <div class="container" style="position: relative; z-index: 10; background: rgba(0,0,0,0.3); backdrop-filter: blur(2px); border-radius: 15px; padding: 2rem; margin-top: 2rem;">
-          <h1 style="color: #00ff41; font-size: 3rem; margin: 2rem 0; text-align: center; text-shadow: 0 0 10px rgba(0,255,65,0.8), 0 0 20px rgba(0,255,65,0.6);">Welcome to The Current-See</h1>
-          <p style="color: white; font-size: 1.2rem; text-align: center; margin: 1rem 0; text-shadow: 0 0 5px rgba(0,0,0,0.8);">Empowering a Planet of Billionaires with Solar Currency</p>
+        <!-- Hero Content Over Video -->
+        <div class="container" style="position: relative; z-index: 10;">
+          <div style="position: relative; background: rgba(0,0,0,0.2); backdrop-filter: blur(1px); border-radius: 20px; padding: 2rem; border: 1px solid rgba(0,255,65,0.3);">
+            
+            <h1 style="color: #00ff41; font-size: 3rem; margin: 0 0 1rem 0; text-align: center; text-shadow: 0 0 20px rgba(0,255,65,1), 0 0 40px rgba(0,255,65,0.8), 0 0 60px rgba(0,255,65,0.6), 3px 3px 6px rgba(0,0,0,1); position: relative; z-index: 2; font-weight: bold;">
+              Welcome to The Current-See
+            </h1>
+            
+            <p style="color: white; font-size: 1.2rem; text-align: center; margin: 1rem 0; text-shadow: 0 0 15px rgba(0,0,0,1), 3px 3px 6px rgba(0,0,0,0.8); font-weight: 500;">Empowering a Planet of Billionaires with Solar Currency</p>
       
       <style>
         @keyframes atomicMultiply {
@@ -253,18 +259,20 @@
         }
       </style>
 
-      <!-- Hero Section -->  
+            <div class="cta-buttons" style="margin-top: 2rem;">
+              <a href="/wallet.html" class="btn-primary">My Solar</a>
+              <a href="/declaration.html" class="btn-secondary">Solar Declaration</a>
+              <a href="/founder_note.html" class="btn-secondary">Founder's Note</a>
+              <a href="/whitepapers.html" class="btn-secondary">White Papers</a>
+              <a href="/business_plan.html" class="btn-secondary">Business Plan</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Content Section -->  
       <section class="hero-solar">
         <div class="container">
-          <h1 style="color: #00ff41; font-size: 3rem; margin: 2rem 0; text-align: center; position: relative; z-index: 10;">Welcome to The Current-See</h1>
-          <p style="color: #333; font-size: 1.2rem; text-align: center; margin: 1rem 0;">Empowering a Planet of Billionaires with Solar Currency</p>
-          <div class="cta-buttons">
-            <a href="/wallet.html" class="btn-primary">My Solar</a>
-            <a href="/declaration.html" class="btn-secondary">Solar Declaration</a>
-            <a href="/founder_note.html" class="btn-secondary">Founder's Note</a>
-            <a href="/whitepapers.html" class="btn-secondary">White Papers</a>
-            <a href="/business_plan.html" class="btn-secondary">Business Plan</a>
-          </div>
           
           <!-- Feature Links Box -->
           <div class="features-container" style="margin: 20px 0; max-width: 600px; background: rgba(255, 255, 255, 0.95); border-radius: 10px; padding: 20px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);">
