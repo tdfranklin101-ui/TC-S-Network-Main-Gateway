@@ -6,6 +6,13 @@ The Current-See is a prototype for a solar-backed global economic system that co
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes (August 2025)
+- Implemented stable frame system to eliminate site floating/movement issues
+- Enhanced dual Pika AI atomic animation system with controlled opacity and blur
+- Added professional container structure with max-width constraints
+- Improved text stability with stronger backdrop filters and positioning
+- Successfully deployed with atomic multiplication effect (1→2→4→16→64) clearly visible
+
 ## System Architecture
 
 ### Frontend
