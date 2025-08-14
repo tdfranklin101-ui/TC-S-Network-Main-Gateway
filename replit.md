@@ -10,7 +10,7 @@ Preferred communication style: Simple, everyday language.
 
 ### Frontend
 - **Technology**: Vanilla HTML, CSS, JavaScript.
-- **Design**: Responsive, mobile-first approach with a focus on a professional aesthetic, including neon green branding and golden gradients. Features dynamic content displays, modular page elements, and interactive AI integration. Includes an atomic/molecular animation as a looping video background.
+- **Design**: Responsive, mobile-first approach with a focus on a professional aesthetic, including neon green branding and golden gradients. Features dynamic content displays, modular page elements, and interactive AI integration. Includes dual Pika AI atomic animations showing 1→2→4→16→64 molecular multiplication: full-screen stretched background and dedicated title video background.
 
 ### Backend
 - **Technology**: Node.js/Express server (CommonJS).
