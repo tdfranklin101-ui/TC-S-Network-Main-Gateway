@@ -213,32 +213,52 @@
     </script>
 
     <main>
-      <!-- Atomic Video Test Block -->
-      <section style="padding: 2rem 0; background: #222; text-align: center;">
+      <!-- Atomic Animation Block -->
+      <section style="padding: 2rem 0; background: #000; text-align: center;">
         <div class="container">
-          <h2 style="color: #00ff41; margin-bottom: 1rem;">ATOMIC VIDEO TEST BLOCK</h2>
-          <div style="max-width: 600px; margin: 0 auto; border: 2px solid #00ff41; border-radius: 10px; overflow: hidden; background: #000;">
-            <video 
-              controls
-              muted
-              loop
-              playsinline
-              style="width: 100%; height: auto; display: block;"
-              oncanplay="console.log('✅ Inline video ready');"
-              onplay="console.log('▶️ Inline video playing');"
-              onerror="console.error('❌ Inline video error:', this.error);"
-            >
-              <source src="atomic-background.mp4" type="video/mp4">
-              <source src="/atomic-background.mp4" type="video/mp4">
-              Video not supported
-            </video>
+          <h2 style="color: #00ff41; margin-bottom: 1rem;">ATOMIC ANIMATION</h2>
+          <div style="max-width: 600px; margin: 0 auto; border: 2px solid #00ff41; border-radius: 10px; overflow: hidden; background: radial-gradient(circle at center, #001a00, #000); height: 300px; position: relative;">
+            <!-- CSS Atomic Animation -->
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 200px; height: 200px;">
+              <div style="position: absolute; width: 12px; height: 12px; background: #00ff41; border-radius: 50%; box-shadow: 0 0 15px #00ff41; top: 50%; left: 50%; transform: translate(-50%, -50%); animation: atomicMultiply 5s infinite;"></div>
+            </div>
           </div>
-          <p style="color: white; margin-top: 1rem;">This should show the 1→2→4→16 atomic animation</p>
+          <p style="color: white; margin-top: 1rem;">1 → 2 → 4 → 16 Molecular Multiplication</p>
           <p style="color: #00ff41; font-size: 0.9rem;">
-            <a href="/atomic-video-standalone.html" style="color: #00ff41;">View Full Standalone Test</a>
+            <a href="/atomic-animation-css.html" style="color: #00ff41;">View Full CSS Animation</a>
           </p>
         </div>
       </section>
+      
+      <style>
+        @keyframes atomicMultiply {
+          0%, 20% { 
+            opacity: 1; 
+            transform: translate(-50%, -50%) scale(1);
+            box-shadow: 0 0 15px #00ff41;
+          }
+          25%, 45% { 
+            opacity: 0.8; 
+            transform: translate(-50%, -50%) scale(2);
+            box-shadow: 0 0 25px #00ff41, 20px 0 15px #00ff41, -20px 0 15px #00ff41;
+          }
+          50%, 70% { 
+            opacity: 0.6; 
+            transform: translate(-50%, -50%) scale(3);
+            box-shadow: 0 0 35px #00ff41, 30px 30px 15px #00ff41, -30px 30px 15px #00ff41, 30px -30px 15px #00ff41, -30px -30px 15px #00ff41;
+          }
+          75%, 95% { 
+            opacity: 0.9; 
+            transform: translate(-50%, -50%) scale(4);
+            box-shadow: 0 0 45px #00ff41, 40px 40px 10px #00ff41, -40px 40px 10px #00ff41, 40px -40px 10px #00ff41, -40px -40px 10px #00ff41, 0 40px 10px #00ff41, 0 -40px 10px #00ff41, 40px 0 10px #00ff41, -40px 0 10px #00ff41;
+          }
+          100% { 
+            opacity: 1; 
+            transform: translate(-50%, -50%) scale(1);
+            box-shadow: 0 0 15px #00ff41;
+          }
+        }
+      </style>
 
       <!-- Hero Section -->  
       <section class="hero-solar">
