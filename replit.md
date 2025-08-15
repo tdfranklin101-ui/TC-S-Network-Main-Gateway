@@ -17,7 +17,13 @@ Preferred communication style: Simple, everyday language.
 - Updated GPT link to correct 10^28 Atoms Longevity Pathways Advisor (g-iO2B1JFMJ)
 - Fine-tuned 10^28 area with transparent background and bold neon orange lettering
 - Added "Longer Life for Everyone" main heading above longevity resources
-- Server and deployment package prepared for production deployment
+- Updated GPT link to correct 10^28 Atoms Longevity Pathways Advisor (g-iO2B1JFMJ)
+- Fine-tuned 10^28 area with transparent background and bold neon orange lettering
+- Added "Longer Life for Everyone" main heading above longevity resources
+- Moved navigation links above 10^28 area for improved flow
+- Changed 10^28 area to neon blue with fully transparent background
+- Converted to dropdown with "So you want to live forever?" as clickable title
+- Server and deployment package prepared for QA deployment
 
 ## System Architecture
 
