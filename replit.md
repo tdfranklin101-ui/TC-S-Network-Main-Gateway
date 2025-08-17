@@ -63,6 +63,9 @@ Voodoo Collection attribution: Use "lyrics by Terry D Franklin" instead of "crea
 - Final deployment ready: All Voodoo functions enhanced with mobile compatibility
 - Updated Voodoo Collection attribution to "Lyrics by Terry D Franklin" as requested
 - Voodoo Collection buttons enhanced with proper touch controls and audio feedback
+- Fixed Voodoo Abundance functionality by converting to working Music Now link format (playMusic11-15)
+- Simplified Voodoo button handlers using proven onclick patterns without complex event handling
+- All 5 Voodoo songs now use identical protocols as working Music Now functions
 
 ## System Architecture
 
