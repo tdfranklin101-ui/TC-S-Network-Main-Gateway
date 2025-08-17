@@ -33,6 +33,7 @@ Preferred communication style: Simple, everyday language.
 - Extended clean green font treatment to all sections below Music Now through Public Members Log
 - Final readability optimization: converted main features box title to clean green font
 - Relocated LIVE Solar Generation section above Join The Current-See Network for improved flow
+- Updated homepage note to reference Kid Solar as "21st Century polymath" about TC-S mission
 - Finalized visual hierarchy with distinct color coding for all platform sections
 - Production deployment ready with polished UI and stable performance
 
