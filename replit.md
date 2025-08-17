@@ -45,6 +45,8 @@ Preferred communication style: Simple, everyday language.
 - Removed conflicting function definitions causing Voodoo Abundance playback issues
 - Reformatted Voodoo functions to exactly match working Music Now format structure
 - Removed generic playAudio function that was causing interference
+- Converted Voodoo Abundance from grouped box to individual Music Now links at top of section
+- Added specific annotations for each Voodoo song with Terry D Franklin attribution
 - All 15 songs (Music Now + Voodoo Abundance) now use identical audio protocols
 - Finalized visual hierarchy with distinct color coding for all platform sections
 - Production deployment ready with polished UI and stable performance
