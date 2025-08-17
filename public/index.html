@@ -2494,24 +2494,108 @@
       });
     }
     
-    // Original music functions (1-10)
-    function playMusic1() { playAudio('https://storage.aisongmaker.io/audio/05556fa4-2b04-423c-b91e-1c4fc6eaa9e0.mp3', 'A Solar Day (sunny)'); }
-    function playMusic2() { playAudio('https://storage.aisongmaker.io/audio/f4d8e5ac-5c29-465d-9c88-d4b4b9f4d8ae.mp3', 'A Solar Day (groovin)'); }
-    function playMusic3() { playAudio('https://storage.aisongmaker.io/audio/34dd1c32-a4ef-43a5-b1e4-7b22c8b9e7aa.mp3', 'A Solar Day (moovin)'); }
-    function playMusic4() { playAudio('https://storage.aisongmaker.io/audio/a12b3c4d-5e6f-7890-1234-567890abcdef.mp3', 'Break Time Blues Rhapsody (By Kid Solar)'); }
-    function playMusic5() { playAudio('https://storage.aisongmaker.io/audio/b23c4d5e-6f78-9012-3456-789012bcdefg.mp3', 'Starlight Forever'); }
-    function playMusic6() { playAudio('https://storage.aisongmaker.io/audio/c34d5e6f-7890-1234-5678-90123cdefghi.mp3', 'Light It From Within'); }
-    function playMusic7() { playAudio('https://storage.aisongmaker.io/audio/d45e6f78-9012-3456-7890-12345defghij.mp3', 'Moonshine in St Kitts. (By Bowie, Jagger, Lennon (ish))'); }
-    function playMusic8() { playAudio('https://storage.aisongmaker.io/audio/e56f7890-1234-5678-9012-3456efghijkl.mp3', 'Solar Tempest Symphony (By JMF)'); }
-    function playMusic9() { playAudio('https://storage.aisongmaker.io/audio/f67890ab-cdef-1234-5678-90123456789a.mp3', 'Steel In His Soul'); }
-    function playMusic10() { playAudio('https://storage.aisongmaker.io/audio/g7890abc-def1-2345-6789-0123456789ab.mp3', 'We Said So'); }
+
     
     // Voodoo Abundance music functions
-    function playVoodoo1() { playAudio('https://storage.aisongmaker.io/audio/19d37c35-dc0b-4686-8bd7-71992f925670.mp3', 'Funky Voodoo (Blues Jam)'); }
-    function playVoodoo2() { playAudio('https://storage.aisongmaker.io/audio/255be09f-c09a-4d9a-8dbc-3c3ba65e9204.mp3', 'Green and Blue (Rock)'); }
-    function playVoodoo3() { playAudio('https://storage.aisongmaker.io/audio/01e05fb6-a7ac-4dd3-9500-00bb46625ef1.mp3', 'Green and Blue (EDM)'); }
-    function playVoodoo4() { playAudio('https://storage.aisongmaker.io/audio/49fc3427-e775-47f0-b5ea-8903006b07a0.mp3', 'Lady Voodoo (Folk Yah)'); }
-    function playVoodoo5() { playAudio('https://storage.aisongmaker.io/audio/b2001c35-620a-4893-b046-4de20ad11422.mp3', 'Lady Voodoo (Crying)'); }
+    function playVoodoo1() {
+      const musicUrl = 'https://storage.aisongmaker.io/audio/19d37c35-dc0b-4686-8bd7-71992f925670.mp3';
+      
+      stopCurrentAudio();
+      
+      // Create and play new audio
+      currentAudio = new Audio(musicUrl);
+      currentAudio.play().then(() => {
+        console.log('🎷 Playing: Funky Voodoo (Blues Jam)');
+      }).catch(error => {
+        console.error('Audio playback failed:', error);
+        alert('Unable to play music. Please check your internet connection.');
+      });
+      
+      // Reset when finished
+      currentAudio.addEventListener('ended', () => {
+        currentAudio = null;
+      });
+    }
+    
+    function playVoodoo2() {
+      const musicUrl = 'https://storage.aisongmaker.io/audio/255be09f-c09a-4d9a-8dbc-3c3ba65e9204.mp3';
+      
+      stopCurrentAudio();
+      
+      // Create and play new audio
+      currentAudio = new Audio(musicUrl);
+      currentAudio.play().then(() => {
+        console.log('🎸 Playing: Green and Blue (Rock)');
+      }).catch(error => {
+        console.error('Audio playback failed:', error);
+        alert('Unable to play music. Please check your internet connection.');
+      });
+      
+      // Reset when finished
+      currentAudio.addEventListener('ended', () => {
+        currentAudio = null;
+      });
+    }
+    
+    function playVoodoo3() {
+      const musicUrl = 'https://storage.aisongmaker.io/audio/01e05fb6-a7ac-4dd3-9500-00bb46625ef1.mp3';
+      
+      stopCurrentAudio();
+      
+      // Create and play new audio
+      currentAudio = new Audio(musicUrl);
+      currentAudio.play().then(() => {
+        console.log('🎧 Playing: Green and Blue (EDM)');
+      }).catch(error => {
+        console.error('Audio playback failed:', error);
+        alert('Unable to play music. Please check your internet connection.');
+      });
+      
+      // Reset when finished
+      currentAudio.addEventListener('ended', () => {
+        currentAudio = null;
+      });
+    }
+    
+    function playVoodoo4() {
+      const musicUrl = 'https://storage.aisongmaker.io/audio/49fc3427-e775-47f0-b5ea-8903006b07a0.mp3';
+      
+      stopCurrentAudio();
+      
+      // Create and play new audio
+      currentAudio = new Audio(musicUrl);
+      currentAudio.play().then(() => {
+        console.log('🪕 Playing: Lady Voodoo (Folk Yah)');
+      }).catch(error => {
+        console.error('Audio playback failed:', error);
+        alert('Unable to play music. Please check your internet connection.');
+      });
+      
+      // Reset when finished
+      currentAudio.addEventListener('ended', () => {
+        currentAudio = null;
+      });
+    }
+    
+    function playVoodoo5() {
+      const musicUrl = 'https://storage.aisongmaker.io/audio/b2001c35-620a-4893-b046-4de20ad11422.mp3';
+      
+      stopCurrentAudio();
+      
+      // Create and play new audio
+      currentAudio = new Audio(musicUrl);
+      currentAudio.play().then(() => {
+        console.log('💧 Playing: Lady Voodoo (Crying)');
+      }).catch(error => {
+        console.error('Audio playback failed:', error);
+        alert('Unable to play music. Please check your internet connection.');
+      });
+      
+      // Reset when finished
+      currentAudio.addEventListener('ended', () => {
+        currentAudio = null;
+      });
+    }
   </script>
 
 </body>
