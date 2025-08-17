@@ -2461,13 +2461,32 @@
     
     // Generic music play function
     function playAudio(url, title) {
+      console.log(`🎵 Attempting to play: ${title}`);
+      console.log(`🔗 URL: ${url}`);
+      
       stopCurrentAudio();
       currentAudio = new Audio(url);
-      currentAudio.play().catch(e => {
-        console.error('Audio playback failed:', e);
-        alert('Unable to play audio. Please check your connection.');
+      
+      // Add event listeners for better debugging
+      currentAudio.addEventListener('loadstart', () => {
+        console.log(`▶️ Loading started: ${title}`);
       });
-      console.log(`🎵 Playing: ${title}`);
+      
+      currentAudio.addEventListener('canplay', () => {
+        console.log(`✅ Can play: ${title}`);
+      });
+      
+      currentAudio.addEventListener('error', (e) => {
+        console.error(`❌ Audio error for ${title}:`, e);
+        alert(`Failed to load "${title}". Please try again.`);
+      });
+      
+      currentAudio.play().then(() => {
+        console.log(`🎶 Now playing: ${title}`);
+      }).catch(e => {
+        console.error('Audio playback failed:', e);
+        alert(`Unable to play "${title}". Please check your connection or try again.`);
+      });
     }
     
     // Original music functions (1-10)
