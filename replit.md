@@ -61,6 +61,8 @@ Voodoo Collection attribution: Use "lyrics by Terry D Franklin" instead of "crea
 - Enhanced Voodoo Collection with mobile-friendly touch controls and audio feedback
 - Added comprehensive error handling and user guidance for mobile audio playback
 - Final deployment ready: All Voodoo functions enhanced with mobile compatibility
+- Updated Voodoo Collection attribution to "Lyrics by Terry D Franklin" as requested
+- Voodoo Collection buttons enhanced with proper touch controls and audio feedback
 
 ## System Architecture
 
