@@ -5,6 +5,7 @@ The Current-See is a prototype for a solar-backed global economic system that co
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
+Voodoo Collection attribution: Use "lyrics by Terry D Franklin" instead of "created by" for future deployments.
 
 ## Recent Changes (August 2025)
 - Implemented stable frame system to eliminate site floating/movement issues
