@@ -5,7 +5,7 @@ The Current-See is a prototype for a solar-backed global economic system that co
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
-Voodoo Collection attribution: Use "lyrics by Terry D Franklin" instead of "created by" for future deployments.
+Voodoo Collection attribution: Use "Lyrics by Terry D Franklin 🌍 World.Org Verified Human" for authentic human verification.
 
 ## Recent Changes (August 2025)
 - Successfully deployed The Current-See Platform with complete Voodoo Abundance Collection functionality (August 17, 2025)
