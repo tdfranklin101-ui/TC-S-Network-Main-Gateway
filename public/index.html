@@ -568,7 +568,7 @@
                   🗿 VOODOO ABUNDANCE SERIES 🗿
                 </h3>
                 <p style="margin: 0; color: #666; font-size: 13px; font-style: italic;">
-                  One mystical poem, five powerful genres • Lyrics by Terry D Franklin
+                  One mystical poem, six powerful genres • Lyrics by Terry D Franklin
                 </p>
               </div>
 
@@ -628,6 +628,18 @@
                 <div style="flex: 1; text-align: left;">
                   <h4 style="margin: 0 0 5px 0; color: #ff8c00;">Voodoo Abundance • Track 5</h4>
                   <p style="margin: 0; color: #555; font-size: 14px;">💧 Lady Voodoo (Crying)</p>
+                </div>
+                <span style="color: #ff8c00; font-weight: bold;">♪</span>
+              </button>
+
+              <!-- Voodoo Abundance Series Track 6 -->
+              <button onclick="playMusic16()" style="display: flex; align-items: center; text-decoration: none; padding: 12px; border-radius: 8px; background: linear-gradient(to right, rgba(255, 140, 0, 0.1), rgba(218, 165, 32, 0.1)); border: 1px solid rgba(255, 140, 0, 0.3); transition: all 0.3s ease; cursor: pointer; width: 100%; border: none; margin-bottom: 8px;">
+                <div style="background: linear-gradient(to right, #ff8c00, #daa520); width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-right: 15px;">
+                  <span style="color: white; font-weight: bold;">🗿</span>
+                </div>
+                <div style="flex: 1; text-align: left;">
+                  <h4 style="margin: 0 0 5px 0; color: #ff8c00;">Voodoo Abundance • Track 6</h4>
+                  <p style="margin: 0; color: #555; font-size: 14px;">🇯🇲 Rasta Lady Voodoo</p>
                 </div>
                 <span style="color: #ff8c00; font-weight: bold;">♪</span>
               </button>
@@ -2261,6 +2273,26 @@
       currentAudio = new Audio(musicUrl);
       currentAudio.play().then(() => {
         console.log('🗿 Playing: Lady Voodoo (Crying) - Lyrics by Terry D Franklin');
+      }).catch(error => {
+        console.error('Audio playback failed:', error);
+        alert('Unable to play music. Please check your internet connection.');
+      });
+      
+      // Reset when finished
+      currentAudio.addEventListener('ended', () => {
+        currentAudio = null;
+      });
+    }
+
+    function playMusic16() {
+      const musicUrl = 'https://storage.aisongmaker.io/audio/7abf4dac-2b12-434a-8d59-c115f8c54cb9.mp3';
+      
+      stopCurrentAudio();
+      
+      // Create and play new audio
+      currentAudio = new Audio(musicUrl);
+      currentAudio.play().then(() => {
+        console.log('🗿 Playing: Rasta Lady Voodoo - Lyrics by Terry D Franklin');
       }).catch(error => {
         console.error('Audio playback failed:', error);
         alert('Unable to play music. Please check your internet connection.');
