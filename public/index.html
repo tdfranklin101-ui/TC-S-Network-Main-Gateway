@@ -2423,34 +2423,52 @@
     function playNextInPlaylist() {
       if (!isPlayingPlaylist || currentPlaylistIndex >= currentPlaylist.length) {
         isPlayingPlaylist = false;
-        console.log('📻 Playlist completed');
+        console.log('📻 Playlist completed - all tracks played');
         return;
       }
       
       const musicUrl = currentPlaylist[currentPlaylistIndex];
+      const trackNumber = currentPlaylistIndex + 1;
       currentPlaylistIndex++;
       
-      stopCurrentAudio();
+      // Stop current audio without resetting playlist flag
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio = null;
+      }
+      
+      console.log(`📻 Loading track ${trackNumber} of ${currentPlaylist.length}`);
       
       // Create and play new audio
       currentAudio = new Audio(musicUrl);
       currentAudio.play().then(() => {
-        console.log(`📻 Playing track ${currentPlaylistIndex} of ${currentPlaylist.length} - No repeats until all played`);
+        console.log(`🎵 Now playing: Track ${trackNumber} of ${currentPlaylist.length}`);
       }).catch(error => {
-        console.error('Playlist playback failed:', error);
+        console.error(`❌ Track ${trackNumber} failed:`, error);
         // Try next track if current fails
         if (isPlayingPlaylist) {
-          setTimeout(() => playNextInPlaylist(), 1000);
+          console.log('⏭️ Skipping to next track...');
+          setTimeout(() => playNextInPlaylist(), 500);
         }
       });
       
       // Set up listener for when current song ends to play next
       currentAudio.addEventListener('ended', () => {
-        setTimeout(() => {
-          if (isPlayingPlaylist) {
-            playNextInPlaylist();
-          }
-        }, 1000); // 1 second pause between tracks
+        console.log(`✅ Track ${trackNumber} finished`);
+        if (isPlayingPlaylist) {
+          console.log('⏭️ Auto-advancing to next track...');
+          setTimeout(() => playNextInPlaylist(), 1000);
+        }
+      });
+      
+      // Error handling
+      currentAudio.addEventListener('error', (e) => {
+        console.error(`❌ Audio error on track ${trackNumber}:`, e);
+        if (isPlayingPlaylist) {
+          console.log('⏭️ Skipping failed track...');
+          setTimeout(() => playNextInPlaylist(), 500);
+        }
       });
     }
 
@@ -2741,7 +2759,7 @@
   <script>
     let currentAudio = null;
     
-    // Stop any currently playing audio
+    // Stop any currently playing audio (for manual single track playback)
     function stopCurrentAudio() {
       if (currentAudio) {
         currentAudio.pause();
@@ -2749,6 +2767,7 @@
         currentAudio = null;
       }
       isPlayingPlaylist = false; // Stop any playlist when manually stopping audio
+      console.log('⏹️ Audio stopped manually');
     }
 
     function stopAllMusic() {
