@@ -9,7 +9,9 @@ Voodoo Collection attribution: Use "Lyrics by Terry D Franklin 🌍 World.Org Ve
 
 ## Recent Changes (August 2025)
 - **DEPLOYMENT READY** - Fixed critical playlist progression bug preventing track advancement (August 20, 2025)
-- Enhanced playlist system with detailed console logging and error handling for both complete collection and Voodoo series
+- Enhanced playlist system: Single-click activation for full playlist playback (17 or 6 tracks)
+- Automatic track progression with detailed console logging and error handling
+- Added artistic SOLAR Token Economics section in credits with animated effects
 - All 17 tracks confirmed operational: 11 Music Now + 6 Voodoo Abundance with sequential playback
 - Successfully deployed The Current-See Platform with complete Voodoo Abundance Collection functionality (August 17, 2025)
 - Resolved Voodoo Abundance audio URL issues: replaced HTTP 404 URLs with working Music Now audio files
