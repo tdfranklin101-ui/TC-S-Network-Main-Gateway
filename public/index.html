@@ -2423,6 +2423,12 @@
     let isPlayingPlaylist = false;
 
     function playAllMusicNow() {
+      // Stop any current playback
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio = null;
+      }
+      
       // All 17 tracks: Music Now (11) + Voodoo Abundance (6)
       const allTracks = [
         // Music Now tracks (11)
@@ -2446,7 +2452,7 @@
         'https://storage.aisongmaker.io/audio/7abf4dac-2b12-434a-8d59-c115f8c54cb9.mp3'  // Voodoo 6
       ];
       
-      // Proper shuffle using Fisher-Yates algorithm for true randomization
+      // Shuffle using Fisher-Yates algorithm
       const shuffledTracks = [...allTracks];
       for (let i = shuffledTracks.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -2457,30 +2463,43 @@
       currentPlaylistIndex = 0;
       isPlayingPlaylist = true;
       
-      console.log(`🎲 Starting complete playlist: ${allTracks.length} tracks shuffled`);
+      console.log(`🎲 Starting playlist: ${allTracks.length} tracks shuffled for continuous playback`);
+      console.log(`📻 First track: ${shuffledTracks[0]}`);
+      
+      // Start immediately
       playNextInPlaylist();
     }
 
     function playAllVoodoo() {
-      // Voodoo Abundance URLs in order
+      // Stop any current playback
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio = null;
+      }
+      
+      // Voodoo Abundance URLs in sequential order
       currentPlaylist = [
-        'https://storage.aisongmaker.io/audio/19d37c35-dc0b-4686-8bd7-71992f925670.mp3', // Track 1
-        'https://storage.aisongmaker.io/audio/255be09f-c09a-4d9a-8dbc-3c3ba65e9204.mp3', // Track 2
-        'https://storage.aisongmaker.io/audio/01e05fb6-a7ac-4dd3-9500-00bb46625ef1.mp3', // Track 3
-        'https://storage.aisongmaker.io/audio/49fc3427-e775-47f0-b5ea-8903006b07a0.mp3', // Track 4
-        'https://storage.aisongmaker.io/audio/b2001c35-620a-4893-b046-4de20ad11422.mp3', // Track 5
-        'https://storage.aisongmaker.io/audio/7abf4dac-2b12-434a-8d59-c115f8c54cb9.mp3'  // Track 6
+        'https://storage.aisongmaker.io/audio/19d37c35-dc0b-4686-8bd7-71992f925670.mp3', // Track 1: Funky Voodoo (Blues Jam)
+        'https://storage.aisongmaker.io/audio/255be09f-c09a-4d9a-8dbc-3c3ba65e9204.mp3', // Track 2: Green and Blue (Rock)
+        'https://storage.aisongmaker.io/audio/01e05fb6-a7ac-4dd3-9500-00bb46625ef1.mp3', // Track 3: Green and Blue (EDM)
+        'https://storage.aisongmaker.io/audio/49fc3427-e775-47f0-b5ea-8903006b07a0.mp3', // Track 4: Green and Blue (Folk)
+        'https://storage.aisongmaker.io/audio/b2001c35-620a-4893-b046-4de20ad11422.mp3', // Track 5: Green and Blue (Crying)
+        'https://storage.aisongmaker.io/audio/7abf4dac-2b12-434a-8d59-c115f8c54cb9.mp3'  // Track 6: Rasta Lady Voodoo
       ];
       currentPlaylistIndex = 0;
       isPlayingPlaylist = true;
       
-      console.log('🗿 Starting Voodoo Abundance series playlist');
+      console.log('🗿 Starting Voodoo Abundance series: 6 tracks in sequential order');
+      console.log('📻 First track: Track 1 - Funky Voodoo (Blues Jam)');
+      
+      // Start immediately  
       playNextInPlaylist();
     }
 
     function playNextInPlaylist() {
       if (!isPlayingPlaylist || currentPlaylistIndex >= currentPlaylist.length) {
         isPlayingPlaylist = false;
+        currentAudio = null;
         console.log('📻 Playlist completed - all tracks played');
         return;
       }
@@ -2489,45 +2508,63 @@
       const trackNumber = currentPlaylistIndex + 1;
       currentPlaylistIndex++;
       
-      // Stop current audio without resetting playlist flag
+      console.log(`📻 Loading track ${trackNumber} of ${currentPlaylist.length}: ${musicUrl}`);
+      
+      // Clean up previous audio completely
       if (currentAudio) {
         currentAudio.pause();
         currentAudio.currentTime = 0;
+        currentAudio.src = '';
         currentAudio = null;
       }
       
-      console.log(`📻 Loading track ${trackNumber} of ${currentPlaylist.length}`);
-      
-      // Create and play new audio
+      // Create new audio with fresh instance
       currentAudio = new Audio(musicUrl);
-      currentAudio.play().then(() => {
-        console.log(`🎵 Now playing: Track ${trackNumber} of ${currentPlaylist.length}`);
-      }).catch(error => {
-        console.error(`❌ Track ${trackNumber} failed:`, error);
-        // Try next track if current fails
-        if (isPlayingPlaylist) {
-          console.log('⏭️ Skipping to next track...');
-          setTimeout(() => playNextInPlaylist(), 500);
-        }
-      });
+      currentAudio.preload = 'auto';
       
-      // Set up listener for when current song ends to play next
-      currentAudio.addEventListener('ended', () => {
-        console.log(`✅ Track ${trackNumber} finished`);
+      // Set up event listeners with direct functions to avoid closure issues
+      currentAudio.onended = function() {
+        console.log(`✅ Track ${trackNumber} finished playing`);
         if (isPlayingPlaylist) {
           console.log('⏭️ Auto-advancing to next track...');
-          setTimeout(() => playNextInPlaylist(), 1000);
+          setTimeout(() => {
+            if (isPlayingPlaylist) {
+              playNextInPlaylist();
+            }
+          }, 500);
         }
-      });
+      };
       
-      // Error handling
-      currentAudio.addEventListener('error', (e) => {
-        console.error(`❌ Audio error on track ${trackNumber}:`, e);
+      currentAudio.onerror = function(e) {
+        console.error(`❌ Audio error on track ${trackNumber}:`, e.type || 'Unknown error');
         if (isPlayingPlaylist) {
           console.log('⏭️ Skipping failed track...');
-          setTimeout(() => playNextInPlaylist(), 500);
+          setTimeout(() => {
+            if (isPlayingPlaylist) {
+              playNextInPlaylist();
+            }
+          }, 300);
         }
-      });
+      };
+      
+      // Attempt to play
+      const playPromise = currentAudio.play();
+      if (playPromise !== undefined) {
+        playPromise.then(() => {
+          console.log(`🎵 Successfully playing: Track ${trackNumber} of ${currentPlaylist.length}`);
+          console.log(`🎵 Track info: Duration ${currentAudio.duration || 'loading...'}s`);
+        }).catch(error => {
+          console.error(`❌ Play promise rejected for track ${trackNumber}:`, error.name, error.message);
+          if (isPlayingPlaylist) {
+            console.log('⏭️ Trying next track due to play failure...');
+            setTimeout(() => {
+              if (isPlayingPlaylist) {
+                playNextInPlaylist();
+              }
+            }, 500);
+          }
+        });
+      }
     }
 
     // Kid Solar Analysis Display Functions
