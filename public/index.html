@@ -562,6 +562,19 @@
                 <span style="color: #0057B8; font-weight: bold;">→</span>
               </a>
 
+              <!-- Music Now Intro Box -->
+              <div style="background: linear-gradient(135deg, rgba(255, 140, 0, 0.1), rgba(218, 165, 32, 0.1)); border: 2px solid rgba(255, 140, 0, 0.3); border-radius: 12px; padding: 15px; margin-bottom: 15px; text-align: center;">
+                <h3 style="margin: 0 0 8px 0; color: #ff8c00; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                  🎵 MUSIC NOW 🎵
+                </h3>
+                <p style="margin: 0 0 12px 0; color: #666; font-size: 13px;">
+                  To play any of the Music Now selections simply press the song below you want to hear
+                </p>
+                <button onclick="playAllMusicNow()" style="background: linear-gradient(to right, #ff8c00, #daa520); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.3s ease;">
+                  🎲 Play All Music Now (Random)
+                </button>
+              </div>
+
               <!-- Music Now - Swampy Boogie Nights -->
               <a href="#" onclick="playMusic17()" style="display: flex; align-items: center; text-decoration: none; padding: 12px; border-radius: 8px; background: linear-gradient(to right, rgba(255, 140, 0, 0.1), rgba(218, 165, 32, 0.1)); border: 1px solid rgba(255, 140, 0, 0.3); transition: all 0.3s ease; color: inherit; margin-bottom: 15px;">
                 <div style="background: linear-gradient(to right, #ff8c00, #daa520); width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-right: 15px;">
@@ -579,9 +592,12 @@
                 <h3 style="margin: 0 0 8px 0; color: #8B4513; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 10px;">
                   🗿 VOODOO ABUNDANCE SERIES 🗿
                 </h3>
-                <p style="margin: 0; color: #666; font-size: 13px; font-style: italic;">
+                <p style="margin: 0 0 12px 0; color: #666; font-size: 13px; font-style: italic;">
                   One mystical poem, six powerful genres • Lyrics by Terry D Franklin 🌍 World.Org Verified Human
                 </p>
+                <button onclick="playAllVoodoo()" style="background: linear-gradient(to right, #8B4513, #A0522D); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.3s ease;">
+                  🗿 Play All Voodoo Abundance (In Order)
+                </button>
               </div>
 
               <!-- Voodoo Abundance Series Track 1 -->
@@ -2336,6 +2352,64 @@
       });
     }
 
+    // Music Playlist Functions
+    let currentPlaylist = [];
+    let currentPlaylistIndex = 0;
+    let isPlayingPlaylist = false;
+
+    function playAllMusicNow() {
+      // All Music Now functions (including new track)
+      const musicNowFunctions = [
+        'playMusic1', 'playMusic2', 'playMusic3', 'playMusic4', 'playMusic5',
+        'playMusic6', 'playMusic7', 'playMusic8', 'playMusic9', 'playMusic10', 'playMusic17'
+      ];
+      
+      // Shuffle the array for random playback
+      currentPlaylist = musicNowFunctions.sort(() => Math.random() - 0.5);
+      currentPlaylistIndex = 0;
+      isPlayingPlaylist = true;
+      
+      console.log('🎲 Starting Music Now random playlist');
+      playNextInPlaylist();
+    }
+
+    function playAllVoodoo() {
+      // Voodoo Abundance functions in order
+      currentPlaylist = ['playMusic11', 'playMusic12', 'playMusic13', 'playMusic14', 'playMusic15', 'playMusic16'];
+      currentPlaylistIndex = 0;
+      isPlayingPlaylist = true;
+      
+      console.log('🗿 Starting Voodoo Abundance series playlist');
+      playNextInPlaylist();
+    }
+
+    function playNextInPlaylist() {
+      if (!isPlayingPlaylist || currentPlaylistIndex >= currentPlaylist.length) {
+        isPlayingPlaylist = false;
+        console.log('📻 Playlist completed');
+        return;
+      }
+      
+      const functionName = currentPlaylist[currentPlaylistIndex];
+      currentPlaylistIndex++;
+      
+      // Call the appropriate music function
+      if (window[functionName]) {
+        window[functionName]();
+        
+        // Set up listener for when current song ends to play next
+        if (currentAudio) {
+          currentAudio.addEventListener('ended', () => {
+            setTimeout(() => {
+              if (isPlayingPlaylist) {
+                playNextInPlaylist();
+              }
+            }, 1000); // 1 second pause between tracks
+          });
+        }
+      }
+    }
+
     // Kid Solar Analysis Display Functions
     function showAnalysisDisplay(analysis) {
       const display = document.getElementById('analysisDisplay');
@@ -2630,6 +2704,7 @@
         currentAudio.currentTime = 0;
         currentAudio = null;
       }
+      isPlayingPlaylist = false; // Stop any playlist when manually stopping audio
     }
     
     // Voodoo Abundance Functions - Enhanced for mobile compatibility
