@@ -2431,10 +2431,12 @@
     let nextAudioElement = null; // For preloading next track
 
     function playAllMusicNow() {
-      console.log('🎲 Initializing 17-track streaming playlist...');
+      console.log('🎲 STARTING RANDOM 17-SONG PLAYLIST (NOT Voodoo only)');
       
-      // Stop any current playback
+      // Stop any current playback and clear state
       stopCurrentAudio();
+      isPlayingPlaylist = false;
+      hideNowPlayingDisplay();
       
       // All 17 tracks: Music Now (11) + Voodoo Abundance (6)
       const allTracks = [
@@ -2459,21 +2461,25 @@
         'https://storage.aisongmaker.io/audio/7abf4dac-2b12-434a-8d59-c115f8c54cb9.mp3'
       ];
       
-      // Fisher-Yates shuffle
+      // Fisher-Yates shuffle for random order
       const shuffledTracks = [...allTracks];
       for (let i = shuffledTracks.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [shuffledTracks[i], shuffledTracks[j]] = [shuffledTracks[j], shuffledTracks[i]];
       }
       
-      startStreamingPlaylist(shuffledTracks, 'random');
+      console.log('🎵 First random track will be:', getTrackName(shuffledTracks[0]));
+      
+      startStreamingPlaylist(shuffledTracks, 'RANDOM 17-SONG MIX');
     }
 
     function playAllVoodoo() {
-      console.log('🗿 Initializing Voodoo Abundance streaming playlist...');
+      console.log('🗿 STARTING VOODOO ABUNDANCE 6-SONG PLAYLIST');
       
-      // Stop any current playback
+      // Stop any current playbook and clear state
       stopCurrentAudio();
+      isPlayingPlaylist = false;
+      hideNowPlayingDisplay();
       
       // Voodoo Abundance in sequential order
       const voodooTracks = [
@@ -2485,7 +2491,9 @@
         'https://storage.aisongmaker.io/audio/7abf4dac-2b12-434a-8d59-c115f8c54cb9.mp3'  // Rasta Lady Voodoo
       ];
       
-      startStreamingPlaylist(voodooTracks, 'sequential');
+      console.log('🗿 First Voodoo track will be:', getTrackName(voodooTracks[0]));
+      
+      startStreamingPlaylist(voodooTracks, 'VOODOO ABUNDANCE 6-SONG');
     }
 
     function startStreamingPlaylist(tracks, mode) {
