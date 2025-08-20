@@ -561,6 +561,18 @@
                 </div>
                 <span style="color: #0057B8; font-weight: bold;">→</span>
               </a>
+
+              <!-- Music Now - Swampy Boogie Nights -->
+              <a href="#" onclick="playMusic17()" style="display: flex; align-items: center; text-decoration: none; padding: 12px; border-radius: 8px; background: linear-gradient(to right, rgba(255, 140, 0, 0.1), rgba(218, 165, 32, 0.1)); border: 1px solid rgba(255, 140, 0, 0.3); transition: all 0.3s ease; color: inherit; margin-bottom: 15px;">
+                <div style="background: linear-gradient(to right, #ff8c00, #daa520); width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-right: 15px;">
+                  <span style="color: white; font-weight: bold;">🐊</span>
+                </div>
+                <div style="flex: 1; text-align: left;">
+                  <h4 style="margin: 0 0 5px 0; color: #ff8c00;">Music Now</h4>
+                  <p style="margin: 0; color: #555; font-size: 14px;">🎺 Swampy Boogie Nights (Cajun Crawler)</p>
+                </div>
+                <span style="color: #ff8c00; font-weight: bold;">♪</span>
+              </a>
               
               <!-- Voodoo Abundance Series Header -->
               <div style="background: linear-gradient(135deg, rgba(139, 69, 19, 0.1), rgba(160, 82, 45, 0.1)); border: 2px solid rgba(139, 69, 19, 0.3); border-radius: 12px; padding: 15px; margin-bottom: 15px; text-align: center;">
@@ -2293,6 +2305,26 @@
       currentAudio = new Audio(musicUrl);
       currentAudio.play().then(() => {
         console.log('🗿 Playing: Rasta Lady Voodoo - Lyrics by Terry D Franklin 🌍 World.Org Verified Human');
+      }).catch(error => {
+        console.error('Audio playback failed:', error);
+        alert('Unable to play music. Please check your internet connection.');
+      });
+      
+      // Reset when finished
+      currentAudio.addEventListener('ended', () => {
+        currentAudio = null;
+      });
+    }
+
+    function playMusic17() {
+      const musicUrl = 'https://storage.aisongmaker.io/audio/015092c3-f687-4a01-9a81-dad42f2adce9.mp3';
+      
+      stopCurrentAudio();
+      
+      // Create and play new audio
+      currentAudio = new Audio(musicUrl);
+      currentAudio.play().then(() => {
+        console.log('🐊 Playing: Swampy Boogie Nights (Cajun Crawler)');
       }).catch(error => {
         console.error('Audio playback failed:', error);
         alert('Unable to play music. Please check your internet connection.');
