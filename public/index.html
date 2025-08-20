@@ -571,7 +571,7 @@
                   To play any of the Music Now selections simply press the song below you want to hear
                 </p>
                 <button onclick="playAllMusicNow()" style="background: linear-gradient(to right, #ff8c00, #daa520); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.3s ease;">
-                  🎲 Play All Music Now (Random)
+                  🎲 Play All 17 Songs (Random, No Repeats)
                 </button>
               </div>
 
@@ -2358,8 +2358,9 @@
     let isPlayingPlaylist = false;
 
     function playAllMusicNow() {
-      // Music Now URLs for direct playback (actual working URLs)
-      const musicNowTracks = [
+      // All 17 tracks: Music Now (11) + Voodoo Abundance (6)
+      const allTracks = [
+        // Music Now tracks (11)
         'https://storage.aisongmaker.io/audio/10db8911-0b74-4675-ba62-02182c1d7f6b.mp3', // Track 1
         'https://storage.aisongmaker.io/audio/418add3e-c1a5-4a76-b361-14d6a11794fe.mp3', // Track 2
         'https://storage.aisongmaker.io/audio/a2647129-991f-4105-aad2-e45210005bef.mp3', // Track 3
@@ -2370,15 +2371,28 @@
         'https://storage.aisongmaker.io/audio/94088af1-8318-401a-b277-b79fbbdb7475.mp3', // Track 8
         'https://storage.aisongmaker.io/audio/cb58c04e-fc7b-448a-a9e5-a642e168cacd.mp3', // Track 9
         'https://storage.aisongmaker.io/audio/11802549-7cf8-4d4c-a708-44f04804f2ab.mp3', // Track 10
-        'https://storage.aisongmaker.io/audio/015092c3-f687-4a01-9a81-dad42f2adce9.mp3'  // Swampy Boogie Nights
+        'https://storage.aisongmaker.io/audio/015092c3-f687-4a01-9a81-dad42f2adce9.mp3', // Swampy Boogie Nights
+        // Voodoo Abundance tracks (6)
+        'https://storage.aisongmaker.io/audio/19d37c35-dc0b-4686-8bd7-71992f925670.mp3', // Voodoo 1
+        'https://storage.aisongmaker.io/audio/255be09f-c09a-4d9a-8dbc-3c3ba65e9204.mp3', // Voodoo 2
+        'https://storage.aisongmaker.io/audio/01e05fb6-a7ac-4dd3-9500-00bb46625ef1.mp3', // Voodoo 3
+        'https://storage.aisongmaker.io/audio/49fc3427-e775-47f0-b5ea-8903006b07a0.mp3', // Voodoo 4
+        'https://storage.aisongmaker.io/audio/b2001c35-620a-4893-b046-4de20ad11422.mp3', // Voodoo 5
+        'https://storage.aisongmaker.io/audio/7abf4dac-2b12-434a-8d59-c115f8c54cb9.mp3'  // Voodoo 6
       ];
       
-      // Shuffle the array for random playback
-      currentPlaylist = musicNowTracks.sort(() => Math.random() - 0.5);
+      // Proper shuffle using Fisher-Yates algorithm for true randomization
+      const shuffledTracks = [...allTracks];
+      for (let i = shuffledTracks.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffledTracks[i], shuffledTracks[j]] = [shuffledTracks[j], shuffledTracks[i]];
+      }
+      
+      currentPlaylist = shuffledTracks;
       currentPlaylistIndex = 0;
       isPlayingPlaylist = true;
       
-      console.log('🎲 Starting Music Now random playlist');
+      console.log(`🎲 Starting complete playlist: ${allTracks.length} tracks shuffled`);
       playNextInPlaylist();
     }
 
@@ -2414,7 +2428,7 @@
       // Create and play new audio
       currentAudio = new Audio(musicUrl);
       currentAudio.play().then(() => {
-        console.log(`📻 Playing track ${currentPlaylistIndex} of ${currentPlaylist.length}`);
+        console.log(`📻 Playing track ${currentPlaylistIndex} of ${currentPlaylist.length} - No repeats until all played`);
       }).catch(error => {
         console.error('Playlist playback failed:', error);
         // Try next track if current fails
