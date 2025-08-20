@@ -570,6 +570,13 @@
                 <p style="margin: 0 0 12px 0; color: #666; font-size: 13px;">
                   To play any of the Music Now selections simply press the song below you want to hear
                 </p>
+                
+                <!-- Now Playing Display -->
+                <div id="nowPlayingDisplay" style="margin: 10px 0; padding: 10px 15px; background: rgba(0, 0, 0, 0.8); border-radius: 8px; color: #ff8c00; font-weight: bold; font-size: 15px; display: none; border: 2px solid #ff8c00;">
+                  🎶 <span id="currentTrackName">Loading...</span>
+                  <br><span id="trackProgress" style="font-size: 13px; color: #daa520; margin-top: 5px; display: block;">Track 0 of 0</span>
+                </div>
+                
                 <button onclick="playAllMusicNow()" style="background: linear-gradient(to right, #ff8c00, #daa520); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.3s ease;">
                   🎲 Play All 17 Songs (Random, No Repeats)
                 </button>
@@ -2489,8 +2496,62 @@
       console.log(`📻 Starting ${mode} playlist: ${tracks.length} tracks`);
       console.log('🎵 Tracks will play automatically one after another');
       
+      // Show now playing display
+      showNowPlayingDisplay();
+      
       // Start streaming immediately
       streamNextTrack();
+    }
+
+    // Track name mapping for display
+    const trackNames = {
+      '10db8911-0b74-4675-ba62-02182c1d7f6b': 'Ecstatic Digital Dreams',
+      '418add3e-c1a5-4a76-b361-14d6a11794fe': 'Ocean\'s Resolve',
+      'a2647129-991f-4105-aad2-e45210005bef': 'Galactic Dreams',
+      '09de8c9d-25a7-4b38-a6bd-c27b7de4629e': 'Break Time Blues Rhapsody',
+      'c51b1f15-eff7-41fb-b778-b1b9d914ce3a': 'Starlight Forever',
+      'ab1612d5-ccf4-4b4a-ab92-21b77bebdd46': 'Light It From Within',
+      '675d577c-5ab9-45c9-b9d5-d4362f6bcc12': 'Moonshine in St Kitts',
+      '94088af1-8318-401a-b277-b79fbbdb7475': 'Solar Tempest Symphony',
+      'cb58c04e-fc7b-448a-a9e5-a642e168cacd': 'Sunshine Party',
+      '11802549-7cf8-4d4c-a708-44f04804f2ab': 'Cosmic Journey',
+      '015092c3-f687-4a01-9a81-dad42f2adce9': 'Swampy Boogie Nights (Cajun Crawler)',
+      '19d37c35-dc0b-4686-8bd7-71992f925670': 'Funky Voodoo (Blues Jam)',
+      '255be09f-c09a-4d9a-8dbc-3c3ba65e9204': 'Green and Blue (Rock)',
+      '01e05fb6-a7ac-4dd3-9500-00bb46625ef1': 'Green and Blue (EDM)',
+      '49fc3427-e775-47f0-b5ea-8903006b07a0': 'Green and Blue (Folk)',
+      'b2001c35-620a-4893-b046-4de20ad11422': 'Green and Blue (Crying)',
+      '7abf4dac-2b12-434a-8d59-c115f8c54cb9': 'Rasta Lady Voodoo'
+    };
+
+    function getTrackName(url) {
+      const fileName = url.split('/').pop().replace('.mp3', '');
+      return trackNames[fileName] || 'Unknown Track';
+    }
+
+    function showNowPlayingDisplay() {
+      const display = document.getElementById('nowPlayingDisplay');
+      if (display) {
+        display.style.display = 'block';
+      }
+    }
+
+    function updateNowPlaying(trackUrl, trackNum, totalTracks) {
+      const trackName = getTrackName(trackUrl);
+      const nameElement = document.getElementById('currentTrackName');
+      const progressElement = document.getElementById('trackProgress');
+      
+      if (nameElement) nameElement.textContent = trackName;
+      if (progressElement) progressElement.textContent = `Track ${trackNum} of ${totalTracks}`;
+      
+      console.log(`🎶 Now displaying: ${trackName} (${trackNum}/${totalTracks})`);
+    }
+
+    function hideNowPlayingDisplay() {
+      const display = document.getElementById('nowPlayingDisplay');
+      if (display) {
+        display.style.display = 'none';
+      }
     }
 
     function streamNextTrack() {
@@ -2499,6 +2560,7 @@
         isPlayingPlaylist = false;
         currentAudio = null;
         nextAudioElement = null;
+        hideNowPlayingDisplay();
         console.log('📻 Playlist streaming completed - all tracks played');
         return;
       }
@@ -2507,71 +2569,65 @@
       const trackNum = currentPlaylistIndex + 1;
       const totalTracks = currentPlaylist.length;
       
-      console.log(`🎵 Streaming track ${trackNum}/${totalTracks}`);
+      console.log(`🎵 Streaming track ${trackNum}/${totalTracks}: ${trackUrl}`);
       
-      // Clean up previous audio
+      // Update now playing display
+      updateNowPlaying(trackUrl, trackNum, totalTracks);
+      
+      // Clean up previous audio completely
       if (currentAudio) {
         currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio.src = '';
         currentAudio = null;
       }
       
-      // Use preloaded audio if available, otherwise create new
-      if (nextAudioElement && nextAudioElement.src === trackUrl) {
-        currentAudio = nextAudioElement;
-        nextAudioElement = null;
-        console.log(`⚡ Using preloaded track ${trackNum}`);
-      } else {
-        currentAudio = new Audio(trackUrl);
-        currentAudio.preload = 'auto';
-      }
+      // Create fresh audio instance - avoid preloading issues
+      currentAudio = new Audio(trackUrl);
+      currentAudio.preload = 'metadata';
       
-      // Preload next track while current plays
+      // Preload next track in background
       if (currentPlaylistIndex + 1 < currentPlaylist.length) {
         const nextUrl = currentPlaylist[currentPlaylistIndex + 1];
+        if (nextAudioElement) nextAudioElement = null;
         nextAudioElement = new Audio(nextUrl);
-        nextAudioElement.preload = 'auto';
-        console.log(`⏳ Preloading track ${trackNum + 1}...`);
+        nextAudioElement.preload = 'metadata';
+        console.log(`⏳ Preloading next track...`);
       }
       
-      // Set up seamless transition to next track
-      currentAudio.onended = function() {
-        console.log(`✅ Track ${trackNum} finished - auto-advancing`);
+      // Critical: Set up auto-advance BEFORE playing
+      currentAudio.addEventListener('ended', function() {
+        console.log(`✅ Track ${trackNum} ended - advancing in 200ms`);
+        currentPlaylistIndex++; // Move to next track
         setTimeout(() => {
           if (isPlayingPlaylist) {
-            streamNextTrack(); // Start next track immediately
+            streamNextTrack();
           }
-        }, 100); // Minimal delay for smooth transition
-      };
+        }, 200);
+      }, { once: true });
       
-      currentAudio.onerror = function() {
-        console.log(`⚠️ Track ${trackNum} failed - skipping`);
+      currentAudio.addEventListener('error', function(e) {
+        console.log(`⚠️ Track ${trackNum} error: ${e.type} - skipping`);
+        currentPlaylistIndex++; // Move to next track
         setTimeout(() => {
           if (isPlayingPlaylist) {
-            streamNextTrack(); // Skip to next track
+            streamNextTrack();
           }
-        }, 100);
-      };
+        }, 300);
+      }, { once: true });
       
-      // Start playback immediately
-      const playPromise = currentAudio.play();
-      if (playPromise) {
-        playPromise.then(() => {
-          console.log(`🎶 Now streaming: Track ${trackNum}/${totalTracks}`);
-          if (currentAudio && currentAudio.duration) {
-            console.log(`⏱️ Duration: ${Math.round(currentAudio.duration)}s`);
+      // Start playback with error handling
+      currentAudio.play().then(() => {
+        console.log(`🎶 Successfully playing: ${getTrackName(trackUrl)}`);
+      }).catch((error) => {
+        console.log(`🔄 Playback failed: ${error.name} - ${error.message}`);
+        currentPlaylistIndex++; // Move to next track on failure
+        setTimeout(() => {
+          if (isPlayingPlaylist) {
+            streamNextTrack();
           }
-        }).catch((error) => {
-          console.log(`🔄 Play failed for track ${trackNum}: ${error.message}`);
-          setTimeout(() => {
-            if (isPlayingPlaylist) {
-              streamNextTrack();
-            }
-          }, 200);
-        });
-      }
-      
-      // Advance index for next track
-      currentPlaylistIndex++;
+        }, 500);
+      });
     }
 
     // Legacy function for compatibility - redirects to new streaming system
@@ -2885,10 +2941,18 @@
         currentAudio = null;
       }
       
+      // Clean up preloaded audio
+      if (nextAudioElement) {
+        nextAudioElement = null;
+      }
+      
       // Stop any active playlists
       isPlayingPlaylist = false;
       currentPlaylist = [];
       currentPlaylistIndex = 0;
+      
+      // Hide now playing display
+      hideNowPlayingDisplay();
       
       console.log('🛑 All music stopped - Safety override activated');
     }
