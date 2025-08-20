@@ -586,6 +586,13 @@
                 </div>
                 <span style="color: #ff8c00; font-weight: bold;">♪</span>
               </a>
+
+              <!-- Stop Music Now Master Switch -->
+              <div style="text-align: center; margin: 20px 0;">
+                <button onclick="stopAllMusic()" style="background: linear-gradient(to right, #dc3545, #c82333); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);">
+                  🛑 Stop Music Now
+                </button>
+              </div>
               
               <!-- Voodoo Abundance Series Header -->
               <div style="background: linear-gradient(135deg, rgba(139, 69, 19, 0.1), rgba(160, 82, 45, 0.1)); border: 2px solid rgba(139, 69, 19, 0.3); border-radius: 12px; padding: 15px; margin-bottom: 15px; text-align: center;">
@@ -2742,6 +2749,22 @@
         currentAudio = null;
       }
       isPlayingPlaylist = false; // Stop any playlist when manually stopping audio
+    }
+
+    function stopAllMusic() {
+      // Immediate stop of any current audio
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio = null;
+      }
+      
+      // Stop any active playlists
+      isPlayingPlaylist = false;
+      currentPlaylist = [];
+      currentPlaylistIndex = 0;
+      
+      console.log('🛑 All music stopped - Safety override activated');
     }
     
     // Voodoo Abundance Functions - Enhanced for mobile compatibility
