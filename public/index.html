@@ -2358,14 +2358,23 @@
     let isPlayingPlaylist = false;
 
     function playAllMusicNow() {
-      // All Music Now functions (including new track)
-      const musicNowFunctions = [
-        'playMusic1', 'playMusic2', 'playMusic3', 'playMusic4', 'playMusic5',
-        'playMusic6', 'playMusic7', 'playMusic8', 'playMusic9', 'playMusic10', 'playMusic17'
+      // Music Now URLs for direct playback (actual working URLs)
+      const musicNowTracks = [
+        'https://storage.aisongmaker.io/audio/10db8911-0b74-4675-ba62-02182c1d7f6b.mp3', // Track 1
+        'https://storage.aisongmaker.io/audio/418add3e-c1a5-4a76-b361-14d6a11794fe.mp3', // Track 2
+        'https://storage.aisongmaker.io/audio/a2647129-991f-4105-aad2-e45210005bef.mp3', // Track 3
+        'https://storage.aisongmaker.io/audio/09de8c9d-25a7-4b38-a6bd-c27b7de4629e.mp3', // Track 4
+        'https://storage.aisongmaker.io/audio/c51b1f15-eff7-41fb-b778-b1b9d914ce3a.mp3', // Track 5
+        'https://storage.aisongmaker.io/audio/ab1612d5-ccf4-4b4a-ab92-21b77bebdd46.mp3', // Track 6
+        'https://storage.aisongmaker.io/audio/675d577c-5ab9-45c9-b9d5-d4362f6bcc12.mp3', // Track 7
+        'https://storage.aisongmaker.io/audio/94088af1-8318-401a-b277-b79fbbdb7475.mp3', // Track 8
+        'https://storage.aisongmaker.io/audio/cb58c04e-fc7b-448a-a9e5-a642e168cacd.mp3', // Track 9
+        'https://storage.aisongmaker.io/audio/11802549-7cf8-4d4c-a708-44f04804f2ab.mp3', // Track 10
+        'https://storage.aisongmaker.io/audio/015092c3-f687-4a01-9a81-dad42f2adce9.mp3'  // Swampy Boogie Nights
       ];
       
       // Shuffle the array for random playback
-      currentPlaylist = musicNowFunctions.sort(() => Math.random() - 0.5);
+      currentPlaylist = musicNowTracks.sort(() => Math.random() - 0.5);
       currentPlaylistIndex = 0;
       isPlayingPlaylist = true;
       
@@ -2374,8 +2383,15 @@
     }
 
     function playAllVoodoo() {
-      // Voodoo Abundance functions in order
-      currentPlaylist = ['playMusic11', 'playMusic12', 'playMusic13', 'playMusic14', 'playMusic15', 'playMusic16'];
+      // Voodoo Abundance URLs in order
+      currentPlaylist = [
+        'https://storage.aisongmaker.io/audio/19d37c35-dc0b-4686-8bd7-71992f925670.mp3', // Track 1
+        'https://storage.aisongmaker.io/audio/255be09f-c09a-4d9a-8dbc-3c3ba65e9204.mp3', // Track 2
+        'https://storage.aisongmaker.io/audio/01e05fb6-a7ac-4dd3-9500-00bb46625ef1.mp3', // Track 3
+        'https://storage.aisongmaker.io/audio/49fc3427-e775-47f0-b5ea-8903006b07a0.mp3', // Track 4
+        'https://storage.aisongmaker.io/audio/b2001c35-620a-4893-b046-4de20ad11422.mp3', // Track 5
+        'https://storage.aisongmaker.io/audio/7abf4dac-2b12-434a-8d59-c115f8c54cb9.mp3'  // Track 6
+      ];
       currentPlaylistIndex = 0;
       isPlayingPlaylist = true;
       
@@ -2390,24 +2406,31 @@
         return;
       }
       
-      const functionName = currentPlaylist[currentPlaylistIndex];
+      const musicUrl = currentPlaylist[currentPlaylistIndex];
       currentPlaylistIndex++;
       
-      // Call the appropriate music function
-      if (window[functionName]) {
-        window[functionName]();
-        
-        // Set up listener for when current song ends to play next
-        if (currentAudio) {
-          currentAudio.addEventListener('ended', () => {
-            setTimeout(() => {
-              if (isPlayingPlaylist) {
-                playNextInPlaylist();
-              }
-            }, 1000); // 1 second pause between tracks
-          });
+      stopCurrentAudio();
+      
+      // Create and play new audio
+      currentAudio = new Audio(musicUrl);
+      currentAudio.play().then(() => {
+        console.log(`📻 Playing track ${currentPlaylistIndex} of ${currentPlaylist.length}`);
+      }).catch(error => {
+        console.error('Playlist playback failed:', error);
+        // Try next track if current fails
+        if (isPlayingPlaylist) {
+          setTimeout(() => playNextInPlaylist(), 1000);
         }
-      }
+      });
+      
+      // Set up listener for when current song ends to play next
+      currentAudio.addEventListener('ended', () => {
+        setTimeout(() => {
+          if (isPlayingPlaylist) {
+            playNextInPlaylist();
+          }
+        }, 1000); // 1 second pause between tracks
+      });
     }
 
     // Kid Solar Analysis Display Functions
