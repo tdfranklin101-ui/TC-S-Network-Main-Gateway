@@ -2605,23 +2605,19 @@
       
       // Critical: Set up auto-advance BEFORE playing
       currentAudio.addEventListener('ended', function() {
-        console.log(`✅ Track ${trackNum} ended - advancing in 200ms`);
-        currentPlaylistIndex++; // Move to next track
-        setTimeout(() => {
-          if (isPlayingPlaylist) {
-            streamNextTrack();
-          }
-        }, 200);
+        console.log(`✅ Track ${trackNum} ended - advancing to next track`);
+        if (isPlayingPlaylist) {
+          currentPlaylistIndex++; // Move to next track
+          streamNextTrack();
+        }
       }, { once: true });
       
       currentAudio.addEventListener('error', function(e) {
-        console.log(`⚠️ Track ${trackNum} error: ${e.type} - skipping`);
-        currentPlaylistIndex++; // Move to next track
-        setTimeout(() => {
-          if (isPlayingPlaylist) {
-            streamNextTrack();
-          }
-        }, 300);
+        console.log(`⚠️ Track ${trackNum} error: ${e.type} - skipping to next`);
+        if (isPlayingPlaylist) {
+          currentPlaylistIndex++; // Move to next track
+          streamNextTrack();
+        }
       }, { once: true });
       
       // Start playback with error handling
@@ -2629,12 +2625,10 @@
         console.log(`🎶 Successfully playing: ${getTrackName(trackUrl)}`);
       }).catch((error) => {
         console.log(`🔄 Playback failed: ${error.name} - ${error.message}`);
-        currentPlaylistIndex++; // Move to next track on failure
-        setTimeout(() => {
-          if (isPlayingPlaylist) {
-            streamNextTrack();
-          }
-        }, 500);
+        if (isPlayingPlaylist) {
+          currentPlaylistIndex++; // Move to next track on failure
+          streamNextTrack();
+        }
       });
     }
 
