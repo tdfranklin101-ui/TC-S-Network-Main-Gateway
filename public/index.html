@@ -2560,6 +2560,31 @@
       if (display) {
         display.style.display = 'none';
       }
+      
+      // Clear persistent storage when playback ends
+      localStorage.removeItem('currentTrackName');
+      localStorage.removeItem('currentTrackProgress');
+      localStorage.removeItem('isPlayingPlaylist');
+      localStorage.removeItem('currentPlaylistIndex');
+    }
+    
+    // Restore display state when returning to tab or waking from sleep
+    function restorePlaybackDisplay() {
+      const persistedTrackName = localStorage.getItem('currentTrackName');
+      const persistedProgress = localStorage.getItem('currentTrackProgress');
+      const persistedPlaylistState = localStorage.getItem('isPlayingPlaylist');
+      
+      if (persistedTrackName && persistedProgress && persistedPlaylistState === 'true') {
+        const nameElement = document.getElementById('currentTrackName');
+        const progressElement = document.getElementById('trackProgress');
+        const display = document.getElementById('nowPlayingDisplay');
+        
+        if (nameElement) nameElement.textContent = persistedTrackName;
+        if (progressElement) progressElement.textContent = persistedProgress;
+        if (display) display.style.display = 'block';
+        
+        console.log(`🔄 Restored display: ${persistedTrackName} - ${persistedProgress}`);
+      }
     }
 
     function streamNextTrack() {
@@ -2585,6 +2610,12 @@
       
       // Update now playing display
       updateNowPlaying(trackUrl, trackNum, totalTracks);
+      
+      // Persist current track info for cross-tab/sleep persistence
+      localStorage.setItem('currentTrackName', getTrackName(trackUrl));
+      localStorage.setItem('currentTrackProgress', `Track ${trackNum} of ${totalTracks}`);
+      localStorage.setItem('isPlayingPlaylist', 'true');
+      localStorage.setItem('currentPlaylistIndex', currentPlaylistIndex.toString());
       
       // Clean up previous audio completely
       if (currentAudio) {
@@ -3163,6 +3194,28 @@
         alert('🗿 Voodoo function error! Please refresh and try again.');
       }
     }
+    
+    // Initialize persistent display on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      restorePlaybackDisplay();
+    });
+    
+    // Restore display when user returns from another tab
+    document.addEventListener('visibilitychange', function() {
+      if (!document.hidden) {
+        restorePlaybackDisplay();
+      }
+    });
+    
+    // Restore display when page regains focus
+    window.addEventListener('focus', function() {
+      restorePlaybackDisplay();
+    });
+    
+    // Restore display on page show (browser back/forward)
+    window.addEventListener('pageshow', function() {
+      restorePlaybackDisplay();
+    });
   </script>
 
 </body>
