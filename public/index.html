@@ -2563,6 +2563,8 @@
     }
 
     function streamNextTrack() {
+      console.log(`🔍 DEBUG streamNextTrack: isPlayingPlaylist=${isPlayingPlaylist}, currentPlaylistIndex=${currentPlaylistIndex}, playlist.length=${currentPlaylist.length}`);
+      
       // Check if playlist is complete
       if (!isPlayingPlaylist || currentPlaylistIndex >= currentPlaylist.length) {
         isPlayingPlaylist = false;
@@ -2577,7 +2579,9 @@
       const trackNum = currentPlaylistIndex + 1;
       const totalTracks = currentPlaylist.length;
       
-      console.log(`🎵 Streaming track ${trackNum}/${totalTracks}: ${trackUrl}`);
+      console.log(`🎵 Streaming track ${trackNum}/${totalTracks}`);
+      console.log(`🎵 Track URL: ${trackUrl}`);
+      console.log(`🎵 Track name: ${getTrackName(trackUrl)}`);
       
       // Update now playing display
       updateNowPlaying(trackUrl, trackNum, totalTracks);
@@ -2586,50 +2590,56 @@
       if (currentAudio) {
         currentAudio.pause();
         currentAudio.currentTime = 0;
-        currentAudio.src = '';
+        currentAudio.removeEventListener('ended', () => {});
+        currentAudio.removeEventListener('error', () => {});
         currentAudio = null;
       }
       
-      // Create fresh audio instance - avoid preloading issues
+      // Create fresh audio instance
       currentAudio = new Audio(trackUrl);
-      currentAudio.preload = 'metadata';
+      currentAudio.preload = 'auto';
       
-      // Preload next track in background
-      if (currentPlaylistIndex + 1 < currentPlaylist.length) {
-        const nextUrl = currentPlaylist[currentPlaylistIndex + 1];
-        if (nextAudioElement) nextAudioElement = null;
-        nextAudioElement = new Audio(nextUrl);
-        nextAudioElement.preload = 'metadata';
-        console.log(`⏳ Preloading next track...`);
+      // Set up auto-advance event listeners
+      currentAudio.onended = function() {
+        console.log(`✅ Track ${trackNum} (${getTrackName(trackUrl)}) ENDED`);
+        console.log(`🔄 Moving to next track: currentIndex=${currentPlaylistIndex} -> ${currentPlaylistIndex + 1}`);
+        
+        if (isPlayingPlaylist && currentPlaylistIndex + 1 < currentPlaylist.length) {
+          currentPlaylistIndex++;
+          setTimeout(() => streamNextTrack(), 100);
+        } else {
+          console.log('📻 End of playlist reached');
+          isPlayingPlaylist = false;
+          hideNowPlayingDisplay();
+        }
+      };
+      
+      currentAudio.onerror = function(e) {
+        console.log(`⚠️ Track ${trackNum} ERROR: ${e.type} - ${e.message}`);
+        if (isPlayingPlaylist && currentPlaylistIndex + 1 < currentPlaylist.length) {
+          currentPlaylistIndex++;
+          setTimeout(() => streamNextTrack(), 200);
+        } else {
+          console.log('📻 End of playlist due to error');
+          isPlayingPlaylist = false;
+          hideNowPlayingDisplay();
+        }
+      };
+      
+      // Start playback
+      const playPromise = currentAudio.play();
+      if (playPromise !== undefined) {
+        playPromise.then(() => {
+          console.log(`🎶 SUCCESS: Now playing "${getTrackName(trackUrl)}" (${trackNum}/${totalTracks})`);
+        }).catch((error) => {
+          console.log(`🚫 PLAY FAILED: ${error.name} - ${error.message}`);
+          console.log(`🔄 Skipping to next track due to play failure`);
+          if (isPlayingPlaylist && currentPlaylistIndex + 1 < currentPlaylist.length) {
+            currentPlaylistIndex++;
+            setTimeout(() => streamNextTrack(), 300);
+          }
+        });
       }
-      
-      // Critical: Set up auto-advance BEFORE playing
-      currentAudio.addEventListener('ended', function() {
-        console.log(`✅ Track ${trackNum} ended - advancing to next track`);
-        if (isPlayingPlaylist) {
-          currentPlaylistIndex++; // Move to next track
-          streamNextTrack();
-        }
-      }, { once: true });
-      
-      currentAudio.addEventListener('error', function(e) {
-        console.log(`⚠️ Track ${trackNum} error: ${e.type} - skipping to next`);
-        if (isPlayingPlaylist) {
-          currentPlaylistIndex++; // Move to next track
-          streamNextTrack();
-        }
-      }, { once: true });
-      
-      // Start playback with error handling
-      currentAudio.play().then(() => {
-        console.log(`🎶 Successfully playing: ${getTrackName(trackUrl)}`);
-      }).catch((error) => {
-        console.log(`🔄 Playback failed: ${error.name} - ${error.message}`);
-        if (isPlayingPlaylist) {
-          currentPlaylistIndex++; // Move to next track on failure
-          streamNextTrack();
-        }
-      });
     }
 
     // Legacy function for compatibility - redirects to new streaming system
