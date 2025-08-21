@@ -573,7 +573,7 @@
                 
                 <!-- Now Playing Display -->
                 <div id="nowPlayingDisplay" style="margin: 10px 0; padding: 10px 15px; background: rgba(0, 0, 0, 0.8); border-radius: 8px; color: #ff8c00; font-weight: bold; font-size: 15px; display: none; border: 2px solid #ff8c00;">
-                  🎶 <span id="currentTrackName">Loading...</span>
+                  🎶 Now Playing: <span id="currentTrackName">Loading...</span>
                   <br><span id="trackProgress" style="font-size: 13px; color: #daa520; margin-top: 5px; display: block;">Track 0 of 0</span>
                 </div>
                 
@@ -2550,7 +2550,7 @@
       const progressElement = document.getElementById('trackProgress');
       
       if (nameElement) nameElement.textContent = trackName;
-      if (progressElement) progressElement.textContent = `Track ${trackNum} of ${totalTracks}`;
+      if (progressElement) progressElement.textContent = `${trackName} • Track ${trackNum} of ${totalTracks}`;
       
       console.log(`🎶 Now displaying: ${trackName} (${trackNum}/${totalTracks})`);
     }
