@@ -74,12 +74,54 @@
       margin: 20px 0;
     }
     
-    /* Canvas styling */
+    /* Enhanced Animation Styling */
     #photonCanvas {
       width: 100%;
       height: 100%;
       display: block;
       border-radius: 8px;
+    }
+    .stage-label {
+      position: absolute;
+      transform: translate(-50%, -120%);
+      padding: 6px 10px;
+      font-size: 13px;
+      border-radius: 12px;
+      background: rgba(255, 209, 102, 0.12);
+      color: #ffd479;
+      border: 1px solid rgba(255, 209, 102, 0.35);
+      opacity: 0;
+      pointer-events: auto;
+      backdrop-filter: blur(2px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .stage-label.show {
+      opacity: 1;
+      transform: translate(-50%, -140%);
+    }
+    .animation-hud {
+      position: absolute;
+      left: 12px;
+      bottom: 10px;
+      color: #9fb1c1;
+      font-size: 12px;
+      user-select: none;
+    }
+    .animation-tooltip {
+      position: absolute;
+      left: 50%;
+      top: 10px;
+      transform: translateX(-50%);
+      font-size: 12px;
+      color: #c9d7e2;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      background: rgba(0, 0, 0, 0.8);
+      padding: 8px 12px;
+      border-radius: 8px;
+      white-space: nowrap;
     }
     
     /* Content Sections */
@@ -197,10 +239,19 @@
     <div id="animation" class="animation-section">
       <h2>Photon Journey: Sun → Life → Thought</h2>
       <p style="color: #ccc; margin-bottom: 20px;">Watch how solar energy transforms into computation and consciousness</p>
-      <div class="animation-box">
-        <canvas id="photonCanvas" width="800" height="400"></canvas>
+      <div class="animation-box" style="position: relative;">
+        <canvas id="photonCanvas" width="720" height="400"></canvas>
+        
+        <!-- Stage labels (positions set by JS) -->
+        <div id="label-sun" class="stage-label">☀️ Sun (origin energy)</div>
+        <div id="label-life" class="stage-label">🌿 Life (photosynthesis)</div>
+        <div id="label-comp" class="stage-label">⚡ Computation (neurons)</div>
+        <div id="label-think" class="stage-label">🧠 Thought (consciousness)</div>
+        
+        <div class="animation-hud">tap/click to pause • hover/tap stages for info</div>
+        <div class="animation-tooltip" id="animation-tip"></div>
       </div>
-      <p style="color: #888;">Golden photon shows the path from solar energy to human thought</p>
+      <p style="color: #888;">Tap to pause, hover stage labels for details</p>
     </div>
 
     <!-- Learn More Section -->
@@ -402,105 +453,245 @@
       setInterval(render, 60000);
     });
 
-    // Enhanced photon animation with trailing particles
+    // Enhanced Interactive Photon Journey Animation
     (function(){
       const canvas = document.getElementById('photonCanvas');
       if (!canvas) return;
 
-      const ctx = canvas.getContext('2d', { alpha: true });
-      const dpr = Math.max(1, window.devicePixelRatio || 1);
+      const ctx = canvas.getContext('2d');
+      const container = canvas.parentElement;
 
-      // Array to hold trailing particles
-      let trails = [];
-      let t = 0, dir = 1;
+      // Labels
+      const L = {
+        sun: document.getElementById('label-sun'),
+        life: document.getElementById('label-life'),
+        comp: document.getElementById('label-comp'),
+        think: document.getElementById('label-think'),
+      };
+      const tip = document.getElementById('animation-tip');
 
-      // Size canvas once it's visible
-      function resize() {
-        const rect = canvas.getBoundingClientRect();
-        canvas.width = Math.floor(rect.width * dpr);
-        canvas.height = Math.floor(rect.height * dpr);
-      }
-      resize();
-      window.addEventListener('resize', resize);
+      // Frame padding
+      const PAD = 26;
 
-      // Define a more complex path with extra points
-      function pathPoints(w,h){
-        return [
-          {x: 0.10*w, y: 0.15*h},
-          {x: 0.30*w, y: 0.35*h},
-          {x: 0.45*w, y: 0.55*h},
-          {x: 0.60*w, y: 0.45*h},
-          {x: 0.80*w, y: 0.65*h},
-          {x: 0.90*w, y: 0.80*h}
-        ];
-      }
+      // Path points (normalized [0..1])
+      const guide = [
+        {x:.18, y:.18}, // start (near "sun")
+        {x:.34, y:.54}, // bounce 1 (Life)
+        {x:.47, y:.48}, // small deflection
+        {x:.63, y:.72}, // bounce 2 (Computation)
+        {x:.83, y:.90}, // bounce 3 (Thought)
+      ];
 
-      function lerp(a,b,u){ return a + (b-a)*u }
-      function interp(p0,p1,u){ return {x: lerp(p0.x,p1.x,u), y: lerp(p0.y,p1.y,u)} }
+      // Convert normalized to pixels
+      const toPx = p => ({
+        x: PAD + p.x*(canvas.width - PAD*2),
+        y: PAD + p.y*(canvas.height - PAD*2)
+      });
 
-      function draw() {
-        const w = canvas.width;
-        const h = canvas.height;
-        ctx.clearRect(0,0,w,h);
+      // Precompute pixels
+      let GPX = guide.map(toPx);
 
-        // Glow around the sun
-        const glow = ctx.createRadialGradient(0.10*w, 0.15*h, 10, 0.10*w, 0.15*h, Math.min(w,h)*0.35);
-        glow.addColorStop(0, 'rgba(255, 209, 102, 0.9)');
-        glow.addColorStop(0.3, 'rgba(255, 165, 0, 0.5)');
-        glow.addColorStop(1, 'rgba(255, 140, 0, 0)');
-        ctx.fillStyle = glow;
-        ctx.beginPath(); ctx.arc(0.10*w, 0.15*h, Math.min(w,h)*0.35, 0, Math.PI*2); ctx.fill();
+      // Stage metadata for labels & tooltips
+      const stages = [
+        { idx: 0, el: L.sun, title: "Sun", desc:"A photon leaves the solar furnace." },
+        { idx: 1, el: L.life, title: "Life", desc:"Absorbed by chlorophyll → sugars → stored work." },
+        { idx: 3, el: L.comp, title: "Computation", desc:"Metabolic energy powers neurons → spikes = bits." },
+        { idx: 4, el: L.think, title: "Thought", desc:"Patterns of spikes become perception & intent." }
+      ];
 
-        // Guide path
-        const pts = pathPoints(w,h);
-        ctx.setLineDash([8*dpr, 12*dpr]);
-        ctx.strokeStyle = 'rgba(128,255,234,0.25)';
-        ctx.lineWidth = 3*dpr;
+      // Place labels near their target points
+      const labelOffset = (dx,dy) => `translate(calc(-50% + ${dx}px), calc(-120% + ${dy}px))`;
+      const placeLabel = (el, p, dx=0, dy=0) => {
+        el.style.left = p.x + 'px';
+        el.style.top = p.y + 'px';
+        el.style.transform = labelOffset(dx,dy);
+      };
+
+      // Photon state
+      let t = 0;
+      let seg = 0;
+      let playing = true;
+      let last = performance.now();
+
+      // Interaction: pause/resume on click/tap
+      container.addEventListener('click', () => {
+        playing = !playing;
+        document.querySelector('.animation-hud').textContent = playing ? 
+          'tap/click to pause • hover/tap stages for info' : 
+          'paused • tap/click to resume';
+      });
+
+      // Tooltips on label hover/tap
+      const showTip = (text) => { 
+        tip.textContent = text; 
+        tip.style.opacity = '0.95'; 
+      };
+      const hideTip = () => { tip.style.opacity = '0'; };
+      
+      stages.forEach(s => {
+        s.el.addEventListener('mouseenter', () => showTip(`${s.title}: ${s.desc}`));
+        s.el.addEventListener('mouseleave', hideTip);
+        s.el.addEventListener('touchstart', () => showTip(`${s.title}: ${s.desc}`), {passive:true});
+      });
+
+      // Utility functions
+      const lerp = (a,b,u) => ({ x:a.x+(b.x-a.x)*u, y:a.y+(b.y-a.y)*u });
+
+      // Draw dashed guide
+      function drawGuide(){
+        ctx.save();
+        ctx.setLineDash([10,10]);
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = 'rgba(120, 170, 170, .45)';
         ctx.beginPath();
-        ctx.moveTo(pts[0].x, pts[0].y);
-        for(let i=1;i<pts.length;i++){
-          ctx.lineTo(pts[i].x, pts[i].y);
-        }
+        ctx.moveTo(GPX[0].x, GPX[0].y);
+        for(let i=1;i<GPX.length;i++) ctx.lineTo(GPX[i].x, GPX[i].y);
         ctx.stroke();
-        ctx.setLineDash([]);
+        ctx.restore();
+      }
 
-        // Update photon position
-        t += 0.0035 * dir;
-        if(t > 1) { t = 1; dir = -1; }
-        if(t < 0) { t = 0; dir = 1; }
+      // Radial glow
+      function glow(x,y, r=70, color='255, 200, 60', alpha=.25){
+        const g = ctx.createRadialGradient(x,y,0, x,y,r);
+        g.addColorStop(0, `rgba(${color}, ${alpha})`);
+        g.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = g; 
+        ctx.beginPath(); 
+        ctx.arc(x,y,r,0,Math.PI*2); 
+        ctx.fill();
+      }
 
-        // Determine segment and interpolate
-        const segs = pts.length - 1;
-        const seg = Math.min(segs - 1, Math.floor(t * segs));
-        const localT = (t * segs) - seg;
-        const pos = interp(pts[seg], pts[seg + 1], localT);
+      // Draw the "sun" source
+      function drawSun(){
+        const p = GPX[0];
+        glow(p.x-40, p.y-40, 120, '255, 190, 70', .35);
+        glow(p.x-40, p.y-40, 60, '255, 210, 90', .55);
+        ctx.fillStyle = '#ffd479';
+        ctx.beginPath(); 
+        ctx.arc(p.x-40, p.y-40, 16, 0, Math.PI*2); 
+        ctx.fill();
+      }
 
-        // Add a new trail particle
-        trails.push({ x: pos.x, y: pos.y, alpha: 1.0 });
+      // Photon visuals evolve by stage
+      function drawPhoton(pos, dir, stage){
+        // trailing glow
+        glow(pos.x, pos.y, 46, '255, 210, 90', .20);
 
-        // Draw trailing particles with decreasing size and alpha
-        trails = trails.filter(p => p.alpha > 0.05);
-        for (const p of trails) {
-          p.alpha -= 0.02; // fade speed
-          const radius = 8 * dpr * p.alpha;
-          ctx.fillStyle = `rgba(255, 183, 3, ${p.alpha})`;
+        // body
+        ctx.save();
+        ctx.translate(pos.x, pos.y);
+        ctx.rotate(dir);
+
+        if(stage === 0){ // SUN: simple disc + beam
+          ctx.fillStyle = '#ffd479';
+          ctx.beginPath(); ctx.arc(0,0,10,0,Math.PI*2); ctx.fill();
+          const grad = ctx.createLinearGradient(0,0, 0,40);
+          grad.addColorStop(0,'rgba(255,220,120,.9)');
+          grad.addColorStop(1,'rgba(255,180,60,0)');
+          ctx.fillStyle = grad;
+          ctx.beginPath(); ctx.moveTo(-6,0); ctx.lineTo(6,0); ctx.lineTo(0,40); ctx.closePath(); ctx.fill();
+        } else if(stage === 1){ // LIFE: leaf-like wedge
+          ctx.fillStyle = '#b8f28a';
           ctx.beginPath();
-          ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+          ctx.moveTo(-7,2); ctx.quadraticCurveTo(0,-12, 8,2); ctx.quadraticCurveTo(0,10, -7,2);
           ctx.fill();
+          ctx.fillStyle = '#defcc6'; ctx.beginPath(); ctx.arc(0,0,5,0,Math.PI*2); ctx.fill();
+        } else if(stage === 2){ // COMPUTATION: spike (neuron)
+          ctx.strokeStyle = '#a6d9ff'; ctx.lineWidth = 2.2;
+          ctx.beginPath(); 
+          for(let i=0;i<5;i++){ ctx.moveTo(0,0); ctx.lineTo( (i%2?10:18), (i-2)*4 ); } 
+          ctx.stroke();
+          ctx.fillStyle = '#dff0ff'; ctx.beginPath(); ctx.arc(0,0,4.5,0,Math.PI*2); ctx.fill();
+        } else { // THOUGHT: bright pearl
+          ctx.fillStyle = '#fff5d6';
+          ctx.beginPath(); ctx.arc(0,0,9,0,Math.PI*2); ctx.fill();
+          glow(0,0,60,'255,240,200',.33);
+        }
+        ctx.restore();
+      }
+
+      // Show/hide labels when we enter corresponding bounce indices
+      function updateLabels(){
+        stages.forEach((s,i) => {
+          const hitting = (seg === s.idx);
+          s.el.classList.toggle('show', hitting || seg > s.idx);
+        });
+      }
+
+      // Main animation loop
+      function tick(now){
+        const dt = Math.min(40, now-last); 
+        last = now;
+
+        // background
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        drawSun();
+        drawGuide();
+
+        // advance time along segment
+        if(playing){
+          t += dt / 1300; // speed
+          if(t >= 1){
+            t = 0; seg++;
+            if(seg >= GPX.length-1){ // cycle complete → restart smoothly
+              seg = 0; t = 0;
+              // briefly hide labels then they'll re-appear as we pass stages again
+              Object.values(L).forEach(el => el.classList.remove('show'));
+            }
+          }
         }
 
-        // Draw the current photon
-        ctx.shadowBlur = 30*dpr;
-        ctx.shadowColor = 'rgba(255,183,3,0.8)';
-        ctx.fillStyle = '#ffd166';
-        ctx.beginPath();
-        ctx.arc(pos.x, pos.y, 10*dpr, 0, Math.PI*2);
-        ctx.fill();
-        ctx.shadowBlur = 0;
+        // positions
+        const A = GPX[seg], B = GPX[seg+1];
+        const pos = lerp(A,B,t);
+        const dir = Math.atan2(B.y-A.y, B.x-A.x);
 
-        requestAnimationFrame(draw);
+        // stage by segment
+        const stage = seg === 0 ? 0 : seg === 1 ? 1 : seg === 2 || seg === 3 ? 2 : 3;
+
+        // draw photon
+        drawPhoton(pos, dir, stage);
+
+        // bright glow when hitting a bounce
+        if(t < 0.12){ glow(A.x, A.y, 80, '255, 210, 90', 0.18); }
+
+        // labels
+        updateLabels();
+
+        requestAnimationFrame(tick);
       }
-      draw();
+
+      // Resize handling (keeps crisp canvas on mobile DPR)
+      function fit(){
+        const r = window.devicePixelRatio || 1;
+        const rect = container.getBoundingClientRect();
+        const w = Math.floor(rect.width);
+        const h = Math.floor(rect.height);
+        canvas.width = Math.round(w*r);
+        canvas.height = Math.round(h*r);
+        canvas.style.width = w+'px';
+        canvas.style.height = h+'px';
+
+        // Recompute pixel points using new canvas size
+        const toPxDyn = p => ({
+          x: PAD + p.x*(canvas.width - PAD*2),
+          y: PAD + p.y*(canvas.height - PAD*2)
+        });
+        for(let i=0;i<guide.length;i++){
+          GPX[i] = toPxDyn(guide[i]);
+        }
+        
+        // Re-place labels
+        placeLabel(L.sun, GPX[0], -18, 8);
+        placeLabel(L.life, GPX[1], 12, -4);
+        placeLabel(L.comp, GPX[3], -6, -6);
+        placeLabel(L.think, GPX[4], -4, -6);
+      }
+
+      // Initialize
+      new ResizeObserver(fit).observe(container);
+      fit();
+      requestAnimationFrame((n)=>{ last=n; tick(n); });
     })();
 
     // Smooth scrolling for navigation
