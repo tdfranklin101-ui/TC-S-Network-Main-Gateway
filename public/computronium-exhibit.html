@@ -360,11 +360,29 @@ document.addEventListener('DOMContentLoaded', function(){
    Photon path canvas animation (robust init for Replit)
 =================================*/
 (function(){
+  console.log('🔍 Starting photon animation setup...');
   const c = document.getElementById('photonCanvas');
-  if(!c) return;
+  if(!c) { 
+    console.error('❌ Canvas element #photonCanvas not found'); 
+    console.log('Available canvas elements:', document.querySelectorAll('canvas')); 
+    return; 
+  }
+  console.log('✅ Canvas element found:', c);
+  console.log('📱 Environment:', {
+    userAgent: navigator.userAgent,
+    isMobile: /Mobile|Android|iPhone|iPad/.test(navigator.userAgent),
+    prefersReducedMotion: window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+    devicePixelRatio: window.devicePixelRatio
+  });
 
   const ctx = c.getContext('2d', { alpha: true });
+  if (!ctx) {
+    console.error('❌ Failed to get 2D context');
+    return;
+  }
+  console.log('✅ Canvas 2D context obtained');
   const dpr = Math.max(1, window.devicePixelRatio || 1);
+  console.log('📏 Device pixel ratio:', dpr);
 
   const steps = [
     { el: document.getElementById('st1'), t: .0 },
@@ -377,11 +395,16 @@ document.addEventListener('DOMContentLoaded', function(){
 
   function sizeCanvas(){
     const rect = c.getBoundingClientRect();
-    if(rect.width <= 0 || rect.height <= 0) return false; // not visible yet
+    console.log('📏 Canvas rect:', rect);
+    if(rect.width <= 0 || rect.height <= 0) {
+      console.log('⚠️ Canvas not visible yet, dimensions:', rect.width, 'x', rect.height);
+      return false; // not visible yet
+    }
     const w = Math.floor(rect.width * dpr);
     const h = Math.floor(rect.height * dpr);
     if (c.width !== w || c.height !== h){
       c.width = w; c.height = h;
+      console.log('✅ Canvas sized:', w, 'x', h, 'dpr:', dpr);
     }
     return true;
   }
@@ -460,8 +483,16 @@ document.addEventListener('DOMContentLoaded', function(){
   }
 
   function start(){
-    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    if(running) return;
+    console.log('🚀 Starting animation loop...');
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      console.log('⏸️ Animation disabled - prefers reduced motion');
+      return;
+    }
+    if(running) {
+      console.log('⚠️ Animation already running');
+      return;
+    }
+    console.log('✅ Animation started successfully');
     running = true;
     cancelAnimationFrame(rafId);
     rafId = requestAnimationFrame(frame);
@@ -478,8 +509,15 @@ document.addEventListener('DOMContentLoaded', function(){
 
   // Wait for DOM and a visible layout box
   function tryStart(attempts=0){
-    if(sizeCanvas()){ start(); return; }
+    console.log('🎯 Try start attempt:', attempts);
+    if(sizeCanvas()){ 
+      console.log('✅ Canvas ready, starting animation...');
+      start(); 
+      return; 
+    }
+    console.log('⏳ Canvas not ready, retrying... attempt', attempts);
     if(attempts < 60){ setTimeout(()=>tryStart(attempts+1), 100); }
+    else { console.error('❌ Failed to initialize canvas after 60 attempts'); }
   }
   if (document.readyState === 'loading'){
     document.addEventListener('DOMContentLoaded', ()=> tryStart());
