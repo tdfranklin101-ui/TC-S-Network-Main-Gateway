@@ -612,10 +612,17 @@
 
       // Show/hide labels when we enter corresponding bounce indices
       function updateLabels(){
-        stages.forEach((s,i) => {
-          const hitting = (seg === s.idx);
-          s.el.classList.toggle('show', hitting || seg > s.idx);
-        });
+        // map current segment → which label should be active
+        // seg: 0 (Sun) → 1 (Life) → 2 (Computation) → 3 (Thought)
+        const activeIndex = (seg === 0) ? 0 : (seg === 1) ? 1 : (seg === 2) ? 2 : 3;
+
+        const order = [L.sun, L.life, L.comp, L.think];
+        order.forEach((el, i) => el.classList.toggle('show', i === activeIndex));
+
+        // hide tooltip if we changed stages
+        if (tip.style.opacity && order[activeIndex] !== document.querySelector('.label.show')) {
+          tip.style.opacity = 0;
+        }
       }
 
       // Main animation loop
@@ -655,8 +662,11 @@
         // bright glow when hitting a bounce
         if(t < 0.12){ glow(A.x, A.y, 80, '255, 210, 90', 0.18); }
 
-        // labels
-        updateLabels();
+        // labels with reveal delay
+        const revealDelay = 0.08; // 80ms after segment start
+        const shouldShow = t > revealDelay;
+        if (!shouldShow) Object.values(L).forEach(el => el.classList.remove('show'));
+        else updateLabels();
 
         requestAnimationFrame(tick);
       }
