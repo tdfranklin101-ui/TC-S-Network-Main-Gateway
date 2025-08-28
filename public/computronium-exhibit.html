@@ -76,7 +76,7 @@
   .grid{display:grid; gap:18px}
   @media (min-width: 860px){ .grid.cols-2{grid-template-columns:1.2fr 1fr} .grid.cols-3{grid-template-columns:repeat(3,1fr)} }
   /* Photon Canvas */
-  #photonCanvas{width:100%; height:360px; display:block; border-radius:var(--radius); background: radial-gradient(circle at 50% 30%, rgba(255,209,102,.08), transparent 55%), linear-gradient(180deg,#061226,#0b1b3a)}
+  #photonCanvas{width:100%; height:360px; display:block; border-radius:var(--radius); background: radial-gradient(circle at 50% 30%, rgba(255,209,102,.08), transparent 55%), linear-gradient(180deg,#061226,#0b1b3a); border: 1px solid rgba(255,255,255,.1);}
   .legend{display:flex; gap:10px; flex-wrap:wrap; margin-top:10px}
   .chip{padding:8px 10px; border-radius:999px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.08); font-size:.9rem}
   .chip b{color:var(--gold)}
@@ -408,14 +408,14 @@ document.addEventListener('DOMContentLoaded', function(){
 
     ctx.clearRect(0,0,w,h);
 
-    // Sun glow
+    // Sun glow (smaller, less intrusive)
     ctx.save();
-    const grad = ctx.createRadialGradient(.08*w, .18*h, 10, .08*w, .18*h, Math.min(w,h)*.4);
-    grad.addColorStop(0, 'rgba(255, 209, 102, .95)');
-    grad.addColorStop(.2, 'rgba(255, 165, 0, .55)');
+    const grad = ctx.createRadialGradient(.08*w, .18*h, 5, .08*w, .18*h, Math.min(w,h)*.15);
+    grad.addColorStop(0, 'rgba(255, 209, 102, .3)');
+    grad.addColorStop(.5, 'rgba(255, 165, 0, .15)');
     grad.addColorStop(1, 'rgba(255, 140, 0, 0)');
     ctx.fillStyle = grad;
-    ctx.beginPath(); ctx.arc(.08*w, .18*h, Math.min(w,h)*.35, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(.08*w, .18*h, Math.min(w,h)*.12, 0, Math.PI*2); ctx.fill();
     ctx.restore();
 
     const pts = pathPoints(w,h);
