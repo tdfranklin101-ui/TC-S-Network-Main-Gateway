@@ -76,7 +76,7 @@
   .grid{display:grid; gap:18px}
   @media (min-width: 860px){ .grid.cols-2{grid-template-columns:1.2fr 1fr} .grid.cols-3{grid-template-columns:repeat(3,1fr)} }
   /* Photon Canvas */
-  #photonCanvas{width:100%; height:360px; display:block; border-radius:var(--radius); background: transparent; border: 1px solid rgba(255,255,255,.1);}
+  #photonCanvas{width:100%; height:360px; display:block; border-radius:var(--radius); background: #1a1a1a; border: 2px solid #ffd166;}
   .legend{display:flex; gap:10px; flex-wrap:wrap; margin-top:10px}
   .chip{padding:8px 10px; border-radius:999px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.08); font-size:.9rem}
   .chip b{color:var(--gold)}
@@ -263,12 +263,12 @@
     </section>
 
     <!-- LEARN MORE SECTION -->
-    <section id="learn" class="reveal" aria-labelledby="learn-title">
-      <h2 id="learn-title">Learn More: The Sun, Computronium, and the Solar Standard</h2>
-      <p class="sub">A deeper dive into the science, philosophy, and design choices behind this exhibit.</p>
+    <section id="learn" class="reveal" aria-labelledby="learn-title" style="background: #000; padding: 40px 20px; margin: 20px 0; border-radius: 12px;">
+      <h2 id="learn-title" style="color: #ffd166; text-align: center; margin-bottom: 30px;">Learn More: The Sun, Computronium, and the Solar Standard</h2>
+      <p class="sub" style="color: #ccc; text-align: center; margin-bottom: 40px;">A deeper dive into the science, philosophy, and design choices behind this exhibit.</p>
 
-      <article class="card" style="padding:22px">
-        <h3 class="lm-h">1) The Sun as the Engine of Computation</h3>
+      <article class="card" style="padding:22px; background: #222; color: #fff; border: 1px solid #444;">
+        <h3 class="lm-h" style="color: #ffd166; margin-bottom: 15px;">1) The Sun as the Engine of Computation</h3>
         <p>
           The Sun provides more than light and warmth — it is the engine of Earth's computation. Every photon that leaves
           the Sun carries information in its oscillations. When it strikes matter on Earth, it catalyzes processes:
@@ -357,8 +357,38 @@ document.addEventListener('DOMContentLoaded', function(){
 });
 
 /* ===============================
-   Photon path canvas animation (robust init for Replit)
+   Simple CSS Animation - Guaranteed to work
 =================================*/
+// Add CSS animation directly
+const style = document.createElement('style');
+style.textContent = `
+  #photonCanvas {
+    position: relative;
+    overflow: hidden;
+  }
+  #photonCanvas::before {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background: radial-gradient(circle, #ffd166, #ff8c42);
+    border-radius: 50%;
+    box-shadow: 0 0 20px #ffd166;
+    animation: photonMove 4s ease-in-out infinite;
+    z-index: 1;
+  }
+  @keyframes photonMove {
+    0% { left: 8%; top: 18%; opacity: 1; }
+    25% { left: 35%; top: 30%; opacity: 0.8; }
+    50% { left: 55%; top: 55%; opacity: 0.6; }
+    75% { left: 88%; top: 78%; opacity: 0.4; }
+    100% { left: 8%; top: 18%; opacity: 1; }
+  }
+`;
+document.head.appendChild(style);
+console.log('✅ Simple CSS animation added');
+
+// Backup function in case we need canvas
 (function(){
   console.log('🔍 Starting photon animation setup...');
   const c = document.getElementById('photonCanvas');
