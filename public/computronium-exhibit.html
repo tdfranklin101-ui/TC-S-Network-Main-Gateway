@@ -317,13 +317,13 @@ document.addEventListener('DOMContentLoaded', function(){
     // Background hints
     ctx.save();
     ctx.globalAlpha=.9;
-    // Sun glow
-    const grad = ctx.createRadialGradient(.08*w, .18*h, 10, .08*w, .18*h, Math.min(w,h)*.4);
-    grad.addColorStop(0, 'rgba(255, 209, 102, .95)');
-    grad.addColorStop(.2, 'rgba(255, 165, 0, .55)');
+    // Sun glow (smaller, less intrusive)
+    const grad = ctx.createRadialGradient(.08*w, .18*h, 5, .08*w, .18*h, Math.min(w,h)*.15);
+    grad.addColorStop(0, 'rgba(255, 209, 102, .3)');
+    grad.addColorStop(.5, 'rgba(255, 165, 0, .15)');
     grad.addColorStop(1, 'rgba(255, 140, 0, 0)');
     ctx.fillStyle = grad;
-    ctx.beginPath(); ctx.arc(.08*w, .18*h, Math.min(w,h)*.35, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(.08*w, .18*h, Math.min(w,h)*.12, 0, Math.PI*2); ctx.fill();
     ctx.restore();
 
     const pts = pathPoints(w,h);
@@ -369,10 +369,8 @@ document.addEventListener('DOMContentLoaded', function(){
 
     requestAnimationFrame(draw);
   }
-  // Start animation only after a brief delay to ensure elements are ready
-  setTimeout(() => {
-    draw();
-  }, 100);
+  // Start animation immediately since DOM is ready
+  draw();
 });
 
 /* ===============================
