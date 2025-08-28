@@ -112,6 +112,10 @@
     background:rgba(255,255,255,.04); border-radius:10px; color:var(--muted)
   }
   .lm-list.bullets{ list-style: disc; }
+  /* Fallback pulse if JS is delayed */
+  @keyframes pulseSun { 0%,100% { transform:scale(1); filter:brightness(1); } 50% { transform:scale(1.02); filter:brightness(1.08); } }
+  .hero .sun{ animation:pulseSun 6s ease-in-out infinite; }
+  @media (prefers-reduced-motion: reduce){ .hero .sun{ animation:none } }
   /* Footer */
   footer{padding:36px 0 68px; text-align:center; color:var(--muted)}
   /* Reveal on scroll */
@@ -356,37 +360,49 @@ document.addEventListener('DOMContentLoaded', function(){
 =================================*/
 document.addEventListener('DOMContentLoaded', function(){
   const c = document.getElementById('photonCanvas');
-  if(!c) {
-    console.error('Canvas element not found');
-    return;
-  }
+  if(!c) return;
   
   const ctx = c.getContext('2d');
-  if(!ctx) {
-    console.error('Canvas context not available');
-    return;
-  }
+  if(!ctx) return;
+
+  let animationId;
+  let isRunning = false;
 
   function resize(){
     const rect = c.getBoundingClientRect();
     const dpr = Math.max(1, window.devicePixelRatio || 1);
     
-    // Set actual canvas size
-    c.width = Math.floor(rect.width * dpr);
-    c.height = Math.floor(rect.height * dpr);
-    
-    // Scale canvas back to display size
-    c.style.width = rect.width + 'px';
-    c.style.height = rect.height + 'px';
-    
-    // Scale drawing context
-    ctx.scale(dpr, dpr);
-    
+    if(rect.width > 0 && rect.height > 0) {
+      c.width = Math.floor(rect.width * dpr);
+      c.height = Math.floor(rect.height * dpr);
+      c.style.width = rect.width + 'px';
+      c.style.height = rect.height + 'px';
+      ctx.scale(dpr, dpr);
+      return true;
+    }
+    return false;
   }
   
-  // Ensure canvas is sized properly
-  setTimeout(resize, 100);
-  window.addEventListener('resize', resize);
+  function tryStart(){
+    if(isRunning) return;
+    if(resize()) {
+      isRunning = true;
+      draw();
+    } else {
+      setTimeout(tryStart, 100);
+    }
+  }
+  
+  // Handle visibility changes (Replit iframe)
+  document.addEventListener('visibilitychange', function(){
+    if(!document.hidden && !isRunning) {
+      setTimeout(tryStart, 50);
+    }
+  });
+  
+  window.addEventListener('resize', function(){
+    if(resize() && !isRunning) tryStart();
+  });
 
   const steps = [
     { el: document.getElementById('st1'), t: .0 },
@@ -472,13 +488,10 @@ document.addEventListener('DOMContentLoaded', function(){
 
     requestAnimationFrame(draw);
   }
-  // Start animation after canvas is ready
-  setTimeout(() => {
-    const rect = c.getBoundingClientRect();
-    if(rect.width > 0 && rect.height > 0) {
-      draw();
-    }
-  }, 200);
+  // Check for reduced motion preference
+  if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    tryStart();
+  }
 });
 
 /* ===============================
