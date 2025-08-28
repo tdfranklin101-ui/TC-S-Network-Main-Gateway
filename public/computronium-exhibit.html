@@ -275,19 +275,37 @@ document.addEventListener('DOMContentLoaded', function(){
 =================================*/
 document.addEventListener('DOMContentLoaded', function(){
   const c = document.getElementById('photonCanvas');
-  if(!c) return;
-  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  if(!c) {
+    console.error('Canvas element not found');
+    return;
+  }
+  
   const ctx = c.getContext('2d');
+  if(!ctx) {
+    console.error('Canvas context not available');
+    return;
+  }
 
   function resize(){
     const rect = c.getBoundingClientRect();
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    
+    // Set actual canvas size
     c.width = Math.floor(rect.width * dpr);
     c.height = Math.floor(rect.height * dpr);
+    
+    // Scale canvas back to display size
     c.style.width = rect.width + 'px';
     c.style.height = rect.height + 'px';
+    
+    // Scale drawing context
     ctx.scale(dpr, dpr);
+    
   }
-  resize(); addEventListener('resize', resize);
+  
+  // Ensure canvas is sized properly
+  setTimeout(resize, 100);
+  window.addEventListener('resize', resize);
 
   const steps = [
     { el: document.getElementById('st1'), t: .0 },
@@ -310,8 +328,13 @@ document.addEventListener('DOMContentLoaded', function(){
   function interp(p0,p1,u){ return {x: lerp(p0.x,p1.x,u), y: lerp(p0.y,p1.y,u)} }
 
   function draw(){
-    const w=c.width/dpr, h=c.height/dpr;
-    ctx.clearRect(0,0,c.width,c.height);
+    if(!ctx) return;
+    
+    const rect = c.getBoundingClientRect();
+    const w = rect.width, h = rect.height;
+    
+    // Clear canvas
+    ctx.clearRect(0, 0, c.width, c.height);
 
     // Background hints
     ctx.save();
@@ -368,16 +391,13 @@ document.addEventListener('DOMContentLoaded', function(){
 
     requestAnimationFrame(draw);
   }
-  // Debug: Check if canvas is ready
-  console.log('Canvas found:', c, 'Width:', c.width, 'Height:', c.height);
-  
-  // Start animation with error handling
-  try {
-    draw();
-    console.log('Animation started successfully');
-  } catch(e) {
-    console.error('Animation failed:', e);
-  }
+  // Start animation after canvas is ready
+  setTimeout(() => {
+    const rect = c.getBoundingClientRect();
+    if(rect.width > 0 && rect.height > 0) {
+      draw();
+    }
+  }, 200);
 });
 
 /* ===============================
