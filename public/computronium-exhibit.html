@@ -355,54 +355,14 @@ document.addEventListener('DOMContentLoaded', function(){
 });
 
 /* ===============================
-   Photon path canvas animation
-   (Sun → Earth → Leaf → Neuron)
+   Photon path canvas animation (robust init for Replit)
 =================================*/
-document.addEventListener('DOMContentLoaded', function(){
+(function(){
   const c = document.getElementById('photonCanvas');
   if(!c) return;
-  
-  const ctx = c.getContext('2d');
-  if(!ctx) return;
 
-  let animationId;
-  let isRunning = false;
-
-  function resize(){
-    const rect = c.getBoundingClientRect();
-    const dpr = Math.max(1, window.devicePixelRatio || 1);
-    
-    if(rect.width > 0 && rect.height > 0) {
-      c.width = Math.floor(rect.width * dpr);
-      c.height = Math.floor(rect.height * dpr);
-      c.style.width = rect.width + 'px';
-      c.style.height = rect.height + 'px';
-      ctx.scale(dpr, dpr);
-      return true;
-    }
-    return false;
-  }
-  
-  function tryStart(){
-    if(isRunning) return;
-    if(resize()) {
-      isRunning = true;
-      draw();
-    } else {
-      setTimeout(tryStart, 100);
-    }
-  }
-  
-  // Handle visibility changes (Replit iframe)
-  document.addEventListener('visibilitychange', function(){
-    if(!document.hidden && !isRunning) {
-      setTimeout(tryStart, 50);
-    }
-  });
-  
-  window.addEventListener('resize', function(){
-    if(resize() && !isRunning) tryStart();
-  });
+  const ctx = c.getContext('2d', { alpha: true });
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
 
   const steps = [
     { el: document.getElementById('st1'), t: .0 },
@@ -411,88 +371,120 @@ document.addEventListener('DOMContentLoaded', function(){
     { el: document.getElementById('st4'), t: .8 },
   ];
 
-  let t = 0, dir = 1;
-  function pathPoints(w,h){
-    // Bezier-like guide from top-left (sun) to mid (leaf) to bottom-right (neuron)
-    return [
-      {x: 0.08*w, y: 0.18*h},
-      {x: 0.35*w, y: 0.30*h},
-      {x: 0.55*w, y: 0.55*h},
-      {x: 0.88*w, y: 0.78*h}
-    ];
+  let t = 0, dir = 1, running = false, rafId = 0;
+
+  function sizeCanvas(){
+    const rect = c.getBoundingClientRect();
+    if(rect.width <= 0 || rect.height <= 0) return false; // not visible yet
+    const w = Math.floor(rect.width * dpr);
+    const h = Math.floor(rect.height * dpr);
+    if (c.width !== w || c.height !== h){
+      c.width = w; c.height = h;
+    }
+    return true;
   }
+
   function lerp(a,b,u){ return a + (b-a)*u }
   function interp(p0,p1,u){ return {x: lerp(p0.x,p1.x,u), y: lerp(p0.y,p1.y,u)} }
 
-  function draw(){
-    if(!ctx) return;
-    
-    const rect = c.getBoundingClientRect();
-    const w = rect.width, h = rect.height;
-    
-    // Clear canvas
-    ctx.clearRect(0, 0, c.width, c.height);
+  function pathPoints(w,h){
+    return [
+      {x: 0.08*w, y: 0.18*h}, // sun
+      {x: 0.35*w, y: 0.30*h}, // atmosphere/leaf
+      {x: 0.55*w, y: 0.55*h}, // cell/ATP
+      {x: 0.88*w, y: 0.78*h}  // neuron
+    ];
+  }
 
-    // Background hints
+  function frame(){
+    if(!running) return;
+    if(!sizeCanvas()){ // keep trying until visible
+      rafId = requestAnimationFrame(frame); return;
+    }
+
+    const w=c.width, h=c.height;
+
+    ctx.clearRect(0,0,w,h);
+
+    // Sun glow
     ctx.save();
-    ctx.globalAlpha=.9;
-    // Sun glow (smaller, less intrusive)
-    const grad = ctx.createRadialGradient(.08*w, .18*h, 5, .08*w, .18*h, Math.min(w,h)*.15);
-    grad.addColorStop(0, 'rgba(255, 209, 102, .3)');
-    grad.addColorStop(.5, 'rgba(255, 165, 0, .15)');
+    const grad = ctx.createRadialGradient(.08*w, .18*h, 10, .08*w, .18*h, Math.min(w,h)*.4);
+    grad.addColorStop(0, 'rgba(255, 209, 102, .95)');
+    grad.addColorStop(.2, 'rgba(255, 165, 0, .55)');
     grad.addColorStop(1, 'rgba(255, 140, 0, 0)');
     ctx.fillStyle = grad;
-    ctx.beginPath(); ctx.arc(.08*w, .18*h, Math.min(w,h)*.12, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(.08*w, .18*h, Math.min(w,h)*.35, 0, Math.PI*2); ctx.fill();
     ctx.restore();
 
     const pts = pathPoints(w,h);
 
-    // Draw guide path
+    // Path guide
     ctx.strokeStyle = 'rgba(128,255,234,.25)';
-    ctx.lineWidth = 3; ctx.setLineDash([6, 10]); ctx.beginPath();
+    ctx.lineWidth = 3*dpr;
+    ctx.setLineDash([6*dpr, 10*dpr]);
+    ctx.beginPath();
     ctx.moveTo(pts[0].x, pts[0].y);
     for(let i=1;i<pts.length;i++){ ctx.lineTo(pts[i].x, pts[i].y); }
-    ctx.stroke(); ctx.setLineDash([]);
+    ctx.stroke();
+    ctx.setLineDash([]);
 
-    // Move photon
-    t += 0.008 * dir;
+    // Animate photon
+    t += 0.0045 * dir;
     if(t>1){ t=1; dir=-1; }
     if(t<0){ t=0; dir=1; }
 
-    // Map t across segments
     const segs = pts.length-1;
     const seg = Math.min(segs-1, Math.floor(t*segs));
     const localT = (t*segs - seg);
-
     const p = interp(pts[seg], pts[seg+1], localT);
-
-    // Photon dot
-    const r = 8; // radius
-    ctx.shadowBlur = 28; ctx.shadowColor = 'rgba(255,183,3,.9)';
-    ctx.fillStyle = '#ffd166';
-    ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI*2); ctx.fill();
-    ctx.shadowBlur = 0;
 
     // Tail
     ctx.strokeStyle = 'rgba(255,183,3,.55)';
-    ctx.lineWidth = 2.5; ctx.beginPath();
+    ctx.lineWidth = 2.5*dpr; ctx.beginPath();
     ctx.moveTo(pts[0].x, pts[0].y);
     for(let i=1;i<=seg;i++){ ctx.lineTo(pts[i].x, pts[i].y) }
     ctx.lineTo(p.x, p.y); ctx.stroke();
 
-    // Step highlights
-    steps.forEach(s=>{
-      const active = (t >= s.t);
-      s.el && s.el.setAttribute('data-hit', active ? 'true' : 'false');
-    });
+    // Photon
+    ctx.shadowBlur = 28*dpr; ctx.shadowColor = 'rgba(255,183,3,.9)';
+    ctx.fillStyle = '#ffd166';
+    ctx.beginPath(); ctx.arc(p.x, p.y, 8*dpr, 0, Math.PI*2); ctx.fill();
+    ctx.shadowBlur = 0;
 
-    requestAnimationFrame(draw);
+    // Step highlights
+    steps.forEach(s=> s.el && s.el.setAttribute('data-hit', (t >= s.t) ? 'true' : 'false'));
+
+    rafId = requestAnimationFrame(frame);
   }
-  // Check for reduced motion preference
-  if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+
+  function start(){
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if(running) return;
+    running = true;
+    cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(frame);
+  }
+
+  function stop(){
+    running = false;
+    cancelAnimationFrame(rafId);
+  }
+
+  // Robust lifecycle
+  document.addEventListener('visibilitychange', ()=> document.hidden ? stop() : start());
+  window.addEventListener('resize', ()=> sizeCanvas() && start());
+
+  // Wait for DOM and a visible layout box
+  function tryStart(attempts=0){
+    if(sizeCanvas()){ start(); return; }
+    if(attempts < 60){ setTimeout(()=>tryStart(attempts+1), 100); }
+  }
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', ()=> tryStart());
+  } else {
     tryStart();
   }
-});
+})();
 
 /* ===============================
    Solar demo wallet (local only)
