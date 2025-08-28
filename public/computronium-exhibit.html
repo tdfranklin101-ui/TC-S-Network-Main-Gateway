@@ -260,19 +260,21 @@
 /* ===============================
    Scroll reveals (no libraries)
 =================================*/
-(function(){
+document.addEventListener('DOMContentLoaded', function(){
   const els = document.querySelectorAll('.reveal');
+  if(els.length === 0) return;
+  
   const io = new IntersectionObserver((entries)=>{
     entries.forEach(e => { if(e.isIntersecting){ e.target.classList.add('on'); io.unobserve(e.target);} });
   }, {threshold: .14});
   els.forEach(el=>io.observe(el));
-})();
+});
 
 /* ===============================
    Photon path canvas animation
    (Sun → Earth → Leaf → Neuron)
 =================================*/
-(function(){
+document.addEventListener('DOMContentLoaded', function(){
   const c = document.getElementById('photonCanvas');
   if(!c) return;
   const dpr = Math.max(1, window.devicePixelRatio || 1);
@@ -282,6 +284,9 @@
     const rect = c.getBoundingClientRect();
     c.width = Math.floor(rect.width * dpr);
     c.height = Math.floor(rect.height * dpr);
+    c.style.width = rect.width + 'px';
+    c.style.height = rect.height + 'px';
+    ctx.scale(dpr, dpr);
   }
   resize(); addEventListener('resize', resize);
 
@@ -306,8 +311,8 @@
   function interp(p0,p1,u){ return {x: lerp(p0.x,p1.x,u), y: lerp(p0.y,p1.y,u)} }
 
   function draw(){
-    const w=c.width, h=c.height;
-    ctx.clearRect(0,0,w,h);
+    const w=c.width/dpr, h=c.height/dpr;
+    ctx.clearRect(0,0,c.width,c.height);
 
     // Background hints
     ctx.save();
@@ -325,13 +330,13 @@
 
     // Draw guide path
     ctx.strokeStyle = 'rgba(128,255,234,.25)';
-    ctx.lineWidth = 3*dpr; ctx.setLineDash([6*dpr, 10*dpr]); ctx.beginPath();
+    ctx.lineWidth = 3; ctx.setLineDash([6, 10]); ctx.beginPath();
     ctx.moveTo(pts[0].x, pts[0].y);
     for(let i=1;i<pts.length;i++){ ctx.lineTo(pts[i].x, pts[i].y); }
     ctx.stroke(); ctx.setLineDash([]);
 
     // Move photon
-    t += 0.0045 * dir;
+    t += 0.008 * dir;
     if(t>1){ t=1; dir=-1; }
     if(t<0){ t=0; dir=1; }
 
@@ -343,15 +348,15 @@
     const p = interp(pts[seg], pts[seg+1], localT);
 
     // Photon dot
-    const r = 8*dpr; // radius
-    ctx.shadowBlur = 28*dpr; ctx.shadowColor = 'rgba(255,183,3,.9)';
+    const r = 8; // radius
+    ctx.shadowBlur = 28; ctx.shadowColor = 'rgba(255,183,3,.9)';
     ctx.fillStyle = '#ffd166';
     ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI*2); ctx.fill();
     ctx.shadowBlur = 0;
 
     // Tail
     ctx.strokeStyle = 'rgba(255,183,3,.55)';
-    ctx.lineWidth = 2.5*dpr; ctx.beginPath();
+    ctx.lineWidth = 2.5; ctx.beginPath();
     ctx.moveTo(pts[0].x, pts[0].y);
     for(let i=1;i<=seg;i++){ ctx.lineTo(pts[i].x, pts[i].y) }
     ctx.lineTo(p.x, p.y); ctx.stroke();
@@ -364,15 +369,18 @@
 
     requestAnimationFrame(draw);
   }
-  draw();
-})();
+  // Start animation only after a brief delay to ensure elements are ready
+  setTimeout(() => {
+    draw();
+  }, 100);
+});
 
 /* ===============================
    Solar demo wallet (local only)
    1 Solar/day, 1 Solar = 10,000 Rays
    Start: 2025-04-07T00:00:00Z
 =================================*/
-(function(){
+document.addEventListener('DOMContentLoaded', function(){
   const MS_DAY = 86400000;
   const START_ISO = '2025-04-07T00:00:00Z';
   const start = new Date(START_ISO); // UTC start of Solar Clock
@@ -449,7 +457,7 @@
   render();
   // Update daily boundary without reload
   setInterval(render, 60000);
-})();
+});
 </script>
 </body>
 </html>
