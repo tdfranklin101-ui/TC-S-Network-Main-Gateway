@@ -359,34 +359,36 @@ document.addEventListener('DOMContentLoaded', function(){
 /* ===============================
    Simple CSS Animation - Guaranteed to work
 =================================*/
-// Add CSS animation directly
-const style = document.createElement('style');
-style.textContent = `
-  #photonCanvas {
-    position: relative;
-    overflow: hidden;
-  }
-  #photonCanvas::before {
-    content: '';
-    position: absolute;
-    width: 20px;
-    height: 20px;
-    background: radial-gradient(circle, #ffd166, #ff8c42);
-    border-radius: 50%;
-    box-shadow: 0 0 20px #ffd166;
-    animation: photonMove 4s ease-in-out infinite;
-    z-index: 1;
-  }
-  @keyframes photonMove {
-    0% { left: 8%; top: 18%; opacity: 1; }
-    25% { left: 35%; top: 30%; opacity: 0.8; }
-    50% { left: 55%; top: 55%; opacity: 0.6; }
-    75% { left: 88%; top: 78%; opacity: 0.4; }
-    100% { left: 8%; top: 18%; opacity: 1; }
-  }
-`;
-document.head.appendChild(style);
-console.log('✅ Simple CSS animation added');
+(function(){
+  // Add CSS animation directly
+  const style = document.createElement('style');
+  style.textContent = `
+    #photonCanvas {
+      position: relative;
+      overflow: hidden;
+    }
+    #photonCanvas::before {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: radial-gradient(circle, #ffd166, #ff8c42);
+      border-radius: 50%;
+      box-shadow: 0 0 20px #ffd166;
+      animation: photonMove 4s ease-in-out infinite;
+      z-index: 1;
+    }
+    @keyframes photonMove {
+      0% { left: 8%; top: 18%; opacity: 1; }
+      25% { left: 35%; top: 30%; opacity: 0.8; }
+      50% { left: 55%; top: 55%; opacity: 0.6; }
+      75% { left: 88%; top: 78%; opacity: 0.4; }
+      100% { left: 8%; top: 18%; opacity: 1; }
+    }
+  `;
+  document.head.appendChild(style);
+  console.log('✅ Simple CSS animation added');
+})();
 
 // Backup function in case we need canvas
 (function(){
