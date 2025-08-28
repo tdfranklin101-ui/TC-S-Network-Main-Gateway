@@ -116,12 +116,28 @@
       transform: translateX(-50%);
       font-size: 12px;
       color: #c9d7e2;
-      opacity: 0;
-      transition: opacity 0.3s ease;
-      background: rgba(0, 0, 0, 0.8);
-      padding: 8px 12px;
-      border-radius: 8px;
-      white-space: nowrap;
+      opacity: 0.85;
+      min-height: 1em;
+    }
+    .animation-controls {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      align-items: center;
+      margin-top: 10px;
+    }
+    .animation-btn {
+      font: inherit;
+      font-weight: 600;
+      border-radius: 10px;
+      padding: 6px 10px;
+      border: 1px solid #32404d;
+      background: #1a232b;
+      color: #cfe3f5;
+      cursor: pointer;
+    }
+    .animation-btn:active {
+      transform: translateY(1px);
     }
     
     /* Content Sections */
@@ -238,18 +254,24 @@
     <!-- Animation Section -->
     <div id="animation" class="animation-section">
       <h2>Photon Journey: Sun → Life → Thought</h2>
-      <p style="color: #ccc; margin-bottom: 20px;">Watch how solar energy transforms into computation and consciousness</p>
+      <p style="color: #ccc; margin-bottom: 20px;">Solar energy → life → neural computation → conscious thought</p>
       <div class="animation-box" style="position: relative;">
         <canvas id="photonCanvas" width="720" height="400"></canvas>
         
         <!-- Stage labels (positions set by JS) -->
-        <div id="label-sun" class="stage-label">☀️ Sun (origin energy)</div>
+        <div id="label-sun" class="stage-label" aria-live="polite">☀️ Sun (origin energy)</div>
         <div id="label-life" class="stage-label">🌿 Life (photosynthesis)</div>
         <div id="label-comp" class="stage-label">⚡ Computation (neurons)</div>
         <div id="label-think" class="stage-label">🧠 Thought (consciousness)</div>
         
-        <div class="animation-hud">tap/click to pause • hover/tap stages for info</div>
+        <div class="animation-hud" id="hud">tap/click to pause • hover/tap bounces for info</div>
         <div class="animation-tooltip" id="animation-tip"></div>
+      </div>
+      <div class="animation-controls">
+        <button class="animation-btn" id="slower">– slower</button>
+        <div style="min-width:10ch; text-align:center"><span id="speedval">2.6</span>s/segment</div>
+        <button class="animation-btn" id="faster">faster +</button>
+        <button class="animation-btn" id="sound">🔈 chime: off</button>
       </div>
       <p style="color: #888;">Tap to pause, hover stage labels for details</p>
     </div>
@@ -453,7 +475,7 @@
       setInterval(render, 60000);
     });
 
-    // Enhanced Interactive Photon Journey Animation
+    // Enhanced Interactive Photon Journey Animation with Controls
     (function(){
       const canvas = document.getElementById('photonCanvas');
       if (!canvas) return;
@@ -470,74 +492,103 @@
       };
       const tip = document.getElementById('animation-tip');
 
+      // --- timing controls ---
+      let SEG_MS   = 2600;   // ms per path segment
+      let DWELL_MS = 420;    // ms pause at each inflection
+      const REVEAL_MS = 110; // delay before label shows
+      let dwellLeft = DWELL_MS;
+      const speedval = document.getElementById('speedval');
+      const slowerBtn = document.getElementById('slower');
+      const fasterBtn = document.getElementById('faster');
+      const soundBtn  = document.getElementById('sound');
+      const updateSpeedLabel = ()=> speedval.textContent = (SEG_MS/1000).toFixed(1);
+
+      // Easing
+      const easeInOutQuad = u => (u < 0.5) ? 2*u*u : 1 - Math.pow(-2*u+2, 2)/2;
+
       // Frame padding
       const PAD = 26;
 
-      // Path points (normalized [0..1])
+      // Path (normalized)
       const guide = [
-        {x:.18, y:.18}, // start (near "sun")
-        {x:.34, y:.54}, // bounce 1 (Life)
-        {x:.47, y:.48}, // small deflection
-        {x:.63, y:.72}, // bounce 2 (Computation)
-        {x:.83, y:.90}, // bounce 3 (Thought)
+        {x:.18, y:.18}, // start (sun)
+        {x:.34, y:.54}, // life (turn 1)
+        {x:.47, y:.48}, // straight leg
+        {x:.63, y:.72}, // computation (turn 2)
+        {x:.83, y:.90}, // thought (end)
       ];
 
-      // Convert normalized to pixels
       const toPx = p => ({
         x: PAD + p.x*(canvas.width - PAD*2),
         y: PAD + p.y*(canvas.height - PAD*2)
       });
-
-      // Precompute pixels
       let GPX = guide.map(toPx);
 
-      // Stage metadata for labels & tooltips
+      // Stage metadata
       const stages = [
-        { idx: 0, el: L.sun, title: "Sun", desc:"A photon leaves the solar furnace." },
-        { idx: 1, el: L.life, title: "Life", desc:"Absorbed by chlorophyll → sugars → stored work." },
-        { idx: 3, el: L.comp, title: "Computation", desc:"Metabolic energy powers neurons → spikes = bits." },
-        { idx: 4, el: L.think, title: "Thought", desc:"Patterns of spikes become perception & intent." }
+        { idx: 0, el: L.sun,   title: "Sun",          desc:"A photon leaves the solar furnace." },
+        { idx: 1, el: L.life,  title: "Life",         desc:"Absorbed by chlorophyll → sugars → stored work." },
+        { idx: 3, el: L.comp,  title: "Computation",  desc:"Metabolic energy powers neurons → spikes = bits." },
+        { idx: 4, el: L.think, title: "Thought",      desc:"Patterns of spikes become perception & intent." }
       ];
 
-      // Place labels near their target points
-      const labelOffset = (dx,dy) => `translate(calc(-50% + ${dx}px), calc(-120% + ${dy}px))`;
-      const placeLabel = (el, p, dx=0, dy=0) => {
-        el.style.left = p.x + 'px';
-        el.style.top = p.y + 'px';
-        el.style.transform = labelOffset(dx,dy);
-      };
-
-      // Photon state
-      let t = 0;
-      let seg = 0;
-      let playing = true;
-      let last = performance.now();
-
-      // Interaction: pause/resume on click/tap
-      container.addEventListener('click', () => {
-        playing = !playing;
-        document.querySelector('.animation-hud').textContent = playing ? 
-          'tap/click to pause • hover/tap stages for info' : 
-          'paused • tap/click to resume';
-      });
-
-      // Tooltips on label hover/tap
-      const showTip = (text) => { 
-        tip.textContent = text; 
-        tip.style.opacity = '0.95'; 
-      };
-      const hideTip = () => { tip.style.opacity = '0'; };
-      
+      // Tooltips
+      const showTip = (text) => { tip.textContent = text; tip.style.opacity = .95; };
+      const hideTip = () => { tip.style.opacity = 0; };
       stages.forEach(s => {
         s.el.addEventListener('mouseenter', () => showTip(`${s.title}: ${s.desc}`));
         s.el.addEventListener('mouseleave', hideTip);
         s.el.addEventListener('touchstart', () => showTip(`${s.title}: ${s.desc}`), {passive:true});
       });
 
-      // Utility functions
-      const lerp = (a,b,u) => ({ x:a.x+(b.x-a.x)*u, y:a.y+(b.y-a.y)*u });
+      // Label placement
+      const labelOffset = (dx,dy) => `translate(calc(-50% + ${dx}px), calc(-120% + ${dy}px))`;
+      const placeLabel = (el, p, dx=0, dy=0) => {
+        el.style.left = p.x + 'px';
+        el.style.top  = p.y + 'px';
+        el.style.transform = labelOffset(dx,dy);
+      };
+      function placeAllLabels(){
+        placeLabel(L.sun,   GPX[0], -18,  8);
+        placeLabel(L.life,  GPX[1],  12, -4);
+        placeLabel(L.comp,  GPX[3],  -6, -6);
+        placeLabel(L.think, GPX[4],  -4, -6);
+      }
+      placeAllLabels();
 
-      // Draw dashed guide
+      // Inflection icons (always visible)
+      const INFLECTIONS = [
+        {i:0, kind:'sun'}, {i:1, kind:'life'}, {i:3, kind:'comp'}, {i:4, kind:'thought'}
+      ];
+      function glow(x,y, r=70, color='255, 200, 60', alpha=.25){
+        const g = ctx.createRadialGradient(x,y,0, x,y,r);
+        g.addColorStop(0, `rgba(${color}, ${alpha})`);
+        g.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+      }
+      function drawInflectionIcon(pt, kind){
+        ctx.save();
+        glow(pt.x, pt.y, 34, '255, 210, 90', 0.15);
+        ctx.translate(pt.x, pt.y);
+        if(kind === 'sun'){
+          ctx.fillStyle = '#ffd479';
+          ctx.beginPath(); ctx.arc(0,0,6.5,0,Math.PI*2); ctx.fill();
+        } else if(kind === 'life'){
+          ctx.fillStyle = '#b8f28a';
+          ctx.beginPath();
+          ctx.moveTo(-6,1); ctx.quadraticCurveTo(0,-8,6,1); ctx.quadraticCurveTo(0,7,-6,1); ctx.fill();
+        } else if(kind === 'comp'){
+          ctx.strokeStyle = '#a6d9ff'; ctx.lineWidth = 1.6;
+          ctx.beginPath(); for(let i=0;i<5;i++){ ctx.moveTo(0,0); ctx.lineTo((i%2?7:12),(i-2)*3); } ctx.stroke();
+          ctx.fillStyle = '#dff0ff'; ctx.beginPath(); ctx.arc(0,0,3,0,Math.PI*2); ctx.fill();
+        } else {
+          ctx.fillStyle = '#fff5d6';
+          ctx.beginPath(); ctx.arc(0,0,6.5,0,Math.PI*2); ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      // Guide path (dashed)
       function drawGuide(){
         ctx.save();
         ctx.setLineDash([10,10]);
@@ -550,59 +601,35 @@
         ctx.restore();
       }
 
-      // Radial glow
-      function glow(x,y, r=70, color='255, 200, 60', alpha=.25){
-        const g = ctx.createRadialGradient(x,y,0, x,y,r);
-        g.addColorStop(0, `rgba(${color}, ${alpha})`);
-        g.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = g; 
-        ctx.beginPath(); 
-        ctx.arc(x,y,r,0,Math.PI*2); 
-        ctx.fill();
-      }
-
-      // Draw the "sun" source
       function drawSun(){
         const p = GPX[0];
         glow(p.x-40, p.y-40, 120, '255, 190, 70', .35);
-        glow(p.x-40, p.y-40, 60, '255, 210, 90', .55);
+        glow(p.x-40, p.y-40, 60,  '255, 210, 90', .55);
         ctx.fillStyle = '#ffd479';
-        ctx.beginPath(); 
-        ctx.arc(p.x-40, p.y-40, 16, 0, Math.PI*2); 
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(p.x-40, p.y-40, 16, 0, Math.PI*2); ctx.fill();
       }
 
-      // Photon visuals evolve by stage
+      // Photon rendering
       function drawPhoton(pos, dir, stage){
-        // trailing glow
         glow(pos.x, pos.y, 46, '255, 210, 90', .20);
-
-        // body
         ctx.save();
         ctx.translate(pos.x, pos.y);
         ctx.rotate(dir);
 
-        if(stage === 0){ // SUN: simple disc + beam
+        if(stage === 0){ // SUN
           ctx.fillStyle = '#ffd479';
           ctx.beginPath(); ctx.arc(0,0,10,0,Math.PI*2); ctx.fill();
-          const grad = ctx.createLinearGradient(0,0, 0,40);
-          grad.addColorStop(0,'rgba(255,220,120,.9)');
-          grad.addColorStop(1,'rgba(255,180,60,0)');
-          ctx.fillStyle = grad;
-          ctx.beginPath(); ctx.moveTo(-6,0); ctx.lineTo(6,0); ctx.lineTo(0,40); ctx.closePath(); ctx.fill();
-        } else if(stage === 1){ // LIFE: leaf-like wedge
+        } else if(stage === 1){ // LIFE
           ctx.fillStyle = '#b8f28a';
           ctx.beginPath();
           ctx.moveTo(-7,2); ctx.quadraticCurveTo(0,-12, 8,2); ctx.quadraticCurveTo(0,10, -7,2);
           ctx.fill();
           ctx.fillStyle = '#defcc6'; ctx.beginPath(); ctx.arc(0,0,5,0,Math.PI*2); ctx.fill();
-        } else if(stage === 2){ // COMPUTATION: spike (neuron)
+        } else if(stage === 2){ // COMPUTATION
           ctx.strokeStyle = '#a6d9ff'; ctx.lineWidth = 2.2;
-          ctx.beginPath(); 
-          for(let i=0;i<5;i++){ ctx.moveTo(0,0); ctx.lineTo( (i%2?10:18), (i-2)*4 ); } 
-          ctx.stroke();
+          ctx.beginPath(); for(let i=0;i<5;i++){ ctx.moveTo(0,0); ctx.lineTo( (i%2?10:18), (i-2)*4 ); } ctx.stroke();
           ctx.fillStyle = '#dff0ff'; ctx.beginPath(); ctx.arc(0,0,4.5,0,Math.PI*2); ctx.fill();
-        } else { // THOUGHT: bright pearl
+        } else { // THOUGHT
           ctx.fillStyle = '#fff5d6';
           ctx.beginPath(); ctx.arc(0,0,9,0,Math.PI*2); ctx.fill();
           glow(0,0,60,'255,240,200',.33);
@@ -610,63 +637,106 @@
         ctx.restore();
       }
 
-      // Show/hide labels when we enter corresponding bounce indices
+      // Stage mapping
+      function stageFromSeg(seg){
+        if (seg === 0) return 0;
+        if (seg === 1 || seg === 2) return 1;
+        if (seg === 3) return 2;
+        return 3;
+      }
       function updateLabels(){
-        // map current segment → which label should be active
-        // seg: 0 (Sun) → 1 (Life) → 2 (Computation) → 3 (Thought)
-        const activeIndex = (seg === 0) ? 0 : (seg === 1) ? 1 : (seg === 2) ? 2 : 3;
-
-        const order = [L.sun, L.life, L.comp, L.think];
-        order.forEach((el, i) => el.classList.toggle('show', i === activeIndex));
-
-        // hide tooltip if we changed stages
-        if (tip.style.opacity && order[activeIndex] !== document.querySelector('.label.show')) {
-          tip.style.opacity = 0;
-        }
+        const active = stageFromSeg(seg);
+        const labels = [L.sun, L.life, L.comp, L.think];
+        labels.forEach((el, i) => el.classList.toggle('show', i === active));
       }
 
-      // Main animation loop
-      function tick(now){
-        const dt = Math.min(40, now-last); 
-        last = now;
+      // Audio (optional chime)
+      let audioEnabled = false;
+      let ac;
+      function enableAudio(){
+        if(audioEnabled) return;
+        ac = new (window.AudioContext || window.webkitAudioContext)();
+        audioEnabled = true;
+        soundBtn.textContent = '🔊 chime: on';
+      }
+      function playChime(){
+        if(!audioEnabled || !ac) return;
+        const o = ac.createOscillator();
+        const g = ac.createGain();
+        o.type = 'sine';
+        o.frequency.value = 840;
+        g.gain.value = 0.0001;
+        o.connect(g); g.connect(ac.destination);
+        const now = ac.currentTime;
+        g.gain.exponentialRampToValueAtTime(0.08, now + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001, now + 0.20);
+        o.start(now);
+        o.stop(now + 0.22);
+      }
 
-        // background
+      // Interaction
+      let playing = true;
+      container.addEventListener('click', () => {
+        if(!audioEnabled) enableAudio();
+        playing = !playing;
+        document.getElementById('hud').textContent = playing ? 'tap/click to pause • hover/tap bounces for info'
+                                                             : 'paused • tap/click to resume';
+        if(ac && ac.state === 'suspended') ac.resume();
+      });
+      soundBtn.addEventListener('click', ()=>{
+        if(!audioEnabled){ enableAudio(); return; }
+        audioEnabled = !audioEnabled;
+        soundBtn.textContent = audioEnabled ? '🔊 chime: on' : '🔈 chime: off';
+      });
+      slowerBtn.addEventListener('click', ()=>{
+        SEG_MS = Math.min(8000, SEG_MS + 300);
+        updateSpeedLabel();
+      });
+      fasterBtn.addEventListener('click', ()=>{
+        SEG_MS = Math.max(900, SEG_MS - 300);
+        updateSpeedLabel();
+      });
+      updateSpeedLabel();
+
+      // Photon state
+      let t = 0;  // progress
+      let seg = 0;
+      let last = performance.now();
+      let lastStage = -1;
+
+      function tick(now){
+        const dt = Math.min(40, now-last); last = now;
+
         ctx.clearRect(0,0,canvas.width,canvas.height);
         drawSun();
         drawGuide();
+        INFLECTIONS.forEach(({i, kind}) => drawInflectionIcon(GPX[i], kind));
 
-        // advance time along segment
         if(playing){
-          t += dt / 1300; // speed
-          if(t >= 1){
-            t = 0; seg++;
-            if(seg >= GPX.length-1){ // cycle complete → restart smoothly
-              seg = 0; t = 0;
-              // briefly hide labels then they'll re-appear as we pass stages again
-              Object.values(L).forEach(el => el.classList.remove('show'));
-            }
+          if (t === 0 && dwellLeft > 0) { dwellLeft -= dt; }
+          else { t += dt / SEG_MS; }
+          if (t >= 1) {
+            t = 0; seg++; dwellLeft = DWELL_MS;
+            if (seg >= GPX.length - 1) { seg = 0; t = 0; }
           }
         }
 
-        // positions
         const A = GPX[seg], B = GPX[seg+1];
-        const pos = lerp(A,B,t);
+        const u = easeInOutQuad(t);
+        const pos = { x: A.x + (B.x - A.x)*u, y: A.y + (B.y - A.y)*u };
         const dir = Math.atan2(B.y-A.y, B.x-A.x);
 
-        // stage by segment
-        const stage = seg === 0 ? 0 : seg === 1 ? 1 : seg === 2 || seg === 3 ? 2 : 3;
+        const stage = stageFromSeg(seg);
+        if(stage !== lastStage && (t > 0 || dwellLeft <= (DWELL_MS - REVEAL_MS))){
+          playChime();
+          lastStage = stage;
+        }
 
-        // draw photon
         drawPhoton(pos, dir, stage);
 
-        // bright glow when hitting a bounce
-        if(t < 0.12){ glow(A.x, A.y, 80, '255, 210, 90', 0.18); }
-
-        // labels with reveal delay
-        const revealDelay = 0.08; // 80ms after segment start
-        const shouldShow = t > revealDelay;
-        if (!shouldShow) Object.values(L).forEach(el => el.classList.remove('show'));
-        else updateLabels();
+        const elapsedThisSeg = (t === 0) ? 0 : Math.max(0, (DWELL_MS - dwellLeft));
+        if (t > 0 || elapsedThisSeg > REVEAL_MS) updateLabels();
+        else Object.values(L).forEach(el => el.classList.remove('show'));
 
         requestAnimationFrame(tick);
       }
@@ -690,15 +760,9 @@
         for(let i=0;i<guide.length;i++){
           GPX[i] = toPxDyn(guide[i]);
         }
-        
-        // Re-place labels
-        placeLabel(L.sun, GPX[0], -18, 8);
-        placeLabel(L.life, GPX[1], 12, -4);
-        placeLabel(L.comp, GPX[3], -6, -6);
-        placeLabel(L.think, GPX[4], -4, -6);
+        placeAllLabels();
       }
 
-      // Initialize
       new ResizeObserver(fit).observe(container);
       fit();
       requestAnimationFrame((n)=>{ last=n; tick(n); });
