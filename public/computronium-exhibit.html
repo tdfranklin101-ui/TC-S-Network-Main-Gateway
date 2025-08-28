@@ -241,10 +241,9 @@
         </p>
       </div>
 
-      <div class="row" style="margin-top:12px">
-        <a class="btn" href="#top"><span class="dot" aria-hidden="true"></span> Back to top</a>
-        <!-- Replace the hrefs below with your real URLs -->
-        <a class="btn secondary" href="/" rel="noopener">← Back to Platform</a>
+      <div class="row" style="margin-top:20px; gap:15px;">
+        <a class="btn" href="#top" style="background: linear-gradient(180deg, rgba(255, 209, 102, .25), rgba(255,183,3,.15));"><span class="dot" aria-hidden="true"></span> Back to top</a>
+        <a class="btn secondary" href="/" rel="noopener" style="background: linear-gradient(180deg, rgba(128,255,234,.25), rgba(128,255,234,.15)); color: #001a14; font-weight: 800; border: 2px solid rgba(128,255,234,.4);">🏠 Back to Platform</a>
       </div>
     </section>
   </main>
@@ -369,8 +368,16 @@ document.addEventListener('DOMContentLoaded', function(){
 
     requestAnimationFrame(draw);
   }
-  // Start animation immediately since DOM is ready
-  draw();
+  // Debug: Check if canvas is ready
+  console.log('Canvas found:', c, 'Width:', c.width, 'Height:', c.height);
+  
+  // Start animation with error handling
+  try {
+    draw();
+    console.log('Animation started successfully');
+  } catch(e) {
+    console.error('Animation failed:', e);
+  }
 });
 
 /* ===============================
