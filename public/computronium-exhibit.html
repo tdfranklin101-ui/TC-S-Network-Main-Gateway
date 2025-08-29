@@ -642,6 +642,11 @@
         if (seg >= 4) return 3; // thought (includes final segment)
         return 0;
       }
+      
+      // Enhanced end-of-journey handling
+      let atEndPoint = false;
+      let endPauseTimer = 0;
+      const END_PAUSE_DURATION = 2000; // 2 second pause at end
 
       // Guide path (dashed)
       function drawGuide(){
@@ -766,20 +771,31 @@
         drawGuide();
 
         if(playing){
-          if (t === 0 && dwellLeft > 0) { dwellLeft -= dt; }
-          else { t += dt / SEG_MS; }
-          if (t >= 1) {
+          if (atEndPoint) {
+            endPauseTimer += dt;
+            if (endPauseTimer >= END_PAUSE_DURATION) {
+              atEndPoint = false;
+              endPauseTimer = 0;
+              seg = 0; t = 0; lastStage = -1;
+            }
+          } else if (t === 0 && dwellLeft > 0) { 
+            dwellLeft -= dt; 
+          } else { 
+            t += dt / SEG_MS; 
+          }
+          
+          if (t >= 1 && !atEndPoint) {
             t = 0; seg++; dwellLeft = DWELL_MS;
             if (seg >= GPX.length - 1) { 
-              // Give conscious thought more time before reset
-              setTimeout(() => {
-                seg = 0; t = 0; lastStage = -1;
-              }, 1500);
+              atEndPoint = true;
+              t = 1; // Stay at end point
             }
           }
         }
 
-        const A = GPX[seg], B = GPX[seg+1];
+        // Ensure we don't go out of bounds
+        const segIndex = Math.min(seg, GPX.length - 2);
+        const A = GPX[segIndex], B = GPX[segIndex + 1];
         const u = easeInOutQuad(t);
         const pos = { x: A.x + (B.x - A.x)*u, y: A.y + (B.y - A.y)*u };
         const dir = Math.atan2(B.y-A.y, B.x-A.x);
@@ -793,8 +809,17 @@
 
         drawPhoton(pos, dir, stage);
 
-        // Render all stage labels with current stage highlighted
-        renderStageLabels(ctx, stage);
+        // Render all stage labels - if at endpoint, light up all stages
+        if (atEndPoint) {
+          // Light up all stages when at the endpoint
+          STAGES.forEach((stageInfo) => {
+            const pt = GPX[stageInfo.index];
+            const text = `${stageInfo.icon} ${stageInfo.label}`;
+            drawStageLabel(ctx, pt.x, pt.y, text, 1.0); // Full brightness for all
+          });
+        } else {
+          renderStageLabels(ctx, stage);
+        }
 
         const elapsedThisSeg = (t === 0) ? 0 : Math.max(0, (DWELL_MS - dwellLeft));
         if (t > 0 || elapsedThisSeg > REVEAL_MS) updateLabels();
