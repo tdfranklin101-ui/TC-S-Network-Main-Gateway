@@ -633,6 +633,15 @@
         if (index === 4) return 3; // thought
         return 0;
       }
+      
+      // Map segment to stage for consistent lighting
+      function stageFromSeg(seg){
+        if (seg === 0) return 0; // sun
+        if (seg === 1 || seg === 2) return 1; // life
+        if (seg === 3) return 2; // computation
+        if (seg >= 4) return 3; // thought (includes final segment)
+        return 0;
+      }
 
       // Guide path (dashed)
       function drawGuide(){
@@ -683,13 +692,6 @@
         ctx.restore();
       }
 
-      // Stage mapping
-      function stageFromSeg(seg){
-        if (seg === 0) return 0;
-        if (seg === 1 || seg === 2) return 1;
-        if (seg === 3) return 2;
-        return 3;
-      }
       function updateLabels(){
         const active = stageFromSeg(seg);
         const labels = [L.sun, L.life, L.comp, L.think];
@@ -707,17 +709,23 @@
       }
       function playChime(){
         if(!audioEnabled || !ac) return;
-        const o = ac.createOscillator();
-        const g = ac.createGain();
-        o.type = 'sine';
-        o.frequency.value = 840;
-        g.gain.value = 0.0001;
-        o.connect(g); g.connect(ac.destination);
-        const now = ac.currentTime;
-        g.gain.exponentialRampToValueAtTime(0.08, now + 0.01);
-        g.gain.exponentialRampToValueAtTime(0.0001, now + 0.20);
-        o.start(now);
-        o.stop(now + 0.22);
+        try {
+          const o = ac.createOscillator();
+          const g = ac.createGain();
+          o.type = 'sine';
+          o.frequency.value = 840;
+          g.gain.value = 0;
+          o.connect(g); g.connect(ac.destination);
+          const now = ac.currentTime;
+          g.gain.setValueAtTime(0, now);
+          g.gain.linearRampToValueAtTime(0.08, now + 0.02);
+          g.gain.exponentialRampToValueAtTime(0.0001, now + 0.25);
+          o.start(now);
+          o.stop(now + 0.3);
+          console.log('🔔 Chime played for stage transition');
+        } catch(e) {
+          console.log('Chime audio error:', e);
+        }
       }
 
       // Interaction
@@ -762,7 +770,12 @@
           else { t += dt / SEG_MS; }
           if (t >= 1) {
             t = 0; seg++; dwellLeft = DWELL_MS;
-            if (seg >= GPX.length - 1) { seg = 0; t = 0; }
+            if (seg >= GPX.length - 1) { 
+              // Give conscious thought more time before reset
+              setTimeout(() => {
+                seg = 0; t = 0; lastStage = -1;
+              }, 1500);
+            }
           }
         }
 
@@ -772,7 +785,8 @@
         const dir = Math.atan2(B.y-A.y, B.x-A.x);
 
         const stage = stageFromSeg(seg);
-        if(stage !== lastStage && (t > 0 || dwellLeft <= (DWELL_MS - REVEAL_MS))){
+        if(stage !== lastStage && t > 0.1){
+          console.log(`🎯 Stage transition: ${lastStage} → ${stage}`);
           playChime();
           lastStage = stage;
         }
