@@ -125,6 +125,13 @@ const server = http.createServer(async (req, res) => {
       return;
     }
   }
+  
+  if (pathname === '/my-solar') {
+    // Redirect to main platform solar tracking section
+    res.writeHead(302, { 'Location': '/main-platform#solar-tracking' });
+    res.end();
+    return;
+  }
 
   // Health check endpoint
   if (pathname === '/health') {
