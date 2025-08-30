@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Computronium Exhibit - The Current-See Platform</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: system-ui, -apple-system, sans-serif; 
+      background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+      color: #ffffff;
+      line-height: 1.6;
+    }
+    .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    
+    /* Header */
+    .header {
+      text-align: center;
+      padding: 40px 0;
+      background: linear-gradient(45deg, #000 0%, #222 100%);
+      margin-bottom: 40px;
+    }
+    .header h1 {
+      font-size: 3rem;
+      color: #ffd166;
+      margin-bottom: 20px;
+      text-shadow: 0 0 20px rgba(255, 209, 102, 0.5);
+    }
+    .header p {
+      font-size: 1.2rem;
+      color: #ccc;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    
+    /* Navigation */
+    .nav {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    .nav a {
+      display: inline-block;
+      margin: 0 10px;
+      padding: 12px 24px;
+      background: #ffd166;
+      color: #000;
+      text-decoration: none;
+      border-radius: 25px;
+      font-weight: bold;
+      transition: all 0.3s ease;
+    }
+    .nav a:hover {
+      background: #ffb84d;
+      transform: translateY(-2px);
+    }
+    
+    /* Animation Section */
+    .animation-section {
+      background: #111;
+      border-radius: 12px;
+      padding: 40px;
+      margin-bottom: 40px;
+      text-align: center;
+    }
+    .animation-box {
+      width: 100%;
+      height: 400px;
+      background: #1a1a1a;
+      border: 3px solid #ffd166;
+      border-radius: 12px;
+      position: relative;
+      overflow: hidden;
+      margin: 20px 0;
+    }
+    
+    /* Enhanced Animation Styling */
+    #photonCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: 8px;
+    }
+    .stage-label {
+      position: absolute;
+      transform: translate(-50%, -120%);
+      padding: 6px 10px;
+      font-size: 13px;
+      border-radius: 12px;
+      background: rgba(255, 209, 102, 0.12);
+      color: #ffd479;
+      border: 1px solid rgba(255, 209, 102, 0.35);
+      opacity: 0;
+      pointer-events: auto;
+      backdrop-filter: blur(2px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .stage-label.show {
+      opacity: 1;
+      transform: translate(-50%, -140%);
+    }
+    .animation-hud {
+      position: absolute;
+      left: 12px;
+      bottom: 10px;
+      color: #9fb1c1;
+      font-size: 12px;
+      user-select: none;
+    }
+    .animation-tooltip {
+      position: absolute;
+      left: 50%;
+      top: 10px;
+      transform: translateX(-50%);
+      font-size: 12px;
+      color: #c9d7e2;
+      opacity: 0.85;
+      min-height: 1em;
+    }
+    .animation-controls {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      align-items: center;
+      margin-top: 10px;
+    }
+    .animation-btn {
+      font: inherit;
+      font-weight: 600;
+      border-radius: 10px;
+      padding: 6px 10px;
+      border: 1px solid #32404d;
+      background: #1a232b;
+      color: #cfe3f5;
+      cursor: pointer;
+    }
+    .animation-btn:active {
+      transform: translateY(1px);
+    }
+    
+    /* Content Sections */
+    .content-section {
+      background: #000;
+      border: 1px solid #333;
+      border-radius: 12px;
+      padding: 40px;
+      margin-bottom: 30px;
+    }
+    .content-section h2 {
+      color: #ffd166;
+      font-size: 2rem;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .content-section h3 {
+      color: #ffd166;
+      font-size: 1.4rem;
+      margin: 30px 0 15px 0;
+    }
+    .content-section p {
+      color: #ccc;
+      margin-bottom: 15px;
+      line-height: 1.8;
+    }
+    .content-section ul {
+      color: #ccc;
+      margin-left: 30px;
+      margin-bottom: 15px;
+    }
+    .content-section li {
+      margin-bottom: 8px;
+    }
+    
+    /* Solar Demo */
+    .solar-demo {
+      background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+      border: 2px solid #ffd166;
+      border-radius: 12px;
+      padding: 30px;
+      margin: 30px 0;
+    }
+    .solar-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin: 20px 0;
+    }
+    .stat-box {
+      background: #000;
+      padding: 20px;
+      border-radius: 8px;
+      text-align: center;
+      border: 1px solid #444;
+    }
+    .stat-box h4 {
+      color: #ffd166;
+      margin-bottom: 10px;
+    }
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #fff;
+    }
+    .solar-button {
+      background: #ffd166;
+      color: #000;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 25px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin: 10px;
+    }
+    .solar-button:hover {
+      background: #ffb84d;
+      transform: translateY(-2px);
+    }
+    
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 40px 0;
+      border-top: 1px solid #333;
+      margin-top: 40px;
+      color: #666;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      .header h1 { font-size: 2rem; }
+      .container { padding: 10px; }
+      .content-section { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🌟 The Solar Standard</h1>
+    <p>Interactive Exhibit: Sun → Energy → Life → Thought → Solar Standard</p>
+  </div>
+
+  <div class="container">
+    <div class="nav">
+      <a href="/">🏠 Back to Platform</a>
+      <a href="#animation">See Animation</a>
+      <a href="#learn">Learn More</a>
+      <a href="#demo">Try Demo</a>
+    </div>
+
+    <!-- Animation Section -->
+    <div id="animation" class="animation-section">
+      <h2>Photon Journey: Sun → Life → Thought</h2>
+      <p style="color: #ccc; margin-bottom: 20px;">Solar energy → life → neural computation → conscious thought</p>
+      <div class="animation-box" style="position: relative;">
+        <canvas id="photonCanvas" width="720" height="400"></canvas>
+        
+        <!-- Stage labels (positions set by JS) -->
+        <div id="label-sun" class="stage-label" aria-live="polite">☀️ Sun (origin energy)</div>
+        <div id="label-life" class="stage-label">🌿 Life (photosynthesis)</div>
+        <div id="label-comp" class="stage-label">⚡ Computation (neurons)</div>
+        <div id="label-think" class="stage-label">🧠 Thought (consciousness)</div>
+        
+        <div class="animation-hud" id="hud">tap/click to pause • labels show automatically</div>
+        <div class="animation-tooltip" id="animation-tip"></div>
+      </div>
+      <div class="animation-controls">
+        <button class="animation-btn" id="slower">– slower</button>
+        <div style="min-width:10ch; text-align:center"><span id="speedval">2.6</span>s/segment</div>
+        <button class="animation-btn" id="faster">faster +</button>
+        <button class="animation-btn" id="sound">🔈 chime: off</button>
+      </div>
+      <p style="color: #888;">Tap to pause, hover stage labels for details</p>
+    </div>
+
+    <!-- Learn More Section -->
+    <div id="learn" class="content-section">
+      <h2>Learn More: The Sun, Computronium, and the Solar Standard</h2>
+      <p style="text-align: center; color: #ccc; margin-bottom: 40px;">A deeper dive into the science, philosophy, and design choices behind this exhibit.</p>
+
+      <h3>1) The Sun as the Engine of Computation</h3>
+      <p>
+        The Sun provides more than light and warmth — it is the engine of Earth's computation. Every photon that leaves
+        the Sun carries information in its oscillations. When it strikes matter on Earth, it catalyzes processes:
+      </p>
+      <ul>
+        <li><strong>Photosynthesis:</strong> Converting light into chemical energy and biological structures</li>
+        <li><strong>Weather systems:</strong> Driving atmospheric computation through heat differentials</li>
+        <li><strong>Ocean currents:</strong> Creating global information transport networks</li>
+        <li><strong>Evolution:</strong> Providing the energy gradient that drives biological innovation</li>
+      </ul>
+      <p>
+        In essence, the Sun's energy flow creates the conditions for all terrestrial computation, from the molecular
+        level up to conscious thought. The Solar Standard recognizes this fundamental relationship.
+      </p>
+
+      <h3>2) What Is Computronium?</h3>
+      <p>
+        Computronium is matter organized in the most computationally efficient way possible. While traditionally
+        imagined as a futuristic material, we argue that computronium already exists all around us:
+      </p>
+      <ul>
+        <li><strong>Biological systems:</strong> DNA, proteins, and neural networks are naturally evolved computronium</li>
+        <li><strong>Technological systems:</strong> Silicon chips, fiber optic networks, and AI are artificial computronium</li>
+        <li><strong>Hybrid systems:</strong> Brain-computer interfaces represent the merger of biological and digital computronium</li>
+      </ul>
+      <p>
+        The key insight is that computronium isn't a single material—it's an organizational principle. Any matter
+        that processes information efficiently qualifies as computronium.
+      </p>
+
+      <h3>3) The Solar Standard as Computronium Currency</h3>
+      <p>
+        The Solar Standard is designed as the native currency of a computronium-based economy. Here's why this makes sense:
+      </p>
+      <ul>
+        <li><strong>Energy equivalence:</strong> All computation requires energy, making energy the fundamental unit of computational value</li>
+        <li><strong>Solar abundance:</strong> The Sun provides more energy than civilization could use for billions of years</li>
+        <li><strong>Information content:</strong> Solar energy carries maximum information content (entropy) when properly harvested</li>
+        <li><strong>Alignment incentives:</strong> A solar-based currency incentivizes renewable energy infrastructure</li>
+      </ul>
+      <p>
+        By pegging currency to solar energy capture, we create economic incentives that align with both computational
+        efficiency and environmental sustainability.
+      </p>
+
+      <h3>4) Design Philosophy: Aligned with Nature</h3>
+      <p>
+        The Current-See platform embodies several key design principles:
+      </p>
+      <ul>
+        <li><strong>Biomimetic:</strong> Learning from billions of years of evolutionary optimization</li>
+        <li><strong>Thermodynamically aware:</strong> Respecting the fundamental role of energy in all processes</li>
+        <li><strong>Scalable:</strong> Designed to work from individual users to planetary-scale coordination</li>
+        <li><strong>Resilient:</strong> Building redundancy and anti-fragility into system architecture</li>
+      </ul>
+
+      <h3>5) Future Implications</h3>
+      <p>
+        If successful, the Solar Standard could catalyze several transformative developments:
+      </p>
+      <ul>
+        <li><strong>Renewable energy acceleration:</strong> Making clean energy directly profitable</li>
+        <li><strong>Computational abundance:</strong> Enabling massive increases in available processing power</li>
+        <li><strong>Economic stability:</strong> Reducing volatility through energy-backed value</li>
+        <li><strong>Planetary coordination:</strong> Providing tools for global-scale cooperation</li>
+      </ul>
+      <p>
+        This exhibit is a prototype and thought experiment. The real work lies in building the infrastructure,
+        governance systems, and social adoption necessary to make this vision reality.
+      </p>
+    </div>
+
+    <!-- Solar Demo Section -->
+    <div id="demo" class="content-section">
+      <h2>Try It: Receive Your Daily Solar (Demo)</h2>
+      <p style="text-align: center; margin-bottom: 30px;">The Solar Clock (activated Apr 7, 2025, 00:00 GMT) issues <strong>1 Solar/day</strong> per person. <em>1 Solar = 10,000 Rays</em>.</p>
+      
+      <div class="solar-demo">
+        <div class="solar-stats">
+          <div class="stat-box">
+            <h4>Days since activation</h4>
+            <div class="stat-value" id="daysSince">—</div>
+          </div>
+          <div class="stat-box">
+            <h4>Unclaimed Solar</h4>
+            <div class="stat-value" id="unclaimed">—</div>
+          </div>
+          <div class="stat-box">
+            <h4>Total Claimed (Solar)</h4>
+            <div class="stat-value" id="claimed">0.0000</div>
+          </div>
+          <div class="stat-box">
+            <h4>Total Claimed (Rays)</h4>
+            <div class="stat-value" id="claimedRays">0</div>
+          </div>
+        </div>
+        
+        <div style="text-align: center;">
+          <button class="solar-button" id="claimBtn">Receive today's Solar</button>
+          <button class="solar-button" id="resetBtn" style="background: #666;">Reset demo</button>
+        </div>
+        
+        <p style="text-align: center; margin-top: 20px; color: #888; font-size: 0.9rem;">
+          This is a local simulation for exhibit purposes only. No real tokens are issued here.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p>"The sun is part of us as a catalyst for our natural computation."</p>
+    <p>© The Current-See PBC, Inc. · Exhibit prototype</p>
+  </div>
+
+  <script>
+    // Solar demo wallet functionality
+    document.addEventListener('DOMContentLoaded', function(){
+      const MS_DAY = 86400000;
+      const START_ISO = '2025-04-07T00:00:00Z';
+      const start = new Date(START_ISO);
+
+      const elDays = document.getElementById('daysSince');
+      const elUnclaimed = document.getElementById('unclaimed');
+      const elClaimed = document.getElementById('claimed');
+      const elClaimedRays = document.getElementById('claimedRays');
+      const claimBtn = document.getElementById('claimBtn');
+      const resetBtn = document.getElementById('resetBtn');
+
+      const K_CLAIMED_SOLAR = 'tcs_demo_claimed_solar';
+      const K_LAST_CLAIM = 'tcs_demo_last_claim_iso';
+
+      function daysSinceStart(now = new Date()){
+        return Math.max(0, Math.floor((now.getTime() - start.getTime()) / MS_DAY));
+      }
+
+      function fmtSolar(x){ return (Math.floor(x * 10000) / 10000).toFixed(4) }
+      function raysFromSolar(x){ return Math.floor(x * 10000) }
+
+      function loadState(){
+        const claimed = parseFloat(localStorage.getItem(K_CLAIMED_SOLAR) || '0');
+        const last = localStorage.getItem(K_LAST_CLAIM) || START_ISO;
+        return { claimedSolar: isNaN(claimed) ? 0 : claimed, lastClaimISO: last };
+      }
+
+      function saveState(s){
+        localStorage.setItem(K_CLAIMED_SOLAR, String(s.claimedSolar));
+        localStorage.setItem(K_LAST_CLAIM, s.lastClaimISO);
+      }
+
+      function computeUnclaimed(state, now = new Date()){
+        const last = new Date(state.lastClaimISO);
+        const d = Math.max(0, Math.floor((now.getTime() - last.getTime()) / MS_DAY));
+        return d;
+      }
+
+      function render(){
+        const now = new Date();
+        const totalDays = daysSinceStart(now);
+        const state = loadState();
+        const unclaimed = computeUnclaimed(state, now);
+
+        elDays.textContent = String(totalDays);
+        elUnclaimed.textContent = fmtSolar(unclaimed);
+        elClaimed.textContent = fmtSolar(state.claimedSolar);
+        elClaimedRays.textContent = raysFromSolar(state.claimedSolar).toLocaleString();
+        claimBtn.disabled = unclaimed <= 0;
+      }
+
+      claimBtn?.addEventListener('click', () => {
+        const now = new Date();
+        const state = loadState();
+        const gain = computeUnclaimed(state, now);
+        if(gain <= 0){ render(); return; }
+        const updated = {
+          claimedSolar: state.claimedSolar + gain,
+          lastClaimISO: now.toISOString().slice(0,10) + 'T00:00:00Z'
+        };
+        saveState(updated);
+        claimBtn.textContent = 'Received ✓';
+        setTimeout(() => { claimBtn.textContent = 'Receive today\'s Solar'; }, 900);
+        render();
+      });
+
+      resetBtn?.addEventListener('click', () => {
+        localStorage.removeItem(K_CLAIMED_SOLAR);
+        localStorage.removeItem(K_LAST_CLAIM);
+        render();
+      });
+
+      render();
+      setInterval(render, 60000);
+    });
+
+    // Enhanced Interactive Photon Journey Animation with Controls
+    (function(){
+      const canvas = document.getElementById('photonCanvas');
+      if (!canvas) return;
+
+      const ctx = canvas.getContext('2d');
+      const container = canvas.parentElement;
+
+      // Labels
+      const L = {
+        sun: document.getElementById('label-sun'),
+        life: document.getElementById('label-life'),
+        comp: document.getElementById('label-comp'),
+        think: document.getElementById('label-think'),
+      };
+      const tip = document.getElementById('animation-tip');
+
+      // --- timing controls ---
+      let SEG_MS   = 2600;   // ms per path segment
+      let DWELL_MS = 420;    // ms pause at each inflection
+      const REVEAL_MS = 110; // delay before label shows
+      let dwellLeft = DWELL_MS;
+      const speedval = document.getElementById('speedval');
+      const slowerBtn = document.getElementById('slower');
+      const fasterBtn = document.getElementById('faster');
+      const soundBtn  = document.getElementById('sound');
+      const updateSpeedLabel = ()=> speedval.textContent = (SEG_MS/1000).toFixed(1);
+
+      // Easing
+      const easeInOutQuad = u => (u < 0.5) ? 2*u*u : 1 - Math.pow(-2*u+2, 2)/2;
+
+      // Frame padding
+      const PAD = 26;
+
+      // Path (normalized)
+      const guide = [
+        {x:.18, y:.18}, // start (sun)
+        {x:.34, y:.54}, // life (turn 1)
+        {x:.47, y:.48}, // straight leg
+        {x:.63, y:.72}, // computation (turn 2)
+        {x:.83, y:.90}, // thought (end)
+      ];
+
+      const toPx = p => ({
+        x: PAD + p.x*(canvas.width - PAD*2),
+        y: PAD + p.y*(canvas.height - PAD*2)
+      });
+      let GPX = guide.map(toPx);
+
+      // Stage metadata
+      const stages = [
+        { idx: 0, el: L.sun,   title: "Sun",          desc:"A photon leaves the solar furnace." },
+        { idx: 1, el: L.life,  title: "Life",         desc:"Absorbed by chlorophyll → sugars → stored work." },
+        { idx: 3, el: L.comp,  title: "Computation",  desc:"Metabolic energy powers neurons → spikes = bits." },
+        { idx: 4, el: L.think, title: "Thought",      desc:"Patterns of spikes become perception & intent." }
+      ];
+
+      // Tooltips
+      const showTip = (text) => { tip.textContent = text; tip.style.opacity = .95; };
+      const hideTip = () => { tip.style.opacity = 0; };
+      stages.forEach(s => {
+        s.el.addEventListener('mouseenter', () => showTip(`${s.title}: ${s.desc}`));
+        s.el.addEventListener('mouseleave', hideTip);
+        s.el.addEventListener('touchstart', () => showTip(`${s.title}: ${s.desc}`), {passive:true});
+      });
+
+      // Label placement
+      const labelOffset = (dx,dy) => `translate(calc(-50% + ${dx}px), calc(-120% + ${dy}px))`;
+      const placeLabel = (el, p, dx=0, dy=0) => {
+        el.style.left = p.x + 'px';
+        el.style.top  = p.y + 'px';
+        el.style.transform = labelOffset(dx,dy);
+      };
+      function placeAllLabels(){
+        placeLabel(L.sun,   GPX[0], -18,  8);
+        placeLabel(L.life,  GPX[1],  12, -4);
+        placeLabel(L.comp,  GPX[3],  -6, -6);
+        placeLabel(L.think, GPX[4],  -4, -6);
+      }
+      placeAllLabels();
+
+      // Stage labels (always visible at bounce points)
+      const STAGES = [
+        { key: 'sun', label: 'Sun (origin energy)', icon: '☀️', index: 0 },
+        { key: 'life', label: 'Life (photosynthesis)', icon: '🌱', index: 1 },
+        { key: 'comp', label: 'Neural computation', icon: '🧠', index: 3 },
+        { key: 'think', label: 'Conscious thought', icon: '💡', index: 4 }
+      ];
+
+      function glow(x,y, r=70, color='255, 200, 60', alpha=.25){
+        const g = ctx.createRadialGradient(x,y,0, x,y,r);
+        g.addColorStop(0, `rgba(${color}, ${alpha})`);
+        g.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+      }
+
+      // Rounded label with auto width
+      function drawStageLabel(ctx, x, y, text, alpha = 1) {
+        ctx.save();
+        ctx.globalAlpha = alpha;
+
+        ctx.font = '15px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif';
+        const padX = 12, padY = 8, radius = 12;
+        const metrics = ctx.measureText(text);
+        const textW = Math.ceil(metrics.width);
+        const w = textW + padX * 2;
+        const h = 32;
+
+        // Center the pill above the point
+        const bx = x - w / 2;
+        const by = y - h - 16;
+
+        // pill background
+        ctx.beginPath();
+        roundRect(ctx, bx, by, w, h, radius);
+        ctx.fillStyle = 'rgba(255, 204, 102, 0.12)';
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = 'rgba(255, 204, 102, 0.75)';
+        ctx.stroke();
+
+        // text
+        ctx.fillStyle = 'rgba(255,255,255,0.92)';
+        ctx.fillText(text, bx + padX, by + h/2 + 5);
+
+        ctx.restore();
+      }
+
+      // Helper for rounded rects
+      function roundRect(ctx, x, y, w, h, r) {
+        const rr = Math.min(r, w/2, h/2);
+        ctx.moveTo(x + rr, y);
+        ctx.arcTo(x + w, y,     x + w, y + h, rr);
+        ctx.arcTo(x + w, y + h, x,     y + h, rr);
+        ctx.arcTo(x,     y + h, x,     y,     rr);
+        ctx.arcTo(x,     y,     x + w, y,     rr);
+        ctx.closePath();
+      }
+
+      // Render all stage labels with active highlighting
+      function renderStageLabels(ctx, activeStage) {
+        STAGES.forEach((stage) => {
+          const pt = GPX[stage.index];
+          const isActive = (activeStage === stageFromIndex(stage.index));
+          const alpha = isActive ? 1.0 : 0.45;
+          const text = `${stage.icon} ${stage.label}`;
+          drawStageLabel(ctx, pt.x, pt.y, text, alpha);
+        });
+      }
+
+      // Map stage indices to stage numbers
+      function stageFromIndex(index) {
+        if (index === 0) return 0; // sun
+        if (index === 1) return 1; // life  
+        if (index === 3) return 2; // computation
+        if (index === 4) return 3; // thought
+        return 0;
+      }
+      
+      // Map segment to stage for consistent lighting
+      function stageFromSeg(seg){
+        if (seg === 0) return 0; // sun
+        if (seg === 1 || seg === 2) return 1; // life
+        if (seg === 3) return 2; // computation
+        if (seg >= 4) return 3; // thought (includes final segment)
+        return 0;
+      }
+      
+      // Enhanced end-of-journey handling
+      let atEndPoint = false;
+      let endPauseTimer = 0;
+      const END_PAUSE_DURATION = 2000; // 2 second pause at end
+
+      // Guide path (dashed)
+      function drawGuide(){
+        ctx.save();
+        ctx.setLineDash([10,10]);
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = 'rgba(120, 170, 170, .45)';
+        ctx.beginPath();
+        ctx.moveTo(GPX[0].x, GPX[0].y);
+        for(let i=1;i<GPX.length;i++) ctx.lineTo(GPX[i].x, GPX[i].y);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function drawSun(){
+        const p = GPX[0];
+        glow(p.x-40, p.y-40, 120, '255, 190, 70', .35);
+        glow(p.x-40, p.y-40, 60,  '255, 210, 90', .55);
+        ctx.fillStyle = '#ffd479';
+        ctx.beginPath(); ctx.arc(p.x-40, p.y-40, 16, 0, Math.PI*2); ctx.fill();
+      }
+
+      // Photon rendering
+      function drawPhoton(pos, dir, stage){
+        glow(pos.x, pos.y, 46, '255, 210, 90', .20);
+        ctx.save();
+        ctx.translate(pos.x, pos.y);
+        ctx.rotate(dir);
+
+        if(stage === 0){ // SUN
+          ctx.fillStyle = '#ffd479';
+          ctx.beginPath(); ctx.arc(0,0,10,0,Math.PI*2); ctx.fill();
+        } else if(stage === 1){ // LIFE
+          ctx.fillStyle = '#b8f28a';
+          ctx.beginPath();
+          ctx.moveTo(-7,2); ctx.quadraticCurveTo(0,-12, 8,2); ctx.quadraticCurveTo(0,10, -7,2);
+          ctx.fill();
+          ctx.fillStyle = '#defcc6'; ctx.beginPath(); ctx.arc(0,0,5,0,Math.PI*2); ctx.fill();
+        } else if(stage === 2){ // COMPUTATION
+          ctx.strokeStyle = '#a6d9ff'; ctx.lineWidth = 2.2;
+          ctx.beginPath(); for(let i=0;i<5;i++){ ctx.moveTo(0,0); ctx.lineTo( (i%2?10:18), (i-2)*4 ); } ctx.stroke();
+          ctx.fillStyle = '#dff0ff'; ctx.beginPath(); ctx.arc(0,0,4.5,0,Math.PI*2); ctx.fill();
+        } else { // THOUGHT
+          ctx.fillStyle = '#fff5d6';
+          ctx.beginPath(); ctx.arc(0,0,9,0,Math.PI*2); ctx.fill();
+          glow(0,0,60,'255,240,200',.33);
+        }
+        ctx.restore();
+      }
+
+      function updateLabels(){
+        const active = stageFromSeg(seg);
+        const labels = [L.sun, L.life, L.comp, L.think];
+        labels.forEach((el, i) => el.classList.toggle('show', i === active));
+      }
+
+      // Audio (optional chime)
+      let audioEnabled = false;
+      let ac;
+      function enableAudio(){
+        if(audioEnabled) return;
+        ac = new (window.AudioContext || window.webkitAudioContext)();
+        audioEnabled = true;
+        soundBtn.textContent = '🔊 chime: on';
+      }
+      function playChime(){
+        if(!audioEnabled || !ac) return;
+        try {
+          const o = ac.createOscillator();
+          const g = ac.createGain();
+          o.type = 'sine';
+          o.frequency.value = 840;
+          g.gain.value = 0;
+          o.connect(g); g.connect(ac.destination);
+          const now = ac.currentTime;
+          g.gain.setValueAtTime(0, now);
+          g.gain.linearRampToValueAtTime(0.08, now + 0.02);
+          g.gain.exponentialRampToValueAtTime(0.0001, now + 0.25);
+          o.start(now);
+          o.stop(now + 0.3);
+          console.log('🔔 Chime played for stage transition');
+        } catch(e) {
+          console.log('Chime audio error:', e);
+        }
+      }
+
+      // Interaction
+      let playing = true;
+      container.addEventListener('click', () => {
+        if(!audioEnabled) enableAudio();
+        playing = !playing;
+        document.getElementById('hud').textContent = playing ? 'tap/click to pause • labels show automatically'
+                                                             : 'paused • tap/click to resume';
+        if(ac && ac.state === 'suspended') ac.resume();
+      });
+      soundBtn.addEventListener('click', ()=>{
+        if(!audioEnabled){ enableAudio(); return; }
+        audioEnabled = !audioEnabled;
+        soundBtn.textContent = audioEnabled ? '🔊 chime: on' : '🔈 chime: off';
+      });
+      slowerBtn.addEventListener('click', ()=>{
+        SEG_MS = Math.min(8000, SEG_MS + 300);
+        updateSpeedLabel();
+      });
+      fasterBtn.addEventListener('click', ()=>{
+        SEG_MS = Math.max(900, SEG_MS - 300);
+        updateSpeedLabel();
+      });
+      updateSpeedLabel();
+
+      // Photon state
+      let t = 0;  // progress
+      let seg = 0;
+      let last = performance.now();
+      let lastStage = -1;
+
+      function tick(now){
+        const dt = Math.min(40, now-last); last = now;
+
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        drawSun();
+        drawGuide();
+
+        if(playing){
+          if (atEndPoint) {
+            endPauseTimer += dt;
+            if (endPauseTimer >= END_PAUSE_DURATION) {
+              atEndPoint = false;
+              endPauseTimer = 0;
+              seg = 0; t = 0; lastStage = -1;
+            }
+          } else if (t === 0 && dwellLeft > 0) { 
+            dwellLeft -= dt; 
+          } else { 
+            t += dt / SEG_MS; 
+          }
+          
+          if (t >= 1 && !atEndPoint) {
+            t = 0; seg++; dwellLeft = DWELL_MS;
+            if (seg >= GPX.length - 1) { 
+              atEndPoint = true;
+              t = 1; // Stay at end point
+            }
+          }
+        }
+
+        // Ensure we don't go out of bounds
+        const segIndex = Math.min(seg, GPX.length - 2);
+        const A = GPX[segIndex], B = GPX[segIndex + 1];
+        const u = easeInOutQuad(t);
+        const pos = { x: A.x + (B.x - A.x)*u, y: A.y + (B.y - A.y)*u };
+        const dir = Math.atan2(B.y-A.y, B.x-A.x);
+
+        const stage = stageFromSeg(seg);
+        if(stage !== lastStage && t > 0.1){
+          console.log(`🎯 Stage transition: ${lastStage} → ${stage}`);
+          playChime();
+          lastStage = stage;
+        }
+
+        drawPhoton(pos, dir, stage);
+
+        // Render all stage labels - if at endpoint, light up all stages
+        if (atEndPoint) {
+          // Light up all stages when at the endpoint
+          STAGES.forEach((stageInfo) => {
+            const pt = GPX[stageInfo.index];
+            const text = `${stageInfo.icon} ${stageInfo.label}`;
+            drawStageLabel(ctx, pt.x, pt.y, text, 1.0); // Full brightness for all
+          });
+        } else {
+          renderStageLabels(ctx, stage);
+        }
+
+        const elapsedThisSeg = (t === 0) ? 0 : Math.max(0, (DWELL_MS - dwellLeft));
+        if (t > 0 || elapsedThisSeg > REVEAL_MS) updateLabels();
+        else Object.values(L).forEach(el => el.classList.remove('show'));
+
+        requestAnimationFrame(tick);
+      }
+
+      // Resize handling (keeps crisp canvas on mobile DPR)
+      function fit(){
+        const r = window.devicePixelRatio || 1;
+        const rect = container.getBoundingClientRect();
+        const w = Math.floor(rect.width);
+        const h = Math.floor(rect.height);
+        canvas.width = Math.round(w*r);
+        canvas.height = Math.round(h*r);
+        canvas.style.width = w+'px';
+        canvas.style.height = h+'px';
+
+        // Recompute pixel points using new canvas size
+        const toPxDyn = p => ({
+          x: PAD + p.x*(canvas.width - PAD*2),
+          y: PAD + p.y*(canvas.height - PAD*2)
+        });
+        for(let i=0;i<guide.length;i++){
+          GPX[i] = toPxDyn(guide[i]);
+        }
+        placeAllLabels();
+      }
+
+      new ResizeObserver(fit).observe(container);
+      fit();
+      requestAnimationFrame((n)=>{ last=n; tick(n); });
+    })();
+
+    // Smooth scrolling for navigation
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth' });
+        }
+      });
+    });
+
+    console.log('✅ Computronium exhibit loaded successfully');
+  </script>
+</body>
+</html>
