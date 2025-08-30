@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feature Subscriptions - The Current-See</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+      color: white;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 50px;
+    }
+    
+    .main-title {
+      font-size: 2.5rem;
+      font-weight: bold;
+      background: linear-gradient(135deg, #FFD700, #FFA500);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 15px;
+    }
+    
+    .subtitle {
+      font-size: 1.2rem;
+      color: #ccc;
+      margin-bottom: 30px;
+    }
+    
+    .status-notice {
+      background: rgba(0,204,51,0.1);
+      border: 1px solid #00cc33;
+      border-radius: 10px;
+      padding: 15px;
+      margin: 20px 0;
+      color: #00cc33;
+      text-align: center;
+    }
+    
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 25px;
+      margin: 40px 0;
+    }
+    
+    .feature-card {
+      background: linear-gradient(135deg, rgba(255,215,0,0.1), rgba(0,204,51,0.1));
+      border: 2px solid #00cc33;
+      border-radius: 15px;
+      padding: 25px;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    
+    .feature-card:hover {
+      transform: translateY(-3px);
+      border-color: #FFD700;
+      box-shadow: 0 8px 25px rgba(255,215,0,0.2);
+    }
+    
+    .feature-card.premium {
+      border-color: #FFD700;
+      background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,165,0,0.1));
+    }
+    
+    .feature-card.enterprise {
+      border-color: #7dd3fc;
+      background: linear-gradient(135deg, rgba(125,211,252,0.1), rgba(59,130,246,0.1));
+    }
+    
+    .feature-title {
+      font-size: 1.3rem;
+      font-weight: bold;
+      color: #FFD700;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .feature-price {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #00cc33;
+      margin-bottom: 15px;
+    }
+    
+    .feature-description {
+      color: #ccc;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+    
+    .feature-list {
+      list-style: none;
+      margin-bottom: 25px;
+    }
+    
+    .feature-list li {
+      color: #e0e0e0;
+      margin-bottom: 8px;
+      padding-left: 20px;
+      position: relative;
+    }
+    
+    .feature-list li::before {
+      content: "✅";
+      position: absolute;
+      left: 0;
+    }
+    
+    .subscribe-btn {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, #00cc33, #7dd3fc);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 1rem;
+    }
+    
+    .subscribe-btn:hover {
+      transform: scale(1.02);
+      box-shadow: 0 5px 15px rgba(0,204,51,0.4);
+    }
+    
+    .bundle-section {
+      background: rgba(0,0,0,0.3);
+      border: 2px solid #7dd3fc;
+      border-radius: 20px;
+      padding: 30px;
+      margin: 40px 0;
+      text-align: center;
+    }
+    
+    .bundle-title {
+      font-size: 1.8rem;
+      color: #7dd3fc;
+      margin-bottom: 15px;
+    }
+    
+    .savings-badge {
+      background: #FFD700;
+      color: #1a1a1a;
+      padding: 5px 15px;
+      border-radius: 20px;
+      font-weight: bold;
+      display: inline-block;
+      margin-bottom: 20px;
+    }
+    
+    .nav-links {
+      text-align: center;
+      margin-top: 40px;
+    }
+    
+    .nav-button {
+      background: rgba(0,204,51,0.2);
+      color: #00cc33;
+      border: 1px solid #00cc33;
+      padding: 10px 20px;
+      margin: 0 10px;
+      border-radius: 8px;
+      text-decoration: none;
+      display: inline-block;
+      transition: all 0.3s ease;
+    }
+    
+    .nav-button:hover {
+      background: rgba(0,204,51,0.4);
+      color: white;
+    }
+    
+    @media (max-width: 768px) {
+      .main-title { font-size: 2rem; }
+      .pricing-grid { grid-template-columns: 1fr; }
+      .container { padding: 20px 15px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1 class="main-title">Individual Feature Subscriptions</h1>
+      <p class="subtitle">Choose exactly the solar-powered features you need</p>
+      
+      <div class="status-notice">
+        <strong>📋 Current Status:</strong> Free Access provided - individual pricing implementation pending
+      </div>
+    </div>
+    
+    <!-- Individual Feature Pricing -->
+    <div class="pricing-grid">
+      <!-- TC-S AI Wallet -->
+      <div class="feature-card">
+        <h3 class="feature-title">🔑 TC-S AI Wallet</h3>
+        <div class="feature-price">$4.99<span style="font-size: 0.6em; color: #ccc;">/month</span></div>
+        <p class="feature-description">AI-powered wallet with Identity Anything technology</p>
+        <ul class="feature-list">
+          <li>Daily 1 SOLAR income</li>
+          <li>AI object identification</li>
+          <li>Energy footprint tracking</li>
+          <li>Secure transactions</li>
+        </ul>
+        <button class="subscribe-btn" onclick="selectFeature('wallet')">Subscribe to Wallet</button>
+      </div>
+      
+      <!-- Kid Solar AI Assistant -->
+      <div class="feature-card premium">
+        <h3 class="feature-title">🤖 Kid Solar AI Expert</h3>
+        <div class="feature-price">$9.99<span style="font-size: 0.6em; color: #ccc;">/month</span></div>
+        <p class="feature-description">Personal solar energy consultant powered by GPT-4</p>
+        <ul class="feature-list">
+          <li>24/7 energy consulting</li>
+          <li>Personalized solar tips</li>
+          <li>Energy optimization</li>
+          <li>Environmental impact analysis</li>
+        </ul>
+        <button class="subscribe-btn" onclick="selectFeature('ai-assistant')">Subscribe to AI Expert</button>
+      </div>
+      
+      <!-- Music Streaming -->
+      <div class="feature-card">
+        <h3 class="feature-title">🎵 Solar Music Collection</h3>
+        <div class="feature-price">$2.99<span style="font-size: 0.6em; color: #ccc;">/month</span></div>
+        <p class="feature-description">17-track collection including Voodoo Abundance series</p>
+        <ul class="feature-list">
+          <li>11 Music Now tracks</li>
+          <li>6 Voodoo Abundance tracks</li>
+          <li>High-quality streaming</li>
+          <li>Offline downloads</li>
+        </ul>
+        <button class="subscribe-btn" onclick="selectFeature('music')">Subscribe to Music</button>
+      </div>
+      
+      <!-- Generator Protocol -->
+      <div class="feature-card premium">
+        <h3 class="feature-title">⚡ Generator Protocol</h3>
+        <div class="feature-price">$19.99<span style="font-size: 0.6em; color: #ccc;">/month</span></div>
+        <p class="feature-description">Professional renewable energy tokenization system</p>
+        <ul class="feature-list">
+          <li>REC/Carbon Credit splits</li>
+          <li>Commissioner management</li>
+          <li>PPA automation</li>
+          <li>Full audit trail</li>
+        </ul>
+        <button class="subscribe-btn" onclick="selectFeature('generator')">Subscribe to Protocol</button>
+      </div>
+      
+      <!-- TC-SVR Gaming -->
+      <div class="feature-card">
+        <h3 class="feature-title">🎮 TC-SVR Gaming</h3>
+        <div class="feature-price">$7.99<span style="font-size: 0.6em; color: #ccc;">/month</span></div>
+        <p class="feature-description">Immersive solar-powered gaming experiences</p>
+        <ul class="feature-list">
+          <li>Gulliver's Solar Travels</li>
+          <li>VR compatibility</li>
+          <li>Educational gameplay</li>
+          <li>SOLAR token rewards</li>
+        </ul>
+        <button class="subscribe-btn" onclick="selectFeature('gaming')">Subscribe to Gaming</button>
+      </div>
+      
+      <!-- Network Commissioning -->
+      <div class="feature-card enterprise">
+        <h3 class="feature-title">🌐 Network Commissioning</h3>
+        <div class="feature-price">$49.99<span style="font-size: 0.6em; color: #ccc;">/month</span></div>
+        <p class="feature-description">Create branded token platforms for events and venues</p>
+        <ul class="feature-list">
+          <li>Custom token creation</li>
+          <li>Event integration</li>
+          <li>Venue partnerships</li>
+          <li>Revenue sharing</li>
+        </ul>
+        <button class="subscribe-btn" onclick="selectFeature('commissioning')">Subscribe to Commissioning</button>
+      </div>
+      
+      <!-- Content Creation -->
+      <div class="feature-card">
+        <h3 class="feature-title">🎬 TC-S Cast Anyone</h3>
+        <div class="feature-price">$12.99<span style="font-size: 0.6em; color: #ccc;">/month</span></div>
+        <p class="feature-description">AI-powered video creation and casting platform</p>
+        <ul class="feature-list">
+          <li>AI video generation</li>
+          <li>Virtual casting</li>
+          <li>Solar theme content</li>
+          <li>Social sharing</li>
+        </ul>
+        <button class="subscribe-btn" onclick="selectFeature('casting')">Subscribe to Cast</button>
+      </div>
+      
+      <!-- Solar Analytics -->
+      <div class="feature-card">
+        <h3 class="feature-title">📊 Energy Analytics Pro</h3>
+        <div class="feature-price">$14.99<span style="font-size: 0.6em; color: #ccc;">/month</span></div>
+        <p class="feature-description">Advanced solar generation and consumption tracking</p>
+        <ul class="feature-list">
+          <li>Real-time monitoring</li>
+          <li>Predictive analytics</li>
+          <li>ROI calculations</li>
+          <li>Export reports</li>
+        </ul>
+        <button class="subscribe-btn" onclick="selectFeature('analytics')">Subscribe to Analytics</button>
+      </div>
+    </div>
+    
+    <!-- Bundle Offers -->
+    <div class="bundle-section">
+      <h2 class="bundle-title">Bundle & Save</h2>
+      <div class="savings-badge">Save up to 40%</div>
+      <p style="color: #ccc; margin-bottom: 20px;">Combine multiple features for maximum value</p>
+      
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 30px;">
+        <div style="background: rgba(0,0,0,0.3); padding: 20px; border-radius: 10px;">
+          <h4 style="color: #FFD700; margin-bottom: 10px;">Solar Starter</h4>
+          <p style="color: #ccc; font-size: 0.9em; margin-bottom: 15px;">Wallet + Music + AI Expert</p>
+          <div style="color: #00cc33; font-weight: bold;">$15.99/mo <span style="text-decoration: line-through; color: #999;">$17.97</span></div>
+        </div>
+        
+        <div style="background: rgba(0,0,0,0.3); padding: 20px; border-radius: 10px;">
+          <h4 style="color: #FFD700; margin-bottom: 10px;">Solar Professional</h4>
+          <p style="color: #ccc; font-size: 0.9em; margin-bottom: 15px;">All features except Commissioning</p>
+          <div style="color: #00cc33; font-weight: bold;">$59.99/mo <span style="text-decoration: line-through; color: #999;">$72.93</span></div>
+        </div>
+        
+        <div style="background: rgba(0,0,0,0.3); padding: 20px; border-radius: 10px;">
+          <h4 style="color: #FFD700; margin-bottom: 10px;">Solar Enterprise</h4>
+          <p style="color: #ccc; font-size: 0.9em; margin-bottom: 15px;">Complete platform access</p>
+          <div style="color: #00cc33; font-weight: bold;">$99.99/mo <span style="text-decoration: line-through; color: #999;">$122.92</span></div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Navigation -->
+    <div class="nav-links">
+      <a href="/paygate.html" class="nav-button">← Back to Main Plans</a>
+      <a href="/index.html" class="nav-button">🏠 Homepage</a>
+      <a href="/page1-solar-intro.html" class="nav-button">🌟 Start Journey</a>
+    </div>
+  </div>
+  
+  <script>
+    function selectFeature(featureType) {
+      const features = {
+        'wallet': 'TC-S AI Wallet ($4.99/mo)',
+        'ai-assistant': 'Kid Solar AI Expert ($9.99/mo)', 
+        'music': 'Solar Music Collection ($2.99/mo)',
+        'generator': 'Generator Protocol ($19.99/mo)',
+        'gaming': 'TC-SVR Gaming ($7.99/mo)',
+        'commissioning': 'Network Commissioning ($49.99/mo)',
+        'casting': 'TC-S Cast Anyone ($12.99/mo)',
+        'analytics': 'Energy Analytics Pro ($14.99/mo)'
+      };
+      
+      alert(`🚀 Selected: ${features[featureType]}\n\n📋 Status: Free Access provided during development\n💳 Payment processing: Coming soon\n\n✅ You can access this feature immediately on the platform!`);
+    }
+  </script>
+</body>
+</html>
