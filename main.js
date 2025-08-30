@@ -126,6 +126,16 @@ const server = http.createServer(async (req, res) => {
     }
   }
   
+  if (pathname === '/paygate') {
+    const filePath = path.join(__dirname, 'public', 'paygate.html');
+    if (fs.existsSync(filePath)) {
+      const content = fs.readFileSync(filePath, 'utf8');
+      res.writeHead(200, { 'Content-Type': 'text/html' });
+      res.end(content);
+      return;
+    }
+  }
+  
   if (pathname === '/my-solar') {
     // Redirect to main platform solar tracking section
     res.writeHead(302, { 'Location': '/main-platform#solar-tracking' });
