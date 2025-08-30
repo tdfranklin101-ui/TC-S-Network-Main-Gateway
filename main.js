@@ -78,6 +78,54 @@ const server = http.createServer(async (req, res) => {
   
   console.log(`${new Date().toISOString()} - ${req.method} ${pathname}`);
 
+  // Route handling for pre-index pages
+  if (pathname === '/' || pathname === '/index.html') {
+    // Redirect to first page in sequence
+    res.writeHead(302, { 'Location': '/page1' });
+    res.end();
+    return;
+  }
+  
+  if (pathname === '/page1') {
+    const filePath = path.join(__dirname, 'public', 'page1-solar-intro.html');
+    if (fs.existsSync(filePath)) {
+      const content = fs.readFileSync(filePath, 'utf8');
+      res.writeHead(200, { 'Content-Type': 'text/html' });
+      res.end(content);
+      return;
+    }
+  }
+  
+  if (pathname === '/page2') {
+    const filePath = path.join(__dirname, 'public', 'page2-solar-live.html');
+    if (fs.existsSync(filePath)) {
+      const content = fs.readFileSync(filePath, 'utf8');
+      res.writeHead(200, { 'Content-Type': 'text/html' });
+      res.end(content);
+      return;
+    }
+  }
+  
+  if (pathname === '/page3') {
+    const filePath = path.join(__dirname, 'public', 'page3-features.html');
+    if (fs.existsSync(filePath)) {
+      const content = fs.readFileSync(filePath, 'utf8');
+      res.writeHead(200, { 'Content-Type': 'text/html' });
+      res.end(content);
+      return;
+    }
+  }
+  
+  if (pathname === '/main-platform') {
+    const filePath = path.join(__dirname, 'public', 'index.html');
+    if (fs.existsSync(filePath)) {
+      const content = fs.readFileSync(filePath, 'utf8');
+      res.writeHead(200, { 'Content-Type': 'text/html' });
+      res.end(content);
+      return;
+    }
+  }
+
   // Health check endpoint
   if (pathname === '/health') {
     const indexPath = path.join(__dirname, 'public', 'index.html');
