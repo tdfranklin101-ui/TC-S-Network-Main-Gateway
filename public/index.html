@@ -3229,8 +3229,11 @@
     }
 
     function stopAllMusic() {
+      console.log('🛑 Stop All Music button clicked');
+      
       // Immediate stop of any current audio
       if (currentAudio) {
+        console.log('🔇 Stopping current audio');
         currentAudio.pause();
         currentAudio.currentTime = 0;
         currentAudio = null;
@@ -3238,6 +3241,7 @@
       
       // Clean up preloaded audio
       if (nextAudioElement) {
+        console.log('🧹 Cleaning up preloaded audio');
         nextAudioElement = null;
       }
       
@@ -3245,9 +3249,11 @@
       isPlayingPlaylist = false;
       currentPlaylist = [];
       currentPlaylistIndex = 0;
+      console.log('📋 Playlist stopped and cleared');
       
       // Hide now playing display
       hideNowPlayingDisplay();
+      console.log('✅ All music stopped successfully');
       
       console.log('🛑 All music stopped - Safety override activated');
     }
@@ -3587,15 +3593,30 @@
     
     // Monazite dropdown toggle function
     function toggleMonaziteInfo() {
+      console.log('🔄 Toggling Monazite dropdown...');
       const content = document.getElementById('monaziteContent');
       const arrow = document.getElementById('monaziteArrow');
+      
+      if (!content) {
+        console.error('❌ Monazite content element not found');
+        return;
+      }
+      
+      if (!arrow) {
+        console.error('❌ Monazite arrow element not found');
+        return;
+      }
+      
+      console.log('📍 Current display state:', content.style.display);
       
       if (content.style.display === 'none' || content.style.display === '') {
         content.style.display = 'block';
         arrow.style.transform = 'rotate(180deg)';
+        console.log('✅ Monazite dropdown opened');
       } else {
         content.style.display = 'none';
         arrow.style.transform = 'rotate(0deg)';
+        console.log('✅ Monazite dropdown closed');
       }
     }
   </script>
