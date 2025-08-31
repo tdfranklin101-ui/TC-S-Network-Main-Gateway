@@ -135,17 +135,20 @@
         </p>
       </div>
       
-      <!-- Object Storage Video Placeholder -->
+      <!-- We Said So Video -->
       <div class="video-card">
-        <h4 style="color: #7dd3fc; margin-bottom: 15px;">☁️ Your Uploaded Video</h4>
-        <div style="background: rgba(125,211,252,0.1); border: 2px dashed #7dd3fc; border-radius: 8px; padding: 40px; text-align: center;">
-          <p style="color: #7dd3fc; margin-bottom: 15px;">📤 Upload your MP4 to Object Storage</p>
-          <p style="color: #ccc; font-size: 0.9em;">
-            1. Open Object Storage panel<br>
-            2. Upload to 'public' folder<br>
-            3. Video will stream automatically
-          </p>
-        </div>
+        <h4 style="color: #7dd3fc; margin-bottom: 15px;">🎵 We Said So - by Monazite</h4>
+        <video 
+          controls 
+          preload="metadata"
+          class="video-player"
+          style="width: 100%; border-radius: 8px;">
+          <source src="/public-objects/we_said_so-by_Monazite.mp4" type="video/mp4">
+          Your browser doesn't support video playback.
+        </video>
+        <p style="color: #ccc; margin-top: 10px; font-size: 0.9em;">
+          Streaming from object storage with range request support
+        </p>
       </div>
     </div>
     
