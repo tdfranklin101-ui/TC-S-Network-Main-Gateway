@@ -35,7 +35,7 @@
 </head>
 <body>
     <div class="test-container">
-        <h1>🎬 MP4 Streaming Compatibility Test</h1>
+        <h1>🎵 We Said So - MP4 Streaming Test</h1>
         
         <div class="status" id="status">
             Status: Loading...
@@ -52,7 +52,8 @@
             onerror="updateStatus('❌ Video load error: ' + this.error?.message)"
             onloadedmetadata="updateStatus('📊 Metadata loaded - Duration: ' + Math.round(this.duration) + 's')"
         >
-            <source src="/atomic-background.mp4" type="video/mp4">
+            <source src="/public-objects/we_said_so-by_Monazite.mp4" type="video/mp4">
+            <source src="/objects/uploads/we_said_so-by_Monazite.mp4" type="video/mp4">
             <p>Your browser does not support the video tag or MP4 format.</p>
         </video>
         
@@ -69,9 +70,9 @@
         </div>
         
         <div style="margin-top: 20px; font-size: 14px; color: #aaa;">
-            File: atomic-background.mp4 (3.4MB)<br>
-            Format: ISO Media, MP4 Base Media v1<br>
-            Test: Direct HTML5 video element
+            File: we_said_so-by_Monazite.mp4 (230.22MiB)<br>
+            Artist: Monazite • Format: MP4 HD<br>
+            Test: Direct HTML5 video element streaming
         </div>
     </div>
     
@@ -85,7 +86,7 @@
         }
         
         // Test video source availability
-        fetch('/atomic-background.mp4', { method: 'HEAD' })
+        fetch('/public-objects/we_said_so-by_Monazite.mp4', { method: 'HEAD' })
             .then(response => {
                 if (response.ok) {
                     updateStatus('📁 Video file found - Size: ' + response.headers.get('content-length') + ' bytes');
