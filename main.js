@@ -79,9 +79,9 @@ const server = http.createServer(async (req, res) => {
   
   console.log(`${new Date().toISOString()} - ${req.method} ${pathname}`);
 
-  // Route handling for pre-index pages
-  if (pathname === '/' || pathname === '/index.html') {
-    // Redirect to first page in sequence
+  // Route handling for main platform access
+  if (pathname === '/' && req.headers['user-agent'] && req.headers['user-agent'].includes('replit')) {
+    // Redirect to first page in sequence for preview
     res.writeHead(302, { 'Location': '/page1' });
     res.end();
     return;
