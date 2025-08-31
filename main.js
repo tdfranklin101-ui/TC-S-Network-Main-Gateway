@@ -294,23 +294,43 @@ const server = http.createServer(async (req, res) => {
         const contentType = response.headers.get('content-type') || 'video/mp4';
         const contentLength = response.headers.get('content-length');
         
-        // Handle range requests for video streaming
+        // Enhanced range request handling for streaming
         const range = req.headers.range;
         if (range && contentLength) {
-          console.log(`📺 Range request: ${range}`);
+          console.log(`📺 Range request: ${range} for ${filePath}`);
           
           const parts = range.replace(/bytes=/, "").split("-");
           const start = parseInt(parts[0], 10);
-          const end = parts[1] ? parseInt(parts[1], 10) : parseInt(contentLength) - 1;
+          const end = parts[1] ? parseInt(parts[1], 10) : Math.min(start + 1048576, parseInt(contentLength) - 1); // 1MB chunks
           const chunksize = (end - start) + 1;
           
-          res.writeHead(206, {
-            'Content-Range': `bytes ${start}-${end}/${contentLength}`,
-            'Accept-Ranges': 'bytes',
-            'Content-Length': chunksize,
-            'Content-Type': contentType,
-            'Cache-Control': 'public, max-age=3600'
+          // Make range request to Object Storage
+          const rangeResponse = await fetch(successUrl, {
+            headers: {
+              'Range': `bytes=${start}-${end}`
+            }
           });
+          
+          if (rangeResponse.status === 206 || rangeResponse.status === 200) {
+            res.writeHead(206, {
+              'Content-Range': `bytes ${start}-${end}/${contentLength}`,
+              'Accept-Ranges': 'bytes',
+              'Content-Length': chunksize,
+              'Content-Type': contentType,
+              'Cache-Control': 'public, max-age=3600'
+            });
+            rangeResponse.body.pipe(res);
+            console.log(`📺 Streamed chunk: ${start}-${end}/${contentLength} (${chunksize} bytes)`);
+          } else {
+            // Fallback to full response
+            res.writeHead(200, {
+              'Content-Type': contentType,
+              'Content-Length': contentLength,
+              'Accept-Ranges': 'bytes',
+              'Cache-Control': 'public, max-age=3600'
+            });
+            response.body.pipe(res);
+          }
         } else {
           res.writeHead(200, {
             'Content-Type': contentType,
@@ -318,11 +338,8 @@ const server = http.createServer(async (req, res) => {
             'Accept-Ranges': 'bytes',
             'Cache-Control': 'public, max-age=3600'
           });
+          response.body.pipe(res);
         }
-        
-        // Stream the response body
-        response.body.pipe(res);
-        console.log(`🎬 Object Storage: Streaming ${filePath} from ${successUrl} (${contentLength} bytes)`);
       } else {
         // Fallback to demo video or error
         res.writeHead(404, { 'Content-Type': 'text/plain' });

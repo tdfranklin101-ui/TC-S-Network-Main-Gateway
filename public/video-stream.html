@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>We Said So - Music Video | The Current-See</title>
+    
+    <!-- Video.js CSS for streaming -->
+    <link href="https://vjs.zencdn.net/8.6.1/video-js.css" rel="stylesheet">
+    
     <style>
         * {
             margin: 0;
@@ -165,31 +169,28 @@
             <div class="loading-text">🎬 Loading 230.22MiB Video...</div>
         </div>
         
-        <!-- Main Video Player -->
-        <video 
-            id="mainVideoPlayer"
-            class="video-player"
-            controls
-            preload="metadata"
-            width="1200"
+        <!-- Streaming Video Player with Video.js -->
+        <video-js 
+            id="streamingVideoPlayer"
+            class="vjs-default-skin video-player"
+            controls 
+            preload="none"
+            width="1200" 
             height="675"
-            poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='675'%3E%3Crect width='100%25' height='100%25' fill='%23000'/%3E%3Ctext x='50%25' y='45%25' font-family='Arial' font-size='48' fill='%23fff' text-anchor='middle'%3E🎵 WE SAID SO 🎵%3C/text%3E%3Ctext x='50%25' y='55%25' font-family='Arial' font-size='32' fill='%23ffaa00' text-anchor='middle'%3Eby Monazite%3C/text%3E%3Ctext x='50%25' y='65%25' font-family='Arial' font-size='24' fill='%2300ccff' text-anchor='middle'%3EOfficial Music Video%3C/text%3E%3C/svg%3E"
-            onloadstart="handleVideoLoadStart()"
-            oncanplay="handleVideoCanPlay()"
-            onloadedmetadata="handleVideoMetadata()"
-            onerror="handleVideoError()"
-            onplay="handleVideoPlay()"
-            onpause="handleVideoPause()">
+            poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='675'%3E%3Crect width='100%25' height='100%25' fill='%23000'/%3E%3Ctext x='50%25' y='45%25' font-family='Arial' font-size='48' fill='%23fff' text-anchor='middle'%3E🎵 WE SAID SO 🎵%3C/text%3E%3Ctext x='50%25' y='55%25' font-family='Arial' font-size='32' fill='%23ffaa00' text-anchor='middle'%3Eby Monazite%3C/text%3E%3Ctext x='50%25' y='65%25' font-family='Arial' font-size='24' fill='%2300ccff' text-anchor='middle'%3EStreaming Ready%3C/text%3E%3C/svg%3E"
+            data-setup='{"fluid": true, "responsive": true, "playbackRates": [0.5, 1, 1.25, 1.5, 2]}'>
             
             <!-- Object Storage Video Source -->
             <source src="/public-objects/we_Said_so_by_Monazite.mp4" type="video/mp4">
             
             <!-- Fallback Message -->
-            <p style="color: white; text-align: center; padding: 40px; font-size: 1.2rem;">
-                Your browser does not support HTML5 video.<br>
-                The "We Said So" music video by Monazite (230.22MiB) is available but cannot be played in this browser.
+            <p class="vjs-no-js">
+                To view this video please enable JavaScript, and consider upgrading to a web browser that
+                <a href="https://videojs.com/html5-video-support/" target="_blank">supports HTML5 video</a>.
+                <br><br>
+                The "We Said So" music video by Monazite (230.22MiB) requires a streaming-capable browser.
             </p>
-        </video>
+        </video-js>
         
         <!-- Video Information -->
         <div class="video-info">
@@ -200,30 +201,101 @@
         </div>
     </div>
     
+    <!-- Video.js JavaScript for streaming -->
+    <script src="https://vjs.zencdn.net/8.6.1/video.js"></script>
+    
     <script>
-        // Video event handlers
+        let player;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Video.js streaming player
+            player = videojs('streamingVideoPlayer', {
+                // Streaming optimizations
+                preload: 'none',
+                fluid: true,
+                responsive: true,
+                playbackRates: [0.5, 1, 1.25, 1.5, 2],
+                html5: {
+                    // Enable streaming and progressive download
+                    hls: {
+                        enableLowInitialPlaylist: true,
+                        smoothQualityChange: true
+                    }
+                },
+                // Advanced buffering for large files
+                techOrder: ['html5'],
+                sources: [{
+                    src: '/public-objects/we_Said_so_by_Monazite.mp4',
+                    type: 'video/mp4'
+                }]
+            });
+            
+            // Event handlers for streaming
+            player.ready(function() {
+                console.log('🎬 Streaming player initialized');
+                document.getElementById('loadingOverlay').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('loadingOverlay').style.display = 'none';
+                }, 500);
+            });
+            
+            player.on('loadstart', function() {
+                console.log('🎬 Streaming started');
+                document.getElementById('loadingOverlay').style.display = 'flex';
+            });
+            
+            player.on('canplay', function() {
+                console.log('✅ Stream ready to play');
+                document.getElementById('loadingOverlay').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('loadingOverlay').style.display = 'none';
+                }, 500);
+            });
+            
+            player.on('loadedmetadata', function() {
+                console.log('📊 Stream metadata loaded:', player.videoWidth() + 'x' + player.videoHeight());
+            });
+            
+            player.on('error', function() {
+                console.error('❌ Streaming error:', player.error());
+                document.getElementById('loadingOverlay').innerHTML = 
+                    '<div class="loading-text" style="color: #ff6666;">⚠️ Streaming Error<br><small>Checking Object Storage connection...</small></div>';
+            });
+            
+            player.on('play', function() {
+                console.log('▶️ Streaming playback started');
+            });
+            
+            player.on('pause', function() {
+                console.log('⏸️ Streaming paused');
+            });
+            
+            player.on('progress', function() {
+                const buffered = player.buffered();
+                if (buffered.length > 0) {
+                    const bufferedEnd = buffered.end(buffered.length - 1);
+                    const duration = player.duration();
+                    const percentage = (bufferedEnd / duration) * 100;
+                    console.log(`📡 Buffered: ${percentage.toFixed(1)}% (${bufferedEnd.toFixed(1)}s of ${duration.toFixed(1)}s)`);
+                }
+            });
+        });
+        
+        // Legacy video event handlers (compatibility)
         function handleVideoLoadStart() {
             console.log('🎬 Video loading started');
-            document.getElementById('loadingOverlay').style.display = 'flex';
         }
         
         function handleVideoCanPlay() {
             console.log('✅ Video ready to play');
-            document.getElementById('loadingOverlay').style.opacity = '0';
-            setTimeout(() => {
-                document.getElementById('loadingOverlay').style.display = 'none';
-            }, 500);
         }
         
         function handleVideoMetadata() {
-            const video = document.getElementById('mainVideoPlayer');
-            console.log('📊 Video metadata loaded:', video.videoWidth + 'x' + video.videoHeight);
+            console.log('📊 Video metadata loaded');
         }
         
         function handleVideoError() {
             console.error('❌ Video loading error');
-            document.getElementById('loadingOverlay').innerHTML = 
-                '<div class="loading-text" style="color: #ff6666;">⚠️ Video Loading Error<br><small>Trying to connect to Object Storage...</small></div>';
         }
         
         function handleVideoPlay() {
