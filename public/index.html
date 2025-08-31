@@ -992,17 +992,6 @@
                 <span style="color: #ff8c00; font-weight: bold;">♪</span>
               </button>
 
-              <!-- We Said So Video Link - YouTube -->
-              <a href="https://youtu.be/WgP9-ghAQJE" target="_blank" style="display: flex; align-items: center; text-decoration: none; padding: 12px; border-radius: 8px; background: linear-gradient(to right, rgba(255, 69, 0, 0.1), rgba(220, 20, 60, 0.1)); border: 1px solid rgba(255, 69, 0, 0.3); transition: all 0.3s ease; color: inherit; margin-bottom: 10px;">
-                <div style="background: linear-gradient(to right, #ff4500, #dc143c); width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-right: 15px;">
-                  <span style="color: white; font-weight: bold;">📺</span>
-                </div>
-                <div style="flex: 1; text-align: left;">
-                  <h4 style="margin: 0 0 5px 0; color: #ff4500;">Music Video on YouTube</h4>
-                  <p style="margin: 0; color: #555; font-size: 14px;">🎵 We Said So - by Monazite</p>
-                </div>
-                <span style="color: #ff4500; font-weight: bold;">▶️</span>
-              </a>
 
               <!-- Monazite Information Dropdown -->
               <div style="margin: 0 0 15px 0; border: 1px solid rgba(139, 69, 19, 0.3); border-radius: 8px; background: linear-gradient(to right, rgba(139, 69, 19, 0.05), rgba(160, 82, 45, 0.05));">
@@ -1605,10 +1594,6 @@
         <div style="font-size: 24px; margin-bottom: 5px;">📷</div>
         <div style="font-size: 12px; color: #666;">Camera</div>
       </div>
-      <div onclick="openVideo()" style="cursor: pointer; padding: 10px; border-radius: 15px; transition: all 0.2s;">
-        <div style="font-size: 24px; margin-bottom: 5px;">🎥</div>
-        <div style="font-size: 12px; color: #666;">Video</div>
-      </div>
       <div onclick="openPhotoLibrary()" style="cursor: pointer; padding: 10px; border-radius: 15px; transition: all 0.2s;">
         <div style="font-size: 24px; margin-bottom: 5px;">🖼️</div>
         <div style="font-size: 12px; color: #666;">Photos</div>
@@ -1760,13 +1745,6 @@
       input.click();
     }
     
-    function openVideo() {
-      closeMultimodalMenu();
-      const input = document.getElementById('didMultimodalInput');
-      input.accept = 'video/*';
-      input.capture = 'environment';
-      input.click();
-    }
     
     function openPhotoLibrary() {
       closeMultimodalMenu();
