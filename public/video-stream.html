@@ -196,8 +196,8 @@
         
         <!-- Video Header -->
         <div class="video-header">
-            <h1 class="video-title">🌀 ATOMIC STREAMING 🌀</h1>
-            <p class="video-subtitle">Professional Video Streaming • Buffer Testing</p>
+            <h1 class="video-title">🎬 MP4 STREAMING TEST 🎬</h1>
+            <p class="video-subtitle">Atomic Background Video • Compatibility Check</p>
         </div>
         
         <!-- Loading Overlay with Buffer Progress -->
@@ -226,9 +226,11 @@
             poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='675'%3E%3Crect width='100%25' height='100%25' fill='%23000'/%3E%3Ctext x='50%25' y='45%25' font-family='Arial' font-size='48' fill='%23fff' text-anchor='middle'%3E🎵 WE SAID SO 🎵%3C/text%3E%3Ctext x='50%25' y='55%25' font-family='Arial' font-size='32' fill='%23ffaa00' text-anchor='middle'%3Eby Monazite%3C/text%3E%3Ctext x='50%25' y='65%25' font-family='Arial' font-size='24' fill='%2300ccff' text-anchor='middle'%3EStreaming Ready%3C/text%3E%3C/svg%3E"
             data-setup='{"fluid": true, "responsive": true, "playbackRates": [0.5, 1, 1.25, 1.5, 2]}'>
             
-            <!-- Streaming Video Source -->
+            <!-- Streaming Video Source with proper codec specification -->
+            <source src="/atomic-background.mp4" type="video/mp4; codecs=&quot;avc1.42E01E, mp4a.40.2&quot;">
+            <!-- Standard MP4 fallback -->
             <source src="/atomic-background.mp4" type="video/mp4">
-            <!-- Fallback streaming source -->
+            <!-- External fallback streaming source -->
             <source src="https://cdn.pika.art/v1/a3861535-1929-4bc1-855e-d01d29872265/Vibrating_atoms_in_electron_clouds_-_show_atomic_decision_1_becomes_2,_becomes_4,_becomes_16,_become_seed1208339865.mp4" type="video/mp4">
             
             <!-- Fallback Message -->
