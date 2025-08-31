@@ -257,15 +257,76 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // Static files
+  // Handle object storage video streaming
+  if (pathname.startsWith('/public-objects/')) {
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(`
+    <html>
+      <body style="margin:0;padding:20px;background:#1a1a1a;color:white;font-family:system-ui">
+        <h2>🎥 Object Storage Video Player</h2>
+        <p>Your uploaded video from object storage will be accessible here once integration is complete.</p>
+        <p>Current setup: Object storage configured ✅</p>
+        <p>Next: Upload your video file to the 'public' folder in Object Storage panel</p>
+        <a href="/" style="color:#00cc33">← Back to Platform</a>
+      </body>
+    </html>
+    `);
+    console.log('📹 Object storage video request handled');
+    return;
+  }
+  
+  // Static files with enhanced video streaming
   let filePath = path.join(__dirname, 'public', pathname);
   
   // Try direct file first
   if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+    const ext = path.extname(filePath).toLowerCase();
+    const isVideo = ['.mp4', '.webm', '.mov'].includes(ext);
+    
+    // Enhanced video streaming with range requests
+    if (isVideo) {
+      const stats = fs.statSync(filePath);
+      const range = req.headers.range;
+      
+      if (range) {
+        // Parse range header
+        const parts = range.replace(/bytes=/, "").split("-");
+        const start = parseInt(parts[0], 10);
+        const end = parts[1] ? parseInt(parts[1], 10) : stats.size - 1;
+        const chunksize = (end - start) + 1;
+        
+        // Create read stream for the range
+        const stream = fs.createReadStream(filePath, { start, end });
+        
+        res.writeHead(206, {
+          'Content-Range': `bytes ${start}-${end}/${stats.size}`,
+          'Accept-Ranges': 'bytes',
+          'Content-Length': chunksize,
+          'Content-Type': 'video/mp4',
+          'Cache-Control': 'public, max-age=3600'
+        });
+        
+        stream.pipe(res);
+        console.log(`🎬 Streamed video range: ${pathname} (${start}-${end})`);
+      } else {
+        // Serve entire video
+        res.writeHead(200, {
+          'Content-Length': stats.size,
+          'Content-Type': 'video/mp4',
+          'Accept-Ranges': 'bytes',
+          'Cache-Control': 'public, max-age=3600'
+        });
+        
+        fs.createReadStream(filePath).pipe(res);
+        console.log(`🎬 Served full video: ${pathname}`);
+      }
+      return;
+    }
+    
+    // Regular static files
     const content = fs.readFileSync(filePath);
     
     // Set content type based on extension
-    const ext = path.extname(filePath).toLowerCase();
     const contentTypes = {
       '.html': 'text/html; charset=utf-8',
       '.css': 'text/css',
