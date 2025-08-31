@@ -1003,21 +1003,25 @@
                     📁 Now Playing: <code style="color: #00ffff;">we_Said_so_by_Monazite.mp4</code> • 230.22MiB
                   </p>
                   
-                  <!-- Simple Video Player -->
-                  <div id="videoContainer" style="width: 100%; max-width: 800px; margin: 20px auto; position: relative;">
+                  <!-- Enhanced Video Player with Screen Area -->
+                  <div id="videoContainer" style="width: 100%; max-width: 800px; margin: 20px auto; position: relative; background: #000; border-radius: 8px; overflow: hidden;">
                     <video 
                       id="musicVideoPlayer"
                       controls
                       preload="metadata"
-                      style="width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);"
-                      poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='450'%3E%3Crect width='100%25' height='100%25' fill='%23111'/%3E%3Ctext x='50%25' y='45%25' font-family='Arial' font-size='28' fill='%23fff' text-anchor='middle'%3E🎵 MUSIC VIDEO NOW 🎵%3C/text%3E%3Ctext x='50%25' y='55%25' font-family='Arial' font-size='20' fill='%23ffaa00' text-anchor='middle'%3E"We Said So" - by Monazite%3C/text%3E%3Ctext x='50%25' y='65%25' font-family='Arial' font-size='16' fill='%2300ccff' text-anchor='middle'%3EVideo Loading...%3C/text%3E%3C/svg%3E"
-                      onloadstart="console.log('🎬 Video loading started')"
-                      oncanplay="console.log('✅ Video ready to play')"
-                      onerror="handleVideoError(this)"
-                      onloadedmetadata="console.log('📊 Video metadata loaded')">
-                      <!-- Exact Object Storage path for We Said So music video -->
+                      width="800"
+                      height="450"
+                      style="width: 100%; height: auto; display: block; background: #000; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);"
+                      poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='450'%3E%3Crect width='100%25' height='100%25' fill='%23111'/%3E%3Ctext x='50%25' y='45%25' font-family='Arial' font-size='28' fill='%23fff' text-anchor='middle'%3E🎵 MUSIC VIDEO NOW 🎵%3C/text%3E%3Ctext x='50%25' y='55%25' font-family='Arial' font-size='20' fill='%23ffaa00' text-anchor='middle'%3E"We Said So" - by Monazite%3C/text%3E%3Ctext x='50%25' y='65%25' font-family='Arial' font-size='16' fill='%2300ccff' text-anchor='middle'%3EClick Play to Start%3C/text%3E%3C/svg%3E"
+                      onloadstart="console.log('🎬 Video loading started'); showVideoStatus('Loading video...')"
+                      oncanplay="console.log('✅ Video ready to play'); showVideoStatus('Ready to play'); this.style.minHeight='450px';"
+                      onerror="console.error('❌ Video error:', this.error); handleVideoError(this)"
+                      onloadedmetadata="console.log('📊 Video metadata loaded:', this.videoWidth + 'x' + this.videoHeight); this.style.minHeight='450px';"
+                      onplay="console.log('▶️ Video playing'); showVideoStatus('Playing');"
+                      onpause="console.log('⏸️ Video paused'); showVideoStatus('Paused');">
+                      <!-- Object Storage path for We Said So music video -->
                       <source src="/public-objects/we_Said_so_by_Monazite.mp4" type="video/mp4">
-                      Your browser does not support the video tag.
+                      <p style="color: white; text-align: center; padding: 20px;">Your browser does not support HTML5 video. The "We Said So - by Monazite" music video (230.22MiB) is available but cannot be played in this browser.</p>
                     </video>
                     
                     <!-- Expand Button -->
@@ -3545,9 +3549,23 @@
       console.log('📺 Using demo video for streaming test');
     }
 
+    // Video status display function
+    function showVideoStatus(status) {
+      console.log('📺 Video status:', status);
+      // Could add visual status indicator here if needed
+    }
+    
     // Initialize persistent display on page load
     document.addEventListener('DOMContentLoaded', function() {
       restorePlaybackDisplay();
+      
+      // Ensure video player has proper screen area
+      const video = document.getElementById('musicVideoPlayer');
+      if (video) {
+        video.style.minHeight = '450px';
+        video.style.background = '#000';
+        console.log('📺 Video player screen area initialized');
+      }
     });
     
     // Restore display when user returns from another tab

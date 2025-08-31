@@ -261,26 +261,73 @@ const server = http.createServer(async (req, res) => {
   // Handle object storage public files
   if (pathname.startsWith('/public-objects/')) {
     const filePath = pathname.replace('/public-objects/', '');
+    console.log(`🎬 Requesting Object Storage file: ${filePath}`);
     
     try {
-      const response = await fetch(`http://127.0.0.1:1106/object-storage/object/${process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID}/public/${filePath}`);
+      // Try multiple paths in Object Storage
+      const possiblePaths = [
+        `http://127.0.0.1:1106/object-storage/object/${process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID}/public/${filePath}`,
+        `http://127.0.0.1:1106/object-storage/object/${process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID}/${filePath}`,
+        `http://127.0.0.1:1106/object-storage/object/replit-objstore-f95b4cf3-0db7-40d1-9680-54f5b997ed65/public/${filePath}`,
+        `http://127.0.0.1:1106/object-storage/object/replit-objstore-f95b4cf3-0db7-40d1-9680-54f5b997ed65/${filePath}`
+      ];
       
-      if (response.ok) {
-        // Forward all headers from Object Storage
-        res.writeHead(response.status, {
-          'Content-Type': response.headers.get('content-type') || 'video/mp4',
-          'Content-Length': response.headers.get('content-length'),
-          'Accept-Ranges': 'bytes',
-          'Cache-Control': 'public, max-age=3600'
-        });
+      let response = null;
+      let successUrl = null;
+      
+      for (const url of possiblePaths) {
+        try {
+          console.log(`🔍 Trying: ${url}`);
+          response = await fetch(url);
+          if (response.ok) {
+            successUrl = url;
+            console.log(`✅ Found video at: ${url}`);
+            break;
+          }
+        } catch (err) {
+          console.log(`❌ Failed: ${url} - ${err.message}`);
+          continue;
+        }
+      }
+      
+      if (response && response.ok) {
+        const contentType = response.headers.get('content-type') || 'video/mp4';
+        const contentLength = response.headers.get('content-length');
+        
+        // Handle range requests for video streaming
+        const range = req.headers.range;
+        if (range && contentLength) {
+          console.log(`📺 Range request: ${range}`);
+          
+          const parts = range.replace(/bytes=/, "").split("-");
+          const start = parseInt(parts[0], 10);
+          const end = parts[1] ? parseInt(parts[1], 10) : parseInt(contentLength) - 1;
+          const chunksize = (end - start) + 1;
+          
+          res.writeHead(206, {
+            'Content-Range': `bytes ${start}-${end}/${contentLength}`,
+            'Accept-Ranges': 'bytes',
+            'Content-Length': chunksize,
+            'Content-Type': contentType,
+            'Cache-Control': 'public, max-age=3600'
+          });
+        } else {
+          res.writeHead(200, {
+            'Content-Type': contentType,
+            'Content-Length': contentLength,
+            'Accept-Ranges': 'bytes',
+            'Cache-Control': 'public, max-age=3600'
+          });
+        }
         
         // Stream the response body
         response.body.pipe(res);
-        console.log(`🎬 Object Storage: Served ${filePath} (${response.headers.get('content-length')} bytes)`);
+        console.log(`🎬 Object Storage: Streaming ${filePath} from ${successUrl} (${contentLength} bytes)`);
       } else {
+        // Fallback to demo video or error
         res.writeHead(404, { 'Content-Type': 'text/plain' });
         res.end(`Object Storage file not found: ${filePath}`);
-        console.log(`❌ Object Storage: File not found - ${filePath}`);
+        console.log(`❌ Object Storage: All paths failed for ${filePath}`);
       }
     } catch (error) {
       res.writeHead(500, { 'Content-Type': 'text/plain' });
