@@ -53,6 +53,11 @@
       50% { background-position: 100% 50%; }
       100% { background-position: 0% 50%; }
     }
+    
+    @keyframes colorScan {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
   </style>
 
   <!-- Network Commissioning Message Block -->
@@ -769,50 +774,6 @@
                 </button>
               </div>
 
-              <!-- Music Video Now - TV Test Pattern Style -->
-              <div style="background: linear-gradient(90deg, #ff0000 0%, #ff8c00 14.28%, #ffff00 28.56%, #00ff00 42.84%, #00ffff 57.12%, #0000ff 71.4%, #ff00ff 85.68%, #ffffff 100%); background-size: 100% 8px; background-repeat: repeat-y; border: 4px solid #000; border-radius: 8px; padding: 25px; margin: 20px 0; text-align: center; position: relative;">
-                <!-- TV Static Overlay -->
-                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: repeating-linear-gradient(0deg, transparent 0px, rgba(255,255,255,0.03) 1px, transparent 2px), repeating-linear-gradient(90deg, transparent 0px, rgba(0,0,0,0.03) 1px, transparent 2px); border-radius: 4px;"></div>
-                
-                <!-- Test Pattern Background -->
-                <div style="position: absolute; top: 4px; left: 4px; right: 4px; bottom: 4px; background: #000; border-radius: 4px;"></div>
-                
-                <!-- Content Layer -->
-                <div style="position: relative; z-index: 2;">
-                  <h3 style="margin: 0 0 15px 0; color: #fff; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 10px; text-shadow: 2px 2px 4px #000; font-family: 'Courier New', monospace; letter-spacing: 2px;">
-                    📺 MUSIC VIDEO NOW 📺
-                  </h3>
-                  <p style="margin: 0 0 15px 0; color: #ffff00; font-size: 14px; text-shadow: 1px 1px 2px #000; font-family: 'Courier New', monospace;">
-                    BROADCASTING: We Said So - by Monazite
-                  </p>
-                  
-                  <!-- TV Frame -->
-                  <div style="max-width: 800px; margin: 0 auto; background: #333; padding: 15px; border-radius: 20px; border: 6px solid #666; box-shadow: inset 0 0 20px #000, 0 0 30px rgba(255,255,255,0.1);">
-                    <!-- Screen Bezel -->
-                    <div style="background: #000; padding: 10px; border-radius: 10px; border: 2px solid #444;">
-                      <video 
-                        controls 
-                        autoplay
-                        muted
-                        preload="auto"
-                        poster="/img/we-said-so-thumbnail.jpg"
-                        style="width: 100%; height: auto; display: block; border-radius: 6px; filter: contrast(1.1) saturate(1.2);">
-                        <source src="/public-objects/we_said_so-by_Monazite.mp4" type="video/mp4">
-                        📺 TV SIGNAL NOT AVAILABLE 📺
-                      </video>
-                    </div>
-                    
-                    <!-- TV Brand/Model -->
-                    <div style="text-align: center; margin-top: 8px;">
-                      <span style="color: #888; font-size: 10px; font-family: 'Courier New', monospace;">CURRENT-SEE TV MODEL TC-S2025</span>
-                    </div>
-                  </div>
-                  
-                  <p style="margin: 15px 0 0 0; color: #00ffff; font-size: 11px; font-style: italic; font-family: 'Courier New', monospace; text-shadow: 1px 1px 2px #000;">
-                    ◉ LIVE TRANSMISSION • SOLAR-POWERED BROADCAST • HD QUALITY ◉
-                  </p>
-                </div>
-              </div>
               
               <!-- Voodoo Collection Section -->
               <div id="voodoo" style="scroll-margin-top: 80px;"></div>
@@ -1021,6 +982,69 @@
                 </div>
                 <span style="color: #ff8c00; font-weight: bold;">♪</span>
               </button>
+
+              <!-- Music Video Now - TV Test Pattern Style (Right after "We Said So" track) -->
+              <div style="background: linear-gradient(90deg, #ff0000 0%, #ff8c00 14.28%, #ffff00 28.56%, #00ff00 42.84%, #00ffff 57.12%, #0000ff 71.4%, #ff00ff 85.68%, #ffffff 100%); background-size: 100% 8px; background-repeat: repeat-y; border: 4px solid #000; border-radius: 8px; padding: 25px; margin: 15px 0; text-align: center; position: relative;">
+                <!-- TV Static Overlay -->
+                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: repeating-linear-gradient(0deg, transparent 0px, rgba(255,255,255,0.03) 1px, transparent 2px), repeating-linear-gradient(90deg, transparent 0px, rgba(0,0,0,0.03) 1px, transparent 2px); border-radius: 4px;"></div>
+                
+                <!-- Test Pattern Background -->
+                <div style="position: absolute; top: 4px; left: 4px; right: 4px; bottom: 4px; background: #000; border-radius: 4px;"></div>
+                
+                <!-- Content Layer -->
+                <div style="position: relative; z-index: 2;">
+                  <h3 style="margin: 0 0 15px 0; color: #fff; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 10px; text-shadow: 2px 2px 4px #000; font-family: 'Courier New', monospace; letter-spacing: 2px;">
+                    📺 MUSIC VIDEO NOW 📺
+                  </h3>
+                  <p style="margin: 0 0 15px 0; color: #ffff00; font-size: 14px; text-shadow: 1px 1px 2px #000; font-family: 'Courier New', monospace;">
+                    BROADCASTING: We Said So - by Monazite
+                  </p>
+                  
+                  <!-- TV Frame -->
+                  <div style="max-width: 900px; margin: 0 auto; background: #333; padding: 12px; border-radius: 20px; border: 6px solid #666; box-shadow: inset 0 0 20px #000, 0 0 30px rgba(255,255,255,0.1);">
+                    <!-- Screen Bezel -->
+                    <div style="background: #000; padding: 8px; border-radius: 10px; border: 2px solid #444;">
+                      <!-- Large TV Screen Display -->
+                      <div style="width: 100%; height: 450px; background: #000; border-radius: 6px; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #fff; font-family: 'Courier New', monospace; position: relative; overflow: hidden;">
+                        <!-- Test Pattern Animation -->
+                        <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: repeating-linear-gradient(45deg, #ff0000 0px, #ff8c00 40px, #ffff00 80px, #00ff00 120px, #00ffff 160px, #0000ff 200px, #ff00ff 240px, #ffffff 280px); opacity: 0.1; animation: colorScan 8s linear infinite;"></div>
+                        
+                        <!-- Center Display -->
+                        <div style="text-align: center; z-index: 2; position: relative;">
+                          <div style="font-size: 24px; font-weight: bold; margin-bottom: 20px; text-shadow: 2px 2px 4px #000;">
+                            🎵 MUSIC VIDEO NOW 🎵
+                          </div>
+                          <div style="font-size: 18px; color: #ffff00; margin-bottom: 15px; text-shadow: 1px 1px 2px #000;">
+                            "We Said So" - by Monazite
+                          </div>
+                          <div style="font-size: 14px; color: #00ffff; margin-bottom: 20px;">
+                            ◉ LIVE TRANSMISSION ◉
+                          </div>
+                          
+                          <!-- Play Button -->
+                          <button onclick="alert('Video will be available once object storage is configured with the video file')" style="background: linear-gradient(to right, #ff8c00, #daa520); color: white; border: none; padding: 15px 30px; border-radius: 25px; font-weight: bold; cursor: pointer; font-size: 16px; transition: all 0.3s ease; box-shadow: 0 4px 8px rgba(255,140,0,0.3);">
+                            ▶️ PLAY VIDEO
+                          </button>
+                        </div>
+                        
+                        <!-- Corner Info -->
+                        <div style="position: absolute; bottom: 10px; right: 10px; font-size: 10px; color: #888;">
+                          TC-S TV
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- TV Brand/Model -->
+                    <div style="text-align: center; margin-top: 8px;">
+                      <span style="color: #888; font-size: 10px; font-family: 'Courier New', monospace;">CURRENT-SEE TV MODEL TC-S2025</span>
+                    </div>
+                  </div>
+                  
+                  <p style="margin: 15px 0 0 0; color: #00ffff; font-size: 11px; font-style: italic; font-family: 'Courier New', monospace; text-shadow: 1px 1px 2px #000;">
+                    ◉ LIVE TRANSMISSION • SOLAR-POWERED BROADCAST • HD QUALITY ◉
+                  </p>
+                </div>
+              </div>
               
 
             </div>
