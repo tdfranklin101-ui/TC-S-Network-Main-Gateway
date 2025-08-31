@@ -72,6 +72,48 @@ console.log('🚀 Starting Current-See Deployment Server...');
 const server = http.createServer(async (req, res) => {
   const pathname = new URL(req.url, `http://${req.headers.host}`).pathname;
   
+  // Handle object storage public files
+  if (pathname.startsWith('/public-objects/')) {
+    const filePath = pathname.replace('/public-objects/', '');
+    const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
+    
+    if (!bucketId) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Object storage not configured' }));
+      return;
+    }
+    
+    try {
+      // Construct the public object URL
+      const objectUrl = `https://storage.googleapis.com/${bucketId}/public/${filePath}`;
+      
+      // Fetch the file from object storage
+      const response = await fetch(objectUrl);
+      if (!response.ok) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Video file not found in object storage' }));
+        return;
+      }
+      
+      // Set appropriate headers for video streaming
+      res.writeHead(200, {
+        'Content-Type': response.headers.get('content-type') || 'video/mp4',
+        'Content-Length': response.headers.get('content-length'),
+        'Accept-Ranges': 'bytes',
+        'Cache-Control': 'public, max-age=3600'
+      });
+      
+      // Stream the response
+      response.body.pipe(res);
+      return;
+    } catch (error) {
+      console.error('Error serving object storage file:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Error accessing object storage' }));
+      return;
+    }
+  }
+  
   // Prevent caching
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.setHeader('Pragma', 'no-cache');

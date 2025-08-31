@@ -139,12 +139,14 @@
             preload="metadata"
             poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='675'%3E%3Crect width='100%25' height='100%25' fill='%23000'/%3E%3Ctext x='50%25' y='45%25' font-family='Arial' font-size='48' fill='%23fff' text-anchor='middle'%3E🎵 WE SAID SO 🎵%3C/text%3E%3Ctext x='50%25' y='55%25' font-family='Arial' font-size='32' fill='%23ffaa00' text-anchor='middle'%3Eby Monazite%3C/text%3E%3Ctext x='50%25' y='65%25' font-family='Arial' font-size='24' fill='%2300ccff' text-anchor='middle'%3EClick to Play%3C/text%3E%3C/svg%3E">
             
-            <!-- Available video file (atomic background as placeholder) -->
-            <source src="/atomic-background.mp4" type="video/mp4">
-            <!-- Try other potential paths for We Said So -->
+            <!-- Primary object storage paths for We Said So video -->
+            <source src="/public-objects/we_said_so_by_Monazite.mp4" type="video/mp4">
+            <source src="/public-objects/WeSaidSo_Monazite.mp4" type="video/mp4">
+            <source src="/objects/uploads/we_said_so_by_Monazite.mp4" type="video/mp4">
+            <!-- Fallback paths -->
             <source src="/we_said_so-by_Monazite.mp4" type="video/mp4">
-            <source src="/static/we_said_so-by_Monazite.mp4" type="video/mp4">
-            <source src="/public/we_said_so-by_Monazite.mp4" type="video/mp4">
+            <!-- Atomic background as final fallback -->
+            <source src="/atomic-background.mp4" type="video/mp4">
             
             <!-- Fallback Message -->
             <p style="color: #ff4444; text-align: center; padding: 20px; background: rgba(0,0,0,0.8); border-radius: 10px;">
@@ -159,11 +161,14 @@
         <!-- Video Information & Status -->
         <div class="video-info">
             <p style="color: #00ffff; font-size: 14px; margin: 0;">
-                📁 <strong>File:</strong> we_said_so-by_Monazite.mp4 • <strong>Size:</strong> 230.22MiB<br>
-                🎬 <strong>Artist:</strong> Monazite • <strong>Quality:</strong> HD Music Video
+                📁 <strong>File:</strong> we_said_so_by_Monazite.mp4 • <strong>Size:</strong> 230.22MiB<br>
+                🎬 <strong>Artist:</strong> Monazite • <strong>Quality:</strong> HD Music Video with Audio
             </p>
             <div id="statusDisplay" class="status-display">
                 Status: Initializing...
+            </div>
+            <div id="uploadHint" style="margin-top: 10px; padding: 10px; background: rgba(255,165,0,0.1); border: 1px solid rgba(255,165,0,0.3); border-radius: 8px; font-size: 12px; color: #ffaa00;">
+                💡 <strong>Upload Tip:</strong> To upload the "We Said So" video file, use the Object Storage panel in your workspace and upload to the <code>public</code> folder with the filename <code>we_said_so_by_Monazite.mp4</code>
             </div>
         </div>
     </div>
@@ -244,12 +249,24 @@
                 
                 // Test video source availability
                 const sources = video.querySelectorAll('source');
+                let foundWesSaidSo = false;
+                
                 sources.forEach((source, index) => {
                     fetch(source.src, { method: 'HEAD' })
                         .then(response => {
                             if (response.ok) {
                                 console.log(`✅ Source ${index + 1} available:`, source.src);
-                                updateStatus(`📁 Found video source ${index + 1}`);
+                                if (source.src.includes('we_said_so') && !foundWesSaidSo) {
+                                    foundWesSaidSo = true;
+                                    updateStatus(`🎵 "We Said So" video found and ready!`);
+                                    // Hide upload hint when video is found
+                                    const uploadHint = document.getElementById('uploadHint');
+                                    if (uploadHint) {
+                                        uploadHint.style.display = 'none';
+                                    }
+                                } else if (index === 0) {
+                                    updateStatus(`📁 Found video source ${index + 1}`);
+                                }
                             } else {
                                 console.log(`❌ Source ${index + 1} not found:`, source.src);
                             }
@@ -258,6 +275,13 @@
                             console.log(`❌ Source ${index + 1} error:`, source.src, error);
                         });
                 });
+                
+                // Show upload instructions if We Said So video not found after checking all sources
+                setTimeout(() => {
+                    if (!foundWesSaidSo) {
+                        updateStatus(`📋 Ready for "We Said So" video upload`);
+                    }
+                }, 2000);
             }
         });
     </script>
