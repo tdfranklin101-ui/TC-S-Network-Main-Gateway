@@ -1000,7 +1000,7 @@
                     BROADCASTING: We Said So - by Monazite
                   </p>
                   <p style="margin: 0 0 10px 0; color: #00ff00; font-size: 12px; text-shadow: 1px 1px 2px #000; font-family: 'Courier New', monospace;">
-                    📁 Playing: <code style="color: #00ffff;">Atomic Animation Demo</code> (Upload "we_said_so-by_Monazite.mp4" for music video)
+                    📁 Ready for: <code style="color: #00ffff;">we_said_so-by_Monazite.mp4</code> via Object Storage
                   </p>
                   
                   <!-- Simple Video Player -->
@@ -1015,13 +1015,13 @@
                       oncanplay="console.log('✅ Video ready to play')"
                       onerror="handleVideoError(this)"
                       onloadedmetadata="console.log('📊 Video metadata loaded')">
-                      <!-- Available videos in order of preference -->
-                      <source src="/attached_assets/we_said_so-by_Monazite.mp4" type="video/mp4">
+                      <!-- Primary path for We Said So music video -->
                       <source src="/public-objects/we_said_so-by_Monazite.mp4" type="video/mp4">
-                      <!-- Use atomic animation as demo -->
-                      <source src="/attached_assets/Vibrating_atoms_in_electron_clouds_-_show_atomic_decision_1_becomes_2,_becomes_4,_becomes_16,_become_seed1208339865_1755103754736.MP4" type="video/mp4">
-                      <!-- Working demo fallback -->
-                      <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4">
+                      <source src="/public-objects/we-said-so-by-monazite.mp4" type="video/mp4">
+                      <source src="/public-objects/videos/we_said_so-by_Monazite.mp4" type="video/mp4">
+                      <!-- Direct public access attempt -->
+                      <source src="/we_said_so-by_Monazite.mp4" type="video/mp4">
+                      <source src="/videos/we_said_so-by_Monazite.mp4" type="video/mp4">
                       Your browser does not support the video tag.
                     </video>
                     
