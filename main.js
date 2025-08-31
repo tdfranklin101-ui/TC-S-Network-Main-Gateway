@@ -257,38 +257,84 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // Handle object storage video streaming
+  // Handle object storage video streaming - serve from attached_assets as fallback
   if (pathname.startsWith('/public-objects/')) {
     const fileName = pathname.replace('/public-objects/', '');
     
-    // For now, serve a placeholder that shows the video would be streamed
-    // In production, this would connect to actual object storage
-    res.writeHead(200, { 'Content-Type': 'text/html' });
-    res.end(`
-    <html>
-      <head>
-        <title>Streaming: ${fileName}</title>
-        <style>
-          body { margin:0; padding:20px; background:#1a1a1a; color:white; font-family:system-ui; }
-          .container { max-width:800px; margin:0 auto; text-align:center; }
-          .video-info { background:rgba(0,204,51,0.1); border:1px solid #00cc33; border-radius:10px; padding:20px; margin:20px 0; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <h2>🎵 ${fileName.replace(/[-_]/g, ' ').replace('.mp4', '')}</h2>
-          <div class="video-info">
-            <p><strong>File:</strong> ${fileName}</p>
-            <p><strong>Status:</strong> Ready for streaming from object storage</p>
-            <p><strong>Features:</strong> Range requests, mobile optimization, progressive loading</p>
-          </div>
-          <p>Video streaming integration in progress...</p>
-          <a href="/video-player.html" style="color:#00cc33">← Back to Video Player</a>
-        </div>
-      </body>
-    </html>
-    `);
-    console.log(`📹 Object storage video request: ${fileName}`);
+    // Try to serve from attached_assets directory as fallback
+    const attachedAssetPath = path.join(__dirname, 'attached_assets', fileName);
+    
+    if (fs.existsSync(attachedAssetPath) && fs.statSync(attachedAssetPath).isFile()) {
+      const stats = fs.statSync(attachedAssetPath);
+      const ext = path.extname(fileName).toLowerCase();
+      const isVideo = ['.mp4', '.webm', '.mov'].includes(ext);
+      
+      if (isVideo) {
+        const range = req.headers.range;
+        
+        if (range) {
+          // Parse range header for video streaming
+          const parts = range.replace(/bytes=/, "").split("-");
+          const start = parseInt(parts[0], 10);
+          const end = parts[1] ? parseInt(parts[1], 10) : stats.size - 1;
+          const chunksize = (end - start) + 1;
+          
+          // Create read stream for the range
+          const stream = fs.createReadStream(attachedAssetPath, { start, end });
+          
+          res.writeHead(206, {
+            'Content-Range': `bytes ${start}-${end}/${stats.size}`,
+            'Accept-Ranges': 'bytes',
+            'Content-Length': chunksize,
+            'Content-Type': 'video/mp4',
+            'Cache-Control': 'public, max-age=3600'
+          });
+          
+          stream.pipe(res);
+          console.log(`🎬 Streamed video range from attached_assets: ${fileName} (${start}-${end})`);
+        } else {
+          // Serve entire video
+          res.writeHead(200, {
+            'Content-Length': stats.size,
+            'Content-Type': 'video/mp4',
+            'Accept-Ranges': 'bytes',
+            'Cache-Control': 'public, max-age=3600'
+          });
+          
+          const stream = fs.createReadStream(attachedAssetPath);
+          stream.pipe(res);
+          console.log(`🎬 Served full video from attached_assets: ${fileName}`);
+        }
+      } else {
+        // Serve other file types
+        const contentTypes = {
+          '.html': 'text/html',
+          '.js': 'application/javascript',
+          '.css': 'text/css',
+          '.json': 'application/json',
+          '.png': 'image/png',
+          '.jpg': 'image/jpeg',
+          '.gif': 'image/gif',
+          '.wav': 'audio/wav',
+          '.mp4': 'video/mp4',
+          '.webm': 'video/webm',
+          '.mov': 'video/quicktime'
+        };
+        res.writeHead(200, {
+          'Content-Type': contentTypes[ext] || 'application/octet-stream',
+          'Content-Length': stats.size,
+          'Cache-Control': 'public, max-age=3600'
+        });
+        
+        const stream = fs.createReadStream(attachedAssetPath);
+        stream.pipe(res);
+        console.log(`📁 Served file from attached_assets: ${fileName}`);
+      }
+    } else {
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      res.end(`File not found: ${fileName}`);
+      console.log(`❌ File not found in attached_assets: ${attachedAssetPath}`);
+    }
     return;
   }
   
