@@ -1006,7 +1006,7 @@
 
               <!-- Monazite Information Dropdown -->
               <div style="margin: 0 0 15px 0; border: 1px solid rgba(139, 69, 19, 0.3); border-radius: 8px; background: linear-gradient(to right, rgba(139, 69, 19, 0.05), rgba(160, 82, 45, 0.05));">
-                <button id="monaziteToggle" onclick="toggleMonaziteInfo()" style="width: 100%; padding: 12px; background: none; border: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; color: inherit;">
+                <button id="monaziteToggle" onclick="console.log('Button clicked!'); toggleMonaziteInfo();" style="width: 100%; padding: 12px; background: none; border: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; color: inherit;">
                   <div style="display: flex; align-items: center;">
                     <div style="background: linear-gradient(to right, #8B4513, #A0522D); width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-right: 15px;">
                       <span style="color: white; font-weight: bold;">⛏️</span>
@@ -3591,34 +3591,48 @@
       restorePlaybackDisplay();
     });
     
-    // Monazite dropdown toggle function
-    function toggleMonaziteInfo() {
-      console.log('🔄 Toggling Monazite dropdown...');
-      const content = document.getElementById('monaziteContent');
-      const arrow = document.getElementById('monaziteArrow');
+    // Monazite dropdown toggle function - Enhanced version
+    window.toggleMonaziteInfo = function() {
+      console.log('🔄 MONAZITE BUTTON CLICKED - Starting toggle...');
       
-      if (!content) {
-        console.error('❌ Monazite content element not found');
-        return;
+      try {
+        const content = document.getElementById('monaziteContent');
+        const arrow = document.getElementById('monaziteArrow');
+        
+        console.log('🔍 Elements found:', {
+          content: !!content,
+          arrow: !!arrow
+        });
+        
+        if (!content) {
+          console.error('❌ Monazite content element not found');
+          alert('Dropdown content missing - please refresh page');
+          return;
+        }
+        
+        if (!arrow) {
+          console.error('❌ Monazite arrow element not found');
+          return;
+        }
+        
+        const currentDisplay = window.getComputedStyle(content).display;
+        console.log('📍 Current display state:', currentDisplay);
+        
+        if (currentDisplay === 'none') {
+          content.style.display = 'block';
+          arrow.style.transform = 'rotate(180deg)';
+          console.log('✅ MONAZITE DROPDOWN OPENED');
+        } else {
+          content.style.display = 'none';
+          arrow.style.transform = 'rotate(0deg)';
+          console.log('✅ MONAZITE DROPDOWN CLOSED');
+        }
+        
+      } catch (error) {
+        console.error('❌ Error in toggleMonaziteInfo:', error);
+        alert('Dropdown error: ' + error.message);
       }
-      
-      if (!arrow) {
-        console.error('❌ Monazite arrow element not found');
-        return;
-      }
-      
-      console.log('📍 Current display state:', content.style.display);
-      
-      if (content.style.display === 'none' || content.style.display === '') {
-        content.style.display = 'block';
-        arrow.style.transform = 'rotate(180deg)';
-        console.log('✅ Monazite dropdown opened');
-      } else {
-        content.style.display = 'none';
-        arrow.style.transform = 'rotate(0deg)';
-        console.log('✅ Monazite dropdown closed');
-      }
-    }
+    };
   </script>
 
 </body>
