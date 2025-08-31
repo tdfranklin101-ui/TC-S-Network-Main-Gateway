@@ -280,15 +280,18 @@
       <p style="color: #ccc; margin-bottom: 15px;">
         Experience basic platform features with limited access to music streaming and AI assistant
       </p>
-      <button class="free-btn" onclick="window.location.href='/main-platform?access=free'">
+      <button class="free-btn" onclick="window.location.href='/index.html'">
         Continue with Limited Access
       </button>
     </div>
     
-    <!-- Back to Features -->
-    <div style="margin-top: 30px;">
-      <button onclick="window.location.href='/page3'" style="background: transparent; border: 1px solid #666; color: #ccc; padding: 10px 20px; border-radius: 20px; cursor: pointer; font-size: 0.9rem;">
+    <!-- Navigation Options -->
+    <div style="margin-top: 30px; text-align: center;">
+      <button onclick="window.location.href='/page3-features.html'" style="background: transparent; border: 1px solid #666; color: #ccc; padding: 10px 20px; border-radius: 20px; cursor: pointer; font-size: 0.9rem; margin-right: 15px;">
         ← Back to Features Overview
+      </button>
+      <button onclick="window.location.href='/index.html'" style="background: linear-gradient(135deg, #00cc33, #66ff66); color: white; padding: 12px 25px; border: none; border-radius: 20px; cursor: pointer; font-size: 1rem; font-weight: bold;">
+        Continue to Full Platform →
       </button>
     </div>
   </div>
@@ -303,7 +306,7 @@
       alert(`Selected ${planType} plan! This will integrate with payment processing.`);
       
       // Temporary redirect to main platform with plan parameter
-      window.location.href = `/main-platform?plan=${planType}`;
+      window.location.href = `/index.html?plan=${planType}`;
     }
     
     // Add some visual feedback
