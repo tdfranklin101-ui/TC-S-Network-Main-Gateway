@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>We Said So - Music Video | The Current-See</title>
     
-    <!-- Video.js CSS for streaming -->
-    <link href="https://vjs.zencdn.net/8.6.1/video-js.css" rel="stylesheet">
+    <!-- Native HTML5 Video Player -->
     
     <style>
         * {
@@ -39,6 +38,14 @@
             height: auto;
             border-radius: 12px;
             box-shadow: 0 0 50px rgba(0,255,65,0.3);
+            background: #000;
+        }
+        
+        .native-video {
+            width: 100%;
+            height: auto;
+            border-radius: 12px;
+            outline: none;
         }
         
         .video-header {
@@ -215,30 +222,33 @@
             Buffer: 0%
         </div>
         
-        <!-- Streaming Video Player with Video.js -->
+        <!-- Native HTML5 Video Player (More Reliable) -->
         <video 
-            id="streamingVideoPlayer"
-            class="video-js vjs-default-skin video-player"
+            id="nativeVideoPlayer"
+            class="native-video video-player"
             controls 
             preload="metadata"
             width="1200" 
             height="675"
             poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='675'%3E%3Crect width='100%25' height='100%25' fill='%23000'/%3E%3Ctext x='50%25' y='45%25' font-family='Arial' font-size='48' fill='%23fff' text-anchor='middle'%3E🎵 WE SAID SO 🎵%3C/text%3E%3Ctext x='50%25' y='55%25' font-family='Arial' font-size='32' fill='%23ffaa00' text-anchor='middle'%3Eby Monazite%3C/text%3E%3Ctext x='50%25' y='65%25' font-family='Arial' font-size='24' fill='%2300ccff' text-anchor='middle'%3EStreaming Ready%3C/text%3E%3C/svg%3E"
-            data-setup='{"fluid": true, "responsive": true, "playbackRates": [0.5, 1, 1.25, 1.5, 2]}'>
+            onloadstart="console.log('🎬 Video loading started')"
+            oncanplay="console.log('✅ Video ready to play')"
+            onerror="console.error('❌ Video error:', this.error)"
+            onloadedmetadata="console.log('📊 Video metadata loaded, duration:', this.duration + 's')">
             
-            <!-- Primary streaming source for We Said So by Monazite -->
-            <source src="/public-objects/we_said_so-by_Monazite.mp4" type="video/mp4">
-            <!-- Object storage fallback -->
-            <source src="/objects/uploads/we_said_so-by_Monazite.mp4" type="video/mp4">
-            <!-- External CDN fallback -->
-            <source src="https://example.com/videos/we_said_so-by_Monazite.mp4" type="video/mp4">
+            <!-- Multiple file path attempts for We Said So video -->
+            <source src="/we_said_so-by_Monazite.mp4" type="video/mp4">
+            <source src="/static/we_said_so-by_Monazite.mp4" type="video/mp4">
+            <source src="/public/we_said_so-by_Monazite.mp4" type="video/mp4">
+            <source src="/videos/we_said_so-by_Monazite.mp4" type="video/mp4">
+            <source src="/atomic-background.mp4" type="video/mp4">
             
             <!-- Fallback Message -->
-            <p class="vjs-no-js">
-                To view this video please enable JavaScript, and consider upgrading to a web browser that
-                <a href="https://videojs.com/html5-video-support/" target="_blank">supports HTML5 video</a>.
-                <br><br>
-                The "We Said So" music video by Monazite (230.22MiB) requires a streaming-capable browser.
+            <p style="color: #ff4444; text-align: center; padding: 20px; background: rgba(0,0,0,0.8); border-radius: 10px;">
+                🎵 Video not loading? The "We Said So" music video requires:<br>
+                • Modern browser with MP4 support<br>
+                • Stable internet connection<br>
+                <a href="/atomic-background.mp4" style="color: #00ff41;">Try backup video</a>
             </p>
         </video>
         
@@ -251,15 +261,13 @@
         </div>
     </div>
     
-    <!-- Video.js JavaScript for streaming -->
-    <script src="https://vjs.zencdn.net/8.6.1/video.js"></script>
-    
+    <!-- Native HTML5 Video JavaScript -->
     <script>
-        let player;
+        let videoPlayer;
         
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialize Video.js streaming player
-            player = videojs('streamingVideoPlayer', {
+            // Initialize native HTML5 video player
+            videoPlayer = document.getElementById('nativeVideoPlayer');
                 // Streaming optimizations
                 preload: 'metadata',
                 fluid: true,
