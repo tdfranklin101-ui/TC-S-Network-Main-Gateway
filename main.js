@@ -128,10 +128,9 @@ const server = http.createServer(async (req, res) => {
   
   console.log(`${new Date().toISOString()} - ${req.method} ${pathname}`);
 
-  // Route handling for main platform access
-  if (pathname === '/' && req.headers['user-agent'] && req.headers['user-agent'].includes('replit')) {
-    // Redirect to first page in sequence for preview
-    res.writeHead(302, { 'Location': '/page1' });
+  // Route handling - always redirect root to page1 to start sequence
+  if (pathname === '/') {
+    res.writeHead(302, { 'Location': '/page1-solar-intro.html' });
     res.end();
     return;
   }

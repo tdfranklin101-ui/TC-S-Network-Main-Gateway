@@ -22,15 +22,14 @@
         
         .video-container {
             position: relative;
-            width: 100vw;
+            width: 100%;
             height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             background: #000;
-            padding: 0;
-            overflow: hidden;
+            padding: 20px;
         }
         
         .video-header {
@@ -58,18 +57,13 @@
         }
         
         .simple-video {
-            width: 100vw;
-            height: 100vh;
-            max-width: none;
-            max-height: none;
-            border-radius: 0;
-            box-shadow: none;
+            width: 90%;
+            height: 70vh;
+            max-width: 1000px;
+            border-radius: 12px;
+            box-shadow: 0 0 50px rgba(0,255,65,0.3);
             background: #000;
             object-fit: contain;
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 100;
         }
         
         .fullscreen-mode .simple-video {
@@ -147,7 +141,8 @@
             id="simpleVideo"
             class="simple-video"
             controls 
-            preload="metadata"
+            preload="auto"
+            crossorigin="anonymous"
             poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='675'%3E%3Crect width='100%25' height='100%25' fill='%23000'/%3E%3Ctext x='50%25' y='45%25' font-family='Arial' font-size='48' fill='%23fff' text-anchor='middle'%3E🎵 WE SAID SO 🎵%3C/text%3E%3Ctext x='50%25' y='55%25' font-family='Arial' font-size='32' fill='%23ffaa00' text-anchor='middle'%3Eby Monazite%3C/text%3E%3Ctext x='50%25' y='65%25' font-family='Arial' font-size='24' fill='%2300ccff' text-anchor='middle'%3EClick to Play%3C/text%3E%3C/svg%3E">
             
             <!-- Primary source - We Said So by Monazite from object storage -->
@@ -155,6 +150,8 @@
             <!-- Alternative paths for We Said So video -->
             <source src="/public-objects/we_said_so_by_Monazite.mp4" type="video/mp4">
             <source src="/public-objects/WeSaidSo-Monazite.mp4" type="video/mp4">
+            <!-- Fallback to atomic video if We Said So not available -->
+            <source src="/atomic-background.mp4" type="video/mp4">
             
             <!-- Fallback Message -->
             <p style="color: #ff4444; text-align: center; padding: 20px; background: rgba(0,0,0,0.8); border-radius: 10px;">
