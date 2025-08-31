@@ -136,6 +136,12 @@
             <p class="video-subtitle">by Monazite • Official Music Video</p>
         </div>
         
+        <!-- Buffer Status Display -->
+        <div id="bufferStatus" style="text-align: center; margin: 20px 0; padding: 10px; background: rgba(0,255,65,0.1); border-radius: 10px; display: none;">
+            <div style="color: #00ff41; font-size: 18px; margin-bottom: 5px;">🔄 Buffering Video...</div>
+            <div id="bufferProgress" style="color: #ffaa00; font-size: 14px;">Initializing memory buffer</div>
+        </div>
+
         <!-- Simple HTML5 Video Player -->
         <video 
             id="simpleVideo"
@@ -143,7 +149,9 @@
             controls 
             preload="auto"
             crossorigin="anonymous"
-            poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='675'%3E%3Crect width='100%25' height='100%25' fill='%23000'/%3E%3Ctext x='50%25' y='45%25' font-family='Arial' font-size='48' fill='%23fff' text-anchor='middle'%3E🎵 WE SAID SO 🎵%3C/text%3E%3Ctext x='50%25' y='55%25' font-family='Arial' font-size='32' fill='%23ffaa00' text-anchor='middle'%3Eby Monazite%3C/text%3E%3Ctext x='50%25' y='65%25' font-family='Arial' font-size='24' fill='%2300ccff' text-anchor='middle'%3EClick to Play%3C/text%3E%3C/svg%3E">
+            muted
+            style="display: none;"
+            poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='675'%3E%3Crect width='100%25' height='100%25' fill='%23000'/%3E%3Ctext x='50%25' y='45%25' font-family='Arial' font-size='48' fill='%23fff' text-anchor='middle'%3E🎵 WE SAID SO 🎵%3C/text%3E%3Ctext x='50%25' y='55%25' font-family='Arial' font-size='32' fill='%23ffaa00' text-anchor='middle'%3Eby Monazite%3C/text%3E%3Ctext x='50%25' y='65%25' font-family='Arial' font-size='24' fill='%2300ccff' text-anchor='middle'%3EReady to Play%3C/text%3E%3C/svg%3E">
             
             <!-- Primary source - We Said So by Monazite from object storage -->
             <source src="/public-objects/we_said_so-by_Monazite.mp4" type="video/mp4">
@@ -177,20 +185,110 @@
         </div>
     </div>
     
-    <!-- Simple JavaScript for video status -->
+    <!-- Memory Buffer Video Loading System -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const video = document.getElementById('simpleVideo');
             const statusDisplay = document.getElementById('statusDisplay');
+            const bufferStatus = document.getElementById('bufferStatus');
+            const bufferProgress = document.getElementById('bufferProgress');
+            
+            let memoryBuffer = null;
+            let isBuffering = false;
             
             function updateStatus(message) {
                 statusDisplay.textContent = 'Status: ' + message;
                 console.log('Video Status:', message);
             }
             
-            if (video) {
-                updateStatus('Video element ready');
+            // Show buffer status immediately
+            if (bufferStatus) {
+                bufferStatus.style.display = 'block';
+            }
+            
+            // Memory buffer preloading function
+            async function preloadVideoToMemory() {
+                if (isBuffering) return;
+                isBuffering = true;
                 
+                const videoSources = [
+                    '/public-objects/we_said_so-by_Monazite.mp4',
+                    '/public-objects/we_said_so_by_Monazite.mp4',
+                    '/public-objects/WeSaidSo-Monazite.mp4'
+                ];
+                
+                updateStatus('🔄 Initializing memory buffer...');
+                
+                for (let i = 0; i < videoSources.length; i++) {
+                    try {
+                        if (bufferProgress) {
+                            bufferProgress.textContent = `Testing source ${i + 1}/${videoSources.length}: ${videoSources[i].split('/').pop()}`;
+                        }
+                        updateStatus(`🔍 Testing source ${i + 1}...`);
+                        
+                        // Test if source exists
+                        const response = await fetch(videoSources[i], {
+                            method: 'HEAD',
+                            cache: 'no-cache'
+                        });
+                        
+                        if (response.ok) {
+                            if (bufferProgress) {
+                                bufferProgress.textContent = `📥 Loading video into memory buffer...`;
+                            }
+                            updateStatus('📥 Loading video into memory...');
+                            
+                            // Fetch the actual video data into memory
+                            const videoResponse = await fetch(videoSources[i]);
+                            if (videoResponse.ok) {
+                                const blob = await videoResponse.blob();
+                                memoryBuffer = URL.createObjectURL(blob);
+                                
+                                // Set the buffered video source
+                                video.src = memoryBuffer;
+                                
+                                if (bufferProgress) {
+                                    bufferProgress.textContent = `✅ Video buffered successfully! Ready to play.`;
+                                }
+                                updateStatus('✅ Video loaded into memory buffer');
+                                
+                                // Hide buffer status and show video after short delay
+                                setTimeout(() => {
+                                    if (bufferStatus) bufferStatus.style.display = 'none';
+                                    if (video) {
+                                        video.style.display = 'block';
+                                        video.muted = false; // Unmute once buffered
+                                    }
+                                }, 1500);
+                                
+                                return;
+                            }
+                        }
+                    } catch (error) {
+                        console.log(`Source ${i + 1} failed:`, error);
+                        if (bufferProgress) {
+                            bufferProgress.textContent = `❌ Source ${i + 1} failed, trying next...`;
+                        }
+                        updateStatus(`❌ Source ${i + 1} failed`);
+                    }
+                }
+                
+                // If all sources fail
+                if (bufferProgress) {
+                    bufferProgress.textContent = `❌ All video sources failed. Check connection.`;
+                }
+                updateStatus('❌ All video sources failed');
+                
+                setTimeout(() => {
+                    if (bufferStatus) bufferStatus.style.display = 'none';
+                    if (video) video.style.display = 'block';
+                }, 3000);
+            }
+            
+            // Start preloading immediately
+            preloadVideoToMemory();
+            
+            if (video) {
                 video.addEventListener('loadstart', function() {
                     updateStatus('🎬 Loading video...');
                 });
@@ -219,7 +317,6 @@
                     updateStatus('❌ Error loading video');
                     console.error('Video error:', this.error);
                     
-                    // Try to show helpful error message
                     if (this.error) {
                         switch(this.error.code) {
                             case 1:
@@ -251,42 +348,18 @@
                     }
                 });
                 
-                // Test video source availability
-                const sources = video.querySelectorAll('source');
-                let foundWesSaidSo = false;
-                
-                sources.forEach((source, index) => {
-                    fetch(source.src, { method: 'HEAD' })
-                        .then(response => {
-                            if (response.ok) {
-                                console.log(`✅ Source ${index + 1} available:`, source.src);
-                                if (source.src.includes('we_said_so') && !foundWesSaidSo) {
-                                    foundWesSaidSo = true;
-                                    updateStatus(`🎵 "We Said So" video found and ready!`);
-                                    // Show fullscreen controls when video is found
-                                    const fullscreenControls = document.getElementById('fullscreenControls');
-                                    if (fullscreenControls) {
-                                        fullscreenControls.style.display = 'block';
-                                    }
-                                } else if (index === 0) {
-                                    updateStatus(`📁 Found video source ${index + 1}`);
-                                }
-                            } else {
-                                console.log(`❌ Source ${index + 1} not found:`, source.src);
-                            }
-                        })
-                        .catch(error => {
-                            console.log(`❌ Source ${index + 1} error:`, source.src, error);
-                        });
+                // Handle successful buffer load
+                video.addEventListener('canplaythrough', function() {
+                    updateStatus('🎯 Video fully buffered - smooth playback ready');
                 });
-                
-                // Show upload instructions if We Said So video not found after checking all sources
-                setTimeout(() => {
-                    if (!foundWesSaidSo) {
-                        updateStatus(`📋 Ready for "We Said So" video upload`);
-                    }
-                }, 2000);
             }
+            
+            // Cleanup memory buffer when page unloads
+            window.addEventListener('beforeunload', function() {
+                if (memoryBuffer) {
+                    URL.revokeObjectURL(memoryBuffer);
+                }
+            });
         });
     </script>
 </body>
