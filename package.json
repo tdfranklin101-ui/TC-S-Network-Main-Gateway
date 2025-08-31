@@ -3,6 +3,7 @@
   "main": "main.js",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.37.0",
+    "@google-cloud/storage": "^7.17.0",
     "@neondatabase/serverless": "^1.0.0",
     "@replit/vite-plugin-cartographer": "^0.0.11",
     "@replit/vite-plugin-runtime-error-modal": "^0.0.3",

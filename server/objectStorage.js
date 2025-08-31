@@ -1,44 +1,22 @@
-const { Storage } = require('@google-cloud/storage');
-
-const REPLIT_SIDECAR_ENDPOINT = "http://127.0.0.1:1106";
-
-// Object storage client configured for Replit
-const objectStorageClient = new Storage({
-  credentials: {
-    audience: "replit",
-    subject_token_type: "access_token",
-    token_url: `${REPLIT_SIDECAR_ENDPOINT}/token`,
-    type: "external_account",
-    credential_source: {
-      url: `${REPLIT_SIDECAR_ENDPOINT}/credential`,
-      format: {
-        type: "json",
-        subject_token_field_name: "access_token",
-      },
-    },
-    universe_domain: "googleapis.com",
-  },
-  projectId: "",
-});
+const fetch = require('node-fetch');
 
 class ObjectStorageService {
   constructor() {
     this.bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
   }
 
-  // Search for a public object
+  // Search for a public object using direct URL
   async searchPublicObject(filePath) {
     if (!this.bucketId) {
       throw new Error('Object storage bucket not configured');
     }
 
     try {
-      const bucket = objectStorageClient.bucket(this.bucketId);
-      const file = bucket.file(`public/${filePath}`);
+      const objectUrl = `https://storage.googleapis.com/${this.bucketId}/public/${filePath}`;
+      const response = await fetch(objectUrl, { method: 'HEAD' });
       
-      const [exists] = await file.exists();
-      if (exists) {
-        return file;
+      if (response.ok) {
+        return { url: objectUrl, response };
       }
       return null;
     } catch (error) {
@@ -48,29 +26,25 @@ class ObjectStorageService {
   }
 
   // Download object and stream to response
-  async downloadObject(file, res) {
+  async downloadObject(fileInfo, res) {
     try {
-      const [metadata] = await file.getMetadata();
+      const response = await fetch(fileInfo.url);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch: ${response.status}`);
+      }
       
       // Set appropriate headers for video streaming
       res.writeHead(200, {
-        'Content-Type': metadata.contentType || 'video/mp4',
-        'Content-Length': metadata.size,
+        'Content-Type': response.headers.get('content-type') || 'video/mp4',
+        'Content-Length': response.headers.get('content-length'),
         'Accept-Ranges': 'bytes',
         'Cache-Control': 'public, max-age=3600'
       });
 
-      // Stream the file
-      const stream = file.createReadStream();
-      stream.pipe(res);
+      // Stream the response
+      response.body.pipe(res);
       
-      stream.on('error', (err) => {
-        console.error('Stream error:', err);
-        if (!res.headersSent) {
-          res.writeHead(500);
-          res.end('Error streaming file');
-        }
-      });
     } catch (error) {
       console.error('Error downloading file:', error);
       if (!res.headersSent) {
