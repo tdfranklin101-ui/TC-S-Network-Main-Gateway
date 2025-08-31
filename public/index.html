@@ -1000,69 +1000,24 @@
                     BROADCASTING: We Said So - by Monazite
                   </p>
                   
-                  <!-- TV Frame -->
-                  <div style="max-width: 900px; margin: 0 auto; background: #333; padding: 12px; border-radius: 20px; border: 6px solid #666; box-shadow: inset 0 0 20px #000, 0 0 30px rgba(255,255,255,0.1);">
-                    <!-- Responsive Video Screen Container -->
-                    <div style="background: #000; padding: 8px; border-radius: 10px; border: 2px solid #444; width: 100%; max-width: 900px; margin: 0 auto;">
-                      <!-- Video Screen Display -->
-                      <div id="videoScreen" style="width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 6px; position: relative; overflow: hidden; min-height: 300px;">
-                        
-                        <!-- Play Button Overlay -->
-                        <div id="playOverlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; z-index: 10;">
-                          <div style="background: #ff6600; border-radius: 50%; width: 80px; height: 80px; display: flex; justify-content: center; align-items: center; margin-bottom: 20px; box-shadow: 0 0 20px rgba(255,102,0,0.5);">
-                            <span style="color: #fff; font-size: 30px; margin-left: 5px;">▶</span>
-                          </div>
-                          <h3 style="color: #ffff00; font-family: 'Courier New', monospace; margin: 0; text-align: center; font-size: 18px;">🎵 MUSIC VIDEO NOW 🎵</h3>
-                          <p style="color: #fff; font-family: 'Courier New', monospace; margin: 8px 0 0 0; text-align: center;">"We Said So" - by Monazite</p>
-                          <p style="color: #00ffff; font-family: 'Courier New', monospace; margin: 8px 0 0 0; text-align: center; font-size: 14px;">◉ CLICK TO PLAY ◉</p>
-                        </div>
-
-                        <!-- Video Element -->
-                        <video 
-                          id="musicVideoPlayer"
-                          preload="metadata"
-                          style="width: 100%; height: 100%; object-fit: cover; border-radius: 6px; filter: contrast(1.1) saturate(1.2);"
-                          poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='450'%3E%3Crect width='100%25' height='100%25' fill='%23000'/%3E%3C/svg%3E">
-                          <!-- Primary source paths for uploaded MP4 -->
-                          <source src="/public-objects/we_said_so-by_Monazite.mp4" type="video/mp4">
-                          <source src="/public-objects/we-said-so-by-monazite.mp4" type="video/mp4">
-                          <source src="/public-objects/videos/we_said_so-by_Monazite.mp4" type="video/mp4">
-                          
-                          <!-- Fallback message -->
-                          <div style="width: 100%; height: 100%; background: #000; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #fff; font-family: 'Courier New', monospace;">
-                            <!-- Test Pattern Animation Background -->
-                            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: repeating-linear-gradient(45deg, #ff0000 0px, #ff8c00 40px, #ffff00 80px, #00ff00 120px, #00ffff 160px, #0000ff 200px, #ff00ff 240px, #ffffff 280px); opacity: 0.1; animation: colorScan 8s linear infinite;"></div>
-                            
-                            <!-- Center Display -->
-                            <div style="text-align: center; z-index: 2; position: relative;">
-                              <div style="font-size: 24px; font-weight: bold; margin-bottom: 20px; text-shadow: 2px 2px 4px #000;">
-                                📺 MUSIC VIDEO NOW 📺
-                              </div>
-                              <div style="font-size: 18px; color: #ffff00; margin-bottom: 15px; text-shadow: 1px 1px 2px #000;">
-                                "We Said So" - by Monazite
-                              </div>
-                              <div style="font-size: 14px; color: #00ffff; margin-bottom: 20px;">
-                                ◉ AWAITING VIDEO FILE ◉
-                              </div>
-                              <div style="font-size: 12px; color: #888; margin-bottom: 20px;">
-                                Upload video file to object storage as:<br>
-                                <code style="color: #00ff00;">we-said-so-by-monazite.mp4</code>
-                              </div>
-                            </div>
-                            
-                            <!-- Corner Info -->
-                            <div style="position: absolute; bottom: 10px; right: 10px; font-size: 10px; color: #888;">
-                              TC-S TV
-                            </div>
-                          </div>
-                        </video>
-                      </div>
-                    </div>
+                  <!-- Simple Video Player -->
+                  <div id="videoContainer" style="width: 100%; max-width: 800px; margin: 20px auto; position: relative;">
+                    <video 
+                      id="musicVideoPlayer"
+                      controls
+                      preload="metadata"
+                      style="width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);"
+                      poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='450'%3E%3Crect width='100%25' height='100%25' fill='%23111'/%3E%3Ctext x='50%25' y='45%25' font-family='Arial' font-size='28' fill='%23fff' text-anchor='middle'%3E🎵 MUSIC VIDEO NOW 🎵%3C/text%3E%3Ctext x='50%25' y='55%25' font-family='Arial' font-size='20' fill='%23ffaa00' text-anchor='middle'%3E"We Said So" - by Monazite%3C/text%3E%3Ctext x='50%25' y='65%25' font-family='Arial' font-size='16' fill='%2300ccff' text-anchor='middle'%3EClick to Play%3C/text%3E%3C/svg%3E">
+                      <source src="/public-objects/we_said_so-by_Monazite.mp4" type="video/mp4">
+                      <source src="/public-objects/we-said-so-by-monazite.mp4" type="video/mp4">
+                      <source src="/public-objects/videos/we_said_so-by_Monazite.mp4" type="video/mp4">
+                      Your browser does not support the video tag.
+                    </video>
                     
-                    <!-- TV Brand/Model -->
-                    <div style="text-align: center; margin-top: 8px;">
-                      <span style="color: #888; font-size: 10px; font-family: 'Courier New', monospace;">CURRENT-SEE TV MODEL TC-S2025</span>
-                    </div>
+                    <!-- Expand Button -->
+                    <button id="expandBtn" onclick="toggleExpand()" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); border: none; color: white; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 14px; z-index: 100;" title="Expand video">
+                      ⛶ Expand
+                    </button>
                   </div>
                   
                   <p style="margin: 15px 0 0 0; color: #00ffff; font-size: 11px; font-style: italic; font-family: 'Courier New', monospace; text-shadow: 1px 1px 2px #000;">
@@ -3482,71 +3437,100 @@
       }
     }
     
-    // Video Player Controls
-    function initializeVideoPlayer() {
+    // Expandable Video Player
+    let isExpanded = false;
+    
+    function toggleExpand() {
+      const container = document.getElementById('videoContainer');
       const video = document.getElementById('musicVideoPlayer');
-      const playOverlay = document.getElementById('playOverlay');
-      const videoScreen = document.getElementById('videoScreen');
+      const button = document.getElementById('expandBtn');
       
-      if (!video || !playOverlay || !videoScreen) return;
-      
-      // Play button functionality - manual activation only
-      playOverlay.addEventListener('click', function() {
-        video.play();
-        playOverlay.style.display = 'none';
-        video.controls = true;
-        video.muted = false; // Enable sound when user clicks play
-      });
-      
-      // Fullscreen toggle based on orientation
-      function handleFullscreen() {
-        if (screen.orientation) {
-          if (screen.orientation.angle === 90 || screen.orientation.angle === -90) {
-            // Landscape mode - enter fullscreen if video is playing
-            if (!document.fullscreenElement && video.currentTime > 0 && !video.paused) {
-              videoScreen.requestFullscreen().catch(e => console.log('Fullscreen failed:', e));
-            }
-          } else {
-            // Portrait mode - exit fullscreen
-            if (document.fullscreenElement) {
-              document.exitFullscreen().catch(e => console.log('Exit fullscreen failed:', e));
-            }
-          }
+      if (!isExpanded) {
+        // Expand video
+        container.style.position = 'fixed';
+        container.style.top = '0';
+        container.style.left = '0';
+        container.style.width = '100vw';
+        container.style.height = '100vh';
+        container.style.maxWidth = 'none';
+        container.style.zIndex = '9999';
+        container.style.background = '#000';
+        container.style.display = 'flex';
+        container.style.alignItems = 'center';
+        container.style.justifyContent = 'center';
+        
+        video.style.maxHeight = '100vh';
+        video.style.maxWidth = '100vw';
+        video.style.borderRadius = '0';
+        
+        button.innerHTML = '✕ Close';
+        button.style.top = '20px';
+        button.style.right = '20px';
+        
+        isExpanded = true;
+        
+        // Enable fullscreen API if available
+        if (container.requestFullscreen) {
+          container.requestFullscreen().catch(e => console.log('Fullscreen not available'));
         }
-      }
-      
-      // Listen for orientation changes
-      if (screen.orientation) {
-        screen.orientation.addEventListener('change', handleFullscreen);
       } else {
-        window.addEventListener('orientationchange', function() {
-          setTimeout(handleFullscreen, 500);
-        });
-      }
-      
-      // Video event handlers
-      video.addEventListener('play', function() {
-        playOverlay.style.display = 'none';
-      });
-      
-      video.addEventListener('pause', function() {
-        if (video.currentTime === 0) {
-          playOverlay.style.display = 'flex';
-          video.controls = false;
+        // Collapse video
+        container.style.position = 'relative';
+        container.style.top = 'auto';
+        container.style.left = 'auto';
+        container.style.width = '100%';
+        container.style.height = 'auto';
+        container.style.maxWidth = '800px';
+        container.style.zIndex = 'auto';
+        container.style.background = 'transparent';
+        container.style.display = 'block';
+        container.style.alignItems = 'normal';
+        container.style.justifyContent = 'normal';
+        
+        video.style.maxHeight = 'none';
+        video.style.maxWidth = 'none';
+        video.style.borderRadius = '8px';
+        
+        button.innerHTML = '⛶ Expand';
+        button.style.top = '10px';
+        button.style.right = '10px';
+        
+        isExpanded = false;
+        
+        // Exit fullscreen if active
+        if (document.fullscreenElement) {
+          document.exitFullscreen().catch(e => console.log('Exit fullscreen failed'));
         }
-      });
-      
-      video.addEventListener('ended', function() {
-        playOverlay.style.display = 'flex';
-        video.controls = false;
-        video.currentTime = 0;
-      });
+      }
     }
+    
+    // Auto-expand on landscape orientation
+    function handleOrientationChange() {
+      if (window.innerHeight < window.innerWidth && !isExpanded) {
+        // Landscape mode - suggest expansion
+        setTimeout(() => {
+          const video = document.getElementById('musicVideoPlayer');
+          if (video && !video.paused && video.currentTime > 0) {
+            toggleExpand();
+          }
+        }, 500);
+      }
+    }
+    
+    // Listen for orientation changes
+    window.addEventListener('orientationchange', handleOrientationChange);
+    window.addEventListener('resize', handleOrientationChange);
+    
+    // Exit fullscreen with Escape key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && isExpanded) {
+        toggleExpand();
+      }
+    });
 
     // Initialize persistent display on page load
     document.addEventListener('DOMContentLoaded', function() {
       restorePlaybackDisplay();
-      initializeVideoPlayer();
     });
     
     // Restore display when user returns from another tab
