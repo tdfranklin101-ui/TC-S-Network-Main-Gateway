@@ -1003,6 +1003,38 @@
                 </div>
                 <span style="color: #ff4500; font-weight: bold;">▶️</span>
               </a>
+
+              <!-- Monazite Information Dropdown -->
+              <div style="margin: 15px 0; border: 1px solid rgba(139, 69, 19, 0.3); border-radius: 8px; background: linear-gradient(to right, rgba(139, 69, 19, 0.05), rgba(160, 82, 45, 0.05));">
+                <button id="monaziteToggle" onclick="toggleMonaziteInfo()" style="width: 100%; padding: 12px; background: none; border: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; color: inherit;">
+                  <div style="display: flex; align-items: center;">
+                    <div style="background: linear-gradient(to right, #8B4513, #A0522D); width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-right: 15px;">
+                      <span style="color: white; font-weight: bold;">⛏️</span>
+                    </div>
+                    <div style="text-align: left;">
+                      <h4 style="margin: 0; color: #8B4513; font-size: 16px;">What is Monazite?</h4>
+                      <p style="margin: 0; color: #666; font-size: 12px;">Click to learn about the mineral & band</p>
+                    </div>
+                  </div>
+                  <span id="monaziteArrow" style="color: #8B4513; font-size: 20px; transform: rotate(0deg); transition: transform 0.3s ease;">▼</span>
+                </button>
+                
+                <div id="monaziteContent" style="display: none; padding: 15px; border-top: 1px solid rgba(139, 69, 19, 0.2); background: rgba(139, 69, 19, 0.02);">
+                  <p style="margin: 0 0 15px 0; color: #444; font-size: 14px; line-height: 1.5;">
+                    Monazite is a reddish-brown phosphate mineral rich in rare earth elements, primarily cerium, lanthanum, and neodymium, with traces of thorium and uranium that make it slightly radioactive. It forms in granitic and metamorphic rocks and is often concentrated in alluvial sands through weathering and erosion, making beach sands in India, Brazil, and South Africa major sources.
+                  </p>
+                  <p style="margin: 0 0 15px 0; color: #444; font-size: 14px; line-height: 1.5;">
+                    Its origins are tied to igneous processes, where phosphate minerals crystallize alongside silicates. Monazite's properties include a high specific gravity, resinous luster, and resistance to weathering, which helps it accumulate in placer deposits. It is valued as a key source of rare earth elements used in high-strength magnets, catalysts, batteries, and electronics, as well as for thorium, which has been considered as a nuclear fuel.
+                  </p>
+                  <p style="margin: 0 0 15px 0; color: #444; font-size: 14px; line-height: 1.5;">
+                    Historically, monazite sands were one of the first major sources for rare earth extraction, anchoring the development of rare earth industries in the 20th century.
+                  </p>
+                  <p style="margin: 0; color: #FF8C00; font-size: 14px; line-height: 1.5; font-weight: bold; text-align: center; padding: 10px; background: rgba(255, 140, 0, 0.1); border-radius: 6px;">
+                    🎵 Monazite is also an AI band of Cajun Solar Punks! 🌞<br>
+                    ✨ Shine on! ✨
+                  </p>
+                </div>
+              </div>
               
 
             </div>
@@ -3552,6 +3584,20 @@
     window.addEventListener('pageshow', function() {
       restorePlaybackDisplay();
     });
+    
+    // Monazite dropdown toggle function
+    function toggleMonaziteInfo() {
+      const content = document.getElementById('monaziteContent');
+      const arrow = document.getElementById('monaziteArrow');
+      
+      if (content.style.display === 'none' || content.style.display === '') {
+        content.style.display = 'block';
+        arrow.style.transform = 'rotate(180deg)';
+      } else {
+        content.style.display = 'none';
+        arrow.style.transform = 'rotate(0deg)';
+      }
+    }
   </script>
 
 </body>
