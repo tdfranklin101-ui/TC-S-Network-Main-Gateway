@@ -22,14 +22,15 @@
         
         .video-container {
             position: relative;
-            width: 100%;
+            width: 100vw;
             height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             background: #000;
-            padding: 20px;
+            padding: 0;
+            overflow: hidden;
         }
         
         .video-header {
@@ -57,12 +58,22 @@
         }
         
         .simple-video {
-            width: 100%;
-            max-width: 1000px;
-            height: auto;
-            border-radius: 12px;
-            box-shadow: 0 0 50px rgba(0,255,65,0.3);
+            width: 100vw;
+            height: 100vh;
+            max-width: none;
+            max-height: none;
+            border-radius: 0;
+            box-shadow: none;
             background: #000;
+            object-fit: contain;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 100;
+        }
+        
+        .fullscreen-mode .simple-video {
+            border-radius: 0;
         }
         
         .back-button {
@@ -164,8 +175,9 @@
             <div id="statusDisplay" class="status-display">
                 Status: Initializing...
             </div>
-            <div id="uploadHint" style="margin-top: 10px; padding: 10px; background: rgba(255,165,0,0.1); border: 1px solid rgba(255,165,0,0.3); border-radius: 8px; font-size: 12px; color: #ffaa00;">
-                💡 <strong>Upload Tip:</strong> To upload the "We Said So" video file, use the Object Storage panel in your workspace and upload to the <code>public</code> folder with the filename <code>we_said_so_by_Monazite.mp4</code>
+            <!-- Fullscreen Controls -->
+            <div id="fullscreenControls" style="margin-top: 10px; padding: 10px; background: rgba(0,255,65,0.1); border: 1px solid rgba(0,255,65,0.3); border-radius: 8px; font-size: 12px; color: #00ff41;">
+                🎬 <strong>Fullscreen Mode:</strong> Double-click video or use player controls for immersive experience
             </div>
         </div>
     </div>
@@ -256,10 +268,10 @@
                                 if (source.src.includes('we_said_so') && !foundWesSaidSo) {
                                     foundWesSaidSo = true;
                                     updateStatus(`🎵 "We Said So" video found and ready!`);
-                                    // Hide upload hint when video is found
-                                    const uploadHint = document.getElementById('uploadHint');
-                                    if (uploadHint) {
-                                        uploadHint.style.display = 'none';
+                                    // Show fullscreen controls when video is found
+                                    const fullscreenControls = document.getElementById('fullscreenControls');
+                                    if (fullscreenControls) {
+                                        fullscreenControls.style.display = 'block';
                                     }
                                 } else if (index === 0) {
                                     updateStatus(`📁 Found video source ${index + 1}`);
