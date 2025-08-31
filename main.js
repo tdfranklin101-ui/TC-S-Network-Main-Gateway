@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const { Pool } = require('@neondatabase/serverless');
 const url = require('url');
+const fetch = require('node-fetch');
 
 const PORT = process.env.PORT || 3000;
 
@@ -257,83 +258,34 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // Handle object storage video streaming - serve from attached_assets as fallback
+  // Handle object storage public files
   if (pathname.startsWith('/public-objects/')) {
-    const fileName = pathname.replace('/public-objects/', '');
+    const filePath = pathname.replace('/public-objects/', '');
     
-    // Try to serve from attached_assets directory as fallback
-    const attachedAssetPath = path.join(__dirname, 'attached_assets', fileName);
-    
-    if (fs.existsSync(attachedAssetPath) && fs.statSync(attachedAssetPath).isFile()) {
-      const stats = fs.statSync(attachedAssetPath);
-      const ext = path.extname(fileName).toLowerCase();
-      const isVideo = ['.mp4', '.webm', '.mov'].includes(ext);
+    try {
+      const response = await fetch(`http://127.0.0.1:1106/object-storage/object/${process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID}/public/${filePath}`);
       
-      if (isVideo) {
-        const range = req.headers.range;
-        
-        if (range) {
-          // Parse range header for video streaming
-          const parts = range.replace(/bytes=/, "").split("-");
-          const start = parseInt(parts[0], 10);
-          const end = parts[1] ? parseInt(parts[1], 10) : stats.size - 1;
-          const chunksize = (end - start) + 1;
-          
-          // Create read stream for the range
-          const stream = fs.createReadStream(attachedAssetPath, { start, end });
-          
-          res.writeHead(206, {
-            'Content-Range': `bytes ${start}-${end}/${stats.size}`,
-            'Accept-Ranges': 'bytes',
-            'Content-Length': chunksize,
-            'Content-Type': 'video/mp4',
-            'Cache-Control': 'public, max-age=3600'
-          });
-          
-          stream.pipe(res);
-          console.log(`🎬 Streamed video range from attached_assets: ${fileName} (${start}-${end})`);
-        } else {
-          // Serve entire video
-          res.writeHead(200, {
-            'Content-Length': stats.size,
-            'Content-Type': 'video/mp4',
-            'Accept-Ranges': 'bytes',
-            'Cache-Control': 'public, max-age=3600'
-          });
-          
-          const stream = fs.createReadStream(attachedAssetPath);
-          stream.pipe(res);
-          console.log(`🎬 Served full video from attached_assets: ${fileName}`);
-        }
-      } else {
-        // Serve other file types
-        const contentTypes = {
-          '.html': 'text/html',
-          '.js': 'application/javascript',
-          '.css': 'text/css',
-          '.json': 'application/json',
-          '.png': 'image/png',
-          '.jpg': 'image/jpeg',
-          '.gif': 'image/gif',
-          '.wav': 'audio/wav',
-          '.mp4': 'video/mp4',
-          '.webm': 'video/webm',
-          '.mov': 'video/quicktime'
-        };
-        res.writeHead(200, {
-          'Content-Type': contentTypes[ext] || 'application/octet-stream',
-          'Content-Length': stats.size,
+      if (response.ok) {
+        // Forward all headers from Object Storage
+        res.writeHead(response.status, {
+          'Content-Type': response.headers.get('content-type') || 'video/mp4',
+          'Content-Length': response.headers.get('content-length'),
+          'Accept-Ranges': 'bytes',
           'Cache-Control': 'public, max-age=3600'
         });
         
-        const stream = fs.createReadStream(attachedAssetPath);
-        stream.pipe(res);
-        console.log(`📁 Served file from attached_assets: ${fileName}`);
+        // Stream the response body
+        response.body.pipe(res);
+        console.log(`🎬 Object Storage: Served ${filePath} (${response.headers.get('content-length')} bytes)`);
+      } else {
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.end(`Object Storage file not found: ${filePath}`);
+        console.log(`❌ Object Storage: File not found - ${filePath}`);
       }
-    } else {
-      res.writeHead(404, { 'Content-Type': 'text/plain' });
-      res.end(`File not found: ${fileName}`);
-      console.log(`❌ File not found in attached_assets: ${attachedAssetPath}`);
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'text/plain' });
+      res.end(`Object Storage error: ${error.message}`);
+      console.log(`❌ Object Storage error for ${filePath}:`, error.message);
     }
     return;
   }
