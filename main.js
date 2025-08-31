@@ -4,6 +4,7 @@ const path = require('path');
 const { Pool } = require('@neondatabase/serverless');
 const url = require('url');
 const fetch = require('node-fetch');
+const { ObjectStorageService } = require('./server/objectStorage');
 
 const PORT = process.env.PORT || 3000;
 
@@ -75,36 +76,23 @@ const server = http.createServer(async (req, res) => {
   // Handle object storage public files
   if (pathname.startsWith('/public-objects/')) {
     const filePath = pathname.replace('/public-objects/', '');
-    const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
-    
-    if (!bucketId) {
-      res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Object storage not configured' }));
-      return;
-    }
     
     try {
-      // Construct the public object URL
-      const objectUrl = `https://storage.googleapis.com/${bucketId}/public/${filePath}`;
+      const objectStorageService = new ObjectStorageService();
+      const file = await objectStorageService.searchPublicObject(filePath);
       
-      // Fetch the file from object storage
-      const response = await fetch(objectUrl);
-      if (!response.ok) {
+      if (!file) {
+        console.log(`❌ Video file not found: ${filePath}`);
         res.writeHead(404, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Video file not found in object storage' }));
+        res.end(JSON.stringify({ 
+          error: 'Video file not found in object storage',
+          requested_file: filePath
+        }));
         return;
       }
       
-      // Set appropriate headers for video streaming
-      res.writeHead(200, {
-        'Content-Type': response.headers.get('content-type') || 'video/mp4',
-        'Content-Length': response.headers.get('content-length'),
-        'Accept-Ranges': 'bytes',
-        'Cache-Control': 'public, max-age=3600'
-      });
-      
-      // Stream the response
-      response.body.pipe(res);
+      console.log(`✅ Found video file: ${filePath}`);
+      await objectStorageService.downloadObject(file, res);
       return;
     } catch (error) {
       console.error('Error serving object storage file:', error);
@@ -112,6 +100,25 @@ const server = http.createServer(async (req, res) => {
       res.end(JSON.stringify({ error: 'Error accessing object storage' }));
       return;
     }
+  }
+  
+  // Debug route to list object storage contents
+  if (pathname === '/debug/storage') {
+    const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(`
+      <h2>Object Storage Debug</h2>
+      <p><strong>Bucket ID:</strong> ${bucketId}</p>
+      <p><strong>Public Path:</strong> https://storage.googleapis.com/${bucketId}/public/</p>
+      <p><strong>Try these URLs directly:</strong></p>
+      <ul>
+        <li><a href="https://storage.googleapis.com/${bucketId}/public/We_Said_So-by_Monazite.mp4" target="_blank">We_Said_So-by_Monazite.mp4</a></li>
+        <li><a href="https://storage.googleapis.com/${bucketId}/public/we-said-so-by-monazite.mp4" target="_blank">we-said-so-by-monazite.mp4</a></li>
+        <li><a href="https://storage.googleapis.com/${bucketId}/public/WeSaidSo.mp4" target="_blank">WeSaidSo.mp4</a></li>
+      </ul>
+      <p><a href="/video-stream-simple.html">Back to Video Player</a></p>
+    `);
+    return;
   }
   
   // Prevent caching
