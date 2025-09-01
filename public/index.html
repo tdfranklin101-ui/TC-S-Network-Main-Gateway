@@ -2156,13 +2156,7 @@
     
     // Music player functionality
     let currentAudio = null;
-    
-    function stopCurrentAudio() {
-      if (currentAudio) {
-        currentAudio.pause();
-        currentAudio = null;
-      }
-    }
+    let isPlayingPlaylist = false;
     
     function playMusic1() {
       const musicUrl = 'https://storage.aisongmaker.io/audio/10db8911-0b74-4675-ba62-02182c1d7f6b.mp3';
