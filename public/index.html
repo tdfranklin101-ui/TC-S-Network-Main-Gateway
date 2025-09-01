@@ -1118,9 +1118,13 @@
                           style="display: flex; align-items: center; padding: 8px 15px; background: linear-gradient(135deg, #0057B8 0%, #0066CC 100%); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">
                     Share with Kid Solar
                   </button>
+                  <button onclick="openPublicGallery()" 
+                          style="display: flex; align-items: center; padding: 8px 15px; background: linear-gradient(135deg, #32cd32 0%, #00ff41 100%); color: #000; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">
+                    📸 Public Gallery
+                  </button>
                   <button onclick="setAsFeatured()" 
                           style="display: flex; align-items: center; padding: 8px 15px; background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); color: #1a1a2e; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">
-                    Set as Featured
+                    🌟 Marketplace Ready
                   </button>
                 </div>
               </div>
@@ -2978,6 +2982,159 @@
         button.textContent = originalText;
         button.style.transform = 'scale(1)';
       }, 2000);
+    }
+
+    // Public Gallery Popup System
+    function openPublicGallery() {
+      const currentImage = document.getElementById('previewImage').src;
+      const caption = document.getElementById('imageCaption').value || 'Solar Energy Project';
+      
+      if (!currentImage) {
+        alert('Please upload an image first!');
+        return;
+      }
+      
+      // Create popup with marketplace-ready features
+      const popup = window.open('', 'PublicGallery', 'width=800,height=600,scrollbars=yes,resizable=yes');
+      
+      popup.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>TC-S Public Solar Gallery - Marketplace Ready</title>
+          <style>
+            body { 
+              font-family: Arial, sans-serif; 
+              margin: 0; 
+              padding: 20px; 
+              background: linear-gradient(135deg, #0b1020 0%, #1a1a2e 100%);
+              color: #fff;
+            }
+            .gallery-header {
+              text-align: center;
+              padding: 20px 0;
+              border-bottom: 2px solid #00ff41;
+              margin-bottom: 30px;
+            }
+            .gallery-header h1 {
+              color: #00ff41;
+              text-shadow: 0 0 10px #00ff41;
+              margin: 0;
+            }
+            .image-container {
+              max-width: 600px;
+              margin: 0 auto;
+              background: rgba(255,255,255,0.1);
+              border-radius: 15px;
+              padding: 20px;
+              border: 1px solid rgba(0,255,65,0.3);
+            }
+            .main-image {
+              width: 100%;
+              border-radius: 10px;
+              box-shadow: 0 8px 32px rgba(0,255,65,0.3);
+            }
+            .image-info {
+              margin-top: 20px;
+              text-align: center;
+            }
+            .marketplace-section {
+              background: linear-gradient(135deg, rgba(255,215,0,0.1), rgba(0,255,65,0.1));
+              padding: 20px;
+              border-radius: 10px;
+              margin-top: 20px;
+              border: 1px solid rgba(255,215,0,0.3);
+            }
+            .price-tag {
+              background: linear-gradient(135deg, #FFD700, #FFA500);
+              color: #000;
+              padding: 8px 16px;
+              border-radius: 20px;
+              font-weight: bold;
+              display: inline-block;
+              margin: 10px 5px;
+            }
+            .share-buttons {
+              display: flex;
+              gap: 10px;
+              justify-content: center;
+              margin-top: 20px;
+            }
+            .btn {
+              padding: 10px 20px;
+              border: none;
+              border-radius: 8px;
+              font-weight: bold;
+              cursor: pointer;
+              text-decoration: none;
+              display: inline-block;
+            }
+            .btn-green { background: linear-gradient(135deg, #32cd32, #00ff41); color: #000; }
+            .btn-gold { background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; }
+            .btn-blue { background: linear-gradient(135deg, #0057B8, #0066CC); color: white; }
+          </style>
+        </head>
+        <body>
+          <div class="gallery-header">
+            <h1>🌞 TC-S Public Solar Gallery</h1>
+            <p>Community Solar Projects - Marketplace Ready</p>
+          </div>
+          
+          <div class="image-container">
+            <img src="${currentImage}" alt="Solar Project" class="main-image">
+            <div class="image-info">
+              <h3>${caption}</h3>
+              <p><strong>Shared by:</strong> TC-S Network Member</p>
+              <p><strong>Timestamp:</strong> ${new Date().toLocaleDateString()}</p>
+            </div>
+            
+            <div class="marketplace-section">
+              <h4 style="color: #FFD700; margin-top: 0;">🏪 Marketplace Preview (Pending Launch)</h4>
+              <p>This image is publicly viewable and marketplace-ready for future solar trading features.</p>
+              
+              <div style="text-align: center;">
+                <span class="price-tag">📊 Energy Data: Available</span>
+                <span class="price-tag">🔗 Shareable: Public Link</span>
+                <span class="price-tag">💰 Market Ready: Yes</span>
+              </div>
+              
+              <div class="share-buttons">
+                <button class="btn btn-green" onclick="copyShareLink()">📋 Copy Link</button>
+                <button class="btn btn-gold" onclick="downloadImage()">💾 Download</button>
+                <button class="btn btn-blue" onclick="shareToSocial()">📱 Share</button>
+              </div>
+            </div>
+          </div>
+          
+          <script>
+            function copyShareLink() {
+              navigator.clipboard.writeText(window.location.href);
+              alert('📋 Share link copied to clipboard!');
+            }
+            
+            function downloadImage() {
+              const link = document.createElement('a');
+              link.href = '${currentImage}';
+              link.download = 'tc-s-solar-project.jpg';
+              link.click();
+            }
+            
+            function shareToSocial() {
+              const text = 'Check out this solar project on The Current-See Network!';
+              const url = window.location.href;
+              if (navigator.share) {
+                navigator.share({ title: text, url: url });
+              } else {
+                window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(url));
+              }
+            }
+          </script>
+        </body>
+        </html>
+      `);
+      
+      popup.document.close();
+      popup.focus();
     }
 
     // Community Gallery Functions
