@@ -1,133 +1,69 @@
 # The Current-See Platform
 
 ## Overview
-The Current-See is a prototype for a solar-backed global economic system that connects renewable energy generation with economic value distribution. It demonstrates a decentralized approach where solar energy production translates directly into economic tokens (SOLAR) for platform members. The project envisions a future where energy abundance drives economic prosperity and aims to be a proof-of-concept for this new economic model. Key capabilities include real-time solar energy tracking, SOLAR token distribution, member management, and AI integration for energy-related queries and personalized tips.
+
+The Current-See is a solar-backed global economic system prototype that combines renewable energy tracking, cryptocurrency-like SOLAR tokens, member management, and AI assistance. The platform features real-time solar energy calculations, member wallet functionality, and an integrated D-ID AI agent called "Kid Solar" that provides polymathic assistance in renewable energy, physics, engineering, and sustainability.
 
 ## User Preferences
-Preferred communication style: Simple, everyday language.
-Voodoo Collection attribution: Use "Lyrics by Terry D Franklin 🌍 World.Org Verified Human" for authentic human verification.
 
-## Recent Changes (August 2025)
-- **DEPLOYMENT READY** - Streaming system debugged with comprehensive error tracking and automatic progression (August 20, 2025)
-- Fixed automatic track advancement logic with enhanced event handling and audio cleanup
-- Complete track name database matching authentic platform song titles
-- Professional debugging system providing detailed console logging for streaming diagnostics
-- Corrected track mapping to eliminate "Sunshine Party" error and match actual platform content
-- Added artistic SOLAR Token Economics section in credits with animated effects
-- All 17 tracks confirmed operational: 11 Music Now + 6 Voodoo Abundance with sequential playback
-- Successfully deployed The Current-See Platform with complete Voodoo Abundance Collection functionality (August 17, 2025)
-- Resolved Voodoo Abundance audio URL issues: replaced HTTP 404 URLs with working Music Now audio files
-- Completed full visual conversion: all Voodoo buttons now use identical orange Music Now styling and functionality
-- Maintained proper attribution: "Lyrics by Terry D Franklin" preserved throughout Voodoo Collection
-- Deployment confirmed successful: 134KB homepage served, all 15 music functions operational
-- Implemented stable frame system to eliminate site floating/movement issues
-- Enhanced dual Pika AI atomic animation system with controlled opacity and blur
-- Added professional container structure with max-width constraints
-- Improved text stability with stronger backdrop filters and positioning
-- Successfully deployed with atomic multiplication effect (1→2→4→16→64) clearly visible
-- Added "Staying Alive" section with links to 1028atoms.com and OpenAI Longevity Pathways Advisor
-- Integrated dual longevity resources: main website and specialized AI advisor on OpenAI API
-- Updated GPT link to correct 10^28 Atoms Longevity Pathways Advisor (g-iO2B1JFMJ)
-- Fine-tuned 10^28 area with transparent background and bold neon orange lettering
-- Added "Longer Life for Everyone" main heading above longevity resources
-- Updated GPT link to correct 10^28 Atoms Longevity Pathways Advisor (g-iO2B1JFMJ)
-- Fine-tuned 10^28 area with transparent background and bold neon orange lettering
-- Added "Longer Life for Everyone" main heading above longevity resources
-- Moved navigation links above 10^28 area for improved flow
-- Changed 10^28 area to neon blue with fully transparent background
-- Converted to dropdown with "So you want to live forever?" as clickable title
-- Updated text below 10^28 area to neon green for visual flow consistency
-- Eliminated entry distraction with clear color-coded navigation paths
-- Added collapse arrow functionality to 10^28 dropdown section
-- Reduced green glow intensity for better readability while maintaining atomic energy aesthetic
-- Updated all headings to neon green theme except Music Now sections (preserved orange)
-- Achieved consistent visual hierarchy with proper color-coded navigation paths
-- Fine-tuned font styling: main titles keep glow, feature links use clean green font
-- Extended clean green font treatment to all sections below Music Now through Public Members Log
-- Final readability optimization: converted main features box title to clean green font
-- Relocated LIVE Solar Generation section above Join The Current-See Network for improved flow
-- Updated homepage note to reference Kid Solar as "21st Century polymath" about TC-S mission
-- Added "Voodoo Abundance" music collection with 5 versions (Blues Jam, Rock, EDM, Folk, Crying) by Terry D Franklin
-- Repositioned Voodoo Abundance to top of Music Now section for prominence
-- Implemented dedicated music box with proper attribution to World.org verified human lyricist
-- Enhanced audio playback system with detailed error handling and debugging
-- Verified all Voodoo Abundance URLs working with authentic AiSongMaker content
-- Updated Voodoo Abundance formatting to match Music Now detailed layout with proper icons
-- All 5 Voodoo Abundance songs now have professional circular icons and consistent styling
-- Fixed audio protocol inconsistency: converted Voodoo functions to use same working implementation as Music Now
-- Removed conflicting function definitions causing Voodoo Abundance playback issues
-- Reformatted Voodoo functions to exactly match working Music Now format structure
-- Removed generic playAudio function that was causing interference
-- Converted Voodoo Abundance from grouped box to individual Music Now links at top of section
-- Added specific annotations for each Voodoo song with Terry D Franklin attribution
-- All 15 songs (Music Now + Voodoo Abundance) now use identical audio protocols
-- Finalized visual hierarchy with distinct color coding for all platform sections
-- QA validated: Server starts successfully, all Voodoo functions present, file structure intact
-- Voodoo Abundance URL troubleshooting complete: All 5 URLs verified working (HTTP 200)
-- Fixed duplicate function conflicts causing Voodoo Abundance playback issues
-- Voodoo magic successfully applied: All 5 Voodoo songs now working properly
-- Added large shrunken head icon (🗿) to distinguish Voodoo Abundance collection
-- Created mystical brown color scheme for Voodoo series with consistent branding
-- Deployment preparation complete: All systems verified and ready for production
-- Final deployment package: 133KB homepage, 20 music functions, full feature set operational
-- Enhanced Voodoo Collection with mobile-friendly touch controls and audio feedback
-- Added comprehensive error handling and user guidance for mobile audio playback
-- Final deployment ready: All Voodoo functions enhanced with mobile compatibility
-- Updated Voodoo Collection attribution to "Lyrics by Terry D Franklin" as requested
-- Voodoo Collection buttons enhanced with proper touch controls and audio feedback
-- Fixed Voodoo Abundance functionality by converting to working Music Now link format (playMusic11-15)
-- Simplified Voodoo button handlers using proven onclick patterns without complex event handling
-- All 5 Voodoo songs now use identical protocols as working Music Now functions
-- Applied shrunken head (🗿) branding to entire Voodoo Abundance Collection
-- Enhanced Voodoo Abundance with series theming showing "One mystical poem, six powerful genres"
-- Added mystical brown series header to distinguish Voodoo Collection as cohesive musical series
-- Updated all Voodoo tracks with authentic AiSongMaker URLs (August 18, 2025)
-- Added Voodoo Abundance Track #6: Rasta Lady Voodoo with Jamaica flag emoji branding
-- Deployment preparation complete: All systems verified and ready for production launch
-- Final verification: 17 total music functions (11 Music Now + 6 Voodoo Abundance) operational
-- Updated "Play All" to include complete 17-track collection with Fisher-Yates shuffle algorithm
-- No-repeat playlist ensures all songs play before any repeat, proper randomization from start
+Preferred communication style: Simple, everyday language.
 
 ## System Architecture
 
-### Frontend
-- **Technology**: Vanilla HTML, CSS, JavaScript.
-- **Design**: Responsive, mobile-first approach with a focus on a professional aesthetic, including neon green branding and golden gradients. Features dynamic content displays, modular page elements, and interactive AI integration. Includes dual Pika AI atomic animations showing 1→2→4→16→64 molecular multiplication: full-screen stretched background and dedicated title video background.
+### Frontend Architecture
+- **Static File Serving**: Express.js serves HTML, CSS, and JavaScript files from a `public` directory structure
+- **Client-Side Framework**: Vanilla JavaScript with dynamic content rendering and real-time counter updates
+- **AI Integration**: D-ID AI agent embedded via CDN script with configured agent ID and client keys
+- **File Upload**: Multer-based image upload system for AI visual analysis
+- **Responsive Design**: Mobile-friendly interface with CSS media queries
 
-### Backend
-- **Technology**: Node.js/Express server (CommonJS).
-- **Deployment Model**: Hybrid, supporting static file serving and dynamic API endpoints.
-- **Configuration**: Multiple server configurations with a comprehensive health check system.
+### Backend Architecture
+- **Server Framework**: Express.js with HTTP fallback options for deployment flexibility
+- **Deployment Strategy**: Multiple deployment scripts optimized for different environments (Replit, Cloud Run)
+- **Health Monitoring**: Comprehensive health check endpoints for deployment monitoring
+- **Session Management**: In-memory session storage for conversation tracking
+- **Static Asset Management**: MIME type handling and proper caching headers
 
-### Database
-- **Primary Database**: PostgreSQL (serverless Neon).
-- **Efficiency**: Connection pooling.
-- **Resilience**: File-based fallbacks for database unavailability and in-memory fallback storage for signup functionality.
-- **Schema Management**: Drizzle ORM for migrations.
+### Data Storage Solutions
+- **PostgreSQL Integration**: Drizzle ORM with schema definitions for member data
+- **Database Connectivity**: Flexible connection handling supporting both DATABASE_URL and CURRENTSEE_DB_URL
+- **File-Based Fallbacks**: JSON files for member data when database is unavailable
+- **Conversation Storage**: File system storage for AI conversation history
+- **Memory System**: Session-based storage for user interactions and AI responses
 
-### Key Components
-- **Solar Generation System**: Tracks real-time solar energy, distributes SOLAR tokens (1 SOLAR = 4,913 kWh), and manages a 10 billion SOLAR reserve pool.
-- **Member Management**: Email-based registration, tracking of members, individual SOLAR accumulation history, and a public ledger.
-- **AI Integration (Kid Solar)**: Powered by OpenAI GPT-4 for energy-related queries, environmental impact assessment, personalized energy tips, and a retention-first memory system with two-step deletion override.
-- **API Endpoints**: Comprehensive set of endpoints for system health, member data, registration, solar calculations, AI interactions, database status, and session management.
-- **Session Lifecycle Management**: Two-phase memory system with automatic retention and deliberate deletion process.
-- **Generator Protocol Prototype**: A beta prototype page for renewable energy generator registration, REC/Carbon Credit split configuration, commissioner settings, payout options, and mock sale calculation, including canvas signature pads for agreements.
+### Authentication and Authorization
+- **Environment-Based Security**: API keys stored in environment variables
+- **Session-Based Tracking**: Anonymous session management for conversation continuity
+- **CORS Configuration**: Cross-origin resource sharing for API endpoints
+- **Rate Limiting**: Built into OpenAI integration to prevent abuse
+
+### External Service Integrations
+- **OpenAI API**: GPT-4 integration for AI responses and image generation (DALL-E)
+- **D-ID Platform**: AI avatar integration with voice responses and visual interaction
+- **PostgreSQL Database**: Cloud-hosted database for persistent member data
+- **CDN Assets**: External script loading for D-ID agent functionality
 
 ## External Dependencies
 
-### Database Services
-- **Neon PostgreSQL**: Primary database hosting, configured via `CURRENTSEE_DB_URL` environment variable with SSL.
+### Third-Party Services
+- **OpenAI**: GPT-4o model for text generation and DALL-E for image creation
+- **D-ID**: AI agent platform for interactive avatar experiences with agent ID `v2_agt_vhYf_e_C`
+- **PostgreSQL**: Database hosting (supports Neon and other cloud providers)
 
-### AI Services
-- **OpenAI API**: Integration with GPT-4 models, utilizing a multi-source API key management system with built-in rate limiting.
-- **D-ID**: Used for educational video content (e.g., Yoda video).
+### APIs and Integrations
+- **Real-Time Solar Calculations**: Mathematical models for energy generation tracking
+- **Member Management API**: RESTful endpoints for member data operations
+- **File Upload API**: Image processing and analysis endpoints
+- **Health Check APIs**: System monitoring and deployment verification endpoints
 
-### Deployment Platforms
-- **Replit Cloud Run**: Primary deployment target.
-- **Namecheap**: DNS management.
+### Databases
+- **Primary Database**: PostgreSQL with Drizzle ORM for structured data
+- **Fallback Storage**: JSON files and in-memory storage for reliability
+- **Session Storage**: File-based conversation persistence
+- **Configuration Storage**: Environment variables and JSON configuration files
 
-### Cloud & Other Services
-- **AWS**
-- **Supabase**
-- **Pika**
-- **AiSongs**
+### Development and Deployment Tools
+- **Package Management**: npm with Express.js, Multer, and database drivers
+- **Deployment Platforms**: Optimized for Replit and Google Cloud Run
+- **Monitoring**: Custom health check and status reporting systems
+- **Cache Management**: Aggressive cache clearing for deployment updates
