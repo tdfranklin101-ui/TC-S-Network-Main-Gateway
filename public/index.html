@@ -1612,131 +1612,9 @@
   </div>
   
   <script>
-    // Add native multimodal "+" button to D-ID agent
-    function addNativeMultimodalButton() {
-      console.log('🔍 Looking for D-ID agent...');
-      
-      // Since D-ID agent runs in iframe, add floating button that positions near the agent
-      if (!document.querySelector('.floating-multimodal-btn')) {
-        const floatingBtn = document.createElement('button');
-        floatingBtn.innerHTML = '+';
-        floatingBtn.className = 'floating-multimodal-btn';
-        floatingBtn.style.cssText = `
-          position: fixed;
-          bottom: 120px;
-          right: 80px;
-          background: #333;
-          color: white;
-          border: none;
-          border-radius: 50%;
-          width: 40px;
-          height: 40px;
-          font-size: 20px;
-          font-weight: bold;
-          cursor: pointer;
-          z-index: 999999;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transition: all 0.2s ease;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        `;
-        
-        floatingBtn.onmouseover = () => {
-          floatingBtn.style.background = '#555';
-          floatingBtn.style.transform = 'scale(1.1)';
-        };
-        
-        floatingBtn.onmouseout = () => {
-          floatingBtn.style.background = '#333';
-          floatingBtn.style.transform = 'scale(1)';
-        };
-        
-        floatingBtn.onclick = (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          toggleMultimodalMenu();
-        };
-        
-        document.body.appendChild(floatingBtn);
-        console.log('✅ Floating multimodal button added');
-      }
-      
-      // Also try to find and enhance any text inputs that appear
-      const possibleInputs = document.querySelectorAll('input[type="text"], textarea, [contenteditable="true"]');
-      for (const input of possibleInputs) {
-        if (input.parentElement && !input.parentElement.querySelector('.inline-multimodal-btn')) {
-          const placeholder = input.placeholder || '';
-          if (placeholder.toLowerCase().includes('message') || 
-              placeholder.toLowerCase().includes('type') || 
-              placeholder.toLowerCase().includes('chat')) {
-            
-            const inlineBtn = document.createElement('button');
-            inlineBtn.innerHTML = '+';
-            inlineBtn.className = 'inline-multimodal-btn';
-            inlineBtn.style.cssText = `
-              position: absolute;
-              left: 8px;
-              top: 50%;
-              transform: translateY(-50%);
-              background: #666;
-              color: white;
-              border: none;
-              border-radius: 50%;
-              width: 24px;
-              height: 24px;
-              font-size: 14px;
-              cursor: pointer;
-              z-index: 999998;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-            `;
-            
-            inlineBtn.onclick = (e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              toggleMultimodalMenu();
-            };
-            
-            const parent = input.parentElement;
-            if (getComputedStyle(parent).position === 'static') {
-              parent.style.position = 'relative';
-            }
-            input.style.paddingLeft = '35px';
-            parent.appendChild(inlineBtn);
-            console.log('✅ Inline multimodal button added to input');
-            break;
-          }
-        }
-      }
-    }
+    // Multimodal button functionality disabled
     
-    function toggleMultimodalMenu() {
-      const menu = document.getElementById('multimodalMenu');
-      if (menu.style.display === 'none' || !menu.style.display) {
-        menu.style.display = 'block';
-        // Add click outside to close
-        setTimeout(() => {
-          document.addEventListener('click', handleClickOutside);
-        }, 100);
-      } else {
-        closeMultimodalMenu();
-      }
-    }
-    
-    function closeMultimodalMenu() {
-      document.getElementById('multimodalMenu').style.display = 'none';
-      document.removeEventListener('click', handleClickOutside);
-    }
-    
-    function handleClickOutside(event) {
-      const menu = document.getElementById('multimodalMenu');
-      const button = document.querySelector('.native-multimodal-btn');
-      if (!menu.contains(event.target) && !button.contains(event.target)) {
-        closeMultimodalMenu();
-      }
-    }
+    // Menu functions disabled
     
     function openCamera() {
       closeMultimodalMenu();
@@ -2269,19 +2147,11 @@
 
     // Initialize when page loads
     document.addEventListener('DOMContentLoaded', () => {
-      addNativeMultimodalButton();
       monitorDidAgentForSessionStart();
       initializeSignupForm();
     });
-    setTimeout(addNativeMultimodalButton, 2000);
-    setTimeout(addNativeMultimodalButton, 4000);
-    setTimeout(addNativeMultimodalButton, 6000);
     
-    // Also watch for new elements being added (D-ID agent might load later)
-    const observer = new MutationObserver(() => {
-      addNativeMultimodalButton();
-    });
-    observer.observe(document.body, { childList: true, subtree: true });
+    // Multimodal button creation disabled
     
     // Music player functionality
     let currentAudio = null;
