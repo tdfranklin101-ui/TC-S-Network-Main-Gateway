@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>World.org | TC-S Solar Network</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      background: #fafafa;
+      color: #222;
+      line-height: 1.7;
+    }
+    header {
+      background: linear-gradient(120deg, #ff6f61, #f9d423, #24c6dc);
+      color: white;
+      text-align: center;
+      padding: 5rem 2rem;
+    }
+    header h1 {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      font-weight: 700;
+    }
+    header p {
+      font-size: 1.4rem;
+      max-width: 850px;
+      margin: 0 auto;
+    }
+    section {
+      padding: 5rem 2rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    section h2 {
+      font-size: 2.2rem;
+      color: #ff6f61;
+      margin-bottom: 1rem;
+      font-weight: 600;
+    }
+    .highlight {
+      background: #fff7e6;
+      padding: 1.2rem;
+      border-left: 5px solid #f9d423;
+      margin: 2rem 0;
+      border-radius: 6px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+    }
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 12px 28px rgba(0,0,0,0.15);
+    }
+    .card h3 {
+      color: #24c6dc;
+      margin-bottom: 0.75rem;
+      font-size: 1.3rem;
+      font-weight: 600;
+    }
+    footer {
+      background: #111;
+      color: #eee;
+      text-align: center;
+      padding: 3rem 2rem;
+      font-size: 0.95rem;
+    }
+    footer p {
+      margin: 0.5rem 0;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>The TC-S Solar Network</h1>
+    <p>Energy as value. People as participants. A global economy written in chalk on the blackboard of the world.</p>
+  </header>
+
+  <section>
+    <h2>☀️ The Solar Standard</h2>
+    <p class="highlight"><strong>1 Solar = 4,913 kWh of renewable energy equivalency.</strong> The Solar Standard ties value to energy itself — stable, transparent, and fair. Not crypto. Not a gift card. A universal measure of abundance.</p>
+  </section>
+
+  <section>
+    <h2>🏛 Foundation & PBC</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>TC-S Foundation</h3>
+        <p>Custodian of the Solar Generator and reserves. Licenses Solar issuance. Anchors global trust and funds the Global Basic Income Network.</p>
+      </div>
+      <div class="card">
+        <h3>TC-S, PBC, Inc</h3>
+        <p>Operates <strong>World.org wallets</strong> for daily Solar income. Runs the <strong>Digital Artifact Marketplace</strong>. Commissions networks into the Solar economy.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>🖊 The Marketplace</h2>
+    <p>The marketplace is a <strong>blackboard</strong> — open and shared. Members are the <strong>chalk</strong> — writing value by buying and selling. Every exchange leaves a mark, building a vibrant, indexed, and searchable economy.</p>
+
+    <div class="grid">
+      <div class="card">
+        <h3>Digital Artifacts</h3>
+        <p>Songs, designs, licenses, services, and access keys — things that move instantly and globally.</p>
+      </div>
+      <div class="card">
+        <h3>Rent Anything</h3>
+        <p>Digital coupons for the rental of physical goods. The coupon trades instantly; arrangements for pickup, use, or delivery are made forward. This extends digital flexibility into the physical world — showing that if it can be represented, it can be Solar.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>🌐 A Living Global Economy</h2>
+    <p>Every person is both buyer and seller. Every day begins with Solar in your wallet. Every exchange strengthens the network. This is a living, global economy — youthful, international, and dynamic — written together, in chalk, on the blackboard of the world.</p>
+  </section>
+
+  <footer>
+    <p>© 2025 TC-S Network Foundation & TC-S, PBC, Inc.</p>
+    <p>Building a Solar-powered economy for all humanity.</p>
+  </footer>
+</body>
+</html>
