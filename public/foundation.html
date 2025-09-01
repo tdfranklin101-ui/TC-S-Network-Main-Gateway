@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TC-S Network Foundation — Custodian of the Solar Generator</title>
+  <meta name="description" content="TC-S Network Foundation — nonprofit custodian of the Solar Generator. One Solar per human per day, pegged to the Solar Standard (4,913 kWh)." />
+  
+  <!-- Social/SEO -->
+  <meta property="og:title" content="TC-S Network Foundation — Custodian of the Solar Generator" />
+  <meta property="og:description" content="One Solar per human per day. Energy-based value via the Solar Standard (4,913 kWh)." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://www.thecurrentsee.org/foundation" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <style>
+    :root { --bg:#0b1020; --card:#111730; --text:#f7fafc; --muted:#a3acc2; --accent:#22d3ee; --line:#1f2845; }
+    * { box-sizing:border-box; }
+    html, body { margin:0; padding:0; background:var(--bg); color:var(--text); font-family:ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; }
+    a { color:var(--accent); text-decoration:none; }
+    header { position:sticky; top:0; backdrop-filter:saturate(1.2) blur(10px); background:linear-gradient(180deg, rgba(11,16,32,.9), rgba(11,16,32,.6)); border-bottom:1px solid var(--line); z-index:50; }
+    .wrap { max-width:1100px; margin:0 auto; padding:1rem; }
+    .nav { display:flex; align-items:center; gap:1rem; justify-content:space-between; }
+    .brand { display:flex; align-items:center; gap:.6rem; font-weight:700; letter-spacing:.3px; }
+    .brand .dot { width:10px; height:10px; border-radius:50%; background:var(--accent); box-shadow:0 0 16px var(--accent); }
+    .links a { margin-left:1rem; color:var(--muted); }
+    .links a:hover { color:var(--text); }
+
+    .hero { padding:5rem 1rem 3rem; background:radial-gradient(1200px 400px at 50% -50%, rgba(34,211,238,.25), transparent 60%); border-bottom:1px solid var(--line); }
+    h1 { font-size:clamp(2rem, 4vw, 3rem); margin:.2rem 0 .6rem; }
+    p.lead { color:var(--muted); font-size:1.1rem; max-width:800px; }
+    .cta { margin-top:1rem; display:flex; gap:.8rem; flex-wrap:wrap; }
+    .btn { padding:.7rem 1rem; border-radius:12px; border:1px solid var(--line); background:var(--card); color:var(--text); }
+    .btn.primary { background:linear-gradient(180deg, #1ecfe6, #14b8c4); color:#04121a; font-weight:700; border:none; }
+
+    section { padding:3rem 1rem; border-bottom:1px solid var(--line); }
+    h2 { font-size:1.6rem; margin:0 0 .5rem; }
+    .muted { color:var(--muted); }
+    .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:1rem; }
+
+    .grid { display:grid; gap:1rem; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); }
+    footer { padding:2rem 1rem; color:var(--muted); }
+    code.inline { background:#0f1a35; padding:.15rem .35rem; border-radius:6px; border:1px solid var(--line); }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap nav">
+      <div class="brand"><span class="dot"></span> TC-S Network Foundation</div>
+      <nav class="links">
+        <a href="#mission">Mission</a>
+        <a href="#solar-clock">Solar Clock</a>
+        <a href="#how">How it works</a>
+        <a href="#transparency">Transparency</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="hero">
+      <h1>Custodian of the Solar Generator</h1>
+      <p class="lead">One Solar per human per day — pegged to the <strong>Solar Standard</strong> (4,913 kWh). The TC-S Network Foundation is a nonprofit custodian that mints the daily GBI subsidy and licenses Solar allocations to sanctioned networks. Learn more at <a href="https://www.thecurrentsee.org" target="_blank" rel="noopener">thecurrentsee.org</a>.</p>
+      <div class="cta">
+        <a class="btn primary" href="#solar-clock">View the Solar Clock</a>
+        <a class="btn" href="#transparency">Pending Status & Reports</a>
+      </div>
+    </section>
+
+    <section id="mission">
+      <h2>Mission</h2>
+      <p class="muted">Advance global basic income by converting value into an energy-based unit of account — the Solar Standard — and guaranteeing every human one (1) Solar per day. The Foundation is neutral, charitable, and independent from operators. The PBC and other vendors provide network services; the Foundation safeguards issuance.</p>
+    </section>
+
+    <!-- ✅ CLOCK LOCATION: Paste your Replit URL into the iframe src below -->
+    <section id="solar-clock">
+      <h2>Solar Generator Clock</h2>
+      <p class="muted">Live counter of daily Solar issuance (demo embed from Replit; replace <code class="inline">REPLIT_EMBED_URL</code> with your instance).</p>
+      <div class="card">
+        <iframe 
+          src="/index.html#solar-tracking" 
+          width="100%" 
+          height="520" 
+          style="border:1px solid var(--line); border-radius:12px; background:#0a1228;" 
+          loading="lazy" 
+          allowfullscreen></iframe>
+        <p class="muted" style="margin:.6rem 0 0; font-size:.92rem;">*Demo while nonprofit incorporation & 501(c)(3) determination are pending. Final live feed will replace this embed.*</p>
+      </div>
+    </section>
+
+    <section id="how">
+      <h2>How it works</h2>
+      <div class="grid">
+        <div class="card"><strong>1) Commissioned Value → Solar Standard</strong><br/><span class="muted">Funds from networks are converted to the Solar Standard (kWh-based value) at commissioning.</span></div>
+        <div class="card"><strong>2) Minting: 1 Solar / Human / Day</strong><br/><span class="muted">Foundation mints the baseline subsidy via the Solar Generator.</span></div>
+        <div class="card"><strong>3) Markets & Services</strong><br/><span class="muted">Donations stock goods/services so daily Solar has real spending power inside sanctioned networks.</span></div>
+        <div class="card"><strong>4) Operations</strong><br/><span class="muted">Automated micro-fees inside transactions fund ordinary network expenses. No special carve‑outs.</span></div>
+      </div>
+    </section>
+
+    <section id="transparency">
+      <h2>Transparency & Status</h2>
+      <div class="card">
+        <p class="muted">TC-S Network Foundation, Inc. nonprofit incorporation and 501(c)(3) determination are <strong>pending</strong>. Governance docs, Solar issuance data, and licensed allocation reports will be posted here. For ecosystem details, visit <a href="https://www.thecurrentsee.org" target="_blank" rel="noopener">thecurrentsee.org</a>.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="wrap">
+    <div class="grid">
+      <div>
+        <strong>TC-S Network Foundation</strong><br/>
+        <span class="muted">Custodian of the Solar Generator</span>
+      </div>
+      <div>
+        <span class="muted">Foundation site pending final domain & SSL. Temporary reference: <a href="https://www.thecurrentsee.org" target="_blank" rel="noopener">thecurrentsee.org</a>.</span>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
