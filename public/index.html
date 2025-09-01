@@ -1062,13 +1062,15 @@
           <p style="text-align: center; color: #666; margin-bottom: 30px; font-size: 1em;">Share your solar journey with The Current-See Network</p>
           
           <div style="background: white; padding: 20px; border-radius: 10px; border: 1px solid rgba(0, 87, 184, 0.2);">
-            <!-- Featured Image Section -->
-            <div id="featuredImageSection" style="text-align: center; margin-bottom: 20px; display: none;">
-              <h3 style="color: #00cc33; font-weight: bold; margin: 0 0 10px 0; font-size: 1.3em;">Featured Community Image</h3>
-              <div style="border-radius: 8px; overflow: hidden; max-width: 500px; margin: 0 auto;">
-                <img id="featuredImage" style="width: 100%; height: auto; display: block;" alt="Community Solar Image">
+            <!-- Community Gallery Feed -->
+            <div id="communityGalleryFeed" style="margin-bottom: 20px;">
+              <h3 style="color: #00cc33; font-weight: bold; margin: 0 0 15px 0; font-size: 1.3em; text-align: center;">🌞 Community Solar Showcase</h3>
+              <div id="galleryLinks" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                <!-- Dynamic gallery links will appear here -->
               </div>
-              <p id="imageDescription" style="margin: 10px 0 0 0; color: #666; font-style: italic;"></p>
+              <p style="text-align: center; color: #666; font-size: 0.9em; margin: 0;">
+                Share your solar story below to add your project to the community showcase!
+              </p>
             </div>
 
             <!-- Upload Section -->
@@ -3185,19 +3187,17 @@
 
     function setAsFeatured() {
       const previewImage = document.getElementById('previewImage');
-      const caption = document.getElementById('imageCaption').value || 'Featured community solar image';
+      const caption = document.getElementById('imageCaption').value || 'Solar Energy Project';
       
-      // Set as featured
-      const featuredSection = document.getElementById('featuredImageSection');
-      const featuredImage = document.getElementById('featuredImage');
-      const imageDescription = document.getElementById('imageDescription');
-      
-      featuredImage.src = previewImage.src;
-      imageDescription.textContent = caption;
-      featuredSection.style.display = 'block';
-      
-      // Hide preview
-      document.getElementById('imagePreview').style.display = 'none';
+      if (previewImage.src) {
+        // Add to community feed
+        addToCommunityFeed(previewImage.src, caption);
+        
+        // Hide preview
+        document.getElementById('imagePreview').style.display = 'none';
+        
+        alert('🌟 Added to Community Showcase! Your project is now marketplace-ready.');
+      }
       
       // Success message
       const button = event.target;
@@ -3207,6 +3207,218 @@
         button.textContent = originalText;
       }, 2000);
     }
+
+    // Community Feed Management
+    function addToCommunityFeed(imageSrc, caption) {
+      const galleryLinks = document.getElementById('galleryLinks');
+      const timestamp = new Date().toLocaleDateString();
+      const projectId = 'project_' + Date.now();
+      
+      // Create gallery link card
+      const linkCard = document.createElement('div');
+      linkCard.style.cssText = `
+        background: linear-gradient(135deg, rgba(0,255,65,0.1), rgba(255,215,0,0.05));
+        border: 1px solid rgba(0,255,65,0.3);
+        border-radius: 10px;
+        padding: 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: center;
+      `;
+      
+      linkCard.innerHTML = `
+        <img src="${imageSrc}" alt="Solar Project" 
+             style="width: 100%; height: 120px; object-fit: cover; border-radius: 8px; margin-bottom: 8px;">
+        <h4 style="margin: 0 0 5px 0; color: #00ff41; font-size: 0.9em;">${caption}</h4>
+        <p style="margin: 0; color: #666; font-size: 0.8em;">${timestamp}</p>
+        <div style="margin-top: 8px;">
+          <span style="background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; padding: 2px 8px; 
+                       border-radius: 12px; font-size: 0.7em; font-weight: bold;">🏪 Market Ready</span>
+        </div>
+      `;
+      
+      // Add click handler to open popup gallery
+      linkCard.onclick = () => openProjectGallery(imageSrc, caption, timestamp, projectId);
+      
+      // Hover effects
+      linkCard.onmouseenter = () => {
+        linkCard.style.transform = 'translateY(-3px)';
+        linkCard.style.boxShadow = '0 8px 25px rgba(0,255,65,0.3)';
+      };
+      linkCard.onmouseleave = () => {
+        linkCard.style.transform = 'translateY(0)';
+        linkCard.style.boxShadow = 'none';
+      };
+      
+      // Add to feed (newest first)
+      galleryLinks.insertBefore(linkCard, galleryLinks.firstChild);
+      
+      // Store in localStorage for persistence
+      saveCommunityProject(projectId, imageSrc, caption, timestamp);
+    }
+    
+    function openProjectGallery(imageSrc, caption, timestamp, projectId) {
+      // Create popup with marketplace features
+      const popup = window.open('', 'ProjectGallery_' + projectId, 'width=800,height=600,scrollbars=yes,resizable=yes');
+      
+      popup.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>TC-S Solar Project - ${caption}</title>
+          <style>
+            body { 
+              font-family: Arial, sans-serif; 
+              margin: 0; 
+              padding: 20px; 
+              background: linear-gradient(135deg, #0b1020 0%, #1a1a2e 100%);
+              color: #fff;
+            }
+            .gallery-header {
+              text-align: center;
+              padding: 20px 0;
+              border-bottom: 2px solid #00ff41;
+              margin-bottom: 30px;
+            }
+            .gallery-header h1 {
+              color: #00ff41;
+              text-shadow: 0 0 10px #00ff41;
+              margin: 0;
+            }
+            .image-container {
+              max-width: 600px;
+              margin: 0 auto;
+              background: rgba(255,255,255,0.1);
+              border-radius: 15px;
+              padding: 20px;
+              border: 1px solid rgba(0,255,65,0.3);
+            }
+            .main-image {
+              width: 100%;
+              border-radius: 10px;
+              box-shadow: 0 8px 32px rgba(0,255,65,0.3);
+            }
+            .marketplace-section {
+              background: linear-gradient(135deg, rgba(255,215,0,0.1), rgba(0,255,65,0.1));
+              padding: 20px;
+              border-radius: 10px;
+              margin-top: 20px;
+              border: 1px solid rgba(255,215,0,0.3);
+            }
+            .price-tag {
+              background: linear-gradient(135deg, #FFD700, #FFA500);
+              color: #000;
+              padding: 8px 16px;
+              border-radius: 20px;
+              font-weight: bold;
+              display: inline-block;
+              margin: 10px 5px;
+            }
+            .btn {
+              padding: 10px 20px;
+              border: none;
+              border-radius: 8px;
+              font-weight: bold;
+              cursor: pointer;
+              margin: 5px;
+            }
+            .btn-green { background: linear-gradient(135deg, #32cd32, #00ff41); color: #000; }
+            .btn-gold { background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; }
+          </style>
+        </head>
+        <body>
+          <div class="gallery-header">
+            <h1>🌞 ${caption}</h1>
+            <p>TC-S Community Solar Project</p>
+          </div>
+          
+          <div class="image-container">
+            <img src="${imageSrc}" alt="Solar Project" class="main-image">
+            <div style="margin-top: 20px; text-align: center;">
+              <p><strong>Project:</strong> ${caption}</p>
+              <p><strong>Shared:</strong> ${timestamp}</p>
+              <p><strong>Status:</strong> 🏪 Marketplace Ready</p>
+            </div>
+            
+            <div class="marketplace-section">
+              <h4 style="color: #FFD700; margin-top: 0;">🚀 Ready for Solar Marketplace</h4>
+              <p>This solar project is verified and ready for The Current-See marketplace launch!</p>
+              
+              <div style="text-align: center;">
+                <span class="price-tag">⚡ Energy Verified</span>
+                <span class="price-tag">🔗 Public Link</span>
+                <span class="price-tag">💰 Trade Ready</span>
+              </div>
+              
+              <div style="text-align: center; margin-top: 20px;">
+                <button class="btn btn-green" onclick="window.open('/', '_blank')">🏠 Return to Platform</button>
+                <button class="btn btn-gold" onclick="alert('🚀 Marketplace launching soon!')">🏪 Marketplace Info</button>
+              </div>
+            </div>
+          </div>
+        </body>
+        </html>
+      `);
+      
+      popup.document.close();
+      popup.focus();
+    }
+    
+    function saveCommunityProject(projectId, imageSrc, caption, timestamp) {
+      const projects = JSON.parse(localStorage.getItem('tcsCommunityProjects') || '[]');
+      projects.unshift({ projectId, imageSrc, caption, timestamp });
+      if (projects.length > 20) projects.splice(20);
+      localStorage.setItem('tcsCommunityProjects', JSON.stringify(projects));
+    }
+    
+    function loadCommunityFeed() {
+      const projects = JSON.parse(localStorage.getItem('tcsCommunityProjects') || '[]');
+      projects.forEach(project => {
+        addToCommunityFeedFromStorage(project.imageSrc, project.caption, project.timestamp, project.projectId);
+      });
+    }
+    
+    function addToCommunityFeedFromStorage(imageSrc, caption, timestamp, projectId) {
+      const galleryLinks = document.getElementById('galleryLinks');
+      if (!galleryLinks) return;
+      
+      const linkCard = document.createElement('div');
+      linkCard.style.cssText = `
+        background: linear-gradient(135deg, rgba(0,255,65,0.1), rgba(255,215,0,0.05));
+        border: 1px solid rgba(0,255,65,0.3);
+        border-radius: 10px;
+        padding: 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: center;
+      `;
+      
+      linkCard.innerHTML = `
+        <img src="${imageSrc}" alt="Solar Project" 
+             style="width: 100%; height: 120px; object-fit: cover; border-radius: 8px; margin-bottom: 8px;">
+        <h4 style="margin: 0 0 5px 0; color: #00ff41; font-size: 0.9em;">${caption}</h4>
+        <p style="margin: 0; color: #666; font-size: 0.8em;">${timestamp}</p>
+        <div style="margin-top: 8px;">
+          <span style="background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; padding: 2px 8px; 
+                       border-radius: 12px; font-size: 0.7em; font-weight: bold;">🏪 Market Ready</span>
+        </div>
+      `;
+      
+      linkCard.onclick = () => openProjectGallery(imageSrc, caption, timestamp, projectId);
+      linkCard.onmouseenter = () => {
+        linkCard.style.transform = 'translateY(-3px)';
+        linkCard.style.boxShadow = '0 8px 25px rgba(0,255,65,0.3)';
+      };
+      linkCard.onmouseleave = () => {
+        linkCard.style.transform = 'translateY(0)';
+        linkCard.style.boxShadow = 'none';
+      };
+      
+      galleryLinks.appendChild(linkCard);
+    }
+    
+    // Load community feed on page load
+    document.addEventListener('DOMContentLoaded', loadCommunityFeed);
 
     // Signup form functionality
     function initializeSignupForm() {
