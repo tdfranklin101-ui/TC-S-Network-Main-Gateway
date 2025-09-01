@@ -3543,6 +3543,10 @@
   <!-- Music Player Functions -->
   <script>
     let currentAudio = null;
+    let isPlayingPlaylist = false;
+    let currentPlaylist = [];
+    let currentPlaylistIndex = 0;
+    let nextAudioElement = null;
     
     // Stop any currently playing audio (for manual single track playback)
     function stopCurrentAudio() {
@@ -3553,6 +3557,19 @@
       }
       isPlayingPlaylist = false; // Stop any playlist when manually stopping audio
       console.log('⏹️ Audio stopped manually');
+    }
+
+    function hideNowPlayingDisplay() {
+      const display = document.getElementById('nowPlayingDisplay');
+      if (display) {
+        display.style.display = 'none';
+      }
+      
+      // Clear persistent storage when playback ends
+      localStorage.removeItem('currentTrackName');
+      localStorage.removeItem('currentTrackProgress');
+      localStorage.removeItem('isPlayingPlaylist');
+      localStorage.removeItem('currentPlaylistIndex');
     }
 
     function stopAllMusic() {
