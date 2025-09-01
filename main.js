@@ -491,7 +491,7 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Server running on port ${PORT}`);
   console.log(`🌐 Access at: http://localhost:${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/health`);
-  console.log(`🎵 Music functions: Embedded in homepage (10 tracks)`);
+  console.log(`🎵 Music functions: Embedded in homepage (18 tracks)`);
   console.log(`🤖 D-ID Agent: Kid Solar ready`);
   console.log(`📱 Mobile responsive: Enabled`);
   console.log(`🔗 Links: Q&A and waitlist working`);
