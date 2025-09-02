@@ -6,7 +6,7 @@ const url = require('url');
 const fetch = require('node-fetch');
 // const { ObjectStorageService } = require('./server/objectStorage'); // Disabled for stable Music Now service
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 
 // Database setup (non-blocking fallback)
 let pool = null;
@@ -169,23 +169,20 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // Health check endpoint
-  if (pathname === '/health') {
-    const indexPath = path.join(__dirname, 'public', 'index.html');
-    let healthData = { 
+  // Health check endpoint - Cloud Run compatible
+  if (pathname === '/health' || pathname === '/healthz' || pathname === '/_ah/health') {
+    const healthData = { 
       status: 'healthy', 
       timestamp: new Date().toISOString(),
-      server: 'deployment-ready'
+      server: 'deployment-ready',
+      port: PORT,
+      service: 'current-see-platform'
     };
     
-    if (fs.existsSync(indexPath)) {
-      const content = fs.readFileSync(indexPath, 'utf8');
-      healthData.musicFunctions = (content.match(/playMusic\d/g) || []).length;
-      healthData.didAgent = content.includes('v2_agt_vhYf_e_C');
-      healthData.fileSize = content.length;
-    }
-    
-    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.writeHead(200, { 
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-cache'
+    });
     res.end(JSON.stringify(healthData, null, 2));
     return;
   }
