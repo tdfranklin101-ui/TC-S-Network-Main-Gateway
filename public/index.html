@@ -763,7 +763,7 @@
                 
                 <!-- Track Selection Dropdown -->
                 <div style="margin-bottom: 15px;">
-                  <select id="trackSelector" style="width: 100%; max-width: 400px; padding: 12px; border: 2px solid #ff8c00; border-radius: 8px; background: white; color: #333; font-size: 14px; cursor: pointer;">
+                  <select onchange="playSelectedTrack()" style="width: 100%; max-width: 400px; padding: 12px; border: 2px solid #ff8c00; border-radius: 8px; background: white; color: #333; font-size: 14px; cursor: pointer;">
                     <option value="">🎵 Select a track to play...</option>
                     <option value="0">⭐ David Boyeez Hair</option>
                     <option value="1">🐊 Swampy Boogie Nights (Cajun Crawler)</option>
@@ -788,13 +788,13 @@
                 
                 <!-- Player Controls -->
                 <div style="margin-bottom: 15px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-                  <button id="playAllBtn" style="padding: 8px 16px; border: 2px solid #ff8c00; border-radius: 6px; background: #ff8c00; color: white; font-size: 12px; cursor: pointer; font-weight: bold;">
+                  <button onclick="playRandomTrack()" style="padding: 8px 16px; border: 2px solid #ff8c00; border-radius: 6px; background: #ff8c00; color: white; font-size: 12px; cursor: pointer; font-weight: bold;">
                     🎲 Play Random
                   </button>
-                  <button id="stopBtn" style="padding: 8px 16px; border: 2px solid #dc143c; border-radius: 6px; background: #dc143c; color: white; font-size: 12px; cursor: pointer; font-weight: bold;">
+                  <button onclick="stopMusic()" style="padding: 8px 16px; border: 2px solid #dc143c; border-radius: 6px; background: #dc143c; color: white; font-size: 12px; cursor: pointer; font-weight: bold;">
                     ⏹️ Stop
                   </button>
-                  <button id="nextBtn" style="padding: 8px 16px; border: 2px solid #228b22; border-radius: 6px; background: #228b22; color: white; font-size: 12px; cursor: pointer; font-weight: bold;">
+                  <button onclick="playNextTrack()" style="padding: 8px 16px; border: 2px solid #228b22; border-radius: 6px; background: #228b22; color: white; font-size: 12px; cursor: pointer; font-weight: bold;">
                     ⏭️ Next
                   </button>
                 </div>
@@ -2630,182 +2630,82 @@
       '7abf4dac-2b12-434a-8d59-c115f8c54cb9': 'Rasta Lady Voodoo'
     };
 
-    // Updated track list for new MP3 player (18 tracks total)
-    const allTracksData = [
-      { url: 'https://storage.aisongmaker.io/audio/9b2b12e4-8626-41e4-b9e4-c7a563e40f97.mp3', name: '⭐ David Boyeez Hair' },
-      { url: 'https://storage.aisongmaker.io/audio/015092c3-f687-4a01-9a81-dad42f2adce9.mp3', name: '🐊 Swampy Boogie Nights (Cajun Crawler)' },
-      { url: 'https://storage.aisongmaker.io/audio/10db8911-0b74-4675-ba62-02182c1d7f6b.mp3', name: '🎵 The Heart is a Mule (by Robert Hunter, Allen Ginsberg and William Burroughs (ish))' },
-      { url: 'https://storage.aisongmaker.io/audio/418add3e-c1a5-4a76-b361-14d6a11794fe.mp3', name: '🎶 A Solar Day (groovin)' },
-      { url: 'https://storage.aisongmaker.io/audio/a2647129-991f-4105-aad2-e45210005bef.mp3', name: '🎼 A Solar Day (moovin)' },
-      { url: 'https://storage.aisongmaker.io/audio/09de8c9d-25a7-4b38-a6bd-c27b7de4629e.mp3', name: '🎺 Break Time Blues Rhapsody (By Kid Solar)' },
-      { url: 'https://storage.aisongmaker.io/audio/c51b1f15-eff7-41fb-b778-b1b9d914ce3a.mp3', name: '⭐ Starlight Forever' },
-      { url: 'https://storage.aisongmaker.io/audio/ab1612d5-ccf4-4b4a-ab92-21b77bebdd46.mp3', name: '💡 Light It From Within' },
-      { url: 'https://storage.aisongmaker.io/audio/675d577c-5ab9-45c9-b9d5-d4362f6bcc12.mp3', name: '🌙 Moonshine in St Kitts. (By Bowie, Jagger, Lennon (ish))' },
-      { url: 'https://storage.aisongmaker.io/audio/94088af1-8318-401a-b277-b79fbbdb7475.mp3', name: '⚡ Solar Tempest Symphony (By JMF)' },
-      { url: 'https://storage.aisongmaker.io/audio/cb58c04e-fc7b-448a-a9e5-a642e168cacd.mp3', name: '🔩 Steel In His Soul' },
-      { url: 'https://storage.aisongmaker.io/audio/11802549-7cf8-4d4c-a708-44f04804f2ab.mp3', name: '💬 We Said So' },
-      { url: 'https://storage.aisongmaker.io/audio/19d37c35-dc0b-4686-8bd7-71992f925670.mp3', name: '🗿 Funky Voodoo (Blues Jam)' },
-      { url: 'https://storage.aisongmaker.io/audio/255be09f-c09a-4d9a-8dbc-3c3ba65e9204.mp3', name: '🗿 Green and Blue (Rock)' },
-      { url: 'https://storage.aisongmaker.io/audio/01e05fb6-a7ac-4dd3-9500-00bb46625ef1.mp3', name: '🗿 Green and Blue (EDM)' },
-      { url: 'https://storage.aisongmaker.io/audio/49fc3427-e775-47f0-b5ea-8903006b07a0.mp3', name: '🗿 Lady Voodoo (Folk Yah)' },
-      { url: 'https://storage.aisongmaker.io/audio/b2001c35-620a-4893-b046-4de20ad11422.mp3', name: '🗿 Lady Voodoo (Crying)' },
-      { url: 'https://storage.aisongmaker.io/audio/7abf4dac-2b12-434a-8d59-c115f8c54cb9.mp3', name: '🗿 Rasta Lady Voodoo' }
+    // SIMPLE MP3 PLAYER DATA
+    const musicTracks = [
+      'https://storage.aisongmaker.io/audio/9b2b12e4-8626-41e4-b9e4-c7a563e40f97.mp3', // David Boyeez Hair
+      'https://storage.aisongmaker.io/audio/015092c3-f687-4a01-9a81-dad42f2adce9.mp3', // Swampy Boogie Nights  
+      'https://storage.aisongmaker.io/audio/10db8911-0b74-4675-ba62-02182c1d7f6b.mp3', // The Heart is a Mule
+      'https://storage.aisongmaker.io/audio/418add3e-c1a5-4a76-b361-14d6a11794fe.mp3', // A Solar Day (groovin)
+      'https://storage.aisongmaker.io/audio/a2647129-991f-4105-aad2-e45210005bef.mp3', // A Solar Day (moovin)
+      'https://storage.aisongmaker.io/audio/09de8c9d-25a7-4b38-a6bd-c27b7de4629e.mp3', // Break Time Blues Rhapsody
+      'https://storage.aisongmaker.io/audio/c51b1f15-eff7-41fb-b778-b1b9d914ce3a.mp3', // Starlight Forever
+      'https://storage.aisongmaker.io/audio/ab1612d5-ccf4-4b4a-ab92-21b77bebdd46.mp3', // Light It From Within
+      'https://storage.aisongmaker.io/audio/675d577c-5ab9-45c9-b9d5-d4362f6bcc12.mp3', // Moonshine in St Kitts
+      'https://storage.aisongmaker.io/audio/94088af1-8318-401a-b277-b79fbbdb7475.mp3', // Solar Tempest Symphony
+      'https://storage.aisongmaker.io/audio/cb58c04e-fc7b-448a-a9e5-a642e168cacd.mp3', // Steel In His Soul
+      'https://storage.aisongmaker.io/audio/11802549-7cf8-4d4c-a708-44f04804f2ab.mp3', // We Said So
+      'https://storage.aisongmaker.io/audio/19d37c35-dc0b-4686-8bd7-71992f925670.mp3', // Funky Voodoo
+      'https://storage.aisongmaker.io/audio/255be09f-c09a-4d9a-8dbc-3c3ba65e9204.mp3', // Green and Blue (Rock)
+      'https://storage.aisongmaker.io/audio/01e05fb6-a7ac-4dd3-9500-00bb46625ef1.mp3', // Green and Blue (EDM)
+      'https://storage.aisongmaker.io/audio/49fc3427-e775-47f0-b5ea-8903006b07a0.mp3', // Lady Voodoo (Folk)
+      'https://storage.aisongmaker.io/audio/b2001c35-620a-4893-b046-4de20ad11422.mp3', // Lady Voodoo (Crying)
+      'https://storage.aisongmaker.io/audio/7abf4dac-2b12-434a-8d59-c115f8c54cb9.mp3'  // Rasta Lady Voodoo
     ];
 
-    // Simple Working MP3 Player - Fixed Version
-    let currentTrackIndex = 0;
-    let isPlayingRandom = false;
-    let playedTracks = [];
-    let shuffledPlaylist = [];
-    
-    // Load and PLAY track function
-    function loadSelectedTrack() {
-      const selector = document.getElementById('trackSelector');
+    const musicNames = [
+      '⭐ David Boyeez Hair', '🐊 Swampy Boogie Nights (Cajun Crawler)', 
+      '🎵 The Heart is a Mule', '🎶 A Solar Day (groovin)', '🎼 A Solar Day (moovin)',
+      '🎺 Break Time Blues Rhapsody', '⭐ Starlight Forever', '💡 Light It From Within',
+      '🌙 Moonshine in St Kitts', '⚡ Solar Tempest Symphony', '🔩 Steel In His Soul',
+      '💬 We Said So', '🗿 Funky Voodoo (Blues Jam)', '🗿 Green and Blue (Rock)',
+      '🗿 Green and Blue (EDM)', '🗿 Lady Voodoo (Folk Yah)', '🗿 Lady Voodoo (Crying)', 
+      '🗿 Rasta Lady Voodoo'
+    ];
+
+    // BRAND NEW SIMPLE MP3 PLAYER - BYPASSES ALL CONFLICTS
+    let currentIdx = 0;
+
+    function playSelectedTrack() {
+      const select = event.target;
+      const idx = parseInt(select.value);
+      if (isNaN(idx)) return;
+      
+      currentIdx = idx;
       const player = document.getElementById('musicPlayer');
-      const nowPlaying = document.getElementById('currentTrackName');
-      const nowPlayingDiv = document.getElementById('nowPlayingDisplay');
+      const display = document.getElementById('nowPlayingDisplay');
+      const nameEl = document.getElementById('currentTrackName');
       
-      const trackIndex = selector.value;
-      
-      if (trackIndex === '') {
-        player.src = '';
-        player.pause();
-        if (nowPlayingDiv) nowPlayingDiv.style.display = 'none';
-        return;
-      }
-      
-      currentTrackIndex = parseInt(trackIndex);
-      const track = allTracksData[currentTrackIndex];
-      
-      if (track) {
-        // Stop any current playback
-        player.pause();
-        player.currentTime = 0;
-        
-        // Load new track
-        player.src = track.url;
-        player.load();
-        
-        // Update display
-        if (nowPlaying) nowPlaying.textContent = track.name;
-        if (nowPlayingDiv) nowPlayingDiv.style.display = 'block';
-        
-        // Auto-play the selected track
-        setTimeout(() => {
-          player.play().catch(e => {
-            console.log('Click to enable audio, then try again');
-          });
-        }, 100);
-      }
-    }
-    
-    // Play random function
-    function playRandomPlaylist() {
-      console.log('Starting random playlist...');
-      isPlayingRandom = true;
-      
-      // Create shuffled playlist
-      shuffledPlaylist = [];
-      for (let i = 0; i < allTracksData.length; i++) {
-        shuffledPlaylist.push(i);
-      }
-      
-      // Fisher-Yates shuffle
-      for (let i = shuffledPlaylist.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffledPlaylist[i], shuffledPlaylist[j]] = [shuffledPlaylist[j], shuffledPlaylist[i]];
-      }
-      
-      playedTracks = [];
-      currentTrackIndex = shuffledPlaylist[0];
-      playedTracks.push(currentTrackIndex);
-      
-      const selector = document.getElementById('trackSelector');
-      const player = document.getElementById('musicPlayer');
-      const nowPlaying = document.getElementById('currentTrackName');
-      const nowPlayingDiv = document.getElementById('nowPlayingDisplay');
-      
-      selector.value = currentTrackIndex.toString();
-      const track = allTracksData[currentTrackIndex];
-      
-      if (track) {
-        console.log('Playing:', track.name);
-        player.src = track.url;
-        player.load();
-        if (nowPlaying) nowPlaying.textContent = track.name;
-        if (nowPlayingDiv) nowPlayingDiv.style.display = 'block';
-        
-        setTimeout(() => {
-          player.play().catch(e => {
-            console.log('Play failed:', e);
-            alert('Please tap the play button on the audio player to start music.');
-          });
-        }, 500);
-      }
-    }
-    
-    // Stop function
-    function stopCurrentPlayer() {
-      const player = document.getElementById('musicPlayer');
       player.pause();
-      player.currentTime = 0;
-      isPlayingRandom = false;
-      playedTracks = [];
-      shuffledPlaylist = [];
-      console.log('Player stopped');
-    }
-    
-    // Next track function - actually works
-    function playNextTrack() {
-      const player = document.getElementById('musicPlayer');
-      
-      currentTrackIndex++;
-      if (currentTrackIndex >= allTracksData.length) {
-        currentTrackIndex = 0;
-      }
-      
-      const track = allTracksData[currentTrackIndex];
-      const selector = document.getElementById('trackSelector');
-      const nowPlaying = document.getElementById('currentTrackName');
-      const nowPlayingDiv = document.getElementById('nowPlayingDisplay');
-      
-      // Stop current, load next track
-      player.pause();
-      player.currentTime = 0;
-      player.src = track.url;
+      player.src = musicTracks[idx];
       player.load();
       
-      // Update display
-      selector.value = currentTrackIndex.toString();
-      if (nowPlaying) nowPlaying.textContent = track.name;
-      if (nowPlayingDiv) nowPlayingDiv.style.display = 'block';
+      if (nameEl) nameEl.textContent = musicNames[idx];
+      if (display) display.style.display = 'block';
       
-      // Auto-play next track
-      setTimeout(() => {
-        player.play().catch(e => {
-          console.log('Click to enable audio');
-        });
-      }, 200);
+      setTimeout(() => player.play().catch(() => alert('Click the ▶️ play button on the audio player')), 100);
     }
-    
-    // SINGLE MP3 Player System - No Conflicts
-    document.addEventListener('DOMContentLoaded', function() {
-      // Initialize MP3 player after short delay
-      setTimeout(() => {
-        const selector = document.getElementById('trackSelector');
-        const playAllBtn = document.getElementById('playAllBtn');
-        const stopBtn = document.getElementById('stopBtn');
-        const nextBtn = document.getElementById('nextBtn');
-        
-        // Direct onclick assignments - simple and reliable
-        if (selector) selector.onchange = loadSelectedTrack;
-        if (playAllBtn) playAllBtn.onclick = playRandomPlaylist;
-        if (stopBtn) stopBtn.onclick = stopCurrentPlayer;
-        if (nextBtn) nextBtn.onclick = playNextTrack;
-        
-        console.log('🎵 MP3 Player Ready');
-      }, 100);
-    });
+
+    function playRandomTrack() {
+      const randomIdx = Math.floor(Math.random() * musicTracks.length);
+      const select = document.querySelector('select[onchange="playSelectedTrack()"]');
+      select.value = randomIdx;
+      playSelectedTrack.call(select);
+    }
+
+    function stopMusic() {
+      const player = document.getElementById('musicPlayer');
+      player.pause();
+      player.currentTime = 0;
+      const display = document.getElementById('nowPlayingDisplay');
+      if (display) display.style.display = 'none';
+    }
+
+    function playNextTrack() {
+      currentIdx = (currentIdx + 1) % musicTracks.length;
+      const select = document.querySelector('select[onchange="playSelectedTrack()"]');
+      select.value = currentIdx;
+      playSelectedTrack.call(select);
+    }
       
 
     // End of simple MP3 player - all functions removed to avoid conflicts

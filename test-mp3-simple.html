@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple MP3 Test</title>
+</head>
+<body>
+    <h2>MP3 Player Test</h2>
+    
+    <select onchange="playSelectedTrack()">
+        <option value="">Select track...</option>
+        <option value="0">⭐ David Boyeez Hair</option>
+        <option value="1">🐊 Swampy Boogie Nights</option>
+        <option value="2">🎵 The Heart is a Mule</option>
+    </select>
+    
+    <br><br>
+    
+    <button onclick="playRandomTrack()">🎲 Play Random</button>
+    <button onclick="stopMusic()">⏹️ Stop</button>
+    <button onclick="playNextTrack()">⏭️ Next</button>
+    
+    <br><br>
+    
+    <audio id="musicPlayer" controls>
+        Your browser does not support audio.
+    </audio>
+    
+    <div id="nowPlayingDisplay" style="display: none; margin-top: 10px; padding: 10px; background: #f0f0f0;">
+        🎶 Now Playing: <span id="currentTrackName">Loading...</span>
+    </div>
+
+    <script>
+        const musicTracks = [
+            'https://storage.aisongmaker.io/audio/9b2b12e4-8626-41e4-b9e4-c7a563e40f97.mp3',
+            'https://storage.aisongmaker.io/audio/015092c3-f687-4a01-9a81-dad42f2adce9.mp3',
+            'https://storage.aisongmaker.io/audio/10db8911-0b74-4675-ba62-02182c1d7f6b.mp3'
+        ];
+
+        const musicNames = [
+            '⭐ David Boyeez Hair',
+            '🐊 Swampy Boogie Nights (Cajun Crawler)',
+            '🎵 The Heart is a Mule'
+        ];
+
+        let currentIdx = 0;
+
+        function playSelectedTrack() {
+            const select = event.target;
+            const idx = parseInt(select.value);
+            if (isNaN(idx)) return;
+            
+            currentIdx = idx;
+            const player = document.getElementById('musicPlayer');
+            const display = document.getElementById('nowPlayingDisplay');
+            const nameEl = document.getElementById('currentTrackName');
+            
+            player.pause();
+            player.src = musicTracks[idx];
+            player.load();
+            
+            if (nameEl) nameEl.textContent = musicNames[idx];
+            if (display) display.style.display = 'block';
+            
+            setTimeout(() => player.play().catch(() => alert('Click the ▶️ play button')), 100);
+        }
+
+        function playRandomTrack() {
+            const randomIdx = Math.floor(Math.random() * musicTracks.length);
+            const select = document.querySelector('select');
+            select.value = randomIdx;
+            playSelectedTrack.call(select);
+        }
+
+        function stopMusic() {
+            const player = document.getElementById('musicPlayer');
+            player.pause();
+            player.currentTime = 0;
+            const display = document.getElementById('nowPlayingDisplay');
+            if (display) display.style.display = 'none';
+        }
+
+        function playNextTrack() {
+            currentIdx = (currentIdx + 1) % musicTracks.length;
+            const select = document.querySelector('select');
+            select.value = currentIdx;
+            playSelectedTrack.call(select);
+        }
+    </script>
+</body>
+</html>
