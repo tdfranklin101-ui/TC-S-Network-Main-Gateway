@@ -2658,16 +2658,30 @@
     let playedTracks = [];
     let shuffledPlaylist = [];
     
-    // Load track function
+    // Load track function with detailed debugging
     function loadSelectedTrack() {
+      console.log('🎯 loadSelectedTrack() called');
+      
       const selector = document.getElementById('trackSelector');
       const player = document.getElementById('musicPlayer');
       const nowPlaying = document.getElementById('currentTrackName');
       const nowPlayingDiv = document.getElementById('nowPlayingDisplay');
       
+      if (!selector) {
+        console.error('❌ Selector not found in loadSelectedTrack');
+        return;
+      }
+      
+      if (!player) {
+        console.error('❌ Player not found in loadSelectedTrack');
+        return;
+      }
+      
       const trackIndex = selector.value;
+      console.log('🎯 Selected track index:', trackIndex);
       
       if (trackIndex === '') {
+        console.log('🎯 Empty selection - clearing player');
         player.src = '';
         if (nowPlayingDiv) nowPlayingDiv.style.display = 'none';
         return;
@@ -2676,12 +2690,24 @@
       currentTrackIndex = parseInt(trackIndex);
       const track = allTracksData[currentTrackIndex];
       
+      console.log('🎯 Track data:', track);
+      
       if (track) {
-        console.log('Loading track:', track.name, track.url);
+        console.log('🎵 LOADING TRACK:', track.name);
+        console.log('🎵 TRACK URL:', track.url);
+        
         player.src = track.url;
+        console.log('✅ Set player.src to:', player.src);
+        
         player.load();
+        console.log('✅ Called player.load()');
+        
         if (nowPlaying) nowPlaying.textContent = track.name;
         if (nowPlayingDiv) nowPlayingDiv.style.display = 'block';
+        
+        console.log('🎵 Track loaded successfully - you can now press play on the audio controls');
+      } else {
+        console.error('❌ Track not found for index:', trackIndex);
       }
     }
     
@@ -2756,22 +2782,53 @@
     
     // Setup when page loads
     window.addEventListener('load', function() {
-      console.log('MP3 Player Ready - 18 tracks available');
+      console.log('🎵 MP3 Player Ready - 18 tracks available');
+      console.log('🎵 Available tracks:', allTracksData.length);
       
-      // Connect dropdown to load function
+      // Connect dropdown to load function with debugging
       const selector = document.getElementById('trackSelector');
       if (selector) {
-        selector.onchange = loadSelectedTrack;
+        console.log('✅ Found track selector dropdown');
+        selector.onchange = function() {
+          console.log('🎯 Dropdown changed! Selected value:', this.value);
+          loadSelectedTrack();
+        };
+      } else {
+        console.error('❌ Track selector not found!');
       }
       
-      // Connect buttons
+      // Connect buttons with debugging
       const playAllBtn = document.getElementById('playAllBtn');
       const stopBtn = document.getElementById('stopBtn');
       const nextBtn = document.getElementById('nextBtn');
+      const player = document.getElementById('musicPlayer');
       
-      if (playAllBtn) playAllBtn.onclick = playRandomPlaylist;
-      if (stopBtn) stopBtn.onclick = stopCurrentPlayer;
-      if (nextBtn) nextBtn.onclick = playNextTrack;
+      if (playAllBtn) {
+        console.log('✅ Found Play Random button');
+        playAllBtn.onclick = playRandomPlaylist;
+      } else {
+        console.error('❌ Play Random button not found!');
+      }
+      
+      if (stopBtn) {
+        console.log('✅ Found Stop button');
+        stopBtn.onclick = stopCurrentPlayer;
+      } else {
+        console.error('❌ Stop button not found!');
+      }
+      
+      if (nextBtn) {
+        console.log('✅ Found Next button');
+        nextBtn.onclick = playNextTrack;
+      } else {
+        console.error('❌ Next button not found!');
+      }
+      
+      if (player) {
+        console.log('✅ Found audio player element');
+      } else {
+        console.error('❌ Audio player element not found!');
+      }
       
       // Auto-advance for random mode
       const player = document.getElementById('musicPlayer');
