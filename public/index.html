@@ -744,7 +744,7 @@
                 
                 <!-- Track Selection Dropdown -->
                 <div style="margin-bottom: 15px;">
-                  <select id="trackSelector" onchange="loadTrack()" style="width: 100%; max-width: 400px; padding: 12px; border: 2px solid #ff8c00; border-radius: 8px; background: white; color: #333; font-size: 14px; cursor: pointer;">
+                  <select id="trackSelector" style="width: 100%; max-width: 400px; padding: 12px; border: 2px solid #ff8c00; border-radius: 8px; background: white; color: #333; font-size: 14px; cursor: pointer;">
                     <option value="">🎵 Select a track to play...</option>
                     <option value="0">⭐ David Boyeez Hair</option>
                     <option value="1">🐊 Swampy Boogie Nights (Cajun Crawler)</option>
@@ -769,19 +769,19 @@
                 
                 <!-- Player Controls -->
                 <div style="margin-bottom: 15px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-                  <button id="playAllBtn" onclick="playRandomTracks()" style="padding: 8px 16px; border: 2px solid #ff8c00; border-radius: 6px; background: #ff8c00; color: white; font-size: 12px; cursor: pointer; font-weight: bold;">
+                  <button id="playAllBtn" style="padding: 8px 16px; border: 2px solid #ff8c00; border-radius: 6px; background: #ff8c00; color: white; font-size: 12px; cursor: pointer; font-weight: bold;">
                     🎲 Play Random
                   </button>
-                  <button id="stopBtn" onclick="stopPlayer()" style="padding: 8px 16px; border: 2px solid #dc143c; border-radius: 6px; background: #dc143c; color: white; font-size: 12px; cursor: pointer; font-weight: bold;">
+                  <button id="stopBtn" style="padding: 8px 16px; border: 2px solid #dc143c; border-radius: 6px; background: #dc143c; color: white; font-size: 12px; cursor: pointer; font-weight: bold;">
                     ⏹️ Stop
                   </button>
-                  <button id="nextBtn" onclick="nextTrack()" style="padding: 8px 16px; border: 2px solid #228b22; border-radius: 6px; background: #228b22; color: white; font-size: 12px; cursor: pointer; font-weight: bold;">
+                  <button id="nextBtn" style="padding: 8px 16px; border: 2px solid #228b22; border-radius: 6px; background: #228b22; color: white; font-size: 12px; cursor: pointer; font-weight: bold;">
                     ⏭️ Next
                   </button>
                 </div>
                 
                 <!-- HTML5 Audio Player -->
-                <audio id="musicPlayer" controls preload="metadata" crossorigin="anonymous" style="width: 100%; max-width: 400px; margin-bottom: 15px; border-radius: 8px;">
+                <audio id="musicPlayer" controls preload="none" style="width: 100%; max-width: 400px; margin-bottom: 15px; border-radius: 8px;">
                   Your browser does not support the audio element.
                 </audio>
                 
@@ -2633,120 +2633,128 @@
       { url: 'https://storage.aisongmaker.io/audio/7abf4dac-2b12-434a-8d59-c115f8c54cb9.mp3', name: '🗿 Rasta Lady Voodoo' }
     ];
 
-    // Simple & Reliable MP3 Player
-    let currentTrackIndex = 0;
-    let isPlayingRandom = false;
-    let playedTracks = [];
-    let shuffledPlaylist = [];
-    
-    // Load selected track immediately
-    function loadTrack() {
+    // Working MP3 Player with Event Listeners
+    document.addEventListener('DOMContentLoaded', function() {
+      let currentTrackIndex = 0;
+      let isPlayingRandom = false;
+      let playedTracks = [];
+      let shuffledPlaylist = [];
+      
       const selector = document.getElementById('trackSelector');
       const player = document.getElementById('musicPlayer');
       const nowPlaying = document.getElementById('currentTrackName');
       const nowPlayingDiv = document.getElementById('nowPlayingDisplay');
+      const playAllBtn = document.getElementById('playAllBtn');
+      const stopBtn = document.getElementById('stopBtn');
+      const nextBtn = document.getElementById('nextBtn');
       
-      const trackIndex = selector.value;
+      // Load track when dropdown changes
+      selector.addEventListener('change', function() {
+        const trackIndex = selector.value;
+        
+        if (trackIndex === '') {
+          player.src = '';
+          if (nowPlayingDiv) nowPlayingDiv.style.display = 'none';
+          return;
+        }
+        
+        currentTrackIndex = parseInt(trackIndex);
+        const track = allTracksData[currentTrackIndex];
+        
+        if (track) {
+          player.src = track.url;
+          player.load();
+          if (nowPlaying) nowPlaying.textContent = track.name;
+          if (nowPlayingDiv) nowPlayingDiv.style.display = 'block';
+        }
+      });
       
-      if (trackIndex === '') {
-        player.src = '';
-        if (nowPlayingDiv) nowPlayingDiv.style.display = 'none';
-        return;
-      }
+      // Play Random button
+      playAllBtn.addEventListener('click', function() {
+        isPlayingRandom = true;
+        
+        // Create shuffled playlist
+        shuffledPlaylist = [];
+        for (let i = 0; i < allTracksData.length; i++) {
+          shuffledPlaylist.push(i);
+        }
+        
+        // Fisher-Yates shuffle
+        for (let i = shuffledPlaylist.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffledPlaylist[i], shuffledPlaylist[j]] = [shuffledPlaylist[j], shuffledPlaylist[i]];
+        }
+        
+        playedTracks = [];
+        currentTrackIndex = shuffledPlaylist[0];
+        playedTracks.push(currentTrackIndex);
+        
+        selector.value = currentTrackIndex.toString();
+        const track = allTracksData[currentTrackIndex];
+        
+        if (track) {
+          player.src = track.url;
+          player.load();
+          if (nowPlaying) nowPlaying.textContent = track.name;
+          if (nowPlayingDiv) nowPlayingDiv.style.display = 'block';
+          
+          player.play().catch(e => console.log('Play failed:', e));
+        }
+      });
       
-      currentTrackIndex = parseInt(trackIndex);
-      const track = allTracksData[currentTrackIndex];
-      
-      if (track) {
-        player.src = track.url;
-        player.load();
-        if (nowPlaying) nowPlaying.textContent = track.name;
-        if (nowPlayingDiv) nowPlayingDiv.style.display = 'block';
-      }
-    }
-    
-    // Create shuffled playlist (no repeats)
-    function createShuffledPlaylist() {
-      shuffledPlaylist = [];
-      for (let i = 0; i < allTracksData.length; i++) {
-        shuffledPlaylist.push(i);
-      }
-      
-      // Fisher-Yates shuffle algorithm
-      for (let i = shuffledPlaylist.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffledPlaylist[i], shuffledPlaylist[j]] = [shuffledPlaylist[j], shuffledPlaylist[i]];
-      }
-      
-      playedTracks = [];
-    }
-    
-    // Play tracks in random order (no repeats)
-    function playRandomTracks() {
-      isPlayingRandom = true;
-      createShuffledPlaylist();
-      
-      // Start with first track from shuffled list
-      currentTrackIndex = shuffledPlaylist[0];
-      playedTracks.push(currentTrackIndex);
-      
-      const selector = document.getElementById('trackSelector');
-      selector.value = currentTrackIndex.toString();
-      loadTrack();
-      
-      const player = document.getElementById('musicPlayer');
-      player.play();
-      
-      // Auto-advance to next random track when current ends
-      player.addEventListener('ended', autoPlayNextRandom);
-    }
-    
-    // Auto-play next random track
-    function autoPlayNextRandom() {
-      if (!isPlayingRandom) return;
-      
-      // Check if we've played all tracks
-      if (playedTracks.length >= allTracksData.length) {
-        // All tracks played - end of random playlist
+      // Stop button
+      stopBtn.addEventListener('click', function() {
+        player.pause();
+        player.currentTime = 0;
         isPlayingRandom = false;
-        return;
-      }
+        playedTracks = [];
+        shuffledPlaylist = [];
+      });
       
-      // Get next track from shuffled playlist
-      const nextIndex = playedTracks.length;
-      currentTrackIndex = shuffledPlaylist[nextIndex];
-      playedTracks.push(currentTrackIndex);
+      // Next button
+      nextBtn.addEventListener('click', function() {
+        currentTrackIndex++;
+        if (currentTrackIndex >= allTracksData.length) {
+          currentTrackIndex = 0;
+        }
+        
+        selector.value = currentTrackIndex.toString();
+        const track = allTracksData[currentTrackIndex];
+        
+        if (track) {
+          player.src = track.url;
+          player.load();
+          if (nowPlaying) nowPlaying.textContent = track.name;
+          if (nowPlayingDiv) nowPlayingDiv.style.display = 'block';
+        }
+      });
       
-      const selector = document.getElementById('trackSelector');
-      selector.value = currentTrackIndex.toString();
-      loadTrack();
-      
-      const player = document.getElementById('musicPlayer');
-      player.play();
-    }
-    
-    // Play next track manually
-    function nextTrack() {
-      currentTrackIndex++;
-      if (currentTrackIndex >= allTracksData.length) {
-        currentTrackIndex = 0; // Loop back to start
-      }
-      
-      const selector = document.getElementById('trackSelector');
-      selector.value = currentTrackIndex.toString();
-      loadTrack();
-    }
-    
-    // Stop player
-    function stopPlayer() {
-      const player = document.getElementById('musicPlayer');
-      player.pause();
-      player.currentTime = 0;
-      isPlayingRandom = false;
-      player.removeEventListener('ended', autoPlayNextRandom);
-      playedTracks = [];
-      shuffledPlaylist = [];
-    }
+      // Auto-advance when random mode is active
+      player.addEventListener('ended', function() {
+        if (!isPlayingRandom) return;
+        
+        if (playedTracks.length >= allTracksData.length) {
+          isPlayingRandom = false;
+          return;
+        }
+        
+        const nextIndex = playedTracks.length;
+        currentTrackIndex = shuffledPlaylist[nextIndex];
+        playedTracks.push(currentTrackIndex);
+        
+        selector.value = currentTrackIndex.toString();
+        const track = allTracksData[currentTrackIndex];
+        
+        if (track) {
+          player.src = track.url;
+          player.load();
+          if (nowPlaying) nowPlaying.textContent = track.name;
+          if (nowPlayingDiv) nowPlayingDiv.style.display = 'block';
+          
+          player.play().catch(e => console.log('Auto-play failed:', e));
+        }
+      });
+    });
 
     // End of simple MP3 player - all functions removed to avoid conflicts
 
