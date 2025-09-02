@@ -163,13 +163,13 @@
           font-size: 0.8em !important;
         }
         
-        /* Fix mobile app positioning - ensure fixed not floating */
-        div[style*="position: fixed"] {
-          position: fixed !important;
+        /* Only D-ID Agent should be floating - remove other fixed positioning */
+        #analysisDisplay, #multimodalMenu, #uploadProgress {
+          position: relative !important;
         }
         
-        /* Mobile overlay elements should be fixed positioned */
-        #analysisDisplay, #multimodalMenu, #uploadProgress {
+        /* Ensure D-ID agent remains floating as intended */
+        [data-agent-id], [data-name="did-agent"] {
           position: fixed !important;
         }
       }
@@ -1539,9 +1539,8 @@
 
   <!-- Kid Solar Analysis Display -->
   <div id="analysisDisplay" style="
-    position: fixed;
-    top: 20px;
-    left: 20px;
+    position: relative;
+    margin: 20px;
     width: 300px;
     background: white;
     border: 2px solid #ff6b35;
@@ -1599,10 +1598,9 @@
   
   <!-- Multimodal Menu Overlay -->
   <div id="multimodalMenu" style="
-    position: fixed;
-    bottom: 80px;
-    left: 50%;
-    transform: translateX(-50%);
+    position: relative;
+    margin: 20px auto;
+    text-align: center;
     background: white;
     border-radius: 20px;
     box-shadow: 0 8px 30px rgba(0,0,0,0.2);
@@ -1757,10 +1755,9 @@
       const progress = document.createElement('div');
       progress.id = 'uploadProgress';
       progress.style.cssText = `
-        position: fixed;
-        bottom: 100px;
-        left: 50%;
-        transform: translateX(-50%);
+        position: relative;
+        margin: 20px auto;
+        text-align: center;
         background: rgba(0,0,0,0.8);
         color: white;
         padding: 15px 25px;
@@ -2026,10 +2023,9 @@
                             'rgba(59, 130, 246, 0.9)';
       
       notification.style.cssText = `
-        position: fixed;
-        bottom: 150px;
-        left: 50%;
-        transform: translateX(-50%);
+        position: relative;
+        margin: 20px auto;
+        text-align: center;
         background: ${backgroundColor};
         color: white;
         padding: 12px 24px;
