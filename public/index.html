@@ -744,7 +744,7 @@
                 
                 <!-- Track Selection Dropdown -->
                 <div style="margin-bottom: 15px;">
-                  <select id="trackSelector" onchange="loadSelectedTrack()" style="width: 100%; max-width: 400px; padding: 12px; border: 2px solid #ff8c00; border-radius: 8px; background: white; color: #333; font-size: 14px; cursor: pointer;">
+                  <select id="trackSelector" onchange="playSelectedTrack()" style="width: 100%; max-width: 400px; padding: 12px; border: 2px solid #ff8c00; border-radius: 8px; background: white; color: #333; font-size: 14px; cursor: pointer;">
                     <option value="">🎵 Select a track to play...</option>
                     <option value="0">⭐ David Boyeez Hair</option>
                     <option value="1">🐊 Swampy Boogie Nights (Cajun Crawler)</option>
@@ -776,16 +776,6 @@
                 <!-- Now Playing Display -->
                 <div id="nowPlayingDisplay" style="margin: 10px 0; padding: 10px 15px; background: rgba(0, 0, 0, 0.8); border-radius: 8px; color: #ff8c00; font-weight: bold; font-size: 15px; display: none; border: 2px solid #ff8c00;">
                   🎶 Now Playing: <span id="currentTrackName">Loading...</span>
-                  <br><span id="trackProgress" style="font-size: 13px; color: #daa520; margin-top: 5px; display: block;">Track 0 of 18</span>
-                </div>
-                
-                <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-                  <button onclick="playSelectedTrack()" style="background: linear-gradient(to right, #ff8c00, #daa520); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.3s ease;">
-                    ▶️ Play Selected
-                  </button>
-                  <button onclick="playAllRandom()" style="background: linear-gradient(to right, #ff8c00, #daa520); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.3s ease;">
-                    🎲 Play All Random
-                  </button>
                 </div>
                 
               </div>
@@ -2631,201 +2621,40 @@
       { url: 'https://storage.aisongmaker.io/audio/7abf4dac-2b12-434a-8d59-c115f8c54cb9.mp3', name: '🗿 Rasta Lady Voodoo' }
     ];
 
-    // New MP3 Player Functions
-    let musicPlayer = null;
-    let randomPlaylist = [];
-    let randomPlayIndex = 0;
-    let isRandomPlaying = false;
-
-    function loadSelectedTrack() {
-      const selector = document.getElementById('trackSelector');
-      const player = document.getElementById('musicPlayer');
-      const audioSource = document.getElementById('audioSource');
-      const nowPlaying = document.getElementById('currentTrackName');
-      const trackProgress = document.getElementById('trackProgress');
-      
-      if (!selector || !player || !audioSource) return;
-      
-      const trackIndex = selector.value;
-      if (trackIndex === '') return;
-      
-      const track = allTracksData[parseInt(trackIndex)];
-      if (!track) return;
-      
-      // Stop any existing playback
-      stopAllMusic();
-      
-      // Load the selected track
-      audioSource.src = track.url;
-      player.load();
-      
-      // Update display
-      if (nowPlaying) nowPlaying.textContent = track.name;
-      if (trackProgress) trackProgress.textContent = `Selected: ${track.name}`;
-      
-      const nowPlayingDiv = document.getElementById('nowPlayingDisplay');
-      if (nowPlayingDiv) nowPlayingDiv.style.display = 'block';
-      
-      console.log('🎵 Track loaded:', track.name);
-    }
-
+    // Simple MP3 Player Function
     function playSelectedTrack() {
       const selector = document.getElementById('trackSelector');
       const player = document.getElementById('musicPlayer');
+      const audioSource = document.getElementById('audioSource');
+      const nowPlaying = document.getElementById('currentTrackName');
+      const nowPlayingDiv = document.getElementById('nowPlayingDisplay');
       
-      if (!selector || !player) return;
-      
+      // Get selected track index
       const trackIndex = selector.value;
       if (trackIndex === '') {
-        alert('Please select a track from the dropdown first!');
+        // Hide display if no track selected
+        if (nowPlayingDiv) nowPlayingDiv.style.display = 'none';
         return;
       }
       
-      // Load track if not already loaded
-      loadSelectedTrack();
-      
-      // Play the track
+      // Get track data
       const track = allTracksData[parseInt(trackIndex)];
-      setTimeout(() => {
-        player.play().then(() => {
-          console.log('▶️ Playing selected track');
-          const nowPlayingDiv = document.getElementById('nowPlayingDisplay');
-          if (nowPlayingDiv) {
-            nowPlayingDiv.style.display = 'block';
-            const trackProgress = document.getElementById('trackProgress');
-            if (trackProgress && track) trackProgress.textContent = `Playing: ${track.name}`;
-          }
-        }).catch(e => {
-          console.error('Playbook error:', e);
-          alert('Error playing track. Please try again.');
-        });
-      }, 100);
-    }
-
-    function playAllRandom() {
-      const player = document.getElementById('musicPlayer');
-      const audioSource = document.getElementById('audioSource');
-      const nowPlaying = document.getElementById('currentTrackName');
-      const trackProgress = document.getElementById('trackProgress');
+      if (!track) return;
       
-      if (!player || !audioSource) return;
+      console.log('🎵 Loading track:', track.name);
       
-      // Stop any existing playback
-      stopAllMusic();
-      
-      // Create shuffled playlist
-      randomPlaylist = [...allTracksData];
-      for (let i = randomPlaylist.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [randomPlaylist[i], randomPlaylist[j]] = [randomPlaylist[j], randomPlaylist[i]];
-      }
-      
-      randomPlayIndex = 0;
-      isRandomPlaying = true;
-      
-      // Play first track
-      playRandomTrack();
-      
-      // Set up event listener for when track ends
-      player.addEventListener('ended', playNextRandom);
-      
-      console.log('🎲 Started random play of all tracks');
-    }
-
-    function playRandomTrack() {
-      if (!isRandomPlaying || randomPlayIndex >= randomPlaylist.length) {
-        isRandomPlaying = false;
-        document.getElementById('nowPlayingDisplay').style.display = 'none';
-        console.log('🎲 Random playlist completed');
-        return;
-      }
-      
-      const player = document.getElementById('musicPlayer');
-      const audioSource = document.getElementById('audioSource');
-      const nowPlaying = document.getElementById('currentTrackName');
-      const trackProgress = document.getElementById('trackProgress');
-      
-      const track = randomPlaylist[randomPlayIndex];
-      
-      // Load and play track
+      // Load track into player
       audioSource.src = track.url;
       player.load();
       
       // Update display
       if (nowPlaying) nowPlaying.textContent = track.name;
-      if (trackProgress) trackProgress.textContent = `Random Play: ${randomPlayIndex + 1} of ${randomPlaylist.length} • ${track.name}`;
+      if (nowPlayingDiv) nowPlayingDiv.style.display = 'block';
       
-      document.getElementById('nowPlayingDisplay').style.display = 'block';
-      
-      player.play().then(() => {
-        console.log(`🎲 Playing random track ${randomPlayIndex + 1}: ${track.name}`);
-      }).catch(e => {
-        console.error('Random playback error:', e);
-        playNextRandom(); // Skip to next track on error
-      });
+      console.log('🎵 Track loaded and ready to play:', track.name);
     }
 
-    function playNextRandom() {
-      if (isRandomPlaying) {
-        randomPlayIndex++;
-        playRandomTrack();
-      }
-    }
-
-    function getTrackName(url) {
-      const fileName = url.split('/').pop().replace('.mp3', '');
-      return trackNames[fileName] || 'Unknown Track';
-    }
-
-    function showNowPlayingDisplay() {
-      const display = document.getElementById('nowPlayingDisplay');
-      if (display) {
-        display.style.display = 'block';
-      }
-    }
-
-    function updateNowPlaying(trackUrl, trackNum, totalTracks) {
-      const trackName = getTrackName(trackUrl);
-      const nameElement = document.getElementById('currentTrackName');
-      const progressElement = document.getElementById('trackProgress');
-      
-      if (nameElement) nameElement.textContent = trackName;
-      if (progressElement) progressElement.textContent = `${trackName} • Track ${trackNum} of ${totalTracks}`;
-      
-      console.log(`🎶 Now displaying: ${trackName} (${trackNum}/${totalTracks})`);
-    }
-
-    function hideNowPlayingDisplay() {
-      const display = document.getElementById('nowPlayingDisplay');
-      if (display) {
-        display.style.display = 'none';
-      }
-      
-      // Clear persistent storage when playback ends
-      localStorage.removeItem('currentTrackName');
-      localStorage.removeItem('currentTrackProgress');
-      localStorage.removeItem('isPlayingPlaylist');
-      localStorage.removeItem('currentPlaylistIndex');
-    }
-    
-    // Restore display state when returning to tab or waking from sleep
-    function restorePlaybackDisplay() {
-      const persistedTrackName = localStorage.getItem('currentTrackName');
-      const persistedProgress = localStorage.getItem('currentTrackProgress');
-      const persistedPlaylistState = localStorage.getItem('isPlayingPlaylist');
-      
-      if (persistedTrackName && persistedProgress && persistedPlaylistState === 'true') {
-        const nameElement = document.getElementById('currentTrackName');
-        const progressElement = document.getElementById('trackProgress');
-        const display = document.getElementById('nowPlayingDisplay');
-        
-        if (nameElement) nameElement.textContent = persistedTrackName;
-        if (progressElement) progressElement.textContent = persistedProgress;
-        if (display) display.style.display = 'block';
-        
-        console.log(`🔄 Restored display: ${persistedTrackName} - ${persistedProgress}`);
-      }
-    }
+    // End of simple MP3 player - all functions removed to avoid conflicts
 
     function streamNextTrack() {
       console.log(`🔍 DEBUG streamNextTrack: isPlayingPlaylist=${isPlayingPlaylist}, currentPlaylistIndex=${currentPlaylistIndex}, playlist.length=${currentPlaylist.length}`);
