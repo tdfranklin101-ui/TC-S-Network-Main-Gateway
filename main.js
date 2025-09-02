@@ -100,16 +100,12 @@ const server = http.createServer(async (req, res) => {
   
   console.log(`${new Date().toISOString()} - ${req.method} ${pathname}`);
 
-  // Route handling - serve main platform at root
+  // Route handling - start with 3-page intro sequence
   if (pathname === '/') {
-    const indexPath = path.join(__dirname, 'public', 'index.html');
-    if (fs.existsSync(indexPath)) {
-      const content = fs.readFileSync(indexPath, 'utf8');
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-      res.end(content);
-      console.log('✅ Served main platform with Music Now functionality');
-      return;
-    }
+    res.writeHead(302, { 'Location': '/page1-solar-intro.html' });
+    res.end();
+    console.log('✅ Redirecting to intro sequence (page1)');
+    return;
   }
   
   if (pathname === '/page1') {
@@ -142,12 +138,13 @@ const server = http.createServer(async (req, res) => {
     }
   }
   
-  if (pathname === '/main-platform') {
+  if (pathname === '/main-platform' || pathname === '/main') {
     const filePath = path.join(__dirname, 'public', 'index.html');
     if (fs.existsSync(filePath)) {
       const content = fs.readFileSync(filePath, 'utf8');
-      res.writeHead(200, { 'Content-Type': 'text/html' });
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
       res.end(content);
+      console.log('✅ Served main platform with Music Now functionality');
       return;
     }
   }
