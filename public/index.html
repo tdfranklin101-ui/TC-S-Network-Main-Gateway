@@ -2788,79 +2788,25 @@
       }, 200);
     }
     
-    // Setup when page loads - SIMPLIFIED AND WORKING
-    window.addEventListener('DOMContentLoaded', function() {
-      console.log('🎵 MP3 Player Setup Starting...');
-      
-      // Wait for elements to be ready
+    // SINGLE MP3 Player System - No Conflicts
+    document.addEventListener('DOMContentLoaded', function() {
+      // Initialize MP3 player after short delay
       setTimeout(() => {
-        // Get all elements
         const selector = document.getElementById('trackSelector');
         const playAllBtn = document.getElementById('playAllBtn');
         const stopBtn = document.getElementById('stopBtn');
         const nextBtn = document.getElementById('nextBtn');
-        const player = document.getElementById('musicPlayer');
         
-        console.log('Elements found:', {
-          selector: !!selector,
-          playAllBtn: !!playAllBtn, 
-          stopBtn: !!stopBtn,
-          nextBtn: !!nextBtn,
-          player: !!player,
-          tracksCount: allTracksData.length
-        });
+        // Direct onclick assignments - simple and reliable
+        if (selector) selector.onchange = loadSelectedTrack;
+        if (playAllBtn) playAllBtn.onclick = playRandomPlaylist;
+        if (stopBtn) stopBtn.onclick = stopCurrentPlayer;
+        if (nextBtn) nextBtn.onclick = playNextTrack;
         
-        // Connect events with direct functions
-        if (selector) {
-          selector.addEventListener('change', loadSelectedTrack);
-          console.log('✅ Dropdown connected');
-        }
-        
-        if (playAllBtn) {
-          playAllBtn.addEventListener('click', playRandomPlaylist);
-          console.log('✅ Play Random connected');
-        }
-        
-        if (stopBtn) {
-          stopBtn.addEventListener('click', stopCurrentPlayer);
-          console.log('✅ Stop connected');
-        }
-        
-        if (nextBtn) {
-          nextBtn.addEventListener('click', playNextTrack);
-          console.log('✅ Next connected');
-        }
-        
-        console.log('🎵 MP3 Player Ready - All buttons connected!');
-      }, 500);
+        console.log('🎵 MP3 Player Ready');
+      }, 100);
     });
       
-      // Auto-advance for random mode
-      const player = document.getElementById('musicPlayer');
-      if (player) {
-        player.onended = function() {
-          if (!isPlayingRandom) return;
-          
-          if (playedTracks.length >= allTracksData.length) {
-            isPlayingRandom = false;
-            console.log('Random playlist completed');
-            return;
-          }
-          
-          const nextIndex = playedTracks.length;
-          currentTrackIndex = shuffledPlaylist[nextIndex];
-          playedTracks.push(currentTrackIndex);
-          
-          const selector = document.getElementById('trackSelector');
-          selector.value = currentTrackIndex.toString();
-          loadSelectedTrack();
-          
-          setTimeout(() => {
-            player.play().catch(e => console.log('Auto-play failed:', e));
-          }, 500);
-        };
-      }
-    });
 
     // End of simple MP3 player - all functions removed to avoid conflicts
 
