@@ -12,7 +12,7 @@
 </head>
 <body>
   <!-- Yellow Header Block - TC-S Network Commissioning (TOP OF PAGE) -->
-  <div id="commissioningBlock" style="width: 100%; background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); border-bottom: 2px solid #FF8F00; padding: 12px 20px; margin-bottom: 0;">
+  <div id="commissioningBlock" style="position: static !important; top: 0 !important; width: 100% !important; background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); border-bottom: 2px solid #FF8F00; padding: 12px 20px; margin: 0 !important; z-index: 1 !important; display: block !important;">
     <div style="max-width: 1200px; margin: 0 auto; display: flex; align-items: center; gap: 15px;">
       
       <!-- Solar Icon -->
@@ -108,13 +108,27 @@
 
   <!-- Message Block Styles -->
   <style>
+    /* Ensure commissioning block stays at top and steady */
+    #commissioningBlock {
+      position: static !important;
+      top: 0 !important;
+      width: 100% !important;
+      margin: 0 !important;
+      z-index: 1 !important;
+      display: block !important;
+      float: none !important;
+    }
+    
     /* Mobile Responsiveness */
     @media (max-width: 768px) {
       #commissioningBlock {
         padding: 10px 15px !important;
         position: static !important;
+        top: 0 !important;
         width: 100% !important;
-        margin-bottom: 0 !important;
+        margin: 0 !important;
+        z-index: 1 !important;
+        display: block !important;
       }
       
       #commissioningBlock > div {
