@@ -737,8 +737,13 @@
                   <br><span id="trackProgress" style="font-size: 13px; color: #daa520; margin-top: 5px; display: block;">Track 0 of 0</span>
                 </div>
                 
-                <button onclick="playAllMusicNow()" style="background: linear-gradient(to right, #ff8c00, #daa520); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.3s ease;">
+                <button onclick="playAllMusicNow()" style="background: linear-gradient(to right, #ff8c00, #daa520); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.3s ease; margin-bottom: 10px;">
                   🎲 Play All 18 Songs (Random, No Repeats)
+                </button>
+                
+                <!-- Test Single Track Button -->
+                <button onclick="testMusicNow()" style="background: linear-gradient(to right, #32cd32, #228b22); color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: all 0.3s ease; margin-left: 10px;">
+                  🎵 Test Single Track
                 </button>
               </div>
 
@@ -2648,17 +2653,19 @@
     let nextAudioElement = null; // For preloading next track
 
     function playAllMusicNow() {
-      console.log('🎲 STARTING RANDOM 18-SONG PLAYLIST (NOT Voodoo only)');
+      console.log('🎲 STARTING MUSIC NOW PLAYLIST - 18 TRACKS');
       
-      // Stop any current playback and clear state
-      // Stop any currently playing audio
+      // Stop any current playback completely
       if (currentAudio) {
         currentAudio.pause();
         currentAudio.currentTime = 0;
         currentAudio = null;
       }
+      
+      // Reset all playlist variables
       isPlayingPlaylist = false;
-      isPlayingPlaylist = false;
+      currentPlaylist = [];
+      currentPlaylistIndex = 0;
       hideNowPlayingDisplay();
       
       // All 18 tracks: Music Now (12) + Voodoo Abundance (6)
@@ -2694,7 +2701,58 @@
       
       console.log('🎵 First random track will be:', getTrackName(shuffledTracks[0]));
       
-      startStreamingPlaylist(shuffledTracks, 'RANDOM 18-SONG MIX');
+      // Try simple direct playback first
+      try {
+        currentAudio = new Audio(shuffledTracks[0]);
+        currentAudio.play().then(() => {
+          console.log('✅ MUSIC NOW: Direct playback successful');
+          showNowPlayingDisplay();
+          updateNowPlaying(shuffledTracks[0], 1, shuffledTracks.length);
+          
+          // Set up auto-advance to next track
+          currentAudio.onended = () => {
+            console.log('🔄 Track ended, starting playlist streaming');
+            startStreamingPlaylist(shuffledTracks, 'RANDOM 18-SONG MIX');
+          };
+        }).catch(error => {
+          console.error('❌ MUSIC NOW: Direct playback failed:', error);
+          alert('Music playback failed. Please check your internet connection and try again.');
+        });
+      } catch (error) {
+        console.error('❌ MUSIC NOW: Audio creation failed:', error);
+        alert('Unable to create audio player. Please try again.');
+      }
+    }
+
+    // Simple test function for Music Now debugging
+    function testMusicNow() {
+      console.log('🧪 TESTING MUSIC NOW - Single Track');
+      
+      // Stop any current audio
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio = null;
+      }
+      
+      // Test single track URL
+      const testTrack = 'https://storage.aisongmaker.io/audio/10db8911-0b74-4675-ba62-02182c1d7f6b.mp3';
+      
+      try {
+        currentAudio = new Audio(testTrack);
+        currentAudio.play().then(() => {
+          console.log('✅ TEST SUCCESS: Audio is playing');
+          showNowPlayingDisplay();
+          updateNowPlaying(testTrack, 1, 1);
+          alert('✅ Music Now test successful! Audio is working.');
+        }).catch(error => {
+          console.error('❌ TEST FAILED:', error);
+          alert('❌ Music playback test failed: ' + error.message);
+        });
+      } catch (error) {
+        console.error('❌ AUDIO CREATION FAILED:', error);
+        alert('❌ Cannot create audio element: ' + error.message);
+      }
     }
 
     function playAllVoodoo() {
