@@ -769,8 +769,8 @@
                 
                 <!-- Player Controls -->
                 <div style="margin-bottom: 15px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-                  <button id="playAllBtn" onclick="playAllTracks()" style="padding: 8px 16px; border: 2px solid #ff8c00; border-radius: 6px; background: #ff8c00; color: white; font-size: 12px; cursor: pointer; font-weight: bold;">
-                    🎵 Play All
+                  <button id="playAllBtn" onclick="playRandomTracks()" style="padding: 8px 16px; border: 2px solid #ff8c00; border-radius: 6px; background: #ff8c00; color: white; font-size: 12px; cursor: pointer; font-weight: bold;">
+                    🎲 Play Random
                   </button>
                   <button id="stopBtn" onclick="stopPlayer()" style="padding: 8px 16px; border: 2px solid #dc143c; border-radius: 6px; background: #dc143c; color: white; font-size: 12px; cursor: pointer; font-weight: bold;">
                     ⏹️ Stop
@@ -2635,7 +2635,9 @@
 
     // Simple & Reliable MP3 Player
     let currentTrackIndex = 0;
-    let isPlayingAll = false;
+    let isPlayingRandom = false;
+    let playedTracks = [];
+    let shuffledPlaylist = [];
     
     // Load selected track immediately
     function loadTrack() {
@@ -2663,31 +2665,57 @@
       }
     }
     
-    // Play all tracks automatically
-    function playAllTracks() {
-      isPlayingAll = true;
-      currentTrackIndex = 0;
+    // Create shuffled playlist (no repeats)
+    function createShuffledPlaylist() {
+      shuffledPlaylist = [];
+      for (let i = 0; i < allTracksData.length; i++) {
+        shuffledPlaylist.push(i);
+      }
+      
+      // Fisher-Yates shuffle algorithm
+      for (let i = shuffledPlaylist.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffledPlaylist[i], shuffledPlaylist[j]] = [shuffledPlaylist[j], shuffledPlaylist[i]];
+      }
+      
+      playedTracks = [];
+    }
+    
+    // Play tracks in random order (no repeats)
+    function playRandomTracks() {
+      isPlayingRandom = true;
+      createShuffledPlaylist();
+      
+      // Start with first track from shuffled list
+      currentTrackIndex = shuffledPlaylist[0];
+      playedTracks.push(currentTrackIndex);
+      
       const selector = document.getElementById('trackSelector');
-      selector.value = '0';
+      selector.value = currentTrackIndex.toString();
       loadTrack();
       
       const player = document.getElementById('musicPlayer');
       player.play();
       
-      // Auto-advance to next track when current ends
-      player.addEventListener('ended', autoPlayNext);
+      // Auto-advance to next random track when current ends
+      player.addEventListener('ended', autoPlayNextRandom);
     }
     
-    // Auto-play next track
-    function autoPlayNext() {
-      if (!isPlayingAll) return;
+    // Auto-play next random track
+    function autoPlayNextRandom() {
+      if (!isPlayingRandom) return;
       
-      currentTrackIndex++;
-      if (currentTrackIndex >= allTracksData.length) {
-        // End of playlist
-        isPlayingAll = false;
+      // Check if we've played all tracks
+      if (playedTracks.length >= allTracksData.length) {
+        // All tracks played - end of random playlist
+        isPlayingRandom = false;
         return;
       }
+      
+      // Get next track from shuffled playlist
+      const nextIndex = playedTracks.length;
+      currentTrackIndex = shuffledPlaylist[nextIndex];
+      playedTracks.push(currentTrackIndex);
       
       const selector = document.getElementById('trackSelector');
       selector.value = currentTrackIndex.toString();
@@ -2714,8 +2742,10 @@
       const player = document.getElementById('musicPlayer');
       player.pause();
       player.currentTime = 0;
-      isPlayingAll = false;
-      player.removeEventListener('ended', autoPlayNext);
+      isPlayingRandom = false;
+      player.removeEventListener('ended', autoPlayNextRandom);
+      playedTracks = [];
+      shuffledPlaylist = [];
     }
 
     // End of simple MP3 player - all functions removed to avoid conflicts
