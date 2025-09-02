@@ -128,11 +128,16 @@ const server = http.createServer(async (req, res) => {
   
   console.log(`${new Date().toISOString()} - ${req.method} ${pathname}`);
 
-  // Route handling - always redirect root to page1 to start sequence
+  // Route handling - serve main platform at root
   if (pathname === '/') {
-    res.writeHead(302, { 'Location': '/page1-solar-intro.html' });
-    res.end();
-    return;
+    const indexPath = path.join(__dirname, 'public', 'index.html');
+    if (fs.existsSync(indexPath)) {
+      const content = fs.readFileSync(indexPath, 'utf8');
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(content);
+      console.log('✅ Served main platform with Music Now functionality');
+      return;
+    }
   }
   
   if (pathname === '/page1') {
