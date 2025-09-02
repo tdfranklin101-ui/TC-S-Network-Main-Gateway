@@ -2620,68 +2620,33 @@
       { url: 'https://storage.aisongmaker.io/audio/7abf4dac-2b12-434a-8d59-c115f8c54cb9.mp3', name: '🗿 Rasta Lady Voodoo' }
     ];
 
-    // Simple MP3 Player Function - Working Version
+    // MP3 Player Function - Production Version
     function playSelectedTrack() {
-      console.log('🎵 playSelectedTrack() called');
-      
       const selector = document.getElementById('trackSelector');
       const player = document.getElementById('musicPlayer');
       const nowPlaying = document.getElementById('currentTrackName');
       const nowPlayingDiv = document.getElementById('nowPlayingDisplay');
       
-      if (!selector || !player) {
-        console.error('❌ Required elements not found');
-        return;
-      }
+      if (!selector || !player) return;
       
-      // Get selected track index
       const trackIndex = selector.value;
-      console.log('🎵 Selected track index:', trackIndex);
       
       if (trackIndex === '') {
-        console.log('🎵 No track selected, hiding player');
         if (nowPlayingDiv) nowPlayingDiv.style.display = 'none';
         player.src = '';
         return;
       }
       
-      // Get track data
       const track = allTracksData[parseInt(trackIndex)];
-      console.log('🎵 Track data:', track);
-      
-      if (!track) {
-        console.error('❌ Track not found for index:', trackIndex);
-        return;
-      }
-      
-      console.log('🎵 Loading track:', track.name);
-      console.log('🔗 Track URL:', track.url);
+      if (!track) return;
       
       // Update display
-      if (nowPlaying) {
-        nowPlaying.textContent = track.name;
-        console.log('🎵 Updated now playing text');
-      }
-      if (nowPlayingDiv) {
-        nowPlayingDiv.style.display = 'block';
-        console.log('🎵 Showed now playing display');
-      }
+      if (nowPlaying) nowPlaying.textContent = track.name;
+      if (nowPlayingDiv) nowPlayingDiv.style.display = 'block';
       
-      // Simple direct loading
+      // Load track
       player.src = track.url;
       player.load();
-      
-      console.log('🎵 Player src set to:', player.src);
-      console.log('🎵 Player load() called');
-      
-      // Add a simple event listener to check if metadata loads
-      player.onloadedmetadata = function() {
-        console.log('✅ Metadata loaded! Duration:', player.duration, 'seconds');
-      };
-      
-      player.onerror = function() {
-        console.error('❌ Audio error occurred');
-      };
     }
 
     // End of simple MP3 player - all functions removed to avoid conflicts
