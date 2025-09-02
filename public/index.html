@@ -744,8 +744,8 @@
                 
                 <!-- Track Selection Dropdown -->
                 <div style="margin-bottom: 15px;">
-                  <select id="trackSelector" onchange="playSelectedTrack()" style="width: 100%; max-width: 400px; padding: 12px; border: 2px solid #ff8c00; border-radius: 8px; background: white; color: #333; font-size: 14px; cursor: pointer;">
-                    <option value="">🎵 Select a track to play...</option>
+                  <select id="trackSelector" onchange="selectTrack()" style="width: 100%; max-width: 400px; padding: 12px; border: 2px solid #ff8c00; border-radius: 8px; background: white; color: #333; font-size: 14px; cursor: pointer;">
+                    <option value="">🎵 Select a track to download...</option>
                     <option value="0">⭐ David Boyeez Hair</option>
                     <option value="1">🐊 Swampy Boogie Nights (Cajun Crawler)</option>
                     <option value="2">🎵 The Heart is a Mule (by Robert Hunter, Allen Ginsberg and William Burroughs (ish))</option>
@@ -765,6 +765,13 @@
                     <option value="16">🗿 Lady Voodoo (Crying)</option>
                     <option value="17">🗿 Rasta Lady Voodoo</option>
                   </select>
+                </div>
+                
+                <!-- Download Button -->
+                <div style="margin-bottom: 15px;">
+                  <button id="downloadBtn" onclick="downloadTrack()" disabled style="padding: 12px 24px; border: 2px solid #ccc; border-radius: 8px; background: #f0f0f0; color: #999; font-size: 14px; cursor: not-allowed; font-weight: bold;">
+                    📥 Select a track first
+                  </button>
                 </div>
                 
                 <!-- HTML5 Audio Player -->
@@ -2620,32 +2627,92 @@
       { url: 'https://storage.aisongmaker.io/audio/7abf4dac-2b12-434a-8d59-c115f8c54cb9.mp3', name: '🗿 Rasta Lady Voodoo' }
     ];
 
-    // MP3 Player Function - Production Version
-    function playSelectedTrack() {
+    // MP3 Player Workflow: Select → Download → Play
+    let selectedTrack = null;
+    let isDownloaded = false;
+    
+    // Step 1: Track Selection
+    function selectTrack() {
       const selector = document.getElementById('trackSelector');
+      const downloadBtn = document.getElementById('downloadBtn');
       const player = document.getElementById('musicPlayer');
-      const nowPlaying = document.getElementById('currentTrackName');
       const nowPlayingDiv = document.getElementById('nowPlayingDisplay');
-      
-      if (!selector || !player) return;
       
       const trackIndex = selector.value;
       
       if (trackIndex === '') {
-        if (nowPlayingDiv) nowPlayingDiv.style.display = 'none';
+        selectedTrack = null;
+        isDownloaded = false;
+        downloadBtn.disabled = true;
+        downloadBtn.textContent = '📥 Select a track first';
+        downloadBtn.style.background = '#f0f0f0';
+        downloadBtn.style.color = '#999';
+        downloadBtn.style.cursor = 'not-allowed';
+        downloadBtn.style.border = '2px solid #ccc';
         player.src = '';
+        if (nowPlayingDiv) nowPlayingDiv.style.display = 'none';
         return;
       }
       
-      const track = allTracksData[parseInt(trackIndex)];
-      if (!track) return;
+      selectedTrack = allTracksData[parseInt(trackIndex)];
+      isDownloaded = false;
       
-      // Update display
-      if (nowPlaying) nowPlaying.textContent = track.name;
-      if (nowPlayingDiv) nowPlayingDiv.style.display = 'block';
+      // Enable download button
+      downloadBtn.disabled = false;
+      downloadBtn.textContent = '📥 Download & Load Track';
+      downloadBtn.style.background = '#ff8c00';
+      downloadBtn.style.color = 'white';
+      downloadBtn.style.cursor = 'pointer';
+      downloadBtn.style.border = '2px solid #ff8c00';
+    }
+    
+    // Step 2: Download & Buffer Track
+    function downloadTrack() {
+      if (!selectedTrack) return;
       
-      // Load track
-      player.src = track.url;
+      const downloadBtn = document.getElementById('downloadBtn');
+      const player = document.getElementById('musicPlayer');
+      const nowPlaying = document.getElementById('currentTrackName');
+      const nowPlayingDiv = document.getElementById('nowPlayingDisplay');
+      
+      // Show loading state
+      downloadBtn.textContent = '⏳ Downloading...';
+      downloadBtn.disabled = true;
+      downloadBtn.style.background = '#daa520';
+      downloadBtn.style.cursor = 'not-allowed';
+      
+      // Set up the player
+      player.src = selectedTrack.url;
+      
+      // Listen for when enough data is loaded to play
+      player.addEventListener('canplaythrough', function onCanPlay() {
+        player.removeEventListener('canplaythrough', onCanPlay);
+        
+        // Mark as downloaded/ready
+        isDownloaded = true;
+        
+        // Update button to show ready state
+        downloadBtn.textContent = '✅ Ready to Play!';
+        downloadBtn.style.background = '#228b22';
+        downloadBtn.style.color = 'white';
+        
+        // Update display
+        if (nowPlaying) nowPlaying.textContent = selectedTrack.name;
+        if (nowPlayingDiv) nowPlayingDiv.style.display = 'block';
+        
+        // Auto-enable play button (browser controls)
+      });
+      
+      // Handle download errors
+      player.addEventListener('error', function onError() {
+        downloadBtn.textContent = '❌ Download Failed - Retry';
+        downloadBtn.disabled = false;
+        downloadBtn.style.background = '#dc143c';
+        downloadBtn.style.cursor = 'pointer';
+        isDownloaded = false;
+      });
+      
+      // Start the download/buffering process
       player.load();
     }
 
