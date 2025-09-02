@@ -2788,55 +2788,52 @@
       }, 200);
     }
     
-    // Setup when page loads
-    window.addEventListener('load', function() {
-      console.log('🎵 MP3 Player Ready - 18 tracks available');
-      console.log('🎵 Available tracks:', allTracksData.length);
+    // Setup when page loads - SIMPLIFIED AND WORKING
+    window.addEventListener('DOMContentLoaded', function() {
+      console.log('🎵 MP3 Player Setup Starting...');
       
-      // Connect dropdown to load function with debugging
-      const selector = document.getElementById('trackSelector');
-      if (selector) {
-        console.log('✅ Found track selector dropdown');
-        selector.onchange = function() {
-          console.log('🎯 Dropdown changed! Selected value:', this.value);
-          loadSelectedTrack();
-        };
-      } else {
-        console.error('❌ Track selector not found!');
-      }
-      
-      // Connect buttons with debugging
-      const playAllBtn = document.getElementById('playAllBtn');
-      const stopBtn = document.getElementById('stopBtn');
-      const nextBtn = document.getElementById('nextBtn');
-      const player = document.getElementById('musicPlayer');
-      
-      if (playAllBtn) {
-        console.log('✅ Found Play Random button');
-        playAllBtn.onclick = playRandomPlaylist;
-      } else {
-        console.error('❌ Play Random button not found!');
-      }
-      
-      if (stopBtn) {
-        console.log('✅ Found Stop button');
-        stopBtn.onclick = stopCurrentPlayer;
-      } else {
-        console.error('❌ Stop button not found!');
-      }
-      
-      if (nextBtn) {
-        console.log('✅ Found Next button');
-        nextBtn.onclick = playNextTrack;
-      } else {
-        console.error('❌ Next button not found!');
-      }
-      
-      if (player) {
-        console.log('✅ Found audio player element');
-      } else {
-        console.error('❌ Audio player element not found!');
-      }
+      // Wait for elements to be ready
+      setTimeout(() => {
+        // Get all elements
+        const selector = document.getElementById('trackSelector');
+        const playAllBtn = document.getElementById('playAllBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const player = document.getElementById('musicPlayer');
+        
+        console.log('Elements found:', {
+          selector: !!selector,
+          playAllBtn: !!playAllBtn, 
+          stopBtn: !!stopBtn,
+          nextBtn: !!nextBtn,
+          player: !!player,
+          tracksCount: allTracksData.length
+        });
+        
+        // Connect events with direct functions
+        if (selector) {
+          selector.addEventListener('change', loadSelectedTrack);
+          console.log('✅ Dropdown connected');
+        }
+        
+        if (playAllBtn) {
+          playAllBtn.addEventListener('click', playRandomPlaylist);
+          console.log('✅ Play Random connected');
+        }
+        
+        if (stopBtn) {
+          stopBtn.addEventListener('click', stopCurrentPlayer);
+          console.log('✅ Stop connected');
+        }
+        
+        if (nextBtn) {
+          nextBtn.addEventListener('click', playNextTrack);
+          console.log('✅ Next connected');
+        }
+        
+        console.log('🎵 MP3 Player Ready - All buttons connected!');
+      }, 500);
+    });
       
       // Auto-advance for random mode
       const player = document.getElementById('musicPlayer');
