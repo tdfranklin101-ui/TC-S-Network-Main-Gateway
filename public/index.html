@@ -2658,31 +2658,18 @@
     let playedTracks = [];
     let shuffledPlaylist = [];
     
-    // Load track function with detailed debugging
+    // Load and PLAY track function
     function loadSelectedTrack() {
-      console.log('🎯 loadSelectedTrack() called');
-      
       const selector = document.getElementById('trackSelector');
       const player = document.getElementById('musicPlayer');
       const nowPlaying = document.getElementById('currentTrackName');
       const nowPlayingDiv = document.getElementById('nowPlayingDisplay');
       
-      if (!selector) {
-        console.error('❌ Selector not found in loadSelectedTrack');
-        return;
-      }
-      
-      if (!player) {
-        console.error('❌ Player not found in loadSelectedTrack');
-        return;
-      }
-      
       const trackIndex = selector.value;
-      console.log('🎯 Selected track index:', trackIndex);
       
       if (trackIndex === '') {
-        console.log('🎯 Empty selection - clearing player');
         player.src = '';
+        player.pause();
         if (nowPlayingDiv) nowPlayingDiv.style.display = 'none';
         return;
       }
@@ -2690,24 +2677,25 @@
       currentTrackIndex = parseInt(trackIndex);
       const track = allTracksData[currentTrackIndex];
       
-      console.log('🎯 Track data:', track);
-      
       if (track) {
-        console.log('🎵 LOADING TRACK:', track.name);
-        console.log('🎵 TRACK URL:', track.url);
+        // Stop any current playback
+        player.pause();
+        player.currentTime = 0;
         
+        // Load new track
         player.src = track.url;
-        console.log('✅ Set player.src to:', player.src);
-        
         player.load();
-        console.log('✅ Called player.load()');
         
+        // Update display
         if (nowPlaying) nowPlaying.textContent = track.name;
         if (nowPlayingDiv) nowPlayingDiv.style.display = 'block';
         
-        console.log('🎵 Track loaded successfully - you can now press play on the audio controls');
-      } else {
-        console.error('❌ Track not found for index:', trackIndex);
+        // Auto-play the selected track
+        setTimeout(() => {
+          player.play().catch(e => {
+            console.log('Click to enable audio, then try again');
+          });
+        }, 100);
       }
     }
     
@@ -2767,17 +2755,37 @@
       console.log('Player stopped');
     }
     
-    // Next track function
+    // Next track function - actually works
     function playNextTrack() {
+      const player = document.getElementById('musicPlayer');
+      
       currentTrackIndex++;
       if (currentTrackIndex >= allTracksData.length) {
         currentTrackIndex = 0;
       }
       
+      const track = allTracksData[currentTrackIndex];
       const selector = document.getElementById('trackSelector');
+      const nowPlaying = document.getElementById('currentTrackName');
+      const nowPlayingDiv = document.getElementById('nowPlayingDisplay');
+      
+      // Stop current, load next track
+      player.pause();
+      player.currentTime = 0;
+      player.src = track.url;
+      player.load();
+      
+      // Update display
       selector.value = currentTrackIndex.toString();
-      loadSelectedTrack();
-      console.log('Next track loaded');
+      if (nowPlaying) nowPlaying.textContent = track.name;
+      if (nowPlayingDiv) nowPlayingDiv.style.display = 'block';
+      
+      // Auto-play next track
+      setTimeout(() => {
+        player.play().catch(e => {
+          console.log('Click to enable audio');
+        });
+      }, 200);
     }
     
     // Setup when page loads
