@@ -6,7 +6,7 @@ const url = require('url');
 const fetch = require('node-fetch');
 // const { ObjectStorageService } = require('./server/objectStorage'); // Disabled for stable Music Now service
 
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 3000;
 
 // Database setup (non-blocking fallback)
 let pool = null;
@@ -466,10 +466,19 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`🤖 D-ID Agent: Kid Solar ready`);
   console.log(`📱 Mobile responsive: Enabled`);
   console.log(`🔗 Links: Q&A and waitlist working`);
-  console.log(`🚀 DEPLOYMENT READY - ALL SYSTEMS OPERATIONAL`);
+  console.log(`🚀 CLOUD RUN READY - SINGLE PORT CONFIGURATION`);
 }).on('error', (err) => {
-  console.error('❌ Server failed to start:', err);
-  process.exit(1);
+  if (err.code === 'EADDRINUSE') {
+    console.log(`⚠️ Port ${PORT} in use, trying alternative...`);
+    const altPort = PORT === 3000 ? 8080 : 3000;
+    server.listen(altPort, '0.0.0.0', () => {
+      console.log(`✅ Server running on alternative port ${altPort}`);
+      console.log(`🚀 DEPLOYMENT READY - ALL SYSTEMS OPERATIONAL`);
+    });
+  } else {
+    console.error('❌ Server failed to start:', err);
+    process.exit(1);
+  }
 });
 
 // Graceful shutdown
