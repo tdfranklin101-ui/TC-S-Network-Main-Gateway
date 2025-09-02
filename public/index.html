@@ -2620,17 +2620,26 @@
       { url: 'https://storage.aisongmaker.io/audio/7abf4dac-2b12-434a-8d59-c115f8c54cb9.mp3', name: '🗿 Rasta Lady Voodoo' }
     ];
 
-    // AiSong Storage Compatible MP3 Player Function
+    // Simple MP3 Player Function - Working Version
     function playSelectedTrack() {
+      console.log('🎵 playSelectedTrack() called');
+      
       const selector = document.getElementById('trackSelector');
       const player = document.getElementById('musicPlayer');
       const nowPlaying = document.getElementById('currentTrackName');
       const nowPlayingDiv = document.getElementById('nowPlayingDisplay');
       
+      if (!selector || !player) {
+        console.error('❌ Required elements not found');
+        return;
+      }
+      
       // Get selected track index
       const trackIndex = selector.value;
+      console.log('🎵 Selected track index:', trackIndex);
+      
       if (trackIndex === '') {
-        // Hide display and reset player if no track selected
+        console.log('🎵 No track selected, hiding player');
         if (nowPlayingDiv) nowPlayingDiv.style.display = 'none';
         player.src = '';
         return;
@@ -2638,57 +2647,41 @@
       
       // Get track data
       const track = allTracksData[parseInt(trackIndex)];
-      if (!track) return;
+      console.log('🎵 Track data:', track);
+      
+      if (!track) {
+        console.error('❌ Track not found for index:', trackIndex);
+        return;
+      }
       
       console.log('🎵 Loading track:', track.name);
       console.log('🔗 Track URL:', track.url);
       
-      // Clear any existing event listeners to avoid duplicates
-      player.removeEventListener('loadstart', handleLoadStart);
-      player.removeEventListener('loadedmetadata', handleLoadedMetadata);
-      player.removeEventListener('error', handleError);
-      player.removeEventListener('canplay', handleCanPlay);
-      
-      // Set up event handlers
-      function handleLoadStart() {
-        console.log('🔄 Load started for:', track.name);
+      // Update display
+      if (nowPlaying) {
+        nowPlaying.textContent = track.name;
+        console.log('🎵 Updated now playing text');
+      }
+      if (nowPlayingDiv) {
+        nowPlayingDiv.style.display = 'block';
+        console.log('🎵 Showed now playing display');
       }
       
-      function handleLoadedMetadata() {
-        console.log('✅ Metadata loaded for:', track.name, 'Duration:', Math.round(player.duration), 'seconds');
-        if (player.duration && player.duration > 0) {
-          console.log('✅ Track duration confirmed:', player.duration);
-        }
-      }
+      // Simple direct loading
+      player.src = track.url;
+      player.load();
       
-      function handleCanPlay() {
-        console.log('✅ Track ready to play:', track.name);
-      }
+      console.log('🎵 Player src set to:', player.src);
+      console.log('🎵 Player load() called');
       
-      function handleError(e) {
-        console.error('❌ Audio loading error:', e.target.error, 'for track:', track.name);
-        console.error('❌ Error code:', e.target.error ? e.target.error.code : 'Unknown');
-        console.error('❌ Error message:', e.target.error ? e.target.error.message : 'Unknown');
-      }
+      // Add a simple event listener to check if metadata loads
+      player.onloadedmetadata = function() {
+        console.log('✅ Metadata loaded! Duration:', player.duration, 'seconds');
+      };
       
-      // Add event listeners
-      player.addEventListener('loadstart', handleLoadStart);
-      player.addEventListener('loadedmetadata', handleLoadedMetadata);
-      player.addEventListener('error', handleError);
-      player.addEventListener('canplay', handleCanPlay);
-      
-      // Update display first
-      if (nowPlaying) nowPlaying.textContent = track.name;
-      if (nowPlayingDiv) nowPlayingDiv.style.display = 'block';
-      
-      // Load the track with proper error handling
-      try {
-        player.src = track.url;
-        player.load();
-        console.log('🎵 Track loading initiated for:', track.name);
-      } catch (error) {
-        console.error('❌ Failed to load track:', error);
-      }
+      player.onerror = function() {
+        console.error('❌ Audio error occurred');
+      };
     }
 
     // End of simple MP3 player - all functions removed to avoid conflicts
