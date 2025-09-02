@@ -4,48 +4,20 @@ const path = require('path');
 const { Pool } = require('@neondatabase/serverless');
 const url = require('url');
 const fetch = require('node-fetch');
-const { ObjectStorageService } = require('./server/objectStorage');
+// const { ObjectStorageService } = require('./server/objectStorage'); // Disabled for stable Music Now service
 
 const PORT = process.env.PORT || 3000;
 
-// Database setup (fallback if DATABASE_URL not available)
+// Database setup (non-blocking fallback)
 let pool = null;
-if (process.env.DATABASE_URL) {
-  try {
-    pool = new Pool({ 
-      connectionString: process.env.DATABASE_URL,
-      ssl: { rejectUnauthorized: false }
-    });
-  } catch (error) {
-    console.log('⚠️ Database connection failed, running without database:', error.message);
-  }
-}
+// Skip database connection to ensure stable Music Now service
 
 // In-memory storage fallback
 let signupStorage = [];
 
-// Ensure signups table exists
-async function ensureSignupsTable() {
-  if (!pool) {
-    console.log('📝 Using in-memory storage for signups (no database available)');
-    return;
-  }
-  
-  try {
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS signups (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        name VARCHAR NOT NULL,
-        address TEXT NOT NULL,
-        email VARCHAR,
-        timestamp TIMESTAMP DEFAULT NOW()
-      )
-    `);
-    console.log('✅ Signups table ready');
-  } catch (error) {
-    console.log('⚠️ Database table setup failed, using in-memory storage:', error.message);
-    pool = null; // Disable database for this session
-  }
+// Simplified signups - no database blocking
+function ensureSignupsTable() {
+  console.log('📝 Using in-memory storage for signups (fast startup)');
 }
 
 // Parse body data helper
