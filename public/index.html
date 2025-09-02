@@ -108,6 +108,25 @@
 
   <!-- Message Block Styles -->
   <style>
+    /* Fix website centering and prevent floating */
+    html, body {
+      margin: 0 !important;
+      padding: 0 !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      overflow-x: hidden !important;
+      position: relative !important;
+    }
+    
+    /* Main content container centering */
+    .main-content {
+      max-width: 1200px !important;
+      margin: 0 auto !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+      padding: 0 20px !important;
+    }
+    
     /* Ensure commissioning block stays at top and steady */
     #commissioningBlock {
       position: static !important;
@@ -2633,127 +2652,152 @@
       { url: 'https://storage.aisongmaker.io/audio/7abf4dac-2b12-434a-8d59-c115f8c54cb9.mp3', name: '🗿 Rasta Lady Voodoo' }
     ];
 
-    // Working MP3 Player with Event Listeners
-    document.addEventListener('DOMContentLoaded', function() {
-      let currentTrackIndex = 0;
-      let isPlayingRandom = false;
-      let playedTracks = [];
-      let shuffledPlaylist = [];
+    // Simple Working MP3 Player - Fixed Version
+    let currentTrackIndex = 0;
+    let isPlayingRandom = false;
+    let playedTracks = [];
+    let shuffledPlaylist = [];
+    
+    // Load track function
+    function loadSelectedTrack() {
+      const selector = document.getElementById('trackSelector');
+      const player = document.getElementById('musicPlayer');
+      const nowPlaying = document.getElementById('currentTrackName');
+      const nowPlayingDiv = document.getElementById('nowPlayingDisplay');
+      
+      const trackIndex = selector.value;
+      
+      if (trackIndex === '') {
+        player.src = '';
+        if (nowPlayingDiv) nowPlayingDiv.style.display = 'none';
+        return;
+      }
+      
+      currentTrackIndex = parseInt(trackIndex);
+      const track = allTracksData[currentTrackIndex];
+      
+      if (track) {
+        console.log('Loading track:', track.name, track.url);
+        player.src = track.url;
+        player.load();
+        if (nowPlaying) nowPlaying.textContent = track.name;
+        if (nowPlayingDiv) nowPlayingDiv.style.display = 'block';
+      }
+    }
+    
+    // Play random function
+    function playRandomPlaylist() {
+      console.log('Starting random playlist...');
+      isPlayingRandom = true;
+      
+      // Create shuffled playlist
+      shuffledPlaylist = [];
+      for (let i = 0; i < allTracksData.length; i++) {
+        shuffledPlaylist.push(i);
+      }
+      
+      // Fisher-Yates shuffle
+      for (let i = shuffledPlaylist.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffledPlaylist[i], shuffledPlaylist[j]] = [shuffledPlaylist[j], shuffledPlaylist[i]];
+      }
+      
+      playedTracks = [];
+      currentTrackIndex = shuffledPlaylist[0];
+      playedTracks.push(currentTrackIndex);
       
       const selector = document.getElementById('trackSelector');
       const player = document.getElementById('musicPlayer');
       const nowPlaying = document.getElementById('currentTrackName');
       const nowPlayingDiv = document.getElementById('nowPlayingDisplay');
+      
+      selector.value = currentTrackIndex.toString();
+      const track = allTracksData[currentTrackIndex];
+      
+      if (track) {
+        console.log('Playing:', track.name);
+        player.src = track.url;
+        player.load();
+        if (nowPlaying) nowPlaying.textContent = track.name;
+        if (nowPlayingDiv) nowPlayingDiv.style.display = 'block';
+        
+        setTimeout(() => {
+          player.play().catch(e => {
+            console.log('Play failed:', e);
+            alert('Please tap the play button on the audio player to start music.');
+          });
+        }, 500);
+      }
+    }
+    
+    // Stop function
+    function stopCurrentPlayer() {
+      const player = document.getElementById('musicPlayer');
+      player.pause();
+      player.currentTime = 0;
+      isPlayingRandom = false;
+      playedTracks = [];
+      shuffledPlaylist = [];
+      console.log('Player stopped');
+    }
+    
+    // Next track function
+    function playNextTrack() {
+      currentTrackIndex++;
+      if (currentTrackIndex >= allTracksData.length) {
+        currentTrackIndex = 0;
+      }
+      
+      const selector = document.getElementById('trackSelector');
+      selector.value = currentTrackIndex.toString();
+      loadSelectedTrack();
+      console.log('Next track loaded');
+    }
+    
+    // Setup when page loads
+    window.addEventListener('load', function() {
+      console.log('MP3 Player Ready - 18 tracks available');
+      
+      // Connect dropdown to load function
+      const selector = document.getElementById('trackSelector');
+      if (selector) {
+        selector.onchange = loadSelectedTrack;
+      }
+      
+      // Connect buttons
       const playAllBtn = document.getElementById('playAllBtn');
       const stopBtn = document.getElementById('stopBtn');
       const nextBtn = document.getElementById('nextBtn');
       
-      // Load track when dropdown changes
-      selector.addEventListener('change', function() {
-        const trackIndex = selector.value;
-        
-        if (trackIndex === '') {
-          player.src = '';
-          if (nowPlayingDiv) nowPlayingDiv.style.display = 'none';
-          return;
-        }
-        
-        currentTrackIndex = parseInt(trackIndex);
-        const track = allTracksData[currentTrackIndex];
-        
-        if (track) {
-          player.src = track.url;
-          player.load();
-          if (nowPlaying) nowPlaying.textContent = track.name;
-          if (nowPlayingDiv) nowPlayingDiv.style.display = 'block';
-        }
-      });
+      if (playAllBtn) playAllBtn.onclick = playRandomPlaylist;
+      if (stopBtn) stopBtn.onclick = stopCurrentPlayer;
+      if (nextBtn) nextBtn.onclick = playNextTrack;
       
-      // Play Random button
-      playAllBtn.addEventListener('click', function() {
-        isPlayingRandom = true;
-        
-        // Create shuffled playlist
-        shuffledPlaylist = [];
-        for (let i = 0; i < allTracksData.length; i++) {
-          shuffledPlaylist.push(i);
-        }
-        
-        // Fisher-Yates shuffle
-        for (let i = shuffledPlaylist.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [shuffledPlaylist[i], shuffledPlaylist[j]] = [shuffledPlaylist[j], shuffledPlaylist[i]];
-        }
-        
-        playedTracks = [];
-        currentTrackIndex = shuffledPlaylist[0];
-        playedTracks.push(currentTrackIndex);
-        
-        selector.value = currentTrackIndex.toString();
-        const track = allTracksData[currentTrackIndex];
-        
-        if (track) {
-          player.src = track.url;
-          player.load();
-          if (nowPlaying) nowPlaying.textContent = track.name;
-          if (nowPlayingDiv) nowPlayingDiv.style.display = 'block';
+      // Auto-advance for random mode
+      const player = document.getElementById('musicPlayer');
+      if (player) {
+        player.onended = function() {
+          if (!isPlayingRandom) return;
           
-          player.play().catch(e => console.log('Play failed:', e));
-        }
-      });
-      
-      // Stop button
-      stopBtn.addEventListener('click', function() {
-        player.pause();
-        player.currentTime = 0;
-        isPlayingRandom = false;
-        playedTracks = [];
-        shuffledPlaylist = [];
-      });
-      
-      // Next button
-      nextBtn.addEventListener('click', function() {
-        currentTrackIndex++;
-        if (currentTrackIndex >= allTracksData.length) {
-          currentTrackIndex = 0;
-        }
-        
-        selector.value = currentTrackIndex.toString();
-        const track = allTracksData[currentTrackIndex];
-        
-        if (track) {
-          player.src = track.url;
-          player.load();
-          if (nowPlaying) nowPlaying.textContent = track.name;
-          if (nowPlayingDiv) nowPlayingDiv.style.display = 'block';
-        }
-      });
-      
-      // Auto-advance when random mode is active
-      player.addEventListener('ended', function() {
-        if (!isPlayingRandom) return;
-        
-        if (playedTracks.length >= allTracksData.length) {
-          isPlayingRandom = false;
-          return;
-        }
-        
-        const nextIndex = playedTracks.length;
-        currentTrackIndex = shuffledPlaylist[nextIndex];
-        playedTracks.push(currentTrackIndex);
-        
-        selector.value = currentTrackIndex.toString();
-        const track = allTracksData[currentTrackIndex];
-        
-        if (track) {
-          player.src = track.url;
-          player.load();
-          if (nowPlaying) nowPlaying.textContent = track.name;
-          if (nowPlayingDiv) nowPlayingDiv.style.display = 'block';
+          if (playedTracks.length >= allTracksData.length) {
+            isPlayingRandom = false;
+            console.log('Random playlist completed');
+            return;
+          }
           
-          player.play().catch(e => console.log('Auto-play failed:', e));
-        }
-      });
+          const nextIndex = playedTracks.length;
+          currentTrackIndex = shuffledPlaylist[nextIndex];
+          playedTracks.push(currentTrackIndex);
+          
+          const selector = document.getElementById('trackSelector');
+          selector.value = currentTrackIndex.toString();
+          loadSelectedTrack();
+          
+          setTimeout(() => {
+            player.play().catch(e => console.log('Auto-play failed:', e));
+          }, 500);
+        };
+      }
     });
 
     // End of simple MP3 player - all functions removed to avoid conflicts
