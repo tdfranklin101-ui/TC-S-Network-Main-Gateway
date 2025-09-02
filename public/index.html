@@ -768,8 +768,7 @@
                 </div>
                 
                 <!-- HTML5 Audio Player -->
-                <audio id="musicPlayer" controls style="width: 100%; max-width: 400px; margin-bottom: 15px; border-radius: 8px;">
-                  <source id="audioSource" src="" type="audio/mpeg">
+                <audio id="musicPlayer" controls preload="metadata" style="width: 100%; max-width: 400px; margin-bottom: 15px; border-radius: 8px;">
                   Your browser does not support the audio element.
                 </audio>
                 
@@ -2642,10 +2641,24 @@
       if (!track) return;
       
       console.log('🎵 Loading track:', track.name);
+      console.log('🔗 Track URL:', track.url);
       
-      // Load track into player
-      audioSource.src = track.url;
+      // Set the source directly on the audio element instead of source element
+      player.src = track.url;
       player.load();
+      
+      // Add event listeners for debugging
+      player.addEventListener('loadstart', () => {
+        console.log('🔄 Load started for:', track.name);
+      });
+      
+      player.addEventListener('loadedmetadata', () => {
+        console.log('✅ Metadata loaded for:', track.name, 'Duration:', player.duration);
+      });
+      
+      player.addEventListener('error', (e) => {
+        console.error('❌ Audio error:', e, 'for track:', track.name);
+      });
       
       // Update display
       if (nowPlaying) nowPlaying.textContent = track.name;
