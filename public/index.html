@@ -736,62 +736,67 @@
               <!-- Music Streaming Section -->
               <div id="music" style="scroll-margin-top: 80px;"></div>
               
-              <!-- Music Now Intro Box -->
-              <div style="background: linear-gradient(135deg, rgba(255, 140, 0, 0.1), rgba(218, 165, 32, 0.1)); border: 2px solid rgba(255, 140, 0, 0.3); border-radius: 12px; padding: 15px; margin-bottom: 15px; text-align: center;">
-                <h3 style="margin: 0 0 8px 0; color: #ff8c00; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 10px;">
+              <!-- Music Now MP3 Player -->
+              <div style="background: linear-gradient(135deg, rgba(255, 140, 0, 0.1), rgba(218, 165, 32, 0.1)); border: 2px solid rgba(255, 140, 0, 0.3); border-radius: 12px; padding: 20px; margin-bottom: 15px; text-align: center;">
+                <h3 style="margin: 0 0 15px 0; color: #ff8c00; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 10px;">
                   🎵 MUSIC NOW 🎵
                 </h3>
-                <p style="margin: 0 0 12px 0; color: #666; font-size: 13px;">
-                  To play any of the Music Now selections simply press the song below you want to hear
-                </p>
+                
+                <!-- Track Selection Dropdown -->
+                <div style="margin-bottom: 15px;">
+                  <select id="trackSelector" onchange="loadSelectedTrack()" style="width: 100%; max-width: 400px; padding: 12px; border: 2px solid #ff8c00; border-radius: 8px; background: white; color: #333; font-size: 14px; cursor: pointer;">
+                    <option value="">🎵 Select a track to play...</option>
+                    <option value="0">⭐ David Boyeez Hair</option>
+                    <option value="1">🐊 Swampy Boogie Nights (Cajun Crawler)</option>
+                    <option value="2">🎵 The Heart is a Mule (by Robert Hunter, Allen Ginsberg and William Burroughs (ish))</option>
+                    <option value="3">🎶 A Solar Day (groovin)</option>
+                    <option value="4">🎼 A Solar Day (moovin)</option>
+                    <option value="5">🎺 Break Time Blues Rhapsody (By Kid Solar)</option>
+                    <option value="6">⭐ Starlight Forever</option>
+                    <option value="7">💡 Light It From Within</option>
+                    <option value="8">🌙 Moonshine in St Kitts. (By Bowie, Jagger, Lennon (ish))</option>
+                    <option value="9">⚡ Solar Tempest Symphony (By JMF)</option>
+                    <option value="10">🔩 Steel In His Soul</option>
+                    <option value="11">💬 We Said So</option>
+                    <option value="12">🗿 Funky Voodoo (Blues Jam)</option>
+                    <option value="13">🗿 Green and Blue (Rock)</option>
+                    <option value="14">🗿 Green and Blue (EDM)</option>
+                    <option value="15">🗿 Lady Voodoo (Folk Yah)</option>
+                    <option value="16">🗿 Lady Voodoo (Crying)</option>
+                    <option value="17">🗿 Rasta Lady Voodoo</option>
+                  </select>
+                </div>
+                
+                <!-- HTML5 Audio Player -->
+                <audio id="musicPlayer" controls style="width: 100%; max-width: 400px; margin-bottom: 15px; border-radius: 8px;">
+                  <source id="audioSource" src="" type="audio/mpeg">
+                  Your browser does not support the audio element.
+                </audio>
                 
                 <!-- Now Playing Display -->
                 <div id="nowPlayingDisplay" style="margin: 10px 0; padding: 10px 15px; background: rgba(0, 0, 0, 0.8); border-radius: 8px; color: #ff8c00; font-weight: bold; font-size: 15px; display: none; border: 2px solid #ff8c00;">
                   🎶 Now Playing: <span id="currentTrackName">Loading...</span>
-                  <br><span id="trackProgress" style="font-size: 13px; color: #daa520; margin-top: 5px; display: block;">Track 0 of 0</span>
+                  <br><span id="trackProgress" style="font-size: 13px; color: #daa520; margin-top: 5px; display: block;">Track 0 of 18</span>
                 </div>
                 
-                <button onclick="playAllMusicNow()" style="background: linear-gradient(to right, #ff8c00, #daa520); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.3s ease; margin-bottom: 10px;">
-                  🎲 Play All 18 Songs (Random, No Repeats)
-                </button>
+                <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                  <button onclick="playSelectedTrack()" style="background: linear-gradient(to right, #ff8c00, #daa520); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.3s ease;">
+                    ▶️ Play Selected
+                  </button>
+                  <button onclick="playAllRandom()" style="background: linear-gradient(to right, #ff8c00, #daa520); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.3s ease;">
+                    🎲 Play All Random
+                  </button>
+                  <button onclick="stopAllMusic()" style="background: linear-gradient(to right, #dc3545, #c82333); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.3s ease;">
+                    ⏹️ Stop
+                  </button>
+                </div>
                 
               </div>
-
-              <!-- Music Now - David Boyeez Hair -->
-              <button onclick="playMusic18()" style="display: flex; align-items: center; text-decoration: none; padding: 12px; border-radius: 8px; background: linear-gradient(to right, rgba(255, 140, 0, 0.1), rgba(218, 165, 32, 0.1)); border: 1px solid rgba(255, 140, 0, 0.3); transition: all 0.3s ease; cursor: pointer; width: 100%; border: none; margin-bottom: 15px;">
-                <div style="background: linear-gradient(to right, #ff8c00, #daa520); width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-right: 15px;">
-                  <span style="color: white; font-weight: bold;">⭐👨</span>
-                </div>
-                <div style="flex: 1; text-align: left;">
-                  <h4 style="margin: 0 0 5px 0; color: #ff8c00;">Music Now</h4>
-                  <p style="margin: 0; color: #555; font-size: 14px;">⭐ David Boyeez Hair</p>
-                </div>
-                <span style="color: #ff8c00; font-weight: bold;">♪</span>
-              </button>
 
               <!-- Bowie Images for David Boyeez Hair -->
               <div style="display: flex; gap: 15px; margin: 15px 0; justify-content: center;">
                 <img src="/attached_assets/04AA9BAB-9CBA-43ED-A1B5-E4674F850D59_1756066851257.png" alt="Changes" style="width: 120px; height: auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
                 <img src="/attached_assets/5906466E-3563-443A-8273-19DB5D24F116_1756066851257.png" alt="Ch-Ch-Ch-Changes" style="width: 120px; height: auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
-              </div>
-
-              <!-- Music Now - Swampy Boogie Nights -->
-              <button onclick="playMusic17()" style="display: flex; align-items: center; text-decoration: none; padding: 12px; border-radius: 8px; background: linear-gradient(to right, rgba(255, 140, 0, 0.1), rgba(218, 165, 32, 0.1)); border: 1px solid rgba(255, 140, 0, 0.3); transition: all 0.3s ease; cursor: pointer; width: 100%; border: none; margin-bottom: 15px;">
-                <div style="background: linear-gradient(to right, #ff8c00, #daa520); width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-right: 15px;">
-                  <span style="color: white; font-weight: bold;">🐊</span>
-                </div>
-                <div style="flex: 1; text-align: left;">
-                  <h4 style="margin: 0 0 5px 0; color: #ff8c00;">Music Now</h4>
-                  <p style="margin: 0; color: #555; font-size: 14px;">🎺 Swampy Boogie Nights (Cajun Crawler)</p>
-                </div>
-                <span style="color: #ff8c00; font-weight: bold;">♪</span>
-              </button>
-
-              <!-- Stop Music Now Master Switch -->
-              <div style="text-align: center; margin: 20px 0;">
-                <button onclick="stopAllMusic()" style="background: linear-gradient(to right, #dc3545, #c82333); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);">
-                  🛑 Stop Music Now
-                </button>
               </div>
 
               
@@ -883,125 +888,6 @@
                 <span style="color: #ff8c00; font-weight: bold;">♪</span>
               </button>
               
-              <!-- Music Now Button 1 -->
-              <button onclick="playMusic1()" style="display: flex; align-items: center; text-decoration: none; padding: 12px; border-radius: 8px; background: linear-gradient(to right, rgba(255, 140, 0, 0.1), rgba(218, 165, 32, 0.1)); border: 1px solid rgba(255, 140, 0, 0.3); transition: all 0.3s ease; cursor: pointer; width: 100%; border: none; margin-bottom: 10px;">
-                <div style="background: linear-gradient(to right, #ff8c00, #daa520); width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-right: 15px;">
-                  <span style="color: white; font-weight: bold;">🎵</span>
-                </div>
-                <div style="flex: 1; text-align: left;">
-                  <h4 style="margin: 0 0 5px 0; color: #ff8c00;">Music Now</h4>
-                  <p style="margin: 0; color: #555; font-size: 14px;">The Heart is a Mule (by Robert Hunter, Allen Ginsberg and William Burroughs (ish))</p>
-                </div>
-                <span style="color: #ff8c00; font-weight: bold;">♪</span>
-              </button>
-              
-              <!-- Music Now Button 2 -->
-              <button onclick="playMusic2()" style="display: flex; align-items: center; text-decoration: none; padding: 12px; border-radius: 8px; background: linear-gradient(to right, rgba(255, 140, 0, 0.1), rgba(218, 165, 32, 0.1)); border: 1px solid rgba(255, 140, 0, 0.3); transition: all 0.3s ease; cursor: pointer; width: 100%; border: none; margin-bottom: 10px;">
-                <div style="background: linear-gradient(to right, #ff8c00, #daa520); width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-right: 15px;">
-                  <span style="color: white; font-weight: bold;">🎶</span>
-                </div>
-                <div style="flex: 1; text-align: left;">
-                  <h4 style="margin: 0 0 5px 0; color: #ff8c00;">Music Now</h4>
-                  <p style="margin: 0; color: #555; font-size: 14px;">A Solar Day (groovin)</p>
-                </div>
-                <span style="color: #ff8c00; font-weight: bold;">♪</span>
-              </button>
-              
-              <!-- Music Now Button 3 -->
-              <button onclick="playMusic3()" style="display: flex; align-items: center; text-decoration: none; padding: 12px; border-radius: 8px; background: linear-gradient(to right, rgba(255, 140, 0, 0.1), rgba(218, 165, 32, 0.1)); border: 1px solid rgba(255, 140, 0, 0.3); transition: all 0.3s ease; cursor: pointer; width: 100%; border: none; margin-bottom: 10px;">
-                <div style="background: linear-gradient(to right, #ff8c00, #daa520); width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-right: 15px;">
-                  <span style="color: white; font-weight: bold;">🎼</span>
-                </div>
-                <div style="flex: 1; text-align: left;">
-                  <h4 style="margin: 0 0 5px 0; color: #ff8c00;">Music Now</h4>
-                  <p style="margin: 0; color: #555; font-size: 14px;">A Solar Day (moovin)</p>
-                </div>
-                <span style="color: #ff8c00; font-weight: bold;">♪</span>
-              </button>
-              
-              <!-- Music Now Button 4 -->
-              <button onclick="playMusic4()" style="display: flex; align-items: center; text-decoration: none; padding: 12px; border-radius: 8px; background: linear-gradient(to right, rgba(255, 140, 0, 0.1), rgba(218, 165, 32, 0.1)); border: 1px solid rgba(255, 140, 0, 0.3); transition: all 0.3s ease; cursor: pointer; width: 100%; border: none; margin-bottom: 10px;">
-                <div style="background: linear-gradient(to right, #ff8c00, #daa520); width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-right: 15px;">
-                  <span style="color: white; font-weight: bold;">🎺</span>
-                </div>
-                <div style="flex: 1; text-align: left;">
-                  <h4 style="margin: 0 0 5px 0; color: #ff8c00;">Music Now</h4>
-                  <p style="margin: 0; color: #555; font-size: 14px;">Break Time Blues Rhapsody (By Kid Solar)</p>
-                </div>
-                <span style="color: #ff8c00; font-weight: bold;">♪</span>
-              </button>
-              
-              <!-- Music Now Button 5 -->
-              <button onclick="playMusic5()" style="display: flex; align-items: center; text-decoration: none; padding: 12px; border-radius: 8px; background: linear-gradient(to right, rgba(255, 140, 0, 0.1), rgba(218, 165, 32, 0.1)); border: 1px solid rgba(255, 140, 0, 0.3); transition: all 0.3s ease; cursor: pointer; width: 100%; border: none; margin-bottom: 10px;">
-                <div style="background: linear-gradient(to right, #ff8c00, #daa520); width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-right: 15px;">
-                  <span style="color: white; font-weight: bold;">⭐</span>
-                </div>
-                <div style="flex: 1; text-align: left;">
-                  <h4 style="margin: 0 0 5px 0; color: #ff8c00;">Music Now</h4>
-                  <p style="margin: 0; color: #555; font-size: 14px;">Starlight Forever</p>
-                </div>
-                <span style="color: #ff8c00; font-weight: bold;">♪</span>
-              </button>
-              
-              <!-- Music Now Button 6 -->
-              <button onclick="playMusic6()" style="display: flex; align-items: center; text-decoration: none; padding: 12px; border-radius: 8px; background: linear-gradient(to right, rgba(255, 140, 0, 0.1), rgba(218, 165, 32, 0.1)); border: 1px solid rgba(255, 140, 0, 0.3); transition: all 0.3s ease; cursor: pointer; width: 100%; border: none; margin-bottom: 10px;">
-                <div style="background: linear-gradient(to right, #ff8c00, #daa520); width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-right: 15px;">
-                  <span style="color: white; font-weight: bold;">💡</span>
-                </div>
-                <div style="flex: 1; text-align: left;">
-                  <h4 style="margin: 0 0 5px 0; color: #ff8c00;">Music Now</h4>
-                  <p style="margin: 0; color: #555; font-size: 14px;">Light It From Within</p>
-                </div>
-                <span style="color: #ff8c00; font-weight: bold;">♪</span>
-              </button>
-              
-              <!-- Music Now Button 7 - Moonshine In St Kitts -->
-              <button onclick="playMusic7()" style="display: flex; align-items: center; text-decoration: none; padding: 12px; border-radius: 8px; background: linear-gradient(to right, rgba(255, 140, 0, 0.1), rgba(218, 165, 32, 0.1)); border: 1px solid rgba(255, 140, 0, 0.3); transition: all 0.3s ease; cursor: pointer; width: 100%; border: none; margin-bottom: 10px;">
-                <div style="background: linear-gradient(to right, #ff8c00, #daa520); width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-right: 15px;">
-                  <span style="color: white; font-weight: bold;">🌙</span>
-                </div>
-                <div style="flex: 1; text-align: left;">
-                  <h4 style="margin: 0 0 5px 0; color: #ff8c00;">Music Now</h4>
-                  <p style="margin: 0; color: #555; font-size: 14px;">Moonshine in St Kitts. (By Bowie, Jagger, Lennon (ish))</p>
-                </div>
-                <span style="color: #ff8c00; font-weight: bold;">♪</span>
-              </button>
-              
-              <!-- Music Now Button 8 - Solar Tempest Symphony -->
-              <button onclick="playMusic8()" style="display: flex; align-items: center; text-decoration: none; padding: 12px; border-radius: 8px; background: linear-gradient(to right, rgba(255, 140, 0, 0.1), rgba(218, 165, 32, 0.1)); border: 1px solid rgba(255, 140, 0, 0.3); transition: all 0.3s ease; cursor: pointer; width: 100%; border: none;">
-                <div style="background: linear-gradient(to right, #ff8c00, #daa520); width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-right: 15px;">
-                  <span style="color: white; font-weight: bold;">⚡</span>
-                </div>
-                <div style="flex: 1; text-align: left;">
-                  <h4 style="margin: 0 0 5px 0; color: #ff8c00;">Music Now</h4>
-                  <p style="margin: 0; color: #555; font-size: 14px;">Solar Tempest Symphony (By JMF)</p>
-                </div>
-                <span style="color: #ff8c00; font-weight: bold;">♪</span>
-              </button>
-              
-              <!-- Music Now Button 9 - Steel In His Soul -->
-              <button onclick="playMusic9()" style="display: flex; align-items: center; text-decoration: none; padding: 12px; border-radius: 8px; background: linear-gradient(to right, rgba(255, 140, 0, 0.1), rgba(218, 165, 32, 0.1)); border: 1px solid rgba(255, 140, 0, 0.3); transition: all 0.3s ease; cursor: pointer; width: 100%; border: none; margin-bottom: 10px;">
-                <div style="background: linear-gradient(to right, #ff8c00, #daa520); width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-right: 15px;">
-                  <span style="color: white; font-weight: bold;">🔩</span>
-                </div>
-                <div style="flex: 1; text-align: left;">
-                  <h4 style="margin: 0 0 5px 0; color: #ff8c00;">Music Now</h4>
-                  <p style="margin: 0; color: #555; font-size: 14px;">Steel In His Soul</p>
-                </div>
-                <span style="color: #ff8c00; font-weight: bold;">♪</span>
-              </button>
-              
-              <!-- Music Now Button 10 - We Said So -->
-              <button onclick="playMusic10()" style="display: flex; align-items: center; text-decoration: none; padding: 12px; border-radius: 8px; background: linear-gradient(to right, rgba(255, 140, 0, 0.1), rgba(218, 165, 32, 0.1)); border: 1px solid rgba(255, 140, 0, 0.3); transition: all 0.3s ease; cursor: pointer; width: 100%; border: none; margin-bottom: 10px;">
-                <div style="background: linear-gradient(to right, #ff8c00, #daa520); width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-right: 15px;">
-                  <span style="color: white; font-weight: bold;">💬</span>
-                </div>
-                <div style="flex: 1; text-align: left;">
-                  <h4 style="margin: 0 0 5px 0; color: #ff8c00;">Music Now</h4>
-                  <p style="margin: 0; color: #555; font-size: 14px;">We Said So</p>
-                </div>
-                <span style="color: #ff8c00; font-weight: bold;">♪</span>
-              </button>
 
               <!-- We Said So Video Link - YouTube -->
               <a href="https://youtu.be/WgP9-ghAQJE" target="_blank" style="display: flex; align-items: center; text-decoration: none; padding: 12px; border-radius: 8px; background: linear-gradient(to right, rgba(255, 69, 0, 0.1), rgba(220, 20, 60, 0.1)); border: 1px solid rgba(255, 69, 0, 0.3); transition: all 0.3s ease; color: inherit; margin-bottom: 10px;">
@@ -2812,6 +2698,159 @@
       '7abf4dac-2b12-434a-8d59-c115f8c54cb9': 'Rasta Lady Voodoo'
     };
 
+    // Updated track list for new MP3 player (18 tracks total)
+    const allTracksData = [
+      { url: 'https://storage.aisongmaker.io/audio/9b2b12e4-8626-41e4-b9e4-c7a563e40f97.mp3', name: '⭐ David Boyeez Hair' },
+      { url: 'https://storage.aisongmaker.io/audio/015092c3-f687-4a01-9a81-dad42f2adce9.mp3', name: '🐊 Swampy Boogie Nights (Cajun Crawler)' },
+      { url: 'https://storage.aisongmaker.io/audio/10db8911-0b74-4675-ba62-02182c1d7f6b.mp3', name: '🎵 The Heart is a Mule (by Robert Hunter, Allen Ginsberg and William Burroughs (ish))' },
+      { url: 'https://storage.aisongmaker.io/audio/418add3e-c1a5-4a76-b361-14d6a11794fe.mp3', name: '🎶 A Solar Day (groovin)' },
+      { url: 'https://storage.aisongmaker.io/audio/a2647129-991f-4105-aad2-e45210005bef.mp3', name: '🎼 A Solar Day (moovin)' },
+      { url: 'https://storage.aisongmaker.io/audio/09de8c9d-25a7-4b38-a6bd-c27b7de4629e.mp3', name: '🎺 Break Time Blues Rhapsody (By Kid Solar)' },
+      { url: 'https://storage.aisongmaker.io/audio/c51b1f15-eff7-41fb-b778-b1b9d914ce3a.mp3', name: '⭐ Starlight Forever' },
+      { url: 'https://storage.aisongmaker.io/audio/ab1612d5-ccf4-4b4a-ab92-21b77bebdd46.mp3', name: '💡 Light It From Within' },
+      { url: 'https://storage.aisongmaker.io/audio/675d577c-5ab9-45c9-b9d5-d4362f6bcc12.mp3', name: '🌙 Moonshine in St Kitts. (By Bowie, Jagger, Lennon (ish))' },
+      { url: 'https://storage.aisongmaker.io/audio/94088af1-8318-401a-b277-b79fbbdb7475.mp3', name: '⚡ Solar Tempest Symphony (By JMF)' },
+      { url: 'https://storage.aisongmaker.io/audio/cb58c04e-fc7b-448a-a9e5-a642e168cacd.mp3', name: '🔩 Steel In His Soul' },
+      { url: 'https://storage.aisongmaker.io/audio/11802549-7cf8-4d4c-a708-44f04804f2ab.mp3', name: '💬 We Said So' },
+      { url: 'https://storage.aisongmaker.io/audio/19d37c35-dc0b-4686-8bd7-71992f925670.mp3', name: '🗿 Funky Voodoo (Blues Jam)' },
+      { url: 'https://storage.aisongmaker.io/audio/255be09f-c09a-4d9a-8dbc-3c3ba65e9204.mp3', name: '🗿 Green and Blue (Rock)' },
+      { url: 'https://storage.aisongmaker.io/audio/01e05fb6-a7ac-4dd3-9500-00bb46625ef1.mp3', name: '🗿 Green and Blue (EDM)' },
+      { url: 'https://storage.aisongmaker.io/audio/49fc3427-e775-47f0-b5ea-8903006b07a0.mp3', name: '🗿 Lady Voodoo (Folk Yah)' },
+      { url: 'https://storage.aisongmaker.io/audio/b2001c35-620a-4893-b046-4de20ad11422.mp3', name: '🗿 Lady Voodoo (Crying)' },
+      { url: 'https://storage.aisongmaker.io/audio/7abf4dac-2b12-434a-8d59-c115f8c54cb9.mp3', name: '🗿 Rasta Lady Voodoo' }
+    ];
+
+    // New MP3 Player Functions
+    let musicPlayer = null;
+    let randomPlaylist = [];
+    let randomPlayIndex = 0;
+    let isRandomPlaying = false;
+
+    function loadSelectedTrack() {
+      const selector = document.getElementById('trackSelector');
+      const player = document.getElementById('musicPlayer');
+      const audioSource = document.getElementById('audioSource');
+      const nowPlaying = document.getElementById('currentTrackName');
+      const trackProgress = document.getElementById('trackProgress');
+      
+      if (!selector || !player || !audioSource) return;
+      
+      const trackIndex = selector.value;
+      if (trackIndex === '') return;
+      
+      const track = allTracksData[parseInt(trackIndex)];
+      if (!track) return;
+      
+      // Stop any existing playback
+      stopAllMusic();
+      
+      // Load the selected track
+      audioSource.src = track.url;
+      player.load();
+      
+      // Update display
+      if (nowPlaying) nowPlaying.textContent = track.name;
+      if (trackProgress) trackProgress.textContent = `Selected: ${track.name}`;
+      
+      document.getElementById('nowPlayingDisplay').style.display = 'block';
+      
+      console.log('🎵 Track loaded:', track.name);
+    }
+
+    function playSelectedTrack() {
+      const selector = document.getElementById('trackSelector');
+      const player = document.getElementById('musicPlayer');
+      
+      if (!selector || !player) return;
+      
+      const trackIndex = selector.value;
+      if (trackIndex === '') {
+        alert('Please select a track from the dropdown first!');
+        return;
+      }
+      
+      // Load track if not already loaded
+      loadSelectedTrack();
+      
+      // Play the track
+      player.play().then(() => {
+        console.log('▶️ Playing selected track');
+      }).catch(e => {
+        console.error('Playback error:', e);
+        alert('Error playing track. Please try again.');
+      });
+    }
+
+    function playAllRandom() {
+      const player = document.getElementById('musicPlayer');
+      const audioSource = document.getElementById('audioSource');
+      const nowPlaying = document.getElementById('currentTrackName');
+      const trackProgress = document.getElementById('trackProgress');
+      
+      if (!player || !audioSource) return;
+      
+      // Stop any existing playback
+      stopAllMusic();
+      
+      // Create shuffled playlist
+      randomPlaylist = [...allTracksData];
+      for (let i = randomPlaylist.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [randomPlaylist[i], randomPlaylist[j]] = [randomPlaylist[j], randomPlaylist[i]];
+      }
+      
+      randomPlayIndex = 0;
+      isRandomPlaying = true;
+      
+      // Play first track
+      playRandomTrack();
+      
+      // Set up event listener for when track ends
+      player.addEventListener('ended', playNextRandom);
+      
+      console.log('🎲 Started random play of all tracks');
+    }
+
+    function playRandomTrack() {
+      if (!isRandomPlaying || randomPlayIndex >= randomPlaylist.length) {
+        isRandomPlaying = false;
+        document.getElementById('nowPlayingDisplay').style.display = 'none';
+        console.log('🎲 Random playlist completed');
+        return;
+      }
+      
+      const player = document.getElementById('musicPlayer');
+      const audioSource = document.getElementById('audioSource');
+      const nowPlaying = document.getElementById('currentTrackName');
+      const trackProgress = document.getElementById('trackProgress');
+      
+      const track = randomPlaylist[randomPlayIndex];
+      
+      // Load and play track
+      audioSource.src = track.url;
+      player.load();
+      
+      // Update display
+      if (nowPlaying) nowPlaying.textContent = track.name;
+      if (trackProgress) trackProgress.textContent = `Random Play: ${randomPlayIndex + 1} of ${randomPlaylist.length} • ${track.name}`;
+      
+      document.getElementById('nowPlayingDisplay').style.display = 'block';
+      
+      player.play().then(() => {
+        console.log(`🎲 Playing random track ${randomPlayIndex + 1}: ${track.name}`);
+      }).catch(e => {
+        console.error('Random playback error:', e);
+        playNextRandom(); // Skip to next track on error
+      });
+    }
+
+    function playNextRandom() {
+      if (isRandomPlaying) {
+        randomPlayIndex++;
+        playRandomTrack();
+      }
+    }
+
     function getTrackName(url) {
       const fileName = url.split('/').pop().replace('.mp3', '');
       return trackNames[fileName] || 'Unknown Track';
@@ -3645,6 +3684,27 @@
 
     function stopAllMusic() {
       console.log('🛑 Stop All Music button clicked');
+      
+      // Stop new MP3 player
+      const player = document.getElementById('musicPlayer');
+      if (player) {
+        player.pause();
+        player.currentTime = 0;
+      }
+      
+      // Stop random playback
+      isRandomPlaying = false;
+      randomPlaylist = [];
+      randomPlayIndex = 0;
+      
+      // Hide now playing display
+      document.getElementById('nowPlayingDisplay').style.display = 'none';
+      
+      // Reset selector
+      const selector = document.getElementById('trackSelector');
+      if (selector) {
+        selector.value = '';
+      }
       
       // Immediate stop of any current audio
       if (currentAudio) {
