@@ -744,8 +744,8 @@
                 
                 <!-- Track Selection Dropdown -->
                 <div style="margin-bottom: 15px;">
-                  <select id="trackSelector" onchange="selectTrack()" style="width: 100%; max-width: 400px; padding: 12px; border: 2px solid #ff8c00; border-radius: 8px; background: white; color: #333; font-size: 14px; cursor: pointer;">
-                    <option value="">🎵 Select a track to download...</option>
+                  <select id="trackSelector" onchange="loadTrack()" style="width: 100%; max-width: 400px; padding: 12px; border: 2px solid #ff8c00; border-radius: 8px; background: white; color: #333; font-size: 14px; cursor: pointer;">
+                    <option value="">🎵 Select a track to play...</option>
                     <option value="0">⭐ David Boyeez Hair</option>
                     <option value="1">🐊 Swampy Boogie Nights (Cajun Crawler)</option>
                     <option value="2">🎵 The Heart is a Mule (by Robert Hunter, Allen Ginsberg and William Burroughs (ish))</option>
@@ -767,10 +767,16 @@
                   </select>
                 </div>
                 
-                <!-- Download Button -->
-                <div style="margin-bottom: 15px;">
-                  <button id="downloadBtn" onclick="downloadTrack()" disabled style="padding: 12px 24px; border: 2px solid #ccc; border-radius: 8px; background: #f0f0f0; color: #999; font-size: 14px; cursor: not-allowed; font-weight: bold;">
-                    📥 Select a track first
+                <!-- Player Controls -->
+                <div style="margin-bottom: 15px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                  <button id="playAllBtn" onclick="playAllTracks()" style="padding: 8px 16px; border: 2px solid #ff8c00; border-radius: 6px; background: #ff8c00; color: white; font-size: 12px; cursor: pointer; font-weight: bold;">
+                    🎵 Play All
+                  </button>
+                  <button id="stopBtn" onclick="stopPlayer()" style="padding: 8px 16px; border: 2px solid #dc143c; border-radius: 6px; background: #dc143c; color: white; font-size: 12px; cursor: pointer; font-weight: bold;">
+                    ⏹️ Stop
+                  </button>
+                  <button id="nextBtn" onclick="nextTrack()" style="padding: 8px 16px; border: 2px solid #228b22; border-radius: 6px; background: #228b22; color: white; font-size: 12px; cursor: pointer; font-weight: bold;">
+                    ⏭️ Next
                   </button>
                 </div>
                 
@@ -2627,93 +2633,89 @@
       { url: 'https://storage.aisongmaker.io/audio/7abf4dac-2b12-434a-8d59-c115f8c54cb9.mp3', name: '🗿 Rasta Lady Voodoo' }
     ];
 
-    // MP3 Player Workflow: Select → Download → Play
-    let selectedTrack = null;
-    let isDownloaded = false;
+    // Simple & Reliable MP3 Player
+    let currentTrackIndex = 0;
+    let isPlayingAll = false;
     
-    // Step 1: Track Selection
-    function selectTrack() {
+    // Load selected track immediately
+    function loadTrack() {
       const selector = document.getElementById('trackSelector');
-      const downloadBtn = document.getElementById('downloadBtn');
       const player = document.getElementById('musicPlayer');
+      const nowPlaying = document.getElementById('currentTrackName');
       const nowPlayingDiv = document.getElementById('nowPlayingDisplay');
       
       const trackIndex = selector.value;
       
       if (trackIndex === '') {
-        selectedTrack = null;
-        isDownloaded = false;
-        downloadBtn.disabled = true;
-        downloadBtn.textContent = '📥 Select a track first';
-        downloadBtn.style.background = '#f0f0f0';
-        downloadBtn.style.color = '#999';
-        downloadBtn.style.cursor = 'not-allowed';
-        downloadBtn.style.border = '2px solid #ccc';
         player.src = '';
         if (nowPlayingDiv) nowPlayingDiv.style.display = 'none';
         return;
       }
       
-      selectedTrack = allTracksData[parseInt(trackIndex)];
-      isDownloaded = false;
+      currentTrackIndex = parseInt(trackIndex);
+      const track = allTracksData[currentTrackIndex];
       
-      // Enable download button
-      downloadBtn.disabled = false;
-      downloadBtn.textContent = '📥 Download & Load Track';
-      downloadBtn.style.background = '#ff8c00';
-      downloadBtn.style.color = 'white';
-      downloadBtn.style.cursor = 'pointer';
-      downloadBtn.style.border = '2px solid #ff8c00';
+      if (track) {
+        player.src = track.url;
+        player.load();
+        if (nowPlaying) nowPlaying.textContent = track.name;
+        if (nowPlayingDiv) nowPlayingDiv.style.display = 'block';
+      }
     }
     
-    // Step 2: Download & Buffer Track
-    function downloadTrack() {
-      if (!selectedTrack) return;
+    // Play all tracks automatically
+    function playAllTracks() {
+      isPlayingAll = true;
+      currentTrackIndex = 0;
+      const selector = document.getElementById('trackSelector');
+      selector.value = '0';
+      loadTrack();
       
-      const downloadBtn = document.getElementById('downloadBtn');
       const player = document.getElementById('musicPlayer');
-      const nowPlaying = document.getElementById('currentTrackName');
-      const nowPlayingDiv = document.getElementById('nowPlayingDisplay');
+      player.play();
       
-      // Show loading state
-      downloadBtn.textContent = '⏳ Downloading...';
-      downloadBtn.disabled = true;
-      downloadBtn.style.background = '#daa520';
-      downloadBtn.style.cursor = 'not-allowed';
+      // Auto-advance to next track when current ends
+      player.addEventListener('ended', autoPlayNext);
+    }
+    
+    // Auto-play next track
+    function autoPlayNext() {
+      if (!isPlayingAll) return;
       
-      // Set up the player
-      player.src = selectedTrack.url;
+      currentTrackIndex++;
+      if (currentTrackIndex >= allTracksData.length) {
+        // End of playlist
+        isPlayingAll = false;
+        return;
+      }
       
-      // Listen for when enough data is loaded to play
-      player.addEventListener('canplaythrough', function onCanPlay() {
-        player.removeEventListener('canplaythrough', onCanPlay);
-        
-        // Mark as downloaded/ready
-        isDownloaded = true;
-        
-        // Update button to show ready state
-        downloadBtn.textContent = '✅ Ready to Play!';
-        downloadBtn.style.background = '#228b22';
-        downloadBtn.style.color = 'white';
-        
-        // Update display
-        if (nowPlaying) nowPlaying.textContent = selectedTrack.name;
-        if (nowPlayingDiv) nowPlayingDiv.style.display = 'block';
-        
-        // Auto-enable play button (browser controls)
-      });
+      const selector = document.getElementById('trackSelector');
+      selector.value = currentTrackIndex.toString();
+      loadTrack();
       
-      // Handle download errors
-      player.addEventListener('error', function onError() {
-        downloadBtn.textContent = '❌ Download Failed - Retry';
-        downloadBtn.disabled = false;
-        downloadBtn.style.background = '#dc143c';
-        downloadBtn.style.cursor = 'pointer';
-        isDownloaded = false;
-      });
+      const player = document.getElementById('musicPlayer');
+      player.play();
+    }
+    
+    // Play next track manually
+    function nextTrack() {
+      currentTrackIndex++;
+      if (currentTrackIndex >= allTracksData.length) {
+        currentTrackIndex = 0; // Loop back to start
+      }
       
-      // Start the download/buffering process
-      player.load();
+      const selector = document.getElementById('trackSelector');
+      selector.value = currentTrackIndex.toString();
+      loadTrack();
+    }
+    
+    // Stop player
+    function stopPlayer() {
+      const player = document.getElementById('musicPlayer');
+      player.pause();
+      player.currentTime = 0;
+      isPlayingAll = false;
+      player.removeEventListener('ended', autoPlayNext);
     }
 
     // End of simple MP3 player - all functions removed to avoid conflicts
