@@ -764,61 +764,13 @@
                   Complete Monazite Catalog • Clean MP3 Player • Mobile Optimized
                 </p>
                 
-                <!-- Track Selection Dropdown -->
-                <div style="margin-bottom: 15px;">
-                  <select id="trackSelector" onchange="handleTrackSelection()" style="width: 100%; max-width: 400px; padding: 12px; border: 2px solid #ff8c00; border-radius: 8px; background: white; color: #333; font-size: 14px; cursor: pointer;">
-                    <option value="">🎵 Select a track to play...</option>
-                    <option value="0">⭐ David Boyeez Hair</option>
-                    <option value="1">🐊 Swampy Boogie Nights (Cajun Crawler)</option>
-                    <option value="2">🎵 The Heart is a Mule (by Robert Hunter, Allen Ginsberg and William Burroughs (ish))</option>
-                    <option value="3">🎶 A Solar Day (groovin)</option>
-                    <option value="4">🎼 A Solar Day (moovin)</option>
-                    <option value="5">🎺 Break Time Blues Rhapsody (By Kid Solar)</option>
-                    <option value="6">⭐ Starlight Forever</option>
-                    <option value="7">💡 Light It From Within</option>
-                    <option value="8">🌙 Moonshine in St Kitts. (By Bowie, Jagger, Lennon (ish))</option>
-                    <option value="9">⚡ Solar Tempest Symphony (By JMF)</option>
-                    <option value="10">🔩 Steel In His Soul</option>
-                    <option value="11">💬 We Said So</option>
-                    <option value="12">🗿 Funky Voodoo (Blues Jam)</option>
-                    <option value="13">🗿 Green and Blue (Rock)</option>
-                    <option value="14">🗿 Green and Blue (EDM)</option>
-                    <option value="15">🗿 Lady Voodoo (Folk Yah)</option>
-                    <option value="16">🗿 Lady Voodoo (Crying)</option>
-                    <option value="17">🗿 Rasta Lady Voodoo</option>
-                  </select>
-                </div>
-                
-                <!-- Player Controls -->
-                <div style="margin-bottom: 15px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-                  <button onclick="playRandomTrackNow()" style="padding: 8px 16px; border: 2px solid #ff8c00; border-radius: 6px; background: #ff8c00; color: white; font-size: 12px; cursor: pointer; font-weight: bold;">
-                    🎲 Play Random
-                  </button>
-                  <button onclick="stopMusicNow()" style="padding: 8px 16px; border: 2px solid #dc143c; border-radius: 6px; background: #dc143c; color: white; font-size: 12px; cursor: pointer; font-weight: bold;">
-                    ⏹️ Stop
-                  </button>
-                  <button onclick="playNextTrackNow()" style="padding: 8px 16px; border: 2px solid #228b22; border-radius: 6px; background: #228b22; color: white; font-size: 12px; cursor: pointer; font-weight: bold;">
-                    ⏭️ Next
-                  </button>
-                </div>
-                
-                <!-- HTML5 Audio Player -->
-                <audio id="musicPlayer" controls preload="none" style="width: 100%; max-width: 400px; margin-bottom: 15px; border-radius: 8px;">
-                  Your browser does not support the audio element.
-                </audio>
-                
-                <!-- Now Playing Display -->
-                <div id="nowPlayingDisplay" style="margin: 10px 0; padding: 10px 15px; background: rgba(0, 0, 0, 0.8); border-radius: 8px; color: #ff8c00; font-weight: bold; font-size: 15px; display: none; border: 2px solid #ff8c00;">
-                  🎶 Now Playing: <span id="currentTrackName">Loading...</span>
+                <!-- Monazite Album Cover -->
+                <div style="margin: 20px 0;">
+                  <img src="/attached_assets/IMG_1376_1756878434885.png" alt="Monazite Album Cover" style="width: 200px; height: auto; border-radius: 12px; box-shadow: 0 6px 12px rgba(0,0,0,0.4); border: 3px solid #ff8c00;">
                 </div>
                 
               </div>
 
-              <!-- Bowie Images for David Boyeez Hair -->
-              <div style="display: flex; gap: 15px; margin: 15px 0; justify-content: center;">
-                <img src="/attached_assets/04AA9BAB-9CBA-43ED-A1B5-E4674F850D59_1756066851257.png" alt="Changes" style="width: 120px; height: auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
-                <img src="/attached_assets/5906466E-3563-443A-8273-19DB5D24F116_1756066851257.png" alt="Ch-Ch-Ch-Changes" style="width: 120px; height: auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
-              </div>
 
               <!-- Music is now available in the dropdown player above -->
 
