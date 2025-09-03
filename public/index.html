@@ -756,7 +756,7 @@
                 
                 <!-- Track Selection Dropdown -->
                 <div style="margin-bottom: 15px;">
-                  <select id="trackSelect" style="width: 100%; max-width: 400px; padding: 12px; border: 2px solid #ff8c00; border-radius: 8px; background: white; color: #333; font-size: 14px; cursor: pointer;">
+                  <select onchange="playSelectedTrackNow(this.value)" style="width: 100%; max-width: 400px; padding: 12px; border: 2px solid #ff8c00; border-radius: 8px; background: white; color: #333; font-size: 14px; cursor: pointer;">
                     <option value="">🎵 Select a track to play...</option>
                     <option value="0">⭐ David Boyeez Hair</option>
                     <option value="1">🐊 Swampy Boogie Nights (Cajun Crawler)</option>
@@ -781,13 +781,13 @@
                 
                 <!-- Player Controls -->
                 <div style="margin-bottom: 15px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-                  <button id="randomBtn" style="padding: 8px 16px; border: 2px solid #ff8c00; border-radius: 6px; background: #ff8c00; color: white; font-size: 12px; cursor: pointer; font-weight: bold;">
+                  <button onclick="playRandomTrackNow()" style="padding: 8px 16px; border: 2px solid #ff8c00; border-radius: 6px; background: #ff8c00; color: white; font-size: 12px; cursor: pointer; font-weight: bold;">
                     🎲 Play Random
                   </button>
-                  <button id="stopBtn" style="padding: 8px 16px; border: 2px solid #dc143c; border-radius: 6px; background: #dc143c; color: white; font-size: 12px; cursor: pointer; font-weight: bold;">
+                  <button onclick="stopMusicNow()" style="padding: 8px 16px; border: 2px solid #dc143c; border-radius: 6px; background: #dc143c; color: white; font-size: 12px; cursor: pointer; font-weight: bold;">
                     ⏹️ Stop
                   </button>
-                  <button id="nextBtn" style="padding: 8px 16px; border: 2px solid #228b22; border-radius: 6px; background: #228b22; color: white; font-size: 12px; cursor: pointer; font-weight: bold;">
+                  <button onclick="playNextTrackNow()" style="padding: 8px 16px; border: 2px solid #228b22; border-radius: 6px; background: #228b22; color: white; font-size: 12px; cursor: pointer; font-weight: bold;">
                     ⏭️ Next
                   </button>
                 </div>
@@ -2309,6 +2309,58 @@
       '🗿 Green and Blue (EDM)', '🗿 Lady Voodoo (Folk Yah)', '🗿 Lady Voodoo (Crying)', 
       '🗿 Rasta Lady Voodoo'
     ];
+
+    // WORKING MP3 PLAYER FUNCTIONS
+    let currentTrackIndex = 0;
+
+    function playSelectedTrackNow(trackIndex) {
+      if (!trackIndex || trackIndex === '') return;
+      
+      const idx = parseInt(trackIndex);
+      if (isNaN(idx) || idx < 0 || idx >= musicTracks.length) return;
+      
+      currentTrackIndex = idx;
+      const player = document.getElementById('musicPlayer');
+      const display = document.getElementById('nowPlayingDisplay');
+      const nameEl = document.getElementById('currentTrackName');
+      
+      // Load and play the track
+      player.src = musicTracks[idx];
+      player.load();
+      
+      // Update display
+      if (nameEl) nameEl.textContent = musicNames[idx];
+      if (display) display.style.display = 'block';
+      
+      // Play the track
+      player.play().catch(() => {
+        alert('🎵 Track loaded! Click the ▶️ play button to start');
+      });
+    }
+
+    function playRandomTrackNow() {
+      const randomIdx = Math.floor(Math.random() * musicTracks.length);
+      const select = document.querySelector('select');
+      if (select) select.value = randomIdx;
+      playSelectedTrackNow(randomIdx);
+    }
+
+    function stopMusicNow() {
+      const player = document.getElementById('musicPlayer');
+      if (player) {
+        player.pause();
+        player.currentTime = 0;
+      }
+      const display = document.getElementById('nowPlayingDisplay');
+      if (display) display.style.display = 'none';
+    }
+
+    function playNextTrackNow() {
+      currentTrackIndex = (currentTrackIndex + 1) % musicTracks.length;
+      const select = document.querySelector('select');
+      if (select) select.value = currentTrackIndex;
+      playSelectedTrackNow(currentTrackIndex);
+    }
 
     // BRAND NEW SIMPLE MP3 PLAYER - BYPASSES ALL CONFLICTS
     let currentIdx = 0;
