@@ -147,6 +147,13 @@
                 <button class="track-button" onclick="playTrack(17)">🗿 Rasta Lady Voodoo</button>
             </div>
             
+            <!-- Play Album Button -->
+            <div style="text-align: center; margin: 20px 0;">
+                <button onclick="playAlbum()" id="albumButton" style="padding: 15px 30px; background: linear-gradient(135deg, #ff6600, #ff4400); border: none; border-radius: 10px; color: white; font-size: 18px; font-weight: bold; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 8px rgba(0,0,0,0.3);">
+                    🎵 Play Album (Random, No Repeats)
+                </button>
+            </div>
+
             <div class="now-playing" id="nowPlaying">
                 🎶 Now Playing: <span id="trackName">Select a track</span>
             </div>
@@ -194,6 +201,11 @@
             '🗿 Rasta Lady Voodoo'
         ];
 
+        // Album playback variables
+        let albumMode = false;
+        let shuffledTracks = [];
+        let currentAlbumIndex = 0;
+
         function playTrack(index) {
             const player = document.getElementById('audioPlayer');
             const nowPlaying = document.getElementById('nowPlaying');
@@ -211,6 +223,70 @@
             player.play().catch(() => {
                 // Autoplay blocked - user can use controls
             });
+        }
+
+        function shuffleArray(array) {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        function playAlbum() {
+            const button = document.getElementById('albumButton');
+            const player = document.getElementById('audioPlayer');
+            
+            if (!albumMode) {
+                // Start album mode
+                albumMode = true;
+                shuffledTracks = shuffleArray([...Array(18).keys()]); // [0,1,2...17] shuffled
+                currentAlbumIndex = 0;
+                button.textContent = '⏹️ Stop Album';
+                button.style.background = 'linear-gradient(135deg, #dc143c, #b91c3c)';
+                
+                // Play first track
+                playTrack(shuffledTracks[currentAlbumIndex]);
+                
+                // Set up auto-advance
+                player.addEventListener('ended', autoAdvanceTrack);
+            } else {
+                // Stop album mode
+                stopAlbum();
+            }
+        }
+
+        function stopAlbum() {
+            const button = document.getElementById('albumButton');
+            const player = document.getElementById('audioPlayer');
+            
+            albumMode = false;
+            button.textContent = '🎵 Play Album (Random, No Repeats)';
+            button.style.background = 'linear-gradient(135deg, #ff6600, #ff4400)';
+            
+            // Remove event listener
+            player.removeEventListener('ended', autoAdvanceTrack);
+            player.pause();
+        }
+
+        function autoAdvanceTrack() {
+            if (!albumMode) return;
+            
+            currentAlbumIndex++;
+            
+            if (currentAlbumIndex >= shuffledTracks.length) {
+                // Album finished
+                stopAlbum();
+                const trackName = document.getElementById('trackName');
+                trackName.textContent = 'Album Complete! 🎉';
+                return;
+            }
+            
+            // Play next track
+            setTimeout(() => {
+                playTrack(shuffledTracks[currentAlbumIndex]);
+            }, 1000); // 1 second gap between tracks
         }
     </script>
 </body>
