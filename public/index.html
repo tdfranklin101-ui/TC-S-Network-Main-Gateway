@@ -756,7 +756,7 @@
                 
                 <!-- Track Selection Dropdown -->
                 <div style="margin-bottom: 15px;">
-                  <select onchange="playSelectedTrackNow(this.value)" style="width: 100%; max-width: 400px; padding: 12px; border: 2px solid #ff8c00; border-radius: 8px; background: white; color: #333; font-size: 14px; cursor: pointer;">
+                  <select id="trackSelector" style="width: 100%; max-width: 400px; padding: 12px; border: 2px solid #ff8c00; border-radius: 8px; background: white; color: #333; font-size: 14px; cursor: pointer;">
                     <option value="">🎵 Select a track to play...</option>
                     <option value="0">⭐ David Boyeez Hair</option>
                     <option value="1">🐊 Swampy Boogie Nights (Cajun Crawler)</option>
@@ -2314,32 +2314,17 @@
     let currentTrackIndex = 0;
 
     function playSelectedTrackNow(trackIndex) {
-      console.log('🎵 playSelectedTrackNow called with:', trackIndex);
-      
-      if (!trackIndex || trackIndex === '') {
-        console.log('❌ No track index provided');
-        return;
-      }
+      if (!trackIndex || trackIndex === '') return;
       
       const idx = parseInt(trackIndex);
-      console.log('🎵 Parsed index:', idx, 'Track URL:', musicTracks[idx]);
-      
-      if (isNaN(idx) || idx < 0 || idx >= musicTracks.length) {
-        console.log('❌ Invalid track index');
-        return;
-      }
+      if (isNaN(idx) || idx < 0 || idx >= musicTracks.length) return;
       
       currentTrackIndex = idx;
       const player = document.getElementById('musicPlayer');
       const display = document.getElementById('nowPlayingDisplay');
       const nameEl = document.getElementById('currentTrackName');
       
-      if (!player) {
-        console.log('❌ Audio player element not found');
-        return;
-      }
-      
-      console.log('🎵 Loading track:', musicNames[idx]);
+      if (!player) return;
       
       // Load and play the track
       player.src = musicTracks[idx];
@@ -2350,13 +2335,20 @@
       if (display) display.style.display = 'block';
       
       // Play the track
-      player.play().then(() => {
-        console.log('✅ Playing:', musicNames[idx]);
-      }).catch(err => {
-        console.log('⚠️ Autoplay blocked:', err);
-        alert('🎵 Track loaded! Click the ▶️ play button to start');
+      player.play().catch(() => {
+        // Silent catch - user can use controls
       });
     }
+
+    // Add event listener for select box when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      const selector = document.getElementById('trackSelector');
+      if (selector) {
+        selector.addEventListener('change', function() {
+          playSelectedTrackNow(this.value);
+        });
+      }
+    });
 
     function playRandomTrackNow() {
       const randomIdx = Math.floor(Math.random() * musicTracks.length);
