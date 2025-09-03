@@ -58,6 +58,7 @@
 
   <!-- Atomic Animation Background with CSS Fallback -->
 
+  
   <style>
     @keyframes atomicPulse {
       0%, 100% { 
@@ -103,6 +104,7 @@
       100% { transform: translateX(100%); }
     }
   </style>
+
 
   <!-- Message Block Styles -->
   <style>
@@ -374,6 +376,7 @@
         }
       </style>
 
+
             </div>
           </div>
         </div>
@@ -570,7 +573,8 @@
                 </div>
                 <span style="color: #0057B8; font-weight: bold;">→</span>
               </a>
-
+              
+              
               <!-- Wallet Link -->
               <a href="#solar-tracking" style="display: flex; align-items: center; text-decoration: none; padding: 12px; border-radius: 8px; background: linear-gradient(to right, rgba(123, 193, 68, 0.1), rgba(0, 87, 184, 0.1)); border: 1px solid rgba(123, 193, 68, 0.3); transition: all 0.3s ease;">
                 <div style="background: linear-gradient(to right, #7bc144, #0057B8); width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-right: 15px;">
@@ -618,7 +622,9 @@
                 </div>
                 <span style="color: #0057B8; font-weight: bold;">→</span>
               </a>
-
+              
+              
+              
               <!-- TC-SVR Game Link -->
               <a href="https://pika.art/video/4be0181a-b6f5-4418-a1c6-18a18bcf7987" target="_blank" style="display: flex; align-items: center; text-decoration: none; padding: 12px; border-radius: 8px; background: linear-gradient(to right, rgba(123, 193, 68, 0.1), rgba(0, 87, 184, 0.1)); border: 1px solid rgba(123, 193, 68, 0.3); transition: all 0.3s ease; margin-bottom: 10px;">
                 <div style="background: linear-gradient(to right, #7bc144, #0057B8); width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-right: 15px;">
@@ -666,6 +672,7 @@
                 </div>
                 <span style="color: #0057B8; font-weight: bold;">→</span>
               </a>
+              
 
               <!-- Poetry Performance Section -->
               <div id="poetry" style="scroll-margin-top: 80px;"></div>
@@ -810,7 +817,9 @@
                 <img src="/attached_assets/5906466E-3563-443A-8273-19DB5D24F116_1756066851257.png" alt="Ch-Ch-Ch-Changes" style="width: 120px; height: auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
               </div>
 
+              
               <!-- Music is now available in the dropdown player above -->
+              
 
               <!-- We Said So Video Link - YouTube -->
               <a href="https://youtu.be/WgP9-ghAQJE" target="_blank" style="display: flex; align-items: center; text-decoration: none; padding: 12px; border-radius: 8px; background: linear-gradient(to right, rgba(255, 69, 0, 0.1), rgba(220, 20, 60, 0.1)); border: 1px solid rgba(255, 69, 0, 0.3); transition: all 0.3s ease; color: inherit; margin-bottom: 10px;">
@@ -855,6 +864,7 @@
                   </p>
                 </div>
               </div>
+              
 
             </div>
           </div>
@@ -891,6 +901,8 @@
           </form>
         </div>
       </section>
+
+
 
       <!-- Community Gallery Section -->
       <section class="community-gallery-section" style="padding: 30px 0; background: #f8f9fa; border-top: 1px solid #0057B8;">
@@ -1010,6 +1022,8 @@
           </div>
         </div>
       </section>
+
+
 
       <!-- Sections removed and consolidated into feature links at the top -->
 
@@ -1456,7 +1470,8 @@
       input.capture = 'environment';
       input.click();
     }
-
+    
+    
     function openPhotoLibrary() {
       closeMultimodalMenu();
       const input = document.getElementById('didMultimodalInput');
@@ -1987,8 +2002,41 @@
     let currentAudio = null;
     let isPlayingPlaylist = false;
     
-    // REMOVED OLD MUSIC FUNCTIONS FOR CLEAN DEPLOYMENT
-
+    function playMusic1() {
+      const musicUrl = 'https://storage.aisongmaker.io/audio/10db8911-0b74-4675-ba62-02182c1d7f6b.mp3';
+      
+      // Stop any currently playing audio
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio = null;
+      }
+      isPlayingPlaylist = false;
+      
+      // Create and play new audio
+      currentAudio = new Audio(musicUrl);
+      currentAudio.play().then(() => {
+        console.log('🎵 Playing: The Heart is a Mule (by Robert Hunter, Allen Ginsberg and William Burroughs (ish))');
+      }).catch(error => {
+        console.error('Audio playback failed:', error);
+        alert('Unable to play music. Please check your internet connection.');
+      });
+      
+      // Reset when finished
+      currentAudio.addEventListener('ended', () => {
+        currentAudio = null;
+      });
+    }
+    
+    function playMusic2() {
+      const musicUrl = 'https://storage.aisongmaker.io/audio/418add3e-c1a5-4a76-b361-14d6a11794fe.mp3';
+      
+      // Stop any currently playing audio
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio = null;
+      }
       isPlayingPlaylist = false;
       
       // Create and play new audio
@@ -2005,7 +2053,16 @@
         currentAudio = null;
       });
     }
-
+    
+    function playMusic3() {
+      const musicUrl = 'https://storage.aisongmaker.io/audio/a2647129-991f-4105-aad2-e45210005bef.mp3';
+      
+      // Stop any currently playing audio
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio = null;
+      }
       isPlayingPlaylist = false;
       
       // Create and play new audio
@@ -2022,7 +2079,16 @@
         currentAudio = null;
       });
     }
-
+    
+    function playMusic4() {
+      const musicUrl = 'https://storage.aisongmaker.io/audio/09de8c9d-25a7-4b38-a6bd-c27b7de4629e.mp3';
+      
+      // Stop any currently playing audio
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio = null;
+      }
       isPlayingPlaylist = false;
       
       // Create and play new audio
@@ -2039,7 +2105,16 @@
         currentAudio = null;
       });
     }
-
+    
+    function playMusic5() {
+      const musicUrl = 'https://storage.aisongmaker.io/audio/c51b1f15-eff7-41fb-b778-b1b9d914ce3a.mp3';
+      
+      // Stop any currently playing audio
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio = null;
+      }
       isPlayingPlaylist = false;
       
       // Create and play new audio
@@ -2056,7 +2131,16 @@
         currentAudio = null;
       });
     }
-
+    
+    function playMusic6() {
+      const musicUrl = 'https://storage.aisongmaker.io/audio/ab1612d5-ccf4-4b4a-ab92-21b77bebdd46.mp3';
+      
+      // Stop any currently playing audio
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio = null;
+      }
       isPlayingPlaylist = false;
       
       // Create and play new audio
@@ -2073,7 +2157,16 @@
         currentAudio = null;
       });
     }
-
+    
+    function playMusic7() {
+      const musicUrl = 'https://storage.aisongmaker.io/audio/675d577c-5ab9-45c9-b9d5-d4362f6bcc12.mp3';
+      
+      // Stop any currently playing audio
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio = null;
+      }
       isPlayingPlaylist = false;
       
       // Create and play new audio
@@ -2090,7 +2183,16 @@
         currentAudio = null;
       });
     }
-
+    
+    function playMusic8() {
+      const musicUrl = 'https://storage.aisongmaker.io/audio/94088af1-8318-401a-b277-b79fbbdb7475.mp3';
+      
+      // Stop any currently playing audio
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio = null;
+      }
       isPlayingPlaylist = false;
       
       // Create and play new audio
@@ -2107,7 +2209,16 @@
         currentAudio = null;
       });
     }
-
+    
+    function playMusic9() {
+      const musicUrl = 'https://storage.aisongmaker.io/audio/cb58c04e-fc7b-448a-a9e5-a642e168cacd.mp3';
+      
+      // Stop any currently playing audio
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio = null;
+      }
       isPlayingPlaylist = false;
       
       // Create and play new audio
@@ -2124,7 +2235,16 @@
         currentAudio = null;
       });
     }
-
+    
+    function playMusic10() {
+      const musicUrl = 'https://storage.aisongmaker.io/audio/11802549-7cf8-4d4c-a708-44f04804f2ab.mp3';
+      
+      // Stop any currently playing audio
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio = null;
+      }
       isPlayingPlaylist = false;
       
       // Create and play new audio
@@ -2142,6 +2262,15 @@
       });
     }
 
+    function playMusic11() {
+      const musicUrl = 'https://storage.aisongmaker.io/audio/19d37c35-dc0b-4686-8bd7-71992f925670.mp3';
+      
+      // Stop any currently playing audio
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio = null;
+      }
       isPlayingPlaylist = false;
       
       // Create and play new audio
@@ -2159,6 +2288,15 @@
       });
     }
 
+    function playMusic12() {
+      const musicUrl = 'https://storage.aisongmaker.io/audio/255be09f-c09a-4d9a-8dbc-3c3ba65e9204.mp3';
+      
+      // Stop any currently playing audio
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio = null;
+      }
       isPlayingPlaylist = false;
       
       // Create and play new audio
@@ -2176,6 +2314,15 @@
       });
     }
 
+    function playMusic13() {
+      const musicUrl = 'https://storage.aisongmaker.io/audio/01e05fb6-a7ac-4dd3-9500-00bb46625ef1.mp3';
+      
+      // Stop any currently playing audio
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio = null;
+      }
       isPlayingPlaylist = false;
       
       // Create and play new audio
@@ -2193,6 +2340,15 @@
       });
     }
 
+    function playMusic14() {
+      const musicUrl = 'https://storage.aisongmaker.io/audio/49fc3427-e775-47f0-b5ea-8903006b07a0.mp3';
+      
+      // Stop any currently playing audio
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio = null;
+      }
       isPlayingPlaylist = false;
       
       // Create and play new audio
@@ -2210,6 +2366,15 @@
       });
     }
 
+    function playMusic15() {
+      const musicUrl = 'https://storage.aisongmaker.io/audio/b2001c35-620a-4893-b046-4de20ad11422.mp3';
+      
+      // Stop any currently playing audio
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio = null;
+      }
       isPlayingPlaylist = false;
       
       // Create and play new audio
@@ -2227,6 +2392,15 @@
       });
     }
 
+    function playMusic16() {
+      const musicUrl = 'https://storage.aisongmaker.io/audio/7abf4dac-2b12-434a-8d59-c115f8c54cb9.mp3';
+      
+      // Stop any currently playing audio
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio = null;
+      }
       isPlayingPlaylist = false;
       
       // Create and play new audio
@@ -2244,6 +2418,15 @@
       });
     }
 
+    function playMusic17() {
+      const musicUrl = 'https://storage.aisongmaker.io/audio/015092c3-f687-4a01-9a81-dad42f2adce9.mp3';
+      
+      // Stop any currently playing audio
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio = null;
+      }
       isPlayingPlaylist = false;
       
       // Create and play new audio
@@ -2261,6 +2444,15 @@
       });
     }
 
+    function playMusic18() {
+      const musicUrl = 'https://storage.aisongmaker.io/audio/9b2b12e4-8626-41e4-b9e4-c7a563e40f97.mp3';
+      
+      // Stop any currently playing audio
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio = null;
+      }
       isPlayingPlaylist = false;
       
       // Create and play new audio
@@ -2277,6 +2469,166 @@
         currentAudio = null;
       });
     }
+
+    // Streaming Playlist System with Preloading
+    let currentPlaylist = [];
+    let currentPlaylistIndex = 0;
+    let isPlayingPlaylist = false;
+    let nextAudioElement = null; // For preloading next track
+
+    function playAllMusicNow() {
+      console.log('🎲 STARTING MUSIC NOW PLAYLIST - 18 TRACKS');
+      
+      // Stop any current playback completely
+      if (currentAudio) {
+        try {
+          currentAudio.pause();
+          currentAudio.currentTime = 0;
+        } catch (e) {
+          console.log('Audio cleanup error (expected):', e);
+        }
+        currentAudio = null;
+      }
+      
+      // Reset all playlist variables
+      isPlayingPlaylist = false;
+      currentPlaylist = [];
+      currentPlaylistIndex = 0;
+      hideNowPlayingDisplay();
+      
+      // All 18 tracks: Music Now (12) + Voodoo Abundance (6)
+      const allTracks = [
+        // Music Now tracks (12)
+        'https://storage.aisongmaker.io/audio/10db8911-0b74-4675-ba62-02182c1d7f6b.mp3',
+        'https://storage.aisongmaker.io/audio/418add3e-c1a5-4a76-b361-14d6a11794fe.mp3',
+        'https://storage.aisongmaker.io/audio/a2647129-991f-4105-aad2-e45210005bef.mp3',
+        'https://storage.aisongmaker.io/audio/09de8c9d-25a7-4b38-a6bd-c27b7de4629e.mp3',
+        'https://storage.aisongmaker.io/audio/c51b1f15-eff7-41fb-b778-b1b9d914ce3a.mp3',
+        'https://storage.aisongmaker.io/audio/ab1612d5-ccf4-4b4a-ab92-21b77bebdd46.mp3',
+        'https://storage.aisongmaker.io/audio/675d577c-5ab9-45c9-b9d5-d4362f6bcc12.mp3',
+        'https://storage.aisongmaker.io/audio/94088af1-8318-401a-b277-b79fbbdb7475.mp3',
+        'https://storage.aisongmaker.io/audio/cb58c04e-fc7b-448a-a9e5-a642e168cacd.mp3',
+        'https://storage.aisongmaker.io/audio/11802549-7cf8-4d4c-a708-44f04804f2ab.mp3',
+        'https://storage.aisongmaker.io/audio/9b2b12e4-8626-41e4-b9e4-c7a563e40f97.mp3',
+        'https://storage.aisongmaker.io/audio/015092c3-f687-4a01-9a81-dad42f2adce9.mp3',
+        // Voodoo Abundance tracks (6)
+        'https://storage.aisongmaker.io/audio/19d37c35-dc0b-4686-8bd7-71992f925670.mp3',
+        'https://storage.aisongmaker.io/audio/255be09f-c09a-4d9a-8dbc-3c3ba65e9204.mp3',
+        'https://storage.aisongmaker.io/audio/01e05fb6-a7ac-4dd3-9500-00bb46625ef1.mp3',
+        'https://storage.aisongmaker.io/audio/49fc3427-e775-47f0-b5ea-8903006b07a0.mp3',
+        'https://storage.aisongmaker.io/audio/b2001c35-620a-4893-b046-4de20ad11422.mp3',
+        'https://storage.aisongmaker.io/audio/7abf4dac-2b12-434a-8d59-c115f8c54cb9.mp3'
+      ];
+      
+      // Fisher-Yates shuffle for random order
+      const shuffledTracks = [...allTracks];
+      for (let i = shuffledTracks.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffledTracks[i], shuffledTracks[j]] = [shuffledTracks[j], shuffledTracks[i]];
+      }
+      
+      console.log('🎵 First random track will be:', getTrackName(shuffledTracks[0]));
+      
+      // Enhanced playback with better error handling
+      try {
+        console.log('🎵 Creating Audio element for:', shuffledTracks[0]);
+        currentAudio = new Audio();
+        currentAudio.crossOrigin = 'anonymous';
+        currentAudio.preload = 'auto';
+        currentAudio.src = shuffledTracks[0];
+        
+        // Add event listeners for better debugging
+        currentAudio.addEventListener('loadstart', () => console.log('🔄 Loading started...'));
+        currentAudio.addEventListener('loadeddata', () => console.log('✅ Audio data loaded'));
+        currentAudio.addEventListener('canplay', () => console.log('✅ Audio ready to play'));
+        currentAudio.addEventListener('error', (e) => console.error('❌ Audio error:', e));
+        
+        currentAudio.play().then(() => {
+          console.log('✅ MUSIC NOW: Playing track 1 of 18');
+          showNowPlayingDisplay();
+          updateNowPlaying(shuffledTracks[0], 1, shuffledTracks.length);
+          
+          // Set up auto-advance to next track
+          currentAudio.onended = () => {
+            console.log('🔄 Track ended, advancing to next...');
+            startStreamingPlaylist(shuffledTracks, 'RANDOM 18-SONG MIX');
+          };
+        }).catch(error => {
+          console.error('❌ MUSIC NOW: Playback failed:', error);
+          alert('Music playback failed: ' + error.message + '\nPlease check your internet connection and try again.');
+        });
+      } catch (error) {
+        console.error('❌ MUSIC NOW: Setup failed:', error);
+        alert('Unable to setup audio player: ' + error.message);
+      }
+    }
+
+
+    function playAllVoodoo() {
+      console.log('🗿 STARTING VOODOO ABUNDANCE 6-SONG PLAYLIST');
+      
+      // Stop any current playbook and clear state
+      // Stop any currently playing audio
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio = null;
+      }
+      isPlayingPlaylist = false;
+      isPlayingPlaylist = false;
+      hideNowPlayingDisplay();
+      
+      // Voodoo Abundance in sequential order
+      const voodooTracks = [
+        'https://storage.aisongmaker.io/audio/19d37c35-dc0b-4686-8bd7-71992f925670.mp3', // Funky Voodoo (Blues Jam)
+        'https://storage.aisongmaker.io/audio/255be09f-c09a-4d9a-8dbc-3c3ba65e9204.mp3', // Green and Blue (Rock)
+        'https://storage.aisongmaker.io/audio/01e05fb6-a7ac-4dd3-9500-00bb46625ef1.mp3', // Green and Blue (EDM)
+        'https://storage.aisongmaker.io/audio/49fc3427-e775-47f0-b5ea-8903006b07a0.mp3', // Green and Blue (Folk)
+        'https://storage.aisongmaker.io/audio/b2001c35-620a-4893-b046-4de20ad11422.mp3', // Green and Blue (Crying)
+        'https://storage.aisongmaker.io/audio/7abf4dac-2b12-434a-8d59-c115f8c54cb9.mp3'  // Rasta Lady Voodoo
+      ];
+      
+      console.log('🗿 First Voodoo track will be:', getTrackName(voodooTracks[0]));
+      
+      startStreamingPlaylist(voodooTracks, 'VOODOO ABUNDANCE 6-SONG');
+    }
+
+    function startStreamingPlaylist(tracks, mode) {
+      currentPlaylist = tracks;
+      currentPlaylistIndex = 0;
+      isPlayingPlaylist = true;
+      
+      console.log(`📻 Starting ${mode} playlist: ${tracks.length} tracks`);
+      console.log('🎵 Tracks will play automatically one after another');
+      
+      // Show now playing display
+      showNowPlayingDisplay();
+      
+      // Start streaming immediately
+      streamNextTrack();
+    }
+
+    // Track name mapping for display - CORRECTED to match actual platform buttons
+    const trackNames = {
+      '10db8911-0b74-4675-ba62-02182c1d7f6b': 'The Heart is a Mule (by Robert Hunter, Allen Ginsberg and William Burroughs (ish))',
+      '418add3e-c1a5-4a76-b361-14d6a11794fe': 'A Solar Day (groovin)',
+      'a2647129-991f-4105-aad2-e45210005bef': 'A Solar Day (moovin)',
+      '09de8c9d-25a7-4b38-a6bd-c27b7de4629e': 'Break Time Blues Rhapsody (By Kid Solar)',
+      'c51b1f15-eff7-41fb-b778-b1b9d914ce3a': 'Starlight Forever',
+      'ab1612d5-ccf4-4b4a-ab92-21b77bebdd46': 'Light It From Within',
+      '675d577c-5ab9-45c9-b9d5-d4362f6bcc12': 'Moonshine in St Kitts. (By Bowie, Jagger, Lennon (ish))',
+      '94088af1-8318-401a-b277-b79fbbdb7475': 'Solar Tempest Symphony (By JMF)',
+      'cb58c04e-fc7b-448a-a9e5-a642e168cacd': 'Steel In His Soul',
+      '11802549-7cf8-4d4c-a708-44f04804f2ab': 'We Said So',
+      '9b2b12e4-8626-41e4-b9e4-c7a563e40f97': 'David Boyeez Hair',
+      '015092c3-f687-4a01-9a81-dad42f2adce9': 'Swampy Boogie Nights (Cajun Crawler)',
+      '19d37c35-dc0b-4686-8bd7-71992f925670': 'Funky Voodoo (Blues Jam)',
+      '255be09f-c09a-4d9a-8dbc-3c3ba65e9204': 'Green and Blue (Rock)',
+      '01e05fb6-a7ac-4dd3-9500-00bb46625ef1': 'Green and Blue (EDM)',
+      '49fc3427-e775-47f0-b5ea-8903006b07a0': 'Lady Voodoo (Folk Yah)',
+      'b2001c35-620a-4893-b046-4de20ad11422': 'Lady Voodoo (Crying)',
+      '7abf4dac-2b12-434a-8d59-c115f8c54cb9': 'Rasta Lady Voodoo'
+    };
 
     // SIMPLE MP3 PLAYER DATA
     const musicTracks = [
@@ -2388,6 +2740,7 @@
         playSelectedTrack();
       }
     }
+      
 
     // Make functions globally accessible
     window.playSelectedTrack = playSelectedTrack;
@@ -2397,7 +2750,7 @@
 
     // ATTACH EVENT LISTENERS DIRECTLY - NO ONCLICK CONFLICTS
     document.addEventListener('DOMContentLoaded', function() {
-      // Setting up MP3 player event listeners
+      console.log('🎵 Setting up MP3 player event listeners...');
       
       // Track selection
       const trackSelect = document.getElementById('trackSelect');
@@ -2405,7 +2758,7 @@
         trackSelect.addEventListener('change', function() {
           const idx = parseInt(this.value);
           if (!isNaN(idx)) {
-            // Track selected
+            console.log('🎵 Track selected:', idx, musicNames[idx]);
             currentIdx = idx;
             const player = document.getElementById('musicPlayer');
             const display = document.getElementById('nowPlayingDisplay');
