@@ -2687,9 +2687,14 @@
 
     function playRandomTrack() {
       const randomIdx = Math.floor(Math.random() * musicTracks.length);
-      const select = document.querySelector('select[onchange="playSelectedTrack()"]');
-      select.value = randomIdx;
-      playSelectedTrack.call(select);
+      const select = document.querySelector('select');
+      if (select) {
+        select.value = randomIdx;
+        // Simulate the event
+        const fakeEvent = { target: select };
+        window.event = fakeEvent;
+        playSelectedTrack();
+      }
     }
 
     function stopMusic() {
@@ -2702,11 +2707,30 @@
 
     function playNextTrack() {
       currentIdx = (currentIdx + 1) % musicTracks.length;
-      const select = document.querySelector('select[onchange="playSelectedTrack()"]');
-      select.value = currentIdx;
-      playSelectedTrack.call(select);
+      const select = document.querySelector('select');
+      if (select) {
+        select.value = currentIdx;
+        // Simulate the event
+        const fakeEvent = { target: select };
+        window.event = fakeEvent;
+        playSelectedTrack();
+      }
     }
       
+
+    // Make functions globally accessible
+    window.playSelectedTrack = playSelectedTrack;
+    window.playRandomTrack = playRandomTrack;
+    window.stopMusic = stopMusic;
+    window.playNextTrack = playNextTrack;
+
+    // Test function availability
+    console.log('🎵 MP3 Player functions loaded:', {
+      playSelectedTrack: typeof window.playSelectedTrack,
+      playRandomTrack: typeof window.playRandomTrack, 
+      stopMusic: typeof window.stopMusic,
+      playNextTrack: typeof window.playNextTrack
+    });
 
     // END OF WORKING MP3 PLAYER CODE
 
