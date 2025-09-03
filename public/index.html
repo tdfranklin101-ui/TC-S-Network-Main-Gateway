@@ -2666,14 +2666,22 @@
     let currentIdx = 0;
 
     function playSelectedTrack() {
-      const select = event.target;
+      console.log('🎵 playSelectedTrack called!');
+      const select = event ? event.target : document.querySelector('select');
       const idx = parseInt(select.value);
-      if (isNaN(idx)) return;
+      console.log('🎵 Selected index:', idx, 'Track:', musicNames[idx]);
+      
+      if (isNaN(idx)) {
+        console.log('❌ Invalid track index');
+        return;
+      }
       
       currentIdx = idx;
       const player = document.getElementById('musicPlayer');
       const display = document.getElementById('nowPlayingDisplay');
       const nameEl = document.getElementById('currentTrackName');
+      
+      console.log('🎵 Loading track:', musicTracks[idx]);
       
       player.pause();
       player.src = musicTracks[idx];
@@ -2682,11 +2690,21 @@
       if (nameEl) nameEl.textContent = musicNames[idx];
       if (display) display.style.display = 'block';
       
-      setTimeout(() => player.play().catch(() => alert('Click the ▶️ play button on the audio player')), 100);
+      // Auto-play after load
+      player.addEventListener('canplaythrough', function() {
+        player.play().then(() => {
+          console.log('✅ Playing:', musicNames[idx]);
+        }).catch(err => {
+          console.log('⚠️ Autoplay blocked, user must click play:', err);
+          alert('🎵 Track loaded! Click the ▶️ play button to start music');
+        });
+      }, { once: true });
     }
 
     function playRandomTrack() {
+      console.log('🎲 playRandomTrack called!');
       const randomIdx = Math.floor(Math.random() * musicTracks.length);
+      console.log('🎲 Random index:', randomIdx);
       const select = document.querySelector('select');
       if (select) {
         select.value = randomIdx;
@@ -2694,13 +2712,19 @@
         const fakeEvent = { target: select };
         window.event = fakeEvent;
         playSelectedTrack();
+      } else {
+        console.log('❌ Could not find select element');
       }
     }
 
     function stopMusic() {
+      console.log('⏹️ stopMusic called!');
       const player = document.getElementById('musicPlayer');
-      player.pause();
-      player.currentTime = 0;
+      if (player) {
+        player.pause();
+        player.currentTime = 0;
+        console.log('⏹️ Music stopped');
+      }
       const display = document.getElementById('nowPlayingDisplay');
       if (display) display.style.display = 'none';
     }
