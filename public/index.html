@@ -2314,15 +2314,32 @@
     let currentTrackIndex = 0;
 
     function playSelectedTrackNow(trackIndex) {
-      if (!trackIndex || trackIndex === '') return;
+      console.log('🎵 playSelectedTrackNow called with:', trackIndex);
+      
+      if (!trackIndex || trackIndex === '') {
+        console.log('❌ No track index provided');
+        return;
+      }
       
       const idx = parseInt(trackIndex);
-      if (isNaN(idx) || idx < 0 || idx >= musicTracks.length) return;
+      console.log('🎵 Parsed index:', idx, 'Track URL:', musicTracks[idx]);
+      
+      if (isNaN(idx) || idx < 0 || idx >= musicTracks.length) {
+        console.log('❌ Invalid track index');
+        return;
+      }
       
       currentTrackIndex = idx;
       const player = document.getElementById('musicPlayer');
       const display = document.getElementById('nowPlayingDisplay');
       const nameEl = document.getElementById('currentTrackName');
+      
+      if (!player) {
+        console.log('❌ Audio player element not found');
+        return;
+      }
+      
+      console.log('🎵 Loading track:', musicNames[idx]);
       
       // Load and play the track
       player.src = musicTracks[idx];
@@ -2333,7 +2350,10 @@
       if (display) display.style.display = 'block';
       
       // Play the track
-      player.play().catch(() => {
+      player.play().then(() => {
+        console.log('✅ Playing:', musicNames[idx]);
+      }).catch(err => {
+        console.log('⚠️ Autoplay blocked:', err);
         alert('🎵 Track loaded! Click the ▶️ play button to start');
       });
     }
