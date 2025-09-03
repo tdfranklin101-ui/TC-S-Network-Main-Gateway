@@ -756,7 +756,7 @@
                 
                 <!-- Track Selection Dropdown -->
                 <div style="margin-bottom: 15px;">
-                  <select id="trackSelector" style="width: 100%; max-width: 400px; padding: 12px; border: 2px solid #ff8c00; border-radius: 8px; background: white; color: #333; font-size: 14px; cursor: pointer;">
+                  <select id="trackSelector" onchange="handleTrackSelection()" style="width: 100%; max-width: 400px; padding: 12px; border: 2px solid #ff8c00; border-radius: 8px; background: white; color: #333; font-size: 14px; cursor: pointer;">
                     <option value="">🎵 Select a track to play...</option>
                     <option value="0">⭐ David Boyeez Hair</option>
                     <option value="1">🐊 Swampy Boogie Nights (Cajun Crawler)</option>
@@ -779,6 +779,13 @@
                   </select>
                 </div>
                 
+                <!-- Test Button for Direct Loading -->
+                <div style="margin-bottom: 15px;">
+                  <button onclick="document.getElementById('musicPlayer').src='https://storage.aisongmaker.io/audio/9b2b12e4-8626-41e4-b9e4-c7a563e40f97.mp3'; document.getElementById('musicPlayer').load(); document.getElementById('currentTrackName').textContent='⭐ David Boyeez Hair'; document.getElementById('nowPlayingDisplay').style.display='block';" style="padding: 10px 20px; border: 3px solid #ff6600; border-radius: 8px; background: #ff6600; color: white; font-size: 14px; cursor: pointer; font-weight: bold; margin-bottom: 10px;">
+                    🎵 Test Load: David Boyeez Hair
+                  </button>
+                </div>
+
                 <!-- Player Controls -->
                 <div style="margin-bottom: 15px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
                   <button onclick="playRandomTrackNow()" style="padding: 8px 16px; border: 2px solid #ff8c00; border-radius: 6px; background: #ff8c00; color: white; font-size: 12px; cursor: pointer; font-weight: bold;">
@@ -2340,15 +2347,36 @@
       });
     }
 
-    // Add event listener for select box when page loads
-    document.addEventListener('DOMContentLoaded', function() {
+    // Simple direct function to handle track selection
+    function handleTrackSelection() {
       const selector = document.getElementById('trackSelector');
-      if (selector) {
-        selector.addEventListener('change', function() {
-          playSelectedTrackNow(this.value);
+      const selectedIndex = selector.value;
+      
+      if (!selectedIndex || selectedIndex === '') return;
+      
+      const trackIndex = parseInt(selectedIndex);
+      if (isNaN(trackIndex) || trackIndex < 0 || trackIndex >= musicTracks.length) return;
+      
+      // Get the player and load the track
+      const player = document.getElementById('musicPlayer');
+      const display = document.getElementById('nowPlayingDisplay');
+      const nameEl = document.getElementById('currentTrackName');
+      
+      if (player) {
+        // Directly set the MP3 file URL
+        player.src = musicTracks[trackIndex];
+        player.load();
+        
+        // Update display
+        if (nameEl) nameEl.textContent = musicNames[trackIndex];
+        if (display) display.style.display = 'block';
+        
+        // Try to play
+        player.play().catch(() => {
+          // If autoplay blocked, user can use controls
         });
       }
-    });
+    }
 
     function playRandomTrackNow() {
       const randomIdx = Math.floor(Math.random() * musicTracks.length);
