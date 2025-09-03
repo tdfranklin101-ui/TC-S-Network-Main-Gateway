@@ -763,7 +763,7 @@
                 
                 <!-- Track Selection Dropdown -->
                 <div style="margin-bottom: 15px;">
-                  <select onchange="playSelectedTrack()" style="width: 100%; max-width: 400px; padding: 12px; border: 2px solid #ff8c00; border-radius: 8px; background: white; color: #333; font-size: 14px; cursor: pointer;">
+                  <select id="trackSelect" style="width: 100%; max-width: 400px; padding: 12px; border: 2px solid #ff8c00; border-radius: 8px; background: white; color: #333; font-size: 14px; cursor: pointer;">
                     <option value="">🎵 Select a track to play...</option>
                     <option value="0">⭐ David Boyeez Hair</option>
                     <option value="1">🐊 Swampy Boogie Nights (Cajun Crawler)</option>
@@ -788,13 +788,13 @@
                 
                 <!-- Player Controls -->
                 <div style="margin-bottom: 15px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-                  <button onclick="playRandomTrack()" style="padding: 8px 16px; border: 2px solid #ff8c00; border-radius: 6px; background: #ff8c00; color: white; font-size: 12px; cursor: pointer; font-weight: bold;">
+                  <button id="randomBtn" style="padding: 8px 16px; border: 2px solid #ff8c00; border-radius: 6px; background: #ff8c00; color: white; font-size: 12px; cursor: pointer; font-weight: bold;">
                     🎲 Play Random
                   </button>
-                  <button onclick="stopMusic()" style="padding: 8px 16px; border: 2px solid #dc143c; border-radius: 6px; background: #dc143c; color: white; font-size: 12px; cursor: pointer; font-weight: bold;">
+                  <button id="stopBtn" style="padding: 8px 16px; border: 2px solid #dc143c; border-radius: 6px; background: #dc143c; color: white; font-size: 12px; cursor: pointer; font-weight: bold;">
                     ⏹️ Stop
                   </button>
-                  <button onclick="playNextTrack()" style="padding: 8px 16px; border: 2px solid #228b22; border-radius: 6px; background: #228b22; color: white; font-size: 12px; cursor: pointer; font-weight: bold;">
+                  <button id="nextBtn" style="padding: 8px 16px; border: 2px solid #228b22; border-radius: 6px; background: #228b22; color: white; font-size: 12px; cursor: pointer; font-weight: bold;">
                     ⏭️ Next
                   </button>
                 </div>
@@ -2748,12 +2748,81 @@
     window.stopMusic = stopMusic;
     window.playNextTrack = playNextTrack;
 
-    // Test function availability
-    console.log('🎵 MP3 Player functions loaded:', {
-      playSelectedTrack: typeof window.playSelectedTrack,
-      playRandomTrack: typeof window.playRandomTrack, 
-      stopMusic: typeof window.stopMusic,
-      playNextTrack: typeof window.playNextTrack
+    // ATTACH EVENT LISTENERS DIRECTLY - NO ONCLICK CONFLICTS
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('🎵 Setting up MP3 player event listeners...');
+      
+      // Track selection
+      const trackSelect = document.getElementById('trackSelect');
+      if (trackSelect) {
+        trackSelect.addEventListener('change', function() {
+          const idx = parseInt(this.value);
+          if (!isNaN(idx)) {
+            console.log('🎵 Track selected:', idx, musicNames[idx]);
+            currentIdx = idx;
+            const player = document.getElementById('musicPlayer');
+            const display = document.getElementById('nowPlayingDisplay');
+            const nameEl = document.getElementById('currentTrackName');
+            
+            player.pause();
+            player.src = musicTracks[idx];
+            player.load();
+            
+            if (nameEl) nameEl.textContent = musicNames[idx];
+            if (display) display.style.display = 'block';
+            
+            player.play().then(() => {
+              console.log('✅ Playing:', musicNames[idx]);
+            }).catch(err => {
+              console.log('⚠️ Click play button:', err);
+              alert('🎵 Track loaded! Click ▶️ to play');
+            });
+          }
+        });
+        console.log('✅ Track selector attached');
+      }
+      
+      // Random button
+      const randomBtn = document.getElementById('randomBtn');
+      if (randomBtn) {
+        randomBtn.addEventListener('click', function() {
+          console.log('🎲 Random button clicked!');
+          const randomIdx = Math.floor(Math.random() * musicTracks.length);
+          trackSelect.value = randomIdx;
+          trackSelect.dispatchEvent(new Event('change'));
+        });
+        console.log('✅ Random button attached');
+      }
+      
+      // Stop button
+      const stopBtn = document.getElementById('stopBtn');
+      if (stopBtn) {
+        stopBtn.addEventListener('click', function() {
+          console.log('⏹️ Stop button clicked!');
+          const player = document.getElementById('musicPlayer');
+          if (player) {
+            player.pause();
+            player.currentTime = 0;
+          }
+          const display = document.getElementById('nowPlayingDisplay');
+          if (display) display.style.display = 'none';
+        });
+        console.log('✅ Stop button attached');
+      }
+      
+      // Next button
+      const nextBtn = document.getElementById('nextBtn');
+      if (nextBtn) {
+        nextBtn.addEventListener('click', function() {
+          console.log('⏭️ Next button clicked!');
+          currentIdx = (currentIdx + 1) % musicTracks.length;
+          trackSelect.value = currentIdx;
+          trackSelect.dispatchEvent(new Event('change'));
+        });
+        console.log('✅ Next button attached');
+      }
+      
+      console.log('🎵 ALL MP3 PLAYER EVENT LISTENERS READY!');
     });
 
     // END OF WORKING MP3 PLAYER CODE
