@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Now - Monazite Catalog</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: white;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 15px;
+            padding: 30px;
+            border: 2px solid #ff8c00;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #ff8c00;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        
+        .player-section {
+            background: linear-gradient(135deg, rgba(255, 140, 0, 0.1), rgba(218, 165, 32, 0.1));
+            border: 2px solid rgba(255, 140, 0, 0.3);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+        
+        .track-list {
+            margin-bottom: 20px;
+        }
+        
+        .track-button {
+            display: block;
+            width: 100%;
+            padding: 12px 20px;
+            margin: 8px 0;
+            background: linear-gradient(135deg, #ff8c00, #ff6600);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .track-button:hover {
+            background: linear-gradient(135deg, #ff6600, #ff4400);
+            transform: translateY(-2px);
+        }
+        
+        .track-button:active {
+            transform: translateY(0);
+        }
+        
+        .audio-player {
+            width: 100%;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        
+        .now-playing {
+            text-align: center;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 8px;
+            color: #ff8c00;
+            font-weight: bold;
+            font-size: 18px;
+            margin: 15px 0;
+            border: 2px solid #ff8c00;
+            display: none;
+        }
+        
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .back-link a {
+            color: #ff8c00;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: bold;
+            padding: 10px 20px;
+            border: 2px solid #ff8c00;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .back-link a:hover {
+            background: #ff8c00;
+            color: black;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 MUSIC NOW 🎵</h1>
+        <p style="text-align: center; font-size: 18px; margin-bottom: 30px;">
+            Monazite Complete Catalog - 18 Tracks
+        </p>
+        
+        <div class="player-section">
+            <div class="track-list">
+                <button class="track-button" onclick="playTrack(0)">⭐ David Boyeez Hair</button>
+                <button class="track-button" onclick="playTrack(1)">🐊 Swampy Boogie Nights (Cajun Crawler)</button>
+                <button class="track-button" onclick="playTrack(2)">🎵 The Heart is a Mule (by Robert Hunter, Allen Ginsberg and William Burroughs)</button>
+                <button class="track-button" onclick="playTrack(3)">🎶 A Solar Day (groovin)</button>
+                <button class="track-button" onclick="playTrack(4)">🎼 A Solar Day (moovin)</button>
+                <button class="track-button" onclick="playTrack(5)">🎺 Break Time Blues Rhapsody (By Kid Solar)</button>
+                <button class="track-button" onclick="playTrack(6)">⭐ Starlight Forever</button>
+                <button class="track-button" onclick="playTrack(7)">💡 Light It From Within</button>
+                <button class="track-button" onclick="playTrack(8)">🌙 Moonshine in St Kitts (By Bowie, Jagger, Lennon)</button>
+                <button class="track-button" onclick="playTrack(9)">⚡ Solar Tempest Symphony (By JMF)</button>
+                <button class="track-button" onclick="playTrack(10)">🔩 Steel In His Soul</button>
+                <button class="track-button" onclick="playTrack(11)">💬 We Said So</button>
+                <button class="track-button" onclick="playTrack(12)">🗿 Funky Voodoo (Blues Jam)</button>
+                <button class="track-button" onclick="playTrack(13)">🗿 Green and Blue (Rock)</button>
+                <button class="track-button" onclick="playTrack(14)">🗿 Green and Blue (EDM)</button>
+                <button class="track-button" onclick="playTrack(15)">🗿 Lady Voodoo (Folk Yah)</button>
+                <button class="track-button" onclick="playTrack(16)">🗿 Lady Voodoo (Crying)</button>
+                <button class="track-button" onclick="playTrack(17)">🗿 Rasta Lady Voodoo</button>
+            </div>
+            
+            <div class="now-playing" id="nowPlaying">
+                🎶 Now Playing: <span id="trackName">Select a track</span>
+            </div>
+            
+            <audio id="audioPlayer" class="audio-player" controls preload="none">
+                Your browser does not support the audio element.
+            </audio>
+        </div>
+        
+        <div class="back-link">
+            <a href="/">← Back to Current-See Platform</a>
+        </div>
+    </div>
+
+    <script>
+        // MP3 track URLs
+        const tracks = [
+            'https://storage.aisongmaker.io/audio/9b2b12e4-8626-41e4-b9e4-c7a563e40f97.mp3', // David Boyeez Hair
+            'https://storage.aisongmaker.io/audio/015092c3-f687-4a01-9a81-dad42f2adce9.mp3', // Swampy Boogie Nights  
+            'https://storage.aisongmaker.io/audio/10db8911-0b74-4675-ba62-02182c1d7f6b.mp3', // The Heart is a Mule
+            'https://storage.aisongmaker.io/audio/418add3e-c1a5-4a76-b361-14d6a11794fe.mp3', // A Solar Day (groovin)
+            'https://storage.aisongmaker.io/audio/a2647129-991f-4105-aad2-e45210005bef.mp3', // A Solar Day (moovin)
+            'https://storage.aisongmaker.io/audio/09de8c9d-25a7-4b38-a6bd-c27b7de4629e.mp3', // Break Time Blues Rhapsody
+            'https://storage.aisongmaker.io/audio/c51b1f15-eff7-41fb-b778-b1b9d914ce3a.mp3', // Starlight Forever
+            'https://storage.aisongmaker.io/audio/ab1612d5-ccf4-4b4a-ab92-21b77bebdd46.mp3', // Light It From Within
+            'https://storage.aisongmaker.io/audio/675d577c-5ab9-45c9-b9d5-d4362f6bcc12.mp3', // Moonshine in St Kitts
+            'https://storage.aisongmaker.io/audio/94088af1-8318-401a-b277-b79fbbdb7475.mp3', // Solar Tempest Symphony
+            'https://storage.aisongmaker.io/audio/cb58c04e-fc7b-448a-a9e5-a642e168cacd.mp3', // Steel In His Soul
+            'https://storage.aisongmaker.io/audio/11802549-7cf8-4d4c-a708-44f04804f2ab.mp3', // We Said So
+            'https://storage.aisongmaker.io/audio/19d37c35-dc0b-4686-8bd7-71992f925670.mp3', // Funky Voodoo
+            'https://storage.aisongmaker.io/audio/255be09f-c09a-4d9a-8dbc-3c3ba65e9204.mp3', // Green and Blue (Rock)
+            'https://storage.aisongmaker.io/audio/01e05fb6-a7ac-4dd3-9500-00bb46625ef1.mp3', // Green and Blue (EDM)
+            'https://storage.aisongmaker.io/audio/49fc3427-e775-47f0-b5ea-8903006b07a0.mp3', // Lady Voodoo (Folk)
+            'https://storage.aisongmaker.io/audio/b2001c35-620a-4893-b046-4de20ad11422.mp3', // Lady Voodoo (Crying)
+            'https://storage.aisongmaker.io/audio/7abf4dac-2b12-434a-8d59-c115f8c54cb9.mp3'  // Rasta Lady Voodoo
+        ];
+
+        const trackNames = [
+            '⭐ David Boyeez Hair', '🐊 Swampy Boogie Nights (Cajun Crawler)', 
+            '🎵 The Heart is a Mule', '🎶 A Solar Day (groovin)', '🎼 A Solar Day (moovin)',
+            '🎺 Break Time Blues Rhapsody', '⭐ Starlight Forever', '💡 Light It From Within',
+            '🌙 Moonshine in St Kitts', '⚡ Solar Tempest Symphony', '🔩 Steel In His Soul',
+            '💬 We Said So', '🗿 Funky Voodoo (Blues Jam)', '🗿 Green and Blue (Rock)',
+            '🗿 Green and Blue (EDM)', '🗿 Lady Voodoo (Folk Yah)', '🗿 Lady Voodoo (Crying)', 
+            '🗿 Rasta Lady Voodoo'
+        ];
+
+        function playTrack(index) {
+            const player = document.getElementById('audioPlayer');
+            const nowPlaying = document.getElementById('nowPlaying');
+            const trackName = document.getElementById('trackName');
+            
+            // Load the track
+            player.src = tracks[index];
+            player.load();
+            
+            // Update display
+            trackName.textContent = trackNames[index];
+            nowPlaying.style.display = 'block';
+            
+            // Try to play (may be blocked by autoplay policy)
+            player.play().catch(() => {
+                // Autoplay blocked - user can use controls
+            });
+        }
+    </script>
+</body>
+</html>
