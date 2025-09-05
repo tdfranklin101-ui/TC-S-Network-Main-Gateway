@@ -2296,10 +2296,87 @@
         
       </div>
       
-      <!-- Demo Action -->
+      <!-- Interactive Financial Demo -->
+      <div style="background: white; border-radius: 16px; box-shadow: 0 6px 20px rgba(0,0,0,0.08); overflow: hidden; margin-bottom: 2rem;">
+        
+        <!-- Demo Header -->
+        <div style="background: linear-gradient(135deg, #24c6dc, #32cd32); color: white; padding: 2rem; text-align: center;">
+          <h3 style="margin: 0 0 10px 0; font-size: 1.8rem; font-weight: 700;">💰 Your Solar Wallet Demo</h3>
+          <p style="margin: 0; font-size: 1rem; opacity: 0.9;">Live demonstration of daily Solar distribution and accumulation</p>
+        </div>
+        
+        <!-- Wallet Dashboard -->
+        <div style="padding: 2rem;">
+          
+          <!-- Current Balance -->
+          <div style="text-align: center; margin-bottom: 2rem; padding: 1.5rem; background: linear-gradient(135deg, rgba(36, 198, 220, 0.1), rgba(50, 205, 50, 0.1)); border-radius: 12px; border: 2px solid #24c6dc;">
+            <div style="font-size: 0.9rem; color: #666; margin-bottom: 5px;">Current Wallet Balance</div>
+            <div id="demoCurrentBalance" style="font-size: 2.2rem; font-weight: 700; color: #24c6dc; margin-bottom: 8px;">1,247.83</div>
+            <div style="font-size: 0.85rem; color: #888;">SOLAR tokens</div>
+          </div>
+          
+          <!-- Daily Stats Grid -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+            
+            <!-- Opening Amount -->
+            <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 12px; text-align: center; border-left: 4px solid #ff6f61;">
+              <div style="font-size: 0.85rem; color: #666; margin-bottom: 8px;">Opening Amount Today</div>
+              <div id="demoOpeningAmount" style="font-size: 1.8rem; font-weight: 600; color: #ff6f61;">1,200.00</div>
+              <div style="font-size: 0.75rem; color: #888; margin-top: 5px;">SOLAR</div>
+            </div>
+            
+            <!-- Daily Distribution -->
+            <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 12px; text-align: center; border-left: 4px solid #32cd32;">
+              <div style="font-size: 0.85rem; color: #666; margin-bottom: 8px;">Today's Distribution</div>
+              <div id="demoDailyDistribution" style="font-size: 1.8rem; font-weight: 600; color: #32cd32;">+47.83</div>
+              <div style="font-size: 0.75rem; color: #888; margin-top: 5px;">SOLAR earned</div>
+            </div>
+            
+            <!-- Energy Equivalent -->
+            <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 12px; text-align: center; border-left: 4px solid #f9d423;">
+              <div style="font-size: 0.85rem; color: #666; margin-bottom: 8px;">Energy Equivalent</div>
+              <div id="demoEnergyEquivalent" style="font-size: 1.6rem; font-weight: 600; color: #f9d423;">235,012</div>
+              <div style="font-size: 0.75rem; color: #888; margin-top: 5px;">kWh total</div>
+            </div>
+            
+          </div>
+          
+          <!-- Cumulative Growth Tracker -->
+          <div style="background: linear-gradient(135deg, rgba(255, 111, 97, 0.05), rgba(249, 212, 35, 0.05)); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(255, 111, 97, 0.2);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+              <h4 style="margin: 0; color: #ff6f61; font-size: 1.1rem;">30-Day Accumulation</h4>
+              <div style="font-size: 0.85rem; color: #666;">Growing daily</div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+              <div style="text-align: center;">
+                <div style="font-size: 0.8rem; color: #666; margin-bottom: 5px;">Total Accumulated</div>
+                <div id="demoCumulativeTotal" style="font-size: 1.5rem; font-weight: 600; color: #ff6f61;">1,434.65</div>
+                <div style="font-size: 0.7rem; color: #888;">SOLAR (30 days)</div>
+              </div>
+              <div style="text-align: center;">
+                <div style="font-size: 0.8rem; color: #666; margin-bottom: 5px;">Daily Average</div>
+                <div style="font-size: 1.5rem; font-weight: 600; color: #32cd32;">47.82</div>
+                <div style="font-size: 0.7rem; color: #888;">SOLAR/day</div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Live Update Indicator -->
+          <div style="text-align: center; margin-top: 1.5rem; padding: 1rem; background: rgba(36, 198, 220, 0.05); border-radius: 8px;">
+            <div style="display: inline-flex; align-items: center; gap: 8px; color: #24c6dc; font-size: 0.85rem;">
+              <div id="demoLiveIndicator" style="width: 8px; height: 8px; background: #32cd32; border-radius: 50%; animation: pulse 2s infinite;"></div>
+              Live demonstration - values update every few seconds
+            </div>
+          </div>
+          
+        </div>
+      </div>
+      
+      <!-- Call to Action -->
       <div style="text-align: center; background: white; padding: 3rem; border-radius: 16px; box-shadow: 0 6px 20px rgba(0,0,0,0.08);">
         <h3 style="color: #ff6f61; margin-bottom: 1rem; font-size: 1.8rem;">Experience the Future Economy</h3>
-        <p style="color: #666; margin-bottom: 2rem; font-size: 1.1rem;">Every person is both buyer and seller. Every day begins with Solar in your wallet. Every exchange strengthens the network.</p>
+        <p style="color: #666; margin-bottom: 2rem; font-size: 1.1rem;">Every person receives daily Solar income. Every wallet grows with the global energy network.</p>
         <a href="/world.html" style="display: inline-block; background: linear-gradient(120deg, #ff6f61, #f9d423); color: white; padding: 15px 35px; border-radius: 25px; text-decoration: none; font-weight: 600; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(255, 111, 97, 0.3); transition: all 0.3s ease;">
           🌍 Explore World.org
         </a>
@@ -2307,6 +2384,63 @@
       
     </div>
   </section>
+
+  <!-- Demo Animation Script -->
+  <script>
+    // Solar Wallet Demo Animation
+    let demoOpeningAmount = 1200.00;
+    let demoDailyDistribution = 47.83;
+    let demoCurrentBalance = demoOpeningAmount + demoDailyDistribution;
+    let demoCumulativeTotal = 1434.65;
+    
+    function updateSolarWalletDemo() {
+      // Simulate small incremental growth
+      demoDailyDistribution += (Math.random() * 0.1 - 0.05); // Random fluctuation
+      demoCurrentBalance = demoOpeningAmount + demoDailyDistribution;
+      demoCumulativeTotal += (Math.random() * 0.05); // Small cumulative growth
+      
+      // Update display values
+      const currentBalanceEl = document.getElementById('demoCurrentBalance');
+      const dailyDistributionEl = document.getElementById('demoDailyDistribution');
+      const energyEquivalentEl = document.getElementById('demoEnergyEquivalent');
+      const cumulativeTotalEl = document.getElementById('demoCumulativeTotal');
+      
+      if (currentBalanceEl) currentBalanceEl.textContent = demoCurrentBalance.toFixed(2);
+      if (dailyDistributionEl) dailyDistributionEl.textContent = '+' + demoDailyDistribution.toFixed(2);
+      if (energyEquivalentEl) energyEquivalentEl.textContent = Math.floor(demoCurrentBalance * 4913).toLocaleString();
+      if (cumulativeTotalEl) cumulativeTotalEl.textContent = demoCumulativeTotal.toFixed(2);
+      
+      // Add updating animation
+      [currentBalanceEl, dailyDistributionEl, energyEquivalentEl, cumulativeTotalEl].forEach(el => {
+        if (el) {
+          el.style.transform = 'scale(1.05)';
+          el.style.transition = 'transform 0.2s ease';
+          setTimeout(() => {
+            el.style.transform = 'scale(1)';
+          }, 200);
+        }
+      });
+    }
+    
+    // Add pulse animation CSS
+    const demoStyle = document.createElement('style');
+    demoStyle.textContent = `
+      @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.3; }
+        100% { opacity: 1; }
+      }
+    `;
+    document.head.appendChild(demoStyle);
+    
+    // Start demo when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      // Initial update
+      updateSolarWalletDemo();
+      // Update every 3 seconds
+      setInterval(updateSolarWalletDemo, 3000);
+    });
+  </script>
 
 </body>
 </html>
