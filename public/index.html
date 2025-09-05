@@ -2284,13 +2284,36 @@
           </div>
         </div>
         
-        <!-- Mobile Wallet Card -->
+        <!-- Mobile Wallet Card with Interactive Demo -->
         <div style="background: white; border-radius: 16px; padding: 2rem; box-shadow: 0 6px 20px rgba(0,0,0,0.08); transition: transform 0.2s ease; border-left: 5px solid #32cd32;">
           <h3 style="color: #32cd32; margin-bottom: 1rem; font-size: 1.4rem; font-weight: 600;">📱 TC-S World Mini</h3>
-          <p style="color: #666; line-height: 1.6; margin-bottom: 1rem;">Identify items, price them in kWh → Solar → Rays, and trade in the Market with the situationally-aware wallet.</p>
-          <div style="background: #f0f8f0; padding: 1rem; border-radius: 8px; text-align: center;">
-            <div style="font-size: 0.9rem; color: #32cd32; margin-bottom: 5px;">Mobile wallet integration</div>
-            <div style="font-size: 0.8rem; color: #888;">Coming Soon</div>
+          <p style="color: #666; line-height: 1.6; margin-bottom: 1.5rem;">Experience the live wallet functionality below - see daily Solar income, growing balances, and energy-based value in action.</p>
+          
+          <!-- Live Demo Preview -->
+          <div style="background: linear-gradient(135deg, #f0f8f0, #e8f5e8); padding: 1.5rem; border-radius: 12px; border: 2px solid #32cd32;">
+            <div style="text-align: center; margin-bottom: 1rem;">
+              <div style="font-size: 0.9rem; color: #32cd32; margin-bottom: 8px; font-weight: 600;">🌟 Live Wallet Demo Active</div>
+              <div id="miniCurrentBalance" style="font-size: 1.8rem; font-weight: 700; color: #222;">1,247.83</div>
+              <div style="font-size: 0.8rem; color: #666; margin-top: 5px;">SOLAR tokens in your wallet</div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.85rem;">
+              <div style="text-align: center; padding: 8px;">
+                <div style="color: #666;">Today's Income</div>
+                <div id="miniDailyIncome" style="color: #32cd32; font-weight: 600;">+47.83</div>
+              </div>
+              <div style="text-align: center; padding: 8px;">
+                <div style="color: #666;">30-Day Total</div>
+                <div id="miniMonthlyTotal" style="color: #ff6f61; font-weight: 600;">1,434.65</div>
+              </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(50, 205, 50, 0.3);">
+              <div style="font-size: 0.75rem; color: #32cd32; display: inline-flex; align-items: center; gap: 5px;">
+                <div style="width: 6px; height: 6px; background: #32cd32; border-radius: 50%; animation: pulse 2s infinite;"></div>
+                Updating live - scroll down for full demo
+              </div>
+            </div>
           </div>
         </div>
         
@@ -2408,6 +2431,15 @@
       if (dailyDistributionEl) dailyDistributionEl.textContent = '+' + demoDailyDistribution.toFixed(2);
       if (energyEquivalentEl) energyEquivalentEl.textContent = Math.floor(demoCurrentBalance * 4913).toLocaleString();
       if (cumulativeTotalEl) cumulativeTotalEl.textContent = demoCumulativeTotal.toFixed(2);
+      
+      // Update mini preview in mobile wallet card
+      const miniCurrentBalanceEl = document.getElementById('miniCurrentBalance');
+      const miniDailyIncomeEl = document.getElementById('miniDailyIncome');
+      const miniMonthlyTotalEl = document.getElementById('miniMonthlyTotal');
+      
+      if (miniCurrentBalanceEl) miniCurrentBalanceEl.textContent = demoCurrentBalance.toFixed(2);
+      if (miniDailyIncomeEl) miniDailyIncomeEl.textContent = '+' + demoDailyDistribution.toFixed(2);
+      if (miniMonthlyTotalEl) miniMonthlyTotalEl.textContent = demoCumulativeTotal.toFixed(2);
       
       // Add updating animation
       [currentBalanceEl, dailyDistributionEl, energyEquivalentEl, cumulativeTotalEl].forEach(el => {
