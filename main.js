@@ -45,33 +45,12 @@ console.log('🚀 Starting Current-See Deployment Server...');
 const server = http.createServer(async (req, res) => {
   const pathname = new URL(req.url, `http://${req.headers.host}`).pathname;
   
-  // Handle object storage public files
+  // Skip object storage for stable deployment
   if (pathname.startsWith('/public-objects/')) {
-    const filePath = pathname.replace('/public-objects/', '');
-    
-    try {
-      const objectStorageService = new ObjectStorageService();
-      const file = await objectStorageService.searchPublicObject(filePath);
-      
-      if (!file) {
-        console.log(`❌ Video file not found: ${filePath}`);
-        res.writeHead(404, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ 
-          error: 'Video file not found in object storage',
-          requested_file: filePath
-        }));
-        return;
-      }
-      
-      console.log(`✅ Found video file: ${filePath}`);
-      await objectStorageService.downloadObject(file, res);
-      return;
-    } catch (error) {
-      console.error('Error serving object storage file:', error);
-      res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Error accessing object storage' }));
-      return;
-    }
+    console.log(`⚠️ Object storage disabled for stable deployment`);
+    res.writeHead(404, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Object storage temporarily disabled' }));
+    return;
   }
   
   // Debug route to list object storage contents
