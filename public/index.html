@@ -2293,18 +2293,18 @@
           <div style="background: linear-gradient(135deg, #f0f8f0, #e8f5e8); padding: 1.5rem; border-radius: 12px; border: 2px solid #32cd32;">
             <div style="text-align: center; margin-bottom: 1rem;">
               <div style="font-size: 0.9rem; color: #32cd32; margin-bottom: 8px; font-weight: 600;">🌟 Live Wallet Demo Active</div>
-              <div id="miniCurrentBalance" style="font-size: 1.8rem; font-weight: 700; color: #222;">1,247.83</div>
+              <div id="miniCurrentBalance" style="font-size: 1.8rem; font-weight: 700; color: #222;">0.00</div>
               <div style="font-size: 0.8rem; color: #666; margin-top: 5px;">SOLAR tokens in your wallet</div>
             </div>
             
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.85rem;">
               <div style="text-align: center; padding: 8px;">
                 <div style="color: #666;">Today's Income</div>
-                <div id="miniDailyIncome" style="color: #32cd32; font-weight: 600;">+47.83</div>
+                <div id="miniDailyIncome" style="color: #32cd32; font-weight: 600;">+1.00</div>
               </div>
               <div style="text-align: center; padding: 8px;">
-                <div style="color: #666;">30-Day Total</div>
-                <div id="miniMonthlyTotal" style="color: #ff6f61; font-weight: 600;">1,434.65</div>
+                <div style="color: #666;">Days Since Launch</div>
+                <div id="miniDaysCount" style="color: #ff6f61; font-weight: 600;">0</div>
               </div>
             </div>
             
@@ -2337,7 +2337,7 @@
           <!-- Main Balance Display -->
           <div style="background: white; border-radius: 16px; padding: 3rem 2rem; box-shadow: 0 6px 20px rgba(0,0,0,0.08); margin-bottom: 2rem; text-align: center;">
             <p style="color: #ff6f61; font-size: 1.1rem; margin-bottom: 0.5rem; font-weight: 600;">Your Solar Wallet Balance</p>
-            <div id="demoCurrentBalance" style="font-size: 3.5rem; font-weight: 700; color: #222; margin-bottom: 0.5rem;">1,247.83</div>
+            <div id="demoCurrentBalance" style="font-size: 3.5rem; font-weight: 700; color: #222; margin-bottom: 0.5rem;">0.00</div>
             <p style="color: #666; font-size: 1rem; margin: 0;">SOLAR tokens</p>
           </div>
           
@@ -2348,20 +2348,20 @@
               
               <div>
                 <p style="color: #666; margin-bottom: 0.5rem; font-size: 0.95rem;">Opening Amount</p>
-                <div id="demoOpeningAmount" style="font-size: 1.8rem; font-weight: 600; color: #ff6f61;">1,200.00</div>
-                <p style="color: #888; font-size: 0.85rem; margin-top: 0.2rem;">SOLAR</p>
+                <div id="demoOpeningAmount" style="font-size: 1.8rem; font-weight: 600; color: #ff6f61;">0.00</div>
+                <p style="color: #888; font-size: 0.85rem; margin-top: 0.2rem;">SOLAR (since April 7, 2025)</p>
               </div>
               
               <div>
                 <p style="color: #666; margin-bottom: 0.5rem; font-size: 0.95rem;">Today's Distribution</p>
-                <div id="demoDailyDistribution" style="font-size: 1.8rem; font-weight: 600; color: #24c6dc;">+47.83</div>
-                <p style="color: #888; font-size: 0.85rem; margin-top: 0.2rem;">SOLAR earned</p>
+                <div id="demoDailyDistribution" style="font-size: 1.8rem; font-weight: 600; color: #24c6dc;">+1.00</div>
+                <p style="color: #888; font-size: 0.85rem; margin-top: 0.2rem;">SOLAR earned daily</p>
               </div>
               
               <div>
                 <p style="color: #666; margin-bottom: 0.5rem; font-size: 0.95rem;">Energy Equivalent</p>
-                <div id="demoEnergyEquivalent" style="font-size: 1.6rem; font-weight: 600; color: #f9d423;">6,127,024</div>
-                <p style="color: #888; font-size: 0.85rem; margin-top: 0.2rem;">kWh total</p>
+                <div id="demoEnergyEquivalent" style="font-size: 1.6rem; font-weight: 600; color: #f9d423;">4,913</div>
+                <p style="color: #888; font-size: 0.85rem; margin-top: 0.2rem;">kWh per Solar</p>
               </div>
               
             </div>
@@ -2371,15 +2371,15 @@
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; margin-bottom: 3rem;">
             
             <div style="background: white; border-radius: 16px; padding: 2rem; box-shadow: 0 6px 20px rgba(0,0,0,0.08);">
-              <h3 style="color: #24c6dc; margin-bottom: 0.75rem; font-size: 1.3rem; font-weight: 600;">30-Day Accumulation</h3>
-              <div id="demoCumulativeTotal" style="font-size: 2rem; font-weight: 700; color: #222; margin-bottom: 0.5rem;">1,434.65</div>
-              <p style="color: #666; line-height: 1.6; margin: 0;">Total SOLAR accumulated over the past month through daily distributions.</p>
+              <h3 style="color: #24c6dc; margin-bottom: 0.75rem; font-size: 1.3rem; font-weight: 600;">Total Since Launch</h3>
+              <div id="demoCumulativeTotal" style="font-size: 2rem; font-weight: 700; color: #222; margin-bottom: 0.5rem;">0.00</div>
+              <p style="color: #666; line-height: 1.6; margin: 0;">Total SOLAR accumulated since April 7, 2025 launch through daily 1 Solar distributions.</p>
             </div>
             
             <div style="background: white; border-radius: 16px; padding: 2rem; box-shadow: 0 6px 20px rgba(0,0,0,0.08);">
-              <h3 style="color: #32cd32; margin-bottom: 0.75rem; font-size: 1.3rem; font-weight: 600;">Daily Average</h3>
-              <div style="font-size: 2rem; font-weight: 700; color: #222; margin-bottom: 0.5rem;">47.82</div>
-              <p style="color: #666; line-height: 1.6; margin: 0;">Consistent daily income from the global Solar network - stable and growing.</p>
+              <h3 style="color: #32cd32; margin-bottom: 0.75rem; font-size: 1.3rem; font-weight: 600;">Daily Income</h3>
+              <div style="font-size: 2rem; font-weight: 700; color: #222; margin-bottom: 0.5rem;">1.00</div>
+              <p style="color: #666; line-height: 1.6; margin: 0;">Guaranteed daily Solar income - 1 SOLAR token distributed every 24 hours.</p>
             </div>
             
           </div>
@@ -2409,17 +2409,28 @@
 
   <!-- Demo Animation Script -->
   <script>
-    // Solar Wallet Demo Animation
-    let demoOpeningAmount = 1200.00;
-    let demoDailyDistribution = 47.83;
+    // Solar Wallet Demo Animation - Real distribution values
+    // 1 Solar per day since April 7, 2025
+    const startDate = new Date('2025-04-07');
+    const today = new Date();
+    const daysSinceStart = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
+    
+    let demoOpeningAmount = Math.max(0, daysSinceStart); // Total Solar earned since April 7
+    let demoDailyDistribution = 1.00; // 1 Solar per day
     let demoCurrentBalance = demoOpeningAmount + demoDailyDistribution;
-    let demoCumulativeTotal = 1434.65;
+    let demoCumulativeTotal = demoCurrentBalance; // Same as current balance for real calculation
     
     function updateSolarWalletDemo() {
-      // Simulate small incremental growth
-      demoDailyDistribution += (Math.random() * 0.1 - 0.05); // Random fluctuation
+      // Real-time progress through the day (1 Solar distributed over 24 hours)
+      const now = new Date();
+      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const msIntoDay = now - startOfDay;
+      const dayProgressPercent = msIntoDay / (24 * 60 * 60 * 1000);
+      
+      // Today's distribution progresses from 0 to 1 Solar throughout the day
+      demoDailyDistribution = dayProgressPercent;
       demoCurrentBalance = demoOpeningAmount + demoDailyDistribution;
-      demoCumulativeTotal += (Math.random() * 0.05); // Small cumulative growth
+      demoCumulativeTotal = demoCurrentBalance;
       
       // Update display values
       const currentBalanceEl = document.getElementById('demoCurrentBalance');
@@ -2428,18 +2439,22 @@
       const cumulativeTotalEl = document.getElementById('demoCumulativeTotal');
       
       if (currentBalanceEl) currentBalanceEl.textContent = demoCurrentBalance.toFixed(2);
-      if (dailyDistributionEl) dailyDistributionEl.textContent = '+' + demoDailyDistribution.toFixed(2);
+      if (dailyDistributionEl) dailyDistributionEl.textContent = '+' + (demoDailyDistribution < 1 ? demoDailyDistribution.toFixed(2) : '1.00');
       if (energyEquivalentEl) energyEquivalentEl.textContent = Math.floor(demoCurrentBalance * 4913).toLocaleString();
       if (cumulativeTotalEl) cumulativeTotalEl.textContent = demoCumulativeTotal.toFixed(2);
+      
+      // Update opening amount
+      const openingAmountEl = document.getElementById('demoOpeningAmount');
+      if (openingAmountEl) openingAmountEl.textContent = demoOpeningAmount.toFixed(2);
       
       // Update mini preview in mobile wallet card
       const miniCurrentBalanceEl = document.getElementById('miniCurrentBalance');
       const miniDailyIncomeEl = document.getElementById('miniDailyIncome');
-      const miniMonthlyTotalEl = document.getElementById('miniMonthlyTotal');
+      const miniDaysCountEl = document.getElementById('miniDaysCount');
       
       if (miniCurrentBalanceEl) miniCurrentBalanceEl.textContent = demoCurrentBalance.toFixed(2);
-      if (miniDailyIncomeEl) miniDailyIncomeEl.textContent = '+' + demoDailyDistribution.toFixed(2);
-      if (miniMonthlyTotalEl) miniMonthlyTotalEl.textContent = demoCumulativeTotal.toFixed(2);
+      if (miniDailyIncomeEl) miniDailyIncomeEl.textContent = '+' + (demoDailyDistribution < 1 ? demoDailyDistribution.toFixed(2) : '1.00');
+      if (miniDaysCountEl) miniDaysCountEl.textContent = daysSinceStart;
       
       // Add updating animation
       [currentBalanceEl, dailyDistributionEl, energyEquivalentEl, cumulativeTotalEl].forEach(el => {
