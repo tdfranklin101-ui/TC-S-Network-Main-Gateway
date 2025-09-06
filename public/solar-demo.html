@@ -27,11 +27,6 @@
       border-bottom: 1px solid #eee;
     }
     
-    .world-content {
-      background: white;
-      padding: 2rem;
-    }
-    
     .demo-card {
       background: white;
       border: 1px solid #ddd;
@@ -105,106 +100,102 @@
   </div>
 
   <div class="container">
-    <div class="world-content">
     
-      <!-- Main Balance Display -->
-      <div class="demo-card" style="text-align: center;">
-        <div class="currency-label">SOLAR BALANCE</div>
-        <div id="currentBalance" class="balance-large">0.00</div>
-        <div class="currency-label">Solar tokens</div>
-        
-        <!-- Solar Rays Conversion -->
-        <div class="conversion-display">
-          <div style="font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;">SOLAR RAYS EQUIVALENT</div>
-          <div id="solarRaysBalance" style="font-size: 1.2rem; color: #333;">S0'.00000 (0 Rays)</div>
+    <!-- Main Balance Display -->
+    <div class="demo-card" style="text-align: center;">
+      <div class="currency-label">SOLAR BALANCE</div>
+      <div id="currentBalance" class="balance-large">0.000</div>
+      <div class="currency-label">Solar tokens</div>
+      
+      <!-- Solar Rays Conversion -->
+      <div class="conversion-display">
+        <div style="font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;">SOLAR RAYS EQUIVALENT</div>
+        <div id="solarRaysBalance" style="font-size: 1.2rem; color: #333;">S0'.00000 (0 Rays)</div>
+      </div>
+      
+      <!-- Energy Equivalent -->
+      <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee;">
+        <div style="font-size: 0.85rem; color: #666;">ENERGY EQUIVALENT</div>
+        <div id="energyEquivalent" style="font-size: 1.1rem; color: #333; margin-top: 0.5rem;">0 kWh</div>
+      </div>
+    </div>
+
+    <!-- Daily Income Statistics -->
+    <div class="demo-card">
+      <h3 style="font-size: 1.1rem; font-weight: 500; color: #333; margin-bottom: 1.5rem; text-align: center;">DAILY SOLAR DISTRIBUTION</h3>
+      
+      <div class="stat-grid">
+        <div class="stat-item">
+          <div class="stat-label">Opening Amount</div>
+          <div id="openingAmount" class="stat-value">0.000</div>
+          <div style="font-size: 0.75rem; color: #999;">Since April 7, 2025</div>
         </div>
         
-        <!-- Energy Equivalent -->
-        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee;">
-          <div style="font-size: 0.85rem; color: #666;">ENERGY EQUIVALENT</div>
-          <div id="energyEquivalent" style="font-size: 1.1rem; color: #333; margin-top: 0.5rem;">0 kWh</div>
+        <div class="stat-item">
+          <div class="stat-label">Today's Progress</div>
+          <div id="dailyDistribution" class="stat-value">+1.000</div>
+          <div style="font-size: 0.75rem; color: #999;">Solar earned</div>
+        </div>
+        
+        <div class="stat-item">
+          <div class="stat-label">Days Active</div>
+          <div id="daysCount" class="stat-value">0</div>
+          <div style="font-size: 0.75rem; color: #999;">Since launch</div>
         </div>
       </div>
-    
-      <!-- Daily Income Statistics -->
-      <div class="demo-card">
-        <h3 style="font-size: 1.1rem; font-weight: 500; color: #333; margin-bottom: 1.5rem; text-align: center;">DAILY SOLAR DISTRIBUTION</h3>
+    </div>
+
+    <!-- Conversion Standards -->
+    <div class="demo-card">
+      <h3 style="font-size: 1.1rem; font-weight: 500; color: #333; margin-bottom: 1.5rem; text-align: center;">SOLAR CONVERSION STANDARDS</h3>
+      
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem;">
+        <div style="text-align: center; padding: 1rem; border: 1px solid #eee; border-radius: 8px;">
+          <div style="font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;">ENERGY EQUIVALENT</div>
+          <div style="font-size: 1.3rem; font-weight: 500; color: #333;">1 Solar = 4,913 kWh</div>
+        </div>
         
-        <div class="stat-grid">
-          <div class="stat-item">
-            <div class="stat-label">Opening Amount</div>
-            <div id="openingAmount" class="stat-value">0.00</div>
-            <div style="font-size: 0.75rem; color: #999;">Since April 7, 2025</div>
-          </div>
-          
-          <div class="stat-item">
-            <div class="stat-label">Today's Progress</div>
-            <div id="dailyDistribution" class="stat-value">+1.00</div>
-            <div style="font-size: 0.75rem; color: #999;">Solar earned</div>
-          </div>
-          
-          <div class="stat-item">
-            <div class="stat-label">Days Active</div>
-            <div id="daysCount" class="stat-value">0</div>
-            <div style="font-size: 0.75rem; color: #999;">Since launch</div>
-          </div>
+        <div style="text-align: center; padding: 1rem; border: 1px solid #eee; border-radius: 8px;">
+          <div style="font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;">SOLAR RAYS</div>
+          <div style="font-size: 1.3rem; font-weight: 500; color: #333;">1.000 Solar = 10,000 Rays</div>
         </div>
       </div>
-    
-      <!-- Conversion Standards -->
-      <div class="demo-card">
-        <h3 style="font-size: 1.1rem; font-weight: 500; color: #333; margin-bottom: 1.5rem; text-align: center;">SOLAR CONVERSION STANDARDS</h3>
-        
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem;">
-          <div style="text-align: center; padding: 1rem; border: 1px solid #eee; border-radius: 8px;">
-            <div style="font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;">ENERGY EQUIVALENT</div>
-            <div style="font-size: 1.3rem; font-weight: 500; color: #333;">1 Solar = 4,913 kWh</div>
-          </div>
-          
-          <div style="text-align: center; padding: 1rem; border: 1px solid #eee; border-radius: 8px;">
-            <div style="font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;">SOLAR RAYS</div>
-            <div style="font-size: 1.3rem; font-weight: 500; color: #333;">1.000 Solar = 10,000 Rays</div>
-          </div>
-        </div>
-        
-        <!-- Pricing Example -->
-        <div style="margin-top: 1.5rem; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
-          <div style="font-size: 0.85rem; color: #666; margin-bottom: 0.5rem; text-align: center;">PRICING FORMAT EXAMPLE</div>
-          <div style="text-align: center; font-family: 'Courier New', monospace;">
-            <span style="font-size: 1.1rem; color: #333;">S0'.00020</span>
-            <span style="margin: 0 1rem; color: #999;">or</span>
-            <span style="font-size: 1.1rem; color: #333;">20 Rays</span>
-          </div>
+      
+      <!-- Pricing Example -->
+      <div style="margin-top: 1.5rem; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+        <div style="font-size: 0.85rem; color: #666; margin-bottom: 0.5rem; text-align: center;">PRICING FORMAT EXAMPLE</div>
+        <div style="text-align: center; font-family: 'Courier New', monospace;">
+          <span style="font-size: 1.1rem; color: #333;">S0'.00020</span>
+          <span style="margin: 0 1rem; color: #999;">or</span>
+          <span style="font-size: 1.1rem; color: #333;">20 Rays</span>
         </div>
       </div>
-    
-      <!-- Status and Navigation -->
-      <div class="demo-card" style="text-align: center;">
-        <div style="margin-bottom: 1.5rem;">
-          <div style="display: inline-flex; align-items: center; gap: 8px; color: #28a745; font-size: 0.9rem;">
-            <div style="width: 8px; height: 8px; background: #28a745; border-radius: 50%; animation: pulse 2s infinite;"></div>
-            Live Demo Active - Updates every 3 seconds
-          </div>
+    </div>
+
+    <!-- Status and Navigation -->
+    <div class="demo-card" style="text-align: center;">
+      <div style="margin-bottom: 1.5rem;">
+        <div style="display: inline-flex; align-items: center; gap: 8px; color: #28a745; font-size: 0.9rem;">
+          <div style="width: 8px; height: 8px; background: #28a745; border-radius: 50%; animation: pulse 2s infinite;"></div>
+          Live Demo Active - Updates every 3 seconds
         </div>
-        
-        <a href="/" style="display: inline-block; background: #007bff; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 500; font-size: 0.9rem; border: none; transition: background 0.2s;">
-          ← Return to Current-See Platform
-        </a>
       </div>
+      
+      <a href="/" style="display: inline-block; background: #007bff; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 500; font-size: 0.9rem; border: none; transition: background 0.2s;">
+        ← Return to Current-See Platform
+      </a>
     </div>
     
   </div>
 
   <script>
-    // Real Solar distribution calculation
+    // Real Solar distribution calculation starting April 7, 2025
     const startDate = new Date('2025-04-07');
     const today = new Date();
     const daysSinceStart = Math.max(0, Math.floor((today - startDate) / (1000 * 60 * 60 * 24)));
     
     let openingAmount = daysSinceStart; // Total Solar earned since April 7
-    let dailyDistribution = 1.00; // 1 Solar per day
-    let currentBalance = openingAmount + dailyDistribution;
-    let cumulativeTotal = currentBalance;
+    let currentBalance = openingAmount;
     
     function updateDemo() {
       // Real-time progress through the day
@@ -251,7 +242,8 @@
     // Start demo when page loads
     document.addEventListener('DOMContentLoaded', function() {
       updateDemo();
-      setInterval(updateDemo, 3000); // Update every 3 seconds
+      // Update every 3 seconds
+      setInterval(updateDemo, 3000);
     });
   </script>
 
