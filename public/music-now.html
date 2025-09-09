@@ -116,35 +116,42 @@
         
         <h1>🎵 MONAZITE MUSIC NOW COLLECTION 🎵</h1>
         <p style="text-align: center; font-size: 18px; margin-bottom: 30px;">
-            Complete Catalog - 18 Tracks
+            Complete Catalog - 19 Tracks
         </p>
         
         <div class="player-section">
             <div class="track-list">
-                <button class="track-button" onclick="playTrack(0)">⭐ David Boyeez Hair</button>
+                <button class="track-button" onclick="playTrack(0)">🔥 'Ternal Flame - Longevity Manifesto</button>
+                
+                <!-- Note: Graphic reference - https://chatgpt.com/s/m_68c047ef2f6c819186fd6342fe61b7ec -->
+                <div style="text-align: center; margin: 10px 0; padding: 10px; background: rgba(255,140,0,0.1); border: 1px solid rgba(255,140,0,0.3); border-radius: 8px;">
+                  <span style="color: #ff8c00; font-style: italic;">🎵 Song 19 - Latest Addition</span>
+                </div>
+                
+                <button class="track-button" onclick="playTrack(1)">⭐ David Boyeez Hair</button>
                 
                 <!-- Bowie Graphics for David Boyeez Hair -->
                 <div style="display: flex; gap: 15px; margin: 10px 0 20px 0; justify-content: center;">
                   <img src="/04AA9BAB-9CBA-43ED-A1B5-E4674F850D59_1756066851257.png" alt="Changes" style="width: 100px; height: auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.3);">
                   <img src="/5906466E-3563-443A-8273-19DB5D24F116_1756066851257.png" alt="Ch-Ch-Ch-Changes" style="width: 100px; height: auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.3);">
                 </div>
-                <button class="track-button" onclick="playTrack(1)">🐊 Swampy Boogie Nights (Cajun Crawler)</button>
-                <button class="track-button" onclick="playTrack(2)">🎵 The Heart is a Mule (by Robert Hunter, Allen Ginsberg and William Burroughs)</button>
-                <button class="track-button" onclick="playTrack(3)">🎶 A Solar Day (groovin)</button>
-                <button class="track-button" onclick="playTrack(4)">🎼 A Solar Day (moovin)</button>
-                <button class="track-button" onclick="playTrack(5)">🎺 Break Time Blues Rhapsody (By Kid Solar)</button>
-                <button class="track-button" onclick="playTrack(6)">⭐ Starlight Forever</button>
-                <button class="track-button" onclick="playTrack(7)">💡 Light It From Within</button>
-                <button class="track-button" onclick="playTrack(8)">🌙 Moonshine in St Kitts (By Bowie, Jagger, Lennon)</button>
-                <button class="track-button" onclick="playTrack(9)">⚡ Solar Tempest Symphony (By JMF)</button>
-                <button class="track-button" onclick="playTrack(10)">🔩 Steel In His Soul</button>
-                <button class="track-button" onclick="playTrack(11)">💬 We Said So</button>
-                <button class="track-button" onclick="playTrack(12)">🗿 Funky Voodoo (Blues Jam)</button>
-                <button class="track-button" onclick="playTrack(13)">🗿 Green and Blue (Rock)</button>
-                <button class="track-button" onclick="playTrack(14)">🗿 Green and Blue (EDM)</button>
-                <button class="track-button" onclick="playTrack(15)">🗿 Lady Voodoo (Folk Yah)</button>
-                <button class="track-button" onclick="playTrack(16)">🗿 Lady Voodoo (Crying)</button>
-                <button class="track-button" onclick="playTrack(17)">🗿 Rasta Lady Voodoo</button>
+                <button class="track-button" onclick="playTrack(2)">🐊 Swampy Boogie Nights (Cajun Crawler)</button>
+                <button class="track-button" onclick="playTrack(3)">🎵 The Heart is a Mule (by Robert Hunter, Allen Ginsberg and William Burroughs)</button>
+                <button class="track-button" onclick="playTrack(4)">🎶 A Solar Day (groovin)</button>
+                <button class="track-button" onclick="playTrack(5)">🎼 A Solar Day (moovin)</button>
+                <button class="track-button" onclick="playTrack(6)">🎺 Break Time Blues Rhapsody (By Kid Solar)</button>
+                <button class="track-button" onclick="playTrack(7)">⭐ Starlight Forever</button>
+                <button class="track-button" onclick="playTrack(8)">💡 Light It From Within</button>
+                <button class="track-button" onclick="playTrack(9)">🌙 Moonshine in St Kitts (By Bowie, Jagger, Lennon)</button>
+                <button class="track-button" onclick="playTrack(10)">⚡ Solar Tempest Symphony (By JMF)</button>
+                <button class="track-button" onclick="playTrack(11)">🔩 Steel In His Soul</button>
+                <button class="track-button" onclick="playTrack(12)">💬 We Said So</button>
+                <button class="track-button" onclick="playTrack(13)">🗿 Funky Voodoo (Blues Jam)</button>
+                <button class="track-button" onclick="playTrack(14)">🗿 Green and Blue (Rock)</button>
+                <button class="track-button" onclick="playTrack(15)">🗿 Green and Blue (EDM)</button>
+                <button class="track-button" onclick="playTrack(16)">🗿 Lady Voodoo (Folk Yah)</button>
+                <button class="track-button" onclick="playTrack(17)">🗿 Lady Voodoo (Crying)</button>
+                <button class="track-button" onclick="playTrack(18)">🗿 Rasta Lady Voodoo</button>
             </div>
             
             <!-- Play Album Button -->
@@ -171,6 +178,7 @@
     <script>
         // MP3 track URLs
         const tracks = [
+            'https://storage.aisongmaker.io/audio/4a839c86-40d9-4272-989b-7a512184ddb6.mp3', // 'Ternal Flame - Longevity Manifesto
             'https://storage.aisongmaker.io/audio/9b2b12e4-8626-41e4-b9e4-c7a563e40f97.mp3', // David Boyeez Hair
             'https://storage.aisongmaker.io/audio/015092c3-f687-4a01-9a81-dad42f2adce9.mp3', // Swampy Boogie Nights  
             'https://storage.aisongmaker.io/audio/10db8911-0b74-4675-ba62-02182c1d7f6b.mp3', // The Heart is a Mule
@@ -192,7 +200,7 @@
         ];
 
         const trackNames = [
-            '⭐ David Boyeez Hair', '🐊 Swampy Boogie Nights (Cajun Crawler)', 
+            '🔥 \'Ternal Flame - Longevity Manifesto', '⭐ David Boyeez Hair', '🐊 Swampy Boogie Nights (Cajun Crawler)', 
             '🎵 The Heart is a Mule', '🎶 A Solar Day (groovin)', '🎼 A Solar Day (moovin)',
             '🎺 Break Time Blues Rhapsody', '⭐ Starlight Forever', '💡 Light It From Within',
             '🌙 Moonshine in St Kitts', '⚡ Solar Tempest Symphony', '🔩 Steel In His Soul',
@@ -241,7 +249,7 @@
             if (!albumMode) {
                 // Start album mode
                 albumMode = true;
-                shuffledTracks = shuffleArray([...Array(18).keys()]); // [0,1,2...17] shuffled
+                shuffledTracks = shuffleArray([...Array(19).keys()]); // [0,1,2...18] shuffled
                 currentAlbumIndex = 0;
                 button.textContent = '⏹️ Stop Album';
                 button.style.background = 'linear-gradient(135deg, #dc143c, #b91c3c)';
