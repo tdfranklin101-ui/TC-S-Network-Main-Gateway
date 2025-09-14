@@ -20,6 +20,7 @@
     "@types/memoizee": "^0.4.12",
     "@types/passport": "^1.0.17",
     "@types/passport-local": "^1.0.38",
+    "@types/ws": "^8.18.1",
     "@vitejs/plugin-react": "^4.3.4",
     "@worldcoin/idkit": "^2.4.1",
     "body-parser": "^2.2.0",
