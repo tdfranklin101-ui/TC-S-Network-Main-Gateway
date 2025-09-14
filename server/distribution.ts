@@ -1,10 +1,10 @@
 import { Request, Response, NextFunction } from "express";
 import { storage } from "./storage";
 import { isAuthenticated } from "./auth";
-import { insertDistributionSchema, User } from "@shared/schema";
+import { User } from "@shared/schema";
 import fs from "fs";
 import path from "path";
-import { parse } from "csv";
+import { parse } from "csv-parse";
 import { fileURLToPath } from "url";
 
 // Import solar constants
