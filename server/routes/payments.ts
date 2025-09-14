@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { storage } from '../storage';
-import { insertTransactionSchema } from '@shared/schema';
+import { insertTransactionSchema, type Transaction } from '@shared/schema';
 import { z } from 'zod';
 
 const router = Router();
@@ -156,7 +156,7 @@ router.get('/payment-status/:transactionId', async (req, res) => {
     const { transactionId } = req.params;
     
     // Get transactions for the user or filter by session in metadata
-    let transactions;
+    let transactions: Transaction[];
     if (userId) {
       transactions = await storage.getUserTransactions(userId);
     } else {
@@ -165,7 +165,7 @@ router.get('/payment-status/:transactionId', async (req, res) => {
       transactions = [];
     }
     
-    const transaction = transactions.find((t: any) => t.id === transactionId);
+    const transaction = transactions.find((t) => t.id === transactionId);
     
     if (!transaction) {
       return res.status(404).json({
@@ -218,14 +218,14 @@ router.get('/access/:contentType/:contentId', async (req, res) => {
     if (userId) {
       // Check user entitlements using existing storage method
       try {
-        entitlement = await storage.getEntitlement(userId, contentType, contentId);
+        entitlement = await storage.getEntitlement(userId, null, contentType, contentId);
       } catch (error) {
         entitlement = null;
       }
     } else {
       // For anonymous users, check session-based entitlements
       try {
-        entitlement = await storage.getEntitlement(sessionId, contentType, contentId);
+        entitlement = await storage.getEntitlement(null, sessionId, contentType, contentId);
       } catch (error) {
         entitlement = null;
       }

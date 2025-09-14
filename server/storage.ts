@@ -830,19 +830,25 @@ export class DatabaseStorage implements IStorage {
 
   // Solar accounts (legacy member system compatibility)
   async getAllSolarAccounts(limit?: number, includeAnonymous?: boolean): Promise<Member[]> {
-    let query = db.select().from(members);
+    const baseQuery = db.select().from(members);
     
-    if (!includeAnonymous) {
-      query = query.where(eq(members.isAnonymous, false));
+    if (!includeAnonymous && limit) {
+      return await baseQuery
+        .where(eq(members.isAnonymous, false))
+        .orderBy(desc(members.createdAt))
+        .limit(limit);
+    } else if (!includeAnonymous) {
+      return await baseQuery
+        .where(eq(members.isAnonymous, false))
+        .orderBy(desc(members.createdAt));
+    } else if (limit) {
+      return await baseQuery
+        .orderBy(desc(members.createdAt))
+        .limit(limit);
+    } else {
+      return await baseQuery
+        .orderBy(desc(members.createdAt));
     }
-    
-    query = query.orderBy(desc(members.createdAt));
-    
-    if (limit) {
-      query = query.limit(limit);
-    }
-    
-    return await query;
   }
 
   // Migration assistance
