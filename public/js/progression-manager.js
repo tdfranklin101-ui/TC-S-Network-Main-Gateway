@@ -55,9 +55,10 @@ class ProgressionManager {
     
     if (!this.sessionId) {
       try {
-        const response = await fetch(`${this.apiBase}/session/create`, {
+        const response = await fetch(`${this.apiBase}/session/start`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId: 'temp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9) })
         });
         
         if (response.ok) {
@@ -84,7 +85,7 @@ class ProgressionManager {
     
     if (this.userId) {
       try {
-        const response = await fetch(`${this.apiBase}/user/${this.userId}/profile`);
+        const response = await fetch(`${this.apiBase}/profile`);
         if (response.ok) {
           this.userProfile = await response.json();
           console.log('👤 Loaded user profile:', this.userProfile);
@@ -102,7 +103,7 @@ class ProgressionManager {
     try {
       const params = new URLSearchParams();
       if (this.userId) {
-        const response = await fetch(`${this.apiBase}/user/${this.userId}/progressions?sessionId=${this.sessionId}`);
+        const response = await fetch(`${this.apiBase}/progressions?sessionId=${this.sessionId}`);
         if (response.ok) {
           const progressions = await response.json();
           progressions.forEach(prog => {
@@ -152,7 +153,7 @@ class ProgressionManager {
       if (this.userId) params.append('userId', this.userId);
       if (this.sessionId) params.append('sessionId', this.sessionId);
       
-      const response = await fetch(`${this.apiBase}/content/access?${params}`);
+      const response = await fetch(`${this.apiBase}/content/${contentType}/${contentId}/access?${params}`);
       if (response.ok) {
         const accessInfo = await response.json();
         
@@ -181,14 +182,10 @@ class ProgressionManager {
    */
   async startTimer(contentType, contentId, duration) {
     try {
-      const response = await fetch(`${this.apiBase}/progression/start-timer`, {
+      const response = await fetch(`${this.apiBase}/content/${contentType}/${contentId}/start-timer`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: this.userId,
-          sessionId: this.sessionId,
-          contentType,
-          contentId,
           duration
         })
       });
@@ -299,13 +296,10 @@ class ProgressionManager {
     }
 
     try {
-      const response = await fetch(`${this.apiBase}/content/unlock`, {
+      const response = await fetch(`${this.apiBase}/content/${contentType}/${contentId}/unlock`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: this.userId,
-          contentType,
-          contentId,
           solarCost
         })
       });
@@ -340,7 +334,7 @@ class ProgressionManager {
    */
   async registerUser(email, firstName, lastName) {
     try {
-      const response = await fetch(`${this.apiBase}/user/register`, {
+      const response = await fetch(`${this.apiBase}/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, firstName, lastName })
@@ -387,21 +381,21 @@ class ProgressionManager {
     }
 
     try {
-      const response = await fetch(`${this.apiBase}/payments/solar-balance`);
+      const response = await fetch(`${this.apiBase}/profile`);
       
       if (response.ok) {
         const data = await response.json();
         this.userProfile = {
           ...this.userProfile,
-          solarBalance: data.balance,
-          totalEarned: data.totalEarned,
-          totalSpent: data.totalSpent
+          solarBalance: data.profile.solarBalance,
+          totalEarned: data.profile.totalEarned,
+          totalSpent: data.profile.totalSpent
         };
         
-        console.log(`⚡ Solar balance: ${data.balance} tokens`);
-        this.emit('balanceUpdated', { profile: this.userProfile, data });
+        console.log(`⚡ Solar balance: ${data.profile.solarBalance} tokens`);
+        this.emit('balanceUpdated', { profile: this.userProfile, data: data.profile });
         
-        return data;
+        return data.profile;
       } else {
         const error = await response.json();
         throw new Error(error.error || 'Failed to get balance');

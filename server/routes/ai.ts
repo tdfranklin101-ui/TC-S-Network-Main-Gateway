@@ -1,7 +1,13 @@
 import { Router } from 'express';
-import AIWalletAssistant from '../ai-wallet-assistant';
-import AIMarketIntelligence from '../ai-market-intelligence';
 import { z } from 'zod';
+
+// Import AI services - these are JavaScript modules with default exports
+const AIWalletAssistantModule = require('../ai-wallet-assistant.js');
+const AIMarketIntelligenceModule = require('../ai-market-intelligence.js');
+
+// Extract the default exports (the classes)
+const AIWalletAssistant = AIWalletAssistantModule.default || AIWalletAssistantModule;
+const AIMarketIntelligence = AIMarketIntelligenceModule.default || AIMarketIntelligenceModule;
 
 const router = Router();
 
@@ -156,7 +162,7 @@ router.get('/market/pricing/:contentType/:contentId', async (req, res) => {
   try {
     const { contentType, contentId } = req.params;
     
-    const pricingData = await aiMarketIntelligence.getPricingRecommendations(contentType, contentId);
+    const pricingData = await aiMarketIntelligence.optimizePricing(contentId, 0, { contentType });
     
     res.json(pricingData);
   } catch (error) {
@@ -173,7 +179,7 @@ router.get('/market/trends', async (req, res) => {
   try {
     const timeframe = parseInt(req.query.timeframe as string) || 30;
     
-    const trends = await aiMarketIntelligence.getMarketTrends(timeframe);
+    const trends = await aiMarketIntelligence.generateMarketOverview({ timeframe, includeForecasts: true });
     
     res.json({
       trends,

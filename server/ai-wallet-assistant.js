@@ -688,7 +688,6 @@ Provide specific, actionable recommendations with reasoning and expected outcome
   async gatherMarketData() {
     return this.gatherMarketContext(); // For now, same as context
   }
-}
 
   // Alias method for API compatibility
   async detectFraud(userId, options = {}) {

@@ -824,7 +824,6 @@ Flag any critical issues requiring immediate attention.
       byCategory: {}
     };
   }
-}
 
   // Analyze market conditions and trends
   async analyzeMarket(contentType = 'all', timeframe = 7) {

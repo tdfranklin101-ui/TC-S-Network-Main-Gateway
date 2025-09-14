@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timer UI Test - Solar Progression System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: white;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 15px;
+            padding: 30px;
+            border: 2px solid #ff8c00;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #ff8c00;
+            margin-bottom: 30px;
+        }
+        
+        .test-section {
+            background: rgba(255, 140, 0, 0.1);
+            border: 1px solid #ff8c00;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .timer-container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+        }
+        
+        .status-display {
+            background: #000;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 14px;
+            color: #0f0;
+        }
+        
+        .test-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        
+        .test-button {
+            padding: 10px 20px;
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .test-button:hover {
+            background: linear-gradient(45deg, #FFA500, #FF8C00);
+        }
+        
+        .error {
+            color: #ff6b6b;
+        }
+        
+        .success {
+            color: #51cf66;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🌟 Timer UI Test - Solar Progression System</h1>
+        
+        <div class="test-section">
+            <h2>Timer Component Test</h2>
+            <p>This tests the timer-gated progression system with Solar payments.</p>
+            
+            <div class="timer-container" id="timer-container">
+                <!-- Timer UI will be injected here -->
+            </div>
+            
+            <div class="test-controls">
+                <button class="test-button" onclick="initializeTimer()">Initialize Timer</button>
+                <button class="test-button" onclick="testRegistration()">Test Registration</button>
+                <button class="test-button" onclick="checkProgression()">Check Progression</button>
+                <button class="test-button" onclick="clearSession()">Clear Session</button>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>System Status</h2>
+            <div class="status-display" id="status-display">
+                Ready to test...
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>ProgressionManager Events</h2>
+            <div class="status-display" id="events-display">
+                Waiting for events...
+            </div>
+        </div>
+    </div>
+
+    <!-- Load the progression system components -->
+    <script src="public/js/progression-manager.js"></script>
+    <script src="public/js/components/timer-ui.js"></script>
+    <script src="public/js/components/payment-modal.js"></script>
+    
+    <script>
+        let timerUI = null;
+        
+        // Log function for status display
+        function log(message, type = 'info') {
+            const statusDisplay = document.getElementById('status-display');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : '';
+            statusDisplay.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+            statusDisplay.scrollTop = statusDisplay.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        }
+        
+        // Log events function
+        function logEvent(message) {
+            const eventsDisplay = document.getElementById('events-display');
+            const timestamp = new Date().toLocaleTimeString();
+            eventsDisplay.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            eventsDisplay.scrollTop = eventsDisplay.scrollHeight;
+        }
+        
+        // Initialize the timer UI component
+        function initializeTimer() {
+            try {
+                log('Initializing Timer UI component...', 'info');
+                
+                // Clear existing timer
+                const container = document.getElementById('timer-container');
+                container.innerHTML = '<div id="test-timer-ui"></div>';
+                
+                // Create timer UI instance
+                timerUI = new TimerUI('test-timer-ui', {
+                    contentType: 'music',
+                    contentId: 'test-track-001',
+                    solarCost: 50,
+                    timerDuration: 30, // 30 seconds for testing
+                    previewDuration: 10,
+                    title: 'Test Music Track',
+                    description: 'This is a test track for testing the timer-gated progression system.'
+                });
+                
+                log('Timer UI initialized successfully!', 'success');
+            } catch (error) {
+                log(`Error initializing Timer UI: ${error.message}`, 'error');
+            }
+        }
+        
+        // Test registration functionality
+        function testRegistration() {
+            try {
+                log('Testing registration functionality...', 'info');
+                
+                if (!window.ProgressionManager) {
+                    log('ProgressionManager not available', 'error');
+                    return;
+                }
+                
+                // Check if ProgressionManager is initialized
+                if (window.ProgressionManager.initialized) {
+                    log('ProgressionManager is initialized', 'success');
+                    log(`Session ID: ${window.ProgressionManager.sessionId}`);
+                    log(`User ID: ${window.ProgressionManager.userId || 'Not registered'}`);
+                } else {
+                    log('ProgressionManager is not yet initialized', 'info');
+                }
+                
+            } catch (error) {
+                log(`Error testing registration: ${error.message}`, 'error');
+            }
+        }
+        
+        // Check progression status
+        function checkProgression() {
+            try {
+                log('Checking progression status...', 'info');
+                
+                if (!window.ProgressionManager?.initialized) {
+                    log('ProgressionManager not initialized', 'error');
+                    return;
+                }
+                
+                const status = window.ProgressionManager.getProgressionStatus('music', 'test-track-001');
+                log(`Progression status: ${JSON.stringify(status, null, 2)}`, 'info');
+                
+            } catch (error) {
+                log(`Error checking progression: ${error.message}`, 'error');
+            }
+        }
+        
+        // Clear session data
+        function clearSession() {
+            try {
+                log('Clearing session data...', 'info');
+                localStorage.clear();
+                sessionStorage.clear();
+                log('Session data cleared. Refresh the page to start fresh.', 'success');
+            } catch (error) {
+                log(`Error clearing session: ${error.message}`, 'error');
+            }
+        }
+        
+        // Listen to ProgressionManager events
+        document.addEventListener('DOMContentLoaded', () => {
+            log('Page loaded. Setting up event listeners...', 'info');
+            
+            // Check if ProgressionManager is available
+            if (window.ProgressionManager) {
+                log('ProgressionManager found', 'success');
+                
+                // Listen to progression manager events
+                window.ProgressionManager.on('initialized', (data) => {
+                    logEvent(`ProgressionManager initialized: ${JSON.stringify(data)}`);
+                });
+                
+                window.ProgressionManager.on('timerStarted', (data) => {
+                    logEvent(`Timer started: ${data.contentType}:${data.contentId} (${data.duration}s)`);
+                });
+                
+                window.ProgressionManager.on('timerTick', (data) => {
+                    logEvent(`Timer tick: ${data.timeRemaining}s remaining`);
+                });
+                
+                window.ProgressionManager.on('timerCompleted', (data) => {
+                    logEvent(`Timer completed: ${data.progression.contentType}:${data.progression.contentId}`);
+                });
+                
+                window.ProgressionManager.on('userRegistered', (data) => {
+                    logEvent(`User registered: ${data.user.email}`);
+                });
+                
+                window.ProgressionManager.on('contentUnlocked', (data) => {
+                    logEvent(`Content unlocked: ${data.contentType}:${data.contentId}`);
+                });
+                
+                window.ProgressionManager.on('balanceUpdated', (data) => {
+                    logEvent(`Balance updated: ${data.profile.solarBalance} Solar`);
+                });
+                
+            } else {
+                log('ProgressionManager not found!', 'error');
+            }
+        });
+        
+        // Auto-initialize after page load
+        setTimeout(() => {
+            log('Auto-initializing timer for demo...', 'info');
+            initializeTimer();
+        }, 2000);
+    </script>
+</body>
+</html>

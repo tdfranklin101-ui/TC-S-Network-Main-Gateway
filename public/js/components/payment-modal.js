@@ -9,14 +9,13 @@ class PaymentModal {
     this.isOpen = false;
     this.currentFlow = null; // 'registration' or 'topup'
     this.contentContext = null; // Content that triggered the modal
-    this.stripe = null;
+    this.selectedAmount = null;
     this.elements = null;
     this.init();
   }
 
   async init() {
-    // Initialize Stripe
-    this.stripe = window.Stripe ? window.Stripe(window.STRIPE_PUBLISHABLE_KEY) : null;
+    // Solar-only payment system (no Stripe needed)
     this.createModal();
     this.attachEventListeners();
   }
@@ -169,18 +168,18 @@ class PaymentModal {
               <input type="number" id="custom-amount" min="50" max="10000" placeholder="Enter amount">
             </div>
 
-            <div class="stripe-payment-section" data-testid="stripe-payment-section">
-              <h4>Payment Method:</h4>
-              <div id="stripe-card-element" data-testid="stripe-card-element">
-                <!-- Stripe Elements will create form elements here -->
+            <div class="solar-payment-info" data-testid="solar-payment-info">
+              <h4>Payment Information:</h4>
+              <div class="payment-note">
+                <p>💡 This is a demo system. In a real implementation, you would integrate with your preferred payment processor to purchase Solar tokens.</p>
+                <p>For now, you can only use existing Solar balance from registration bonuses.</p>
               </div>
-              <div id="card-errors" data-testid="card-errors" role="alert"></div>
             </div>
 
-            <button class="payment-submit-btn topup-btn" data-testid="button-pay-now" disabled>
-              <span class="button-icon">💳</span>
-              <span class="button-text">Pay Now</span>
-              <span class="button-amount" data-testid="button-payment-amount">($0.00)</span>
+            <button class="payment-submit-btn topup-btn" data-testid="button-demo-topup" disabled>
+              <span class="button-icon">🎭</span>
+              <span class="button-text">Demo: Add Solar</span>
+              <span class="button-amount" data-testid="button-payment-amount">(Demo only)</span>
             </button>
           </div>
         </div>
@@ -255,8 +254,7 @@ class PaymentModal {
       amountButtons: document.querySelectorAll('.amount-btn'),
       customAmountInput: document.querySelector('.custom-amount-input'),
       customAmountField: document.getElementById('custom-amount'),
-      stripeCardElement: document.getElementById('stripe-card-element'),
-      cardErrors: document.getElementById('card-errors'),
+      paymentInfo: document.querySelector('.solar-payment-info'),
       payButton: document.querySelector('.topup-btn'),
       paymentAmount: document.querySelector('.button-payment-amount'),
       
@@ -285,7 +283,7 @@ class PaymentModal {
       this.handleRegistration();
     });
 
-    // Top-up amount selection
+    // Top-up amount selection (for demo purposes only)
     this.elements.amountButtons.forEach(button => {
       button.addEventListener('click', () => this.selectAmount(button));
     });
@@ -293,6 +291,11 @@ class PaymentModal {
     // Custom amount input
     this.elements.customAmountField.addEventListener('input', () => {
       this.updatePaymentButton();
+    });
+
+    // Demo top-up button
+    this.elements.payButton.addEventListener('click', () => {
+      this.handleDemoTopUp();
     });
 
     // Success flow
@@ -549,18 +552,22 @@ class PaymentModal {
         margin: 0 0 15px 0;
       }
 
-      #stripe-card-element {
-        background: #000;
+      .solar-payment-info {
+        background: rgba(255, 215, 0, 0.1);
+        border: 1px solid #FFD700;
+        border-radius: 8px;
         padding: 15px;
-        border: 2px solid #333;
-        border-radius: 5px;
-        margin-bottom: 10px;
+        margin-bottom: 20px;
       }
 
-      #card-errors {
-        color: #ff6b6b;
+      .payment-note {
+        color: #ccc;
         font-size: 0.9em;
-        margin-bottom: 15px;
+        line-height: 1.4;
+      }
+
+      .payment-note p {
+        margin: 8px 0;
       }
 
       .payment-submit-btn {
@@ -681,7 +688,7 @@ class PaymentModal {
     this.contentContext = contentContext;
     this.updateContentInfo();
     this.updateCurrentBalance();
-    this.setupStripeElements();
+    this.setupSolarPaymentInfo();
     this.showFlow('topup');
     this.open();
   }
@@ -715,41 +722,16 @@ class PaymentModal {
   }
 
   /**
-   * Setup Stripe Elements
+   * Setup Solar-only payment info
    */
-  async setupStripeElements() {
-    if (!this.stripe) {
-      console.warn('Stripe not available');
-      return;
-    }
-
-    this.elements = this.stripe.elements();
-    const cardElement = this.elements.create('card', {
-      style: {
-        base: {
-          color: '#ffffff',
-          fontFamily: 'Arial, sans-serif',
-          fontSize: '16px',
-          '::placeholder': {
-            color: '#aab7c4',
-          },
-        },
-      },
-    });
-
-    cardElement.mount('#stripe-card-element');
-    
-    cardElement.on('change', (event) => {
-      const displayError = document.getElementById('card-errors');
-      if (event.error) {
-        displayError.textContent = event.error.message;
-      } else {
-        displayError.textContent = '';
+  setupSolarPaymentInfo() {
+    // Update the payment info section with current context
+    if (this.elements.paymentInfo) {
+      const noteElement = this.elements.paymentInfo.querySelector('.payment-note p:first-child');
+      if (noteElement) {
+        noteElement.innerHTML = '💡 This is a demo system. Solar tokens are earned through registration and daily bonuses.';
       }
-      this.updatePaymentButton();
-    });
-
-    this.cardElement = cardElement;
+    }
   }
 
   /**
@@ -817,11 +799,10 @@ class PaymentModal {
     
     if (amount && amount >= 50) {
       this.elements.payButton.disabled = false;
-      const price = (amount * 0.05).toFixed(2); // 5 cents per Solar
-      this.elements.paymentAmount.textContent = `($${price})`;
+      this.elements.paymentAmount.textContent = `(${amount} Solar)`;
     } else {
       this.elements.payButton.disabled = true;
-      this.elements.paymentAmount.textContent = '($0.00)';
+      this.elements.paymentAmount.textContent = '(Demo only)';
     }
   }
 
@@ -852,11 +833,8 @@ class PaymentModal {
           await this.unlockContent();
           return;
         } else {
-          // Not enough balance, switch to top-up flow
-          this.currentFlow = 'topup';
-          this.updateCurrentBalance();
-          this.setupStripeElements();
-          this.showFlow('topup');
+          // Not enough balance, show demo message
+          this.showError('Registration successful! In a real system, you would purchase Solar tokens to unlock content. For this demo, users get daily Solar bonuses.');
         }
       } else {
         this.showSuccess('Registration completed successfully!');
@@ -868,60 +846,29 @@ class PaymentModal {
   }
 
   /**
-   * Handle payment processing
+   * Handle demo top-up (Solar-only system)
    */
-  async handlePayment() {
-    if (!this.stripe || !this.cardElement) {
-      throw new Error('Stripe not properly initialized');
-    }
-
+  async handleDemoTopUp() {
     let amount = this.selectedAmount;
     if (this.elements.customAmountInput.style.display !== 'none') {
       amount = parseInt(this.elements.customAmountField.value) || 0;
     }
 
     if (!amount || amount < 50) {
-      throw new Error('Please select a valid amount');
+      this.showError('Please select a valid amount (minimum 50 Solar)');
+      return;
     }
 
     this.showFlow('loading');
 
     try {
-      // Create payment intent
-      const response = await fetch('/api/payment/create-intent', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          amount: amount * 5, // 5 cents per Solar in cents
-          currency: 'usd',
-          userId: window.ProgressionManager.userId
-        })
-      });
-
-      const { client_secret } = await response.json();
-
-      // Confirm payment with Stripe
-      const { error, paymentIntent } = await this.stripe.confirmCardPayment(client_secret, {
-        payment_method: {
-          card: this.cardElement
-        }
-      });
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      // Update balance with ProgressionManager
-      await window.ProgressionManager.topUpBalance(amount, paymentIntent.id);
+      // In a real system, this would integrate with a payment processor
+      // For demo purposes, we'll show that this feature is not implemented
+      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate processing
       
-      // Try to unlock content after successful payment
-      if (this.contentContext) {
-        await this.unlockContent();
-      } else {
-        this.showSuccess(`Successfully added ${amount} Solar to your balance!`);
-      }
+      this.showError('Demo Mode: Solar top-up via payment is not implemented. Users earn Solar through registration bonuses and daily rewards in the full system.');
     } catch (error) {
-      console.error('Payment failed:', error);
+      console.error('Demo top-up failed:', error);
       this.showError(error.message);
     }
   }
