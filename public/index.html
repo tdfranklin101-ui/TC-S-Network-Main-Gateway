@@ -1092,7 +1092,24 @@
           <h2 style="text-align: center; color: #00cc33; font-weight: bold; margin-bottom: 10px; font-size: 1.6em;">Join The Current-See Network</h2>
           <p style="text-align: center; color: #666; margin-bottom: 30px; font-size: 1em;">Be part of the solar-powered economic revolution</p>
           
-          <form id="signupForm" style="background: white; padding: 20px; border-radius: 8px; border: 1px solid rgba(0, 87, 184, 0.2);">
+          <!-- World ID Verification Step -->
+          <div id="registration-step-1" style="background: white; padding: 20px; border-radius: 8px; border: 1px solid rgba(0, 87, 184, 0.2); margin-bottom: 20px;">
+            <h3 style="text-align: center; color: #0057B8; margin-bottom: 15px; font-size: 1.3em;">🛡️ Step 1: Verify Your Humanity</h3>
+            <p style="text-align: center; color: #666; margin-bottom: 20px; font-size: 0.95em;">
+              Use World ID to prove you're human and join our verified community of solar energy advocates.
+            </p>
+            
+            <div id="registration-world-id-container" style="text-align: center;"></div>
+            
+            <div style="margin-top: 15px; padding: 15px; background: rgba(0, 123, 255, 0.05); border-radius: 6px; font-size: 0.9em; color: #666;">
+              <strong>Why World ID?</strong> Prevents bots and ensures fair Solar Ray distribution to real humans only.
+            </div>
+          </div>
+          
+          <!-- Registration Form (Hidden until World ID verified) -->
+          <form id="signupForm" style="background: white; padding: 20px; border-radius: 8px; border: 1px solid rgba(0, 87, 184, 0.2); display: none;">
+            <h3 style="text-align: center; color: #0057B8; margin-bottom: 15px; font-size: 1.3em;">✅ Step 2: Complete Your Registration</h3>
+            
             <div style="margin-bottom: 15px;">
               <label for="signupName" style="display: block; margin-bottom: 5px; color: #333; font-weight: 600;">Full Name *</label>
               <input type="text" id="signupName" name="name" required style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; box-sizing: border-box;" placeholder="Enter your full name">
@@ -1108,8 +1125,12 @@
               <input type="email" id="signupEmail" name="email" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; box-sizing: border-box;" placeholder="Enter your email address">
             </div>
             
-            <button type="submit" style="width: 100%; background: linear-gradient(135deg, #0057B8 0%, #0066CC 100%); color: white; border: none; padding: 12px; border-radius: 6px; font-size: 1em; font-weight: bold; cursor: pointer; transition: all 0.3s;">
-              Join the Network
+            <!-- Hidden fields to store World ID verification result -->
+            <input type="hidden" id="worldIdNullifier" name="worldIdNullifier" value="">
+            <input type="hidden" id="worldIdProof" name="worldIdProof" value="">
+            
+            <button type="submit" style="width: 100%; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border: none; padding: 12px; border-radius: 6px; font-size: 1em; font-weight: bold; cursor: pointer; transition: all 0.3s;">
+              🚀 Complete Registration & Access Solar Wallet
             </button>
             
             <div id="signupMessage" style="margin-top: 10px; padding: 10px; border-radius: 6px; display: none; text-align: center; font-weight: 600;"></div>
@@ -2805,51 +2826,33 @@
   <script>
     // Initialize World ID verification when page loads
     document.addEventListener('DOMContentLoaded', function() {
-      // Create the World ID verification button
+      // Initialize for main homepage verification section
       if (window.WorldIDUtils) {
         window.WorldIDUtils.createButton('world-id-container', {
           buttonText: '🌍 Verify with World ID & Join Network',
           buttonClass: 'world-id-verify-btn-main'
         });
         
+        // Initialize for registration workflow verification section
+        window.WorldIDUtils.createButton('registration-world-id-container', {
+          buttonText: '🛡️ Verify Humanity with World ID',
+          buttonClass: 'world-id-verify-btn-registration'
+        });
+        
         // Listen for successful verification
         document.addEventListener('worldid-verified', function(event) {
           const result = event.detail.result;
           
-          // Show success message
-          const container = document.getElementById('world-id-container');
-          if (container) {
-            container.innerHTML = `
-              <div style="
-                background: rgba(40, 167, 69, 0.1);
-                color: #28a745;
-                border: 2px solid rgba(40, 167, 69, 0.3);
-                border-radius: 12px;
-                padding: 20px;
-                margin: 15px 0;
-              ">
-                <h4 style="margin: 0 0 10px 0; color: #28a745;">✅ Welcome to TC-S Network!</h4>
-                <p style="margin: 0 0 15px 0; color: #ffffff;">
-                  Your humanity has been verified. You are now eligible for daily Solar Ray distributions.
-                </p>
-                <div style="margin-top: 15px;">
-                  <a href="https://wallet.market.thecurrentsee.org" target="_blank" style="
-                    display: inline-block; 
-                    padding: 12px 25px; 
-                    background: linear-gradient(135deg, #28a745, #20c997); 
-                    border: none; 
-                    border-radius: 8px; 
-                    color: white; 
-                    font-size: 16px; 
-                    font-weight: bold; 
-                    text-decoration: none; 
-                    transition: all 0.3s ease;
-                  " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-                    🚀 Access Your Solar Wallet
-                  </a>
-                </div>
-              </div>
-            `;
+          // Check which verification was triggered
+          const mainContainer = document.getElementById('world-id-container');
+          const registrationContainer = document.getElementById('registration-world-id-container');
+          
+          if (event.target && event.target.closest('#registration-world-id-container')) {
+            // Registration workflow verification
+            showRegistrationForm(result);
+          } else if (event.target && event.target.closest('#world-id-container')) {
+            // Main homepage verification - show success message
+            showMainVerificationSuccess(result);
           }
           
           // Store member status
@@ -2870,41 +2873,133 @@
         
         // Check if user is already verified
         if (window.WorldIDUtils.isVerified()) {
-          const status = window.WorldIDUtils.getStatus();
-          const container = document.getElementById('world-id-container');
-          if (container) {
-            container.innerHTML = `
-              <div style="
-                background: rgba(0, 123, 255, 0.1);
-                color: #007bff;
-                border: 2px solid rgba(0, 123, 255, 0.3);
-                border-radius: 12px;
-                padding: 20px;
-                margin: 15px 0;
-              ">
-                <h4 style="margin: 0 0 10px 0; color: #007bff;">👋 Welcome back, TC-S Member!</h4>
-                <p style="margin: 0 0 15px 0; color: #ffffff;">
-                  You are already verified and eligible for daily Solar Ray distributions.
-                </p>
-                <div style="margin-top: 15px;">
-                  <a href="https://wallet.market.thecurrentsee.org" target="_blank" style="
-                    display: inline-block; 
-                    padding: 12px 25px; 
-                    background: linear-gradient(135deg, #007bff, #0056b3); 
-                    border: none; 
-                    border-radius: 8px; 
-                    color: white; 
-                    font-size: 16px; 
-                    font-weight: bold; 
-                    text-decoration: none; 
-                    transition: all 0.3s ease;
-                  " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-                    🔑 Access Your Solar Wallet
-                  </a>
-                </div>
+          showExistingMemberStatus();
+        }
+      }
+      
+      function showRegistrationForm(result) {
+        // Hide Step 1 and show Step 2
+        const step1 = document.getElementById('registration-step-1');
+        const signupForm = document.getElementById('signupForm');
+        
+        if (step1) step1.style.display = 'none';
+        if (signupForm) signupForm.style.display = 'block';
+        
+        // Store World ID verification data in hidden fields
+        const nullifierField = document.getElementById('worldIdNullifier');
+        const proofField = document.getElementById('worldIdProof');
+        
+        if (nullifierField) nullifierField.value = result.nullifier_hash || '';
+        if (proofField) proofField.value = JSON.stringify(result) || '';
+        
+        // Scroll to registration form
+        signupForm.scrollIntoView({ behavior: 'smooth' });
+      }
+      
+      function showMainVerificationSuccess(result) {
+        const container = document.getElementById('world-id-container');
+        if (container) {
+          container.innerHTML = `
+            <div style="
+              background: rgba(40, 167, 69, 0.1);
+              color: #28a745;
+              border: 2px solid rgba(40, 167, 69, 0.3);
+              border-radius: 12px;
+              padding: 20px;
+              margin: 15px 0;
+            ">
+              <h4 style="margin: 0 0 10px 0; color: #28a745;">✅ Welcome to TC-S Network!</h4>
+              <p style="margin: 0 0 15px 0; color: #ffffff;">
+                Your humanity has been verified. You are now eligible for daily Solar Ray distributions.
+              </p>
+              <div style="margin-top: 15px;">
+                <a href="https://wallet.market.thecurrentsee.org" target="_blank" style="
+                  display: inline-block; 
+                  padding: 12px 25px; 
+                  background: linear-gradient(135deg, #28a745, #20c997); 
+                  border: none; 
+                  border-radius: 8px; 
+                  color: white; 
+                  font-size: 16px; 
+                  font-weight: bold; 
+                  text-decoration: none; 
+                  transition: all 0.3s ease;
+                " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                  🚀 Access Your Solar Wallet
+                </a>
               </div>
-            `;
-          }
+            </div>
+          `;
+        }
+      }
+      
+      function showExistingMemberStatus() {
+        const mainContainer = document.getElementById('world-id-container');
+        const registrationContainer = document.getElementById('registration-world-id-container');
+        
+        const statusHTML = `
+          <div style="
+            background: rgba(0, 123, 255, 0.1);
+            color: #007bff;
+            border: 2px solid rgba(0, 123, 255, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px 0;
+          ">
+            <h4 style="margin: 0 0 10px 0; color: #007bff;">👋 Welcome back, TC-S Member!</h4>
+            <p style="margin: 0 0 15px 0; color: #ffffff;">
+              You are already verified and eligible for daily Solar Ray distributions.
+            </p>
+            <div style="margin-top: 15px;">
+              <a href="https://wallet.market.thecurrentsee.org" target="_blank" style="
+                display: inline-block; 
+                padding: 12px 25px; 
+                background: linear-gradient(135deg, #007bff, #0056b3); 
+                border: none; 
+                border-radius: 8px; 
+                color: white; 
+                font-size: 16px; 
+                font-weight: bold; 
+                text-decoration: none; 
+                transition: all 0.3s ease;
+              " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                🔑 Access Your Solar Wallet
+              </a>
+            </div>
+          </div>
+        `;
+        
+        if (mainContainer) mainContainer.innerHTML = statusHTML;
+        if (registrationContainer) {
+          registrationContainer.innerHTML = `
+            <div style="
+              background: rgba(40, 167, 69, 0.1);
+              color: #28a745;
+              border: 2px solid rgba(40, 167, 69, 0.3);
+              border-radius: 12px;
+              padding: 15px;
+              margin: 10px 0;
+            ">
+              <h4 style="margin: 0 0 8px 0; color: #28a745;">✅ Already Verified!</h4>
+              <p style="margin: 0; color: #ffffff; font-size: 14px;">
+                You can complete your registration or access your Solar Wallet directly.
+              </p>
+            </div>
+          `;
+          
+          // Show the registration form if already verified
+          const signupForm = document.getElementById('signupForm');
+          const step1 = document.getElementById('registration-step-1');
+          
+          if (signupForm) signupForm.style.display = 'block';
+          
+          // Store existing verification data
+          const nullifierField = document.getElementById('worldIdNullifier');
+          const proofField = document.getElementById('worldIdProof');
+          const status = window.WorldIDUtils.getStatus();
+          
+          if (nullifierField && status) nullifierField.value = status.nullifier_hash || '';
+          if (proofField && status) proofField.value = JSON.stringify(status) || '';
         }
       }
     });
