@@ -13,6 +13,8 @@ import {
 } from '../shared/schema';
 import fs from 'fs';
 import path from 'path';
+import session from 'express-session';
+import connectPgSimple from 'connect-pg-simple';
 
 // Storage interface for member data and timer-gated progression
 export interface IStorage {
@@ -44,8 +46,10 @@ export interface IStorage {
   // User operations for timer-gated progression
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByUsername(username: string): Promise<User | undefined>;
   createUser(data: InsertUser): Promise<User>;
   updateUser(id: string, data: Partial<InsertUser>): Promise<User | undefined>;
+  updateUserCredentials(id: string, email: string, hashedPassword: string): Promise<User | undefined>;
 
   // User profile operations
   getUserProfile(userId: string): Promise<UserProfile | undefined>;
@@ -129,10 +133,25 @@ export interface IStorage {
 
   // Solar accounts (legacy member system compatibility)
   getAllSolarAccounts(limit?: number, includeAnonymous?: boolean): Promise<Member[]>;
+  createSolarAccount(data: { userId: string; isAnonymous: boolean; displayName: string }): Promise<Member>;
+  
+  // Session store for passport sessions
+  sessionStore: any;
 }
 
 // Implementation of the storage interface using Drizzle ORM
 export class DatabaseStorage implements IStorage {
+  // Session store for passport sessions
+  sessionStore: any;
+
+  constructor() {
+    // Initialize session store with PostgreSQL
+    const PgSession = connectPgSimple(session);
+    this.sessionStore = new PgSession({
+      conString: process.env.DATABASE_URL,
+      tableName: 'session'
+    });
+  }
   // Member operations
   async getMembers(): Promise<Member[]> {
     return await db.select().from(members).orderBy(members.id);
@@ -247,6 +266,11 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.username, username));
+    return result[0];
+  }
+
   async createUser(data: InsertUser): Promise<User> {
     const result = await db.insert(users).values(data).returning();
     return result[0];
@@ -254,7 +278,15 @@ export class DatabaseStorage implements IStorage {
 
   async updateUser(id: string, data: Partial<InsertUser>): Promise<User | undefined> {
     const result = await db.update(users)
-      .set(data)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async updateUserCredentials(id: string, email: string, hashedPassword: string): Promise<User | undefined> {
+    const result = await db.update(users)
+      .set({ email, password: hashedPassword, updatedAt: new Date() })
       .where(eq(users.id, id))
       .returning();
     return result[0];
@@ -867,6 +899,22 @@ export class DatabaseStorage implements IStorage {
         .orderBy(desc(members.createdAt));
     }
   }
+
+  async createSolarAccount(data: { userId: string; isAnonymous: boolean; displayName: string }): Promise<Member> {
+    // Create a member record for the solar account
+    const memberData = {
+      username: `user_${data.userId}`,
+      name: data.displayName,
+      email: '', // Will be updated from user data if available
+      isAnonymous: data.isAnonymous,
+      totalSolar: '0',
+      totalDollars: '0'
+    };
+    
+    const result = await db.insert(members).values(memberData).returning();
+    return result[0];
+  }
+
 
   // Migration assistance
   async migrateFileBasedMembersToDatabase(membersList: any[]): Promise<{ success: boolean, migrated: number, errors: any[] }> {

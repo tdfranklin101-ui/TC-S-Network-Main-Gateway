@@ -10,6 +10,11 @@ import { User as UserType } from "@shared/schema";
 declare global {
   namespace Express {
     interface User extends UserType {}
+    interface Request {
+      login(user: any, callback: (err: any) => void): void;
+      logout(callback: (err?: any) => void): void;
+      isAuthenticated(): boolean;
+    }
   }
 }
 
@@ -46,10 +51,10 @@ export function setupAuth(app: Express) {
   app.use(passport.session());
 
   passport.use(
-    new LocalStrategy(async (username, password, done) => {
+    new LocalStrategy(async (username: string, password: string, done: any) => {
       try {
         const user = await storage.getUserByUsername(username);
-        if (!user || !(await comparePasswords(password, user.password))) {
+        if (!user || !user.password || !(await comparePasswords(password, user.password))) {
           return done(null, false);
         } else {
           return done(null, user);
@@ -60,8 +65,8 @@ export function setupAuth(app: Express) {
     }),
   );
 
-  passport.serializeUser((user, done) => done(null, user.id));
-  passport.deserializeUser(async (id: number, done) => {
+  passport.serializeUser((user: any, done: any) => done(null, user.id));
+  passport.deserializeUser(async (id: string, done: any) => {
     try {
       const user = await storage.getUser(id);
       done(null, user);
@@ -124,7 +129,7 @@ export function setupAuth(app: Express) {
       
       console.log("Solar account created successfully with ID:", solarAccount.id);
 
-      req.login(user, (err) => {
+      req.login(user, (err: any) => {
         if (err) {
           console.error("Login after registration failed:", err);
           return next(err);
@@ -159,10 +164,10 @@ export function setupAuth(app: Express) {
         return res.status(400).json({ error: "Missing required fields" });
       }
       
-      // Try to find the user by ID first (if numeric)
+      // Try to find the user by ID first (if it looks like a UUID)
       let user;
-      if (!isNaN(parseInt(identifier))) {
-        user = await storage.getUser(parseInt(identifier));
+      if (identifier.length > 10 && identifier.includes('-')) {
+        user = await storage.getUser(identifier);
       }
       
       // If not found by ID, try by username
@@ -191,7 +196,7 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/logout", (req, res, next) => {
-    req.logout((err) => {
+    req.logout((err?: any) => {
       if (err) return next(err);
       res.status(200).send({ message: "Logged out successfully" });
     });
