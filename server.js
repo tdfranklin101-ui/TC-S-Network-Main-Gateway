@@ -8,9 +8,11 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const express = require('express');
+const session = require('express-session');
 const cors = require('cors');
 const { Pool } = require('pg');
 const schedule = require('node-schedule');
+const connectPgSimple = require('connect-pg-simple');
 
 // Timer-gated progression tracking (in-memory for demo)
 const userProgressions = new Map(); // sessionId -> { completedTimers: Set, payments: Set }
@@ -183,9 +185,39 @@ const { createIncludesMiddleware } = require('./page-includes');
 console.log('Page includes middleware loaded');
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: true,
+  credentials: true // Allow credentials for session cookies
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Session middleware configuration
+let sessionStore;
+if (pool) {
+  const PgSession = connectPgSimple(session);
+  sessionStore = new PgSession({
+    pool: pool,
+    tableName: 'user_sessions',
+    createTableIfMissing: true
+  });
+} else {
+  // Use memory store for development when no database
+  sessionStore = new session.MemoryStore();
+}
+
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'solar-timer-progression-secret-key-2025',
+  resave: false,
+  saveUninitialized: true,
+  store: sessionStore,
+  cookie: {
+    secure: false, // Set to true in production with HTTPS
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+}));
+
 app.use(createIncludesMiddleware()); // Add page includes middleware
 
 // Database connection (if available)
@@ -2045,7 +2077,7 @@ function generateLandingPage() {
 
 // Timer-gated progression API endpoints
 app.post('/api/progression/start/:trackId', (req, res) => {
-  const sessionId = req.headers['x-session-id'] || req.ip;
+  const sessionId = req.session.id;
   const trackId = parseInt(req.params.trackId);
   
   if (!userProgressions.has(sessionId)) {
@@ -2056,7 +2088,7 @@ app.post('/api/progression/start/:trackId', (req, res) => {
 });
 
 app.post('/api/progression/complete/:trackId', (req, res) => {
-  const sessionId = req.headers['x-session-id'] || req.ip;
+  const sessionId = req.session.id;
   const trackId = parseInt(req.params.trackId);
   
   if (!userProgressions.has(sessionId)) {
@@ -2068,7 +2100,7 @@ app.post('/api/progression/complete/:trackId', (req, res) => {
 });
 
 app.post('/api/payment/solar/:trackId', (req, res) => {
-  const sessionId = req.headers['x-session-id'] || req.ip;
+  const sessionId = req.session.id;
   const trackId = parseInt(req.params.trackId);
   
   if (!userProgressions.has(sessionId)) {
@@ -2080,7 +2112,7 @@ app.post('/api/payment/solar/:trackId', (req, res) => {
 });
 
 app.get('/api/content/access/:trackId', (req, res) => {
-  const sessionId = req.headers['x-session-id'] || req.ip;
+  const sessionId = req.session.id;
   const trackId = parseInt(req.params.trackId);
   
   if (!premiumTracks.has(trackId)) {

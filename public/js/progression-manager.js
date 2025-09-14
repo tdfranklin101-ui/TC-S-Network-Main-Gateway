@@ -375,34 +375,39 @@ class ProgressionManager {
   }
 
   /**
-   * Top up Solar balance with Stripe
+   * Get Solar balance and daily earnings info
    */
-  async topUpBalance(amount, stripePaymentIntentId) {
+  async getSolarBalance() {
     if (!this.userId) {
-      throw new Error('User must be registered for top-ups');
+      return {
+        balance: 0,
+        registered: false,
+        message: 'Register to track your Solar balance and earn daily tokens'
+      };
     }
 
     try {
-      const response = await fetch(`${this.apiBase}/user/${this.userId}/topup`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount, stripePaymentIntentId })
-      });
-
+      const response = await fetch(`${this.apiBase}/payments/solar-balance`);
+      
       if (response.ok) {
         const data = await response.json();
-        this.userProfile = data.profile;
+        this.userProfile = {
+          ...this.userProfile,
+          solarBalance: data.balance,
+          totalEarned: data.totalEarned,
+          totalSpent: data.totalSpent
+        };
         
-        console.log(`💳 Balance topped up: +${amount} Solar`);
-        this.emit('balanceUpdated', { profile: this.userProfile, transaction: data.transaction });
+        console.log(`⚡ Solar balance: ${data.balance} tokens`);
+        this.emit('balanceUpdated', { profile: this.userProfile, data });
         
         return data;
       } else {
         const error = await response.json();
-        throw new Error(error.error || 'Top-up failed');
+        throw new Error(error.error || 'Failed to get balance');
       }
     } catch (error) {
-      console.error('Top-up failed:', error);
+      console.error('Failed to get Solar balance:', error);
       throw error;
     }
   }

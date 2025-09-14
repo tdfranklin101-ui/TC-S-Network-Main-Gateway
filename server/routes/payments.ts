@@ -1,148 +1,148 @@
 import { Router } from 'express';
-import Stripe from 'stripe';
 import { storage } from '../storage';
 import { insertTransactionSchema } from '@shared/schema';
 import { z } from 'zod';
 
 const router = Router();
 
-// Initialize Stripe with secret key
-const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
-
-if (!stripe) {
-  console.warn('Warning: Stripe not initialized - STRIPE_SECRET_KEY not found in environment');
-}
-
 // Helper function to get user ID
 function getUserId(req: any): string | null {
   return req.user?.id || req.session?.userId || null;
 }
 
-// Create Stripe payment intent for Solar top-up
-const createPaymentIntentSchema = z.object({
-  amount: z.number().min(1).max(100000), // $1 to $1000
-  solarAmount: z.number().min(50).max(10000) // 50 to 10,000 Solar tokens
+// Helper function to get session ID
+function getSessionId(req: any): string {
+  return req.session.id;
+}
+
+// Solar payment schema for content unlocking
+const solarPaymentSchema = z.object({
+  contentId: z.string().min(1),
+  contentType: z.string().min(1),
+  solarCost: z.number().min(1).max(1000) // 1 to 1000 Solar tokens
 });
 
-router.post('/create-payment-intent', async (req, res) => {
+// Create Solar payment for content access
+router.post('/solar-payment', async (req, res) => {
   try {
-    if (!stripe) {
-      return res.status(503).json({
-        error: 'Payment system unavailable',
-        message: 'Stripe payment system is not configured'
-      });
-    }
-    
+    const sessionId = getSessionId(req);
     const userId = getUserId(req);
-    if (!userId) {
-      return res.status(401).json({
-        error: 'Authentication required',
-        message: 'You must be registered to purchase Solar tokens'
+    
+    const { contentId, contentType, solarCost } = solarPaymentSchema.parse(req.body);
+    
+    // Check if user has enough Solar balance (if they're registered)
+    let hasEnoughBalance = true;
+    let userProfile = null;
+    if (userId) {
+      userProfile = await storage.getUserProfile(userId);
+      if (!userProfile || (userProfile.solarBalance || 0) < solarCost) {
+        hasEnoughBalance = false;
+      }
+    } else {
+      // For anonymous users, allow Solar payment with session tracking
+      // This enables demo functionality without registration
+      console.log(`Anonymous Solar payment for session: ${sessionId}`);
+    }
+    
+    if (!hasEnoughBalance && userId) {
+      return res.status(400).json({
+        error: 'Insufficient Solar balance',
+        message: `You need ${solarCost} Solar tokens but only have ${userProfile?.solarBalance || 0}`,
+        required: solarCost,
+        available: userProfile?.solarBalance || 0
       });
     }
     
-    const { amount, solarAmount } = createPaymentIntentSchema.parse(req.body);
-    
-    // Create payment intent
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: amount * 100, // Convert dollars to cents
-      currency: 'usd',
-      metadata: {
-        userId,
-        solarAmount: solarAmount.toString(),
-        purpose: 'solar_topup'
-      }
-    });
-    
-    // Create pending transaction record
+    // Create Solar transaction record (sessionId stored in metadata for anonymous users)
     const transaction = await storage.createTransaction({
-      userId,
-      type: 'stripe_topup',
-      amount: solarAmount,
-      currency: 'USD',
-      status: 'pending',
-      stripePaymentIntentId: paymentIntent.id,
-      description: `Purchase ${solarAmount} Solar tokens for $${amount}`,
+      userId: userId || null,
+      type: 'solar_spend',
+      amount: solarCost,
+      currency: 'SOLAR',
+      status: 'completed',
+      description: `Solar payment for ${contentType} access: ${contentId}`,
       metadata: {
-        stripeAmount: amount * 100,
-        solarAmount
+        sessionId: userId ? null : sessionId, // Store sessionId in metadata for anonymous users
+        contentId,
+        contentType,
+        solarCost,
+        paymentMethod: 'solar_balance'
       }
     });
+    
+    // Deduct Solar from user balance (if registered)
+    if (userId && hasEnoughBalance) {
+      await storage.updateSolarBalance(userId, -solarCost);
+    }
+    
+    // Create entitlement for the content
+    await storage.createEntitlement({
+      userId: userId || null,
+      sessionId: userId ? null : sessionId,
+      contentType,
+      contentId,
+      accessType: 'full',
+      purchaseMethod: 'solar',
+      solarCost
+    });
+    
+    console.log(`Solar payment completed: ${solarCost} Solar for ${contentType} ${contentId} (${userId ? 'user: ' + userId : 'session: ' + sessionId})`);
     
     res.json({
-      clientSecret: paymentIntent.client_secret,
-      transactionId: transaction.id
+      success: true,
+      transactionId: transaction.id,
+      message: `Access granted! Paid ${solarCost} Solar tokens`,
+      solarCost,
+      contentId,
+      contentType,
+      remainingBalance: userId && userProfile ? (userProfile.solarBalance || 0) - solarCost : null
     });
+    
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({
         error: 'Invalid payment data',
-        message: 'Please check your payment amount',
+        message: 'Please check your payment details',
         details: error.errors
       });
     }
     
-    console.error('Error creating payment intent:', error);
+    console.error('Error processing Solar payment:', error);
     res.status(500).json({
-      error: 'Failed to create payment',
+      error: 'Payment processing failed',
       message: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 });
 
-// Webhook handler for Stripe events
-router.post('/stripe-webhook', async (req, res) => {
+// Get user's Solar balance and transaction history
+router.get('/solar-balance', async (req, res) => {
   try {
-    if (!stripe) {
-      return res.status(503).send('Stripe not configured');
+    const userId = getUserId(req);
+    if (!userId) {
+      return res.json({
+        balance: 0,
+        registered: false,
+        message: 'Register to track your Solar balance'
+      });
     }
     
-    const sig = req.headers['stripe-signature'] as string;
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    const userProfile = await storage.getUserProfile(userId);
+    const transactions = await storage.getUserTransactions(userId);
     
-    if (!webhookSecret) {
-      console.error('Stripe webhook secret not configured');
-      return res.status(500).send('Webhook secret not configured');
-    }
+    res.json({
+      balance: userProfile?.solarBalance || 0,
+      totalEarned: userProfile?.totalEarned || 0,
+      totalSpent: userProfile?.totalSpent || 0,
+      registered: true,
+      recentTransactions: transactions.slice(0, 10), // Last 10 transactions
+      lastActivity: userProfile?.lastActivityAt
+    });
     
-    let event: Stripe.Event;
-    
-    try {
-      event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
-    } catch (err) {
-      console.error('Webhook signature verification failed:', err);
-      return res.status(400).send(`Webhook Error: ${err}`);
-    }
-    
-    // Handle payment intent succeeded
-    if (event.type === 'payment_intent.succeeded') {
-      const paymentIntent = event.data.object as Stripe.PaymentIntent;
-      
-      // Find the transaction
-      const transactions = await storage.getUserTransactions(paymentIntent.metadata.userId);
-      const transaction = transactions.find(t => t.stripePaymentIntentId === paymentIntent.id);
-      
-      if (transaction && transaction.status === 'pending') {
-        // Update transaction status
-        const updatedTransaction = await storage.updateTransactionStatus(
-          transaction.id,
-          'completed',
-          new Date()
-        );
-        
-        // Add Solar to user balance
-        const solarAmount = parseInt(paymentIntent.metadata.solarAmount);
-        await storage.updateSolarBalance(paymentIntent.metadata.userId, solarAmount);
-        
-        console.log(`Payment completed: Added ${solarAmount} Solar to user ${paymentIntent.metadata.userId}`);
-      }
-    }
-    
-    res.json({ received: true });
   } catch (error) {
-    console.error('Stripe webhook error:', error);
+    console.error('Error getting Solar balance:', error);
     res.status(500).json({
-      error: 'Webhook processing failed',
+      error: 'Failed to get balance',
       message: error instanceof Error ? error.message : 'Unknown error'
     });
   }
@@ -151,17 +151,21 @@ router.post('/stripe-webhook', async (req, res) => {
 // Get payment status
 router.get('/payment-status/:transactionId', async (req, res) => {
   try {
+    const sessionId = getSessionId(req);
     const userId = getUserId(req);
-    if (!userId) {
-      return res.status(401).json({
-        error: 'Authentication required',
-        message: 'You must be logged in to check payment status'
-      });
+    const { transactionId } = req.params;
+    
+    // Get transactions for the user or filter by session in metadata
+    let transactions;
+    if (userId) {
+      transactions = await storage.getUserTransactions(userId);
+    } else {
+      // For anonymous users, return empty transactions for now
+      // Full session-based transaction history would require database schema updates
+      transactions = [];
     }
     
-    const { transactionId } = req.params;
-    const transactions = await storage.getUserTransactions(userId);
-    const transaction = transactions.find(t => t.id === transactionId);
+    const transaction = transactions.find((t: any) => t.id === transactionId);
     
     if (!transaction) {
       return res.status(404).json({
@@ -177,7 +181,8 @@ router.get('/payment-status/:transactionId', async (req, res) => {
       currency: transaction.currency,
       description: transaction.description,
       createdAt: transaction.createdAt,
-      completedAt: transaction.completedAt
+      completedAt: transaction.completedAt,
+      metadata: transaction.metadata
     });
   } catch (error) {
     console.error('Error getting payment status:', error);
@@ -188,12 +193,65 @@ router.get('/payment-status/:transactionId', async (req, res) => {
   }
 });
 
-// Get payment configuration (publishable key, etc.)
+// Get Solar payment system configuration
 router.get('/config', (req, res) => {
   res.json({
-    publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || '',
-    configured: !!stripe && !!process.env.STRIPE_PUBLISHABLE_KEY
+    paymentSystem: 'solar',
+    solarEnabled: true,
+    registrationBonus: 100, // New users get 100 Solar tokens
+    dailyAllocation: 10, // Daily Solar token allocation
+    minimumPayment: 1,
+    maximumPayment: 1000,
+    message: 'Solar-powered payment system - no external payments required'
   });
+});
+
+// Check content access for user/session
+router.get('/access/:contentType/:contentId', async (req, res) => {
+  try {
+    const sessionId = getSessionId(req);
+    const userId = getUserId(req);
+    const { contentType, contentId } = req.params;
+    
+    // Check for existing entitlement
+    let entitlement;
+    if (userId) {
+      // Check user entitlements using existing storage method
+      try {
+        entitlement = await storage.getEntitlement(userId, contentType, contentId);
+      } catch (error) {
+        entitlement = null;
+      }
+    } else {
+      // For anonymous users, check session-based entitlements
+      try {
+        entitlement = await storage.getEntitlement(sessionId, contentType, contentId);
+      } catch (error) {
+        entitlement = null;
+      }
+    }
+    
+    if (entitlement) {
+      res.json({
+        hasAccess: true,
+        accessType: entitlement.accessType,
+        purchaseMethod: entitlement.purchaseMethod,
+        grantedAt: entitlement.createdAt
+      });
+    } else {
+      res.json({
+        hasAccess: false,
+        message: 'Payment required for full access'
+      });
+    }
+    
+  } catch (error) {
+    console.error('Error checking content access:', error);
+    res.status(500).json({
+      error: 'Access check failed',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
 });
 
 export default router;

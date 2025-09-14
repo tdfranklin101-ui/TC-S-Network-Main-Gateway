@@ -140,7 +140,7 @@ export const entitlements = pgTable("entitlements", {
   contentType: varchar("content_type").notNull(),
   contentId: varchar("content_id").notNull(),
   accessType: varchar("access_type").notNull(), // 'preview', 'full', 'permanent'
-  purchaseMethod: varchar("purchase_method"), // 'solar', 'stripe', 'free', 'registration'
+  purchaseMethod: varchar("purchase_method"), // 'solar', 'free', 'registration'
   solarCost: integer("solar_cost"), // Cost in Solar tokens
   expiresAt: timestamp("expires_at"), // For temporary access
   createdAt: timestamp("created_at").defaultNow(),
@@ -150,11 +150,11 @@ export const entitlements = pgTable("entitlements", {
 export const transactions = pgTable("transactions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id),
-  type: varchar("type").notNull(), // 'solar_spend', 'stripe_topup', 'registration_bonus'
+  type: varchar("type").notNull(), // 'solar_spend', 'solar_earn', 'registration_bonus'
   amount: integer("amount").notNull(), // Amount in Solar tokens (for spend) or cents (for Stripe)
   currency: varchar("currency").default('SOLAR'), // 'SOLAR' or 'USD'
   status: varchar("status").notNull(), // 'pending', 'completed', 'failed', 'refunded'
-  stripePaymentIntentId: varchar("stripe_payment_intent_id"), // For Stripe transactions
+  stripePaymentIntentId: varchar("stripe_payment_intent_id"), // Legacy field - no longer used
   description: text("description"), // What was purchased/topup reason
   metadata: jsonb("metadata"), // Additional transaction data
   createdAt: timestamp("created_at").defaultNow(),
