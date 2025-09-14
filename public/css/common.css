@@ -58,9 +58,9 @@
   --sun-ray-color: rgba(255, 215, 0, 0.04); /* Very subtle gold color */
   --sun-ray-highlight: rgba(255, 215, 0, 0.08); /* Slightly stronger highlight */
   
-  /* Neon Green Glow System */
-  --neon-green: #00ff41;
-  --neon-green-glow: 0 0 5px #00ff41, 0 0 10px #00ff41, 0 0 15px #00ff41, 0 0 20px #00ff41;
+  /* Dark Brown Emphasis System */
+  --neon-green: #8B4513;
+  --neon-green-glow: 0 0 5px #8B4513, 0 0 10px #8B4513, 0 0 15px #8B4513, 0 0 20px #8B4513;
   
   /* Misc */
   --border-radius: 8px;
