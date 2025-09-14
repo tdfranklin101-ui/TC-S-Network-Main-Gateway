@@ -198,50 +198,10 @@
             background: linear-gradient(135deg, #c82333, #bd2130);
             transform: scale(1.05);
         }
-        /* Timer UI Integration */
-        .timer-container {
-            margin: 20px 0;
-            padding: 20px;
-            background: rgba(0, 0, 0, 0.6);
-            border-radius: 12px;
-            border: 2px solid #ff8c00;
-        }
-        
-        .track-with-timer {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 15px;
-            padding: 15px;
-            background: rgba(0, 0, 0, 0.4);
-            border-radius: 8px;
-        }
-        
-        .track-info {
-            flex: 1;
-        }
-        
-        .track-name {
-            color: #ff8c00;
-            font-weight: bold;
-            font-size: 18px;
-            margin-bottom: 5px;
-        }
-        
-        .track-description {
-            color: #ccc;
-            font-size: 14px;
-        }
-        
-        .timer-section {
-            min-width: 200px;
-        }
+        /* Timer UI styles removed - streaming is now free */
     </style>
 
-    <!-- Load progression system scripts -->
-    <script src="/js/progression-manager.js"></script>
-    <script src="/js/components/timer-ui.js"></script>
-    <script src="/js/components/payment-modal.js"></script>
+    <!-- Progression system scripts removed - streaming is now free -->
     <script>
         // Configure Stripe (load from environment or use test key)
         // Use environment variable for Stripe publishable key (set by server)
@@ -257,8 +217,8 @@
         
         <!-- Prominent Get Solar Banner -->
         <div style="background: linear-gradient(135deg, #ffff00, #ffd700); border-radius: 15px; padding: 20px; margin: 0 0 20px 0; text-align: center; border: 3px solid #ffa500; box-shadow: 0 6px 20px rgba(255,165,0,0.4);">
-          <h2 style="color: black; margin: 0 0 10px 0; font-size: 1.5rem; font-weight: bold;">⚡ Need Solar to unlock music? Get it FREE!</h2>
-          <p style="color: black; margin: 0 0 15px 0; font-size: 1rem; opacity: 0.9;">1 Solar per day automatic - your birthright share</p>
+          <h2 style="color: black; margin: 0 0 10px 0; font-size: 1.5rem; font-weight: bold;">🎵 All Music Streams FREE!</h2>
+          <p style="color: black; margin: 0 0 15px 0; font-size: 1rem; opacity: 0.9;">Download tracks for offline access with Solar</p>
           <a href="https://solar-artifacts-tdfranklin101.replit.app" data-testid="button-get-solar-music" style="display: inline-block; background: linear-gradient(135deg, #28a745, #20c997); color: white; padding: 12px 25px; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 1.1rem; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(40,167,69,0.4);">
             🚀 Get Solar Now - Free Registration
           </a>
@@ -308,38 +268,9 @@
                 <button class="track-button" data-testid="track-button-4" onclick="playTrack(4)">🎶 A Solar Day (groovin)</button>
                 <button class="track-button" data-testid="track-button-5" onclick="playTrack(5)">🎼 A Solar Day (moovin)</button>
                 <button class="track-button" data-testid="track-button-6" onclick="playTrack(6)">🎺 Break Time Blues Rhapsody (By Kid Solar)</button>
-                <!-- Premium Track with Timer UI -->
-                <div class="track-with-timer">
-                    <div class="track-info">
-                        <div class="track-name">⭐ Starlight Forever</div>
-                        <div class="track-description">Premium track - Experience the full orchestral version</div>
-                    </div>
-                    <div class="timer-section">
-                        <div id="timer-starlight-forever" data-testid="timer-starlight-forever"></div>
-                    </div>
-                </div>
-
-                <!-- Premium Track with Timer UI -->
-                <div class="track-with-timer">
-                    <div class="track-info">
-                        <div class="track-name">💡 Light It From Within</div>
-                        <div class="track-description">Premium track - Exclusive meditation mix</div>
-                    </div>
-                    <div class="timer-section">
-                        <div id="timer-light-it-from-within" data-testid="timer-light-it-from-within"></div>
-                    </div>
-                </div>
-
-                <!-- Premium Track with Timer UI -->
-                <div class="track-with-timer">
-                    <div class="track-info">
-                        <div class="track-name">🌙 Moonshine in St Kitts</div>
-                        <div class="track-description">Premium track - By Bowie, Jagger, Lennon</div>
-                    </div>
-                    <div class="timer-section">
-                        <div id="timer-moonshine-st-kitts" data-testid="timer-moonshine-st-kitts"></div>
-                    </div>
-                </div>
+                <button class="track-button" data-testid="track-button-7" onclick="playTrack(7)">⭐ Starlight Forever - Experience the full orchestral version</button>
+                <button class="track-button" data-testid="track-button-8" onclick="playTrack(8)">💡 Light It From Within - Exclusive meditation mix</button>
+                <button class="track-button" data-testid="track-button-9" onclick="playTrack(9)">🌙 Moonshine in St Kitts - By Bowie, Jagger, Lennon</button>
                 <button class="track-button" data-testid="track-button-10" onclick="playTrack(10)">⚡ Solar Tempest Symphony (By JMF)</button>
                 <button class="track-button" data-testid="track-button-11" onclick="playTrack(11)">🔩 Steel In His Soul</button>
                 <button class="track-button" data-testid="track-button-12" onclick="playTrack(12)">💬 We Said So</button>
@@ -1198,162 +1129,7 @@
             }
         };
 
-        // Timer-gated progression system initialization
-        class MusicProgressionSystem {
-            constructor() {
-                this.timerUIInstances = new Map();
-                this.premiumTracks = [
-                    {
-                        id: 'starlight-forever',
-                        trackIndex: 7,
-                        title: '⭐ Starlight Forever',
-                        description: 'Premium track - Experience the full orchestral version',
-                        solarCost: 50,
-                        timerDuration: 120 // 2 minutes for demo
-                    },
-                    {
-                        id: 'light-it-from-within',
-                        trackIndex: 8,
-                        title: '💡 Light It From Within',
-                        description: 'Premium track - Exclusive meditation mix',
-                        solarCost: 75,
-                        timerDuration: 90 // 1.5 minutes for demo
-                    },
-                    {
-                        id: 'moonshine-st-kitts',
-                        trackIndex: 9,
-                        title: '🌙 Moonshine in St Kitts',
-                        description: 'Premium track - By Bowie, Jagger, Lennon',
-                        solarCost: 100,
-                        timerDuration: 180 // 3 minutes for demo
-                    }
-                ];
-                this.init();
-            }
-
-            async init() {
-                // Wait for ProgressionManager to be ready
-                await this.waitForProgressionManager();
-                
-                // Initialize timer UIs for premium tracks
-                this.premiumTracks.forEach(track => {
-                    this.initTimerUI(track);
-                });
-
-                // Set up event listeners
-                this.setupEventListeners();
-                
-                console.log('🎵 Music Progression System initialized');
-            }
-
-            async waitForProgressionManager() {
-                return new Promise((resolve) => {
-                    const checkForManager = () => {
-                        if (window.ProgressionManager && window.ProgressionManager.initialized) {
-                            resolve();
-                        } else {
-                            setTimeout(checkForManager, 100);
-                        }
-                    };
-                    checkForManager();
-                });
-            }
-
-            initTimerUI(track) {
-                const container = document.getElementById(`timer-${track.id}`);
-                if (!container) {
-                    console.warn(`Container not found for track: ${track.id}`);
-                    return;
-                }
-
-                try {
-                    const timerUI = new TimerUI(`timer-${track.id}`, {
-                        contentType: 'music_track',
-                        contentId: track.id,
-                        solarCost: track.solarCost,
-                        timerDuration: track.timerDuration,
-                        title: track.title,
-                        description: track.description
-                    });
-
-                    this.timerUIInstances.set(track.id, timerUI);
-                    
-                    // Listen for content access events
-                    timerUI.on('contentAccess', (event) => {
-                        this.handleContentAccess(track, event.detail);
-                    });
-
-                    console.log(`✅ Timer UI initialized for ${track.title}`);
-                } catch (error) {
-                    console.error(`Failed to initialize timer UI for ${track.id}:`, error);
-                }
-            }
-
-            handleContentAccess(track, eventData) {
-                console.log(`🎵 Accessing content for ${track.title}`, eventData);
-                
-                // Play the track
-                if (typeof playTrack === 'function') {
-                    playTrack(track.trackIndex);
-                } else {
-                    console.error('playTrack function not available');
-                }
-                
-                // Show success message
-                this.showAccessNotification(track);
-            }
-
-            showAccessNotification(track) {
-                // Create temporary notification
-                const notification = document.createElement('div');
-                notification.style.cssText = `
-                    position: fixed;
-                    top: 20px;
-                    right: 20px;
-                    background: linear-gradient(135deg, #28a745, #20c997);
-                    color: white;
-                    padding: 15px 25px;
-                    border-radius: 8px;
-                    font-weight: bold;
-                    z-index: 10001;
-                    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-                    animation: slideInRight 0.3s ease;
-                `;
-                notification.innerHTML = `
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <span style="font-size: 1.2em;">🎉</span>
-                        <span>Now playing: ${track.title}</span>
-                    </div>
-                `;
-                
-                document.body.appendChild(notification);
-                
-                // Remove after 3 seconds
-                setTimeout(() => {
-                    notification.style.animation = 'slideOutRight 0.3s ease';
-                    setTimeout(() => {
-                        if (notification.parentNode) {
-                            notification.parentNode.removeChild(notification);
-                        }
-                    }, 300);
-                }, 3000);
-            }
-
-            setupEventListeners() {
-                // Listen for payment modal events
-                document.addEventListener('timerUI:showRegistrationModal', (event) => {
-                    console.log('Registration modal requested:', event.detail);
-                });
-                
-                document.addEventListener('timerUI:showTopUpModal', (event) => {
-                    console.log('Top-up modal requested:', event.detail);
-                });
-                
-                document.addEventListener('contentUnlocked', (event) => {
-                    console.log('Content unlocked:', event.detail);
-                });
-            }
-        }
+        // Timer-gated progression system removed - all tracks now stream freely
 
         // Initialize Music AI Dashboard when page loads
         document.addEventListener('DOMContentLoaded', function() {
@@ -1371,10 +1147,9 @@
             `;
             document.head.appendChild(style);
             
-            // Small delay to ensure all dependencies are loaded
+            // Initialize only AI Dashboard (progression system removed)
             setTimeout(() => {
                 window.musicAIDashboard = new MusicAIDashboard();
-                window.musicProgressionSystem = new MusicProgressionSystem();
             }, 1000);
         });
     </script>
