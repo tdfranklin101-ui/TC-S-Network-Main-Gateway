@@ -252,7 +252,7 @@
                     <div style="text-align: center; margin-bottom: 10px;">
                         <span style="color: #ffd700; font-weight: bold; font-size: 16px;">💎 BONUS MARKET EXCLUSIVE 💎</span>
                     </div>
-                    <button class="track-button locked" data-testid="track-button-bonus" onclick="showBonusTrackModal()" style="background: linear-gradient(135deg, #ffd700, #ffb300); color: #1a1a2e; position: relative;">❄️ Snowmancer One (Market Exclusive)</button>
+                    <button class="track-button" data-testid="track-button-bonus" onclick="playTrack(19)" style="background: linear-gradient(135deg, #ffd700, #ffb300); color: #1a1a2e;">❄️ Snowmancer One (Market Exclusive)</button>
                     <div style="text-align: center; margin-top: 8px; font-size: 14px; color: #ffd700;">
                         Available only through Solar trading at wallet.market
                     </div>
@@ -361,7 +361,13 @@
             buttons.forEach((button, index) => {
                 if (isTrackPlayed(index)) {
                     button.classList.add('locked');
-                    button.onclick = () => showWalletModal(index);
+                    if (index === 19) {
+                        // Bonus track gets special modal
+                        button.onclick = () => showBonusTrackModal();
+                    } else {
+                        // Regular tracks get standard modal
+                        button.onclick = () => showWalletModal(index);
+                    }
                 }
             });
         }
@@ -410,7 +416,13 @@
         function playTrack(index) {
             // Check if track was already played
             if (isTrackPlayed(index)) {
-                showWalletModal(index);
+                if (index === 19) {
+                    // Bonus track gets special modal
+                    showBonusTrackModal();
+                } else {
+                    // Regular tracks get standard modal
+                    showWalletModal(index);
+                }
                 return;
             }
             const player = document.getElementById('audioPlayer');
