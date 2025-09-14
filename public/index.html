@@ -2798,5 +2798,117 @@
     });
   </script>
 
+  <!-- World ID Verification Script -->
+  <script src="/js/world-id-verification.js"></script>
+  
+  <!-- Initialize World ID Verification -->
+  <script>
+    // Initialize World ID verification when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      // Create the World ID verification button
+      if (window.WorldIDUtils) {
+        window.WorldIDUtils.createButton('world-id-container', {
+          buttonText: '🌍 Verify with World ID & Join Network',
+          buttonClass: 'world-id-verify-btn-main'
+        });
+        
+        // Listen for successful verification
+        document.addEventListener('worldid-verified', function(event) {
+          const result = event.detail.result;
+          
+          // Show success message
+          const container = document.getElementById('world-id-container');
+          if (container) {
+            container.innerHTML = `
+              <div style="
+                background: rgba(40, 167, 69, 0.1);
+                color: #28a745;
+                border: 2px solid rgba(40, 167, 69, 0.3);
+                border-radius: 12px;
+                padding: 20px;
+                margin: 15px 0;
+              ">
+                <h4 style="margin: 0 0 10px 0; color: #28a745;">✅ Welcome to TC-S Network!</h4>
+                <p style="margin: 0 0 15px 0; color: #ffffff;">
+                  Your humanity has been verified. You are now eligible for daily Solar Ray distributions.
+                </p>
+                <div style="margin-top: 15px;">
+                  <a href="https://wallet.market.thecurrentsee.org" target="_blank" style="
+                    display: inline-block; 
+                    padding: 12px 25px; 
+                    background: linear-gradient(135deg, #28a745, #20c997); 
+                    border: none; 
+                    border-radius: 8px; 
+                    color: white; 
+                    font-size: 16px; 
+                    font-weight: bold; 
+                    text-decoration: none; 
+                    transition: all 0.3s ease;
+                  " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    🚀 Access Your Solar Wallet
+                  </a>
+                </div>
+              </div>
+            `;
+          }
+          
+          // Store member status
+          localStorage.setItem('tc_s_member', JSON.stringify({
+            verified: true,
+            nullifier_hash: result.nullifier_hash,
+            joined: new Date().toISOString(),
+            member_id: 'auto-generated'
+          }));
+          
+          console.log('TC-S Network: New member verified and registered');
+        });
+        
+        // Listen for verification errors
+        document.addEventListener('worldid-error', function(event) {
+          console.error('World ID verification failed:', event.detail.error);
+        });
+        
+        // Check if user is already verified
+        if (window.WorldIDUtils.isVerified()) {
+          const status = window.WorldIDUtils.getStatus();
+          const container = document.getElementById('world-id-container');
+          if (container) {
+            container.innerHTML = `
+              <div style="
+                background: rgba(0, 123, 255, 0.1);
+                color: #007bff;
+                border: 2px solid rgba(0, 123, 255, 0.3);
+                border-radius: 12px;
+                padding: 20px;
+                margin: 15px 0;
+              ">
+                <h4 style="margin: 0 0 10px 0; color: #007bff;">👋 Welcome back, TC-S Member!</h4>
+                <p style="margin: 0 0 15px 0; color: #ffffff;">
+                  You are already verified and eligible for daily Solar Ray distributions.
+                </p>
+                <div style="margin-top: 15px;">
+                  <a href="https://wallet.market.thecurrentsee.org" target="_blank" style="
+                    display: inline-block; 
+                    padding: 12px 25px; 
+                    background: linear-gradient(135deg, #007bff, #0056b3); 
+                    border: none; 
+                    border-radius: 8px; 
+                    color: white; 
+                    font-size: 16px; 
+                    font-weight: bold; 
+                    text-decoration: none; 
+                    transition: all 0.3s ease;
+                  " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    🔑 Access Your Solar Wallet
+                  </a>
+                </div>
+              </div>
+            `;
+          }
+        }
+      }
+    });
+  </script>
+
 </body>
 </html>
