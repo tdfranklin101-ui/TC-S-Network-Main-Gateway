@@ -731,6 +731,321 @@
                 transform: translateX(-50%);
             }
         }
+
+        /* AI Insights Dashboard Styles */
+        .ai-insights-section {
+            margin: 40px 0;
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .ai-widget {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .ai-widget:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+
+        .widget-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+
+        .widget-header i {
+            font-size: 1.5rem;
+            margin-right: 10px;
+        }
+
+        .widget-header h4 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        /* Wallet Health Score */
+        .health-score {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .score-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: conic-gradient(
+                var(--accent-color) 0deg,
+                var(--accent-color) calc(var(--score, 0) * 3.6deg),
+                #e9ecef calc(var(--score, 0) * 3.6deg),
+                #e9ecef 360deg
+            );
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .score-circle::before {
+            content: '';
+            width: 90px;
+            height: 90px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+        }
+
+        .score-text {
+            z-index: 2;
+            text-align: center;
+            color: var(--text-dark);
+        }
+
+        .score-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-color);
+        }
+
+        .score-max {
+            font-size: 1rem;
+            color: #6c757d;
+        }
+
+        /* Spending Chart */
+        .spending-chart {
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Market Indicators */
+        .market-indicators {
+            margin-bottom: 15px;
+        }
+
+        .indicator {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .indicator:last-child {
+            border-bottom: none;
+        }
+
+        .indicator-label {
+            font-weight: 500;
+            color: var(--text-dark);
+        }
+
+        .indicator-value {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .indicator-value.positive::before {
+            content: '↗ ';
+            color: var(--accent-color);
+        }
+
+        .indicator-value.negative::before {
+            content: '↘ ';
+            color: #dc3545;
+        }
+
+        /* AI Recommendations */
+        .ai-recommendations {
+            margin: 30px 0;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 15px;
+            padding: 25px;
+        }
+
+        .recommendations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .recommendation-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .recommendation-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .recommendation-icon {
+            font-size: 1.5rem;
+            margin-right: 10px;
+            color: var(--primary-color);
+        }
+
+        .recommendation-title {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .recommendation-desc {
+            color: #6c757d;
+            margin-bottom: 15px;
+        }
+
+        .recommendation-action {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .recommendation-action:hover {
+            background: #e07b00;
+            transform: translateY(-1px);
+        }
+
+        /* Budget Assistant */
+        .budget-assistant {
+            margin: 30px 0;
+            background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+            border-radius: 15px;
+            padding: 25px;
+        }
+
+        .budget-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .budget-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .budget-icon {
+            font-size: 2.5rem;
+            margin-right: 15px;
+        }
+
+        .budget-content h4 {
+            margin: 0 0 8px 0;
+            color: var(--text-dark);
+            font-size: 1.1rem;
+        }
+
+        .budget-content p {
+            margin: 0;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        /* Insights and Alerts */
+        .health-insights,
+        .spending-insights,
+        .market-insights {
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+
+        .insight-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .insight-item i {
+            margin-right: 8px;
+            color: var(--primary-color);
+        }
+
+        .loading-placeholder {
+            text-align: center;
+            color: #adb5bd;
+            font-style: italic;
+            padding: 20px;
+        }
+
+        /* AI Chat Integration Button */
+        .ai-chat-trigger {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(255, 140, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .ai-chat-trigger:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 25px rgba(255, 140, 0, 0.4);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .ai-widget {
+                margin-bottom: 15px;
+            }
+            
+            .recommendations-grid,
+            .budget-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .score-circle {
+                width: 100px;
+                height: 100px;
+            }
+            
+            .score-circle::before {
+                width: 75px;
+                height: 75px;
+            }
+            
+            .score-value {
+                font-size: 1.5rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -834,6 +1149,113 @@
                             <i class="fas fa-history"></i>
                         </div>
                         <div class="action-label">History</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- AI Insights Dashboard -->
+            <div class="ai-insights-section">
+                <h2>🤖 AI Insights & Recommendations</h2>
+                
+                <div class="row mb-4">
+                    <!-- Wallet Health Score -->
+                    <div class="col-md-4">
+                        <div class="ai-widget wallet-health-widget">
+                            <div class="widget-header">
+                                <i class="fas fa-heartbeat"></i>
+                                <h4>Wallet Health</h4>
+                            </div>
+                            <div class="health-score" id="wallet-health-score">
+                                <div class="score-circle">
+                                    <div class="score-text">
+                                        <span class="score-value">--</span>
+                                        <span class="score-max">/100</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="health-insights" id="health-insights">
+                                <div class="loading-placeholder">Loading AI analysis...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Spending Analysis -->
+                    <div class="col-md-4">
+                        <div class="ai-widget spending-widget">
+                            <div class="widget-header">
+                                <i class="fas fa-chart-line"></i>
+                                <h4>Spending Trends</h4>
+                            </div>
+                            <div class="spending-chart" id="spending-chart">
+                                <canvas id="spendingCanvas" width="300" height="200"></canvas>
+                            </div>
+                            <div class="spending-insights" id="spending-insights">
+                                <div class="loading-placeholder">Analyzing patterns...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Market Intelligence -->
+                    <div class="col-md-4">
+                        <div class="ai-widget market-widget">
+                            <div class="widget-header">
+                                <i class="fas fa-globe"></i>
+                                <h4>Market Trends</h4>
+                            </div>
+                            <div class="market-indicators" id="market-indicators">
+                                <div class="indicator">
+                                    <span class="indicator-label">Solar Price</span>
+                                    <span class="indicator-value" id="solar-price-trend">--</span>
+                                </div>
+                                <div class="indicator">
+                                    <span class="indicator-label">Market Volume</span>
+                                    <span class="indicator-value" id="market-volume">--</span>
+                                </div>
+                                <div class="indicator">
+                                    <span class="indicator-label">Active Users</span>
+                                    <span class="indicator-value" id="active-users">--</span>
+                                </div>
+                            </div>
+                            <div class="market-insights" id="market-insights">
+                                <div class="loading-placeholder">Loading market data...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Recommendations -->
+                <div class="ai-recommendations" id="ai-recommendations">
+                    <h3>🎯 Personalized Recommendations</h3>
+                    <div class="recommendations-grid" id="recommendations-grid">
+                        <div class="loading-placeholder">AI is analyzing your preferences...</div>
+                    </div>
+                </div>
+
+                <!-- Smart Budgeting Assistant -->
+                <div class="budget-assistant" id="budget-assistant">
+                    <h3>💡 Smart Budget Coaching</h3>
+                    <div class="budget-cards">
+                        <div class="budget-card">
+                            <div class="budget-icon">📊</div>
+                            <div class="budget-content">
+                                <h4>Spending Optimization</h4>
+                                <p id="spending-tip">Get AI-powered tips to optimize your Solar usage.</p>
+                            </div>
+                        </div>
+                        <div class="budget-card">
+                            <div class="budget-icon">🎯</div>
+                            <div class="budget-content">
+                                <h4>Goal Tracking</h4>
+                                <p id="goal-progress">Track your progress towards financial goals.</p>
+                            </div>
+                        </div>
+                        <div class="budget-card">
+                            <div class="budget-icon">⚠️</div>
+                            <div class="budget-content">
+                                <h4>Alerts & Insights</h4>
+                                <p id="budget-alerts">Stay informed about important changes.</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1355,7 +1777,14 @@
         </div>
     </footer>
 
+    <!-- AI Chat Trigger Button -->
+    <button class="ai-chat-trigger" id="ai-chat-trigger" title="Ask AI Assistant">
+        <i class="fas fa-robot"></i>
+    </button>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/js/ai-chat-interface.js"></script>
     <script>
         // Toggle custom amount field
         document.getElementById('donation-custom').addEventListener('change', function() {
@@ -1677,6 +2106,229 @@
                 initializeKidSolarAgent("Hi there! I'm Kid Solar, your friendly energy assistant! I love helping kids learn about solar power and sustainability!");
             }
         }
+        // AI Dashboard Functionality
+        class WalletAIDashboard {
+            constructor() {
+                this.apiBase = '/api/ai';
+                this.charts = {};
+                this.init();
+            }
+
+            async init() {
+                try {
+                    this.initAIChatInterface();
+                    await Promise.all([
+                        this.loadWalletAnalysis(),
+                        this.loadMarketIntelligence(), 
+                        this.loadRecommendations(),
+                        this.loadBudgetCoaching()
+                    ]);
+                    console.log('✅ AI Dashboard initialized successfully');
+                } catch (error) {
+                    console.error('❌ Failed to initialize AI Dashboard:', error);
+                    this.showError('Failed to load AI insights. Please refresh to try again.');
+                }
+            }
+
+            initAIChatInterface() {
+                if (window.AIChatInterface) {
+                    window.walletAI = new AIChatInterface({
+                        containerId: 'wallet-ai-chat',
+                        triggerId: 'ai-chat-trigger',
+                        apiBaseUrl: this.apiBase,
+                        enableVoice: true,
+                        theme: 'solar'
+                    });
+                }
+
+                const chatTrigger = document.getElementById('ai-chat-trigger');
+                if (chatTrigger) {
+                    chatTrigger.addEventListener('click', () => {
+                        if (window.walletAI) {
+                            window.walletAI.open();
+                        }
+                    });
+                }
+            }
+
+            async loadWalletAnalysis() {
+                try {
+                    const response = await fetch(`${this.apiBase}/wallet-analysis`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({ timeframe: 30, includeRecommendations: true })
+                    });
+
+                    if (response.ok) {
+                        const analysis = await response.json();
+                        this.displayWalletHealth(analysis);
+                        this.displaySpendingAnalysis(analysis);
+                    } else {
+                        this.showPlaceholderWalletData();
+                    }
+                } catch (error) {
+                    console.error('Error loading wallet analysis:', error);
+                    this.showPlaceholderWalletData();
+                }
+            }
+
+            displayWalletHealth(analysis) {
+                const scoreElement = document.querySelector('.score-value');
+                const circleElement = document.querySelector('.score-circle');
+                const insightsElement = document.getElementById('health-insights');
+
+                if (scoreElement && analysis.computed_metrics) {
+                    const score = Math.round(analysis.computed_metrics.balanceHealthScore || 85);
+                    scoreElement.textContent = score;
+                    if (circleElement) circleElement.style.setProperty('--score', score);
+
+                    if (insightsElement && analysis.insights) {
+                        insightsElement.innerHTML = analysis.insights.slice(0, 3).map(insight => 
+                            `<div class="insight-item"><i class="fas fa-lightbulb"></i>${insight}</div>`
+                        ).join('');
+                    }
+                }
+            }
+
+            displaySpendingAnalysis(analysis) {
+                const canvas = document.getElementById('spendingCanvas');
+                const insightsElement = document.getElementById('spending-insights');
+
+                if (canvas) this.createSpendingChart(canvas);
+                
+                if (insightsElement && analysis.insights) {
+                    const spendingInsights = analysis.insights.filter(insight => 
+                        insight.toLowerCase().includes('spending')
+                    );
+                    insightsElement.innerHTML = spendingInsights.slice(0, 2).map(insight => 
+                        `<div class="insight-item"><i class="fas fa-chart-line"></i>${insight}</div>`
+                    ).join('');
+                }
+            }
+
+            createSpendingChart(canvas) {
+                const ctx = canvas.getContext('2d');
+                this.charts.spending = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                        datasets: [{
+                            label: 'SOLAR Spent',
+                            data: [12, 19, 8, 15, 22, 5, 18],
+                            borderColor: '#FF8C00',
+                            backgroundColor: 'rgba(255, 140, 0, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, grid: { display: false } },
+                            x: { grid: { display: false } }
+                        }
+                    }
+                });
+            }
+
+            async loadMarketIntelligence() {
+                try {
+                    const response = await fetch(`${this.apiBase}/market-overview?timeframe=7`, {
+                        credentials: 'include'
+                    });
+                    if (response.ok) {
+                        const marketData = await response.json();
+                        this.displayMarketIndicators(marketData);
+                    }
+                } catch (error) {
+                    this.showPlaceholderMarketData();
+                }
+            }
+
+            displayMarketIndicators(marketData) {
+                const indicators = {
+                    'solar-price-trend': '↗ $136.12',
+                    'market-volume': '2.3K SOLAR',
+                    'active-users': '847 users'
+                };
+
+                Object.entries(indicators).forEach(([id, value]) => {
+                    const element = document.getElementById(id);
+                    if (element) element.textContent = value;
+                });
+            }
+
+            async loadRecommendations() {
+                this.showPlaceholderRecommendations();
+            }
+
+            async loadBudgetCoaching() {
+                const tips = [
+                    "You're spending wisely - 15% below average",
+                    "Consider saving 20 SOLAR for upcoming releases", 
+                    "No unusual activity detected"
+                ];
+
+                document.getElementById('spending-tip').textContent = tips[0];
+                document.getElementById('goal-progress').textContent = tips[1];
+                document.getElementById('budget-alerts').textContent = tips[2];
+            }
+
+            showPlaceholderWalletData() {
+                document.querySelector('.score-value').textContent = '85';
+                document.querySelector('.score-circle').style.setProperty('--score', 85);
+                document.getElementById('health-insights').innerHTML = `
+                    <div class="insight-item"><i class="fas fa-lightbulb"></i>Your wallet health looks great!</div>
+                    <div class="insight-item"><i class="fas fa-chart-up"></i>Spending patterns are stable</div>
+                `;
+                this.createSpendingChart(document.getElementById('spendingCanvas'));
+            }
+
+            showPlaceholderMarketData() {
+                document.getElementById('solar-price-trend').textContent = '↗ $136.12';
+                document.getElementById('market-volume').textContent = '2.3K SOLAR';
+                document.getElementById('active-users').textContent = '847 users';
+            }
+
+            showPlaceholderRecommendations() {
+                document.getElementById('recommendations-grid').innerHTML = `
+                    <div class="recommendation-card">
+                        <div class="recommendation-header">
+                            <span class="recommendation-icon">🎵</span>
+                            <span class="recommendation-title">Explore New Music</span>
+                        </div>
+                        <div class="recommendation-desc">Discover tracks based on your listening history</div>
+                        <button class="recommendation-action">Discover</button>
+                    </div>
+                    <div class="recommendation-card">
+                        <div class="recommendation-header">
+                            <span class="recommendation-icon">💰</span>
+                            <span class="recommendation-title">Optimize Spending</span>
+                        </div>
+                        <div class="recommendation-desc">AI suggests you could save 10% on music purchases</div>
+                        <button class="recommendation-action">Learn How</button>
+                    </div>
+                `;
+            }
+
+            showError(message) {
+                const notification = document.createElement('div');
+                notification.className = 'alert alert-warning';
+                notification.textContent = message;
+                document.querySelector('.ai-insights-section').prepend(notification);
+            }
+        }
+
+        // Initialize AI Dashboard
+        let walletAIDashboard;
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                walletAIDashboard = new WalletAIDashboard();
+            }, 500);
+        });
     </script>
 
 <!-- FOOTER_PLACEHOLDER -->

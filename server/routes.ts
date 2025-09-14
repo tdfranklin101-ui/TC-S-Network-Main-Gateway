@@ -17,7 +17,11 @@ import cors from "cors";
 import { db } from "./db";
 import { sql } from "drizzle-orm";
 import apiRoutes from "./routes/api";
+import progressionRoutes from "./routes/progression";
+import paymentsRoutes from "./routes/payments";
+import aiRoutes from "./routes/ai";
 import geoip from "geoip-lite";
+import multer from "multer";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Add a simple health check endpoint for deployment checks
@@ -35,14 +39,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Otherwise continue to the next handler (which will serve the index.html)
     next();
   });
-  // Add CORS headers middleware with more comprehensive configuration
+  // Add CORS headers middleware with secure configuration
   app.use((req, res, next) => {
-    // Allow all origins for maximum compatibility
-    res.header('Access-Control-Allow-Origin', '*');
+    // Secure CORS configuration - never use '*' with credentials
+    const allowedOrigins = process.env.NODE_ENV === 'production' 
+      ? (process.env.ALLOWED_ORIGINS?.split(',') || ['https://yourdomain.com']) 
+      : ['http://localhost:5000', 'http://127.0.0.1:5000', 'http://0.0.0.0:5000'];
+    
+    const origin = req.headers.origin;
+    // Only allow specific origins when credentials are used
+    if (allowedOrigins.includes(origin)) {
+      res.header('Access-Control-Allow-Origin', origin);
+      res.header('Access-Control-Allow-Credentials', 'true');
+    } else if (!origin) {
+      // Same-origin requests (no origin header)
+      res.header('Access-Control-Allow-Credentials', 'true');
+    }
+    
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-Api-Key');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-Api-Key, X-CSRF-Token');
     res.header('Access-Control-Max-Age', '86400'); // 24 hours
-    res.header('Access-Control-Allow-Credentials', 'true');
     
     // Handle preflight requests
     if (req.method === 'OPTIONS') {
@@ -59,6 +75,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
   
   const apiRouter = express.Router();
+  
+  // Initialize AI services
+  const aiWalletAssistant = new AIWalletAssistant();
+  const aiMarketIntelligence = new AIMarketIntelligence();
   
   // Migration endpoint
   apiRouter.post("/migrate", async (req, res) => {
@@ -173,7 +193,492 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Mount the API router
+  // Timer-gated progression system API endpoints
+
+  // User Management Endpoints
+  apiRouter.post("/user/register", async (req, res) => {
+    try {
+      const { email, firstName, lastName } = req.body;
+      
+      // Check if user already exists
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ error: "User already exists" });
+      }
+      
+      // Create user and profile
+      const user = await storage.createUser({ email, firstName, lastName });
+      const userProfile = await storage.createUserProfile({ 
+        userId: user.id,
+        solarBalance: 100, // Registration bonus
+        totalEarned: 100,
+        registrationBonus: true
+      });
+      
+      res.status(201).json({ user, profile: userProfile });
+    } catch (error) {
+      console.error("User registration error:", error);
+      res.status(500).json({ error: "Registration failed" });
+    }
+  });
+
+  apiRouter.get("/user/:userId", async (req, res) => {
+    try {
+      const user = await storage.getUser(req.params.userId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      res.json(user);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch user" });
+    }
+  });
+
+  // User Profile Management
+  apiRouter.get("/user/:userId/profile", async (req, res) => {
+    try {
+      const profile = await storage.getUserProfile(req.params.userId);
+      if (!profile) {
+        return res.status(404).json({ error: "Profile not found" });
+      }
+      res.json(profile);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch profile" });
+    }
+  });
+
+  apiRouter.post("/user/:userId/topup", async (req, res) => {
+    try {
+      const { amount, stripePaymentIntentId } = req.body; // amount in Solar tokens
+      
+      // Create transaction record
+      const transaction = await storage.createTransaction({
+        userId: req.params.userId,
+        type: 'stripe_topup',
+        amount: amount,
+        currency: 'SOLAR',
+        status: 'completed',
+        stripePaymentIntentId,
+        description: `Top-up ${amount} Solar tokens`,
+        completedAt: new Date()
+      });
+      
+      // Update user balance
+      const updatedProfile = await storage.updateSolarBalance(req.params.userId, amount);
+      
+      res.json({ transaction, profile: updatedProfile });
+    } catch (error) {
+      console.error("Top-up error:", error);
+      res.status(500).json({ error: "Top-up failed" });
+    }
+  });
+
+  // Content Access Management
+  apiRouter.get("/content/access", async (req, res) => {
+    try {
+      const { userId, sessionId, contentType, contentId } = req.query;
+      
+      const accessInfo = await storage.canAccessContent(
+        userId as string || null,
+        sessionId as string || null,
+        contentType as string,
+        contentId as string
+      );
+      
+      res.json(accessInfo);
+    } catch (error) {
+      console.error("Access check error:", error);
+      res.status(500).json({ error: "Failed to check access" });
+    }
+  });
+
+  apiRouter.post("/content/unlock", async (req, res) => {
+    try {
+      const { userId, contentType, contentId, solarCost } = req.body;
+      
+      const result = await storage.unlockContentWithPayment(
+        userId,
+        contentType,
+        contentId,
+        solarCost
+      );
+      
+      if (result.success) {
+        res.json(result);
+      } else {
+        res.status(400).json(result);
+      }
+    } catch (error) {
+      console.error("Unlock error:", error);
+      res.status(500).json({ error: "Failed to unlock content" });
+    }
+  });
+
+  // Progression Management
+  apiRouter.get("/progression", async (req, res) => {
+    try {
+      const { userId, sessionId, contentType, contentId } = req.query;
+      
+      const progression = await storage.getProgression(
+        userId as string || null,
+        sessionId as string || null,
+        contentType as string,
+        contentId as string
+      );
+      
+      res.json(progression || null);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch progression" });
+    }
+  });
+
+  apiRouter.get("/user/:userId/progressions", async (req, res) => {
+    try {
+      const { sessionId } = req.query;
+      const progressions = await storage.getUserProgressions(
+        req.params.userId,
+        sessionId as string || null
+      );
+      res.json(progressions);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch progressions" });
+    }
+  });
+
+  apiRouter.post("/progression/start-timer", async (req, res) => {
+    try {
+      const { userId, sessionId, contentType, contentId, duration } = req.body;
+      
+      const progression = await storage.startTimer(
+        userId || null,
+        sessionId || null,
+        contentType,
+        contentId,
+        duration
+      );
+      
+      res.status(201).json(progression);
+    } catch (error) {
+      console.error("Timer start error:", error);
+      res.status(500).json({ error: "Failed to start timer" });
+    }
+  });
+
+  apiRouter.post("/progression/:progressionId/complete", async (req, res) => {
+    try {
+      const progression = await storage.completeTimer(req.params.progressionId);
+      if (!progression) {
+        return res.status(404).json({ error: "Progression not found" });
+      }
+      res.json(progression);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to complete timer" });
+    }
+  });
+
+  // Entitlement Management
+  apiRouter.get("/entitlements", async (req, res) => {
+    try {
+      const { userId, sessionId } = req.query;
+      const entitlements = await storage.getUserEntitlements(
+        userId as string || null,
+        sessionId as string || null
+      );
+      res.json(entitlements);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch entitlements" });
+    }
+  });
+
+  apiRouter.get("/entitlement", async (req, res) => {
+    try {
+      const { userId, sessionId, contentType, contentId } = req.query;
+      
+      const entitlement = await storage.getEntitlement(
+        userId as string || null,
+        sessionId as string || null,
+        contentType as string,
+        contentId as string
+      );
+      
+      res.json(entitlement || null);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch entitlement" });
+    }
+  });
+
+  // Content Library Management
+  apiRouter.get("/content/library", async (req, res) => {
+    try {
+      const library = await storage.getContentLibrary();
+      res.json(library);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch content library" });
+    }
+  });
+
+  apiRouter.get("/content/:contentType/:contentId", async (req, res) => {
+    try {
+      const contentItem = await storage.getContentItem(
+        req.params.contentType,
+        req.params.contentId
+      );
+      
+      if (!contentItem) {
+        return res.status(404).json({ error: "Content not found" });
+      }
+      
+      res.json(contentItem);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch content item" });
+    }
+  });
+
+  apiRouter.post("/content/library", async (req, res) => {
+    try {
+      const contentItem = await storage.createContentItem(req.body);
+      res.status(201).json(contentItem);
+    } catch (error) {
+      console.error("Content creation error:", error);
+      res.status(500).json({ error: "Failed to create content item" });
+    }
+  });
+
+  // Transaction Management
+  apiRouter.get("/user/:userId/transactions", async (req, res) => {
+    try {
+      const transactions = await storage.getUserTransactions(req.params.userId);
+      res.json(transactions);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch transactions" });
+    }
+  });
+
+  // Session Management
+  apiRouter.post("/session/create", async (req, res) => {
+    try {
+      const sessionId = require('crypto').randomUUID();
+      res.json({ sessionId, expires: new Date(Date.now() + 24 * 60 * 60 * 1000) });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create session" });
+    }
+  });
+
+  // Health check for progression system
+  apiRouter.get("/progression/health", async (req, res) => {
+    try {
+      res.json({ 
+        status: "ok", 
+        timestamp: new Date().toISOString(),
+        features: ["timers", "progressions", "entitlements", "payments"]
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Health check failed" });
+    }
+  });
+
+  // Initialize AI services
+  const aiWalletAssistant = new AIWalletAssistant();
+  const aiMarketIntelligence = new AIMarketIntelligence();
+  
+  // Configure multer for image uploads
+  const upload = multer({ 
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+  });
+
+  // AI API endpoints
+  const aiRouter = express.Router();
+
+  // Wallet AI endpoints
+  aiRouter.post("/wallet-analysis", async (req, res) => {
+    try {
+      const userId = req.body.userId || req.session?.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "User authentication required" });
+      }
+
+      const options = {
+        timeframe: req.body.timeframe || 30,
+        includeRecommendations: req.body.includeRecommendations !== false
+      };
+
+      const analysis = await aiWalletAssistant.analyzeWallet(userId, options);
+      res.json(analysis);
+
+    } catch (error) {
+      console.error('Error in wallet analysis:', error);
+      res.status(500).json({ 
+        error: "Wallet analysis failed", 
+        message: error.message 
+      });
+    }
+  });
+
+  aiRouter.post("/chat", async (req, res) => {
+    try {
+      const { message, context, conversationHistory } = req.body;
+      const userId = req.body.userId || req.session?.user?.id;
+
+      if (!message) {
+        return res.status(400).json({ error: "Message is required" });
+      }
+
+      // Process the query using the AI Wallet Assistant
+      const response = await aiWalletAssistant.processQuery(userId || 'anonymous', message, {
+        context,
+        conversationHistory: conversationHistory || []
+      });
+
+      // Enhance response with conversational formatting
+      const conversationalResponse = {
+        message: response.message || formatAIResponse(response),
+        data: response.data,
+        suggestions: generateFollowUpSuggestions(response),
+        context: {
+          lastQuery: message,
+          responseType: response.type,
+          timestamp: new Date().toISOString()
+        },
+        speak: response.speak || generateSpeechText(response)
+      };
+
+      res.json(conversationalResponse);
+
+    } catch (error) {
+      console.error('Error in AI chat:', error);
+      res.status(500).json({ 
+        error: "Chat processing failed", 
+        message: "I apologize, but I encountered an error processing your request. Please try again."
+      });
+    }
+  });
+
+  aiRouter.get("/market-overview", async (req, res) => {
+    try {
+      const options = {
+        timeframe: parseInt(req.query.timeframe as string) || 30,
+        includeForecasts: req.query.includeForecasts !== 'false'
+      };
+
+      const marketOverview = await aiMarketIntelligence.generateMarketOverview(options);
+      res.json(marketOverview);
+
+    } catch (error) {
+      console.error('Error generating market overview:', error);
+      res.status(500).json({ 
+        error: "Market analysis failed", 
+        message: error.message 
+      });
+    }
+  });
+
+  aiRouter.post("/content-recommendations", async (req, res) => {
+    try {
+      const userId = req.body.userId || req.session?.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "User authentication required" });
+      }
+
+      const options = {
+        maxRecommendations: req.body.maxRecommendations || 10,
+        contentTypes: req.body.contentTypes || null
+      };
+
+      const recommendations = await aiMarketIntelligence.generateContentRecommendations(userId, options);
+      res.json(recommendations);
+
+    } catch (error) {
+      console.error('Error generating content recommendations:', error);
+      res.status(500).json({ 
+        error: "Content recommendation failed", 
+        message: error.message 
+      });
+    }
+  });
+
+  aiRouter.get("/user-context", async (req, res) => {
+    try {
+      const userId = req.session?.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "User authentication required" });
+      }
+
+      // Get user profile and basic context
+      const userProfile = await storage.getUserProfile(userId);
+      const recentTransactions = await storage.getUserTransactions(userId);
+
+      const context = {
+        userId,
+        solarBalance: userProfile?.solarBalance || 0,
+        totalEarned: userProfile?.totalEarned || 0,
+        totalSpent: userProfile?.totalSpent || 0,
+        recentActivity: recentTransactions.length,
+        lastActivity: userProfile?.lastActivityAt,
+        segment: determineUserSegment(userProfile, recentTransactions)
+      };
+
+      res.json(context);
+
+    } catch (error) {
+      console.error('Error loading user context:', error);
+      res.status(500).json({ 
+        error: "Failed to load user context", 
+        message: error.message 
+      });
+    }
+  });
+
+  // Helper functions for AI responses
+  function formatAIResponse(response) {
+    if (response.insights && response.insights.length > 0) {
+      return `Here's what I found:\n\n${response.insights.join('\n\n')}`;
+    }
+    return 'I analyzed your request and here are the results.';
+  }
+
+  function generateFollowUpSuggestions(response) {
+    const suggestions = [];
+    
+    if (response.type === 'analysis') {
+      suggestions.push("Tell me more about these patterns");
+      suggestions.push("How can I improve this?");
+    } else if (response.type === 'recommendation') {
+      suggestions.push("Why do you recommend this?");
+      suggestions.push("What are some alternatives?");
+    }
+    
+    return suggestions;
+  }
+
+  function generateSpeechText(response) {
+    if (response.insights && response.insights.length > 0) {
+      return response.insights.slice(0, 2).join('. ') + '.';
+    }
+    return 'I have analyzed your request and found some interesting information for you.';
+  }
+
+  function determineUserSegment(userProfile, transactions) {
+    if (!userProfile) return 'new';
+    
+    const balance = userProfile.solarBalance || 0;
+    const spent = userProfile.totalSpent || 0;
+    
+    if (balance > 500 && spent > 100) return 'premium';
+    if (balance > 100 && spent > 50) return 'active';
+    if (spent > 10) return 'engaged';
+    return 'casual';
+  }
+
+  // Mount specialized API route modules
+  app.use("/api/progression", progressionRoutes);
+  app.use("/api/payment", paymentsRoutes); 
+  app.use("/api/ai", aiRoutes);
+
+  // Mount legacy AI routes (to be replaced)
+  app.use("/api/ai", aiRouter);
+
+  // Mount the general API router
   app.use("/api", apiRouter);
   
   // Set up distribution routes
@@ -476,6 +981,349 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Add route for the account update page
   app.get('/update-account', (req, res) => {
     res.sendFile('update-account.html', { root: './public' });
+  });
+
+  // AI Wallet Assistant endpoints
+  apiRouter.post("/ai/wallet/analyze", async (req, res) => {
+    try {
+      const { userId, options = {} } = req.body;
+      if (!userId) {
+        return res.status(400).json({ error: "userId required" });
+      }
+      
+      const analysis = await aiWalletAssistant.analyzeWallet(userId, options);
+      res.json(analysis);
+    } catch (error) {
+      console.error('AI Wallet Analysis error:', error);
+      res.status(500).json({ error: "AI analysis failed", message: String(error) });
+    }
+  });
+
+  apiRouter.post("/ai/wallet/query", async (req, res) => {
+    try {
+      const { userId, query, options = {} } = req.body;
+      if (!userId || !query) {
+        return res.status(400).json({ error: "userId and query required" });
+      }
+      
+      const response = await aiWalletAssistant.processNaturalLanguageQuery(userId, query, options);
+      res.json(response);
+    } catch (error) {
+      console.error('AI Wallet Query error:', error);
+      res.status(500).json({ error: "AI query failed", message: String(error) });
+    }
+  });
+
+  // AI Market Intelligence endpoints
+  apiRouter.get("/ai/market/overview", async (req, res) => {
+    try {
+      const options = {
+        timeframe: parseInt(req.query.timeframe as string) || 30,
+        includeForecasts: req.query.includeForecasts !== 'false'
+      };
+      
+      const overview = await aiMarketIntelligence.generateMarketOverview(options);
+      res.json(overview);
+    } catch (error) {
+      console.error('AI Market Overview error:', error);
+      res.status(500).json({ error: "Market analysis failed", message: String(error) });
+    }
+  });
+
+  apiRouter.post("/ai/market/pricing", async (req, res) => {
+    try {
+      const { contentType, contentId, currentPrice, options = {} } = req.body;
+      if (!contentType || !contentId) {
+        return res.status(400).json({ error: "contentType and contentId required" });
+      }
+      
+      const pricing = await aiMarketIntelligence.optimizePricing(contentType, contentId, currentPrice, options);
+      res.json(pricing);
+    } catch (error) {
+      console.error('AI Pricing Optimization error:', error);
+      res.status(500).json({ error: "Pricing optimization failed", message: String(error) });
+    }
+  });
+
+  // AI Chat Interface endpoints
+  apiRouter.post("/ai/chat", async (req, res) => {
+    try {
+      const { message, userId, context = {} } = req.body;
+      if (!message) {
+        return res.status(400).json({ error: "message required" });
+      }
+      
+      // Route to appropriate AI service based on context
+      let response;
+      if (context.type === 'wallet' && userId) {
+        response = await aiWalletAssistant.processNaturalLanguageQuery(userId, message, context);
+      } else if (context.type === 'market') {
+        response = await aiMarketIntelligence.generateMarketOverview({ query: message });
+      } else {
+        // Default to wallet assistant for general queries
+        response = {
+          type: 'query_response',
+          category: 'general',
+          confidence: 0.8,
+          data: {},
+          insights: [
+            "I can help you with Solar wallet management and market insights.",
+            "Try asking about your balance, recent transactions, or market trends."
+          ],
+          recommendations: []
+        };
+      }
+      
+      res.json(response);
+    } catch (error) {
+      console.error('AI Chat error:', error);
+      res.status(500).json({ error: "AI chat failed", message: String(error) });
+    }
+  });
+
+  // Progression and content access endpoints
+  apiRouter.post("/progression/start-timer", async (req, res) => {
+    try {
+      const { userId, sessionId, contentType, contentId, duration } = req.body;
+      
+      if (!contentType || !contentId || !duration) {
+        return res.status(400).json({ error: "contentType, contentId, and duration required" });
+      }
+      
+      // Store progression in database (implement with your storage)
+      const progression = {
+        id: `prog_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        userId: userId || null,
+        sessionId: sessionId || null,
+        contentType,
+        contentId,
+        status: 'timer_active',
+        timerStartTime: new Date().toISOString(),
+        timerEndTime: new Date(Date.now() + (duration * 1000)).toISOString(),
+        duration
+      };
+      
+      // TODO: Save to database via storage interface
+      
+      res.json(progression);
+    } catch (error) {
+      console.error('Start timer error:', error);
+      res.status(500).json({ error: "Timer start failed", message: String(error) });
+    }
+  });
+
+  apiRouter.post("/progression/:progressionId/complete", async (req, res) => {
+    try {
+      const { progressionId } = req.params;
+      
+      // TODO: Update progression status to 'timer_complete' in database
+      const progression = {
+        id: progressionId,
+        status: 'timer_complete',
+        completedAt: new Date().toISOString()
+      };
+      
+      res.json(progression);
+    } catch (error) {
+      console.error('Complete timer error:', error);
+      res.status(500).json({ error: "Timer completion failed", message: String(error) });
+    }
+  });
+
+  apiRouter.get("/content/access", async (req, res) => {
+    try {
+      const { contentType, contentId, userId, sessionId } = req.query;
+      
+      if (!contentType || !contentId) {
+        return res.status(400).json({ error: "contentType and contentId required" });
+      }
+      
+      // Check entitlements and progressions
+      // TODO: Implement actual database checks
+      const accessInfo = {
+        canAccess: true,
+        accessType: 'preview', // 'preview', 'timer_active', 'timer_complete', 'full'
+        solarCost: 50,
+        progression: null,
+        entitlement: null
+      };
+      
+      res.json(accessInfo);
+    } catch (error) {
+      console.error('Content access check error:', error);
+      res.status(500).json({ error: "Access check failed", message: String(error) });
+    }
+  });
+
+  apiRouter.post("/content/unlock", async (req, res) => {
+    try {
+      const { userId, contentType, contentId, solarCost } = req.body;
+      
+      if (!userId || !contentType || !contentId || !solarCost) {
+        return res.status(400).json({ error: "userId, contentType, contentId, and solarCost required" });
+      }
+      
+      // Server-side validation for content unlock
+      if (!userId || !contentType || !contentId || solarCost < 1) {
+        return res.status(400).json({ 
+          success: false,
+          error: "Invalid unlock request parameters" 
+        });
+      }
+      
+      // TODO: Implement actual balance check and deduction
+      // For now, simulate validation
+      const mockCurrentBalance = 1000;
+      if (mockCurrentBalance < solarCost) {
+        return res.status(400).json({ 
+          success: false,
+          error: "Insufficient Solar balance",
+          currentBalance: mockCurrentBalance,
+          requiredAmount: solarCost
+        });
+      }
+      
+      const newBalance = mockCurrentBalance - solarCost;
+      const result = {
+        success: true,
+        entitlement: {
+          id: `ent_${Date.now()}`,
+          userId,
+          contentType,
+          contentId,
+          accessType: 'full',
+          createdAt: new Date().toISOString()
+        },
+        newBalance,
+        transactionId: `txn_unlock_${Date.now()}`
+      };
+      
+      res.json(result);
+    } catch (error) {
+      console.error('Content unlock error:', error);
+      res.status(500).json({ error: "Content unlock failed", message: String(error) });
+    }
+  });
+
+  apiRouter.post("/user/register", async (req, res) => {
+    try {
+      const { email, firstName, lastName } = req.body;
+      
+      if (!email || !firstName || !lastName) {
+        return res.status(400).json({ error: "email, firstName, and lastName required" });
+      }
+      
+      // TODO: Create user and profile in database
+      const user = {
+        id: `user_${Date.now()}`,
+        email,
+        firstName,
+        lastName,
+        createdAt: new Date().toISOString()
+      };
+      
+      const profile = {
+        userId: user.id,
+        solarBalance: 1000, // Starting balance
+        totalEarned: 1000,
+        totalSpent: 0,
+        lastActivityAt: new Date().toISOString()
+      };
+      
+      res.json({ user, profile });
+    } catch (error) {
+      console.error('User registration error:', error);
+      res.status(500).json({ error: "Registration failed", message: String(error) });
+    }
+  });
+
+  apiRouter.get("/user/:userId/profile", async (req, res) => {
+    try {
+      const { userId } = req.params;
+      
+      // TODO: Get user profile from database
+      const profile = {
+        userId,
+        solarBalance: 1000,
+        totalEarned: 1000,
+        totalSpent: 0,
+        lastActivityAt: new Date().toISOString()
+      };
+      
+      res.json(profile);
+    } catch (error) {
+      console.error('Get profile error:', error);
+      res.status(500).json({ error: "Profile fetch failed", message: String(error) });
+    }
+  });
+
+  apiRouter.post("/user/:userId/topup", async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const { amount, stripePaymentIntentId } = req.body;
+      
+      if (!amount || !stripePaymentIntentId) {
+        return res.status(400).json({ error: "amount and stripePaymentIntentId required" });
+      }
+      
+      // TODO: Verify payment with Stripe and update balance
+      const profile = {
+        userId,
+        solarBalance: 1000 + amount, // Add to existing balance
+        totalEarned: 1000 + amount,
+        totalSpent: 0,
+        lastActivityAt: new Date().toISOString()
+      };
+      
+      const transaction = {
+        id: `txn_${Date.now()}`,
+        userId,
+        type: 'topup',
+        amount,
+        stripePaymentIntentId,
+        createdAt: new Date().toISOString()
+      };
+      
+      res.json({ profile, transaction });
+    } catch (error) {
+      console.error('Top-up error:', error);
+      res.status(500).json({ error: "Top-up failed", message: String(error) });
+    }
+  });
+
+  apiRouter.post("/session/create", async (req, res) => {
+    try {
+      const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      // TODO: Store session in database
+      
+      res.json({ sessionId });
+    } catch (error) {
+      console.error('Session creation error:', error);
+      res.status(500).json({ error: "Session creation failed", message: String(error) });
+    }
+  });
+
+  // Stripe payment intent creation
+  apiRouter.post("/payment/create-intent", async (req, res) => {
+    try {
+      const { amount, currency = 'usd', userId } = req.body;
+      
+      if (!amount || amount < 250) { // Minimum $2.50 (250 cents)
+        return res.status(400).json({ error: "Minimum amount is $2.50" });
+      }
+      
+      // TODO: Create Stripe payment intent
+      // For now, return a mock response
+      res.json({
+        client_secret: `pi_mock_${Date.now()}_secret_mock`,
+        amount,
+        currency
+      });
+    } catch (error) {
+      console.error('Payment intent creation error:', error);
+      res.status(500).json({ error: "Payment intent creation failed", message: String(error) });
+    }
   });
 
   // Enhanced conversation capture endpoint for Console Solar responses

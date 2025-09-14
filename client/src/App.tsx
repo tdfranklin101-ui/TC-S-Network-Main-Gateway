@@ -4,12 +4,14 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
+import TimerProgressionDemo from "@/pages/TimerProgressionDemo";
 import { useEffect } from "react";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/demo" component={TimerProgressionDemo} />
       {/* Fallback to 404 */}
       <Route component={NotFound} />
     </Switch>

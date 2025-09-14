@@ -12,6 +12,10 @@ const cors = require('cors');
 const { Pool } = require('pg');
 const schedule = require('node-schedule');
 
+// Timer-gated progression tracking (in-memory for demo)
+const userProgressions = new Map(); // sessionId -> { completedTimers: Set, payments: Set }
+const premiumTracks = new Set([7, 8, 9]); // "Starlight Forever", "Light It From Within", "Moonshine in St Kitts"
+
 // Constants
 const PORT = process.env.PORT || 3000;
 const HOST = '0.0.0.0';
@@ -2038,6 +2042,77 @@ function generateLandingPage() {
 </body>
 </html>`;
 }
+
+// Timer-gated progression API endpoints
+app.post('/api/progression/start/:trackId', (req, res) => {
+  const sessionId = req.headers['x-session-id'] || req.ip;
+  const trackId = parseInt(req.params.trackId);
+  
+  if (!userProgressions.has(sessionId)) {
+    userProgressions.set(sessionId, { completedTimers: new Set(), payments: new Set() });
+  }
+  
+  res.json({ success: true, message: 'Timer started', trackId });
+});
+
+app.post('/api/progression/complete/:trackId', (req, res) => {
+  const sessionId = req.headers['x-session-id'] || req.ip;
+  const trackId = parseInt(req.params.trackId);
+  
+  if (!userProgressions.has(sessionId)) {
+    userProgressions.set(sessionId, { completedTimers: new Set(), payments: new Set() });
+  }
+  
+  userProgressions.get(sessionId).completedTimers.add(trackId);
+  res.json({ success: true, message: 'Timer completed', trackId, canAccess: true });
+});
+
+app.post('/api/payment/solar/:trackId', (req, res) => {
+  const sessionId = req.headers['x-session-id'] || req.ip;
+  const trackId = parseInt(req.params.trackId);
+  
+  if (!userProgressions.has(sessionId)) {
+    userProgressions.set(sessionId, { completedTimers: new Set(), payments: new Set() });
+  }
+  
+  userProgressions.get(sessionId).payments.add(trackId);
+  res.json({ success: true, message: 'Payment completed', trackId, canAccess: true });
+});
+
+app.get('/api/content/access/:trackId', (req, res) => {
+  const sessionId = req.headers['x-session-id'] || req.ip;
+  const trackId = parseInt(req.params.trackId);
+  
+  if (!premiumTracks.has(trackId)) {
+    return res.json({ canAccess: true, reason: 'Free track' });
+  }
+  
+  const progression = userProgressions.get(sessionId);
+  if (!progression) {
+    return res.json({ canAccess: false, reason: 'No progression data' });
+  }
+  
+  const canAccess = progression.completedTimers.has(trackId) || progression.payments.has(trackId);
+  res.json({ canAccess, reason: canAccess ? 'Authorized' : 'Timer not completed or payment not made' });
+});
+
+// Basic AI endpoints for demonstration
+app.post('/api/ai/wallet/analysis', (req, res) => {
+  res.json({
+    healthScore: 85,
+    spendingPattern: 'optimal',
+    recommendation: 'Your Solar spending is well balanced. Consider exploring more music tracks!',
+    balance: 1.5
+  });
+});
+
+app.post('/api/ai/chat', (req, res) => {
+  const { message } = req.body;
+  res.json({
+    response: `I understand you said: "${message}". As your AI wallet assistant, I can help with Solar balance, payments, and music recommendations!`,
+    suggestions: ['Check Solar balance', 'Get payment help', 'Find new music']
+  });
+});
 
 // Root route that serves index.html or generates one
 app.get('/', (req, res) => {
