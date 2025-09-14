@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { storage } from '../storage';
+import session from 'express-session';
 
-// Extend Request interface to include user information
+// Extend Request interface to include user information and session
 declare module 'express-serve-static-core' {
   interface Request {
     user?: {
@@ -10,6 +11,11 @@ declare module 'express-serve-static-core' {
       firstName?: string;
       lastName?: string;
     };
+    session: session.Session & {
+      userId?: string;
+      id?: string;
+    };
+    sessionID: string;
   }
 }
 

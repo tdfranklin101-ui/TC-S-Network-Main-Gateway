@@ -86,6 +86,7 @@ export interface IStorage {
     solarCost?: number;
     progression?: Progression;
     entitlement?: Entitlement;
+    userBalance?: number;
   }>;
   unlockContentWithPayment(userId: string, contentType: string, contentId: string, solarCost: number): Promise<{
     success: boolean;
@@ -457,14 +458,23 @@ export class DatabaseStorage implements IStorage {
     solarCost?: number;
     progression?: Progression;
     entitlement?: Entitlement;
+    userBalance?: number;
   }> {
+    // Get user balance if userId is provided
+    let userBalance: number | undefined;
+    if (userId) {
+      const userProfile = await this.getUserProfile(userId);
+      userBalance = userProfile?.solarBalance ?? undefined;
+    }
+
     // Check for existing entitlement
     const entitlement = await this.getEntitlement(userId, sessionId, contentType, contentId);
     if (entitlement && entitlement.accessType === 'full') {
       return {
         canAccess: true,
         accessType: 'full',
-        entitlement
+        entitlement,
+        userBalance
       };
     }
 
@@ -475,7 +485,8 @@ export class DatabaseStorage implements IStorage {
     if (!contentItem) {
       return {
         canAccess: false,
-        accessType: 'locked'
+        accessType: 'locked',
+        userBalance
       };
     }
 
@@ -484,7 +495,8 @@ export class DatabaseStorage implements IStorage {
       return {
         canAccess: true,
         accessType: 'preview',
-        solarCost: contentItem.solarCost || 0
+        solarCost: contentItem.solarCost || 0,
+        userBalance
       };
     }
 
@@ -499,7 +511,8 @@ export class DatabaseStorage implements IStorage {
           canAccess: true,
           accessType: 'timer_active',
           timeRemaining,
-          progression
+          progression,
+          userBalance
         };
       } else {
         // Timer expired, update status
@@ -508,7 +521,8 @@ export class DatabaseStorage implements IStorage {
           canAccess: true,
           accessType: 'timer_complete',
           solarCost: contentItem.solarCost || 0,
-          progression
+          progression,
+          userBalance
         };
       }
     }
@@ -518,7 +532,8 @@ export class DatabaseStorage implements IStorage {
         canAccess: true,
         accessType: 'timer_complete',
         solarCost: contentItem.solarCost || 0,
-        progression
+        progression,
+        userBalance
       };
     }
 
@@ -526,7 +541,8 @@ export class DatabaseStorage implements IStorage {
       return {
         canAccess: true,
         accessType: 'full',
-        progression
+        progression,
+        userBalance
       };
     }
 
@@ -534,7 +550,8 @@ export class DatabaseStorage implements IStorage {
     return {
       canAccess: true,
       accessType: 'preview',
-      solarCost: contentItem.solarCost || 0
+      solarCost: contentItem.solarCost || 0,
+      userBalance
     };
   }
 

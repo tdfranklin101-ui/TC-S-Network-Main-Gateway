@@ -1,7 +1,23 @@
 import { Router } from 'express';
 import { storage } from '../storage';
-import { insertProgressionSchema, insertEntitlementSchema, insertTransactionSchema, insertUserSchema, insertUserProfileSchema } from '@shared/schema';
+import { insertProgressionSchema, insertEntitlementSchema, insertTransactionSchema, insertUserProfileSchema, users } from '@shared/schema';
+import { createInsertSchema } from 'drizzle-zod';
 import { z } from 'zod';
+import session from 'express-session';
+
+// Create the missing insertUserSchema
+const insertUserSchema = createInsertSchema(users);
+
+// Extend Request interface to include session
+declare module 'express-serve-static-core' {
+  interface Request {
+    session: session.Session & {
+      userId?: string;
+      id?: string;
+    };
+    sessionID: string;
+  }
+}
 
 const router = Router();
 
