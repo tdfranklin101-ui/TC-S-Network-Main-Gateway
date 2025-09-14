@@ -192,19 +192,8 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Session middleware configuration
-let sessionStore;
-if (pool) {
-  const PgSession = connectPgSimple(session);
-  sessionStore = new PgSession({
-    pool: pool,
-    tableName: 'user_sessions',
-    createTableIfMissing: true
-  });
-} else {
-  // Use memory store for development when no database
-  sessionStore = new session.MemoryStore();
-}
+// Session middleware configuration (will be initialized after pool)
+let sessionStore = new session.MemoryStore(); // Default to memory store
 
 app.use(session({
   secret: process.env.SESSION_SECRET || 'solar-timer-progression-secret-key-2025',

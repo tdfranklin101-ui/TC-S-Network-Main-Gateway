@@ -76,7 +76,7 @@ export async function enforceContentAccess(contentType: string, contentId: strin
         options: {
           timer: !userId ? 'Register first to start timer' : 'Start timer progression',
           payment: !userId ? 'Register first to pay with Solar' : `Pay ${accessInfo.solarCost} Solar tokens`,
-          topup: !userId ? 'Register for Stripe top-up' : 'Top up Solar with Stripe'
+          topup: !userId ? 'Register for additional Solar' : 'Earn more Solar daily or through platform activities'
         }
       });
 
