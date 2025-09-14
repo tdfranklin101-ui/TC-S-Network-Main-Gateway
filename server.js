@@ -343,6 +343,129 @@ app.get('/embedded-members', (req, res) => {
   res.json(members);
 });
 
+// World ID Human Verification endpoint
+app.post('/api/verify-world-id', async (req, res) => {
+  try {
+    console.log('Received World ID verification request:', req.body);
+    
+    const {
+      nullifier_hash,
+      merkle_root,
+      proof,
+      verification_level,
+      action,
+      signal_hash
+    } = req.body;
+    
+    // Validate required fields
+    if (!nullifier_hash || !merkle_root || !proof || !verification_level || !action) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required verification fields'
+      });
+    }
+    
+    // Verify with World ID API
+    const worldIdResponse = await fetch('https://developer.worldcoin.org/api/v2/verify/app_staging_3a3e7e1f4c6b9c8a2b1d0e5f', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': 'TC-S-Network/1.0'
+      },
+      body: JSON.stringify({
+        nullifier_hash,
+        merkle_root,
+        proof,
+        verification_level,
+        action,
+        signal_hash: signal_hash || ''
+      })
+    });
+    
+    const worldIdResult = await worldIdResponse.json();
+    
+    if (worldIdResponse.ok && worldIdResult.success) {
+      // Store verification in database or memory
+      const verificationRecord = {
+        nullifier_hash,
+        verification_level,
+        action,
+        verified_at: new Date().toISOString(),
+        signal_hash: signal_hash || null
+      };
+      
+      // For now, store in memory (in production, use database)
+      if (!global.worldIdVerifications) {
+        global.worldIdVerifications = new Map();
+      }
+      global.worldIdVerifications.set(nullifier_hash, verificationRecord);
+      
+      console.log('World ID verification successful:', {
+        nullifier_hash,
+        verification_level,
+        action
+      });
+      
+      res.json({
+        success: true,
+        verification_level,
+        nullifier_hash,
+        verified: true,
+        message: 'Human verification successful with World ID'
+      });
+      
+    } else {
+      console.error('World ID verification failed:', worldIdResult);
+      res.status(400).json({
+        success: false,
+        error: worldIdResult.detail || 'World ID verification failed',
+        code: worldIdResult.code || 'VERIFICATION_FAILED'
+      });
+    }
+    
+  } catch (error) {
+    console.error('World ID verification error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error during verification',
+      message: error.message
+    });
+  }
+});
+
+// Get World ID verification status
+app.get('/api/world-id-status/:nullifier_hash', (req, res) => {
+  try {
+    const { nullifier_hash } = req.params;
+    
+    if (!global.worldIdVerifications) {
+      return res.json({ verified: false, exists: false });
+    }
+    
+    const verification = global.worldIdVerifications.get(nullifier_hash);
+    
+    if (verification) {
+      res.json({
+        verified: true,
+        exists: true,
+        verification_level: verification.verification_level,
+        verified_at: verification.verified_at,
+        action: verification.action
+      });
+    } else {
+      res.json({ verified: false, exists: false });
+    }
+    
+  } catch (error) {
+    console.error('Error checking World ID status:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      verified: false,
+      exists: false
+    });
+  }
+});
+
 app.get('/api/members-data', (req, res) => {
   // Alternative endpoint for JSONP callback support
   updateMemberDistributions();
