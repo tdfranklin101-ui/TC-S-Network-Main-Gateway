@@ -108,25 +108,7 @@
             color: black;
         }
         
-        .track-button.locked {
-            background: linear-gradient(135deg, #666, #444);
-            cursor: not-allowed;
-            opacity: 0.7;
-            position: relative;
-        }
-        
-        .track-button.locked::after {
-            content: '🔒';
-            position: absolute;
-            right: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-        }
-        
-        .track-button.locked:hover {
-            background: linear-gradient(135deg, #666, #444);
-            transform: none;
-        }
+        /* No locked styles needed - all tracks free for streaming */
         
         .modal {
             display: none;
@@ -250,11 +232,11 @@
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 600px; margin: 0 auto;">
                 <div style="background: rgba(40,167,69,0.2); padding: 15px; border-radius: 8px; border: 1px solid #28a745;">
                     <h4 style="color: #28a745; margin: 0 0 10px 0;">🎵 STREAMING</h4>
-                    <p style="margin: 0; color: white; font-size: 14px;">• All tracks stream FREE<br>• No timers or restrictions<br>• Instant access to full catalog<br>• AI recommendations included</p>
+                    <p style="margin: 0; color: white; font-size: 14px;">• All tracks stream FREE<br>• No timers, no restrictions, no limits<br>• Unlimited replays and full catalog access<br>• AI recommendations included</p>
                 </div>
                 <div style="background: rgba(255,193,7,0.2); padding: 15px; border-radius: 8px; border: 1px solid #ffc107;">
                     <h4 style="color: #ffc107; margin: 0 0 10px 0;">💾 DOWNLOADS</h4>
-                    <p style="margin: 0; color: white; font-size: 14px;">• Offline access requires Solar<br>• Permanent file ownership<br>• Support artist & platform<br>• Available at market link below</p>
+                    <p style="margin: 0; color: white; font-size: 14px;">• Offline downloads require Solar registration<br>• Permanent file ownership through Solar market<br>• Support artist & platform<br>• Register at solar-artifacts-tdfranklin101.replit.app</p>
                 </div>
             </div>
         </div>
@@ -463,15 +445,15 @@
     <!-- Wallet Modal -->
     <div id="walletModal" class="modal">
         <div class="modal-content">
-            <h2>🔒 Track Locked</h2>
-            <p>You've already enjoyed your free preview of this track!</p>
-            <p>To continue listening or download, trade your <strong>Solar tokens</strong> at solar-artifacts-tdfranklin101.replit.app:</p>
+            <h2>💾 Download Available</h2>
+            <p>Streaming is completely FREE with unlimited replays!</p>
+            <p>For offline downloads, register for Solar tokens at solar-artifacts-tdfranklin101.replit.app:</p>
             <div style="background: rgba(255,140,0,0.1); padding: 15px; border-radius: 10px; margin: 20px 0; border: 2px solid #ff8c00;">
-                <p style="margin: 0; color: #ff8c00; font-weight: bold;">💰 Track Cost: S0.1000 Solar</p>
-                <p style="margin: 5px 0 0 0; font-size: 14px;">Full access for listening & download</p>
+                <p style="margin: 0; color: #ff8c00; font-weight: bold;">💾 Download Cost: S0.1000 Solar</p>
+                <p style="margin: 5px 0 0 0; font-size: 14px;">Streaming is FREE - Download requires Solar registration</p>
                 <p style="margin: 8px 0 0 0; color: #ffff00; font-size: 13px; font-weight: bold;">⚡ Don't have Solar? Get 1 free per day!</p>
-                <div style="margin: 10px 0; padding: 8px; background: rgba(255,0,0,0.1); border-radius: 6px; border: 1px solid #ff6b6b;">
-                  <p style="margin: 0; color: #ff6b6b; font-size: 11px; font-weight: bold;">🔒 Server Protection: Premium tracks require timer completion or Solar payment</p>
+                <div style="margin: 10px 0; padding: 8px; background: rgba(40,167,69,0.1); border-radius: 6px; border: 1px solid #28a745;">
+                  <p style="margin: 0; color: #28a745; font-size: 11px; font-weight: bold;">🎵 Streaming is completely FREE! Downloads require Solar registration.</p>
                 </div>
             </div>
             <div class="modal-buttons">
@@ -542,18 +524,12 @@
         }
         
         function updateTrackButtons() {
+            // NO RESTRICTIONS - ALL TRACKS ALWAYS AVAILABLE FOR STREAMING
             const buttons = document.querySelectorAll('.track-button');
             buttons.forEach((button, index) => {
-                if (isTrackPlayed(index)) {
-                    button.classList.add('locked');
-                    if (index === 19) {
-                        // Bonus track gets special modal
-                        button.onclick = () => showBonusTrackModal();
-                    } else {
-                        // Regular tracks get standard modal
-                        button.onclick = () => showWalletModal(index);
-                    }
-                }
+                button.classList.remove('locked');
+                // Ensure all buttons work for streaming
+                button.onclick = () => playTrack(index);
             });
         }
         
@@ -567,22 +543,22 @@
             const modalContent = modal.querySelector('.modal-content');
             
             modalContent.innerHTML = `
-                <h2>📻 Like Radio - One Full Play Complete!</h2>
+                <h2>🎵 Free Streaming Available!</h2>
                 <div style="margin: 20px 0;">
                     <h3 style="color: #ffd700; margin-bottom: 15px;">❄️ Snowmancer One</h3>
-                    <p>You've enjoyed your full radio-style listen of this exclusive winter soundscape!</p>
-                    <p>For unlimited access and download rights, trade Solar tokens only - <strong>no cash or credit cards required</strong>.</p>
+                    <p>Stream this track unlimited times for FREE!</p>
+                    <p>For offline downloads, register for Solar tokens - <strong>no cash or credit cards required</strong>.</p>
                 </div>
                 <div style="background: rgba(255,215,0,0.1); padding: 15px; border-radius: 10px; margin: 20px 0; border: 2px solid #ffd700;">
-                    <p style="margin: 0; color: #ffd700; font-weight: bold;">💰 Unlimited Access: S0.0250 Solar</p>
-                    <p style="margin: 5px 0 0 0; font-size: 14px;">Solar tokens only - pure digital currency trading</p>
+                    <p style="margin: 0; color: #ffd700; font-weight: bold;">💾 Download Access: S0.0250 Solar</p>
+                    <p style="margin: 5px 0 0 0; font-size: 14px;">Streaming FREE - Downloads through Solar registration only</p>
                 </div>
                 <div style="background: rgba(40,167,69,0.1); padding: 10px; border-radius: 8px; margin: 15px 0; border: 1px solid #28a745;">
-                    <p style="margin: 0; color: #28a745; font-size: 14px; font-weight: bold;">✅ 100% Solar Token Economy</p>
-                    <p style="margin: 3px 0 0 0; font-size: 12px; color: #ffffff;">No traditional payment methods needed</p>
+                    <p style="margin: 0; color: #28a745; font-size: 14px; font-weight: bold;">✅ 100% Free Streaming</p>
+                    <p style="margin: 3px 0 0 0; font-size: 12px; color: #ffffff;">No restrictions, no timers, unlimited replays</p>
                 </div>
                 <div class="modal-buttons">
-                    <button class="modal-button wallet-button" data-testid="button-trade-solar-bonus" onclick="goToWallet()">🚀 Get & Trade Solar at solar-artifacts-tdfranklin101.replit.app</button>
+                    <button class="modal-button wallet-button" data-testid="button-trade-solar-bonus" onclick="goToWallet()">🚀 Get Solar for Downloads at solar-artifacts-tdfranklin101.replit.app</button>
                     <button class="modal-button close-button" data-testid="button-close-modal" onclick="closeModal()">Cancel</button>
                 </div>
             `;
@@ -599,21 +575,18 @@
             closeModal();
         }
         
-        // Initialize track button states when page loads
-        window.addEventListener('load', updateTrackButtons);
+        // Initialize track button states when page loads - ensure no restrictions
+        window.addEventListener('load', function() {
+            // Remove any existing locks and ensure all tracks are playable
+            const buttons = document.querySelectorAll('.track-button');
+            buttons.forEach((button, index) => {
+                button.classList.remove('locked');
+                button.onclick = () => playTrack(index);
+            });
+        });
 
         function playTrack(index) {
-            // Check if track was already played
-            if (isTrackPlayed(index)) {
-                if (index === 19) {
-                    // Bonus track gets special modal
-                    showBonusTrackModal();
-                } else {
-                    // Regular tracks get standard modal
-                    showWalletModal(index);
-                }
-                return;
-            }
+            // FREE STREAMING - NO RESTRICTIONS!
             const player = document.getElementById('audioPlayer');
             const nowPlaying = document.getElementById('nowPlaying');
             const trackName = document.getElementById('trackName');
@@ -625,14 +598,6 @@
             // Update display
             trackName.textContent = trackNames[index];
             nowPlaying.style.display = 'block';
-            
-            // Mark track as played after a few seconds of listening
-            player.addEventListener('timeupdate', function markAsPlayed() {
-                if (player.currentTime > 30) { // After 30 seconds
-                    markTrackPlayed(index);
-                    player.removeEventListener('timeupdate', markAsPlayed);
-                }
-            });
             
             // Try to play (may be blocked by autoplay policy)
             player.play().catch(() => {
