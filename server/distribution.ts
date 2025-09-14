@@ -35,15 +35,22 @@ export function setupDistributionRoutes(app: any) {
         return res.status(404).json({ error: "Solar account not found" });
       }
       
-      // Calculate accurate SOLAR balance based on join date (1 SOLAR per day + initial 0.01918)
+      // Calculate accurate SOLAR balance based on protocol: Genesis (April 7, 2025) OR user's birthday (whichever is later)
       const today = new Date();
-      // Ensure joinedDate is not null
-      const joinDateValue = solarAccount.joinedDate ? solarAccount.joinedDate.toString() : '2025-04-10';
-      const joinDate = new Date(joinDateValue);
-      // Calculate difference in time
-      const timeDiff = today.getTime() - joinDate.getTime();
-      // Calculate days difference (rounded down)
-      const daysDiff = Math.floor(timeDiff / (1000 * 3600 * 24));
+      const genesisDate = new Date('2025-04-07'); // Solar generation genesis date
+      
+      // For now, use joinedDate as proxy for birthday until birthday field is added to schema
+      // TODO: Replace with actual birthday when user profile includes birthday field
+      const userBirthdayValue = solarAccount.joinedDate ? solarAccount.joinedDate.toString() : '2025-04-10';
+      const userBirthday = new Date(userBirthdayValue);
+      
+      // Protocol: Accumulation starts from whichever is later - Genesis OR birthday
+      const accumulationStartDate = genesisDate > userBirthday ? genesisDate : userBirthday;
+      
+      // Calculate difference in time from accumulation start date
+      const timeDiff = today.getTime() - accumulationStartDate.getTime();
+      // Calculate days difference (rounded down) - cannot be negative
+      const daysDiff = Math.max(0, Math.floor(timeDiff / (1000 * 3600 * 24)));
       // 1 SOLAR per day + 0.01918 initial bonus
       const calculatedSolar = daysDiff + 0.01918;
       
@@ -148,16 +155,23 @@ export function setupDistributionRoutes(app: any) {
         return res.json([TERRY_DEFAULT_ACCOUNT]);
       }
       
-      // Calculate accurate SOLAR balances based on join date (1 SOLAR per day + initial 0.01918)
+      // Calculate accurate SOLAR balances based on protocol: Genesis (April 7, 2025) OR user's birthday (whichever is later)
       const today = new Date();
+      const genesisDate = new Date('2025-04-07'); // Solar generation genesis date
+      
       solarAccounts = solarAccounts.map(account => {
-        // Ensure joinedDate is not null
-        const joinDateValue = account.joinedDate ? account.joinedDate.toString() : '2025-04-10'; // Default to April 10 if null
-        const joinDate = new Date(joinDateValue);
-        // Calculate difference in time
-        const timeDiff = today.getTime() - joinDate.getTime();
-        // Calculate days difference (rounded down)
-        const daysDiff = Math.floor(timeDiff / (1000 * 3600 * 24));
+        // For now, use joinedDate as proxy for birthday until birthday field is added to schema
+        // TODO: Replace with actual birthday when user profile includes birthday field
+        const userBirthdayValue = account.joinedDate ? account.joinedDate.toString() : '2025-04-10'; // Default to April 10 if null
+        const userBirthday = new Date(userBirthdayValue);
+        
+        // Protocol: Accumulation starts from whichever is later - Genesis OR birthday
+        const accumulationStartDate = genesisDate > userBirthday ? genesisDate : userBirthday;
+        
+        // Calculate difference in time from accumulation start date
+        const timeDiff = today.getTime() - accumulationStartDate.getTime();
+        // Calculate days difference (rounded down) - cannot be negative
+        const daysDiff = Math.max(0, Math.floor(timeDiff / (1000 * 3600 * 24)));
         // 1 SOLAR per day + 0.01918 initial bonus
         const calculatedSolar = daysDiff + 0.01918;
         
