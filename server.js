@@ -14,9 +14,7 @@ const { Pool } = require('pg');
 const schedule = require('node-schedule');
 const connectPgSimple = require('connect-pg-simple');
 
-// Timer-gated progression tracking (in-memory for demo)
-const userProgressions = new Map(); // sessionId -> { completedTimers: Set, payments: Set }
-const premiumTracks = new Set([7, 8, 9]); // "Starlight Forever", "Light It From Within", "Moonshine in St Kitts"
+// Timer-gated progression removed - all tracks now stream freely
 
 // Constants
 const PORT = process.env.PORT || 3000;
@@ -196,7 +194,7 @@ app.use(express.urlencoded({ extended: true }));
 let sessionStore = new session.MemoryStore(); // Default to memory store
 
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'solar-timer-progression-secret-key-2025',
+  secret: process.env.SESSION_SECRET || 'solar-streaming-secret-key-2025',
   resave: false,
   saveUninitialized: true,
   store: sessionStore,
@@ -2064,58 +2062,10 @@ function generateLandingPage() {
 </html>`;
 }
 
-// Timer-gated progression API endpoints
-app.post('/api/progression/start/:trackId', (req, res) => {
-  const sessionId = req.session.id;
-  const trackId = parseInt(req.params.trackId);
-  
-  if (!userProgressions.has(sessionId)) {
-    userProgressions.set(sessionId, { completedTimers: new Set(), payments: new Set() });
-  }
-  
-  res.json({ success: true, message: 'Timer started', trackId });
-});
+// Timer-gated progression API endpoints removed - streaming is now free
 
-app.post('/api/progression/complete/:trackId', (req, res) => {
-  const sessionId = req.session.id;
-  const trackId = parseInt(req.params.trackId);
-  
-  if (!userProgressions.has(sessionId)) {
-    userProgressions.set(sessionId, { completedTimers: new Set(), payments: new Set() });
-  }
-  
-  userProgressions.get(sessionId).completedTimers.add(trackId);
-  res.json({ success: true, message: 'Timer completed', trackId, canAccess: true });
-});
 
-app.post('/api/payment/solar/:trackId', (req, res) => {
-  const sessionId = req.session.id;
-  const trackId = parseInt(req.params.trackId);
-  
-  if (!userProgressions.has(sessionId)) {
-    userProgressions.set(sessionId, { completedTimers: new Set(), payments: new Set() });
-  }
-  
-  userProgressions.get(sessionId).payments.add(trackId);
-  res.json({ success: true, message: 'Payment completed', trackId, canAccess: true });
-});
 
-app.get('/api/content/access/:trackId', (req, res) => {
-  const sessionId = req.session.id;
-  const trackId = parseInt(req.params.trackId);
-  
-  if (!premiumTracks.has(trackId)) {
-    return res.json({ canAccess: true, reason: 'Free track' });
-  }
-  
-  const progression = userProgressions.get(sessionId);
-  if (!progression) {
-    return res.json({ canAccess: false, reason: 'No progression data' });
-  }
-  
-  const canAccess = progression.completedTimers.has(trackId) || progression.payments.has(trackId);
-  res.json({ canAccess, reason: canAccess ? 'Authorized' : 'Timer not completed or payment not made' });
-});
 
 // Basic AI endpoints for demonstration
 app.post('/api/ai/wallet/analysis', (req, res) => {
