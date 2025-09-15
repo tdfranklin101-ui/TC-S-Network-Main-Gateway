@@ -6,6 +6,9 @@ const url = require('url');
 const fetch = require('node-fetch');
 // const { ObjectStorageService } = require('./server/objectStorage'); // Disabled for stable Music Now service
 
+// Import seed rotation system
+const { initializeSeedRotation, getSeedRotator } = require('./server/seed-rotation-api');
+
 const PORT = process.env.PORT || 3000;
 
 // Database setup (non-blocking fallback)
@@ -234,6 +237,199 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // SEED ROTATION API ENDPOINTS - SECURED
+  
+  // Authentication helper for seed rotation endpoints
+  function authenticateSeedRotationRequest(req) {
+    const authHeader = req.headers.authorization;
+    const expectedToken = process.env.SEED_ROTATION_API_TOKEN || process.env.ADMIN_API_TOKEN;
+    
+    if (!expectedToken) {
+      console.warn('🔐 SECURITY WARNING: No SEED_ROTATION_API_TOKEN or ADMIN_API_TOKEN configured - blocking all seed rotation requests');
+      return false;
+    }
+    
+    if (!authHeader) {
+      return false;
+    }
+    
+    const token = authHeader.startsWith('Bearer ') 
+      ? authHeader.substring(7) 
+      : authHeader;
+    
+    return token === expectedToken;
+  }
+
+  // Get seed rotation status (read-only, but still secured)
+  if (pathname === '/api/seed-rotation/status' && req.method === 'GET') {
+    if (!authenticateSeedRotationRequest(req)) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: false,
+        error: 'Unauthorized',
+        message: 'Valid authentication token required for seed rotation endpoints'
+      }));
+      return;
+    }
+    
+    try {
+      const rotator = getSeedRotator();
+      const status = rotator.getStatus();
+      
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        status: status,
+        message: 'Seed rotation status retrieved successfully'
+      }));
+    } catch (error) {
+      console.error('Error getting seed rotation status:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: false,
+        error: 'Failed to get seed rotation status',
+        message: error.message
+      }));
+    }
+    return;
+  }
+
+  // DANGEROUS ENDPOINT - SECURED: Trigger seed rotation manually
+  if (pathname === '/api/seed-rotation/trigger' && req.method === 'POST') {
+    if (!authenticateSeedRotationRequest(req)) {
+      console.warn(`🚨 SECURITY ALERT: Unauthorized attempt to trigger seed rotation from ${req.headers['x-forwarded-for'] || req.connection.remoteAddress}`);
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: false,
+        error: 'Unauthorized',
+        message: 'Valid authentication token required for seed rotation trigger'
+      }));
+      return;
+    }
+    
+    try {
+      const rotator = getSeedRotator();
+      
+      if (rotator.isRotating) {
+        res.writeHead(409, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: false,
+          error: 'Rotation already in progress',
+          message: 'Please wait for the current rotation to complete'
+        }));
+        return;
+      }
+
+      console.log('🔧 Manual seed rotation triggered via API');
+      const result = await rotator.triggerRotation();
+      
+      if (result) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: true,
+          message: 'Seed rotation completed successfully',
+          timestamp: new Date().toISOString()
+        }));
+      } else {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: false,
+          error: 'Rotation failed',
+          message: 'Check server logs for details'
+        }));
+      }
+    } catch (error) {
+      console.error('Error triggering seed rotation:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: false,
+        error: 'Failed to trigger seed rotation',
+        message: error.message
+      }));
+    }
+    return;
+  }
+
+  // SECURED: Get seed rotation logs (contains sensitive system info)
+  if (pathname === '/api/seed-rotation/logs' && req.method === 'GET') {
+    if (!authenticateSeedRotationRequest(req)) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: false,
+        error: 'Unauthorized',
+        message: 'Valid authentication token required for seed rotation logs'
+      }));
+      return;
+    }
+    
+    try {
+      const rotator = getSeedRotator();
+      const status = rotator.getStatus();
+      
+      const urlParams = new URL(req.url, `http://${req.headers.host}`);
+      const limit = parseInt(urlParams.searchParams.get('limit')) || 50;
+      const logs = status.recentLogs.slice(-limit);
+      
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        logs: logs,
+        total: status.recentLogs.length,
+        limit: limit
+      }));
+    } catch (error) {
+      console.error('Error getting rotation logs:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: false,
+        error: 'Failed to get rotation logs',
+        message: error.message
+      }));
+    }
+    return;
+  }
+
+  // Get available seeds information (public info, but still secured for consistency)
+  if (pathname === '/api/seed-rotation/seeds' && req.method === 'GET') {
+    if (!authenticateSeedRotationRequest(req)) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: false,
+        error: 'Unauthorized',
+        message: 'Valid authentication token required for seed rotation endpoints'
+      }));
+      return;
+    }
+    
+    try {
+      const seedDatabase = require('./server/seed-database');
+      const allSeeds = seedDatabase.getAllSeeds();
+      const categories = Object.keys(seedDatabase.SEED_DATABASE);
+      
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        data: {
+          totalSeeds: allSeeds.length,
+          categories: categories,
+          categoryCounts: categories.reduce((acc, category) => {
+            acc[category] = seedDatabase.SEED_DATABASE[category].length;
+            return acc;
+          }, {})
+        }
+      }));
+    } catch (error) {
+      console.error('Error getting seed information:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: false,
+        error: 'Failed to get seed information',
+        message: error.message
+      }));
+    }
+    return;
+  }
+
   // Root path - serve homepage and act as health check
   if (pathname === '/') {
     const indexPath = path.join(__dirname, 'public', 'index.html');
@@ -445,6 +641,17 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`🤖 D-ID Agent: Kid Solar ready`);
   console.log(`📱 Mobile responsive: Enabled`);
   console.log(`🔗 Links: Q&A and waitlist working`);
+  
+  // Initialize Seed Rotation System
+  try {
+    initializeSeedRotation();
+    console.log(`🌱 Seed Rotation System: Active (24h auto-rotation enabled)`);
+    console.log(`🌱 Seed Rotation API: http://localhost:${PORT}/api/seed-rotation/status`);
+    console.log(`🔧 Manual trigger: POST http://localhost:${PORT}/api/seed-rotation/trigger`);
+  } catch (error) {
+    console.error(`⚠️ Seed Rotation System failed to initialize:`, error.message);
+  }
+  
   console.log(`🚀 CLOUD RUN READY - SINGLE PORT CONFIGURATION`);
 }).on('error', (err) => {
   if (err.code === 'EADDRINUSE') {
