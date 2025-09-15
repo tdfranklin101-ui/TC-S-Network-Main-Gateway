@@ -18,52 +18,67 @@ class SeedRotator {
     this.isRotating = false;
     this.logFile = path.join(__dirname, '../logs/seed-rotation.log');
     this.backupDir = path.join(__dirname, '../backups/seed-rotation');
+    this.initializationError = null;
     
-    // Performance and feature flags from environment
-    this.config = {
-      // Rotation frequency (in days)
-      rotationInterval: parseInt(process.env.SEED_ROTATION_INTERVAL_DAYS) || 3,
+    try {
+      // Performance and feature flags from environment
+      this.config = {
+        // Rotation frequency (in days)
+        rotationInterval: parseInt(process.env.SEED_ROTATION_INTERVAL_DAYS) || 3,
+        
+        // Maximum targets to modify per file
+        maxTargetsPerFile: parseInt(process.env.SEED_MAX_TARGETS_PER_FILE) || 5,
+        
+        // Enable/disable OpenAI for rotation planning
+        useOpenAI: process.env.SEED_USE_OPENAI !== 'false',
+        
+        // Enable/disable automatic scheduling
+        enableScheduling: process.env.ENABLE_SEED_ROTATION_SCHEDULING !== 'false',
+        
+        // Dry run mode for testing
+        dryRun: process.env.SEED_ROTATION_DRY_RUN === 'true',
+        
+        // Stagger rotations across files
+        enableStaggering: process.env.SEED_ENABLE_STAGGERING !== 'false',
+        
+        // Maximum HTML files to process in one rotation
+        maxFilesPerRotation: parseInt(process.env.SEED_MAX_FILES_PER_ROTATION) || 10
+      };
       
-      // Maximum targets to modify per file
-      maxTargetsPerFile: parseInt(process.env.SEED_MAX_TARGETS_PER_FILE) || 5,
+      // Ensure directories exist (with error handling)
+      this.ensureDirectories();
       
-      // Enable/disable OpenAI for rotation planning
-      useOpenAI: process.env.SEED_USE_OPENAI !== 'false',
+      // Load previous rotation state if available (with error handling)
+      this.loadRotationState();
       
-      // Enable/disable automatic scheduling
-      enableScheduling: process.env.ENABLE_SEED_ROTATION_SCHEDULING !== 'false',
+      console.log('🌱 Seed Rotation System initialized with performance optimizations');
+      console.log(`🔧 Configuration: ${this.config.rotationInterval}-day intervals, ${this.config.dryRun ? 'DRY RUN' : 'LIVE'} mode`);
       
-      // Dry run mode for testing
-      dryRun: process.env.SEED_ROTATION_DRY_RUN === 'true',
-      
-      // Stagger rotations across files
-      enableStaggering: process.env.SEED_ENABLE_STAGGERING !== 'false',
-      
-      // Maximum HTML files to process in one rotation
-      maxFilesPerRotation: parseInt(process.env.SEED_MAX_FILES_PER_ROTATION) || 10
-    };
-    
-    // Ensure directories exist
-    this.ensureDirectories();
-    
-    // Load previous rotation state if available
-    this.loadRotationState();
-    
-    console.log('🌱 Seed Rotation System initialized with performance optimizations');
-    console.log(`🔧 Configuration: ${this.config.rotationInterval}-day intervals, ${this.config.dryRun ? 'DRY RUN' : 'LIVE'} mode`);
+    } catch (initError) {
+      this.initializationError = initError;
+      console.error('❌ SeedRotator initialization failed:', initError.message);
+      // Don't throw - let the system continue without seed rotation
+    }
   }
 
   /**
-   * Ensure required directories exist
+   * Ensure required directories exist (with error handling)
    */
   ensureDirectories() {
-    const logsDir = path.dirname(this.logFile);
-    if (!fs.existsSync(logsDir)) {
-      fs.mkdirSync(logsDir, { recursive: true });
-    }
-    
-    if (!fs.existsSync(this.backupDir)) {
-      fs.mkdirSync(this.backupDir, { recursive: true });
+    try {
+      const logsDir = path.dirname(this.logFile);
+      if (!fs.existsSync(logsDir)) {
+        fs.mkdirSync(logsDir, { recursive: true });
+        console.log(`📁 Created logs directory: ${logsDir}`);
+      }
+      
+      if (!fs.existsSync(this.backupDir)) {
+        fs.mkdirSync(this.backupDir, { recursive: true });
+        console.log(`📁 Created backup directory: ${this.backupDir}`);
+      }
+    } catch (dirError) {
+      console.error('⚠️ Failed to create directories:', dirError.message);
+      throw new Error(`Directory creation failed: ${dirError.message}`);
     }
   }
 
@@ -345,6 +360,44 @@ Respond with JSON in this exact format:
 
     this.log(`✅ Rotation plan validation passed: ${plan.rotation_plan.length} valid assignments`);
     return true;
+  }
+
+  /**
+   * Get system status including initialization errors
+   */
+  getStatus() {
+    return {
+      isInitialized: !this.initializationError,
+      initializationError: this.initializationError ? this.initializationError.message : null,
+      isRotating: this.isRotating,
+      lastRotationTime: this.lastRotationTime,
+      config: this.config,
+      recentLogs: this.rotationLog.slice(-10), // Last 10 log entries
+      scheduledJob: !!this.scheduledJob,
+      directories: {
+        logsDir: path.dirname(this.logFile),
+        backupDir: this.backupDir
+      }
+    };
+  }
+
+  /**
+   * Check if the system is ready for operations
+   */
+  isReady() {
+    return !this.initializationError && !this.isRotating;
+  }
+
+  /**
+   * Trigger rotation with safety checks
+   */
+  async triggerRotation() {
+    if (this.initializationError) {
+      this.log(`Cannot trigger rotation - initialization error: ${this.initializationError.message}`, 'ERROR');
+      return false;
+    }
+    
+    return await this.performRotation();
   }
 
   /**
@@ -771,12 +824,27 @@ Respond with JSON in this exact format:
   }
 
   /**
-   * Schedule automatic rotations every 3 days for stability
+   * Schedule automatic rotations every 3 days for stability (with comprehensive error handling)
    */
   scheduleRotations() {
     try {
+      // Check if system has initialization errors
+      if (this.initializationError) {
+        console.warn('⚠️ Skipping rotation scheduling due to initialization error:', this.initializationError.message);
+        return null;
+      }
+
+      // Check if scheduling is disabled
+      if (!this.config.enableScheduling) {
+        console.log('📅 Automatic scheduling disabled by configuration');
+        return null;
+      }
+
       // Schedule to run based on configured interval at 3:00 AM for better stability and SEO
       const cronExpression = `0 3 */${this.config.rotationInterval} * *`;
+      
+      console.log(`📅 Scheduling rotations with cron: ${cronExpression}`);
+      
       const job = schedule.scheduleJob(cronExpression, async () => {
         this.log('🕒 Scheduled rotation starting (3-day interval)...');
         
@@ -784,6 +852,12 @@ Respond with JSON in this exact format:
           // Add safety check before rotation
           if (this.isRotating) {
             this.log('Skipping scheduled rotation - already in progress', 'WARN');
+            return;
+          }
+          
+          // Check if system has errors
+          if (this.initializationError) {
+            this.log('Skipping scheduled rotation - system has initialization errors', 'WARN');
             return;
           }
           
@@ -808,6 +882,7 @@ Respond with JSON in this exact format:
           
         } catch (rotationError) {
           this.log(`❌ Scheduled rotation error: ${rotationError.message}`, 'ERROR');
+          console.error('❌ Scheduled rotation error details:', rotationError);
         }
       });
 
@@ -816,12 +891,14 @@ Respond with JSON in this exact format:
         this.scheduledJob = job;
         return job;
       } else {
-        throw new Error('Failed to create scheduled job');
+        throw new Error('Failed to create scheduled job - schedule.scheduleJob returned null');
       }
       
     } catch (error) {
+      console.error(`❌ Failed to schedule rotations: ${error.message}`, error);
+      // Don't re-throw - let the system continue without scheduling
       this.log(`❌ Failed to schedule rotations: ${error.message}`, 'ERROR');
-      throw error;
+      return null;
     }
   }
 

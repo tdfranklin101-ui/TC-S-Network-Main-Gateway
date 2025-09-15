@@ -642,15 +642,43 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`📱 Mobile responsive: Enabled`);
   console.log(`🔗 Links: Q&A and waitlist working`);
   
-  // Initialize Seed Rotation System
-  try {
-    initializeSeedRotation();
-    console.log(`🌱 Seed Rotation System: Active (24h auto-rotation enabled)`);
-    console.log(`🌱 Seed Rotation API: http://localhost:${PORT}/api/seed-rotation/status`);
-    console.log(`🔧 Manual trigger: POST http://localhost:${PORT}/api/seed-rotation/trigger`);
-  } catch (error) {
-    console.error(`⚠️ Seed Rotation System failed to initialize:`, error.message);
-  }
+  // Initialize Seed Rotation System with comprehensive error handling
+  setImmediate(async () => {
+    try {
+      console.log('🌱 Initializing Seed Rotation System...');
+      
+      const rotator = initializeSeedRotation();
+      
+      if (rotator) {
+        const status = rotator.getStatus();
+        
+        if (status.isInitialized) {
+          console.log(`✅ Seed Rotation System: Active (${status.config.rotationInterval}-day auto-rotation)`);
+          console.log(`🌱 Seed Rotation API: http://localhost:${PORT}/api/seed-rotation/status`);
+          console.log(`🔧 Manual trigger: POST http://localhost:${PORT}/api/seed-rotation/trigger`);
+          
+          if (status.scheduledJob) {
+            console.log(`📅 Automatic scheduling: Enabled`);
+          } else {
+            console.log(`📅 Automatic scheduling: Disabled (manual triggers only)`);
+          }
+        } else if (status.initializationError) {
+          console.warn(`⚠️ Seed Rotation System initialized with errors: ${status.initializationError}`);
+          console.log(`🌱 API endpoints available but functionality limited`);
+        } else {
+          console.log(`✅ Seed Rotation System: Initialized successfully`);
+          console.log(`🌱 Seed Rotation API: http://localhost:${PORT}/api/seed-rotation/status`);
+          console.log(`🔧 Manual trigger: POST http://localhost:${PORT}/api/seed-rotation/trigger`);
+        }
+      } else {
+        console.warn(`⚠️ Seed Rotation System failed to initialize - continuing without rotation features`);
+      }
+      
+    } catch (error) {
+      console.error(`❌ Seed Rotation System initialization error:`, error.message);
+      console.log(`🌱 Server continuing without seed rotation features`);
+    }
+  });
   
   console.log(`🚀 CLOUD RUN READY - SINGLE PORT CONFIGURATION`);
 }).on('error', (err) => {

@@ -368,31 +368,39 @@ Ensure that all tips are practical, specific, and tailored to the user's locatio
   }
 }
 
-// Initialize API working status flag
-console.log('Testing OpenAI connection...');
-try {
-  // Simple test call to check if API is working
-  const testPrompt = 'Hello';
-  openai.chat.completions.create({
-    model: 'gpt-4o',
-    messages: [{ role: 'user', content: testPrompt }],
-    max_tokens: 5
-  }).then(() => {
+// Initialize API working status flag - make this async and non-blocking
+console.log('🔧 OpenAI service loaded, will test connection asynchronously...');
+
+// Test connection asynchronously without blocking startup
+setImmediate(async () => {
+  try {
+    if (!hasValidApiKey()) {
+      _apiWorking = false;
+      console.log('⚠️ OpenAI API key not available - features will be disabled');
+      return;
+    }
+
+    console.log('🔍 Testing OpenAI connection...');
+    const testPrompt = 'Hello';
+    await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [{ role: 'user', content: testPrompt }],
+      max_tokens: 5
+    });
+    
     _apiWorking = true;
     console.log('✓ OpenAI API connection successful');
-  }).catch((err) => {
+  } catch (err) {
     _apiWorking = false;
-    console.error('✗ OpenAI API connection failed:', err.message);
-  });
-} catch (err) {
-  _apiWorking = false;
-  console.error('✗ OpenAI API initialization error:', err.message);
-}
+    console.log('✗ OpenAI API connection failed:', err.message);
+  }
+});
 
 module.exports = {
   getEnergyAssistantResponse,
   analyzeProductEnergy,
   getPersonalizedEnergyTips,
   isApiWorking,
-  getKeySource
+  getKeySource,
+  hasValidApiKey
 };
