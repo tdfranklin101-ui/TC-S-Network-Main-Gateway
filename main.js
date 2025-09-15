@@ -554,10 +554,10 @@ const server = http.createServer(async (req, res) => {
   // Try direct file first
   if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
     const ext = path.extname(filePath).toLowerCase();
-    const isVideo = ['.mp4', '.webm', '.mov'].includes(ext);
+    const isMedia = ['.mp4', '.webm', '.mov', '.mp3'].includes(ext);
     
-    // Enhanced video streaming with range requests
-    if (isVideo) {
+    // Enhanced media streaming with range requests (video and audio)
+    if (isMedia) {
       const stats = fs.statSync(filePath);
       const range = req.headers.range;
       
@@ -571,27 +571,34 @@ const server = http.createServer(async (req, res) => {
         // Create read stream for the range
         const stream = fs.createReadStream(filePath, { start, end });
         
+        // Determine content type for media
+        const mediaContentType = ext === '.mp3' ? 'audio/mpeg' : 'video/mp4';
+        
         res.writeHead(206, {
           'Content-Range': `bytes ${start}-${end}/${stats.size}`,
           'Accept-Ranges': 'bytes',
           'Content-Length': chunksize,
-          'Content-Type': 'video/mp4',
+          'Content-Type': mediaContentType,
           'Cache-Control': 'public, max-age=3600'
         });
         
         stream.pipe(res);
-        console.log(`🎬 Streamed video range: ${pathname} (${start}-${end})`);
+        const mediaType = ext === '.mp3' ? '🎵 audio' : '🎬 video';
+        console.log(`${mediaType} Streamed range: ${pathname} (${start}-${end})`);
       } else {
-        // Serve entire video
+        // Serve entire media file
+        const mediaContentType = ext === '.mp3' ? 'audio/mpeg' : 'video/mp4';
+        const mediaType = ext === '.mp3' ? '🎵 audio' : '🎬 video';
+        
         res.writeHead(200, {
           'Content-Length': stats.size,
-          'Content-Type': 'video/mp4',
+          'Content-Type': mediaContentType,
           'Accept-Ranges': 'bytes',
           'Cache-Control': 'public, max-age=3600'
         });
         
         fs.createReadStream(filePath).pipe(res);
-        console.log(`🎬 Served full video: ${pathname}`);
+        console.log(`${mediaType} Served full file: ${pathname}`);
       }
       return;
     }
@@ -609,6 +616,7 @@ const server = http.createServer(async (req, res) => {
       '.jpg': 'image/jpeg',
       '.jpeg': 'image/jpeg',
       '.svg': 'image/svg+xml',
+      '.mp3': 'audio/mpeg',
       '.mp4': 'video/mp4',
       '.webm': 'video/webm',
       '.mov': 'video/quicktime'
