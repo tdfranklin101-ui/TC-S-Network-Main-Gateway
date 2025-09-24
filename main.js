@@ -19,6 +19,7 @@ const ContentValidator = require('./server/content-validator');
 const SEOGenerator = require('./server/seo-generator');
 const AISEOOptimizer = require('./server/ai-seo-optimizer');
 const MemberContentService = require('./server/member-content-service');
+const AIPromotionService = require('./server/ai-promotion-service');
 
 const PORT = process.env.PORT || 3000;
 
@@ -223,6 +224,7 @@ const contentValidator = new ContentValidator();
 const seoGenerator = new SEOGenerator();
 const aiSEOOptimizer = new AISEOOptimizer();
 const memberContentService = new MemberContentService();
+const aiPromotionService = new AIPromotionService(memberContentService, marketDataService);
 
 // Start automatic SEO updates
 seoGenerator.startAutoUpdates();
@@ -233,6 +235,7 @@ console.log('✅ Content validation system ready');
 console.log('🔄 Dynamic SEO generation active');
 console.log('🤖 AI SEO optimization enabled');
 console.log('📁 Member content sharing system ready');
+console.log('🎯 AI automatic promotion system active');
 
 const server = http.createServer(async (req, res) => {
   const pathname = new URL(req.url, `http://${req.headers.host}`).pathname;
@@ -1687,6 +1690,126 @@ const server = http.createServer(async (req, res) => {
       console.error('Member dashboard error:', error);
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ success: false, error: 'Failed to get dashboard data' }));
+    }
+    return;
+  }
+
+  // AI Automatic Promotion System API Endpoints
+  if (pathname === '/api/ai-promotion/analytics' && req.method === 'GET') {
+    try {
+      const analytics = aiPromotionService.getPromotionAnalytics();
+      
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ 
+        success: true, 
+        data: analytics,
+        description: 'AI promotion system analytics including category indexes and performance metrics'
+      }));
+    } catch (error) {
+      console.error('AI promotion analytics error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to get promotion analytics' }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/ai-promotion/recommendations' && req.method === 'GET') {
+    try {
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      const contentId = url.searchParams.get('contentId');
+
+      if (!contentId) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Content ID required' }));
+        return;
+      }
+
+      const recommendations = aiPromotionService.getContentPromotionRecommendations(contentId);
+      
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ 
+        success: true, 
+        data: recommendations,
+        contentId: contentId
+      }));
+    } catch (error) {
+      console.error('AI promotion recommendations error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: error.message }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/ai-promotion/trigger-analysis' && req.method === 'POST') {
+    try {
+      // Manually trigger a promotion analysis cycle
+      aiPromotionService.runPromotionAnalysis()
+        .then(() => console.log('✅ Manual promotion analysis completed'))
+        .catch(error => console.error('Manual promotion analysis failed:', error));
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ 
+        success: true, 
+        message: 'AI promotion analysis triggered',
+        timestamp: new Date().toISOString()
+      }));
+    } catch (error) {
+      console.error('AI promotion trigger error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to trigger promotion analysis' }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/ai-promotion/market-index' && req.method === 'GET') {
+    try {
+      const analytics = aiPromotionService.getPromotionAnalytics();
+      const marketIndex = {
+        categoryIndexes: analytics.categoryIndexes,
+        inventoryGaps: analytics.inventoryGaps,
+        totalContent: Object.values(analytics.categoryIndexes || {})
+          .reduce((sum, cat) => sum + (cat.totalItems || 0), 0),
+        lastIndexed: analytics.performanceMetrics?.lastUpdated || new Date().toISOString()
+      };
+      
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ 
+        success: true, 
+        data: marketIndex,
+        description: 'Market category indexes and inventory gap analysis'
+      }));
+    } catch (error) {
+      console.error('Market index error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to get market index' }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/ai-promotion/performance' && req.method === 'GET') {
+    try {
+      const analytics = aiPromotionService.getPromotionAnalytics();
+      const performance = {
+        metrics: analytics.performanceMetrics,
+        recentPromotions: analytics.recentPromotions,
+        algorithmStats: analytics.performanceMetrics?.algorithmPerformance || {},
+        systemStatus: {
+          active: true,
+          lastAnalysis: analytics.performanceMetrics?.lastUpdated,
+          nextAnalysis: new Date(Date.now() + 30 * 60 * 1000).toISOString() // 30 min from now
+        }
+      };
+      
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ 
+        success: true, 
+        data: performance,
+        description: 'AI promotion system performance metrics and algorithm statistics'
+      }));
+    } catch (error) {
+      console.error('Promotion performance error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to get performance data' }));
     }
     return;
   }
