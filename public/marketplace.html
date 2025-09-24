@@ -642,6 +642,7 @@
             <div class="header-subtitle">Solar Standard</div>
         </div>
         <div class="header-actions">
+            <button class="register-btn" id="signin-btn" onclick="showSigninModal()">Sign In</button>
             <a href="/register.html" class="register-btn" id="register-link">Join Network</a>
             <div class="user-menu" id="user-menu" style="display: none;">
                 <span id="header-username"></span>
@@ -778,6 +779,28 @@
             <div class="form-buttons">
                 <button class="btn btn-secondary" onclick="closeSignupModal()">Cancel</button>
                 <button class="btn btn-primary" onclick="signupUser()">Join Network</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sign In Modal -->
+    <div class="signup-modal" id="signin-modal">
+        <div class="signup-form">
+            <h3>Sign In to TC-S Network</h3>
+            <p style="color: #888; margin-bottom: 20px; font-size: 14px;">
+                Welcome back! Sign in to access your Solar balance and digital artifacts.
+            </p>
+            <div class="form-group">
+                <label for="signin-username">Username or Email</label>
+                <input type="text" id="signin-username" required>
+            </div>
+            <div class="form-group">
+                <label for="signin-password">Password</label>
+                <input type="password" id="signin-password" required>
+            </div>
+            <div class="form-buttons">
+                <button class="btn btn-secondary" onclick="closeSigninModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="signinUser()">Sign In</button>
             </div>
         </div>
     </div>
@@ -1189,6 +1212,60 @@
 
         function closeSignupModal() {
             document.getElementById('signup-modal').classList.remove('visible');
+        }
+
+        function showSigninModal() {
+            document.getElementById('signin-modal').classList.add('visible');
+        }
+
+        function closeSigninModal() {
+            document.getElementById('signin-modal').classList.remove('visible');
+        }
+
+        async function signinUser() {
+            const username = document.getElementById('signin-username').value;
+            const password = document.getElementById('signin-password').value;
+
+            if (!username || !password) {
+                alert('Username/email and password are required');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    currentUser = {
+                        userId: result.userId,
+                        username: result.username,
+                        solarBalance: result.solarBalance || 0
+                    };
+                    
+                    // Store in localStorage
+                    localStorage.setItem('tc_s_user', JSON.stringify(currentUser));
+                    
+                    updateUserDisplay();
+                    closeSigninModal();
+                    
+                    alert(`🌱 Welcome back, ${result.username}! Balance: ${result.solarBalance} Solar`);
+                } else {
+                    alert(`❌ Sign in failed: ${result.error}`);
+                }
+            } catch (error) {
+                console.error('Sign in error:', error);
+                alert('❌ Network error during sign in');
+            }
         }
 
         async function signupUser() {
