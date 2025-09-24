@@ -54,6 +54,51 @@
             border-radius: 1px;
         }
 
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .register-btn {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .register-btn:hover {
+            background: linear-gradient(135deg, #0056b3, #004085);
+            transform: translateY(-1px);
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #ffffff;
+            font-size: 14px;
+        }
+
+        .logout-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: #c82333;
+        }
+
         .container {
             padding: 20px;
             max-width: 800px;
@@ -410,10 +455,17 @@
             <div class="header-title">TC-S Market</div>
             <div class="header-subtitle">Solar Standard</div>
         </div>
-        <div class="header-menu" onclick="toggleMenu()">
-            <span></span>
-            <span></span>
-            <span></span>
+        <div class="header-actions">
+            <a href="/register.html" class="register-btn" id="register-link">Join Network</a>
+            <div class="user-menu" id="user-menu" style="display: none;">
+                <span id="header-username"></span>
+                <button class="logout-btn" onclick="logoutUser()">Logout</button>
+            </div>
+            <div class="header-menu" onclick="toggleMenu()">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
         </div>
     </div>
 
@@ -692,13 +744,31 @@
 
         function updateUserDisplay() {
             if (currentUser) {
+                // Update main user info panel
                 document.getElementById('user-info').classList.add('visible');
                 document.getElementById('username').textContent = currentUser.username;
                 document.getElementById('solar-balance').textContent = 
                     `${(currentUser.solarBalance || 0).toFixed(4)} Solar`;
+                
+                // Update header display
+                document.getElementById('register-link').style.display = 'none';
+                document.getElementById('user-menu').style.display = 'flex';
+                document.getElementById('header-username').textContent = currentUser.username;
             } else {
+                // Hide user info panel
                 document.getElementById('user-info').classList.remove('visible');
+                
+                // Show register link in header
+                document.getElementById('register-link').style.display = 'block';
+                document.getElementById('user-menu').style.display = 'none';
             }
+        }
+
+        function logoutUser() {
+            localStorage.removeItem('tc_s_user');
+            currentUser = null;
+            updateUserDisplay();
+            alert('✅ Logged out successfully');
         }
 
         function showSignupModal() {

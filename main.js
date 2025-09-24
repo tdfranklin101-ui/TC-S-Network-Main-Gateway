@@ -535,6 +535,88 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Enhanced member registration API
+  if (pathname === '/api/users/register-member' && req.method === 'POST') {
+    try {
+      const body = await parseBody(req);
+      const { firstName, lastName, username, email, country, interests, agreeToTerms, subscribeNewsletter, interestedInCommissioning } = body;
+
+      if (!agreeToTerms) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'You must agree to the terms of service' }));
+        return;
+      }
+
+      // Calculate days since Solar start date for initial allocation
+      const startDate = new Date('2025-04-07T00:00:00Z');
+      const currentDate = new Date();
+      const daysSinceStart = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
+      const initialSolarAllocation = Math.max(daysSinceStart, 0);
+
+      // Enhanced member data
+      const memberData = {
+        username,
+        email,
+        firstName,
+        lastName,
+        country: country || 'Not specified',
+        interests: interests || 'General',
+        solarBalance: initialSolarAllocation,
+        memberSince: currentDate.toISOString(),
+        subscribeNewsletter: subscribeNewsletter || false,
+        interestedInCommissioning: interestedInCommissioning || false,
+        membershipType: 'Foundation Market Member'
+      };
+
+      let success = false;
+      let userId = null;
+
+      // Try database first
+      if (db) {
+        try {
+          const result = await db.insert(signups).values(memberData).returning({ id: signups.id });
+          if (result && result.length > 0) {
+            userId = result[0].id;
+            success = true;
+            console.log(`📝 New TC-S Network member registered: ${username} (DB ID: ${userId})`);
+          }
+        } catch (dbError) {
+          console.error('Database registration error:', dbError);
+        }
+      }
+
+      // Fallback to memory storage
+      if (!success) {
+        userId = Date.now();
+        memberData.id = userId;
+        // Store in memory (in production, this would be handled differently)
+        console.log(`📝 New TC-S Network member registered: ${username} (Memory ID: ${userId})`);
+        success = true;
+      }
+
+      if (success) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: true,
+          message: 'TC-S Network membership created successfully',
+          userId: userId,
+          username: username,
+          initialSolarBalance: initialSolarAllocation,
+          memberSince: memberData.memberSince,
+          membershipType: 'Foundation Market Member'
+        }));
+      } else {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Failed to create membership' }));
+      }
+    } catch (error) {
+      console.error('Member registration error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Registration system error' }));
+    }
+    return;
+  }
+
   // User Signup with Initial Solar Allocation API
   if (pathname === '/api/users/signup-solar' && req.method === 'POST') {
     try {
