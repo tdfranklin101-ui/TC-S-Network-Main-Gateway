@@ -588,6 +588,95 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Artifact Download Handler
+  if (pathname.startsWith('/api/artifacts/download/')) {
+    try {
+      const downloadToken = pathname.split('/api/artifacts/download/')[1];
+      const decoded = Buffer.from(downloadToken, 'base64').toString();
+      const [userId, artifactId, timestamp] = decoded.split(':');
+      
+      // Verify token is recent (within 1 hour)
+      const tokenTime = parseInt(timestamp);
+      const now = Date.now();
+      if (now - tokenTime > 3600000) { // 1 hour expiry
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Download token expired' }));
+        return;
+      }
+
+      if (pool) {
+        // Verify user purchased this artifact
+        const purchaseQuery = 'SELECT t.id FROM transactions t WHERE t.wallet_id = $1 AND t.artifact_id = $2 AND t.type = $3';
+        const purchaseResult = await pool.query(purchaseQuery, [userId, artifactId, 'purchase']);
+        
+        if (purchaseResult.rows.length === 0) {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'No valid purchase found' }));
+          return;
+        }
+
+        // Get artifact details for file serving
+        const artifactQuery = 'SELECT title, delivery_url FROM artifacts WHERE id = $1';
+        const artifactResult = await pool.query(artifactQuery, [artifactId]);
+        
+        if (artifactResult.rows.length === 0) {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Artifact not found' }));
+          return;
+        }
+
+        const artifact = artifactResult.rows[0];
+        
+        // For music tracks, serve from the music directory
+        // In production, this would be from secure cloud storage
+        const musicFiles = {
+          "'Ternal Flame": "https://storage.aisongmaker.io/audio/4a839c86-40d9-4272-989b-7a512184ddb6.mp3",
+          "David Boyeez Hair": "https://storage.aisongmaker.io/audio/9b2b12e4-8626-41e4-b9e4-c7a563e40f97.mp3",
+          "Starlight Forever": "https://storage.aisongmaker.io/audio/c51b1f15-eff7-41fb-b778-b1b9d914ce3a.mp3",
+          "Snowmancer One (Market Exclusive)": "/music/snowmancer-one.mp3"
+        };
+
+        const fileUrl = musicFiles[artifact.title] || artifact.delivery_url;
+        
+        if (fileUrl) {
+          if (fileUrl.startsWith('http')) {
+            // Redirect to external URL
+            res.writeHead(302, { 'Location': fileUrl });
+            res.end();
+          } else {
+            // Serve local file
+            const filePath = path.join(__dirname, 'public', fileUrl);
+            if (fs.existsSync(filePath)) {
+              const stats = fs.statSync(filePath);
+              res.writeHead(200, {
+                'Content-Type': 'audio/mpeg',
+                'Content-Length': stats.size,
+                'Content-Disposition': `attachment; filename="${artifact.title}.mp3"`
+              });
+              fs.createReadStream(filePath).pipe(res);
+            } else {
+              res.writeHead(404, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: 'File not found' }));
+            }
+          }
+          
+          console.log(`💾 Download initiated: "${artifact.title}" for user ${userId}`);
+        } else {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Download URL not available' }));
+        }
+      } else {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Database unavailable for downloads' }));
+      }
+    } catch (error) {
+      console.error('Download error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Download failed' }));
+    }
+    return;
+  }
+
   // Skip object storage for stable deployment
   if (pathname.startsWith('/public-objects/')) {
     console.log(`⚠️ Object storage disabled for stable deployment`);
