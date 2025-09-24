@@ -468,11 +468,11 @@
                     localStorage.setItem('tc_s_user', JSON.stringify({
                         userId: result.userId,
                         username: result.username,
-                        solarBalance: result.initialSolarBalance,
+                        solarBalance: result.solarBalance,
                         memberSince: result.memberSince
                     }));
 
-                    alert(`✅ Welcome to TC-S Network, ${result.username}!\n\nYour account has been created and you've received your initial Solar allocation: ${result.initialSolarBalance} Solar tokens.\n\nYou can now access the marketplace and start trading digital artifacts!`);
+                    alert(`✅ Welcome to TC-S Network, ${result.username}!\n\nYour account has been created and you've received your initial Solar allocation: ${result.solarBalance} Solar tokens.\n\nYou can now access the marketplace and start trading digital artifacts!`);
                     
                     // Redirect to marketplace
                     window.location.href = '/marketplace.html';
