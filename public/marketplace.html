@@ -333,6 +333,190 @@
             color: #ffaa00;
         }
 
+        /* NEW: Monazite Collection Styles */
+        .featured-section {
+            background: linear-gradient(135deg, #1a1a1a, #2a1a2a);
+            border: 1px solid #444;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 25px 0;
+            box-shadow: 0 4px 20px rgba(255, 170, 0, 0.1);
+        }
+
+        .featured-header h2 {
+            font-size: 24px;
+            color: #ffaa00;
+            margin-bottom: 5px;
+        }
+
+        .featured-header p {
+            color: #888;
+            margin-bottom: 20px;
+        }
+
+        .collection-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-item {
+            text-align: center;
+            background: rgba(255, 170, 0, 0.1);
+            border: 1px solid rgba(255, 170, 0, 0.3);
+            border-radius: 8px;
+            padding: 15px 10px;
+        }
+
+        .stat-number {
+            display: block;
+            font-size: 22px;
+            font-weight: bold;
+            color: #ffaa00;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #ccc;
+            text-transform: uppercase;
+        }
+
+        .collection-actions {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .bundle-btn {
+            background: linear-gradient(135deg, #ff6b35, #ff8c42);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .bundle-btn:hover {
+            background: linear-gradient(135deg, #e55a2e, #e67a35);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 53, 0.3);
+        }
+
+        .view-tracks-btn {
+            background: rgba(255, 170, 0, 0.1);
+            color: #ffaa00;
+            border: 1px solid #ffaa00;
+            padding: 15px 25px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex: 1;
+            min-width: 180px;
+        }
+
+        .view-tracks-btn:hover {
+            background: rgba(255, 170, 0, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .tracks-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .track-card {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 15px;
+            transition: all 0.3s;
+        }
+
+        .track-card:hover {
+            border-color: #ffaa00;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 170, 0, 0.2);
+        }
+
+        .track-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .track-number {
+            background: #ffaa00;
+            color: #000;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .track-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #fff;
+            margin: 0 10px;
+            flex: 1;
+            line-height: 1.3;
+        }
+
+        .track-info {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 15px;
+        }
+
+        .track-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .track-buy-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex: 1;
+        }
+
+        .track-buy-btn:hover {
+            background: #218838;
+            transform: translateY(-1px);
+        }
+
+        .track-price {
+            font-size: 14px;
+            font-weight: bold;
+            color: #ffaa00;
+            white-space: nowrap;
+        }
+
         .signup-modal {
             position: fixed;
             top: 0;
@@ -483,6 +667,46 @@
             </div>
         </div>
 
+        <!-- NEW: Monazite Collection Feature Section -->
+        <div id="monazite-section" class="featured-section" style="display: none;">
+            <div class="featured-header">
+                <h2>🎵 Featured: Monazite Complete Collection</h2>
+                <p>20 original solar-powered tracks from TC-S Network</p>
+            </div>
+            
+            <div class="collection-stats">
+                <div class="stat-item">
+                    <span class="stat-number" id="monazite-track-count">20</span>
+                    <span class="stat-label">Tracks</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="monazite-total-value">2.40</span>
+                    <span class="stat-label">Solar Total</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">1.92</span>
+                    <span class="stat-label">Bundle Price</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">20%</span>
+                    <span class="stat-label">Savings</span>
+                </div>
+            </div>
+
+            <div class="collection-actions">
+                <button id="buy-bundle-btn" class="bundle-btn" onclick="purchaseMonaziteBundle()">
+                    🎁 Buy Complete Album - 1.92 Solar
+                </button>
+                <button id="view-tracks-btn" class="view-tracks-btn" onclick="toggleMonaziteTracks()">
+                    🎵 View Individual Tracks
+                </button>
+            </div>
+
+            <div id="monazite-tracks" class="tracks-grid" style="display: none;">
+                <!-- Tracks will be loaded here by JavaScript -->
+            </div>
+        </div>
+
         <!-- User Info (Hidden by default) -->
         <div class="user-info" id="user-info">
             <div>Logged in as: <span id="username"></span></div>
@@ -562,10 +786,13 @@
         let currentUser = null;
         let allArtifacts = [];
         let filteredArtifacts = [];
+        let monaziteCollection = null;
+        let monaziteTracksVisible = false;
 
         // Load artifacts and user info on page load
         window.addEventListener('load', function() {
             loadArtifacts();
+            loadMonaziteCollection();
             checkUserSession();
             setupEventListeners();
         });
@@ -613,6 +840,182 @@
         function updateArtifactCount(count) {
             document.getElementById('artifact-count').textContent = 
                 `${count} artifacts available for download ownership`;
+        }
+
+        // NEW: Load Monazite Collection
+        async function loadMonaziteCollection() {
+            try {
+                const response = await fetch('/api/marketplace/monazite');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.data) {
+                        monaziteCollection = data.data;
+                        displayMonaziteCollection();
+                    } else {
+                        console.log('Monazite collection not available');
+                    }
+                } else {
+                    console.log('Monazite collection endpoint not found');
+                }
+            } catch (error) {
+                console.error('Error loading Monazite collection:', error);
+            }
+        }
+
+        function displayMonaziteCollection() {
+            if (!monaziteCollection) return;
+
+            const section = document.getElementById('monazite-section');
+            section.style.display = 'block';
+
+            // Update stats
+            document.getElementById('monazite-track-count').textContent = monaziteCollection.artifacts.length;
+            document.getElementById('monazite-total-value').textContent = monaziteCollection.totals.totalValue.toFixed(2);
+
+            console.log('🎵 Monazite Collection loaded:', monaziteCollection);
+        }
+
+        function toggleMonaziteTracks() {
+            const tracksGrid = document.getElementById('monazite-tracks');
+            const button = document.getElementById('view-tracks-btn');
+            
+            if (monaziteTracksVisible) {
+                tracksGrid.style.display = 'none';
+                button.textContent = '🎵 View Individual Tracks';
+                monaziteTracksVisible = false;
+            } else {
+                displayMonaziteTracks();
+                tracksGrid.style.display = 'grid';
+                button.textContent = '🎵 Hide Individual Tracks';
+                monaziteTracksVisible = true;
+            }
+        }
+
+        function displayMonaziteTracks() {
+            if (!monaziteCollection || !monaziteCollection.artifacts) return;
+
+            const tracksGrid = document.getElementById('monazite-tracks');
+            const tracks = monaziteCollection.artifacts.sort((a, b) => a.trackNumber - b.trackNumber);
+
+            tracksGrid.innerHTML = tracks.map(track => `
+                <div class="track-card">
+                    <div class="track-header">
+                        <div class="track-number">${track.trackNumber}</div>
+                        <div class="track-title">${track.title}</div>
+                    </div>
+                    <div class="track-info">
+                        ${track.genre} • ${formatDuration(track.durationSec)} • ${(track.fileSize / 1024 / 1024).toFixed(1)} MB
+                    </div>
+                    <div class="track-actions">
+                        <button class="track-buy-btn" onclick="purchaseMonaziteTrack('${track.id}')">
+                            Buy Track
+                        </button>
+                        <div class="track-price">${track.priceSolar} Solar</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function formatDuration(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+        }
+
+        async function purchaseMonaziteBundle() {
+            if (!currentUser) {
+                showSignupModal();
+                return;
+            }
+
+            if (!monaziteCollection || !monaziteCollection.bundles || !monaziteCollection.bundles[0]) {
+                alert('❌ Bundle not available');
+                return;
+            }
+
+            const bundle = monaziteCollection.bundles[0];
+            const confirmed = confirm(`🎁 Purchase Monazite Complete Collection?\n\n• 20 tracks included\n• Price: ${bundle.priceSolar} Solar\n• You'll save ${(monaziteCollection.totals.totalValue - bundle.priceSolar).toFixed(4)} Solar vs individual purchases\n\nProceed with purchase?`);
+            
+            if (!confirmed) return;
+
+            try {
+                const response = await fetch('/api/marketplace/purchase', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        bundleId: bundle.id,
+                        buyerEmail: 'tdfranklin101@thecurrentsee.org',
+                        solarAmount: bundle.priceSolar
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert(`🎉 ${result.message}`);
+                    
+                    // Initiate bundle download
+                    const downloadUrl = `${result.purchase.download.url}?bundle=true`;
+                    window.open(downloadUrl, '_blank');
+                    
+                    console.log('🎁 Bundle purchased:', result.purchase);
+                } else {
+                    alert(`❌ Purchase failed: ${result.error}`);
+                }
+            } catch (error) {
+                console.error('Bundle purchase error:', error);
+                alert('❌ Purchase failed. Please try again.');
+            }
+        }
+
+        async function purchaseMonaziteTrack(trackId) {
+            if (!currentUser) {
+                showSignupModal();
+                return;
+            }
+
+            const track = monaziteCollection.artifacts.find(t => t.id === trackId);
+            if (!track) {
+                alert('❌ Track not found');
+                return;
+            }
+
+            const confirmed = confirm(`🎵 Purchase "${track.title}"?\n\nPrice: ${track.priceSolar} Solar\nDuration: ${formatDuration(track.durationSec)}\nGenre: ${track.genre}\n\nProceed with purchase?`);
+            
+            if (!confirmed) return;
+
+            try {
+                const response = await fetch('/api/marketplace/purchase', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        artifactId: track.id,
+                        buyerEmail: 'tdfranklin101@thecurrentsee.org',
+                        solarAmount: track.priceSolar
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert(`🎵 ${result.message}`);
+                    
+                    // Initiate track download
+                    const downloadUrl = `${result.purchase.download.url}?item=${track.id}`;
+                    window.open(downloadUrl, '_blank');
+                    
+                    console.log('🎵 Track purchased:', result.purchase);
+                } else {
+                    alert(`❌ Purchase failed: ${result.error}`);
+                }
+            } catch (error) {
+                console.error('Track purchase error:', error);
+                alert('❌ Purchase failed. Please try again.');
+            }
         }
 
         function applyFilters() {
