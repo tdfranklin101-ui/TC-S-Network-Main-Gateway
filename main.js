@@ -599,11 +599,14 @@ const server = http.createServer(async (req, res) => {
       let userId = null;
 
       // Try database first
-      if (db) {
+      if (pool) {
         try {
-          const result = await db.insert(signups).values(memberData).returning({ id: signups.id });
-          if (result && result.length > 0) {
-            userId = result[0].id;
+          const result = await pool.query(
+            'INSERT INTO members (username, email, first_name, last_name, country, interests, solar_balance, member_since, subscribe_newsletter, interested_in_commissioning, membership_type) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id',
+            [username, email, firstName, lastName, memberData.country, memberData.interests, memberData.solarBalance, memberData.memberSince, memberData.subscribeNewsletter, memberData.interestedInCommissioning, memberData.membershipType]
+          );
+          if (result && result.rows && result.rows.length > 0) {
+            userId = result.rows[0].id;
             success = true;
             console.log(`📝 New TC-S Network member registered: ${username} (DB ID: ${userId})`);
           }
