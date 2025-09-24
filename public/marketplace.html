@@ -1140,6 +1140,13 @@
             if (stored) {
                 try {
                     currentUser = JSON.parse(stored);
+                    // If old session data doesn't have solarBalance, clear it to force re-login
+                    if (currentUser && typeof currentUser.solarBalance === 'undefined') {
+                        console.log('🔄 Clearing old session data - missing balance info');
+                        localStorage.removeItem('tc_s_user');
+                        currentUser = null;
+                        return;
+                    }
                     updateUserDisplay();
                 } catch (error) {
                     localStorage.removeItem('tc_s_user');
