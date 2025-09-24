@@ -1101,11 +1101,30 @@
         }
 
         function showMyListings() {
-            // For now, show empty state for my listings
-            document.getElementById('artifacts-grid').style.display = 'none';
-            document.getElementById('empty-state').style.display = 'block';
-            document.querySelector('#empty-state h3').textContent = 'No Listings Yet';
-            document.querySelector('#empty-state p').textContent = 'You haven\'t listed any artifacts for sale yet.';
+            if (!currentUser) {
+                // Show sign-in prompt if not logged in
+                document.getElementById('artifacts-grid').style.display = 'none';
+                document.getElementById('empty-state').style.display = 'block';
+                document.querySelector('#empty-state h3').textContent = 'Sign In Required';
+                document.querySelector('#empty-state p').textContent = 'Please sign in to view your listings.';
+                return;
+            }
+
+            // Filter artifacts by current user's creatorId
+            const myArtifacts = allArtifacts.filter(artifact => 
+                artifact.creatorId && artifact.creatorId.toString() === currentUser.userId.toString()
+            );
+
+            if (myArtifacts.length === 0) {
+                // Show empty state for no listings
+                document.getElementById('artifacts-grid').style.display = 'none';
+                document.getElementById('empty-state').style.display = 'block';
+                document.querySelector('#empty-state h3').textContent = 'No Listings Yet';
+                document.querySelector('#empty-state p').textContent = 'You haven\'t listed any artifacts for sale yet. Use the Upload tab to add your first item.';
+            } else {
+                // Display user's artifacts
+                displayArtifacts(myArtifacts);
+            }
         }
 
         async function purchaseArtifact(artifactId) {
