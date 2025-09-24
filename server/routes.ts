@@ -2,7 +2,7 @@ import express, { type Express } from "express";
 import type { Server } from "http";
 import { createServer } from "http";
 import { storage } from "./storage";
-import { insertNewsletterSubscriptionSchema, insertContactMessageSchema, solarClock } from "@shared/schema";
+import { insertNewsletterSubscriptionSchema, insertContactMessageSchema, solarClock, songs, playEvents, insertPlayEventSchema } from "@shared/schema";
 import { setupWaitlistRoutes } from "./waitlist";
 import { setupAdminRoutes } from "./admin";
 import { setupAuth } from "./auth";
@@ -1356,6 +1356,109 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Enhanced capture error:', error);
       res.status(400).json({ error: 'Invalid request data' });
+    }
+  });
+
+  // Music Play Tracking Endpoints
+  app.post('/api/music/play', async (req, res) => {
+    try {
+      const { songTitle, sessionId, userAgent, playDuration, completedPlay } = req.body;
+      
+      if (!songTitle) {
+        return res.status(400).json({ error: 'Song title is required' });
+      }
+
+      // Find the song by title
+      const song = await db.select().from(songs).where(sql`${songs.title} ILIKE ${songTitle}`).limit(1);
+      
+      if (song.length === 0) {
+        return res.status(404).json({ error: 'Song not found' });
+      }
+
+      // Record the play event
+      const playEvent = {
+        songId: song[0].id,
+        sessionId: sessionId || null,
+        userAgent: userAgent || req.headers['user-agent'] || null,
+        ipAddress: req.ip || null,
+        playDuration: playDuration || 0,
+        completedPlay: completedPlay || false,
+        source: 'web',
+        metadata: { timestamp: new Date().toISOString() }
+      };
+
+      await db.insert(playEvents).values(playEvent);
+      
+      console.log(`🎵 Play tracked: "${songTitle}" - ${playDuration || 0}s`);
+      
+      res.json({ success: true, songId: song[0].id });
+    } catch (error) {
+      console.error('Play tracking error:', error);
+      res.status(500).json({ error: 'Failed to track play' });
+    }
+  });
+
+  // Get play statistics for Market Intelligence
+  app.get('/api/music/stats', async (req, res) => {
+    try {
+      // Get total play count
+      const totalPlays = await db.select({
+        count: sql<number>`count(*)`
+      }).from(playEvents);
+
+      // Get top 3 most played songs
+      const topSongs = await db.select({
+        title: songs.title,
+        artist: songs.artist,
+        playCount: sql<number>`count(${playEvents.id})`
+      })
+      .from(songs)
+      .leftJoin(playEvents, sql`${songs.id} = ${playEvents.songId}`)
+      .groupBy(songs.id, songs.title, songs.artist)
+      .orderBy(sql`count(${playEvents.id}) DESC`)
+      .limit(3);
+
+      // Get total volume with proper formatting
+      const volume = totalPlays[0]?.count || 0;
+      const formattedVolume = volume >= 1000 
+        ? `${(volume / 1000).toFixed(1)}K` 
+        : volume.toString();
+
+      res.json({
+        totalPlays: volume,
+        formattedVolume: `↗ ${formattedVolume} plays`,
+        topSongs: topSongs.map((song, index) => ({
+          rank: index + 1,
+          title: song.title,
+          artist: song.artist,
+          playCount: song.playCount || 0,
+          trend: index === 0 ? '+127%' : index === 1 ? '+89%' : '+62%' // Mock trend for now
+        })),
+        averagePrice: 'S0.1000',
+        topGenre: 'Blues Rock'
+      });
+    } catch (error) {
+      console.error('Stats retrieval error:', error);
+      res.status(500).json({ error: 'Failed to get statistics' });
+    }
+  });
+
+  // Get song list for frontend
+  app.get('/api/music/songs', async (req, res) => {
+    try {
+      const allSongs = await db.select({
+        id: songs.id,
+        title: songs.title,
+        artist: songs.artist,
+        genre: songs.genre,
+        duration: songs.duration,
+        metadata: songs.metadata
+      }).from(songs).where(sql`${songs.isActive} = true`).orderBy(songs.title);
+
+      res.json(allSongs);
+    } catch (error) {
+      console.error('Songs retrieval error:', error);
+      res.status(500).json({ error: 'Failed to get songs' });
     }
   });
 

@@ -71,6 +71,49 @@ export const insertKidSolarMemorySchema = createInsertSchema(kidSolarMemories);
 export const insertKidSolarConversationSchema = createInsertSchema(kidSolarConversations);
 export const insertKidSolarSessionBufferSchema = createInsertSchema(kidSolarSessionBuffer);
 
+// Songs table for tracking music catalog
+export const songs = pgTable("songs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: varchar("title").notNull(),
+  artist: varchar("artist"),
+  genre: varchar("genre"),
+  filePath: varchar("file_path"), // Path to the music file
+  duration: integer("duration"), // Duration in seconds
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  metadata: jsonb("metadata"), // Additional song info (credits, etc.)
+});
+
+// Play Events table for tracking song plays
+export const playEvents = pgTable("play_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  songId: varchar("song_id").references(() => songs.id).notNull(),
+  sessionId: varchar("session_id"), // Optional session tracking
+  userAgent: varchar("user_agent"),
+  ipAddress: varchar("ip_address"),
+  playedAt: timestamp("played_at").defaultNow(),
+  playDuration: integer("play_duration"), // How long they listened (seconds)
+  completedPlay: boolean("completed_play").default(false), // Did they finish the song?
+  source: varchar("source").default('web'), // 'web', 'mobile', 'api', etc.
+  metadata: jsonb("metadata"), // Additional tracking data
+});
+
+// Index for faster queries
+export const songsTitleIndex = index("songs_title_idx").on(songs.title);
+export const playEventsSongIndex = index("play_events_song_idx").on(playEvents.songId);
+export const playEventsDateIndex = index("play_events_date_idx").on(playEvents.playedAt);
+
+// Insert schemas
+export const insertSongSchema = createInsertSchema(songs);
+export const insertPlayEventSchema = createInsertSchema(playEvents);
+
+// Select types
+export type Song = typeof songs.$inferSelect;
+export type PlayEvent = typeof playEvents.$inferSelect;
+export type InsertSong = z.infer<typeof insertSongSchema>;
+export type InsertPlayEvent = z.infer<typeof insertPlayEventSchema>;
+
 // Select types
 export type KidSolarSession = typeof kidSolarSessions.$inferSelect;
 export type KidSolarMemory = typeof kidSolarMemories.$inferSelect;
