@@ -18,6 +18,7 @@ const MarketDataService = require('./server/market-data-service');
 const ContentValidator = require('./server/content-validator');
 const SEOGenerator = require('./server/seo-generator');
 const AISEOOptimizer = require('./server/ai-seo-optimizer');
+const MemberContentService = require('./server/member-content-service');
 
 const PORT = process.env.PORT || 3000;
 
@@ -221,6 +222,7 @@ const marketDataService = new MarketDataService();
 const contentValidator = new ContentValidator();
 const seoGenerator = new SEOGenerator();
 const aiSEOOptimizer = new AISEOOptimizer();
+const memberContentService = new MemberContentService();
 
 // Start automatic SEO updates
 seoGenerator.startAutoUpdates();
@@ -230,6 +232,7 @@ console.log('📊 Market data service initialized');
 console.log('✅ Content validation system ready');
 console.log('🔄 Dynamic SEO generation active');
 console.log('🤖 AI SEO optimization enabled');
+console.log('📁 Member content sharing system ready');
 
 const server = http.createServer(async (req, res) => {
   const pathname = new URL(req.url, `http://${req.headers.host}`).pathname;
@@ -1507,6 +1510,183 @@ const server = http.createServer(async (req, res) => {
       console.error('Conversational context generation error:', error);
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ success: false, error: 'Conversational context generation failed' }));
+    }
+    return;
+  }
+
+  // Member Content Sharing and Advertising API Endpoints
+  if (pathname === '/api/member-content/upload' && req.method === 'POST') {
+    try {
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      const memberId = url.searchParams.get('memberId');
+      const username = url.searchParams.get('username');
+
+      if (!memberId || !username) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Member ID and username required' }));
+        return;
+      }
+
+      // Handle file upload and content info
+      upload.single('contentFile')(req, res, async (err) => {
+        if (err) {
+          console.error('Upload error:', err);
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'File upload failed' }));
+          return;
+        }
+
+        const body = await parseBody(req);
+        const memberData = { userId: memberId, username: username };
+
+        const result = await memberContentService.uploadMemberContent(memberData, req.file, body);
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(result));
+      });
+    } catch (error) {
+      console.error('Member content upload error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Upload failed' }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/member-content/my-content' && req.method === 'GET') {
+    try {
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      const memberId = url.searchParams.get('memberId');
+      const category = url.searchParams.get('category');
+      const status = url.searchParams.get('status');
+      const searchTerm = url.searchParams.get('search');
+
+      if (!memberId) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Member ID required' }));
+        return;
+      }
+
+      const filters = { category, status, searchTerm };
+      const result = memberContentService.getMemberContent(memberId, filters);
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(result));
+    } catch (error) {
+      console.error('Get member content error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to get content' }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/member-content/marketplace' && req.method === 'GET') {
+    try {
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      const category = url.searchParams.get('category');
+      const priceRange = url.searchParams.get('priceRange');
+      const searchTerm = url.searchParams.get('search');
+
+      const filters = { category, priceRange, searchTerm };
+      const result = memberContentService.getMarketplaceContent(filters);
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(result));
+    } catch (error) {
+      console.error('Get marketplace content error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to get marketplace content' }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/member-content/promote' && req.method === 'POST') {
+    try {
+      const body = await parseBody(req);
+      const { contentId, memberId, promotion } = body;
+
+      if (!contentId || !memberId) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Content ID and member ID required' }));
+        return;
+      }
+
+      const result = memberContentService.updateContentPromotion(contentId, memberId, promotion);
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(result));
+    } catch (error) {
+      console.error('Content promotion error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: error.message }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/member-content/advertisement' && req.method === 'POST') {
+    try {
+      const body = await parseBody(req);
+      const { contentId } = body;
+
+      if (!contentId) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Content ID required' }));
+        return;
+      }
+
+      const advertisement = memberContentService.generateContentAdvertisement(contentId);
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, advertisement: advertisement }));
+    } catch (error) {
+      console.error('Advertisement generation error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: error.message }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/member-content/stream' && req.method === 'GET') {
+    try {
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      const contentId = url.searchParams.get('contentId');
+
+      if (!contentId) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Content ID required' }));
+        return;
+      }
+
+      const streamData = await memberContentService.getContentForStreaming(contentId);
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, data: streamData }));
+    } catch (error) {
+      console.error('Content streaming error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: error.message }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/member-content/dashboard' && req.method === 'GET') {
+    try {
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      const memberId = url.searchParams.get('memberId');
+
+      if (!memberId) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Member ID required' }));
+        return;
+      }
+
+      const summary = memberContentService.getMemberContentSummary(memberId);
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, data: summary }));
+    } catch (error) {
+      console.error('Member dashboard error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to get dashboard data' }));
     }
     return;
   }
