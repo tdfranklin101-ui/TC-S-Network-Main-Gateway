@@ -9,6 +9,7 @@ const sharp = require('sharp');
 const { fileTypeFromBuffer } = require('file-type');
 const crypto = require('crypto');
 const bcrypt = require('bcrypt');
+const schedule = require('node-schedule');
 // const { ObjectStorageService } = require('./server/objectStorage'); // Disabled for stable Music Now service
 
 // Import seed rotation system
@@ -267,6 +268,105 @@ function parseBody(req) {
       }
     });
   });
+}
+
+// Daily Solar Distribution System
+async function processDailyDistribution() {
+  const today = new Date();
+  const todayString = today.toISOString().split('T')[0]; // YYYY-MM-DD format
+  
+  console.log(`🌱 Processing daily Solar distribution for ${todayString}...`);
+  
+  if (!pool) {
+    console.log('⚠️ No database connection - skipping daily distribution');
+    return;
+  }
+  
+  try {
+    // Get all members who haven't received today's distribution
+    const membersQuery = `
+      SELECT id, username, email, total_solar, last_distribution_date 
+      FROM members 
+      WHERE last_distribution_date IS NULL 
+         OR DATE(last_distribution_date) < DATE($1)
+    `;
+    
+    const membersResult = await pool.query(membersQuery, [todayString]);
+    const members = membersResult.rows;
+    
+    if (members.length === 0) {
+      console.log(`✅ All members already received today's Solar distribution`);
+      return;
+    }
+    
+    console.log(`📊 Distributing 1 Solar to ${members.length} members...`);
+    
+    let successCount = 0;
+    let errorCount = 0;
+    
+    // Process each member
+    for (const member of members) {
+      try {
+        const currentSolar = parseFloat(member.total_solar) || 0;
+        const newSolar = currentSolar + 1; // Add 1 Solar per day
+        
+        // Update member's solar balance and last distribution date
+        const updateQuery = `
+          UPDATE members 
+          SET total_solar = $1, last_distribution_date = $2 
+          WHERE id = $3
+        `;
+        
+        await pool.query(updateQuery, [newSolar, today.toISOString(), member.id]);
+        successCount++;
+        
+        console.log(`💰 ${member.username}: ${currentSolar} → ${newSolar} Solar`);
+        
+      } catch (memberError) {
+        console.error(`❌ Failed to distribute to ${member.username}:`, memberError.message);
+        errorCount++;
+      }
+    }
+    
+    console.log(`✅ Daily distribution complete: ${successCount} success, ${errorCount} errors`);
+    
+    // Log the distribution event
+    try {
+      const logQuery = `
+        INSERT INTO distribution_logs (distribution_date, members_processed, solar_distributed, success_count, error_count, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6)
+      `;
+      await pool.query(logQuery, [todayString, members.length, members.length, successCount, errorCount, today.toISOString()]);
+      console.log(`📝 Distribution logged to database`);
+    } catch (logError) {
+      console.error('⚠️ Failed to log distribution (table may not exist):', logError.message);
+    }
+    
+  } catch (error) {
+    console.error('❌ Daily distribution failed:', error.message);
+  }
+}
+
+function initializeDailyDistribution() {
+  console.log('🌱 Initializing daily Solar distribution system...');
+  
+  // Schedule daily distribution at 3:00 AM UTC (reliable time)
+  const dailyJob = schedule.scheduleJob('0 3 * * *', async () => {
+    await processDailyDistribution();
+  });
+  
+  if (dailyJob) {
+    console.log('✅ Daily Solar distribution scheduled for 3:00 AM UTC');
+    console.log('🔄 Next distribution:', dailyJob.nextInvocation());
+  } else {
+    console.error('❌ Failed to schedule daily distribution');
+  }
+  
+  // Run initial check on startup (useful for testing)
+  setTimeout(() => {
+    console.log('🔍 Running initial distribution check...');
+    processDailyDistribution();
+  }, 5000); // Wait 5 seconds after server startup
 }
 
 // Initialize database
@@ -801,6 +901,28 @@ const server = http.createServer(async (req, res) => {
       console.error('Registration error:', error);
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ success: false, error: 'Registration failed' }));
+    }
+    return;
+  }
+
+  // Manual daily distribution trigger API (for testing)
+  if (pathname === '/api/admin/trigger-distribution' && req.method === 'POST') {
+    try {
+      console.log('🔧 Manual distribution trigger requested');
+      await processDailyDistribution();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        message: 'Daily distribution triggered successfully'
+      }));
+    } catch (error) {
+      console.error('Manual distribution trigger error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ 
+        success: false, 
+        error: 'Distribution trigger failed',
+        details: error.message 
+      }));
     }
     return;
   }
@@ -2984,6 +3106,9 @@ server.listen(PORT, '0.0.0.0', () => {
   });
   
   console.log(`🚀 CLOUD RUN READY - SINGLE PORT CONFIGURATION`);
+  
+  // Initialize daily Solar distribution automation
+  initializeDailyDistribution();
 }).on('error', (err) => {
   if (err.code === 'EADDRINUSE') {
     console.log(`⚠️ Port ${PORT} in use, trying alternative...`);
