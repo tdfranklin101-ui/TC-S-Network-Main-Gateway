@@ -2084,6 +2084,311 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // NEW: Monazite Collection API - Serve seeded marketplace artifacts
+  if (pathname === '/api/marketplace/monazite' && req.method === 'GET') {
+    try {
+      const fs = require('fs');
+      const manifestPath = 'public/models/monazite-collection.json';
+      
+      if (!fs.existsSync(manifestPath)) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ 
+          success: false, 
+          error: 'Monazite collection not found',
+          message: 'Run the seeding script to initialize the collection'
+        }));
+        return;
+      }
+
+      const manifestData = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      const includeBundle = url.searchParams.get('bundle') !== 'false';
+      const category = url.searchParams.get('category');
+      const searchTerm = url.searchParams.get('search');
+
+      let artifacts = manifestData.artifacts.filter(artifact => artifact.isActive);
+      let bundles = includeBundle ? manifestData.bundles.filter(bundle => bundle.isActive) : [];
+
+      // Apply search filter
+      if (searchTerm) {
+        const searchLower = searchTerm.toLowerCase();
+        artifacts = artifacts.filter(artifact => 
+          artifact.title.toLowerCase().includes(searchLower) ||
+          artifact.description.toLowerCase().includes(searchLower) ||
+          artifact.genre.toLowerCase().includes(searchLower) ||
+          artifact.tags.some(tag => tag.toLowerCase().includes(searchLower))
+        );
+        
+        if (includeBundle) {
+          bundles = bundles.filter(bundle =>
+            bundle.title.toLowerCase().includes(searchLower) ||
+            bundle.description.toLowerCase().includes(searchLower)
+          );
+        }
+      }
+
+      // Apply category filter for music vs bundles
+      if (category === 'music') {
+        bundles = [];
+      } else if (category === 'bundles') {
+        artifacts = [];
+      }
+
+      const response = {
+        success: true,
+        data: {
+          collection: manifestData.metadata,
+          artifacts: artifacts,
+          bundles: bundles,
+          totals: {
+            tracks: artifacts.length,
+            bundles: bundles.length,
+            totalValue: artifacts.reduce((sum, a) => sum + a.priceSolar, 0),
+            bundleValue: bundles.reduce((sum, b) => sum + b.priceSolar, 0)
+          }
+        }
+      };
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(response));
+    } catch (error) {
+      console.error('Monazite collection API error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ 
+        success: false, 
+        error: 'Failed to load Monazite collection',
+        message: error.message 
+      }));
+    }
+    return;
+  }
+
+  // NEW: Purchase Monazite tracks/bundles with Solar tokens
+  if (pathname === '/api/marketplace/purchase' && req.method === 'POST') {
+    try {
+      const body = await parseBody(req);
+      const { artifactId, bundleId, buyerEmail, solarAmount } = body;
+
+      if (!buyerEmail || (!artifactId && !bundleId) || !solarAmount) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ 
+          success: false, 
+          error: 'Missing required fields: buyerEmail, artifactId/bundleId, solarAmount' 
+        }));
+        return;
+      }
+
+      // Load Monazite collection
+      const fs = require('fs');
+      const manifestPath = 'public/models/monazite-collection.json';
+      const manifestData = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+
+      let item = null;
+      let itemType = '';
+
+      if (artifactId) {
+        item = manifestData.artifacts.find(a => a.id === artifactId && a.isActive);
+        itemType = 'track';
+      } else if (bundleId) {
+        item = manifestData.bundles.find(b => b.id === bundleId && b.isActive);
+        itemType = 'bundle';
+      }
+
+      if (!item) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ 
+          success: false, 
+          error: 'Item not found or not available for purchase' 
+        }));
+        return;
+      }
+
+      // Verify price
+      if (Math.abs(solarAmount - item.priceSolar) > 0.0001) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ 
+          success: false, 
+          error: 'Price mismatch',
+          expected: item.priceSolar,
+          provided: solarAmount
+        }));
+        return;
+      }
+
+      // Check buyer's Solar balance (simplified - in production integrate with actual user accounts)
+      const buyerBalance = 172.5; // Your current balance - in production, query from database
+      
+      if (buyerBalance < solarAmount) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ 
+          success: false, 
+          error: 'Insufficient Solar balance',
+          required: solarAmount,
+          available: buyerBalance
+        }));
+        return;
+      }
+
+      // Generate secure download token
+      const crypto = require('crypto');
+      const purchaseId = `purch_${Date.now()}_${crypto.randomBytes(8).toString('hex')}`;
+      const downloadToken = crypto.createHmac('sha256', 'monazite-secure-key')
+        .update(`${purchaseId}:${buyerEmail}:${item.id}:${Date.now()}`)
+        .digest('hex');
+
+      // Record purchase (simplified - in production, save to database)
+      const purchase = {
+        id: purchaseId,
+        buyerEmail: buyerEmail,
+        itemId: item.id,
+        itemType: itemType,
+        itemTitle: item.title,
+        priceSolar: solarAmount,
+        creatorEmail: item.creatorEmail,
+        creatorEarnings: Math.round(solarAmount * 0.85 * 10000) / 10000, // 85% to creator
+        platformFee: Math.round(solarAmount * 0.15 * 10000) / 10000, // 15% platform fee
+        purchasedAt: new Date().toISOString(),
+        downloadToken: downloadToken,
+        downloadExpires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hour expiry
+      };
+
+      console.log(`💰 SOLAR PURCHASE: ${buyerEmail} bought "${item.title}" for ${solarAmount} Solar`);
+      console.log(`🎯 Creator earnings: ${purchase.creatorEarnings} Solar (85%)`);
+      console.log(`🏛️ Platform fee: ${purchase.platformFee} Solar (15%)`);
+
+      const response = {
+        success: true,
+        purchase: {
+          id: purchase.id,
+          item: {
+            id: item.id,
+            title: item.title,
+            type: itemType
+          },
+          payment: {
+            amount: solarAmount,
+            currency: 'Solar'
+          },
+          download: {
+            token: downloadToken,
+            expires: purchase.downloadExpires,
+            url: `/api/download/${downloadToken}`
+          }
+        },
+        message: `Successfully purchased ${item.title}! Download available for 24 hours.`
+      };
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(response));
+    } catch (error) {
+      console.error('Purchase error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ 
+        success: false, 
+        error: 'Purchase failed',
+        message: error.message 
+      }));
+    }
+    return;
+  }
+
+  // NEW: Secure download endpoint with token validation
+  if (pathname.startsWith('/api/download/') && req.method === 'GET') {
+    try {
+      const token = pathname.split('/api/download/')[1];
+      
+      if (!token) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Download token required' }));
+        return;
+      }
+
+      // Load Monazite collection to find item
+      const fs = require('fs');
+      const manifestPath = 'public/models/monazite-collection.json';
+      const manifestData = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+
+      // In production, validate token against database purchases
+      // For now, check if token matches expected format
+      if (token.length !== 64) { // SHA256 hex length
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Invalid download token' }));
+        return;
+      }
+
+      // Determine what to download based on token (simplified)
+      // In production, look up actual purchase record
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      const itemId = url.searchParams.get('item');
+      const bundleDownload = url.searchParams.get('bundle') === 'true';
+
+      if (bundleDownload) {
+        // Download complete bundle ZIP
+        const bundlePath = 'public/music/bundles/monazite-complete-collection.zip';
+        
+        if (!fs.existsSync(bundlePath)) {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Bundle file not found' }));
+          return;
+        }
+
+        const bundleStats = fs.statSync(bundlePath);
+        const bundleStream = fs.createReadStream(bundlePath);
+
+        res.writeHead(200, {
+          'Content-Type': 'application/zip',
+          'Content-Disposition': 'attachment; filename="Monazite_Complete_Collection.zip"',
+          'Content-Length': bundleStats.size,
+          'Cache-Control': 'no-cache',
+          'X-Download-Type': 'bundle'
+        });
+
+        bundleStream.pipe(res);
+        console.log(`📦 Bundle download initiated: Monazite Complete Collection (${(bundleStats.size / 1024 / 1024).toFixed(2)} MB)`);
+        return;
+
+      } else if (itemId) {
+        // Download individual track
+        const artifact = manifestData.artifacts.find(a => a.id === itemId);
+        
+        if (!artifact || !fs.existsSync(artifact.filePath)) {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Track file not found' }));
+          return;
+        }
+
+        const trackStats = fs.statSync(artifact.filePath);
+        const trackStream = fs.createReadStream(artifact.filePath);
+        const filename = `${artifact.trackNumber.toString().padStart(2, '0')}_${artifact.title.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_')}.mp3`;
+
+        res.writeHead(200, {
+          'Content-Type': 'audio/mpeg',
+          'Content-Disposition': `attachment; filename="${filename}"`,
+          'Content-Length': trackStats.size,
+          'Cache-Control': 'no-cache',
+          'X-Download-Type': 'track'
+        });
+
+        trackStream.pipe(res);
+        console.log(`🎵 Track download initiated: ${artifact.title} (${(trackStats.size / 1024 / 1024).toFixed(2)} MB)`);
+        return;
+      }
+
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'No download type specified' }));
+
+    } catch (error) {
+      console.error('Download error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ 
+        success: false, 
+        error: 'Download failed',
+        message: error.message 
+      }));
+    }
+    return;
+  }
+
   if (pathname === '/api/member-content/promote' && req.method === 'POST') {
     try {
       const body = await parseBody(req);
