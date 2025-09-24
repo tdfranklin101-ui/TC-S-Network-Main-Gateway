@@ -20,6 +20,7 @@ const SEOGenerator = require('./server/seo-generator');
 const AISEOOptimizer = require('./server/ai-seo-optimizer');
 const MemberContentService = require('./server/member-content-service');
 const AIPromotionService = require('./server/ai-promotion-service');
+const MemberTemplateService = require('./server/member-template-service');
 
 const PORT = process.env.PORT || 3000;
 
@@ -225,6 +226,7 @@ const seoGenerator = new SEOGenerator();
 const aiSEOOptimizer = new AISEOOptimizer();
 const memberContentService = new MemberContentService();
 const aiPromotionService = new AIPromotionService(memberContentService, marketDataService);
+const memberTemplateService = new MemberTemplateService(memberContentService);
 
 // Start automatic SEO updates
 seoGenerator.startAutoUpdates();
@@ -236,6 +238,7 @@ console.log('🔄 Dynamic SEO generation active');
 console.log('🤖 AI SEO optimization enabled');
 console.log('📁 Member content sharing system ready');
 console.log('🎯 AI automatic promotion system active');
+console.log('🎨 Member display templates ready');
 
 const server = http.createServer(async (req, res) => {
   const pathname = new URL(req.url, `http://${req.headers.host}`).pathname;
@@ -1810,6 +1813,222 @@ const server = http.createServer(async (req, res) => {
       console.error('Promotion performance error:', error);
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ success: false, error: 'Failed to get performance data' }));
+    }
+    return;
+  }
+
+  // Member Template and Display System API Endpoints
+  if (pathname === '/api/templates/available' && req.method === 'GET') {
+    try {
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      const category = url.searchParams.get('category');
+
+      let templates;
+      if (category) {
+        templates = memberTemplateService.getTemplatesByCategory(category);
+      } else {
+        templates = memberTemplateService.getAllTemplates();
+      }
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ 
+        success: true, 
+        data: templates,
+        totalCount: templates.length
+      }));
+    } catch (error) {
+      console.error('Get templates error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to get templates' }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/templates/preview' && req.method === 'POST') {
+    try {
+      const body = await parseBody(req);
+      const { templateId, sampleData } = body;
+
+      if (!templateId) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Template ID required' }));
+        return;
+      }
+
+      const preview = memberTemplateService.generateTemplatePreview(templateId, sampleData);
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ 
+        success: true, 
+        data: preview 
+      }));
+    } catch (error) {
+      console.error('Template preview error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: error.message }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/templates/create-display' && req.method === 'POST') {
+    try {
+      const body = await parseBody(req);
+      const { memberId, templateId, displayData } = body;
+
+      if (!memberId || !templateId || !displayData) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Member ID, template ID, and display data required' }));
+        return;
+      }
+
+      const memberDisplay = await memberTemplateService.createMemberDisplay(memberId, templateId, displayData);
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ 
+        success: true, 
+        data: memberDisplay,
+        message: 'Member display created successfully'
+      }));
+    } catch (error) {
+      console.error('Create member display error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: error.message }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/templates/member-displays' && req.method === 'GET') {
+    try {
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      const memberId = url.searchParams.get('memberId');
+
+      if (!memberId) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Member ID required' }));
+        return;
+      }
+
+      const displays = memberTemplateService.getMemberDisplays(memberId);
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ 
+        success: true, 
+        data: displays,
+        totalCount: displays.length
+      }));
+    } catch (error) {
+      console.error('Get member displays error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to get member displays' }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/templates/display' && req.method === 'GET') {
+    try {
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      const displayId = url.searchParams.get('displayId');
+
+      if (!displayId) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Display ID required' }));
+        return;
+      }
+
+      const display = memberTemplateService.getDisplayById(displayId);
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ 
+        success: true, 
+        data: display 
+      }));
+    } catch (error) {
+      console.error('Get display error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: error.message }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/templates/update-display' && req.method === 'PUT') {
+    try {
+      const body = await parseBody(req);
+      const { displayId, updates } = body;
+
+      if (!displayId || !updates) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Display ID and updates required' }));
+        return;
+      }
+
+      const updatedDisplay = await memberTemplateService.updateMemberDisplay(displayId, updates);
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ 
+        success: true, 
+        data: updatedDisplay,
+        message: 'Display updated successfully'
+      }));
+    } catch (error) {
+      console.error('Update display error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: error.message }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/templates/stats' && req.method === 'GET') {
+    try {
+      const stats = memberTemplateService.getTemplateStats();
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ 
+        success: true, 
+        data: stats,
+        description: 'Template usage statistics and performance metrics'
+      }));
+    } catch (error) {
+      console.error('Template stats error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to get template stats' }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/templates/render-display' && req.method === 'GET') {
+    try {
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      const displayId = url.searchParams.get('displayId');
+
+      if (!displayId) {
+        res.writeHead(400, { 'Content-Type': 'text/html' });
+        res.end('<h1>Display ID Required</h1><p>Please provide a display ID to render the template.</p>');
+        return;
+      }
+
+      const display = memberTemplateService.getDisplayById(displayId);
+      
+      const fullHtml = `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>${display.templateName} - TC-S Network</title>
+          <style>${display.renderedCss}</style>
+        </head>
+        <body>
+          ${display.renderedHtml}
+        </body>
+        </html>
+      `;
+
+      res.writeHead(200, { 'Content-Type': 'text/html' });
+      res.end(fullHtml);
+    } catch (error) {
+      console.error('Render display error:', error);
+      res.writeHead(500, { 'Content-Type': 'text/html' });
+      res.end('<h1>Display Error</h1><p>Failed to render the display template.</p>');
     }
     return;
   }
