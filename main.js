@@ -8,6 +8,7 @@ const multer = require('multer');
 const sharp = require('sharp');
 const { fileTypeFromBuffer } = require('file-type');
 const crypto = require('crypto');
+const bcrypt = require('bcrypt');
 // const { ObjectStorageService } = require('./server/objectStorage'); // Disabled for stable Music Now service
 
 // Import seed rotation system
@@ -585,13 +586,31 @@ const server = http.createServer(async (req, res) => {
   if (pathname === '/api/users/register-member' && req.method === 'POST') {
     try {
       const body = await parseBody(req);
-      const { firstName, lastName, username, email, country, interests, agreeToTerms, subscribeNewsletter, interestedInCommissioning } = body;
+      const { firstName, lastName, username, email, password, country, interests, agreeToTerms, subscribeNewsletter, interestedInCommissioning } = body;
 
       if (!agreeToTerms) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: false, error: 'You must agree to the terms of service' }));
         return;
       }
+
+      // Validate required fields
+      if (!firstName || !lastName || !username || !email || !password) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'All required fields must be provided' }));
+        return;
+      }
+
+      // Validate password length
+      if (password.length < 6) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Password must be at least 6 characters long' }));
+        return;
+      }
+
+      // Hash the password
+      const saltRounds = 12;
+      const passwordHash = await bcrypt.hash(password, saltRounds);
 
       // Calculate days since Solar start date for initial allocation
       const startDate = new Date('2025-04-07T00:00:00Z');
@@ -605,6 +624,7 @@ const server = http.createServer(async (req, res) => {
         email,
         firstName,
         lastName,
+        passwordHash,
         country: country || 'Not specified',
         interests: interests || 'General',
         solarBalance: initialSolarAllocation,
@@ -621,8 +641,8 @@ const server = http.createServer(async (req, res) => {
       if (pool) {
         try {
           const result = await pool.query(
-            'INSERT INTO members (username, email, first_name, last_name, country, interests, solar_balance, member_since, subscribe_newsletter, interested_in_commissioning, membership_type) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id',
-            [username, email, firstName, lastName, memberData.country, memberData.interests, memberData.solarBalance, memberData.memberSince, memberData.subscribeNewsletter, memberData.interestedInCommissioning, memberData.membershipType]
+            'INSERT INTO members (username, email, first_name, last_name, password_hash, country, interests, solar_balance, member_since, subscribe_newsletter, interested_in_commissioning, membership_type) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id',
+            [username, email, firstName, lastName, passwordHash, memberData.country, memberData.interests, memberData.solarBalance, memberData.memberSince, memberData.subscribeNewsletter, memberData.interestedInCommissioning, memberData.membershipType]
           );
           if (result && result.rows && result.rows.length > 0) {
             userId = result.rows[0].id;
