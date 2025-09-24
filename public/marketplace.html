@@ -308,6 +308,42 @@
             transform: translateY(-1px);
         }
 
+        .artifact-action-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #28a745, #1e7e34);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 8px;
+        }
+
+        .artifact-action-btn:hover {
+            background: linear-gradient(135deg, #218838, #1a6f2b);
+            transform: translateY(-1px);
+        }
+
+        .artifact-action-btn.download {
+            background: linear-gradient(135deg, #17a2b8, #138496);
+        }
+
+        .artifact-action-btn.download:hover {
+            background: linear-gradient(135deg, #138496, #0f6674);
+        }
+
+        .artifact-action-btn.edit {
+            background: linear-gradient(135deg, #ffc107, #e0a800);
+            color: #000;
+        }
+
+        .artifact-action-btn.edit:hover {
+            background: linear-gradient(135deg, #e0a800, #c69500);
+        }
+
         .loading {
             text-align: center;
             padding: 40px;
@@ -1100,32 +1136,402 @@
             applyFilters();
         }
 
-        function showMyListings() {
+        async function showMyListings() {
             if (!currentUser) {
                 // Show sign-in prompt if not logged in
                 document.getElementById('artifacts-grid').style.display = 'none';
                 document.getElementById('empty-state').style.display = 'block';
                 document.querySelector('#empty-state h3').textContent = 'Sign In Required';
-                document.querySelector('#empty-state p').textContent = 'Please sign in to view your listings.';
+                document.querySelector('#empty-state p').textContent = 'Please sign in to view your items.';
                 return;
             }
 
-            // Filter artifacts by current user's creatorId
-            const myArtifacts = allArtifacts.filter(artifact => 
-                artifact.creatorId && artifact.creatorId.toString() === currentUser.userId.toString()
-            );
-
-            if (myArtifacts.length === 0) {
-                // Show empty state for no listings
-                document.getElementById('artifacts-grid').style.display = 'none';
-                document.getElementById('empty-state').style.display = 'block';
-                document.querySelector('#empty-state h3').textContent = 'No Listings Yet';
-                document.querySelector('#empty-state p').textContent = 'You haven\'t listed any artifacts for sale yet. Use the Upload tab to add your first item.';
-            } else {
-                // Display user's artifacts
-                displayArtifacts(myArtifacts);
+            try {
+                // Fetch user's uploaded and purchased items
+                const response = await fetch('/api/artifacts/my-items');
+                if (response.ok) {
+                    const data = await response.json();
+                    displayMyItems(data);
+                } else if (response.status === 401) {
+                    // Authentication error - show sign in prompt
+                    document.getElementById('artifacts-grid').style.display = 'none';
+                    document.getElementById('empty-state').style.display = 'block';
+                    document.querySelector('#empty-state h3').textContent = 'Sign In Required';
+                    document.querySelector('#empty-state p').textContent = 'Please sign in to view your items.';
+                } else {
+                    throw new Error('Failed to fetch user items');
+                }
+            } catch (error) {
+                console.error('Error loading user items:', error);
+                // Fallback to old method for uploaded items only
+                const myArtifacts = allArtifacts.filter(artifact => 
+                    artifact.creatorId && artifact.creatorId.toString() === currentUser.userId.toString()
+                );
+                if (myArtifacts.length === 0) {
+                    document.getElementById('artifacts-grid').style.display = 'none';
+                    document.getElementById('empty-state').style.display = 'block';
+                    document.querySelector('#empty-state h3').textContent = 'No Items Yet';
+                    document.querySelector('#empty-state p').textContent = 'You haven\'t uploaded any artifacts or made any purchases yet.';
+                } else {
+                    displayArtifacts(myArtifacts);
+                }
             }
         }
+
+        function displayMyItems(data) {
+            // Store data globally for copy functionality
+            currentMyItemsData = data;
+            
+            const grid = document.getElementById('artifacts-grid');
+            const emptyState = document.getElementById('empty-state');
+            
+            const totalItems = data.uploaded.count + data.purchased.count;
+            
+            if (totalItems === 0) {
+                grid.style.display = 'none';
+                emptyState.style.display = 'block';
+                document.querySelector('#empty-state h3').textContent = 'No Items Yet';
+                document.querySelector('#empty-state p').textContent = 'You haven\'t uploaded any artifacts or made any purchases yet.';
+                return;
+            }
+            
+            grid.style.display = 'grid';
+            emptyState.style.display = 'none';
+            
+            let gridHTML = '';
+            
+            // Add uploaded items section
+            if (data.uploaded.count > 0) {
+                gridHTML += `
+                    <div style="grid-column: 1 / -1; margin-bottom: 20px;">
+                        <h3 style="color: #ffaa00; margin-bottom: 15px; font-size: 20px;">
+                            📋 My Uploads (${data.uploaded.count})
+                        </h3>
+                        <p style="color: #888; font-size: 14px; margin-bottom: 20px;">
+                            Artifacts you've created and listed on the market
+                        </p>
+                    </div>
+                `;
+                
+                data.uploaded.artifacts.forEach(artifact => {
+                    gridHTML += createArtifactCard(artifact, 'uploaded');
+                });
+            }
+            
+            // Add purchased items section
+            if (data.purchased.count > 0) {
+                gridHTML += `
+                    <div style="grid-column: 1 / -1; margin: 30px 0 20px 0;">
+                        <h3 style="color: #28a745; margin-bottom: 15px; font-size: 20px;">
+                            💾 My Downloads (${data.purchased.count})
+                        </h3>
+                        <p style="color: #888; font-size: 14px; margin-bottom: 20px;">
+                            Digital artifacts you've purchased and own
+                        </p>
+                    </div>
+                `;
+                
+                data.purchased.artifacts.forEach(artifact => {
+                    gridHTML += createArtifactCard(artifact, 'purchased');
+                });
+            }
+            
+            grid.innerHTML = gridHTML;
+        }
+
+        function createArtifactCard(artifact, type) {
+            const typeIcon = type === 'uploaded' ? '📋' : '💾';
+            const typeLabel = type === 'uploaded' ? 'Uploaded' : 'Purchased';
+            
+            let actionButtons = '';
+            if (type === 'uploaded') {
+                actionButtons = `<button class="artifact-action-btn edit" onclick="editArtifact('${artifact.id}')">📝 Edit Listing</button>`;
+            } else {
+                // For purchased items, offer both view and download based on file type
+                const fileType = artifact.fileType || 'unknown';
+                const isMusic = artifact.category === 'music' || fileType.includes('audio');
+                const isImage = artifact.category === 'art' || fileType.includes('image');
+                const isText = fileType.includes('text') || fileType.includes('document');
+                
+                actionButtons = `
+                    <button class="artifact-action-btn download" onclick="downloadArtifact('${artifact.id}')">💾 Download File</button>
+                    ${isMusic ? `<button class="artifact-action-btn" onclick="previewArtifact('${artifact.id}', 'music')">🎵 Preview Audio</button>` : ''}
+                    ${isImage ? `<button class="artifact-action-btn" onclick="previewArtifact('${artifact.id}', 'image')">🖼️ View Image</button>` : ''}
+                    ${isText ? `<button class="artifact-action-btn" onclick="previewArtifact('${artifact.id}', 'text')">📄 View Text</button>` : ''}
+                    <button class="artifact-action-btn" onclick="copyArtifactContent('${artifact.id}')">📋 Copy Content</button>
+                `;
+            }
+            
+            return `
+                <div class="artifact-card" style="border-left: 3px solid ${type === 'uploaded' ? '#ffaa00' : '#28a745'};">
+                    <div class="artifact-category">${typeIcon} ${typeLabel} • ${artifact.category}</div>
+                    <div class="artifact-title">${artifact.title}</div>
+                    <div class="artifact-price">${artifact.formattedPrice}</div>
+                    <div class="artifact-kwh">${artifact.kwhFootprint.toFixed(1)} kWh equivalent</div>
+                    ${artifact.isBonus ? '<div class="artifact-bonus">BONUS</div>' : ''}
+                    <div style="margin-top: 15px;">
+                        ${actionButtons}
+                    </div>
+                    ${type === 'purchased' ? `<div style="color: #666; font-size: 12px; margin-top: 8px;">Purchased: ${new Date(artifact.dateAdded).toLocaleDateString()}</div>` : ''}
+                </div>
+            `;
+        }
+
+        async function downloadArtifact(artifactId) {
+            if (!currentUser) {
+                alert('Please sign in to download artifacts.');
+                return;
+            }
+
+            try {
+                // Generate download token and redirect
+                const downloadToken = btoa(`${currentUser.userId}:${artifactId}:${Date.now()}`);
+                const downloadUrl = `/api/artifacts/download/${downloadToken}`;
+                
+                // Open download in new window/tab
+                window.open(downloadUrl, '_blank');
+                
+                alert('✅ Download started! The file should begin downloading shortly.');
+            } catch (error) {
+                console.error('Download error:', error);
+                alert('❌ Download failed. Please try again.');
+            }
+        }
+
+        async function previewArtifact(artifactId, type) {
+            if (!currentUser) {
+                alert('Please sign in to preview artifacts.');
+                return;
+            }
+
+            try {
+                const downloadToken = btoa(`${currentUser.userId}:${artifactId}:${Date.now()}`);
+                const fileUrl = `/api/artifacts/download/${downloadToken}`;
+                
+                // Create modal container
+                const modal = document.createElement('div');
+                modal.style.cssText = `
+                    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+                    background: rgba(0,0,0,0.8); z-index: 1000;
+                    display: flex; align-items: center; justify-content: center;
+                    padding: 20px;
+                `;
+                
+                const content = document.createElement('div');
+                content.style.cssText = `
+                    background: #1a1a1a; padding: 30px; border-radius: 12px;
+                    max-width: 80%; max-height: 80%; width: auto; height: auto;
+                    overflow: auto; color: white;
+                `;
+                
+                if (type === 'music') {
+                    const audio = new Audio(fileUrl);
+                    audio.controls = true;
+                    audio.style.width = '100%';
+                    audio.style.marginTop = '10px';
+                    
+                    content.innerHTML = `
+                        <h3 style="color: #fff; margin-bottom: 20px;">🎵 Audio Preview</h3>
+                        <div style="margin-bottom: 20px;"></div>
+                        <button onclick="this.parentElement.parentElement.remove()" 
+                                style="background: #dc3545; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;">
+                            Close
+                        </button>
+                    `;
+                    content.children[1].appendChild(audio);
+                    
+                } else if (type === 'image') {
+                    const img = document.createElement('img');
+                    img.src = fileUrl;
+                    img.style.cssText = 'max-width: 100%; max-height: 70vh; border-radius: 8px;';
+                    
+                    content.innerHTML = `
+                        <h3 style="color: #fff; margin-bottom: 20px;">🖼️ Image Preview</h3>
+                        <div style="margin-bottom: 20px; text-align: center;"></div>
+                        <div style="text-align: center; margin-top: 20px;">
+                            <button onclick="copyImageToClipboard('${fileUrl}')" 
+                                    style="background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; margin-right: 10px;">
+                                📋 Copy Image
+                            </button>
+                            <button onclick="this.parentElement.parentElement.parentElement.remove()" 
+                                    style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
+                                Close
+                            </button>
+                        </div>
+                    `;
+                    content.children[1].appendChild(img);
+                    
+                } else if (type === 'text') {
+                    // Fetch text content
+                    try {
+                        const response = await fetch(fileUrl);
+                        const textContent = await response.text();
+                        
+                        content.innerHTML = `
+                            <h3 style="color: #fff; margin-bottom: 20px;">📄 Text Preview</h3>
+                            <div style="background: #2a2a2a; padding: 15px; border-radius: 8px; max-height: 60vh; overflow-y: auto; white-space: pre-wrap; font-family: monospace; font-size: 14px; line-height: 1.5; margin-bottom: 20px;" id="textContent">${textContent}</div>
+                            <div style="text-align: center;">
+                                <button onclick="copyTextContent()" 
+                                        style="background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; margin-right: 10px;">
+                                    📋 Copy Text
+                                </button>
+                                <button onclick="this.parentElement.parentElement.remove()" 
+                                        style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
+                                    Close
+                                </button>
+                            </div>
+                        `;
+                    } catch (error) {
+                        content.innerHTML = `
+                            <h3 style="color: #fff; margin-bottom: 20px;">📄 Text Preview</h3>
+                            <p style="color: #ff6b6b;">❌ Could not load text content. Please use Download to access the file.</p>
+                            <button onclick="this.parentElement.parentElement.remove()" 
+                                    style="background: #dc3545; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; margin-top: 15px;">
+                                Close
+                            </button>
+                        `;
+                    }
+                } else {
+                    content.innerHTML = `
+                        <h3 style="color: #fff; margin-bottom: 20px;">📄 File Preview</h3>
+                        <p style="color: #888;">Preview not available for this file type. Use Download to access the file.</p>
+                        <button onclick="this.parentElement.parentElement.remove()" 
+                                style="background: #dc3545; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; margin-top: 15px;">
+                            Close
+                        </button>
+                    `;
+                }
+                
+                modal.appendChild(content);
+                document.body.appendChild(modal);
+                
+                // Auto-remove modal when clicking outside
+                modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+                
+            } catch (error) {
+                console.error('Preview error:', error);
+                alert('❌ Preview failed. Please try downloading the file instead.');
+            }
+        }
+
+        async function copyImageToClipboard(imageUrl) {
+            try {
+                const response = await fetch(imageUrl);
+                const blob = await response.blob();
+                await navigator.clipboard.write([
+                    new ClipboardItem({ [blob.type]: blob })
+                ]);
+                alert('📋 Image copied to clipboard!');
+            } catch (error) {
+                console.error('Copy image error:', error);
+                alert('❌ Could not copy image. Your browser may not support this feature.');
+            }
+        }
+
+        function copyTextContent() {
+            try {
+                const textElement = document.getElementById('textContent');
+                const text = textElement.textContent;
+                navigator.clipboard.writeText(text);
+                alert('📋 Text content copied to clipboard!');
+            } catch (error) {
+                console.error('Copy text error:', error);
+                alert('❌ Could not copy text content.');
+            }
+        }
+
+        async function copyArtifactContent(artifactId) {
+            if (!currentUser) {
+                alert('Please sign in to copy artifact content.');
+                return;
+            }
+
+            try {
+                // Find the artifact to determine type
+                const artifact = currentMyItemsData?.uploaded?.artifacts?.find(a => a.id === artifactId) ||
+                                currentMyItemsData?.purchased?.artifacts?.find(a => a.id === artifactId);
+                
+                if (!artifact) {
+                    alert('❌ Could not find artifact information.');
+                    return;
+                }
+
+                const fileType = artifact.fileType || 'unknown';
+                const isText = fileType.includes('text') || fileType.includes('document');
+                const isImage = artifact.category === 'art' || fileType.includes('image');
+
+                if (isText) {
+                    // For text files, copy the actual content
+                    const downloadToken = btoa(`${currentUser.userId}:${artifactId}:${Date.now()}`);
+                    const fileUrl = `/api/artifacts/download/${downloadToken}`;
+                    
+                    const response = await fetch(fileUrl);
+                    const textContent = await response.text();
+                    await navigator.clipboard.writeText(textContent);
+                    alert('📋 Text content copied to clipboard!');
+                    
+                } else if (isImage) {
+                    // For images, copy the image blob
+                    const downloadToken = btoa(`${currentUser.userId}:${artifactId}:${Date.now()}`);
+                    const fileUrl = `/api/artifacts/download/${downloadToken}`;
+                    
+                    const response = await fetch(fileUrl);
+                    const blob = await response.blob();
+                    await navigator.clipboard.write([
+                        new ClipboardItem({ [blob.type]: blob })
+                    ]);
+                    alert('📋 Image copied to clipboard!');
+                    
+                } else {
+                    // For other file types, copy artifact information
+                    const info = `📄 ${artifact.title}
+🏷️ Category: ${artifact.category}
+💰 Price: ${artifact.formattedPrice}
+⚡ Energy: ${artifact.kwhFootprint.toFixed(1)} kWh equivalent
+📝 Description: ${artifact.description || 'N/A'}
+🆔 ID: ${artifact.id}`;
+                    
+                    await navigator.clipboard.writeText(info);
+                    alert('📋 Artifact information copied to clipboard!');
+                }
+            } catch (error) {
+                console.error('Copy content error:', error);
+                alert('❌ Failed to copy content. Your browser may not support this feature for this file type.');
+            }
+        }
+
+        async function copyArtifactInfo(artifactId) {
+            try {
+                // Find the artifact in the current data
+                const artifact = currentMyItemsData?.uploaded?.artifacts?.find(a => a.id === artifactId) ||
+                                currentMyItemsData?.purchased?.artifacts?.find(a => a.id === artifactId);
+                
+                if (artifact) {
+                    const info = `📄 ${artifact.title}
+🏷️ Category: ${artifact.category}
+💰 Price: ${artifact.formattedPrice}
+⚡ Energy: ${artifact.kwhFootprint.toFixed(1)} kWh equivalent
+📝 Description: ${artifact.description || 'N/A'}
+🆔 ID: ${artifact.id}`;
+                    
+                    await navigator.clipboard.writeText(info);
+                    alert('📋 Artifact information copied to clipboard!');
+                } else {
+                    alert('❌ Could not find artifact information.');
+                }
+            } catch (error) {
+                console.error('Copy error:', error);
+                alert('❌ Failed to copy information. Please try again.');
+            }
+        }
+
+        function editArtifact(artifactId) {
+            // Placeholder for edit functionality
+            alert('📝 Edit functionality coming soon! You can manage your listings from the Upload section.');
+        }
+
+        // Store current data for copying functionality
+        let currentMyItemsData = null;
 
         async function purchaseArtifact(artifactId) {
             if (!currentUser) {

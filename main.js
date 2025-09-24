@@ -1528,7 +1528,7 @@ const server = http.createServer(async (req, res) => {
         const purchasedQuery = `
           SELECT DISTINCT a.id, a.title, a.description, a.category, a.kwh_footprint, 
                  a.solar_amount_s, a.is_bonus, a.cover_art_url, a.delivery_mode, 
-                 a.creator_id, t.created_at as purchase_date, t.amount_s as paid_amount
+                 a.creator_id, a.file_type, t.created_at as purchase_date, t.amount_s as paid_amount
           FROM artifacts a
           INNER JOIN transactions t ON a.id = t.artifact_id
           WHERE a.active = true AND t.wallet_id = $1 AND t.type = 'purchase'
@@ -1565,6 +1565,7 @@ const server = http.createServer(async (req, res) => {
           coverArt: artifact.cover_art_url,
           deliveryMode: artifact.delivery_mode || 'download',
           creatorId: artifact.creator_id,
+          fileType: artifact.file_type,
           itemType: 'purchased',
           dateAdded: artifact.purchase_date,
           paidAmount: parseFloat(artifact.paid_amount)
