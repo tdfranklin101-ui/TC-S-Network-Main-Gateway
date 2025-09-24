@@ -283,6 +283,9 @@ async function processDailyDistribution() {
   }
   
   try {
+    // Use existing pool connection (more reliable than creating new one)
+    console.log('📡 Using existing database connection for distribution...');
+    
     // Get all members who haven't received today's distribution
     const membersQuery = `
       SELECT id, username, email, total_solar, last_distribution_date 
