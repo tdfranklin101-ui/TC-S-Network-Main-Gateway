@@ -25,6 +25,39 @@ const MemberTemplateService = require('./server/member-template-service');
 
 const PORT = process.env.PORT || 3000;
 
+// Simple session storage (in production, use Redis or database)
+const sessions = new Map();
+
+// Session helper functions
+function generateSessionId() {
+  return crypto.randomBytes(32).toString('hex');
+}
+
+function createSession(userId, userData) {
+  const sessionId = generateSessionId();
+  const sessionData = {
+    userId,
+    ...userData,
+    createdAt: new Date(),
+    lastAccess: new Date()
+  };
+  sessions.set(sessionId, sessionData);
+  return sessionId;
+}
+
+function getSession(sessionId) {
+  const session = sessions.get(sessionId);
+  if (session) {
+    session.lastAccess = new Date();
+    return session;
+  }
+  return null;
+}
+
+function destroySession(sessionId) {
+  return sessions.delete(sessionId);
+}
+
 // File upload configuration
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -211,12 +244,12 @@ try {
   pool = null;
 }
 
-// In-memory storage fallback
+// Legacy signup storage (deprecated - auth uses database)
 let signupStorage = [];
 
-// Simplified signups - no database blocking
+// Note: This is for legacy signups only - authentication uses database
 function ensureSignupsTable() {
-  console.log('📝 Using in-memory storage for signups (fast startup)');
+  console.log('📝 Using in-memory storage for legacy signups only (authentication uses database)');
 }
 
 // Parse body data helper
@@ -632,7 +665,26 @@ const server = http.createServer(async (req, res) => {
       }
 
       if (loginSuccess) {
-        res.writeHead(200, { 'Content-Type': 'application/json' });
+        // Create session
+        const sessionId = createSession(userData.userId, userData);
+        
+        // Set secure session cookie
+        const cookieOptions = [
+          `tc_s_session=${sessionId}`,
+          'HttpOnly',
+          'SameSite=Lax',
+          'Path=/',
+          `Max-Age=${24 * 60 * 60}` // 24 hours
+        ];
+        
+        if (process.env.NODE_ENV === 'production') {
+          cookieOptions.push('Secure');
+        }
+        
+        res.writeHead(200, { 
+          'Content-Type': 'application/json',
+          'Set-Cookie': cookieOptions.join('; ')
+        });
         res.end(JSON.stringify({
           success: true,
           message: 'Login successful',
@@ -706,14 +758,40 @@ const server = http.createServer(async (req, res) => {
       }
 
       if (success) {
-        res.writeHead(200, { 'Content-Type': 'application/json' });
+        // Create session for the new user
+        const userData = {
+          userId: userId,
+          username: username,
+          email: email,
+          firstName: firstName || '',
+          lastName: lastName || '',
+          solarBalance: initialSolarAllocation,
+          memberSince: currentDate.toISOString()
+        };
+        
+        const sessionId = createSession(userId, userData);
+        
+        // Set secure session cookie
+        const cookieOptions = [
+          `tc_s_session=${sessionId}`,
+          'HttpOnly',
+          'SameSite=Lax',
+          'Path=/',
+          `Max-Age=${24 * 60 * 60}` // 24 hours
+        ];
+        
+        if (process.env.NODE_ENV === 'production') {
+          cookieOptions.push('Secure');
+        }
+        
+        res.writeHead(200, { 
+          'Content-Type': 'application/json',
+          'Set-Cookie': cookieOptions.join('; ')
+        });
         res.end(JSON.stringify({
           success: true,
           message: 'Registration successful',
-          userId: userId,
-          username: username,
-          initialSolarBalance: initialSolarAllocation,
-          memberSince: currentDate.toISOString()
+          ...userData
         }));
       } else {
         res.writeHead(500, { 'Content-Type': 'application/json' });
@@ -723,6 +801,39 @@ const server = http.createServer(async (req, res) => {
       console.error('Registration error:', error);
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ success: false, error: 'Registration failed' }));
+    }
+    return;
+  }
+
+  // Logout API endpoint
+  if ((pathname === '/api/logout' || pathname === '/api/users/logout') && req.method === 'POST') {
+    try {
+      // Get session ID from cookie
+      const cookies = req.headers.cookie?.split(';').reduce((acc, cookie) => {
+        const [key, value] = cookie.trim().split('=');
+        acc[key] = value;
+        return acc;
+      }, {}) || {};
+      
+      const sessionId = cookies.tc_s_session;
+      
+      if (sessionId) {
+        destroySession(sessionId);
+      }
+      
+      // Clear the session cookie
+      res.writeHead(200, { 
+        'Content-Type': 'application/json',
+        'Set-Cookie': 'tc_s_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0'
+      });
+      res.end(JSON.stringify({
+        success: true,
+        message: 'Logged out successfully'
+      }));
+    } catch (error) {
+      console.error('Logout error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Logout failed' }));
     }
     return;
   }
@@ -809,15 +920,41 @@ const server = http.createServer(async (req, res) => {
       }
 
       if (success) {
-        res.writeHead(200, { 'Content-Type': 'application/json' });
+        // Create session for the new user
+        const userData = {
+          userId: userId,
+          username: username,
+          email: email,
+          firstName: firstName,
+          lastName: lastName,
+          solarBalance: initialSolarAllocation,
+          memberSince: memberData.memberSince,
+          membershipType: 'Foundation Market Member'
+        };
+        
+        const sessionId = createSession(userId, userData);
+        
+        // Set secure session cookie
+        const cookieOptions = [
+          `tc_s_session=${sessionId}`,
+          'HttpOnly',
+          'SameSite=Lax',
+          'Path=/',
+          `Max-Age=${24 * 60 * 60}` // 24 hours
+        ];
+        
+        if (process.env.NODE_ENV === 'production') {
+          cookieOptions.push('Secure');
+        }
+        
+        res.writeHead(200, { 
+          'Content-Type': 'application/json',
+          'Set-Cookie': cookieOptions.join('; ')
+        });
         res.end(JSON.stringify({
           success: true,
           message: 'TC-S Network membership created successfully',
-          userId: userId,
-          username: username,
-          initialSolarBalance: initialSolarAllocation,
-          memberSince: memberData.memberSince,
-          membershipType: 'Foundation Market Member'
+          ...userData
         }));
       } else {
         res.writeHead(500, { 'Content-Type': 'application/json' });
