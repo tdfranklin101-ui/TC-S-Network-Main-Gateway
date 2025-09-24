@@ -114,6 +114,45 @@
             border-color: #007bff;
         }
 
+        .password-input-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .password-input-container input {
+            flex: 1;
+            padding-right: 50px;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #888;
+            font-size: 18px;
+            padding: 4px;
+            border-radius: 4px;
+            transition: color 0.3s;
+        }
+
+        .password-toggle:hover {
+            color: #007bff;
+        }
+
+        .password-toggle:focus {
+            outline: none;
+            color: #007bff;
+        }
+
+        .eye-icon {
+            user-select: none;
+        }
+
         .form-group.half {
             display: flex;
             gap: 10px;
@@ -299,6 +338,26 @@
             </div>
 
             <div class="form-group">
+                <label for="password">Password * (minimum 6 characters)</label>
+                <div class="password-input-container">
+                    <input type="password" id="password" name="password" required minlength="6" placeholder="Enter your password">
+                    <button type="button" class="password-toggle" onclick="togglePassword('password', this)">
+                        <span class="eye-icon">👁️</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="confirmPassword">Confirm Password *</label>
+                <div class="password-input-container">
+                    <input type="password" id="confirmPassword" name="confirmPassword" required minlength="6" placeholder="Confirm your password">
+                    <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword', this)">
+                        <span class="eye-icon">👁️</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-group">
                 <label for="country">Country/Region</label>
                 <select id="country" name="country">
                     <option value="">Select your country</option>
@@ -362,11 +421,30 @@
             registerBtn.textContent = 'Creating Account...';
 
             const formData = new FormData(this);
+            // Password validation
+            const password = formData.get('password');
+            const confirmPassword = formData.get('confirmPassword');
+            
+            if (password.length < 6) {
+                alert('❌ Password must be at least 6 characters long');
+                registerBtn.disabled = false;
+                registerBtn.textContent = 'Create My TC-S Network Account';
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                alert('❌ Passwords do not match');
+                registerBtn.disabled = false;
+                registerBtn.textContent = 'Create My TC-S Network Account';
+                return;
+            }
+
             const registrationData = {
                 firstName: formData.get('firstName'),
                 lastName: formData.get('lastName'),
                 username: formData.get('username'),
                 email: formData.get('email'),
+                password: password,
                 country: formData.get('country'),
                 interests: formData.get('interests'),
                 agreeToTerms: formData.get('terms') === 'on',
@@ -431,6 +509,20 @@
                 this.setCustomValidity('');
             }
         });
+
+        // Toggle password visibility
+        function togglePassword(inputId, button) {
+            const input = document.getElementById(inputId);
+            const eyeIcon = button.querySelector('.eye-icon');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                eyeIcon.textContent = '🙈';
+            } else {
+                input.type = 'password';
+                eyeIcon.textContent = '👁️';
+            }
+        }
     </script>
 </body>
 </html>
