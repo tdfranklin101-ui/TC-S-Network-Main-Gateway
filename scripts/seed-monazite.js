@@ -43,15 +43,20 @@ function createSlug(title) {
 
 // Calculate Solar price based on file size and energy estimation
 function calculateSolarPrice(fileSize, duration) {
-  // Base energy calculation: ~0.001 kWh per MB + duration factor
+  // Base energy calculation: actual kWh consumption for digital music
   const sizeInMB = fileSize / (1024 * 1024);
   const durationInMin = parseFloat(duration.split(':')[0]) + parseFloat(duration.split(':')[1]) / 60;
   
-  // Energy estimation: file size impact + streaming/encoding energy
+  // Realistic energy estimation for digital music processing
+  // File storage/transfer: ~0.001 kWh per MB
+  // Streaming/playback: ~0.0005 kWh per minute
   const estimatedKwh = (sizeInMB * 0.001) + (durationInMin * 0.0005);
   
-  // Convert to Solar tokens (0.8 multiplier for efficiency)
-  const solarPrice = Math.max(0.12, Math.round(estimatedKwh * 0.8 * 10000) / 10000);
+  // Convert kWh to Solar tokens (1 Solar = 4,913 kWh)
+  const energyBasedPrice = estimatedKwh / 4913;
+  
+  // Apply reasonable music industry pricing (minimum 0.001 Solar for platform sustainability)
+  const solarPrice = Math.max(0.001, Math.round(energyBasedPrice * 1000000) / 1000000);
   
   return solarPrice;
 }
