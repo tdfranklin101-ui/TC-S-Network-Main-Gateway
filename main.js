@@ -13,6 +13,12 @@ const crypto = require('crypto');
 // Import seed rotation system
 const { initializeSeedRotation, getSeedRotator } = require('./server/seed-rotation-api');
 
+// Import market data and SEO services
+const MarketDataService = require('./server/market-data-service');
+const ContentValidator = require('./server/content-validator');
+const SEOGenerator = require('./server/seo-generator');
+const AISEOOptimizer = require('./server/ai-seo-optimizer');
+
 const PORT = process.env.PORT || 3000;
 
 // File upload configuration
@@ -210,7 +216,20 @@ function parseBody(req) {
 // Initialize database
 ensureSignupsTable();
 
+// Initialize market data and SEO services
+const marketDataService = new MarketDataService();
+const contentValidator = new ContentValidator();
+const seoGenerator = new SEOGenerator();
+const aiSEOOptimizer = new AISEOOptimizer();
+
+// Start automatic SEO updates
+seoGenerator.startAutoUpdates();
+
 console.log('🚀 Starting Current-See Deployment Server...');
+console.log('📊 Market data service initialized');
+console.log('✅ Content validation system ready');
+console.log('🔄 Dynamic SEO generation active');
+console.log('🤖 AI SEO optimization enabled');
 
 const server = http.createServer(async (req, res) => {
   const pathname = new URL(req.url, `http://${req.headers.host}`).pathname;
@@ -1174,6 +1193,285 @@ const server = http.createServer(async (req, res) => {
     // Redirect to main platform solar tracking section
     res.writeHead(302, { 'Location': '/main-platform#solar-tracking' });
     res.end();
+    return;
+  }
+
+  // Market Data API Endpoints
+  if (pathname === '/api/market-data/stats' && req.method === 'GET') {
+    try {
+      const marketData = await marketDataService.getRenewableEnergyStats();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, data: marketData }));
+    } catch (error) {
+      console.error('Market data error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to fetch market data' }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/market-data/positioning' && req.method === 'GET') {
+    try {
+      const positioning = await marketDataService.getMarketPositioning();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, data: positioning }));
+    } catch (error) {
+      console.error('Market positioning error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to fetch market positioning' }));
+    }
+    return;
+  }
+
+  // Content Validation API Endpoints
+  if (pathname === '/api/content/validate' && req.method === 'POST') {
+    try {
+      const body = await parseBody(req);
+      const { content, contentType = 'general' } = body;
+      
+      if (!content) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Content is required' }));
+        return;
+      }
+
+      const validation = await contentValidator.validateAndEnhanceContent(content, contentType);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, data: validation }));
+    } catch (error) {
+      console.error('Content validation error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Content validation failed' }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/content/competitor-analysis' && req.method === 'GET') {
+    try {
+      const analysis = await contentValidator.getCompetitorAnalysis();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, data: analysis }));
+    } catch (error) {
+      console.error('Competitor analysis error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Competitor analysis failed' }));
+    }
+    return;
+  }
+
+  // Dynamic SEO API Endpoints
+  if (pathname === '/api/seo/generate' && req.method === 'POST') {
+    try {
+      const body = await parseBody(req);
+      const { pageType = 'homepage' } = body;
+      
+      const seoContent = await seoGenerator.generateAllSEOContent();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ 
+        success: true, 
+        data: seoContent,
+        pageType: pageType,
+        timestamp: new Date().toISOString()
+      }));
+    } catch (error) {
+      console.error('SEO generation error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'SEO generation failed' }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/seo/update' && req.method === 'POST') {
+    try {
+      const body = await parseBody(req);
+      const { pageType = 'all' } = body;
+      
+      const updatedPages = await seoGenerator.updateSEOFiles(pageType);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ 
+        success: true, 
+        message: `SEO updated for ${pageType}`,
+        data: updatedPages,
+        timestamp: new Date().toISOString()
+      }));
+    } catch (error) {
+      console.error('SEO update error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'SEO update failed' }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/seo/competitive-analysis' && req.method === 'GET') {
+    try {
+      const analysis = await seoGenerator.getCompetitiveSEOAnalysis();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, data: analysis }));
+    } catch (error) {
+      console.error('SEO competitive analysis error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'SEO competitive analysis failed' }));
+    }
+    return;
+  }
+
+  // AI SEO Optimization API Endpoints
+  if (pathname === '/api/ai-seo/generate' && req.method === 'POST') {
+    try {
+      const body = await parseBody(req);
+      const { contentType = 'homepage' } = body;
+      
+      const aiOptimizedContent = await aiSEOOptimizer.generateAIOptimizedContent(contentType);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ 
+        success: true, 
+        data: aiOptimizedContent,
+        contentType: contentType,
+        optimization: 'AI-optimized for semantic understanding and entity recognition',
+        timestamp: new Date().toISOString()
+      }));
+    } catch (error) {
+      console.error('AI SEO generation error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'AI SEO generation failed' }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/ai-seo/optimize-content' && req.method === 'POST') {
+    try {
+      const body = await parseBody(req);
+      const { content, contentType = 'general' } = body;
+      
+      if (!content) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Content is required' }));
+        return;
+      }
+
+      const optimization = await aiSEOOptimizer.optimizeForAIRanking(content, contentType);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, data: optimization }));
+    } catch (error) {
+      console.error('AI content optimization error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'AI content optimization failed' }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/ai-seo/meta-tags' && req.method === 'POST') {
+    try {
+      const body = await parseBody(req);
+      const { contentType = 'homepage' } = body;
+      
+      const aiContent = await aiSEOOptimizer.generateAIOptimizedContent(contentType);
+      const metaTags = aiSEOOptimizer.generateAIMetaTags(aiContent, contentType);
+      
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ 
+        success: true, 
+        data: metaTags,
+        description: 'AI-optimized meta tags for enhanced semantic understanding',
+        timestamp: new Date().toISOString()
+      }));
+    } catch (error) {
+      console.error('AI meta tags generation error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'AI meta tags generation failed' }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/ai-seo/knowledge-graph' && req.method === 'GET') {
+    try {
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      const contentType = url.searchParams.get('contentType') || 'homepage';
+      
+      const aiContent = await aiSEOOptimizer.generateAIOptimizedContent(contentType);
+      const knowledgeGraph = aiContent.knowledgeGraphNodes;
+      
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ 
+        success: true, 
+        data: knowledgeGraph,
+        description: 'Knowledge graph for AI understanding and entity recognition',
+        contentType: contentType
+      }));
+    } catch (error) {
+      console.error('Knowledge graph generation error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Knowledge graph generation failed' }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/ai-seo/conversational-context' && req.method === 'GET') {
+    try {
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      const contentType = url.searchParams.get('contentType') || 'homepage';
+      
+      const aiContent = await aiSEOOptimizer.generateAIOptimizedContent(contentType);
+      const conversationalContext = aiContent.naturalLanguageContext;
+      
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ 
+        success: true, 
+        data: conversationalContext,
+        description: 'Conversational context optimized for AI assistants and voice search',
+        contentType: contentType
+      }));
+    } catch (error) {
+      console.error('Conversational context generation error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Conversational context generation failed' }));
+    }
+    return;
+  }
+
+  // Brand Authenticity Dashboard API
+  if (pathname === '/api/brand/authenticity-dashboard' && req.method === 'GET') {
+    try {
+      const [marketData, positioning, competitorAnalysis, seoAnalysis] = await Promise.all([
+        marketDataService.getRenewableEnergyStats(),
+        marketDataService.getMarketPositioning(),
+        contentValidator.getCompetitorAnalysis(),
+        seoGenerator.getCompetitiveSEOAnalysis()
+      ]);
+
+      const dashboard = {
+        marketData: {
+          lastUpdated: marketData.lastUpdated,
+          aiEnergyDemand: `${marketData.aiDataCenterDemand.value}GW by 2030`,
+          digitalEconomyScale: `$${marketData.globalDigitalEconomy.value}T (${marketData.globalDigitalEconomy.percentage}% of GDP)`,
+          renewableGrowth: `${marketData.renewableMarketGrowth.value}% annually`
+        },
+        authenticity: {
+          energyStandard: `1 Solar = ${marketData.solarStandard.value} kWh`,
+          distributionStart: marketData.dailyDistribution.startDate,
+          brandConsistency: 'TC-S Network Foundation Market',
+          crossReferences: positioning.crossReferences.industry_reports.length
+        },
+        competitive: {
+          uniqueValue: Object.keys(positioning.uniqueValue).length + ' key differentiators',
+          marketGaps: Object.keys(positioning.marketGaps).length + ' gaps addressed',
+          seoAdvantages: Object.keys(seoAnalysis.seoAdvantages).length + ' SEO advantages'
+        },
+        credibility: {
+          realDataBacking: 'All claims cross-referenced with industry reports',
+          marketTiming: `Aligned with ${marketData.aiDataCenterDemand.value}GW AI energy surge`,
+          innovation: 'First energy-backed universal basic income system',
+          transparency: `Public distribution tracking since ${marketData.dailyDistribution.startDate}`
+        }
+      };
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, data: dashboard }));
+    } catch (error) {
+      console.error('Brand authenticity dashboard error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Dashboard generation failed' }));
+    }
     return;
   }
 
