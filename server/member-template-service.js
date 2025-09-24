@@ -15,62 +15,67 @@ class MemberTemplateService {
    * Initialize default templates
    */
   initializeTemplates() {
-    // Free Streaming Template
-    this.templates.set('free_streaming', {
-      id: 'free_streaming',
-      name: 'Free Streaming Display',
-      category: 'streaming',
-      description: 'Professional streaming interface for free content access',
-      features: ['auto_play', 'playlist_support', 'social_sharing', 'member_branding'],
-      usageCount: 0,
-      template: this.generateFreeStreamingTemplate()
-    });
+    try {
+      // Free Streaming Template
+      this.templates.set('free_streaming', {
+        id: 'free_streaming',
+        name: 'Free Streaming Display',
+        category: 'streaming',
+        description: 'Professional streaming interface for free content access',
+        features: ['auto_play', 'playlist_support', 'social_sharing', 'member_branding'],
+        usageCount: 0,
+        template: this.generateFreeStreamingTemplate()
+      });
 
-    // Member Showcase Template
-    this.templates.set('member_showcase', {
-      id: 'member_showcase',
-      name: 'Member Content Showcase',
-      category: 'portfolio',
-      description: 'Professional portfolio display for member content',
-      features: ['grid_layout', 'category_filtering', 'premium_highlighting', 'contact_info'],
-      usageCount: 0,
-      template: this.generateMemberShowcaseTemplate()
-    });
+      // Member Showcase Template
+      this.templates.set('member_showcase', {
+        id: 'member_showcase',
+        name: 'Member Content Showcase',
+        category: 'portfolio',
+        description: 'Professional portfolio display for member content',
+        features: ['grid_layout', 'category_filtering', 'premium_highlighting', 'contact_info'],
+        usageCount: 0,
+        template: this.generateMemberShowcaseTemplate()
+      });
 
-    // Premium Gallery Template
-    this.templates.set('premium_gallery', {
-      id: 'premium_gallery',
-      name: 'Premium Content Gallery',
-      category: 'sales',
-      description: 'Premium gallery for paid content with purchase integration',
-      features: ['preview_mode', 'purchase_integration', 'price_display', 'testimonials'],
-      usageCount: 0,
-      template: this.generatePremiumGalleryTemplate()
-    });
+      // Premium Gallery Template
+      this.templates.set('premium_gallery', {
+        id: 'premium_gallery',
+        name: 'Premium Content Gallery',
+        category: 'sales',
+        description: 'Premium gallery for paid content with purchase integration',
+        features: ['preview_mode', 'purchase_integration', 'price_display', 'testimonials'],
+        usageCount: 0,
+        template: this.generatePremiumGalleryTemplate()
+      });
 
-    // Artist Studio Template
-    this.templates.set('artist_studio', {
-      id: 'artist_studio',
-      name: 'Artist Studio Display',
-      category: 'creative',
-      description: 'Creative studio layout for artists and creators',
-      features: ['work_in_progress', 'commission_requests', 'artist_bio', 'collaboration'],
-      usageCount: 0,
-      template: this.generateArtistStudioTemplate()
-    });
+      // Artist Studio Template
+      this.templates.set('artist_studio', {
+        id: 'artist_studio',
+        name: 'Artist Studio Display',
+        category: 'creative',
+        description: 'Creative studio layout for artists and creators',
+        features: ['work_in_progress', 'commission_requests', 'artist_bio', 'collaboration'],
+        usageCount: 0,
+        template: this.generateArtistStudioTemplate()
+      });
 
-    // Minimal Clean Template
-    this.templates.set('minimal_clean', {
-      id: 'minimal_clean',
-      name: 'Minimal Clean Display',
-      category: 'minimal',
-      description: 'Clean, minimal design focusing on content',
-      features: ['minimal_ui', 'typography_focus', 'fast_loading', 'mobile_optimized'],
-      usageCount: 0,
-      template: this.generateMinimalCleanTemplate()
-    });
+      // Minimal Clean Template
+      this.templates.set('minimal_clean', {
+        id: 'minimal_clean',
+        name: 'Minimal Clean Display',
+        category: 'minimal',
+        description: 'Clean, minimal design focusing on content',
+        features: ['minimal_ui', 'typography_focus', 'fast_loading', 'mobile_optimized'],
+        usageCount: 0,
+        template: this.generateMinimalCleanTemplate()
+      });
 
-    console.log(`📋 Initialized ${this.templates.size} member display templates`);
+      console.log(`📋 Initialized ${this.templates.size} member display templates`);
+    } catch (error) {
+      console.error('⚠️ Template initialization error:', error.message);
+      console.log('📋 Continuing with partial template initialization');
+    }
   }
 
   /**
