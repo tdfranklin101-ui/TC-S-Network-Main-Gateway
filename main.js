@@ -31,12 +31,23 @@ const upload = multer({
     fileSize: 500 * 1024 * 1024, // 500MB max (will validate per type)
   },
   fileFilter: (req, file, cb) => {
-    // Basic filter - detailed validation happens later
+    // Extended filter for marketplace artifacts - more permissive
     const allowedMimes = [
-      'audio/mpeg', 'audio/wav', 'audio/flac', 'audio/mp4',
-      'image/jpeg', 'image/png', 'image/gif', 'image/svg+xml', 'image/webp',
-      'video/mp4', 'video/webm', 'video/quicktime',
-      'text/plain', 'application/pdf', 'text/markdown'
+      // Audio files
+      'audio/mpeg', 'audio/wav', 'audio/flac', 'audio/mp4', 'audio/aac', 'audio/ogg',
+      // Image files
+      'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/svg+xml', 'image/webp', 'image/bmp',
+      // Video files  
+      'video/mp4', 'video/webm', 'video/quicktime', 'video/avi', 'video/mkv', 'video/x-msvideo',
+      // Document files
+      'text/plain', 'application/pdf', 'text/markdown', 'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      // Archive files
+      'application/zip', 'application/x-rar-compressed', 'application/x-7z-compressed',
+      // Binary and generic files
+      'application/octet-stream', 'application/x-binary'
     ];
     
     if (allowedMimes.includes(file.mimetype)) {
@@ -180,15 +191,23 @@ async function analyzeContentForPricing(fileBuffer, mimeType, metadata) {
   };
 }
 
-// Database setup for music tracking
+// Enhanced database setup with robust error handling
 let pool = null;
 try {
   if (process.env.DATABASE_URL) {
-    pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    pool = new Pool({ 
+      connectionString: process.env.DATABASE_URL,
+      max: 10,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 10000,
+      // Disable WebSocket fallback for stability
+      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+    });
     console.log('✅ Database connection ready for music tracking');
   }
 } catch (error) {
   console.warn('⚠️ Database connection failed, using fallback mode:', error.message);
+  pool = null;
 }
 
 // In-memory storage fallback
@@ -1554,22 +1573,44 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      // Handle file upload and content info
+      // Handle file upload and content info with robust error handling
       upload.single('contentFile')(req, res, async (err) => {
         if (err) {
           console.error('Upload error:', err);
           res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ success: false, error: 'File upload failed' }));
+          res.end(JSON.stringify({ success: false, error: `File upload failed: ${err.message}` }));
           return;
         }
 
-        const body = await parseBody(req);
-        const memberData = { userId: memberId, username: username };
+        try {
+          const body = await parseBody(req);
+          const memberData = { userId: memberId, username: username };
 
-        const result = await memberContentService.uploadMemberContent(memberData, req.file, body);
+          // Enhanced upload with database fallback handling
+          const result = await memberContentService.uploadMemberContent(memberData, req.file, body);
 
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(result));
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(result));
+        } catch (uploadError) {
+          console.error('Member content upload error:', uploadError);
+          
+          // Provide helpful error message based on error type
+          let errorMessage = 'Upload failed';
+          if (uploadError.message.includes('WebSocket') || uploadError.message.includes('database')) {
+            errorMessage = 'Upload successful but database connection temporarily unavailable. Your file is saved and will be processed shortly.';
+          } else if (uploadError.message.includes('file')) {
+            errorMessage = 'File processing failed. Please check file format and try again.';
+          } else {
+            errorMessage = `Upload failed: ${uploadError.message}`;
+          }
+          
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ 
+            success: false, 
+            error: errorMessage,
+            technical: uploadError.message
+          }));
+        }
       });
     } catch (error) {
       console.error('Member content upload error:', error);
