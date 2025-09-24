@@ -1,7 +1,12 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const { Pool } = require('@neondatabase/serverless');
+const { Pool, neonConfig } = require('@neondatabase/serverless');
+
+// Configure WebSocket for Node.js environment to fix distribution connectivity
+neonConfig.webSocketConstructor = require('ws');
+neonConfig.fetch = require('node-fetch');
+neonConfig.poolQueryViaFetch = true;
 const url = require('url');
 const fetch = require('node-fetch');
 const multer = require('multer');
@@ -235,7 +240,6 @@ try {
       max: 10,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 10000,
-      // Disable WebSocket fallback for stability
       ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
     });
     console.log('✅ Database connection ready for music tracking');
@@ -283,66 +287,52 @@ async function processDailyDistribution() {
   }
   
   try {
-    // Use existing pool connection (more reliable than creating new one)
-    console.log('📡 Using existing database connection for distribution...');
+    console.log('📡 Performing atomic Solar distribution to prevent race conditions...');
     
-    // Get all members who haven't received today's distribution
-    const membersQuery = `
-      SELECT id, username, email, total_solar, last_distribution_date 
-      FROM members 
-      WHERE last_distribution_date IS NULL 
-         OR DATE(last_distribution_date) < DATE($1)
+    // Atomic UPDATE with race condition protection and duplicate prevention
+    const atomicDistributionQuery = `
+      UPDATE members 
+      SET 
+        total_solar = total_solar + 1,
+        last_distribution_date = CURRENT_TIMESTAMP
+      WHERE 
+        last_distribution_date IS NULL 
+        OR DATE(last_distribution_date) < CURRENT_DATE
+      RETURNING id, username, total_solar, last_distribution_date
     `;
     
-    const membersResult = await pool.query(membersQuery, [todayString]);
-    const members = membersResult.rows;
+    const distributionResult = await pool.query(atomicDistributionQuery);
+    const updatedMembers = distributionResult.rows;
     
-    if (members.length === 0) {
+    if (updatedMembers.length === 0) {
       console.log(`✅ All members already received today's Solar distribution`);
       return;
     }
     
-    console.log(`📊 Distributing 1 Solar to ${members.length} members...`);
+    console.log(`📊 Distributed 1 Solar to ${updatedMembers.length} members atomically`);
     
-    let successCount = 0;
-    let errorCount = 0;
-    
-    // Process each member
-    for (const member of members) {
-      try {
-        const currentSolar = parseFloat(member.total_solar) || 0;
-        const newSolar = currentSolar + 1; // Add 1 Solar per day
-        
-        // Update member's solar balance and last distribution date
-        const updateQuery = `
-          UPDATE members 
-          SET total_solar = $1, last_distribution_date = $2 
-          WHERE id = $3
-        `;
-        
-        await pool.query(updateQuery, [newSolar, today.toISOString(), member.id]);
-        successCount++;
-        
-        console.log(`💰 ${member.username}: ${currentSolar} → ${newSolar} Solar`);
-        
-      } catch (memberError) {
-        console.error(`❌ Failed to distribute to ${member.username}:`, memberError.message);
-        errorCount++;
-      }
+    // Log each member's distribution
+    for (const member of updatedMembers) {
+      console.log(`💰 ${member.username}: received 1 Solar (total: ${member.total_solar})`);
     }
+    
+    const successCount = updatedMembers.length;
+    const errorCount = 0;
     
     console.log(`✅ Daily distribution complete: ${successCount} success, ${errorCount} errors`);
     
-    // Log the distribution event
+    // Log individual member distributions to match table structure
     try {
-      const logQuery = `
-        INSERT INTO distribution_logs (distribution_date, members_processed, solar_distributed, success_count, error_count, created_at)
-        VALUES ($1, $2, $3, $4, $5, $6)
-      `;
-      await pool.query(logQuery, [todayString, members.length, members.length, successCount, errorCount, today.toISOString()]);
-      console.log(`📝 Distribution logged to database`);
+      for (const member of updatedMembers) {
+        const logQuery = `
+          INSERT INTO distribution_logs (member_id, distribution_date, solar_amount, dollar_value)
+          VALUES ($1, $2, $3, $4)
+        `;
+        await pool.query(logQuery, [member.id, todayString, 1.0000, 0.00]);
+      }
+      console.log(`📝 Distribution logged: ${updatedMembers.length} member distributions recorded`);
     } catch (logError) {
-      console.error('⚠️ Failed to log distribution (table may not exist):', logError.message);
+      console.error('⚠️ Failed to log distribution:', logError.message);
     }
     
   } catch (error) {
@@ -353,8 +343,8 @@ async function processDailyDistribution() {
 function initializeDailyDistribution() {
   console.log('🌱 Initializing daily Solar distribution system...');
   
-  // Schedule daily distribution at 3:00 AM UTC (reliable time)
-  const dailyJob = schedule.scheduleJob('0 3 * * *', async () => {
+  // Schedule daily distribution at 3:00 AM UTC with explicit timezone
+  const dailyJob = schedule.scheduleJob({ rule: '0 3 * * *', tz: 'UTC' }, async () => {
     await processDailyDistribution();
   });
   
