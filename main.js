@@ -1499,6 +1499,102 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Get User's Items API (uploaded artifacts + purchased artifacts)
+  if (pathname === '/api/artifacts/my-items' && req.method === 'GET') {
+    try {
+      // Get user ID from session
+      const sessionId = getCookie(req, 'sessionId');
+      if (!sessionId || !sessions[sessionId]) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Authentication required' }));
+        return;
+      }
+
+      const userId = sessions[sessionId].userId;
+
+      if (pool) {
+        // Get uploaded artifacts (created by user)
+        const uploadedQuery = `
+          SELECT id, title, description, category, kwh_footprint, solar_amount_s, 
+                 is_bonus, cover_art_url, delivery_mode, creator_id, created_at
+          FROM artifacts 
+          WHERE active = true AND creator_id = $1
+          ORDER BY created_at DESC
+        `;
+        
+        const uploadedResult = await pool.query(uploadedQuery, [userId.toString()]);
+        
+        // Get purchased artifacts (bought by user)
+        const purchasedQuery = `
+          SELECT DISTINCT a.id, a.title, a.description, a.category, a.kwh_footprint, 
+                 a.solar_amount_s, a.is_bonus, a.cover_art_url, a.delivery_mode, 
+                 a.creator_id, t.created_at as purchase_date, t.amount_s as paid_amount
+          FROM artifacts a
+          INNER JOIN transactions t ON a.id = t.artifact_id
+          WHERE a.active = true AND t.wallet_id = $1 AND t.type = 'purchase'
+          ORDER BY t.created_at DESC
+        `;
+        
+        const purchasedResult = await pool.query(purchasedQuery, [userId]);
+
+        const uploadedArtifacts = uploadedResult.rows.map(artifact => ({
+          id: artifact.id,
+          title: artifact.title,
+          description: artifact.description,
+          category: artifact.category,
+          kwhFootprint: parseFloat(artifact.kwh_footprint),
+          solarPrice: parseFloat(artifact.solar_amount_s),
+          formattedPrice: `${formatSolar(artifact.solar_amount_s)} Solar`,
+          isBonus: artifact.is_bonus,
+          coverArt: artifact.cover_art_url,
+          deliveryMode: artifact.delivery_mode || 'download',
+          creatorId: artifact.creator_id,
+          itemType: 'uploaded',
+          dateAdded: artifact.created_at
+        }));
+
+        const purchasedArtifacts = purchasedResult.rows.map(artifact => ({
+          id: artifact.id,
+          title: artifact.title,
+          description: artifact.description,
+          category: artifact.category,
+          kwhFootprint: parseFloat(artifact.kwh_footprint),
+          solarPrice: parseFloat(artifact.solar_amount_s),
+          formattedPrice: `${formatSolar(artifact.paid_amount)} Solar`,
+          isBonus: artifact.is_bonus,
+          coverArt: artifact.cover_art_url,
+          deliveryMode: artifact.delivery_mode || 'download',
+          creatorId: artifact.creator_id,
+          itemType: 'purchased',
+          dateAdded: artifact.purchase_date,
+          paidAmount: parseFloat(artifact.paid_amount)
+        }));
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: true,
+          userId: userId,
+          uploaded: {
+            count: uploadedArtifacts.length,
+            artifacts: uploadedArtifacts
+          },
+          purchased: {
+            count: purchasedArtifacts.length,
+            artifacts: purchasedArtifacts
+          }
+        }));
+      } else {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Database unavailable' }));
+      }
+    } catch (error) {
+      console.error('My items error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Failed to get user items' }));
+    }
+    return;
+  }
+
   // Music Stats API
   if (pathname === '/api/music/stats' && req.method === 'GET') {
     try {
