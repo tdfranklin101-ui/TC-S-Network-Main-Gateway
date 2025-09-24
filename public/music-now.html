@@ -684,7 +684,7 @@
             if (!albumMode) {
                 // Start album mode
                 albumMode = true;
-                shuffledTracks = shuffleArray([...Array(19).keys()]); // [0,1,2...18] shuffled (excluding bonus track)
+                shuffledTracks = shuffleArray([...Array(20).keys()]); // [0,1,2...19] shuffled (including bonus track)
                 currentAlbumIndex = 0;
                 button.textContent = '⏹️ Stop Album';
                 button.style.background = 'linear-gradient(135deg, #dc143c, #b91c3c)';
