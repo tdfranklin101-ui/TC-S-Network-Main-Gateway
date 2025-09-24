@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const fetch = require('node-fetch');
 const FormData = require('form-data');
+const { fileTypeFromFile } = require('file-type');
 
 // Monazite Collection Data (extracted from music-now.html)
 const MONAZITE_COLLECTION = {
