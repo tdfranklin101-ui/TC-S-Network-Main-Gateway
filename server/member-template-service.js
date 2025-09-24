@@ -2760,30 +2760,81 @@ class MemberTemplateService {
    * Generate template preview
    */
   generateTemplatePreview(templateId, sampleData = {}) {
-    const template = this.getTemplate(templateId);
-    
-    // Use sample data if no data provided
-    const defaultSampleData = {
-      memberName: 'Sample Creator',
-      memberTagline: 'Digital Artist & Creator',
-      currentTitle: 'Amazing Content',
-      category: 'Art',
-      galleryTitle: 'Premium Gallery',
-      featuredTitle: 'Featured Work',
-      creatorName: 'Sample Creator',
-      studioName: 'Creative Studio'
-    };
+    try {
+      const template = this.getTemplate(templateId);
+      
+      // Use comprehensive sample data with all required variables
+      const defaultSampleData = {
+        memberName: 'Sample Creator',
+        memberTagline: 'Digital Artist & Creator',
+        memberAvatar: '👤',
+        currentTitle: 'Amazing Content',
+        category: 'Art',
+        galleryTitle: 'Premium Gallery',
+        gallerySubtitle: 'Discover premium digital content',
+        featuredTitle: 'Featured Work',
+        featuredDescription: 'This is a sample featured work description.',
+        featuredPrice: '5.0000',
+        featuredPriceUSD: '12.50',
+        featuredRating: '4.8',
+        featuredDownloads: '245',
+        featuredViews: '1,234',
+        featuredMedia: '🖼️',
+        creatorName: 'Sample Creator',
+        creatorFocus: 'Digital Art & Design',
+        studioName: 'Creative Studio',
+        studioTagline: 'Where creativity meets technology',
+        studioStatus: 'online',
+        studioStatusText: 'Currently Online',
+        currentProjectTitle: 'New Digital Artwork',
+        currentProjectDescription: 'Working on an exciting new piece',
+        projectProgress: '75',
+        expectedCompletion: 'Next Week',
+        currentProjectPreview: '🎨',
+        contactText: 'Get in touch for collaborations',
+        email: 'creator@example.com',
+        acceptingCommissions: true,
+        galleryItems: [],
+        queueItems: [],
+        memberContent: [],
+        recentWorks: [],
+        commissionTypes: [],
+        seekingCollabs: ['Digital Art', 'Music'],
+        skillsOffered: ['Illustration', 'Design'],
+        toolsUsed: [],
+        processSteps: [],
+        testimonials: [],
+        contentItems: [],
+        cartItems: [],
+        cartTotal: '0.0000',
+        yearsExperience: '5',
+        completedProjects: '127',
+        happyClients: '89',
+        solarGenerated: '1,250',
+        carbonOffset: '845'
+      };
 
-    const previewData = { ...defaultSampleData, ...sampleData };
-    
-    return {
-      templateId: templateId,
-      templateName: template.name,
-      previewHtml: this.renderTemplate(template.template.html, previewData),
-      previewCss: template.template.css,
-      features: template.features,
-      category: template.category
-    };
+      const previewData = { ...defaultSampleData, ...sampleData };
+      
+      return {
+        templateId: templateId,
+        templateName: template.name,
+        previewHtml: this.renderTemplate(template.template.html, previewData),
+        previewCss: template.template.css,
+        features: template.features,
+        category: template.category
+      };
+    } catch (error) {
+      console.error(`Template preview generation error for ${templateId}:`, error);
+      return {
+        templateId: templateId,
+        templateName: 'Error Template',
+        previewHtml: '<div>Template preview unavailable</div>',
+        previewCss: '',
+        features: [],
+        category: 'error'
+      };
+    }
   }
 }
 

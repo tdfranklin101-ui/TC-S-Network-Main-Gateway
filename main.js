@@ -226,7 +226,26 @@ const seoGenerator = new SEOGenerator();
 const aiSEOOptimizer = new AISEOOptimizer();
 const memberContentService = new MemberContentService();
 const aiPromotionService = new AIPromotionService(memberContentService, marketDataService);
-const memberTemplateService = new MemberTemplateService(memberContentService);
+
+// Initialize template service with error handling
+let memberTemplateService;
+try {
+  memberTemplateService = new MemberTemplateService(memberContentService);
+  console.log('🎨 Member display templates ready');
+} catch (error) {
+  console.error('⚠️ Template service initialization failed:', error.message);
+  // Create fallback service
+  memberTemplateService = {
+    getAllTemplates: () => [],
+    getTemplatesByCategory: () => [],
+    generateTemplatePreview: () => ({ templateId: 'error', templateName: 'Service Unavailable', previewHtml: '<div>Template service temporarily unavailable</div>', previewCss: '', features: [], category: 'error' }),
+    createMemberDisplay: () => { throw new Error('Template service unavailable'); },
+    getMemberDisplays: () => [],
+    getDisplayById: () => { throw new Error('Template service unavailable'); },
+    updateMemberDisplay: () => { throw new Error('Template service unavailable'); },
+    getTemplateStats: () => ({ totalTemplates: 0, totalDisplays: 0, activeDisplays: 0, mostPopularTemplate: null, totalViews: 0, templateUsage: [] })
+  };
+}
 
 // Start automatic SEO updates
 seoGenerator.startAutoUpdates();
@@ -238,7 +257,6 @@ console.log('🔄 Dynamic SEO generation active');
 console.log('🤖 AI SEO optimization enabled');
 console.log('📁 Member content sharing system ready');
 console.log('🎯 AI automatic promotion system active');
-console.log('🎨 Member display templates ready');
 
 const server = http.createServer(async (req, res) => {
   const pathname = new URL(req.url, `http://${req.headers.host}`).pathname;
