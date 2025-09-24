@@ -582,6 +582,74 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Login API endpoint
+  if ((pathname === '/api/login' || pathname === '/api/users/login') && req.method === 'POST') {
+    try {
+      const body = await parseBody(req);
+      const { username, password } = body;
+
+      if (!username || !password) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Username and password are required' }));
+        return;
+      }
+
+      let loginSuccess = false;
+      let userData = null;
+
+      // Try database authentication first
+      if (pool) {
+        try {
+          // Check for user by username or email
+          const result = await pool.query(
+            'SELECT id, username, email, first_name, last_name, password_hash, total_solar, signup_timestamp FROM members WHERE username = $1 OR email = $1',
+            [username]
+          );
+
+          if (result && result.rows && result.rows.length > 0) {
+            const user = result.rows[0];
+            
+            // Verify password
+            const passwordMatch = await bcrypt.compare(password, user.password_hash);
+            
+            if (passwordMatch) {
+              loginSuccess = true;
+              userData = {
+                userId: user.id,
+                username: user.username,
+                email: user.email,
+                firstName: user.first_name,
+                lastName: user.last_name,
+                solarBalance: parseFloat(user.total_solar) || 0,
+                memberSince: user.signup_timestamp
+              };
+              console.log(`🔐 User logged in: ${user.username} (ID: ${user.id})`);
+            }
+          }
+        } catch (dbError) {
+          console.error('Database login error:', dbError);
+        }
+      }
+
+      if (loginSuccess) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: true,
+          message: 'Login successful',
+          ...userData
+        }));
+      } else {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Invalid username or password' }));
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Login failed' }));
+    }
+    return;
+  }
+
   // Enhanced member registration API
   if (pathname === '/api/users/register-member' && req.method === 'POST') {
     try {
