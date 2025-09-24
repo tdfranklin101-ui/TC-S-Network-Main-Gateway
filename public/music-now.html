@@ -345,7 +345,7 @@
                             </div>
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                                 <span>Market Volume:</span>
-                                <span style="color: #28a745; font-weight: bold;" id="market-volume">↗ 45.3K plays</span>
+                                <span style="color: #28a745; font-weight: bold;" id="market-volume">Loading...</span>
                             </div>
                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <span>Top Genre:</span>
@@ -358,17 +358,8 @@
                     <div style="background: rgba(255, 255, 255, 0.05); border-radius: 10px; padding: 15px;">
                         <h4 style="color: #007bff; margin: 0 0 10px 0;">🎵 Popular Right Now</h4>
                         <div id="demand-forecast">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                <span>1. 'Ternal Flame</span>
-                                <span style="color: #ff4400;">🔥 +127%</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                <span>2. David Boyeez Hair</span>
-                                <span style="color: #ff6600;">⭐ +89%</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span>3. Starlight Forever</span>
-                                <span style="color: #ff8c00;">📈 +62%</span>
+                            <div id="top-songs-list">
+                                Loading popular tracks...
                             </div>
                         </div>
                     </div>
@@ -511,6 +502,30 @@
         let shuffledTracks = [];
         let currentAlbumIndex = 0;
         
+        // Function to track play events
+        async function trackPlayEvent(songTitle, playDuration = 0, completedPlay = false) {
+          try {
+            const response = await fetch('/api/music/play', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                songTitle: songTitle,
+                sessionId: `session_${Date.now()}`,
+                playDuration: playDuration,
+                completedPlay: completedPlay
+              })
+            });
+            
+            if (response.ok) {
+              console.log(`📊 Play tracked: ${songTitle}`);
+            }
+          } catch (error) {
+            console.warn('Play tracking failed:', error);
+          }
+        }
+        
         // Track play history management
         function getPlayHistory() {
             return JSON.parse(localStorage.getItem('monazite_play_history') || '[]');
@@ -581,6 +596,42 @@
             closeModal();
         }
         
+        // Load real music statistics
+        async function loadMusicStats() {
+            try {
+                const response = await fetch('/api/music/stats');
+                if (response.ok) {
+                    const stats = await response.json();
+                    
+                    // Update market volume
+                    const volumeElement = document.getElementById('market-volume');
+                    if (volumeElement) {
+                        volumeElement.textContent = stats.formattedVolume || '↗ 0 plays';
+                    }
+                    
+                    // Update top songs list
+                    const topSongsElement = document.getElementById('top-songs-list');
+                    if (topSongsElement && stats.topSongs) {
+                        topSongsElement.innerHTML = stats.topSongs.map(song => `
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <span>${song.rank}. ${song.title}</span>
+                                <span style="color: ${song.rank === 1 ? '#ff4400' : song.rank === 2 ? '#ff6600' : '#ff8c00'};">
+                                    ${song.rank === 1 ? '🔥' : song.rank === 2 ? '⭐' : '📈'} ${song.trend}
+                                </span>
+                            </div>
+                        `).join('');
+                    }
+                    
+                    console.log('📊 Music stats loaded:', stats);
+                } else {
+                    console.warn('Failed to load music stats');
+                }
+            } catch (error) {
+                console.warn('Error loading music stats:', error);
+                // Keep default values on error
+            }
+        }
+
         // Initialize track button states when page loads - ensure no restrictions
         window.addEventListener('load', function() {
             // Remove any existing locks and ensure all tracks are playable
@@ -589,6 +640,9 @@
                 button.classList.remove('locked');
                 button.onclick = () => playTrack(index);
             });
+            
+            // Load real music statistics
+            loadMusicStats();
         });
 
         function playTrack(index) {
@@ -600,6 +654,9 @@
             // Load the track
             player.src = tracks[index];
             player.load();
+            
+            // Track the play event
+            trackPlayEvent(trackNames[index]);
             
             // Update display
             trackName.textContent = trackNames[index];

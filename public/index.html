@@ -2450,6 +2450,30 @@
     let currentAudio = null;
     let isPlayingPlaylist = false;
     
+    // Function to track play events
+    async function trackPlayEvent(songTitle, playDuration = 0, completedPlay = false) {
+      try {
+        const response = await fetch('/api/music/play', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            songTitle: songTitle,
+            sessionId: `session_${Date.now()}`,
+            playDuration: playDuration,
+            completedPlay: completedPlay
+          })
+        });
+        
+        if (response.ok) {
+          console.log(`📊 Play tracked: ${songTitle}`);
+        }
+      } catch (error) {
+        console.warn('Play tracking failed:', error);
+      }
+    }
+    
     // REMOVED OLD MUSIC FUNCTIONS FOR CLEAN DEPLOYMENT
 
       isPlayingPlaylist = false;
@@ -2458,6 +2482,8 @@
       currentAudio = new Audio(musicUrl);
       currentAudio.play().then(() => {
         console.log('🎶 Playing: A Solar Day (groovin)');
+        // Track play event
+        trackPlayEvent('A Solar Day (groovin)');
       }).catch(error => {
         console.error('Audio playback failed:', error);
         alert('Unable to play music. Please check your internet connection.');
@@ -2475,6 +2501,7 @@
       currentAudio = new Audio(musicUrl);
       currentAudio.play().then(() => {
         console.log('🎼 Playing: A Solar Day (moovin)');
+        trackPlayEvent('A Solar Day (moovin)');
       }).catch(error => {
         console.error('Audio playback failed:', error);
         alert('Unable to play music. Please check your internet connection.');
@@ -2492,6 +2519,7 @@
       currentAudio = new Audio(musicUrl);
       currentAudio.play().then(() => {
         console.log('🎺 Playing: Break Time Blues Rhapsody (By Kid Solar)');
+        trackPlayEvent('Break Time Blues Rhapsody');
       }).catch(error => {
         console.error('Audio playback failed:', error);
         alert('Unable to play music. Please check your internet connection.');
@@ -2509,6 +2537,7 @@
       currentAudio = new Audio(musicUrl);
       currentAudio.play().then(() => {
         console.log('⭐ Playing: Starlight Forever');
+        trackPlayEvent('Starlight Forever');
       }).catch(error => {
         console.error('Audio playback failed:', error);
         alert('Unable to play music. Please check your internet connection.');
@@ -2526,6 +2555,7 @@
       currentAudio = new Audio(musicUrl);
       currentAudio.play().then(() => {
         console.log('💡 Playing: Light It From Within');
+        trackPlayEvent('Light It From Within');
       }).catch(error => {
         console.error('Audio playback failed:', error);
         alert('Unable to play music. Please check your internet connection.');
@@ -2543,6 +2573,7 @@
       currentAudio = new Audio(musicUrl);
       currentAudio.play().then(() => {
         console.log('🌙 Playing: Moonshine in St Kitts. (By Bowie, Jagger, Lennon (ish))');
+        trackPlayEvent('Moonshine in St Kitts');
       }).catch(error => {
         console.error('Audio playback failed:', error);
         alert('Unable to play music. Please check your internet connection.');
@@ -2560,6 +2591,7 @@
       currentAudio = new Audio(musicUrl);
       currentAudio.play().then(() => {
         console.log('⚡ Playing: Solar Tempest Symphony (By JMF)');
+        trackPlayEvent('Solar Tempest Symphony');
       }).catch(error => {
         console.error('Audio playback failed:', error);
         alert('Unable to play music. Please check your internet connection.');
@@ -2577,6 +2609,7 @@
       currentAudio = new Audio(musicUrl);
       currentAudio.play().then(() => {
         console.log('🔩 Playing: Steel In His Soul');
+        trackPlayEvent('Steel In His Soul');
       }).catch(error => {
         console.error('Audio playback failed:', error);
         alert('Unable to play music. Please check your internet connection.');
@@ -2594,6 +2627,7 @@
       currentAudio = new Audio(musicUrl);
       currentAudio.play().then(() => {
         console.log('💬 Playing: We Said So');
+        trackPlayEvent('We Said So');
       }).catch(error => {
         console.error('Audio playback failed:', error);
         alert('Unable to play music. Please check your internet connection.');
@@ -2696,6 +2730,7 @@
       currentAudio = new Audio(musicUrl);
       currentAudio.play().then(() => {
         console.log('🗿 Playing: Rasta Lady Voodoo - Lyrics by Terry D Franklin 🌍 World.Org Verified Human');
+        trackPlayEvent('Rasta Lady Voodoo');
       }).catch(error => {
         console.error('Audio playback failed:', error);
         alert('Unable to play music. Please check your internet connection.');
@@ -2713,6 +2748,7 @@
       currentAudio = new Audio(musicUrl);
       currentAudio.play().then(() => {
         console.log('🐊 Playing: Swampy Boogie Nights (Cajun Crawler)');
+        trackPlayEvent('Swampy Boogie Nights (Cajun Crawler)');
       }).catch(error => {
         console.error('Audio playback failed:', error);
         alert('Unable to play music. Please check your internet connection.');
@@ -2730,6 +2766,7 @@
       currentAudio = new Audio(musicUrl);
       currentAudio.play().then(() => {
         console.log('⭐ Playing: David Boyeez Hair');
+        trackPlayEvent('David Boyeez Hair');
       }).catch(error => {
         console.error('Audio playback failed:', error);
         alert('Unable to play music. Please check your internet connection.');
