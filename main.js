@@ -151,7 +151,7 @@ const server = http.createServer(async (req, res) => {
         
         estimatedKwh = recordingEnergy + productionEnergy + storageEnergy + distributionEnergy;
         
-        assessmentReasoning = \`Music track assessment: Recording (\${recordingEnergy.toFixed(4)} kWh) + Production (\${productionEnergy.toFixed(4)} kWh) + Storage (\${storageEnergy.toFixed(4)} kWh) + Distribution (\${distributionEnergy} kWh) = \${estimatedKwh.toFixed(4)} kWh total footprint.\`;
+        assessmentReasoning = `Music track assessment: Recording (${recordingEnergy.toFixed(4)} kWh) + Production (${productionEnergy.toFixed(4)} kWh) + Storage (${storageEnergy.toFixed(4)} kWh) + Distribution (${distributionEnergy} kWh) = ${estimatedKwh.toFixed(4)} kWh total footprint.`;
         
         // Add complexity factors based on name analysis
         if (itemName.toLowerCase().includes('symphony') || itemName.toLowerCase().includes('rhapsody')) {
@@ -172,7 +172,7 @@ const server = http.createServer(async (req, res) => {
       const solarAmount = estimatedKwh / 4913;
       const formattedSolarAmount = parseFloat(solarAmount.toFixed(6));
 
-      console.log(\`🔍 kWh Assessment: "\${itemName}" = \${estimatedKwh.toFixed(4)} kWh = \${formattedSolarAmount} Solar\`);
+      console.log(`🔍 kWh Assessment: "${itemName}" = ${estimatedKwh.toFixed(4)} kWh = ${formattedSolarAmount} Solar`);
 
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
@@ -223,31 +223,31 @@ const server = http.createServer(async (req, res) => {
         const initialSolarAmount = Math.max(daysSinceGenesis, 1); // At least 1 Solar
 
         // Create user account
-        const userInsertQuery = \`
+        const userInsertQuery = `
           INSERT INTO users (id, username, email, first_name, last_name, created_at)
           VALUES (gen_random_uuid(), $1, $2, $3, $4, NOW())
           RETURNING id
-        \`;
+        `;
         
         const userResult = await pool.query(userInsertQuery, [username, email, firstName || '', lastName || '']);
         const userId = userResult.rows[0].id;
 
         // Create Solar account with initial allocation
-        const solarAccountQuery = \`
+        const solarAccountQuery = `
           INSERT INTO solar_accounts (user_id, account_number, display_name, total_solar, total_kwh, total_dollars, joined_date)
           VALUES ($1, $2, $3, $4, $5, $6, NOW())
-        \`;
+        `;
         
-        const accountNumber = \`SOL-\${userId.substring(0, 8).toUpperCase()}\`;
+        const accountNumber = `SOL-${userId.substring(0, 8).toUpperCase()}`;
         const initialKwh = initialSolarAmount * 4913; // Convert to kWh equivalent
         const initialDollars = initialSolarAmount * 0.20; // Approximate dollar value
         
         await pool.query(solarAccountQuery, [
-          userId, accountNumber, \`\${firstName || username}'s Solar Account\`, 
+          userId, accountNumber, `${firstName || username}'s Solar Account`, 
           initialSolarAmount, initialKwh, initialDollars
         ]);
 
-        console.log(\`🌱 New user created: \${username} with \${initialSolarAmount} Solar (\${daysSinceGenesis} days since genesis)\`);
+        console.log(`🌱 New user created: ${username} with ${initialSolarAmount} Solar (${daysSinceGenesis} days since genesis)`);
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
@@ -258,7 +258,7 @@ const server = http.createServer(async (req, res) => {
           initialSolarAmount: initialSolarAmount,
           daysSinceGenesis: daysSinceGenesis,
           genesisDate: '2025-04-07',
-          message: \`Welcome to the Current-See Network! You've been allocated \${initialSolarAmount} Solar tokens (\${daysSinceGenesis} days since genesis).\`
+          message: `Welcome to the Current-See Network! You've been allocated ${initialSolarAmount} Solar tokens (${daysSinceGenesis} days since genesis).`
         }));
       } else {
         res.writeHead(503, { 'Content-Type': 'application/json' });
@@ -316,7 +316,7 @@ const server = http.createServer(async (req, res) => {
           username: user.username,
           accountNumber: user.account_number,
           solarBalance: user.total_solar || 0,
-          formattedBalance: \`\${user.total_solar || 0}.0000 Solar\`
+          formattedBalance: `${user.total_solar || 0}.0000 Solar`
         }));
       } else {
         res.writeHead(503, { 'Content-Type': 'application/json' });
@@ -381,25 +381,25 @@ const server = http.createServer(async (req, res) => {
             const daysSinceGenesis = Math.floor((currentDate - genesisDate) / (1000 * 60 * 60 * 24));
             const initialSolarAmount = Math.max(daysSinceGenesis, 1);
 
-            const newUserQuery = \`
+            const newUserQuery = `
               INSERT INTO users (id, username, email, first_name, created_at)
               VALUES (gen_random_uuid(), $1, $2, $3, NOW())
               RETURNING id
-            \`;
+            `;
             
             const username = userName || userEmail.split('@')[0];
             const newUserResult = await pool.query(newUserQuery, [username, userEmail, userName || '']);
             const newUserId = newUserResult.rows[0].id;
 
             // Create Solar account
-            const accountNumber = \`SOL-\${newUserId.substring(0, 8).toUpperCase()}\`;
-            const solarAccountQuery = \`
+            const accountNumber = `SOL-${newUserId.substring(0, 8).toUpperCase()}`;
+            const solarAccountQuery = `
               INSERT INTO solar_accounts (user_id, account_number, display_name, total_solar, total_kwh, total_dollars, joined_date)
               VALUES ($1, $2, $3, $4, $5, $6, NOW())
-            \`;
+            `;
             
             await pool.query(solarAccountQuery, [
-              newUserId, accountNumber, \`\${userName || username}'s Solar Account\`, 
+              newUserId, accountNumber, `${userName || username}'s Solar Account`, 
               initialSolarAmount, initialSolarAmount * 4913, initialSolarAmount * 0.20
             ]);
 
@@ -409,7 +409,7 @@ const server = http.createServer(async (req, res) => {
               total_solar: initialSolarAmount
             };
 
-            console.log(\`🌱 New user created for purchase: \${username} with \${initialSolarAmount} Solar\`);
+            console.log(`🌱 New user created for purchase: ${username} with ${initialSolarAmount} Solar`);
           }
         }
 
@@ -440,24 +440,24 @@ const server = http.createServer(async (req, res) => {
         await pool.query(updateBalanceQuery, [newBalance, user.id]);
 
         // Record transaction
-        const transactionQuery = \`
+        const transactionQuery = `
           INSERT INTO transactions (id, type, wallet_id, artifact_id, amount_s, note, created_at)
           VALUES (gen_random_uuid(), 'purchase', $1, $2, $3, $4, NOW())
           RETURNING id
-        \`;
+        `;
         
         const transactionResult = await pool.query(transactionQuery, [
           user.id, 
           artifactId, 
           requiredSolar,
-          \`Purchase of "\${artifact.title}" for \${requiredSolar} Solar\`
+          `Purchase of "${artifact.title}" for ${requiredSolar} Solar`
         ]);
 
-        console.log(\`💰 Purchase completed: \${user.username} bought "\${artifact.title}" for \${requiredSolar} Solar\`);
+        console.log(`💰 Purchase completed: ${user.username} bought "${artifact.title}" for ${requiredSolar} Solar`);
 
         // Generate download link (simplified - in production this would be a signed URL)
-        const downloadToken = Buffer.from(\`\${user.id}:\${artifactId}:\${Date.now()}\`).toString('base64');
-        const downloadUrl = \`/api/artifacts/download/\${downloadToken}\`;
+        const downloadToken = Buffer.from(`${user.id}:${artifactId}:${Date.now()}`).toString('base64');
+        const downloadUrl = `/api/artifacts/download/${downloadToken}`;
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
@@ -467,7 +467,7 @@ const server = http.createServer(async (req, res) => {
           amountPaid: requiredSolar,
           newBalance: newBalance,
           downloadUrl: downloadUrl,
-          message: \`Successfully purchased "\${artifact.title}" for \${requiredSolar} Solar. Your new balance is \${newBalance.toFixed(4)} Solar.\`
+          message: `Successfully purchased "${artifact.title}" for ${requiredSolar} Solar. Your new balance is ${newBalance.toFixed(4)} Solar.`
         }));
       } else {
         res.writeHead(503, { 'Content-Type': 'application/json' });
@@ -485,13 +485,13 @@ const server = http.createServer(async (req, res) => {
   if (pathname === '/api/artifacts/available' && req.method === 'GET') {
     try {
       if (pool) {
-        const artifactsQuery = \`
+        const artifactsQuery = `
           SELECT id, title, description, category, kwh_footprint, solar_amount_s, 
                  is_bonus, cover_art_url, delivery_mode
           FROM artifacts 
           WHERE active = true 
           ORDER BY is_bonus ASC, solar_amount_s ASC, title ASC
-        \`;
+        `;
         
         const artifactsResult = await pool.query(artifactsQuery);
         
@@ -502,7 +502,7 @@ const server = http.createServer(async (req, res) => {
           category: artifact.category,
           kwhFootprint: parseFloat(artifact.kwh_footprint),
           solarPrice: parseFloat(artifact.solar_amount_s),
-          formattedPrice: \`\${artifact.solar_amount_s} Solar\`,
+          formattedPrice: `${artifact.solar_amount_s} Solar`,
           isBonus: artifact.is_bonus,
           coverArt: artifact.cover_art_url,
           deliveryMode: artifact.delivery_mode || 'download'
