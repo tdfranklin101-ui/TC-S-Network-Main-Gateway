@@ -443,6 +443,9 @@
             <button class="tab" data-tab="my-listings">
                 <span>📋</span> My Listings
             </button>
+            <button class="tab" data-tab="upload">
+                <span>🚀</span> Upload
+            </button>
         </div>
 
         <!-- Filters -->
@@ -523,6 +526,8 @@
                     const tabType = this.dataset.tab;
                     if (tabType === 'my-listings') {
                         showMyListings();
+                    } else if (tabType === 'upload') {
+                        window.location.href = '/creator-upload.html';
                     } else {
                         showAllMarket();
                     }

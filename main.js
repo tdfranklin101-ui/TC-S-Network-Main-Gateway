@@ -4,12 +4,172 @@ const path = require('path');
 const { Pool } = require('@neondatabase/serverless');
 const url = require('url');
 const fetch = require('node-fetch');
+const multer = require('multer');
+const sharp = require('sharp');
+const { fileTypeFromBuffer } = require('file-type');
+const crypto = require('crypto');
 // const { ObjectStorageService } = require('./server/objectStorage'); // Disabled for stable Music Now service
 
 // Import seed rotation system
 const { initializeSeedRotation, getSeedRotator } = require('./server/seed-rotation-api');
 
 const PORT = process.env.PORT || 3000;
+
+// File upload configuration
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 500 * 1024 * 1024, // 500MB max (will validate per type)
+  },
+  fileFilter: (req, file, cb) => {
+    // Basic filter - detailed validation happens later
+    const allowedMimes = [
+      'audio/mpeg', 'audio/wav', 'audio/flac', 'audio/mp4',
+      'image/jpeg', 'image/png', 'image/gif', 'image/svg+xml', 'image/webp',
+      'video/mp4', 'video/webm', 'video/quicktime',
+      'text/plain', 'application/pdf', 'text/markdown'
+    ];
+    
+    if (allowedMimes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error(`Unsupported file type: ${file.mimetype}`), false);
+    }
+  }
+});
+
+// Solar formatting helper - 4 decimal places, extend if rounds to zero
+function formatSolar(amount) {
+  const num = parseFloat(amount);
+  if (num === 0) return '0.0000';
+  
+  let formatted = num.toFixed(4);
+  if (parseFloat(formatted) === 0 && num > 0) {
+    // Extend decimals if rounds to zero
+    for (let decimals = 5; decimals <= 10; decimals++) {
+      formatted = num.toFixed(decimals);
+      if (parseFloat(formatted) > 0) break;
+    }
+  }
+  return formatted;
+}
+
+// Enhanced AI Content Analysis for all file types
+async function analyzeContentForPricing(fileBuffer, mimeType, metadata) {
+  let estimatedKwh = 0;
+  let reasoning = '';
+  const { title, description, category, fileSize, filename } = metadata;
+  
+  // Base energy calculations
+  const fileSizeMB = fileSize / (1024 * 1024);
+  const baseStorageEnergy = fileSizeMB * 0.0001; // 0.0001 kWh per MB storage
+  const baseDistributionEnergy = 0.1; // Base distribution cost
+  
+  if (mimeType.startsWith('audio/')) {
+    // Audio analysis (enhanced from existing music analysis)
+    const estimatedDuration = Math.max(fileSizeMB * 60, 180); // Rough duration estimate
+    const recordingEnergy = estimatedDuration * 0.002; // Recording energy
+    const productionEnergy = estimatedDuration * 0.001; // Production energy
+    
+    estimatedKwh = recordingEnergy + productionEnergy + baseStorageEnergy + baseDistributionEnergy;
+    reasoning = `Audio track: Recording (${recordingEnergy.toFixed(4)} kWh) + Production (${productionEnergy.toFixed(4)} kWh) + Storage (${baseStorageEnergy.toFixed(4)} kWh) + Distribution (${baseDistributionEnergy} kWh)`;
+    
+    // Genre-based multipliers
+    const titleLower = title.toLowerCase();
+    if (titleLower.includes('symphony') || titleLower.includes('orchestra')) {
+      estimatedKwh *= 1.4;
+      reasoning += ' +40% complex orchestration';
+    } else if (titleLower.includes('jazz') || titleLower.includes('blues')) {
+      estimatedKwh *= 1.2;
+      reasoning += ' +20% live recording';
+    } else if (titleLower.includes('electronic') || titleLower.includes('edm')) {
+      estimatedKwh *= 0.9;
+      reasoning += ' -10% digital production';
+    }
+    
+  } else if (mimeType.startsWith('image/')) {
+    // Image/Art analysis
+    const resolutionFactor = Math.min(fileSizeMB / 5, 3); // Scale with resolution
+    const creationEnergy = 0.5 + (resolutionFactor * 0.3); // Base creation + complexity
+    const processingEnergy = fileSizeMB * 0.01; // Processing energy
+    
+    estimatedKwh = creationEnergy + processingEnergy + baseStorageEnergy + baseDistributionEnergy;
+    reasoning = `Digital art: Creation (${creationEnergy.toFixed(4)} kWh) + Processing (${processingEnergy.toFixed(4)} kWh) + Storage (${baseStorageEnergy.toFixed(4)} kWh) + Distribution (${baseDistributionEnergy} kWh)`;
+    
+    // Art complexity factors
+    const titleLower = title.toLowerCase();
+    if (titleLower.includes('painting') || titleLower.includes('artwork')) {
+      estimatedKwh *= 1.3;
+      reasoning += ' +30% artistic complexity';
+    } else if (titleLower.includes('photo') || titleLower.includes('picture')) {
+      estimatedKwh *= 0.8;
+      reasoning += ' -20% photography';
+    }
+    
+  } else if (mimeType.startsWith('video/')) {
+    // Video analysis
+    const estimatedDuration = Math.max(fileSizeMB / 50, 30); // Rough duration estimate
+    const filmingEnergy = estimatedDuration * 0.01; // Filming energy
+    const editingEnergy = estimatedDuration * 0.02; // Editing energy (higher than filming)
+    const renderingEnergy = fileSizeMB * 0.005; // Rendering based on file size
+    
+    estimatedKwh = filmingEnergy + editingEnergy + renderingEnergy + baseStorageEnergy + baseDistributionEnergy;
+    reasoning = `Video: Filming (${filmingEnergy.toFixed(4)} kWh) + Editing (${editingEnergy.toFixed(4)} kWh) + Rendering (${renderingEnergy.toFixed(4)} kWh) + Storage (${baseStorageEnergy.toFixed(4)} kWh) + Distribution (${baseDistributionEnergy} kWh)`;
+    
+    // Video type multipliers
+    const titleLower = title.toLowerCase();
+    if (titleLower.includes('film') || titleLower.includes('movie')) {
+      estimatedKwh *= 1.5;
+      reasoning += ' +50% cinematic production';
+    } else if (titleLower.includes('animation')) {
+      estimatedKwh *= 1.8;
+      reasoning += ' +80% animation complexity';
+    }
+    
+  } else if (mimeType.startsWith('text/') || mimeType === 'application/pdf') {
+    // Text/Document analysis
+    const wordCount = Math.max(fileSizeMB * 500, 100); // Rough word count estimate
+    const writingEnergy = wordCount * 0.00001; // Energy per word
+    const formattingEnergy = fileSizeMB * 0.001; // Formatting energy
+    
+    estimatedKwh = writingEnergy + formattingEnergy + baseStorageEnergy + baseDistributionEnergy;
+    reasoning = `Document: Writing (${writingEnergy.toFixed(4)} kWh) + Formatting (${formattingEnergy.toFixed(4)} kWh) + Storage (${baseStorageEnergy.toFixed(4)} kWh) + Distribution (${baseDistributionEnergy} kWh)`;
+    
+    // Content type multipliers
+    const titleLower = title.toLowerCase();
+    if (titleLower.includes('poetry') || titleLower.includes('poem')) {
+      estimatedKwh *= 1.2;
+      reasoning += ' +20% creative writing';
+    } else if (titleLower.includes('research') || titleLower.includes('academic')) {
+      estimatedKwh *= 1.4;
+      reasoning += ' +40% research complexity';
+    }
+  } else {
+    // Generic file analysis
+    estimatedKwh = baseStorageEnergy + baseDistributionEnergy + (fileSizeMB * 0.001);
+    reasoning = `Generic file: Storage + Distribution + Processing = ${estimatedKwh.toFixed(4)} kWh`;
+  }
+  
+  // Quality multiplier based on file size (higher quality = more energy)
+  if (fileSizeMB > 100) {
+    estimatedKwh *= 1.2;
+    reasoning += ' +20% high quality';
+  } else if (fileSizeMB < 1) {
+    estimatedKwh *= 0.9;
+    reasoning += ' -10% compressed';
+  }
+  
+  // Convert to Solar (1 Solar = 4,913 kWh)
+  const solarAmount = estimatedKwh / 4913;
+  
+  return {
+    estimatedKwh: parseFloat(estimatedKwh.toFixed(4)),
+    solarAmount: parseFloat(solarAmount.toFixed(10)), // High precision for small amounts
+    reasoning: reasoning + ` = ${estimatedKwh.toFixed(4)} kWh total`,
+    category: category,
+    qualityScore: Math.min(fileSizeMB / 10, 5) // Simple quality score 0-5
+  };
+}
 
 // Database setup for music tracking
 let pool = null;
@@ -114,6 +274,169 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Failed to track play' }));
     }
+    return;
+  }
+
+  // Creator File Upload API
+  if (pathname === '/api/creator/upload' && req.method === 'POST') {
+    upload.single('file')(req, res, async (err) => {
+      if (err) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message }));
+        return;
+      }
+
+      try {
+        if (!req.file) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'No file uploaded' }));
+          return;
+        }
+
+        const file = req.file;
+        const fileBuffer = file.buffer;
+        
+        // Determine file type and validate size limits
+        const fileType = await fileTypeFromBuffer(fileBuffer);
+        const actualMime = fileType?.mime || file.mimetype;
+        
+        let maxSize, category;
+        if (actualMime.startsWith('audio/')) {
+          maxSize = 50 * 1024 * 1024; // 50MB
+          category = 'music';
+        } else if (actualMime.startsWith('image/')) {
+          maxSize = 25 * 1024 * 1024; // 25MB
+          category = 'art';
+        } else if (actualMime.startsWith('video/')) {
+          maxSize = 500 * 1024 * 1024; // 500MB
+          category = 'video';
+        } else if (actualMime.startsWith('text/') || actualMime === 'application/pdf') {
+          maxSize = 5 * 1024 * 1024; // 5MB
+          category = 'document';
+        } else {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: `Unsupported file type: ${actualMime}` }));
+          return;
+        }
+
+        if (file.size > maxSize) {
+          const maxSizeMB = maxSize / (1024 * 1024);
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ 
+            error: `File too large. Maximum size for ${category} files is ${maxSizeMB}MB` 
+          }));
+          return;
+        }
+
+        // Get form data (creator info and metadata)
+        const formData = {};
+        if (req.body) {
+          Object.assign(formData, req.body);
+        }
+
+        const { creatorId, title, description, tags } = formData;
+        
+        if (!creatorId || !title) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Creator ID and title are required' }));
+          return;
+        }
+
+        // AI Content Analysis for pricing
+        const analysis = await analyzeContentForPricing(fileBuffer, actualMime, {
+          title,
+          description,
+          category,
+          fileSize: file.size,
+          filename: file.originalname
+        });
+
+        // Store file in object storage
+        const bucketPath = process.env.PRIVATE_OBJECT_DIR || '/private';
+        const fileId = crypto.randomUUID();
+        const fileExtension = path.extname(file.originalname) || `.${fileType?.ext || 'bin'}`;
+        const storagePath = `${bucketPath}/artifacts/${fileId}${fileExtension}`;
+        
+        // For now, store in local filesystem (in production would use object storage API)
+        const localStoragePath = path.join(__dirname, 'public', 'artifacts');
+        if (!fs.existsSync(localStoragePath)) {
+          fs.mkdirSync(localStoragePath, { recursive: true });
+        }
+        
+        const localFilePath = path.join(localStoragePath, `${fileId}${fileExtension}`);
+        fs.writeFileSync(localFilePath, fileBuffer);
+
+        // Generate thumbnail for visual content
+        let thumbnailUrl = null;
+        if (actualMime.startsWith('image/')) {
+          try {
+            const thumbnailBuffer = await sharp(fileBuffer)
+              .resize(300, 300, { fit: 'inside', withoutEnlargement: true })
+              .jpeg({ quality: 80 })
+              .toBuffer();
+            
+            const thumbnailPath = path.join(localStoragePath, `${fileId}_thumb.jpg`);
+            fs.writeFileSync(thumbnailPath, thumbnailBuffer);
+            thumbnailUrl = `/artifacts/${fileId}_thumb.jpg`;
+          } catch (error) {
+            console.warn('Thumbnail generation failed:', error.message);
+          }
+        }
+
+        if (pool) {
+          // Insert artifact into database
+          const insertQuery = `
+            INSERT INTO artifacts (
+              id, title, description, category, file_type, 
+              kwh_footprint, solar_amount_s, delivery_mode, delivery_url,
+              creator_id, cover_art_url, active, created_at
+            ) VALUES (
+              gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW()
+            ) RETURNING id, solar_amount_s
+          `;
+          
+          const result = await pool.query(insertQuery, [
+            title,
+            description || '',
+            category,
+            actualMime,
+            analysis.estimatedKwh,
+            analysis.solarAmount,
+            'download',
+            `/artifacts/${fileId}${fileExtension}`,
+            creatorId,
+            thumbnailUrl,
+            true // active
+          ]);
+
+          const artifactId = result.rows[0].id;
+          const solarPrice = result.rows[0].solar_amount_s;
+
+          console.log(`🎨 New artifact uploaded: "${title}" by ${creatorId} - ${formatSolar(solarPrice)} Solar`);
+
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({
+            success: true,
+            artifactId: artifactId,
+            title: title,
+            category: category,
+            fileSize: file.size,
+            estimatedKwh: analysis.estimatedKwh,
+            solarPrice: formatSolar(solarPrice),
+            thumbnailUrl: thumbnailUrl,
+            analysis: analysis.reasoning,
+            message: `Artifact "${title}" uploaded successfully! Priced at ${formatSolar(solarPrice)} Solar.`
+          }));
+        } else {
+          res.writeHead(503, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Database unavailable for uploads' }));
+        }
+      } catch (error) {
+        console.error('Upload error:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Upload failed: ' + error.message }));
+      }
+    });
     return;
   }
 
@@ -316,7 +639,7 @@ const server = http.createServer(async (req, res) => {
           username: user.username,
           accountNumber: user.account_number,
           solarBalance: user.total_solar || 0,
-          formattedBalance: `${user.total_solar || 0}.0000 Solar`
+          formattedBalance: `${formatSolar(user.total_solar || 0)} Solar`
         }));
       } else {
         res.writeHead(503, { 'Content-Type': 'application/json' });
@@ -467,7 +790,7 @@ const server = http.createServer(async (req, res) => {
           amountPaid: requiredSolar,
           newBalance: newBalance,
           downloadUrl: downloadUrl,
-          message: `Successfully purchased "${artifact.title}" for ${requiredSolar} Solar. Your new balance is ${newBalance.toFixed(4)} Solar.`
+          message: `Successfully purchased "${artifact.title}" for ${formatSolar(requiredSolar)} Solar. Your new balance is ${formatSolar(newBalance)} Solar.`
         }));
       } else {
         res.writeHead(503, { 'Content-Type': 'application/json' });
@@ -477,6 +800,83 @@ const server = http.createServer(async (req, res) => {
       console.error('Purchase error:', error);
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Failed to process purchase' }));
+    }
+    return;
+  }
+
+  // Creator Dashboard API - Get creator's artifacts and earnings
+  if (pathname === '/api/creator/dashboard' && req.method === 'POST') {
+    try {
+      const body = await parseBody(req);
+      const { creatorId } = body;
+      
+      if (!creatorId) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Creator ID is required' }));
+        return;
+      }
+
+      if (pool) {
+        // Get creator's artifacts
+        const artifactsQuery = `
+          SELECT id, title, category, kwh_footprint, solar_amount_s, 
+                 created_at, active, delivery_url
+          FROM artifacts 
+          WHERE creator_id = $1 
+          ORDER BY created_at DESC
+        `;
+        
+        const artifactsResult = await pool.query(artifactsQuery, [creatorId]);
+        
+        // Get purchase statistics for creator's artifacts
+        const salesQuery = `
+          SELECT a.id as artifact_id, a.title, COUNT(t.id) as total_sales,
+                 SUM(t.amount_s) as total_revenue
+          FROM artifacts a
+          LEFT JOIN transactions t ON a.id = t.artifact_id AND t.type = 'purchase'
+          WHERE a.creator_id = $1
+          GROUP BY a.id, a.title
+          ORDER BY total_revenue DESC NULLS LAST
+        `;
+        
+        const salesResult = await pool.query(salesQuery, [creatorId]);
+        
+        // Calculate total earnings (85% of sales)
+        const totalSales = salesResult.rows.reduce((sum, row) => sum + parseFloat(row.total_revenue || 0), 0);
+        const creatorEarnings = totalSales * 0.85;
+        
+        const artifacts = artifactsResult.rows.map(artifact => {
+          const salesData = salesResult.rows.find(s => s.artifact_id === artifact.id);
+          return {
+            id: artifact.id,
+            title: artifact.title,
+            category: artifact.category,
+            solarPrice: formatSolar(artifact.solar_amount_s),
+            createdAt: artifact.created_at,
+            active: artifact.active,
+            totalSales: parseInt(salesData?.total_sales || 0),
+            totalRevenue: formatSolar(salesData?.total_revenue || 0),
+            creatorEarnings: formatSolar((salesData?.total_revenue || 0) * 0.85)
+          };
+        });
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: true,
+          creatorId: creatorId,
+          totalArtifacts: artifacts.length,
+          totalEarnings: formatSolar(creatorEarnings),
+          totalSales: salesResult.rows.reduce((sum, row) => sum + parseInt(row.total_sales || 0), 0),
+          artifacts: artifacts
+        }));
+      } else {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Database unavailable' }));
+      }
+    } catch (error) {
+      console.error('Creator dashboard error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Failed to get creator dashboard' }));
     }
     return;
   }
@@ -502,7 +902,7 @@ const server = http.createServer(async (req, res) => {
           category: artifact.category,
           kwhFootprint: parseFloat(artifact.kwh_footprint),
           solarPrice: parseFloat(artifact.solar_amount_s),
-          formattedPrice: `${artifact.solar_amount_s} Solar`,
+          formattedPrice: `${formatSolar(artifact.solar_amount_s)} Solar`,
           isBonus: artifact.is_bonus,
           coverArt: artifact.cover_art_url,
           deliveryMode: artifact.delivery_mode || 'download'
