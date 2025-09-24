@@ -650,6 +650,83 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Registration API endpoint (for existing login.html page)
+  if (pathname === '/api/register' && req.method === 'POST') {
+    try {
+      const body = await parseBody(req);
+      const { username, displayName, email, password, isAnonymous, firstName, lastName } = body;
+
+      // Validate required fields
+      if (!username || !email || !password || !displayName) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'All required fields must be provided' }));
+        return;
+      }
+
+      // Validate password length
+      if (password.length < 6) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Password must be at least 6 characters long' }));
+        return;
+      }
+
+      // Hash the password
+      const saltRounds = 12;
+      const passwordHash = await bcrypt.hash(password, saltRounds);
+
+      // Calculate days since Solar start date for initial allocation
+      const startDate = new Date('2025-04-07T00:00:00Z');
+      const currentDate = new Date();
+      const daysSinceStart = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
+      const initialSolarAllocation = Math.max(daysSinceStart, 0);
+
+      let success = false;
+      let userId = null;
+
+      // Try database first
+      if (pool) {
+        try {
+          const result = await pool.query(
+            'INSERT INTO members (username, email, first_name, last_name, password_hash, name, joined_date, total_solar, total_dollars, is_anonymous, is_reserve, is_placeholder, last_distribution_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id',
+            [username, email, firstName || '', lastName || '', passwordHash, displayName, currentDate.toISOString(), initialSolarAllocation, 0, isAnonymous || false, false, false, currentDate.toISOString()]
+          );
+          if (result && result.rows && result.rows.length > 0) {
+            userId = result.rows[0].id;
+            success = true;
+            console.log(`📝 New TC-S Network member registered: ${username} (DB ID: ${userId})`);
+          }
+        } catch (dbError) {
+          console.error('Database registration error:', dbError);
+          if (dbError.code === '23505') { // Unique constraint violation
+            res.writeHead(409, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: 'Username or email already exists' }));
+            return;
+          }
+        }
+      }
+
+      if (success) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: true,
+          message: 'Registration successful',
+          userId: userId,
+          username: username,
+          initialSolarBalance: initialSolarAllocation,
+          memberSince: currentDate.toISOString()
+        }));
+      } else {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Failed to create account' }));
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Registration failed' }));
+    }
+    return;
+  }
+
   // Enhanced member registration API
   if (pathname === '/api/users/register-member' && req.method === 'POST') {
     try {
