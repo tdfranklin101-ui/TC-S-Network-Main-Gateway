@@ -2156,11 +2156,27 @@
         // New unified preview function using the type-aware preview system
         async function openPreview(artifactId) {
             try {
-                // Use the new /api/preview/:id endpoint which routes based on type
-                window.open(`/api/preview/${artifactId}`, '_blank');
+                // First try to get artifact details to ensure it exists
+                const response = await fetch(`/api/artifacts`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const artifact = data.artifacts.find(a => a.id === artifactId);
+                    if (artifact && artifact.previewSlug) {
+                        // Use direct preview page URL
+                        window.open(`/preview/${artifact.previewSlug}`, '_blank');
+                    } else {
+                        // Fallback to API preview endpoint
+                        window.open(`/api/preview/${artifactId}`, '_blank');
+                    }
+                } else {
+                    // Fallback to API preview endpoint
+                    window.open(`/api/preview/${artifactId}`, '_blank');
+                }
             } catch (error) {
                 console.error('Preview error:', error);
-                alert('Unable to open preview. Please try again.');
+                // Fallback to API preview endpoint
+                window.open(`/api/preview/${artifactId}`, '_blank');
             }
         }
 
