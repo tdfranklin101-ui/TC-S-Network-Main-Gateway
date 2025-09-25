@@ -554,7 +554,7 @@
         }
 
         /* Video Preview Modal */
-        .video-preview-modal {
+        .video-preview-modal, .music-preview-modal {
             position: fixed;
             top: 0;
             left: 0;
@@ -567,11 +567,11 @@
             z-index: 2000;
         }
 
-        .video-preview-modal.visible {
+        .video-preview-modal.visible, .music-preview-modal.visible {
             display: flex;
         }
 
-        .video-modal-content {
+        .video-modal-content, .music-modal-content {
             background: #1a1a1a;
             border: 2px solid #ffaa00;
             border-radius: 15px;
@@ -580,8 +580,13 @@
             overflow: hidden;
             position: relative;
         }
+        
+        .music-modal-content {
+            max-width: 500px;
+            max-height: 400px;
+        }
 
-        .video-modal-header {
+        .video-modal-header, .music-modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -590,13 +595,13 @@
             background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
         }
 
-        .video-modal-header h3 {
+        .video-modal-header h3, .music-modal-header h3 {
             color: #ffaa00;
             margin: 0;
             font-size: 20px;
         }
 
-        .video-close-btn {
+        .video-close-btn, .music-close-btn {
             color: #888;
             font-size: 28px;
             font-weight: bold;
@@ -605,7 +610,7 @@
             transition: color 0.3s;
         }
 
-        .video-close-btn:hover {
+        .video-close-btn:hover, .music-close-btn:hover {
             color: #ffaa00;
         }
 
@@ -966,6 +971,33 @@
         </div>
     </div>
 
+    <!-- Music Preview Modal -->
+    <div class="music-preview-modal" id="music-preview-modal" style="display: none;">
+        <div class="music-modal-content">
+            <div class="music-modal-header">
+                <h3 id="music-preview-title">Music Preview</h3>
+                <span class="music-close-btn" id="music-close-btn">&times;</span>
+            </div>
+            <div class="music-container" style="padding: 20px; text-align: center;">
+                <audio id="music-player" controls style="width: 100%;" preload="none">
+                    <source id="music-source" src="" type="audio/mpeg">
+                    Your browser does not support audio playback.
+                </audio>
+            </div>
+            <div class="music-modal-footer" style="display: flex; justify-content: space-between; align-items: center; padding: 20px 25px; background: linear-gradient(135deg, #2a2a2a, #1a1a1a); border-top: 1px solid #333;">
+                <div class="music-info" style="display: flex; flex-direction: column; gap: 5px;">
+                    <div class="music-category" id="music-preview-category" style="font-size: 12px; color: #888; text-transform: uppercase;">Music</div>
+                    <div class="music-price" id="music-preview-price" style="font-size: 18px; font-weight: bold; color: #ffaa00;">0.000000 Solar</div>
+                </div>
+                <div class="music-actions">
+                    <button class="preview-purchase-btn" id="music-preview-purchase-btn" style="background: linear-gradient(135deg, #ff6b35, #ff8c42); color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer;">
+                        Purchase & Download
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Signup Modal -->
     <div class="signup-modal" id="signup-modal">
         <div class="signup-form">
@@ -1302,7 +1334,47 @@
             grid.style.display = 'grid';
             emptyState.style.display = 'none';
 
-            grid.innerHTML = artifacts.map(artifact => `
+            const categoryFilter = document.getElementById('category-filter').value;
+
+            // If no category filter is selected (All Categories), organize by category sections
+            if (!categoryFilter) {
+                const categories = [...new Set(artifacts.map(a => a.category))];
+                let gridHTML = '';
+
+                categories.forEach(category => {
+                    const categoryArtifacts = artifacts.filter(a => a.category === category);
+                    const categoryName = category.charAt(0).toUpperCase() + category.slice(1);
+                    const categoryIcon = category === 'music' ? '🎵' : category === 'video' ? '🎬' : 
+                                        category === 'image' ? '🖼️' : category === 'document' ? '📄' : '📁';
+
+                    gridHTML += `
+                        <div style="grid-column: 1 / -1; margin: 30px 0 20px 0;">
+                            <h3 style="color: #ffaa00; margin-bottom: 15px; font-size: 20px;">
+                                ${categoryIcon} ${categoryName} (${categoryArtifacts.length})
+                            </h3>
+                            <p style="color: #888; font-size: 14px; margin-bottom: 20px;">
+                                ${category === 'music' ? 'Audio tracks and compositions' : 
+                                  category === 'video' ? 'Video content and multimedia' : 
+                                  category === 'image' ? 'Images and visual art' : 
+                                  'Digital documents and files'}
+                            </p>
+                        </div>
+                    `;
+
+                    categoryArtifacts.forEach(artifact => {
+                        gridHTML += createArtifactCard(artifact, 'marketplace');
+                    });
+                });
+
+                grid.innerHTML = gridHTML;
+            } else {
+                // Single category view - show items normally
+                grid.innerHTML = artifacts.map(artifact => createArtifactCard(artifact, 'marketplace')).join('');
+            }
+        }
+
+        function createArtifactCard(artifact, context = 'marketplace') {
+            return `
                 <div class="artifact-card" onclick="selectArtifact('${artifact.id}')">
                     ${artifact.isBonus ? '<div class="artifact-bonus">BONUS TRACK</div>' : ''}
                     <div class="artifact-category">${artifact.category}</div>
@@ -1314,11 +1386,16 @@
                             🎬 Preview Video
                         </button>` : ''
                     }
+                    ${artifact.category === 'music' ? 
+                        `<button class="preview-btn" onclick="event.stopPropagation(); previewMusic('${artifact.id}')">
+                            🎵 Preview Track
+                        </button>` : ''
+                    }
                     <button class="purchase-btn" onclick="event.stopPropagation(); purchaseArtifact('${artifact.id}')">
                         Purchase & Download
                     </button>
                 </div>
-            `).join('');
+            `;
         }
 
         function clearFilters() {
@@ -2055,6 +2132,84 @@
             };
         }
 
+        async function previewMusic(artifactId) {
+            // Find the artifact data
+            const artifact = allArtifacts.find(a => a.id === artifactId) || 
+                           currentMyItemsData?.uploaded?.artifacts?.find(a => a.id === artifactId) ||
+                           currentMyItemsData?.purchased?.artifacts?.find(a => a.id === artifactId);
+            
+            if (!artifact) {
+                alert('❌ Music track not found');
+                return;
+            }
+
+            currentPreviewArtifact = artifact;
+
+            // Update modal content
+            document.getElementById('music-preview-title').textContent = artifact.title;
+            document.getElementById('music-preview-category').textContent = artifact.category.toUpperCase();
+            document.getElementById('music-preview-price').textContent = artifact.formattedPrice;
+
+            // Show modal with loading state
+            document.getElementById('music-preview-modal').classList.add('visible');
+            const musicPlayer = document.getElementById('music-player');
+            const musicSource = document.getElementById('music-source');
+            
+            // Show loading state
+            musicSource.src = '';
+            musicPlayer.load();
+
+            try {
+                // Request secure preview token from server
+                const response = await fetch(`/api/artifacts/${artifactId}/preview`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Preview failed: ${response.status}`);
+                }
+
+                const result = await response.json();
+                
+                if (result.success && result.previewUrl) {
+                    // Set audio source with secure URL
+                    musicSource.src = result.previewUrl;
+                    musicPlayer.load();
+                    
+                    console.log(`🎵 Preview ready for: ${result.artifactTitle}`);
+                } else {
+                    throw new Error(result.error || 'Preview generation failed');
+                }
+            } catch (error) {
+                console.error('Preview error:', error);
+                alert(`❌ Music preview failed: ${error.message}`);
+                closeMusicPreview();
+                return;
+            }
+
+            // Set up purchase button
+            const purchaseBtn = document.getElementById('music-preview-purchase-btn');
+            purchaseBtn.onclick = () => purchaseFromMusicPreview(artifactId);
+            purchaseBtn.disabled = false;
+
+            // Add audio event handlers
+            musicPlayer.onerror = function() {
+                alert('❌ Audio could not be loaded. Please try again later.');
+                closeMusicPreview();
+            };
+
+            musicPlayer.onloadstart = function() {
+                console.log('🎵 Audio loading started...');
+            };
+
+            musicPlayer.oncanplay = function() {
+                console.log('🎵 Audio ready to play!');
+            };
+        }
+
         function closeVideoPreview() {
             const modal = document.getElementById('video-preview-modal');
             const videoPlayer = document.getElementById('video-player');
@@ -2062,6 +2217,19 @@
             // Stop and reset video
             videoPlayer.pause();
             videoPlayer.currentTime = 0;
+            
+            // Hide modal
+            modal.classList.remove('visible');
+            currentPreviewArtifact = null;
+        }
+
+        function closeMusicPreview() {
+            const modal = document.getElementById('music-preview-modal');
+            const musicPlayer = document.getElementById('music-player');
+            
+            // Stop and reset audio
+            musicPlayer.pause();
+            musicPlayer.currentTime = 0;
             
             // Hide modal
             modal.classList.remove('visible');
@@ -2090,24 +2258,56 @@
             }
         }
 
-        // Set up video modal event listeners when page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            // Close button
-            document.getElementById('video-close-btn').addEventListener('click', closeVideoPreview);
+        async function purchaseFromMusicPreview(artifactId) {
+            const purchaseBtn = document.getElementById('music-preview-purchase-btn');
             
-            // Click outside modal to close
+            // Disable button to prevent double-clicks
+            purchaseBtn.disabled = true;
+            purchaseBtn.textContent = 'Processing...';
+            
+            try {
+                // Use existing purchase function
+                await purchaseArtifact(artifactId);
+                
+                // Close preview modal after successful purchase
+                closeMusicPreview();
+            } catch (error) {
+                console.error('Purchase from music preview failed:', error);
+                // Re-enable button on error
+                purchaseBtn.disabled = false;
+                purchaseBtn.textContent = 'Purchase & Download';
+                // Keep modal open so user can try again
+            }
+        }
+
+        // Set up preview modal event listeners when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Video modal events
+            document.getElementById('video-close-btn').addEventListener('click', closeVideoPreview);
             document.getElementById('video-preview-modal').addEventListener('click', function(e) {
                 if (e.target === this) {
                     closeVideoPreview();
                 }
             });
             
-            // Escape key to close
+            // Music modal events
+            document.getElementById('music-close-btn').addEventListener('click', closeMusicPreview);
+            document.getElementById('music-preview-modal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeMusicPreview();
+                }
+            });
+            
+            // Escape key to close any open modals
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape') {
-                    const modal = document.getElementById('video-preview-modal');
-                    if (modal.classList.contains('visible')) {
+                    const videoModal = document.getElementById('video-preview-modal');
+                    const musicModal = document.getElementById('music-preview-modal');
+                    
+                    if (videoModal.classList.contains('visible')) {
                         closeVideoPreview();
+                    } else if (musicModal.classList.contains('visible')) {
+                        closeMusicPreview();
                     }
                 }
             });

@@ -1559,9 +1559,9 @@ const server = http.createServer(async (req, res) => {
       }
 
       const artifact = artifactResult.rows[0];
-      if (artifact.category !== 'video') {
+      if (artifact.category !== 'video' && artifact.category !== 'music') {
         res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Preview only available for videos' }));
+        res.end(JSON.stringify({ error: 'Preview only available for videos and music' }));
         return;
       }
 
