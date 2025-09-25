@@ -1508,7 +1508,7 @@
                 `;
                 
                 filteredUploaded.forEach(artifact => {
-                    gridHTML += createArtifactCard(artifact, 'uploaded');
+                    gridHTML += createMyItemCard(artifact, 'uploaded');
                 });
             }
             
@@ -1527,14 +1527,14 @@
                 `;
                 
                 filteredPurchased.forEach(artifact => {
-                    gridHTML += createArtifactCard(artifact, 'purchased');
+                    gridHTML += createMyItemCard(artifact, 'purchased');
                 });
             }
             
             grid.innerHTML = gridHTML;
         }
 
-        function createArtifactCard(artifact, type) {
+        function createMyItemCard(artifact, type) {
             const typeIcon = type === 'uploaded' ? '📋' : '💾';
             const typeLabel = type === 'uploaded' ? 'Uploaded' : 'Purchased';
             
@@ -1552,7 +1552,7 @@
                 
                 actionButtons = `
                     <button class="artifact-action-btn download" onclick="downloadArtifact('${artifact.id}')">💾 Download File</button>
-                    ${isMusic ? `<button class="artifact-action-btn" onclick="previewArtifact('${artifact.id}', 'music')">🎵 Preview Audio</button>` : ''}
+                    ${isMusic ? `<button class="artifact-action-btn" onclick="previewMusic('${artifact.id}')">🎵 Preview Audio</button>` : ''}
                     ${isVideo ? `<button class="artifact-action-btn" onclick="previewVideo('${artifact.id}')">🎬 Preview Video</button>` : ''}
                     ${isImage ? `<button class="artifact-action-btn" onclick="previewArtifact('${artifact.id}', 'image')">🖼️ View Image</button>` : ''}
                     ${isText ? `<button class="artifact-action-btn" onclick="previewArtifact('${artifact.id}', 'text')">📄 View Text</button>` : ''}
