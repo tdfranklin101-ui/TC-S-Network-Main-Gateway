@@ -553,6 +553,151 @@
             white-space: nowrap;
         }
 
+        /* Video Preview Modal */
+        .video-preview-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .video-preview-modal.visible {
+            display: flex;
+        }
+
+        .video-modal-content {
+            background: #1a1a1a;
+            border: 2px solid #ffaa00;
+            border-radius: 15px;
+            max-width: 90vw;
+            max-height: 90vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .video-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 25px;
+            border-bottom: 1px solid #333;
+            background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+        }
+
+        .video-modal-header h3 {
+            color: #ffaa00;
+            margin: 0;
+            font-size: 20px;
+        }
+
+        .video-close-btn {
+            color: #888;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 0 5px;
+            transition: color 0.3s;
+        }
+
+        .video-close-btn:hover {
+            color: #ffaa00;
+        }
+
+        .video-container {
+            padding: 20px;
+            background: #000;
+        }
+
+        .video-modal-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 25px;
+            background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
+            border-top: 1px solid #333;
+        }
+
+        .video-info {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .video-category {
+            font-size: 12px;
+            color: #888;
+            text-transform: uppercase;
+        }
+
+        .video-price {
+            font-size: 18px;
+            font-weight: bold;
+            color: #ffaa00;
+        }
+
+        .preview-purchase-btn {
+            background: linear-gradient(135deg, #ff6b35, #ff8c42);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .preview-purchase-btn:hover {
+            background: linear-gradient(135deg, #e55a2e, #e67a35);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 53, 0.3);
+        }
+
+        .preview-btn {
+            background: rgba(255, 170, 0, 0.1);
+            color: #ffaa00;
+            border: 1px solid #ffaa00;
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 8px;
+            width: 100%;
+        }
+
+        .preview-btn:hover {
+            background: rgba(255, 170, 0, 0.2);
+            transform: translateY(-1px);
+        }
+
+        @media (max-width: 768px) {
+            .video-modal-content {
+                max-width: 95vw;
+                max-height: 95vh;
+            }
+            
+            .video-modal-header {
+                padding: 15px 20px;
+            }
+            
+            .video-container {
+                padding: 15px;
+            }
+            
+            .video-modal-footer {
+                padding: 15px 20px;
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+
         .signup-modal {
             position: fixed;
             top: 0;
@@ -791,6 +936,33 @@
             <h3>No Artifacts Found</h3>
             <p>Try adjusting your filters or check back later for new content.</p>
             <button class="clear-filters-btn" onclick="clearFilters()">Clear Filters</button>
+        </div>
+    </div>
+
+    <!-- Video Preview Modal -->
+    <div class="video-preview-modal" id="video-preview-modal" style="display: none;">
+        <div class="video-modal-content">
+            <div class="video-modal-header">
+                <h3 id="video-preview-title">Video Preview</h3>
+                <span class="video-close-btn" id="video-close-btn">&times;</span>
+            </div>
+            <div class="video-container">
+                <video id="video-player" controls width="100%" height="400" preload="none">
+                    <source id="video-source" src="" type="video/mp4">
+                    Your browser does not support video playback.
+                </video>
+            </div>
+            <div class="video-modal-footer">
+                <div class="video-info">
+                    <div class="video-category" id="video-preview-category">Video</div>
+                    <div class="video-price" id="video-preview-price">0.000000 Solar</div>
+                </div>
+                <div class="video-actions">
+                    <button class="preview-purchase-btn" id="preview-purchase-btn">
+                        Purchase & Download
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
