@@ -1309,6 +1309,11 @@
                     <div class="artifact-title">${artifact.title}</div>
                     <div class="artifact-kwh">${artifact.kwhFootprint} kWh footprint</div>
                     <div class="artifact-price">${artifact.formattedPrice}</div>
+                    ${artifact.category === 'video' ? 
+                        `<button class="preview-btn" onclick="event.stopPropagation(); previewVideo('${artifact.id}')">
+                            🎬 Preview Video
+                        </button>` : ''
+                    }
                     <button class="purchase-btn" onclick="event.stopPropagation(); purchaseArtifact('${artifact.id}')">
                         Purchase & Download
                     </button>
@@ -1466,9 +1471,12 @@
                 const isImage = artifact.category === 'art' || fileType.includes('image');
                 const isText = fileType.includes('text') || fileType.includes('document');
                 
+                const isVideo = artifact.category === 'video' || fileType.includes('video');
+                
                 actionButtons = `
                     <button class="artifact-action-btn download" onclick="downloadArtifact('${artifact.id}')">💾 Download File</button>
                     ${isMusic ? `<button class="artifact-action-btn" onclick="previewArtifact('${artifact.id}', 'music')">🎵 Preview Audio</button>` : ''}
+                    ${isVideo ? `<button class="artifact-action-btn" onclick="previewVideo('${artifact.id}')">🎬 Preview Video</button>` : ''}
                     ${isImage ? `<button class="artifact-action-btn" onclick="previewArtifact('${artifact.id}', 'image')">🖼️ View Image</button>` : ''}
                     ${isText ? `<button class="artifact-action-btn" onclick="previewArtifact('${artifact.id}', 'text')">📄 View Text</button>` : ''}
                     <button class="artifact-action-btn" onclick="copyArtifactContent('${artifact.id}')">📋 Copy Content</button>
