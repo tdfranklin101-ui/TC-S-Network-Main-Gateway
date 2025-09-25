@@ -365,6 +365,32 @@ export type ContactMessage = typeof contactMessages.$inferSelect;
 export type SolarClock = typeof solarClock.$inferSelect;
 export type Product = typeof products.$inferSelect;
 
+// Digital Artifacts for marketplace
+export const artifacts = pgTable("artifacts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  slug: text("slug").notNull().unique(),
+  title: text("title").notNull(),
+  description: text("description"),
+  category: text("category").notNull(),
+  fileType: text("file_type").notNull(),
+  kwhFootprint: varchar("kwh_footprint").notNull(),
+  solarAmountS: varchar("solar_amount_s").notNull(),
+  raysAmount: integer("rays_amount").default(0),
+  spotifyComparisonPrice: text("spotify_comparison_price"),
+  deliveryMode: text("delivery_mode").notNull(),
+  deliveryUrl: text("delivery_url"),
+  isBonus: boolean("is_bonus").default(false),
+  creatorId: text("creator_id").notNull(),
+  coverArtUrl: text("cover_art_url"),
+  active: boolean("active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  // New fields for preview system
+  streamingUrl: text("streaming_url"), // Music Now streaming location
+  previewType: text("preview_type"), // 'audio', 'video', 'image', 'pdf', 'text', 'other'
+  previewSlug: text("preview_slug"), // Slug for preview page
+  searchTags: text("search_tags").array(), // Tags for search indexing
+});
+
 // Insert types for additional tables
 export type InsertMember = z.infer<typeof insertMemberSchema>;
 export type InsertDistributionLog = z.infer<typeof insertDistributionLogSchema>;
@@ -373,3 +399,8 @@ export type InsertNewsletterSubscription = z.infer<typeof insertNewsletterSubscr
 export type InsertContactMessage = z.infer<typeof insertContactMessageSchema>;
 export type InsertSolarClock = z.infer<typeof insertSolarClockSchema>;
 export type InsertProduct = z.infer<typeof insertProductSchema>;
+
+// Artifacts schemas
+export const insertArtifactSchema = createInsertSchema(artifacts).omit({ id: true, createdAt: true });
+export type Artifact = typeof artifacts.$inferSelect;
+export type InsertArtifact = z.infer<typeof insertArtifactSchema>;
