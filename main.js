@@ -20,6 +20,9 @@ const schedule = require('node-schedule');
 // Import seed rotation system
 const { initializeSeedRotation, getSeedRotator } = require('./server/seed-rotation-api');
 
+// Import enhanced file management system
+const ArtifactFileManager = require('./server/artifact-file-manager');
+
 // Import market data and SEO services
 const MarketDataService = require('./server/market-data-service');
 const ContentValidator = require('./server/content-validator');
@@ -33,6 +36,13 @@ const PORT = process.env.PORT || 3000;
 
 // Simple session storage (in production, use Redis or database)
 const sessions = new Map();
+
+// Initialize enhanced file management system
+const fileManager = new ArtifactFileManager({
+  masterStoragePath: path.join(__dirname, 'storage/master'),
+  previewStoragePath: path.join(__dirname, 'public/previews'),
+  tradeStoragePath: path.join(__dirname, 'storage/trade')
+});
 
 // Automatic slug generation for uploads
 function generateSlug(title, filename) {
@@ -558,37 +568,33 @@ const server = http.createServer(async (req, res) => {
           filename: file.originalname
         });
 
-        // Store file in object storage
-        const bucketPath = process.env.PRIVATE_OBJECT_DIR || '/private';
-        const fileId = crypto.randomUUID();
-        const fileExtension = path.extname(file.originalname) || `.${fileType?.ext || 'bin'}`;
-        const storagePath = `${bucketPath}/artifacts/${fileId}${fileExtension}`;
-        
-        // For now, store in local filesystem (in production would use object storage API)
-        const localStoragePath = path.join(__dirname, 'public', 'artifacts');
-        if (!fs.existsSync(localStoragePath)) {
-          fs.mkdirSync(localStoragePath, { recursive: true });
-        }
-        
-        const localFilePath = path.join(localStoragePath, `${fileId}${fileExtension}`);
-        fs.writeFileSync(localFilePath, fileBuffer);
-
-        // Generate thumbnail for visual content
-        let thumbnailUrl = null;
-        if (actualMime.startsWith('image/')) {
-          try {
-            const thumbnailBuffer = await sharp(fileBuffer)
-              .resize(300, 300, { fit: 'inside', withoutEnlargement: true })
-              .jpeg({ quality: 80 })
-              .toBuffer();
-            
-            const thumbnailPath = path.join(localStoragePath, `${fileId}_thumb.jpg`);
-            fs.writeFileSync(thumbnailPath, thumbnailBuffer);
-            thumbnailUrl = `/artifacts/${fileId}_thumb.jpg`;
-          } catch (error) {
-            console.warn('Thumbnail generation failed:', error.message);
+        // Process file through enhanced three-copy workflow
+        console.log(`🔄 Processing upload through three-copy workflow: ${title}`);
+        const fileProcessingResult = await fileManager.processUpload(
+          fileBuffer,
+          {
+            originalname: file.originalname,
+            mimetype: actualMime,
+            size: file.size
+          },
+          {
+            title,
+            description,
+            category,
+            creatorId
           }
+        );
+
+        if (!fileProcessingResult.success) {
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ 
+            error: `File processing failed: ${fileProcessingResult.error}` 
+          }));
+          return;
         }
+
+        const artifactId = fileProcessingResult.artifactId;
+        console.log(`✅ Three-copy processing complete for: ${artifactId}`);
 
         if (pool) {
           // Generate unique slug automatically
@@ -603,18 +609,24 @@ const server = http.createServer(async (req, res) => {
             finalSlug = `${baseSlug}-${slugCounter++}`;
           }
           
-          // Insert artifact into database with auto-generated slug
+          // Insert artifact into database with enhanced three-copy schema
           const insertQuery = `
             INSERT INTO artifacts (
               id, slug, title, description, category, file_type, 
               kwh_footprint, solar_amount_s, rays_amount, delivery_mode, delivery_url,
-              creator_id, cover_art_url, active, created_at
+              creator_id, cover_art_url, active,
+              master_file_url, preview_file_url, trade_file_url,
+              master_file_size, preview_file_size, trade_file_size,
+              file_duration, preview_duration, preview_type, preview_slug,
+              processing_status, created_at
             ) VALUES (
-              gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW()
+              $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
+              $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, NOW()
             ) RETURNING id, slug, solar_amount_s
           `;
           
           const result = await pool.query(insertQuery, [
+            artifactId, // Use the artifactId from file processing
             finalSlug, // Auto-generated unique slug
             title,
             description || '',
@@ -624,22 +636,34 @@ const server = http.createServer(async (req, res) => {
             analysis.solarAmount,
             0, // rays_amount (default to 0)
             'download',
-            `/artifacts/${fileId}${fileExtension}`,
+            fileProcessingResult.tradeFile.url, // Legacy delivery_url points to trade file
             creatorId,
-            thumbnailUrl,
-            true // active
+            fileProcessingResult.previewFile.thumbnailUrl,
+            true, // active
+            fileProcessingResult.masterFile.url,
+            fileProcessingResult.previewFile.previewUrl,
+            fileProcessingResult.tradeFile.url,
+            fileProcessingResult.masterFile.size,
+            fileProcessingResult.previewFile.previewSize || 0,
+            fileProcessingResult.tradeFile.size,
+            fileProcessingResult.metadata.fileDuration || null,
+            fileProcessingResult.previewFile.previewDuration || null,
+            fileProcessingResult.previewFile.previewType,
+            `${finalSlug}-preview`, // Generate preview slug
+            fileProcessingResult.processingStatus
           ]);
 
-          const artifactId = result.rows[0].id;
+          const dbArtifactId = result.rows[0].id;
           const artifactSlug = result.rows[0].slug;
           const solarPrice = result.rows[0].solar_amount_s;
 
-          console.log(`🚀 Upload Anything: "${title}" (${artifactSlug}) by ${creatorId} - ${formatSolar(solarPrice)} Solar`);
+          console.log(`🚀 Enhanced Upload Complete: "${title}" (${artifactSlug}) by ${creatorId} - ${formatSolar(solarPrice)} Solar`);
+          console.log(`📁 Files: Master (${fileProcessingResult.masterFile.size}B), Preview (${fileProcessingResult.previewFile.previewSize || 0}B), Trade (${fileProcessingResult.tradeFile.size}B)`);
 
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({
             success: true,
-            artifactId: artifactId,
+            artifactId: dbArtifactId,
             slug: artifactSlug,
             title: title,
             category: category,
@@ -647,24 +671,40 @@ const server = http.createServer(async (req, res) => {
             estimatedKwh: analysis.estimatedKwh,
             solarPrice: formatSolar(solarPrice),
             estimatedSolarPrice: formatSolar(solarPrice),
-            thumbnailUrl: thumbnailUrl,
+            thumbnailUrl: fileProcessingResult.previewFile.thumbnailUrl,
+            previewType: fileProcessingResult.previewFile.previewType,
             analysis: analysis.reasoning,
-            message: `🚀 Upload successful! "${title}" is now available in the marketplace at ${formatSolar(solarPrice)} Solar.`,
-            uploadType: 'automatic',
+            message: `🚀 Upload successful! "${title}" is now available in the marketplace at ${formatSolar(solarPrice)} Solar. Preview system ready.`,
+            uploadType: 'enhanced_three_copy',
+            fileSystem: {
+              masterFile: fileProcessingResult.masterFile.url,
+              previewFile: fileProcessingResult.previewFile.previewUrl,
+              tradeFile: fileProcessingResult.tradeFile.url,
+              previewType: fileProcessingResult.previewFile.previewType
+            },
             autoGenerated: {
               slug: artifactSlug,
               category: category,
-              pricing: `${formatSolar(solarPrice)} Solar (${analysis.estimatedKwh} kWh)`
+              pricing: `${formatSolar(solarPrice)} Solar (${analysis.estimatedKwh} kWh)`,
+              previewSlug: `${artifactSlug}-preview`
             }
           }));
         } else {
+          // Cleanup files if database is unavailable
+          await fileManager.cleanup(artifactId);
           res.writeHead(503, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'Database unavailable for uploads' }));
         }
       } catch (error) {
-        console.error('Upload error:', error);
+        console.error('Enhanced upload error:', error);
+        
+        // Cleanup any partial files on error
+        if (fileProcessingResult && fileProcessingResult.artifactId) {
+          await fileManager.cleanup(fileProcessingResult.artifactId);
+        }
+        
         res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Upload failed: ' + error.message }));
+        res.end(JSON.stringify({ error: 'Enhanced upload failed: ' + error.message }));
       }
     });
     return;
