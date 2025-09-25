@@ -1537,6 +1537,148 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Generate Video Preview Token API (secure server-side)
+  if (pathname.startsWith('/api/artifacts/') && pathname.endsWith('/preview') && req.method === 'POST') {
+    try {
+      const artifactId = pathname.split('/')[3]; // Extract ID from /api/artifacts/{id}/preview
+      
+      if (!artifactId) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Artifact ID required' }));
+        return;
+      }
+
+      // Check if artifact exists and is video
+      const artifactQuery = 'SELECT id, title, category, delivery_url FROM artifacts WHERE id = $1 AND active = true';
+      const artifactResult = await pool.query(artifactQuery, [artifactId]);
+      
+      if (artifactResult.rows.length === 0) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Video not found' }));
+        return;
+      }
+
+      const artifact = artifactResult.rows[0];
+      if (artifact.category !== 'video') {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Preview only available for videos' }));
+        return;
+      }
+
+      // Generate secure HMAC-signed preview token (expires in 10 minutes)
+      const crypto = require('crypto');
+      const secretKey = process.env.PREVIEW_TOKEN_SECRET || 'fallback-preview-secret-2025';
+      
+      const previewData = {
+        artifactId: artifactId,
+        type: 'preview',
+        expires: Date.now() + (10 * 60 * 1000), // 10 minutes
+        timestamp: Date.now(),
+        nonce: crypto.randomBytes(8).toString('hex')
+      };
+      
+      const payload = Buffer.from(JSON.stringify(previewData)).toString('base64');
+      const signature = crypto.createHmac('sha256', secretKey).update(payload).digest('hex');
+      const previewToken = `${payload}.${signature}`;
+      const previewUrl = `/api/artifacts/preview/${previewToken}`;
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        previewUrl: previewUrl,
+        artifactTitle: artifact.title,
+        expiresIn: 600 // seconds
+      }));
+    } catch (error) {
+      console.error('Preview token generation error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Failed to generate preview' }));
+    }
+    return;
+  }
+
+  // Video Preview Delivery API (secure token validation)
+  if (pathname.startsWith('/api/artifacts/preview/') && req.method === 'GET') {
+    try {
+      const previewToken = pathname.split('/')[4]; // Extract token from /api/artifacts/preview/{token}
+      
+      if (!previewToken) {
+        res.writeHead(400, { 'Content-Type': 'text/plain' });
+        res.end('Invalid preview token');
+        return;
+      }
+
+      // Validate HMAC-signed preview token
+      const crypto = require('crypto');
+      const secretKey = process.env.PREVIEW_TOKEN_SECRET || 'fallback-preview-secret-2025';
+      
+      const tokenParts = previewToken.split('.');
+      if (tokenParts.length !== 2) {
+        res.writeHead(400, { 'Content-Type': 'text/plain' });
+        res.end('Invalid preview token format');
+        return;
+      }
+      
+      const [payload, signature] = tokenParts;
+      
+      // Verify HMAC signature
+      const expectedSignature = crypto.createHmac('sha256', secretKey).update(payload).digest('hex');
+      if (!crypto.timingSafeEqual(Buffer.from(signature, 'hex'), Buffer.from(expectedSignature, 'hex'))) {
+        res.writeHead(401, { 'Content-Type': 'text/plain' });
+        res.end('Invalid preview token signature');
+        return;
+      }
+      
+      // Decode and validate preview data
+      let previewData;
+      try {
+        previewData = JSON.parse(Buffer.from(payload, 'base64').toString());
+      } catch (decodeError) {
+        res.writeHead(400, { 'Content-Type': 'text/plain' });
+        res.end('Invalid preview token payload');
+        return;
+      }
+
+      // Validate token structure and expiration
+      if (!previewData.artifactId || !previewData.expires || previewData.type !== 'preview') {
+        res.writeHead(400, { 'Content-Type': 'text/plain' });
+        res.end('Invalid preview token data');
+        return;
+      }
+
+      if (Date.now() > previewData.expires) {
+        res.writeHead(410, { 'Content-Type': 'text/plain' });
+        res.end('Preview token expired');
+        return;
+      }
+
+      // Get artifact delivery URL
+      const artifactQuery = 'SELECT delivery_url, title FROM artifacts WHERE id = $1 AND active = true AND category = $2';
+      const artifactResult = await pool.query(artifactQuery, [previewData.artifactId, 'video']);
+      
+      if (artifactResult.rows.length === 0) {
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.end('Video not found');
+        return;
+      }
+
+      const deliveryUrl = artifactResult.rows[0].delivery_url;
+      
+      // Redirect to actual video file with security headers
+      res.writeHead(302, { 
+        'Location': deliveryUrl,
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+        'Pragma': 'no-cache'
+      });
+      res.end();
+    } catch (error) {
+      console.error('Preview delivery error:', error);
+      res.writeHead(500, { 'Content-Type': 'text/plain' });
+      res.end('Preview service error');
+    }
+    return;
+  }
+
   // Get User's Items API (uploaded artifacts + purchased artifacts)
   if (pathname === '/api/artifacts/my-items' && req.method === 'GET') {
     try {

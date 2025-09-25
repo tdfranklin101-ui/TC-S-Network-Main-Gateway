@@ -1971,6 +1971,147 @@
             // Add menu functionality here
             console.log('Menu toggled');
         }
+
+        // Video Preview Functions
+        let currentPreviewArtifact = null;
+
+        async function previewVideo(artifactId) {
+            // Find the artifact data
+            const artifact = allArtifacts.find(a => a.id === artifactId) || 
+                           currentMyItemsData?.uploaded?.artifacts?.find(a => a.id === artifactId) ||
+                           currentMyItemsData?.purchased?.artifacts?.find(a => a.id === artifactId);
+            
+            if (!artifact) {
+                alert('❌ Video not found');
+                return;
+            }
+
+            currentPreviewArtifact = artifact;
+
+            // Update modal content
+            document.getElementById('video-preview-title').textContent = artifact.title;
+            document.getElementById('video-preview-category').textContent = artifact.category.toUpperCase();
+            document.getElementById('video-preview-price').textContent = artifact.formattedPrice;
+
+            // Show modal with loading state
+            document.getElementById('video-preview-modal').classList.add('visible');
+            const videoPlayer = document.getElementById('video-player');
+            const videoSource = document.getElementById('video-source');
+            
+            // Show loading state
+            videoSource.src = '';
+            videoPlayer.load();
+            videoPlayer.poster = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMzMzIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iI2ZmYWEwMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkxvYWRpbmcgcHJldmlldy4uLjwvdGV4dD48L3N2Zz4=';
+
+            try {
+                // Request secure preview token from server
+                const response = await fetch(`/api/artifacts/${artifactId}/preview`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Preview failed: ${response.status}`);
+                }
+
+                const result = await response.json();
+                
+                if (result.success && result.previewUrl) {
+                    // Set video source with secure URL
+                    videoSource.src = result.previewUrl;
+                    videoPlayer.load();
+                    videoPlayer.poster = ''; // Remove loading poster
+                    
+                    console.log(`🎬 Preview ready for: ${result.artifactTitle}`);
+                } else {
+                    throw new Error(result.error || 'Preview generation failed');
+                }
+            } catch (error) {
+                console.error('Preview error:', error);
+                alert(`❌ Video preview failed: ${error.message}`);
+                closeVideoPreview();
+                return;
+            }
+
+            // Set up purchase button
+            const purchaseBtn = document.getElementById('preview-purchase-btn');
+            purchaseBtn.onclick = () => purchaseFromPreview(artifactId);
+            purchaseBtn.disabled = false;
+
+            // Add video event handlers
+            videoPlayer.onerror = function() {
+                alert('❌ Video could not be loaded. Please try again later.');
+                closeVideoPreview();
+            };
+
+            videoPlayer.onloadstart = function() {
+                console.log('🎬 Video loading started...');
+            };
+
+            videoPlayer.oncanplay = function() {
+                console.log('🎬 Video ready to play!');
+            };
+        }
+
+        function closeVideoPreview() {
+            const modal = document.getElementById('video-preview-modal');
+            const videoPlayer = document.getElementById('video-player');
+            
+            // Stop and reset video
+            videoPlayer.pause();
+            videoPlayer.currentTime = 0;
+            
+            // Hide modal
+            modal.classList.remove('visible');
+            currentPreviewArtifact = null;
+        }
+
+        async function purchaseFromPreview(artifactId) {
+            const purchaseBtn = document.getElementById('preview-purchase-btn');
+            
+            // Disable button to prevent double-clicks
+            purchaseBtn.disabled = true;
+            purchaseBtn.textContent = 'Processing...';
+            
+            try {
+                // Use existing purchase function
+                await purchaseArtifact(artifactId);
+                
+                // Close preview modal after successful purchase
+                closeVideoPreview();
+            } catch (error) {
+                console.error('Purchase from preview failed:', error);
+                // Re-enable button on error
+                purchaseBtn.disabled = false;
+                purchaseBtn.textContent = 'Purchase & Download';
+                // Keep modal open so user can try again
+            }
+        }
+
+        // Set up video modal event listeners when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Close button
+            document.getElementById('video-close-btn').addEventListener('click', closeVideoPreview);
+            
+            // Click outside modal to close
+            document.getElementById('video-preview-modal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeVideoPreview();
+                }
+            });
+            
+            // Escape key to close
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    const modal = document.getElementById('video-preview-modal');
+                    if (modal.classList.contains('visible')) {
+                        closeVideoPreview();
+                    }
+                }
+            });
+        });
     </script>
 </body>
 </html>
