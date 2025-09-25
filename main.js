@@ -1679,6 +1679,74 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Type-Aware Preview Resolver API - redirects based on artifact type
+  if (pathname.startsWith('/api/preview/') && req.method === 'GET') {
+    try {
+      const artifactId = pathname.split('/')[3]; // Extract ID from /api/preview/{id}
+      
+      if (!artifactId) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Artifact ID required' }));
+        return;
+      }
+
+      if (pool) {
+        // Get artifact details including new preview fields
+        const artifactQuery = `
+          SELECT id, title, category, preview_type, streaming_url, preview_slug, delivery_url, active 
+          FROM artifacts 
+          WHERE id = $1 AND active = true
+        `;
+        const artifactResult = await pool.query(artifactQuery, [artifactId]);
+        
+        if (artifactResult.rows.length === 0) {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Artifact not found' }));
+          return;
+        }
+
+        const artifact = artifactResult.rows[0];
+        
+        // Route based on preview type
+        if (artifact.preview_type === 'audio' && artifact.streaming_url) {
+          // For music: redirect to Music Now streaming location
+          res.writeHead(302, { 
+            'Location': artifact.streaming_url,
+            'Cache-Control': 'no-cache'
+          });
+          res.end();
+        } else if (artifact.preview_slug) {
+          // For video/other files: redirect to preview page
+          res.writeHead(302, { 
+            'Location': `/preview/${artifact.preview_slug}`,
+            'Cache-Control': 'no-cache'
+          });
+          res.end();
+        } else {
+          // Fallback: return preview info as JSON
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({
+            id: artifact.id,
+            title: artifact.title,
+            category: artifact.category,
+            previewType: artifact.preview_type,
+            streamingUrl: artifact.streaming_url,
+            previewSlug: artifact.preview_slug,
+            message: 'Preview available - use streaming URL or preview slug'
+          }));
+        }
+      } else {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Database unavailable' }));
+      }
+    } catch (error) {
+      console.error('Preview resolver error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Preview service error' }));
+    }
+    return;
+  }
+
   // Get User's Items API (uploaded artifacts + purchased artifacts)
   if (pathname === '/api/artifacts/my-items' && req.method === 'GET') {
     try {
@@ -3537,6 +3605,163 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(500, { 'Content-Type': 'text/plain' });
       res.end(`Object Storage error: ${error.message}`);
       console.log(`❌ Object Storage error for ${filePath}:`, error.message);
+    }
+    return;
+  }
+
+  // Preview Page Handler - serves universal preview page for different file types
+  if (pathname.startsWith('/preview/') && req.method === 'GET') {
+    try {
+      const previewSlug = pathname.split('/')[2]; // Extract slug from /preview/{slug}
+      
+      if (!previewSlug) {
+        res.writeHead(400, { 'Content-Type': 'text/plain' });
+        res.end('Invalid preview slug');
+        return;
+      }
+
+      if (pool) {
+        // Get artifact details by preview slug
+        const artifactQuery = `
+          SELECT id, title, category, file_type, preview_type, delivery_url, streaming_url, 
+                 description, creator_id, kwh_footprint, solar_amount_s, active
+          FROM artifacts 
+          WHERE preview_slug = $1 AND active = true
+        `;
+        const artifactResult = await pool.query(artifactQuery, [previewSlug]);
+        
+        if (artifactResult.rows.length === 0) {
+          res.writeHead(404, { 'Content-Type': 'text/html' });
+          res.end(`
+            <!DOCTYPE html>
+            <html>
+            <head><title>Preview Not Found - TC-S Network</title></head>
+            <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+              <h2>Preview Not Available</h2>
+              <p>The requested preview could not be found.</p>
+              <a href="/marketplace.html">← Back to Marketplace</a>
+            </body>
+            </html>
+          `);
+          return;
+        }
+
+        const artifact = artifactResult.rows[0];
+        
+        // Generate preview page HTML based on file type
+        let previewContent = '';
+        let pageTitle = `Preview: ${artifact.title} - TC-S Network`;
+        
+        if (artifact.preview_type === 'video' && artifact.delivery_url) {
+          previewContent = `
+            <div style="max-width: 800px; margin: 0 auto;">
+              <video controls style="width: 100%; max-height: 400px;" preload="metadata">
+                <source src="${artifact.delivery_url}" type="${artifact.file_type}">
+                Your browser does not support video playback.
+              </video>
+            </div>
+          `;
+        } else if (artifact.preview_type === 'audio' && artifact.delivery_url) {
+          previewContent = `
+            <div style="max-width: 600px; margin: 0 auto;">
+              <audio controls style="width: 100%;" preload="metadata">
+                <source src="${artifact.delivery_url}" type="${artifact.file_type}">
+                Your browser does not support audio playback.
+              </audio>
+            </div>
+          `;
+        } else if (artifact.file_type && artifact.file_type.startsWith('image/') && artifact.delivery_url) {
+          previewContent = `
+            <div style="max-width: 800px; margin: 0 auto;">
+              <img src="${artifact.delivery_url}" alt="${artifact.title}" style="max-width: 100%; height: auto; border-radius: 8px;">
+            </div>
+          `;
+        } else {
+          previewContent = `
+            <div style="max-width: 600px; margin: 0 auto; text-align: center;">
+              <p style="color: #666;">Preview not available for this file type.</p>
+              <a href="/marketplace.html" style="background: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px;">
+                Purchase to Download
+              </a>
+            </div>
+          `;
+        }
+
+        const previewPage = `
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>${pageTitle}</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #1a1a1a; color: white; }
+              .container { max-width: 1000px; margin: 0 auto; }
+              .header { text-align: center; margin-bottom: 30px; }
+              .artifact-info { background: #2a2a2a; padding: 20px; border-radius: 12px; margin-bottom: 20px; }
+              .preview-area { background: #333; padding: 20px; border-radius: 12px; text-align: center; }
+              .actions { text-align: center; margin-top: 20px; }
+              .btn { display: inline-block; padding: 12px 24px; margin: 5px; text-decoration: none; border-radius: 6px; font-weight: bold; }
+              .btn-primary { background: #28a745; color: white; }
+              .btn-secondary { background: #6c757d; color: white; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>${artifact.title}</h1>
+                <p style="color: #888;">Category: ${artifact.category.charAt(0).toUpperCase() + artifact.category.slice(1)}</p>
+              </div>
+              
+              <div class="artifact-info">
+                <p><strong>Description:</strong> ${artifact.description || 'No description available'}</p>
+                <p><strong>Energy Footprint:</strong> ${artifact.kwh_footprint} kWh</p>
+                <p><strong>Price:</strong> ${formatSolar(artifact.solar_amount_s)} Solar</p>
+              </div>
+              
+              <div class="preview-area">
+                ${previewContent}
+              </div>
+              
+              <div class="actions">
+                <a href="/marketplace.html" class="btn btn-primary">Purchase & Download</a>
+                <a href="/marketplace.html" class="btn btn-secondary">← Back to Marketplace</a>
+              </div>
+            </div>
+          </body>
+          </html>
+        `;
+
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end(previewPage);
+      } else {
+        res.writeHead(503, { 'Content-Type': 'text/html' });
+        res.end(`
+          <!DOCTYPE html>
+          <html>
+          <head><title>Service Unavailable - TC-S Network</title></head>
+          <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+            <h2>Service Temporarily Unavailable</h2>
+            <p>Preview service is currently unavailable. Please try again later.</p>
+            <a href="/marketplace.html">← Back to Marketplace</a>
+          </body>
+          </html>
+        `);
+      }
+    } catch (error) {
+      console.error('Preview page error:', error);
+      res.writeHead(500, { 'Content-Type': 'text/html' });
+      res.end(`
+        <!DOCTYPE html>
+        <html>
+        <head><title>Error - TC-S Network</title></head>
+        <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+          <h2>Preview Error</h2>
+          <p>There was an error loading the preview. Please try again.</p>
+          <a href="/marketplace.html">← Back to Marketplace</a>
+        </body>
+        </html>
+      `);
     }
     return;
   }
