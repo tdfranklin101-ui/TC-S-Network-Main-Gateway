@@ -3253,6 +3253,119 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Enhanced file preview endpoint for three-copy workflow
+  if (pathname.startsWith('/api/files/preview/') && req.method === 'GET') {
+    try {
+      const artifactId = pathname.split('/')[4];
+      
+      if (!artifactId) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Artifact ID required' }));
+        return;
+      }
+
+      if (pool) {
+        // Get artifact with enhanced file URLs
+        const artifactQuery = `
+          SELECT id, title, category, preview_file_url, preview_type, 
+                 master_file_url, trade_file_url, delivery_url
+          FROM artifacts 
+          WHERE id = $1 AND active = true
+        `;
+        const artifactResult = await pool.query(artifactQuery, [artifactId]);
+        
+        if (artifactResult.rows.length === 0) {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Artifact not found' }));
+          return;
+        }
+
+        const artifact = artifactResult.rows[0];
+        
+        // Generate secure preview URL using file manager
+        const secureUrl = fileManager.generateSecureUrl('preview', artifactId, 3600); // 1 hour expiry
+        
+        // Provide preview URL (try enhanced first, fallback to legacy)
+        const previewUrl = artifact.preview_file_url || artifact.delivery_url || `/artifacts/${artifactId}`;
+        
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: true,
+          artifactId: artifact.id,
+          artifactTitle: artifact.title,
+          previewUrl: secureUrl.url, // Use secure URL for better access control
+          directUrl: previewUrl, // Fallback direct URL
+          previewType: artifact.preview_type,
+          expires: secureUrl.expires,
+          message: 'Enhanced preview URL generated'
+        }));
+      } else {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Database unavailable' }));
+      }
+    } catch (error) {
+      console.error('Preview URL generation error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Preview generation failed' }));
+    }
+    return;
+  }
+
+  // Secure file access endpoint
+  if (pathname.startsWith('/api/files/secure/') && req.method === 'GET') {
+    try {
+      const pathParts = pathname.split('/');
+      const fileType = pathParts[4]; // 'master', 'preview', 'trade'
+      const artifactId = pathParts[5];
+      
+      const urlParams = new URLSearchParams(url.parse(req.url).query);
+      const token = urlParams.get('token');
+      const expires = parseInt(urlParams.get('expires'));
+      
+      if (!fileType || !artifactId || !token || !expires) {
+        res.writeHead(400, { 'Content-Type': 'text/plain' });
+        res.end('Missing required parameters');
+        return;
+      }
+
+      // Verify secure token
+      const verification = fileManager.verifySecureUrl(fileType, artifactId, token, expires);
+      if (!verification.valid) {
+        res.writeHead(403, { 'Content-Type': 'text/plain' });
+        res.end(`Access denied: ${verification.reason}`);
+        return;
+      }
+
+      // Serve the requested file
+      const filePath = fileManager.getFilePath(fileType, artifactId);
+      if (!fs.existsSync(filePath)) {
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.end('File not found');
+        return;
+      }
+
+      // Stream the file with appropriate headers
+      const stat = fs.statSync(filePath);
+      const fileStream = fs.createReadStream(filePath);
+      
+      res.writeHead(200, {
+        'Content-Type': 'application/octet-stream',
+        'Content-Length': stat.size,
+        'Cache-Control': 'no-cache, must-revalidate',
+        'X-Secure-Access': 'true'
+      });
+      
+      fileStream.pipe(res);
+      console.log(`🔒 Secure file access: ${fileType}/${artifactId}`);
+      
+    } catch (error) {
+      console.error('Secure file access error:', error);
+      res.writeHead(500, { 'Content-Type': 'text/plain' });
+      res.end('Server error');
+    }
+    return;
+  }
+
   // Health check endpoint - Cloud Run compatible
   if (pathname === '/health' || pathname === '/healthz' || pathname === '/_ah/health') {
     const healthData = { 

@@ -2153,36 +2153,14 @@
             };
         }
 
-        // New unified preview function using the type-aware preview system
+        // Enhanced unified preview function using in-page modals  
         async function openPreview(artifactId) {
-            try {
-                // First try to get artifact details to ensure it exists
-                const response = await fetch(`/api/artifacts`);
-                const data = await response.json();
-                
-                if (data.success) {
-                    const artifact = data.artifacts.find(a => a.id === artifactId);
-                    if (artifact && artifact.previewSlug) {
-                        // Use direct preview page URL
-                        window.open(`/preview/${artifact.previewSlug}`, '_blank');
-                    } else {
-                        // Fallback to API preview endpoint
-                        window.open(`/api/preview/${artifactId}`, '_blank');
-                    }
-                } else {
-                    // Fallback to API preview endpoint
-                    window.open(`/api/preview/${artifactId}`, '_blank');
-                }
-            } catch (error) {
-                console.error('Preview error:', error);
-                // Fallback to API preview endpoint
-                window.open(`/api/preview/${artifactId}`, '_blank');
-            }
+            await showEnhancedPreview(artifactId, 'auto');
         }
 
-        // Legacy function - kept for compatibility but updated to use new system
+        // Enhanced modal-based video preview system
         async function previewVideo(artifactId) {
-            openPreview(artifactId);
+            await showEnhancedPreview(artifactId, 'video');
         }
 
         // Legacy function - kept for compatibility but updated to use new system
@@ -2264,17 +2242,124 @@
             };
         }
 
+        // Enhanced unified preview function using in-page modals
+        async function showEnhancedPreview(artifactId, forceType = 'auto') {
+            try {
+                // Get artifact details including enhanced file URLs
+                const response = await fetch(`/api/artifacts`);
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error('Failed to load artifacts data');
+                }
+                
+                const artifact = data.artifacts.find(a => a.id === artifactId);
+                if (!artifact) {
+                    throw new Error('Artifact not found');
+                }
+                
+                // Determine preview type
+                const previewType = forceType === 'auto' ? (artifact.previewType || 'video') : forceType;
+                
+                console.log(`🎬 Opening enhanced preview for: ${artifact.title} (${previewType})`);
+                
+                // Use existing modal system with enhanced file URLs
+                if (previewType === 'audio' || previewType === 'music') {
+                    await enhancedMusicPreview(artifact);
+                } else {
+                    await enhancedVideoPreview(artifact);
+                }
+                
+            } catch (error) {
+                console.error('Enhanced preview error:', error);
+                alert(`❌ Preview failed: ${error.message}`);
+            }
+        }
+
+        // Enhanced video preview using three-copy file system
+        async function enhancedVideoPreview(artifact) {
+            currentPreviewArtifact = artifact;
+            
+            // Update modal content
+            document.getElementById('video-preview-title').textContent = artifact.title;
+            document.getElementById('video-preview-category').textContent = artifact.category.toUpperCase();
+            document.getElementById('video-preview-price').textContent = artifact.formattedPrice;
+            
+            // Show modal
+            const modal = document.getElementById('video-preview-modal');
+            modal.classList.add('visible');
+            
+            const videoPlayer = document.getElementById('video-player');
+            const videoSource = document.getElementById('video-source');
+            
+            // Show loading state
+            videoPlayer.poster = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMzMzIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iI2ZmYWEwMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkVuaGFuY2VkIFByZXZpZXcgTG9hZGluZy4uLjwvdGV4dD48L3N2Zz4=';
+            
+            try {
+                // Request secure preview URL from enhanced file system
+                const previewResponse = await fetch(`/api/files/preview/${artifact.id}`, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (!previewResponse.ok) {
+                    // Fallback to legacy preview system
+                    console.log('🔄 Falling back to legacy preview system');
+                    const fallbackResponse = await fetch(`/api/artifacts/${artifact.id}/preview`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    
+                    if (fallbackResponse.ok) {
+                        const fallbackData = await fallbackResponse.json();
+                        if (fallbackData.success && fallbackData.previewUrl) {
+                            videoSource.src = fallbackData.previewUrl;
+                            videoPlayer.load();
+                            videoPlayer.poster = '';
+                            console.log(`🎬 Legacy preview ready: ${artifact.title}`);
+                            return;
+                        }
+                    }
+                    throw new Error(`Preview request failed: ${previewResponse.status}`);
+                }
+                
+                const previewData = await previewResponse.json();
+                
+                if (previewData.success && previewData.previewUrl) {
+                    videoSource.src = previewData.previewUrl;
+                    videoPlayer.load();
+                    videoPlayer.poster = '';
+                    console.log(`🎬 Enhanced preview ready: ${artifact.title}`);
+                } else {
+                    throw new Error(previewData.error || 'Preview URL generation failed');
+                }
+            } catch (error) {
+                console.error('Video preview error:', error);
+                videoPlayer.poster = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjNjY2Ii8+PHRleHQgeD0iNTAlIiB5PSI0NSUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iI2ZmYWEwMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkVycm9yIGxvYWRpbmcgcHJldmlldzwvdGV4dD48dGV4dCB4PSI1MCUiIHk9IjU1JSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjODg4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+Q2xpY2sgUHVyY2hhc2UgdG8gYWNjZXNzPC90ZXh0Pjwvc3ZnPic;
+                console.log('🛒 Preview unavailable - purchase to access full content');
+            }
+            
+            // Set up purchase button
+            const purchaseBtn = document.getElementById('preview-purchase-btn');
+            purchaseBtn.onclick = () => purchaseFromPreview(artifact.id);
+            purchaseBtn.disabled = false;
+        }
+
         function closeVideoPreview() {
             const modal = document.getElementById('video-preview-modal');
             const videoPlayer = document.getElementById('video-player');
+            const videoSource = document.getElementById('video-source');
             
             // Stop and reset video
             videoPlayer.pause();
             videoPlayer.currentTime = 0;
+            videoSource.src = ''; // Clear source to stop loading
             
             // Hide modal
             modal.classList.remove('visible');
             currentPreviewArtifact = null;
+            
+            console.log('🔄 Enhanced video preview closed');
         }
 
         function closeMusicPreview() {
