@@ -1,4 +1,11 @@
-const sharp = require('sharp');
+// Conditional sharp import for Cloud Run compatibility
+let sharp = null;
+try {
+  sharp = require('sharp');
+} catch (error) {
+  console.warn('⚠️ Sharp disabled in PreviewGenerator:', error.message);
+}
+
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
@@ -63,6 +70,11 @@ class PreviewGenerator {
    * Generate image preview (thumbnail + web-optimized version)
    */
   async generateImagePreview(fileBuffer, previewId, metadata) {
+    if (!sharp) {
+      console.warn('Sharp not available, generating placeholder image preview');
+      return this.generateImagePlaceholder(previewId, metadata);
+    }
+
     const thumbnailBuffer = await sharp(fileBuffer)
       .resize(400, 400, { fit: 'inside', withoutEnlargement: true })
       .jpeg({ quality: 85, progressive: true })
@@ -90,6 +102,41 @@ class PreviewGenerator {
         originalSize: fileBuffer.length,
         thumbnailSize: thumbnailBuffer.length,
         webOptimizedSize: webOptimizedBuffer.length
+      }
+    };
+  }
+
+  /**
+   * Generate image placeholder when Sharp is not available
+   */
+  async generateImagePlaceholder(previewId, metadata) {
+    const placeholderSvg = `
+      <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+        <rect width="100%" height="100%" fill="#2a2a2a"/>
+        <rect x="50" y="50" width="300" height="200" fill="#3a3a3a" rx="10"/>
+        <text x="200" y="140" font-family="Arial" font-size="16" fill="#ffaa00" text-anchor="middle">
+          📷 ${metadata.title || 'Image'}
+        </text>
+        <text x="200" y="165" font-family="Arial" font-size="12" fill="#888" text-anchor="middle">
+          Image preview unavailable
+        </text>
+      </svg>
+    `;
+
+    const thumbnailBuffer = Buffer.from(placeholderSvg);
+    const thumbnailPath = path.join(this.publicDir, `${previewId}_thumb.svg`);
+    fs.writeFileSync(thumbnailPath, thumbnailBuffer);
+
+    return {
+      success: true,
+      previewType: 'image',
+      thumbnailUrl: `/previews/${previewId}_thumb.svg`,
+      previewUrl: `/previews/${previewId}_thumb.svg`,
+      previewSize: thumbnailBuffer.length,
+      previewDuration: null,
+      metadata: {
+        originalSize: 0,
+        placeholder: true
       }
     };
   }

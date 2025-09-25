@@ -10,10 +10,25 @@ neonConfig.poolQueryViaFetch = true;
 const url = require('url');
 const fetch = require('node-fetch');
 const multer = require('multer');
-const sharp = require('sharp');
+// Conditional native modules for Cloud Run compatibility
+let sharp = null;
+let bcrypt = null;
+try {
+  sharp = require('sharp');
+  console.log('✅ Sharp module loaded successfully');
+} catch (error) {
+  console.warn('⚠️ Sharp module disabled (not available in this environment):', error.message);
+}
+
+try {
+  bcrypt = require('bcrypt');
+  console.log('✅ Bcrypt module loaded successfully');
+} catch (error) {
+  console.warn('⚠️ Bcrypt module disabled (not available in this environment):', error.message);
+}
+
 const { fileTypeFromBuffer } = require('file-type');
 const crypto = require('crypto');
-const bcrypt = require('bcrypt');
 const schedule = require('node-schedule');
 // const { ObjectStorageService } = require('./server/objectStorage'); // Disabled for stable Music Now service
 
@@ -857,6 +872,9 @@ const server = http.createServer(async (req, res) => {
             const user = result.rows[0];
             
             // Verify password
+            if (!bcrypt) {
+              throw new Error('Password verification unavailable (bcrypt not loaded)');
+            }
             const passwordMatch = await bcrypt.compare(password, user.password_hash);
             
             if (passwordMatch) {
@@ -937,6 +955,9 @@ const server = http.createServer(async (req, res) => {
       }
 
       // Hash the password
+      if (!bcrypt) {
+        throw new Error('Password hashing unavailable (bcrypt not loaded)');
+      }
       const saltRounds = 12;
       const passwordHash = await bcrypt.hash(password, saltRounds);
 
@@ -1101,6 +1122,9 @@ const server = http.createServer(async (req, res) => {
       }
 
       // Hash the password
+      if (!bcrypt) {
+        throw new Error('Password hashing unavailable (bcrypt not loaded)');
+      }
       const saltRounds = 12;
       const passwordHash = await bcrypt.hash(password, saltRounds);
 
