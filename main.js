@@ -1492,7 +1492,8 @@ const server = http.createServer(async (req, res) => {
       if (pool) {
         const artifactsQuery = `
           SELECT id, title, description, category, kwh_footprint, solar_amount_s, 
-                 is_bonus, cover_art_url, delivery_mode, creator_id
+                 is_bonus, cover_art_url, delivery_mode, creator_id, 
+                 streaming_url, preview_type, preview_slug
           FROM artifacts 
           WHERE active = true 
           ORDER BY is_bonus ASC, solar_amount_s ASC, title ASC
@@ -1511,7 +1512,10 @@ const server = http.createServer(async (req, res) => {
           isBonus: artifact.is_bonus,
           coverArt: artifact.cover_art_url,
           deliveryMode: artifact.delivery_mode || 'download',
-          creatorId: artifact.creator_id
+          creatorId: artifact.creator_id,
+          streamingUrl: artifact.streaming_url,
+          previewType: artifact.preview_type,
+          previewSlug: artifact.preview_slug
         }));
 
         res.writeHead(200, { 'Content-Type': 'application/json' });

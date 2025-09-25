@@ -682,6 +682,22 @@
             transform: translateY(-1px);
         }
 
+        /* Music streaming link styling */
+        .preview-btn.music-link {
+            background: linear-gradient(135deg, #1db954, #1ed760);
+            color: white;
+            border: none;
+            text-decoration: none;
+            display: inline-block;
+            font-weight: bold;
+        }
+
+        .preview-btn.music-link:hover {
+            background: linear-gradient(135deg, #1aa34a, #1db954);
+            color: white;
+            text-decoration: none;
+        }
+
         @media (max-width: 768px) {
             .video-modal-content {
                 max-width: 95vw;
@@ -1381,14 +1397,19 @@
                     <div class="artifact-title">${artifact.title}</div>
                     <div class="artifact-kwh">${artifact.kwhFootprint} kWh footprint</div>
                     <div class="artifact-price">${artifact.formattedPrice}</div>
-                    ${artifact.category === 'video' ? 
-                        `<button class="preview-btn" onclick="event.stopPropagation(); previewVideo('${artifact.id}')">
+                    ${artifact.previewType === 'audio' && artifact.streamingUrl ? 
+                        `<a href="${artifact.streamingUrl}" target="_blank" class="preview-btn music-link" onclick="event.stopPropagation();">
+                            🎵 Listen on Music Now
+                        </a>` : ''
+                    }
+                    ${artifact.previewType === 'video' ? 
+                        `<button class="preview-btn" onclick="event.stopPropagation(); openPreview('${artifact.id}')">
                             🎬 Preview Video
                         </button>` : ''
                     }
-                    ${artifact.category === 'music' ? 
-                        `<button class="preview-btn" onclick="event.stopPropagation(); previewMusic('${artifact.id}')">
-                            🎵 Preview Track
+                    ${artifact.previewType && !['audio', 'video'].includes(artifact.previewType) ? 
+                        `<button class="preview-btn" onclick="event.stopPropagation(); openPreview('${artifact.id}')">
+                            👁️ Preview File
                         </button>` : ''
                     }
                     <button class="purchase-btn" onclick="event.stopPropagation(); purchaseArtifact('${artifact.id}')">
@@ -1552,8 +1573,8 @@
                 
                 actionButtons = `
                     <button class="artifact-action-btn download" onclick="downloadArtifact('${artifact.id}')">💾 Download File</button>
-                    ${isMusic ? `<button class="artifact-action-btn" onclick="previewMusic('${artifact.id}')">🎵 Preview Audio</button>` : ''}
-                    ${isVideo ? `<button class="artifact-action-btn" onclick="previewVideo('${artifact.id}')">🎬 Preview Video</button>` : ''}
+                    ${isMusic ? `<button class="artifact-action-btn" onclick="openPreview('${artifact.id}')">🎵 Listen on Music Now</button>` : ''}
+                    ${isVideo ? `<button class="artifact-action-btn" onclick="openPreview('${artifact.id}')">🎬 Preview Video</button>` : ''}
                     ${isImage ? `<button class="artifact-action-btn" onclick="previewArtifact('${artifact.id}', 'image')">🖼️ View Image</button>` : ''}
                     ${isText ? `<button class="artifact-action-btn" onclick="previewArtifact('${artifact.id}', 'text')">📄 View Text</button>` : ''}
                     <button class="artifact-action-btn" onclick="copyArtifactContent('${artifact.id}')">📋 Copy Content</button>
@@ -2132,6 +2153,23 @@
             };
         }
 
+        // New unified preview function using the type-aware preview system
+        async function openPreview(artifactId) {
+            try {
+                // Use the new /api/preview/:id endpoint which routes based on type
+                window.open(`/api/preview/${artifactId}`, '_blank');
+            } catch (error) {
+                console.error('Preview error:', error);
+                alert('Unable to open preview. Please try again.');
+            }
+        }
+
+        // Legacy function - kept for compatibility but updated to use new system
+        async function previewVideo(artifactId) {
+            openPreview(artifactId);
+        }
+
+        // Legacy function - kept for compatibility but updated to use new system
         async function previewMusic(artifactId) {
             // Find the artifact data
             const artifact = allArtifacts.find(a => a.id === artifactId) || 
