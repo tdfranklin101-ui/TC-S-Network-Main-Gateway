@@ -1519,7 +1519,7 @@ const server = http.createServer(async (req, res) => {
           success: true,
           totalArtifacts: artifacts.length,
           artifacts: artifacts,
-          categories: ['music', 'art', 'document'],
+          categories: ['music', 'video', 'art', 'document'],
           priceRange: {
             min: Math.min(...artifacts.map(a => a.solarPrice)),
             max: Math.max(...artifacts.map(a => a.solarPrice))
