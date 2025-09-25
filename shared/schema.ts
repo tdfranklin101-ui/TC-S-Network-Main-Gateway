@@ -378,17 +378,29 @@ export const artifacts = pgTable("artifacts", {
   raysAmount: integer("rays_amount").default(0),
   spotifyComparisonPrice: text("spotify_comparison_price"),
   deliveryMode: text("delivery_mode").notNull(),
-  deliveryUrl: text("delivery_url"),
+  deliveryUrl: text("delivery_url"), // Legacy field - kept for compatibility
   isBonus: boolean("is_bonus").default(false),
   creatorId: text("creator_id").notNull(),
   coverArtUrl: text("cover_art_url"),
   active: boolean("active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
-  // New fields for preview system
+  // Enhanced three-copy file management system
+  masterFileUrl: text("master_file_url"), // Original uploaded file (secure private storage)
+  previewFileUrl: text("preview_file_url"), // Optimized preview version (thumbnails, clips, samples)
+  tradeFileUrl: text("trade_file_url"), // File delivered to purchasers
+  masterFileSize: integer("master_file_size"), // File size in bytes
+  previewFileSize: integer("preview_file_size"), // Preview file size
+  tradeFileSize: integer("trade_file_size"), // Trade file size
+  fileDuration: integer("file_duration"), // Duration in seconds (for video/audio)
+  previewDuration: integer("preview_duration"), // Preview clip duration
+  // Preview system fields
   streamingUrl: text("streaming_url"), // Music Now streaming location
   previewType: text("preview_type"), // 'audio', 'video', 'image', 'pdf', 'text', 'other'
   previewSlug: text("preview_slug"), // Slug for preview page
   searchTags: text("search_tags").array(), // Tags for search indexing
+  // Processing status
+  processingStatus: text("processing_status").default("pending"), // 'pending', 'processing', 'completed', 'failed'
+  processingError: text("processing_error"), // Error message if processing fails
 });
 
 // Insert types for additional tables
