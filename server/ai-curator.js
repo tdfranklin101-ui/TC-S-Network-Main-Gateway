@@ -47,7 +47,7 @@ class AICurator {
         tags: contentAnalysis.tags,
         aiGenerated: true,
         previewUrl: null, // No preview file, just descriptions
-        thumbnailUrl: `/api/generate-icon/${contentAnalysis.category}` // Generate category icon
+        thumbnailUrl: this.getCategoryIcon(contentAnalysis.category) // Get category icon
       };
       
     } catch (error) {
@@ -92,11 +92,15 @@ Focus on: What problem it solves, who would use it, and why it's valuable.
         model: "gpt-4o-mini",
         messages: [{ role: "user", content: prompt }],
         temperature: 0.7,
-        max_tokens: 500
+        max_tokens: 500,
+        response_format: { type: "json_object" }
       });
 
-      return JSON.parse(response.choices[0].message.content);
+      const content = response.choices[0].message.content;
+      const cleanContent = content.replace(/```json\n?|```\n?/g, '').trim();
+      return JSON.parse(cleanContent);
     } catch (error) {
+      console.warn(`AI analysis failed for code content: ${error.message}`);
       return this.getFallbackAnalysis(metadata, 'code');
     }
   }
@@ -131,11 +135,15 @@ Emphasize practical value and AI innovation.
         model: "gpt-4o-mini", 
         messages: [{ role: "user", content: prompt }],
         temperature: 0.7,
-        max_tokens: 400
+        max_tokens: 400,
+        response_format: { type: "json_object" }
       });
 
-      return JSON.parse(response.choices[0].message.content);
+      const content = response.choices[0].message.content;
+      const cleanContent = content.replace(/```json\n?|```\n?/g, '').trim();
+      return JSON.parse(cleanContent);
     } catch (error) {
+      console.warn(`AI analysis failed for AI app: ${error.message}`);
       return this.getFallbackAnalysis(metadata, 'ai-app');
     }
   }
@@ -165,11 +173,15 @@ Generate JSON:
         model: "gpt-4o-mini",
         messages: [{ role: "user", content: prompt }],
         temperature: 0.6,
-        max_tokens: 300
+        max_tokens: 300,
+        response_format: { type: "json_object" }
       });
 
-      return JSON.parse(response.choices[0].message.content);
+      const content = response.choices[0].message.content;
+      const cleanContent = content.replace(/```json\n?|```\n?/g, '').trim();
+      return JSON.parse(cleanContent);
     } catch (error) {
+      console.warn(`AI analysis failed for PDF: ${error.message}`);
       return this.getFallbackAnalysis(metadata, 'document');
     }
   }
@@ -200,11 +212,15 @@ Generate appealing marketplace copy in JSON:
         model: "gpt-4o-mini",
         messages: [{ role: "user", content: prompt }],
         temperature: 0.6,
-        max_tokens: 300
+        max_tokens: 300,
+        response_format: { type: "json_object" }
       });
 
-      return JSON.parse(response.choices[0].message.content);
+      const content = response.choices[0].message.content;
+      const cleanContent = content.replace(/```json\n?|```\n?/g, '').trim();
+      return JSON.parse(cleanContent);
     } catch (error) {
+      console.warn(`AI analysis failed for generic file: ${error.message}`);
       return this.getFallbackAnalysis(metadata, 'file');
     }
   }
@@ -227,6 +243,30 @@ Generate appealing marketplace copy in JSON:
       'media-tools',   // Audio/video processing
       'data-tools'     // Data processing applications
     ];
+  }
+
+  /**
+   * Get category icon URL (no API call needed)
+   */
+  getCategoryIcon(category) {
+    const iconMap = {
+      'ai-tools': '🤖',
+      'ai-automation': '⚙️', 
+      'ai-creativity': '🎨',
+      'ai-analysis': '📊',
+      'ai-assistants': '💬',
+      'productivity': '📈',
+      'utilities': '🔧',
+      'games': '🎮',
+      'documents': '📄',
+      'code-tools': '💻',
+      'media-tools': '🎥',
+      'data-tools': '📁',
+      'uncategorized': '📦'
+    };
+    
+    const icon = iconMap[category] || iconMap['uncategorized'];
+    return `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64"><text x="50%" y="50%" font-size="32" text-anchor="middle" dominant-baseline="middle">${icon}</text></svg>`;
   }
 
   /**
