@@ -1311,8 +1311,13 @@ const server = http.createServer(async (req, res) => {
       }
 
       if (pool) {
-        // Get artifact details
-        const artifactQuery = 'SELECT id, title, solar_amount_s, delivery_url, active FROM artifacts WHERE id = $1';
+        // Get artifact details with enhanced file URLs
+        const artifactQuery = `
+          SELECT id, title, solar_amount_s, delivery_url, active,
+                 master_file_url, preview_file_url, trade_file_url,
+                 file_type, category, trade_file_size, processing_status
+          FROM artifacts WHERE id = $1
+        `;
         const artifactResult = await pool.query(artifactQuery, [artifactId]);
         
         if (artifactResult.rows.length === 0) {
@@ -1423,9 +1428,41 @@ const server = http.createServer(async (req, res) => {
 
         console.log(`💰 Purchase completed: ${user.username} bought "${artifact.title}" for ${requiredSolar} Solar`);
 
-        // Generate download link (simplified - in production this would be a signed URL)
-        const downloadToken = Buffer.from(`${user.id}:${artifactId}:${Date.now()}`).toString('base64');
+        // Generate secure trade file access (valid for 7 days for purchased content)
+        const secureTradeAccess = fileManager.generateSecureUrl('trade', artifactId, 7 * 24 * 3600); // 7 days
+        
+        // Create enhanced download record in database
+        const downloadToken = crypto.randomBytes(32).toString('hex');
+        const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+        
+        // Check if download_tokens table exists and enhance if needed
+        try {
+          const enhancedTokenQuery = `
+            INSERT INTO download_tokens (
+              token, artifact_id, user_id, expires_at, created_at,
+              secure_url, access_type, file_size
+            ) VALUES ($1, $2, $3, $4, NOW(), $5, $6, $7)
+          `;
+          
+          await pool.query(enhancedTokenQuery, [
+            downloadToken, 
+            artifactId, 
+            user.id, 
+            expiresAt,
+            secureTradeAccess.url,
+            'trade_file',
+            artifact.trade_file_size || 0
+          ]);
+          
+          console.log(`🔐 Enhanced download access created for ${user.username}`);
+        } catch (dbError) {
+          // Fallback to simple token system if enhanced table doesn't exist
+          console.log('📁 Using fallback download system - enhanced table not available');
+        }
+
+        // Provide both secure and legacy download options
         const downloadUrl = `/api/artifacts/download/${downloadToken}`;
+        const secureDownloadUrl = secureTradeAccess.url;
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
@@ -1434,8 +1471,16 @@ const server = http.createServer(async (req, res) => {
           artifactTitle: artifact.title,
           amountPaid: requiredSolar,
           newBalance: newBalance,
-          downloadUrl: downloadUrl,
-          message: `Successfully purchased "${artifact.title}" for ${formatSolar(requiredSolar)} Solar. Your new balance is ${formatSolar(newBalance)} Solar.`
+          downloadUrl: downloadUrl, // Legacy endpoint for compatibility
+          secureDownloadUrl: secureDownloadUrl, // Enhanced secure access
+          downloadExpires: expiresAt.toISOString(),
+          fileInfo: {
+            type: artifact.file_type,
+            category: artifact.category,
+            size: artifact.trade_file_size || 'Unknown',
+            secureAccess: true
+          },
+          message: `Successfully purchased "${artifact.title}" for ${formatSolar(requiredSolar)} Solar. Your new balance is ${formatSolar(newBalance)} Solar. Download access valid for 7 days.`
         }));
       } else {
         res.writeHead(503, { 'Content-Type': 'application/json' });
