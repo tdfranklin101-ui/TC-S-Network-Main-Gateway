@@ -94,12 +94,17 @@ class ArtifactFileManager {
     
     fs.writeFileSync(masterFilePath, fileBuffer);
     
+    // SECURITY: Never expose direct storage paths!
+    // Always use secure URL generation
+    const secureUrl = this.generateSecureUrl('master', artifactId, 86400); // 24 hour expiry for master files
+    
     return {
-      url: `/storage/master/${masterFileName}`,
-      path: masterFilePath,
+      url: secureUrl.url, // Secure tokenized URL
+      internalPath: masterFilePath, // Internal use only - never expose!
       size: fileBuffer.length,
       originalName: fileInfo.originalname,
-      mimeType: fileInfo.mimetype
+      mimeType: fileInfo.mimetype,
+      secureAccess: true
     };
   }
 
@@ -150,12 +155,17 @@ class ArtifactFileManager {
     
     fs.writeFileSync(tradeFilePath, tradeBuffer);
     
+    // SECURITY: Never expose direct storage paths!
+    // Trade files get longer expiry since they're purchased content
+    const secureUrl = this.generateSecureUrl('trade', artifactId, 7 * 86400); // 7 days for purchased content
+    
     return {
-      url: `/storage/trade/${tradeFileName}`,
-      path: tradeFilePath,
+      url: secureUrl.url, // Secure tokenized URL  
+      internalPath: tradeFilePath, // Internal use only - never expose!
       size: tradeBuffer.length,
       mimeType: fileInfo.mimetype,
-      originalName: fileInfo.originalname
+      originalName: fileInfo.originalname,
+      secureAccess: true
     };
   }
 
@@ -219,18 +229,37 @@ class ArtifactFileManager {
   }
 
   /**
-   * Get file path for secure access
+   * Get internal file path for secure access (INTERNAL USE ONLY)
+   * WARNING: These paths must NEVER be exposed to clients!
    */
   getFilePath(fileType, artifactId, fileExtension = '') {
-    const fileName = `${artifactId}_${fileType}${fileExtension}`;
+    // Try to find file with any extension if none provided
+    if (!fileExtension) {
+      const baseDir = this.getBaseDirectory(fileType);
+      const files = fs.readdirSync(baseDir).filter(f => f.startsWith(`${artifactId}_${fileType}`));
+      if (files.length > 0) {
+        return path.join(baseDir, files[0]);
+      }
+      // Fallback to generic extension
+      fileExtension = '.bin';
+    }
     
+    const fileName = `${artifactId}_${fileType}${fileExtension}`;
+    const baseDir = this.getBaseDirectory(fileType);
+    return path.join(baseDir, fileName);
+  }
+  
+  /**
+   * Get base directory for file type
+   */
+  getBaseDirectory(fileType) {
     switch (fileType) {
       case 'master':
-        return path.join(this.masterStoragePath, fileName);
+        return this.masterStoragePath;
       case 'trade':
-        return path.join(this.tradeStoragePath, fileName);
+        return this.tradeStoragePath;
       case 'preview':
-        return path.join(this.previewStoragePath, fileName);
+        return this.previewStoragePath;
       default:
         throw new Error(`Invalid file type: ${fileType}`);
     }

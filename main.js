@@ -22,6 +22,7 @@ const { initializeSeedRotation, getSeedRotator } = require('./server/seed-rotati
 
 // Import enhanced file management system
 const ArtifactFileManager = require('./server/artifact-file-manager');
+const AICurator = require('./server/ai-curator');
 
 // Import market data and SEO services
 const MarketDataService = require('./server/market-data-service');
@@ -43,6 +44,9 @@ const fileManager = new ArtifactFileManager({
   previewStoragePath: path.join(__dirname, 'public/previews'),
   tradeStoragePath: path.join(__dirname, 'storage/trade')
 });
+
+// Initialize AI curation system for smart descriptions
+const aiCurator = new AICurator();
 
 // Automatic slug generation for uploads
 function generateSlug(title, filename) {
@@ -595,6 +599,34 @@ const server = http.createServer(async (req, res) => {
 
         const artifactId = fileProcessingResult.artifactId;
         console.log(`✅ Three-copy processing complete for: ${artifactId}`);
+        
+        // AI Curation: Generate smart descriptions for non-video content
+        let aiCuration = null;
+        if (!actualMime.startsWith('video/')) {
+          try {
+            console.log(`🤖 AI curating content: ${title}`);
+            aiCuration = await aiCurator.generateSmartDescription(
+              fileBuffer,
+              actualMime,
+              { title, description, category }
+            );
+            
+            if (aiCuration.success) {
+              console.log(`✨ AI curation complete: ${aiCuration.category} - ${aiCuration.suggestedPrice} Solar`);
+              
+              // Override category and description with AI suggestions if better
+              if (aiCuration.category && aiCuration.category !== 'uncategorized') {
+                category = aiCuration.category;
+              }
+              if (aiCuration.description && (!description || description.length < 50)) {
+                description = aiCuration.description;
+              }
+            }
+          } catch (error) {
+            console.warn(`⚠️ AI curation failed: ${error.message}`);
+            // Continue without AI curation
+          }
+        }
 
         if (pool) {
           // Generate unique slug automatically
@@ -609,7 +641,7 @@ const server = http.createServer(async (req, res) => {
             finalSlug = `${baseSlug}-${slugCounter++}`;
           }
           
-          // Insert artifact into database with enhanced three-copy schema
+          // Insert artifact into database with enhanced three-copy schema + AI curation
           const insertQuery = `
             INSERT INTO artifacts (
               id, slug, title, description, category, file_type, 
@@ -618,12 +650,22 @@ const server = http.createServer(async (req, res) => {
               master_file_url, preview_file_url, trade_file_url,
               master_file_size, preview_file_size, trade_file_size,
               file_duration, preview_duration, preview_type, preview_slug,
-              processing_status, created_at
+              processing_status, search_tags, created_at
             ) VALUES (
               $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
-              $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, NOW()
+              $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, NOW()
             ) RETURNING id, slug, solar_amount_s
           `;
+          
+          // Use AI-suggested pricing if available and reasonable
+          let finalSolarAmount = analysis.solarAmount;
+          if (aiCuration && aiCuration.success && aiCuration.suggestedPrice) {
+            const aiSuggested = parseFloat(aiCuration.suggestedPrice);
+            if (aiSuggested > 0 && aiSuggested <= 100) {
+              finalSolarAmount = aiSuggested;
+              console.log(`💡 Using AI-suggested pricing: ${aiSuggested} Solar (was ${analysis.solarAmount})`);
+            }
+          }
           
           const result = await pool.query(insertQuery, [
             artifactId, // Use the artifactId from file processing
@@ -633,7 +675,7 @@ const server = http.createServer(async (req, res) => {
             category,
             actualMime,
             analysis.estimatedKwh,
-            analysis.solarAmount,
+            finalSolarAmount, // Use AI-suggested pricing if available
             0, // rays_amount (default to 0)
             'download',
             fileProcessingResult.tradeFile.url, // Legacy delivery_url points to trade file
@@ -650,7 +692,8 @@ const server = http.createServer(async (req, res) => {
             fileProcessingResult.previewFile.previewDuration || null,
             fileProcessingResult.previewFile.previewType,
             `${finalSlug}-preview`, // Generate preview slug
-            fileProcessingResult.processingStatus
+            fileProcessingResult.processingStatus,
+            aiCuration && aiCuration.success ? aiCuration.tags : [] // AI-generated tags
           ]);
 
           const dbArtifactId = result.rows[0].id;
