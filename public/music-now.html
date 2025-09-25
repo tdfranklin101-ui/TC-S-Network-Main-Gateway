@@ -210,6 +210,15 @@
           </a>
         </div>
         
+        <!-- Foundation Market Link -->
+        <div style="background: linear-gradient(135deg, #ff8c00, #ff6600); border-radius: 15px; padding: 20px; margin: 0 0 20px 0; text-align: center; border: 3px solid #ff8c00; box-shadow: 0 6px 20px rgba(255,140,0,0.4);">
+          <h2 style="color: white; margin: 0 0 10px 0; font-size: 1.5rem; font-weight: bold;" title="Complete marketplace for digital artifacts">🏪 Foundation Market</h2>
+          <p style="color: white; margin: 0 0 15px 0; font-size: 1rem; opacity: 0.95;">Browse, preview, and purchase all digital artifacts with Solar tokens</p>
+          <a href="/market.html" data-testid="button-foundation-market" style="display: inline-block; background: linear-gradient(135deg, #ffffff, #f0f0f0); color: #ff8c00; padding: 12px 25px; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 1.1rem; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(255,255,255,0.4);">
+            🚀 Visit Foundation Market
+          </a>
+        </div>
+        
         <h1>🎵 MONAZITE MUSIC NOW COLLECTION 🎵</h1>
         <p style="text-align: center; font-size: 18px; margin-bottom: 20px;">
             Complete Catalog - 19 Tracks + 1 Bonus Market Track
@@ -290,7 +299,7 @@
                     </div>
                     <button class="track-button" data-testid="track-button-bonus" onclick="playTrack(19)" style="background: linear-gradient(135deg, #ffd700, #ffb300); color: #1a1a2e;">❄️ Snowmancer One (Market Exclusive)</button>
                     <div style="text-align: center; margin-top: 8px; font-size: 14px; color: #ffd700;">
-                        Available only through Solar trading at solar-artifacts-tdfranklin101.replit.app
+                        Available only through Solar trading at Foundation Market
                     </div>
                 </div>
             </div>
@@ -443,7 +452,7 @@
         <div class="modal-content">
             <h2>💾 Download Available</h2>
             <p>Streaming is completely FREE with unlimited replays!</p>
-            <p>For offline downloads, register for Solar tokens at solar-artifacts-tdfranklin101.replit.app:</p>
+            <p>For offline downloads, register for Solar tokens at Foundation Market:</p>
             <div style="background: rgba(255,140,0,0.1); padding: 15px; border-radius: 10px; margin: 20px 0; border: 2px solid #ff8c00;">
                 <p style="margin: 0; color: #ff8c00; font-weight: bold;">💾 Download Cost: S0.1000 Solar</p>
                 <p style="margin: 5px 0 0 0; font-size: 14px;">Streaming is FREE - Download requires Solar registration</p>
@@ -455,7 +464,7 @@
             </div>
             <div class="modal-buttons">
                 <button class="modal-button wallet-button" data-testid="button-trade-solar" onclick="goToWallet()">🚀 Trade Solar at wallet.market</button>
-                <button class="modal-button" data-testid="button-get-solar-modal" onclick="window.open('https://solar-artifacts-tdfranklin101.replit.app', '_blank'); closeModal();" style="background: linear-gradient(135deg, #28a745, #20c997); color: white; border: none; padding: 12px 20px; border-radius: 8px; font-size: 1em; font-weight: bold; cursor: pointer; transition: all 0.3s; margin: 5px;">⚡ Get Free Solar</button>
+                <button class="modal-button" data-testid="button-get-solar-modal" onclick="window.open('/market.html', '_blank'); closeModal();" style="background: linear-gradient(135deg, #28a745, #20c997); color: white; border: none; padding: 12px 20px; border-radius: 8px; font-size: 1em; font-weight: bold; cursor: pointer; transition: all 0.3s; margin: 5px;">🚀 Get Solar Now - Free Registration</button>
                 <button class="modal-button close-button" data-testid="button-close-modal" onclick="closeModal()">Cancel</button>
             </div>
         </div>
@@ -592,7 +601,7 @@
         }
         
         function goToWallet() {
-            window.open('https://solar-artifacts-tdfranklin101.replit.app', '_blank');
+            window.open('/market.html', '_blank');
             closeModal();
         }
         
