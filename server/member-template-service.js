@@ -74,6 +74,7 @@ class MemberTemplateService {
       console.log(`📋 Initialized ${this.templates.size} member display templates`);
     } catch (error) {
       console.error('⚠️ Template initialization error:', error.message);
+      console.error('📋 Full error details:', error);
       console.log('📋 Continuing with partial template initialization');
     }
   }
