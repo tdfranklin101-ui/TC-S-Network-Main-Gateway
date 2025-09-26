@@ -1,0 +1,17 @@
+run = "node main.js"
+entrypoint = "main.js"
+modules = ["nodejs-20", "postgresql-16"]
+
+[nix]
+channel = "stable-22_11"
+
+[deployment]
+run = "node main.js"
+deploymentTarget = "cloudrun"
+
+[[ports]]
+localPort = 3001
+externalPort = 80
+
+[env]
+NODE_ENV = "production"
