@@ -182,10 +182,38 @@ class MarketplaceApp {
       }
     });
     
-    // Process purchase
-    router.post('/purchase', async (req, res) => {
+    // Process purchase (protected route)
+    router.post('/purchase', this.authBridge.requireAuth(), async (req, res) => {
       try {
-        const result = await this.ledger.processPurchase(req.body);
+        // Extract authenticated user ID
+        const buyerUserId = req.user.id;
+        const { artifactId, sellerId } = req.body;
+        
+        // Validate input
+        if (!artifactId || !sellerId) {
+          return res.status(400).json({ error: 'artifactId and sellerId are required' });
+        }
+        
+        // Get artifact details to verify price and seller
+        const artifact = await this.db.getArtifactById(artifactId);
+        if (!artifact) {
+          return res.status(404).json({ error: 'Artifact not found' });
+        }
+        
+        // Verify seller matches artifact owner
+        if (artifact.creatorId !== sellerId) {
+          return res.status(400).json({ error: 'Invalid seller for this artifact' });
+        }
+        
+        // Process purchase with server-verified data
+        const purchaseData = {
+          userId: buyerUserId, // Use authenticated user ID, not from request body
+          artifactId: artifactId,
+          price: artifact.price, // Use server-verified price
+          sellerId: sellerId
+        };
+        
+        const result = await this.ledger.processPurchase(purchaseData);
         res.json(result);
       } catch (error) {
         res.status(500).json({ error: error.message });

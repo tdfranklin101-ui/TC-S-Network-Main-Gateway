@@ -27,13 +27,13 @@ class LedgerService {
       if (!user) {
         // User doesn't exist in marketplace DB, sync from Foundation
         const foundationBalance = await this.syncBalanceFromFoundation(userId);
-        return foundationBalance;
+        return foundationBalance; // syncBalanceFromFoundation now returns string
       }
       
       return new Decimal(user.solarBalance || '0').toString();
     } catch (error) {
       console.error('Error getting user balance:', error);
-      return 0;
+      return '0'; // Return string zero instead of numeric zero
     }
   }
 
@@ -90,17 +90,23 @@ class LedgerService {
   async executeTransaction(transaction) {
     const { userId, sellerId, amount, id } = transaction;
     
-    // Deduct from buyer
-    const buyerBalance = await this.getUserBalance(userId);
-    const newBuyerBalance = buyerBalance - amount;
-    await this.db.updateUserBalance(userId, newBuyerBalance);
-
-    // Add to seller (minus marketplace fee)
-    const marketplaceFee = amount * 0.15; // 15% marketplace fee (85% to creator)
-    const sellerAmount = amount - marketplaceFee;
-    const sellerBalance = await this.getUserBalance(sellerId);
-    const newSellerBalance = sellerBalance + sellerAmount;
-    await this.db.updateUserBalance(sellerId, newSellerBalance);
+    // Convert all values to Decimal for precise arithmetic
+    const buyerBalance = new Decimal(await this.getUserBalance(userId));
+    const transactionAmount = new Decimal(amount);
+    const marketplaceFeeRate = new Decimal('0.15'); // 15% marketplace fee
+    
+    // Calculate precise values
+    const marketplaceFee = transactionAmount.mul(marketplaceFeeRate);
+    const sellerAmount = transactionAmount.minus(marketplaceFee);
+    const newBuyerBalance = buyerBalance.minus(transactionAmount);
+    
+    // Get seller balance and calculate new balance
+    const sellerBalance = new Decimal(await this.getUserBalance(sellerId));
+    const newSellerBalance = sellerBalance.plus(sellerAmount);
+    
+    // Update balances using string values
+    await this.db.updateUserBalance(userId, newBuyerBalance.toString());
+    await this.db.updateUserBalance(sellerId, newSellerBalance.toString());
 
     // Record completed transaction in database
     const transactionData = {
@@ -108,11 +114,11 @@ class LedgerService {
       type: 'purchase',
       fromUserId: userId,
       toUserId: sellerId,
-      amount: amount.toString(),
+      amount: transactionAmount.toString(),
       status: 'completed',
       metadata: JSON.stringify({
-        marketplaceFee: marketplaceFee,
-        sellerAmount: sellerAmount,
+        marketplaceFee: marketplaceFee.toString(),
+        sellerAmount: sellerAmount.toString(),
         artifactId: transaction.artifactId
       })
     };
@@ -121,10 +127,10 @@ class LedgerService {
     this.pendingTransactions.delete(id);
 
     // Sync balance changes back to Foundation app
-    await this.syncBalanceToFoundation(userId, newBuyerBalance);
-    await this.syncBalanceToFoundation(sellerId, newSellerBalance);
+    await this.syncBalanceToFoundation(userId, newBuyerBalance.toString());
+    await this.syncBalanceToFoundation(sellerId, newSellerBalance.toString());
 
-    console.log(`✅ Transaction completed: ${amount} Solar - Buyer: ${userId}, Seller: ${sellerId}`);
+    console.log(`✅ Transaction completed: ${transactionAmount} Solar - Buyer: ${userId}, Seller: ${sellerId}`);
   }
 
   /**
@@ -167,11 +173,11 @@ class LedgerService {
   async syncBalanceFromFoundation(userId) {
     try {
       // This would make an API call to the Foundation app
-      // For now, return default balance
-      return 10.0000; // Default starting balance
+      // For now, return default balance as string
+      return '10.0000'; // Default starting balance
     } catch (error) {
       console.error('Failed to sync balance from Foundation:', error);
-      return 0;
+      return '0'; // Return string zero
     }
   }
 
