@@ -2577,23 +2577,10 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Marketplace content API redirected to standalone marketplace app
   if (pathname === '/api/member-content/marketplace' && req.method === 'GET') {
-    try {
-      const url = new URL(req.url, `http://${req.headers.host}`);
-      const category = url.searchParams.get('category');
-      const priceRange = url.searchParams.get('priceRange');
-      const searchTerm = url.searchParams.get('search');
-
-      const filters = { category, priceRange, searchTerm };
-      const result = memberContentService.getMarketplaceContent(filters);
-
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(result));
-    } catch (error) {
-      console.error('Get marketplace content error:', error);
-      res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ success: false, error: 'Failed to get marketplace content' }));
-    }
+    res.writeHead(301, { 'Location': 'https://tc-s-marketplace.replit.app/api/artifacts/available' });
+    res.end();
     return;
   }
 
@@ -2676,134 +2663,13 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // NEW: Purchase Monazite tracks/bundles with Solar tokens
+  // Purchase API redirected to standalone marketplace app
   if (pathname === '/api/marketplace/purchase' && req.method === 'POST') {
-    try {
-      const body = await parseBody(req);
-      const { artifactId, bundleId, buyerEmail, solarAmount } = body;
-
-      if (!buyerEmail || (!artifactId && !bundleId) || !solarAmount) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ 
-          success: false, 
-          error: 'Missing required fields: buyerEmail, artifactId/bundleId, solarAmount' 
-        }));
-        return;
-      }
-
-      // Load Monazite collection
-      const fs = require('fs');
-      const manifestPath = 'public/models/monazite-collection.json';
-      const manifestData = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-
-      let item = null;
-      let itemType = '';
-
-      if (artifactId) {
-        item = manifestData.artifacts.find(a => a.id === artifactId && a.isActive);
-        itemType = 'track';
-      } else if (bundleId) {
-        item = manifestData.bundles.find(b => b.id === bundleId && b.isActive);
-        itemType = 'bundle';
-      }
-
-      if (!item) {
-        res.writeHead(404, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ 
-          success: false, 
-          error: 'Item not found or not available for purchase' 
-        }));
-        return;
-      }
-
-      // Verify price
-      if (Math.abs(solarAmount - item.priceSolar) > 0.0001) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ 
-          success: false, 
-          error: 'Price mismatch',
-          expected: item.priceSolar,
-          provided: solarAmount
-        }));
-        return;
-      }
-
-      // Check buyer's Solar balance (simplified - in production integrate with actual user accounts)
-      const buyerBalance = 172.5; // Your current balance - in production, query from database
-      
-      if (buyerBalance < solarAmount) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ 
-          success: false, 
-          error: 'Insufficient Solar balance',
-          required: solarAmount,
-          available: buyerBalance
-        }));
-        return;
-      }
-
-      // Generate secure download token
-      const crypto = require('crypto');
-      const purchaseId = `purch_${Date.now()}_${crypto.randomBytes(8).toString('hex')}`;
-      const downloadToken = crypto.createHmac('sha256', 'monazite-secure-key')
-        .update(`${purchaseId}:${buyerEmail}:${item.id}:${Date.now()}`)
-        .digest('hex');
-
-      // Record purchase (simplified - in production, save to database)
-      const purchase = {
-        id: purchaseId,
-        buyerEmail: buyerEmail,
-        itemId: item.id,
-        itemType: itemType,
-        itemTitle: item.title,
-        priceSolar: solarAmount,
-        creatorEmail: item.creatorEmail,
-        creatorEarnings: Math.round(solarAmount * 0.85 * 10000) / 10000, // 85% to creator
-        platformFee: Math.round(solarAmount * 0.15 * 10000) / 10000, // 15% platform fee
-        purchasedAt: new Date().toISOString(),
-        downloadToken: downloadToken,
-        downloadExpires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hour expiry
-      };
-
-      console.log(`💰 SOLAR PURCHASE: ${buyerEmail} bought "${item.title}" for ${solarAmount} Solar`);
-      console.log(`🎯 Creator earnings: ${purchase.creatorEarnings} Solar (85%)`);
-      console.log(`🏛️ Platform fee: ${purchase.platformFee} Solar (15%)`);
-
-      const response = {
-        success: true,
-        purchase: {
-          id: purchase.id,
-          item: {
-            id: item.id,
-            title: item.title,
-            type: itemType
-          },
-          payment: {
-            amount: solarAmount,
-            currency: 'Solar'
-          },
-          download: {
-            token: downloadToken,
-            expires: purchase.downloadExpires,
-            url: `/api/download/${downloadToken}`
-          }
-        },
-        message: `Successfully purchased ${item.title}! Download available for 24 hours.`
-      };
-
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(response));
-    } catch (error) {
-      console.error('Purchase error:', error);
-      res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ 
-        success: false, 
-        error: 'Purchase failed',
-        message: error.message 
-      }));
-    }
+    res.writeHead(301, { 'Location': 'https://tc-s-marketplace.replit.app/api/ledger/purchase' });
+    res.end();
     return;
   }
+
 
   // NEW: Secure download endpoint with token validation
   if (pathname.startsWith('/api/download/') && req.method === 'GET') {
@@ -3919,7 +3785,7 @@ const server = http.createServer(async (req, res) => {
             <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
               <h2>Preview Not Available</h2>
               <p>The requested preview could not be found.</p>
-              <a href="/marketplace.html">← Back to Marketplace</a>
+              <a href="https://tc-s-marketplace.replit.app" target="_blank">← Back to Digital Marketplace</a>
             </body>
             </html>
           `);
@@ -3960,8 +3826,8 @@ const server = http.createServer(async (req, res) => {
           previewContent = `
             <div style="max-width: 600px; margin: 0 auto; text-align: center;">
               <p style="color: #666;">Preview not available for this file type.</p>
-              <a href="/marketplace.html" style="background: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px;">
-                Purchase to Download
+              <a href="https://tc-s-marketplace.replit.app" target="_blank" style="background: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px;">
+                Visit Digital Marketplace
               </a>
             </div>
           `;
