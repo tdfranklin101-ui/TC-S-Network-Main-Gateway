@@ -1,248 +1,354 @@
 /**
  * TC-S Network Foundation Digital Artifact Marketplace
- * Managed by TC-S, PBC Inc.
- * 
- * Standalone marketplace app with integrated ledger system
- * Features: AI-curated digital artifacts, Solar-based transactions, creator payments
+ * Solar-powered Global Basic Income System
+ * FileFlow Deployment Version
  */
 
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const dotenv = require('dotenv');
+const multer = require('multer');
+const fs = require('fs');
 
-// Load environment variables
-dotenv.config();
+const app = express();
+const PORT = process.env.PORT || 5000;
 
-// Import marketplace services
-const AICurator = require('./server/ai-curator');
-const ArtifactFileManager = require('./server/artifact-file-manager');
-const MarketplaceTemplateService = require('./server/marketplace-template-service');
-const MarketDataService = require('./server/market-data-service');
-const LedgerService = require('./server/ledger-service');
-const AuthBridge = require('./server/auth-bridge');
-const DatabaseService = require('./server/database');
+// Middleware setup
+app.use(cors());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-class MarketplaceApp {
-  constructor() {
-    this.app = express();
-    this.port = process.env.PORT || 5000;
-    
-    // Initialize services
-    this.db = new DatabaseService();
-    this.aiCurator = new AICurator();
-    this.artifactManager = new ArtifactFileManager();
-    this.templateService = new MarketplaceTemplateService();
-    this.marketData = new MarketDataService();
-    this.ledger = new LedgerService(this.db); // Pass database to ledger
-    this.authBridge = new AuthBridge();
-    
-    this.setupMiddleware();
-    this.setupRoutes();
-  }
+// Serve static files from public directory
+app.use(express.static(path.join(__dirname, 'public')));
 
-  setupMiddleware() {
-    // CORS for foundation app integration
-    this.app.use(cors({
-      origin: [
-        'http://localhost:3000',  // Foundation app
-        'https://the-current-see.replit.app',  // Foundation production
-        process.env.FOUNDATION_URL
-      ].filter(Boolean),
-      credentials: true
-    }));
-    
-    this.app.use(express.json({ limit: '50mb' }));
-    this.app.use(express.urlencoded({ extended: true, limit: '50mb' }));
-    
-    // Serve static files
-    this.app.use(express.static(path.join(__dirname, 'public')));
-    this.app.use('/previews', express.static(path.join(__dirname, 'storage/previews')));
-  }
+// File upload configuration
+const upload = multer({
+  dest: 'uploads/',
+  limits: { fileSize: 50 * 1024 * 1024 } // 50MB limit
+});
 
-  setupRoutes() {
-    // Health check
-    this.app.get('/health', async (req, res) => {
-      const dbHealth = await this.db.healthCheck();
-      res.json({
-        status: dbHealth.status === 'healthy' ? 'healthy' : 'degraded',
-        app: 'TC-S Network Foundation Digital Artifact Marketplace',
-        timestamp: new Date().toISOString(),
-        services: {
-          database: dbHealth.status,
-          aiCurator: 'active',
-          artifactManager: 'active',
-          ledger: 'active',
-          authBridge: 'active'
-        }
-      });
-    });
+// In-memory data storage for the marketplace
+let artifacts = [];
+let members = [];
+let transactions = [];
+let solarCounter = {
+  totalSolar: 150000000,
+  perSecond: 2.5,
+  lastUpdate: Date.now()
+};
 
-    // Authentication bridge routes
-    this.app.use('/api/auth', this.createAuthRoutes());
-    
-    // Marketplace API routes
-    this.app.use('/api/artifacts', this.createArtifactRoutes());
-    this.app.use('/api/market', this.createMarketRoutes());
-    this.app.use('/api/ledger', this.createLedgerRoutes());
-    
-    // Serve marketplace frontend
-    this.app.get('/', (req, res) => {
-      res.sendFile(path.join(__dirname, 'public/index.html'));
-    });
-    
-    // Fallback for SPA routing (excluding API routes)
-    this.app.get(/^\/(?!api\/).*/, (req, res) => {
-      res.sendFile(path.join(__dirname, 'public/index.html'));
-    });
-  }
-
-  createAuthRoutes() {
-    const router = express.Router();
-    
-    // Sync user session from Foundation app
-    router.post('/sync', async (req, res) => {
-      try {
-        const { foundationToken } = req.body;
-        const user = await this.authBridge.validateFoundationToken(foundationToken);
-        
-        if (user) {
-          // Create marketplace session
-          const marketplaceToken = await this.authBridge.createMarketplaceSession(user);
-          res.json({ success: true, token: marketplaceToken, user });
-        } else {
-          res.status(401).json({ success: false, error: 'Invalid foundation token' });
-        }
-      } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
-      }
-    });
-    
-    return router;
-  }
-
-  createArtifactRoutes() {
-    const router = express.Router();
-    
-    // Get available artifacts
-    router.get('/available', async (req, res) => {
-      try {
-        const artifacts = await this.db.getArtifacts(req.query);
-        res.json(artifacts);
-      } catch (error) {
-        res.status(500).json({ error: error.message });
-      }
-    });
-    
-    // Upload new artifact
-    router.post('/upload', async (req, res) => {
-      try {
-        // Handle artifact upload with AI curation
-        const result = await this.processArtifactUpload(req);
-        res.json(result);
-      } catch (error) {
-        res.status(500).json({ error: error.message });
-      }
-    });
-    
-    return router;
-  }
-
-  createMarketRoutes() {
-    const router = express.Router();
-    
-    // Get market statistics
-    router.get('/stats', async (req, res) => {
-      try {
-        const stats = await this.db.getMarketplaceStats();
-        res.json(stats);
-      } catch (error) {
-        res.status(500).json({ error: error.message });
-      }
-    });
-    
-    return router;
-  }
-
-  createLedgerRoutes() {
-    const router = express.Router();
-    
-    // Get user balance (protected route with authorization)
-    router.get('/balance/:userId', this.authBridge.requireAuth(), async (req, res) => {
-      try {
-        // Ensure user can only access their own balance
-        if (req.user.id !== req.params.userId) {
-          return res.status(403).json({ error: 'Access denied: Cannot access another user\'s balance' });
-        }
-        
-        const balance = await this.ledger.getUserBalance(req.params.userId);
-        res.json({ balance });
-      } catch (error) {
-        res.status(500).json({ error: error.message });
-      }
-    });
-    
-    // Process purchase (protected route)
-    router.post('/purchase', this.authBridge.requireAuth(), async (req, res) => {
-      try {
-        // Extract authenticated user ID
-        const buyerUserId = req.user.id;
-        const { artifactId, sellerId } = req.body;
-        
-        // Validate input
-        if (!artifactId || !sellerId) {
-          return res.status(400).json({ error: 'artifactId and sellerId are required' });
-        }
-        
-        // Get artifact details to verify price and seller
-        const artifact = await this.db.getArtifactById(artifactId);
-        if (!artifact) {
-          return res.status(404).json({ error: 'Artifact not found' });
-        }
-        
-        // Verify seller matches artifact owner
-        if (artifact.creatorId !== sellerId) {
-          return res.status(400).json({ error: 'Invalid seller for this artifact' });
-        }
-        
-        // Process purchase with server-verified data
-        const purchaseData = {
-          userId: buyerUserId, // Use authenticated user ID, not from request body
-          artifactId: artifactId,
-          price: artifact.price, // Use server-verified price
-          sellerId: sellerId
-        };
-        
-        const result = await this.ledger.processPurchase(purchaseData);
-        res.json(result);
-      } catch (error) {
-        res.status(500).json({ error: error.message });
-      }
-    });
-    
-    return router;
-  }
-
-  async processArtifactUpload(req) {
-    // Process artifact upload with AI curation
-    // Implementation will use existing upload logic
-    return { success: true, message: 'Upload processing implemented' };
-  }
-
-  start() {
-    this.app.listen(this.port, '0.0.0.0', () => {
-      console.log(`🚀 TC-S Network Foundation Digital Artifact Marketplace`);
-      console.log(`🌐 Running on port ${this.port}`);
-      console.log(`🤖 AI Curation: Active`);
-      console.log(`📊 Ledger System: Active`);
-      console.log(`🔗 Foundation Bridge: Ready`);
-      console.log(`⚡ CLOUD RUN READY - Marketplace App`);
-    });
-  }
+// Solar calculation service
+function updateSolarCounter() {
+  const now = Date.now();
+  const seconds = (now - solarCounter.lastUpdate) / 1000;
+  solarCounter.totalSolar += seconds * solarCounter.perSecond;
+  solarCounter.lastUpdate = now;
+  return solarCounter;
 }
 
-// Start the marketplace app
-const marketplace = new MarketplaceApp();
-marketplace.start();
+// API Routes
 
-module.exports = MarketplaceApp;
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'healthy', 
+    service: 'TC-S Marketplace',
+    timestamp: new Date().toISOString(),
+    solarSystem: 'active'
+  });
+});
+
+// Solar counter API
+app.get('/api/solar', (req, res) => {
+  const current = updateSolarCounter();
+  res.json({
+    totalSolar: Math.floor(current.totalSolar),
+    perSecond: current.perSecond,
+    timestamp: current.lastUpdate
+  });
+});
+
+// Marketplace artifacts API
+app.get('/api/artifacts', (req, res) => {
+  res.json({
+    artifacts: artifacts,
+    total: artifacts.length,
+    featured: artifacts.filter(a => a.featured).slice(0, 3)
+  });
+});
+
+// Add new artifact
+app.post('/api/artifacts', upload.single('file'), (req, res) => {
+  try {
+    const { title, description, solarPrice, creator, category } = req.body;
+    
+    const artifact = {
+      id: Date.now().toString(),
+      title: title || 'Digital Artifact',
+      description: description || 'AI-curated digital artifact',
+      solarPrice: parseInt(solarPrice) || 100,
+      creator: creator || 'Anonymous Creator',
+      category: category || 'Digital Art',
+      featured: Math.random() > 0.7,
+      uploadDate: new Date().toISOString(),
+      file: req.file ? {
+        originalName: req.file.originalname,
+        filename: req.file.filename,
+        mimetype: req.file.mimetype,
+        size: req.file.size
+      } : null
+    };
+    
+    artifacts.push(artifact);
+    
+    res.json({
+      success: true,
+      artifact: artifact,
+      message: 'Artifact added to marketplace'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Member management API
+app.get('/api/members', (req, res) => {
+  res.json({
+    members: members.map(m => ({
+      id: m.id,
+      name: m.name,
+      solarBalance: m.solarBalance,
+      joinDate: m.joinDate
+    })),
+    total: members.length
+  });
+});
+
+// Add new member
+app.post('/api/members', (req, res) => {
+  try {
+    const { name, email } = req.body;
+    
+    if (!name || !email) {
+      return res.status(400).json({
+        success: false,
+        error: 'Name and email are required'
+      });
+    }
+    
+    const member = {
+      id: Date.now().toString(),
+      name: name,
+      email: email,
+      solarBalance: 1000, // Starting balance
+      joinDate: new Date().toISOString(),
+      walletAddress: `solar_${Date.now()}`
+    };
+    
+    members.push(member);
+    
+    res.json({
+      success: true,
+      member: member,
+      message: 'Member added to TC-S Network'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Purchase artifact
+app.post('/api/purchase', (req, res) => {
+  try {
+    const { artifactId, memberId } = req.body;
+    
+    const artifact = artifacts.find(a => a.id === artifactId);
+    const member = members.find(m => m.id === memberId);
+    
+    if (!artifact) {
+      return res.status(404).json({
+        success: false,
+        error: 'Artifact not found'
+      });
+    }
+    
+    if (!member) {
+      return res.status(404).json({
+        success: false,
+        error: 'Member not found'
+      });
+    }
+    
+    if (member.solarBalance < artifact.solarPrice) {
+      return res.status(400).json({
+        success: false,
+        error: 'Insufficient SOLAR balance'
+      });
+    }
+    
+    // Process transaction
+    member.solarBalance -= artifact.solarPrice;
+    
+    const transaction = {
+      id: Date.now().toString(),
+      artifactId: artifactId,
+      memberId: memberId,
+      amount: artifact.solarPrice,
+      timestamp: new Date().toISOString(),
+      type: 'purchase'
+    };
+    
+    transactions.push(transaction);
+    
+    res.json({
+      success: true,
+      transaction: transaction,
+      newBalance: member.solarBalance,
+      message: 'Purchase completed successfully'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Transaction history
+app.get('/api/transactions', (req, res) => {
+  res.json({
+    transactions: transactions,
+    total: transactions.length
+  });
+});
+
+// AI Curation endpoint (mock)
+app.post('/api/ai-curate', (req, res) => {
+  const { content, type } = req.body;
+  
+  // Mock AI curation response
+  const curation = {
+    score: Math.random() * 100,
+    tags: ['digital', 'renewable', 'sustainable', 'innovative'],
+    recommendation: 'Featured',
+    aiDescription: `This ${type || 'artifact'} demonstrates innovative digital craftsmanship with strong renewable energy themes.`,
+    solarValue: Math.floor(Math.random() * 500) + 50
+  };
+  
+  res.json({
+    success: true,
+    curation: curation
+  });
+});
+
+// Root route - serve main marketplace page
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({
+    error: 'Endpoint not found',
+    availableEndpoints: [
+      '/health',
+      '/api/solar',
+      '/api/artifacts',
+      '/api/members',
+      '/api/purchase',
+      '/api/transactions',
+      '/api/ai-curate'
+    ]
+  });
+});
+
+// Error handler
+app.use((error, req, res, next) => {
+  console.error('Server Error:', error);
+  res.status(500).json({
+    error: 'Internal server error',
+    message: error.message
+  });
+});
+
+// Start server
+app.listen(PORT, '0.0.0.0', () => {
+  console.log('🚀 TC-S Network Foundation Digital Artifact Marketplace');
+  console.log(`🌐 Server running on port ${PORT}`);
+  console.log('⚡ Solar-powered marketplace active');
+  console.log('🤖 AI curation system ready');
+  console.log('💰 SOLAR ledger initialized');
+  console.log('🔗 FileFlow deployment ready');
+  
+  // Initialize sample data
+  initializeSampleData();
+});
+
+// Initialize sample marketplace data
+function initializeSampleData() {
+  // Sample artifacts
+  artifacts.push(
+    {
+      id: '1',
+      title: 'Solar Sunrise Digital Art',
+      description: 'Beautiful digital artwork capturing the essence of renewable energy',
+      solarPrice: 250,
+      creator: 'EcoArtist',
+      category: 'Digital Art',
+      featured: true,
+      uploadDate: new Date().toISOString()
+    },
+    {
+      id: '2', 
+      title: 'Sustainable Future NFT',
+      description: 'A vision of our renewable energy future',
+      solarPrice: 500,
+      creator: 'FutureVision',
+      category: 'NFT',
+      featured: true,
+      uploadDate: new Date().toISOString()
+    },
+    {
+      id: '3',
+      title: 'Clean Energy Music',
+      description: 'Ambient sounds inspired by wind and solar power',
+      solarPrice: 150,
+      creator: 'SolarSound',
+      category: 'Audio',
+      featured: false,
+      uploadDate: new Date().toISOString()
+    }
+  );
+  
+  // Sample members
+  members.push(
+    {
+      id: '1',
+      name: 'Solar Pioneer',
+      email: 'pioneer@tc-s.net',
+      solarBalance: 2500,
+      joinDate: new Date().toISOString(),
+      walletAddress: 'solar_1001'
+    },
+    {
+      id: '2',
+      name: 'Renewable Creator',
+      email: 'creator@tc-s.net', 
+      solarBalance: 1800,
+      joinDate: new Date().toISOString(),
+      walletAddress: 'solar_1002'
+    }
+  );
+  
+  console.log('📊 Sample marketplace data initialized');
+  console.log(`   - ${artifacts.length} artifacts available`);
+  console.log(`   - ${members.length} members registered`);
+}
+
+module.exports = app;
