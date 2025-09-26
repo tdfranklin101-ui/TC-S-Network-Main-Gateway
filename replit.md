@@ -1,69 +1,71 @@
-# The Current-See Platform
+# Overview
 
-## Overview
+The Current-See is a solar-backed global economic platform that implements a comprehensive ecosystem featuring real-time solar energy tracking, member management, AI assistants, and digital marketplace functionality. The system demonstrates a vision for a renewable energy-based economy where users receive daily distributions of virtual SOLAR currency based on real solar energy calculations. The platform includes multiple interactive components including a live solar counter, member dashboard, AI-powered features, and various demonstration tools.
 
-The Current-See is a solar-backed global economic system prototype that combines renewable energy tracking, cryptocurrency-like SOLAR tokens, member management, and AI assistance. The platform features real-time solar energy calculations, member wallet functionality, and an integrated D-ID AI agent called "Kid Solar" that provides polymathic assistance in renewable energy, physics, engineering, and sustainability.
-
-## User Preferences
+# User Preferences
 
 Preferred communication style: Simple, everyday language.
 
-## System Architecture
+# System Architecture
 
-### Frontend Architecture
-- **Static File Serving**: Express.js serves HTML, CSS, and JavaScript files from a `public` directory structure
-- **Client-Side Framework**: Vanilla JavaScript with dynamic content rendering and real-time counter updates
-- **AI Integration**: D-ID AI agent embedded via CDN script with configured agent ID and client keys
-- **File Upload**: Multer-based image upload system for AI visual analysis
-- **Responsive Design**: Mobile-friendly interface with CSS media queries
+## Backend Architecture
+- **Server Framework**: Express.js with Node.js CommonJS modules
+- **Database Strategy**: Dual approach using PostgreSQL with Drizzle ORM for persistent storage and JSON file fallback for local development
+- **Session Management**: Express-session with PostgreSQL store for user authentication
+- **File Storage**: Local filesystem with organized directory structure for static assets and uploads
 
-### Backend Architecture
-- **Server Framework**: Express.js with HTTP fallback options for deployment flexibility
-- **Deployment Strategy**: Multiple deployment scripts optimized for different environments (Replit, Cloud Run)
-- **Health Monitoring**: Comprehensive health check endpoints for deployment monitoring
-- **Session Management**: In-memory session storage for conversation tracking
-- **Static Asset Management**: MIME type handling and proper caching headers
+## Frontend Architecture
+- **Static Site Architecture**: Server-side rendered HTML with vanilla JavaScript enhancements
+- **Build System**: Vite-based build process with React support for interactive components
+- **CSS Framework**: Custom CSS with Bootstrap integration for responsive design
+- **Real-time Updates**: WebSocket connections for live data synchronization
 
-### Data Storage Solutions
-- **PostgreSQL Integration**: Drizzle ORM with schema definitions for member data
-- **Database Connectivity**: Flexible connection handling supporting both DATABASE_URL and CURRENTSEE_DB_URL
-- **File-Based Fallbacks**: JSON files for member data when database is unavailable
-- **Conversation Storage**: File system storage for AI conversation history
-- **Memory System**: Session-based storage for user interactions and AI responses
+## Core Components
+- **Solar Clock System**: Real-time calculation engine that tracks global solar energy accumulation since April 7, 2025, with mathematical models for energy distribution
+- **Member Management**: Complete user registration and profile system with solar currency tracking
+- **AI Integration**: OpenAI-powered assistant services for energy consulting and interactive features
+- **Marketplace System**: Digital artifact management with file upload, processing, and transaction capabilities
 
-### Authentication and Authorization
-- **Environment-Based Security**: API keys stored in environment variables
-- **Session-Based Tracking**: Anonymous session management for conversation continuity
-- **CORS Configuration**: Cross-origin resource sharing for API endpoints
-- **Rate Limiting**: Built into OpenAI integration to prevent abuse
+## Data Architecture
+- **Solar Constants**: Hardcoded mathematical models for global solar energy calculations (4.176e+15 kWh daily)
+- **Member Storage**: JSON-based member data with database synchronization for production
+- **Analytics**: Simple in-memory analytics with file-based logging for performance tracking
+- **Distribution System**: Automated daily SOLAR currency distribution based on energy calculations
 
-### External Service Integrations
-- **OpenAI API**: GPT-4 integration for AI responses and image generation (DALL-E)
-- **D-ID Platform**: AI avatar integration with voice responses and visual interaction
-- **PostgreSQL Database**: Cloud-hosted database for persistent member data
-- **CDN Assets**: External script loading for D-ID agent functionality
+## Service Integrations
+- **Python Services**: Geolocation and badge generation services running as child processes
+- **Badge Generation**: Custom achievement badge creation for social sharing
+- **Voice Assistant**: AI-powered voice interaction capabilities
+- **Health Monitoring**: Comprehensive health check and monitoring systems for deployment reliability
 
-## External Dependencies
+# External Dependencies
 
-### Third-Party Services
-- **OpenAI**: GPT-4o model for text generation and DALL-E for image creation
-- **D-ID**: AI agent platform for interactive avatar experiences with agent ID `v2_agt_vhYf_e_C`
-- **PostgreSQL**: Database hosting (supports Neon and other cloud providers)
+## Third-party Services
+- **OpenAI API**: Powers the AI assistant features and energy consultation services
+- **PostgreSQL Database**: Primary data storage with connection pooling via pg library
+- **MaxMind GeoIP**: Geolocation services for user location detection (via license key)
 
-### APIs and Integrations
-- **Real-Time Solar Calculations**: Mathematical models for energy generation tracking
-- **Member Management API**: RESTful endpoints for member data operations
-- **File Upload API**: Image processing and analysis endpoints
-- **Health Check APIs**: System monitoring and deployment verification endpoints
+## Node.js Packages
+- **express**: Web application framework
+- **pg**: PostgreSQL database client
+- **cors**: Cross-origin resource sharing middleware
+- **express-session**: Session management
+- **node-schedule**: Task scheduling for automated distributions
+- **multer**: File upload handling for marketplace
+- **ws**: WebSocket implementation for real-time features
 
-### Databases
-- **Primary Database**: PostgreSQL with Drizzle ORM for structured data
-- **Fallback Storage**: JSON files and in-memory storage for reliability
-- **Session Storage**: File-based conversation persistence
-- **Configuration Storage**: Environment variables and JSON configuration files
+## Frontend Libraries
+- **Bootstrap 5.3.0**: CSS framework for responsive design
+- **Font Awesome 6.0.0**: Icon library for UI elements
+- **React**: Component-based UI for interactive features (via Vite build)
 
-### Development and Deployment Tools
-- **Package Management**: npm with Express.js, Multer, and database drivers
-- **Deployment Platforms**: Optimized for Replit and Google Cloud Run
-- **Monitoring**: Custom health check and status reporting systems
-- **Cache Management**: Aggressive cache clearing for deployment updates
+## Development Tools
+- **Vite**: Build tool and development server
+- **Tailwind CSS**: Utility-first CSS framework
+- **TypeScript**: Type checking and development support
+- **Drizzle ORM**: Database schema management and queries
+
+## Python Dependencies
+- **Flask**: Microservices for geolocation and badge generation
+- **PIL/Pillow**: Image processing for badge creation
+- **GeoIP2**: Advanced geolocation capabilities
