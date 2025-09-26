@@ -1069,6 +1069,23 @@
         let monaziteCollection = null;
         let monaziteTracksVisible = false;
 
+        // MISSING MODAL FUNCTIONS - Option 1 Fix
+        function showSigninModal() {
+            document.getElementById('signin-modal').classList.add('visible');
+        }
+
+        function closeSigninModal() {
+            document.getElementById('signin-modal').classList.remove('visible');
+        }
+
+        function showSignupModal() {
+            document.getElementById('signup-modal').classList.add('visible');
+        }
+
+        function closeSignupModal() {
+            document.getElementById('signup-modal').classList.remove('visible');
+        }
+
         // Load artifacts and user info on page load
         window.addEventListener('load', function() {
             loadArtifacts();
