@@ -344,7 +344,7 @@ class MarketplaceApp {
     } else {
       return `
         <button class="purchase-btn" onclick="event.stopPropagation(); marketplace.showSignupModal()">
-          🔒 Login to Purchase
+          🚀 Join to Purchase & Download
         </button>
       `;
     }
