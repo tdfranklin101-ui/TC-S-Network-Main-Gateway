@@ -21,6 +21,7 @@ const MarketplaceTemplateService = require('./server/marketplace-template-servic
 const MarketDataService = require('./server/market-data-service');
 const LedgerService = require('./server/ledger-service');
 const AuthBridge = require('./server/auth-bridge');
+const DatabaseService = require('./server/database');
 
 class MarketplaceApp {
   constructor() {
@@ -28,11 +29,12 @@ class MarketplaceApp {
     this.port = process.env.PORT || 3001;
     
     // Initialize services
+    this.db = new DatabaseService();
     this.aiCurator = new AICurator();
     this.artifactManager = new ArtifactFileManager();
     this.templateService = new MarketplaceTemplateService();
     this.marketData = new MarketDataService();
-    this.ledger = new LedgerService();
+    this.ledger = new LedgerService(this.db); // Pass database to ledger
     this.authBridge = new AuthBridge();
     
     this.setupMiddleware();
@@ -60,12 +62,14 @@ class MarketplaceApp {
 
   setupRoutes() {
     // Health check
-    this.app.get('/health', (req, res) => {
+    this.app.get('/health', async (req, res) => {
+      const dbHealth = await this.db.healthCheck();
       res.json({
-        status: 'healthy',
+        status: dbHealth.status === 'healthy' ? 'healthy' : 'degraded',
         app: 'TC-S Network Foundation Digital Artifact Marketplace',
         timestamp: new Date().toISOString(),
         services: {
+          database: dbHealth.status,
           aiCurator: 'active',
           artifactManager: 'active',
           ledger: 'active',
@@ -123,7 +127,7 @@ class MarketplaceApp {
     // Get available artifacts
     router.get('/available', async (req, res) => {
       try {
-        const artifacts = await this.marketData.getAvailableArtifacts();
+        const artifacts = await this.db.getArtifacts(req.query);
         res.json(artifacts);
       } catch (error) {
         res.status(500).json({ error: error.message });
@@ -150,7 +154,7 @@ class MarketplaceApp {
     // Get market statistics
     router.get('/stats', async (req, res) => {
       try {
-        const stats = await this.marketData.getMarketStats();
+        const stats = await this.db.getMarketplaceStats();
         res.json(stats);
       } catch (error) {
         res.status(500).json({ error: error.message });
@@ -163,9 +167,14 @@ class MarketplaceApp {
   createLedgerRoutes() {
     const router = express.Router();
     
-    // Get user balance
-    router.get('/balance/:userId', async (req, res) => {
+    // Get user balance (protected route)
+    router.get('/balance/:userId', this.authBridge.requireAuth(), async (req, res) => {
       try {
+        // Ensure user can only access their own balance
+        if (req.user.id !== req.params.userId) {
+          return res.status(403).json({ error: 'Access denied' });
+        }
+        
         const balance = await this.ledger.getUserBalance(req.params.userId);
         res.json({ balance });
       } catch (error) {

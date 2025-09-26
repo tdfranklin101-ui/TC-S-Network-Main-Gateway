@@ -5,28 +5,31 @@
  */
 
 class LedgerService {
-  constructor() {
-    this.transactions = new Map();
-    this.balances = new Map();
-    this.pendingTransactions = new Map();
+  constructor(databaseService) {
+    this.db = databaseService;
+    this.pendingTransactions = new Map(); // Keep pending in memory for speed
     
-    console.log('💰 Solar Ledger Service initialized');
+    console.log('💰 Solar Ledger Service initialized with database persistence');
   }
 
   /**
    * Get user's Solar balance
    */
   async getUserBalance(userId) {
-    // Check local balance first, then sync with Foundation if needed
-    let balance = this.balances.get(userId);
-    
-    if (balance === undefined) {
-      // Sync from Foundation app
-      balance = await this.syncBalanceFromFoundation(userId);
-      this.balances.set(userId, balance);
+    try {
+      const user = await this.db.getUserById(userId);
+      
+      if (!user) {
+        // User doesn't exist in marketplace DB, sync from Foundation
+        const foundationBalance = await this.syncBalanceFromFoundation(userId);
+        return foundationBalance;
+      }
+      
+      return parseFloat(user.solarBalance) || 0;
+    } catch (error) {
+      console.error('Error getting user balance:', error);
+      return 0;
     }
-    
-    return balance || 0;
   }
 
   /**
