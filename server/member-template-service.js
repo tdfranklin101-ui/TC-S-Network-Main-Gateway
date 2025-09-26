@@ -971,7 +971,8 @@ class MemberTemplateService {
    * Generate Premium Gallery Template
    */
   generatePremiumGalleryTemplate() {
-    const templateHtml = `
+    return {
+      html: `
         <div class="premium-gallery-display" data-template="premium_gallery">
           <div class="gallery-header">
             <h1 class="gallery-title">{{galleryTitle}}</h1>
@@ -990,7 +991,6 @@ class MemberTemplateService {
                 <p>{{featuredDescription}}</p>
                 <div class="featured-price">
                   <span class="price-solar">{{featuredPrice}} Solar</span>
-                  <span class="price-usd">(~$` + '{{featuredPriceUSD}}' + `)</span>
                 </div>
                 <div class="featured-stats">
                   <span>⭐ {{featuredRating}}/5</span>
@@ -2780,7 +2780,6 @@ class MemberTemplateService {
         featuredTitle: 'Featured Work',
         featuredDescription: 'This is a sample featured work description.',
         featuredPrice: '5.0000',
-        featuredPriceUSD: '12.50',
         featuredRating: '4.8',
         featuredDownloads: '245',
         featuredViews: '1,234',
