@@ -1,0 +1,41 @@
+{
+  "name": "tc-s-network-foundation-digital-artifact-marketplace",
+  "version": "1.0.0",
+  "description": "Standalone Digital Artifact Marketplace with AI Curation and Solar Ledger - Managed by TC-S, PBC Inc.",
+  "main": "main.js",
+  "scripts": {
+    "start": "node main.js",
+    "dev": "node main.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "marketplace",
+    "digital-artifacts",
+    "ai-curation",
+    "solar-economy",
+    "blockchain",
+    "tc-s"
+  ],
+  "author": "TC-S, PBC Inc.",
+  "license": "Private",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.37.0",
+    "bcrypt": "^6.0.0",
+    "body-parser": "^2.2.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "file-type": "^21.0.0",
+    "multer": "^2.0.2",
+    "openai": "^4.104.0",
+    "sharp": "^0.34.4",
+    "ws": "^8.18.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "private"
+  }
+}
