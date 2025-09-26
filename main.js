@@ -26,7 +26,7 @@ const DatabaseService = require('./server/database');
 class MarketplaceApp {
   constructor() {
     this.app = express();
-    this.port = process.env.PORT || 3001;
+    this.port = process.env.PORT || 5000;
     
     // Initialize services
     this.db = new DatabaseService();
