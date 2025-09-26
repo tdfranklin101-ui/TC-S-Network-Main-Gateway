@@ -147,7 +147,7 @@ class SEOGenerator {
         
         "potentialAction": {
           "@type": "JoinAction",
-          "target": "https://www.thecurrentsee.org/marketplace.html",
+          "target": "https://tc-s-marketplace.replit.app",
           "description": "Join TC-S Network and start earning Solar tokens backed by renewable energy"
         }
       },
@@ -248,7 +248,7 @@ class SEOGenerator {
       }
       
       if (pageType === 'all' || pageType === 'marketplace') {
-        await this.updateMarketplaceSEO(pages.marketplace);
+        // Marketplace SEO handled by standalone marketplace app
       }
 
       console.log(`✅ SEO files updated for ${pageType} with current market data`);
@@ -297,25 +297,11 @@ ${JSON.stringify(seoData.structuredData, null, 2)}
   }
 
   /**
-   * Update marketplace SEO
+   * Update marketplace SEO - Now handled by standalone marketplace app
    */
   async updateMarketplaceSEO(seoData) {
-    const marketplacePath = path.join(process.cwd(), 'public', 'marketplace.html');
-    let content = await fs.readFile(marketplacePath, 'utf-8');
-    
-    content = content.replace(
-      /<title>.*?<\/title>/i,
-      `<title>${seoData.title}</title>`
-    );
-    
-    // Add meta description if not exists
-    if (!content.includes('<meta name="description"')) {
-      const headCloseIndex = content.indexOf('</head>');
-      const metaTag = `    <meta name="description" content="${seoData.description}">\n    <meta name="keywords" content="${seoData.keywords.join(', ')}">\n`;
-      content = content.slice(0, headCloseIndex) + metaTag + content.slice(headCloseIndex);
-    }
-    
-    await fs.writeFile(marketplacePath, content, 'utf-8');
+    // Marketplace SEO is now handled by the standalone TC-S marketplace app
+    console.log('⚠️ Marketplace SEO handled by standalone app at tc-s-marketplace.replit.app');
   }
 
   /**
