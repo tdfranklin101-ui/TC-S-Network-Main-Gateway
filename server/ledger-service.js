@@ -4,6 +4,11 @@
  * Integrates with Foundation app for balance synchronization
  */
 
+const Decimal = require('decimal.js');
+
+// Configure Decimal.js for precise monetary calculations
+Decimal.set({ precision: 20, rounding: Decimal.ROUND_HALF_UP });
+
 class LedgerService {
   constructor(databaseService) {
     this.db = databaseService;
@@ -25,7 +30,7 @@ class LedgerService {
         return foundationBalance;
       }
       
-      return parseFloat(user.solarBalance) || 0;
+      return new Decimal(user.solarBalance || '0').toString();
     } catch (error) {
       console.error('Error getting user balance:', error);
       return 0;
@@ -41,8 +46,9 @@ class LedgerService {
     
     try {
       // Check user balance
-      const userBalance = await this.getUserBalance(userId);
-      if (userBalance < price) {
+      const userBalance = new Decimal(await this.getUserBalance(userId));
+      const purchasePrice = new Decimal(price);
+      if (userBalance.lessThan(purchasePrice)) {
         throw new Error('Insufficient Solar balance');
       }
 
@@ -125,10 +131,11 @@ class LedgerService {
    * Add Solar to user balance (from Foundation daily distribution)
    */
   async addSolar(userId, amount, source = 'daily_distribution') {
-    const currentBalance = await this.getUserBalance(userId);
-    const newBalance = currentBalance + amount;
+    const currentBalance = new Decimal(await this.getUserBalance(userId));
+    const addAmount = new Decimal(amount);
+    const newBalance = currentBalance.plus(addAmount);
     
-    await this.db.updateUserBalance(userId, newBalance);
+    await this.db.updateUserBalance(userId, newBalance.toString());
     
     // Record transaction
     const transactionId = this.generateTransactionId();
@@ -136,15 +143,15 @@ class LedgerService {
       id: transactionId,
       type: 'credit',
       toUserId: userId,
-      amount: amount.toString(),
+      amount: addAmount.toString(),
       status: 'completed',
       metadata: JSON.stringify({ source })
     };
     
     await this.db.createTransaction(transactionData);
     
-    console.log(`💰 Added ${amount} Solar to user ${userId} from ${source}`);
-    return newBalance;
+    console.log(`💰 Added ${addAmount} Solar to user ${userId} from ${source}`);
+    return newBalance.toString();
   }
 
   /**

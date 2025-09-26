@@ -5,7 +5,8 @@
 
 const { neon } = require('@neondatabase/serverless');
 const { drizzle } = require('drizzle-orm/neon-http');
-const { eq, desc, and } = require('drizzle-orm');
+const { eq, desc, and, or } = require('drizzle-orm');
+const Decimal = require('decimal.js');
 
 // Import schemas
 const { 
@@ -105,7 +106,7 @@ class DatabaseService {
       .select()
       .from(transactions)
       .where(
-        and(
+        or(
           eq(transactions.fromUserId, userId),
           eq(transactions.toUserId, userId)
         )
@@ -151,7 +152,7 @@ class DatabaseService {
       
       // Get total transactions volume
       const allTransactions = await this.db.select().from(transactions).where(eq(transactions.status, 'completed'));
-      const totalVolume = allTransactions.reduce((sum, tx) => sum + parseFloat(tx.amount), 0);
+      const totalVolume = allTransactions.reduce((sum, tx) => sum.plus(new Decimal(tx.amount || '0')), new Decimal('0'));
       
       // Get total users
       const userCount = await this.db.select().from(marketplaceUsers);
