@@ -78,7 +78,7 @@ class MarketplaceApp {
     try {
       this.showLoading(true);
       
-      const response = await fetch('/api/artifacts');
+      const response = await fetch('/api/artifacts/available');
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }

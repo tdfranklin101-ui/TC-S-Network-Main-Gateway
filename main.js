@@ -1,6 +1,17 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+
+// Add process error handlers to prevent crashes from database issues
+process.on('uncaughtException', (error) => {
+  console.error('🚨 Uncaught Exception:', error);
+  console.log('🔄 Server continuing to run...');
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('🚨 Unhandled Rejection at:', promise, 'reason:', reason);
+  console.log('🔄 Server continuing to run...');
+});
 const { Pool, neonConfig } = require('@neondatabase/serverless');
 
 // Configure WebSocket for Node.js environment to fix distribution connectivity
