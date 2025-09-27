@@ -1960,11 +1960,36 @@
             }
         }
 
-        function logoutUser() {
-            localStorage.removeItem('tc_s_user');
-            currentUser = null;
-            updateUserDisplay();
-            alert('✅ Logged out successfully');
+        async function logoutUser() {
+            try {
+                // 1. First, destroy server-side session
+                const response = await fetch('/api/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                // 2. Then clean up client-side data (regardless of server response)
+                localStorage.removeItem('tc_s_user');
+                currentUser = null;
+                updateUserDisplay();
+                
+                if (response.ok) {
+                    alert('✅ Logged out successfully');
+                } else {
+                    console.warn('Server logout failed, but client cleaned up');
+                    alert('✅ Logged out (local session cleared)');
+                }
+                
+            } catch (error) {
+                console.error('Logout error:', error);
+                // Still clean up client-side even if server call fails
+                localStorage.removeItem('tc_s_user');
+                currentUser = null;
+                updateUserDisplay();
+                alert('✅ Logged out (local session cleared)');
+            }
         }
 
 
