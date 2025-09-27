@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Current-See - AI Wallet Features</title>
+
+  <link rel="stylesheet" href="/css/common.css">
+  
+  <!-- Header and Body Structure -->
+  
+  <style>
+    /* AI Wallet Page Specific Watermark */
+    .ai-wallet-main {
+      position: relative;
+      overflow: hidden;
+      background-color: var(--bg-light);
+      padding: 2rem 0;
+    }
+    
+    .ai-wallet-main::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: repeating-conic-gradient(
+        rgba(76, 175, 80, 0.02) 0deg 12deg,
+        rgba(76, 175, 80, 0.04) 12deg 24deg
+      );
+      animation: sun-ray-rotate 210s linear infinite;
+      z-index: 0;
+      opacity: 0.5;
+      pointer-events: none;
+    }
+    
+    .feature-section {
+      background-color: #f9f9f9;
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.05);
+      position: relative;
+      z-index: 1;
+    }
+    
+    .feature-section h2 {
+      color: #227722;
+      margin-top: 0;
+      border-bottom: 2px solid #ddd;
+      padding-bottom: 0.5rem;
+    }
+    
+    .feature-description {
+      color: #555;
+      line-height: 1.6;
+    }
+    
+    .use-case {
+      background-color: #f0f7e6;
+      border: 1px solid #d1e7c5;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+    }
+    
+    .use-case h3 {
+      margin-top: 0;
+      color: #446622;
+    }
+    
+    .example-query {
+      font-family: monospace;
+      background-color: #f5f5f5;
+      padding: 0.5rem;
+      margin: 0.5rem 0;
+      border-radius: 4px;
+      border-left: 3px solid #7bc144;
+    }
+    
+    .example-response {
+      background-color: white;
+      border: 1px solid #e5e5e5;
+      border-radius: 4px;
+      padding: 1rem;
+      margin: 0.5rem 0;
+      max-height: 200px;
+      overflow-y: auto;
+      font-size: 0.9rem;
+    }
+    
+    .feature-screenshot {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      overflow: hidden;
+      margin: 1.5rem 0;
+    }
+    
+    .feature-screenshot img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+    }
+    
+    .ai-demo-box {
+      background-color: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+    }
+    
+    .ai-demo-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    .form-group label {
+      font-weight: bold;
+      color: #555;
+    }
+    
+    .form-group select, 
+    .form-group input, 
+    .form-group textarea {
+      padding: 0.75rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 1rem;
+    }
+    
+    .btn {
+      padding: 0.75rem 1.5rem;
+      background-color: #7bc144;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    
+    .btn:hover {
+      background-color: #669f33;
+    }
+    
+    .btn:disabled {
+      background-color: #b5b5b5;
+      cursor: not-allowed;
+    }
+    
+    .ai-response {
+      background-color: #f9f9f9;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-top: 1.5rem;
+      white-space: pre-line;
+      display: none;
+    }
+    
+    .ai-response.show {
+      display: block;
+    }
+    
+    .loading-indicator {
+      display: none;
+      justify-content: center;
+      margin: 1rem 0;
+    }
+    
+    .loading-indicator.show {
+      display: flex;
+    }
+    
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 3px solid rgba(123, 193, 68, 0.3);
+      border-top-color: #7bc144;
+      animation: spin 1s infinite linear;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .feature-note {
+      font-size: 0.9rem;
+      color: #666;
+      font-style: italic;
+      margin-top: 1rem;
+    }
+
+    .eco-metrics {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+
+    .eco-metric {
+      flex: 1;
+      min-width: 200px;
+      background-color: #f0f7e6;
+      border-radius: 8px;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .eco-metric-value {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #7bc144;
+      margin: 0.5rem 0;
+    }
+
+    .eco-metric-label {
+      color: #555;
+      font-size: 0.9rem;
+    }
+
+    .carbon-diagram {
+      width: 100%;
+      height: 200px;
+      background-color: #f9f9f9;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      margin: 1.5rem 0;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .carbon-bar {
+      position: absolute;
+      bottom: 0;
+      width: 100px;
+      background-color: #7bc144;
+      transition: height 0.5s ease;
+      border-top-left-radius: 4px;
+      border-top-right-radius: 4px;
+    }
+
+    .carbon-bar-label {
+      position: absolute;
+      bottom: -25px;
+      width: 100%;
+      text-align: center;
+      font-size: 12px;
+      color: #555;
+    }
+
+    .carbon-bar-value {
+      position: absolute;
+      top: -25px;
+      width: 100%;
+      text-align: center;
+      font-size: 12px;
+      color: white;
+      background-color: rgba(0,0,0,0.7);
+      padding: 2px 4px;
+      border-radius: 4px;
+    }
+    
+    @media (max-width: 768px) {
+      .feature-section {
+        padding: 1.5rem;
+      }
+      
+      .eco-metrics {
+        flex-direction: column;
+      }
+      
+      .eco-metric {
+        min-width: unset;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- HEADER_PLACEHOLDER -->
+    
+    <main>
+      <h1 class="page-title">AI Wallet Econometric Features</h1>
+      <p class="page-subtitle">Evaluating carbon footprints, energy metrics, and supply chain analytics</p>
+      
+      <div class="feature-section">
+        <h2>Product Carbon Footprint Analysis</h2>
+        <div class="feature-description">
+          <p>Our AI assistant can analyze the carbon footprint and environmental impact of specific products and activities, providing detailed insights into their energy consumption, material usage, and sustainability metrics.</p>
+          
+          <p>This feature helps users make more informed purchasing decisions by understanding the true environmental cost of products, converted into equivalent SOLAR tokens for easy comparison.</p>
+        </div>
+        
+        <div class="use-case">
+          <h3>Example: Evaluating Electronics</h3>
+          
+          <div class="example-query">
+            "What's the carbon footprint of a smartphone?"
+          </div>
+          
+          <div class="example-response">
+            <strong>Carbon Footprint Analysis: SMARTPHONE</strong><br><br>
+            • Manufacturing: 60 kg CO2e (70% of lifecycle emissions)<br>
+            • Usage over 2.5 years: 21.25 kg CO2e (30% of lifecycle emissions)<br>
+            • Total lifecycle emissions: 81.25 kg CO2e<br>
+            • Energy consumption: 13.75 kWh over product lifetime<br><br>
+            This is equivalent to approximately 1.4 kg of beef or 387 kilometers driven by car.<br><br>
+            In the Current-See SOLAR economy, offsetting this carbon footprint would require approximately 24.0 SOLAR tokens.
+          </div>
+          
+          <div class="eco-metrics">
+            <div class="eco-metric">
+              <span class="eco-metric-value">60 kg</span>
+              <span class="eco-metric-label">CO2e from Production</span>
+            </div>
+            <div class="eco-metric">
+              <span class="eco-metric-value">13.75 kWh</span>
+              <span class="eco-metric-label">Lifetime Energy Use</span>
+            </div>
+            <div class="eco-metric">
+              <span class="eco-metric-value">24.0</span>
+              <span class="eco-metric-label">SOLAR Token Value</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="ai-demo-box">
+          <h3>Try Carbon Footprint Analysis</h3>
+          
+          <div class="ai-demo-form" id="carbon-form">
+            <div class="form-group">
+              <label for="product-category">Product Category</label>
+              <select id="product-category">
+                <option value="">Select a category</option>
+                <option value="electronics">Electronics</option>
+                <option value="clothing">Clothing</option>
+                <option value="food">Food</option>
+                <option value="transportation">Transportation</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label for="product-type">Product Type</label>
+              <select id="product-type" disabled>
+                <option value="">Select product type</option>
+              </select>
+            </div>
+            
+            <button type="button" class="btn" id="analyze-button" disabled>Analyze Carbon Footprint</button>
+          </div>
+          
+          <div class="loading-indicator" id="carbon-loading">
+            <div class="loading-spinner"></div>
+          </div>
+          
+          <div class="ai-response" id="carbon-response"></div>
+        </div>
+      </div>
+      
+      <div class="feature-section">
+        <h2>Farm-to-Table Energy-Based Pricing</h2>
+        <div class="feature-description">
+          <p>Our AI analyzes farm-to-table produce to calculate energy-based pricing that factors in seasonality, growing methods, transportation distances, and storage requirements.</p>
+          
+          <p>This revolutionary approach makes transparent the true energy costs embedded in our food system, helping consumers make sustainable choices while ensuring fair compensation for efficient producers.</p>
+        </div>
+        
+        <div class="use-case">
+          <h3>Example: Local vs. Imported Produce</h3>
+          
+          <div class="example-query">
+            "Calculate energy pricing for local organic tomatoes"
+          </div>
+          
+          <div class="example-response">
+            <strong>Energy-Based Pricing Analysis: TOMATOES</strong><br>
+            Local, In-Season, Organic<br><br>
+            Energy Requirements:<br>
+            • Growing: 1.68 kWh/kg<br>
+            • Transportation: 0.63 kWh/kg<br>
+            • Processing: 0.50 kWh/kg<br>
+            • Total Energy Footprint: 2.81 kWh/kg<br><br>
+            Market Price: $4.99/kg<br>
+            Energy Cost Component: $0.34/kg<br>
+            Energy-Adjusted Fair Price: $5.33/kg<br><br>
+            In the Current-See SOLAR economy, this represents 1.12 SOLAR tokens per kg.
+          </div>
+          
+          <div class="carbon-diagram">
+            <div class="carbon-bar" style="left: 50px; height: 50px; background-color: #7bc144;">
+              <div class="carbon-bar-label">Local Organic</div>
+              <div class="carbon-bar-value">2.81 kWh</div>
+            </div>
+            <div class="carbon-bar" style="left: 250px; height: 150px; background-color: #ff9933;">
+              <div class="carbon-bar-label">Imported Conventional</div>
+              <div class="carbon-bar-value">8.44 kWh</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="ai-demo-box">
+          <h3>Try Farm-to-Table Pricing Analysis</h3>
+          
+          <div class="ai-demo-form" id="farm-form">
+            <div class="form-group">
+              <label for="produce-type">Produce Type</label>
+              <select id="produce-type">
+                <option value="">Select produce type</option>
+                <option value="leafy_greens">Leafy Greens</option>
+                <option value="root_vegetables">Root Vegetables</option>
+                <option value="tomatoes">Tomatoes</option>
+                <option value="berries">Berries</option>
+                <option value="tree_fruits">Tree Fruits</option>
+                <option value="grains">Grains</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label>Production Methods</label>
+              <div>
+                <input type="checkbox" id="is-local" checked>
+                <label for="is-local">Local (< 50 miles)</label>
+              </div>
+              <div>
+                <input type="checkbox" id="is-organic" checked>
+                <label for="is-organic">Organic</label>
+              </div>
+              <div>
+                <input type="checkbox" id="is-seasonal" checked>
+                <label for="is-seasonal">In Season</label>
+              </div>
+            </div>
+            
+            <button type="button" class="btn" id="farm-button" disabled>Calculate Energy-Based Price</button>
+          </div>
+          
+          <div class="loading-indicator" id="farm-loading">
+            <div class="loading-spinner"></div>
+          </div>
+          
+          <div class="ai-response" id="farm-response"></div>
+        </div>
+      </div>
+      
+      <div class="feature-section">
+        <h2>Supply Chain Energy Analysis</h2>
+        <div class="feature-description">
+          <p>Our AI assistant can analyze the energy consumption across the entire supply chain of products, from raw material extraction to final delivery.</p>
+          
+          <p>This feature helps businesses and consumers understand the hidden energy costs in global supply chains and identify opportunities for optimization and efficiency improvements.</p>
+        </div>
+        
+        <div class="use-case">
+          <h3>Example: Optimizing Product Shipping</h3>
+          
+          <div class="example-query">
+            "Analyze energy impact of different shipping methods"
+          </div>
+          
+          <div class="example-response">
+            <strong>Supply Chain Energy Analysis:</strong><br><br>
+            The energy consumption across modern supply chains can be divided into:<br>
+            • Production energy (30-40%)<br>
+            • Processing energy (10-20%)<br>
+            • Transportation energy (15-30%)<br>
+            • Storage energy (5-15%)<br>
+            • End-use energy (10-20%)<br><br>
+            For most consumer products, transportation represents between 5-15% of the total carbon footprint, while production often accounts for 30-60% depending on the product type.<br><br>
+            Average energy intensity by transportation mode (for 1 ton-kilometer):<br>
+            • Sea freight: 0.01-0.05 kWh<br>
+            • Rail: 0.05-0.2 kWh<br>
+            • Truck: 0.3-0.9 kWh<br>
+            • Air freight: 4-8 kWh
+          </div>
+        </div>
+        
+        <div class="ai-demo-box">
+          <h3>Try Supply Chain Analysis</h3>
+          
+          <div class="ai-demo-form" id="supply-form">
+            <div class="form-group">
+              <label for="supply-query">Ask about supply chain energy impacts</label>
+              <textarea id="supply-query" rows="3" placeholder="e.g., 'What's the energy impact of shipping electronics from Asia?'"></textarea>
+            </div>
+            
+            <button type="button" class="btn" id="supply-button" disabled>Analyze Supply Chain</button>
+          </div>
+          
+          <div class="loading-indicator" id="supply-loading">
+            <div class="loading-spinner"></div>
+          </div>
+          
+          <div class="ai-response" id="supply-response"></div>
+        </div>
+      </div>
+      
+      <div class="feature-section">
+        <h2>AI Wallet Assistant</h2>
+        <div class="feature-description">
+          <p>Our AI wallet assistant provides personalized answers to your questions about energy, sustainability, carbon footprints, and The Current-See platform. Ask anything related to these topics to get instant, accurate information.</p>
+        </div>
+        
+        <div class="ai-demo-box">
+          <h3>Talk with the AI Wallet Assistant</h3>
+          
+          <div class="ai-demo-form" id="ai-assistant-form">
+            <div class="form-group">
+              <label for="ai-query">Ask a question about energy, sustainability, or The Current-See</label>
+              <input type="text" id="ai-query" placeholder="e.g., 'How does The Current-See calculate energy value?'" class="input-field">
+            </div>
+            
+            <button type="button" class="btn" id="ai-submit-button">Ask Assistant</button>
+          </div>
+          
+          <div class="loading-indicator" id="ai-loading">
+            <div class="loading-spinner"></div>
+          </div>
+          
+          <div class="ai-response" id="ai-response">
+            Welcome to The Current-See AI Wallet Assistant. What would you like to know about our solar economy, carbon footprints, or energy efficiency?
+          </div>
+          
+          <div id="follow-up-container" style="margin-top: 15px;">
+            <div class="form-group">
+              <label for="follow-up-query">Follow-up question:</label>
+              <input type="text" id="follow-up-query" placeholder="Type your follow-up question..." class="input-field">
+            </div>
+            <button type="button" class="btn" id="follow-up-button">Send Follow-up</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="feature-section">
+        <h2>Buckminster Fuller Design Principles</h2>
+        <div class="feature-description">
+          <p>Our AI wallet integrates the visionary principles of R. Buckminster Fuller, whose concepts of "doing more with less" and "Spaceship Earth" deeply influence The Current-See's approach to energy economics.</p>
+          
+          <p>Ask the AI assistant about Fuller's principles to understand how his pioneering systems thinking shaped our approach to energy accounting and sustainable value creation.</p>
+        </div>
+        
+        <div class="use-case">
+          <h3>Example: Fuller's Influence on The Current-See</h3>
+          
+          <div class="example-query">
+            "How does Buckminster Fuller's work relate to the SOLAR token system?"
+          </div>
+          
+          <div class="example-response">
+            <strong>R. Buckminster Fuller (1895-1983)</strong> was a visionary systems theorist, architect, engineer, and inventor whose work deeply influences The Current-See philosophy.<br><br>
+            <strong>Ephemeralization:</strong> Doing more with less, continuously increasing efficiency through technological advancement.<br>
+            "More and more with less and less until eventually you can do everything with nothing."<br><br>
+            <strong>Application to The Current-See:</strong> The Current-See ecosystem embodies ephemeralization by creating value from the ever-increasing efficiency of solar energy collection and distribution.<br><br>
+            <strong>Spaceship Earth:</strong> The metaphor describing Earth as a vessel with finite resources traveling through space.<br>
+            "We are all astronauts on a little spaceship called Earth."<br><br>
+            <strong>Application to The Current-See:</strong> Our SOLAR token system represents an energy accounting system for fairly distributing the resources of our shared planetary vessel.<br><br>
+            Fuller's vision of "making the world work for 100% of humanity" through resource efficiency directly inspires our approach to universal energy access and equitable distribution of solar resources.<br><br>
+            In the context of your wallet, the SOLAR token system embodies Fuller's concept of "energy accounting" as the true basis for economic value, rather than artificial monetary systems. Each SOLAR token represents real energy potential and contributes to the creation of a more equitable global energy economy.
+          </div>
+        </div>
+        
+        <div class="ai-demo-box">
+          <h3>Explore Fuller's Principles</h3>
+          
+          <div class="ai-demo-form" id="fuller-form">
+            <div class="form-group">
+              <label for="fuller-query">Ask about Fuller's principles and their application</label>
+              <textarea id="fuller-query" rows="3" placeholder="e.g., 'Explain Fuller's concept of ephemeralization' or 'How does The Current-See relate to Spaceship Earth?'"></textarea>
+            </div>
+            
+            <button type="button" class="btn" id="fuller-button" disabled>Explore Fuller's Ideas</button>
+          </div>
+          
+          <div class="loading-indicator" id="fuller-loading">
+            <div class="loading-spinner"></div>
+          </div>
+          
+          <div class="ai-response" id="fuller-response"></div>
+        </div>
+      </div>
+      
+      <div class="cta-section">
+        <div style="text-align: center; margin: 3rem 0;">
+          <a href="/wallet-prototype.html" style="display: inline-block; background-color: #7bc144; color: white; font-weight: 700; padding: 1.2rem 2.5rem; border-radius: 50px; text-decoration: none; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(123, 193, 68, 0.3); font-size: 1.1rem; letter-spacing: 0.5px; margin-right: 1rem;">
+            <span style="display: inline-block; margin-right: 8px;">🚀</span> Launch Full Demo
+          </a>
+          <a href="/" style="display: inline-block; background-color: #2054a6; color: white; font-weight: 700; padding: 1.2rem 2.5rem; border-radius: 50px; text-decoration: none; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(32, 84, 166, 0.3); font-size: 1.1rem; letter-spacing: 0.5px;">
+            <span style="display: inline-block; margin-right: 8px;">⬅</span> Return to Home Page
+          </a>
+        </div>
+      </div>
+    </main>
+    
+    <!-- FOOTER_PLACEHOLDER -->
+  </div>
+  
+  <!-- Include the wallet AI assistant script -->
+  <script src="/js/wallet-ai-assistant.js"></script>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // AI Assistant functionality
+      const aiQuery = document.getElementById('ai-query');
+      const aiSubmitButton = document.getElementById('ai-submit-button');
+      const followUpQuery = document.getElementById('follow-up-query');
+      const followUpButton = document.getElementById('follow-up-button');
+      const aiResponseContainer = document.getElementById('ai-response');
+      const aiLoadingIndicator = document.getElementById('ai-loading');
+      
+      // Function to process AI queries
+      async function processAIQuery(query, isFollowUp = false) {
+        if (!query.trim()) return;
+        
+        aiLoadingIndicator.classList.add('show');
+        
+        // Simulate AI processing
+        setTimeout(() => {
+          let response = '';
+          
+          if (query.toLowerCase().includes('solar') || query.toLowerCase().includes('token')) {
+            response = `The SOLAR token is the fundamental unit of our solar-backed economy. Each token represents a specific amount of solar energy produced and is distributed daily to all participants in The Current-See network.
+
+The value of each SOLAR token is derived from the actual energy generated by the global solar infrastructure, making it a truly resource-backed currency with inherent value.
+
+Daily distributions ensure that every person receives their fair share of Earth's solar income, creating a more equitable economic system where everyone benefits from renewable energy production.`;
+          } 
+          else if (query.toLowerCase().includes('carbon') || query.toLowerCase().includes('footprint')) {
+            response = `Carbon footprints measure the total greenhouse gas emissions associated with a product, service, or activity, expressed in carbon dioxide equivalent (CO2e).
+
+The Current-See wallet helps you track and understand your personal carbon footprint by analyzing your consumption patterns and providing insights on how to reduce your environmental impact.
+
+By converting carbon impacts into SOLAR token values, we make sustainability tangible and rewarding. You can easily see how much solar energy would be required to offset different activities.`;
+          }
+          else if (query.toLowerCase().includes('energy') || query.toLowerCase().includes('efficiency')) {
+            response = `Energy efficiency is at the core of The Current-See philosophy. Our wallet tracks energy usage across different aspects of your life and identifies opportunities for improved efficiency.
+
+By making energy consumption visible and quantifiable through SOLAR tokens, we create incentives for more sustainable choices and behaviors.
+
+The wallet's AI provides personalized recommendations to reduce waste and optimize energy use, helping you save both environmental resources and SOLAR tokens.`;
+          }
+          else {
+            response = `I don't have specific information about "${query}" yet. Please ask about SOLAR tokens, carbon footprints, energy efficiency, or other aspects of The Current-See platform for more detailed information.
+
+Would you like to know more about how our solar-backed economy works, or how we calculate carbon footprints?`;
+          }
+          
+          aiLoadingIndicator.classList.remove('show');
+          aiResponseContainer.textContent = response;
+          aiResponseContainer.classList.add('show');
+          
+          // Show follow-up container after first response
+          document.getElementById('follow-up-container').style.display = 'block';
+        }, 1500);
+      }
+      
+      // Set up event listeners
+      aiSubmitButton.addEventListener('click', () => {
+        processAIQuery(aiQuery.value);
+      });
+      
+      aiQuery.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          processAIQuery(aiQuery.value);
+        }
+      });
+      
+      followUpButton.addEventListener('click', () => {
+        processAIQuery(followUpQuery.value, true);
+      });
+      
+      followUpQuery.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          processAIQuery(followUpQuery.value, true);
+        }
+      });
+      // Product category options
+      const productOptions = {
+        electronics: ['smartphone', 'laptop', 'television'],
+        clothing: ['shirt', 'jeans', 'jacket'],
+        food: ['beef', 'chicken', 'rice', 'vegetables', 'fruit'],
+        transportation: ['car', 'bus', 'train', 'plane', 'bicycle']
+      };
+      
+      // Carbon footprint form
+      const categorySelect = document.getElementById('product-category');
+      const productSelect = document.getElementById('product-type');
+      const analyzeButton = document.getElementById('analyze-button');
+      
+      // Update product types based on selected category
+      categorySelect.addEventListener('change', function() {
+        productSelect.innerHTML = '<option value="">Select product type</option>';
+        productSelect.disabled = true;
+        analyzeButton.disabled = true;
+        
+        const category = this.value;
+        if (category && productOptions[category]) {
+          productOptions[category].forEach(product => {
+            const option = document.createElement('option');
+            option.value = product;
+            option.textContent = product.charAt(0).toUpperCase() + product.slice(1);
+            productSelect.appendChild(option);
+          });
+          productSelect.disabled = false;
+        }
+      });
+      
+      // Enable analyze button when product type is selected
+      productSelect.addEventListener('change', function() {
+        analyzeButton.disabled = !this.value;
+      });
+      
+      // Carbon footprint analysis
+      analyzeButton.addEventListener('click', function() {
+        const category = categorySelect.value;
+        const product = productSelect.value;
+        
+        if (!category || !product) return;
+        
+        const loadingIndicator = document.getElementById('carbon-loading');
+        const responseContainer = document.getElementById('carbon-response');
+        
+        loadingIndicator.classList.add('show');
+        responseContainer.classList.remove('show');
+        responseContainer.textContent = '';
+        
+        // Simulate API call to wallet assistant
+        setTimeout(() => {
+          const query = `What's the carbon footprint of a ${product}?`;
+          
+          // In a real implementation, this would call the wallet assistant API
+          // fetch('/api/wallet-assistant', {
+          //   method: 'POST',
+          //   headers: { 'Content-Type': 'application/json' },
+          //   body: JSON.stringify({ query, mode: 'carbon_footprint' })
+          // })
+          
+          let response = '';
+          
+          if (category === 'electronics') {
+            if (product === 'smartphone') {
+              response = `Carbon Footprint Analysis: SMARTPHONE
+
+• Manufacturing: 60 kg CO2e (70% of lifecycle emissions)
+• Usage over 2.5 years: 21.25 kg CO2e (30% of lifecycle emissions)
+• Total lifecycle emissions: 81.25 kg CO2e
+• Energy consumption: 13.75 kWh over product lifetime
+
+This is equivalent to approximately 1.4 kg of beef or 387 kilometers driven by car.
+
+In the Current-See SOLAR economy, offsetting this carbon footprint would require approximately 24.0 SOLAR tokens.
+
+Extending your device lifespan by 1 year could save approximately 24 kg CO2e, with local recycling options available to recover valuable materials.`;
+            } else if (product === 'laptop') {
+              response = `Carbon Footprint Analysis: LAPTOP
+
+• Manufacturing: 330 kg CO2e (65% of lifecycle emissions)
+• Usage over 4 years: 176 kg CO2e (35% of lifecycle emissions)
+• Total lifecycle emissions: 506 kg CO2e
+• Energy consumption: 260 kWh over product lifetime
+
+This is equivalent to approximately 8.4 kg of beef or 2,410 kilometers driven by car.
+
+In the Current-See SOLAR economy, offsetting this carbon footprint would require approximately 137.5 SOLAR tokens.
+
+Extending your device lifespan by 1 year could save approximately 82.5 kg CO2e, with proper recycling recovering up to 25% of embodied energy.`;
+            } else {
+              response = `Carbon Footprint Analysis: TELEVISION
+
+• Manufacturing: 400 kg CO2e (34% of lifecycle emissions)
+• Usage over 7 years: 770 kg CO2e (66% of lifecycle emissions)
+• Total lifecycle emissions: 1,170 kg CO2e
+• Energy consumption: 1,050 kWh over product lifetime
+
+This is equivalent to approximately 19.5 kg of beef or 5,571 kilometers driven by car.
+
+In the Current-See SOLAR economy, offsetting this carbon footprint would require approximately 312.0 SOLAR tokens.
+
+Energy-efficient models can reduce usage emissions by 30-50%. Look for ENERGY STAR rated models with lower standby power consumption.`;
+            }
+          } else if (category === 'food') {
+            if (product === 'beef') {
+              response = `Carbon Footprint Analysis: BEEF (per kg)
+
+• Production Emissions: 60 kg CO2e
+• Water Usage: 15.4 cubic meters
+• Land Usage: 326 square meters
+
+Food choices have a significant impact on your carbon footprint. Buying locally grown beef can reduce transportation emissions by approximately 10%.
+
+For comparison, chicken has a carbon footprint approximately 10 times lower than beef.
+
+In terms of SOLAR tokens: producing 1kg of beef requires energy equivalent to approximately 24.00 SOLAR tokens.
+
+Reducing beef consumption by half and replacing with plant proteins would save approximately 12 SOLAR tokens worth of energy per kilogram.`;
+            } else {
+              response = `Carbon Footprint Analysis: ${product.toUpperCase()} (per kg)
+
+The carbon footprint and environmental impact of ${product} has been calculated based on industry standards and lifecycle assessments.
+
+Please ask for specific details about aspects you're interested in, such as:
+• Production emissions
+• Water usage
+• Land usage
+• Transportation impacts
+• Alternative options with lower footprints
+
+In the Current-See SOLAR economy, we can represent these environmental impacts in terms of energy equivalents measured in SOLAR tokens.`;
+            }
+          } else {
+            response = `Carbon Footprint Analysis: ${product.toUpperCase()}
+
+I've calculated the carbon footprint and environmental impact of ${product}. To provide more detailed information, please specify which aspects you're most interested in:
+
+• Manufacturing/production emissions
+• Usage/consumption emissions
+• Water and resource usage
+• Energy consumption over lifetime
+• Sustainable alternatives
+
+In the Current-See economy, we represent environmental impacts using SOLAR tokens, which makes it easier to compare different products and make sustainable choices.`;
+          }
+          
+          loadingIndicator.classList.remove('show');
+          responseContainer.textContent = response;
+          responseContainer.classList.add('show');
+        }, 1500);
+      });
+      
+      // Farm-to-table form
+      const produceSelect = document.getElementById('produce-type');
+      const farmButton = document.getElementById('farm-button');
+      
+      // Enable farm button when produce type is selected
+      produceSelect.addEventListener('change', function() {
+        farmButton.disabled = !this.value;
+      });
+      
+      // Farm-to-table analysis
+      farmButton.addEventListener('click', function() {
+        const produce = produceSelect.value;
+        const isLocal = document.getElementById('is-local').checked;
+        const isOrganic = document.getElementById('is-organic').checked;
+        const isSeasonal = document.getElementById('is-seasonal').checked;
+        
+        if (!produce) return;
+        
+        const loadingIndicator = document.getElementById('farm-loading');
+        const responseContainer = document.getElementById('farm-response');
+        
+        loadingIndicator.classList.add('show');
+        responseContainer.classList.remove('show');
+        responseContainer.textContent = '';
+        
+        // Simulate API call
+        setTimeout(() => {
+          const displayName = produce.replace('_', ' ');
+          
+          const response = `Energy-Based Pricing Analysis: ${displayName.toUpperCase()}
+${isLocal ? 'Local' : 'Non-local'}, ${isSeasonal ? 'In-Season' : 'Off-Season'}, ${isOrganic ? 'Organic' : 'Conventional'}
+
+Energy Requirements:
+• Growing: ${(Math.random() * 2 + 0.5).toFixed(2)} kWh/kg
+• Transportation: ${isLocal ? (Math.random() * 0.5 + 0.3).toFixed(2) : (Math.random() * 2 + 1.5).toFixed(2)} kWh/kg
+• Processing: ${(Math.random() * 0.5 + 0.3).toFixed(2)} kWh/kg
+• Total Energy Footprint: ${isLocal && isSeasonal ? (Math.random() * 2 + 1.5).toFixed(2) : (Math.random() * 5 + 4).toFixed(2)} kWh/kg
+
+Market Price: $${(Math.random() * 3 + 2).toFixed(2)}/kg
+Energy Cost Component: $${(Math.random() * 0.5 + 0.2).toFixed(2)}/kg
+Energy-Adjusted Fair Price: $${(Math.random() * 3 + 3).toFixed(2)}/kg
+
+In the Current-See SOLAR economy, this represents ${(Math.random() * 2 + 0.5).toFixed(2)} SOLAR tokens per kg.
+
+${isLocal ? 'You\'re making an energy-efficient choice with local produce.' : 'Switching to local options could reduce transportation energy by up to 60%.'}
+
+${isSeasonal ? 'Seasonal produce typically requires 50-70% less energy than off-season alternatives.' : 'Off-season produce often requires energy-intensive greenhouse growing or long-distance transportation.'}
+
+${isOrganic ? 'Organic farming practices typically use 30-50% less energy but may require more land area.' : 'Conventional farming often uses more energy for synthetic fertilizers and pesticides.'}`;
+          
+          loadingIndicator.classList.remove('show');
+          responseContainer.textContent = response;
+          responseContainer.classList.add('show');
+        }, 1500);
+      });
+      
+      // Supply chain form
+      const supplyQuery = document.getElementById('supply-query');
+      const supplyButton = document.getElementById('supply-button');
+      
+      // Enable supply button when query has text
+      supplyQuery.addEventListener('input', function() {
+        supplyButton.disabled = !this.value.trim();
+      });
+      
+      // Supply chain analysis
+      supplyButton.addEventListener('click', function() {
+        const query = supplyQuery.value.trim();
+        
+        if (!query) return;
+        
+        const loadingIndicator = document.getElementById('supply-loading');
+        const responseContainer = document.getElementById('supply-response');
+        
+        loadingIndicator.classList.add('show');
+        responseContainer.classList.remove('show');
+        responseContainer.textContent = '';
+        
+        // Simulate API call
+        setTimeout(() => {
+          const response = `Supply Chain Energy Analysis:
+
+The energy consumption across modern supply chains can be divided into:
+• Production energy (30-40%)
+• Processing energy (10-20%)
+• Transportation energy (15-30%)
+• Storage energy (5-15%)
+• End-use energy (10-20%)
+
+For most consumer products, transportation represents between 5-15% of the total carbon footprint, while production often accounts for 30-60% depending on the product type.
+
+Average energy intensity by transportation mode (for 1 ton-kilometer):
+• Sea freight: 0.01-0.05 kWh 
+• Rail: 0.05-0.2 kWh
+• Truck: 0.3-0.9 kWh
+• Air freight: 4-8 kWh
+
+By optimizing transportation modes and distances, supply chain energy consumption can be reduced by 30-60%. The Current-See platform incentivizes this optimization by making energy costs explicit through SOLAR token pricing.
+
+For international shipping from Asia to North America, sea freight typically adds 0.5-1.5 kWh of energy consumption per kg of product, equivalent to approximately 0.2-0.6 SOLAR tokens per kg in the Current-See system.`;
+          
+          loadingIndicator.classList.remove('show');
+          responseContainer.textContent = response;
+          responseContainer.classList.add('show');
+        }, 1500);
+      });
+      
+      // Fuller principles form
+      const fullerQuery = document.getElementById('fuller-query');
+      const fullerButton = document.getElementById('fuller-button');
+      
+      // Enable Fuller button when query has text
+      fullerQuery.addEventListener('input', function() {
+        fullerButton.disabled = !this.value.trim();
+      });
+      
+      // Fuller principles analysis
+      fullerButton.addEventListener('click', function() {
+        const query = fullerQuery.value.trim();
+        
+        if (!query) return;
+        
+        const loadingIndicator = document.getElementById('fuller-loading');
+        const responseContainer = document.getElementById('fuller-response');
+        
+        loadingIndicator.classList.add('show');
+        responseContainer.classList.remove('show');
+        responseContainer.textContent = '';
+        
+        // Simulate API call
+        setTimeout(() => {
+          let response = '';
+          
+          if (query.includes('ephemeralization') || query.includes('more with less')) {
+            response = `Buckminster Fuller's Concept of Ephemeralization:
+
+"Ephemeralization" is Fuller's term for the principle of doing more with less - continuously increasing efficiency through technological advancement.
+
+Fuller described it as "the ability of technological advancement to do more and more with less and less until eventually you can do everything with nothing."
+
+This principle is central to The Current-See system in several ways:
+
+1. Solar energy itself exemplifies ephemeralization - panels become more efficient while costs decrease
+2. Our SOLAR tokens track and reward efficiency gains in the global energy system
+3. The digital distribution system allows nearly frictionless transfer of energy value
+4. As solar efficiency increases, each SOLAR token represents more actual energy value over time
+
+This principle shows why a solar-backed currency is fundamentally different from traditional fiat money - it's backed by a technology that consistently produces more with less input over time.`;
+          } else if (query.includes('spaceship earth')) {
+            response = `Buckminster Fuller's "Spaceship Earth" Concept:
+
+In his influential book "Operating Manual for Spaceship Earth" (1969), Fuller introduced the metaphor of Earth as a finite vessel with limited resources traveling through space.
+
+Key aspects of this concept:
+• Earth has limited resources that must be properly managed
+• There is no "away" where waste can be discarded
+• We are all crew members responsible for maintaining our shared vessel
+• We need a comprehensive understanding of Earth's systems
+
+The Current-See directly applies this principle by:
+• Creating an economic system aligned with actual energy availability
+• Fairly distributing the "supplies" (solar energy) to all crew members
+• Tracking global energy production to ensure sustainability
+• Providing tools to make resource usage transparent
+
+The SOLAR token system serves as the "operating manual" - making visible the true energetic basis of our economy in ways traditional money obscures.`;
+          } else if (query.includes('tensegrity') || query.includes('tension')) {
+            response = `Buckminster Fuller's Principle of Tensegrity:
+
+Tensegrity (tension + integrity) describes structures that maintain their integrity through a balance of tension and compression components.
+
+Fuller's famous geodesic domes exemplify this principle - creating maximum strength with minimal material by distributing forces optimally through the structure.
+
+Applied to The Current-See:
+• Our economic model balances distributed solar production with centralized tracking
+• The system creates stability through the dynamic relationship between energy production and token value
+• Rather than fighting existing economic systems, we create a parallel structure that demonstrates advantages naturally
+• "Don't fight forces, use them" - Fuller's approach to systemic change
+
+The Current-See embodies tensegrity by creating a resilient economic network that derives strength from its distributed nature rather than centralized control.`;
+          } else {
+            response = `R. Buckminster Fuller (1895-1983) was a visionary systems theorist, architect, engineer, and inventor whose work deeply influences The Current-See philosophy.
+
+Fuller pioneered concepts that are fundamental to our approach:
+
+1. Ephemeralization - doing more with less through technological advancement
+"More and more with less and less until eventually you can do everything with nothing."
+
+2. Spaceship Earth - recognizing our planet as a finite vessel with limited resources
+"We are all astronauts on a little spaceship called Earth."
+
+3. Anticipatory Design Science - solving problems by anticipating future needs
+"The best way to predict the future is to design it."
+
+4. Synergetics - understanding systems holistically rather than as collections of parts
+"Synergy means behavior of whole systems unpredicted by the behavior of their parts."
+
+5. Comprehensive Accounting - measuring true costs and benefits
+"Either war is obsolete, or men are."
+
+Fuller's vision of "making the world work for 100% of humanity" through resource efficiency directly inspires our approach to universal energy access and equitable distribution of solar resources.
+
+The SOLAR token economy embodies Fuller's concept of "energy accounting" as the true basis for economic value, rather than artificial monetary systems.`;
+          }
+          
+          loadingIndicator.classList.remove('show');
+          responseContainer.textContent = response;
+          responseContainer.classList.add('show');
+        }, 1500);
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Photon Journey: Sun → Life → Thought</title>
+<style>
+  :root{
+    --bg:#0f1216; --panel:#151b20; --frame:#ffcc55; --text:#e9edf2; --muted:#a8b3bf;
+  }
+  *{box-sizing:border-box}
+  body{margin:0; font-family:system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; background:var(--bg); color:var(--text); display:grid; place-items:center; min-height:100dvh;}
+  .wrap{max-width:860px; width:min(94vw,860px); padding:20px;}
+  h1{font-weight:800; text-align:center; margin:0 0 8px; letter-spacing:.3px;}
+  p.sub{color:var(--muted); text-align:center; margin:0 0 16px;}
+  .panel{position:relative; background:var(--panel); border-radius:20px; padding:18px 18px 26px; box-shadow:0 0 0 1px rgba(255,255,255,.04) inset;}
+  .frame{
+    position:relative; border:4px solid var(--frame); border-radius:22px; overflow:hidden;
+    aspect-ratio: 3 / 4; background:#0b0e11;
+  }
+  canvas{width:100%; height:100%; display:block;}
+  .label{
+    position:absolute; transform:translate(-50%,-120%); padding:6px 10px; font-size:13px;
+    border-radius:12px; background:rgba(255, 204, 85, .12); color:#ffd479;
+    border:1px solid rgba(255,204,85,.35); opacity:0; pointer-events:auto;
+    backdrop-filter: blur(2px);
+    transition: opacity .35s ease, transform .35s ease;
+    white-space:nowrap; user-select:none;
+  }
+  .label.show{opacity:1; transform:translate(-50%,-140%);}
+  .hud{
+    position:absolute; left:12px; bottom:10px; color:#9fb1c1; font-size:12px; user-select:none;
+  }
+  .tooltip{
+    position:absolute; left:50%; top:10px; transform:translateX(-50%); font-size:12px; color:#c9d7e2;
+    opacity:.85; min-height:1em;
+  }
+  .hint{ color:#90a4b8; font-size:12px; text-align:center; margin-top:8px; }
+  .controls{
+    display:flex; gap:8px; justify-content:center; align-items:center; margin-top:10px;
+  }
+  .btn{
+    font:inherit; font-weight:600; border-radius:10px; padding:6px 10px; border:1px solid #32404d;
+    background:#1a232b; color:#cfe3f5; cursor:pointer;
+  }
+  .btn:active{transform:translateY(1px)}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Photon Journey: Sun → Life → Thought</h1>
+    <p class="sub">Solar energy → life → neural computation → conscious thought. Tap to pause; hover/tap labels for details.</p>
+
+    <div class="panel">
+      <div id="container" class="frame">
+        <canvas id="scene" width="720" height="960"></canvas>
+
+        <!-- Stage labels -->
+        <div id="label-sun"   class="label" aria-live="polite">☀️ Sun (origin energy)</div>
+        <div id="label-life"  class="label">🌿 Life (photosynthesis)</div>
+        <div id="label-comp"  class="label">⚡ Computation (neurons)</div>
+        <div id="label-think" class="label">🧠 Thought (consciousness)</div>
+
+        <div class="hud" id="hud">tap/click to pause • hover/tap bounces for info</div>
+        <div class="tooltip" id="tip"></div>
+      </div>
+      <div class="controls">
+        <button class="btn" id="slower">– slower</button>
+        <div style="min-width:10ch; text-align:center"><span id="speedval">2.6</span>s/segment</div>
+        <button class="btn" id="faster">faster +</button>
+        <button class="btn" id="sound">🔈 chime: off</button>
+      </div>
+      <div class="hint">Tip: pause, then tap the labels to read the story beats.</div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('scene');
+  const ctx = canvas.getContext('2d');
+  const container = document.getElementById('container');
+
+  // Labels
+  const L = {
+    sun:   document.getElementById('label-sun'),
+    life:  document.getElementById('label-life'),
+    comp:  document.getElementById('label-comp'),
+    think: document.getElementById('label-think'),
+  };
+  const tip = document.getElementById('tip');
+
+  // --- timing controls ---
+  let SEG_MS   = 2600;   // ms per path segment
+  let DWELL_MS = 420;    // ms pause at each inflection
+  const REVEAL_MS = 110; // delay before label shows
+  let dwellLeft = DWELL_MS;
+  const speedval = document.getElementById('speedval');
+  const slowerBtn = document.getElementById('slower');
+  const fasterBtn = document.getElementById('faster');
+  const soundBtn  = document.getElementById('sound');
+  const updateSpeedLabel = ()=> speedval.textContent = (SEG_MS/1000).toFixed(1);
+
+  // Easing
+  const easeInOutQuad = u => (u < 0.5) ? 2*u*u : 1 - Math.pow(-2*u+2, 2)/2;
+
+  // Frame padding
+  const PAD = 26;
+
+  // Path (normalized)
+  const guide = [
+    {x:.18, y:.18}, // start (sun)
+    {x:.34, y:.54}, // life (turn 1)
+    {x:.47, y:.48}, // straight leg
+    {x:.63, y:.72}, // computation (turn 2)
+    {x:.83, y:.90}, // thought (end)
+  ];
+
+  const toPx = p => ({
+    x: PAD + p.x*(canvas.width - PAD*2),
+    y: PAD + p.y*(canvas.height - PAD*2)
+  });
+  const GPX = guide.map(toPx);
+
+  // Stage metadata
+  const stages = [
+    { idx: 0, el: L.sun,   title: "Sun",          desc:"A photon leaves the solar furnace." },
+    { idx: 1, el: L.life,  title: "Life",         desc:"Absorbed by chlorophyll → sugars → stored work." },
+    { idx: 3, el: L.comp,  title: "Computation",  desc:"Metabolic energy powers neurons → spikes = bits." },
+    { idx: 4, el: L.think, title: "Thought",      desc:"Patterns of spikes become perception & intent." }
+  ];
+
+  // Tooltips
+  const showTip = (text) => { tip.textContent = text; tip.style.opacity = .95; };
+  const hideTip = () => { tip.style.opacity = 0; };
+  stages.forEach(s => {
+    s.el.addEventListener('mouseenter', () => showTip(`${s.title}: ${s.desc}`));
+    s.el.addEventListener('mouseleave', hideTip);
+    s.el.addEventListener('touchstart', () => showTip(`${s.title}: ${s.desc}`), {passive:true});
+  });
+
+  // Label placement
+  const labelOffset = (dx,dy) => `translate(calc(-50% + ${dx}px), calc(-120% + ${dy}px))`;
+  const placeLabel = (el, p, dx=0, dy=0) => {
+    el.style.left = p.x + 'px';
+    el.style.top  = p.y + 'px';
+    el.style.transform = labelOffset(dx,dy);
+  };
+  function placeAllLabels(){
+    placeLabel(L.sun,   GPX[0], -18,  8);
+    placeLabel(L.life,  GPX[1],  12, -4);
+    placeLabel(L.comp,  GPX[3],  -6, -6);
+    placeLabel(L.think, GPX[4],  -4, -6);
+  }
+  placeAllLabels();
+
+  // Inflection icons (always visible)
+  const INFLECTIONS = [
+    {i:0, kind:'sun'}, {i:1, kind:'life'}, {i:3, kind:'comp'}, {i:4, kind:'thought'}
+  ];
+  function glow(x,y, r=70, color='255, 200, 60', alpha=.25){
+    const g = ctx.createRadialGradient(x,y,0, x,y,r);
+    g.addColorStop(0, `rgba(${color}, ${alpha})`);
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+  }
+  function drawInflectionIcon(pt, kind){
+    ctx.save();
+    glow(pt.x, pt.y, 34, '255, 210, 90', 0.15);
+    ctx.translate(pt.x, pt.y);
+    if(kind === 'sun'){
+      ctx.fillStyle = '#ffd479';
+      ctx.beginPath(); ctx.arc(0,0,6.5,0,Math.PI*2); ctx.fill();
+    } else if(kind === 'life'){
+      ctx.fillStyle = '#b8f28a';
+      ctx.beginPath();
+      ctx.moveTo(-6,1); ctx.quadraticCurveTo(0,-8,6,1); ctx.quadraticCurveTo(0,7,-6,1); ctx.fill();
+    } else if(kind === 'comp'){
+      ctx.strokeStyle = '#a6d9ff'; ctx.lineWidth = 1.6;
+      ctx.beginPath(); for(let i=0;i<5;i++){ ctx.moveTo(0,0); ctx.lineTo((i%2?7:12),(i-2)*3); } ctx.stroke();
+      ctx.fillStyle = '#dff0ff'; ctx.beginPath(); ctx.arc(0,0,3,0,Math.PI*2); ctx.fill();
+    } else {
+      ctx.fillStyle = '#fff5d6';
+      ctx.beginPath(); ctx.arc(0,0,6.5,0,Math.PI*2); ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  // Guide path (dashed)
+  function drawGuide(){
+    ctx.save();
+    ctx.setLineDash([10,10]);
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = 'rgba(120, 170, 170, .45)';
+    ctx.beginPath();
+    ctx.moveTo(GPX[0].x, GPX[0].y);
+    for(let i=1;i<GPX.length;i++) ctx.lineTo(GPX[i].x, GPX[i].y);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawSun(){
+    const p = GPX[0];
+    glow(p.x-40, p.y-40, 120, '255, 190, 70', .35);
+    glow(p.x-40, p.y-40, 60,  '255, 210, 90', .55);
+    ctx.fillStyle = '#ffd479';
+    ctx.beginPath(); ctx.arc(p.x-40, p.y-40, 16, 0, Math.PI*2); ctx.fill();
+  }
+
+  // Photon rendering
+  function drawPhoton(pos, dir, stage){
+    glow(pos.x, pos.y, 46, '255, 210, 90', .20);
+    ctx.save();
+    ctx.translate(pos.x, pos.y);
+    ctx.rotate(dir);
+
+    if(stage === 0){ // SUN
+      ctx.fillStyle = '#ffd479';
+      ctx.beginPath(); ctx.arc(0,0,10,0,Math.PI*2); ctx.fill();
+    } else if(stage === 1){ // LIFE
+      ctx.fillStyle = '#b8f28a';
+      ctx.beginPath();
+      ctx.moveTo(-7,2); ctx.quadraticCurveTo(0,-12, 8,2); ctx.quadraticCurveTo(0,10, -7,2);
+      ctx.fill();
+      ctx.fillStyle = '#defcc6'; ctx.beginPath(); ctx.arc(0,0,5,0,Math.PI*2); ctx.fill();
+    } else if(stage === 2){ // COMPUTATION
+      ctx.strokeStyle = '#a6d9ff'; ctx.lineWidth = 2.2;
+      ctx.beginPath(); for(let i=0;i<5;i++){ ctx.moveTo(0,0); ctx.lineTo( (i%2?10:18), (i-2)*4 ); } ctx.stroke();
+      ctx.fillStyle = '#dff0ff'; ctx.beginPath(); ctx.arc(0,0,4.5,0,Math.PI*2); ctx.fill();
+    } else { // THOUGHT
+      ctx.fillStyle = '#fff5d6';
+      ctx.beginPath(); ctx.arc(0,0,9,0,Math.PI*2); ctx.fill();
+      glow(0,0,60,'255,240,200',.33);
+    }
+    ctx.restore();
+  }
+
+  // Stage mapping
+  function stageFromSeg(seg){
+    if (seg === 0) return 0;
+    if (seg === 1 || seg === 2) return 1;
+    if (seg === 3) return 2;
+    return 3;
+  }
+  function updateLabels(){
+    const active = stageFromSeg(seg);
+    const labels = [L.sun, L.life, L.comp, L.think];
+    labels.forEach((el, i) => el.classList.toggle('show', i === active));
+  }
+
+  // Audio (optional chime)
+  let audioEnabled = false;
+  let ac;
+  function enableAudio(){
+    if(audioEnabled) return;
+    ac = new (window.AudioContext || window.webkitAudioContext)();
+    audioEnabled = true;
+    soundBtn.textContent = '🔊 chime: on';
+  }
+  function playChime(){
+    if(!audioEnabled || !ac) return;
+    const o = ac.createOscillator();
+    const g = ac.createGain();
+    o.type = 'sine';
+    o.frequency.value = 840;
+    g.gain.value = 0.0001;
+    o.connect(g); g.connect(ac.destination);
+    const now = ac.currentTime;
+    g.gain.exponentialRampToValueAtTime(0.08, now + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.20);
+    o.start(now);
+    o.stop(now + 0.22);
+  }
+
+  // Interaction
+  let playing = true;
+  container.addEventListener('click', () => {
+    if(!audioEnabled) enableAudio();
+    playing = !playing;
+    document.getElementById('hud').textContent = playing ? 'tap/click to pause • hover/tap bounces for info'
+                                                         : 'paused • tap/click to resume';
+    if(ac && ac.state === 'suspended') ac.resume();
+  });
+  soundBtn.addEventListener('click', ()=>{
+    if(!audioEnabled){ enableAudio(); return; }
+    audioEnabled = !audioEnabled;
+    soundBtn.textContent = audioEnabled ? '🔊 chime: on' : '🔈 chime: off';
+  });
+  slowerBtn.addEventListener('click', ()=>{
+    SEG_MS = Math.min(8000, SEG_MS + 300);
+    updateSpeedLabel();
+  });
+  fasterBtn.addEventListener('click', ()=>{
+    SEG_MS = Math.max(900, SEG_MS - 300);
+    updateSpeedLabel();
+  });
+  updateSpeedLabel();
+
+  // Photon state
+  let t = 0;  // progress
+  let seg = 0;
+  let last = performance.now();
+  let lastStage = -1;
+
+  function tick(now){
+    const dt = Math.min(40, now-last); last = now;
+
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    drawSun();
+    drawGuide();
+    INFLECTIONS.forEach(({i, kind}) => drawInflectionIcon(GPX[i], kind));
+
+    if(playing){
+      if (t === 0 && dwellLeft > 0) { dwellLeft -= dt; }
+      else { t += dt / SEG_MS; }
+      if (t >= 1) {
+        t = 0; seg++; dwellLeft = DWELL_MS;
+        if (seg >= GPX.length - 1) { seg = 0; t = 0; }
+      }
+    }
+
+    const A = GPX[seg], B = GPX[seg+1];
+    const u = easeInOutQuad(t);
+    const pos = { x: A.x + (B.x - A.x)*u, y: A.y + (B.y - A.y)*u };
+    const dir = Math.atan2(B.y-A.y, B.x-A.x);
+
+    const stage = stageFromSeg(seg);
+    if(stage !== lastStage && (t > 0 || dwellLeft <= (DWELL_MS - REVEAL_MS))){
+      playChime();
+      lastStage = stage;
+    }
+
+    drawPhoton(pos, dir, stage);
+
+    const elapsedThisSeg = (t === 0) ? 0 : Math.max(0, (DWELL_MS - dwellLeft));
+    if (t > 0 || elapsedThisSeg > REVEAL_MS) updateLabels();
+    else Object.values(L).forEach(el => el.classList.remove('show'));
+
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame((n)=>{ last=n; tick(n); });
+
+ 

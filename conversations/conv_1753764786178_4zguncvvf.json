@@ -1,0 +1,11 @@
+{
+  "id": "conv_1753764786178_4zguncvvf",
+  "sessionId": "test-button-1753764786175",
+  "timestamp": "2025-07-29T04:53:07.175Z",
+  "messageType": "did_agent_response",
+  "messageText": "Console Solar responding - test button is working correctly!",
+  "agentId": "v2_agt_vhYf_e_C",
+  "captureSource": "inline_test_demonstration",
+  "retentionFirst": true,
+  "isDidSession": true
+}

@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TC-S Generator Protocol — Beta Prototype</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <div class="prototype-banner">
+    ⚠️ Prototype / Mockup — NOT LIVE • No real transactions. For internal testing only.
+  </div>
+
+  <header class="site-header">
+    <div class="brand">The Current-See</div>
+    <nav><a href="home.html">Home</a></nav>
+  </header>
+
+  <main class="container">
+    <section class="intro">
+      <h1>Generator Protocol (Beta)</h1>
+      <p class="lede">Verify energy → tokenize (REC/CC) → distribute value to people, merchants, and communities.</p>
+      <ul class="checks">
+        <li>✅ Verified renewable generation</li>
+        <li>✅ Automatic tokenization</li>
+        <li>✅ Transparent wealth distribution</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>1) Onboard Your Facility</h2>
+      <form id="onboardForm">
+        <div class="row">
+          <label>Generator Name
+            <input type="text" name="generatorName" placeholder="Sunny Ridge Solar" required>
+          </label>
+          <label>Location / Grid Region
+            <input type="text" name="location" placeholder="US-CA-CAISO" required>
+          </label>
+        </div>
+
+        <div class="row">
+          <label>Technology
+            <select name="tech" required>
+              <option value="">Select…</option>
+              <option>solar_pv</option><option>wind</option><option>hydro</option>
+              <option>geothermal</option><option>biomass</option>
+            </select>
+          </label>
+          <label>Capacity (kW)
+            <input type="number" min="1" step="1" name="capacityKw" placeholder="500" required>
+          </label>
+          <label>Est. Annual Output (MWh)
+            <input type="number" min="0" step="0.01" name="estMwh" placeholder="1000.00" required>
+          </label>
+        </div>
+
+        <div class="row">
+          <label>Grid Emission Factor (tCO₂e/MWh)
+            <input type="number" min="0" step="0.001" name="gridEF" placeholder="0.45" required>
+          </label>
+          <label>REC Split (%)
+            <input id="recPct" type="number" min="0" max="100" step="1" name="recPct" value="55" required>
+          </label>
+          <label>CC Split (%)
+            <input id="ccPct" type="number" min="0" max="100" step="1" name="ccPct" value="45" required>
+          </label>
+        </div>
+
+        <div class="row">
+          <label>Commissioner Present?
+            <select name="commissionerPresent" id="commissionerPresent" required>
+              <option value="">Select…</option>
+              <option value="yes">Yes — Private Network</option>
+              <option value="no">No — Generator as Commissioner</option>
+            </select>
+          </label>
+          <label id="noCommModeWrap" class="hidden">No-Commissioner Mode
+            <select name="noCommissionerMode" id="noCommissionerMode">
+              <option value="KEEP">Keep commissioner portion</option>
+              <option value="DONATE_GBI">Donate to TC-S GBI (REC purchase → Solar Rays distribution)</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="row">
+          <label>Payout USD (%)
+            <input id="usdPct" type="number" min="0" max="100" step="1" name="usdPct" value="70" required>
+          </label>
+          <label>Payout Solar Rays (%)
+            <input id="raysPct" type="number" min="0" max="100" step="1" name="raysPct" value="30" required>
+          </label>
+        </div>
+
+        <label class="checkbox">
+          <input type="checkbox" required>
+          <span>I understand this is a prototype. No real trades or payments.</span>
+        </label>
+
+        <div class="actions">
+          <button type="submit" class="btn primary">Preview Calculations (Mock)</button>
+          <button type="button" id="saveMock" class="btn">Save Locally (Mock)</button>
+        </div>
+      </form>
+
+      <pre id="preview" class="preview hidden"></pre>
+    </section>
+
+    <section class="card">
+      <h2>2) Sample Period Calculation</h2>
+      <form id="calcForm">
+        <div class="row">
+          <label>Reporting Period (MWh)
+            <input type="number" min="0" step="0.01" name="periodMwh" placeholder="1000.00" required>
+          </label>
+          <label>REC Base ($/REC)
+            <input type="number" min="0" step="0.01" name="recBase" placeholder="20.00" required>
+          </label>
+          <label>REC Market Price ($/REC)
+            <input type="number" min="0" step="0.01" name="recPrice" placeholder="28.00" required>
+          </label>
+        </div>
+        <div class="actions"><button type="submit" class="btn">Compute Mock Delta</button></div>
+      </form>
+      <pre id="calcPreview" class="preview hidden"></pre>
+    </section>
+
+    <section class="card faint">
+      <h2>About this Prototype</h2>
+      <p>TC-S is software that facilitates verification, tokenization, and transparent distribution. TC-S does not fund transactions or act as a financial counterparty. All market purchases and sales are third-party. This page is a <b>mockup</b> for internal testing.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>© The Current-See PBC, Inc. • Prototype only • Do not rely on outputs</p>
+  </footer>
+</body>
+</html>

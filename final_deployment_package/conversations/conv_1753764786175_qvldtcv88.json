@@ -1,0 +1,11 @@
+{
+  "id": "conv_1753764786175_qvldtcv88",
+  "sessionId": "test-button-1753764786174",
+  "timestamp": "2025-07-29T04:53:06.174Z",
+  "messageType": "user_input",
+  "messageText": "Test button clicked - this is a user message",
+  "agentId": "v2_agt_vhYf_e_C",
+  "captureSource": "inline_test_demonstration",
+  "retentionFirst": true,
+  "isDidSession": true
+}

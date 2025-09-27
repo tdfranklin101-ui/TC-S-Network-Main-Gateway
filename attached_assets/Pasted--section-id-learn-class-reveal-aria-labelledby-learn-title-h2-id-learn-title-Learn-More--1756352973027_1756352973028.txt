@@ -1,0 +1,69 @@
+<section id="learn" class="reveal" aria-labelledby="learn-title">
+  <h2 id="learn-title">Learn More: The Sun, Computronium, and the Solar Standard</h2>
+  <p class="sub">A deeper dive into the science, philosophy, and design choices behind this exhibit.</p>
+
+  <article class="card" style="padding:22px">
+    <h3 class="lm-h">1) The Sun as the Engine of Computation</h3>
+    <p>
+      The Sun provides more than light and warmth — it is the engine of Earth’s computation. Every photon that leaves
+      the Sun carries information in its oscillations. When it strikes matter on Earth, it catalyzes processes:
+    </p>
+    <ul class="lm-list">
+      <li><strong>In plants:</strong> photons drive photosynthesis, converting light into sugars — molecules that encode chemical information.</li>
+      <li><strong>In humans:</strong> those sugars become ATP, the energy currency of our cells. Neurons fire when powered by ATP, and from those firings, thoughts emerge.</li>
+      <li><strong>In civilizations:</strong> our technologies are extensions of this flow. Solar energy, fossil energy (ancient sunlight), and nuclear reactions all drive computation in machines and societies.</li>
+    </ul>
+    <p class="takeaway">Takeaway: Every heartbeat, every network, every algorithm traces back to the Sun.</p>
+  </article>
+
+  <article class="card" style="padding:22px; margin-top:18px">
+    <h3 class="lm-h">2) The Universe as Computronium</h3>
+    <p>
+      Physicists have shown that <em>information is physical</em>:
+      erasing a bit costs energy (Landauer’s Principle), there’s a maximum information density any region can hold (the Bekenstein bound),
+      and “It from Bit” suggests physical reality arises from informational choices.
+      If matter is always updating its state, the universe is not just matter and energy — it is computronium by default: a cosmic computer already running.
+    </p>
+    <p class="takeaway">Takeaway: Computronium isn’t sci-fi material — it’s what the universe already is.</p>
+  </article>
+
+  <article class="card" style="padding:22px; margin-top:18px">
+    <h3 class="lm-h">3) Humanity as Conscious Computronium</h3>
+    <p>
+      We are a layer of computronium that has become self-aware. Our bodies are reorganized sunlight, continuously processing information.
+      Our societies are distributed networks of computation. Our technologies (AI, internet, quantum computing) are extensions of natural computation into new substrates.
+    </p>
+    <p class="takeaway">Takeaway: Humanity is the universe reflecting on its own computation.</p>
+  </article>
+
+  <article class="card" style="padding:22px; margin-top:18px">
+    <h3 class="lm-h">4) The Solar Standard & The Current-See</h3>
+    <p>
+      If the universe is computronium, then the Sun is our daily power input. The Solar Standard translates this truth into a new foundation for value:
+    </p>
+    <ul class="lm-list">
+      <li><strong>1 Solar</strong> = Earth’s share of the Sun’s daily energy income.</li>
+      <li>Each Solar is divisible into <strong>10,000 Rays</strong> — micro-units of computation and exchange.</li>
+      <li>The <strong>Solar Clock</strong> began ticking <strong>April 7, 2025 (00:00 GMT)</strong>. Each person accrues Solar daily.</li>
+    </ul>
+    <p>
+      By linking value directly to solar energy, the Current-See aligns human economies with the universe’s natural computation.
+      Instead of fighting energy and information flows, we design with them.
+    </p>
+    <p class="takeaway">Takeaway: The Solar Standard isn’t just money; it’s alignment with how the cosmos actually works.</p>
+  </article>
+
+  <article class="card" style="padding:22px; margin-top:18px">
+    <h3 class="lm-h">5) The Ah-Ha Moment</h3>
+    <ul class="lm-list bullets">
+      <li>You are sunlight, reorganized.</li>
+      <li>The universe is computronium, already computing.</li>
+      <li>The Solar Standard makes this real in human systems.</li>
+      <li>Aligning value with the Sun aligns us with the deepest truth of the cosmos.</li>
+    </ul>
+    <div class="actions" style="margin-top:6px">
+      <a class="btn" href="#wallet"><span class="dot" aria-hidden="true"></span>Get Your Solar Rays</a>
+      <a class="btn secondary" href="#top">Back to top</a>
+    </div>
+  </article>
+</section>

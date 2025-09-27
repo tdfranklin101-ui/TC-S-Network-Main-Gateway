@@ -1,0 +1,23 @@
+{
+  "name": "current-see-analytics",
+  "version": "1.0.0",
+  "description": "Standalone analytics dashboard for The Current-See platform",
+  "main": "index.html",
+  "deployment": {
+    "type": "static",
+    "domain": "analytics.thecurrentsee.org",
+    "https": true,
+    "cdn": true
+  },
+  "contact": {
+    "company": "The Current-See PBC, Inc.",
+    "email": "hello@thecurrentsee.org",
+    "website": "https://www.thecurrentsee.org"
+  },
+  "features": [
+    "Real-time platform analytics",
+    "Privacy-first user tracking", 
+    "Mobile-optimized design",
+    "Standalone deployment ready"
+  ]
+}

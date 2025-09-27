@@ -1,6 +1,14 @@
 const { spawn } = require('child_process');
 const fetch = require('node-fetch');
-const geoip = require('geoip-lite');
+
+// Try to load geoip-lite but handle missing data gracefully
+let geoip = null;
+try {
+  geoip = require('geoip-lite');
+  console.log('Node.js geoip-lite service loaded successfully');
+} catch (error) {
+  console.log('Warning: geoip-lite not available, using fallback geolocation service');
+}
 
 // Configuration
 const USE_PYTHON_SERVICE = true; // Set to false to use Node.js geoip-lite instead
@@ -83,6 +91,10 @@ async function getLocationFromPythonService(ip) {
  */
 function getLocationFromNodeGeoip(ip) {
   try {
+    if (!geoip) {
+      return getFallbackLocation(ip, 'geoip-lite not available');
+    }
+    
     const geo = geoip.lookup(ip);
     
     if (!geo) {

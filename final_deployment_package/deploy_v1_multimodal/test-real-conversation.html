@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Real D-ID Conversation Capture</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .conversation-log { background: #f5f5f5; padding: 10px; margin: 10px 0; min-height: 200px; }
+        button { padding: 10px 20px; margin: 5px; }
+        #testInput { width: 300px; padding: 8px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test Real Console Solar Conversation Capture</h1>
+    
+    <div class="test-section">
+        <h3>D-ID Agent Status</h3>
+        <div id="agentStatus">Checking...</div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Simulate User-Console Solar Conversation</h3>
+        <input type="text" id="testInput" placeholder="Type a message to Console Solar..." />
+        <button onclick="simulateUserInput()">Send to Console Solar</button>
+        <button onclick="simulateAgentResponse()">Simulate Console Solar Response</button>
+    </div>
+    
+    <div class="test-section">
+        <h3>Conversation Log</h3>
+        <div class="conversation-log" id="conversationLog">
+            No conversations captured yet...
+        </div>
+        <button onclick="refreshLog()">Refresh Log</button>
+        <button onclick="clearLog()">Clear Log</button>
+    </div>
+    
+    <div class="test-section">
+        <h3>Memory System Check</h3>
+        <button onclick="checkMemorySystem()">Check Stored Conversations</button>
+        <div id="memoryStatus"></div>
+    </div>
+
+    <script>
+        let conversationCapture = null;
+        let testSessionId = `test-console-solar-${Date.now()}`;
+        let conversationCount = 0;
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAgentStatus();
+            initializeCapture();
+            setInterval(refreshLog, 5000); // Auto-refresh every 5 seconds
+        });
+        
+        function checkAgentStatus() {
+            const agentElements = document.querySelectorAll('[data-agent-id], iframe');
+            const status = document.getElementById('agentStatus');
+            
+            if (agentElements.length > 0) {
+                status.innerHTML = '✅ D-ID Agent elements found on page';
+                status.style.color = 'green';
+            } else {
+                status.innerHTML = '❌ No D-ID Agent elements detected';
+                status.style.color = 'red';
+            }
+        }
+        
+        function initializeCapture() {
+            // Simplified capture system for testing
+            conversationCapture = {
+                capturedConversations: [],
+                captureUserInput: function(text) {
+                    const conversation = {
+                        id: `test-user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                        sessionId: testSessionId,
+                        timestamp: new Date().toISOString(),
+                        conversationType: 'Console Solar Test Session',
+                        messageType: 'user_input',
+                        messageText: text,
+                        captureSource: 'test_simulation',
+                        captureProof: 'test_real_conversation'
+                    };
+                    
+                    this.capturedConversations.push(conversation);
+                    this.sendToServer(conversation);
+                    return conversation;
+                },
+                
+                captureAgentResponse: function(text) {
+                    const conversation = {
+                        id: `test-agent-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                        sessionId: testSessionId,
+                        timestamp: new Date().toISOString(),
+                        conversationType: 'Console Solar Test Session',
+                        messageType: 'agent_response',
+                        messageText: text,
+                        captureSource: 'test_simulation',
+                        captureProof: 'test_real_conversation'
+                    };
+                    
+                    this.capturedConversations.push(conversation);
+                    this.sendToServer(conversation);
+                    return conversation;
+                },
+                
+                sendToServer: function(conversationData) {
+                    fetch('/api/kid-solar-conversation', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(conversationData)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('✅ Test conversation stored:', data);
+                        updateConversationLog(`✅ Stored: ${conversationData.messageType} - ${conversationData.messageText.substring(0, 50)}...`);
+                    })
+                    .catch(error => {
+                        console.error('❌ Failed to store test conversation:', error);
+                        updateConversationLog(`❌ Error storing: ${error.message}`);
+                    });
+                }
+            };
+            
+            console.log('🧪 Test conversation capture initialized');
+        }
+        
+        function simulateUserInput() {
+            const input = document.getElementById('testInput');
+            const message = input.value.trim();
+            
+            if (!message) {
+                alert('Please enter a message');
+                return;
+            }
+            
+            conversationCount++;
+            const userConv = conversationCapture.captureUserInput(message);
+            updateConversationLog(`👤 User #${conversationCount}: ${message}`);
+            
+            input.value = '';
+            
+            // Simulate agent response after delay
+            setTimeout(() => {
+                const agentResponse = generateConsoleResponseFor(message);
+                const agentConv = conversationCapture.captureAgentResponse(agentResponse);
+                updateConversationLog(`🤖 Console Solar #${conversationCount}: ${agentResponse}`);
+            }, 1500);
+        }
+        
+        function simulateAgentResponse() {
+            const responses = [
+                "Hello! I'm Console Solar, your polymathic AI assistant. I specialize in renewable energy, sustainability, and environmental solutions. How can I help you today?",
+                "Solar energy is fascinating! Modern photovoltaic panels can convert sunlight to electricity with 20-25% efficiency. The Current-See platform tracks global solar generation to create SOLAR tokens for our community.",
+                "That's a great question about renewable energy! Solar technology has advanced tremendously - we now have perovskite tandem cells reaching over 30% efficiency in laboratories.",
+                "Sustainability is key to our future. The Current-See system demonstrates how renewable energy can power economic systems while supporting environmental conservation.",
+                "I'm here to help you understand the intersection of technology, energy, and sustainability. What specific aspect would you like to explore further?"
+            ];
+            
+            const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+            conversationCount++;
+            
+            const agentConv = conversationCapture.captureAgentResponse(randomResponse);
+            updateConversationLog(`🤖 Console Solar #${conversationCount}: ${randomResponse}`);
+        }
+        
+        function generateConsoleResponseFor(userMessage) {
+            const responses = {
+                'hello': "Hello! I'm Console Solar, your polymathic AI assistant specializing in renewable energy and sustainability. How can I help you explore the world of clean energy today?",
+                'solar': "Solar energy is one of the most promising renewable technologies! Modern panels achieve 20-25% efficiency, and the Current-See platform tracks global solar generation to distribute SOLAR tokens to our community members.",
+                'energy': "Energy transformation is crucial for our sustainable future. From photovoltaics to wind power, we're seeing incredible innovations. The Current-See system demonstrates how renewable energy can power economic models.",
+                'efficiency': "Great question about efficiency! Modern commercial solar panels achieve 15-22% efficiency, while laboratory cells have reached over 47%. The Current-See platform calculates that 1 SOLAR token represents 4,913 kWh of energy.",
+                'default': "That's an interesting perspective! As your polymathic AI assistant, I can help you explore the connections between renewable energy, sustainability, and technological innovation. What specific aspect interests you most?"
+            };
+            
+            for (let keyword in responses) {
+                if (userMessage.toLowerCase().includes(keyword)) {
+                    return responses[keyword];
+                }
+            }
+            
+            return responses['default'];
+        }
+        
+        function updateConversationLog(message) {
+            const log = document.getElementById('conversationLog');
+            const timestamp = new Date().toLocaleTimeString();
+            log.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        function refreshLog() {
+            // Clear and rebuild from captured conversations
+            const log = document.getElementById('conversationLog');
+            log.innerHTML = '<div><strong>Recent Test Conversations:</strong></div>';
+            
+            if (conversationCapture && conversationCapture.capturedConversations.length > 0) {
+                conversationCapture.capturedConversations.forEach((conv, index) => {
+                    const type = conv.messageType === 'user_input' ? '👤 User' : '🤖 Console Solar';
+                    const time = new Date(conv.timestamp).toLocaleTimeString();
+                    log.innerHTML += `<div>[${time}] ${type}: ${conv.messageText.substring(0, 100)}...</div>`;
+                });
+            } else {
+                log.innerHTML += '<div>No conversations captured yet. Try the buttons above!</div>';
+            }
+            
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        function clearLog() {
+            const log = document.getElementById('conversationLog');
+            log.innerHTML = 'Log cleared...';
+            if (conversationCapture) {
+                conversationCapture.capturedConversations = [];
+            }
+            conversationCount = 0;
+        }
+        
+        function checkMemorySystem() {
+            const statusDiv = document.getElementById('memoryStatus');
+            statusDiv.innerHTML = 'Checking memory system...';
+            
+            fetch('/api/kid-solar-memory/all')
+                .then(response => response.json())
+                .then(data => {
+                    statusDiv.innerHTML = `
+                        <h4>Memory System Status:</h4>
+                        <p>✅ Total conversations: ${data.totalConversations}</p>
+                        <p>📊 Real conversations: ${data.realConversations}</p>
+                        <p>🧪 Test conversations: ${data.testConversations}</p>
+                        <p>🤖 Agent version: ${data.agentVersion}</p>
+                        <p><strong>Recent conversations found - check analytics page to view!</strong></p>
+                    `;
+                    statusDiv.style.color = 'green';
+                })
+                .catch(error => {
+                    statusDiv.innerHTML = `❌ Memory system error: ${error.message}`;
+                    statusDiv.style.color = 'red';
+                });
+        }
+    </script>
+</body>
+</html>

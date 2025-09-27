@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Deep Research | Solar-Governed Compute</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 3rem 1.5rem;
+      background: #0d0d0d;
+      color: #f4f4f4;
+      font-family: 'Georgia', serif;
+      line-height: 1.8;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    h1, h2 {
+      font-family: 'Segoe UI', sans-serif;
+      color: #12f5c0;
+      margin-top: 2rem;
+    }
+    h1 {
+      font-size: 2.75rem;
+    }
+    h2 {
+      font-size: 1.75rem;
+    }
+    p {
+      font-size: 1.05rem;
+      margin-bottom: 1.5rem;
+    }
+    a {
+      color: #12f5c0;
+      text-decoration: none;
+      border-bottom: 1px dotted #12f5c0;
+    }
+    a:hover {
+      border-bottom: 1px solid #12f5c0;
+    }
+    code {
+      background: #1a1a1a;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-family: monospace;
+      color: #ffcc00;
+    }
+  </style>
+</head>
+<body>
+  <h1>How the TC-S Network Will Power Civilization</h1>
+
+  <p>
+    The TC-S Network is not a platform. It is a protocol for purpose. A planetary system where each person receives <strong>1 Solar token per day</strong>, representing <strong>4,913 kWh</strong> of real-world value. This is not currency. This is <em>directional energy</em>—a signal of what you care about, encoded in thermodynamics.
+  </p>
+
+  <h2>1. Foundation + PBC Structure</h2>
+  <p>
+    The <strong>TC-S Foundation</strong> holds the Solar Generator, issues the daily dividend, and safeguards human rights encoded in the energy ledger.
+    The <strong>TC-S Public Benefit Corporation (PBC)</strong> hosts the digital marketplace, manages user interfaces, and facilitates exchange of goods, services, and compute direction.
+  </p>
+
+  <h2>2. Computronium: Directing Intelligence</h2>
+  <p>
+    Users stake their Solar tokens to vote for categories of purpose: health, climate, longevity, open knowledge, and more. These tokens are routed to computational infrastructure—local clusters or public models—to execute AI aligned with collective values.
+  </p>
+
+  <p>
+    This transforms Solar into what we call <strong>Computronium</strong>: the most optimized use of energy as intentional intelligence.
+  </p>
+
+  <h2>3. Transparency + Civic Feedback</h2>
+  <p>
+    All token flow, compute allocation, and model results are transparently published in real time. A civic dashboard lets every user see:
+  </p>
+  <ul>
+    <li>Where their Solar was directed</li>
+    <li>What models were trained</li>
+    <li>How outcomes are used in the real world</li>
+  </ul>
+
+  <h2>4. A Post-Fiat Civilizational Model</h2>
+  <p>
+    Instead of speculative currency, this system builds a <em>real economy backed by physics</em>. The sun powers the network. The people power the sun. Together, we shift from scarcity games to regenerative abundance.
+  </p>
+
+  <p>
+    Every wallet is a vote. Every Solar is a seed. The Foundation stewards the protocol. The PBC evolves the tools. And the future listens.
+  </p>
+
+  <p>
+    <a href="/">← Return to the TC-S Main Display</a>
+  </p>
+
+</body>
+</html>

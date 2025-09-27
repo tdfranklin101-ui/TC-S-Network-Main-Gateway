@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TC-S Wallet Prototype</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #f8fdfc; margin: 2rem; }
+    .wallet-box { border: 1px solid #ccc; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; background: #fff; }
+    .title { font-size: 1.4rem; font-weight: bold; color: #003a33; }
+    .sub { font-size: 0.9rem; color: #555; }
+    pre { background: #eef7f4; padding: 1rem; border-radius: 6px; font-size: 0.85rem; overflow-x: auto; }
+    .btn { background: #00aa88; color: white; border: none; padding: 0.7rem 1rem; font-size: 1rem; border-radius: 6px; cursor: pointer; margin-top: 1rem; }
+    .btn:hover { background: #008f72; }
+  </style>
+</head>
+<body>
+  <h1>The Current-See: AI Wallet Prototype</h1>
+  <p class="sub">A live demonstration of our AI-powered, energy-conscious wallet system. Data is streaming in real time from our working prototype.</p>
+
+  <div class="wallet-box">
+    <div class="title">User 1 Wallet</div>
+    <div id="wallet1">Loading...</div>
+  </div>
+
+  <div class="wallet-box">
+    <div class="title">User 2 Wallet</div>
+    <div id="wallet2">Loading...</div>
+  </div>
+
+  <div class="wallet-box">
+    <div class="title">Most Recent Transfers</div>
+    <pre id="transfer-log">Loading...</pre>
+  </div>
+
+  <div class="wallet-box">
+    <div class="title">WalletWhisper: Sustainability Tip Preview</div>
+    <p>"Consider switching to a reusable bottle. It saves ~0.2 kWh per use."</p>
+    <button class="btn" onclick="walletWhisper('Consider switching to a reusable bottle. It saves 0.2 kilowatt-hours per use.')">Play Voice Tip</button>
+  </div>
+
+  <div class="wallet-box">
+    <a href="https://YOUR_CROSS_PLATFORM_DEMO.repl.co" class="btn">Launch Full Demo</a>
+    <a href="/join" class="btn">Join the TC-S Network</a>
+  </div>
+
+  <script>
+    const backendBase = "https://YOUR_CROSS_PLATFORM_DEMO.repl.co";
+
+    function loadWalletData() {
+      fetch(`${backendBase}/wallets`)
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById("wallet1").innerText = `${data.user1.balance.toFixed(2)} Solar`;
+          document.getElementById("wallet2").innerText = `${data.user2.balance.toFixed(2)} Solar`;
+        });
+    }
+
+    function loadTransferLog() {
+      fetch(`${backendBase}/transfers`)
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById("transfer-log").innerText = JSON.stringify(data.slice(-5).reverse(), null, 2);
+        });
+    }
+
+    function walletWhisper(text) {
+      const msg = new SpeechSynthesisUtterance(text);
+      msg.pitch = 1.1;
+      msg.rate = 1;
+      window.speechSynthesis.speak(msg);
+    }
+
+    setInterval(() => {
+      loadWalletData();
+      loadTransferLog();
+    }, 3000);
+
+    window.onload = () => {
+      loadWalletData();
+      loadTransferLog();
+    };
+  </script>
+</body>
+</html>

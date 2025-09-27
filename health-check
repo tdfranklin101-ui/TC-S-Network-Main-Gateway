@@ -1,0 +1,4 @@
+#!/bin/bash
+# This is a special file that Replit will look for to perform health checks
+# It executes our health check script
+node health-check.js "$@"

@@ -1,0 +1,47 @@
+:root{--bg:#0b0d10;--card:#12161c;--ink:#e9eef5;--muted:#9fb0c4;--line:#1a1f26;--accent:#8ad1ff}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+a{color:var(--accent);text-decoration:none}
+
+/* banner */
+.prototype-banner{position:sticky;top:0;z-index:999;background:#332;color:#ffd;padding:8px 12px;text-align:center;font-weight:700}
+
+/* layout */
+.site-header,.site-footer{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid var(--line);background:#0e1116}
+.site-footer{border-top:1px solid var(--line);border-bottom:none}
+.brand{font-weight:800;letter-spacing:.3px}
+.container{max-width:980px;margin:24px auto;padding:0 16px}
+.intro .lede{color:var(--muted)}
+.checks{padding-left:18px}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin:18px 0}
+.card.faint{opacity:.9}
+.row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.row label{display:flex;flex-direction:column;font-size:14px;gap:6px}
+input,select,button{padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:#0e1218;color:var(--ink)}
+.checkbox{display:flex;align-items:center;gap:8px;margin:10px 0}
+.actions{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
+.actions.end{justify-content:flex-end}
+.btn{cursor:pointer}
+.btn.primary{background:var(--accent);color:#001629;border:0}
+.btn.secondary{background:#18212b}
+.btn.tiny{padding:6px 8px;font-size:12px}
+
+.preview{white-space:pre-wrap;background:#0a0e14;border:1px dashed var(--line);border-radius:8px;padding:12px;margin-top:12px;color:var(--ink)}
+.hidden{display:none}
+.small{color:var(--muted);font-size:12px;line-height:1.4}
+
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px}
+.modal-card{width:min(960px,96vw);background:#0f141a;border:1px solid var(--line);border-radius:14px;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+.modal-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line)}
+.modal-body{padding:16px}
+.icon{background:#1a232e;border:1px solid var(--line);border-radius:8px;color:var(--ink)}
+.siggrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:10px}
+.siglabel{font-size:12px;color:var(--muted);margin-bottom:6px}
+.sigpad{width:100%;background:#0a0e14;border:1px dashed var(--line);border-radius:8px;touch-action:none}
+.sigactions{margin-top:6px}
+@media (max-width:900px){
+  .row{grid-template-columns:1fr}
+  .siggrid{grid-template-columns:1fr}
+}

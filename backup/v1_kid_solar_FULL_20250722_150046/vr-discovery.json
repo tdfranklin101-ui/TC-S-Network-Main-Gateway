@@ -1,0 +1,38 @@
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "The Current-See Solar Experience",
+  "applicationCategory": "FinancialApplication, EnvironmentalApplication",
+  "operatingSystem": "Any",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "potentialAction": {
+    "@type": "ViewAction",
+    "target": {
+      "@type": "EntryPoint",
+      "urlTemplate": "https://www.thecurrentsee.org/solar-generator.html",
+      "actionPlatform": [
+        "http://schema.org/DesktopWebPlatform",
+        "http://schema.org/MobileWebPlatform",
+        "http://schema.org/VRWebPlatform"
+      ]
+    }
+  },
+  "browserRequirements": "WebVR, WebXR",
+  "availableOnDevice": ["Oculus", "Meta Quest", "HTC Vive", "Valve Index", "Desktop", "Mobile"],
+  "environmentVariables": {
+    "solarEnergy": {
+      "type": "RealTimeData",
+      "measurement": "kWh"
+    },
+    "virtualCurrency": {
+      "type": "SOLAR",
+      "value": "136000 USD"
+    }
+  },
+  "interactionCount": "100000+ Users",
+  "description": "Experience the solar-powered global economic revolution in VR/XR with real-time energy tracking and daily SOLAR distributions."
+}

@@ -1,0 +1,17 @@
+The Current-See Solution and Technology Stack
+
+This document outlines the full system architecture behind The Current-See platform, a technical bridge between planetary energy flows and individual wealth creation. The solution stack includes four primary layers:
+
+1. Solar Input and Measurement (IoT Layer)
+Smart sensors and data aggregation nodes measure daily solar irradiance. These are placed globally, drawing from satellite data and ground-based solar farms. This layer ensures transparency and precision in calculating the total kWh available for monetization.
+
+2. Token Generation and Issuance (Blockchain + Algorithmic Layer)
+The system monetizes 1% of Earth's daily solar income and converts it to the "Solar" token. A smart contract calculates the per capita issuance rate based on the global population and algorithmic adjustments that fund reserves, operations, and scalability.
+
+3. Wallet Interface and Distribution (AI Wallet Layer)
+Solar tokens are distributed daily to each network participant through a situationally aware AI wallet. It prices goods and services based on energy input and supports responsible, informed transactions.
+
+4. The TC-S Network (Protocol Layer)
+The TC-S Network is the decentralized system that ensures trustless operation, consensus validation, and open integration with developers and commercial systems. Every transaction is verified against energy equivalency.
+
+Together, these layers establish an open, auditable, and secure platform for implementing energy-backed basic income and a new planetary economy.

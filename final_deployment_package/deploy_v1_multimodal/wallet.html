@@ -1,0 +1,1724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar Wallet | The Current-See</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #FF8C00;
+            --secondary-color: #FFD700;
+            --accent-color: #4CAF50;
+            --bg-gradient: linear-gradient(135deg, #FF8C00, #FFD700);
+            --text-light: #FFFFFF;
+            --text-dark: #333333;
+        }
+        
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            color: var(--text-dark);
+            background: var(--bg-gradient);
+            background-attachment: fixed;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        header {
+            padding: 20px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            color: #0057B8; /* Changed from white to blue for better contrast */
+            text-decoration: none;
+        }
+        
+        .logo img {
+            width: 50px;
+            height: 50px;
+            margin-right: 10px;
+        }
+        
+        .logo-text {
+            font-size: 24px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        
+        nav li {
+            margin-left: 30px;
+        }
+        
+        nav a {
+            color: #0057B8; /* Changed from white to blue for better contrast */
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 16px;
+            text-transform: uppercase;
+            padding: 5px 0;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        nav a:hover, nav a.active {
+            color: #0057B8; /* Changed from white to blue for better contrast */
+        }
+        
+        nav a::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            background-color: #0057B8; /* Changed from white to blue for better contrast */
+            bottom: 0;
+            left: 0;
+            transition: width 0.3s ease;
+        }
+        
+        nav a:hover::after, nav a.active::after {
+            width: 100%;
+        }
+        
+        .page-header {
+            text-align: center;
+            padding: 60px 0 40px;
+        }
+        
+        .page-header h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: white;
+        }
+        
+        .page-header p {
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin: 0 auto 30px;
+            color: white;
+        }
+        
+        .wallet-dashboard {
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            margin-bottom: 60px;
+        }
+        
+        .wallet-dashboard h2 {
+            color: var(--primary-color);
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+        }
+        
+        .balance-card {
+            background: linear-gradient(135deg, #4CAF50, #2E7D32);
+            color: white;
+            border-radius: 10px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .balance-label {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+        
+        .balance-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .balance-equivalent {
+            font-size: 1.1rem;
+            opacity: 0.8;
+        }
+        
+        .transaction-list {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+        
+        .transaction-list .header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px 20px;
+            font-weight: 600;
+        }
+        
+        .transaction {
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .transaction:last-child {
+            border-bottom: none;
+        }
+        
+        .transaction-icon {
+            width: 40px;
+            height: 40px;
+            background-color: #f5f5f5;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            color: var(--primary-color);
+        }
+        
+        .transaction-details {
+            flex-grow: 1;
+        }
+        
+        .transaction-title {
+            font-weight: 600;
+            margin-bottom: 3px;
+        }
+        
+        .transaction-date {
+            font-size: 0.85rem;
+            color: #777;
+        }
+        
+        .transaction-amount {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        
+        .transaction-amount.credit {
+            color: #4CAF50;
+        }
+        
+        .transaction-amount.debit {
+            color: #F44336;
+        }
+        
+        .action-buttons {
+            margin-bottom: 40px;
+        }
+        
+        .action-button {
+            background-color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .action-button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .action-icon {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+        
+        .action-label {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+        
+        .solar-certificate {
+            background: linear-gradient(135deg, #FFD700, #FFA000);
+            color: var(--text-dark);
+            border-radius: 10px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .certificate-watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 8rem;
+            opacity: 0.1;
+            color: white;
+        }
+        
+        .certificate-header {
+            text-align: center;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        .certificate-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .certificate-id {
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+        
+        .certificate-details {
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 20px;
+            position: relative;
+        }
+        
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .detail-label {
+            font-weight: 600;
+        }
+        
+        .support-section {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 40px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .support-title {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+        
+        .support-description {
+            max-width: 600px;
+            margin: 0 auto 20px;
+            color: #666;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border: none;
+            padding: 12px 30px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 30px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-primary:hover {
+            background-color: #E67E00;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-secondary {
+            background-color: transparent;
+            border: 2px solid var(--primary-color);
+            padding: 10px 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 30px;
+            color: var(--primary-color);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            margin-left: 15px;
+        }
+        
+        .btn-secondary:hover {
+            background-color: var(--primary-color);
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Return to Home button */
+        .btn-return {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            margin-top: 30px;
+        }
+        
+        .btn-return:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+            border-color: white;
+            color: white;
+        }
+        
+        /* Modal styling */
+        .modal-content {
+            border-radius: 15px;
+            border: none;
+        }
+        
+        .modal-header {
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 15px 15px 0 0;
+            padding: 20px 30px;
+        }
+        
+        .modal-body {
+            padding: 30px;
+        }
+        
+        .modal-footer {
+            padding: 20px 30px;
+            border-top: 1px solid #eee;
+        }
+
+        /* Kid Solar Modal Styling */
+        .upload-area {
+            border: 2px dashed #ddd;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            min-height: 200px;
+            position: relative;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary-color);
+            background-color: rgba(255, 140, 0, 0.05);
+        }
+
+        .upload-area.dragover {
+            border-color: var(--primary-color);
+            background-color: rgba(255, 140, 0, 0.1);
+        }
+
+        .upload-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+
+        .preview-container {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .preview-container img,
+        .preview-container video {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .preview-info {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .input-section {
+            min-height: 250px;
+        }
+
+        .btn-group .btn-check:checked + .btn {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        #loadingIndicator .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+        
+        .form-control {
+            border-radius: 8px;
+            padding: 12px 15px;
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        footer {
+            background-color: #000;
+            color: white;
+            padding: 50px 0 20px;
+            text-align: center;
+        }
+        
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
+        
+        .footer-column {
+            flex: 1;
+            min-width: 250px;
+            margin-bottom: 30px;
+            text-align: left;
+        }
+        
+        .footer-column h4 {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            position: relative;
+            padding-bottom: 10px;
+        }
+        
+        .footer-column h4::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 40px;
+            height: 2px;
+            background-color: var(--primary-color);
+        }
+        
+        .footer-column ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .footer-column ul li {
+            margin-bottom: 10px;
+        }
+        
+        .footer-column a {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .footer-column a:hover {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        
+        .copyright {
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+        }
+        
+        /* Payment form styling */
+        #payment-form {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        #payment-element {
+            margin-bottom: 24px;
+        }
+        
+        #payment-message {
+            color: rgb(105, 115, 134);
+            font-size: 16px;
+            line-height: 20px;
+            padding-top: 12px;
+            text-align: center;
+        }
+        
+        #payment-form button {
+            background: var(--primary-color);
+            font-family: Arial, sans-serif;
+            color: #ffffff;
+            border-radius: 4px;
+            border: 0;
+            padding: 12px 16px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: block;
+            transition: all 0.2s ease;
+            box-shadow: 0px 4px 5.5px 0px rgba(0, 0, 0, 0.07);
+            width: 100%;
+        }
+        
+        #payment-form button:hover {
+            filter: brightness(1.1);
+        }
+        
+        #payment-form button:disabled {
+            opacity: 0.5;
+            cursor: default;
+        }
+        
+        /* Loading spinner */
+        .spinner {
+            color: var(--primary-color);
+            font-size: 22px;
+            text-indent: -99999px;
+            margin: 0px auto;
+            position: relative;
+            width: 20px;
+            height: 20px;
+            box-shadow: inset 0 0 0 2px;
+            -webkit-transform: translateZ(0);
+            -ms-transform: translateZ(0);
+            transform: translateZ(0);
+            border-radius: 50%;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        
+        .spinner:before,
+        .spinner:after {
+            position: absolute;
+            content: '';
+            background: white;
+        }
+        
+        .spinner:before {
+            width: 10.4px;
+            height: 20.4px;
+            border-radius: 20.4px 0 0 20.4px;
+            top: -0.2px;
+            left: -0.2px;
+            -webkit-transform-origin: 10.4px 10.2px;
+            transform-origin: 10.4px 10.2px;
+            -webkit-animation: loading 2s infinite ease 1.5s;
+            animation: loading 2s infinite ease 1.5s;
+        }
+        
+        .spinner:after {
+            width: 10.4px;
+            height: 10.2px;
+            border-radius: 0 10.2px 10.2px 0;
+            top: -0.1px;
+            left: 10.2px;
+            -webkit-transform-origin: 0px 10.2px;
+            transform-origin: 0px 10.2px;
+            -webkit-animation: loading 2s infinite ease;
+            animation: loading 2s infinite ease;
+        }
+        
+        @-webkit-keyframes loading {
+            0% {
+                -webkit-transform: rotate(0deg);
+                transform: rotate(0deg);
+            }
+            100% {
+                -webkit-transform: rotate(360deg);
+                transform: rotate(360deg);
+            }
+        }
+        
+        @keyframes loading {
+            0% {
+                -webkit-transform: rotate(0deg);
+                transform: rotate(0deg);
+            }
+            100% {
+                -webkit-transform: rotate(360deg);
+                transform: rotate(360deg);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .logo {
+                margin-bottom: 20px;
+            }
+            
+            nav ul {
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            
+            nav li {
+                margin: 10px 15px;
+            }
+            
+            .page-header h1 {
+                font-size: 2.5rem;
+            }
+            
+            .balance-card {
+                margin-bottom: 20px;
+            }
+            
+            .action-button {
+                margin-bottom: 20px;
+            }
+            
+            .wallet-dashboard {
+                padding: 20px;
+            }
+            
+            .footer-content {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .footer-column h4::after {
+                left: 50%;
+                transform: translateX(-50%);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="/" class="logo">
+                <img src="/solar_spinner.png" alt="The Current-See Logo" />
+                <span class="logo-text">The Current-See</span>
+            </a>
+            <nav>
+                <ul>
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/prototype">Prototype</a></li>
+                    <li><a href="/merch">Merch</a></li>
+                    <li><a href="/my-solar">My Solar</a></li>
+                    <li><a href="/wallet" class="active">Wallet</a></li>
+                </ul>
+            </nav>
+        </header>
+    </div>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>Solar Wallet</h1>
+            <p>Manage your solar energy assets and track your environmental impact</p>
+        </div>
+
+        <div class="wallet-dashboard">
+            <h2>Your Wallet Dashboard</h2>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="balance-card">
+                        <div class="balance-label">Solar Balance</div>
+                        <div class="balance-value">3.01918 SOLAR</div>
+                        <div class="balance-equivalent">
+                            <div>= 53,439.49 kWh</div>
+                            <div>= $410,608.48 USD</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="solar-certificate">
+                        <div class="certificate-watermark">
+                            <i class="fas fa-certificate"></i>
+                        </div>
+                        <div class="certificate-header">
+                            <div class="certificate-title">Solar Certificate</div>
+                            <div class="certificate-id">ID: SOL-GEN-2025-00001</div>
+                        </div>
+                        <div class="certificate-details">
+                            <div class="detail-row">
+                                <div class="detail-label">Solar Units:</div>
+                                <div class="detail-value">3.01918</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Energy Equivalent:</div>
+                                <div class="detail-value">53,439.49 kWh</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">CO₂ Reduced:</div>
+                                <div class="detail-value">23,670.28 kg</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Issue Date:</div>
+                                <div class="detail-value">April 11, 2025</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row action-buttons">
+                <div class="col-md-3 col-6">
+                    <div class="action-button" data-bs-toggle="modal" data-bs-target="#sendModal">
+                        <div class="action-icon">
+                            <i class="fas fa-paper-plane"></i>
+                        </div>
+                        <div class="action-label">Send</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="action-button" data-bs-toggle="modal" data-bs-target="#receiveModal">
+                        <div class="action-icon">
+                            <i class="fas fa-qrcode"></i>
+                        </div>
+                        <div class="action-label">Receive</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="action-button" data-bs-toggle="modal" data-bs-target="#purchaseModal">
+                        <div class="action-icon">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                        <div class="action-label">Purchase</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="action-button" data-bs-toggle="modal" data-bs-target="#historyModal">
+                        <div class="action-icon">
+                            <i class="fas fa-history"></i>
+                        </div>
+                        <div class="action-label">History</div>
+                    </div>
+                </div>
+            </div>
+            
+            <h2>Recent Activity</h2>
+            <div class="transaction-list">
+                <div class="header">
+                    <div class="row">
+                        <div class="col-7">Transaction</div>
+                        <div class="col-5 text-end">Amount</div>
+                    </div>
+                </div>
+                <div class="transaction">
+                    <div class="transaction-icon">
+                        <i class="fas fa-solar-panel"></i>
+                    </div>
+                    <div class="transaction-details">
+                        <div class="transaction-title">Solar Distribution</div>
+                        <div class="transaction-date">Apr 11, 2025</div>
+                    </div>
+                    <div class="transaction-amount credit">+1.00000 SOLAR</div>
+                </div>
+                <div class="transaction">
+                    <div class="transaction-icon">
+                        <i class="fas fa-solar-panel"></i>
+                    </div>
+                    <div class="transaction-details">
+                        <div class="transaction-title">Solar Distribution</div>
+                        <div class="transaction-date">Apr 10, 2025</div>
+                    </div>
+                    <div class="transaction-amount credit">+1.00000 SOLAR</div>
+                </div>
+                <div class="transaction">
+                    <div class="transaction-icon">
+                        <i class="fas fa-solar-panel"></i>
+                    </div>
+                    <div class="transaction-details">
+                        <div class="transaction-title">Solar Distribution</div>
+                        <div class="transaction-date">Apr 09, 2025</div>
+                    </div>
+                    <div class="transaction-amount credit">+1.00000 SOLAR</div>
+                </div>
+                <div class="transaction">
+                    <div class="transaction-icon">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <div class="transaction-details">
+                        <div class="transaction-title">Welcome Bonus</div>
+                        <div class="transaction-date">Apr 08, 2025</div>
+                    </div>
+                    <div class="transaction-amount credit">+0.01918 SOLAR</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="support-section">
+            <h3 class="support-title">Support The Current-See</h3>
+            <p class="support-description">
+                Your contributions help us expand our mission and distribute more solar energy to communities worldwide.
+            </p>
+            <button class="btn-primary" data-bs-toggle="modal" data-bs-target="#supportModal">Make a Contribution</button>
+        </div>
+        
+        <!-- Kid Solar Multimodal Input Section -->
+        <div class="support-section">
+            <h3 class="support-title">Kid Solar (TC-S S0001) - Multimodal AI Assistant</h3>
+            <p class="support-description">
+                Upload photos, videos, or text to get AI-powered energy analysis and SOLAR token equivalents. Perfect for learning about sustainability!
+            </p>
+            <button class="btn-primary" data-bs-toggle="modal" data-bs-target="#kidSolarModal">Launch Kid Solar AI</button>
+        </div>
+
+        <div class="text-center mb-5">
+            <a href="/wallet-prototype.html" class="btn-primary me-3">Launch Full Wallet</a>
+            <a href="/transfer-demo.html" class="btn-secondary me-3">2-Wallet Demo</a>
+            <a href="https://cross-platform-mobile-tdfranklin101.replit.app" class="btn-secondary me-3" target="_blank">Full AI Wallet</a>
+            <a href="/" class="btn-return">Return to Home</a>
+        </div>
+    </div>
+
+    <!-- Send Modal -->
+    <div class="modal fade" id="sendModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Send Solar</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="mb-3">
+                            <label for="recipient-address" class="form-label">Recipient Solar Address</label>
+                            <input type="text" class="form-control" id="recipient-address" placeholder="SOL-..." required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="send-amount" class="form-label">Amount (SOLAR)</label>
+                            <input type="number" class="form-control" id="send-amount" min="0.00001" max="3.01918" step="0.00001" placeholder="0.00000" required>
+                            <div class="form-text">
+                                Available: 3.01918 SOLAR
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="send-note" class="form-label">Note (Optional)</label>
+                            <textarea class="form-control" id="send-note" rows="2"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary">Send Solar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Receive Modal -->
+    <div class="modal fade" id="receiveModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Receive Solar</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <p>Your Solar address:</p>
+                    <div class="d-flex align-items-center justify-content-center mb-3">
+                        <input type="text" class="form-control me-2" value="SOL-GEN-2025-00001" readonly>
+                        <button class="btn btn-outline-primary" title="Copy to clipboard">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                    <div class="qr-code-container bg-light p-4 d-inline-block rounded mb-3">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=SOL-GEN-2025-00001" alt="QR Code" class="img-fluid">
+                    </div>
+                    <p class="text-muted small">Share this address with others to receive Solar tokens</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Purchase Modal -->
+    <div class="modal fade" id="purchaseModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Purchase Solar</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        The Solar purchase feature is coming soon! Join our waitlist for updates.
+                    </div>
+                    <form>
+                        <div class="mb-3">
+                            <label for="purchase-amount" class="form-label">Amount to Purchase (SOLAR)</label>
+                            <input type="number" class="form-control" id="purchase-amount" min="0.01" step="0.01" placeholder="0.00" disabled>
+                            <div class="form-text">
+                                1 SOLAR = 17.7M kWh = $136,000 USD
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="payment-method" class="form-label">Payment Method</label>
+                            <select class="form-select" id="payment-method" disabled>
+                                <option selected>Credit/Debit Card</option>
+                                <option>Bank Transfer</option>
+                                <option>PayPal</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" disabled>Join Waitlist</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- History Modal -->
+    <div class="modal fade" id="historyModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Transaction History</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="transaction-list">
+                        <div class="header">
+                            <div class="row">
+                                <div class="col-md-3">Date</div>
+                                <div class="col-md-4">Description</div>
+                                <div class="col-md-3">Amount</div>
+                                <div class="col-md-2">Status</div>
+                            </div>
+                        </div>
+                        <div class="transaction p-3">
+                            <div class="row">
+                                <div class="col-md-3">Apr 11, 2025</div>
+                                <div class="col-md-4">Solar Distribution</div>
+                                <div class="col-md-3 text-success">+1.00000 SOLAR</div>
+                                <div class="col-md-2">
+                                    <span class="badge bg-success">Completed</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="transaction p-3">
+                            <div class="row">
+                                <div class="col-md-3">Apr 10, 2025</div>
+                                <div class="col-md-4">Solar Distribution</div>
+                                <div class="col-md-3 text-success">+1.00000 SOLAR</div>
+                                <div class="col-md-2">
+                                    <span class="badge bg-success">Completed</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="transaction p-3">
+                            <div class="row">
+                                <div class="col-md-3">Apr 09, 2025</div>
+                                <div class="col-md-4">Solar Distribution</div>
+                                <div class="col-md-3 text-success">+1.00000 SOLAR</div>
+                                <div class="col-md-2">
+                                    <span class="badge bg-success">Completed</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="transaction p-3">
+                            <div class="row">
+                                <div class="col-md-3">Apr 08, 2025</div>
+                                <div class="col-md-4">Welcome Bonus</div>
+                                <div class="col-md-3 text-success">+0.01918 SOLAR</div>
+                                <div class="col-md-2">
+                                    <span class="badge bg-success">Completed</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Kid Solar Multimodal Modal -->
+    <div class="modal fade" id="kidSolarModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, #FF8C00, #FFD700);">
+                    <h5 class="modal-title text-white">
+                        <i class="fas fa-child me-2"></i>Kid Solar (TC-S S0001) - Multimodal AI Assistant
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Input Type Selector -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="inputType" id="photoInput" checked>
+                                <label class="btn btn-outline-primary" for="photoInput">
+                                    <i class="fas fa-camera me-2"></i>Photo Analysis
+                                </label>
+                                
+                                <input type="radio" class="btn-check" name="inputType" id="videoInput">
+                                <label class="btn btn-outline-primary" for="videoInput">
+                                    <i class="fas fa-video me-2"></i>Video Analysis
+                                </label>
+                                
+                                <input type="radio" class="btn-check" name="inputType" id="textInput">
+                                <label class="btn btn-outline-primary" for="textInput">
+                                    <i class="fas fa-keyboard me-2"></i>Text Query
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Photo Input Section -->
+                    <div id="photoSection" class="input-section">
+                        <div class="upload-area" id="photoUploadArea">
+                            <div class="upload-content text-center p-4">
+                                <i class="fas fa-cloud-upload-alt fa-3x text-primary mb-3"></i>
+                                <h5>Upload a Photo for Analysis</h5>
+                                <p class="text-muted">Drag & drop an image or click to browse</p>
+                                <input type="file" id="photoFile" accept="image/*" class="d-none">
+                                <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('photoFile').click()">
+                                    <i class="fas fa-folder-open me-2"></i>Choose Photo
+                                </button>
+                            </div>
+                            <div class="preview-container" id="photoPreview" style="display: none;">
+                                <img id="photoPreviewImg" class="img-fluid rounded" alt="Preview">
+                                <div class="preview-info mt-2">
+                                    <span class="badge bg-info" id="photoFileInfo"></span>
+                                    <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="clearPhotoPreview()">
+                                        <i class="fas fa-times"></i> Remove
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Video Input Section -->
+                    <div id="videoSection" class="input-section" style="display: none;">
+                        <div class="upload-area" id="videoUploadArea">
+                            <div class="upload-content text-center p-4">
+                                <i class="fas fa-film fa-3x text-primary mb-3"></i>
+                                <h5>Upload a Video for Analysis</h5>
+                                <p class="text-muted">Supports MP4, WebM, AVI (max 50MB)</p>
+                                <input type="file" id="videoFile" accept="video/*" class="d-none">
+                                <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('videoFile').click()">
+                                    <i class="fas fa-folder-open me-2"></i>Choose Video
+                                </button>
+                            </div>
+                            <div class="preview-container" id="videoPreview" style="display: none;">
+                                <video id="videoPreviewVid" class="w-100 rounded" controls style="max-height: 300px;"></video>
+                                <div class="preview-info mt-2">
+                                    <span class="badge bg-info" id="videoFileInfo"></span>
+                                    <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="clearVideoPreview()">
+                                        <i class="fas fa-times"></i> Remove
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Text Input Section -->
+                    <div id="textSection" class="input-section" style="display: none;">
+                        <div class="form-group">
+                            <label for="textQuery" class="form-label">
+                                <i class="fas fa-question-circle me-2"></i>Ask Kid Solar anything about energy and sustainability:
+                            </label>
+                            <textarea id="textQuery" class="form-control" rows="4" 
+                                placeholder="Example: How much energy does my school use? What's the carbon footprint of my bicycle? How do solar panels work?"></textarea>
+                            <div class="form-text">
+                                Kid Solar can help you understand energy consumption, environmental impact, and sustainability concepts!
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Analysis Button -->
+                    <div class="text-center mt-4">
+                        <button id="analyzeBtn" class="btn btn-primary btn-lg" onclick="startAnalysis()">
+                            <i class="fas fa-magic me-2"></i>Analyze with Kid Solar AI
+                        </button>
+                    </div>
+
+                    <!-- D-ID Kid Solar Avatar Section -->
+                    <div id="didKidSolarSection" class="mt-4" style="display: none;">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #4CAF50, #81C784);">
+                                <h6 class="mb-0 text-white">
+                                    <i class="fas fa-child me-2"></i>Kid Solar is Analyzing...
+                                </h6>
+                                <button type="button" class="btn btn-sm btn-light" onclick="document.getElementById('quickPhotoInput').click();" title="Upload Photo to Kid Solar">
+                                    <i class="fas fa-camera me-1"></i>📷 Upload Photo
+                                </button>
+                            </div>
+                            <div class="card-body text-center">
+                                <div id="kid-solar-agent" style="width: 100%; height: 300px; border-radius: 10px; overflow: hidden; background: linear-gradient(135deg, #E8F5E8, #F1F8E9);"></div>
+                                <p class="mt-3 text-muted">Kid Solar is thinking about your input...</p>
+                                <div class="d-flex justify-content-center gap-2">
+                                    <button type="button" class="btn btn-sm btn-outline-success" onclick="testKidSolarVoice()">
+                                        <i class="fas fa-volume-up me-1"></i>Test Kid Solar Voice
+                                    </button>
+                                </div>
+                                <input type="file" id="quickPhotoInput" accept="image/*" style="display: none;" onchange="handleQuickPhotoUpload(this)">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Results Section -->
+                    <div id="resultsSection" class="mt-4" style="display: none;">
+                        <div class="card">
+                            <div class="card-header bg-success text-white">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-robot me-2"></i>Kid Solar Analysis Results
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="analysisResults">
+                                    <!-- Results will be populated here -->
+                                </div>
+                                <div class="row mt-3">
+                                    <div class="col-md-4">
+                                        <div class="text-center p-3 bg-light rounded">
+                                            <i class="fas fa-bolt text-warning fa-2x mb-2"></i>
+                                            <div class="h5 mb-1" id="energyValue">--</div>
+                                            <small class="text-muted">kWh Equivalent</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="text-center p-3 bg-light rounded">
+                                            <i class="fas fa-coins text-primary fa-2x mb-2"></i>
+                                            <div class="h5 mb-1" id="solarValue">--</div>
+                                            <small class="text-muted">SOLAR Tokens</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="text-center p-3 bg-light rounded">
+                                            <i class="fas fa-leaf text-success fa-2x mb-2"></i>
+                                            <div class="h5 mb-1" id="carbonValue">--</div>
+                                            <small class="text-muted">CO2 Impact</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Loading Indicator -->
+                    <div id="loadingIndicator" class="text-center mt-4" style="display: none;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Analyzing...</span>
+                        </div>
+                        <p class="mt-2">Kid Solar is analyzing your input...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-outline-primary" onclick="clearAllInputs()">
+                        <i class="fas fa-refresh me-2"></i>Start Over
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Support Modal -->
+    <div class="modal fade" id="supportModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Support The Current-See</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <p>Your contribution helps us accelerate the transition to a solar-backed economy. Select a contribution amount below:</p>
+                    </div>
+                    
+                    <div class="d-flex justify-content-center mb-4">
+                        <div class="btn-group" role="group">
+                            <input type="radio" class="btn-check" name="donation-amount" id="donation-25" autocomplete="off" checked>
+                            <label class="btn btn-outline-primary" for="donation-25">$25</label>
+                            
+                            <input type="radio" class="btn-check" name="donation-amount" id="donation-50" autocomplete="off">
+                            <label class="btn btn-outline-primary" for="donation-50">$50</label>
+                            
+                            <input type="radio" class="btn-check" name="donation-amount" id="donation-100" autocomplete="off">
+                            <label class="btn btn-outline-primary" for="donation-100">$100</label>
+                            
+                            <input type="radio" class="btn-check" name="donation-amount" id="donation-custom" autocomplete="off">
+                            <label class="btn btn-outline-primary" for="donation-custom">Custom</label>
+                        </div>
+                    </div>
+                    
+                    <div id="custom-amount-container" class="mb-4" style="display: none;">
+                        <label for="custom-amount" class="form-label">Custom Amount (USD)</label>
+                        <input type="number" class="form-control" id="custom-amount" min="1" step="1" placeholder="Enter amount">
+                    </div>
+                    
+                    <div id="payment-container">
+                        <form id="payment-form">
+                            <div id="payment-element">
+                                <!-- Stripe.js injects the Payment Element -->
+                            </div>
+                            <button id="submit">
+                                <div class="spinner" id="spinner" style="display: none;"></div>
+                                <span id="button-text">Support Now</span>
+                            </button>
+                            <div id="payment-message" class="hidden"></div>
+                        </form>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h4>The Current-See</h4>
+                    <p>A new global economy backed by the Sun.<br>One Solar. One Earth. Daily.</p>
+                    <p style="margin-top: 10px;">The Current-See PBC, Inc.<br>
+                    <a href="mailto:hello@thecurrentsee.org" style="color: rgba(255, 255, 255, 0.7);">hello@thecurrentsee.org</a></p>
+                </div>
+                <div class="footer-column">
+                    <h4>Learn More</h4>
+                    <ul>
+                        <li><a href="/whitepapers">White Papers</a></li>
+                        <li><a href="/declaration">Solar Declaration</a></li>
+                        <li><a href="/founder_note">Founder's Note</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>Get Involved</h4>
+                    <ul>
+                        <li><a href="/my-solar">Join The Current-See</a></li>
+                        <li><a href="/prototype">Try The Prototype</a></li>
+                        <li><a href="/merch">Support With Merch</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>Links</h4>
+                    <ul>
+                        <li><a href="/">Home</a></li>
+                        <li><a href="/wallet">Solar Wallet</a></li>
+                        <li><a href="/admin">Admin</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="copyright">
+                &copy; 2025 The Current-See PBC, Inc. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Toggle custom amount field
+        document.getElementById('donation-custom').addEventListener('change', function() {
+            document.getElementById('custom-amount-container').style.display = this.checked ? 'block' : 'none';
+        });
+        
+        // Hide custom amount field when other options are selected
+        const otherOptions = ['donation-25', 'donation-50', 'donation-100'];
+        otherOptions.forEach(id => {
+            document.getElementById(id).addEventListener('change', function() {
+                document.getElementById('custom-amount-container').style.display = 'none';
+            });
+        });
+        
+        // Copy address to clipboard
+        document.querySelector('.fa-copy').parentElement.addEventListener('click', function() {
+            const addressField = document.querySelector('#receiveModal input[readonly]');
+            addressField.select();
+            document.execCommand('copy');
+            
+            // Show feedback
+            const originalHTML = this.innerHTML;
+            this.innerHTML = '<i class="fas fa-check"></i>';
+            this.classList.add('btn-success');
+            this.classList.remove('btn-outline-primary');
+            
+            setTimeout(() => {
+                this.innerHTML = originalHTML;
+                this.classList.remove('btn-success');
+                this.classList.add('btn-outline-primary');
+            }, 2000);
+        });
+
+        // Kid Solar Multimodal Functions
+        function switchInputType() {
+            const photoInput = document.getElementById('photoInput');
+            const videoInput = document.getElementById('videoInput');
+            const textInput = document.getElementById('textInput');
+            
+            const photoSection = document.getElementById('photoSection');
+            const videoSection = document.getElementById('videoSection');
+            const textSection = document.getElementById('textSection');
+            
+            // Hide all sections
+            photoSection.style.display = 'none';
+            videoSection.style.display = 'none';
+            textSection.style.display = 'none';
+            
+            // Show selected section
+            if (photoInput.checked) {
+                photoSection.style.display = 'block';
+            } else if (videoInput.checked) {
+                videoSection.style.display = 'block';
+            } else if (textInput.checked) {
+                textSection.style.display = 'block';
+            }
+        }
+
+        // Add event listeners for input type switching
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('photoInput').addEventListener('change', switchInputType);
+            document.getElementById('videoInput').addEventListener('change', switchInputType);
+            document.getElementById('textInput').addEventListener('change', switchInputType);
+        });
+
+        // Photo file handling
+        document.getElementById('photoFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                handlePhotoUpload(file);
+            }
+        });
+
+        function handlePhotoUpload(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById('photoPreview');
+                const img = document.getElementById('photoPreviewImg');
+                const info = document.getElementById('photoFileInfo');
+                
+                img.src = e.target.result;
+                info.textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+                preview.style.display = 'block';
+                document.getElementById('photoUploadArea').querySelector('.upload-content').style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function clearPhotoPreview() {
+            document.getElementById('photoPreview').style.display = 'none';
+            document.getElementById('photoUploadArea').querySelector('.upload-content').style.display = 'block';
+            document.getElementById('photoFile').value = '';
+        }
+
+        // Video file handling
+        document.getElementById('videoFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                handleVideoUpload(file);
+            }
+        });
+
+        function handleVideoUpload(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById('videoPreview');
+                const video = document.getElementById('videoPreviewVid');
+                const info = document.getElementById('videoFileInfo');
+                
+                video.src = e.target.result;
+                info.textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+                preview.style.display = 'block';
+                document.getElementById('videoUploadArea').querySelector('.upload-content').style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function clearVideoPreview() {
+            document.getElementById('videoPreview').style.display = 'none';
+            document.getElementById('videoUploadArea').querySelector('.upload-content').style.display = 'block';
+            document.getElementById('videoFile').value = '';
+        }
+
+        function clearAllInputs() {
+            clearPhotoPreview();
+            clearVideoPreview();
+            document.getElementById('textQuery').value = '';
+            document.getElementById('resultsSection').style.display = 'none';
+            document.getElementById('loadingIndicator').style.display = 'none';
+            document.getElementById('didKidSolarSection').style.display = 'none';
+            
+            // Clean up D-ID agent
+            if (window.kidSolarAgent) {
+                try {
+                    window.kidSolarAgent.destroy();
+                    window.kidSolarAgent = null;
+                } catch (e) {
+                    console.log('D-ID agent cleanup:', e);
+                }
+            }
+            
+            // Reset to photo input
+            document.getElementById('photoInput').checked = true;
+            switchInputType();
+        }
+
+        async function startAnalysis() {
+            const photoInput = document.getElementById('photoInput');
+            const videoInput = document.getElementById('videoInput');
+            const textInput = document.getElementById('textInput');
+            
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const resultsSection = document.getElementById('resultsSection');
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            
+            // Show loading
+            loadingIndicator.style.display = 'block';
+            resultsSection.style.display = 'none';
+            analyzeBtn.disabled = true;
+            
+            try {
+                let analysisData = {};
+                
+                if (photoInput.checked) {
+                    const photoFile = document.getElementById('photoFile').files[0];
+                    if (!photoFile) {
+                        throw new Error('Please select a photo to analyze');
+                    }
+                    analysisData = await analyzePhoto(photoFile);
+                } else if (videoInput.checked) {
+                    const videoFile = document.getElementById('videoFile').files[0];
+                    if (!videoFile) {
+                        throw new Error('Please select a video to analyze');
+                    }
+                    analysisData = await analyzeVideo(videoFile);
+                } else if (textInput.checked) {
+                    const textQuery = document.getElementById('textQuery').value.trim();
+                    if (!textQuery) {
+                        throw new Error('Please enter a question for Kid Solar');
+                    }
+                    analysisData = await analyzeText(textQuery);
+                }
+                
+                displayResults(analysisData);
+                
+            } catch (error) {
+                alert('Analysis failed: ' + error.message);
+            } finally {
+                loadingIndicator.style.display = 'none';
+                analyzeBtn.disabled = false;
+            }
+        }
+
+        async function analyzePhoto(file) {
+            const formData = new FormData();
+            formData.append('photo', file);
+            formData.append('type', 'photo');
+            
+            const response = await fetch('/api/kid-solar-analysis', {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!response.ok) {
+                throw new Error('Photo analysis failed');
+            }
+            
+            return await response.json();
+        }
+
+        async function analyzeVideo(file) {
+            const formData = new FormData();
+            formData.append('video', file);
+            formData.append('type', 'video');
+            
+            const response = await fetch('/api/kid-solar-analysis', {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!response.ok) {
+                throw new Error('Video analysis failed');
+            }
+            
+            return await response.json();
+        }
+
+        async function analyzeText(query) {
+            const response = await fetch('/api/kid-solar-analysis', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    type: 'text',
+                    query: query
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error('Text analysis failed');
+            }
+            
+            return await response.json();
+        }
+
+        function displayResults(data) {
+            const resultsSection = document.getElementById('resultsSection');
+            const analysisResults = document.getElementById('analysisResults');
+            const energyValue = document.getElementById('energyValue');
+            const solarValue = document.getElementById('solarValue');
+            const carbonValue = document.getElementById('carbonValue');
+            
+            // Show D-ID Kid Solar avatar first
+            const didSection = document.getElementById('didKidSolarSection');
+            didSection.style.display = 'block';
+            
+            // Initialize D-ID Kid Solar agent if not already done
+            if (!window.kidSolarAgent) {
+                initializeKidSolarAgent(data.analysis);
+            } else {
+                // Send analysis to existing agent
+                window.kidSolarAgent.speak({ text: data.analysis, audio: true });
+            }
+            
+            // Display main analysis text
+            analysisResults.innerHTML = `<p class="mb-0">${data.analysis}</p>`;
+            
+            // Display metrics
+            energyValue.textContent = data.energy_kwh || '--';
+            solarValue.textContent = data.solar_tokens || '--';
+            carbonValue.textContent = data.carbon_footprint || '--';
+            
+            // Show results after a delay to let D-ID agent start speaking
+            setTimeout(() => {
+                resultsSection.style.display = 'block';
+            }, 2000);
+        }
+
+        function initializeKidSolarAgent(message) {
+            // Import D-ID agent module and create Kid Solar instance
+            import('https://agent.d-id.com/v2/index.js').then(() => {
+                window.kidSolarAgent = window.D_ID.agents.create({
+                    container: document.getElementById('kid-solar-agent'),
+                    agentId: 'v2_agt_vhYf_e_C', // Console Solar - Kid Solar agent
+                    clientKey: 'YXV0aDB8Njg3NjgyNDI2M2Q2ODI4MmIwOWFiYmUzOlR2cUplanVzeWc1cjlKV2ZNV0NKaQ==',
+                    mode: 'fabio',
+                    orientation: 'vertical',
+                    position: 'center',
+                    monitor: true,
+                    onReady: () => {
+                        console.log('Kid Solar D-ID agent ready');
+                        // Speak the analysis results
+                        window.kidSolarAgent.speak({ 
+                            text: `Hi! I'm Kid Solar! ${message}`, 
+                            audio: true 
+                        });
+                    },
+                    onError: (error) => {
+                        console.error('Kid Solar D-ID agent error:', error);
+                        // Fallback to text-only display
+                        document.getElementById('didKidSolarSection').style.display = 'none';
+                    }
+                });
+            }).catch(error => {
+                console.error('Failed to load D-ID agent:', error);
+                // Hide D-ID section if it fails to load
+                document.getElementById('didKidSolarSection').style.display = 'none';
+            });
+        }
+
+        function testKidSolarVoice() {
+            if (window.kidSolarAgent) {
+                window.kidSolarAgent.speak({ 
+                    text: "Hi there! I'm Kid Solar, your friendly energy assistant! I love helping kids learn about solar power and sustainability. Upload a photo, video, or ask me any question about energy!", 
+                    audio: true 
+                });
+            } else {
+                initializeKidSolarAgent("Hi there! I'm Kid Solar, your friendly energy assistant! I love helping kids learn about solar power and sustainability!");
+            }
+        }
+
+        function handleQuickPhotoUpload(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                
+                // Show the Kid Solar agent immediately
+                const didSection = document.getElementById('didKidSolarSection');
+                didSection.style.display = 'block';
+                
+                // Initialize or use existing Kid Solar agent
+                if (!window.kidSolarAgent) {
+                    initializeKidSolarAgent("Hi! I'm Kid Solar! Let me analyze your photo for you!");
+                } else {
+                    window.kidSolarAgent.speak({ 
+                        text: "Great! I can see you uploaded a photo. Let me analyze it for you!", 
+                        audio: true 
+                    });
+                }
+                
+                // Process the photo using existing analysis function
+                analyzePhoto(file).then(data => {
+                    displayResults(data);
+                }).catch(error => {
+                    console.error('Quick photo analysis failed:', error);
+                    if (window.kidSolarAgent) {
+                        window.kidSolarAgent.speak({ 
+                            text: "Sorry, I had trouble analyzing that photo. Please try again or use the main upload area!", 
+                            audio: true 
+                        });
+                    }
+                });
+            }
+        }
+    </script>
+
+<!-- FOOTER_PLACEHOLDER -->
+
+</body>
+</html>

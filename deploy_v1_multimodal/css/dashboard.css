@@ -1,0 +1,370 @@
+/**
+ * Dashboard Styles for Current-See
+ *
+ * This stylesheet provides styles for the Solar Dashboard including:
+ * - Stat cards
+ * - Solar flow graph
+ * - Scan history
+ * - Energy impact visualization
+ */
+
+/* Dashboard Container */
+#dashboard-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+  transition: opacity 0.3s ease;
+}
+
+#dashboard-container.loading {
+  opacity: 0.7;
+}
+
+/* Dashboard Section Headers */
+#dashboard-container h3 {
+  margin: 25px 0 15px;
+  font-size: 1.4rem;
+  color: #333;
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 10px;
+}
+
+/* Stat Cards */
+.dashboard-stat-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.dashboard-stat-card {
+  background: #fff;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  text-align: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dashboard-stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+.stat-icon {
+  font-size: 2rem;
+  margin-bottom: 10px;
+}
+
+.stat-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 5px;
+  color: #333;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+/* Card Colors */
+.solar-card {
+  background: linear-gradient(135deg, #fffbeb, #fff8e6);
+  border-left: 4px solid #ffb700;
+}
+
+.solar-card .stat-value {
+  color: #ffb700;
+}
+
+.energy-card {
+  background: linear-gradient(135deg, #edf7ed, #f2f9f2);
+  border-left: 4px solid #7bc144;
+}
+
+.energy-card .stat-value {
+  color: #7bc144;
+}
+
+.scans-card {
+  background: linear-gradient(135deg, #edf0f5, #f5f7fa);
+  border-left: 4px solid #4a6fa5;
+}
+
+.scans-card .stat-value {
+  color: #4a6fa5;
+}
+
+.achievements-card {
+  background: linear-gradient(135deg, #fff0e6, #fff5f0);
+  border-left: 4px solid #ff8c42;
+}
+
+.achievements-card .stat-value {
+  color: #ff8c42;
+}
+
+/* Graph Section */
+.dashboard-graph-section {
+  background: #fff;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  margin-bottom: 30px;
+}
+
+.solar-flow-graph {
+  height: 300px;
+  position: relative;
+}
+
+/* Scan History Section */
+.dashboard-scan-history {
+  background: #fff;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  margin-bottom: 30px;
+}
+
+.scan-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.scan-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  border-radius: 8px;
+  background: #f8f9fa;
+  transition: background-color 0.2s ease;
+}
+
+.scan-item:hover {
+  background: #f0f2f5;
+}
+
+.scan-product-name {
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.scan-product-location {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+.scan-date {
+  font-size: 0.8rem;
+  color: #999;
+}
+
+.scan-energy-value {
+  font-weight: bold;
+  text-align: right;
+  margin-bottom: 5px;
+}
+
+.scan-eco-score {
+  font-size: 0.9rem;
+  padding: 3px 10px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.scan-eco-score.excellent {
+  background: #e3f5e3;
+  color: #2e7d32;
+}
+
+.scan-eco-score.good {
+  background: #fff8e1;
+  color: #ff8f00;
+}
+
+.scan-eco-score.neutral {
+  background: #f5f5f5;
+  color: #757575;
+}
+
+.scan-eco-score.poor {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.empty-scan-history {
+  padding: 30px;
+  text-align: center;
+  color: #666;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+/* Impact Section */
+.dashboard-impact-section {
+  background: #fff;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  margin-bottom: 30px;
+}
+
+.impact-score-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  background: linear-gradient(135deg, #f0f7ff, #e6f2ff);
+  border-radius: 8px;
+}
+
+.impact-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: white;
+  border-radius: 50%;
+  width: 150px;
+  height: 150px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.impact-value {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #4a6fa5;
+}
+
+.impact-unit {
+  font-size: 1rem;
+  color: #666;
+}
+
+.impact-equivalents {
+  display: flex;
+  gap: 30px;
+}
+
+.impact-equivalent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 15px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+}
+
+.equivalent-icon {
+  font-size: 2rem;
+  margin-bottom: 10px;
+}
+
+.equivalent-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.equivalent-label {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+/* Solar Token Flow Animation */
+.solar-token-flow {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.token-particle {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: #ffeb99;
+  border-radius: 50%;
+  box-shadow: 0 0 5px rgba(255, 183, 0, 0.6);
+  animation: flow 3s linear forwards;
+  opacity: 0;
+}
+
+@keyframes flow {
+  0% { transform: translateY(-20px) translateX(var(--start-x)); opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: translateY(220px) translateX(var(--end-x)); opacity: 0; }
+}
+
+/* Dashboard Error State */
+.dashboard-error {
+  padding: 30px;
+  text-align: center;
+  background: #ffebee;
+  border-radius: 10px;
+  margin: 30px 0;
+}
+
+.dashboard-error h3 {
+  color: #c62828;
+  margin-bottom: 10px;
+}
+
+.error-details {
+  font-family: monospace;
+  background: #f5f5f5;
+  padding: 10px;
+  border-radius: 5px;
+  margin-top: 15px;
+  text-align: left;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .dashboard-stat-cards {
+    grid-template-columns: 1fr;
+  }
+  
+  .impact-score-container {
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .impact-score {
+    width: 120px;
+    height: 120px;
+  }
+  
+  .impact-equivalents {
+    width: 100%;
+  }
+  
+  .scan-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .scan-energy-info {
+    width: 100%;
+    margin-top: 10px;
+  }
+  
+  .scan-energy-value, .scan-eco-score {
+    text-align: left;
+  }
+}
