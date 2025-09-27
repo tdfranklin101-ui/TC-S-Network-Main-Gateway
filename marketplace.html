@@ -678,13 +678,37 @@
                 userBalance -= price;
                 document.getElementById('balanceAmount').textContent = userBalance.toLocaleString();
                 
-                showNotification(`Successfully purchased artifact for ${price} SOLAR!`, 'success');
+                // Find the purchased artifact
+                const artifact = MONAZITE_COLLECTION.find(item => item.id === artifactId);
                 
-                // Add to user's items (mock)
+                showNotification(`Successfully purchased "${artifact.title}" for ${price} SOLAR!`, 'success');
+                
+                // Add to user's items
                 addToMyItems(artifactId);
+                
+                // Trigger download automatically after purchase
+                setTimeout(() => {
+                    downloadArtifact(artifact);
+                    showNotification(`Download started: ${artifact.title}`, 'success');
+                }, 1000);
+                
             } else {
                 showNotification('Insufficient SOLAR balance!', 'error');
             }
+        }
+
+        function downloadArtifact(artifact) {
+            // Create download link
+            const link = document.createElement('a');
+            link.href = artifact.file;
+            link.download = `${artifact.title.replace(/[^a-zA-Z0-9]/g, '_')}.${artifact.type === 'video' ? 'mp4' : 'mp3'}`;
+            link.style.display = 'none';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            console.log(`Downloading ${artifact.type}: ${artifact.title} from ${artifact.file}`);
         }
 
         function addToMyItems(artifactId) {
