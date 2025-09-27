@@ -1052,6 +1052,48 @@ const server = http.createServer(async (req, res) => {
   }
 
   // Manual daily distribution trigger API (for testing)
+  // Admin interface route
+  if (pathname === '/admin' && req.method === 'GET') {
+    try {
+      const adminHtmlPath = path.join(__dirname, 'admin', 'global-solar-admin.html');
+      if (fs.existsSync(adminHtmlPath)) {
+        const content = fs.readFileSync(adminHtmlPath, 'utf8');
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end(content);
+        console.log('✅ Served admin interface');
+        return;
+      }
+    } catch (error) {
+      console.error('Admin interface error:', error);
+    }
+    res.writeHead(404, { 'Content-Type': 'text/plain' });
+    res.end('Admin interface not found');
+    return;
+  }
+
+  // Admin CSS/JS files
+  if (pathname.startsWith('/admin/') && req.method === 'GET') {
+    try {
+      const adminFilePath = path.join(__dirname, pathname);
+      if (fs.existsSync(adminFilePath) && fs.statSync(adminFilePath).isFile()) {
+        const content = fs.readFileSync(adminFilePath);
+        const ext = path.extname(pathname);
+        const contentType = ext === '.css' ? 'text/css' : 
+                           ext === '.js' ? 'application/javascript' :
+                           'application/octet-stream';
+        res.writeHead(200, { 'Content-Type': contentType });
+        res.end(content);
+        console.log(`✅ Served admin file: ${pathname}`);
+        return;
+      }
+    } catch (error) {
+      console.error('Admin file error:', error);
+    }
+    res.writeHead(404, { 'Content-Type': 'text/plain' });
+    res.end('Admin file not found');
+    return;
+  }
+
   if (pathname === '/api/admin/trigger-distribution' && req.method === 'POST') {
     try {
       console.log('🔧 Manual distribution trigger requested');
