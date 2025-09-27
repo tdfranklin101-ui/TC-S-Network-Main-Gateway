@@ -1281,24 +1281,36 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // User Signup with Initial Solar Allocation API
-  if (pathname === '/api/users/signup-solar' && req.method === 'POST') {
+  // Unified Auth Signup API - creates members with proper password hashing
+  if ((pathname === '/api/users/signup-solar' || pathname === '/api/auth/signup') && req.method === 'POST') {
     try {
       const body = await parseBody(req);
-      const { username, email, firstName, lastName } = body;
+      const { username, email, firstName, password } = body;
       
-      if (!username || !email) {
+      if (!username || !email || !password) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Username and email are required' }));
+        res.end(JSON.stringify({ error: 'Username, email, and password are required' }));
+        return;
+      }
+
+      if (password.length < 6) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Password must be at least 6 characters long' }));
+        return;
+      }
+
+      if (!bcrypt) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Password hashing unavailable' }));
         return;
       }
 
       if (pool) {
-        // Check if user already exists
-        const existingUserQuery = 'SELECT id FROM users WHERE username = $1 OR email = $2';
-        const existingUser = await pool.query(existingUserQuery, [username, email]);
+        // Check if member already exists
+        const existingMemberQuery = 'SELECT id FROM members WHERE username = $1 OR email = $2';
+        const existingMember = await pool.query(existingMemberQuery, [username, email]);
         
-        if (existingUser.rows.length > 0) {
+        if (existingMember.rows.length > 0) {
           res.writeHead(409, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'Username or email already exists' }));
           return;
@@ -1310,39 +1322,58 @@ const server = http.createServer(async (req, res) => {
         const daysSinceGenesis = Math.floor((currentDate - genesisDate) / (1000 * 60 * 60 * 24));
         const initialSolarAmount = Math.max(daysSinceGenesis, 1); // At least 1 Solar
 
-        // Create user account
-        const userInsertQuery = `
-          INSERT INTO users (id, username, email, first_name, last_name, created_at)
-          VALUES (gen_random_uuid(), $1, $2, $3, $4, NOW())
-          RETURNING id
-        `;
-        
-        const userResult = await pool.query(userInsertQuery, [username, email, firstName || '', lastName || '']);
-        const userId = userResult.rows[0].id;
+        // Hash password
+        const saltRounds = 12;
+        const passwordHash = await bcrypt.hash(password, saltRounds);
 
-        // Create Solar account with initial allocation
-        const solarAccountQuery = `
-          INSERT INTO solar_accounts (user_id, account_number, display_name, total_solar, total_kwh, total_dollars, joined_date)
-          VALUES ($1, $2, $3, $4, $5, $6, NOW())
+        // Create member with hashed password and initial Solar balance
+        const memberInsertQuery = `
+          INSERT INTO members (username, name, email, first_name, password_hash, total_solar, total_dollars, signup_timestamp)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+          RETURNING id, username, total_solar
         `;
         
-        const accountNumber = `SOL-${userId.substring(0, 8).toUpperCase()}`;
-        const initialKwh = initialSolarAmount * 4913; // Convert to kWh equivalent
+        const displayName = firstName || username;
         const initialDollars = initialSolarAmount * 0.20; // Approximate dollar value
         
-        await pool.query(solarAccountQuery, [
-          userId, accountNumber, `${firstName || username}'s Solar Account`, 
-          initialSolarAmount, initialKwh, initialDollars
+        const memberResult = await pool.query(memberInsertQuery, [
+          username, displayName, email, firstName || '', passwordHash,
+          initialSolarAmount, initialDollars
         ]);
+        
+        const member = memberResult.rows[0];
 
-        console.log(`🌱 New user created: ${username} with ${initialSolarAmount} Solar (${daysSinceGenesis} days since genesis)`);
+        console.log(`🌱 New member created: ${username} with ${initialSolarAmount} Solar (${daysSinceGenesis} days since genesis)`);
 
-        res.writeHead(200, { 'Content-Type': 'application/json' });
+        // Create session for immediate login
+        const sessionId = createSession(member.id, {
+          userId: member.id,
+          username: member.username,
+          solarBalance: parseFloat(member.total_solar) || 0
+        });
+        
+        // Set secure session cookie
+        const cookieOptions = [
+          `tc_s_session=${sessionId}`,
+          'HttpOnly',
+          'SameSite=Lax',
+          'Path=/',
+          `Max-Age=${24 * 60 * 60}` // 24 hours
+        ];
+        
+        if (process.env.NODE_ENV === 'production') {
+          cookieOptions.push('Secure');
+        }
+
+        res.writeHead(200, { 
+          'Content-Type': 'application/json',
+          'Set-Cookie': cookieOptions.join('; ')
+        });
         res.end(JSON.stringify({
           success: true,
-          userId: userId,
-          username: username,
-          accountNumber: accountNumber,
+          userId: member.id,
+          username: member.username,
+          solarBalance: parseFloat(member.total_solar) || 0,
           initialSolarAmount: initialSolarAmount,
           daysSinceGenesis: daysSinceGenesis,
           genesisDate: '2025-04-07',
@@ -1353,9 +1384,9 @@ const server = http.createServer(async (req, res) => {
         res.end(JSON.stringify({ error: 'Database unavailable for user registration' }));
       }
     } catch (error) {
-      console.error('User signup error:', error);
+      console.error('Member signup error:', error);
       res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Failed to create user account' }));
+      res.end(JSON.stringify({ error: 'Failed to create member account' }));
     }
     return;
   }

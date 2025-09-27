@@ -1033,6 +1033,14 @@
                 <label for="signup-name">First Name</label>
                 <input type="text" id="signup-name">
             </div>
+            <div class="form-group">
+                <label for="signup-password">Password</label>
+                <input type="password" id="signup-password" required>
+            </div>
+            <div class="form-group">
+                <label for="signup-password-confirm">Confirm Password</label>
+                <input type="password" id="signup-password-confirm" required>
+            </div>
             <div class="form-buttons">
                 <button class="btn btn-secondary" onclick="marketplace.closeSignupModal()">Cancel</button>
                 <button class="btn btn-primary" onclick="signupUser()">Join Network</button>
@@ -2043,9 +2051,21 @@
             const username = document.getElementById('signup-username').value;
             const email = document.getElementById('signup-email').value;
             const firstName = document.getElementById('signup-name').value;
+            const password = document.getElementById('signup-password').value;
+            const passwordConfirm = document.getElementById('signup-password-confirm').value;
 
-            if (!username || !email) {
-                alert('Username and email are required');
+            if (!username || !email || !password) {
+                alert('Username, email, and password are required');
+                return;
+            }
+
+            if (password !== passwordConfirm) {
+                alert('Passwords do not match');
+                return;
+            }
+
+            if (password.length < 6) {
+                alert('Password must be at least 6 characters long');
                 return;
             }
 
@@ -2058,7 +2078,8 @@
                     body: JSON.stringify({
                         username: username,
                         email: email,
-                        firstName: firstName
+                        firstName: firstName,
+                        password: password
                     })
                 });
 
