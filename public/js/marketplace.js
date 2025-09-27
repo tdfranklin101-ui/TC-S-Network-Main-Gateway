@@ -779,7 +779,6 @@ class MarketplaceApp {
 let marketplace;
 document.addEventListener('DOMContentLoaded', () => {
   marketplace = new MarketplaceApp();
+  // Make marketplace globally accessible for onclick handlers
+  window.marketplace = marketplace;
 });
-
-// Global functions for onclick handlers
-window.marketplace = marketplace;
