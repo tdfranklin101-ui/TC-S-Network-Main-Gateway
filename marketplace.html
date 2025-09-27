@@ -539,29 +539,10 @@
         let currentUser = null;
         let userBalance = 10000;
 
-        // Original Monazite Collection - 20 MP3s + 1 MP4
+        // NOTE: No actual media files found in project - using placeholder data
+        // You need to upload your MP3s to /public/music/ and MP4s to /public/videos/
         const MONAZITE_COLLECTION = [
-            { id: 'mono_01', file: '/music/monazite/01_Ternal_Flame_Longevity_Manifesto.mp3', title: 'Ternal Flame - Longevity Manifesto', duration: '4:38', price: 75, genre: 'Alternative', type: 'audio' },
-            { id: 'mono_02', file: '/music/monazite/02_David_Boyeez_Hair.mp3', title: 'David Boyeez Hair', duration: '5:51', price: 85, genre: 'Rock', type: 'audio' },
-            { id: 'mono_03', file: '/music/monazite/03_Swampy_Boogie_Nights_Cajun_Crawler.mp3', title: 'Swampy Boogie Nights (Cajun Crawler)', duration: '5:26', price: 80, genre: 'Blues', type: 'audio' },
-            { id: 'mono_04', file: '/music/monazite/04_The_Heart_is_a_Mule.mp3', title: 'The Heart is a Mule', duration: '5:38', price: 85, genre: 'Alternative', type: 'audio' },
-            { id: 'mono_05', file: '/music/monazite/05_A_Solar_Day_groovin.mp3', title: 'A Solar Day (groovin)', duration: '4:25', price: 70, genre: 'Alternative', type: 'audio' },
-            { id: 'mono_06', file: '/music/monazite/06_A_Solar_Day_moovin.mp3', title: 'A Solar Day (moovin)', duration: '5:56', price: 90, genre: 'Alternative', type: 'audio' },
-            { id: 'mono_07', file: '/music/monazite/07_Break_Time_Blues_Rhapsody.mp3', title: 'Break Time Blues Rhapsody', duration: '5:53', price: 90, genre: 'Blues', type: 'audio' },
-            { id: 'mono_08', file: '/music/monazite/08_Starlight_Forever.mp3', title: 'Starlight Forever', duration: '5:31', price: 85, genre: 'Alternative', type: 'audio' },
-            { id: 'mono_09', file: '/music/monazite/09_Light_It_From_Within.mp3', title: 'Light It From Within', duration: '5:14', price: 80, genre: 'Alternative', type: 'audio' },
-            { id: 'mono_10', file: '/music/monazite/10_Moonshine_in_St_Kitts.mp3', title: 'Moonshine in St Kitts', duration: '4:23', price: 70, genre: 'Alternative', type: 'audio' },
-            { id: 'mono_11', file: '/music/monazite/11_Solar_Tempest_Symphony.mp3', title: 'Solar Tempest Symphony', duration: '2:45', price: 55, genre: 'Classical', type: 'audio' },
-            { id: 'mono_12', file: '/music/monazite/12_Steel_In_His_Soul.mp3', title: 'Steel In His Soul', duration: '4:47', price: 75, genre: 'Alternative', type: 'audio' },
-            { id: 'mono_13', file: '/music/monazite/13_We_Said_So.mp3', title: 'We Said So', duration: '5:33', price: 85, genre: 'Alternative', type: 'audio' },
-            { id: 'mono_14', file: '/music/monazite/14_Funky_Voodoo_Blues_Jam.mp3', title: 'Funky Voodoo (Blues Jam)', duration: '5:27', price: 80, genre: 'Blues', type: 'audio' },
-            { id: 'mono_15', file: '/music/monazite/15_Green_and_Blue_Rock.mp3', title: 'Green and Blue (Rock)', duration: '5:06', price: 80, genre: 'Rock', type: 'audio' },
-            { id: 'mono_16', file: '/music/monazite/16_Green_and_Blue_EDM.mp3', title: 'Green and Blue (EDM)', duration: '3:52', price: 65, genre: 'Electronic', type: 'audio' },
-            { id: 'mono_17', file: '/music/monazite/17_Lady_Voodoo_Folk_Yah.mp3', title: 'Lady Voodoo (Folk Yah)', duration: '5:19', price: 80, genre: 'Folk', type: 'audio' },
-            { id: 'mono_18', file: '/music/monazite/18_Lady_Voodoo_Crying.mp3', title: 'Lady Voodoo (Crying)', duration: '5:29', price: 85, genre: 'Blues', type: 'audio' },
-            { id: 'mono_19', file: '/music/monazite/19_Rasta_Lady_Voodoo.mp3', title: 'Rasta Lady Voodoo', duration: '4:03', price: 65, genre: 'Reggae', type: 'audio' },
-            { id: 'mono_20', file: '/music/snowmancer-one.mp3', title: 'Snowmancer One (Market Exclusive)', duration: '4:15', price: 70, genre: 'Alternative', type: 'audio' },
-            { id: 'mono_video_01', file: '/videos/renewable-dreams.mp4', title: 'Renewable Dreams - Visual Journey', duration: '6:30', price: 150, genre: 'Documentary', type: 'video' }
+            { id: 'placeholder_01', file: '#', title: 'Media Files Not Found', duration: '0:00', price: 0, genre: 'Notice', type: 'notice' }
         ];
 
         // Initialize marketplace
