@@ -686,7 +686,17 @@ class MarketplaceApp {
     if (isNaN(num) || num == null) {
       return "0.0000"; // Return "0.0000" instead of "NaN" for invalid prices
     }
-    return num.toFixed(4);
+    if (num === 0) return '0.0000';
+    
+    let formatted = num.toFixed(4);
+    if (parseFloat(formatted) === 0 && num > 0) {
+      // Extend decimals if rounds to zero
+      for (let decimals = 5; decimals <= 10; decimals++) {
+        formatted = num.toFixed(decimals);
+        if (parseFloat(formatted) > 0) break;
+      }
+    }
+    return formatted;
   }
 
   escapeHtml(text) {
