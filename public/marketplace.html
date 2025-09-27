@@ -832,6 +832,259 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* Upload Form Styles */
+        .upload-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .upload-header h2 {
+            color: #ffffff;
+            margin-bottom: 10px;
+        }
+
+        .upload-header p {
+            color: #888;
+        }
+
+        .upload-benefits {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 30px;
+            justify-content: center;
+        }
+
+        .benefit-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(40, 167, 69, 0.1);
+            border: 1px solid #28a745;
+            border-radius: 8px;
+            padding: 10px 15px;
+        }
+
+        .benefit-icon {
+            font-size: 18px;
+        }
+
+        .benefit-text {
+            color: #28a745;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .upload-form {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .form-section {
+            margin-bottom: 25px;
+        }
+
+        .form-label {
+            display: block;
+            color: #ffffff;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .required {
+            color: #ff6b35;
+        }
+
+        .file-upload-area {
+            border: 2px dashed #555;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #111;
+        }
+
+        .file-upload-area:hover {
+            border-color: #28a745;
+            background: rgba(40, 167, 69, 0.05);
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            font-size: 16px;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+
+        .upload-hint {
+            font-size: 14px;
+            color: #888;
+        }
+
+        .file-preview {
+            margin-top: 15px;
+            padding: 15px;
+            background: #111;
+            border-radius: 8px;
+            border: 1px solid #333;
+        }
+
+        .ai-analysis-section, .pricing-section {
+            background: rgba(40, 167, 69, 0.05);
+            border: 1px solid #28a745;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .analysis-header, .pricing-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .analysis-header h3, .pricing-header h3 {
+            color: #28a745;
+            margin: 0;
+        }
+
+        .analysis-status {
+            background: #28a745;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            animation: pulse 2s infinite;
+        }
+
+        .pricing-subtitle {
+            color: #888;
+            font-size: 12px;
+        }
+
+        .price-input-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .price-input-group label {
+            color: #28a745;
+            font-weight: 600;
+            min-width: 80px;
+        }
+
+        .price-input-group input {
+            background: #0a0a0a;
+            border: 1px solid #28a745;
+            color: #28a745;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-weight: 600;
+            width: 120px;
+        }
+
+        .price-unit {
+            color: #28a745;
+            font-weight: 600;
+        }
+
+        .kwh-conversion {
+            background: rgba(40, 167, 69, 0.1);
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #28a745;
+        }
+
+        #artifact-title, #creator-email, #artifact-category {
+            width: 100%;
+            padding: 12px 16px;
+            background: #0a0a0a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            color: #ffffff;
+            font-size: 16px;
+        }
+
+        #artifact-title:focus, #creator-email:focus, #artifact-category:focus {
+            border-color: #28a745;
+            outline: none;
+        }
+
+        .upload-submit-btn {
+            width: 100%;
+            padding: 15px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+        }
+
+        .upload-submit-btn:hover:not(:disabled) {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .upload-submit-btn:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .upload-terms {
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .my-items-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .my-items-header h2 {
+            color: #ffffff;
+            margin-bottom: 10px;
+        }
+
+        .my-items-header p {
+            color: #888;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @media (max-width: 768px) {
+            .upload-benefits {
+                flex-direction: column;
+            }
+            
+            .upload-form {
+                margin: 0 10px;
+                padding: 20px;
+            }
+        }
     </style>
     <meta name="description" content="Upload, price, and sell digital content with AI-powered Solar currency. Join the creator economy within the $16T digital marketplace. Each Solar token backed by 4913 kWh renewable energy. Daily distribution since April 7, 2025.">
     <meta name="keywords" content="digital asset marketplace 2025, creator economy platform, AI-powered content pricing, Solar token payments, renewable energy backed currency, sustainable content monetization, 44GW energy-backed marketplace, universal basic income creators">
@@ -947,16 +1200,134 @@
             </select>
         </div>
 
-        <!-- Artifacts Grid -->
-        <div class="artifacts-grid" id="artifacts-grid">
-            <div class="loading">Loading digital artifacts...</div>
+        <!-- Tab Content Areas -->
+        
+        <!-- All Market Tab Content -->
+        <div id="all-market-content" class="tab-content">
+            <!-- Artifacts Grid -->
+            <div class="artifacts-grid" id="artifacts-grid">
+                <div class="loading">Loading digital artifacts...</div>
+            </div>
+
+            <!-- Empty State -->
+            <div class="empty-state" id="empty-state" style="display: none;">
+                <h3>No Artifacts Found</h3>
+                <p>Try adjusting your filters or check back later for new content.</p>
+                <button class="clear-filters-btn" onclick="clearFilters()">Clear Filters</button>
+            </div>
         </div>
 
-        <!-- Empty State -->
-        <div class="empty-state" id="empty-state" style="display: none;">
-            <h3>No Artifacts Found</h3>
-            <p>Try adjusting your filters or check back later for new content.</p>
-            <button class="clear-filters-btn" onclick="clearFilters()">Clear Filters</button>
+        <!-- My Listings Tab Content -->
+        <div id="my-listings-content" class="tab-content" style="display: none;">
+            <div class="my-items-header">
+                <h2>🎨 Your Digital Artifacts</h2>
+                <p>Manage your uploaded items and track sales</p>
+            </div>
+            <div class="my-artifacts-grid" id="my-artifacts-grid">
+                <!-- User's artifacts will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Upload Tab Content -->
+        <div id="upload-content" class="tab-content" style="display: none;">
+            <div class="upload-header">
+                <h2>🚀 Upload New Artifact</h2>
+                <p>Powered by TC Identity Sync for smart pricing & AI curation</p>
+            </div>
+
+            <div class="upload-benefits">
+                <div class="benefit-item">
+                    <span class="benefit-icon">🤖</span>
+                    <span class="benefit-text">AI identifies your item automatically</span>
+                </div>
+                <div class="benefit-item">
+                    <span class="benefit-icon">⚡</span>
+                    <span class="benefit-text">kWh to Solar pricing conversion</span>
+                </div>
+                <div class="benefit-item">
+                    <span class="benefit-icon">🎯</span>
+                    <span class="benefit-text">Smart descriptions with "What AI sees"</span>
+                </div>
+            </div>
+
+            <form id="upload-form" class="upload-form" enctype="multipart/form-data">
+                <div class="form-section">
+                    <label for="artifact-file" class="form-label">
+                        📎 Select File <span class="required">*</span>
+                    </label>
+                    <div class="file-upload-area" onclick="document.getElementById('artifact-file').click()">
+                        <div class="upload-placeholder">
+                            <div class="upload-icon">📁</div>
+                            <div class="upload-text">Click to select file or drag and drop</div>
+                            <div class="upload-hint">Images, videos, documents, audio files supported</div>
+                        </div>
+                        <input type="file" id="artifact-file" name="file" accept="*/*" style="display: none;" required>
+                    </div>
+                    <div class="file-preview" id="file-preview" style="display: none;"></div>
+                </div>
+
+                <div class="form-section">
+                    <label for="artifact-title" class="form-label">
+                        🏷️ Item Title <span class="required">*</span>
+                    </label>
+                    <input type="text" id="artifact-title" name="title" placeholder="Give your artifact a catchy title" required>
+                </div>
+
+                <div class="ai-analysis-section" id="ai-analysis-section" style="display: none;">
+                    <div class="analysis-header">
+                        <h3>🤖 TC Identity Sync Analysis</h3>
+                        <div class="analysis-status" id="analysis-status">Analyzing...</div>
+                    </div>
+                    <div class="analysis-results" id="analysis-results">
+                        <!-- AI analysis results will appear here -->
+                    </div>
+                </div>
+
+                <div class="pricing-section" id="pricing-section" style="display: none;">
+                    <div class="pricing-header">
+                        <h3>⚡ Solar Pricing</h3>
+                        <div class="pricing-subtitle">Based on kWh analysis</div>
+                    </div>
+                    <div class="pricing-display">
+                        <div class="price-input-group">
+                            <label for="solar-price">Solar Price:</label>
+                            <input type="number" id="solar-price" name="price" step="0.0001" min="0.0001" placeholder="0.0001" readonly>
+                            <span class="price-unit">Solar</span>
+                        </div>
+                        <div class="kwh-conversion" id="kwh-conversion">
+                            <!-- kWh calculation details -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <label for="artifact-category" class="form-label">📂 Category</label>
+                    <select id="artifact-category" name="category" required>
+                        <option value="">Select category...</option>
+                        <option value="art">🎨 Digital Art</option>
+                        <option value="music">🎵 Music & Audio</option>
+                        <option value="video">🎬 Video Content</option>
+                        <option value="document">📄 Documents</option>
+                        <option value="software">💻 Software & Apps</option>
+                        <option value="other">🔧 Other</option>
+                    </select>
+                </div>
+
+                <div class="form-section">
+                    <label for="creator-email" class="form-label">
+                        📧 Creator Email <span class="required">*</span>
+                    </label>
+                    <input type="email" id="creator-email" name="email" placeholder="your@email.com" required>
+                </div>
+
+                <button type="submit" class="upload-submit-btn" disabled>
+                    🚀 Upload to Market
+                </button>
+
+                <div class="upload-terms">
+                    <p>By uploading, you confirm you own the rights to this content and agree to our Solar Standard terms.</p>
+                </div>
+            </form>
         </div>
     </div>
 
