@@ -1035,14 +1035,28 @@
             </div>
             <div class="form-group">
                 <label for="signup-password">Password</label>
-                <input type="password" id="signup-password" required>
+                <div style="position: relative;">
+                    <input type="password" id="signup-password" required>
+                    <button type="button" onclick="togglePasswordVisibility('signup-password')" 
+                            style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); 
+                                   background: none; border: none; color: #888; cursor: pointer; font-size: 14px;">
+                        👁️
+                    </button>
+                </div>
             </div>
             <div class="form-group">
                 <label for="signup-password-confirm">Confirm Password</label>
-                <input type="password" id="signup-password-confirm" required>
+                <div style="position: relative;">
+                    <input type="password" id="signup-password-confirm" required>
+                    <button type="button" onclick="togglePasswordVisibility('signup-password-confirm')" 
+                            style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); 
+                                   background: none; border: none; color: #888; cursor: pointer; font-size: 14px;">
+                        👁️
+                    </button>
+                </div>
             </div>
             <div class="form-buttons">
-                <button class="btn btn-secondary" onclick="marketplace.closeSignupModal()">Cancel</button>
+                <button class="btn btn-secondary" onclick="closeSignupModal()">Cancel</button>
                 <button class="btn btn-primary" onclick="signupUser()">Join Network</button>
             </div>
         </div>
@@ -1061,10 +1075,17 @@
             </div>
             <div class="form-group">
                 <label for="signin-password">Password</label>
-                <input type="password" id="signin-password" required>
+                <div style="position: relative;">
+                    <input type="password" id="signin-password" required>
+                    <button type="button" onclick="togglePasswordVisibility('signin-password')" 
+                            style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); 
+                                   background: none; border: none; color: #888; cursor: pointer; font-size: 14px;">
+                        👁️
+                    </button>
+                </div>
             </div>
             <div class="form-buttons">
-                <button class="btn btn-secondary" onclick="marketplace.closeSigninModal()">Cancel</button>
+                <button class="btn btn-secondary" onclick="closeSigninModal()">Cancel</button>
                 <button class="btn btn-primary" onclick="signinUser()">Sign In</button>
             </div>
         </div>
@@ -1092,6 +1113,22 @@
 
         function closeSignupModal() {
             document.getElementById('signup-modal').classList.remove('visible');
+        }
+
+        // Password visibility toggle function
+        function togglePasswordVisibility(inputId) {
+            const passwordInput = document.getElementById(inputId);
+            const toggleButton = passwordInput.nextElementSibling;
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleButton.textContent = '🙈';
+                toggleButton.style.color = '#ffaa00';
+            } else {
+                passwordInput.type = 'password';
+                toggleButton.textContent = '👁️';
+                toggleButton.style.color = '#888';
+            }
         }
 
         // Load artifacts and user info on page load
