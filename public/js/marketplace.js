@@ -684,9 +684,9 @@ class MarketplaceApp {
   formatPrice(price) {
     const num = parseFloat(price);
     if (isNaN(num) || num == null) {
-      return "0"; // Return "0" instead of "NaN" for invalid prices
+      return "0.0000"; // Return "0.0000" instead of "NaN" for invalid prices
     }
-    return num.toFixed(0);
+    return num.toFixed(4);
   }
 
   escapeHtml(text) {
