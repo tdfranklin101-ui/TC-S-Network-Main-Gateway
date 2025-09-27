@@ -701,15 +701,9 @@ class MarketplaceApp {
     }
     if (num === 0) return '0.0000';
     
-    let formatted = num.toFixed(4);
-    if (parseFloat(formatted) === 0 && num > 0) {
-      // Extend decimals if rounds to zero
-      for (let decimals = 5; decimals <= 10; decimals++) {
-        formatted = num.toFixed(decimals);
-        if (parseFloat(formatted) > 0) break;
-      }
-    }
-    return formatted;
+    // For non-zero values, ensure minimum display of 0.0001
+    const roundedPrice = Math.max(0.0001, Math.round(num * 10000) / 10000);
+    return roundedPrice.toFixed(4);
   }
 
   escapeHtml(text) {
