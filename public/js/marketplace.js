@@ -176,7 +176,313 @@ class MarketplaceApp {
         e.preventDefault();
         await this.handleUpload(e);
       });
+
+      // File input handling
+      const fileInput = document.getElementById('artifact-file');
+      const titleInput = document.getElementById('artifact-title');
+      const emailInput = document.getElementById('creator-email');
+      const categorySelect = document.getElementById('artifact-category');
+      const submitBtn = document.querySelector('.upload-submit-btn');
+
+      if (fileInput) {
+        fileInput.addEventListener('change', async (e) => {
+          await this.handleFileSelection(e);
+        });
+      }
+
+      // Form validation
+      const validateForm = () => {
+        const hasFile = fileInput && fileInput.files && fileInput.files.length > 0;
+        const hasTitle = titleInput && titleInput.value.trim().length > 0;
+        const hasEmail = emailInput && emailInput.value.trim().length > 0;
+        const hasCategory = categorySelect && categorySelect.value.trim().length > 0;
+        
+        if (submitBtn) {
+          submitBtn.disabled = !(hasFile && hasTitle && hasEmail && hasCategory);
+        }
+      };
+
+      // Add event listeners for form validation
+      [titleInput, emailInput, categorySelect].forEach(element => {
+        if (element) {
+          element.addEventListener('input', validateForm);
+          element.addEventListener('change', validateForm);
+        }
+      });
     }
+  }
+
+  async handleFileSelection(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    console.log('🔄 File selected:', file.name, file.type, file.size);
+
+    // Show file preview
+    this.displayFilePreview(file);
+
+    // Start TC Identity Sync analysis
+    await this.analyzeWithTCIdentity(file);
+  }
+
+  displayFilePreview(file) {
+    const preview = document.getElementById('file-preview');
+    const uploadArea = document.querySelector('.file-upload-area .upload-placeholder');
+    
+    if (preview && uploadArea) {
+      // Update upload area
+      uploadArea.innerHTML = `
+        <div class="upload-icon">✅</div>
+        <div class="upload-text">${file.name}</div>
+        <div class="upload-hint">${this.formatFileSize(file.size)} • ${file.type}</div>
+      `;
+
+      // Show preview section
+      preview.style.display = 'block';
+      preview.innerHTML = `
+        <div style="color: #28a745; font-weight: 600;">📁 File Ready:</div>
+        <div style="color: #ffffff; margin-top: 5px;">${file.name}</div>
+        <div style="color: #888; font-size: 12px; margin-top: 5px;">
+          ${this.formatFileSize(file.size)} • ${file.type}
+        </div>
+      `;
+    }
+  }
+
+  formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  async analyzeWithTCIdentity(file) {
+    const analysisSection = document.getElementById('ai-analysis-section');
+    const analysisStatus = document.getElementById('analysis-status');
+    const analysisResults = document.getElementById('analysis-results');
+    const pricingSection = document.getElementById('pricing-section');
+
+    if (!analysisSection || !analysisStatus || !analysisResults) {
+      console.error('Analysis UI elements not found');
+      return;
+    }
+
+    // Show analysis section
+    analysisSection.style.display = 'block';
+    analysisStatus.textContent = 'Analyzing with TC Identity Sync...';
+    analysisStatus.className = 'analysis-status';
+
+    try {
+      console.log('🤖 Starting TC Identity Sync analysis...');
+
+      // Prepare form data for TC Identity Sync
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('description', document.getElementById('artifact-title').value || file.name);
+
+      // Call TC Identity Sync API
+      const response = await fetch('https://tc-identity-sync-tdfranklin101.replit.app/api/analyze', {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`TC Identity Sync API error: ${response.status}`);
+      }
+
+      const analysisData = await response.json();
+      console.log('✅ TC Identity Sync analysis complete:', analysisData);
+
+      // Store analysis data for upload
+      this.lastAnalysisData = analysisData;
+
+      // Display analysis results
+      this.displayAnalysisResults(analysisData);
+
+      // Calculate and display Solar pricing
+      this.calculateSolarPricing(analysisData);
+
+      analysisStatus.textContent = 'Analysis Complete!';
+      analysisStatus.style.background = '#28a745';
+
+    } catch (error) {
+      console.error('❌ TC Identity Sync analysis failed:', error);
+      
+      // Fallback to basic analysis
+      const fallbackData = await this.performFallbackAnalysis(file);
+      
+      // Store fallback analysis data for upload
+      this.lastAnalysisData = fallbackData;
+      
+      this.displayAnalysisResults(fallbackData);
+      this.calculateSolarPricing(fallbackData);
+
+      analysisStatus.textContent = 'Using Basic Analysis';
+      analysisStatus.style.background = '#ff6b35';
+    }
+  }
+
+  displayAnalysisResults(data) {
+    const resultsDiv = document.getElementById('analysis-results');
+    if (!resultsDiv) return;
+
+    const aiSees = data.what_ai_sees || data.analysis || 'Digital content item';
+    const category = data.suggested_category || 'other';
+    const confidence = data.confidence || 85;
+    const kwhValue = data.kwh_estimate || this.estimateKwh(data);
+
+    resultsDiv.innerHTML = `
+      <div class="analysis-item">
+        <strong>🤖 What the AI Sees:</strong>
+        <div style="margin-top: 8px; padding: 12px; background: rgba(40, 167, 69, 0.1); border-radius: 6px; color: #28a745;">
+          ${aiSees}
+        </div>
+      </div>
+      <div class="analysis-item" style="margin-top: 15px;">
+        <strong>📊 Analysis Details:</strong>
+        <div style="margin-top: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div>Category: <span style="color: #28a745;">${category}</span></div>
+          <div>Confidence: <span style="color: #28a745;">${confidence}%</span></div>
+          <div>kWh Estimate: <span style="color: #28a745;">${kwhValue}</span></div>
+          <div>Value Score: <span style="color: #28a745;">${data.value_score || 'Medium'}</span></div>
+        </div>
+      </div>
+    `;
+
+    // Auto-fill category if suggested
+    const categorySelect = document.getElementById('artifact-category');
+    if (categorySelect && data.suggested_category) {
+      const categoryMap = {
+        'art': 'art',
+        'music': 'music',
+        'audio': 'music',
+        'video': 'video',
+        'document': 'document',
+        'software': 'software',
+        'app': 'software'
+      };
+      
+      const mappedCategory = categoryMap[data.suggested_category.toLowerCase()] || 'other';
+      categorySelect.value = mappedCategory;
+      categorySelect.dispatchEvent(new Event('change')); // Trigger validation
+    }
+  }
+
+  calculateSolarPricing(data) {
+    const pricingSection = document.getElementById('pricing-section');
+    const priceInput = document.getElementById('solar-price');
+    const kwhConversion = document.getElementById('kwh-conversion');
+
+    if (!pricingSection || !priceInput || !kwhConversion) return;
+
+    // Show pricing section
+    pricingSection.style.display = 'block';
+
+    // Calculate Solar price from kWh
+    const kwhValue = parseFloat(data.kwh_estimate) || this.estimateKwh(data);
+    const kwhToSolarRate = 0.0002; // 1 kWh = 0.0002 Solar (example rate)
+    const baseSolarPrice = kwhValue * kwhToSolarRate;
+    
+    // Apply category and value modifiers
+    const categoryMultiplier = this.getCategoryMultiplier(data.suggested_category);
+    const valueMultiplier = this.getValueMultiplier(data.value_score);
+    
+    let finalPrice = baseSolarPrice * categoryMultiplier * valueMultiplier;
+    
+    // Ensure minimum price
+    finalPrice = Math.max(0.0001, finalPrice);
+    
+    // Round to appropriate precision
+    const roundedPrice = this.roundSolarPrice(finalPrice);
+
+    // Set price
+    priceInput.value = roundedPrice;
+
+    // Display conversion details
+    kwhConversion.innerHTML = `
+      <div style="margin-bottom: 8px;">
+        <strong>⚡ Energy Calculation:</strong>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 11px;">
+        <div>Estimated kWh: ${kwhValue}</div>
+        <div>Base Rate: ${kwhToSolarRate} Solar/kWh</div>
+        <div>Category Modifier: ${categoryMultiplier}x</div>
+        <div>Value Modifier: ${valueMultiplier}x</div>
+        <div style="grid-column: span 2; border-top: 1px solid #28a745; padding-top: 8px; margin-top: 8px;">
+          <strong>Final Price: ${roundedPrice} Solar</strong>
+        </div>
+      </div>
+    `;
+
+    console.log('💰 Solar pricing calculated:', {
+      kwhValue,
+      baseSolarPrice,
+      finalPrice: roundedPrice,
+      categoryMultiplier,
+      valueMultiplier
+    });
+  }
+
+  getCategoryMultiplier(category) {
+    const multipliers = {
+      'art': 1.5,
+      'music': 1.2,
+      'video': 2.0,
+      'document': 0.8,
+      'software': 2.5,
+      'other': 1.0
+    };
+    return multipliers[category?.toLowerCase()] || 1.0;
+  }
+
+  getValueMultiplier(valueScore) {
+    const scoreMap = {
+      'high': 1.5,
+      'medium': 1.0,
+      'low': 0.7
+    };
+    return scoreMap[valueScore?.toLowerCase()] || 1.0;
+  }
+
+  estimateKwh(data) {
+    // Fallback kWh estimation based on file type and size
+    const fileSize = data.file_size || 1000000; // 1MB default
+    const baseKwh = fileSize / 10000000; // 10MB = 1 kWh as rough estimate
+    return Math.max(0.1, Math.min(10, baseKwh)).toFixed(2);
+  }
+
+  roundSolarPrice(price) {
+    if (price >= 1) return price.toFixed(4);
+    if (price >= 0.1) return price.toFixed(4);
+    if (price >= 0.01) return price.toFixed(5);
+    return price.toFixed(6);
+  }
+
+  async performFallbackAnalysis(file) {
+    console.log('🔄 Performing fallback analysis...');
+    
+    return {
+      what_ai_sees: `Digital ${file.type.split('/')[0]} file: ${file.name}. This appears to be a ${file.type} file with content that could be valuable for digital trading.`,
+      suggested_category: this.guessCategory(file),
+      confidence: 75,
+      kwh_estimate: this.estimateKwh({ file_size: file.size }),
+      value_score: 'medium',
+      file_size: file.size,
+      file_type: file.type
+    };
+  }
+
+  guessCategory(file) {
+    const type = file.type.toLowerCase();
+    if (type.startsWith('image/')) return 'art';
+    if (type.startsWith('audio/')) return 'music';
+    if (type.startsWith('video/')) return 'video';
+    if (type.includes('document') || type.includes('pdf') || type.includes('text')) return 'document';
+    return 'other';
   }
 
   switchTab(tabName) {
@@ -563,6 +869,16 @@ class MarketplaceApp {
       submitBtn.textContent = '⏳ Uploading...';
       submitBtn.disabled = true;
 
+      // Add AI analysis data to the upload
+      if (this.lastAnalysisData) {
+        formData.append('ai_analysis', JSON.stringify(this.lastAnalysisData));
+        formData.append('what_ai_sees', this.lastAnalysisData.what_ai_sees || '');
+        formData.append('kwh_estimate', this.lastAnalysisData.kwh_estimate || '0.1');
+        formData.append('confidence_score', this.lastAnalysisData.confidence || 85);
+        formData.append('value_score', this.lastAnalysisData.value_score || 'medium');
+        console.log('📊 Including TC Identity Sync analysis in upload:', this.lastAnalysisData);
+      }
+
       const response = await fetch('/api/upload', {
         method: 'POST',
         body: formData
@@ -573,17 +889,41 @@ class MarketplaceApp {
       if (data.success) {
         console.log('✅ Upload successful:', data.message);
         
-        // Show success message
-        this.showSuccess(data.message);
+        // Show enhanced success message
+        const analysisInfo = this.lastAnalysisData ? 
+          `🤖 AI Analysis: ${this.lastAnalysisData.what_ai_sees?.substring(0, 100)}...` : 
+          '';
         
-        // Reset form
+        this.showSuccess(`🎉 Upload successful with TC Identity Sync! ${analysisInfo}\n\n${data.message}`);
+        
+        // Clear form and reset state
         form.reset();
+        this.lastAnalysisData = null;
+        
+        // Hide upload sections
+        const aiSection = document.getElementById('ai-analysis-section');
+        const pricingSection = document.getElementById('pricing-section');
+        const previewSection = document.getElementById('file-preview');
+        
+        if (aiSection) aiSection.style.display = 'none';
+        if (pricingSection) pricingSection.style.display = 'none';
+        if (previewSection) previewSection.style.display = 'none';
+        
+        // Reset upload area
+        const uploadArea = document.querySelector('.file-upload-area .upload-placeholder');
+        if (uploadArea) {
+          uploadArea.innerHTML = `
+            <div class="upload-icon">📁</div>
+            <div class="upload-text">Click to select file or drag and drop</div>
+            <div class="upload-hint">Images, videos, documents, audio files supported</div>
+          `;
+        }
         
         // Reload artifacts to show new upload
         await this.loadArtifacts();
         
-        // Switch to my uploads tab
-        this.switchTab('my-uploads');
+        // Switch to all market tab to see the new item
+        this.switchTab('all-market');
 
       } else {
         throw new Error(data.error || 'Upload failed');
