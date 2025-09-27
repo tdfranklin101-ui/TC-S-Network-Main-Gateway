@@ -54,6 +54,7 @@ class MarketplaceApp {
     // Modals
     this.videoModal = document.getElementById('video-preview-modal');
     this.signupModal = document.getElementById('signup-modal');
+    this.signinModal = document.getElementById('signin-modal');
     
     console.log('📋 UI elements initialized');
   }
@@ -343,7 +344,7 @@ class MarketplaceApp {
       `;
     } else {
       return `
-        <button class="purchase-btn" onclick="event.stopPropagation(); showSignupModal()">
+        <button class="purchase-btn" onclick="event.stopPropagation(); marketplace.showSignupModal()">
           🚀 Join to Purchase & Download
         </button>
       `;
@@ -608,6 +609,18 @@ class MarketplaceApp {
   closeSignupModal() {
     if (this.signupModal) {
       this.signupModal.classList.remove('visible');
+    }
+  }
+
+  showSigninModal() {
+    if (this.signinModal) {
+      this.signinModal.classList.add('visible');
+    }
+  }
+
+  closeSigninModal() {
+    if (this.signinModal) {
+      this.signinModal.classList.remove('visible');
     }
   }
 
