@@ -424,7 +424,7 @@ export const downloadTokens = pgTable("download_tokens", {
   // Enhanced secure access fields
   secureUrl: text("secure_url"), // Generated secure URL for file access
   accessType: varchar("access_type").default("trade_file"), // 'preview', 'trade_file', 'master_file'
-  fileSize: bigint("file_size", { mode: "number" }), // File size for bandwidth tracking
+  fileSize: integer("file_size"), // File size for bandwidth tracking
   downloadCount: integer("download_count").default(0), // Track download attempts
   maxDownloads: integer("max_downloads").default(10), // Download limit
   lastAccessedAt: timestamp("last_accessed_at"), // Last download time
@@ -445,14 +445,14 @@ export const fileAccessLogs = pgTable("file_access_logs", {
   accessedAt: timestamp("accessed_at").defaultNow(),
   success: boolean("success").default(true), // Whether access was successful
   errorMessage: text("error_message"), // Error details if failed
-  fileSize: bigint("file_size", { mode: "number" }), // Bytes transferred
+  fileSize: integer("file_size"), // Bytes transferred
   duration: integer("duration"), // Access duration in milliseconds
 });
 
 // Artifacts schemas
 export const insertArtifactSchema = createInsertSchema(artifacts).omit({ id: true, createdAt: true });
-export const insertDownloadTokenSchema = createInsertSchema(downloadTokens).omit({ id: true, createdAt: true });
-export const insertFileAccessLogSchema = createInsertSchema(fileAccessLogs).omit({ id: true, accessedAt: true });
+export const insertDownloadTokenSchema = createInsertSchema(downloadTokens);
+export const insertFileAccessLogSchema = createInsertSchema(fileAccessLogs);
 
 export type Artifact = typeof artifacts.$inferSelect;
 export type DownloadToken = typeof downloadTokens.$inferSelect;
