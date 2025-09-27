@@ -343,7 +343,7 @@ class MarketplaceApp {
       `;
     } else {
       return `
-        <button class="purchase-btn" onclick="event.stopPropagation(); marketplace.showSignupModal()">
+        <button class="purchase-btn" onclick="event.stopPropagation(); showSignupModal()">
           🚀 Join to Purchase & Download
         </button>
       `;
