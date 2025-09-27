@@ -805,3 +805,124 @@ document.addEventListener('DOMContentLoaded', () => {
   // Make marketplace globally accessible for onclick handlers
   window.marketplace = marketplace;
 });
+
+// Global functions for HTML onclick handlers
+window.togglePasswordVisibility = function(inputId) {
+  const passwordInput = document.getElementById(inputId);
+  const toggleButton = passwordInput.nextElementSibling;
+  
+  if (passwordInput.type === 'password') {
+    passwordInput.type = 'text';
+    toggleButton.textContent = '🙈';
+    toggleButton.style.color = '#ffaa00';
+  } else {
+    passwordInput.type = 'password';
+    toggleButton.textContent = '👁️';
+    toggleButton.style.color = '#888';
+  }
+};
+
+window.signinUser = async function() {
+  const username = document.getElementById('signin-username').value;
+  const password = document.getElementById('signin-password').value;
+
+  if (!username || !password) {
+    alert('Username/email and password are required');
+    return;
+  }
+
+  try {
+    const response = await fetch('/api/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        username: username,
+        password: password
+      })
+    });
+
+    const result = await response.json();
+
+    if (response.ok) {
+      // Update marketplace instance if available
+      if (window.marketplace) {
+        window.marketplace.currentUser = {
+          userId: result.userId,
+          username: result.username,
+          solarBalance: result.solarBalance || 0
+        };
+        window.marketplace.updateUserInterface();
+        window.marketplace.closeSigninModal();
+      }
+      
+      alert(`🌱 Welcome back, ${result.username}! Balance: ${result.solarBalance} Solar`);
+    } else {
+      alert(`❌ Sign in failed: ${result.error}`);
+    }
+  } catch (error) {
+    console.error('Sign in error:', error);
+    alert('❌ Network error during sign in');
+  }
+};
+
+window.signupUser = async function() {
+  const username = document.getElementById('signup-username').value;
+  const email = document.getElementById('signup-email').value;
+  const firstName = document.getElementById('signup-name').value;
+  const password = document.getElementById('signup-password').value;
+  const passwordConfirm = document.getElementById('signup-password-confirm').value;
+
+  if (!username || !email || !password) {
+    alert('Username, email, and password are required');
+    return;
+  }
+
+  if (password !== passwordConfirm) {
+    alert('Passwords do not match');
+    return;
+  }
+
+  if (password.length < 6) {
+    alert('Password must be at least 6 characters');
+    return;
+  }
+
+  try {
+    const response = await fetch('/api/users/signup-solar', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        username: username,
+        email: email,
+        firstName: firstName,
+        password: password
+      })
+    });
+
+    const result = await response.json();
+
+    if (response.ok) {
+      // Update marketplace instance if available
+      if (window.marketplace) {
+        window.marketplace.currentUser = {
+          userId: result.userId,
+          username: result.username,
+          solarBalance: result.solarBalance || result.initialSolarAmount || 0
+        };
+        window.marketplace.updateUserInterface();
+        window.marketplace.closeSignupModal();
+      }
+      
+      alert(result.message || `🌱 Welcome to TC-S Network, ${result.username}!`);
+    } else {
+      alert(`❌ Signup failed: ${result.error}`);
+    }
+  } catch (error) {
+    console.error('Signup error:', error);
+    alert('❌ Network error during signup');
+  }
+};
