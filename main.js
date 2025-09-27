@@ -1336,10 +1336,18 @@ const server = http.createServer(async (req, res) => {
         const displayName = firstName || username;
         const initialDollars = initialSolarAmount * 0.20; // Approximate dollar value
         
-        const memberResult = await pool.query(memberInsertQuery, [
-          username, displayName, email, firstName || '', passwordHash,
-          initialSolarAmount, initialDollars
-        ]);
+        let memberResult;
+        try {
+          memberResult = await pool.query(memberInsertQuery, [
+            username, displayName, email, firstName || '', passwordHash,
+            initialSolarAmount, initialDollars
+          ]);
+        } catch (dbError) {
+          console.error('❌ Database insert error:', dbError.message);
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: `Database error: ${dbError.message}` }));
+          return;
+        }
         
         const member = memberResult.rows[0];
 
@@ -1385,8 +1393,9 @@ const server = http.createServer(async (req, res) => {
       }
     } catch (error) {
       console.error('Member signup error:', error);
+      console.error('Full error details:', error.stack);
       res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Failed to create member account' }));
+      res.end(JSON.stringify({ error: `Failed to create member account: ${error.message}` }));
     }
     return;
   }
