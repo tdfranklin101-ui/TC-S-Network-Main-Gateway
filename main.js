@@ -707,7 +707,7 @@ const server = http.createServer(async (req, res) => {
             fileProcessingResult.tradeFile.url, // Legacy delivery_url points to trade file
             creatorId,
             fileProcessingResult.previewFile.thumbnailUrl,
-            true, // active
+            false, // active - require consent before publication
             fileProcessingResult.masterFile.url,
             fileProcessingResult.previewFile.previewUrl,
             fileProcessingResult.tradeFile.url,
@@ -2010,12 +2010,12 @@ const server = http.createServer(async (req, res) => {
       const userId = sessions[sessionId].userId;
 
       if (pool) {
-        // Get uploaded artifacts (created by user)
+        // Get uploaded artifacts (created by user) - both active and inactive
         const uploadedQuery = `
           SELECT id, title, description, category, kwh_footprint, solar_amount_s, 
-                 is_bonus, cover_art_url, delivery_mode, creator_id, created_at
+                 is_bonus, cover_art_url, delivery_mode, creator_id, created_at, active
           FROM artifacts 
-          WHERE active = true AND creator_id = $1
+          WHERE creator_id = $1
           ORDER BY created_at DESC
         `;
         
@@ -2047,7 +2047,9 @@ const server = http.createServer(async (req, res) => {
           deliveryMode: artifact.delivery_mode || 'download',
           creatorId: artifact.creator_id,
           itemType: 'uploaded',
-          dateAdded: artifact.created_at
+          dateAdded: artifact.created_at,
+          active: artifact.active,
+          status: artifact.active ? 'published' : 'pending_approval'
         }));
 
         const purchasedArtifacts = purchasedResult.rows.map(artifact => ({
@@ -2089,6 +2091,71 @@ const server = http.createServer(async (req, res) => {
       console.error('My items error:', error);
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Failed to get user items' }));
+    }
+    return;
+  }
+
+  // Artifact Approval API (for publishing uploaded artifacts to marketplace)
+  if (pathname === '/api/artifacts/approve' && req.method === 'POST') {
+    try {
+      // Get user ID from session
+      const sessionId = getCookie(req, 'sessionId');
+      if (!sessionId || !sessions[sessionId]) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Authentication required' }));
+        return;
+      }
+
+      const userId = sessions[sessionId].userId;
+      const body = await parseBody(req);
+      const { artifactId } = body;
+
+      if (!artifactId) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Artifact ID required' }));
+        return;
+      }
+
+      if (pool) {
+        // Verify the user owns this artifact
+        const ownershipQuery = 'SELECT id, title, active FROM artifacts WHERE id = $1 AND creator_id = $2';
+        const ownershipResult = await pool.query(ownershipQuery, [artifactId, userId.toString()]);
+
+        if (ownershipResult.rows.length === 0) {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Artifact not found or access denied' }));
+          return;
+        }
+
+        const artifact = ownershipResult.rows[0];
+
+        // Check if already active
+        if (artifact.active) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Artifact is already published' }));
+          return;
+        }
+
+        // Approve the artifact for publication
+        const approveQuery = 'UPDATE artifacts SET active = true WHERE id = $1 AND creator_id = $2';
+        await pool.query(approveQuery, [artifactId, userId.toString()]);
+
+        console.log(`✅ Artifact approved for publication: ${artifact.title} (${artifactId})`);
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: true,
+          message: `"${artifact.title}" has been published to the marketplace`,
+          artifactId: artifactId
+        }));
+      } else {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Database unavailable' }));
+      }
+    } catch (error) {
+      console.error('Artifact approval error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Failed to approve artifact' }));
     }
     return;
   }

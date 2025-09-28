@@ -104,6 +104,56 @@ class MarketplaceApp {
     }
   }
 
+  async loadMyItems() {
+    try {
+      this.showLoading(true);
+      
+      const response = await fetch('/api/artifacts/my-items');
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        // Combine uploaded and purchased artifacts for display
+        const uploadedArtifacts = data.uploaded?.artifacts || [];
+        const purchasedArtifacts = data.purchased?.artifacts || [];
+        
+        // For My Items tab, we primarily show uploaded artifacts with status info
+        this.artifacts = uploadedArtifacts.map(artifact => ({
+          id: artifact.id,
+          title: artifact.title,
+          description: artifact.description,
+          category: artifact.category,
+          kwh_footprint: artifact.kwhFootprint,
+          solar_amount_s: artifact.solarPrice,
+          is_bonus: artifact.isBonus,
+          cover_art_url: artifact.coverArt,
+          delivery_mode: artifact.deliveryMode,
+          creatorId: artifact.creatorId,
+          created_at: artifact.dateAdded,
+          file_type: artifact.fileType || 'application/octet-stream',
+          active: artifact.active,
+          status: artifact.status,
+          search_tags: []
+        }));
+        
+        this.applyFilters();
+        console.log(`📋 Loaded ${this.artifacts.length} user artifacts`);
+      } else {
+        console.error('Invalid my items data:', data);
+        this.artifacts = [];
+      }
+    } catch (error) {
+      console.error('Failed to load my items:', error);
+      this.showError('Failed to load your items');
+      this.artifacts = [];
+    } finally {
+      this.showLoading(false);
+    }
+  }
+
   setupEventListeners() {
     // Tab switching
     this.tabs.forEach(tab => {
@@ -531,13 +581,20 @@ class MarketplaceApp {
     return 'other';
   }
 
-  switchTab(tabName) {
+  async switchTab(tabName) {
     this.currentTab = tabName;
     
     // Update tab visual state
     this.tabs.forEach(tab => {
       tab.classList.toggle('active', tab.dataset.tab === tabName);
     });
+
+    // Load appropriate data based on tab
+    if (tabName === 'my-listings' && this.currentUser) {
+      await this.loadMyItems();
+    } else if (tabName === 'all-market') {
+      await this.loadArtifacts();
+    }
 
     // Show/hide relevant sections
     this.render();
@@ -675,14 +732,34 @@ class MarketplaceApp {
     const isOwner = this.currentUser && artifact.creatorId === this.currentUser.id;
     
     if (isOwner) {
-      return `
-        <button class="artifact-action-btn edit" onclick="event.stopPropagation(); marketplace.editArtifact('${artifact.id}')">
-          ✏️ Edit
-        </button>
-        <button class="artifact-action-btn download" onclick="event.stopPropagation(); marketplace.downloadOwnArtifact('${artifact.id}')">
-          📥 Download
-        </button>
-      `;
+      // Check if artifact is pending approval (only in My Items tab)
+      if (this.currentTab === 'my-listings' && artifact.active === false) {
+        return `
+          <div class="pending-status">
+            <span class="status-badge pending">⏳ Pending Review</span>
+            <p class="status-text">Review your upload and approve it for publication to the marketplace.</p>
+          </div>
+          <button class="approve-btn" onclick="event.stopPropagation(); marketplace.approveArtifact('${artifact.id}')">
+            ✅ Approve & Publish
+          </button>
+          <button class="artifact-action-btn edit" onclick="event.stopPropagation(); marketplace.editArtifact('${artifact.id}')">
+            ✏️ Edit
+          </button>
+        `;
+      } else {
+        // Published artifact - normal owner actions
+        return `
+          <div class="published-status">
+            <span class="status-badge published">✅ Published</span>
+          </div>
+          <button class="artifact-action-btn edit" onclick="event.stopPropagation(); marketplace.editArtifact('${artifact.id}')">
+            ✏️ Edit
+          </button>
+          <button class="artifact-action-btn download" onclick="event.stopPropagation(); marketplace.downloadOwnArtifact('${artifact.id}')">
+            📥 Download
+          </button>
+        `;
+      }
     } else if (this.currentUser) {
       return `
         <button class="purchase-btn" onclick="event.stopPropagation(); marketplace.purchaseArtifact('${artifact.id}')">
@@ -827,6 +904,38 @@ class MarketplaceApp {
         video.pause();
         video.currentTime = 0;
       }
+    }
+  }
+
+  async approveArtifact(artifactId) {
+    try {
+      console.log(`✅ Approving artifact for publication: ${artifactId}`);
+
+      const response = await fetch('/api/artifacts/approve', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ artifactId })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        this.showSuccess(`${data.message || 'Artifact approved successfully'}`);
+        
+        // Reload my items to show updated status
+        await this.loadMyItems();
+        this.render();
+        
+        console.log('✅ Artifact approved successfully');
+      } else {
+        throw new Error(data.error || 'Approval failed');
+      }
+
+    } catch (error) {
+      console.error('Approval failed:', error);
+      this.showError(`Failed to approve artifact: ${error.message}`);
     }
   }
 
