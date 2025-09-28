@@ -113,21 +113,34 @@ export function setupAuth(app: Express) {
       
       console.log("User created successfully with ID:", user.id);
 
-      // Create a solar account for the user
-      const isAnonymous = req.body.isAnonymous === true;
-      const displayName = isAnonymous ? 
-        `Anonymous Solar Participant #${user.id}` : 
-        req.body.displayName || `${firstName || ''} ${lastName || ''}`.trim() || req.body.username;
+      // Calculate Solar balance: 1 Solar per day since April 7, 2025
+      const solarGenesisDate = new Date('2025-04-07T00:00:00.000Z');
+      const currentDate = new Date();
+      const daysSinceGenesis = Math.floor((currentDate.getTime() - solarGenesisDate.getTime()) / (1000 * 60 * 60 * 24));
+      const initialSolarBalance = Math.max(0, daysSinceGenesis); // 1 Solar per day, minimum 0
       
-      console.log("Creating solar account with display name:", displayName);
+      console.log(`Calculating Solar balance: ${daysSinceGenesis} days since genesis = ${initialSolarBalance} Solar`);
       
-      const solarAccount = await storage.createSolarAccount({
+      // Create user profile with calculated Solar balance
+      const userProfile = await storage.createUserProfile({
         userId: user.id,
-        isAnonymous,
-        displayName,
+        solarBalance: initialSolarBalance,
+        totalEarned: initialSolarBalance,
+        registrationBonus: true
       });
       
-      console.log("Solar account created successfully with ID:", solarAccount.id);
+      console.log(`User profile created with ${initialSolarBalance} Solar balance`);
+      
+      // Create registration transaction record
+      await storage.createTransaction({
+        userId: user.id,
+        type: 'registration_bonus',
+        amount: initialSolarBalance,
+        currency: 'SOLAR',
+        status: 'completed',
+        description: `Registration bonus: ${daysSinceGenesis} days since Solar genesis (April 7, 2025)`,
+        completedAt: new Date()
+      });
 
       req.login(user, (err: any) => {
         if (err) {
@@ -141,7 +154,8 @@ export function setupAuth(app: Express) {
         console.log("Registration completed successfully, sending response");
         res.status(201).json({ 
           user: userResponse, 
-          solarAccount 
+          userProfile,
+          solarBalance: initialSolarBalance
         });
       });
     } catch (err) {
@@ -149,10 +163,48 @@ export function setupAuth(app: Express) {
     }
   });
 
-  app.post("/api/login", passport.authenticate("local"), (req, res) => {
-    // Remove password from response
-    const userResponse = { ...req.user, password: undefined };
-    res.status(200).json(userResponse);
+  app.post("/api/login", passport.authenticate("local"), async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Authentication failed" });
+      }
+      
+      // Get user's Solar profile
+      const userProfile = await storage.getUserProfile(req.user.id);
+      
+      // If no profile exists, create one with calculated Solar balance
+      let profile = userProfile;
+      if (!profile) {
+        const solarGenesisDate = new Date('2025-04-07T00:00:00.000Z');
+        const currentDate = new Date();
+        const daysSinceGenesis = Math.floor((currentDate.getTime() - solarGenesisDate.getTime()) / (1000 * 60 * 60 * 24));
+        const initialSolarBalance = Math.max(0, daysSinceGenesis);
+        
+        profile = await storage.createUserProfile({
+          userId: req.user.id,
+          solarBalance: initialSolarBalance,
+          totalEarned: initialSolarBalance,
+          registrationBonus: true
+        });
+        
+        console.log(`Created missing profile for user ${req.user.id} with ${initialSolarBalance} Solar`);
+      }
+      
+      // Remove password from response
+      const userResponse = { ...req.user, password: undefined };
+      res.status(200).json({ 
+        user: userResponse,
+        userProfile: profile,
+        solarBalance: profile.solarBalance
+      });
+    } catch (error) {
+      console.error('Error during login:', error);
+      if (!req.user) {
+        return res.status(500).json({ error: "Login failed" });
+      }
+      const userResponse = { ...req.user, password: undefined };
+      res.status(200).json(userResponse);
+    }
   });
   
   // API endpoint to update existing account with credentials
@@ -202,12 +254,51 @@ export function setupAuth(app: Express) {
     });
   });
 
-  app.get("/api/user", (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+  app.get("/api/user", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.sendStatus(401);
+    }
     
-    // Remove password from response
-    const userResponse = { ...req.user, password: undefined };
-    res.json(userResponse);
+    try {
+      // Get user's Solar profile
+      const userProfile = await storage.getUserProfile(req.user.id);
+      
+      // Remove password from response
+      const userResponse = { ...req.user, password: undefined };
+      res.json({ 
+        user: userResponse,
+        userProfile,
+        solarBalance: userProfile?.solarBalance || 0
+      });
+    } catch (error) {
+      console.error('Error getting user profile:', error);
+      const userResponse = { ...req.user, password: undefined };
+      res.json(userResponse);
+    }
+  });
+
+  app.get("/api/session", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.json({ success: false, authenticated: false });
+    }
+    
+    try {
+      // Get user's Solar profile
+      const userProfile = await storage.getUserProfile(req.user.id);
+      
+      // Remove password from response
+      const userResponse = { ...req.user, password: undefined };
+      res.json({ 
+        success: true,
+        authenticated: true,
+        user: userResponse,
+        userProfile,
+        solarBalance: userProfile?.solarBalance || 0
+      });
+    } catch (error) {
+      console.error('Error getting session:', error);
+      res.json({ success: false, authenticated: false });
+    }
   });
 }
 

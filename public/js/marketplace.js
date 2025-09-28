@@ -66,8 +66,10 @@ class MarketplaceApp {
         const data = await response.json();
         if (data.success && data.user) {
           this.currentUser = data.user;
+          this.userProfile = data.userProfile;
+          this.solarBalance = data.solarBalance || 0;
           this.updateUserInterface();
-          console.log(`👤 User session loaded: ${data.user.name}`);
+          console.log(`👤 User session loaded: ${data.user.username} (${this.solarBalance} Solar)`);
         }
       }
     } catch (error) {
@@ -142,6 +144,50 @@ class MarketplaceApp {
     this.setupUploadForm();
 
     console.log('🎧 Event listeners configured');
+  }
+
+  updateUserInterface() {
+    const headerActions = document.getElementById('header-actions');
+    if (!headerActions) return;
+
+    if (this.currentUser) {
+      // Show member status with initial/emoji and Solar balance
+      const userInitial = this.currentUser.firstName ? this.currentUser.firstName.charAt(0).toUpperCase() : 
+                         this.currentUser.username ? this.currentUser.username.charAt(0).toUpperCase() : '👤';
+      
+      headerActions.innerHTML = `
+        <div class="user-menu">
+          <div class="user-avatar">${userInitial}</div>
+          <div class="user-info">
+            <div class="user-name">${this.currentUser.firstName || this.currentUser.username}</div>
+            <div class="solar-balance">${this.solarBalance || 0} Solar</div>
+          </div>
+          <button class="logout-btn" onclick="marketplace.logout()">Logout</button>
+        </div>
+      `;
+    } else {
+      // Show register/login buttons for non-authenticated users
+      headerActions.innerHTML = `
+        <a href="/signup.html" class="register-btn">Join TC-S Network</a>
+      `;
+    }
+  }
+
+  async logout() {
+    try {
+      const response = await fetch('/api/logout', { method: 'POST' });
+      if (response.ok) {
+        this.currentUser = null;
+        this.userProfile = null;
+        this.solarBalance = 0;
+        this.updateUserInterface();
+        // Reload artifacts to update "My Items" view
+        await this.loadArtifacts();
+        console.log('👋 User logged out successfully');
+      }
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
   }
 
   setupModalListeners() {
