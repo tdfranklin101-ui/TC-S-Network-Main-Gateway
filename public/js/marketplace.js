@@ -694,15 +694,22 @@ class MarketplaceApp {
     // Check if this artifact has AI-curated information
     const isAICurated = artifact.search_tags && artifact.search_tags.length > 0;
     const aiIcon = isAICurated ? '🤖 ' : '';
+    
+    // Enhanced AI categorization display
+    const categoryDisplay = this.formatCategory(artifact.category);
+    const hasAICategory = categoryDisplay.includes('🤖') || categoryDisplay.includes('AI');
 
     card.innerHTML = `
-      <div class="artifact-category">${aiIcon}${this.formatCategory(artifact.category)}</div>
+      <div class="artifact-category ${isAICurated ? 'ai-enhanced' : ''}">${aiIcon}${categoryDisplay}</div>
       <h3 class="artifact-title">${this.escapeHtml(artifact.title)}</h3>
       <div class="artifact-price">${this.formatPrice(artifact.solar_amount_s)} Solar</div>
       <div class="artifact-kwh">${artifact.kwh_footprint || '0'} kWh footprint</div>
       
       ${isAICurated ? `
-        <div class="artifact-bonus">AI-Curated</div>
+        <div class="artifact-ai-badge">
+          <span class="ai-icon">🤖</span>
+          <span class="ai-text">AI-Curated & Analyzed</span>
+        </div>
       ` : ''}
       
       <div class="artifact-description">
@@ -710,10 +717,14 @@ class MarketplaceApp {
       </div>
       
       ${artifact.search_tags && artifact.search_tags.length > 0 ? `
-        <div class="artifact-tags">
-          ${artifact.search_tags.slice(0, 3).map(tag => 
-            `<span class="tag">${this.escapeHtml(tag)}</span>`
-          ).join('')}
+        <div class="artifact-tags-container">
+          <div class="ai-tags-header">🏷️ AI-Generated Tags</div>
+          <div class="artifact-tags">
+            ${artifact.search_tags.slice(0, 4).map(tag => 
+              `<span class="tag ai-tag">${this.escapeHtml(tag)}</span>`
+            ).join('')}
+            ${artifact.search_tags.length > 4 ? `<span class="tag-more">+${artifact.search_tags.length - 4} more</span>` : ''}
+          </div>
         </div>
       ` : ''}
 
@@ -1169,11 +1180,17 @@ class MarketplaceApp {
   // Utility methods
   formatCategory(category) {
     const categoryMap = {
+      // AI-Enhanced Categories
       'ai-tools': '🤖 AI Tools',
       'ai-automation': '⚙️ AI Automation', 
       'ai-creativity': '🎨 AI Creativity',
       'ai-analysis': '📊 AI Analysis',
       'ai-assistants': '💬 AI Assistants',
+      'ai-generated': '🤖 AI Generated',
+      'machine-learning': '🧠 Machine Learning',
+      'computer-vision': '👁️ Computer Vision',
+      
+      // TC Identity Sync Categories (AI-curated)
       'productivity': '📈 Productivity',
       'utilities': '🔧 Utilities',
       'games': '🎮 Games',
@@ -1181,12 +1198,27 @@ class MarketplaceApp {
       'code-tools': '💻 Code Tools',
       'media-tools': '🎥 Media Tools',
       'data-tools': '📁 Data Tools',
+      
+      // Creative & Media
       'music': '🎵 Music',
+      'audio': '🎧 Audio',
       'video': '🎬 Video',
-      'software': '💻 Software'
+      'art': '🖼️ Art',
+      'photography': '📸 Photography',
+      'writing': '✍️ Writing',
+      
+      // Technical
+      'software': '💻 Software',
+      'web-development': '🌐 Web Dev',
+      'mobile-apps': '📱 Mobile Apps',
+      'data-science': '📊 Data Science',
+      
+      // Default fallback
+      'other': '📦 Other',
+      'document': '📄 Document'
     };
     
-    return categoryMap[category] || category.charAt(0).toUpperCase() + category.slice(1);
+    return categoryMap[category] || `🏷️ ${category.charAt(0).toUpperCase() + category.slice(1)}`;
   }
 
   formatPrice(price) {

@@ -425,6 +425,63 @@
             transform: translateY(-1px);
         }
 
+        /* Enhanced AI Categorization Styles */
+        .artifact-category.ai-enhanced {
+            background: linear-gradient(135deg, rgba(13, 110, 253, 0.1), rgba(25, 135, 84, 0.1));
+            border: 1px solid rgba(13, 110, 253, 0.3);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+
+        .artifact-ai-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, rgba(13, 110, 253, 0.1), rgba(25, 135, 84, 0.1));
+            border: 1px solid rgba(13, 110, 253, 0.3);
+            padding: 6px 10px;
+            border-radius: 8px;
+            margin: 8px 0;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .artifact-ai-badge .ai-icon {
+            font-size: 14px;
+        }
+
+        .artifact-ai-badge .ai-text {
+            color: #0d6efd;
+        }
+
+        .artifact-tags-container {
+            margin-top: 12px;
+        }
+
+        .ai-tags-header {
+            font-size: 11px;
+            color: #888;
+            margin-bottom: 6px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .artifact-tags .ai-tag {
+            background: linear-gradient(135deg, rgba(13, 110, 253, 0.1), rgba(25, 135, 84, 0.1));
+            border: 1px solid rgba(13, 110, 253, 0.3);
+            color: #0d6efd;
+            font-weight: 500;
+        }
+
+        .tag-more {
+            font-size: 11px;
+            color: #888;
+            font-style: italic;
+            padding: 2px 6px;
+        }
+
         .loading {
             text-align: center;
             padding: 40px;
@@ -1267,10 +1324,30 @@
         <div class="filters">
             <select class="filter-select" id="category-filter">
                 <option value="">All Categories</option>
-                <option value="music">Music</option>
-                <option value="video">Video</option>
-                <option value="art">Art</option>
-                <option value="document">Documents</option>
+                <optgroup label="🤖 AI-Enhanced">
+                    <option value="ai-tools">🤖 AI Tools</option>
+                    <option value="ai-creativity">🎨 AI Creativity</option>
+                    <option value="ai-analysis">📊 AI Analysis</option>
+                    <option value="ai-assistants">💬 AI Assistants</option>
+                </optgroup>
+                <optgroup label="🎨 Creative & Media">
+                    <option value="music">🎵 Music</option>
+                    <option value="video">🎬 Video</option>
+                    <option value="art">🖼️ Art</option>
+                    <option value="photography">📸 Photography</option>
+                    <option value="writing">✍️ Writing</option>
+                </optgroup>
+                <optgroup label="💻 Technical">
+                    <option value="software">💻 Software</option>
+                    <option value="code-tools">💻 Code Tools</option>
+                    <option value="data-science">📊 Data Science</option>
+                </optgroup>
+                <optgroup label="📚 Other">
+                    <option value="document">📄 Documents</option>
+                    <option value="productivity">📈 Productivity</option>
+                    <option value="utilities">🔧 Utilities</option>
+                    <option value="games">🎮 Games</option>
+                </optgroup>
             </select>
             
             <select class="filter-select" id="price-filter">
@@ -1385,12 +1462,31 @@
                     <label for="artifact-category" class="form-label">📂 Category</label>
                     <select id="artifact-category" name="category" required>
                         <option value="">Select category...</option>
-                        <option value="art">🎨 Digital Art</option>
-                        <option value="music">🎵 Music & Audio</option>
-                        <option value="video">🎬 Video Content</option>
-                        <option value="document">📄 Documents</option>
-                        <option value="software">💻 Software & Apps</option>
-                        <option value="other">🔧 Other</option>
+                        <optgroup label="🤖 AI-Enhanced">
+                            <option value="ai-tools">🤖 AI Tools</option>
+                            <option value="ai-creativity">🎨 AI Creativity</option>
+                            <option value="ai-analysis">📊 AI Analysis</option>
+                            <option value="ai-assistants">💬 AI Assistants</option>
+                        </optgroup>
+                        <optgroup label="🎨 Creative & Media">
+                            <option value="art">🎨 Digital Art</option>
+                            <option value="music">🎵 Music & Audio</option>
+                            <option value="video">🎬 Video Content</option>
+                            <option value="photography">📸 Photography</option>
+                            <option value="writing">✍️ Writing</option>
+                        </optgroup>
+                        <optgroup label="💻 Technical">
+                            <option value="software">💻 Software & Apps</option>
+                            <option value="code-tools">💻 Code Tools</option>
+                            <option value="data-science">📊 Data Science</option>
+                        </optgroup>
+                        <optgroup label="📚 Other">
+                            <option value="document">📄 Documents</option>
+                            <option value="productivity">📈 Productivity</option>
+                            <option value="utilities">🔧 Utilities</option>
+                            <option value="games">🎮 Games</option>
+                            <option value="other">🔧 Other</option>
+                        </optgroup>
                     </select>
                 </div>
 
