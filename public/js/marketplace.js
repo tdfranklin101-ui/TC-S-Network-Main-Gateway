@@ -556,9 +556,9 @@ class MarketplaceApp {
     }
 
     // Filter by current tab
-    if (this.currentTab === 'my-uploads' && this.currentUser) {
+    if (this.currentTab === 'my-listings' && this.currentUser) {
       filtered = filtered.filter(artifact => 
-        artifact.creator_id === this.currentUser.id
+        artifact.creatorId === this.currentUser.id
       );
     }
 
@@ -672,7 +672,7 @@ class MarketplaceApp {
   }
 
   renderArtifactActions(artifact) {
-    const isOwner = this.currentUser && artifact.creator_id === this.currentUser.id;
+    const isOwner = this.currentUser && artifact.creatorId === this.currentUser.id;
     
     if (isOwner) {
       return `
