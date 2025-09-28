@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atomic Video Test</title>
+    <style>
+        body { margin: 0; padding: 0; background: #000; }
+        .video-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+        }
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            background: #000;
+        }
+        .test-text {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            color: white;
+            font-family: Arial, sans-serif;
+            z-index: 10;
+            background: rgba(0,0,0,0.5);
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="video-container">
+        <video 
+            muted 
+            loop 
+            playsinline 
+            preload="metadata"
+            controls
+            onloadstart="console.log('🎬 Test video loading...')"
+            onloadeddata="console.log('📁 Video data loaded')"
+            oncanplay="console.log('✅ Test video ready'); console.log('Video duration:', this.duration, 'seconds');"
+            onplay="console.log('▶️ Test video playing!');"
+            onended="console.log('🔄 Test video ended');"
+            onerror="console.error('❌ Test video error:', this.error?.message || 'Unknown error');"
+            onstalled="console.log('⏸️ Video stalled');"
+            onwaiting="console.log('⏳ Video waiting');"
+        >
+            <source src="atomic-background.mp4" type="video/mp4">
+            <source src="/atomic-background.mp4" type="video/mp4">
+            Video not supported - Try clicking play manually
+        </video>
+    </div>
+    <div class="test-text">
+        ATOMIC VIDEO TEST<br>
+        Should show: 1→2→4→16 animation<br>
+        Duration: 5 seconds looping
+    </div>
+</body>
+</html>

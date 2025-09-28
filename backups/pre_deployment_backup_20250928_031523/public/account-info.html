@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Account Information - The Current-See</title>
+  <link rel="stylesheet" href="/css/common.css">
+  <style>
+    .account-info-container {
+      max-width: 800px;
+      margin: 60px auto;
+      padding: 40px;
+      background-color: rgba(255, 255, 255, 0.95);
+      border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    h1 {
+      color: #4caf50;
+      margin-bottom: 25px;
+      text-align: center;
+    }
+    
+    .info-section {
+      margin-bottom: 30px;
+      padding: 20px;
+      background-color: rgba(255, 255, 255, 0.8);
+      border-radius: 8px;
+      border-left: 4px solid #4caf50;
+    }
+    
+    .info-section h2 {
+      color: #00573B;
+      margin-bottom: 15px;
+      font-size: 1.4rem;
+    }
+    
+    .info-section p {
+      line-height: 1.6;
+      margin-bottom: 15px;
+      font-size: 1.1rem;
+    }
+    
+    .info-icon {
+      font-size: 2.5rem;
+      margin-bottom: 15px;
+      color: #FFC107;
+      text-align: center;
+      display: block;
+    }
+    
+    .cta-btn {
+      display: inline-block;
+      background-color: #4caf50;
+      color: white;
+      padding: 12px 25px;
+      border-radius: 5px;
+      text-decoration: none;
+      font-weight: 600;
+      margin-top: 10px;
+      transition: all 0.3s ease;
+    }
+    
+    .cta-btn:hover {
+      background-color: #00573B;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    }
+    
+    /* Sun ray watermark styling */
+    .sun-ray-watermark {
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .sun-ray-watermark::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: repeating-conic-gradient(
+        rgba(76, 175, 80, 0.03) 0deg 15deg,
+        rgba(76, 175, 80, 0.06) 15deg 30deg
+      );
+      animation: rotate 180s linear infinite;
+      z-index: -1;
+    }
+    
+    @keyframes rotate {
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-wrapper">
+    <!-- HEADER_PLACEHOLDER -->
+    
+    <main>
+      <div class="account-info-container sun-ray-watermark">
+        <span class="info-icon">📧</span>
+        <h1>Account Information</h1>
+        
+        <div class="info-section">
+          <h2>Email Verification Coming Soon</h2>
+          <p>We're implementing a secure email verification system to protect your SOLAR distribution account. Soon, you'll be able to:</p>
+          <ul>
+            <li>Securely verify your identity via email</li>
+            <li>Set up password protection for your account</li>
+            <li>Manage your SOLAR distribution settings</li>
+            <li>Access advanced features of the Current-See platform</li>
+          </ul>
+          <p>This enhancement supports our commitment to a transparent and secure global economic system.</p>
+        </div>
+        
+        <div class="info-section">
+          <h2>Already Registered?</h2>
+          <p>If you've already joined The Current-See using our sign-up form, your account is safely stored in our system. When our email verification system launches, you'll receive an email with instructions to complete your account setup.</p>
+          <p>In the meantime, you can track your SOLAR distributions in the upcoming account dashboard feature.</p>
+          <a href="/#join-section" class="cta-btn">Join The Movement</a>
+        </div>
+        
+        <div class="info-section">
+          <h2>New to The Current-See?</h2>
+          <p>Join our growing community today! Sign up using our simple form to start receiving daily SOLAR distributions.</p>
+          <p>Each member receives 1 SOLAR per day - representing both energy production and monetary value.</p>
+          <a href="/#join-section" class="cta-btn">Join Now</a>
+        </div>
+      </div>
+    </main>
+    
+    <!-- FOOTER_PLACEHOLDER -->
+  </div>
+</body>
+</html>

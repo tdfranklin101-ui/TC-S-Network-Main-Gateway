@@ -1,0 +1,152 @@
+/**
+ * Real-Time Solar Counter - A dynamic odometer for the Current-See project
+ * 
+ * This script creates an animated counter that visualizes the 
+ * continuous generation of solar energy in kilowatt-hours (kWh)
+ * based on data accumulated since April 7, 2025.
+ * 
+ * The calculation is based on 1% of Earth's solar input divided among 8.5 billion people,
+ * with each person receiving an equal share (1 SOLAR = 4,913 kWh).
+ */
+
+// Function to initialize the counter with retry capability
+function trySolarCounterInit() {
+  console.log("Attempting to initialize solar counter...");
+  
+  // Check if elements exist
+  const energyDisplay = document.getElementById('energy-display');
+  
+  if (!energyDisplay) {
+    console.log("Solar counter elements not found, will retry in 1 second...");
+    setTimeout(trySolarCounterInit, 1000);
+    return;
+  }
+  
+  console.log("Solar counter elements found. Starting counter!");
+  initSolarCounter();
+  
+  // Initialize kwh rate display
+  const kwhRateDisplay = document.getElementById('kwh-rate-display');
+  if (kwhRateDisplay) {
+    kwhRateDisplay.innerHTML = '1 Solar = 4,913 kWh (based on 1% of Earth\'s solar input divided among 8.5B people)';
+  }
+}
+
+// Start initialization when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+  console.log("DOM Content Loaded - starting solar counter initialization");
+  trySolarCounterInit();
+});
+
+function initSolarCounter() {
+  // Reference to the counter elements
+  const energyDisplay = document.getElementById('energy-display');
+  
+  if (!energyDisplay) {
+    console.error("Solar counter elements not found! Will retry in 1 second...");
+    // Retry after a short delay (in case elements load after script)
+    setTimeout(initSolarCounter, 1000);
+    return;
+  }
+  
+  console.log("Solar counter elements found. Starting counter...");
+  
+  // Base values - hardcoded for static implementation
+  // April 7, 2025 is the official starting date for the Solar Generator
+  const baseDate = new Date('2025-04-07T00:00:00Z');
+  // 4,913 kWh per SOLAR per day = 0.056863425925926 kWh per second per person
+  // World population of 8.5 billion = 483,333,333.5 kWh per second total
+  const kwhPerSecond = 483333333.5; // kWh generated per second globally
+  
+  console.log("Solar counter starting with base date:", baseDate);
+  console.log("kWh per second:", kwhPerSecond);
+  
+  // Start counter animation
+  updateCounter(baseDate, kwhPerSecond);
+}
+
+function updateCounter(baseDate, kwhPerSecond) {
+  // Calculate elapsed time since base date
+  const currentTime = new Date();
+  const elapsedMs = currentTime.getTime() - baseDate.getTime();
+  const elapsedSeconds = elapsedMs / 1000;
+  
+  // Calculate current energy value
+  const totalKwh = elapsedSeconds * kwhPerSecond;
+  
+  // Convert to MkWh (Million kWh) for display
+  const currentMkWh = totalKwh / 1000000;
+  
+  // Format value with proper precision
+  const formattedMkWh = formatWithDigitAnimation(
+    currentMkWh.toFixed(6), 
+    document.getElementById('energy-display')
+  );
+  
+  // Calculate SOLAR units (1 SOLAR = 4,913 kWh)
+  const totalSolar = totalKwh / 4913;
+  
+  // Calculate and update solar units counter if element exists
+  const solarDisplay = document.getElementById('solar-display');
+  if (solarDisplay) {
+    formatWithDigitAnimation(
+      totalSolar.toFixed(4),
+      solarDisplay
+    );
+  }
+  
+  // Request next animation frame
+  requestAnimationFrame(() => updateCounter(baseDate, kwhPerSecond));
+}
+
+function formatWithDigitAnimation(value, element) {
+  if (!element) return value;
+  
+  const newValue = value.toString();
+  const oldValue = element.getAttribute('data-value') || '0';
+  
+  // Store new value for next comparison
+  element.setAttribute('data-value', newValue);
+  
+  // If this is the first render, just set the text
+  if (oldValue === '0') {
+    element.textContent = newValue;
+    return newValue;
+  }
+  
+  // Create a new display with animated digits
+  let html = '';
+  const digitRegex = /(\d|\.|\,|\$)/g;
+  
+  for (let i = 0; i < newValue.length; i++) {
+    const char = newValue[i];
+    
+    // Check if this digit changed
+    const changed = (i < oldValue.length) ? (char !== oldValue[i]) : true;
+    
+    if (char.match(digitRegex)) {
+      // It's a digit, decimal point, comma, or currency symbol
+      if (changed && char.match(/\d/)) {
+        // Only digits get animation, not separators or currency symbols
+        html += `<span class="digit changing">${char}</span>`;
+      } else {
+        html += `<span class="digit">${char}</span>`;
+      }
+    } else {
+      // Other characters
+      html += char;
+    }
+  }
+  
+  element.innerHTML = html;
+  
+  // Clear animation classes after the animation completes
+  setTimeout(() => {
+    const changingDigits = element.querySelectorAll('.changing');
+    changingDigits.forEach(digit => {
+      digit.classList.remove('changing');
+    });
+  }, 500);
+  
+  return newValue;
+}

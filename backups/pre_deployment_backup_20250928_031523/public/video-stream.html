@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>We Said So - Music Video | The Current-See</title>
+    
+    <!-- Native HTML5 Video Player -->
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #000000 0%, #001122 50%, #000000 100%);
+            color: white;
+            font-family: 'Arial', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .video-container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #000;
+        }
+        
+        .video-player {
+            width: 100%;
+            max-width: 1200px;
+            height: auto;
+            border-radius: 12px;
+            box-shadow: 0 0 50px rgba(0,255,65,0.3);
+            background: #000;
+        }
+        
+        .native-video {
+            width: 100%;
+            height: auto;
+            border-radius: 12px;
+            outline: none;
+        }
+        
+        .video-header {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            z-index: 100;
+            text-align: center;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            border: 2px solid rgba(0,255,65,0.6);
+        }
+        
+        .video-title {
+            color: #00ff41;
+            font-size: 2.5rem;
+            font-weight: bold;
+            text-shadow: 0 0 30px rgba(0,255,65,1);
+            margin-bottom: 10px;
+        }
+        
+        .video-subtitle {
+            color: #ffff00;
+            font-size: 1.3rem;
+            text-shadow: 0 0 20px rgba(255,255,0,0.8);
+        }
+        
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: linear-gradient(135deg, #00ff41, #00cc33);
+            color: #000;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 200;
+            box-shadow: 0 4px 15px rgba(0,255,65,0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .back-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,255,65,0.4);
+        }
+        
+        .video-info {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            z-index: 100;
+            text-align: center;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 15px;
+            border: 1px solid rgba(0,255,65,0.4);
+        }
+        
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 150;
+            transition: opacity 0.5s ease;
+        }
+        
+        .loading-text {
+            color: #00ff41;
+            font-size: 1.5rem;
+            text-shadow: 0 0 20px rgba(0,255,65,1);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .preload-progress {
+            position: absolute;
+            bottom: 80px;
+            left: 20px;
+            right: 20px;
+            background: rgba(0,255,65,0.1);
+            border-radius: 10px;
+            height: 6px;
+            overflow: hidden;
+            z-index: 160;
+        }
+        
+        .preload-bar {
+            background: linear-gradient(90deg, #00ff41, #00cc33);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+        
+        .buffer-status {
+            position: absolute;
+            top: 80px;
+            right: 20px;
+            background: rgba(0,255,65,0.2);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #00ff41;
+            z-index: 160;
+            border: 1px solid rgba(0,255,65,0.3);
+        }
+        
+        @media (max-width: 768px) {
+            .video-title {
+                font-size: 1.8rem;
+            }
+            .video-subtitle {
+                font-size: 1rem;
+            }
+            .video-header {
+                top: 10px;
+                left: 10px;
+                right: 10px;
+                padding: 15px;
+            }
+            .back-button {
+                top: 10px;
+                left: 10px;
+                padding: 8px 15px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="video-container">
+        <!-- Back to Homepage Button -->
+        <a href="/index.html" class="back-button">← Back to Platform</a>
+        
+        <!-- Video Header -->
+        <div class="video-header">
+            <h1 class="video-title">🎵 WE SAID SO 🎵</h1>
+            <p class="video-subtitle">by Monazite • Official Music Video</p>
+        </div>
+        
+        <!-- Loading Overlay with Buffer Progress -->
+        <div id="loadingOverlay" class="loading-overlay">
+            <div class="loading-text">🎬 Loading 230.22MiB Video...</div>
+        </div>
+        
+        <!-- Preload Progress Bar -->
+        <div id="preloadProgress" class="preload-progress" style="display: none;">
+            <div id="preloadBar" class="preload-bar"></div>
+        </div>
+        
+        <!-- Buffer Status -->
+        <div id="bufferStatus" class="buffer-status" style="display: none;">
+            Buffer: 0%
+        </div>
+        
+        <!-- Native HTML5 Video Player (More Reliable) -->
+        <video 
+            id="nativeVideoPlayer"
+            class="native-video video-player"
+            controls 
+            preload="metadata"
+            width="1200" 
+            height="675"
+            poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='675'%3E%3Crect width='100%25' height='100%25' fill='%23000'/%3E%3Ctext x='50%25' y='45%25' font-family='Arial' font-size='48' fill='%23fff' text-anchor='middle'%3E🎵 WE SAID SO 🎵%3C/text%3E%3Ctext x='50%25' y='55%25' font-family='Arial' font-size='32' fill='%23ffaa00' text-anchor='middle'%3Eby Monazite%3C/text%3E%3Ctext x='50%25' y='65%25' font-family='Arial' font-size='24' fill='%2300ccff' text-anchor='middle'%3EStreaming Ready%3C/text%3E%3C/svg%3E"
+            onloadstart="console.log('🎬 Video loading started')"
+            oncanplay="console.log('✅ Video ready to play')"
+            onerror="console.error('❌ Video error:', this.error)"
+            onloadedmetadata="console.log('📊 Video metadata loaded, duration:', this.duration + 's')">
+            
+            <!-- Multiple file path attempts for We Said So video -->
+            <source src="/we_said_so-by_Monazite.mp4" type="video/mp4">
+            <source src="/static/we_said_so-by_Monazite.mp4" type="video/mp4">
+            <source src="/public/we_said_so-by_Monazite.mp4" type="video/mp4">
+            <source src="/videos/we_said_so-by_Monazite.mp4" type="video/mp4">
+            <source src="/atomic-background.mp4" type="video/mp4">
+            
+            <!-- Fallback Message -->
+            <p style="color: #ff4444; text-align: center; padding: 20px; background: rgba(0,0,0,0.8); border-radius: 10px;">
+                🎵 Video not loading? The "We Said So" music video requires:<br>
+                • Modern browser with MP4 support<br>
+                • Stable internet connection<br>
+                <a href="/atomic-background.mp4" style="color: #00ff41;">Try backup video</a>
+            </p>
+        </video>
+        
+        <!-- Video Information -->
+        <div class="video-info">
+            <p style="color: #00ffff; font-size: 14px; margin: 0;">
+                📁 <strong>File:</strong> we_said_so-by_Monazite.mp4 • <strong>Size:</strong> 230.22MiB<br>
+                🎬 <strong>Source:</strong> Object Storage Streaming • <strong>Quality:</strong> HD
+            </p>
+        </div>
+    </div>
+    
+    <!-- Native HTML5 Video JavaScript -->
+    <script>
+        let videoPlayer;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize native HTML5 video player
+            videoPlayer = document.getElementById('nativeVideoPlayer');
+                // Streaming optimizations
+                preload: 'metadata',
+                fluid: true,
+                responsive: true,
+                playbackRates: [0.5, 1, 1.25, 1.5, 2],
+                html5: {
+                    // Enable streaming and progressive download
+                    hls: {
+                        enableLowInitialPlaylist: true,
+                        smoothQualityChange: true
+                    }
+                },
+                // Advanced buffering for large files
+                techOrder: ['html5'],
+                // Memory buffer settings for smooth playback
+                bufferTime: 30,
+                bufferTimeMax: 60,
+                sources: [{
+                    src: '/public-objects/we_Said_so_by_Monazite.mp4',
+                    type: 'video/mp4'
+                }]
+            });
+            
+            // Event handlers for streaming
+            player.ready(function() {
+                console.log('🎬 Streaming player initialized');
+                document.getElementById('loadingOverlay').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('loadingOverlay').style.display = 'none';
+                }, 500);
+            });
+            
+            player.on('loadstart', function() {
+                console.log('🎬 Streaming started');
+                document.getElementById('loadingOverlay').style.display = 'flex';
+            });
+            
+            player.on('canplay', function() {
+                console.log('✅ Stream ready to play');
+                document.getElementById('loadingOverlay').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('loadingOverlay').style.display = 'none';
+                }, 500);
+            });
+            
+            player.on('loadedmetadata', function() {
+                console.log('📊 Stream metadata loaded:', player.videoWidth() + 'x' + player.videoHeight());
+            });
+            
+            player.on('error', function() {
+                console.error('❌ Streaming error:', player.error());
+                document.getElementById('loadingOverlay').innerHTML = 
+                    '<div class="loading-text" style="color: #ff6666;">⚠️ Streaming Error<br><small>Checking Object Storage connection...</small></div>';
+            });
+            
+            player.on('play', function() {
+                console.log('▶️ Streaming playback started');
+            });
+            
+            player.on('pause', function() {
+                console.log('⏸️ Streaming paused');
+            });
+            
+            player.on('progress', function() {
+                const buffered = player.buffered();
+                if (buffered.length > 0) {
+                    const bufferedEnd = buffered.end(buffered.length - 1);
+                    const duration = player.duration();
+                    const percentage = (bufferedEnd / duration) * 100;
+                    console.log(`📡 Buffered: ${percentage.toFixed(1)}% (${bufferedEnd.toFixed(1)}s of ${duration.toFixed(1)}s)`);
+                    
+                    // Update buffer status display
+                    const bufferStatus = document.getElementById('bufferStatus');
+                    if (bufferStatus) {
+                        bufferStatus.style.display = 'block';
+                        bufferStatus.textContent = `Buffer: ${percentage.toFixed(1)}%`;
+                        
+                        // Hide buffer status when fully loaded
+                        if (percentage >= 100) {
+                            setTimeout(() => {
+                                bufferStatus.style.display = 'none';
+                            }, 2000);
+                        }
+                    }
+                    
+                    // Update preload progress bar
+                    const preloadBar = document.getElementById('preloadBar');
+                    if (preloadBar) {
+                        preloadBar.style.width = `${percentage}%`;
+                        
+                        // Show progress bar during loading
+                        const preloadProgress = document.getElementById('preloadProgress');
+                        if (preloadProgress && percentage < 100) {
+                            preloadProgress.style.display = 'block';
+                        } else if (preloadProgress && percentage >= 100) {
+                            setTimeout(() => {
+                                preloadProgress.style.display = 'none';
+                            }, 2000);
+                        }
+                    }
+                }
+            });
+        });
+        
+        // Legacy video event handlers (compatibility)
+        function handleVideoLoadStart() {
+            console.log('🎬 Video loading started');
+        }
+        
+        function handleVideoCanPlay() {
+            console.log('✅ Video ready to play');
+        }
+        
+        function handleVideoMetadata() {
+            console.log('📊 Video metadata loaded');
+        }
+        
+        function handleVideoError() {
+            console.error('❌ Video loading error');
+        }
+        
+        function handleVideoPlay() {
+            console.log('▶️ Video playing');
+        }
+        
+        function handleVideoPause() {
+            console.log('⏸️ Video paused');
+        }
+        
+        // Auto-hide loading overlay after 10 seconds if video doesn't load
+        setTimeout(() => {
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay.style.display !== 'none') {
+                overlay.style.opacity = '0';
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                }, 500);
+            }
+        }, 10000);
+        
+        // Keyboard controls
+        document.addEventListener('keydown', function(e) {
+            const video = document.getElementById('mainVideoPlayer');
+            
+            switch(e.code) {
+                case 'Space':
+                    e.preventDefault();
+                    video.paused ? video.play() : video.pause();
+                    break;
+                case 'ArrowLeft':
+                    video.currentTime -= 10;
+                    break;
+                case 'ArrowRight':
+                    video.currentTime += 10;
+                    break;
+                case 'KeyF':
+                    if (video.requestFullscreen) {
+                        video.requestFullscreen();
+                    }
+                    break;
+                case 'Escape':
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    }
+                    break;
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,3092 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Artifact Market - Creator Economy for $16T Digital Revolution</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: #0a0a0a;
+            border-bottom: 1px solid #2a2a2a;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ffffff;
+        }
+
+        .header-subtitle {
+            font-size: 14px;
+            color: #888;
+            margin-top: 2px;
+        }
+
+        .header-menu {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            cursor: pointer;
+        }
+
+        .header-menu span {
+            height: 2px;
+            background: #ffffff;
+            border-radius: 1px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .register-btn {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .register-btn:hover {
+            background: linear-gradient(135deg, #0056b3, #004085);
+            transform: translateY(-1px);
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #ffffff;
+            font-size: 14px;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .solar-balance {
+            font-size: 12px;
+            color: #ffaa00;
+            font-weight: bold;
+        }
+
+        .logout-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: #c82333;
+        }
+
+        .container {
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .market-title {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .market-subtitle {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .market-info {
+            background: rgba(40, 167, 69, 0.1);
+            border-left: 4px solid #28a745;
+            padding: 12px 16px;
+            margin-bottom: 30px;
+            border-radius: 4px;
+        }
+
+        .market-info-text {
+            color: #28a745;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 2px;
+            margin-bottom: 30px;
+            background: #1a1a1a;
+            border-radius: 8px;
+            padding: 4px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px 16px;
+            background: transparent;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            background: #2a2a2a;
+            color: #ffffff;
+        }
+
+        .tab:hover {
+            background: #333;
+            color: #ffffff;
+        }
+
+        .filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .filter-select {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            color: #ffffff;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            min-width: 150px;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+
+        .artifacts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .artifact-card {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .artifact-card:hover {
+            background: #2a2a2a;
+            border-color: #555;
+            transform: translateY(-2px);
+        }
+
+        .artifact-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #ffffff;
+        }
+
+        .artifact-category {
+            font-size: 12px;
+            color: #888;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .artifact-price {
+            font-size: 20px;
+            font-weight: bold;
+            color: #ffaa00;
+            margin: 10px 0;
+        }
+
+        .artifact-kwh {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .artifact-bonus {
+            background: linear-gradient(135deg, #ff6b6b, #ff8e53);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+
+        .purchase-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .purchase-btn:hover {
+            background: linear-gradient(135deg, #0056b3, #004085);
+            transform: translateY(-1px);
+        }
+
+        .purchase-btn:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .empty-state h3 {
+            font-size: 24px;
+            margin-bottom: 15px;
+            color: #ffffff;
+        }
+
+        .empty-state p {
+            color: #888;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+
+        .clear-filters-btn {
+            background: #ff6b35;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .clear-filters-btn:hover {
+            background: #e55a2e;
+            transform: translateY(-1px);
+        }
+
+        .artifact-action-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #28a745, #1e7e34);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 8px;
+        }
+
+        .artifact-action-btn:hover {
+            background: linear-gradient(135deg, #218838, #1a6f2b);
+            transform: translateY(-1px);
+        }
+
+        .artifact-action-btn.download {
+            background: linear-gradient(135deg, #17a2b8, #138496);
+        }
+
+        .artifact-action-btn.download:hover {
+            background: linear-gradient(135deg, #138496, #0f6674);
+        }
+
+        .artifact-action-btn.edit {
+            background: linear-gradient(135deg, #ffc107, #e0a800);
+            color: #000;
+        }
+
+        .artifact-action-btn.edit:hover {
+            background: linear-gradient(135deg, #e0a800, #c69500);
+        }
+
+        .pending-status, .published-status {
+            margin-bottom: 12px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+
+        .status-badge.pending {
+            background: rgba(255, 193, 7, 0.1);
+            color: #ffc107;
+            border: 1px solid #ffc107;
+        }
+
+        .status-badge.published {
+            background: rgba(40, 167, 69, 0.1);
+            color: #28a745;
+            border: 1px solid #28a745;
+        }
+
+        .status-text {
+            font-size: 12px;
+            color: #888;
+            margin: 4px 0 0 0;
+            line-height: 1.3;
+        }
+
+        .approve-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #28a745, #1e7e34);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 8px;
+        }
+
+        .approve-btn:hover {
+            background: linear-gradient(135deg, #218838, #1a6f2b);
+            transform: translateY(-1px);
+        }
+
+        /* Enhanced AI Categorization Styles */
+        .artifact-category.ai-enhanced {
+            background: linear-gradient(135deg, rgba(13, 110, 253, 0.1), rgba(25, 135, 84, 0.1));
+            border: 1px solid rgba(13, 110, 253, 0.3);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+
+        .artifact-ai-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, rgba(13, 110, 253, 0.1), rgba(25, 135, 84, 0.1));
+            border: 1px solid rgba(13, 110, 253, 0.3);
+            padding: 6px 10px;
+            border-radius: 8px;
+            margin: 8px 0;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .artifact-ai-badge .ai-icon {
+            font-size: 14px;
+        }
+
+        .artifact-ai-badge .ai-text {
+            color: #0d6efd;
+        }
+
+        .artifact-tags-container {
+            margin-top: 12px;
+        }
+
+        .ai-tags-header {
+            font-size: 11px;
+            color: #888;
+            margin-bottom: 6px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .artifact-tags .ai-tag {
+            background: linear-gradient(135deg, rgba(13, 110, 253, 0.1), rgba(25, 135, 84, 0.1));
+            border: 1px solid rgba(13, 110, 253, 0.3);
+            color: #0d6efd;
+            font-weight: 500;
+        }
+
+        .tag-more {
+            font-size: 11px;
+            color: #888;
+            font-style: italic;
+            padding: 2px 6px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+
+        .user-info {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .user-info.visible {
+            display: block;
+        }
+
+        .solar-balance {
+            font-size: 18px;
+            font-weight: bold;
+            color: #ffaa00;
+        }
+
+        /* NEW: Monazite Collection Styles */
+        .featured-section {
+            background: linear-gradient(135deg, #1a1a1a, #2a1a2a);
+            border: 1px solid #444;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 25px 0;
+            box-shadow: 0 4px 20px rgba(255, 170, 0, 0.1);
+        }
+
+        .featured-header h2 {
+            font-size: 24px;
+            color: #ffaa00;
+            margin-bottom: 5px;
+        }
+
+        .featured-header p {
+            color: #888;
+            margin-bottom: 20px;
+        }
+
+        .collection-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-item {
+            text-align: center;
+            background: rgba(255, 170, 0, 0.1);
+            border: 1px solid rgba(255, 170, 0, 0.3);
+            border-radius: 8px;
+            padding: 15px 10px;
+        }
+
+        .stat-number {
+            display: block;
+            font-size: 22px;
+            font-weight: bold;
+            color: #ffaa00;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #ccc;
+            text-transform: uppercase;
+        }
+
+        .collection-actions {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .bundle-btn {
+            background: linear-gradient(135deg, #ff6b35, #ff8c42);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .bundle-btn:hover {
+            background: linear-gradient(135deg, #e55a2e, #e67a35);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 53, 0.3);
+        }
+
+        .view-tracks-btn {
+            background: rgba(255, 170, 0, 0.1);
+            color: #ffaa00;
+            border: 1px solid #ffaa00;
+            padding: 15px 25px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex: 1;
+            min-width: 180px;
+        }
+
+        .view-tracks-btn:hover {
+            background: rgba(255, 170, 0, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .tracks-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .track-card {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 15px;
+            transition: all 0.3s;
+        }
+
+        .track-card:hover {
+            border-color: #ffaa00;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 170, 0, 0.2);
+        }
+
+        .track-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .track-number {
+            background: #ffaa00;
+            color: #000;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .track-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #fff;
+            margin: 0 10px;
+            flex: 1;
+            line-height: 1.3;
+        }
+
+        .track-info {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 15px;
+        }
+
+        .track-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .track-buy-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex: 1;
+        }
+
+        .track-buy-btn:hover {
+            background: #218838;
+            transform: translateY(-1px);
+        }
+
+        .track-price {
+            font-size: 14px;
+            font-weight: bold;
+            color: #ffaa00;
+            white-space: nowrap;
+        }
+
+        /* Video Preview Modal */
+        .video-preview-modal, .music-preview-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .video-preview-modal.visible, .music-preview-modal.visible {
+            display: flex;
+        }
+
+        .video-modal-content, .music-modal-content {
+            background: #1a1a1a;
+            border: 2px solid #ffaa00;
+            border-radius: 15px;
+            max-width: 90vw;
+            max-height: 90vh;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .music-modal-content {
+            max-width: 500px;
+            max-height: 400px;
+        }
+
+        .video-modal-header, .music-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 25px;
+            border-bottom: 1px solid #333;
+            background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+        }
+
+        .video-modal-header h3, .music-modal-header h3 {
+            color: #ffaa00;
+            margin: 0;
+            font-size: 20px;
+        }
+
+        .video-close-btn, .music-close-btn {
+            color: #888;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 0 5px;
+            transition: color 0.3s;
+        }
+
+        .video-close-btn:hover, .music-close-btn:hover {
+            color: #ffaa00;
+        }
+
+        .video-container {
+            padding: 20px;
+            background: #000;
+        }
+
+        .video-modal-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 25px;
+            background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
+            border-top: 1px solid #333;
+        }
+
+        .video-info {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .video-category {
+            font-size: 12px;
+            color: #888;
+            text-transform: uppercase;
+        }
+
+        .video-price {
+            font-size: 18px;
+            font-weight: bold;
+            color: #ffaa00;
+        }
+
+        .preview-purchase-btn {
+            background: linear-gradient(135deg, #ff6b35, #ff8c42);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .preview-purchase-btn:hover {
+            background: linear-gradient(135deg, #e55a2e, #e67a35);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 53, 0.3);
+        }
+
+        .preview-btn {
+            background: rgba(255, 170, 0, 0.1);
+            color: #ffaa00;
+            border: 1px solid #ffaa00;
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 8px;
+            width: 100%;
+        }
+
+        .preview-btn:hover {
+            background: rgba(255, 170, 0, 0.2);
+            transform: translateY(-1px);
+        }
+
+        /* Music streaming link styling */
+        .preview-btn.music-link {
+            background: linear-gradient(135deg, #1db954, #1ed760);
+            color: white;
+            border: none;
+            text-decoration: none;
+            display: inline-block;
+            font-weight: bold;
+        }
+
+        .preview-btn.music-link:hover {
+            background: linear-gradient(135deg, #1aa34a, #1db954);
+            color: white;
+            text-decoration: none;
+        }
+
+        @media (max-width: 768px) {
+            .video-modal-content {
+                max-width: 95vw;
+                max-height: 95vh;
+            }
+            
+            .video-modal-header {
+                padding: 15px 20px;
+            }
+            
+            .video-container {
+                padding: 15px;
+            }
+            
+            .video-modal-footer {
+                padding: 15px 20px;
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+
+        .signup-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .signup-modal.visible {
+            display: flex;
+        }
+
+        .signup-form {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .signup-form h3 {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #ccc;
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            background: #2a2a2a;
+            border: 1px solid #555;
+            color: #ffffff;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+
+        .form-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+
+        .btn-secondary {
+            background: #666;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #555;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .market-title {
+                font-size: 28px;
+            }
+
+            .filters {
+                flex-direction: column;
+            }
+
+            .filter-select {
+                min-width: auto;
+            }
+
+            .artifacts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Upload Form Styles */
+        .upload-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .upload-header h2 {
+            color: #ffffff;
+            margin-bottom: 10px;
+        }
+
+        .upload-header p {
+            color: #888;
+        }
+
+        .upload-benefits {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 30px;
+            justify-content: center;
+        }
+
+        .benefit-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(40, 167, 69, 0.1);
+            border: 1px solid #28a745;
+            border-radius: 8px;
+            padding: 10px 15px;
+        }
+
+        .benefit-icon {
+            font-size: 18px;
+        }
+
+        .benefit-text {
+            color: #28a745;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .upload-form {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .form-section {
+            margin-bottom: 25px;
+        }
+
+        .form-label {
+            display: block;
+            color: #ffffff;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .required {
+            color: #ff6b35;
+        }
+
+        .file-upload-area {
+            border: 2px dashed #555;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #111;
+        }
+
+        .file-upload-area:hover {
+            border-color: #28a745;
+            background: rgba(40, 167, 69, 0.05);
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            font-size: 16px;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+
+        .upload-hint {
+            font-size: 14px;
+            color: #888;
+        }
+
+        .file-preview {
+            margin-top: 15px;
+            padding: 15px;
+            background: #111;
+            border-radius: 8px;
+            border: 1px solid #333;
+        }
+
+        .ai-analysis-section, .pricing-section {
+            background: rgba(40, 167, 69, 0.05);
+            border: 1px solid #28a745;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .analysis-header, .pricing-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .analysis-header h3, .pricing-header h3 {
+            color: #28a745;
+            margin: 0;
+        }
+
+        .analysis-status {
+            background: #28a745;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            animation: pulse 2s infinite;
+        }
+
+        .pricing-subtitle {
+            color: #888;
+            font-size: 12px;
+        }
+
+        .price-input-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .price-input-group label {
+            color: #28a745;
+            font-weight: 600;
+            min-width: 80px;
+        }
+
+        .price-input-group input {
+            background: #0a0a0a;
+            border: 1px solid #28a745;
+            color: #28a745;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-weight: 600;
+            width: 120px;
+        }
+
+        .price-unit {
+            color: #28a745;
+            font-weight: 600;
+        }
+
+        .kwh-conversion {
+            background: rgba(40, 167, 69, 0.1);
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #28a745;
+        }
+
+        #artifact-title, #creator-email, #artifact-category {
+            width: 100%;
+            padding: 12px 16px;
+            background: #0a0a0a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            color: #ffffff;
+            font-size: 16px;
+        }
+
+        #artifact-title:focus, #creator-email:focus, #artifact-category:focus {
+            border-color: #28a745;
+            outline: none;
+        }
+
+        .upload-submit-btn {
+            width: 100%;
+            padding: 15px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+        }
+
+        .upload-submit-btn:hover:not(:disabled) {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .upload-submit-btn:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .upload-terms {
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .my-items-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .my-items-header h2 {
+            color: #ffffff;
+            margin-bottom: 10px;
+        }
+
+        .my-items-header p {
+            color: #888;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @media (max-width: 768px) {
+            .upload-benefits {
+                flex-direction: column;
+            }
+            
+            .upload-form {
+                margin: 0 10px;
+                padding: 20px;
+            }
+        }
+    </style>
+    <meta name="description" content="Upload, price, and sell digital content with AI-powered Solar currency. Join the creator economy within the $16T digital marketplace. Each Solar token backed by 4913 kWh renewable energy. Daily distribution since April 7, 2025.">
+    <meta name="keywords" content="digital asset marketplace 2025, creator economy platform, AI-powered content pricing, Solar token payments, renewable energy backed currency, sustainable content monetization, 44GW energy-backed marketplace, universal basic income creators">
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div>
+            <div class="header-title">TC-S Market</div>
+            <div class="header-subtitle">Solar Standard</div>
+        </div>
+        <div class="header-actions">
+            <button class="register-btn" id="signin-btn" onclick="marketplace.showSigninModal()">Sign In</button>
+            <button class="register-btn" id="register-btn" onclick="marketplace.showSignupModal()">Join Network</button>
+            <div class="user-menu" id="user-menu" style="display: none;">
+                <span id="header-username"></span>
+                <button class="logout-btn" onclick="logoutUser()">Logout</button>
+            </div>
+            <div class="header-menu" onclick="toggleMenu()">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <h1 class="market-title">Digital Artifact Market</h1>
+        <p class="market-subtitle" id="artifact-count">Loading artifacts...</p>
+
+        <!-- Market Info -->
+        <div class="market-info">
+            <div class="market-info-text">
+                🎵 All tracks stream free • Purchase to download & own forever
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" data-tab="all-market">
+                <span>🏪</span> All Items
+            </button>
+            <button class="tab" data-tab="my-listings">
+                <span>📋</span> My Items
+            </button>
+            <button class="tab" data-tab="upload">
+                <span>🚀</span> Upload
+            </button>
+        </div>
+
+        <!-- NEW: Monazite Collection Feature Section -->
+        <div id="monazite-section" class="featured-section" style="display: none;">
+            <div class="featured-header">
+                <h2>🎵 Featured: Monazite Complete Collection</h2>
+                <p>20 original solar-powered tracks from TC-S Network</p>
+            </div>
+            
+            <div class="collection-stats">
+                <div class="stat-item">
+                    <span class="stat-number" id="monazite-track-count">20</span>
+                    <span class="stat-label">Tracks</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="monazite-total-value">0.02</span>
+                    <span class="stat-label">Solar Total</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">0.016</span>
+                    <span class="stat-label">Bundle Price</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">20%</span>
+                    <span class="stat-label">Savings</span>
+                </div>
+            </div>
+
+            <div class="collection-actions">
+                <button id="buy-bundle-btn" class="bundle-btn" onclick="purchaseMonaziteBundle()">
+                    🎁 Buy Complete Album - 0.016 Solar
+                </button>
+                <button id="view-tracks-btn" class="view-tracks-btn" onclick="toggleMonaziteTracks()">
+                    🎵 View Individual Tracks
+                </button>
+            </div>
+
+            <div id="monazite-tracks" class="tracks-grid" style="display: none;">
+                <!-- Tracks will be loaded here by JavaScript -->
+            </div>
+        </div>
+
+        <!-- User Info (Hidden by default) -->
+        <div class="user-info" id="user-info">
+            <div>Logged in as: <span id="username"></span></div>
+            <div class="solar-balance">Solar Balance: <span id="solar-balance">0.0000</span></div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters">
+            <select class="filter-select" id="category-filter">
+                <option value="">All Categories</option>
+                <optgroup label="🤖 AI-Enhanced">
+                    <option value="ai-tools">🤖 AI Tools</option>
+                    <option value="ai-creativity">🎨 AI Creativity</option>
+                    <option value="ai-analysis">📊 AI Analysis</option>
+                    <option value="ai-assistants">💬 AI Assistants</option>
+                </optgroup>
+                <optgroup label="🎨 Creative & Media">
+                    <option value="music">🎵 Music</option>
+                    <option value="video">🎬 Video</option>
+                    <option value="art">🖼️ Art</option>
+                    <option value="photography">📸 Photography</option>
+                    <option value="writing">✍️ Writing</option>
+                </optgroup>
+                <optgroup label="💻 Technical">
+                    <option value="software">💻 Software</option>
+                    <option value="code-tools">💻 Code Tools</option>
+                    <option value="data-science">📊 Data Science</option>
+                </optgroup>
+                <optgroup label="📚 Other">
+                    <option value="document">📄 Documents</option>
+                    <option value="productivity">📈 Productivity</option>
+                    <option value="utilities">🔧 Utilities</option>
+                    <option value="games">🎮 Games</option>
+                </optgroup>
+            </select>
+            
+            <select class="filter-select" id="price-filter">
+                <option value="">All Items</option>
+                <option value="low">Low Price (< 0.001 Solar)</option>
+                <option value="medium">Medium Price (0.001 - 0.01 Solar)</option>
+                <option value="high">High Price (> 0.01 Solar)</option>
+            </select>
+        </div>
+
+        <!-- Tab Content Areas -->
+        
+        <!-- All Market Tab Content -->
+        <div id="all-market-content" class="tab-content">
+            <!-- Artifacts Grid -->
+            <div class="artifacts-grid" id="artifacts-grid">
+                <div class="loading">Loading digital artifacts...</div>
+            </div>
+
+            <!-- Empty State -->
+            <div class="empty-state" id="empty-state" style="display: none;">
+                <h3>No Artifacts Found</h3>
+                <p>Try adjusting your filters or check back later for new content.</p>
+                <button class="clear-filters-btn" onclick="clearFilters()">Clear Filters</button>
+            </div>
+        </div>
+
+        <!-- My Listings Tab Content -->
+        <div id="my-listings-content" class="tab-content" style="display: none;">
+            <div class="my-items-header">
+                <h2>🎨 Your Digital Artifacts</h2>
+                <p>Manage your uploaded items and track sales</p>
+            </div>
+            <div class="my-artifacts-grid" id="my-artifacts-grid">
+                <!-- User's artifacts will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Upload Tab Content -->
+        <div id="upload-content" class="tab-content" style="display: none;">
+            <div class="upload-header">
+                <h2>🚀 Upload New Artifact</h2>
+                <p>Powered by TC Identity Sync for smart pricing & AI curation</p>
+            </div>
+
+            <div class="upload-benefits">
+                <div class="benefit-item">
+                    <span class="benefit-icon">🤖</span>
+                    <span class="benefit-text">AI identifies your item automatically</span>
+                </div>
+                <div class="benefit-item">
+                    <span class="benefit-icon">⚡</span>
+                    <span class="benefit-text">kWh to Solar pricing conversion</span>
+                </div>
+                <div class="benefit-item">
+                    <span class="benefit-icon">🎯</span>
+                    <span class="benefit-text">Smart descriptions with "What AI sees"</span>
+                </div>
+            </div>
+
+            <form id="upload-form" class="upload-form" enctype="multipart/form-data">
+                <div class="form-section">
+                    <label for="artifact-file" class="form-label">
+                        📎 Select File <span class="required">*</span>
+                    </label>
+                    <div class="file-upload-area" onclick="document.getElementById('artifact-file').click()">
+                        <div class="upload-placeholder">
+                            <div class="upload-icon">📁</div>
+                            <div class="upload-text">Click to select file or drag and drop</div>
+                            <div class="upload-hint">Images, videos, documents, audio files supported</div>
+                        </div>
+                        <input type="file" id="artifact-file" name="file" accept="*/*" style="display: none;" required>
+                    </div>
+                    <div class="file-preview" id="file-preview" style="display: none;"></div>
+                </div>
+
+                <div class="form-section">
+                    <label for="artifact-title" class="form-label">
+                        🏷️ Item Title <span class="required">*</span>
+                    </label>
+                    <input type="text" id="artifact-title" name="title" placeholder="Give your artifact a catchy title" required>
+                </div>
+
+                <div class="ai-analysis-section" id="ai-analysis-section" style="display: none;">
+                    <div class="analysis-header">
+                        <h3>🤖 TC Identity Sync Analysis</h3>
+                        <div class="analysis-status" id="analysis-status">Analyzing...</div>
+                    </div>
+                    <div class="analysis-results" id="analysis-results">
+                        <!-- AI analysis results will appear here -->
+                    </div>
+                </div>
+
+                <div class="pricing-section" id="pricing-section" style="display: none;">
+                    <div class="pricing-header">
+                        <h3>⚡ Solar Pricing</h3>
+                        <div class="pricing-subtitle">Based on kWh analysis</div>
+                    </div>
+                    <div class="pricing-display">
+                        <div class="price-input-group">
+                            <label for="solar-price">Solar Price:</label>
+                            <input type="number" id="solar-price" name="price" step="0.0001" min="0.0001" placeholder="0.0001" readonly>
+                            <span class="price-unit">Solar</span>
+                        </div>
+                        <div class="kwh-conversion" id="kwh-conversion">
+                            <!-- kWh calculation details -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <label for="artifact-category" class="form-label">📂 Category</label>
+                    <select id="artifact-category" name="category" required>
+                        <option value="">Select category...</option>
+                        <optgroup label="🤖 AI-Enhanced">
+                            <option value="ai-tools">🤖 AI Tools</option>
+                            <option value="ai-creativity">🎨 AI Creativity</option>
+                            <option value="ai-analysis">📊 AI Analysis</option>
+                            <option value="ai-assistants">💬 AI Assistants</option>
+                        </optgroup>
+                        <optgroup label="🎨 Creative & Media">
+                            <option value="art">🎨 Digital Art</option>
+                            <option value="music">🎵 Music & Audio</option>
+                            <option value="video">🎬 Video Content</option>
+                            <option value="photography">📸 Photography</option>
+                            <option value="writing">✍️ Writing</option>
+                        </optgroup>
+                        <optgroup label="💻 Technical">
+                            <option value="software">💻 Software & Apps</option>
+                            <option value="code-tools">💻 Code Tools</option>
+                            <option value="data-science">📊 Data Science</option>
+                        </optgroup>
+                        <optgroup label="📚 Other">
+                            <option value="document">📄 Documents</option>
+                            <option value="productivity">📈 Productivity</option>
+                            <option value="utilities">🔧 Utilities</option>
+                            <option value="games">🎮 Games</option>
+                            <option value="other">🔧 Other</option>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <div class="form-section">
+                    <label for="creator-email" class="form-label">
+                        📧 Creator Email <span class="required">*</span>
+                    </label>
+                    <input type="email" id="creator-email" name="email" placeholder="your@email.com" required>
+                </div>
+
+                <button type="submit" class="upload-submit-btn" disabled>
+                    🚀 Upload to Market
+                </button>
+
+                <div class="upload-terms">
+                    <p>By uploading, you confirm you own the rights to this content and agree to our Solar Standard terms.</p>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Video Preview Modal -->
+    <div class="video-preview-modal" id="video-preview-modal" style="display: none;">
+        <div class="video-modal-content">
+            <div class="video-modal-header">
+                <h3 id="video-preview-title">Video Preview</h3>
+                <span class="video-close-btn" id="video-close-btn">&times;</span>
+            </div>
+            <div class="video-container">
+                <video id="video-player" controls width="100%" height="400" preload="none">
+                    <source id="video-source" src="" type="video/mp4">
+                    Your browser does not support video playback.
+                </video>
+            </div>
+            <div class="video-modal-footer">
+                <div class="video-info">
+                    <div class="video-category" id="video-preview-category">Video</div>
+                    <div class="video-price" id="video-preview-price">0.000000 Solar</div>
+                </div>
+                <div class="video-actions">
+                    <button class="preview-purchase-btn" id="preview-purchase-btn">
+                        Purchase & Download
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Music Preview Modal -->
+    <div class="music-preview-modal" id="music-preview-modal" style="display: none;">
+        <div class="music-modal-content">
+            <div class="music-modal-header">
+                <h3 id="music-preview-title">Music Preview</h3>
+                <span class="music-close-btn" id="music-close-btn">&times;</span>
+            </div>
+            <div class="music-container" style="padding: 20px; text-align: center;">
+                <audio id="music-player" controls style="width: 100%;" preload="none">
+                    <source id="music-source" src="" type="audio/mpeg">
+                    Your browser does not support audio playback.
+                </audio>
+            </div>
+            <div class="music-modal-footer" style="display: flex; justify-content: space-between; align-items: center; padding: 20px 25px; background: linear-gradient(135deg, #2a2a2a, #1a1a1a); border-top: 1px solid #333;">
+                <div class="music-info" style="display: flex; flex-direction: column; gap: 5px;">
+                    <div class="music-category" id="music-preview-category" style="font-size: 12px; color: #888; text-transform: uppercase;">Music</div>
+                    <div class="music-price" id="music-preview-price" style="font-size: 18px; font-weight: bold; color: #ffaa00;">0.000000 Solar</div>
+                </div>
+                <div class="music-actions">
+                    <button class="preview-purchase-btn" id="music-preview-purchase-btn" style="background: linear-gradient(135deg, #ff6b35, #ff8c42); color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer;">
+                        Purchase & Download
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Signup Modal -->
+    <div class="signup-modal" id="signup-modal">
+        <div class="signup-form">
+            <h3>Join the Current-See Network</h3>
+            <p style="color: #888; margin-bottom: 20px; font-size: 14px;">
+                Get your initial Solar allocation and start purchasing digital artifacts!
+            </p>
+            <div class="form-group">
+                <label for="signup-username">Username</label>
+                <input type="text" id="signup-username" required>
+            </div>
+            <div class="form-group">
+                <label for="signup-email">Email</label>
+                <input type="email" id="signup-email" required>
+            </div>
+            <div class="form-group">
+                <label for="signup-name">First Name</label>
+                <input type="text" id="signup-name">
+            </div>
+            <div class="form-group">
+                <label for="signup-password">Password</label>
+                <div style="position: relative;">
+                    <input type="password" id="signup-password" required>
+                    <button type="button" onclick="togglePasswordVisibility('signup-password')" 
+                            style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); 
+                                   background: none; border: none; color: #888; cursor: pointer; font-size: 14px;">
+                        👁️
+                    </button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="signup-password-confirm">Confirm Password</label>
+                <div style="position: relative;">
+                    <input type="password" id="signup-password-confirm" required>
+                    <button type="button" onclick="togglePasswordVisibility('signup-password-confirm')" 
+                            style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); 
+                                   background: none; border: none; color: #888; cursor: pointer; font-size: 14px;">
+                        👁️
+                    </button>
+                </div>
+            </div>
+            <div class="form-buttons">
+                <button class="btn btn-secondary" onclick="marketplace.closeSignupModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="signupUser()">Join Network</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sign In Modal -->
+    <div class="signup-modal" id="signin-modal">
+        <div class="signup-form">
+            <h3>Sign In to TC-S Network</h3>
+            <p style="color: #888; margin-bottom: 20px; font-size: 14px;">
+                Welcome back! Sign in to access your Solar balance and digital artifacts.
+            </p>
+            <div class="form-group">
+                <label for="signin-username">Username or Email</label>
+                <input type="text" id="signin-username" required>
+            </div>
+            <div class="form-group">
+                <label for="signin-password">Password</label>
+                <div style="position: relative;">
+                    <input type="password" id="signin-password" required>
+                    <button type="button" onclick="togglePasswordVisibility('signin-password')" 
+                            style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); 
+                                   background: none; border: none; color: #888; cursor: pointer; font-size: 14px;">
+                        👁️
+                    </button>
+                </div>
+            </div>
+            <div class="form-buttons">
+                <button class="btn btn-secondary" onclick="marketplace.closeSigninModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="signinUser()">Sign In</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let allArtifacts = [];
+        let filteredArtifacts = [];
+        let monaziteCollection = null;
+        let monaziteTracksVisible = false;
+
+        // MISSING MODAL FUNCTIONS - Option 1 Fix
+        function showSigninModal() {
+            document.getElementById('signin-modal').classList.add('visible');
+        }
+
+        function closeSigninModal() {
+            document.getElementById('signin-modal').classList.remove('visible');
+        }
+
+        function showSignupModal() {
+            document.getElementById('signup-modal').classList.add('visible');
+        }
+
+        function closeSignupModal() {
+            document.getElementById('signup-modal').classList.remove('visible');
+        }
+
+        // Password visibility toggle function
+        function togglePasswordVisibility(inputId) {
+            const passwordInput = document.getElementById(inputId);
+            const toggleButton = passwordInput.nextElementSibling;
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleButton.textContent = '🙈';
+                toggleButton.style.color = '#ffaa00';
+            } else {
+                passwordInput.type = 'password';
+                toggleButton.textContent = '👁️';
+                toggleButton.style.color = '#888';
+            }
+        }
+
+        // Load artifacts and user info on page load
+        window.addEventListener('load', function() {
+            loadArtifacts();
+            loadMonaziteCollection();
+            checkUserSession();
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            // Tab switching
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const tabType = this.dataset.tab;
+                    if (tabType === 'my-listings') {
+                        showMyListings();
+                    } else if (tabType === 'upload') {
+                        window.location.href = '/creator-upload.html';
+                    } else {
+                        showAllMarket();
+                    }
+                });
+            });
+
+            // Filter changes
+            document.getElementById('category-filter').addEventListener('change', function() {
+                const activeTab = document.querySelector('.tab.active');
+                if (activeTab && activeTab.dataset.tab === 'my-listings') {
+                    // If My Items tab is active, refresh the My Items view
+                    showMyListings();
+                } else {
+                    // Otherwise apply marketplace filters
+                    applyFilters();
+                }
+            });
+            document.getElementById('price-filter').addEventListener('change', function() {
+                const activeTab = document.querySelector('.tab.active');
+                if (activeTab && activeTab.dataset.tab === 'my-listings') {
+                    // Price filter should also work for My Items
+                    showMyListings();
+                } else {
+                    applyFilters();
+                }
+            });
+        }
+
+        async function loadArtifacts() {
+            try {
+                const response = await fetch('/api/artifacts/available');
+                if (response.ok) {
+                    const data = await response.json();
+                    allArtifacts = data.artifacts || [];
+                    updateArtifactCount(data.totalArtifacts || 0);
+                    applyFilters();
+                } else {
+                    showError('Failed to load artifacts');
+                }
+            } catch (error) {
+                console.error('Error loading artifacts:', error);
+                showError('Error loading artifacts');
+            }
+        }
+
+        function updateArtifactCount(count) {
+            document.getElementById('artifact-count').textContent = 
+                `${count} artifacts available for download ownership`;
+        }
+
+        // NEW: Load Monazite Collection
+        async function loadMonaziteCollection() {
+            try {
+                const response = await fetch('/api/marketplace/monazite');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.data) {
+                        monaziteCollection = data.data;
+                        displayMonaziteCollection();
+                    } else {
+                        console.log('Monazite collection not available');
+                    }
+                } else {
+                    console.log('Monazite collection endpoint not found');
+                }
+            } catch (error) {
+                console.error('Error loading Monazite collection:', error);
+            }
+        }
+
+        function displayMonaziteCollection() {
+            if (!monaziteCollection) return;
+
+            const section = document.getElementById('monazite-section');
+            section.style.display = 'block';
+
+            // Update stats
+            document.getElementById('monazite-track-count').textContent = monaziteCollection.artifacts.length;
+            document.getElementById('monazite-total-value').textContent = monaziteCollection.totals.totalValue.toFixed(2);
+
+            console.log('🎵 Monazite Collection loaded:', monaziteCollection);
+        }
+
+        function toggleMonaziteTracks() {
+            const tracksGrid = document.getElementById('monazite-tracks');
+            const button = document.getElementById('view-tracks-btn');
+            
+            if (monaziteTracksVisible) {
+                tracksGrid.style.display = 'none';
+                button.textContent = '🎵 View Individual Tracks';
+                monaziteTracksVisible = false;
+            } else {
+                displayMonaziteTracks();
+                tracksGrid.style.display = 'grid';
+                button.textContent = '🎵 Hide Individual Tracks';
+                monaziteTracksVisible = true;
+            }
+        }
+
+        function displayMonaziteTracks() {
+            if (!monaziteCollection || !monaziteCollection.artifacts) return;
+
+            const tracksGrid = document.getElementById('monazite-tracks');
+            const tracks = monaziteCollection.artifacts.sort((a, b) => a.trackNumber - b.trackNumber);
+
+            tracksGrid.innerHTML = tracks.map(track => `
+                <div class="track-card">
+                    <div class="track-header">
+                        <div class="track-number">${track.trackNumber}</div>
+                        <div class="track-title">${track.title}</div>
+                    </div>
+                    <div class="track-info">
+                        ${track.genre} • ${formatDuration(track.durationSec)} • ${(track.fileSize / 1024 / 1024).toFixed(1)} MB
+                    </div>
+                    <div class="track-actions">
+                        <button class="track-buy-btn" onclick="purchaseMonaziteTrack('${track.id}')">
+                            Buy Track
+                        </button>
+                        <div class="track-price">${track.priceSolar} Solar</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function formatDuration(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+        }
+
+        async function purchaseMonaziteBundle() {
+            if (!currentUser) {
+                showSignupModal();
+                return;
+            }
+
+            if (!monaziteCollection || !monaziteCollection.bundles || !monaziteCollection.bundles[0]) {
+                alert('❌ Bundle not available');
+                return;
+            }
+
+            const bundle = monaziteCollection.bundles[0];
+            const confirmed = confirm(`🎁 Purchase Monazite Complete Collection?\n\n• 20 tracks included\n• Price: ${bundle.priceSolar} Solar\n• You'll save ${(monaziteCollection.totals.totalValue - bundle.priceSolar).toFixed(4)} Solar vs individual purchases\n\nProceed with purchase?`);
+            
+            if (!confirmed) return;
+
+            try {
+                const response = await fetch('/api/marketplace/purchase', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        bundleId: bundle.id,
+                        buyerEmail: 'tdfranklin101@thecurrentsee.org',
+                        solarAmount: bundle.priceSolar
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert(`🎉 ${result.message}`);
+                    
+                    // Initiate bundle download
+                    const downloadUrl = `${result.purchase.download.url}?bundle=true`;
+                    window.open(downloadUrl, '_blank');
+                    
+                    console.log('🎁 Bundle purchased:', result.purchase);
+                } else {
+                    alert(`❌ Purchase failed: ${result.error}`);
+                }
+            } catch (error) {
+                console.error('Bundle purchase error:', error);
+                alert('❌ Purchase failed. Please try again.');
+            }
+        }
+
+        async function purchaseMonaziteTrack(trackId) {
+            if (!currentUser) {
+                showSignupModal();
+                return;
+            }
+
+            const track = monaziteCollection.artifacts.find(t => t.id === trackId);
+            if (!track) {
+                alert('❌ Track not found');
+                return;
+            }
+
+            const confirmed = confirm(`🎵 Purchase "${track.title}"?\n\nPrice: ${track.priceSolar} Solar\nDuration: ${formatDuration(track.durationSec)}\nGenre: ${track.genre}\n\nProceed with purchase?`);
+            
+            if (!confirmed) return;
+
+            try {
+                const response = await fetch('/api/marketplace/purchase', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        artifactId: track.id,
+                        buyerEmail: 'tdfranklin101@thecurrentsee.org',
+                        solarAmount: track.priceSolar
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert(`🎵 ${result.message}`);
+                    
+                    // Initiate track download
+                    const downloadUrl = `${result.purchase.download.url}?item=${track.id}`;
+                    window.open(downloadUrl, '_blank');
+                    
+                    console.log('🎵 Track purchased:', result.purchase);
+                } else {
+                    alert(`❌ Purchase failed: ${result.error}`);
+                }
+            } catch (error) {
+                console.error('Track purchase error:', error);
+                alert('❌ Purchase failed. Please try again.');
+            }
+        }
+
+        function applyFilters() {
+            const categoryFilter = document.getElementById('category-filter').value;
+            const priceFilter = document.getElementById('price-filter').value;
+
+            filteredArtifacts = allArtifacts.filter(artifact => {
+                let passesCategory = !categoryFilter || artifact.category === categoryFilter;
+                let passesPrice = true;
+
+                if (priceFilter === 'low') {
+                    passesPrice = artifact.solarPrice < 0.001;
+                } else if (priceFilter === 'medium') {
+                    passesPrice = artifact.solarPrice >= 0.001 && artifact.solarPrice <= 0.01;
+                } else if (priceFilter === 'high') {
+                    passesPrice = artifact.solarPrice > 0.01;
+                }
+
+                return passesCategory && passesPrice;
+            });
+
+            renderArtifacts(filteredArtifacts);
+        }
+
+        function renderArtifacts(artifacts) {
+            const grid = document.getElementById('artifacts-grid');
+            const emptyState = document.getElementById('empty-state');
+
+            if (artifacts.length === 0) {
+                grid.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            grid.style.display = 'grid';
+            emptyState.style.display = 'none';
+
+            const categoryFilter = document.getElementById('category-filter').value;
+
+            // If no category filter is selected (All Categories), organize by category sections
+            if (!categoryFilter) {
+                const categories = [...new Set(artifacts.map(a => a.category))];
+                let gridHTML = '';
+
+                categories.forEach(category => {
+                    const categoryArtifacts = artifacts.filter(a => a.category === category);
+                    const categoryName = category.charAt(0).toUpperCase() + category.slice(1);
+                    const categoryIcon = category === 'music' ? '🎵' : category === 'video' ? '🎬' : 
+                                        category === 'image' ? '🖼️' : category === 'document' ? '📄' : '📁';
+
+                    gridHTML += `
+                        <div style="grid-column: 1 / -1; margin: 30px 0 20px 0;">
+                            <h3 style="color: #ffaa00; margin-bottom: 15px; font-size: 20px;">
+                                ${categoryIcon} ${categoryName} (${categoryArtifacts.length})
+                            </h3>
+                            <p style="color: #888; font-size: 14px; margin-bottom: 20px;">
+                                ${category === 'music' ? 'Audio tracks and compositions' : 
+                                  category === 'video' ? 'Video content and multimedia' : 
+                                  category === 'image' ? 'Images and visual art' : 
+                                  'Digital documents and files'}
+                            </p>
+                        </div>
+                    `;
+
+                    categoryArtifacts.forEach(artifact => {
+                        gridHTML += createArtifactCard(artifact, 'marketplace');
+                    });
+                });
+
+                grid.innerHTML = gridHTML;
+            } else {
+                // Single category view - show items normally
+                grid.innerHTML = artifacts.map(artifact => createArtifactCard(artifact, 'marketplace')).join('');
+            }
+        }
+
+        function createArtifactCard(artifact, context = 'marketplace') {
+            return `
+                <div class="artifact-card" onclick="selectArtifact('${artifact.id}')">
+                    ${artifact.isBonus ? '<div class="artifact-bonus">BONUS TRACK</div>' : ''}
+                    <div class="artifact-category">${artifact.category}</div>
+                    <div class="artifact-title">${artifact.title}</div>
+                    <div class="artifact-kwh">${artifact.kwhFootprint} kWh footprint</div>
+                    <div class="artifact-price">${artifact.formattedPrice}</div>
+                    ${artifact.previewType === 'audio' && artifact.streamingUrl ? 
+                        `<a href="${artifact.streamingUrl}" target="_blank" class="preview-btn music-link" onclick="event.stopPropagation();">
+                            🎵 Listen on Music Now
+                        </a>` : ''
+                    }
+                    ${artifact.previewType === 'video' ? 
+                        `<button class="preview-btn" onclick="event.stopPropagation(); openPreview('${artifact.id}')">
+                            🎬 Preview Video
+                        </button>` : ''
+                    }
+                    ${artifact.previewType && !['audio', 'video'].includes(artifact.previewType) ? 
+                        `<button class="preview-btn" onclick="event.stopPropagation(); openPreview('${artifact.id}')">
+                            👁️ Preview File
+                        </button>` : ''
+                    }
+                    <button class="purchase-btn" onclick="event.stopPropagation(); purchaseArtifact('${artifact.id}')">
+                        Purchase & Download
+                    </button>
+                </div>
+            `;
+        }
+
+        function clearFilters() {
+            document.getElementById('category-filter').value = '';
+            document.getElementById('price-filter').value = '';
+            applyFilters();
+        }
+
+        function showAllMarket() {
+            applyFilters();
+        }
+
+        async function showMyListings() {
+            if (!currentUser) {
+                // Show sign-in prompt if not logged in
+                document.getElementById('artifacts-grid').style.display = 'none';
+                document.getElementById('empty-state').style.display = 'block';
+                document.querySelector('#empty-state h3').textContent = 'Sign In Required';
+                document.querySelector('#empty-state p').textContent = 'Please sign in to view your items.';
+                return;
+            }
+
+            try {
+                // Fetch user's uploaded and purchased items
+                const response = await fetch('/api/artifacts/my-items');
+                if (response.ok) {
+                    const data = await response.json();
+                    displayMyItems(data);
+                } else if (response.status === 401) {
+                    // Authentication error - show sign in prompt
+                    document.getElementById('artifacts-grid').style.display = 'none';
+                    document.getElementById('empty-state').style.display = 'block';
+                    document.querySelector('#empty-state h3').textContent = 'Sign In Required';
+                    document.querySelector('#empty-state p').textContent = 'Please sign in to view your items.';
+                } else {
+                    throw new Error('Failed to fetch user items');
+                }
+            } catch (error) {
+                console.error('Error loading user items:', error);
+                // Fallback to old method for uploaded items only
+                const myArtifacts = allArtifacts.filter(artifact => 
+                    artifact.creatorId && artifact.creatorId.toString() === currentUser.userId.toString()
+                );
+                if (myArtifacts.length === 0) {
+                    document.getElementById('artifacts-grid').style.display = 'none';
+                    document.getElementById('empty-state').style.display = 'block';
+                    document.querySelector('#empty-state h3').textContent = 'No Items Yet';
+                    document.querySelector('#empty-state p').textContent = 'You haven\'t uploaded any artifacts or made any purchases yet.';
+                } else {
+                    displayArtifacts(myArtifacts);
+                }
+            }
+        }
+
+        function displayMyItems(data) {
+            // Store data globally for copy functionality
+            currentMyItemsData = data;
+            
+            // Apply current category filter to My Items data
+            const categoryFilter = document.getElementById('category-filter').value;
+            
+            // Filter uploaded artifacts
+            const filteredUploaded = categoryFilter ? 
+                data.uploaded.artifacts.filter(artifact => artifact.category === categoryFilter) : 
+                data.uploaded.artifacts;
+            
+            // Filter purchased artifacts  
+            const filteredPurchased = categoryFilter ?
+                data.purchased.artifacts.filter(artifact => artifact.category === categoryFilter) :
+                data.purchased.artifacts;
+            
+            const grid = document.getElementById('artifacts-grid');
+            const emptyState = document.getElementById('empty-state');
+            
+            const filteredUploadedCount = filteredUploaded.length;
+            const filteredPurchasedCount = filteredPurchased.length;
+            const totalFilteredItems = filteredUploadedCount + filteredPurchasedCount;
+            
+            if (totalFilteredItems === 0) {
+                grid.style.display = 'none';
+                emptyState.style.display = 'block';
+                if (categoryFilter) {
+                    const categoryName = categoryFilter.charAt(0).toUpperCase() + categoryFilter.slice(1);
+                    document.querySelector('#empty-state h3').textContent = `No ${categoryName} Items Found`;
+                    document.querySelector('#empty-state p').textContent = `You don't have any ${categoryName.toLowerCase()} artifacts in this category yet.`;
+                } else {
+                    document.querySelector('#empty-state h3').textContent = 'No Items Yet';
+                    document.querySelector('#empty-state p').textContent = 'You haven\'t uploaded any artifacts or made any purchases yet.';
+                }
+                return;
+            }
+            
+            grid.style.display = 'grid';
+            emptyState.style.display = 'none';
+            
+            let gridHTML = '';
+            
+            // Add uploaded items section (only if filtered results exist)
+            if (filteredUploadedCount > 0) {
+                const categoryText = categoryFilter ? ` (${categoryFilter.charAt(0).toUpperCase() + categoryFilter.slice(1)})` : '';
+                gridHTML += `
+                    <div style="grid-column: 1 / -1; margin-bottom: 20px;">
+                        <h3 style="color: #ffaa00; margin-bottom: 15px; font-size: 20px;">
+                            📋 My Uploads${categoryText} (${filteredUploadedCount})
+                        </h3>
+                        <p style="color: #888; font-size: 14px; margin-bottom: 20px;">
+                            Artifacts you've created and listed on the market
+                        </p>
+                    </div>
+                `;
+                
+                filteredUploaded.forEach(artifact => {
+                    gridHTML += createMyItemCard(artifact, 'uploaded');
+                });
+            }
+            
+            // Add purchased items section (only if filtered results exist)
+            if (filteredPurchasedCount > 0) {
+                const categoryText = categoryFilter ? ` (${categoryFilter.charAt(0).toUpperCase() + categoryFilter.slice(1)})` : '';
+                gridHTML += `
+                    <div style="grid-column: 1 / -1; margin: 30px 0 20px 0;">
+                        <h3 style="color: #28a745; margin-bottom: 15px; font-size: 20px;">
+                            💾 My Downloads${categoryText} (${filteredPurchasedCount})
+                        </h3>
+                        <p style="color: #888; font-size: 14px; margin-bottom: 20px;">
+                            Digital artifacts you've purchased and own
+                        </p>
+                    </div>
+                `;
+                
+                filteredPurchased.forEach(artifact => {
+                    gridHTML += createMyItemCard(artifact, 'purchased');
+                });
+            }
+            
+            grid.innerHTML = gridHTML;
+        }
+
+        function createMyItemCard(artifact, type) {
+            const typeIcon = type === 'uploaded' ? '📋' : '💾';
+            const typeLabel = type === 'uploaded' ? 'Uploaded' : 'Purchased';
+            
+            let actionButtons = '';
+            if (type === 'uploaded') {
+                actionButtons = `<button class="artifact-action-btn edit" onclick="editArtifact('${artifact.id}')">📝 Edit Listing</button>`;
+            } else {
+                // For purchased items, offer both view and download based on file type
+                const fileType = artifact.fileType || 'unknown';
+                const isMusic = artifact.category === 'music' || fileType.includes('audio');
+                const isImage = artifact.category === 'art' || fileType.includes('image');
+                const isText = fileType.includes('text') || fileType.includes('document');
+                
+                const isVideo = artifact.category === 'video' || fileType.includes('video');
+                
+                actionButtons = `
+                    <button class="artifact-action-btn download" onclick="downloadArtifact('${artifact.id}')">💾 Download File</button>
+                    ${isMusic ? `<button class="artifact-action-btn" onclick="openPreview('${artifact.id}')">🎵 Listen on Music Now</button>` : ''}
+                    ${isVideo ? `<button class="artifact-action-btn" onclick="openPreview('${artifact.id}')">🎬 Preview Video</button>` : ''}
+                    ${isImage ? `<button class="artifact-action-btn" onclick="previewArtifact('${artifact.id}', 'image')">🖼️ View Image</button>` : ''}
+                    ${isText ? `<button class="artifact-action-btn" onclick="previewArtifact('${artifact.id}', 'text')">📄 View Text</button>` : ''}
+                    <button class="artifact-action-btn" onclick="copyArtifactContent('${artifact.id}')">📋 Copy Content</button>
+                `;
+            }
+            
+            return `
+                <div class="artifact-card" style="border-left: 3px solid ${type === 'uploaded' ? '#ffaa00' : '#28a745'};">
+                    <div class="artifact-category">${typeIcon} ${typeLabel} • ${artifact.category}</div>
+                    <div class="artifact-title">${artifact.title}</div>
+                    <div class="artifact-price">${artifact.formattedPrice}</div>
+                    <div class="artifact-kwh">${artifact.kwhFootprint.toFixed(1)} kWh equivalent</div>
+                    ${artifact.isBonus ? '<div class="artifact-bonus">BONUS</div>' : ''}
+                    <div style="margin-top: 15px;">
+                        ${actionButtons}
+                    </div>
+                    ${type === 'purchased' ? `<div style="color: #666; font-size: 12px; margin-top: 8px;">Purchased: ${new Date(artifact.dateAdded).toLocaleDateString()}</div>` : ''}
+                </div>
+            `;
+        }
+
+        async function downloadArtifact(artifactId) {
+            if (!currentUser) {
+                alert('Please sign in to download artifacts.');
+                return;
+            }
+
+            try {
+                // Generate download token and redirect
+                const downloadToken = btoa(`${currentUser.userId}:${artifactId}:${Date.now()}`);
+                const downloadUrl = `/api/artifacts/download/${downloadToken}`;
+                
+                // Open download in new window/tab
+                window.open(downloadUrl, '_blank');
+                
+                alert('✅ Download started! The file should begin downloading shortly.');
+            } catch (error) {
+                console.error('Download error:', error);
+                alert('❌ Download failed. Please try again.');
+            }
+        }
+
+        async function previewArtifact(artifactId, type) {
+            if (!currentUser) {
+                alert('Please sign in to preview artifacts.');
+                return;
+            }
+
+            try {
+                const downloadToken = btoa(`${currentUser.userId}:${artifactId}:${Date.now()}`);
+                const fileUrl = `/api/artifacts/download/${downloadToken}`;
+                
+                // Create modal container
+                const modal = document.createElement('div');
+                modal.style.cssText = `
+                    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+                    background: rgba(0,0,0,0.8); z-index: 1000;
+                    display: flex; align-items: center; justify-content: center;
+                    padding: 20px;
+                `;
+                
+                const content = document.createElement('div');
+                content.style.cssText = `
+                    background: #1a1a1a; padding: 30px; border-radius: 12px;
+                    max-width: 80%; max-height: 80%; width: auto; height: auto;
+                    overflow: auto; color: white;
+                `;
+                
+                if (type === 'music') {
+                    const audio = new Audio(fileUrl);
+                    audio.controls = true;
+                    audio.style.width = '100%';
+                    audio.style.marginTop = '10px';
+                    
+                    content.innerHTML = `
+                        <h3 style="color: #fff; margin-bottom: 20px;">🎵 Audio Preview</h3>
+                        <div style="margin-bottom: 20px;"></div>
+                        <button onclick="this.parentElement.parentElement.remove()" 
+                                style="background: #dc3545; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;">
+                            Close
+                        </button>
+                    `;
+                    content.children[1].appendChild(audio);
+                    
+                } else if (type === 'image') {
+                    const img = document.createElement('img');
+                    img.src = fileUrl;
+                    img.style.cssText = 'max-width: 100%; max-height: 70vh; border-radius: 8px;';
+                    
+                    content.innerHTML = `
+                        <h3 style="color: #fff; margin-bottom: 20px;">🖼️ Image Preview</h3>
+                        <div style="margin-bottom: 20px; text-align: center;"></div>
+                        <div style="text-align: center; margin-top: 20px;">
+                            <button onclick="copyImageToClipboard('${fileUrl}')" 
+                                    style="background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; margin-right: 10px;">
+                                📋 Copy Image
+                            </button>
+                            <button onclick="this.parentElement.parentElement.parentElement.remove()" 
+                                    style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
+                                Close
+                            </button>
+                        </div>
+                    `;
+                    content.children[1].appendChild(img);
+                    
+                } else if (type === 'text') {
+                    // Fetch text content
+                    try {
+                        const response = await fetch(fileUrl);
+                        const textContent = await response.text();
+                        
+                        content.innerHTML = `
+                            <h3 style="color: #fff; margin-bottom: 20px;">📄 Text Preview</h3>
+                            <div style="background: #2a2a2a; padding: 15px; border-radius: 8px; max-height: 60vh; overflow-y: auto; white-space: pre-wrap; font-family: monospace; font-size: 14px; line-height: 1.5; margin-bottom: 20px;" id="textContent">${textContent}</div>
+                            <div style="text-align: center;">
+                                <button onclick="copyTextContent()" 
+                                        style="background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; margin-right: 10px;">
+                                    📋 Copy Text
+                                </button>
+                                <button onclick="this.parentElement.parentElement.remove()" 
+                                        style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
+                                    Close
+                                </button>
+                            </div>
+                        `;
+                    } catch (error) {
+                        content.innerHTML = `
+                            <h3 style="color: #fff; margin-bottom: 20px;">📄 Text Preview</h3>
+                            <p style="color: #ff6b6b;">❌ Could not load text content. Please use Download to access the file.</p>
+                            <button onclick="this.parentElement.parentElement.remove()" 
+                                    style="background: #dc3545; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; margin-top: 15px;">
+                                Close
+                            </button>
+                        `;
+                    }
+                } else {
+                    content.innerHTML = `
+                        <h3 style="color: #fff; margin-bottom: 20px;">📄 File Preview</h3>
+                        <p style="color: #888;">Preview not available for this file type. Use Download to access the file.</p>
+                        <button onclick="this.parentElement.parentElement.remove()" 
+                                style="background: #dc3545; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; margin-top: 15px;">
+                            Close
+                        </button>
+                    `;
+                }
+                
+                modal.appendChild(content);
+                document.body.appendChild(modal);
+                
+                // Auto-remove modal when clicking outside
+                modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+                
+            } catch (error) {
+                console.error('Preview error:', error);
+                alert('❌ Preview failed. Please try downloading the file instead.');
+            }
+        }
+
+        async function copyImageToClipboard(imageUrl) {
+            try {
+                const response = await fetch(imageUrl);
+                const blob = await response.blob();
+                await navigator.clipboard.write([
+                    new ClipboardItem({ [blob.type]: blob })
+                ]);
+                alert('📋 Image copied to clipboard!');
+            } catch (error) {
+                console.error('Copy image error:', error);
+                alert('❌ Could not copy image. Your browser may not support this feature.');
+            }
+        }
+
+        function copyTextContent() {
+            try {
+                const textElement = document.getElementById('textContent');
+                const text = textElement.textContent;
+                navigator.clipboard.writeText(text);
+                alert('📋 Text content copied to clipboard!');
+            } catch (error) {
+                console.error('Copy text error:', error);
+                alert('❌ Could not copy text content.');
+            }
+        }
+
+        async function copyArtifactContent(artifactId) {
+            if (!currentUser) {
+                alert('Please sign in to copy artifact content.');
+                return;
+            }
+
+            try {
+                // Find the artifact to determine type
+                const artifact = currentMyItemsData?.uploaded?.artifacts?.find(a => a.id === artifactId) ||
+                                currentMyItemsData?.purchased?.artifacts?.find(a => a.id === artifactId);
+                
+                if (!artifact) {
+                    alert('❌ Could not find artifact information.');
+                    return;
+                }
+
+                const fileType = artifact.fileType || 'unknown';
+                const isText = fileType.includes('text') || fileType.includes('document');
+                const isImage = artifact.category === 'art' || fileType.includes('image');
+
+                if (isText) {
+                    // For text files, copy the actual content
+                    const downloadToken = btoa(`${currentUser.userId}:${artifactId}:${Date.now()}`);
+                    const fileUrl = `/api/artifacts/download/${downloadToken}`;
+                    
+                    const response = await fetch(fileUrl);
+                    const textContent = await response.text();
+                    await navigator.clipboard.writeText(textContent);
+                    alert('📋 Text content copied to clipboard!');
+                    
+                } else if (isImage) {
+                    // For images, copy the image blob
+                    const downloadToken = btoa(`${currentUser.userId}:${artifactId}:${Date.now()}`);
+                    const fileUrl = `/api/artifacts/download/${downloadToken}`;
+                    
+                    const response = await fetch(fileUrl);
+                    const blob = await response.blob();
+                    await navigator.clipboard.write([
+                        new ClipboardItem({ [blob.type]: blob })
+                    ]);
+                    alert('📋 Image copied to clipboard!');
+                    
+                } else {
+                    // For other file types, copy artifact information
+                    const info = `📄 ${artifact.title}
+🏷️ Category: ${artifact.category}
+💰 Price: ${artifact.formattedPrice}
+⚡ Energy: ${artifact.kwhFootprint.toFixed(1)} kWh equivalent
+📝 Description: ${artifact.description || 'N/A'}
+🆔 ID: ${artifact.id}`;
+                    
+                    await navigator.clipboard.writeText(info);
+                    alert('📋 Artifact information copied to clipboard!');
+                }
+            } catch (error) {
+                console.error('Copy content error:', error);
+                alert('❌ Failed to copy content. Your browser may not support this feature for this file type.');
+            }
+        }
+
+        async function copyArtifactInfo(artifactId) {
+            try {
+                // Find the artifact in the current data
+                const artifact = currentMyItemsData?.uploaded?.artifacts?.find(a => a.id === artifactId) ||
+                                currentMyItemsData?.purchased?.artifacts?.find(a => a.id === artifactId);
+                
+                if (artifact) {
+                    const info = `📄 ${artifact.title}
+🏷️ Category: ${artifact.category}
+💰 Price: ${artifact.formattedPrice}
+⚡ Energy: ${artifact.kwhFootprint.toFixed(1)} kWh equivalent
+📝 Description: ${artifact.description || 'N/A'}
+🆔 ID: ${artifact.id}`;
+                    
+                    await navigator.clipboard.writeText(info);
+                    alert('📋 Artifact information copied to clipboard!');
+                } else {
+                    alert('❌ Could not find artifact information.');
+                }
+            } catch (error) {
+                console.error('Copy error:', error);
+                alert('❌ Failed to copy information. Please try again.');
+            }
+        }
+
+        function editArtifact(artifactId) {
+            // Placeholder for edit functionality
+            alert('📝 Edit functionality coming soon! You can manage your listings from the Upload section.');
+        }
+
+        // Store current data for copying functionality
+        let currentMyItemsData = null;
+
+        async function purchaseArtifact(artifactId) {
+            if (!currentUser) {
+                showSignupModal();
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/artifacts/purchase', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        userId: currentUser.userId,
+                        artifactId: artifactId
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert(`✅ ${result.message}`);
+                    // Update user balance
+                    currentUser.solarBalance = result.newBalance;
+                    updateUserDisplay();
+                    
+                    // Initiate download
+                    window.open(result.downloadUrl, '_blank');
+                } else {
+                    if (result.error === 'Insufficient Solar balance') {
+                        alert(`❌ Insufficient Solar balance. You need ${result.required} Solar but only have ${result.available}. Shortfall: ${result.shortfall.toFixed(4)} Solar.`);
+                    } else {
+                        alert(`❌ Purchase failed: ${result.error}`);
+                    }
+                }
+            } catch (error) {
+                console.error('Purchase error:', error);
+                alert('❌ Purchase failed. Please try again.');
+            }
+        }
+
+        function selectArtifact(artifactId) {
+            const artifact = allArtifacts.find(a => a.id === artifactId);
+            if (artifact) {
+                // Show artifact details (could expand this to a modal)
+                console.log('Selected artifact:', artifact);
+            }
+        }
+
+        function checkUserSession() {
+            // Check if user is logged in (simplified - in production would check session/JWT)
+            const stored = localStorage.getItem('tc_s_user');
+            if (stored) {
+                try {
+                    currentUser = JSON.parse(stored);
+                    // If old session data doesn't have solarBalance, clear it to force re-login
+                    if (currentUser && typeof currentUser.solarBalance === 'undefined') {
+                        console.log('🔄 Clearing old session data - missing balance info');
+                        localStorage.removeItem('tc_s_user');
+                        currentUser = null;
+                        return;
+                    }
+                    updateUserDisplay();
+                } catch (error) {
+                    localStorage.removeItem('tc_s_user');
+                }
+            }
+        }
+
+        function updateUserDisplay() {
+            if (currentUser) {
+                // Update main user info panel
+                document.getElementById('user-info').classList.add('visible');
+                document.getElementById('username').textContent = currentUser.username;
+                document.getElementById('solar-balance').textContent = 
+                    `${(currentUser.solarBalance || 0).toFixed(4)} Solar`;
+                
+                // Update header display
+                document.getElementById('register-link').style.display = 'none';
+                document.getElementById('user-menu').style.display = 'flex';
+                document.getElementById('header-username').textContent = currentUser.username;
+            } else {
+                // Hide user info panel
+                document.getElementById('user-info').classList.remove('visible');
+                
+                // Show register link in header
+                document.getElementById('register-link').style.display = 'block';
+                document.getElementById('user-menu').style.display = 'none';
+            }
+        }
+
+        async function logoutUser() {
+            try {
+                // 1. First, destroy server-side session
+                const response = await fetch('/api/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                // 2. Then clean up client-side data (regardless of server response)
+                localStorage.removeItem('tc_s_user');
+                currentUser = null;
+                updateUserDisplay();
+                
+                if (response.ok) {
+                    alert('✅ Logged out successfully');
+                } else {
+                    console.warn('Server logout failed, but client cleaned up');
+                    alert('✅ Logged out (local session cleared)');
+                }
+                
+            } catch (error) {
+                console.error('Logout error:', error);
+                // Still clean up client-side even if server call fails
+                localStorage.removeItem('tc_s_user');
+                currentUser = null;
+                updateUserDisplay();
+                alert('✅ Logged out (local session cleared)');
+            }
+        }
+
+
+        async function signinUser() {
+            const username = document.getElementById('signin-username').value;
+            const password = document.getElementById('signin-password').value;
+
+            if (!username || !password) {
+                alert('Username/email and password are required');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    currentUser = {
+                        userId: result.userId,
+                        username: result.username,
+                        solarBalance: result.solarBalance || 0
+                    };
+                    
+                    // Store in localStorage
+                    localStorage.setItem('tc_s_user', JSON.stringify(currentUser));
+                    
+                    updateUserDisplay();
+                    closeSigninModal();
+                    
+                    alert(`🌱 Welcome back, ${result.username}! Balance: ${result.solarBalance} Solar`);
+                } else {
+                    alert(`❌ Sign in failed: ${result.error}`);
+                }
+            } catch (error) {
+                console.error('Sign in error:', error);
+                alert('❌ Network error during sign in');
+            }
+        }
+
+        async function signupUser() {
+            const username = document.getElementById('signup-username').value;
+            const email = document.getElementById('signup-email').value;
+            const firstName = document.getElementById('signup-name').value;
+            const password = document.getElementById('signup-password').value;
+            const passwordConfirm = document.getElementById('signup-password-confirm').value;
+
+            if (!username || !email || !password) {
+                alert('Username, email, and password are required');
+                return;
+            }
+
+            if (password !== passwordConfirm) {
+                alert('Passwords do not match');
+                return;
+            }
+
+            if (password.length < 6) {
+                alert('Password must be at least 6 characters long');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/users/signup-solar', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        email: email,
+                        firstName: firstName,
+                        password: password
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    currentUser = {
+                        userId: result.userId,
+                        username: result.username,
+                        solarBalance: result.solarBalance || result.initialSolarAmount || 0
+                    };
+                    
+                    // Store in localStorage (simplified session management)
+                    localStorage.setItem('tc_s_user', JSON.stringify(currentUser));
+                    
+                    updateUserDisplay();
+                    closeSignupModal();
+                    
+                    alert(`🌱 ${result.message}`);
+                } else {
+                    alert(`❌ Signup failed: ${result.error}`);
+                }
+            } catch (error) {
+                console.error('Signup error:', error);
+                alert('❌ Signup failed. Please try again.');
+            }
+        }
+
+        function showError(message) {
+            document.getElementById('artifacts-grid').innerHTML = 
+                `<div class="loading" style="color: #ff6b6b;">Error: ${message}</div>`;
+        }
+
+        function toggleMenu() {
+            // Add menu functionality here
+            console.log('Menu toggled');
+        }
+
+        // Video Preview Functions
+        let currentPreviewArtifact = null;
+
+        async function previewVideo(artifactId) {
+            // Find the artifact data
+            const artifact = allArtifacts.find(a => a.id === artifactId) || 
+                           currentMyItemsData?.uploaded?.artifacts?.find(a => a.id === artifactId) ||
+                           currentMyItemsData?.purchased?.artifacts?.find(a => a.id === artifactId);
+            
+            if (!artifact) {
+                alert('❌ Video not found');
+                return;
+            }
+
+            currentPreviewArtifact = artifact;
+
+            // Update modal content
+            document.getElementById('video-preview-title').textContent = artifact.title;
+            document.getElementById('video-preview-category').textContent = artifact.category.toUpperCase();
+            document.getElementById('video-preview-price').textContent = artifact.formattedPrice;
+
+            // Show modal with loading state
+            document.getElementById('video-preview-modal').classList.add('visible');
+            const videoPlayer = document.getElementById('video-player');
+            const videoSource = document.getElementById('video-source');
+            
+            // Show loading state
+            videoSource.src = '';
+            videoPlayer.load();
+            videoPlayer.poster = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMzMzIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iI2ZmYWEwMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkxvYWRpbmcgcHJldmlldy4uLjwvdGV4dD48L3N2Zz4=';
+
+            try {
+                // Request secure preview token from server
+                const response = await fetch(`/api/artifacts/${artifactId}/preview`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Preview failed: ${response.status}`);
+                }
+
+                const result = await response.json();
+                
+                if (result.success && result.previewUrl) {
+                    // Set video source with secure URL
+                    videoSource.src = result.previewUrl;
+                    videoPlayer.load();
+                    videoPlayer.poster = ''; // Remove loading poster
+                    
+                    console.log(`🎬 Preview ready for: ${result.artifactTitle}`);
+                } else {
+                    throw new Error(result.error || 'Preview generation failed');
+                }
+            } catch (error) {
+                console.error('Preview error:', error);
+                alert(`❌ Video preview failed: ${error.message}`);
+                closeVideoPreview();
+                return;
+            }
+
+            // Set up purchase button
+            const purchaseBtn = document.getElementById('preview-purchase-btn');
+            purchaseBtn.onclick = () => purchaseFromPreview(artifactId);
+            purchaseBtn.disabled = false;
+
+            // Add video event handlers
+            videoPlayer.onerror = function() {
+                alert('❌ Video could not be loaded. Please try again later.');
+                closeVideoPreview();
+            };
+
+            videoPlayer.onloadstart = function() {
+                console.log('🎬 Video loading started...');
+            };
+
+            videoPlayer.oncanplay = function() {
+                console.log('🎬 Video ready to play!');
+            };
+        }
+
+        // Enhanced unified preview function using in-page modals  
+        async function openPreview(artifactId) {
+            await showEnhancedPreview(artifactId, 'auto');
+        }
+
+        // Enhanced modal-based video preview system
+        async function previewVideo(artifactId) {
+            await showEnhancedPreview(artifactId, 'video');
+        }
+
+        // Legacy function - kept for compatibility but updated to use new system
+        async function previewMusic(artifactId) {
+            // Find the artifact data
+            const artifact = allArtifacts.find(a => a.id === artifactId) || 
+                           currentMyItemsData?.uploaded?.artifacts?.find(a => a.id === artifactId) ||
+                           currentMyItemsData?.purchased?.artifacts?.find(a => a.id === artifactId);
+            
+            if (!artifact) {
+                alert('❌ Music track not found');
+                return;
+            }
+
+            currentPreviewArtifact = artifact;
+
+            // Update modal content
+            document.getElementById('music-preview-title').textContent = artifact.title;
+            document.getElementById('music-preview-category').textContent = artifact.category.toUpperCase();
+            document.getElementById('music-preview-price').textContent = artifact.formattedPrice;
+
+            // Show modal with loading state
+            document.getElementById('music-preview-modal').classList.add('visible');
+            const musicPlayer = document.getElementById('music-player');
+            const musicSource = document.getElementById('music-source');
+            
+            // Show loading state
+            musicSource.src = '';
+            musicPlayer.load();
+
+            try {
+                // Request secure preview token from server
+                const response = await fetch(`/api/artifacts/${artifactId}/preview`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Preview failed: ${response.status}`);
+                }
+
+                const result = await response.json();
+                
+                if (result.success && result.previewUrl) {
+                    // Set audio source with secure URL
+                    musicSource.src = result.previewUrl;
+                    musicPlayer.load();
+                    
+                    console.log(`🎵 Preview ready for: ${result.artifactTitle}`);
+                } else {
+                    throw new Error(result.error || 'Preview generation failed');
+                }
+            } catch (error) {
+                console.error('Preview error:', error);
+                alert(`❌ Music preview failed: ${error.message}`);
+                closeMusicPreview();
+                return;
+            }
+
+            // Set up purchase button
+            const purchaseBtn = document.getElementById('music-preview-purchase-btn');
+            purchaseBtn.onclick = () => purchaseFromMusicPreview(artifactId);
+            purchaseBtn.disabled = false;
+
+            // Add audio event handlers
+            musicPlayer.onerror = function() {
+                alert('❌ Audio could not be loaded. Please try again later.');
+                closeMusicPreview();
+            };
+
+            musicPlayer.onloadstart = function() {
+                console.log('🎵 Audio loading started...');
+            };
+
+            musicPlayer.oncanplay = function() {
+                console.log('🎵 Audio ready to play!');
+            };
+        }
+
+        // Enhanced unified preview function using in-page modals
+        async function showEnhancedPreview(artifactId, forceType = 'auto') {
+            try {
+                // Get artifact details including enhanced file URLs
+                const response = await fetch(`/api/artifacts`);
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error('Failed to load artifacts data');
+                }
+                
+                const artifact = data.artifacts.find(a => a.id === artifactId);
+                if (!artifact) {
+                    throw new Error('Artifact not found');
+                }
+                
+                // Determine preview type
+                const previewType = forceType === 'auto' ? (artifact.previewType || 'video') : forceType;
+                
+                console.log(`🎬 Opening enhanced preview for: ${artifact.title} (${previewType})`);
+                
+                // Use existing modal system with enhanced file URLs
+                if (previewType === 'audio' || previewType === 'music') {
+                    await enhancedMusicPreview(artifact);
+                } else {
+                    await enhancedVideoPreview(artifact);
+                }
+                
+            } catch (error) {
+                console.error('Enhanced preview error:', error);
+                alert(`❌ Preview failed: ${error.message}`);
+            }
+        }
+
+        // Enhanced video preview using three-copy file system
+        async function enhancedVideoPreview(artifact) {
+            currentPreviewArtifact = artifact;
+            
+            // Update modal content
+            document.getElementById('video-preview-title').textContent = artifact.title;
+            document.getElementById('video-preview-category').textContent = artifact.category.toUpperCase();
+            document.getElementById('video-preview-price').textContent = artifact.formattedPrice;
+            
+            // Show modal
+            const modal = document.getElementById('video-preview-modal');
+            modal.classList.add('visible');
+            
+            const videoPlayer = document.getElementById('video-player');
+            const videoSource = document.getElementById('video-source');
+            
+            // Show loading state
+            videoPlayer.poster = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMzMzIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iI2ZmYWEwMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkVuaGFuY2VkIFByZXZpZXcgTG9hZGluZy4uLjwvdGV4dD48L3N2Zz4=';
+            
+            try {
+                // Request secure preview URL from enhanced file system
+                const previewResponse = await fetch(`/api/files/preview/${artifact.id}`, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (!previewResponse.ok) {
+                    // Fallback to legacy preview system
+                    console.log('🔄 Falling back to legacy preview system');
+                    const fallbackResponse = await fetch(`/api/artifacts/${artifact.id}/preview`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    
+                    if (fallbackResponse.ok) {
+                        const fallbackData = await fallbackResponse.json();
+                        if (fallbackData.success && fallbackData.previewUrl) {
+                            videoSource.src = fallbackData.previewUrl;
+                            videoPlayer.load();
+                            videoPlayer.poster = '';
+                            console.log(`🎬 Legacy preview ready: ${artifact.title}`);
+                            return;
+                        }
+                    }
+                    throw new Error(`Preview request failed: ${previewResponse.status}`);
+                }
+                
+                const previewData = await previewResponse.json();
+                
+                if (previewData.success && previewData.previewUrl) {
+                    videoSource.src = previewData.previewUrl;
+                    videoPlayer.load();
+                    videoPlayer.poster = '';
+                    console.log(`🎬 Enhanced preview ready: ${artifact.title}`);
+                } else {
+                    throw new Error(previewData.error || 'Preview URL generation failed');
+                }
+            } catch (error) {
+                console.error('Video preview error:', error);
+                videoPlayer.poster = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjNjY2Ii8+PHRleHQgeD0iNTAlIiB5PSI0NSUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iI2ZmYWEwMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkVycm9yIGxvYWRpbmcgcHJldmlldzwvdGV4dD48dGV4dCB4PSI1MCUiIHk9IjU1JSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjODg4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+Q2xpY2sgUHVyY2hhc2UgdG8gYWNjZXNzPC90ZXh0Pjwvc3ZnPic;
+                console.log('🛒 Preview unavailable - purchase to access full content');
+            }
+            
+            // Set up purchase button
+            const purchaseBtn = document.getElementById('preview-purchase-btn');
+            purchaseBtn.onclick = () => purchaseFromPreview(artifact.id);
+            purchaseBtn.disabled = false;
+        }
+
+        function closeVideoPreview() {
+            const modal = document.getElementById('video-preview-modal');
+            const videoPlayer = document.getElementById('video-player');
+            const videoSource = document.getElementById('video-source');
+            
+            // Stop and reset video
+            videoPlayer.pause();
+            videoPlayer.currentTime = 0;
+            videoSource.src = ''; // Clear source to stop loading
+            
+            // Hide modal
+            modal.classList.remove('visible');
+            currentPreviewArtifact = null;
+            
+            console.log('🔄 Enhanced video preview closed');
+        }
+
+        function closeMusicPreview() {
+            const modal = document.getElementById('music-preview-modal');
+            const musicPlayer = document.getElementById('music-player');
+            
+            // Stop and reset audio
+            musicPlayer.pause();
+            musicPlayer.currentTime = 0;
+            
+            // Hide modal
+            modal.classList.remove('visible');
+            currentPreviewArtifact = null;
+        }
+
+        async function purchaseFromPreview(artifactId) {
+            const purchaseBtn = document.getElementById('preview-purchase-btn');
+            
+            // Disable button to prevent double-clicks
+            purchaseBtn.disabled = true;
+            purchaseBtn.textContent = 'Processing...';
+            
+            try {
+                // Use existing purchase function
+                await purchaseArtifact(artifactId);
+                
+                // Close preview modal after successful purchase
+                closeVideoPreview();
+            } catch (error) {
+                console.error('Purchase from preview failed:', error);
+                // Re-enable button on error
+                purchaseBtn.disabled = false;
+                purchaseBtn.textContent = 'Purchase & Download';
+                // Keep modal open so user can try again
+            }
+        }
+
+        async function purchaseFromMusicPreview(artifactId) {
+            const purchaseBtn = document.getElementById('music-preview-purchase-btn');
+            
+            // Disable button to prevent double-clicks
+            purchaseBtn.disabled = true;
+            purchaseBtn.textContent = 'Processing...';
+            
+            try {
+                // Use existing purchase function
+                await purchaseArtifact(artifactId);
+                
+                // Close preview modal after successful purchase
+                closeMusicPreview();
+            } catch (error) {
+                console.error('Purchase from music preview failed:', error);
+                // Re-enable button on error
+                purchaseBtn.disabled = false;
+                purchaseBtn.textContent = 'Purchase & Download';
+                // Keep modal open so user can try again
+            }
+        }
+
+        // Set up preview modal event listeners when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Video modal events
+            document.getElementById('video-close-btn').addEventListener('click', closeVideoPreview);
+            document.getElementById('video-preview-modal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeVideoPreview();
+                }
+            });
+            
+            // Music modal events
+            document.getElementById('music-close-btn').addEventListener('click', closeMusicPreview);
+            document.getElementById('music-preview-modal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeMusicPreview();
+                }
+            });
+            
+            // Escape key to close any open modals
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    const videoModal = document.getElementById('video-preview-modal');
+                    const musicModal = document.getElementById('music-preview-modal');
+                    
+                    if (videoModal.classList.contains('visible')) {
+                        closeVideoPreview();
+                    } else if (musicModal.classList.contains('visible')) {
+                        closeMusicPreview();
+                    }
+                }
+            });
+        });
+    </script>
+    
+    <!-- Marketplace functionality -->
+    <script src="/js/marketplace.js"></script>
+</body>
+</html>

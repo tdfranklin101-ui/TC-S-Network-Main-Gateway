@@ -1,0 +1,10 @@
+{
+  "id": "conv_1753799333362_0ek8x6k28",
+  "sessionId": "final-test-session",
+  "timestamp": "2025-07-29T14:28:53+00:00",
+  "messageType": "user_input",
+  "messageText": "Final test - button now working correctly!",
+  "agentId": "v2_agt_vhYf_e_C",
+  "captureSource": "inline_test_demonstration",
+  "storedAt": "2025-07-29T14:28:53.362Z"
+}
