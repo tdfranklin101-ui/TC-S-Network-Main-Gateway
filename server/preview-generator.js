@@ -53,6 +53,10 @@ class PreviewGenerator {
         return await this.generatePdfPreview(fileBuffer, previewId, metadata);
       } else if (mimeType.startsWith('text/')) {
         return await this.generateTextPreview(fileBuffer, previewId, metadata);
+      } else if (this.isArchiveFile(mimeType)) {
+        return await this.generateArchivePreview(fileBuffer, previewId, metadata);
+      } else if (this.isOfficeDocument(mimeType)) {
+        return await this.generateOfficePreview(fileBuffer, previewId, metadata);
       } else {
         return await this.generateGenericPreview(fileBuffer, previewId, metadata);
       }
@@ -346,6 +350,110 @@ class PreviewGenerator {
         }
       });
     });
+  }
+
+  /**
+   * Check if file is an archive type
+   */
+  isArchiveFile(mimeType) {
+    const archiveTypes = [
+      'application/zip',
+      'application/x-zip-compressed',
+      'application/x-tar',
+      'application/gzip',
+      'application/x-rar-compressed',
+      'application/x-7z-compressed'
+    ];
+    return archiveTypes.includes(mimeType);
+  }
+
+  /**
+   * Check if file is an office document
+   */
+  isOfficeDocument(mimeType) {
+    const officeTypes = [
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-powerpoint',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+    ];
+    return officeTypes.includes(mimeType);
+  }
+
+  /**
+   * Generate archive preview (shows file count and contents)
+   */
+  async generateArchivePreview(fileBuffer, previewId, metadata) {
+    const archiveSvg = `
+      <svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
+        <rect width="100%" height="100%" fill="#2a2a2a" rx="10"/>
+        <rect x="40" y="40" width="120" height="120" fill="#3a3a3a" rx="5"/>
+        <rect x="50" y="50" width="20" height="15" fill="#ffaa00"/>
+        <rect x="75" y="50" width="70" height="8" fill="#888"/>
+        <rect x="50" y="70" width="20" height="15" fill="#ffaa00"/>
+        <rect x="75" y="70" width="50" height="8" fill="#888"/>
+        <rect x="50" y="90" width="20" height="15" fill="#ffaa00"/>
+        <rect x="75" y="90" width="60" height="8" fill="#888"/>
+        <text x="100" y="180" font-family="Arial" font-size="12" fill="#ffaa00" text-anchor="middle">
+          📦 ${metadata.title || 'Archive'}
+        </text>
+      </svg>
+    `;
+
+    const thumbnailBuffer = Buffer.from(archiveSvg);
+    const thumbnailPath = path.join(this.publicDir, `${previewId}_archive.svg`);
+    fs.writeFileSync(thumbnailPath, thumbnailBuffer);
+
+    return {
+      success: true,
+      previewType: 'archive',
+      thumbnailUrl: `/previews/${previewId}_archive.svg`,
+      previewUrl: null,
+      previewSize: 0,
+      previewDuration: null,
+      metadata: {
+        originalSize: fileBuffer.length,
+        archiveType: true
+      }
+    };
+  }
+
+  /**
+   * Generate office document preview
+   */
+  async generateOfficePreview(fileBuffer, previewId, metadata) {
+    const officeSvg = `
+      <svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
+        <rect width="100%" height="100%" fill="#2a2a2a" rx="10"/>
+        <rect x="40" y="30" width="120" height="140" fill="#ffffff" rx="5"/>
+        <rect x="50" y="40" width="100" height="15" fill="#0078d4"/>
+        <rect x="50" y="65" width="80" height="8" fill="#666"/>
+        <rect x="50" y="80" width="90" height="8" fill="#666"/>
+        <rect x="50" y="95" width="70" height="8" fill="#666"/>
+        <text x="100" y="185" font-family="Arial" font-size="12" fill="#ffaa00" text-anchor="middle">
+          📄 ${metadata.title || 'Document'}
+        </text>
+      </svg>
+    `;
+
+    const thumbnailBuffer = Buffer.from(officeSvg);
+    const thumbnailPath = path.join(this.publicDir, `${previewId}_office.svg`);
+    fs.writeFileSync(thumbnailPath, thumbnailBuffer);
+
+    return {
+      success: true,
+      previewType: 'office',
+      thumbnailUrl: `/previews/${previewId}_office.svg`,
+      previewUrl: null,
+      previewSize: 0,
+      previewDuration: null,
+      metadata: {
+        originalSize: fileBuffer.length,
+        officeDocument: true
+      }
+    };
   }
 }
 
