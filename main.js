@@ -1736,7 +1736,7 @@ const server = http.createServer(async (req, res) => {
     try {
       if (pool) {
         const artifactsQuery = `
-          SELECT id, title, description, category, kwh_footprint, solar_amount_s, 
+          SELECT id, title, description, category, file_type, kwh_footprint, solar_amount_s, 
                  is_bonus, cover_art_url, delivery_mode, creator_id, 
                  streaming_url, preview_type, preview_slug
           FROM artifacts 
@@ -1751,6 +1751,7 @@ const server = http.createServer(async (req, res) => {
           title: artifact.title,
           description: artifact.description,
           category: artifact.category,
+          file_type: artifact.file_type,
           kwhFootprint: parseFloat(artifact.kwh_footprint),
           solarPrice: parseFloat(artifact.solar_amount_s),
           formattedPrice: `${formatSolar(artifact.solar_amount_s)} Solar`,
@@ -2012,7 +2013,7 @@ const server = http.createServer(async (req, res) => {
       if (pool) {
         // Get uploaded artifacts (created by user) - both active and inactive
         const uploadedQuery = `
-          SELECT id, title, description, category, kwh_footprint, solar_amount_s, 
+          SELECT id, title, description, category, file_type, kwh_footprint, solar_amount_s, 
                  is_bonus, cover_art_url, delivery_mode, creator_id, created_at, active
           FROM artifacts 
           WHERE creator_id = $1
@@ -2039,6 +2040,7 @@ const server = http.createServer(async (req, res) => {
           title: artifact.title,
           description: artifact.description,
           category: artifact.category,
+          file_type: artifact.file_type,
           kwhFootprint: parseFloat(artifact.kwh_footprint),
           solarPrice: parseFloat(artifact.solar_amount_s),
           formattedPrice: `${formatSolar(artifact.solar_amount_s)} Solar`,
