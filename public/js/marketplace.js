@@ -89,7 +89,23 @@ class MarketplaceApp {
       const data = await response.json();
       
       if (data.success && Array.isArray(data.artifacts)) {
-        this.artifacts = data.artifacts;
+        // Normalize artifact data to match expected frontend format
+        this.artifacts = data.artifacts.map(artifact => ({
+          id: artifact.id,
+          title: artifact.title,
+          description: artifact.description,
+          category: artifact.category,
+          kwh_footprint: artifact.kwh_footprint || artifact.kwhFootprint,
+          solar_amount_s: artifact.solar_amount_s || artifact.solarPrice,
+          is_bonus: artifact.is_bonus || artifact.isBonus,
+          cover_art_url: artifact.cover_art_url || artifact.coverArt,
+          delivery_mode: artifact.delivery_mode || artifact.deliveryMode,
+          creator_id: artifact.creator_id || artifact.creatorId,
+          created_at: artifact.created_at || artifact.dateAdded,
+          file_type: artifact.file_type || artifact.fileType || 'application/octet-stream',
+          active: artifact.active,
+          status: artifact.status || 'approved'
+        }));
         this.applyFilters();
         console.log(`📦 Loaded ${this.artifacts.length} artifacts`);
       } else {

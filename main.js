@@ -119,11 +119,23 @@ function destroySession(sessionId) {
   return sessions.delete(sessionId);
 }
 
-// File upload configuration
+// File upload configuration - using disk storage for security
 const upload = multer({
-  storage: multer.memoryStorage(),
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => {
+      const uploadDir = path.join(__dirname, 'uploads');
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+      cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    }
+  }),
   limits: {
-    fileSize: 500 * 1024 * 1024, // 500MB max (will validate per type)
+    fileSize: 100 * 1024 * 1024, // Reduced to 100MB for better security
   },
   fileFilter: (req, file, cb) => {
     // Extended filter for marketplace artifacts - more permissive
@@ -527,14 +539,14 @@ const server = http.createServer(async (req, res) => {
   // Creator File Upload API
   if (pathname === '/api/creator/upload' && req.method === 'POST') {
     // Check authentication first
-    const sessionId = getCookie(req, 'sessionId');
-    if (!sessionId || !sessions[sessionId]) {
+    const sessionId = getCookie(req, 'tc_s_session');
+    if (!sessionId || !sessions.get(sessionId)) {
       res.writeHead(401, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Authentication required' }));
       return;
     }
 
-    const userId = sessions[sessionId].userId;
+    const userId = sessions.get(sessionId).userId;
 
     upload.single('file')(req, res, async (err) => {
       if (err) {
@@ -543,6 +555,7 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
+      let tempFilePath = null;
       try {
         if (!req.file) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -551,7 +564,8 @@ const server = http.createServer(async (req, res) => {
         }
 
         const file = req.file;
-        const fileBuffer = file.buffer;
+        tempFilePath = file.path; // Store for cleanup
+        const fileBuffer = fs.readFileSync(file.path);
         
         // Determine file type and validate size limits
         const fileType = await fileTypeFromBuffer(fileBuffer);
@@ -769,6 +783,7 @@ const server = http.createServer(async (req, res) => {
               previewSlug: `${artifactSlug}-preview`
             }
           }));
+          
         } else {
           // Cleanup files if database is unavailable
           await fileManager.cleanup(artifactId);
@@ -785,6 +800,16 @@ const server = http.createServer(async (req, res) => {
         
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Enhanced upload failed: ' + error.message }));
+      } finally {
+        // Always clean up temporary upload file
+        if (tempFilePath && fs.existsSync(tempFilePath)) {
+          try {
+            fs.unlinkSync(tempFilePath);
+            console.log(`🧹 Temporary upload file cleaned: ${tempFilePath}`);
+          } catch (cleanupError) {
+            console.warn(`⚠️ Failed to cleanup temp file ${tempFilePath}:`, cleanupError);
+          }
+        }
       }
     });
     return;
@@ -2012,14 +2037,14 @@ const server = http.createServer(async (req, res) => {
   if (pathname === '/api/artifacts/my-items' && req.method === 'GET') {
     try {
       // Get user ID from session
-      const sessionId = getCookie(req, 'sessionId');
-      if (!sessionId || !sessions[sessionId]) {
+      const sessionId = getCookie(req, 'tc_s_session');
+      if (!sessionId || !sessions.get(sessionId)) {
         res.writeHead(401, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Authentication required' }));
         return;
       }
 
-      const userId = sessions[sessionId].userId;
+      const userId = sessions.get(sessionId).userId;
 
       if (pool) {
         // Get uploaded artifacts (created by user) - both active and inactive
@@ -2112,14 +2137,14 @@ const server = http.createServer(async (req, res) => {
   if (pathname === '/api/artifacts/approve' && req.method === 'POST') {
     try {
       // Get user ID from session
-      const sessionId = getCookie(req, 'sessionId');
-      if (!sessionId || !sessions[sessionId]) {
+      const sessionId = getCookie(req, 'tc_s_session');
+      if (!sessionId || !sessions.get(sessionId)) {
         res.writeHead(401, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Authentication required' }));
         return;
       }
 
-      const userId = sessions[sessionId].userId;
+      const userId = sessions.get(sessionId).userId;
       const body = await parseBody(req);
       const { artifactId } = body;
 
