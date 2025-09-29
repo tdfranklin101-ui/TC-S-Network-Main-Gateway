@@ -526,6 +526,16 @@ const server = http.createServer(async (req, res) => {
 
   // Creator File Upload API
   if (pathname === '/api/creator/upload' && req.method === 'POST') {
+    // Check authentication first
+    const sessionId = getCookie(req, 'sessionId');
+    if (!sessionId || !sessions[sessionId]) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Authentication required' }));
+      return;
+    }
+
+    const userId = sessions[sessionId].userId;
+
     upload.single('file')(req, res, async (err) => {
       if (err) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -581,11 +591,12 @@ const server = http.createServer(async (req, res) => {
           Object.assign(formData, req.body);
         }
 
-        const { creatorId, title, description, tags } = formData;
+        const { title, description, tags, email } = formData;
+        const creatorId = userId; // Get from session instead of form
         
-        if (!creatorId || !title) {
+        if (!title) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Creator ID and title are required' }));
+          res.end(JSON.stringify({ error: 'Title is required' }));
           return;
         }
 

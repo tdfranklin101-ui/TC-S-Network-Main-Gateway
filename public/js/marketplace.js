@@ -1045,7 +1045,7 @@ class MarketplaceApp {
         console.log('📊 Including TC Identity Sync analysis in upload:', this.lastAnalysisData);
       }
 
-      const response = await fetch('/api/upload', {
+      const response = await fetch('/api/creator/upload', {
         method: 'POST',
         body: formData
       });
