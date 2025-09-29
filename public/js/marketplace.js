@@ -61,19 +61,45 @@ class MarketplaceApp {
 
   async loadUserSession() {
     try {
-      const response = await fetch('/api/session');
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
+      const response = await fetch('/api/session', {
+        signal: controller.signal
+      });
+      clearTimeout(timeout);
+      
       if (response.ok) {
         const data = await response.json();
-        if (data.success && data.user) {
-          this.currentUser = data.user;
-          this.userProfile = data.userProfile;
-          this.solarBalance = data.solarBalance || 0;
+        
+        // Validate response structure
+        if (!data || typeof data !== 'object') {
+          console.warn('Invalid session response structure');
+          return;
+        }
+        
+        if (data.success && data.user && typeof data.user === 'object') {
+          this.currentUser = {
+            ...data.user,
+            id: data.user.id || null,
+            username: data.user.username || 'Unknown User'
+          };
+          this.userProfile = data.userProfile || null;
+          this.solarBalance = parseFloat(data.solarBalance) || 0;
           this.updateUserInterface();
-          console.log(`👤 User session loaded: ${data.user.username} (${this.solarBalance} Solar)`);
+          console.log(`👤 User session loaded: ${this.currentUser.username} (${this.solarBalance} Solar)`);
         }
       }
     } catch (error) {
-      console.warn('Session check failed:', error);
+      if (error.name === 'AbortError') {
+        console.warn('Session check timed out');
+      } else {
+        console.warn('Session check failed:', error.message || error);
+      }
+      // Set safe defaults
+      this.currentUser = null;
+      this.userProfile = null;
+      this.solarBalance = 0;
     }
   }
 
@@ -81,40 +107,82 @@ class MarketplaceApp {
     try {
       this.showLoading(true);
       
-      const response = await fetch('/api/artifacts/available');
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000); // 15 second timeout for artifacts
+      
+      const response = await fetch('/api/artifacts/available', {
+        signal: controller.signal
+      });
+      clearTimeout(timeout);
+      
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       
       const data = await response.json();
       
+      // Validate response structure
+      if (!data || typeof data !== 'object') {
+        throw new Error('Invalid response format: expected JSON object');
+      }
+      
       if (data.success && Array.isArray(data.artifacts)) {
-        // Normalize artifact data to match expected frontend format
-        this.artifacts = data.artifacts.map(artifact => ({
-          id: artifact.id,
-          title: artifact.title,
-          description: artifact.description,
-          category: artifact.category,
-          kwh_footprint: artifact.kwh_footprint || artifact.kwhFootprint,
-          solar_amount_s: artifact.solar_amount_s || artifact.solarPrice,
-          is_bonus: artifact.is_bonus || artifact.isBonus,
-          cover_art_url: artifact.cover_art_url || artifact.coverArt,
-          delivery_mode: artifact.delivery_mode || artifact.deliveryMode,
-          creator_id: artifact.creator_id || artifact.creatorId,
-          created_at: artifact.created_at || artifact.dateAdded,
-          file_type: artifact.file_type || artifact.fileType || 'application/octet-stream',
-          active: artifact.active,
-          status: artifact.status || 'approved'
-        }));
+        // Normalize and validate artifact data with comprehensive error handling
+        this.artifacts = data.artifacts.map((artifact, index) => {
+          try {
+            // Ensure required fields exist
+            if (!artifact || typeof artifact !== 'object') {
+              console.warn(`Invalid artifact at index ${index}:`, artifact);
+              return null;
+            }
+            
+            return {
+              id: artifact.id || `missing-id-${index}`,
+              title: String(artifact.title || 'Untitled').trim() || 'Untitled',
+              description: String(artifact.description || '').trim(),
+              category: String(artifact.category || 'other').toLowerCase(),
+              kwh_footprint: parseFloat(artifact.kwh_footprint || artifact.kwhFootprint) || 0,
+              solar_amount_s: parseFloat(artifact.solar_amount_s || artifact.solarPrice) || 0,
+              is_bonus: Boolean(artifact.is_bonus || artifact.isBonus),
+              cover_art_url: String(artifact.cover_art_url || artifact.coverArt || '').trim(),
+              delivery_mode: String(artifact.delivery_mode || artifact.deliveryMode || 'download').toLowerCase(),
+              creator_id: String(artifact.creator_id || artifact.creatorId || 'unknown'),
+              created_at: artifact.created_at || artifact.dateAdded || new Date().toISOString(),
+              file_type: String(artifact.file_type || artifact.fileType || 'application/octet-stream').toLowerCase(),
+              active: Boolean(artifact.active !== false), // Default to true unless explicitly false
+              status: String(artifact.status || 'approved').toLowerCase()
+            };
+          } catch (normalizationError) {
+            console.warn(`Error normalizing artifact at index ${index}:`, normalizationError);
+            return null;
+          }
+        }).filter(artifact => artifact !== null); // Remove invalid artifacts
+        
         this.applyFilters();
-        console.log(`📦 Loaded ${this.artifacts.length} artifacts`);
+        console.log(`📦 Loaded ${this.artifacts.length} artifacts (${data.artifacts.length - this.artifacts.length} invalid artifacts filtered)`);
+      } else if (data.success && !Array.isArray(data.artifacts)) {
+        throw new Error('Invalid artifacts data: expected array');
       } else {
-        throw new Error(data.error || 'Invalid response format');
+        throw new Error(data.error || 'No artifacts data received');
       }
       
     } catch (error) {
       console.error('Failed to load artifacts:', error);
-      this.showError(`Failed to load marketplace: ${error.message}`);
+      
+      // Provide user-friendly error messages
+      let errorMessage = 'Failed to load marketplace';
+      if (error.name === 'AbortError') {
+        errorMessage = 'Marketplace loading timed out. Please check your connection and try again.';
+      } else if (error.message.includes('HTTP')) {
+        errorMessage = 'Server error while loading marketplace. Please try again later.';
+      } else {
+        errorMessage = `Failed to load marketplace: ${error.message}`;
+      }
+      
+      this.showError(errorMessage);
+      
+      // Set safe fallback
+      this.artifacts = [];
     } finally {
       this.showLoading(false);
     }
@@ -1041,35 +1109,104 @@ class MarketplaceApp {
   }
 
   async handleUpload(event) {
+    event.preventDefault();
+    
     const form = event.target;
-    const formData = new FormData(form);
+    let submitBtn = null;
+    let originalText = 'Upload Artifact';
 
     try {
-      // Show upload progress
-      const submitBtn = form.querySelector('button[type="submit"]');
-      const originalText = submitBtn.textContent;
-      submitBtn.textContent = '⏳ Uploading...';
-      submitBtn.disabled = true;
+      // Validate form element
+      if (!form || !(form instanceof HTMLFormElement)) {
+        throw new Error('Invalid form submission');
+      }
+      
+      const formData = new FormData(form);
 
-      // Add AI analysis data to the upload
-      if (this.lastAnalysisData) {
-        formData.append('ai_analysis', JSON.stringify(this.lastAnalysisData));
-        formData.append('what_ai_sees', this.lastAnalysisData.what_ai_sees || '');
-        formData.append('kwh_estimate', this.lastAnalysisData.kwh_estimate || '0.1');
-        formData.append('confidence_score', this.lastAnalysisData.confidence || 85);
-        formData.append('value_score', this.lastAnalysisData.value_score || 'medium');
-        console.log('📊 Including TC Identity Sync analysis in upload:', this.lastAnalysisData);
+      // File validation
+      const fileInput = form.querySelector('input[type="file"]');
+      if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+        throw new Error('Please select a file to upload');
+      }
+      
+      const file = fileInput.files[0];
+      
+      // File size validation (100MB limit matching server)
+      const maxFileSize = 100 * 1024 * 1024; // 100MB
+      if (file.size > maxFileSize) {
+        throw new Error(`File is too large. Maximum size is ${Math.round(maxFileSize / (1024 * 1024))}MB, but your file is ${Math.round(file.size / (1024 * 1024))}MB.`);
+      }
+      
+      // Basic form validation
+      const title = String(formData.get('title') || '').trim();
+      if (!title || title.length < 3) {
+        throw new Error('Please provide a title (at least 3 characters)');
       }
 
+      // Show upload progress
+      submitBtn = form.querySelector('button[type="submit"]');
+      if (submitBtn) {
+        originalText = submitBtn.textContent || 'Upload Artifact';
+        submitBtn.textContent = '⏳ Uploading...';
+        submitBtn.disabled = true;
+      }
+
+      // Add AI analysis data to the upload with validation
+      if (this.lastAnalysisData && typeof this.lastAnalysisData === 'object') {
+        try {
+          formData.append('ai_analysis', JSON.stringify(this.lastAnalysisData));
+          formData.append('what_ai_sees', String(this.lastAnalysisData.what_ai_sees || ''));
+          formData.append('kwh_estimate', String(this.lastAnalysisData.kwh_estimate || '0.1'));
+          formData.append('confidence_score', String(this.lastAnalysisData.confidence || 85));
+          formData.append('value_score', String(this.lastAnalysisData.value_score || 'medium'));
+          console.log('📊 Including TC Identity Sync analysis in upload:', this.lastAnalysisData);
+        } catch (analysisError) {
+          console.warn('Failed to include AI analysis data:', analysisError);
+        }
+      }
+
+      // Upload with timeout
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 120000); // 2 minute timeout
+      
       const response = await fetch('/api/creator/upload', {
         method: 'POST',
-        body: formData
+        body: formData,
+        signal: controller.signal
       });
+      
+      clearTimeout(timeout);
 
-      const data = await response.json();
+      // Response validation
+      if (!response) {
+        throw new Error('No response received from server');
+      }
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Please sign in to upload artifacts');
+        } else if (response.status === 413) {
+          throw new Error('File is too large for upload');
+        } else if (response.status >= 500) {
+          throw new Error('Server error. Please try again later.');
+        } else {
+          throw new Error(`Upload failed with status ${response.status}`);
+        }
+      }
+      
+      let data;
+      try {
+        data = await response.json();
+      } catch (jsonError) {
+        throw new Error('Invalid server response. Please try again.');
+      }
+      
+      if (!data || typeof data !== 'object') {
+        throw new Error('Invalid response format');
+      }
 
       if (data.success) {
-        console.log('✅ Upload successful:', data.message);
+        console.log('✅ Upload successful:', data.message || 'Success');
         
         // Show enhanced success message
         const analysisInfo = this.lastAnalysisData ? 
