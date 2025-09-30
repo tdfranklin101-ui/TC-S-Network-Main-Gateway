@@ -1525,8 +1525,12 @@ window.signinUser = async function() {
         window.marketplace.currentUser = {
           userId: result.userId,
           username: result.username,
+          firstName: result.firstName || result.name || result.username,
+          email: result.email,
           solarBalance: result.solarBalance || 0
         };
+        // IMPORTANT: Also update the separate solarBalance property that the UI uses
+        window.marketplace.solarBalance = result.solarBalance || 0;
         window.marketplace.updateUserInterface();
         window.marketplace.closeSigninModal();
       }
@@ -1585,8 +1589,12 @@ window.signupUser = async function() {
         window.marketplace.currentUser = {
           userId: result.userId,
           username: result.username,
+          firstName: result.firstName || firstName || result.username,
+          email: result.email || email,
           solarBalance: result.solarBalance || result.initialSolarAmount || 0
         };
+        // IMPORTANT: Also update the separate solarBalance property that the UI uses
+        window.marketplace.solarBalance = result.solarBalance || result.initialSolarAmount || 0;
         window.marketplace.updateUserInterface();
         window.marketplace.closeSignupModal();
       }
