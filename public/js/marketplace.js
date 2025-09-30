@@ -289,12 +289,15 @@ class MarketplaceApp {
       const userInitial = this.currentUser.firstName ? this.currentUser.firstName.charAt(0).toUpperCase() : 
                          this.currentUser.username ? this.currentUser.username.charAt(0).toUpperCase() : '👤';
       
+      // Format balance consistently
+      const formattedBalance = (this.solarBalance || 0).toFixed(4);
+      
       headerActions.innerHTML = `
         <div class="user-menu">
           <div class="user-avatar">${userInitial}</div>
           <div class="user-info">
             <div class="user-name">${this.currentUser.firstName || this.currentUser.username}</div>
-            <div class="solar-balance">${this.solarBalance || 0} Solar</div>
+            <div class="solar-balance">${formattedBalance} Solar</div>
           </div>
           <button class="logout-btn" onclick="marketplace.logout()">Logout</button>
         </div>
@@ -1522,20 +1525,22 @@ window.signinUser = async function() {
     if (response.ok) {
       // Update marketplace instance if available
       if (window.marketplace) {
+        const balance = parseFloat(result.solarBalance ?? 0);
         window.marketplace.currentUser = {
           userId: result.userId,
           username: result.username,
           firstName: result.firstName || result.name || result.username,
           email: result.email,
-          solarBalance: result.solarBalance || 0
+          solarBalance: balance
         };
         // IMPORTANT: Also update the separate solarBalance property that the UI uses
-        window.marketplace.solarBalance = result.solarBalance || 0;
+        window.marketplace.solarBalance = balance;
         window.marketplace.updateUserInterface();
         window.marketplace.closeSigninModal();
       }
       
-      alert(`🌱 Welcome back, ${result.username}! Balance: ${result.solarBalance} Solar`);
+      const displayBalance = parseFloat(result.solarBalance ?? 0).toFixed(4);
+      alert(`🌱 Welcome back, ${result.username}! Balance: ${displayBalance} Solar`);
     } else {
       alert(`❌ Sign in failed: ${result.error}`);
     }
@@ -1586,15 +1591,16 @@ window.signupUser = async function() {
     if (response.ok) {
       // Update marketplace instance if available
       if (window.marketplace) {
+        const balance = parseFloat(result.solarBalance ?? result.initialSolarAmount ?? 0);
         window.marketplace.currentUser = {
           userId: result.userId,
           username: result.username,
           firstName: result.firstName || firstName || result.username,
           email: result.email || email,
-          solarBalance: result.solarBalance || result.initialSolarAmount || 0
+          solarBalance: balance
         };
         // IMPORTANT: Also update the separate solarBalance property that the UI uses
-        window.marketplace.solarBalance = result.solarBalance || result.initialSolarAmount || 0;
+        window.marketplace.solarBalance = balance;
         window.marketplace.updateUserInterface();
         window.marketplace.closeSignupModal();
       }
