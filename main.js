@@ -64,15 +64,37 @@ const PORT = process.env.PORT || 3000;
 // Simple session storage (in production, use Redis or database)
 const sessions = new Map();
 
-// Initialize enhanced file management system
-const fileManager = new ArtifactFileManager({
-  masterStoragePath: path.join(__dirname, 'storage/master'),
-  previewStoragePath: path.join(__dirname, 'public/previews'),
-  tradeStoragePath: path.join(__dirname, 'storage/trade')
-});
+// Initialize enhanced file management system with error handling
+let fileManager;
+try {
+  fileManager = new ArtifactFileManager({
+    masterStoragePath: path.join(__dirname, 'storage/master'),
+    previewStoragePath: path.join(__dirname, 'public/previews'),
+    tradeStoragePath: path.join(__dirname, 'storage/trade')
+  });
+  console.log('✅ File management system initialized');
+} catch (error) {
+  console.error('⚠️ File manager initialization failed:', error.message);
+  // Create minimal fallback
+  fileManager = {
+    processFile: () => { throw new Error('File manager unavailable'); },
+    getFileMetadata: () => null
+  };
+}
 
-// Initialize AI curation system for smart descriptions
-const aiCurator = new AICurator();
+// Initialize AI curation system for smart descriptions with error handling
+let aiCurator;
+try {
+  aiCurator = new AICurator();
+  console.log('✅ AI curator initialized');
+} catch (error) {
+  console.error('⚠️ AI curator initialization failed:', error.message);
+  // Create minimal fallback
+  aiCurator = {
+    generateDescription: async () => 'Description unavailable',
+    categorizeArtifact: async () => 'uncategorized'
+  };
+}
 
 // Automatic slug generation for uploads
 function generateSlug(title, filename) {
@@ -444,16 +466,36 @@ function initializeDailyDistribution() {
   }, 5000); // Wait 5 seconds after server startup
 }
 
-// Initialize database
-ensureSignupsTable();
+// Initialize database with error handling
+try {
+  ensureSignupsTable();
+  console.log('✅ Database tables initialized');
+} catch (error) {
+  console.error('⚠️ Database initialization failed:', error.message);
+  console.log('Server will continue without database features');
+}
 
-// Initialize market data and SEO services
-const marketDataService = new MarketDataService();
-const contentValidator = new ContentValidator();
-const seoGenerator = new SEOGenerator();
-const aiSEOOptimizer = new AISEOOptimizer();
-const memberContentService = new MemberContentService();
-const aiPromotionService = new AIPromotionService(memberContentService, marketDataService);
+// Initialize market data and SEO services with error handling
+let marketDataService, contentValidator, seoGenerator, aiSEOOptimizer, memberContentService, aiPromotionService;
+
+try {
+  marketDataService = new MarketDataService();
+  contentValidator = new ContentValidator();
+  seoGenerator = new SEOGenerator();
+  aiSEOOptimizer = new AISEOOptimizer();
+  memberContentService = new MemberContentService();
+  aiPromotionService = new AIPromotionService(memberContentService, marketDataService);
+  console.log('✅ Market data and SEO services initialized');
+} catch (error) {
+  console.error('⚠️ Service initialization failed:', error.message);
+  // Create minimal fallbacks
+  marketDataService = { getMarketData: () => ({}) };
+  contentValidator = { validate: () => true };
+  seoGenerator = { startAutoUpdates: () => {}, generateSEO: () => '' };
+  aiSEOOptimizer = { optimize: () => '' };
+  memberContentService = { getContent: () => null };
+  aiPromotionService = { promote: () => null };
+}
 
 // Initialize template service with error handling
 let memberTemplateService;
