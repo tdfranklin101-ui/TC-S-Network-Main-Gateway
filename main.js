@@ -4289,6 +4289,18 @@ const server = http.createServer(async (req, res) => {
     return;
   }
   
+  // Handle root path - serve index.html
+  if (pathname === '/') {
+    const indexPath = path.join(__dirname, 'public', 'index.html');
+    if (fs.existsSync(indexPath)) {
+      const content = fs.readFileSync(indexPath, 'utf8');
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(content);
+      console.log(`✅ Served root: index.html`);
+      return;
+    }
+  }
+  
   // Static files with enhanced video streaming
   let filePath = path.join(__dirname, 'public', pathname);
   
