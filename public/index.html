@@ -191,6 +191,11 @@
       font-size: 1.1rem;
     }
     
+    .card-cta-zprivate {
+      color: #39FF14;
+      text-shadow: 0 0 10px rgba(57, 255, 20, 0.5);
+    }
+    
     .card-cta::after {
       content: '→';
       font-size: 1.5rem;
@@ -199,6 +204,11 @@
     
     .platform-card:hover .card-cta::after {
       transform: translateX(5px);
+    }
+    
+    .platform-card-zprivate:hover .card-cta-zprivate {
+      color: #39FF14;
+      text-shadow: 0 0 20px rgba(57, 255, 20, 0.8);
     }
     
     .loading {
@@ -286,7 +296,7 @@
     </div>
     
     <div class="platforms-grid">
-      <a href="/main-platform.html" class="platform-card" data-testid="card-main-platform">
+      <a href="/main-platform" class="platform-card" data-testid="card-main-platform">
         <div class="card-image card-foundation"></div>
         <div class="card-content">
           <h3 class="card-title">TC-S Networks Foundation</h3>
@@ -310,7 +320,7 @@
         </div>
       </a>
       
-      <a href="/private-network.html" class="platform-card" data-testid="card-zprivate">
+      <a href="https://solar-network-tdfranklin101.replit.app" class="platform-card platform-card-zprivate" data-testid="card-zprivate" target="_blank" rel="noopener noreferrer">
         <div class="card-image card-zprivate"></div>
         <div class="card-content">
           <h3 class="card-title">Z Private Commissioning</h3>
@@ -318,7 +328,7 @@
             Create your own branded Solar token platform. Custom generator protocol for events, venues, 
             and communities. Explore opportunities and join the waitlist for private network commissioning.
           </p>
-          <span class="card-cta">Learn More (Free)</span>
+          <span class="card-cta card-cta-zprivate">Learn More (Free)</span>
         </div>
       </a>
     </div>

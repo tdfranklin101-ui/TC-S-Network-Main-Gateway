@@ -2476,6 +2476,13 @@ const server = http.createServer(async (req, res) => {
     }
   }
   
+  // Permanent redirect from .html extension to clean route
+  if (pathname === '/main-platform.html') {
+    res.writeHead(301, { 'Location': '/main-platform' });
+    res.end();
+    return;
+  }
+  
   if (pathname === '/paygate') {
     const filePath = path.join(__dirname, 'public', 'paygate.html');
     if (fs.existsSync(filePath)) {
