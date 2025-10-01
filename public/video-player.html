@@ -1,201 +1,355 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Video Player - The Current-See</title>
-  <style>
-    body {
-      margin: 0;
-      padding: 20px;
-      background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-      color: white;
-      font-family: system-ui;
-      min-height: 100vh;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="page-title">Video Player | The Current-See</title>
     
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-    
-    .header {
-      text-align: center;
-      margin-bottom: 30px;
-    }
-    
-    .main-title {
-      font-size: 2.5rem;
-      color: #00cc33;
-      margin-bottom: 10px;
-      text-shadow: 0 0 20px rgba(0,204,51,0.5);
-    }
-    
-    .video-container {
-      background: rgba(0,0,0,0.5);
-      border: 2px solid #00cc33;
-      border-radius: 15px;
-      padding: 20px;
-      margin: 20px 0;
-    }
-    
-    .video-player {
-      width: 100%;
-      max-width: 900px;
-      margin: 0 auto;
-      display: block;
-      border-radius: 10px;
-    }
-    
-    .video-info {
-      background: rgba(0,204,51,0.1);
-      border: 1px solid #00cc33;
-      border-radius: 10px;
-      padding: 20px;
-      margin: 20px 0;
-    }
-    
-    .video-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 20px;
-      margin: 30px 0;
-    }
-    
-    .video-card {
-      background: rgba(15, 25, 35, 0.8);
-      border: 1px solid #00cc33;
-      border-radius: 10px;
-      padding: 20px;
-      text-align: center;
-    }
-    
-    .nav-links {
-      text-align: center;
-      margin-top: 40px;
-    }
-    
-    .nav-button {
-      background: rgba(0,204,51,0.2);
-      color: #00cc33;
-      border: 1px solid #00cc33;
-      padding: 10px 20px;
-      margin: 0 10px;
-      border-radius: 8px;
-      text-decoration: none;
-      display: inline-block;
-      transition: all 0.3s ease;
-    }
-    
-    .nav-button:hover {
-      background: rgba(0,204,51,0.4);
-      color: white;
-    }
-    
-    @media (max-width: 768px) {
-      .main-title { font-size: 2rem; }
-      .container { padding: 15px; }
-    }
-  </style>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0a1128 0%, #1a2332 50%, #0f1b2e 100%);
+            color: white;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #0057B8 0%, #00695c 50%, #7bc144 100%);
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .back-button {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 10px 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        .video-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .video-title {
+            font-size: clamp(2rem, 5vw, 3rem);
+            font-weight: 800;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #FFD700, #FFA500, #34C759);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .video-subtitle {
+            font-size: clamp(1rem, 2.5vw, 1.3rem);
+            color: #B0BEC5;
+            margin-bottom: 10px;
+        }
+        
+        .video-description {
+            font-size: 1rem;
+            color: #90A4AE;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .video-container {
+            position: relative;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+        
+        .video-player {
+            width: 100%;
+            height: auto;
+            display: block;
+            background: #000;
+        }
+        
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+        
+        .loading-overlay.hidden {
+            display: none;
+        }
+        
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #34C759;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .error-message {
+            background: rgba(255, 0, 0, 0.2);
+            border: 2px solid #ff4444;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px auto;
+            max-width: 600px;
+            text-align: center;
+        }
+        
+        .error-message.hidden {
+            display: none;
+        }
+        
+        .video-info {
+            margin-top: 30px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .info-item {
+            text-align: center;
+            padding: 15px;
+            background: rgba(52, 199, 89, 0.1);
+            border-radius: 10px;
+        }
+        
+        .info-label {
+            font-size: 0.9rem;
+            color: #90A4AE;
+            margin-bottom: 5px;
+        }
+        
+        .info-value {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #34C759;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px 10px;
+            }
+            
+            .video-info {
+                padding: 20px 15px;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
     <div class="header">
-      <h1 class="main-title">🎥 Video Streaming Center</h1>
-      <p style="color: #7dd3fc; font-size: 1.2em;">Enhanced video player with range request streaming</p>
-    </div>
-    
-    <div class="video-info">
-      <h3 style="color: #FFD700; margin-bottom: 15px;">📹 Your Uploaded Videos</h3>
-      <p>Videos uploaded to object storage will appear here. Current setup supports:</p>
-      <ul style="color: #e0e0e0; margin: 15px 0; padding-left: 30px;">
-        <li>✅ HTTP Range Request streaming (efficient loading)</li>
-        <li>✅ Automatic quality adaptation</li>
-        <li>✅ Mobile-optimized playback</li>
-        <li>✅ Object storage integration ready</li>
-      </ul>
-    </div>
-    
-    <!-- Video Grid -->
-    <div class="video-grid">
-      <!-- Existing Video -->
-      <div class="video-card">
-        <h4 style="color: #00cc33; margin-bottom: 15px;">🌀 Atomic Background</h4>
-        <video 
-          controls 
-          preload="metadata"
-          poster="/img/atomic-thumbnail.jpg"
-          class="video-player"
-          style="width: 100%; border-radius: 8px;">
-          <source src="/atomic-background.mp4" type="video/mp4">
-          Your browser doesn't support video playback.
-        </video>
-        <p style="color: #ccc; margin-top: 10px; font-size: 0.9em;">
-          Existing platform video with enhanced streaming
-        </p>
-      </div>
-      
-      <!-- We Said So Video -->
-      <div class="video-card">
-        <h4 style="color: #7dd3fc; margin-bottom: 15px;">🎵 We Said So - by Monazite</h4>
-        <video 
-          controls 
-          preload="metadata"
-          class="video-player"
-          style="width: 100%; border-radius: 8px;">
-          <source src="/public-objects/we_said_so-by_Monazite.mp4" type="video/mp4">
-          Your browser doesn't support video playback.
-        </video>
-        <p style="color: #ccc; margin-top: 10px; font-size: 0.9em;">
-          Streaming from object storage with range request support
-        </p>
-      </div>
-    </div>
-    
-    <!-- Test Object Storage Link -->
-    <div class="video-container">
-      <h3 style="color: #FFD700; text-align: center; margin-bottom: 20px;">🔗 Object Storage Integration Test</h3>
-      <div style="text-align: center;">
-        <a href="/public-objects/test-video.mp4" style="background: linear-gradient(135deg, #7dd3fc, #00cc33); color: white; padding: 12px 25px; border-radius: 8px; text-decoration: none; font-weight: bold;">
-          Test Object Storage Video Link
+        <a href="/main-platform" class="back-button" data-testid="button-back">
+            ← Back to Platform
         </a>
-        <p style="color: #ccc; margin-top: 15px; font-size: 0.9em;">
-          This will show object storage integration status
-        </p>
-      </div>
     </div>
     
-    <!-- Navigation -->
-    <div class="nav-links">
-      <a href="/index.html" class="nav-button">← Back to Platform</a>
-      <a href="/index.html" class="nav-button">🌟 Full Platform</a>
-      <a href="/computronium-exhibit.html" class="nav-button">⚛️ Exhibits</a>
+    <div class="container">
+        <div class="video-header">
+            <h1 class="video-title" id="video-title">Loading Video...</h1>
+            <p class="video-subtitle" id="video-subtitle"></p>
+            <p class="video-description" id="video-description"></p>
+        </div>
+        
+        <div class="video-container">
+            <div class="loading-overlay" id="loading">
+                <div class="spinner"></div>
+            </div>
+            <video 
+                id="video-player" 
+                class="video-player" 
+                controls 
+                controlsList="nodownload"
+                data-testid="video-player"
+            >
+                <source id="video-source" src="" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+        </div>
+        
+        <div class="error-message hidden" id="error-message">
+            <h3>⚠️ Video Not Available</h3>
+            <p id="error-text">Unable to load video. Please check your connection and try again.</p>
+        </div>
+        
+        <div class="video-info" id="video-info">
+            <h3 style="color: #FFD700; margin-bottom: 15px;">About This Video</h3>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Category</div>
+                    <div class="info-value" id="video-category">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Duration</div>
+                    <div class="info-value" id="video-duration">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Released</div>
+                    <div class="info-value" id="video-date">-</div>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
-  
-  <script>
-    // Video player enhancements
-    document.addEventListener('DOMContentLoaded', function() {
-      const videos = document.querySelectorAll('video');
-      
-      videos.forEach(video => {
-        video.addEventListener('loadstart', function() {
-          console.log('🎬 Video loading started:', this.src);
-        });
+    
+    <script>
+        // Video metadata database
+        const videos = {
+            'garcia-solar-rays': {
+                title: 'Garcia for Solar Rays',
+                subtitle: 'Solar energy inspiration and insights',
+                description: 'Explore the transformative power of solar energy through artistic expression and scientific insight.',
+                category: 'Education',
+                date: '2025',
+                duration: 'Short',
+                filename: 'garcia-solar-rays.mp4'
+            },
+            'we-said-so': {
+                title: 'We Said So',
+                subtitle: 'Music Video by Monazite',
+                description: 'Official music video from Monazite featuring the TC-S Network vision for renewable energy and global prosperity.',
+                category: 'Music',
+                date: '2025',
+                duration: 'Full Length',
+                filename: 'we-said-so-monazite.mp4'
+            },
+            'plant-the-seed': {
+                title: 'Plant the seed (TC-S Networks)',
+                subtitle: '21st Century Kid Solar AI film production',
+                description: 'Kid Solar AI film production short showcasing the future of renewable energy and global basic income. September 7, 2025.',
+                category: 'Film',
+                date: 'Sept. 7, 2025',
+                duration: 'Short Film',
+                filename: 'plant-the-seed.mp4'
+            }
+        };
         
-        video.addEventListener('progress', function() {
-          console.log('📊 Video loading progress:', this.buffered.length);
-        });
+        // Get video ID from URL parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const videoId = urlParams.get('v');
         
-        video.addEventListener('canplay', function() {
-          console.log('✅ Video ready to play:', this.src);
-        });
+        // Elements
+        const videoPlayer = document.getElementById('video-player');
+        const videoSource = document.getElementById('video-source');
+        const loading = document.getElementById('loading');
+        const errorMessage = document.getElementById('error-message');
+        const errorText = document.getElementById('error-text');
         
-        video.addEventListener('error', function() {
-          console.error('❌ Video error:', this.error);
-        });
-      });
-    });
-  </script>
+        // Load video
+        function loadVideo() {
+            if (!videoId || !videos[videoId]) {
+                showError('Video not found. Please check the link and try again.');
+                return;
+            }
+            
+            const video = videos[videoId];
+            
+            // Update page title and metadata
+            document.getElementById('page-title').textContent = `${video.title} | The Current-See`;
+            document.getElementById('video-title').textContent = video.title;
+            document.getElementById('video-subtitle').textContent = video.subtitle;
+            document.getElementById('video-description').textContent = video.description;
+            document.getElementById('video-category').textContent = video.category;
+            document.getElementById('video-duration').textContent = video.duration;
+            document.getElementById('video-date').textContent = video.date;
+            
+            // Set video source - check both public and object storage paths
+            const publicPath = `/videos/${video.filename}`;
+            const storagePath = `/replit-objstore-f95b4cf3-0db7-40d1-9680-54f5b997ed65/public/videos/${video.filename}`;
+            
+            // Try public path first
+            videoSource.src = publicPath;
+            videoPlayer.load();
+            
+            // Handle video events
+            videoPlayer.addEventListener('loadeddata', () => {
+                loading.classList.add('hidden');
+                console.log('✅ Video loaded successfully');
+            });
+            
+            videoPlayer.addEventListener('error', (e) => {
+                console.log('❌ Public path failed, trying object storage...');
+                // Try object storage path
+                videoSource.src = storagePath;
+                videoPlayer.load();
+                
+                // If this also fails
+                videoPlayer.addEventListener('error', () => {
+                    showError(`Video file not found. Please upload ${video.filename} to continue.`);
+                }, { once: true });
+            }, { once: true });
+            
+            videoPlayer.addEventListener('loadedmetadata', () => {
+                const duration = Math.floor(videoPlayer.duration);
+                const minutes = Math.floor(duration / 60);
+                const seconds = duration % 60;
+                if (duration > 0) {
+                    document.getElementById('video-duration').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                }
+            });
+        }
+        
+        function showError(message) {
+            loading.classList.add('hidden');
+            errorMessage.classList.remove('hidden');
+            errorText.textContent = message;
+        }
+        
+        // Initialize
+        if (videoId) {
+            loadVideo();
+        } else {
+            showError('No video specified. Please select a video from the platform.');
+        }
+    </script>
 </body>
 </html>
