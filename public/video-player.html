@@ -313,33 +313,38 @@
             document.getElementById('video-duration').textContent = video.duration;
             document.getElementById('video-date').textContent = video.date;
             
-            // Set video source - check both public and object storage paths
+            // Set video source paths
             const publicPath = `/videos/${video.filename}`;
             const storagePath = `/public-objects/videos/${video.filename}`;
             
-            // Try public path first
-            videoSource.src = publicPath;
-            videoPlayer.load();
+            let errorCount = 0;
             
-            // Handle video events
-            videoPlayer.addEventListener('loadeddata', () => {
+            // Setup event handlers BEFORE loading
+            const hideLoading = () => {
                 loading.classList.add('hidden');
-                console.log('✅ Video loaded successfully from:', publicPath);
-            });
+                console.log('✅ Video ready to play');
+            };
             
-            videoPlayer.addEventListener('error', (e) => {
-                console.log('❌ Public path failed, trying object storage at:', storagePath);
-                // Try object storage path
-                videoSource.src = storagePath;
-                videoPlayer.load();
+            const handleError = (e) => {
+                errorCount++;
+                console.log(`❌ Video error (attempt ${errorCount}):`, e);
                 
-                // If this also fails
-                videoPlayer.addEventListener('error', () => {
-                    showError(`Video file not found. Please upload ${video.filename} to continue.`);
-                }, { once: true });
-            }, { once: true });
+                if (errorCount === 1) {
+                    // First error - try object storage
+                    console.log('Trying object storage path:', storagePath);
+                    videoSource.src = storagePath;
+                    videoPlayer.load();
+                } else {
+                    // Second error - show error message
+                    showError(`Unable to load video. The file may still be uploading to cloud storage.`);
+                }
+            };
             
+            // Multiple events can hide the loading spinner
+            videoPlayer.addEventListener('loadeddata', hideLoading);
+            videoPlayer.addEventListener('canplay', hideLoading);
             videoPlayer.addEventListener('loadedmetadata', () => {
+                hideLoading();
                 const duration = Math.floor(videoPlayer.duration);
                 const minutes = Math.floor(duration / 60);
                 const seconds = duration % 60;
@@ -347,6 +352,14 @@
                     document.getElementById('video-duration').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
                 }
             });
+            
+            videoPlayer.addEventListener('error', handleError);
+            
+            // Now load the video
+            videoSource.src = publicPath;
+            videoPlayer.load();
+            
+            console.log('🎬 Loading video from:', publicPath);
         }
         
         function showError(message) {
