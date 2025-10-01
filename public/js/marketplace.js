@@ -1531,7 +1531,7 @@ window.signinUser = async function() {
           username: result.username,
           firstName: result.firstName || result.name || result.username,
           email: result.email,
-          solarBalance: balance
+          solar_balance: balance  // Use underscore for consistency with UI
         };
         // IMPORTANT: Also update the separate solarBalance property that the UI uses
         window.marketplace.solarBalance = balance;
@@ -1597,7 +1597,7 @@ window.signupUser = async function() {
           username: result.username,
           firstName: result.firstName || firstName || result.username,
           email: result.email || email,
-          solarBalance: balance
+          solar_balance: balance  // Use underscore for consistency with UI
         };
         // IMPORTANT: Also update the separate solarBalance property that the UI uses
         window.marketplace.solarBalance = balance;
