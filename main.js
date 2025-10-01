@@ -4084,92 +4084,62 @@ const server = http.createServer(async (req, res) => {
     console.log(`🎬 Requesting Object Storage file: ${filePath}`);
     
     try {
-      // Try multiple paths in Object Storage
-      const possiblePaths = [
-        `http://127.0.0.1:1106/object-storage/object/${process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID}/public/${filePath}`,
-        `http://127.0.0.1:1106/object-storage/object/${process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID}/${filePath}`,
-        `http://127.0.0.1:1106/object-storage/object/replit-objstore-f95b4cf3-0db7-40d1-9680-54f5b997ed65/public/${filePath}`,
-        `http://127.0.0.1:1106/object-storage/object/replit-objstore-f95b4cf3-0db7-40d1-9680-54f5b997ed65/${filePath}`
-      ];
+      const { Client } = require('@replit/object-storage');
+      const storageClient = new Client();
       
-      let response = null;
-      let successUrl = null;
+      // Download file from object storage
+      const objectPath = `public/${filePath}`;
+      console.log(`📥 Downloading from object storage: ${objectPath}`);
       
-      for (const url of possiblePaths) {
-        try {
-          console.log(`🔍 Trying: ${url}`);
-          response = await fetch(url);
-          if (response.ok) {
-            successUrl = url;
-            console.log(`✅ Found video at: ${url}`);
-            break;
-          }
-        } catch (err) {
-          console.log(`❌ Failed: ${url} - ${err.message}`);
-          continue;
-        }
-      }
+      const fileBuffer = await storageClient.downloadAsBytes(objectPath);
       
-      if (response && response.ok) {
-        const contentType = response.headers.get('content-type') || 'video/mp4';
-        const contentLength = response.headers.get('content-length');
+      if (fileBuffer) {
+        const contentType = filePath.endsWith('.mp4') ? 'video/mp4' : 
+                          filePath.endsWith('.webm') ? 'video/webm' :
+                          filePath.endsWith('.mp3') ? 'audio/mpeg' : 'application/octet-stream';
+        
+        const fileSize = fileBuffer.length;
         
         // Enhanced range request handling for streaming
         const range = req.headers.range;
-        if (range && contentLength) {
+        if (range) {
           console.log(`📺 Range request: ${range} for ${filePath}`);
           
           const parts = range.replace(/bytes=/, "").split("-");
           const start = parseInt(parts[0], 10);
-          const end = parts[1] ? parseInt(parts[1], 10) : Math.min(start + 1048576, parseInt(contentLength) - 1); // 1MB chunks
+          const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
           const chunksize = (end - start) + 1;
           
-          // Make range request to Object Storage
-          const rangeResponse = await fetch(successUrl, {
-            headers: {
-              'Range': `bytes=${start}-${end}`
-            }
-          });
+          const chunk = fileBuffer.slice(start, end + 1);
           
-          if (rangeResponse.status === 206 || rangeResponse.status === 200) {
-            res.writeHead(206, {
-              'Content-Range': `bytes ${start}-${end}/${contentLength}`,
-              'Accept-Ranges': 'bytes',
-              'Content-Length': chunksize,
-              'Content-Type': contentType,
-              'Cache-Control': 'public, max-age=3600'
-            });
-            rangeResponse.body.pipe(res);
-            console.log(`📺 Streamed chunk: ${start}-${end}/${contentLength} (${chunksize} bytes)`);
-          } else {
-            // Fallback to full response
-            res.writeHead(200, {
-              'Content-Type': contentType,
-              'Content-Length': contentLength,
-              'Accept-Ranges': 'bytes',
-              'Cache-Control': 'public, max-age=3600'
-            });
-            response.body.pipe(res);
-          }
+          res.writeHead(206, {
+            'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+            'Accept-Ranges': 'bytes',
+            'Content-Length': chunksize,
+            'Content-Type': contentType,
+            'Cache-Control': 'public, max-age=3600'
+          });
+          res.end(chunk);
+          console.log(`📺 Streamed chunk: ${start}-${end}/${fileSize} (${chunksize} bytes)`);
         } else {
           res.writeHead(200, {
             'Content-Type': contentType,
-            'Content-Length': contentLength,
+            'Content-Length': fileSize,
             'Accept-Ranges': 'bytes',
             'Cache-Control': 'public, max-age=3600'
           });
-          response.body.pipe(res);
+          res.end(fileBuffer);
+          console.log(`✅ Served full file from object storage: ${filePath} (${fileSize} bytes)`);
         }
       } else {
-        // Fallback to demo video or error
         res.writeHead(404, { 'Content-Type': 'text/plain' });
         res.end(`Object Storage file not found: ${filePath}`);
-        console.log(`❌ Object Storage: All paths failed for ${filePath}`);
+        console.log(`❌ Object Storage: File not found: ${objectPath}`);
       }
     } catch (error) {
+      console.error(`❌ Object Storage error for ${filePath}:`, error.message);
       res.writeHead(500, { 'Content-Type': 'text/plain' });
       res.end(`Object Storage error: ${error.message}`);
-      console.log(`❌ Object Storage error for ${filePath}:`, error.message);
     }
     return;
   }

@@ -315,7 +315,7 @@
             
             // Set video source - check both public and object storage paths
             const publicPath = `/videos/${video.filename}`;
-            const storagePath = `/replit-objstore-f95b4cf3-0db7-40d1-9680-54f5b997ed65/public/videos/${video.filename}`;
+            const storagePath = `/public-objects/videos/${video.filename}`;
             
             // Try public path first
             videoSource.src = publicPath;
@@ -324,11 +324,11 @@
             // Handle video events
             videoPlayer.addEventListener('loadeddata', () => {
                 loading.classList.add('hidden');
-                console.log('✅ Video loaded successfully');
+                console.log('✅ Video loaded successfully from:', publicPath);
             });
             
             videoPlayer.addEventListener('error', (e) => {
-                console.log('❌ Public path failed, trying object storage...');
+                console.log('❌ Public path failed, trying object storage at:', storagePath);
                 // Try object storage path
                 videoSource.src = storagePath;
                 videoPlayer.load();
