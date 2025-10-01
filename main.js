@@ -2434,14 +2434,6 @@ const server = http.createServer(async (req, res) => {
   res.setHeader('Expires', '0');
   
   console.log(`${new Date().toISOString()} - ${req.method} ${pathname}`);
-
-  // Route handling - start with 3-page intro sequence
-  if (pathname === '/') {
-    res.writeHead(302, { 'Location': '/page1-solar-intro.html' });
-    res.end();
-    console.log('✅ Redirecting to intro sequence (page1)');
-    return;
-  }
   
   if (pathname === '/page1') {
     const filePath = path.join(__dirname, 'public', 'page1-solar-intro.html');
@@ -2474,7 +2466,7 @@ const server = http.createServer(async (req, res) => {
   }
   
   if (pathname === '/main-platform' || pathname === '/main') {
-    const filePath = path.join(__dirname, 'public', 'index.html');
+    const filePath = path.join(__dirname, 'public', 'main-platform.html');
     if (fs.existsSync(filePath)) {
       const content = fs.readFileSync(filePath, 'utf8');
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
