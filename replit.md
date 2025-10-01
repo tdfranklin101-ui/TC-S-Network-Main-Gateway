@@ -4,7 +4,15 @@
 
 The Current-See is a solar-backed global economic system prototype that combines renewable energy tracking, cryptocurrency-like SOLAR tokens, member management, and AI assistance. The platform features real-time solar energy calculations, member wallet functionality with automatic initialization, and an integrated D-ID AI agent called "Kid Solar" that provides polymathic assistance in renewable energy, physics, engineering, and sustainability.
 
-## Recent Updates (September 2025)
+## Recent Updates (October 2025)
+
+### Landing Page QA Fixes (October 1, 2025)
+- **Z Private Link Corrected**: Now properly links to external solar-network app at `https://solar-network-tdfranklin101.replit.app` with neon green (#39FF14) styling
+- **Foundation Platform Restored**: Recovered correct version from git history (commit af10e01) with Kid Solar AI agent (ID: v2_agt_vhYf_e_C)
+- **Permanent Redirects Added**: `/main-platform.html` → `/main-platform` for legacy bookmark support
+- **Guest Browsing Messaging**: Clear UX with "Browse freely as a guest • Sign in to participate in the marketplace"
+
+## Previous Updates (September 2025)
 
 ### Marketplace Loading & Upload Fixes
 - **Resolved undefined errors**: Added file_type fields to all API responses preventing marketplace crashes
