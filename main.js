@@ -571,6 +571,7 @@ const server = http.createServer(async (req, res) => {
       }
 
       let tempFilePath = null;
+      let fileProcessingResult = null; // Declare here so it's available in catch block
       try {
         if (!req.file) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -640,7 +641,7 @@ const server = http.createServer(async (req, res) => {
 
         // Process file through enhanced three-copy workflow
         console.log(`🔄 Processing upload through three-copy workflow: ${title}`);
-        const fileProcessingResult = await fileManager.processUpload(
+        fileProcessingResult = await fileManager.processUpload(
           fileBuffer,
           {
             originalname: file.originalname,
