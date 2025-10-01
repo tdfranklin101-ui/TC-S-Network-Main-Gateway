@@ -1,8 +1,0 @@
-User-agent: *
-Allow: /
-Disallow: /api/
-Disallow: /includes/
-Disallow: /js/ai/
-Disallow: /embedded-members
-
-Sitemap: https://www.thecurrentsee.org/sitemap.xml

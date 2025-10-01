@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
-  <circle cx="50" cy="50" r="48" fill="#0057B8" stroke="#FFD700" stroke-width="4"/>
-  <circle cx="50" cy="50" r="20" fill="#FFD700"/>
-  <path d="M50 10 C50 10, 30 30, 30 50 C30 70, 50 90, 50 90 C50 90, 70 70, 70 50 C70 30, 50 10, 50 10 Z" stroke="#FFD700" stroke-width="3" fill="none"/>
-  <path d="M10 50 C10 50, 30 30, 50 30 C70 30, 90 50, 90 50 C90 50, 70 70, 50 70 C30 70, 10 50, 10 50 Z" stroke="#FFD700" stroke-width="3" fill="none"/>
-</svg>
