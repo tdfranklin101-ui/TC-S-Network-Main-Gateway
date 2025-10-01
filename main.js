@@ -119,6 +119,21 @@ function destroySession(sessionId) {
   return sessions.delete(sessionId);
 }
 
+// Cookie helper function
+function getCookie(req, name) {
+  const cookies = req.headers.cookie;
+  if (!cookies) return null;
+  
+  const cookieArr = cookies.split(';');
+  for (let cookie of cookieArr) {
+    const [key, value] = cookie.trim().split('=');
+    if (key === name) {
+      return value;
+    }
+  }
+  return null;
+}
+
 // File upload configuration - using disk storage for security
 const upload = multer({
   storage: multer.diskStorage({
@@ -732,7 +747,7 @@ const server = http.createServer(async (req, res) => {
             fileProcessingResult.tradeFile.url, // Legacy delivery_url points to trade file
             creatorId,
             fileProcessingResult.previewFile.thumbnailUrl,
-            false, // active - require consent before publication
+            true, // active - immediately available in marketplace (changed from false)
             fileProcessingResult.masterFile.url,
             fileProcessingResult.previewFile.previewUrl,
             fileProcessingResult.tradeFile.url,
@@ -977,6 +992,47 @@ const server = http.createServer(async (req, res) => {
       console.error('Login error:', error);
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ success: false, error: 'Login failed' }));
+    }
+    return;
+  }
+
+  // Session Check API endpoint
+  if (pathname === '/api/session' && req.method === 'GET') {
+    try {
+      const sessionId = getCookie(req, 'tc_s_session');
+      
+      if (!sessionId) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, authenticated: false }));
+        return;
+      }
+      
+      const session = getSession(sessionId);
+      
+      if (!session) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, authenticated: false }));
+        return;
+      }
+      
+      // Return session data
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        authenticated: true,
+        user: {
+          id: session.userId,
+          username: session.username,
+          email: session.email,
+          firstName: session.firstName,
+          lastName: session.lastName
+        },
+        solarBalance: session.solarBalance || 0
+      }));
+    } catch (error) {
+      console.error('Session check error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Session check failed' }));
     }
     return;
   }
