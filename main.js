@@ -2197,25 +2197,99 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      // Get artifact delivery URL
-      const artifactQuery = 'SELECT delivery_url, title FROM artifacts WHERE id = $1 AND active = true AND category = $2';
-      const artifactResult = await pool.query(artifactQuery, [previewData.artifactId, 'video']);
+      // Get artifact delivery URL (supports both video and music)
+      const artifactQuery = 'SELECT delivery_url, title, category FROM artifacts WHERE id = $1 AND active = true AND category IN ($2, $3)';
+      const artifactResult = await pool.query(artifactQuery, [previewData.artifactId, 'video', 'music']);
       
       if (artifactResult.rows.length === 0) {
         res.writeHead(404, { 'Content-Type': 'text/plain' });
-        res.end('Video not found');
+        res.end('Media file not found');
         return;
       }
 
       const deliveryUrl = artifactResult.rows[0].delivery_url;
       
-      // Redirect to actual video file with security headers
-      res.writeHead(302, { 
-        'Location': deliveryUrl,
-        'Cache-Control': 'no-store, no-cache, must-revalidate',
-        'Pragma': 'no-cache'
-      });
-      res.end();
+      // Stream video with Range request support for large files
+      try {
+        // First, get the file size with a HEAD request
+        const headResponse = await fetch(deliveryUrl, { method: 'HEAD' });
+        
+        if (!headResponse.ok) {
+          throw new Error(`Failed to fetch video info: ${headResponse.status}`);
+        }
+
+        const fileSize = parseInt(headResponse.headers.get('content-length') || '0', 10);
+        const artifact = artifactResult.rows[0];
+        const defaultType = artifact.category === 'music' ? 'audio/mpeg' : 'video/mp4';
+        const contentType = headResponse.headers.get('content-type') || defaultType;
+
+        // Check if client sent a Range header
+        const rangeHeader = req.headers.range;
+        
+        if (rangeHeader && fileSize > 0) {
+          // Parse Range header (format: "bytes=start-end")
+          const rangeParts = rangeHeader.replace(/bytes=/, '').split('-');
+          const start = parseInt(rangeParts[0], 10);
+          const end = rangeParts[1] ? parseInt(rangeParts[1], 10) : fileSize - 1;
+          
+          // Validate range
+          if (start >= fileSize || end >= fileSize) {
+            res.writeHead(416, {
+              'Content-Range': `bytes */${fileSize}`
+            });
+            res.end();
+            return;
+          }
+
+          const chunkSize = (end - start) + 1;
+
+          // Fetch only the requested byte range from Google Cloud Storage
+          const rangeResponse = await fetch(deliveryUrl, {
+            headers: {
+              'Range': `bytes=${start}-${end}`
+            }
+          });
+
+          if (!rangeResponse.ok) {
+            throw new Error(`Failed to fetch range: ${rangeResponse.status}`);
+          }
+
+          // Return HTTP 206 Partial Content
+          res.writeHead(206, {
+            'Content-Type': contentType,
+            'Content-Length': chunkSize,
+            'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+            'Accept-Ranges': 'bytes',
+            'Cache-Control': 'public, max-age=3600'
+          });
+
+          // Stream the partial content
+          rangeResponse.body.pipe(res);
+          console.log(`📹 Streaming ${artifact.category} range: ${start}-${end}/${fileSize} bytes`);
+          
+        } else {
+          // No Range header - send entire file (for small videos)
+          const response = await fetch(deliveryUrl);
+          
+          if (!response.ok) {
+            throw new Error(`Failed to fetch video: ${response.status}`);
+          }
+          
+          res.writeHead(200, {
+            'Content-Type': contentType,
+            'Content-Length': fileSize,
+            'Accept-Ranges': 'bytes',
+            'Cache-Control': 'public, max-age=3600'
+          });
+
+          response.body.pipe(res);
+          console.log(`📹 Streaming full ${artifact.category}: ${fileSize} bytes`);
+        }
+      } catch (streamError) {
+        console.error('Media streaming error:', streamError);
+        res.writeHead(500, { 'Content-Type': 'text/plain' });
+        res.end('Media streaming failed');
+      }
     } catch (error) {
       console.error('Preview delivery error:', error);
       res.writeHead(500, { 'Content-Type': 'text/plain' });

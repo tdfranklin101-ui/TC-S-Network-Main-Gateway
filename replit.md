@@ -6,6 +6,14 @@ The Current-See is a solar-backed global economic system prototype that combines
 
 ## Recent Updates (October 2025)
 
+### Video Streaming Fixed for Production (October 2, 2025)
+- **HTTP Range Request Support**: Implemented proper byte-range streaming for large video/music files
+- **Production-Ready**: Large videos now work in both dev and production environments
+- **Smart Streaming**: Server responds with HTTP 206 Partial Content for range requests
+- **Efficient Playback**: Browser can seek/scrub through videos without downloading entire file
+- **Multi-Format**: Supports both video (MP4) and music (MP3) streaming with proper MIME types
+- **Error Handling**: Validates ranges, returns HTTP 416 for invalid byte ranges
+
 ### Marketplace Authentication Flow Fixed (October 2, 2025)
 - **Primary Marketplace**: `/marketplace.html` is the Digital Artifact Market with embedded sign-in/register modals
 - **Authentication UX**: Sign-in and registration happen via modal overlays - users stay on marketplace page
