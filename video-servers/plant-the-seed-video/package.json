@@ -1,0 +1,12 @@
+{
+  "name": "plant-the-seed-video",
+  "version": "1.0.0",
+  "description": "Video server for Plant the Seed",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}

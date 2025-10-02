@@ -1,0 +1,5 @@
+run = "npm start"
+modules = ["nodejs-20"]
+
+[deployment]
+run = ["sh", "-c", "npm start"]

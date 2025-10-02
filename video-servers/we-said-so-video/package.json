@@ -1,0 +1,12 @@
+{
+  "name": "we-said-so-video",
+  "version": "1.0.0",
+  "description": "Video server for We Said So - Monazite",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
