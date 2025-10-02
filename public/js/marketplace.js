@@ -827,7 +827,7 @@ class MarketplaceApp {
   }
 
   renderArtifactActions(artifact) {
-    const isOwner = this.currentUser && artifact.creatorId === this.currentUser.id;
+    const isOwner = this.currentUser && (artifact.creator_id === this.currentUser.id || artifact.creator_id === String(this.currentUser.userId));
     
     if (isOwner) {
       // Check if artifact is pending approval (only in My Items tab)
