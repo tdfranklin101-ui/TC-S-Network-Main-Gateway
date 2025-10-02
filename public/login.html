@@ -191,17 +191,33 @@
         }
         
         @media (max-width: 768px) {
+            body {
+                min-height: auto;
+                padding-bottom: 100px; /* Extra padding for mobile browser UI */
+            }
+
             .auth-container {
                 flex-direction: column;
+                min-height: auto;
+                margin: 20px auto 60px;
             }
             
             .auth-form, .auth-hero {
                 width: 100%;
             }
             
+            .auth-form {
+                padding: 30px 20px;
+            }
+            
             .auth-hero {
-                min-height: 300px;
+                min-height: 250px;
                 order: -1;
+                padding: 30px 20px;
+            }
+
+            .btn-auth {
+                margin-bottom: 30px; /* Extra margin for better accessibility */
             }
         }
     </style>

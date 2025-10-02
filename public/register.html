@@ -271,9 +271,18 @@
         }
 
         @media (max-width: 768px) {
+            body {
+                display: block;
+                align-items: unset;
+                justify-content: unset;
+                padding: 20px 20px 100px 20px; /* Extra bottom padding for mobile browser UI */
+                min-height: 100vh;
+            }
+
             .register-container {
                 padding: 30px 20px;
-                margin: 10px;
+                margin: 10px auto;
+                margin-bottom: 60px; /* Extra space at bottom */
             }
 
             .form-group.half {
@@ -285,6 +294,10 @@
                 display: block;
                 margin-bottom: 20px;
                 text-align: center;
+            }
+
+            .register-btn {
+                margin-bottom: 30px; /* Extra margin for better accessibility */
             }
         }
     </style>
