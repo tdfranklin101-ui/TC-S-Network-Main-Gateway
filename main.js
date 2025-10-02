@@ -4549,39 +4549,25 @@ const server = http.createServer(async (req, res) => {
   const isVideoPath = pathname.startsWith('/videos/');
   
   if (isMedia && isVideoPath && !fs.existsSync(filePath)) {
-    // Video not in local filesystem - serve from Object Storage
-    const { Client } = require('@replit/object-storage');
-    const client = new Client();
-    const objectKey = `public${pathname}`; // e.g., public/videos/plant-the-seed.mp4
-    
-    console.log(`📦 Serving video from Object Storage: ${objectKey}`);
+    // Video not in local filesystem - serve from Object Storage via Google Cloud Storage
+    console.log(`📦 Serving video from Object Storage: public${pathname}`);
     
     try {
-      const { ok, value: streamResult, error } = await client.downloadAsStream(objectKey);
+      const { Storage } = require('@google-cloud/storage');
+      const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
       
-      if (!ok) {
-        console.error(`❌ Object Storage error for ${objectKey}:`, error?.message);
-        res.writeHead(404, { 'Content-Type': 'text/plain' });
-        res.end('Video not found');
-        return;
-      }
+      const storage = new Storage();
+      const bucket = storage.bucket(bucketId);
+      const file = bucket.file(`public${pathname}`); // e.g., public/videos/plant-the-seed.mp4
       
-      // Get file size from Object Storage metadata
-      const { ok: existsOk, value: exists } = await client.exists(objectKey);
-      let fileSize = 0;
-      
-      if (existsOk && exists) {
-        // For range requests, we need the file size
-        const { ok: listOk, value: objects } = await client.list({ prefix: objectKey });
-        if (listOk && objects.length > 0) {
-          fileSize = objects[0].size || 0;
-        }
-      }
+      // Get file metadata for size
+      const [metadata] = await file.getMetadata();
+      const fileSize = parseInt(metadata.size, 10);
       
       const mediaContentType = ext === '.mp3' ? 'audio/mpeg' : 'video/mp4';
       const range = req.headers.range;
       
-      if (range && fileSize > 0) {
+      if (range) {
         // Browser requesting specific byte range
         const parts = range.replace(/bytes=/, "").split("-");
         const start = parseInt(parts[0], 10);
@@ -4597,13 +4583,13 @@ const server = http.createServer(async (req, res) => {
           'Access-Control-Expose-Headers': 'Content-Range, Accept-Ranges'
         });
         
+        file.createReadStream({ start, end }).pipe(res);
         console.log(`📹 Object Storage HTTP 206: ${pathname} (${start}-${end}/${fileSize})`);
       } else {
-        // Initial request or no range support
+        // Initial request - force partial content for large files (Cloud Run fix)
         const CLOUD_RUN_SAFE_SIZE = 10 * 1024 * 1024; // 10MB
         
         if (fileSize > CLOUD_RUN_SAFE_SIZE) {
-          // Force partial content for large files (Cloud Run fix)
           const end = Math.min(CLOUD_RUN_SAFE_SIZE - 1, fileSize - 1);
           
           res.writeHead(206, {
@@ -4616,6 +4602,7 @@ const server = http.createServer(async (req, res) => {
             'Access-Control-Expose-Headers': 'Content-Range, Accept-Ranges'
           });
           
+          file.createReadStream({ start: 0, end }).pipe(res);
           console.log(`📹 Object Storage HTTP 206 Initial Chunk: ${pathname} (0-${end}/${fileSize})`);
         } else {
           // Small file - send complete
@@ -4628,17 +4615,16 @@ const server = http.createServer(async (req, res) => {
             'Access-Control-Expose-Headers': 'Content-Length, Accept-Ranges'
           });
           
+          file.createReadStream().pipe(res);
           console.log(`📹 Object Storage HTTP 200: ${pathname} (${fileSize} bytes)`);
         }
       }
-      
-      streamResult.pipe(res);
       return;
       
     } catch (error) {
       console.error(`❌ Error serving from Object Storage:`, error.message);
-      res.writeHead(500, { 'Content-Type': 'text/plain' });
-      res.end('Error serving video');
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      res.end('Video not found');
       return;
     }
   }
