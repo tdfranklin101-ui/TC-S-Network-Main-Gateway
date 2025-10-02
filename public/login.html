@@ -449,9 +449,9 @@
                 
                 if (response.ok) {
                     showNotification('success', 'Login successful! Redirecting...');
-                    // Redirect to my solar page after a short delay
+                    // Redirect to main platform with initialized wallet
                     setTimeout(() => {
-                        window.location.href = '/my-solar';
+                        window.location.href = '/main-platform';
                     }, 1500);
                 } else {
                     const errorData = await response.json();
@@ -516,9 +516,9 @@
                 
                 if (response.ok) {
                     showNotification('success', 'Registration successful! Redirecting...');
-                    // Redirect to my solar page after a short delay
+                    // Redirect to main platform with initialized wallet
                     setTimeout(() => {
-                        window.location.href = '/my-solar';
+                        window.location.href = '/main-platform';
                     }, 1500);
                 } else {
                     let errorMessage = 'Registration failed. Please try another username.';

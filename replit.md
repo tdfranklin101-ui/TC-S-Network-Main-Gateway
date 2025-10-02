@@ -6,6 +6,12 @@ The Current-See is a solar-backed global economic system prototype that combines
 
 ## Recent Updates (October 2025)
 
+### Login Flow & Deployment Fixes (October 2, 2025)
+- **Login Redirect Fixed**: Sign-in and registration now redirect to `/main-platform` (not `/my-solar`) for proper wallet initialization
+- **Purchase Endpoint Fixed**: Corrected database queries to use `members.total_solar` instead of non-existent `users.total_solar` and `solar_accounts.total_solar`
+- **Deployment Ready**: Removed redundant health check servers that caused "6 ports" deployment error
+- **Daily Solar Distribution**: Active in development; manual trigger available in production via API
+
 ### Wallet & Download Fixes (October 2, 2025)
 - **Real-Time Balance Updates**: Session endpoint now fetches current Solar balance from database on every request (daily additions and transactions show immediately)
 - **Auto-Login with Fresh Balance**: New members automatically logged in after registration with current balance loaded from database
