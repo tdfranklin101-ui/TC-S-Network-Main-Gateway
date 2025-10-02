@@ -1,0 +1,95 @@
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  VIDEO SERVER QUICK START - YouTube-Style External Hosting
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ WHAT WE BUILT
+
+Instead of serving videos from the main platform (causing 1.4GB deployment),
+we created 3 separate video server apps - just like how YouTube works!
+
+Main Platform → Links to → Separate Video Servers
+(~400MB)                    (176MB, 134MB, 231MB each)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  SETUP STEPS (Do this 3 times - once per video)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎬 VIDEO 1: Plant the Seed (176MB)
+─────────────────────────────────────
+1. Create new Replit: "plant-the-seed-video"
+   - Template: Node.js
+   
+2. Copy these files from THIS project:
+   FROM: video-servers/plant-the-seed-video/
+   TO: Your new plant-the-seed-video Repl
+   
+   Files to copy:
+   ✓ server.js
+   ✓ index.html  
+   ✓ package.json
+   ✓ .replit
+   
+3. Copy the video file:
+   FROM: public/videos/plant-the-seed.mp4
+   TO: Your new plant-the-seed-video Repl (root folder)
+   
+4. Click "Run" → Test video plays
+5. Click "Deploy" → Copy the URL
+
+🎬 VIDEO 2: We Said So (231MB)
+─────────────────────────────────────
+1. Create new Replit: "we-said-so-video"
+2. Copy from: video-servers/we-said-so-video/
+3. Copy video: public/videos/we-said-so-monazite.mp4
+4. Run → Deploy → Copy URL
+
+🎬 VIDEO 3: Podcast Discussion (134MB)
+─────────────────────────────────────
+1. Create new Replit: "podcast-discussion-video"
+2. Copy from: video-servers/podcast-discussion-video/
+3. Copy video: public/videos/podcast-discussion.mp4
+4. Run → Deploy → Copy URL
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  FINAL STEP: Update Main Platform
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+After deploying all 3 video servers, update main-platform.html:
+
+Replace these placeholder URLs with your actual deployed URLs:
+
+Line ~856:
+  FROM: https://plant-the-seed-video.YOURUSERNAME.repl.co
+  TO:   https://plant-the-seed-video.YOUR-ACTUAL-USERNAME.repl.co
+
+Line ~917:
+  FROM: https://podcast-discussion-video.YOURUSERNAME.repl.co
+  TO:   https://podcast-discussion-video.YOUR-ACTUAL-USERNAME.repl.co
+
+Line ~1221:
+  FROM: https://we-said-so-video.YOURUSERNAME.repl.co
+  TO:   https://we-said-so-video.YOUR-ACTUAL-USERNAME.repl.co
+
+(Search for "YOURUSERNAME" in main-platform.html to find them)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  BENEFITS OF THIS APPROACH
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Main platform: ~400MB (deploys to Cloud Run easily)
+✅ Each video server: Under 500MB (deploys to Replit easily)
+✅ HTTP Range support: Full seeking/scrubbing in videos
+✅ Simple architecture: Just like linking to YouTube
+✅ Easy updates: Update videos without redeploying main app
+✅ Independent scaling: Each video can be updated separately
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  TESTING
+
+Each video server has been tested and confirmed working:
+✓ HTTP 200 OK (full video playback)
+✓ HTTP 206 Partial Content (seeking/scrubbing)
+✓ CORS enabled (cross-origin access)
+✓ 24-hour cache for performance
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
