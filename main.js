@@ -1414,41 +1414,16 @@ const server = http.createServer(async (req, res) => {
       }
 
       if (success) {
-        // Create session for the new user
-        const userData = {
-          userId: userId,
-          username: username,
-          email: email,
-          firstName: firstName,
-          lastName: lastName,
-          solarBalance: initialSolarAllocation,
-          memberSince: memberData.memberSince,
-          membershipType: 'Foundation Market Member'
-        };
-        
-        const sessionId = createSession(userId, userData);
-        
-        // Set secure session cookie
-        const cookieOptions = [
-          `tc_s_session=${sessionId}`,
-          'HttpOnly',
-          'SameSite=Lax',
-          'Path=/',
-          `Max-Age=${24 * 60 * 60}` // 24 hours
-        ];
-        
-        if (process.env.NODE_ENV === 'production') {
-          cookieOptions.push('Secure');
-        }
-        
+        // Account created successfully - direct user to sign in to initialize wallet
         res.writeHead(200, { 
-          'Content-Type': 'application/json',
-          'Set-Cookie': cookieOptions.join('; ')
+          'Content-Type': 'application/json'
         });
         res.end(JSON.stringify({
           success: true,
-          message: 'TC-S Network membership created successfully',
-          ...userData
+          message: 'Account created successfully! Please sign in to initialize your Solar wallet.',
+          username: username,
+          initialSolarAllocation: initialSolarAllocation,
+          redirectToLogin: true
         }));
       } else {
         res.writeHead(500, { 'Content-Type': 'application/json' });
