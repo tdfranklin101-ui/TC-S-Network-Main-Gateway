@@ -1111,6 +1111,38 @@ class MarketplaceApp {
     }
   }
 
+  async downloadOwnArtifact(artifactId) {
+    try {
+      const artifact = this.artifacts.find(a => a.id === artifactId);
+      
+      if (!artifact) {
+        alert('❌ Artifact not found');
+        return;
+      }
+
+      // Check if artifact has a downloadable file
+      if (artifact.trade_file_url || artifact.master_file_url || artifact.delivery_url) {
+        const downloadUrl = artifact.trade_file_url || artifact.master_file_url || artifact.delivery_url;
+        
+        // Create a temporary link and trigger download
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = artifact.title || 'download';
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        console.log(`📥 Downloaded: ${artifact.title}`);
+      } else {
+        alert(`📂 No downloadable file available for "${artifact.title}"\n\nThis artifact may be streaming-only or the file has not been uploaded yet.`);
+      }
+    } catch (error) {
+      console.error('Download failed:', error);
+      alert('❌ Download failed. Please try again.');
+    }
+  }
+
   async handleUpload(event) {
     event.preventDefault();
     
