@@ -1058,7 +1058,28 @@ const server = http.createServer(async (req, res) => {
         return;
       }
       
-      // Return session data
+      // Fetch current balance from database to ensure it's up-to-date
+      let currentBalance = session.solarBalance || 0;
+      
+      if (pool && session.userId) {
+        try {
+          const result = await pool.query(
+            'SELECT total_solar FROM members WHERE id = $1',
+            [session.userId]
+          );
+          
+          if (result && result.rows && result.rows.length > 0) {
+            currentBalance = parseFloat(result.rows[0].total_solar) || 0;
+            // Update session with current balance
+            session.solarBalance = currentBalance;
+          }
+        } catch (dbError) {
+          console.error('Error fetching current balance:', dbError);
+          // Use cached balance if database query fails
+        }
+      }
+      
+      // Return session data with current balance
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
         success: true,
@@ -1070,7 +1091,7 @@ const server = http.createServer(async (req, res) => {
           firstName: session.firstName,
           lastName: session.lastName
         },
-        solarBalance: session.solarBalance || 0
+        solarBalance: currentBalance
       }));
     } catch (error) {
       console.error('Session check error:', error);
