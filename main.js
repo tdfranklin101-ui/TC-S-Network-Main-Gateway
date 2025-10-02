@@ -4556,6 +4556,10 @@ const server = http.createServer(async (req, res) => {
       const mediaContentType = ext === '.mp3' ? 'audio/mpeg' : 'video/mp4';
       const mediaType = ext === '.mp3' ? '🎵 audio' : '🎬 video';
       
+      // Cloud Run HTTP/1 has 32MB limit - force partial content for large files
+      const CLOUD_RUN_SAFE_SIZE = 10 * 1024 * 1024; // 10MB safety threshold
+      const isLargeFile = stats.size > CLOUD_RUN_SAFE_SIZE;
+      
       if (range) {
         // Parse range header for partial content
         const parts = range.replace(/bytes=/, "").split("-");
@@ -4577,8 +4581,29 @@ const server = http.createServer(async (req, res) => {
         
         stream.pipe(res);
         console.log(`📹 ${mediaType} HTTP 206 Partial Content: ${pathname} (${start}-${end}/${stats.size} bytes)`);
+      } else if (isLargeFile) {
+        // PRODUCTION FIX: Force partial content for large files to bypass Cloud Run 32MB limit
+        // Send first chunk and let browser request more via Range headers
+        const start = 0;
+        const end = Math.min(CLOUD_RUN_SAFE_SIZE - 1, stats.size - 1);
+        const chunksize = (end - start) + 1;
+        
+        const stream = fs.createReadStream(filePath, { start, end });
+        
+        res.writeHead(206, {
+          'Content-Range': `bytes ${start}-${end}/${stats.size}`,
+          'Accept-Ranges': 'bytes',
+          'Content-Length': chunksize,
+          'Content-Type': mediaContentType,
+          'Cache-Control': 'public, max-age=3600',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Expose-Headers': 'Content-Range, Accept-Ranges'
+        });
+        
+        stream.pipe(res);
+        console.log(`📹 ${mediaType} HTTP 206 Initial Chunk (Cloud Run): ${pathname} (${start}-${end}/${stats.size} bytes)`);
       } else {
-        // Send full file with proper headers for initial request
+        // Small files can be sent in full (under 10MB)
         res.writeHead(200, {
           'Content-Length': stats.size,
           'Content-Type': mediaContentType,
@@ -4590,7 +4615,7 @@ const server = http.createServer(async (req, res) => {
         
         const stream = fs.createReadStream(filePath);
         stream.pipe(res);
-        console.log(`📹 ${mediaType} HTTP 200 Full File: ${pathname} (${stats.size} bytes, Range support enabled)`);
+        console.log(`📹 ${mediaType} HTTP 200 Full File: ${pathname} (${stats.size} bytes)`);
       }
       return;
     }

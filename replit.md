@@ -10,15 +10,20 @@ The Current-See is a solar-backed global economic system prototype that combines
 - **HTTP Range Request Support**: Full byte-range streaming for 3 large platform videos (176MB, 134MB, 231MB)
 - **Video Optimization**: All MP4s re-encoded with faststart flag (moov atom at beginning) for instant playback
 - **Production-Ready**: Enhanced with CORS headers and explicit Range support for Cloud Run deployment
+- **Cloud Run 32MB Limit Fix**: Force HTTP 206 partial content for files >10MB (bypasses Cloud Run HTTP/1 32MB response limit)
 - **HTTP 206 Partial Content**: Proper Content-Range headers enable instant seeking/scrubbing
 - **Platform Videos Working**: 
-  - Plant the seed (176MB) - /videos/plant-the-seed.mp4 - ✅ Web-optimized
-  - We Said So (231MB) - /videos/we-said-so-monazite.mp4 - ✅ Web-optimized
-  - Podcast Discussion (134MB) - /videos/podcast-discussion.mp4 - ✅ Web-optimized
+  - Plant the seed (176MB) - /videos/plant-the-seed.mp4 - ✅ Web-optimized + Cloud Run ready
+  - We Said So (231MB) - /videos/we-said-so-monazite.mp4 - ✅ Web-optimized + Cloud Run ready
+  - Podcast Discussion (134MB) - /videos/podcast-discussion.mp4 - ✅ Web-optimized + Cloud Run ready
 - **Multi-Format**: Supports .mp4, .webm, .mov (video) and .mp3 (audio) streaming
 - **CORS Enabled**: Access-Control headers for cross-origin video playback
-- **Smart Fallback**: HTTP 200 for full file, HTTP 206 for partial content
-- **Root Cause**: Videos had moov atom at end (not server code issue) - fixed with ffmpeg faststart
+- **Smart Content Delivery**: 
+  - Large files (>10MB): HTTP 206 with 10MB initial chunk, browser requests more automatically
+  - Small files (<10MB): HTTP 200 full file
+  - Range requests: HTTP 206 with requested byte range
+- **Production Streaming Logic**: Initial request without Range header sends first 10MB chunk (HTTP 206), browser automatically fetches subsequent chunks via Range headers
+- **Root Causes Fixed**: (1) Videos had moov atom at end - fixed with ffmpeg faststart; (2) Cloud Run HTTP/1 32MB limit - fixed by forcing partial content for large files
 
 ### Marketplace Authentication Flow Fixed (October 2, 2025)
 - **Primary Marketplace**: `/marketplace.html` is the Digital Artifact Market with embedded sign-in/register modals
