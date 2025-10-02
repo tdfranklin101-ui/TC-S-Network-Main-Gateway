@@ -4092,22 +4092,28 @@ const server = http.createServer(async (req, res) => {
         
         const fileSize = fileBuffer.length;
         
-        // Enhanced range request handling for streaming (always use 206 for videos)
+        // Enhanced range request handling for streaming
         const range = req.headers.range;
-        const isVideo = contentType.startsWith('video/');
-        let start, end;
         
         if (range) {
+          // Send partial content when requested
           const parts = range.replace(/bytes=/, "").split("-");
-          start = parseInt(parts[0], 10);
-          end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
-        } else if (isVideo) {
-          // For videos without range header, send first chunk (helps mobile browsers load metadata)
-          start = 0;
-          // Send first 5MB or entire file for small videos
-          end = Math.min(5 * 1024 * 1024, fileSize - 1);
+          const start = parseInt(parts[0], 10);
+          const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+          const chunksize = (end - start) + 1;
+          const chunk = fileBuffer.slice(start, end + 1);
+          
+          res.writeHead(206, {
+            'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+            'Accept-Ranges': 'bytes',
+            'Content-Length': chunksize,
+            'Content-Type': contentType,
+            'Cache-Control': 'public, max-age=3600'
+          });
+          res.end(chunk);
+          console.log(`📺 Streamed chunk: ${start}-${end}/${fileSize} (${chunksize} bytes)`);
         } else {
-          // Non-video files can be served normally
+          // Send full file for initial request
           res.writeHead(200, {
             'Content-Type': contentType,
             'Content-Length': fileSize,
@@ -4116,21 +4122,7 @@ const server = http.createServer(async (req, res) => {
           });
           res.end(fileBuffer);
           console.log(`✅ Served full file from object storage: ${filePath} (${fileSize} bytes)`);
-          return;
         }
-        
-        const chunksize = (end - start) + 1;
-        const chunk = fileBuffer.slice(start, end + 1);
-        
-        res.writeHead(206, {
-          'Content-Range': `bytes ${start}-${end}/${fileSize}`,
-          'Accept-Ranges': 'bytes',
-          'Content-Length': chunksize,
-          'Content-Type': contentType,
-          'Cache-Control': 'public, max-age=3600'
-        });
-        res.end(chunk);
-        console.log(`📺 Streamed chunk: ${start}-${end}/${fileSize} (${chunksize} bytes)${range ? '' : ' [auto-chunk for metadata]'}`);
 
       } else {
         res.writeHead(404, { 'Content-Type': 'text/plain' });
@@ -4327,44 +4319,41 @@ const server = http.createServer(async (req, res) => {
       const stats = fs.statSync(filePath);
       const range = req.headers.range;
       
-      // Parse range header or default to first chunk for large videos
-      let start, end;
+      const mediaContentType = ext === '.mp3' ? 'audio/mpeg' : 'video/mp4';
+      const mediaType = ext === '.mp3' ? '🎵 audio' : '🎬 video';
       
       if (range) {
+        // Parse range header for partial content
         const parts = range.replace(/bytes=/, "").split("-");
-        start = parseInt(parts[0], 10);
-        end = parts[1] ? parseInt(parts[1], 10) : stats.size - 1;
+        const start = parseInt(parts[0], 10);
+        const end = parts[1] ? parseInt(parts[1], 10) : stats.size - 1;
+        const chunksize = (end - start) + 1;
+        
+        const stream = fs.createReadStream(filePath, { start, end });
+        
+        res.writeHead(206, {
+          'Content-Range': `bytes ${start}-${end}/${stats.size}`,
+          'Accept-Ranges': 'bytes',
+          'Content-Length': chunksize,
+          'Content-Type': mediaContentType,
+          'Cache-Control': 'public, max-age=3600'
+        });
+        
+        stream.pipe(res);
+        console.log(`${mediaType} Streamed range: ${pathname} (${start}-${end}/${stats.size})`);
       } else {
-        // For videos without range header, send first chunk (helps mobile browsers load metadata)
-        start = 0;
-        // Send first 5MB or entire file for small videos
-        const chunkSize = ext === '.mp4' ? Math.min(5 * 1024 * 1024, stats.size - 1) : stats.size - 1;
-        end = chunkSize;
+        // Send full file with proper headers for initial request
+        res.writeHead(200, {
+          'Content-Length': stats.size,
+          'Content-Type': mediaContentType,
+          'Accept-Ranges': 'bytes',
+          'Cache-Control': 'public, max-age=3600'
+        });
+        
+        const stream = fs.createReadStream(filePath);
+        stream.pipe(res);
+        console.log(`${mediaType} Served full file: ${pathname} (${stats.size} bytes)`);
       }
-      
-      const chunksize = (end - start) + 1;
-      const stream = fs.createReadStream(filePath, { start, end });
-      const mediaContentType = ext === '.mp3' ? 'audio/mpeg' : 'video/mp4';
-      
-      res.writeHead(206, {
-        'Content-Range': `bytes ${start}-${end}/${stats.size}`,
-        'Accept-Ranges': 'bytes',
-        'Content-Length': chunksize,
-        'Content-Type': mediaContentType,
-        'Cache-Control': 'public, max-age=3600'
-      });
-      
-      stream.pipe(res);
-      const mediaType = ext === '.mp3' ? '🎵 audio' : '🎬 video';
-      console.log(`${mediaType} Streamed range: ${pathname} (${start}-${end}/${stats.size})`);
-      
-      stream.on('error', (err) => {
-        console.error(`Stream error for ${pathname}:`, err.message);
-        if (!res.headersSent) {
-          res.writeHead(500, { 'Content-Type': 'text/plain' });
-          res.end('Stream error');
-        }
-      });
       return;
     }
     
