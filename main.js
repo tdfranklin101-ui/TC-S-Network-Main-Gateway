@@ -2442,14 +2442,6 @@ const server = http.createServer(async (req, res) => {
     }
     return;
   }
-
-  // Skip object storage for stable deployment
-  if (pathname.startsWith('/public-objects/')) {
-    console.log(`⚠️ Object storage disabled for stable deployment`);
-    res.writeHead(404, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'Object storage temporarily disabled' }));
-    return;
-  }
   
   // Debug route to list object storage contents
   if (pathname === '/debug/storage') {
