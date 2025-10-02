@@ -8,15 +8,17 @@ The Current-See is a solar-backed global economic system prototype that combines
 
 ### Large Video Streaming Fixed for Production (October 2, 2025)
 - **HTTP Range Request Support**: Full byte-range streaming for 3 large platform videos (176MB, 134MB, 231MB)
+- **Video Optimization**: All MP4s re-encoded with faststart flag (moov atom at beginning) for instant playback
 - **Production-Ready**: Enhanced with CORS headers and explicit Range support for Cloud Run deployment
 - **HTTP 206 Partial Content**: Proper Content-Range headers enable instant seeking/scrubbing
 - **Platform Videos Working**: 
-  - Plant the seed (176MB) - /videos/plant-the-seed.mp4
-  - We Said So (231MB) - /videos/we-said-so-monazite.mp4
-  - Podcast Discussion (134MB) - /videos/podcast-discussion.mp4
+  - Plant the seed (176MB) - /videos/plant-the-seed.mp4 - ✅ Web-optimized
+  - We Said So (231MB) - /videos/we-said-so-monazite.mp4 - ✅ Web-optimized
+  - Podcast Discussion (134MB) - /videos/podcast-discussion.mp4 - ✅ Web-optimized
 - **Multi-Format**: Supports .mp4, .webm, .mov (video) and .mp3 (audio) streaming
 - **CORS Enabled**: Access-Control headers for cross-origin video playback
 - **Smart Fallback**: HTTP 200 for full file, HTTP 206 for partial content
+- **Root Cause**: Videos had moov atom at end (not server code issue) - fixed with ffmpeg faststart
 
 ### Marketplace Authentication Flow Fixed (October 2, 2025)
 - **Primary Marketplace**: `/marketplace.html` is the Digital Artifact Market with embedded sign-in/register modals
