@@ -4570,23 +4570,27 @@ const server = http.createServer(async (req, res) => {
           'Accept-Ranges': 'bytes',
           'Content-Length': chunksize,
           'Content-Type': mediaContentType,
-          'Cache-Control': 'public, max-age=3600'
+          'Cache-Control': 'public, max-age=3600',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Expose-Headers': 'Content-Range, Accept-Ranges'
         });
         
         stream.pipe(res);
-        console.log(`${mediaType} Streamed range: ${pathname} (${start}-${end}/${stats.size})`);
+        console.log(`📹 ${mediaType} HTTP 206 Partial Content: ${pathname} (${start}-${end}/${stats.size} bytes)`);
       } else {
         // Send full file with proper headers for initial request
         res.writeHead(200, {
           'Content-Length': stats.size,
           'Content-Type': mediaContentType,
           'Accept-Ranges': 'bytes',
-          'Cache-Control': 'public, max-age=3600'
+          'Cache-Control': 'public, max-age=3600',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Expose-Headers': 'Content-Length, Accept-Ranges'
         });
         
         const stream = fs.createReadStream(filePath);
         stream.pipe(res);
-        console.log(`${mediaType} Served full file: ${pathname} (${stats.size} bytes)`);
+        console.log(`📹 ${mediaType} HTTP 200 Full File: ${pathname} (${stats.size} bytes, Range support enabled)`);
       }
       return;
     }
