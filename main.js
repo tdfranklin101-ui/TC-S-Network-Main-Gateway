@@ -1355,17 +1355,37 @@ const server = http.createServer(async (req, res) => {
           }
         } catch (dbError) {
           console.error('Database registration error:', dbError);
-          console.error('Error details:', dbError.message);
+          
+          // Handle duplicate username/email
+          if (dbError.code === '23505') { // Unique violation
+            const errorMessage = dbError.message.includes('email') 
+              ? 'Email address already registered. Please use a different email or sign in.' 
+              : 'Username already exists. Please choose a different username.';
+            
+            res.writeHead(409, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ 
+              success: false, 
+              error: errorMessage
+            }));
+            return;
+          }
+          
+          // For other database errors, report them properly
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ 
+            success: false, 
+            error: 'Database error during registration. Please try again.' 
+          }));
+          return;
         }
-      }
-
-      // Fallback to memory storage
-      if (!success) {
-        userId = Date.now();
-        memberData.id = userId;
-        // Store in memory (in production, this would be handled differently)
-        console.log(`📝 New TC-S Network member registered: ${username} (Memory ID: ${userId})`);
-        success = true;
+      } else {
+        // No database available
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ 
+          success: false, 
+          error: 'Database unavailable. Please try again later.' 
+        }));
+        return;
       }
 
       if (success) {
