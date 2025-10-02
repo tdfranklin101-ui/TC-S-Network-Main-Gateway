@@ -1235,10 +1235,13 @@
             <div class="header-subtitle">Solar Standard</div>
         </div>
         <div class="header-actions">
-            <button class="register-btn" id="signin-btn" onclick="marketplace.showSigninModal()">Sign In</button>
-            <button class="register-btn" id="register-btn" onclick="marketplace.showSignupModal()">Join Network</button>
+            <button class="register-btn" id="signin-btn" onclick="showSigninModal()">Sign In</button>
+            <button class="register-btn" id="register-btn" onclick="showSignupModal()">Join Network</button>
             <div class="user-menu" id="user-menu" style="display: none;">
-                <span id="header-username"></span>
+                <div class="user-info">
+                    <div class="user-name" id="header-username"></div>
+                    <div class="solar-balance" id="header-balance"></div>
+                </div>
                 <button class="logout-btn" onclick="logoutUser()">Logout</button>
             </div>
             <div class="header-menu" onclick="toggleMenu()">
@@ -1604,7 +1607,7 @@
                 </div>
             </div>
             <div class="form-buttons">
-                <button class="btn btn-secondary" onclick="marketplace.closeSignupModal()">Cancel</button>
+                <button class="btn btn-secondary" onclick="closeSignupModal()">Cancel</button>
                 <button class="btn btn-primary" onclick="signupUser()">Join Network</button>
             </div>
         </div>
@@ -1633,7 +1636,7 @@
                 </div>
             </div>
             <div class="form-buttons">
-                <button class="btn btn-secondary" onclick="marketplace.closeSigninModal()">Cancel</button>
+                <button class="btn btn-secondary" onclick="closeSigninModal()">Cancel</button>
                 <button class="btn btn-primary" onclick="signinUser()">Sign In</button>
             </div>
         </div>
@@ -2540,15 +2543,19 @@
                     `${(currentUser.solarBalance || 0).toFixed(4)} Solar`;
                 
                 // Update header display
-                document.getElementById('register-link').style.display = 'none';
+                document.getElementById('signin-btn').style.display = 'none';
+                document.getElementById('register-btn').style.display = 'none';
                 document.getElementById('user-menu').style.display = 'flex';
                 document.getElementById('header-username').textContent = currentUser.username;
+                document.getElementById('header-balance').textContent = 
+                    `${(currentUser.solarBalance || 0).toFixed(4)} Solar`;
             } else {
                 // Hide user info panel
                 document.getElementById('user-info').classList.remove('visible');
                 
-                // Show register link in header
-                document.getElementById('register-link').style.display = 'block';
+                // Show sign in/register buttons in header
+                document.getElementById('signin-btn').style.display = 'inline-block';
+                document.getElementById('register-btn').style.display = 'inline-block';
                 document.getElementById('user-menu').style.display = 'none';
             }
         }
@@ -2611,8 +2618,8 @@
 
                 if (response.ok) {
                     currentUser = {
-                        userId: result.userId,
-                        username: result.username,
+                        userId: result.user.id,
+                        username: result.user.username,
                         solarBalance: result.solarBalance || 0
                     };
                     
@@ -2655,7 +2662,7 @@
             }
 
             try {
-                const response = await fetch('/api/users/signup-solar', {
+                const response = await fetch('/api/register', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -2663,6 +2670,7 @@
                     body: JSON.stringify({
                         username: username,
                         email: email,
+                        displayName: firstName,
                         firstName: firstName,
                         password: password
                     })
@@ -2672,9 +2680,9 @@
 
                 if (response.ok) {
                     currentUser = {
-                        userId: result.userId,
-                        username: result.username,
-                        solarBalance: result.solarBalance || result.initialSolarAmount || 0
+                        userId: result.user.id,
+                        username: result.user.username,
+                        solarBalance: result.solarBalance || 0
                     };
                     
                     // Store in localStorage (simplified session management)

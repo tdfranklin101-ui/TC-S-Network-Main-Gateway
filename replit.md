@@ -6,11 +6,17 @@ The Current-See is a solar-backed global economic system prototype that combines
 
 ## Recent Updates (October 2025)
 
-### Login Flow & Deployment Fixes (October 2, 2025)
-- **Login Redirect Fixed**: Sign-in and registration now redirect to `/main-platform` (not `/my-solar`) for proper wallet initialization
-- **Purchase Endpoint Fixed**: Corrected database queries to use `members.total_solar` instead of non-existent `users.total_solar` and `solar_accounts.total_solar`
+### Marketplace Authentication Flow Fixed (October 2, 2025)
+- **Primary Marketplace**: `/marketplace.html` is the Digital Artifact Market with embedded sign-in/register modals
+- **Authentication UX**: Sign-in and registration happen via modal overlays - users stay on marketplace page
+- **Header Display**: After login/register, header shows username + Solar balance (e.g., "Jennmarie" + "178.0000 Solar")
+- **Navigation Links Fixed**: All "My Solar" links now direct to `/marketplace.html` for consistent UX
+- **Modal Functions Fixed**: Removed non-existent `marketplace.` object references; functions now called directly
+- **API Endpoints Corrected**: Registration uses `/api/register`, login uses `/api/login` with proper response parsing
+- **Purchase Endpoint Fixed**: Corrected database queries to use `members.total_solar` instead of non-existent tables
 - **Deployment Ready**: Removed redundant health check servers that caused "6 ports" deployment error
 - **Daily Solar Distribution**: Active in development; manual trigger available in production via API
+- **Initial Solar Calculation**: Confirmed correct - 1 Solar per day since April 7, 2025 (Genesis Date)
 
 ### Wallet & Download Fixes (October 2, 2025)
 - **Real-Time Balance Updates**: Session endpoint now fetches current Solar balance from database on every request (daily additions and transactions show immediately)
