@@ -6,6 +6,15 @@ The Current-See is a solar-backed global economic system prototype that combines
 
 ## Recent Updates (October 2025)
 
+### Wallet & Download Fixes (October 2, 2025)
+- **Real-Time Balance Updates**: Session endpoint now fetches current Solar balance from database on every request (daily additions and transactions show immediately)
+- **Auto-Login with Fresh Balance**: New members automatically logged in after registration with current balance loaded from database
+- **Persistent Sessions**: Extended session duration from 24 hours to 30 days for seamless long-term access
+- **Download Button Fixed**: Added missing downloadOwnArtifact() function to enable file downloads for artifact creators
+- **Ownership Detection Fixed**: Corrected field name mismatch (creator_id vs creatorId) in ownership validation
+- **Database Registration Fixed**: Corrected column names (total_solar, signup_timestamp, name) to match schema, preventing silent registration failures
+- **Member #30 (Jennmarie) Successfully Registered**: 178.0000 Solar balance displaying correctly
+
 ### Landing Page QA Fixes (October 1, 2025)
 - **Z Private Link Corrected**: Now properly links to external solar-network app at `https://solar-network-tdfranklin101.replit.app` with neon green (#39FF14) styling
 - **Foundation Platform Restored**: Recovered correct version from git history (commit af10e01) with Kid Solar AI agent (ID: v2_agt_vhYf_e_C)
