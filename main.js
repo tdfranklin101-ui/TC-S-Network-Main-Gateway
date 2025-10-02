@@ -4604,20 +4604,12 @@ server.listen(PORT, '0.0.0.0', () => {
   
   console.log(`🚀 CLOUD RUN READY - SINGLE PORT CONFIGURATION`);
   
-  // Initialize daily Solar distribution automation
-  initializeDailyDistribution();
+  // Daily Solar distribution disabled for Autoscale deployment (background tasks not supported)
+  // Manual distribution available via API: POST /api/distribution/trigger
+  console.log('ℹ️ Daily Solar distribution: Manual mode (call API to trigger)');
 }).on('error', (err) => {
-  if (err.code === 'EADDRINUSE') {
-    console.log(`⚠️ Port ${PORT} in use, trying alternative...`);
-    const altPort = PORT === 3000 ? 8080 : 3000;
-    server.listen(altPort, '0.0.0.0', () => {
-      console.log(`✅ Server running on alternative port ${altPort}`);
-      console.log(`🚀 DEPLOYMENT READY - ALL SYSTEMS OPERATIONAL`);
-    });
-  } else {
-    console.error('❌ Server failed to start:', err);
-    process.exit(1);
-  }
+  console.error('❌ Server failed to start:', err);
+  process.exit(1);
 });
 
 // Graceful shutdown
