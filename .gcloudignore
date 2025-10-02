@@ -1,0 +1,28 @@
+# Deployment exclusions - reduce size from 1.4GB to ~900MB
+
+# Development assets (518MB) - NOT needed in production
+attached_assets/
+backup/
+backup_*/
+deployment_backups/
+temp_extract/
+logs/
+*.log
+*.pid
+
+# Development files  
+.env.local
+test_*
+debug_*
+*.pyc
+__pycache__/
+.pytest_cache/
+.git/
+.cache/
+conversations/
+
+# Videos (546MB) - excluded to get under 500MB deployment limit
+# Will be served from Object Storage instead
+public/videos/*.mp4
+public/videos/*.mov
+public/videos/*.webm
