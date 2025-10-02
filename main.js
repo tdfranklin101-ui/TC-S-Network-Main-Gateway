@@ -4604,9 +4604,16 @@ server.listen(PORT, '0.0.0.0', () => {
   
   console.log(`🚀 CLOUD RUN READY - SINGLE PORT CONFIGURATION`);
   
-  // Daily Solar distribution disabled for Autoscale deployment (background tasks not supported)
-  // Manual distribution available via API: POST /api/distribution/trigger
-  console.log('ℹ️ Daily Solar distribution: Manual mode (call API to trigger)');
+  // Initialize daily Solar distribution
+  // Note: Cron jobs work in dev but not in Autoscale deployment
+  // For production, use External Cron (Replit Deployments settings) to call:
+  // POST https://your-app.replit.app/api/distribution/trigger
+  try {
+    initializeDailyDistribution();
+  } catch (error) {
+    console.warn('⚠️ Cron scheduling not available in this environment');
+    console.log('📌 Use external cron or manual trigger: POST /api/distribution/trigger');
+  }
 }).on('error', (err) => {
   console.error('❌ Server failed to start:', err);
   process.exit(1);
