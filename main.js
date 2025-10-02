@@ -1345,16 +1345,17 @@ const server = http.createServer(async (req, res) => {
       if (pool) {
         try {
           const result = await pool.query(
-            'INSERT INTO members (username, email, first_name, last_name, password_hash, country, interests, solar_balance, member_since, subscribe_newsletter, interested_in_commissioning, membership_type) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id',
-            [username, email, firstName, lastName, passwordHash, memberData.country, memberData.interests, memberData.solarBalance, memberData.memberSince, memberData.subscribeNewsletter, memberData.interestedInCommissioning, memberData.membershipType]
+            'INSERT INTO members (username, email, first_name, last_name, password_hash, total_solar, signup_timestamp) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id',
+            [username, email, firstName, lastName, passwordHash, memberData.solarBalance, new Date()]
           );
           if (result && result.rows && result.rows.length > 0) {
             userId = result.rows[0].id;
             success = true;
-            console.log(`📝 New TC-S Network member registered: ${username} (DB ID: ${userId})`);
+            console.log(`📝 New TC-S Network member registered: ${username} (DB ID: ${userId}) with ${memberData.solarBalance} Solar`);
           }
         } catch (dbError) {
           console.error('Database registration error:', dbError);
+          console.error('Error details:', dbError.message);
         }
       }
 
