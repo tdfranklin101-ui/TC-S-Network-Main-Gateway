@@ -1344,9 +1344,13 @@ const server = http.createServer(async (req, res) => {
       // Try database first
       if (pool) {
         try {
+          // Construct full name from first and last names
+          const fullName = `${firstName} ${lastName}`.trim();
+          const joinedDate = currentDate.toISOString();
+          
           const result = await pool.query(
-            'INSERT INTO members (username, email, first_name, last_name, password_hash, total_solar, signup_timestamp) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id',
-            [username, email, firstName, lastName, passwordHash, memberData.solarBalance, new Date()]
+            'INSERT INTO members (username, name, email, first_name, last_name, password_hash, total_solar, total_dollars, joined_date, last_distribution_date, signup_timestamp) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id',
+            [username, fullName, email, firstName, lastName, passwordHash, memberData.solarBalance, 0, joinedDate, joinedDate, new Date()]
           );
           if (result && result.rows && result.rows.length > 0) {
             userId = result.rows[0].id;
