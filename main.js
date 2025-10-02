@@ -1011,7 +1011,7 @@ const server = http.createServer(async (req, res) => {
           'HttpOnly',
           'SameSite=Lax',
           'Path=/',
-          `Max-Age=${24 * 60 * 60}` // 24 hours
+          `Max-Age=${30 * 24 * 60 * 60}` // 30 days
         ];
         
         if (process.env.NODE_ENV === 'production') {
@@ -1179,7 +1179,7 @@ const server = http.createServer(async (req, res) => {
           'HttpOnly',
           'SameSite=Lax',
           'Path=/',
-          `Max-Age=${24 * 60 * 60}` // 24 hours
+          `Max-Age=${30 * 24 * 60 * 60}` // 30 days
         ];
         
         if (process.env.NODE_ENV === 'production') {
@@ -1414,16 +1414,57 @@ const server = http.createServer(async (req, res) => {
       }
 
       if (success) {
-        // Account created successfully - direct user to sign in to initialize wallet
+        // Fetch fresh balance from database for session
+        let currentBalance = initialSolarAllocation;
+        if (pool && userId) {
+          try {
+            const balanceResult = await pool.query(
+              'SELECT total_solar FROM members WHERE id = $1',
+              [userId]
+            );
+            if (balanceResult && balanceResult.rows && balanceResult.rows.length > 0) {
+              currentBalance = parseFloat(balanceResult.rows[0].total_solar) || 0;
+            }
+          } catch (err) {
+            console.error('Error fetching balance:', err);
+          }
+        }
+
+        // Create session for automatic login
+        const userData = {
+          userId: userId,
+          username: username,
+          email: email,
+          firstName: firstName,
+          lastName: lastName,
+          solarBalance: currentBalance,
+          memberSince: memberData.memberSince,
+          membershipType: 'Foundation Market Member'
+        };
+        
+        const sessionId = createSession(userId, userData);
+        
+        // Set persistent session cookie (30 days)
+        const cookieOptions = [
+          `tc_s_session=${sessionId}`,
+          'HttpOnly',
+          'SameSite=Lax',
+          'Path=/',
+          `Max-Age=${30 * 24 * 60 * 60}` // 30 days
+        ];
+        
+        if (process.env.NODE_ENV === 'production') {
+          cookieOptions.push('Secure');
+        }
+        
         res.writeHead(200, { 
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Set-Cookie': cookieOptions.join('; ')
         });
         res.end(JSON.stringify({
           success: true,
-          message: 'Account created successfully! Please sign in to initialize your Solar wallet.',
-          username: username,
-          initialSolarAllocation: initialSolarAllocation,
-          redirectToLogin: true
+          message: 'TC-S Network membership created successfully',
+          ...userData
         }));
       } else {
         res.writeHead(500, { 'Content-Type': 'application/json' });
@@ -1522,7 +1563,7 @@ const server = http.createServer(async (req, res) => {
           'HttpOnly',
           'SameSite=Lax',
           'Path=/',
-          `Max-Age=${24 * 60 * 60}` // 24 hours
+          `Max-Age=${30 * 24 * 60 * 60}` // 30 days
         ];
         
         if (process.env.NODE_ENV === 'production') {

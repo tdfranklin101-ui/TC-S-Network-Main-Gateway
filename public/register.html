@@ -477,25 +477,18 @@
                 const result = await response.json();
 
                 if (response.ok) {
-                    // Check if we should redirect to login to initialize wallet
-                    if (result.redirectToLogin) {
-                        alert(`✅ ${result.message}\n\nYour initial Solar allocation: ${result.initialSolarAllocation} Solar tokens.\n\nPlease sign in to activate your wallet and access the marketplace.`);
-                        // Redirect to login page
-                        window.location.href = '/login.html';
-                    } else {
-                        // Legacy: Store user session if auto-logged in
-                        localStorage.setItem('tc_s_user', JSON.stringify({
-                            userId: result.userId,
-                            username: result.username,
-                            solarBalance: result.solarBalance,
-                            memberSince: result.memberSince
-                        }));
+                    // Store user session (auto-logged in)
+                    localStorage.setItem('tc_s_user', JSON.stringify({
+                        userId: result.userId,
+                        username: result.username,
+                        solarBalance: result.solarBalance,
+                        memberSince: result.memberSince
+                    }));
 
-                        alert(`✅ Welcome to TC-S Network, ${result.username}!\n\nYour account has been created and you've received your initial Solar allocation: ${result.solarBalance} Solar tokens.\n\nYou can now access the marketplace and start trading digital artifacts!`);
-                        
-                        // Redirect to marketplace
-                        window.location.href = '/marketplace.html';
-                    }
+                    alert(`✅ Welcome to TC-S Network, ${result.username}!\n\nYour account has been created and you've been automatically logged in.\n\nInitial Solar allocation: ${result.solarBalance} Solar tokens.\n\nYou can now access the marketplace and start trading digital artifacts!`);
+                    
+                    // Redirect to marketplace
+                    window.location.href = '/marketplace.html';
                 } else {
                     alert(`❌ Registration failed: ${result.error}`);
                 }
