@@ -1707,8 +1707,8 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      // Get user's current balance
-      const userQuery = 'SELECT id, username, total_solar FROM users WHERE id = $1';
+      // Get user's current balance from members table
+      const userQuery = 'SELECT id, username, total_solar FROM members WHERE id = $1';
       const userResult = await pool.query(userQuery, [userId]);
       
       if (userResult.rows.length === 0) {
@@ -1732,9 +1732,9 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      // Process transaction (deduct Solar)
+      // Process transaction (deduct Solar from members table)
       const newBalance = userBalance - requiredSolar;
-      const updateBalanceQuery = 'UPDATE users SET total_solar = $1 WHERE id = $2';
+      const updateBalanceQuery = 'UPDATE members SET total_solar = $1 WHERE id = $2';
       await pool.query(updateBalanceQuery, [newBalance, user.id]);
 
       // Record transaction
@@ -1823,52 +1823,21 @@ const server = http.createServer(async (req, res) => {
         // Get or create user if needed
         let user = null;
         if (userId) {
-          const userQuery = 'SELECT u.id, u.username, sa.total_solar FROM users u LEFT JOIN solar_accounts sa ON u.id = sa.user_id WHERE u.id = $1';
+          const userQuery = 'SELECT id, username, total_solar FROM members WHERE id = $1';
           const userResult = await pool.query(userQuery, [userId]);
           user = userResult.rows[0];
         } else if (userEmail) {
           // Check if user exists by email
-          const emailQuery = 'SELECT u.id, u.username, sa.total_solar FROM users u LEFT JOIN solar_accounts sa ON u.id = sa.user_id WHERE u.email = $1';
+          const emailQuery = 'SELECT id, username, total_solar FROM members WHERE email = $1';
           const emailResult = await pool.query(emailQuery, [userEmail]);
           
           if (emailResult.rows.length > 0) {
             user = emailResult.rows[0];
           } else {
-            // Create new user for first purchase
-            const genesisDate = new Date('2025-04-07');
-            const currentDate = new Date();
-            const daysSinceGenesis = Math.floor((currentDate - genesisDate) / (1000 * 60 * 60 * 24));
-            const initialSolarAmount = Math.max(daysSinceGenesis, 1);
-
-            const newUserQuery = `
-              INSERT INTO users (id, username, email, first_name, created_at)
-              VALUES (gen_random_uuid(), $1, $2, $3, NOW())
-              RETURNING id
-            `;
-            
-            const username = userName || userEmail.split('@')[0];
-            const newUserResult = await pool.query(newUserQuery, [username, userEmail, userName || '']);
-            const newUserId = newUserResult.rows[0].id;
-
-            // Create Solar account
-            const accountNumber = `SOL-${newUserId.substring(0, 8).toUpperCase()}`;
-            const solarAccountQuery = `
-              INSERT INTO solar_accounts (user_id, account_number, display_name, total_solar, total_kwh, total_dollars, joined_date)
-              VALUES ($1, $2, $3, $4, $5, $6, NOW())
-            `;
-            
-            await pool.query(solarAccountQuery, [
-              newUserId, accountNumber, `${userName || username}'s Solar Account`, 
-              initialSolarAmount, initialSolarAmount * 4913, initialSolarAmount * 0.20
-            ]);
-
-            user = {
-              id: newUserId,
-              username: username,
-              total_solar: initialSolarAmount
-            };
-
-            console.log(`🌱 New user created for purchase: ${username} with ${initialSolarAmount} Solar`);
+            // Cannot create new user during purchase - user must register first
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Please register an account before making purchases' }));
+            return;
           }
         }
 
@@ -1893,9 +1862,9 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
-        // Process transaction (deduct Solar)
+        // Process transaction (deduct Solar from members table)
         const newBalance = userBalance - requiredSolar;
-        const updateBalanceQuery = 'UPDATE solar_accounts SET total_solar = $1 WHERE user_id = $2';
+        const updateBalanceQuery = 'UPDATE members SET total_solar = $1 WHERE id = $2';
         await pool.query(updateBalanceQuery, [newBalance, user.id]);
 
         // Record transaction
