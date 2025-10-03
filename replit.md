@@ -7,6 +7,8 @@ The Current-See is a solar-backed global economic system prototype that combines
 ## Recent Updates (October 2025)
 
 ### Production Deployment Ready (October 3, 2025)
+- **Ownership Protection Added**: Users cannot purchase their own artifacts - frontend UX check + backend validation
+- **Self-Purchase Prevention**: Friendly "This is your listing!" popup prevents accidental self-purchases
 - **Deployment Package Optimized**: Reduced from 4.9GB to ~450MB for Cloud Run compatibility
 - **JavaScript Syntax Fix**: Corrected marketplace.html line 2982 - malformed data URI prevented modal functions
 - **Authentication Working**: Sign In and Join Network buttons functional in development
