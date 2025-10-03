@@ -1,5 +1,6 @@
 {pkgs}: {
   deps = [
+    pkgs.nano
     pkgs.ffmpeg
     pkgs.jq
     pkgs.unzip
