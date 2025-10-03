@@ -59,7 +59,7 @@ const MemberContentService = require('./server/member-content-service');
 const AIPromotionService = require('./server/ai-promotion-service');
 const MemberTemplateService = require('./server/member-template-service');
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 
 // Simple session storage (in production, use Redis or database)
 const sessions = new Map();
