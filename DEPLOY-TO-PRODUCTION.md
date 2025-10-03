@@ -26,16 +26,21 @@ gcloud run deploy current-see \
 ## What Happens During Deployment
 
 ✅ `.gcloudignore` automatically excludes:
-- 395MB of videos (public/videos/*.mp4) 
-- 518MB of dev assets (attached_assets/)
-- Deployment size: ~400MB (under 500MB limit)
+- 400MB node_modules (rebuilt by Cloud Build with production deps only)
+- 521MB attached_assets (dev files)
+- 850MB non-runtime directories (admin/, analytics-standalone/, download/, etc.)
+- 98MB music bundles (public/music/bundles/)
+- **Final deployment size: ~450MB** (under 500MB limit)
 
-✅ Videos served from Object Storage in production:
-- plant-the-seed.mp4
-- we-said-so-monazite.mp4  
-- podcast-discussion.mp4
+✅ Videos hosted on Vimeo (external):
+- Plant the Seed: vimeo.com/1124103517
+- We Said So: vimeo.com/1124104035
+- Podcast Discussion: vimeo.com/1124104721
 
-✅ Google Cloud Storage SDK auto-authenticates in Cloud Run
+✅ Cloud Build process:
+1. Copies source code (~250MB)
+2. Runs `npm ci --production` (installs ~200MB production deps)
+3. Starts server with `node main.js`
 
 ## Alternative: Deploy from Cloud Shell
 
@@ -45,10 +50,10 @@ gcloud run deploy current-see \
 
 ## Environment Variables Needed
 
-These are already in your Replit secrets - copy them to Cloud Run:
-- `DATABASE_URL` (PostgreSQL connection)
-- `DEFAULT_OBJECT_STORAGE_BUCKET_ID` (for videos)
-- `OPENAI_API_KEY` (for AI features)
+Set these in Cloud Run (from your Replit secrets):
+- `DATABASE_URL` - PostgreSQL connection string (required for member data)
+- `OPENAI_API_KEY` - For AI curator and Kid Solar agent (required)
+- `NODE_ENV=production` - Enables production optimizations (auto-set by deploy script)
 
 ## Verify Deployment
 

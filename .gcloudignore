@@ -1,11 +1,16 @@
-# Deployment exclusions - reduce size from 1.4GB to ~900MB
+# Cloud Run Deployment Exclusions - Optimized Package Size
+
+# Node modules (400MB) - Cloud Build will reinstall from package.json
+node_modules/
 
 # Development assets (518MB) - NOT needed in production
 attached_assets/
 backup/
 backup_*/
+backups/
 deployment_backups/
 temp_extract/
+temp/
 logs/
 *.log
 *.pid
@@ -18,8 +23,24 @@ debug_*
 __pycache__/
 .pytest_cache/
 .git/
+.gitignore
 .cache/
 conversations/
+
+# Non-runtime directories (~850MB)
+admin/
+analytics-standalone/
+download/
+python_services/
+scripts/
+uploads/
+storage/
+
+# Large static assets in public/ (~98MB music bundles)
+public/music/bundles/
+public/admin/
+public/previews/
+public/attached_assets/
 
 # Large videos (390MB deleted, now using Vimeo)
 # Keep small garcia-solar-rays.mp4 (5.5MB) - used in app
@@ -28,3 +49,8 @@ public/videos/we-said-so-monazite.mp4
 public/videos/podcast-discussion.mp4
 public/videos/*.mov
 public/videos/*.webm
+
+# Documentation (not needed at runtime)
+docs/
+*.md
+!DEPLOY*.md

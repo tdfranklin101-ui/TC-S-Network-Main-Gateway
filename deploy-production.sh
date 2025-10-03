@@ -23,9 +23,11 @@ if ! command -v gcloud &> /dev/null; then
     echo "📄 Full instructions: See DEPLOY-TO-PRODUCTION.md"
     echo ""
     echo "✅ Project is ready to deploy:"
-    echo "   - Deployment size: ~400MB (under 500MB limit)"
-    echo "   - Videos will stream from Object Storage"
-    echo "   - All 3 platform videos confirmed in storage"
+    echo "   - Deployment size: ~450MB (under 500MB limit)"
+    echo "   - Source code: ~250MB"
+    echo "   - node_modules rebuilt by Cloud Build: ~200MB"
+    echo "   - Videos streaming from Vimeo"
+    echo "   - Marketplace authentication tested and working"
     exit 1
 fi
 
