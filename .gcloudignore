@@ -21,8 +21,10 @@ __pycache__/
 .cache/
 conversations/
 
-# Videos (546MB) - excluded to get under 500MB deployment limit
-# Will be served from Object Storage instead
-public/videos/*.mp4
+# Large videos (390MB deleted, now using Vimeo)
+# Keep small garcia-solar-rays.mp4 (5.5MB) - used in app
+public/videos/plant-the-seed.mp4
+public/videos/we-said-so-monazite.mp4
+public/videos/podcast-discussion.mp4
 public/videos/*.mov
 public/videos/*.webm
