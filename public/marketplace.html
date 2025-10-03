@@ -2471,6 +2471,14 @@
                 return;
             }
 
+            // Check if user is trying to purchase their own artifact
+            const artifact = allArtifacts.find(a => a.id === artifactId);
+            if (artifact && artifact.creatorId && artifact.creatorId.toString() === currentUser.userId.toString()) {
+                alert('📦 This is your listing!\n\nYou already own this artifact as the creator. You can download it from the "My Items" tab.');
+                console.log('🚫 Self-purchase prevented:', { artifactId, creatorId: artifact.creatorId, userId: currentUser.userId });
+                return;
+            }
+
             try {
                 const response = await fetch('/api/artifacts/purchase', {
                     method: 'POST',
@@ -2496,6 +2504,8 @@
                 } else {
                     if (result.error === 'Insufficient Solar balance') {
                         alert(`❌ Insufficient Solar balance. You need ${result.required} Solar but only have ${result.available}. Shortfall: ${result.shortfall.toFixed(4)} Solar.`);
+                    } else if (result.isOwner) {
+                        alert(`📦 This is your listing!\n\n${result.message || 'You already own this artifact as the creator. You can download it from the "My Items" tab.'}`);
                     } else {
                         alert(`❌ Purchase failed: ${result.error}`);
                     }

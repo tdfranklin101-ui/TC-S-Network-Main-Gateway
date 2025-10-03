@@ -1801,7 +1801,8 @@ const server = http.createServer(async (req, res) => {
         const artifactQuery = `
           SELECT id, title, solar_amount_s, delivery_url, active,
                  master_file_url, preview_file_url, trade_file_url,
-                 file_type, category, trade_file_size, processing_status
+                 file_type, category, trade_file_size, processing_status,
+                 creator_id
           FROM artifacts WHERE id = $1
         `;
         const artifactResult = await pool.query(artifactQuery, [artifactId]);
@@ -1844,6 +1845,18 @@ const server = http.createServer(async (req, res) => {
         if (!user) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'User identification required' }));
+          return;
+        }
+
+        // Check if user is trying to purchase their own artifact
+        if (artifact.creator_id && artifact.creator_id === user.id) {
+          console.log(`🚫 Self-purchase prevented: User ${user.username} (ID: ${user.id}) tried to purchase their own artifact "${artifact.title}" (ID: ${artifactId})`);
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ 
+            error: 'You cannot purchase your own artifact',
+            isOwner: true,
+            message: 'This is your listing. You already own this artifact as the creator.'
+          }));
           return;
         }
 
