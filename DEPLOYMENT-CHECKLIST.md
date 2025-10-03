@@ -22,22 +22,28 @@
 
 ## 🚀 Deployment Steps
 
-### Step 1: Get Environment Variables
+### Step 1: Download Project
+1. In Replit: Click three dots (⋮) → Download as zip
+2. Extract on your local machine: `unzip current-see.zip && cd current-see`
+
+### Step 2: Set Environment Variables
 Copy these from Replit Secrets:
 ```bash
-# Required
+# Required - export before deploying
 export DATABASE_URL="your-postgres-connection-string"
 export OPENAI_API_KEY="your-openai-api-key"
 ```
 
-### Step 2: Download Project
-1. In Replit: Click three dots (⋮) → Download as zip
-2. Extract on your local machine
-
 ### Step 3: Deploy to Cloud Run
-```bash
-cd current-see
 
+**Option A: Using deployment script (recommended)**
+```bash
+./deploy-production.sh
+```
+The deployment script validates environment variables before deploying.
+
+**Option B: Manual gcloud command**
+```bash
 gcloud run deploy current-see \
   --source . \
   --region us-central1 \

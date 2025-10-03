@@ -11,7 +11,14 @@ Click the three dots menu (⋮) in Replit → Download as zip
 unzip current-see.zip
 cd current-see
 
-# Deploy to Cloud Run (requires gcloud CLI installed)
+# Export required environment variables (from Replit Secrets)
+export DATABASE_URL="your-postgres-connection-string"
+export OPENAI_API_KEY="your-openai-api-key"
+
+# Deploy using the deployment script (recommended - validates env vars)
+./deploy-production.sh
+
+# OR deploy manually with gcloud CLI
 gcloud run deploy current-see \
   --source . \
   --region us-central1 \
@@ -19,7 +26,8 @@ gcloud run deploy current-see \
   --allow-unauthenticated \
   --memory 1Gi \
   --timeout 300 \
-  --set-env-vars "NODE_ENV=production,DATABASE_URL=$DATABASE_URL,DEFAULT_OBJECT_STORAGE_BUCKET_ID=$DEFAULT_OBJECT_STORAGE_BUCKET_ID" \
+  --max-instances 10 \
+  --set-env-vars "NODE_ENV=production,DATABASE_URL=$DATABASE_URL,OPENAI_API_KEY=$OPENAI_API_KEY" \
   --quiet
 ```
 
