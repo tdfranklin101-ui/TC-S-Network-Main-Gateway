@@ -1,21 +1,26 @@
-import express from "express";
-import { listEnergy, matchEnergyOrders, getEnergyMarket } from "../lib/ledger.js";
+const { listEnergy, matchEnergyOrders, getEnergyMarket } = require('../lib/ledger');
 
-const router = express.Router();
-
-router.post("/list", (req, res) => {
-  const { walletId, type, kwh, pricePerKwh } = req.body;
-  const id = listEnergy(walletId, type, kwh, pricePerKwh);
-  res.json({ ok: true, listingId: id });
-});
-
-router.post("/match", (req, res) => {
-  matchEnergyOrders();
-  res.json({ ok: true });
-});
-
-router.get("/", (req, res) => {
-  res.json(getEnergyMarket());
-});
-
-export default router;
+module.exports = function(req, res, pathname, body) {
+  if (pathname === '/energy' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(getEnergyMarket()));
+    return true;
+  }
+  
+  if (pathname === '/energy/list' && req.method === 'POST') {
+    const { walletId, type, kwh, pricePerKwh } = body;
+    const id = listEnergy(walletId, type, kwh, pricePerKwh);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ ok: true, listingId: id }));
+    return true;
+  }
+  
+  if (pathname === '/energy/match' && req.method === 'POST') {
+    matchEnergyOrders();
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ ok: true }));
+    return true;
+  }
+  
+  return false;
+};

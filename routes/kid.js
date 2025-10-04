@@ -1,12 +1,13 @@
-import express from "express";
-import { kidSolarRespond } from "../lib/kidSolar.js";
+const { kidSolarRespond } = require('../lib/kidSolar');
 
-const router = express.Router();
-
-router.post("/query", async (req, res) => {
-  const { walletId, text } = req.body;
-  const reply = await kidSolarRespond(walletId, text);
-  res.json({ reply });
-});
-
-export default router;
+module.exports = async function(req, res, pathname, body) {
+  if (pathname === '/kid/query' && req.method === 'POST') {
+    const { walletId, text } = body;
+    const reply = await kidSolarRespond(walletId, text);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ reply }));
+    return true;
+  }
+  
+  return false;
+};

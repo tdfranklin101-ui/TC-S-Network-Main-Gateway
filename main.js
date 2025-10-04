@@ -59,6 +59,11 @@ const MemberContentService = require('./server/member-content-service');
 const AIPromotionService = require('./server/ai-promotion-service');
 const MemberTemplateService = require('./server/member-template-service');
 
+// TC-S Computronium Market routes
+const marketRoutes = require('./routes/market');
+const energyRoutes = require('./routes/energy');
+const kidRoutes = require('./routes/kid');
+
 const PORT = process.env.PORT || 8080;
 
 // Simple session storage (in production, use Redis or database)
@@ -530,6 +535,31 @@ console.log('🎯 AI automatic promotion system active');
 
 const server = http.createServer(async (req, res) => {
   const pathname = new URL(req.url, `http://${req.headers.host}`).pathname;
+  
+  // TC-S Computronium Market API routes
+  let body = null;
+  if (req.method === 'POST' && (pathname.startsWith('/market') || pathname.startsWith('/energy') || pathname.startsWith('/kid'))) {
+    try {
+      body = await parseBody(req);
+    } catch (error) {
+      // Continue without body for GET requests or parsing errors
+    }
+  }
+  
+  // Try market routes
+  if (pathname.startsWith('/market')) {
+    if (marketRoutes(req, res, pathname)) return;
+  }
+  
+  // Try energy routes
+  if (pathname.startsWith('/energy')) {
+    if (await energyRoutes(req, res, pathname, body)) return;
+  }
+  
+  // Try Kid Solar routes
+  if (pathname.startsWith('/kid')) {
+    if (await kidRoutes(req, res, pathname, body)) return;
+  }
   
   // Music API Endpoints
   if (pathname === '/api/music/play' && req.method === 'POST') {
