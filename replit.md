@@ -6,10 +6,26 @@ The Current-See is a solar-backed global economic system prototype that combines
 
 ## Recent Updates (October 2025)
 
+### Kid Solar AI Voice Assistant Deployed (October 4, 2025)
+- **OpenAI Voice Integration**: Whisper (speech-to-text), GPT-4o (NLU), TTS (text-to-speech with Nova voice)
+- **Natural Language Wallet Control**: Members use voice to query balance, transactions, and energy listings
+- **Situationally Aware**: Accesses real-time member data (balance, name, transaction history)
+- **Voice API Endpoint**: `POST /api/kid-solar/voice` with multipart audio upload
+- **Security Features**:
+  - Session-based authentication required
+  - Rate limiting: 5 requests per minute per user
+  - File size validation: 10MB max audio
+  - Request timeout: 30 seconds
+  - Audio data validation
+- **Database Optimization**: Shared connection pool prevents Neon pool exhaustion
+- **Frontend UX**: Green neon button with visual states (recording/processing/playing/error)
+- **Error Handling**: Graceful fallbacks for microphone access, network errors, playback issues
+- **Example Commands**: "What's my balance?", "Show my transactions", "List my energy"
+
 ### TC-S Computronium Market API Integrated (October 4, 2025)
 - **Five Market Categories Added**: Computronium Missions, Culture, Basic Needs, Rent Anything, Energy Trading
+- **Frontend Integration**: Category filter dropdown with merged artifact display (DB + Market API)
 - **Energy Trading System**: REC/PPA listing and automatic matching engine with in-memory ledger
-- **Kid Solar AI Interface**: Text-based command parser for balance queries and energy listing
 - **API Endpoints Added**:
   - `GET /market/categories` - Returns array of 5 market categories
   - `GET /market/artifacts/:category` - Returns artifacts filtered by category
@@ -19,7 +35,7 @@ The Current-See is a solar-backed global economic system prototype that combines
   - `POST /kid/query` - Send text commands to Kid Solar AI (balance, list energy)
 - **CommonJS Architecture**: All modules use CommonJS format matching main.js server
 - **In-Memory Trading**: Wallet system with Solar token balances and energy trading ledger
-- **Kid Solar Commands**: "balance", "list energy", "list REC <kwh> <price>" format
+- **Sample Artifacts**: One per category (1 Solar mission, 0.1 Solar tracks, 0.5 Solar rentals, 100 kWh energy)
 - **Port Configuration**: Single port 8080→80 maintained for Cloud Run deployment
 - **Production Ready**: All endpoints tested and verified working with existing marketplace
 
