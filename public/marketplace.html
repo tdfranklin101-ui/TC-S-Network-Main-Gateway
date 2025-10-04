@@ -1739,15 +1739,34 @@
 
         async function loadArtifacts() {
             try {
+                // Load existing database artifacts
                 const response = await fetch('/api/artifacts/available');
+                let dbArtifacts = [];
                 if (response.ok) {
                     const data = await response.json();
-                    allArtifacts = data.artifacts || [];
-                    updateArtifactCount(data.totalArtifacts || 0);
-                    applyFilters();
-                } else {
-                    showError('Failed to load artifacts');
+                    dbArtifacts = data.artifacts || [];
                 }
+
+                // Load TC-S Computronium Market artifacts from all categories
+                const marketCategories = ['computronium_missions', 'culture', 'basic_needs', 'rent_anything', 'energy_trading'];
+                let marketArtifacts = [];
+                
+                for (const category of marketCategories) {
+                    try {
+                        const catResponse = await fetch(`/market/artifacts/${category}`);
+                        if (catResponse.ok) {
+                            const catData = await catResponse.json();
+                            marketArtifacts = marketArtifacts.concat(catData);
+                        }
+                    } catch (err) {
+                        console.warn(`Failed to load ${category} artifacts:`, err);
+                    }
+                }
+
+                // Merge all artifacts
+                allArtifacts = [...dbArtifacts, ...marketArtifacts];
+                updateArtifactCount(allArtifacts.length);
+                applyFilters();
             } catch (error) {
                 console.error('Error loading artifacts:', error);
                 showError('Error loading artifacts');
