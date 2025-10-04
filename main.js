@@ -64,6 +64,9 @@ const marketRoutes = require('./routes/market');
 const energyRoutes = require('./routes/energy');
 const kidRoutes = require('./routes/kid');
 
+// Kid Solar Voice Assistant
+const KidSolarVoice = require('./server/kid-solar-voice');
+
 const PORT = process.env.PORT || 8080;
 
 // Simple session storage (in production, use Redis or database)
@@ -559,6 +562,113 @@ const server = http.createServer(async (req, res) => {
   // Try Kid Solar routes
   if (pathname.startsWith('/kid')) {
     if (await kidRoutes(req, res, pathname, body)) return;
+  }
+  
+  // Kid Solar Voice Interaction
+  if (pathname === '/api/kid-solar/voice' && req.method === 'POST') {
+    try {
+      // Verify authentication first
+      const sessionId = getCookie(req, 'tc_s_session');
+      if (!sessionId || !sessions.get(sessionId)) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Authentication required' }));
+        return;
+      }
+
+      const session = sessions.get(sessionId);
+      const authenticatedUserId = session.userId;
+      const memberName = session.username || 'Member';
+
+      // Rate limiting: 5 requests per minute per user
+      const rateLimitKey = `voice_${authenticatedUserId}`;
+      const now = Date.now();
+      if (!session.voiceRateLimit) session.voiceRateLimit = { count: 0, resetAt: now + 60000 };
+      
+      if (now > session.voiceRateLimit.resetAt) {
+        session.voiceRateLimit = { count: 0, resetAt: now + 60000 };
+      }
+      
+      if (session.voiceRateLimit.count >= 5) {
+        res.writeHead(429, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Rate limit exceeded. Please wait before trying again.' }));
+        return;
+      }
+      
+      session.voiceRateLimit.count++;
+
+      const chunks = [];
+      let totalSize = 0;
+      const MAX_SIZE = 10 * 1024 * 1024; // 10MB max audio size
+
+      req.on('data', chunk => {
+        totalSize += chunk.length;
+        if (totalSize > MAX_SIZE) {
+          req.destroy();
+          res.writeHead(413, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Audio file too large (max 10MB)' }));
+          return;
+        }
+        chunks.push(chunk);
+      });
+
+      req.on('end', async () => {
+        try {
+          const buffer = Buffer.concat(chunks);
+          
+          const boundary = req.headers['content-type']?.split('boundary=')[1];
+          if (!boundary) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'No boundary in multipart data' }));
+            return;
+          }
+          
+          const parts = buffer.toString('binary').split(`--${boundary}`);
+          let audioData = null;
+          
+          for (const part of parts) {
+            if (part.includes('name="audio"')) {
+              const dataStart = part.indexOf('\r\n\r\n') + 4;
+              const dataEnd = part.lastIndexOf('\r\n');
+              audioData = Buffer.from(part.substring(dataStart, dataEnd), 'binary');
+              
+              // Validate it's actually audio data (basic check for webm/audio headers)
+              if (audioData.length < 100 || audioData.length > MAX_SIZE) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Invalid audio data' }));
+                return;
+              }
+            }
+          }
+          
+          if (!audioData) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Missing audio data' }));
+            return;
+          }
+          
+          const kidSolar = new KidSolarVoice();
+          const result = await kidSolar.handleVoiceInteraction(
+            audioData,
+            authenticatedUserId,
+            { name: memberName },
+            'webm'
+          );
+          
+          res.writeHead(200, { 'Content-Type': 'audio/mpeg' });
+          res.end(result.responseAudio);
+          
+        } catch (error) {
+          console.error('Voice processing error:', error);
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: error.message }));
+        }
+      });
+    } catch (error) {
+      console.error('Voice endpoint error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: error.message }));
+    }
+    return;
   }
   
   // Music API Endpoints
