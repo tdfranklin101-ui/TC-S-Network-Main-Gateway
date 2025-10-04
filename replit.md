@@ -6,6 +6,23 @@ The Current-See is a solar-backed global economic system prototype that combines
 
 ## Recent Updates (October 2025)
 
+### TC-S Computronium Market API Integrated (October 4, 2025)
+- **Five Market Categories Added**: Computronium Missions, Culture, Basic Needs, Rent Anything, Energy Trading
+- **Energy Trading System**: REC/PPA listing and automatic matching engine with in-memory ledger
+- **Kid Solar AI Interface**: Text-based command parser for balance queries and energy listing
+- **API Endpoints Added**:
+  - `GET /market/categories` - Returns array of 5 market categories
+  - `GET /market/artifacts/:category` - Returns artifacts filtered by category
+  - `GET /energy` - Returns current energy market (listings and trades)
+  - `POST /energy/list` - List energy for sale (REC or PPA type)
+  - `POST /energy/match` - Trigger automatic matching of buy/sell orders
+  - `POST /kid/query` - Send text commands to Kid Solar AI (balance, list energy)
+- **CommonJS Architecture**: All modules use CommonJS format matching main.js server
+- **In-Memory Trading**: Wallet system with Solar token balances and energy trading ledger
+- **Kid Solar Commands**: "balance", "list energy", "list REC <kwh> <price>" format
+- **Port Configuration**: Single port 8080→80 maintained for Cloud Run deployment
+- **Production Ready**: All endpoints tested and verified working with existing marketplace
+
 ### Production Deployment Ready (October 3, 2025)
 - **Ownership Protection Added**: Users cannot purchase their own artifacts - frontend UX check + backend validation
 - **Self-Purchase Prevention**: Friendly "This is your listing!" popup prevents accidental self-purchases
@@ -131,6 +148,10 @@ Preferred communication style: Simple, everyday language.
 - **Member Management API**: RESTful endpoints for member data operations
 - **File Upload API**: Image processing and analysis endpoints
 - **Health Check APIs**: System monitoring and deployment verification endpoints
+- **TC-S Computronium Market API**: Category browsing, artifact filtering, energy trading, Kid Solar AI
+  - Market Categories: `/market/categories`, `/market/artifacts/:category`
+  - Energy Trading: `/energy` (GET), `/energy/list` (POST), `/energy/match` (POST)
+  - Kid Solar AI: `/kid/query` (POST) - Text command interface for wallets and energy
 
 ### Databases
 - **Primary Database**: PostgreSQL with Drizzle ORM for structured data
