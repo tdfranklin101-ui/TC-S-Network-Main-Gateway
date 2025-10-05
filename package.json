@@ -20,6 +20,7 @@
     "@types/express-session": "^1.18.2",
     "@types/geoip-lite": "^1.4.4",
     "@types/memoizee": "^0.4.12",
+    "@types/multer": "^2.0.0",
     "@types/passport": "^1.0.17",
     "@types/passport-local": "^1.0.38",
     "@types/ws": "^8.18.1",

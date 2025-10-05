@@ -10,8 +10,11 @@ import { setupDistributionRoutes } from "./distribution";
 import cookieParser from "cookie-parser";
 import fs from "fs";
 import path from "path";
-import { parse } from "csv";
 import { generatePage } from "./template-processor";
+// @ts-ignore - JavaScript file without type definitions
+import { AIWalletAssistant } from "./ai-wallet-assistant";
+// @ts-ignore - JavaScript file without type definitions
+import { AIMarketIntelligence } from "./ai-market-intelligence";
 import * as solarConstants from "./solar-constants";
 import cors from "cors";
 import { db } from "./db";
@@ -48,7 +51,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     const origin = req.headers.origin;
     // Only allow specific origins when credentials are used
-    if (allowedOrigins.includes(origin)) {
+    if (origin && allowedOrigins.includes(origin)) {
       res.header('Access-Control-Allow-Origin', origin);
       res.header('Access-Control-Allow-Credentials', 'true');
     } else if (!origin) {
@@ -111,7 +114,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const baseData = clockRecords[0];
       
       // Calculate current values based on base data and continuous accumulation
-      const baseTimestamp = new Date(baseData.timestamp).getTime();
+      const baseTimestamp = baseData.timestamp ? new Date(baseData.timestamp).getTime() : Date.now();
       const currentTimestamp = Date.now();
       const elapsedSeconds = (currentTimestamp - baseTimestamp) / 1000;
       
@@ -129,7 +132,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const totalDollars = parseFloat(String(baseData.dollars)) + additionalDollars;
       
       // Check if we need to update the base values (if it's a new day)
-      const baseDate = new Date(baseData.timestamp);
+      const baseDate = baseData.timestamp ? new Date(baseData.timestamp) : new Date();
       const currentDate = new Date();
       
       // If the base date is not today, update the database with current totals
@@ -476,10 +479,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Health check failed" });
     }
   });
-
-  // Initialize AI services
-  const aiWalletAssistant = new AIWalletAssistant();
-  const aiMarketIntelligence = new AIMarketIntelligence();
   
   // Configure multer for image uploads
   const upload = multer({ 
@@ -493,7 +492,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Wallet AI endpoints
   aiRouter.post("/wallet-analysis", async (req, res) => {
     try {
-      const userId = req.body.userId || req.session?.user?.id;
+      const userId = req.body.userId || (req.session as any)?.userId;
       if (!userId) {
         return res.status(401).json({ error: "User authentication required" });
       }
@@ -510,7 +509,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Error in wallet analysis:', error);
       res.status(500).json({ 
         error: "Wallet analysis failed", 
-        message: error.message 
+        message: error instanceof Error ? error.message : String(error)
       });
     }
   });
@@ -518,7 +517,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   aiRouter.post("/chat", async (req, res) => {
     try {
       const { message, context, conversationHistory } = req.body;
-      const userId = req.body.userId || req.session?.user?.id;
+      const userId = req.body.userId || (req.session as any)?.userId;
 
       if (!message) {
         return res.status(400).json({ error: "Message is required" });
@@ -568,14 +567,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Error generating market overview:', error);
       res.status(500).json({ 
         error: "Market analysis failed", 
-        message: error.message 
+        message: error instanceof Error ? error.message : String(error)
       });
     }
   });
 
   aiRouter.post("/content-recommendations", async (req, res) => {
     try {
-      const userId = req.body.userId || req.session?.user?.id;
+      const userId = req.body.userId || (req.session as any)?.userId;
       if (!userId) {
         return res.status(401).json({ error: "User authentication required" });
       }
@@ -592,14 +591,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Error generating content recommendations:', error);
       res.status(500).json({ 
         error: "Content recommendation failed", 
-        message: error.message 
+        message: error instanceof Error ? error.message : String(error)
       });
     }
   });
 
   aiRouter.get("/user-context", async (req, res) => {
     try {
-      const userId = req.session?.user?.id;
+      const userId = (req.session as any)?.userId;
       if (!userId) {
         return res.status(401).json({ error: "User authentication required" });
       }
@@ -624,21 +623,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Error loading user context:', error);
       res.status(500).json({ 
         error: "Failed to load user context", 
-        message: error.message 
+        message: error instanceof Error ? error.message : String(error)
       });
     }
   });
 
   // Helper functions for AI responses
-  function formatAIResponse(response) {
+  function formatAIResponse(response: any): string {
     if (response.insights && response.insights.length > 0) {
       return `Here's what I found:\n\n${response.insights.join('\n\n')}`;
     }
     return 'I analyzed your request and here are the results.';
   }
 
-  function generateFollowUpSuggestions(response) {
-    const suggestions = [];
+  function generateFollowUpSuggestions(response: any): string[] {
+    const suggestions: string[] = [];
     
     if (response.type === 'analysis') {
       suggestions.push("Tell me more about these patterns");
@@ -651,14 +650,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return suggestions;
   }
 
-  function generateSpeechText(response) {
+  function generateSpeechText(response: any): string {
     if (response.insights && response.insights.length > 0) {
       return response.insights.slice(0, 2).join('. ') + '.';
     }
     return 'I have analyzed your request and found some interesting information for you.';
   }
 
-  function determineUserSegment(userProfile, transactions) {
+  function determineUserSegment(userProfile: any, transactions: any[]): string {
     if (!userProfile) return 'new';
     
     const balance = userProfile.solarBalance || 0;
@@ -696,8 +695,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Format the data for the public API
       const formattedAccounts = accounts.map(account => ({
         id: account.id,
-        displayName: account.displayName || account.accountNumber,
-        solarBalance: parseFloat(account.totalSolar).toFixed(5),
+        displayName: account.name || account.username || `Member ${account.id}`,
+        solarBalance: account.totalSolar ? parseFloat(account.totalSolar).toFixed(5) : '0.00000',
         joinedDate: account.joinedDate
       }));
       
@@ -741,8 +740,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Format the accounts data for embedding
       const accountsForTemplate = accounts.map(account => ({
         id: account.id,
-        displayName: account.displayName || account.accountNumber,
-        solarBalance: parseFloat(account.totalSolar).toFixed(5),
+        displayName: account.name || account.username || `Member ${account.id}`,
+        solarBalance: account.totalSolar ? parseFloat(account.totalSolar).toFixed(5) : '0.00000',
         joinedDate: account.joinedDate ? new Date(account.joinedDate).toISOString().split('T')[0] : ''
       }));
       
@@ -807,8 +806,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Format the accounts data
       const formattedAccounts = accounts.map(account => ({
         id: account.id,
-        displayName: account.displayName || account.accountNumber,
-        solarBalance: parseFloat(account.totalSolar).toFixed(5),
+        displayName: account.name || account.username || `Member ${account.id}`,
+        solarBalance: account.totalSolar ? parseFloat(account.totalSolar).toFixed(5) : '0.00000',
         joinedDate: account.joinedDate
       }));
       
@@ -840,8 +839,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Format the accounts data
       const formattedAccounts = accounts.map(account => ({
         id: account.id,
-        displayName: account.displayName || account.accountNumber,
-        solarBalance: parseFloat(account.totalSolar).toFixed(5),
+        displayName: account.name || account.username || `Member ${account.id}`,
+        solarBalance: account.totalSolar ? parseFloat(account.totalSolar).toFixed(5) : '0.00000',
         joinedDate: account.joinedDate
       }));
       
@@ -908,8 +907,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Format the accounts data
       const formattedAccounts = accounts.map(account => ({
         id: account.id,
-        displayName: account.displayName || account.accountNumber,
-        solarBalance: parseFloat(account.totalSolar).toFixed(5),
+        displayName: account.name || account.username || `Member ${account.id}`,
+        solarBalance: account.totalSolar ? parseFloat(account.totalSolar).toFixed(5) : '0.00000',
         joinedDate: account.joinedDate
       }));
       
