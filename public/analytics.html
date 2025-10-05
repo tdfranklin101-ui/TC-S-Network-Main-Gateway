@@ -283,7 +283,7 @@
         <div class="stats-grid">
             <div class="stat-card highlight-card">
                 <div class="stat-label">Total Site Visits Since Inception</div>
-                <div class="stat-value" id="totalVisits">7,650</div>
+                <div class="stat-value" id="totalVisits">...</div>
                 <div class="stat-sublabel">Platform launched April 7, 2025</div>
             </div>
             <div class="stat-card">
@@ -352,6 +352,20 @@
             document.getElementById(tabName).classList.add('active');
         }
 
+        // Load total visits from database
+        async function loadTotalVisits() {
+            try {
+                const response = await fetch('/api/analytics/total-visits');
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('totalVisits').textContent = data.totalVisits.toLocaleString();
+                }
+            } catch (error) {
+                console.error('Error loading total visits:', error);
+                document.getElementById('totalVisits').textContent = 'Error';
+            }
+        }
+
         // Load member count and today's visits
         async function loadMetrics() {
             try {
@@ -390,6 +404,7 @@
         }
         
         function refreshData() {
+            loadTotalVisits();
             loadMetrics();
             loadAnalytics();
         }
@@ -577,6 +592,7 @@
 
         // Initialize on page load
         window.addEventListener('DOMContentLoaded', () => {
+            loadTotalVisits();
             loadMetrics();
             loadAnalytics();
             // Auto-refresh timestamp every 10 seconds
