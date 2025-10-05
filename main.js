@@ -484,11 +484,11 @@ function initializeDailyDistribution() {
     console.error('❌ Failed to schedule daily distribution');
   }
   
-  // Run initial check on startup (useful for testing)
-  setTimeout(() => {
-    console.log('🔍 Running initial distribution check...');
-    processDailyDistribution();
-  }, 5000); // Wait 5 seconds after server startup
+  // Initial check disabled to prevent server instability
+  // Use manual trigger endpoint: POST /api/distribution/trigger
+  // Or wait for scheduled run at 3:00 AM UTC
+  console.log('ℹ️  Initial distribution check disabled - using scheduled cron only');
+  console.log('📌 Manual trigger: POST /api/distribution/trigger');
 }
 
 // Initialize database with error handling
@@ -4225,6 +4225,19 @@ const server = http.createServer(async (req, res) => {
       console.error('Error fetching month summary:', error);
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ success: false, error: 'Failed to fetch month summary' }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/analytics/today' && req.method === 'GET') {
+    try {
+      const todayVisits = await analyticsTracker.getTodayVisits();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, todayVisits }));
+    } catch (error) {
+      console.error('Error fetching today visits:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to fetch today visits' }));
     }
     return;
   }

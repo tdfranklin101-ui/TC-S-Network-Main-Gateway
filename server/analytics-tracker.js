@@ -269,6 +269,28 @@ class AnalyticsTracker {
   }
 
   /**
+   * Get visits for current month (approximation of "today" since we aggregate monthly)
+   * @returns {Promise<number>} Current month visit count
+   */
+  async getTodayVisits() {
+    try {
+      const today = new Date();
+      const currentMonth = today.toISOString().substring(0, 7); // YYYY-MM
+      
+      const result = await this.pool.query(`
+        SELECT COALESCE(SUM(visit_count), 0) as today_visits
+        FROM geo_analytics
+        WHERE month = $1
+      `, [currentMonth]);
+
+      return parseInt(result.rows[0]?.today_visits) || 0;
+    } catch (error) {
+      console.error('Error getting today visits:', error);
+      return 0;
+    }
+  }
+
+  /**
    * Close database connection
    */
   async close() {
