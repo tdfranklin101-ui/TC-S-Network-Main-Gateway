@@ -3802,14 +3802,16 @@
 
         // Open chat panel (triggered from existing "Ask Kid Solar" button)
         function openKidSolarChat() {
-            if (!currentUser) {
+            const storedUser = localStorage.getItem('tc_s_user');
+            if (!storedUser) {
                 alert('Please sign in to use Kid Solar');
                 return;
             }
+            const user = JSON.parse(storedUser);
             document.getElementById('kid-solar-chat-panel').classList.add('open');
             // Welcome message if first time
             if (chatConversation.length === 0) {
-                addChatMessage('assistant', `Hi ${currentUser.username}! I'm Kid Solar, your AI assistant. I can help with voice, text, images, and files. What can I do for you today?`);
+                addChatMessage('assistant', `Hi ${user.username}! I'm Kid Solar, your AI assistant. I can help with voice, text, images, and files. What can I do for you today?`);
             }
         }
 
@@ -3838,7 +3840,8 @@
             
             if (!text && chatAttachments.length === 0) return;
             
-            if (!currentUser) {
+            const storedUser = localStorage.getItem('tc_s_user');
+            if (!storedUser) {
                 alert('Please sign in to use Kid Solar');
                 return;
             }
@@ -3904,7 +3907,9 @@
             
             const avatar = document.createElement('div');
             avatar.className = 'chat-message-avatar';
-            avatar.textContent = role === 'user' ? (currentUser?.username?.[0]?.toUpperCase() || '👤') : '☀️';
+            const storedUser = localStorage.getItem('tc_s_user');
+            const username = storedUser ? JSON.parse(storedUser).username : '';
+            avatar.textContent = role === 'user' ? (username?.[0]?.toUpperCase() || '👤') : '☀️';
             
             const content = document.createElement('div');
             content.className = 'chat-message-content';
