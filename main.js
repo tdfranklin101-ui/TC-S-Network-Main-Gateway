@@ -4168,6 +4168,52 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Analytics API endpoints
+  if (pathname === '/api/analytics/total-visits' && req.method === 'GET') {
+    try {
+      const totalVisits = await analyticsTracker.getTotalVisits();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, totalVisits }));
+    } catch (error) {
+      console.error('Error fetching total visits:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to fetch total visits' }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/analytics/monthly' && req.method === 'GET') {
+    try {
+      const data = await analyticsTracker.getMonthlyAnalytics();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, data }));
+    } catch (error) {
+      console.error('Error fetching monthly analytics:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to fetch analytics' }));
+    }
+    return;
+  }
+
+  if (pathname.startsWith('/api/analytics/month/') && req.method === 'GET') {
+    try {
+      const month = pathname.split('/api/analytics/month/')[1];
+      if (!month || !/^\d{4}-\d{2}$/.test(month)) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Invalid month format. Use YYYY-MM' }));
+        return;
+      }
+      const summary = await analyticsTracker.getMonthSummary(month);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, ...summary }));
+    } catch (error) {
+      console.error('Error fetching month summary:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to fetch month summary' }));
+    }
+    return;
+  }
+
   // Health check endpoint - Cloud Run compatible
   if (pathname === '/health' || pathname === '/healthz' || pathname === '/_ah/health') {
     const healthData = { 
