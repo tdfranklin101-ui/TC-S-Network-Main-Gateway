@@ -283,7 +283,7 @@
         <div class="stats-grid">
             <div class="stat-card highlight-card">
                 <div class="stat-label">Total Site Visits Since Inception</div>
-                <div class="stat-value">7,650</div>
+                <div class="stat-value" id="totalVisits">...</div>
                 <div class="stat-sublabel">Platform launched April 7, 2025</div>
             </div>
             <div class="stat-card">
@@ -304,7 +304,7 @@
         </div>
 
         <div class="section">
-            <div class="section-title">📊 Geographic Distribution <span style="font-size: 14px; color: #718096; font-weight: normal; margin-left: 10px;">(New tracking started October 2025)</span></div>
+            <div class="section-title">📊 Geographic Distribution</div>
             
             <div class="tabs">
                 <button class="tab active" onclick="switchTab('countries')">Countries</button>
@@ -332,7 +332,7 @@
         <div class="genesis-note">
             <strong>📅 Genesis Date:</strong> April 7, 2025 - The Current-See platform launched with solar-backed global economic system. 
             <br><br>
-            <strong>🌍 Geographic Tracking:</strong> Started October 2025 - All analytics are aggregate monthly totals to ensure visitor privacy. No individual visitor data or IP addresses are stored.
+            <strong>🌍 Privacy Policy:</strong> All analytics are aggregate monthly totals to ensure visitor privacy. No individual visitor data or IP addresses are stored.
         </div>
     </div>
 
@@ -349,8 +349,19 @@
             document.getElementById(tabName).classList.add('active');
         }
 
-        // Total visits is hardcoded to preserve historical data (7,650)
-        // New geographic tracking started October 2025
+        // Load total visits from database
+        async function loadTotalVisits() {
+            try {
+                const response = await fetch('/api/analytics/total-visits');
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('totalVisits').textContent = data.totalVisits.toLocaleString();
+                }
+            } catch (error) {
+                console.error('Error loading total visits:', error);
+                document.getElementById('totalVisits').textContent = 'Error';
+            }
+        }
 
         // Load all analytics data
         async function loadAnalytics() {
@@ -535,6 +546,7 @@
 
         // Initialize on page load
         window.addEventListener('DOMContentLoaded', () => {
+            loadTotalVisits();
             loadAnalytics();
         });
     </script>
