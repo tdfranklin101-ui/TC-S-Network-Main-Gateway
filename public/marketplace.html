@@ -1931,6 +1931,7 @@
                     headers: {
                         'Content-Type': 'application/json',
                     },
+                    credentials: 'include',
                     body: JSON.stringify({
                         bundleId: bundle.id,
                         buyerEmail: 'tdfranklin101@thecurrentsee.org',
@@ -1979,6 +1980,7 @@
                     headers: {
                         'Content-Type': 'application/json',
                     },
+                    credentials: 'include',
                     body: JSON.stringify({
                         artifactId: track.id,
                         buyerEmail: 'tdfranklin101@thecurrentsee.org',
@@ -2131,7 +2133,9 @@
 
             try {
                 // Fetch user's uploaded and purchased items
-                const response = await fetch('/api/artifacts/my-items');
+                const response = await fetch('/api/artifacts/my-items', {
+                    credentials: 'include'
+                });
                 if (response.ok) {
                     const data = await response.json();
                     displayMyItems(data);
@@ -2562,6 +2566,7 @@
                     headers: {
                         'Content-Type': 'application/json',
                     },
+                    credentials: 'include',
                     body: JSON.stringify({
                         userId: currentUser.userId,
                         artifactId: artifactId
@@ -2654,7 +2659,8 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                    }
+                    },
+                    credentials: 'include'
                 });
 
                 // 2. Then clean up client-side data (regardless of server response)
@@ -2770,7 +2776,8 @@
 
                 const response = await fetch('/api/kid-solar/voice', {
                     method: 'POST',
-                    body: formData
+                    body: formData,
+                    credentials: 'include'
                 });
 
                 if (response.ok) {
@@ -2858,6 +2865,7 @@
                     headers: {
                         'Content-Type': 'application/json',
                     },
+                    credentials: 'include',
                     body: JSON.stringify({
                         username: username,
                         password: password
@@ -2917,6 +2925,7 @@
                     headers: {
                         'Content-Type': 'application/json',
                     },
+                    credentials: 'include',
                     body: JSON.stringify({
                         username: username,
                         email: email,
