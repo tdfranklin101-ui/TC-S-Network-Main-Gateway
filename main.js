@@ -69,7 +69,20 @@ const KidSolarVoice = require('./server/kid-solar-voice');
 
 // Geographic Analytics Tracker
 const AnalyticsTracker = require('./server/analytics-tracker');
-const analyticsTracker = new AnalyticsTracker(process.env.DATABASE_URL);
+let analyticsTracker;
+try {
+  analyticsTracker = new AnalyticsTracker(process.env.DATABASE_URL);
+  console.log('✅ Analytics tracker initialized');
+} catch (error) {
+  console.error('⚠️ Analytics tracker initialization failed:', error.message);
+  // Create minimal fallback
+  analyticsTracker = {
+    trackVisit: async () => {},
+    getTotalVisits: async () => 0,
+    getMonthlyAnalytics: async () => [],
+    getMonthSummary: async () => ({ month: '', totalVisits: 0, topCountries: [], usStates: [] })
+  };
+}
 
 const PORT = process.env.PORT || 8080;
 
@@ -4170,12 +4183,14 @@ const server = http.createServer(async (req, res) => {
 
   // Analytics API endpoints
   if (pathname === '/api/analytics/total-visits' && req.method === 'GET') {
+    console.log('📊 Analytics API: total-visits request received');
     try {
       const totalVisits = await analyticsTracker.getTotalVisits();
+      console.log('📊 Total visits:', totalVisits);
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ success: true, totalVisits }));
     } catch (error) {
-      console.error('Error fetching total visits:', error);
+      console.error('❌ Error fetching total visits:', error);
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ success: false, error: 'Failed to fetch total visits' }));
     }

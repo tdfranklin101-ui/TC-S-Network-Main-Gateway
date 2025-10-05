@@ -28,11 +28,12 @@ class AnalyticsTracker {
       return null;
     }
 
+    // Use empty string for non-US states to ensure proper unique constraint
     return {
       countryCode: geo.country,
       countryName: this.getCountryName(geo.country),
-      stateCode: geo.country === 'US' ? geo.region : null,
-      stateName: geo.country === 'US' ? this.getUSStateName(geo.region) : null
+      stateCode: geo.country === 'US' && geo.region ? geo.region : '',
+      stateName: geo.country === 'US' && geo.region ? this.getUSStateName(geo.region) : ''
     };
   }
 
