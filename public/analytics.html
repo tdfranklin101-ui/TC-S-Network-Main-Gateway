@@ -355,7 +355,7 @@
         // Load total visits from database
         async function loadTotalVisits() {
             try {
-                const response = await fetch('/api/analytics/total-visits');
+                const response = await fetch('/api/analytics/total-visits?' + Date.now());
                 const data = await response.json();
                 if (data.success) {
                     document.getElementById('totalVisits').textContent = data.totalVisits.toLocaleString();
@@ -370,15 +370,14 @@
         async function loadMetrics() {
             try {
                 // Get member count
-                const memberResponse = await fetch('/api/members');
+                const memberResponse = await fetch('/api/members?' + Date.now());
                 if (memberResponse.ok) {
                     const members = await memberResponse.json();
                     document.getElementById('memberCount').textContent = members.length || 0;
                 }
                 
                 // Get today's visits (tracked since midnight UTC)
-                const today = new Date().toISOString().split('T')[0];
-                const todayResponse = await fetch('/api/analytics/today');
+                const todayResponse = await fetch('/api/analytics/today?' + Date.now());
                 if (todayResponse.ok) {
                     const data = await todayResponse.json();
                     document.getElementById('todayVisits').textContent = data.todayVisits || 0;
@@ -403,16 +402,31 @@
             document.getElementById('currentTime').textContent = `Last updated: ${timeStr} UTC`;
         }
         
-        function refreshData() {
-            loadTotalVisits();
-            loadMetrics();
-            loadAnalytics();
+        async function refreshData() {
+            const button = event?.target;
+            if (button) {
+                button.textContent = '⏳ Refreshing...';
+                button.disabled = true;
+            }
+            
+            try {
+                await loadTotalVisits();
+                await loadMetrics();
+                await loadAnalytics();
+            } catch (error) {
+                console.error('Error refreshing data:', error);
+            } finally {
+                if (button) {
+                    button.textContent = '🔄 Refresh Data';
+                    button.disabled = false;
+                }
+            }
         }
 
         // Load all analytics data
         async function loadAnalytics() {
             try {
-                const response = await fetch('/api/analytics/monthly');
+                const response = await fetch('/api/analytics/monthly?' + Date.now());
                 const data = await response.json();
                 
                 if (!data.success) {
