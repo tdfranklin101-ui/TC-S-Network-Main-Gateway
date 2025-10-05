@@ -284,6 +284,16 @@ class MarketplaceApp {
     const headerActions = document.getElementById('header-actions');
     if (!headerActions) return;
 
+    // Sync with global currentUser variable for legacy functions
+    if (typeof window !== 'undefined') {
+      window.currentUser = this.currentUser ? {
+        userId: this.currentUser.id,
+        username: this.currentUser.username,
+        solarBalance: this.solarBalance || 0,
+        ...this.currentUser
+      } : null;
+    }
+
     if (this.currentUser) {
       // Show member status with initial/emoji and Solar balance
       const userInitial = this.currentUser.firstName ? this.currentUser.firstName.charAt(0).toUpperCase() : 
