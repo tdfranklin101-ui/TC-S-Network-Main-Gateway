@@ -577,8 +577,8 @@ const server = http.createServer(async (req, res) => {
     }
   }
   
-  // Try market routes
-  if (pathname.startsWith('/market')) {
+  // Try market routes (includes /api/kid-solar/voice multi-modal endpoint)
+  if (pathname.startsWith('/market') || pathname === '/api/kid-solar/voice') {
     if (marketRoutes(req, res, pathname)) return;
   }
   
@@ -592,8 +592,8 @@ const server = http.createServer(async (req, res) => {
     if (await kidRoutes(req, res, pathname, body)) return;
   }
   
-  // Kid Solar Voice Interaction
-  if (pathname === '/api/kid-solar/voice' && req.method === 'POST') {
+  // OLD Kid Solar Voice Interaction (replaced by multi-modal endpoint in routes/market.js)
+  if (false && pathname === '/api/kid-solar/voice' && req.method === 'POST') {
     try {
       // Verify authentication first
       const sessionId = getCookie(req, 'tc_s_session');

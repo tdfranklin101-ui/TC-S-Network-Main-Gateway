@@ -4,6 +4,7 @@
  * Voice-powered wallet assistant using OpenAI's:
  * - Whisper API for speech-to-text
  * - GPT-4o for natural language understanding
+ * - GPT-4o Vision for image analysis
  * - TTS API for text-to-speech responses
  * 
  * Provides situationally aware wallet operations through natural language
@@ -41,6 +42,7 @@ Your capabilities:
 - Explain marketplace features
 - Provide spending insights and recommendations
 - Answer questions about the solar economy
+- Analyze images and documents when shared
 
 Response style:
 - Keep responses concise and conversational (2-3 sentences max)
@@ -79,9 +81,9 @@ Context:
   }
 
   /**
-   * Process voice command and generate response
+   * Process voice command and generate response with conversation history
    */
-  async processVoiceCommand(text, memberId, memberContext = {}) {
+  async processVoiceCommand(text, memberId, memberContext = {}, conversationHistory = []) {
     try {
       const walletData = await this.getWalletData(memberId);
       
@@ -99,12 +101,15 @@ User said: "${text}"
 
 Provide a helpful, conversational voice response.`;
 
+      const messages = [
+        { role: 'system', content: this.systemPrompt },
+        ...conversationHistory,
+        { role: 'user', content: contextPrompt }
+      ];
+
       const completion = await this.openai.chat.completions.create({
         model: this.model,
-        messages: [
-          { role: 'system', content: this.systemPrompt },
-          { role: 'user', content: contextPrompt }
-        ],
+        messages: messages,
         temperature: 0.7,
         max_tokens: 150
       });
@@ -120,6 +125,108 @@ Provide a helpful, conversational voice response.`;
     } catch (error) {
       console.error('Error processing voice command:', error);
       throw new Error(`Voice processing failed: ${error.message}`);
+    }
+  }
+
+  /**
+   * Process image with GPT-4o Vision
+   */
+  async processImageWithVision(imageData, prompt, conversationHistory = []) {
+    try {
+      let base64Image;
+      
+      if (Buffer.isBuffer(imageData)) {
+        base64Image = imageData.toString('base64');
+      } else if (typeof imageData === 'string' && imageData.startsWith('data:')) {
+        base64Image = imageData.split(',')[1];
+      } else if (typeof imageData === 'string') {
+        base64Image = imageData;
+      } else {
+        throw new Error('Invalid image data format');
+      }
+
+      const imageUrl = `data:image/jpeg;base64,${base64Image}`;
+
+      const messages = [
+        { role: 'system', content: this.systemPrompt },
+        ...conversationHistory,
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: prompt || 'What do you see in this image?' },
+            { type: 'image_url', image_url: { url: imageUrl } }
+          ]
+        }
+      ];
+
+      const completion = await this.openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages: messages,
+        max_tokens: 300
+      });
+
+      return {
+        text: completion.choices[0].message.content,
+        intent: 'image_analysis'
+      };
+
+    } catch (error) {
+      console.error('Error processing image:', error);
+      throw new Error(`Image processing failed: ${error.message}`);
+    }
+  }
+
+  /**
+   * Process file text extraction
+   */
+  async processFileText(fileData, fileName, prompt, conversationHistory = []) {
+    try {
+      const ext = path.extname(fileName).toLowerCase();
+      let extractedText = '';
+
+      if (ext === '.txt') {
+        extractedText = Buffer.isBuffer(fileData) ? fileData.toString('utf-8') : fileData;
+      } else if (ext === '.pdf') {
+        return {
+          text: "I can see you've uploaded a PDF document. PDF text extraction is coming soon! For now, please copy and paste the text you'd like me to analyze.",
+          intent: 'file_upload'
+        };
+      } else if (ext === '.doc' || ext === '.docx') {
+        return {
+          text: "I can see you've uploaded a Word document. Document analysis is coming soon! For now, please copy and paste the text you'd like me to analyze.",
+          intent: 'file_upload'
+        };
+      } else {
+        throw new Error(`Unsupported file type: ${ext}`);
+      }
+
+      if (extractedText.length > 4000) {
+        extractedText = extractedText.substring(0, 4000) + '... (truncated)';
+      }
+
+      const messages = [
+        { role: 'system', content: this.systemPrompt },
+        ...conversationHistory,
+        {
+          role: 'user',
+          content: `${prompt || 'Please analyze this file content:'}\n\nFile: ${fileName}\n\nContent:\n${extractedText}`
+        }
+      ];
+
+      const completion = await this.openai.chat.completions.create({
+        model: this.model,
+        messages: messages,
+        max_tokens: 300
+      });
+
+      return {
+        text: completion.choices[0].message.content,
+        intent: 'file_analysis'
+      };
+
+    } catch (error) {
+      console.error('Error processing file:', error);
+      throw new Error(`File processing failed: ${error.message}`);
     }
   }
 
