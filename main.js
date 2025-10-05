@@ -67,6 +67,10 @@ const kidRoutes = require('./routes/kid');
 // Kid Solar Voice Assistant
 const KidSolarVoice = require('./server/kid-solar-voice');
 
+// Geographic Analytics Tracker
+const AnalyticsTracker = require('./server/analytics-tracker');
+const analyticsTracker = new AnalyticsTracker(process.env.DATABASE_URL);
+
 const PORT = process.env.PORT || 8080;
 
 // Simple session storage (in production, use Redis or database)
@@ -538,6 +542,17 @@ console.log('🎯 AI automatic promotion system active');
 
 const server = http.createServer(async (req, res) => {
   const pathname = new URL(req.url, `http://${req.headers.host}`).pathname;
+  
+  // Track page visits for analytics (async, non-blocking)
+  if (req.method === 'GET' && !pathname.startsWith('/api/') && !pathname.includes('.')) {
+    const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() 
+      || req.headers['x-real-ip'] 
+      || req.connection.remoteAddress 
+      || req.socket.remoteAddress;
+    analyticsTracker.trackVisit(ip).catch(err => {
+      console.error('Analytics tracking failed:', err.message);
+    });
+  }
   
   // TC-S Computronium Market API routes
   let body = null;
