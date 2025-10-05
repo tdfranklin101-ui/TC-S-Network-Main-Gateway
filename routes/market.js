@@ -128,10 +128,8 @@ async function handleMultipartRequest(req, res) {
         addToConversation(conversationId, 'assistant', response.text, 'voice');
         
         const audioResponse = await kidSolar.textToSpeech(response.text);
-        const audioFilename = `response_${Date.now()}.mp3`;
-        const audioPath = path.join('/tmp', audioFilename);
-        require('fs').writeFileSync(audioPath, audioResponse);
-        audioUrl = `/tmp/${audioFilename}`;
+        const audioBase64 = audioResponse.toString('base64');
+        audioUrl = `data:audio/mpeg;base64,${audioBase64}`;
         
       } else if (req.files && req.files.image && req.files.image[0]) {
         const imageFile = req.files.image[0];
@@ -176,6 +174,10 @@ async function handleMultipartRequest(req, res) {
         );
         
         addToConversation(conversationId, 'assistant', response.text, 'text');
+        
+        const audioResponse = await kidSolar.textToSpeech(response.text);
+        const audioBase64 = audioResponse.toString('base64');
+        audioUrl = `data:audio/mpeg;base64,${audioBase64}`;
         
       } else {
         res.writeHead(400, { 'Content-Type': 'application/json' });
