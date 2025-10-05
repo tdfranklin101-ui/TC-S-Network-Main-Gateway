@@ -8,7 +8,7 @@ packages = ["freetype", "lcms2", "libimagequant", "libjpeg", "libtiff", "libwebp
 
 [deployment]
 run = "node main.js"
-deploymentTarget = "cloudrun"
+deploymentTarget = "autoscale"
 
 [[ports]]
 localPort = 8080
