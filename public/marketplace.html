@@ -3643,12 +3643,12 @@
 
         // Open chat panel (triggered from existing "Ask Kid Solar" button)
         function openKidSolarChat() {
-            const storedUser = localStorage.getItem('tc_s_user');
-            if (!storedUser) {
+            // Use currentUser variable instead of re-checking localStorage
+            if (!currentUser) {
                 alert('Please sign in to use Kid Solar');
                 return;
             }
-            const user = JSON.parse(storedUser);
+            const user = currentUser;
             document.getElementById('kid-solar-chat-panel').classList.add('open');
             // Welcome message if first time
             if (chatConversation.length === 0) {
@@ -3681,8 +3681,8 @@
             
             if (!text && chatAttachments.length === 0) return;
             
-            const storedUser = localStorage.getItem('tc_s_user');
-            if (!storedUser) {
+            // Use currentUser variable instead of re-checking localStorage
+            if (!currentUser) {
                 alert('Please sign in to use Kid Solar');
                 return;
             }
@@ -3748,8 +3748,8 @@
             
             const avatar = document.createElement('div');
             avatar.className = 'chat-message-avatar';
-            const storedUser = localStorage.getItem('tc_s_user');
-            const username = storedUser ? JSON.parse(storedUser).username : '';
+            // Use currentUser variable instead of re-checking localStorage
+            const username = currentUser ? currentUser.username : '';
             avatar.textContent = role === 'user' ? (username?.[0]?.toUpperCase() || '👤') : '☀️';
             
             const content = document.createElement('div');
