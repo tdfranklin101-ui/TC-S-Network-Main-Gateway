@@ -462,10 +462,11 @@ export type InsertArtifact = z.infer<typeof insertArtifactSchema>;
 export type InsertDownloadToken = z.infer<typeof insertDownloadTokenSchema>;
 export type InsertFileAccessLog = z.infer<typeof insertFileAccessLogSchema>;
 
-// Geographic Analytics - Privacy-focused aggregate monthly visit tracking
+// Geographic Analytics - Privacy-focused aggregate daily visit tracking (production only)
 export const geoAnalytics = pgTable("geo_analytics", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  month: varchar("month").notNull(), // Format: 'YYYY-MM' (e.g., '2025-04')
+  date: varchar("date").notNull(), // Format: 'YYYY-MM-DD' (e.g., '2025-04-07')
+  environment: varchar("environment", { length: 20 }).notNull().default('production'), // 'production' or 'development'
   countryCode: varchar("country_code", { length: 2 }).notNull(), // ISO 3166-1 alpha-2 (e.g., 'US', 'CA')
   countryName: varchar("country_name").notNull(), // Full country name
   stateCode: varchar("state_code", { length: 2 }), // US state code (e.g., 'CA', 'NY') - NULL for non-US
@@ -474,7 +475,7 @@ export const geoAnalytics = pgTable("geo_analytics", {
   updatedAt: timestamp("updated_at").defaultNow(), // Last update timestamp
 });
 
-// Indexes for fast queries by month and location will be created separately
+// Indexes for fast queries by date and location will be created separately
 
 // Insert schema
 export const insertGeoAnalyticsSchema = createInsertSchema(geoAnalytics).omit({ id: true, updatedAt: true });

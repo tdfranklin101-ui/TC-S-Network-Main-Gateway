@@ -119,47 +119,69 @@ class AnalyticsTracker {
   }
 
   /**
-   * Get current month in YYYY-MM format
-   * @returns {string} Current month
+   * Get current date in YYYY-MM-DD format
+   * @returns {string} Current date
    */
-  getCurrentMonth() {
+  getCurrentDate() {
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
-    return `${year}-${month}`;
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  /**
+   * Detect if running in production environment
+   * @returns {boolean} True if production
+   */
+  isProduction() {
+    // Check for production indicators
+    const nodeEnv = process.env.NODE_ENV;
+    const replitDeployment = process.env.REPLIT_DEPLOYMENT;
+    const replDeploy = process.env.REPL_DEPLOY;
+    
+    // Production if NODE_ENV is production OR if it's a Replit deployment
+    return nodeEnv === 'production' || replitDeployment === '1' || replDeploy === '1';
   }
 
   /**
    * Track a page visit with geographic data
-   * Updates monthly aggregate counts
+   * Updates daily aggregate counts (production only)
    * @param {string} ip - Visitor IP address
    */
   async trackVisit(ip) {
     try {
+      // Only track production visits
+      const environment = this.isProduction() ? 'production' : 'development';
+      if (environment !== 'production') {
+        return; // Skip development visits
+      }
+
       const location = this.getLocationFromIP(ip);
       if (!location) {
         return; // Skip if no valid location
       }
 
-      const month = this.getCurrentMonth();
+      const date = this.getCurrentDate();
 
-      // Upsert monthly aggregate
+      // Upsert daily aggregate for production only
       await this.pool.query(`
-        INSERT INTO geo_analytics (month, country_code, country_name, state_code, state_name, visit_count, updated_at)
-        VALUES ($1, $2, $3, $4, $5, 1, CURRENT_TIMESTAMP)
-        ON CONFLICT (month, country_code, COALESCE(state_code, ''))
+        INSERT INTO geo_analytics (date, environment, country_code, country_name, state_code, state_name, visit_count, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, 1, CURRENT_TIMESTAMP)
+        ON CONFLICT (date, environment, country_code, COALESCE(state_code, ''))
         DO UPDATE SET
           visit_count = geo_analytics.visit_count + 1,
           updated_at = CURRENT_TIMESTAMP
       `, [
-        month,
+        date,
+        environment,
         location.countryCode,
         location.countryName,
         location.stateCode,
         location.stateName
       ]);
 
-      console.log(`📊 Analytics: +1 visit from ${location.countryName}${location.stateName ? ', ' + location.stateName : ''} for ${month}`);
+      console.log(`📊 Analytics: +1 production visit from ${location.countryName}${location.stateName ? ', ' + location.stateName : ''} for ${date}`);
     } catch (error) {
       console.error('❌ Analytics tracking error:', error.message);
       // Don't throw - tracking failures shouldn't break the site
@@ -188,20 +210,22 @@ class AnalyticsTracker {
   }
 
   /**
-   * Get all monthly analytics
+   * Get all daily analytics (production only) grouped by month for display
    * @returns {Promise<Array>} Analytics data grouped by month
    */
   async getMonthlyAnalytics() {
     try {
       const result = await this.pool.query(`
         SELECT 
-          month,
+          SUBSTRING(date, 1, 7) as month,
           country_code,
           country_name,
           state_code,
           state_name,
-          visit_count
+          SUM(visit_count) as visit_count
         FROM geo_analytics
+        WHERE environment = 'production'
+        GROUP BY SUBSTRING(date, 1, 7), country_code, country_name, state_code, state_name
         ORDER BY month DESC, visit_count DESC
       `);
       return result.rows;
@@ -212,7 +236,7 @@ class AnalyticsTracker {
   }
 
   /**
-   * Get analytics summary for a specific month
+   * Get analytics summary for a specific month (production only)
    * @param {string} month - Month in YYYY-MM format
    * @returns {Promise<object>} Analytics summary
    */
@@ -224,13 +248,14 @@ class AnalyticsTracker {
           country_name,
           state_code,
           state_name,
-          visit_count
+          SUM(visit_count) as visit_count
         FROM geo_analytics
-        WHERE month = $1
+        WHERE environment = 'production' AND date LIKE $1
+        GROUP BY country_code, country_name, state_code, state_name
         ORDER BY visit_count DESC
-      `, [month]);
+      `, [month + '%']);
 
-      const totalVisits = result.rows.reduce((sum, row) => sum + row.visit_count, 0);
+      const totalVisits = result.rows.reduce((sum, row) => sum + parseInt(row.visit_count), 0);
       const topCountries = result.rows
         .filter(row => !row.state_code) // Only country-level data
         .slice(0, 10);
@@ -247,12 +272,17 @@ class AnalyticsTracker {
       };
     } catch (error) {
       console.error('Error fetching month summary:', error);
-      return null;
+      return {
+        month,
+        totalVisits: 0,
+        topCountries: [],
+        usStates: []
+      };
     }
   }
 
   /**
-   * Get total visits since inception
+   * Get total visits since inception (production only)
    * @returns {Promise<number>} Total visit count
    */
   async getTotalVisits() {
@@ -260,6 +290,7 @@ class AnalyticsTracker {
       const result = await this.pool.query(`
         SELECT SUM(visit_count) as total
         FROM geo_analytics
+        WHERE environment = 'production'
       `);
       return parseInt(result.rows[0]?.total || 0);
     } catch (error) {
@@ -269,19 +300,18 @@ class AnalyticsTracker {
   }
 
   /**
-   * Get visits for current month (approximation of "today" since we aggregate monthly)
-   * @returns {Promise<number>} Current month visit count
+   * Get visits for today (production only)
+   * @returns {Promise<number>} Today's visit count
    */
   async getTodayVisits() {
     try {
-      const today = new Date();
-      const currentMonth = today.toISOString().substring(0, 7); // YYYY-MM
+      const date = this.getCurrentDate();
       
       const result = await this.pool.query(`
         SELECT COALESCE(SUM(visit_count), 0) as today_visits
         FROM geo_analytics
-        WHERE month = $1
-      `, [currentMonth]);
+        WHERE environment = 'production' AND date = $1
+      `, [date]);
 
       return parseInt(result.rows[0]?.today_visits) || 0;
     } catch (error) {
