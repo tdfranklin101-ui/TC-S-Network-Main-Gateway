@@ -455,7 +455,7 @@
                         total: 0
                     };
                 }
-                countries[row.country_code].total += row.visit_count;
+                countries[row.country_code].total += parseInt(row.visit_count) || 0;
             });
 
             // Convert to array and sort
@@ -493,7 +493,7 @@
                             total: 0
                         };
                     }
-                    acc[row.state_code].total += row.visit_count;
+                    acc[row.state_code].total += parseInt(row.visit_count) || 0;
                     return acc;
                 }, {});
 
