@@ -20,7 +20,7 @@ Preferred communication style: Simple, everyday language.
 ### Technical Implementations
 - **Frontend**: Vanilla JavaScript for dynamic content rendering and real-time updates. D-ID AI agent is embedded via a CDN script.
 - **Backend**: Express.js server, designed for deployment flexibility across environments like Replit and Cloud Run. Utilizes CommonJS architecture for modules.
-- **Real-time Analytics**: Dynamic fetching of total visits, geographic analytics, daily visits, and live member count.
+- **Real-time Analytics**: Production-only tracking with daily visit aggregation, geographic analytics (countries and US states), and live member count. Development views are excluded for accurate public metrics. Environment detection via NODE_ENV and Replit deployment flags.
 - **AI Multi-Modal Assistant**: Kid Solar Command Center integrates OpenAI's Whisper (STT), GPT-4o (NLU/Vision), and TTS (Nova voice) for natural language wallet control and multi-modal interactions. Supports text chat, voice commands, image analysis via Vision API, and file processing (PDF/TXT/DOC). Conversation context persisted across all input modes using in-memory state management and localStorage conversationId. Base64 audio delivery for TTS responses ensures seamless playback across devices.
 - **Marketplace & Energy Trading**: Features five market categories (Computronium Missions, Culture, Basic Needs, Rent Anything, Energy Trading) with artifact display and an in-memory energy trading ledger for RECs/PPAs.
 - **Authentication**: Session-based authentication with extended session durations (30 days), ensuring seamless user experience. Includes self-purchase prevention for marketplace listings.
