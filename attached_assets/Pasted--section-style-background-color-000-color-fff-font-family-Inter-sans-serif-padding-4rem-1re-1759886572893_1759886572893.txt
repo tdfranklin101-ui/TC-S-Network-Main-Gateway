@@ -1,0 +1,93 @@
+<section style="background-color:#000; color:#fff; font-family:'Inter', sans-serif; padding:4rem 1rem;">
+  <div style="max-width:950px; margin:0 auto; text-align:center;">
+
+    <!-- Section Title -->
+    <h2 style="font-size:2rem; margin-bottom:1rem; font-weight:700; color:#00f5d4;">
+      🌐 Participation & Get Involved
+    </h2>
+
+    <p style="font-size:1.15rem; line-height:1.8; opacity:0.9; max-width:780px; margin:0 auto 2.5rem auto;">
+      The Solar Standard belongs to everyone.  
+      Whether you are an individual, an energy generator, an institution, or a network operator, 
+      there is a role for you in building the Solar economy.  
+      Participation connects personal action to planetary impact.
+    </p>
+
+    <!-- Participation Grid -->
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(250px, 1fr)); gap:2rem; margin-top:2rem; text-align:left;">
+
+      <!-- Individuals -->
+      <div style="background:#0a0a0a; border:1px solid #111; padding:1.5rem; border-radius:8px;">
+        <h3 style="color:#00bbf9; font-size:1.3rem; margin-bottom:0.5rem;">👤 Individuals</h3>
+        <p style="font-size:1rem; line-height:1.6; opacity:0.95;">
+          Every human is issued <strong>1 Solar per day</strong> through their wallet — a universal Solar income.
+          Individuals can:
+        </p>
+        <ul style="list-style:none; padding:0; margin:0; font-size:0.95rem; line-height:1.6;">
+          <li>• Claim and manage their <strong>Solar wallet</strong>.</li>
+          <li>• Spend Solar in marketplaces for energy, digital artifacts, and services.</li>
+          <li>• Allocate Solar to support AI, science, and community projects.</li>
+          <li>• Join local Z Private Networks to trade Solar locally.</li>
+        </ul>
+      </div>
+
+      <!-- Generators -->
+      <div style="background:#0a0a0a; border:1px solid #111; padding:1.5rem; border-radius:8px;">
+        <h3 style="color:#00bbf9; font-size:1.3rem; margin-bottom:0.5rem;">☀️ Energy Generators</h3>
+        <p style="font-size:1rem; line-height:1.6; opacity:0.95;">
+          Renewable producers can register to <strong>issue RECs and PPAs</strong> into the Solar marketplace. Generators can:
+        </p>
+        <ul style="list-style:none; padding:0; margin:0; font-size:0.95rem; line-height:1.6;">
+          <li>• List REC/PPA capacity for <strong>Solar-denominated sales</strong>.</li>
+          <li>• Receive Solar for power contributions into the reserve.</li>
+          <li>• Participate in <strong>virtual power plant (VPP)</strong> integrations.</li>
+          <li>• Support global GBI through verified renewable generation.</li>
+        </ul>
+      </div>
+
+      <!-- Institutions -->
+      <div style="background:#0a0a0a; border:1px solid #111; padding:1.5rem; border-radius:8px;">
+        <h3 style="color:#00bbf9; font-size:1.3rem; margin-bottom:0.5rem;">🏛️ Institutions & Partners</h3>
+        <p style="font-size:1rem; line-height:1.6; opacity:0.95;">
+          Organizations, NGOs, cities, and research centers can use Solar as a <strong>settlement, funding, and coordination layer</strong> for missions and infrastructure. Institutions can:
+        </p>
+        <ul style="list-style:none; padding:0; margin:0; font-size:0.95rem; line-height:1.6;">
+          <li>• Accept Solar for programs, services, or grants.</li>
+          <li>• Allocate Solar toward <strong>scientific and AI compute</strong>.</li>
+          <li>• Launch Solar-backed <strong>impact funds</strong> or initiatives.</li>
+          <li>• Help shape standards and transparent governance.</li>
+        </ul>
+      </div>
+
+      <!-- Networks -->
+      <div style="background:#0a0a0a; border:1px solid #111; padding:1.5rem; border-radius:8px;">
+        <h3 style="color:#00bbf9; font-size:1.3rem; margin-bottom:0.5rem;">🏙️ Z Private Networks</h3>
+        <p style="font-size:1rem; line-height:1.6; opacity:0.95;">
+          Communities, venues, and enterprises can <strong>commission their own Solar economies</strong> 
+          using the global standard as a backbone. Z Private Network operators can:
+        </p>
+        <ul style="list-style:none; padding:0; margin:0; font-size:0.95rem; line-height:1.6;">
+          <li>• Host Solar marketplaces for events, campuses, and cities.</li>
+          <li>• Integrate REC/PPA-backed energy flows locally.</li>
+          <li>• Tokenize services and experiences inside their Solar ecosystem.</li>
+          <li>• Interoperate seamlessly with the global Solar reserve.</li>
+        </ul>
+      </div>
+
+    </div>
+
+    <!-- Call to Action -->
+    <div style="margin-top:3rem;">
+      <p style="font-size:1.2rem; line-height:1.8; max-width:780px; margin:0 auto 1.5rem auto;">
+        Participation is how the Solar economy grows.  
+        Each wallet, generator, marketplace, and network adds capacity, intention, and innovation to the planetary reserve.
+      </p>
+      <a href="#"
+         style="display:inline-block; background:linear-gradient(135deg,#00f5d4 0%,#00bbf9 100%);
+         color:#000; font-weight:600; padding:0.8rem 1.5rem; border-radius:6px; text-decoration:none; font-size:1.1rem;">
+        🌞 Join the Solar Economy
+      </a>
+    </div>
+
+  </div>
+</section>
