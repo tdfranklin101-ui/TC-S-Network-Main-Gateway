@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Governance & Transparency - Learn how the TC-S Network Foundation maintains algorithmic issuance, open ledgers, and trustless governance of the Solar Standard.">
+    <meta property="og:title" content="Solar Standard: Governance & Transparency | TC-S Network Foundation">
+    <meta property="og:description" content="Discover how algorithmic issuance, public ledgers, and transparent governance create a trustless planetary monetary system.">
+    <meta property="og:type" content="article">
+    <title>Governance & Transparency | TC-S Network Foundation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #0a0a0a;
+            color: #fff;
+            line-height: 1.6;
+        }
+
+        /* Header Navigation */
+        .header-nav {
+            background: rgba(0, 0, 0, 0.9);
+            border-bottom: 1px solid #222;
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #00f5d4;
+            text-decoration: none;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            color: #888;
+        }
+
+        .breadcrumb a {
+            color: #00bbf9;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .breadcrumb a:hover {
+            color: #00f5d4;
+        }
+
+        /* Main Content Section */
+        .main-section {
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.65) 0%, rgba(10, 10, 10, 0.85) 100%);
+            backdrop-filter: blur(20px);
+            color: #fff;
+            padding: 4rem 1rem;
+        }
+
+        .content-wrapper {
+            max-width: 900px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        /* Typography */
+        h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            font-weight: 800;
+            color: #00f5d4;
+            text-shadow: 0 0 20px rgba(0, 245, 212, 0.3);
+        }
+
+        h3 {
+            font-size: 1.5rem;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            color: #00bbf9;
+            font-weight: 700;
+        }
+
+        h4 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.3rem;
+            color: #00f5d4;
+            font-weight: 700;
+        }
+
+        p {
+            font-size: 1.15rem;
+            line-height: 1.8;
+            opacity: 0.95;
+            max-width: 750px;
+            margin: 0 auto 1.5rem auto;
+            font-weight: 400;
+        }
+
+        p strong {
+            font-weight: 800;
+            color: #fff;
+        }
+
+        /* Lists */
+        .feature-list {
+            list-style: none;
+            text-align: left;
+            max-width: 650px;
+            margin: 1rem auto;
+            font-size: 1.05rem;
+            line-height: 1.7;
+        }
+
+        .feature-list li {
+            margin-bottom: 0.8rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .feature-list strong {
+            font-weight: 800;
+            color: #fff;
+        }
+
+        /* Governance Box */
+        .governance-box {
+            background: rgba(17, 17, 17, 0.9);
+            border: 1px solid #333;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-top: 2rem;
+            max-width: 750px;
+            margin-left: auto;
+            margin-right: auto;
+            backdrop-filter: blur(10px);
+        }
+
+        .governance-list {
+            list-style: none;
+            text-align: left;
+            margin: 0;
+            padding: 0;
+            font-size: 1rem;
+            line-height: 1.7;
+        }
+
+        .governance-list li {
+            margin-bottom: 0.5rem;
+        }
+
+        .governance-list strong {
+            font-weight: 800;
+        }
+
+        /* Navigation Buttons */
+        .page-navigation {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 900px;
+            margin: 3rem auto 0 auto;
+            padding: 2rem 0;
+            border-top: 1px solid #222;
+        }
+
+        .nav-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(135deg, #00f5d4, #00bbf9);
+            color: #000;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 700;
+            transition: all 0.3s;
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 245, 212, 0.4);
+        }
+
+        .nav-btn.disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            h2 {
+                font-size: 1.5rem;
+            }
+
+            h3 {
+                font-size: 1.25rem;
+            }
+
+            p {
+                font-size: 1rem;
+            }
+
+            .header-nav {
+                padding: 1rem;
+            }
+
+            .nav-container {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .breadcrumb {
+                font-size: 0.8rem;
+            }
+
+            .page-navigation {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .nav-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <nav class="header-nav">
+        <div class="nav-container">
+            <a href="/main-platform.html" class="logo">TC-S Network Foundation</a>
+            <div class="breadcrumb">
+                <a href="/main-platform.html">Home</a>
+                <span>/</span>
+                <a href="/main-platform.html#solar-standard">Solar Standard</a>
+                <span>/</span>
+                <span>Page 3</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <section class="main-section">
+        <div class="content-wrapper">
+
+            <!-- Section Title -->
+            <h2>🏛 Governance & Transparency</h2>
+
+            <p>
+                The <strong>TC-S Network Foundation, Inc.</strong> operates as a <strong>non-profit planetary mint and reserve steward</strong>.  
+                Its purpose is to maintain the integrity of the <strong>Solar Standard</strong>, manage the Solar Reserve, and ensure 
+                that issuance and distribution remain <strong>transparent, algorithmic, and universal</strong>.
+            </p>
+
+            <!-- Subsection 1: Role of the Foundation -->
+            <h3>🌞 Role of the Foundation</h3>
+            <p>
+                The Foundation serves as the <strong>mint and reserve</strong> of the Solar economy.  
+                It is not a market operator, broker, or private token issuer. Its role is to:
+            </p>
+            <ul class="feature-list">
+                <li>• Mint Solar tokens according to the <strong>Solar Standard</strong> — algorithmically, not discretionarily.</li>
+                <li>• Maintain the <strong>Solar Reserve ledger</strong> as a planetary accounting layer.</li>
+                <li>• Distribute Solar tokens daily to all wallets, supporting the <strong>Global Basic Income mission</strong>.</li>
+                <li>• Publish transparent issuance data and reserve status for public verification.</li>
+                <li>• Steward the integrity of the system for future generations.</li>
+            </ul>
+
+            <!-- Subsection 2: Algorithmic Issuance -->
+            <h3>🧮 Algorithmic Issuance</h3>
+            <p>
+                Solar issuance is governed by an open, physics-based algorithm tied to 
+                <strong>1% of Earth's incoming solar energy</strong> and distributed at a rate of 
+                <strong>1 Solar per person per day</strong>.  
+                No board, central bank, or political body can arbitrarily change this rate.  
+                The algorithm is <strong>publicly published, cryptographically verifiable, and permanently auditable</strong>.
+            </p>
+
+            <!-- Subsection 3: Transparency Protocol -->
+            <h3>🔍 Transparency Protocol</h3>
+            <p>
+                Every minted Solar token, reserve adjustment, and distribution event is 
+                <strong>recorded on a public ledger</strong>. This allows anyone — individuals, 
+                researchers, regulators, or automated agents — to verify the reserve supply and 
+                circulation in real time. This transparency replaces the need for trust in opaque institutions.
+            </p>
+
+            <div class="governance-box">
+                <h4>🪙 Core Governance Principles</h4>
+                <ul class="governance-list">
+                    <li>• <strong>Algorithmic issuance</strong> replaces discretionary monetary policy.</li>
+                    <li>• <strong>Open ledgers</strong> replace closed accounting systems.</li>
+                    <li>• <strong>Universal access</strong> replaces privileged monetary creation.</li>
+                    <li>• <strong>Long-term stewardship</strong> replaces short-term profit motives.</li>
+                </ul>
+            </div>
+
+            <!-- Subsection 4: Why This Matters -->
+            <h3>🌐 Why This Matters</h3>
+            <p>
+                In an era where monetary systems are often opaque, politicized, or unstable, 
+                the TC-S Network Foundation provides a <strong>clear, planetary reference point for value</strong>.  
+                By aligning currency issuance with <strong>the sun's energy</strong> and open governance, 
+                the Foundation establishes a <strong>trustless, transparent, and regenerative monetary layer</strong> 
+                that communities, markets, and governments can build upon with confidence.
+            </p>
+
+            <!-- Page Navigation -->
+            <div class="page-navigation">
+                <a href="/solar-standard-page2.html" class="nav-btn">
+                    ← Previous: Why the Reserve Matters
+                </a>
+                <a href="/main-platform.html#solar-standard" class="nav-btn">
+                    Return to Foundation Home
+                </a>
+            </div>
+
+        </div>
+    </section>
+
+</body>
+</html>
