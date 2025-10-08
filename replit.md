@@ -12,6 +12,12 @@ Preferred communication style: Simple, everyday language.
 - **Design Philosophy**: Emphasizes a clean, intuitive interface with clear navigation and real-time data display.
 - **3-Division Landing Page**: Homepage displays three organizational divisions: (1) TC-S Network Foundation, Inc. with black transparent background section (rgba(0,0,0,0.65)) featuring high-contrast white text and cyan "Solar Standard" heading, (2) Z Private Networks yellow commissioning header, and (3) TC-S Network Commission oversight references.
 - **Foundation Section Styling**: Black semi-transparent background with backdrop blur, high-contrast white lettering (font-weight 800-900), enhanced text shadows and glows, cyan (#00f5d4) accent for "The Solar Standard" heading, and yellow Foundation Signup CTA button.
+- **Solar Standard Educational Series**: Five-page educational navigation system explaining the Solar Standard:
+  - Page 2: Why the Reserve Matters (authenticity, permanence, distributive framework)
+  - Page 3: Governance & Transparency (algorithmic issuance, transparency protocol, trustless governance)
+  - Page 4: Marketplace & Networks (REC/PPA energy markets, computronium allocation, Z Private Networks)
+  - Page 5: Participation & Get Involved (roles for individuals, generators, institutions, and network operators with CTA to marketplace)
+  - All pages feature consistent Foundation design with breadcrumb navigation, Previous/Next links, and data-testid attributes for testing
 - **Kid Solar Command Center**: Multi-modal AI chat interface with slide-up panel design, supporting text, voice, image, and file inputs. Features conversation history with mixed-media message cards, iOS native file pickers (camera/gallery/documents), and real-time audio playback. All input modes maintain conversation context seamlessly.
 - **Marketplace**: Integrates sign-in/registration modals directly into the marketplace experience, displaying username and Solar balance after authentication.
 - **Video Streaming**: Implements robust HTTP Range Request support for large video files, ensuring smooth playback and instant seeking/scrubbing across various devices.
