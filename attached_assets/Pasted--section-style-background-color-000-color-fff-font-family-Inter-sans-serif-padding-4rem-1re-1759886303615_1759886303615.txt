@@ -1,0 +1,69 @@
+<section style="background-color:#000; color:#fff; font-family:'Inter', sans-serif; padding:4rem 1rem;">
+  <div style="max-width:900px; margin:0 auto; text-align:center;">
+
+    <!-- Section Title -->
+    <h2 style="font-size:2rem; margin-bottom:1rem; font-weight:700; color:#00f5d4;">
+      🏛 Governance & Transparency
+    </h2>
+
+    <p style="font-size:1.15rem; line-height:1.8; opacity:0.9; max-width:750px; margin:0 auto 2.5rem auto;">
+      The <strong>TC-S Network Foundation, Inc.</strong> operates as a <strong>non-profit planetary mint and reserve steward</strong>.  
+      Its purpose is to maintain the integrity of the <strong>Solar Standard</strong>, manage the Solar Reserve, and ensure 
+      that issuance and distribution remain <strong>transparent, algorithmic, and universal</strong>.
+    </p>
+
+    <!-- Subsection 1: Role of the Foundation -->
+    <h3 style="font-size:1.5rem; margin-top:2rem; color:#00bbf9;">🌞 Role of the Foundation</h3>
+    <p style="font-size:1.05rem; line-height:1.7; max-width:750px; margin:0 auto;">
+      The Foundation serves as the <strong>mint and reserve</strong> of the Solar economy.  
+      It is not a market operator, broker, or private token issuer. Its role is to:
+    </p>
+    <ul style="list-style:none; text-align:left; max-width:650px; margin:1rem auto; font-size:1.05rem; line-height:1.7;">
+      <li>• Mint Solar tokens according to the <strong>Solar Standard</strong> — algorithmically, not discretionarily.</li>
+      <li>• Maintain the <strong>Solar Reserve ledger</strong> as a planetary accounting layer.</li>
+      <li>• Distribute Solar tokens daily to all wallets, supporting the <strong>Global Basic Income mission</strong>.</li>
+      <li>• Publish transparent issuance data and reserve status for public verification.</li>
+      <li>• Steward the integrity of the system for future generations.</li>
+    </ul>
+
+    <!-- Subsection 2: Algorithmic Issuance -->
+    <h3 style="font-size:1.5rem; margin-top:2rem; color:#00bbf9;">🧮 Algorithmic Issuance</h3>
+    <p style="font-size:1.05rem; line-height:1.7; max-width:750px; margin:0 auto;">
+      Solar issuance is governed by an open, physics-based algorithm tied to 
+      <strong>1% of Earth’s incoming solar energy</strong> and distributed at a rate of 
+      <strong>1 Solar per person per day</strong>.  
+      No board, central bank, or political body can arbitrarily change this rate.  
+      The algorithm is <strong>publicly published, cryptographically verifiable, and permanently auditable</strong>.
+    </p>
+
+    <!-- Subsection 3: Transparency Protocol -->
+    <h3 style="font-size:1.5rem; margin-top:2rem; color:#00bbf9;">🔍 Transparency Protocol</h3>
+    <p style="font-size:1.05rem; line-height:1.7; max-width:750px; margin:0 auto;">
+      Every minted Solar token, reserve adjustment, and distribution event is 
+      <strong>recorded on a public ledger</strong>. This allows anyone — individuals, 
+      researchers, regulators, or automated agents — to verify the reserve supply and 
+      circulation in real time. This transparency replaces the need for trust in opaque institutions.
+    </p>
+
+    <div style="background:#111; border:1px solid #222; padding:1.5rem; border-radius:8px; margin-top:2rem; max-width:750px; margin-left:auto; margin-right:auto;">
+      <h4 style="margin:0 0 0.5rem 0; font-size:1.3rem; color:#00f5d4;">🪙 Core Governance Principles</h4>
+      <ul style="list-style:none; text-align:left; margin:0; padding:0; font-size:1rem; line-height:1.7;">
+        <li>• <strong>Algorithmic issuance</strong> replaces discretionary monetary policy.</li>
+        <li>• <strong>Open ledgers</strong> replace closed accounting systems.</li>
+        <li>• <strong>Universal access</strong> replaces privileged monetary creation.</li>
+        <li>• <strong>Long-term stewardship</strong> replaces short-term profit motives.</li>
+      </ul>
+    </div>
+
+    <!-- Subsection 4: Why This Matters -->
+    <h3 style="font-size:1.5rem; margin-top:2.5rem; color:#00bbf9;">🌐 Why This Matters</h3>
+    <p style="font-size:1.05rem; line-height:1.7; max-width:750px; margin:0 auto;">
+      In an era where monetary systems are often opaque, politicized, or unstable, 
+      the TC-S Network Foundation provides a <strong>clear, planetary reference point for value</strong>.  
+      By aligning currency issuance with <strong>the sun’s energy</strong> and open governance, 
+      the Foundation establishes a <strong>trustless, transparent, and regenerative monetary layer</strong> 
+      that communities, markets, and governments can build upon with confidence.
+    </p>
+
+  </div>
+</section>
