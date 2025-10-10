@@ -40,7 +40,7 @@ Preferred communication style: Simple, everyday language.
   - **AI Music Creator**: URL import from AiSongMaker.io, Suno AI, and Udio platforms (members create externally, paste direct MP3/WAV/FLAC URLs)
   - **Video Hosting**: URL import from Vimeo Create (AI video generator + hosting) and Runway AI (advanced AI video generation). Members create videos externally, paste player URLs (player.vimeo.com/video/...) or direct MP4/WEBM URLs. **Decision (Oct 2025)**: Using Vimeo + Runway AI as primary video platforms - provides immediate member access without API dependencies. Sora 2 API researched but not publicly available as of Oct 2025.
 - **Music Streaming Platform**: Separate from marketplace - Music Now (music-now.html) dynamically streams Monazite Foundation tracks + member uploads flagged with `isFreeStreaming: true`. Member uploaded audio served from `/uploads/member-content/audio/` with Range Request support.
-- **Authentication**: Session-based authentication with extended session durations (30 days), ensuring seamless user experience. Includes self-purchase prevention for marketplace listings. **FIXED (Oct 2025)**: Marketplace authentication now fetches current user session from server (`/api/session`) instead of relying on localStorage, eliminating session mismatch issues. Session is re-validated on every tab switch, login, and signup to maintain persistent authentication across the marketplace.
+- **Authentication**: Session-based authentication with extended session durations (30 days), ensuring seamless user experience. Includes self-purchase prevention for marketplace listings. **FIXED (Oct 10, 2025)**: Complete Kid Solar authentication overhaul - changed `currentUser.id` to `currentUser.userId` throughout, added Number() coercion for all balance values to prevent TypeError, made login/signup work without page reload via async session refresh, and added balance display to Kid Solar welcome message. All 6 critical authentication issues resolved and architect-approved.
 - **Video Streaming Optimization**: MP4s re-encoded with `faststart` flag, and large files (>10MB) are delivered via HTTP 206 partial content to bypass Cloud Run's 32MB HTTP/1 response limit.
 - **Solar Distribution**: Daily 1 Solar token distribution per member since the Genesis Date (April 7, 2025).
 
@@ -56,11 +56,12 @@ Preferred communication style: Simple, everyday language.
 - **OpenAI**: Utilized for GPT-4o model (text generation, natural language understanding, vision analysis), Whisper (speech-to-text), TTS (text-to-speech with Nova voice), and DALL-E (image creation).
 - **D-ID**: Provides the AI agent platform for interactive avatar experiences (Kid Solar, agent ID: `v2_agt_vhYf_e_C`).
 - **PostgreSQL**: Cloud-hosted relational database for persistent storage, supporting providers like Neon.
-- **AI Content Creation Platforms (Member-Accessible)**:
-  - **Vimeo Create**: AI video generator with hosting (vimeo.com/create) - Members create videos, import via player URLs
-  - **Runway AI**: Advanced AI video generation (runwayml.com) - Gen-2/Gen-3 models
-  - **AiSongMaker.io, Suno AI, Udio**: AI music creation platforms - Members create music, import via direct audio URLs
-  - Note: These are external platforms accessed by members directly; no API keys required on TC-S platform side
+- **AI Content Creation Platforms (Member-Accessible)** - **NEW (Oct 10, 2025)**: Implemented compact dropdown discovery system with 9 platforms:
+  - **Music Creators (3)**: Suno AI, Udio, AiSongMaker.io - AI music generation platforms
+  - **Video Creators (2)**: Vimeo Create (AI video + hosting), Runway AI (Gen-2/Gen-3 models)
+  - **Code Creators (4)**: Replit (app builder), OpenAI Codex (code gen), Bolt.new (full-stack AI), v0.dev (UI generator)
+  - **UX**: 3 compact dropdown buttons in Upload tab - click to reveal platform choices with descriptions
+  - Note: All external platforms accessed by members directly; no API keys required on TC-S platform side
 
 ### APIs and Integrations
 - **TC-S Computronium Market API**: Provides endpoints for market categories (`/market/categories`, `/market/artifacts/:category`), energy trading (`/energy`, `/energy/list`, `/energy/match`), and a text command interface for Kid Solar AI (`/kid/query`).
