@@ -1920,7 +1920,7 @@
                 
                 <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
                     <!-- Music Creators Dropdown -->
-                    <div style="position: relative; flex: 1; min-width: 200px; max-width: 300px;">
+                    <div style="position: relative; flex: 1; min-width: 200px; max-width: 280px;">
                         <button type="button" onclick="toggleAIPlatformDropdown('music')" data-testid="button-music-dropdown" style="width: 100%; padding: 14px 20px; background: linear-gradient(135deg, #39FF14, #32CD32); border: none; border-radius: 8px; color: #000; font-weight: 700; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
                             <span>🎵 Music Creators</span>
                             <span id="music-dropdown-arrow">▼</span>
@@ -1942,7 +1942,7 @@
                     </div>
                     
                     <!-- Video Creators Dropdown -->
-                    <div style="position: relative; flex: 1; min-width: 200px; max-width: 300px;">
+                    <div style="position: relative; flex: 1; min-width: 200px; max-width: 280px;">
                         <button type="button" onclick="toggleAIPlatformDropdown('video')" data-testid="button-video-dropdown" style="width: 100%; padding: 14px 20px; background: linear-gradient(135deg, #39FF14, #32CD32); border: none; border-radius: 8px; color: #000; font-weight: 700; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
                             <span>🎬 Video Creators</span>
                             <span id="video-dropdown-arrow">▼</span>
@@ -1955,6 +1955,32 @@
                             <a href="https://runwayml.com" target="_blank" data-testid="link-runway" style="display: block; padding: 12px; color: #39FF14; text-decoration: none; border-radius: 6px; background: rgba(57,255,20,0.1); transition: all 0.3s;" onmouseover="this.style.background='rgba(57,255,20,0.2)'" onmouseout="this.style.background='rgba(57,255,20,0.1)'">
                                 <strong>🎞️ Runway AI</strong><br>
                                 <small style="color: #888;">Advanced AI video generation</small>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Code Creators Dropdown -->
+                    <div style="position: relative; flex: 1; min-width: 200px; max-width: 280px;">
+                        <button type="button" onclick="toggleAIPlatformDropdown('code')" data-testid="button-code-dropdown" style="width: 100%; padding: 14px 20px; background: linear-gradient(135deg, #39FF14, #32CD32); border: none; border-radius: 8px; color: #000; font-weight: 700; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
+                            <span>💻 Code Creators</span>
+                            <span id="code-dropdown-arrow">▼</span>
+                        </button>
+                        <div id="code-platforms-dropdown" style="display: none; position: absolute; top: 100%; left: 0; right: 0; margin-top: 8px; background: #1a1a1a; border: 2px solid #39FF14; border-radius: 8px; padding: 10px; z-index: 1000; box-shadow: 0 4px 12px rgba(57,255,20,0.3);">
+                            <a href="https://replit.com" target="_blank" data-testid="link-replit" style="display: block; padding: 12px; color: #39FF14; text-decoration: none; border-radius: 6px; margin-bottom: 8px; background: rgba(57,255,20,0.1); transition: all 0.3s;" onmouseover="this.style.background='rgba(57,255,20,0.2)'" onmouseout="this.style.background='rgba(57,255,20,0.1)'">
+                                <strong>🔧 Replit</strong><br>
+                                <small style="color: #888;">Build and deploy apps instantly</small>
+                            </a>
+                            <a href="https://platform.openai.com/docs/guides/code" target="_blank" data-testid="link-codex" style="display: block; padding: 12px; color: #39FF14; text-decoration: none; border-radius: 6px; margin-bottom: 8px; background: rgba(57,255,20,0.1); transition: all 0.3s;" onmouseover="this.style.background='rgba(57,255,20,0.2)'" onmouseout="this.style.background='rgba(57,255,20,0.1)'">
+                                <strong>🤖 OpenAI Codex</strong><br>
+                                <small style="color: #888;">AI code generation assistant</small>
+                            </a>
+                            <a href="https://bolt.new" target="_blank" data-testid="link-bolt" style="display: block; padding: 12px; color: #39FF14; text-decoration: none; border-radius: 6px; margin-bottom: 8px; background: rgba(57,255,20,0.1); transition: all 0.3s;" onmouseover="this.style.background='rgba(57,255,20,0.2)'" onmouseout="this.style.background='rgba(57,255,20,0.1)'">
+                                <strong>⚡ Bolt.new</strong><br>
+                                <small style="color: #888;">AI full-stack app builder</small>
+                            </a>
+                            <a href="https://v0.dev" target="_blank" data-testid="link-v0" style="display: block; padding: 12px; color: #39FF14; text-decoration: none; border-radius: 6px; background: rgba(57,255,20,0.1); transition: all 0.3s;" onmouseover="this.style.background='rgba(57,255,20,0.2)'" onmouseout="this.style.background='rgba(57,255,20,0.1)'">
+                                <strong>✨ v0.dev</strong><br>
+                                <small style="color: #888;">AI UI/component generator</small>
                             </a>
                         </div>
                     </div>
