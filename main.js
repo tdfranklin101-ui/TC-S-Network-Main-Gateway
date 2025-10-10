@@ -136,6 +136,25 @@ function generateSlug(title, filename) {
     || 'untitled-upload'; // Fallback if empty
 }
 
+// Balance change logging utility - CRITICAL for debugging wallet issues
+function logBalanceChange(context, userId, username, oldBalance, newBalance, source) {
+  const timestamp = new Date().toISOString();
+  const change = newBalance - oldBalance;
+  const changeStr = change >= 0 ? `+${change}` : `${change}`;
+  
+  console.log(`💰 [BALANCE LOG] ${timestamp} | ${context} | User: ${username} (ID: ${userId}) | ${oldBalance} → ${newBalance} Solar (${changeStr}) | Source: ${source}`);
+  
+  // Critical warning if balance drops to 0 unexpectedly
+  if (newBalance === 0 && oldBalance > 0) {
+    console.error(`🚨 [BALANCE ALERT] User ${username} balance dropped to ZERO! Was ${oldBalance} Solar. Source: ${source}`);
+  }
+  
+  // Warning if balance decreased without transaction
+  if (newBalance < oldBalance && !source.includes('purchase') && !source.includes('transaction')) {
+    console.warn(`⚠️ [BALANCE WARNING] Balance decreased without transaction: ${username} ${oldBalance} → ${newBalance} | ${source}`);
+  }
+}
+
 // Session helper functions
 function generateSessionId() {
   return crypto.randomBytes(32).toString('hex');
@@ -150,6 +169,11 @@ function createSession(userId, userData) {
     lastAccess: new Date()
   };
   sessions.set(sessionId, sessionData);
+  
+  // Log session creation with initial balance
+  const balance = userData.solarBalance || 0;
+  console.log(`🔐 [SESSION] Created for ${userData.username} (ID: ${userId}) | Balance: ${balance} Solar | Session: ${sessionId.substring(0, 8)}...`);
+  
   return sessionId;
 }
 
@@ -1152,16 +1176,20 @@ const server = http.createServer(async (req, res) => {
             
             if (passwordMatch) {
               loginSuccess = true;
+              const balanceValue = parseFloat(user.total_solar) || 0;
               userData = {
                 userId: user.id,
                 username: user.username,
                 email: user.email,
                 firstName: user.first_name,
                 lastName: user.last_name,
-                solarBalance: parseFloat(user.total_solar) || 0,
+                solarBalance: balanceValue,
                 memberSince: user.signup_timestamp
               };
-              console.log(`🔐 User logged in: ${user.username} (ID: ${user.id})`);
+              
+              // Log login with balance
+              console.log(`🔐 User logged in: ${user.username} (ID: ${user.id}) | Balance: ${balanceValue} Solar`);
+              logBalanceChange('Login', user.id, user.username, 0, balanceValue, 'database_at_login');
             }
           }
         } catch (dbError) {
@@ -1207,7 +1235,7 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // Session Check API endpoint
+  // Session Check API endpoint - ENHANCED with balance safeguards
   if (pathname === '/api/session' && req.method === 'GET') {
     try {
       const sessionId = getCookie(req, 'tc_s_session');
@@ -1226,8 +1254,12 @@ const server = http.createServer(async (req, res) => {
         return;
       }
       
-      // Fetch current balance from database to ensure it's up-to-date
-      let currentBalance = session.solarBalance || 0;
+      // SAFEGUARD 1: Store last known good balance as fallback
+      const cachedBalance = session.solarBalance || 0;
+      let currentBalance = cachedBalance;
+      let balanceSource = 'cached_session';
+      
+      console.log(`🔍 [SESSION CHECK] User: ${session.username} (ID: ${session.userId}) | Cached balance: ${cachedBalance} Solar`);
       
       if (pool && session.userId) {
         try {
@@ -1237,15 +1269,58 @@ const server = http.createServer(async (req, res) => {
           );
           
           if (result && result.rows && result.rows.length > 0) {
-            currentBalance = parseFloat(result.rows[0].total_solar) || 0;
-            // Update session with current balance
-            session.solarBalance = currentBalance;
+            const dbBalance = result.rows[0].total_solar;
+            
+            // SAFEGUARD 2: Handle NULL/undefined from database properly
+            if (dbBalance === null || dbBalance === undefined) {
+              console.warn(`⚠️ [BALANCE WARNING] Database returned NULL balance for ${session.username}. Using cached: ${cachedBalance}`);
+              currentBalance = cachedBalance; // Keep cached balance
+              balanceSource = 'cached_null_db';
+            } else {
+              const parsedBalance = parseFloat(dbBalance);
+              
+              // SAFEGUARD 3: Validate parsed balance
+              if (isNaN(parsedBalance)) {
+                console.error(`🚨 [BALANCE ERROR] Invalid balance in DB for ${session.username}: "${dbBalance}". Using cached: ${cachedBalance}`);
+                currentBalance = cachedBalance;
+                balanceSource = 'cached_invalid_db';
+              } else {
+                // SAFEGUARD 4: If DB returns 0 but cached has value, investigate
+                if (parsedBalance === 0 && cachedBalance > 0) {
+                  console.error(`🚨 [BALANCE ALERT] DB shows 0 but cached shows ${cachedBalance} for ${session.username}! Keeping cached value for safety.`);
+                  currentBalance = cachedBalance; // Keep cached value for safety
+                  balanceSource = 'cached_zero_protection';
+                } else {
+                  // All checks passed - use DB balance
+                  currentBalance = parsedBalance;
+                  balanceSource = 'database';
+                  
+                  // Log balance change if different from cache
+                  if (currentBalance !== cachedBalance) {
+                    logBalanceChange('Session Check', session.userId, session.username, cachedBalance, currentBalance, balanceSource);
+                  }
+                  
+                  // Update session with current balance
+                  session.solarBalance = currentBalance;
+                }
+              }
+            }
+          } else {
+            console.warn(`⚠️ [BALANCE WARNING] No DB record for ${session.username}. Using cached: ${cachedBalance}`);
+            currentBalance = cachedBalance;
+            balanceSource = 'cached_no_db_record';
           }
         } catch (dbError) {
-          console.error('Error fetching current balance:', dbError);
-          // Use cached balance if database query fails
+          console.error(`❌ [DB ERROR] Failed to fetch balance for ${session.username}:`, dbError.message);
+          // SAFEGUARD 5: On DB error, ALWAYS use cached balance
+          currentBalance = cachedBalance;
+          balanceSource = 'cached_db_error';
         }
+      } else {
+        balanceSource = 'cached_no_pool';
       }
+      
+      console.log(`✅ [SESSION CHECK] Returning balance for ${session.username}: ${currentBalance} Solar (source: ${balanceSource})`);
       
       // Return session data with current balance
       res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -1259,7 +1334,8 @@ const server = http.createServer(async (req, res) => {
           firstName: session.firstName,
           lastName: session.lastName
         },
-        solarBalance: currentBalance
+        solarBalance: currentBalance,
+        balanceSource: balanceSource // Debug info
       }));
     } catch (error) {
       console.error('Session check error:', error);
@@ -1315,7 +1391,8 @@ const server = http.createServer(async (req, res) => {
           if (result && result.rows && result.rows.length > 0) {
             userId = result.rows[0].id;
             success = true;
-            console.log(`📝 New TC-S Network member registered: ${username} (DB ID: ${userId})`);
+            console.log(`📝 New TC-S Network member registered: ${username} (DB ID: ${userId}) | Initial balance: ${initialSolarAllocation} Solar`);
+            logBalanceChange('Registration', userId, username, 0, initialSolarAllocation, 'initial_allocation');
           }
         } catch (dbError) {
           console.error('Database registration error:', dbError);
@@ -1904,6 +1981,9 @@ const server = http.createServer(async (req, res) => {
       const newBalance = userBalance - requiredSolar;
       const updateBalanceQuery = 'UPDATE members SET total_solar = $1 WHERE id = $2';
       await pool.query(updateBalanceQuery, [newBalance, user.id]);
+      
+      // Log balance change for purchase
+      logBalanceChange('Purchase', user.id, user.username, userBalance, newBalance, `purchase_artifact_${artifactId}`);
 
       // Record transaction
       const transactionQuery = `
@@ -2047,6 +2127,9 @@ const server = http.createServer(async (req, res) => {
         const newBalance = userBalance - requiredSolar;
         const updateBalanceQuery = 'UPDATE members SET total_solar = $1 WHERE id = $2';
         await pool.query(updateBalanceQuery, [newBalance, user.id]);
+        
+        // Log balance change for purchase
+        logBalanceChange('Purchase', user.id, user.username, userBalance, newBalance, `purchase_artifact_${artifactId}`);
 
         // Record transaction
         const transactionQuery = `

@@ -3194,6 +3194,10 @@
             console.log('🔍 Checking user session from server...');
             
             try {
+                // Store current balance before checking (for comparison)
+                const previousBalance = currentUser ? currentUser.solarBalance : null;
+                const previousUsername = currentUser ? currentUser.username : null;
+                
                 // ALWAYS fetch current session from server (don't trust localStorage)
                 const response = await fetch('/api/session', {
                     credentials: 'include'
@@ -3201,13 +3205,47 @@
                 
                 if (response.ok) {
                     const data = await response.json();
+                    
                     if (data.success && data.authenticated && data.user) {
+                        // Log balance source for debugging
+                        if (data.balanceSource) {
+                            console.log(`💰 Balance source: ${data.balanceSource}`);
+                            
+                            // Warn if balance is from cache due to errors
+                            if (data.balanceSource.includes('cached') && (data.balanceSource.includes('error') || data.balanceSource.includes('null'))) {
+                                console.warn(`⚠️ WARNING: Balance loaded from cache due to: ${data.balanceSource}`);
+                            }
+                            
+                            // Alert if zero protection was triggered
+                            if (data.balanceSource === 'cached_zero_protection') {
+                                console.error('🚨 CRITICAL: Zero balance protection activated! DB showed 0 but kept cached value.');
+                            }
+                        }
+                        
+                        // SAFEGUARD: Prevent balance from being set to 0 if we had a higher value
+                        let newBalance = data.solarBalance || 0;
+                        
+                        if (previousBalance !== null && previousUsername === data.user.username) {
+                            // Same user - check for unexpected balance drop
+                            if (newBalance === 0 && previousBalance > 0) {
+                                console.error(`🚨 BALANCE ALERT: Balance would drop from ${previousBalance} to 0! Keeping previous value for safety.`);
+                                console.error(`   Source: ${data.balanceSource || 'unknown'}`);
+                                newBalance = previousBalance; // Keep previous balance for safety
+                            } else if (newBalance < previousBalance) {
+                                console.warn(`⚠️ Balance decreased: ${previousBalance} → ${newBalance} (source: ${data.balanceSource || 'unknown'})`);
+                            } else if (newBalance > previousBalance) {
+                                console.log(`💰 Balance increased: ${previousBalance} → ${newBalance} (source: ${data.balanceSource || 'unknown'})`);
+                            }
+                        }
+                        
                         currentUser = {
                             userId: data.user.id,
                             username: data.user.username,
-                            solarBalance: data.solarBalance || 0
+                            solarBalance: newBalance
                         };
-                        console.log('✅ Server session active:', currentUser);
+                        
+                        console.log(`✅ Server session active: ${currentUser.username} | Balance: ${currentUser.solarBalance} Solar`);
+                        
                         // Cache to localStorage
                         localStorage.setItem('tc_s_user', JSON.stringify(currentUser));
                     } else {
@@ -3217,12 +3255,27 @@
                     }
                 } else {
                     console.log('❌ Server session check failed:', response.status);
-                    currentUser = null;
-                    localStorage.removeItem('tc_s_user');
+                    
+                    // ERROR BOUNDARY: If server fails, try to keep cached session
+                    const stored = localStorage.getItem('tc_s_user');
+                    if (stored && previousBalance !== null) {
+                        console.warn('⚠️ Server check failed, keeping cached session as fallback');
+                        try {
+                            currentUser = JSON.parse(stored);
+                            console.log('📦 Using cached session due to server error:', currentUser);
+                        } catch (e) {
+                            currentUser = null;
+                            localStorage.removeItem('tc_s_user');
+                        }
+                    } else {
+                        currentUser = null;
+                        localStorage.removeItem('tc_s_user');
+                    }
                 }
             } catch (error) {
                 console.error('❌ Error checking session:', error);
-                // Fallback to localStorage only if server is unreachable
+                
+                // ERROR BOUNDARY: Fallback to localStorage if server is unreachable
                 const stored = localStorage.getItem('tc_s_user');
                 if (stored) {
                     try {
