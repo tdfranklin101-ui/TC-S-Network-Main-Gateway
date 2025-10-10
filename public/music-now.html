@@ -472,7 +472,59 @@
 
     <script>
         // MP3 track URLs
-        const tracks = [
+        // Dynamically loaded tracks (Monazite + Member Uploads)
+        let tracks = [];
+        let trackNames = [];
+        let trackData = [];
+
+        // Load all music tracks from API
+        async function loadMusicTracks() {
+            try {
+                const response = await fetch('/api/music/all-tracks');
+                const data = await response.json();
+                
+                if (data.success) {
+                    trackData = data.tracks;
+                    tracks = trackData.map(t => t.url);
+                    trackNames = trackData.map(t => `${t.icon} ${t.title} ${t.artist !== 'TC-S Network' ? `by ${t.artist}` : ''}`);
+                    
+                    console.log(`🎵 Loaded ${data.totalCount} tracks: ${data.monaziteCount} Monazite + ${data.memberCount} Member uploads`);
+                    
+                    // Render track buttons
+                    renderTrackButtons();
+                    
+                    // Update track count display
+                    const trackCountEl = document.getElementById('track-count');
+                    if (trackCountEl) {
+                        trackCountEl.textContent = `${data.totalCount} Tracks Available (${data.monaziteCount} Foundation + ${data.memberCount} Member)`;
+                    }
+                } else {
+                    console.error('Failed to load music tracks');
+                }
+            } catch (error) {
+                console.error('Error loading music tracks:', error);
+            }
+        }
+
+        // Render track buttons dynamically
+        function renderTrackButtons() {
+            const trackList = document.querySelector('.track-list');
+            if (!trackList) return;
+            
+            trackList.innerHTML = '';
+            
+            trackData.forEach((track, index) => {
+                const button = document.createElement('button');
+                button.className = 'track-button';
+                button.textContent = `${track.icon} ${track.title}${track.artist !== 'TC-S Network' ? ` - ${track.artist}` : ''}`;
+                button.onclick = () => playTrack(index);
+                button.dataset.collection = track.collection;
+                trackList.appendChild(button);
+            });
+        }
+
+        // OLD HARDCODED - Kept as fallback
+        const fallbackTracks = [
             'https://storage.aisongmaker.io/audio/4a839c86-40d9-4272-989b-7a512184ddb6.mp3', // 'Ternal Flame - Longevity Manifesto
             'https://storage.aisongmaker.io/audio/9b2b12e4-8626-41e4-b9e4-c7a563e40f97.mp3', // David Boyeez Hair
             'https://storage.aisongmaker.io/audio/015092c3-f687-4a01-9a81-dad42f2adce9.mp3', // Swampy Boogie Nights  
@@ -495,7 +547,7 @@
             '/music/snowmancer-one.mp3'  // Snowmancer One (Bonus) - LOCAL FILE for Solar Downloads
         ];
 
-        const trackNames = [
+        const fallbackTrackNames = [
             '🔥 \'Ternal Flame - Longevity Manifesto', '⭐ David Boyeez Hair', '🐊 Swampy Boogie Nights (Cajun Crawler)', 
             '🎵 The Heart is a Mule', '🎶 A Solar Day (groovin)', '🎼 A Solar Day (moovin)',
             '🎺 Break Time Blues Rhapsody', '⭐ Starlight Forever', '💡 Light It From Within',
@@ -642,7 +694,17 @@
         }
 
         // Initialize track button states when page loads - ensure no restrictions
-        window.addEventListener('load', function() {
+        window.addEventListener('load', async function() {
+            // Load all tracks from API (Monazite + Member uploads)
+            await loadMusicTracks();
+            
+            // Fallback to hardcoded if API fails
+            if (tracks.length === 0) {
+                console.warn('⚠️ Using fallback tracks');
+                tracks = fallbackTracks;
+                trackNames = fallbackTrackNames;
+            }
+            
             // Remove any existing locks and ensure all tracks are playable
             const buttons = document.querySelectorAll('.track-button');
             buttons.forEach((button, index) => {

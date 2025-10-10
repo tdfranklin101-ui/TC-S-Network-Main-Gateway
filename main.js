@@ -3182,6 +3182,208 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Music Now Streaming API - Get all music tracks (Monazite + Member Uploads)
+  if (pathname === '/api/music/all-tracks' && req.method === 'GET') {
+    try {
+      // Monazite collection (Foundation curated)
+      const monaziteTracks = [
+        {
+          id: 'mono_1',
+          title: '\'Ternal Flame - Longevity Manifesto',
+          artist: 'TC-S Network',
+          url: 'https://storage.aisongmaker.io/audio/4a839c86-40d9-4272-989b-7a512184ddb6.mp3',
+          collection: 'monazite',
+          icon: '🔥'
+        },
+        {
+          id: 'mono_2',
+          title: 'David Boyeez Hair',
+          artist: 'TC-S Network',
+          url: 'https://storage.aisongmaker.io/audio/9b2b12e4-8626-41e4-b9e4-c7a563e40f97.mp3',
+          collection: 'monazite',
+          icon: '⭐'
+        },
+        {
+          id: 'mono_3',
+          title: 'Swampy Boogie Nights (Cajun Crawler)',
+          artist: 'TC-S Network',
+          url: 'https://storage.aisongmaker.io/audio/015092c3-f687-4a01-9a81-dad42f2adce9.mp3',
+          collection: 'monazite',
+          icon: '🐊'
+        },
+        {
+          id: 'mono_4',
+          title: 'The Heart is a Mule',
+          artist: 'TC-S Network',
+          url: 'https://storage.aisongmaker.io/audio/10db8911-0b74-4675-ba62-02182c1d7f6b.mp3',
+          collection: 'monazite',
+          icon: '🎵'
+        },
+        {
+          id: 'mono_5',
+          title: 'A Solar Day (groovin)',
+          artist: 'TC-S Network',
+          url: 'https://storage.aisongmaker.io/audio/418add3e-c1a5-4a76-b361-14d6a11794fe.mp3',
+          collection: 'monazite',
+          icon: '🎶'
+        },
+        {
+          id: 'mono_6',
+          title: 'A Solar Day (moovin)',
+          artist: 'TC-S Network',
+          url: 'https://storage.aisongmaker.io/audio/a2647129-991f-4105-aad2-e45210005bef.mp3',
+          collection: 'monazite',
+          icon: '🎼'
+        },
+        {
+          id: 'mono_7',
+          title: 'Break Time Blues Rhapsody',
+          artist: 'TC-S Network',
+          url: 'https://storage.aisongmaker.io/audio/09de8c9d-25a7-4b38-a6bd-c27b7de4629e.mp3',
+          collection: 'monazite',
+          icon: '🎺'
+        },
+        {
+          id: 'mono_8',
+          title: 'Starlight Forever',
+          artist: 'TC-S Network',
+          url: 'https://storage.aisongmaker.io/audio/c51b1f15-eff7-41fb-b778-b1b9d914ce3a.mp3',
+          collection: 'monazite',
+          icon: '⭐'
+        },
+        {
+          id: 'mono_9',
+          title: 'Light It From Within',
+          artist: 'TC-S Network',
+          url: 'https://storage.aisongmaker.io/audio/ab1612d5-ccf4-4b4a-ab92-21b77bebdd46.mp3',
+          collection: 'monazite',
+          icon: '💡'
+        },
+        {
+          id: 'mono_10',
+          title: 'Moonshine in St Kitts',
+          artist: 'TC-S Network',
+          url: 'https://storage.aisongmaker.io/audio/675d577c-5ab9-45c9-b9d5-d4362f6bcc12.mp3',
+          collection: 'monazite',
+          icon: '🌙'
+        },
+        {
+          id: 'mono_11',
+          title: 'Solar Tempest Symphony',
+          artist: 'TC-S Network',
+          url: 'https://storage.aisongmaker.io/audio/94088af1-8318-401a-b277-b79fbbdb7475.mp3',
+          collection: 'monazite',
+          icon: '⚡'
+        },
+        {
+          id: 'mono_12',
+          title: 'Steel In His Soul',
+          artist: 'TC-S Network',
+          url: 'https://storage.aisongmaker.io/audio/cb58c04e-fc7b-448a-a9e5-a642e168cacd.mp3',
+          collection: 'monazite',
+          icon: '🔩'
+        },
+        {
+          id: 'mono_13',
+          title: 'We Said So',
+          artist: 'TC-S Network',
+          url: 'https://storage.aisongmaker.io/audio/11802549-7cf8-4d4c-a708-44f04804f2ab.mp3',
+          collection: 'monazite',
+          icon: '💬'
+        },
+        {
+          id: 'mono_14',
+          title: 'Funky Voodoo (Blues Jam)',
+          artist: 'TC-S Network',
+          url: 'https://storage.aisongmaker.io/audio/19d37c35-dc0b-4686-8bd7-71992f925670.mp3',
+          collection: 'monazite',
+          icon: '🗿'
+        },
+        {
+          id: 'mono_15',
+          title: 'Green and Blue (Rock)',
+          artist: 'TC-S Network',
+          url: 'https://storage.aisongmaker.io/audio/255be09f-c09a-4d9a-8dbc-3c3ba65e9204.mp3',
+          collection: 'monazite',
+          icon: '🗿'
+        },
+        {
+          id: 'mono_16',
+          title: 'Green and Blue (EDM)',
+          artist: 'TC-S Network',
+          url: 'https://storage.aisongmaker.io/audio/01e05fb6-a7ac-4dd3-9500-00bb46625ef1.mp3',
+          collection: 'monazite',
+          icon: '🗿'
+        },
+        {
+          id: 'mono_17',
+          title: 'Lady Voodoo (Folk Yah)',
+          artist: 'TC-S Network',
+          url: 'https://storage.aisongmaker.io/audio/49fc3427-e775-47f0-b5ea-8903006b07a0.mp3',
+          collection: 'monazite',
+          icon: '🗿'
+        },
+        {
+          id: 'mono_18',
+          title: 'Lady Voodoo (Crying)',
+          artist: 'TC-S Network',
+          url: 'https://storage.aisongmaker.io/audio/b2001c35-620a-4893-b046-4de20ad11422.mp3',
+          collection: 'monazite',
+          icon: '🗿'
+        },
+        {
+          id: 'mono_19',
+          title: 'Rasta Lady Voodoo',
+          artist: 'TC-S Network',
+          url: 'https://storage.aisongmaker.io/audio/7abf4dac-2b12-434a-8d59-c115f8c54cb9.mp3',
+          collection: 'monazite',
+          icon: '🗿'
+        },
+        {
+          id: 'mono_20',
+          title: 'Snowmancer One (Bonus)',
+          artist: 'TC-S Network',
+          url: '/music/snowmancer-one.mp3',
+          collection: 'monazite',
+          icon: '❄️'
+        }
+      ];
+
+      // Get member uploaded music
+      const memberMusic = Array.from(memberContentService.memberContent.values())
+        .filter(content => 
+          content.category === 'music' && 
+          content.status === 'active' &&
+          content.isFreeStreaming === true
+        )
+        .map(content => ({
+          id: content.id,
+          title: content.title,
+          artist: content.memberUsername,
+          url: `/uploads/member-content/audio/${path.basename(content.filePath)}`,
+          collection: 'member-uploads',
+          icon: '🎵',
+          uploadDate: content.uploadDate
+        }));
+
+      const allTracks = [...monaziteTracks, ...memberMusic];
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ 
+        success: true, 
+        tracks: allTracks,
+        monaziteCount: monaziteTracks.length,
+        memberCount: memberMusic.length,
+        totalCount: allTracks.length
+      }));
+    } catch (error) {
+      console.error('Music tracks API error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to fetch music tracks' }));
+    }
+    return;
+  }
+
   // Member Content Sharing and Advertising API Endpoints
   if (pathname === '/api/member-content/upload' && req.method === 'POST') {
     try {
@@ -4770,6 +4972,52 @@ const server = http.createServer(async (req, res) => {
     return;
   }
   
+  // Serve member uploaded audio files for Music Now streaming
+  if (pathname.startsWith('/uploads/member-content/audio/')) {
+    const audioFilePath = path.join(__dirname, pathname);
+    
+    if (fs.existsSync(audioFilePath)) {
+      const stat = fs.statSync(audioFilePath);
+      const fileSize = stat.size;
+      const range = req.headers.range;
+      
+      if (range) {
+        // Browser requesting specific byte range for streaming
+        const parts = range.replace(/bytes=/, "").split("-");
+        const start = parseInt(parts[0], 10);
+        const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+        
+        const chunksize = (end - start) + 1;
+        const file = fs.createReadStream(audioFilePath, { start, end });
+        
+        res.writeHead(206, {
+          'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+          'Accept-Ranges': 'bytes',
+          'Content-Length': chunksize,
+          'Content-Type': 'audio/mpeg',
+          'Cache-Control': 'public, max-age=31536000'
+        });
+        
+        file.pipe(res);
+      } else {
+        // Serve entire file
+        res.writeHead(200, {
+          'Content-Length': fileSize,
+          'Content-Type': 'audio/mpeg',
+          'Cache-Control': 'public, max-age=31536000'
+        });
+        fs.createReadStream(audioFilePath).pipe(res);
+      }
+      
+      console.log(`🎵 Served member audio: ${path.basename(audioFilePath)}`);
+      return;
+    } else {
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      res.end('Audio file not found');
+      return;
+    }
+  }
+
   // Handle root path - serve index.html
   if (pathname === '/') {
     const indexPath = path.join(__dirname, 'public', 'index.html');
