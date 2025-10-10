@@ -254,6 +254,7 @@ User said: "${text}"`;
 
       // Check if GPT wants to call a function
       if (responseMessage.tool_calls && responseMessage.tool_calls.length > 0) {
+        // Handle all tool calls (OpenAI may request multiple at once)
         const toolCall = responseMessage.tool_calls[0];
         const functionName = toolCall.function.name;
         const functionArgs = JSON.parse(toolCall.function.arguments);
@@ -263,13 +264,24 @@ User said: "${text}"`;
         // Execute the function
         const functionResult = await this.executeFunctionCall(functionName, functionArgs, memberId, fileData);
 
-        // Add function call and result to messages
+        // Add assistant message with tool_calls
         messages.push(responseMessage);
-        messages.push({
-          role: "tool",
-          tool_call_id: toolCall.id,
-          content: JSON.stringify(functionResult)
-        });
+        
+        // Add tool response messages for ALL tool calls
+        for (const call of responseMessage.tool_calls) {
+          const callFunctionName = call.function.name;
+          const callFunctionArgs = JSON.parse(call.function.arguments);
+          
+          // Execute each function call
+          const callResult = call === toolCall ? functionResult : 
+            await this.executeFunctionCall(callFunctionName, callFunctionArgs, memberId, fileData);
+          
+          messages.push({
+            role: "tool",
+            tool_call_id: call.id,
+            content: JSON.stringify(callResult)
+          });
+        }
 
         // Get final response from GPT with function result
         const finalCompletion = await this.openai.chat.completions.create({
@@ -286,7 +298,8 @@ User said: "${text}"`;
           intent: functionName,
           data: functionResult,
           functionCalled: functionName,
-          functionArgs: functionArgs
+          functionArgs: functionArgs,
+          functionData: functionResult
         };
       } else {
         // No function call, return direct response
