@@ -33,7 +33,11 @@ Set these in Cloud Run:
 
 ### Application Features Included
 1. ✅ Solar Standard Educational Series (5 pages)
-2. ✅ Kid Solar AI Command Center (multi-modal)
+2. ✅ Kid Solar AI Command Center (multi-modal with OpenAI function calling)
+   - Voice/text marketplace wallet control
+   - AI-powered upload assistance with Vision API
+   - Automatic metadata extraction for artifacts
+   - Purchase, preview, and browse functions
 3. ✅ TC-S Computronium Marketplace
 4. ✅ Member Wallet System
 5. ✅ Energy Trading (REC/PPA)
@@ -77,6 +81,9 @@ gcloud run deploy tc-s-network-foundation \
 3. Test Solar Standard navigation (pages 2-5)
 4. Verify "The Best Time Ever" graphic displays
 5. Check Kid Solar AI chat (requires OPENAI_API_KEY)
+   - Test voice commands: "check my balance"
+   - Test upload assistance: upload image and say "help me upload this"
+   - Test marketplace functions: "show me music"
 6. Test marketplace authentication flow
 7. Verify analytics tracking (production only)
 
