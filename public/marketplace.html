@@ -1266,6 +1266,47 @@
             }
         }
 
+        /* Floating Kid Solar Button */
+        .floating-kid-solar-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 65px;
+            height: 65px;
+            background: linear-gradient(135deg, #39FF14, #32CD32);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            box-shadow: 0 4px 20px rgba(57, 255, 20, 0.5);
+            z-index: 9999;
+            transition: all 0.3s ease;
+            animation: float-pulse 2s ease-in-out infinite;
+        }
+
+        .floating-kid-solar-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 30px rgba(57, 255, 20, 0.7);
+        }
+
+        .floating-kid-solar-btn.hidden {
+            display: none;
+        }
+
+        @keyframes float-pulse {
+            0%, 100% { 
+                transform: translateY(0);
+                box-shadow: 0 4px 20px rgba(57, 255, 20, 0.5);
+            }
+            50% { 
+                transform: translateY(-5px);
+                box-shadow: 0 8px 30px rgba(57, 255, 20, 0.7);
+            }
+        }
+
         /* Kid Solar Command Center Chat Panel */
         .kid-solar-chat-panel {
             position: fixed;
@@ -3585,6 +3626,11 @@
     <!-- Marketplace functionality -->
     <script src="/js/marketplace.js"></script>
 
+    <!-- Floating Kid Solar Button -->
+    <button id="floating-kid-solar-btn" class="floating-kid-solar-btn" onclick="openKidSolarChat()" data-testid="button-floating-kid-solar" title="Ask Kid Solar">
+        ☀️
+    </button>
+
     <!-- Kid Solar Command Center Chat Panel -->
     <div id="kid-solar-chat-panel" class="kid-solar-chat-panel">
         <div class="chat-panel-header">
@@ -3653,6 +3699,7 @@
             }
             const user = currentUser;
             document.getElementById('kid-solar-chat-panel').classList.add('open');
+            document.getElementById('floating-kid-solar-btn').classList.add('hidden');
             // Welcome message if first time
             if (chatConversation.length === 0) {
                 addChatMessage('assistant', `Hi ${user.username}! I'm Kid Solar, your AI assistant. I can help with voice, text, images, and files. What can I do for you today?`);
@@ -3662,6 +3709,7 @@
         // Close chat panel
         function closeKidSolarChat() {
             document.getElementById('kid-solar-chat-panel').classList.remove('open');
+            document.getElementById('floating-kid-solar-btn').classList.remove('hidden');
         }
 
         // Update existing Kid Solar button to open chat panel
