@@ -2940,34 +2940,54 @@
             }
         }
 
-        function checkUserSession() {
-            console.log('🔍 Checking user session on page load...');
-            // Check if user is logged in (simplified - in production would check session/JWT)
-            const stored = localStorage.getItem('tc_s_user');
-            if (stored) {
-                try {
-                    currentUser = JSON.parse(stored);
-                    console.log('📦 Found stored user:', currentUser);
-                    // If old session data doesn't have solarBalance, clear it to force re-login
-                    if (currentUser && typeof currentUser.solarBalance === 'undefined') {
-                        console.log('🔄 Clearing old session data - missing balance info');
-                        localStorage.removeItem('tc_s_user');
+        async function checkUserSession() {
+            console.log('🔍 Checking user session from server...');
+            
+            try {
+                // ALWAYS fetch current session from server (don't trust localStorage)
+                const response = await fetch('/api/session', {
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.authenticated && data.user) {
+                        currentUser = {
+                            userId: data.user.id,
+                            username: data.user.username,
+                            solarBalance: data.solarBalance || 0
+                        };
+                        console.log('✅ Server session active:', currentUser);
+                        // Cache to localStorage
+                        localStorage.setItem('tc_s_user', JSON.stringify(currentUser));
+                    } else {
+                        console.log('❌ Server says: not authenticated');
                         currentUser = null;
-                        updateUserDisplay();
-                        return;
+                        localStorage.removeItem('tc_s_user');
                     }
-                    // Update display with existing user
-                    updateUserDisplay();
-                } catch (error) {
-                    console.error('❌ Error parsing stored user:', error);
-                    localStorage.removeItem('tc_s_user');
+                } else {
+                    console.log('❌ Server session check failed:', response.status);
                     currentUser = null;
-                    updateUserDisplay();
+                    localStorage.removeItem('tc_s_user');
                 }
-            } else {
-                console.log('❌ No stored user session found');
-                updateUserDisplay();
+            } catch (error) {
+                console.error('❌ Error checking session:', error);
+                // Fallback to localStorage only if server is unreachable
+                const stored = localStorage.getItem('tc_s_user');
+                if (stored) {
+                    try {
+                        currentUser = JSON.parse(stored);
+                        console.log('📦 Using cached user (server unreachable):', currentUser);
+                    } catch (e) {
+                        currentUser = null;
+                        localStorage.removeItem('tc_s_user');
+                    }
+                } else {
+                    currentUser = null;
+                }
             }
+            
+            updateUserDisplay();
         }
 
         function updateUserDisplay() {
