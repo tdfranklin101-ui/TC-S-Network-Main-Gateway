@@ -3,7 +3,7 @@
  * 
  * Voice-powered wallet assistant using OpenAI's:
  * - Whisper API for speech-to-text
- * - GPT-4o for natural language understanding
+ * - GPT-4o for natural language understanding with function calling
  * - GPT-4o Vision for image analysis
  * - TTS API for text-to-speech responses
  * 
@@ -39,10 +39,15 @@ class KidSolarVoice {
 Your capabilities:
 - Check Solar balance and transaction history
 - List energy available for trading (REC/PPA)
+- Purchase artifacts from the marketplace
+- Preview music, videos, and other content
 - Explain marketplace features
 - Provide spending insights and recommendations
 - Answer questions about the solar economy
 - Analyze images and documents when shared
+- Help users upload artifacts with AI-powered metadata suggestions
+- Guide users through the upload process step-by-step
+- Check upload status and list user's artifacts
 
 Response style:
 - Keep responses concise and conversational (2-3 sentences max)
@@ -55,6 +60,133 @@ Context:
 - Members earn Solar daily since Genesis Date (April 7, 2025)
 - Energy trading includes REC (Renewable Energy Credits) and PPA (Power Purchase Agreements)
 - The marketplace has 5 TC-S categories: Missions, Culture, Basic Needs, Rent Anything, Energy Trading`;
+
+    // OpenAI function definitions for marketplace operations
+    this.functionDefinitions = [
+      {
+        type: "function",
+        function: {
+          name: "purchase_artifact",
+          description: "Purchase a music track, video, or other item from the marketplace using Solar tokens. Checks balance and creates transaction.",
+          parameters: {
+            type: "object",
+            properties: {
+              title: {
+                type: "string",
+                description: "The title or name of the artifact to purchase (e.g., 'Rasta Lady Voodoo', 'Snowmancer One')"
+              },
+              slug: {
+                type: "string",
+                description: "Optional: The URL slug of the artifact if known"
+              }
+            },
+            required: ["title"]
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "preview_artifact",
+          description: "Get streaming preview URL for music, video, or content samples. Returns preview information without purchasing.",
+          parameters: {
+            type: "object",
+            properties: {
+              title: {
+                type: "string",
+                description: "The title of the artifact to preview"
+              }
+            },
+            required: ["title"]
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "check_wallet_balance",
+          description: "Check the user's current Solar token balance",
+          parameters: {
+            type: "object",
+            properties: {}
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "list_marketplace_items",
+          description: "List available items from the marketplace, optionally filtered by category or price range",
+          parameters: {
+            type: "object",
+            properties: {
+              category: {
+                type: "string",
+                description: "Filter by category: 'music', 'video', 'art', 'text', or 'all'",
+                enum: ["music", "video", "art", "text", "all"]
+              },
+              maxPrice: {
+                type: "number",
+                description: "Maximum Solar price to show (e.g., 0.01 for items under 0.01 Solar)"
+              },
+              limit: {
+                type: "integer",
+                description: "Maximum number of items to return (default 10)",
+                default: 10
+              }
+            }
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "analyze_artifact_for_upload",
+          description: "Analyze an uploaded image, audio, video, or document file using AI to suggest metadata for marketplace upload (title, description, category, tags, pricing)",
+          parameters: {
+            type: "object",
+            properties: {
+              fileName: {
+                type: "string",
+                description: "Name of the file being analyzed"
+              },
+              fileType: {
+                type: "string",
+                description: "MIME type of the file (e.g., 'image/jpeg', 'audio/mp3', 'video/mp4')"
+              }
+            },
+            required: ["fileName", "fileType"]
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "get_upload_guidance",
+          description: "Provide step-by-step instructions for uploading artifacts to the marketplace, including file size limits and requirements",
+          parameters: {
+            type: "object",
+            properties: {
+              fileType: {
+                type: "string",
+                description: "Optional: Type of file user wants to upload (music/video/art/document) for specific guidance"
+              }
+            }
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "check_my_uploads",
+          description: "List all artifacts uploaded by the user with their approval status (approved/pending review)",
+          parameters: {
+            type: "object",
+            properties: {}
+          }
+        }
+      }
+    ];
   }
 
   /**
@@ -81,25 +213,26 @@ Context:
   }
 
   /**
-   * Process voice command and generate response with conversation history
+   * Process voice command with function calling support
    */
-  async processVoiceCommand(text, memberId, memberContext = {}, conversationHistory = []) {
+  async processVoiceCommand(text, memberId, memberContext = {}, conversationHistory = [], fileData = null) {
     try {
       const walletData = await this.getWalletData(memberId);
       
-      const contextPrompt = `
+      let contextPrompt = `
 Member Context:
-- Name: ${memberContext.name || 'Member'}
+- Name: ${memberContext.name || walletData.name || 'Member'}
 - Solar Balance: ${walletData.balance} Solar
-- Member Since: ${memberContext.memberSince || 'Unknown'}
+- Member Since: ${memberContext.memberSince || walletData.memberSince || 'Unknown'}
 - Recent Transactions: ${walletData.recentTransactions.length}
 
-Energy Available:
-${JSON.stringify(walletData.energyListings, null, 2)}
+User said: "${text}"`;
 
-User said: "${text}"
+      if (fileData) {
+        contextPrompt += `\n\nFile attached: ${fileData.fileName} (${fileData.fileType})`;
+      }
 
-Provide a helpful, conversational voice response.`;
+      contextPrompt += '\n\nUse the available functions to help the user with marketplace operations, or provide a conversational response.';
 
       const messages = [
         { role: 'system', content: this.systemPrompt },
@@ -107,24 +240,355 @@ Provide a helpful, conversational voice response.`;
         { role: 'user', content: contextPrompt }
       ];
 
+      // First API call with function calling enabled
       const completion = await this.openai.chat.completions.create({
         model: this.model,
         messages: messages,
+        tools: this.functionDefinitions,
+        tool_choice: "auto",
         temperature: 0.7,
         max_tokens: 150
       });
 
-      const responseText = completion.choices[0].message.content;
-      
-      return {
-        text: responseText,
-        intent: this.detectIntent(text),
-        data: walletData
-      };
+      const responseMessage = completion.choices[0].message;
+
+      // Check if GPT wants to call a function
+      if (responseMessage.tool_calls && responseMessage.tool_calls.length > 0) {
+        const toolCall = responseMessage.tool_calls[0];
+        const functionName = toolCall.function.name;
+        const functionArgs = JSON.parse(toolCall.function.arguments);
+
+        console.log(`🔧 Kid Solar calling function: ${functionName} with args:`, functionArgs);
+
+        // Execute the function
+        const functionResult = await this.executeFunctionCall(functionName, functionArgs, memberId, fileData);
+
+        // Add function call and result to messages
+        messages.push(responseMessage);
+        messages.push({
+          role: "tool",
+          tool_call_id: toolCall.id,
+          content: JSON.stringify(functionResult)
+        });
+
+        // Get final response from GPT with function result
+        const finalCompletion = await this.openai.chat.completions.create({
+          model: this.model,
+          messages: messages,
+          temperature: 0.7,
+          max_tokens: 150
+        });
+
+        const finalText = finalCompletion.choices[0].message.content;
+
+        return {
+          text: finalText,
+          intent: functionName,
+          data: functionResult,
+          functionCalled: functionName,
+          functionArgs: functionArgs
+        };
+      } else {
+        // No function call, return direct response
+        return {
+          text: responseMessage.content,
+          intent: this.detectIntent(text),
+          data: walletData
+        };
+      }
 
     } catch (error) {
       console.error('Error processing voice command:', error);
       throw new Error(`Voice processing failed: ${error.message}`);
+    }
+  }
+
+  /**
+   * Execute function calls from OpenAI
+   */
+  async executeFunctionCall(functionName, args, memberId, fileData = null) {
+    try {
+      switch (functionName) {
+        case 'purchase_artifact':
+          return await this.purchaseArtifact(args.title, memberId, args.slug);
+        
+        case 'preview_artifact':
+          return await this.previewArtifact(args.title);
+        
+        case 'check_wallet_balance':
+          return await this.checkWalletBalance(memberId);
+        
+        case 'list_marketplace_items':
+          return await this.listMarketplaceItems(args.category, args.maxPrice, args.limit || 10);
+        
+        case 'analyze_artifact_for_upload':
+          return await this.analyzeArtifactForUpload(fileData, args.fileName, args.fileType);
+        
+        case 'get_upload_guidance':
+          return await this.getUploadGuidance(args.fileType);
+        
+        case 'check_my_uploads':
+          return await this.checkMyUploads(memberId);
+        
+        default:
+          throw new Error(`Unknown function: ${functionName}`);
+      }
+    } catch (error) {
+      console.error(`Error executing function ${functionName}:`, error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * Purchase artifact from marketplace
+   */
+  async purchaseArtifact(title, memberId, slug = null) {
+    const pool = getSharedPool();
+    if (!pool) {
+      return { success: false, error: 'Database unavailable' };
+    }
+
+    try {
+      // Find artifact by title or slug
+      let artifact;
+      if (slug) {
+        const result = await pool.query(
+          'SELECT * FROM artifacts WHERE slug = $1 AND active = true',
+          [slug]
+        );
+        artifact = result.rows[0];
+      } else {
+        const result = await pool.query(
+          'SELECT * FROM artifacts WHERE LOWER(title) LIKE LOWER($1) AND active = true LIMIT 1',
+          [`%${title}%`]
+        );
+        artifact = result.rows[0];
+      }
+
+      if (!artifact) {
+        return { success: false, error: `Could not find "${title}" in the marketplace` };
+      }
+
+      // Get member's current balance
+      const memberResult = await pool.query(
+        'SELECT total_solar, name FROM members WHERE id = $1',
+        [memberId]
+      );
+      const member = memberResult.rows[0];
+      
+      if (!member) {
+        return { success: false, error: 'Member not found' };
+      }
+
+      const currentBalance = parseFloat(member.total_solar || '0');
+      const artifactPrice = parseFloat(artifact.solar_amount_s || '0');
+
+      // Check if user has enough balance
+      if (currentBalance < artifactPrice) {
+        return {
+          success: false,
+          error: `Insufficient balance. You have ${currentBalance} Solar, but this costs ${artifactPrice} Solar`,
+          balance: currentBalance,
+          price: artifactPrice,
+          artifact: {
+            title: artifact.title,
+            price: artifactPrice
+          }
+        };
+      }
+
+      // Deduct Solar from member's balance
+      const newBalance = currentBalance - artifactPrice;
+      await pool.query(
+        'UPDATE members SET total_solar = $1 WHERE id = $2',
+        [newBalance.toString(), memberId]
+      );
+
+      // Create transaction record
+      await pool.query(
+        `INSERT INTO transactions (user_id, type, amount, currency, status, description, metadata, completed_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())`,
+        [
+          memberId.toString(),
+          'solar_spend',
+          artifactPrice,
+          'SOLAR',
+          'completed',
+          `Purchased: ${artifact.title}`,
+          JSON.stringify({
+            artifactId: artifact.id,
+            artifactTitle: artifact.title,
+            artifactSlug: artifact.slug,
+            solarPrice: artifactPrice
+          })
+        ]
+      );
+
+      return {
+        success: true,
+        artifact: {
+          id: artifact.id,
+          title: artifact.title,
+          slug: artifact.slug,
+          price: artifactPrice,
+          downloadUrl: artifact.trade_file_url || artifact.delivery_url,
+          streamingUrl: artifact.streaming_url
+        },
+        transaction: {
+          oldBalance: currentBalance,
+          newBalance: newBalance,
+          amountSpent: artifactPrice
+        }
+      };
+
+    } catch (error) {
+      console.error('Error purchasing artifact:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Get preview information for artifact
+   */
+  async previewArtifact(title) {
+    const pool = getSharedPool();
+    if (!pool) {
+      return { success: false, error: 'Database unavailable' };
+    }
+
+    try {
+      const result = await pool.query(
+        'SELECT * FROM artifacts WHERE LOWER(title) LIKE LOWER($1) AND active = true LIMIT 1',
+        [`%${title}%`]
+      );
+
+      const artifact = result.rows[0];
+      if (!artifact) {
+        return { success: false, error: `Could not find "${title}" in the marketplace` };
+      }
+
+      return {
+        success: true,
+        artifact: {
+          id: artifact.id,
+          title: artifact.title,
+          slug: artifact.slug,
+          description: artifact.description,
+          category: artifact.category,
+          price: parseFloat(artifact.solar_amount_s || '0'),
+          streamingUrl: artifact.streaming_url,
+          previewUrl: artifact.preview_file_url,
+          coverArt: artifact.cover_art_url,
+          fileType: artifact.file_type,
+          previewType: artifact.preview_type
+        }
+      };
+
+    } catch (error) {
+      console.error('Error previewing artifact:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Check wallet balance
+   */
+  async checkWalletBalance(memberId) {
+    const pool = getSharedPool();
+    if (!pool) {
+      return { success: false, error: 'Database unavailable' };
+    }
+
+    try {
+      const result = await pool.query(
+        'SELECT total_solar, total_dollars, name, joined_date FROM members WHERE id = $1',
+        [memberId]
+      );
+
+      const member = result.rows[0];
+      if (!member) {
+        return { success: false, error: 'Member not found' };
+      }
+
+      return {
+        success: true,
+        balance: {
+          solar: parseFloat(member.total_solar || '0'),
+          dollars: parseFloat(member.total_dollars || '0'),
+          name: member.name,
+          memberSince: member.joined_date
+        }
+      };
+
+    } catch (error) {
+      console.error('Error checking balance:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * List marketplace items with filters
+   */
+  async listMarketplaceItems(category = 'all', maxPrice = null, limit = 10) {
+    const pool = getSharedPool();
+    if (!pool) {
+      return { success: false, error: 'Database unavailable' };
+    }
+
+    try {
+      let query = 'SELECT * FROM artifacts WHERE active = true';
+      const params = [];
+      let paramIndex = 1;
+
+      // Category filter
+      if (category && category !== 'all') {
+        query += ` AND category = $${paramIndex}`;
+        params.push(category);
+        paramIndex++;
+      }
+
+      // Price filter
+      if (maxPrice !== null && maxPrice !== undefined) {
+        query += ` AND CAST(solar_amount_s AS DECIMAL) <= $${paramIndex}`;
+        params.push(maxPrice);
+        paramIndex++;
+      }
+
+      // Order by price and limit
+      query += ` ORDER BY CAST(solar_amount_s AS DECIMAL) ASC LIMIT $${paramIndex}`;
+      params.push(limit);
+
+      const result = await pool.query(query, params);
+
+      const items = result.rows.map(artifact => ({
+        id: artifact.id,
+        title: artifact.title,
+        slug: artifact.slug,
+        description: artifact.description,
+        category: artifact.category,
+        price: parseFloat(artifact.solar_amount_s || '0'),
+        fileType: artifact.file_type,
+        coverArt: artifact.cover_art_url,
+        streamingUrl: artifact.streaming_url
+      }));
+
+      return {
+        success: true,
+        items: items,
+        count: items.length,
+        filters: {
+          category: category,
+          maxPrice: maxPrice,
+          limit: limit
+        }
+      };
+
+    } catch (error) {
+      console.error('Error listing marketplace items:', error);
+      return { success: false, error: error.message };
     }
   }
 
@@ -269,19 +733,19 @@ Provide a helpful, conversational voice response.`;
       }
       
       const balanceResult = await pool.query(
-        'SELECT total_solar, name, signup_timestamp FROM members WHERE id = $1',
+        'SELECT total_solar, name, joined_date FROM members WHERE id = $1',
         [memberId]
       );
 
       const transactionsResult = await pool.query(
-        'SELECT * FROM transactions WHERE member_id = $1 ORDER BY timestamp DESC LIMIT 5',
-        [memberId]
+        'SELECT * FROM transactions WHERE user_id = $1 ORDER BY created_at DESC LIMIT 5',
+        [memberId.toString()]
       );
 
       return {
-        balance: balanceResult.rows[0]?.total_solar || 0,
+        balance: parseFloat(balanceResult.rows[0]?.total_solar || '0'),
         name: balanceResult.rows[0]?.name || 'Member',
-        memberSince: balanceResult.rows[0]?.signup_timestamp,
+        memberSince: balanceResult.rows[0]?.joined_date,
         recentTransactions: transactionsResult.rows || [],
         energyListings: []
       };
@@ -308,9 +772,200 @@ Provide a helpful, conversational voice response.`;
     if (lower.includes('energy') || lower.includes('rec') || lower.includes('ppa')) return 'check_energy';
     if (lower.includes('list') || lower.includes('sell')) return 'list_energy';
     if (lower.includes('buy') || lower.includes('purchase')) return 'buy_artifact';
+    if (lower.includes('preview') || lower.includes('play') || lower.includes('stream')) return 'preview_artifact';
+    if (lower.includes('upload') || lower.includes('submit')) return 'upload_artifact';
+    if (lower.includes('my upload') || lower.includes('my artifact')) return 'check_my_uploads';
+    if (lower.includes('how to upload') || lower.includes('upload guide')) return 'upload_guidance';
     if (lower.includes('help') || lower.includes('what can')) return 'help';
     
     return 'general_query';
+  }
+
+  /**
+   * Analyze artifact file for upload using Vision API
+   */
+  async analyzeArtifactForUpload(fileData, fileName, fileType) {
+    try {
+      if (!fileData || !fileData.buffer) {
+        return {
+          success: false,
+          error: 'No file data provided for analysis'
+        };
+      }
+
+      let analysisText = '';
+      let category = 'uncategorized';
+      let suggestedPrice = 0.001;
+
+      if (fileType.startsWith('image/')) {
+        const visionPrompt = `Analyze this image for marketplace upload. Provide:
+1. Suggested title (creative and descriptive)
+2. Detailed description (2-3 sentences)
+3. Category (art/photo/design)
+4. 3-5 relevant tags
+5. Suggested pricing in Solar (0.001-0.01 range based on quality and complexity)
+
+Format your response as JSON.`;
+
+        const visionResult = await this.processImageWithVision(fileData.buffer, visionPrompt);
+        analysisText = visionResult.text;
+        
+        const match = analysisText.match(/\{[\s\S]*\}/);
+        if (match) {
+          try {
+            const parsed = JSON.parse(match[0]);
+            return {
+              success: true,
+              suggestions: {
+                title: parsed.title || fileName.replace(/\.[^/.]+$/, ''),
+                description: parsed.description || 'High-quality artwork',
+                category: parsed.category || 'art',
+                tags: parsed.tags || [],
+                price: parsed.price || 0.005
+              },
+              fileInfo: {
+                name: fileName,
+                type: fileType,
+                category: 'image'
+              }
+            };
+          } catch (e) {
+            console.warn('Failed to parse Vision JSON, using text analysis');
+          }
+        }
+        
+        category = 'art';
+        suggestedPrice = 0.005;
+
+      } else if (fileType.startsWith('audio/')) {
+        category = 'music';
+        suggestedPrice = 0.002;
+        analysisText = 'Audio file detected. Suggested category: Music';
+
+      } else if (fileType.startsWith('video/')) {
+        category = 'video';
+        suggestedPrice = 0.01;
+        analysisText = 'Video file detected. Suggested category: Video';
+
+      } else {
+        category = 'document';
+        suggestedPrice = 0.001;
+        analysisText = 'Document file detected';
+      }
+
+      const cleanTitle = fileName.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
+
+      return {
+        success: true,
+        suggestions: {
+          title: cleanTitle.charAt(0).toUpperCase() + cleanTitle.slice(1),
+          description: `${category.charAt(0).toUpperCase() + category.slice(1)} file: ${fileName}`,
+          category: category,
+          tags: [category, 'upload'],
+          price: suggestedPrice
+        },
+        fileInfo: {
+          name: fileName,
+          type: fileType,
+          category: category
+        },
+        analysis: analysisText
+      };
+
+    } catch (error) {
+      console.error('Error analyzing artifact:', error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * Provide upload guidance
+   */
+  async getUploadGuidance(fileType = null) {
+    const guidance = {
+      success: true,
+      general: {
+        steps: [
+          'Go to the Upload tab in the marketplace',
+          'Select your file (drag & drop or browse)',
+          'Add a catchy title and description',
+          'Choose the right category',
+          'Set your Solar price (or let AI suggest)',
+          'Submit for review'
+        ],
+        tips: [
+          'Use clear, descriptive titles',
+          'Add relevant tags for better discovery',
+          'High-quality files get more attention',
+          'Pricing is based on file size and content value'
+        ]
+      },
+      limits: {
+        music: { maxSize: '50MB', formats: 'MP3, WAV, FLAC, OGG', suggestedPrice: '0.001-0.005 Solar' },
+        video: { maxSize: '500MB', formats: 'MP4, WEBM, MOV', suggestedPrice: '0.005-0.02 Solar' },
+        art: { maxSize: '25MB', formats: 'JPG, PNG, GIF, WEBP, SVG', suggestedPrice: '0.002-0.01 Solar' },
+        document: { maxSize: '5MB', formats: 'PDF, TXT, DOC, DOCX', suggestedPrice: '0.001-0.003 Solar' }
+      }
+    };
+
+    if (fileType) {
+      const type = fileType.toLowerCase();
+      if (guidance.limits[type]) {
+        guidance.specific = guidance.limits[type];
+      }
+    }
+
+    return guidance;
+  }
+
+  /**
+   * Check user's uploads and their status
+   */
+  async checkMyUploads(memberId) {
+    const pool = getSharedPool();
+    if (!pool) {
+      return { success: false, error: 'Database unavailable' };
+    }
+
+    try {
+      const result = await pool.query(
+        `SELECT id, title, category, solar_amount_s, active, created_at, processing_status
+         FROM artifacts 
+         WHERE creator_id = $1 
+         ORDER BY created_at DESC 
+         LIMIT 20`,
+        [memberId.toString()]
+      );
+
+      const uploads = result.rows.map(artifact => ({
+        id: artifact.id,
+        title: artifact.title,
+        category: artifact.category,
+        price: parseFloat(artifact.solar_amount_s || '0'),
+        status: artifact.active ? 'approved' : 'pending review',
+        processingStatus: artifact.processing_status || 'completed',
+        uploadedAt: artifact.created_at
+      }));
+
+      const stats = {
+        total: uploads.length,
+        approved: uploads.filter(u => u.status === 'approved').length,
+        pending: uploads.filter(u => u.status === 'pending review').length
+      };
+
+      return {
+        success: true,
+        uploads: uploads,
+        stats: stats
+      };
+
+    } catch (error) {
+      console.error('Error checking uploads:', error);
+      return { success: false, error: error.message };
+    }
   }
 
   /**
@@ -331,7 +986,9 @@ Provide a helpful, conversational voice response.`;
         responseText: response.text,
         responseAudio: audioResponse,
         intent: response.intent,
-        walletData: response.data
+        walletData: response.data,
+        functionCalled: response.functionCalled,
+        functionArgs: response.functionArgs
       };
 
     } catch (error) {

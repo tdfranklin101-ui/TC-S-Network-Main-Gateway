@@ -138,11 +138,32 @@ async function handleMultipartRequest(req, res) {
         
         addToConversation(conversationId, 'user', `[Image: ${imageFile.originalname}] ${prompt}`, 'image');
         
-        response = await kidSolar.processImageWithVision(
-          imageBuffer,
-          prompt,
-          conversationHistory
+        const fileData = {
+          buffer: imageBuffer,
+          fileName: imageFile.originalname,
+          fileType: imageFile.mimetype
+        };
+        
+        const uploadKeywords = ['upload', 'sell', 'marketplace', 'list'];
+        const isUploadIntent = uploadKeywords.some(keyword => 
+          text.toLowerCase().includes(keyword)
         );
+        
+        if (isUploadIntent) {
+          response = await kidSolar.processVoiceCommand(
+            prompt,
+            memberId,
+            memberContext,
+            conversationHistory,
+            fileData
+          );
+        } else {
+          response = await kidSolar.processImageWithVision(
+            imageBuffer,
+            prompt,
+            conversationHistory
+          );
+        }
         
         addToConversation(conversationId, 'assistant', response.text, 'image');
         
@@ -154,12 +175,33 @@ async function handleMultipartRequest(req, res) {
         
         addToConversation(conversationId, 'user', `[File: ${fileName}] ${prompt}`, 'file');
         
-        response = await kidSolar.processFileText(
-          fileBuffer,
-          fileName,
-          prompt,
-          conversationHistory
+        const fileData = {
+          buffer: fileBuffer,
+          fileName: fileName,
+          fileType: fileAttachment.mimetype
+        };
+        
+        const uploadKeywords = ['upload', 'sell', 'marketplace', 'list'];
+        const isUploadIntent = uploadKeywords.some(keyword => 
+          text.toLowerCase().includes(keyword)
         );
+        
+        if (isUploadIntent) {
+          response = await kidSolar.processVoiceCommand(
+            prompt,
+            memberId,
+            memberContext,
+            conversationHistory,
+            fileData
+          );
+        } else {
+          response = await kidSolar.processFileText(
+            fileBuffer,
+            fileName,
+            prompt,
+            conversationHistory
+          );
+        }
         
         addToConversation(conversationId, 'assistant', response.text, 'file');
         
@@ -195,7 +237,10 @@ async function handleMultipartRequest(req, res) {
         transcript,
         audioUrl,
         conversationId,
-        intent: response.intent
+        intent: response.intent,
+        functionCalled: response.functionCalled,
+        functionArgs: response.functionArgs,
+        functionData: response.data
       }));
 
     } catch (error) {
@@ -272,7 +317,10 @@ async function handleJsonRequest(req, res) {
         success: true,
         response: response.text,
         conversationId,
-        intent: response.intent
+        intent: response.intent,
+        functionCalled: response.functionCalled,
+        functionArgs: response.functionArgs,
+        functionData: response.data
       }));
 
     } catch (error) {
