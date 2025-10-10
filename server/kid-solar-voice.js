@@ -217,11 +217,17 @@ Context:
    */
   async processVoiceCommand(text, memberId, memberContext = {}, conversationHistory = [], fileData = null) {
     try {
-      const walletData = await this.getWalletData(memberId);
+      // Prefer memberContext data over database query for better performance and reliability
+      const walletData = memberContext.totalSolar !== undefined ? {
+        balance: memberContext.totalSolar,
+        name: memberContext.username || memberContext.name || 'Member',
+        memberSince: memberContext.memberSince || 'Unknown',
+        recentTransactions: []
+      } : await this.getWalletData(memberId);
       
       let contextPrompt = `
 Member Context:
-- Name: ${memberContext.name || walletData.name || 'Member'}
+- Name: ${memberContext.username || memberContext.name || walletData.name || 'Member'}
 - Solar Balance: ${walletData.balance} Solar
 - Member Since: ${memberContext.memberSince || walletData.memberSince || 'Unknown'}
 - Recent Transactions: ${walletData.recentTransactions.length}
@@ -750,16 +756,28 @@ User said: "${text}"`;
         [memberId]
       );
 
-      const transactionsResult = await pool.query(
-        'SELECT * FROM transactions WHERE user_id = $1 ORDER BY created_at DESC LIMIT 5',
-        [memberId.toString()]
+      // Get wallet_id for this member to fetch transactions
+      const walletResult = await pool.query(
+        'SELECT id FROM wallets WHERE member_id = $1',
+        [memberId]
       );
+      
+      const walletId = walletResult.rows[0]?.id;
+      
+      let recentTransactions = [];
+      if (walletId) {
+        const transactionsResult = await pool.query(
+          'SELECT * FROM transactions WHERE wallet_id = $1 ORDER BY created_at DESC LIMIT 5',
+          [walletId]
+        );
+        recentTransactions = transactionsResult.rows;
+      }
 
       return {
         balance: parseFloat(balanceResult.rows[0]?.total_solar || '0'),
         name: balanceResult.rows[0]?.name || 'Member',
         memberSince: balanceResult.rows[0]?.joined_date,
-        recentTransactions: transactionsResult.rows || [],
+        recentTransactions: recentTransactions,
         energyListings: []
       };
 

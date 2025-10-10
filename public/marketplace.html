@@ -3712,6 +3712,9 @@
                     body: JSON.stringify({
                         text: text,
                         conversationId: conversationId,
+                        memberId: currentUser.id || 'anonymous',
+                        memberUsername: currentUser.username || 'Member',
+                        memberBalance: currentUser.solarBalance || '0',
                         attachments: attachmentsCopy.map(a => ({
                             type: a.type,
                             name: a.name,
@@ -3856,6 +3859,13 @@
                 const formData = new FormData();
                 formData.append('audio', audioBlob, 'voice.webm');
                 formData.append('conversationId', conversationId);
+                
+                // Add member context for Kid Solar
+                if (currentUser) {
+                    formData.append('memberId', currentUser.id || 'anonymous');
+                    formData.append('memberUsername', currentUser.username || 'Member');
+                    formData.append('memberBalance', currentUser.solarBalance || '0');
+                }
 
                 const response = await fetch('/api/kid-solar/voice', {
                     method: 'POST',

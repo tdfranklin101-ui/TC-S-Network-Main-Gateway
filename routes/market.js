@@ -100,7 +100,10 @@ async function handleMultipartRequest(req, res) {
       const conversationId = req.body.conversationId || `conv_${Date.now()}`;
       const memberId = req.body.memberId || 'anonymous';
       const memberContext = {
-        name: req.body.memberName || 'Member'
+        name: req.body.memberName || 'Member',
+        username: req.body.memberUsername || req.body.memberName || 'Member',
+        totalSolar: parseFloat(req.body.memberBalance || '0'),
+        memberSince: req.body.memberSince || 'Unknown'
       };
       const text = req.body.text || '';
       
@@ -268,7 +271,10 @@ async function handleJsonRequest(req, res) {
       const conversationId = data.conversationId || `conv_${Date.now()}`;
       const memberId = data.memberId || 'anonymous';
       const memberContext = {
-        name: data.memberName || 'Member'
+        name: data.memberName || data.memberUsername || 'Member',
+        username: data.memberUsername || data.memberName || 'Member',
+        totalSolar: parseFloat(data.memberBalance || '0'),
+        memberSince: data.memberSince || 'Unknown'
       };
       const text = data.text || data.message || '';
       const imageBase64 = data.imageBase64;
