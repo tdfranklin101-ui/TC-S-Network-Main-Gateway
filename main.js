@@ -1285,24 +1285,19 @@ const server = http.createServer(async (req, res) => {
                 currentBalance = cachedBalance;
                 balanceSource = 'cached_invalid_db';
               } else {
-                // SAFEGUARD 4: If DB returns 0 but cached has value, investigate
+                // All checks passed - use DB balance (including legitimate 0)
+                currentBalance = parsedBalance;
+                balanceSource = 'database';
+                
+                // Enhanced logging: distinguish NULL vs legitimate 0
                 if (parsedBalance === 0 && cachedBalance > 0) {
-                  console.error(`🚨 [BALANCE ALERT] DB shows 0 but cached shows ${cachedBalance} for ${session.username}! Keeping cached value for safety.`);
-                  currentBalance = cachedBalance; // Keep cached value for safety
-                  balanceSource = 'cached_zero_protection';
-                } else {
-                  // All checks passed - use DB balance
-                  currentBalance = parsedBalance;
-                  balanceSource = 'database';
-                  
-                  // Log balance change if different from cache
-                  if (currentBalance !== cachedBalance) {
-                    logBalanceChange('Session Check', session.userId, session.username, cachedBalance, currentBalance, balanceSource);
-                  }
-                  
-                  // Update session with current balance
-                  session.solarBalance = currentBalance;
+                  console.log(`📊 [BALANCE UPDATE] ${session.username}: ${cachedBalance} → 0 Solar (legitimate transaction or zero balance)`);
+                } else if (currentBalance !== cachedBalance) {
+                  logBalanceChange('Session Check', session.userId, session.username, cachedBalance, currentBalance, balanceSource);
                 }
+                
+                // Update session with current balance
+                session.solarBalance = currentBalance;
               }
             }
           } else {

@@ -3215,22 +3215,15 @@
                             if (data.balanceSource.includes('cached') && (data.balanceSource.includes('error') || data.balanceSource.includes('null'))) {
                                 console.warn(`⚠️ WARNING: Balance loaded from cache due to: ${data.balanceSource}`);
                             }
-                            
-                            // Alert if zero protection was triggered
-                            if (data.balanceSource === 'cached_zero_protection') {
-                                console.error('🚨 CRITICAL: Zero balance protection activated! DB showed 0 but kept cached value.');
-                            }
                         }
                         
-                        // SAFEGUARD: Prevent balance from being set to 0 if we had a higher value
+                        // Trust server balance (including legitimate 0 from transactions)
                         let newBalance = data.solarBalance || 0;
                         
                         if (previousBalance !== null && previousUsername === data.user.username) {
-                            // Same user - check for unexpected balance drop
+                            // Same user - log balance changes for monitoring
                             if (newBalance === 0 && previousBalance > 0) {
-                                console.error(`🚨 BALANCE ALERT: Balance would drop from ${previousBalance} to 0! Keeping previous value for safety.`);
-                                console.error(`   Source: ${data.balanceSource || 'unknown'}`);
-                                newBalance = previousBalance; // Keep previous balance for safety
+                                console.log(`📊 Balance reached 0: ${previousBalance} → 0 (source: ${data.balanceSource || 'unknown'})`);
                             } else if (newBalance < previousBalance) {
                                 console.warn(`⚠️ Balance decreased: ${previousBalance} → ${newBalance} (source: ${data.balanceSource || 'unknown'})`);
                             } else if (newBalance > previousBalance) {
