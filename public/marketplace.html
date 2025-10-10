@@ -1914,31 +1914,54 @@
                 <p>Powered by TC Identity Sync for smart pricing & AI curation</p>
             </div>
             
-            <!-- AI Generation Highlight with Direct Links -->
+            <!-- AI Generation Highlight with Dropdown Links -->
             <div style="background: linear-gradient(135deg, rgba(0,123,255,0.15) 0%, rgba(138,43,226,0.15) 100%); border: 2px solid rgba(138,43,226,0.4); border-radius: 12px; padding: 20px; margin: 20px 0;">
-                <h3 style="color: #8A2BE2; font-size: 22px; margin-bottom: 15px; text-align: center;">✨ Create AI Content - Click Links Below</h3>
+                <h3 style="color: #8A2BE2; font-size: 22px; margin-bottom: 15px; text-align: center;">✨ Create AI Content</h3>
                 
-                <!-- AI Music Platforms -->
-                <div style="margin-bottom: 20px;">
-                    <h4 style="color: #39FF14; font-size: 16px; margin-bottom: 10px; font-weight: 600;">🎵 AI MUSIC CREATORS:</h4>
-                    <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">
-                        <a href="https://suno.ai" target="_blank" data-testid="link-suno-ai" style="display: inline-block; padding: 10px 20px; background: rgba(57,255,20,0.2); border: 1px solid #39FF14; border-radius: 8px; color: #39FF14; text-decoration: none; font-weight: 600; transition: all 0.3s;">🎸 Suno AI →</a>
-                        <a href="https://udio.com" target="_blank" data-testid="link-udio" style="display: inline-block; padding: 10px 20px; background: rgba(57,255,20,0.2); border: 1px solid #39FF14; border-radius: 8px; color: #39FF14; text-decoration: none; font-weight: 600; transition: all 0.3s;">🎹 Udio →</a>
-                        <a href="https://aisongmaker.io" target="_blank" data-testid="link-aisongmaker" style="display: inline-block; padding: 10px 20px; background: rgba(57,255,20,0.2); border: 1px solid #39FF14; border-radius: 8px; color: #39FF14; text-decoration: none; font-weight: 600; transition: all 0.3s;">🎼 AiSongMaker →</a>
+                <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                    <!-- Music Creators Dropdown -->
+                    <div style="position: relative; flex: 1; min-width: 200px; max-width: 300px;">
+                        <button type="button" onclick="toggleAIPlatformDropdown('music')" data-testid="button-music-dropdown" style="width: 100%; padding: 14px 20px; background: linear-gradient(135deg, #39FF14, #32CD32); border: none; border-radius: 8px; color: #000; font-weight: 700; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
+                            <span>🎵 Music Creators</span>
+                            <span id="music-dropdown-arrow">▼</span>
+                        </button>
+                        <div id="music-platforms-dropdown" style="display: none; position: absolute; top: 100%; left: 0; right: 0; margin-top: 8px; background: #1a1a1a; border: 2px solid #39FF14; border-radius: 8px; padding: 10px; z-index: 1000; box-shadow: 0 4px 12px rgba(57,255,20,0.3);">
+                            <a href="https://suno.ai" target="_blank" data-testid="link-suno-ai" style="display: block; padding: 12px; color: #39FF14; text-decoration: none; border-radius: 6px; margin-bottom: 8px; background: rgba(57,255,20,0.1); transition: all 0.3s;" onmouseover="this.style.background='rgba(57,255,20,0.2)'" onmouseout="this.style.background='rgba(57,255,20,0.1)'">
+                                <strong>🎸 Suno AI</strong><br>
+                                <small style="color: #888;">Generate songs from text prompts</small>
+                            </a>
+                            <a href="https://udio.com" target="_blank" data-testid="link-udio" style="display: block; padding: 12px; color: #39FF14; text-decoration: none; border-radius: 6px; margin-bottom: 8px; background: rgba(57,255,20,0.1); transition: all 0.3s;" onmouseover="this.style.background='rgba(57,255,20,0.2)'" onmouseout="this.style.background='rgba(57,255,20,0.1)'">
+                                <strong>🎹 Udio</strong><br>
+                                <small style="color: #888;">AI music composition tool</small>
+                            </a>
+                            <a href="https://aisongmaker.io" target="_blank" data-testid="link-aisongmaker" style="display: block; padding: 12px; color: #39FF14; text-decoration: none; border-radius: 6px; background: rgba(57,255,20,0.1); transition: all 0.3s;" onmouseover="this.style.background='rgba(57,255,20,0.2)'" onmouseout="this.style.background='rgba(57,255,20,0.1)'">
+                                <strong>🎼 AiSongMaker</strong><br>
+                                <small style="color: #888;">Create AI-generated tracks</small>
+                            </a>
+                        </div>
                     </div>
-                </div>
-                
-                <!-- AI Video Platforms -->
-                <div>
-                    <h4 style="color: #39FF14; font-size: 16px; margin-bottom: 10px; font-weight: 600;">🎬 AI VIDEO CREATORS:</h4>
-                    <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">
-                        <a href="https://vimeo.com/create" target="_blank" data-testid="link-vimeo-create" style="display: inline-block; padding: 10px 20px; background: rgba(57,255,20,0.2); border: 1px solid #39FF14; border-radius: 8px; color: #39FF14; text-decoration: none; font-weight: 600; transition: all 0.3s;">🎥 Vimeo AI →</a>
-                        <a href="https://runwayml.com" target="_blank" data-testid="link-runway" style="display: inline-block; padding: 10px 20px; background: rgba(57,255,20,0.2); border: 1px solid #39FF14; border-radius: 8px; color: #39FF14; text-decoration: none; font-weight: 600; transition: all 0.3s;">🎞️ Runway AI →</a>
+                    
+                    <!-- Video Creators Dropdown -->
+                    <div style="position: relative; flex: 1; min-width: 200px; max-width: 300px;">
+                        <button type="button" onclick="toggleAIPlatformDropdown('video')" data-testid="button-video-dropdown" style="width: 100%; padding: 14px 20px; background: linear-gradient(135deg, #39FF14, #32CD32); border: none; border-radius: 8px; color: #000; font-weight: 700; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
+                            <span>🎬 Video Creators</span>
+                            <span id="video-dropdown-arrow">▼</span>
+                        </button>
+                        <div id="video-platforms-dropdown" style="display: none; position: absolute; top: 100%; left: 0; right: 0; margin-top: 8px; background: #1a1a1a; border: 2px solid #39FF14; border-radius: 8px; padding: 10px; z-index: 1000; box-shadow: 0 4px 12px rgba(57,255,20,0.3);">
+                            <a href="https://vimeo.com/create" target="_blank" data-testid="link-vimeo-create" style="display: block; padding: 12px; color: #39FF14; text-decoration: none; border-radius: 6px; margin-bottom: 8px; background: rgba(57,255,20,0.1); transition: all 0.3s;" onmouseover="this.style.background='rgba(57,255,20,0.2)'" onmouseout="this.style.background='rgba(57,255,20,0.1)'">
+                                <strong>🎥 Vimeo Create</strong><br>
+                                <small style="color: #888;">AI video generator + hosting</small>
+                            </a>
+                            <a href="https://runwayml.com" target="_blank" data-testid="link-runway" style="display: block; padding: 12px; color: #39FF14; text-decoration: none; border-radius: 6px; background: rgba(57,255,20,0.1); transition: all 0.3s;" onmouseover="this.style.background='rgba(57,255,20,0.2)'" onmouseout="this.style.background='rgba(57,255,20,0.1)'">
+                                <strong>🎞️ Runway AI</strong><br>
+                                <small style="color: #888;">Advanced AI video generation</small>
+                            </a>
+                        </div>
                     </div>
                 </div>
                 
                 <p style="color: #B0BEC5; font-size: 14px; margin-top: 15px; text-align: center;">
-                    1️⃣ Click platform → 2️⃣ Create content → 3️⃣ Get URL → 4️⃣ Paste below to upload
+                    Click button → Choose platform → Create content → Get URL → Paste below
                 </p>
             </div>
 
@@ -2304,6 +2327,32 @@
                 toggleButton.style.color = '#888';
             }
         }
+
+        // Toggle AI Platform Dropdown
+        function toggleAIPlatformDropdown(type) {
+            const dropdown = document.getElementById(`${type}-platforms-dropdown`);
+            const arrow = document.getElementById(`${type}-dropdown-arrow`);
+            const isVisible = dropdown.style.display === 'block';
+            
+            // Close all dropdowns first
+            document.querySelectorAll('[id$="-platforms-dropdown"]').forEach(d => d.style.display = 'none');
+            document.querySelectorAll('[id$="-dropdown-arrow"]').forEach(a => a.textContent = '▼');
+            
+            // Toggle clicked dropdown
+            if (!isVisible) {
+                dropdown.style.display = 'block';
+                arrow.textContent = '▲';
+            }
+        }
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('button[onclick*="toggleAIPlatformDropdown"]') && 
+                !event.target.closest('[id$="-platforms-dropdown"]')) {
+                document.querySelectorAll('[id$="-platforms-dropdown"]').forEach(d => d.style.display = 'none');
+                document.querySelectorAll('[id$="-dropdown-arrow"]').forEach(a => a.textContent = '▼');
+            }
+        });
 
         // Upload Method Switcher for AI Music & Video Integration
         function switchUploadMethod(method) {
