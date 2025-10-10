@@ -3218,7 +3218,8 @@
                         }
                         
                         // Trust server balance (including legitimate 0 from transactions)
-                        let newBalance = data.solarBalance || 0;
+                        // Ensure balance is always a number (not string)
+                        let newBalance = Number(data.solarBalance) || 0;
                         
                         if (previousBalance !== null && previousUsername === data.user.username) {
                             // Same user - log balance changes for monitoring
@@ -3405,13 +3406,16 @@
                 if (response.ok) {
                     console.log('✅ Sign-in successful:', result);
                     
-                    // Close modal first
-                    closeSigninModal();
-                    
-                    // Re-check session from server to ensure sync
+                    // Re-check session from server FIRST to update currentUser
                     await checkUserSession();
                     
-                    alert(`🌱 Welcome back, ${result.username}! Balance: ${result.solarBalance || 0} Solar`);
+                    // Close modal
+                    closeSigninModal();
+                    
+                    // Refresh the page data with new user context
+                    await checkAndSwitchTab(currentTab);
+                    
+                    alert(`🌱 Welcome back, ${result.username}! Balance: ${(Number(result.solarBalance) || 0).toFixed(4)} Solar`);
                 } else {
                     alert(`❌ Sign in failed: ${result.error}`);
                 }
@@ -3464,13 +3468,16 @@
                 if (response.ok) {
                     console.log('✅ Registration successful:', result);
                     
-                    // Close modal first
-                    closeSignupModal();
-                    
-                    // Re-check session from server to ensure sync
+                    // Re-check session from server FIRST to update currentUser
                     await checkUserSession();
                     
-                    alert(`🌱 ${result.message || 'Welcome! Your account has been created.'}`);
+                    // Close modal
+                    closeSignupModal();
+                    
+                    // Refresh the page data with new user context
+                    await checkAndSwitchTab(currentTab);
+                    
+                    alert(`🌱 Welcome, ${result.username || username}! Balance: ${(Number(result.solarBalance) || 0).toFixed(4)} Solar`);
                 } else {
                     alert(`❌ Signup failed: ${result.error}`);
                 }
@@ -3941,7 +3948,10 @@
         localStorage.setItem('kid_solar_conversation_id', conversationId);
 
         // Open chat panel (triggered from existing "Ask Kid Solar" button)
-        function openKidSolarChat() {
+        async function openKidSolarChat() {
+            // Re-check session to ensure we have latest user data
+            await checkUserSession();
+            
             // Use currentUser variable instead of re-checking localStorage
             if (!currentUser) {
                 alert('Please sign in to use Kid Solar');
@@ -3950,9 +3960,9 @@
             const user = currentUser;
             document.getElementById('kid-solar-chat-panel').classList.add('open');
             document.getElementById('floating-kid-solar-btn').classList.add('hidden');
-            // Welcome message if first time
+            // Welcome message if first time (with balance)
             if (chatConversation.length === 0) {
-                addChatMessage('assistant', `Hi ${user.username}! I'm Kid Solar, your AI assistant. I can help with voice, text, images, and files. What can I do for you today?`);
+                addChatMessage('assistant', `Hi ${user.username}! I'm Kid Solar, your AI assistant. You have ${(Number(user.solarBalance) || 0).toFixed(4)} Solar. I can help with voice, text, images, and files. What can I do for you today?`);
             }
         }
 
@@ -4010,9 +4020,9 @@
                     body: JSON.stringify({
                         text: text,
                         conversationId: conversationId,
-                        memberId: currentUser.id || 'anonymous',
+                        memberId: currentUser.userId || 'anonymous',
                         memberUsername: currentUser.username || 'Member',
-                        memberBalance: currentUser.solarBalance || '0',
+                        memberBalance: String(Number(currentUser.solarBalance) || 0),
                         attachments: attachmentsCopy.map(a => ({
                             type: a.type,
                             name: a.name,
@@ -4160,9 +4170,9 @@
                 
                 // Add member context for Kid Solar
                 if (currentUser) {
-                    formData.append('memberId', currentUser.id || 'anonymous');
+                    formData.append('memberId', currentUser.userId || 'anonymous');
                     formData.append('memberUsername', currentUser.username || 'Member');
-                    formData.append('memberBalance', currentUser.solarBalance || '0');
+                    formData.append('memberBalance', String(Number(currentUser.solarBalance) || 0));
                 }
 
                 const response = await fetch('/api/kid-solar/voice', {
