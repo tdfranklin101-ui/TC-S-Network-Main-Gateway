@@ -2085,11 +2085,16 @@
         function setupEventListeners() {
             // Tab switching
             document.querySelectorAll('.tab').forEach(tab => {
-                tab.addEventListener('click', function() {
+                tab.addEventListener('click', async function() {
                     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
                     this.classList.add('active');
                     
                     const tabType = this.dataset.tab;
+                    
+                    // ALWAYS re-check session from server when switching tabs
+                    console.log('🔄 Tab switched to:', tabType, '- Re-checking session...');
+                    await checkUserSession();
+                    
                     if (tabType === 'my-listings') {
                         showMyListings();
                     } else if (tabType === 'upload') {
@@ -3108,25 +3113,14 @@
 
                 if (response.ok) {
                     console.log('✅ Sign-in successful:', result);
-                    currentUser = {
-                        userId: result.userId,
-                        username: result.username,
-                        solarBalance: result.solarBalance || 0
-                    };
-                    
-                    // Store in localStorage
-                    localStorage.setItem('tc_s_user', JSON.stringify(currentUser));
-                    console.log('💾 Stored user in localStorage:', currentUser);
                     
                     // Close modal first
                     closeSigninModal();
                     
-                    // Then update display after a brief delay to ensure DOM is ready
-                    setTimeout(() => {
-                        updateUserDisplay();
-                    }, 100);
+                    // Re-check session from server to ensure sync
+                    await checkUserSession();
                     
-                    alert(`🌱 Welcome back, ${result.username}! Balance: ${result.solarBalance} Solar`);
+                    alert(`🌱 Welcome back, ${result.username}! Balance: ${result.solarBalance || 0} Solar`);
                 } else {
                     alert(`❌ Sign in failed: ${result.error}`);
                 }
@@ -3178,25 +3172,14 @@
 
                 if (response.ok) {
                     console.log('✅ Registration successful:', result);
-                    currentUser = {
-                        userId: result.userId,
-                        username: result.username,
-                        solarBalance: result.solarBalance || 0
-                    };
-                    
-                    // Store in localStorage (simplified session management)
-                    localStorage.setItem('tc_s_user', JSON.stringify(currentUser));
-                    console.log('💾 Stored user in localStorage:', currentUser);
                     
                     // Close modal first
                     closeSignupModal();
                     
-                    // Then update display after a brief delay to ensure DOM is ready
-                    setTimeout(() => {
-                        updateUserDisplay();
-                    }, 100);
+                    // Re-check session from server to ensure sync
+                    await checkUserSession();
                     
-                    alert(`🌱 ${result.message}`);
+                    alert(`🌱 ${result.message || 'Welcome! Your account has been created.'}`);
                 } else {
                     alert(`❌ Signup failed: ${result.error}`);
                 }
