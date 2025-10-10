@@ -35,6 +35,11 @@ Preferred communication style: Simple, everyday language.
 - **Real-time Analytics**: Production-only tracking with daily visit aggregation, geographic analytics (countries and US states), and live member count. Development views are excluded for accurate public metrics. Environment detection via NODE_ENV and Replit deployment flags.
 - **AI Multi-Modal Assistant**: Kid Solar Command Center integrates OpenAI's Whisper (STT), GPT-4o (NLU/Vision/Function Calling), and TTS (Nova voice) for natural language wallet control and multi-modal interactions. Supports text chat, voice commands, image analysis via Vision API, and file processing (PDF/TXT/DOC). **NEW (Oct 2025)**: Added OpenAI function calling for marketplace operations - Kid Solar can now execute purchases, preview artifacts, check wallet balance, list marketplace items, analyze uploads, and provide upload guidance through voice or text commands. Conversation context persisted across all input modes using in-memory state management and localStorage conversationId. Base64 audio delivery for TTS responses ensures seamless playback across devices.
 - **Marketplace & Energy Trading**: Features five market categories (Computronium Missions, Culture, Basic Needs, Rent Anything, Energy Trading) with artifact display and an in-memory energy trading ledger for RECs/PPAs.
+- **Member Content Upload System (Oct 2025)**: Three-tab upload interface for digital artifacts:
+  - **Local File Upload**: Direct file uploads with AI-powered "Identify Anything" kWh-to-Solar pricing
+  - **AI Music Creator**: URL import from AiSongMaker.io, Suno AI, and Udio platforms (members create externally, paste direct MP3/WAV/FLAC URLs)
+  - **Video Hosting**: URL import from Vimeo Create (AI video generator + hosting) and Runway AI (advanced AI video generation). Members create videos externally, paste player URLs (player.vimeo.com/video/...) or direct MP4/WEBM URLs. **Decision (Oct 2025)**: Using Vimeo + Runway AI as primary video platforms - provides immediate member access without API dependencies. Sora 2 API researched but not publicly available as of Oct 2025.
+- **Music Streaming Platform**: Separate from marketplace - Music Now (music-now.html) dynamically streams Monazite Foundation tracks + member uploads flagged with `isFreeStreaming: true`. Member uploaded audio served from `/uploads/member-content/audio/` with Range Request support.
 - **Authentication**: Session-based authentication with extended session durations (30 days), ensuring seamless user experience. Includes self-purchase prevention for marketplace listings. **FIXED (Oct 2025)**: Marketplace authentication now fetches current user session from server (`/api/session`) instead of relying on localStorage, eliminating session mismatch issues. Session is re-validated on every tab switch, login, and signup to maintain persistent authentication across the marketplace.
 - **Video Streaming Optimization**: MP4s re-encoded with `faststart` flag, and large files (>10MB) are delivered via HTTP 206 partial content to bypass Cloud Run's 32MB HTTP/1 response limit.
 - **Solar Distribution**: Daily 1 Solar token distribution per member since the Genesis Date (April 7, 2025).
@@ -51,7 +56,11 @@ Preferred communication style: Simple, everyday language.
 - **OpenAI**: Utilized for GPT-4o model (text generation, natural language understanding, vision analysis), Whisper (speech-to-text), TTS (text-to-speech with Nova voice), and DALL-E (image creation).
 - **D-ID**: Provides the AI agent platform for interactive avatar experiences (Kid Solar, agent ID: `v2_agt_vhYf_e_C`).
 - **PostgreSQL**: Cloud-hosted relational database for persistent storage, supporting providers like Neon.
-- **Vimeo**: Video hosting service.
+- **AI Content Creation Platforms (Member-Accessible)**:
+  - **Vimeo Create**: AI video generator with hosting (vimeo.com/create) - Members create videos, import via player URLs
+  - **Runway AI**: Advanced AI video generation (runwayml.com) - Gen-2/Gen-3 models
+  - **AiSongMaker.io, Suno AI, Udio**: AI music creation platforms - Members create music, import via direct audio URLs
+  - Note: These are external platforms accessed by members directly; no API keys required on TC-S platform side
 
 ### APIs and Integrations
 - **TC-S Computronium Market API**: Provides endpoints for market categories (`/market/categories`, `/market/artifacts/:category`), energy trading (`/energy`, `/energy/list`, `/energy/match`), and a text command interface for Kid Solar AI (`/kid/query`).
