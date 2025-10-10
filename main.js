@@ -602,7 +602,8 @@ const server = http.createServer(async (req, res) => {
   }
   
   // Try market routes (includes /api/kid-solar/voice multi-modal endpoint)
-  if (pathname.startsWith('/market') || pathname === '/api/kid-solar/voice') {
+  // EXCLUDE .html files so /marketplace.html reaches static file handler
+  if ((pathname.startsWith('/market') && !pathname.endsWith('.html')) || pathname === '/api/kid-solar/voice') {
     if (marketRoutes(req, res, pathname)) return;
   }
   
@@ -3020,6 +3021,22 @@ const server = http.createServer(async (req, res) => {
     }
   }
   
+  if (pathname === '/marketplace.html' || pathname === '/marketplace') {
+    console.log('🔍 MARKETPLACE ROUTE HIT:', pathname);
+    const filePath = path.join(__dirname, 'public', 'marketplace.html');
+    console.log('📁 File path:', filePath);
+    console.log('📄 File exists:', fs.existsSync(filePath));
+    if (fs.existsSync(filePath)) {
+      const content = fs.readFileSync(filePath, 'utf8');
+      console.log('📏 Content length:', content.length);
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(content);
+      console.log('✅ Served marketplace with AI platform dropdowns');
+      return;
+    }
+    console.log('❌ File not found!');
+  }
+
   if (pathname === '/my-solar') {
     // Redirect to main platform solar tracking section
     res.writeHead(302, { 'Location': '/main-platform#solar-tracking' });

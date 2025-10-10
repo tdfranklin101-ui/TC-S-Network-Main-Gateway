@@ -20,7 +20,12 @@ DEPLOYMENT COMMAND:
    - Login/signup work without page reload
    - Balance shows in welcome message
 
-2. AI PLATFORM DISCOVERY (9 PLATFORMS) ✅
+2. MARKETPLACE ROUTE FIX (CRITICAL) ✅
+   - Fixed /marketplace.html being blocked by API routes
+   - Dropdowns now load correctly (verified locally!)
+   - 175KB marketplace file serves completely
+
+3. AI PLATFORM DISCOVERY (9 PLATFORMS) ✅
    
    🎵 Music Creators:
    - Suno AI
@@ -37,7 +42,7 @@ DEPLOYMENT COMMAND:
    - Bolt.new
    - v0.dev
 
-3. COMPACT DROPDOWN UX ✅
+4. COMPACT DROPDOWN UX ✅
    - 3 dropdown buttons (Music, Video, Code)
    - Auto-close on outside click
    - Platform descriptions visible
