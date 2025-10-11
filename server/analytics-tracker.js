@@ -10,11 +10,28 @@ const { Pool } = require('@neondatabase/serverless');
 class AnalyticsTracker {
   constructor(databaseUrl) {
     this.pool = new Pool({ connectionString: databaseUrl });
-    // Historical offsets removed - database restored with real data (Oct 11, 2025)
-    this.HISTORICAL_OFFSET = 0;
+    // Historical offset to restore pre-deployment visit count
+    // Production database separate from workspace - needs offset restoration
+    this.HISTORICAL_OFFSET = 9716;
     
-    // Country offsets removed - using restored database values
-    this.COUNTRY_OFFSETS = {};
+    // Historical country-level offsets (cumulative totals from pre-deployment database)
+    this.COUNTRY_OFFSETS = {
+      'US': 6226,
+      'CA': 650,
+      'GB': 460,
+      'DE': 325,
+      'CN': 276,
+      'AU': 265,
+      'IN': 226,
+      'JP': 200,
+      'RU': 183,
+      'FR': 153,
+      'NL': 114,
+      'SE': 57,
+      'ES': 33,
+      'IT': 23,
+      'SG': 2
+    };
   }
 
   /**
