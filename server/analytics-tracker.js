@@ -10,6 +10,9 @@ const { Pool } = require('@neondatabase/serverless');
 class AnalyticsTracker {
   constructor(databaseUrl) {
     this.pool = new Pool({ connectionString: databaseUrl });
+    // Historical offset to restore pre-deployment visit count
+    // Production database started fresh; this adds back historical visits
+    this.HISTORICAL_OFFSET = 9716;
   }
 
   /**
@@ -292,10 +295,12 @@ class AnalyticsTracker {
         FROM geo_analytics
         WHERE environment = 'production'
       `);
-      return parseInt(result.rows[0]?.total || 0);
+      const currentTotal = parseInt(result.rows[0]?.total || 0);
+      // Add historical offset to restore pre-deployment cumulative count
+      return currentTotal + this.HISTORICAL_OFFSET;
     } catch (error) {
       console.error('Error fetching total visits:', error);
-      return 0;
+      return this.HISTORICAL_OFFSET; // Return offset even on error to show historical data
     }
   }
 
