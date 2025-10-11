@@ -13,6 +13,25 @@ class AnalyticsTracker {
     // Historical offset to restore pre-deployment visit count
     // Production database started fresh; this adds back historical visits
     this.HISTORICAL_OFFSET = 9716;
+    
+    // Historical country-level offsets (cumulative totals from pre-deployment database)
+    this.COUNTRY_OFFSETS = {
+      'US': 6226,
+      'CA': 650,
+      'GB': 460,
+      'DE': 325,
+      'CN': 276,
+      'AU': 265,
+      'IN': 226,
+      'JP': 200,
+      'RU': 183,
+      'FR': 153,
+      'NL': 114,
+      'SE': 57,
+      'ES': 33,
+      'IT': 23,
+      'SG': 2
+    };
   }
 
   /**
@@ -322,6 +341,58 @@ class AnalyticsTracker {
     } catch (error) {
       console.error('Error getting today visits:', error);
       return 0;
+    }
+  }
+
+  /**
+   * Get all-time country totals with historical offsets (production only)
+   * @returns {Promise<Array>} Country totals since inception
+   */
+  async getAllTimeCountryTotals() {
+    try {
+      const result = await this.pool.query(`
+        SELECT 
+          country_code,
+          country_name,
+          SUM(visit_count) as visit_count
+        FROM geo_analytics
+        WHERE environment = 'production' AND (state_code IS NULL OR state_code = '')
+        GROUP BY country_code, country_name
+        ORDER BY visit_count DESC
+      `);
+
+      // Apply historical offsets to restore pre-deployment cumulative totals
+      const countriesWithOffsets = result.rows.map(row => {
+        const historicalOffset = this.COUNTRY_OFFSETS[row.country_code] || 0;
+        return {
+          country_code: row.country_code,
+          country_name: row.country_name,
+          visit_count: parseInt(row.visit_count) + historicalOffset
+        };
+      });
+
+      // Add countries that only exist in historical data (not yet in current database)
+      const currentCountries = new Set(result.rows.map(r => r.country_code));
+      for (const [code, count] of Object.entries(this.COUNTRY_OFFSETS)) {
+        if (!currentCountries.has(code)) {
+          countriesWithOffsets.push({
+            country_code: code,
+            country_name: this.getCountryName(code),
+            visit_count: count
+          });
+        }
+      }
+
+      // Sort by visit count descending
+      return countriesWithOffsets.sort((a, b) => b.visit_count - a.visit_count);
+    } catch (error) {
+      console.error('Error fetching all-time country totals:', error);
+      // Return historical data on error
+      return Object.entries(this.COUNTRY_OFFSETS).map(([code, count]) => ({
+        country_code: code,
+        country_name: this.getCountryName(code),
+        visit_count: count
+      })).sort((a, b) => b.visit_count - a.visit_count);
     }
   }
 

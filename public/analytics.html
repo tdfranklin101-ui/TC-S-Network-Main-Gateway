@@ -434,7 +434,7 @@
                 }
 
                 analyticsData = data.data;
-                displayCountries();
+                await displayCountries(); // Now async with historical offsets
                 displayUSStates();
                 displayMonthSelector();
             } catch (error) {
@@ -443,43 +443,33 @@
             }
         }
 
-        // Display top countries
-        function displayCountries() {
-            const countries = {};
-            
-            // Aggregate by country
-            analyticsData.forEach(row => {
-                if (!countries[row.country_code]) {
-                    countries[row.country_code] = {
-                        name: row.country_name,
-                        total: 0
-                    };
+        // Display top countries (with historical offsets)
+        async function displayCountries() {
+            try {
+                const response = await fetch('/api/analytics/countries-all-time?' + Date.now());
+                const data = await response.json();
+                
+                if (!data.success || !data.countries || data.countries.length === 0) {
+                    document.getElementById('countriesTable').innerHTML = '<div class="empty-state"><div class="empty-state-icon">🌍</div><p>No country data yet. Visit tracking will begin automatically.</p></div>';
+                    return;
                 }
-                countries[row.country_code].total += parseInt(row.visit_count) || 0;
-            });
 
-            // Convert to array and sort
-            const sortedCountries = Object.entries(countries)
-                .map(([code, data]) => ({ code, ...data }))
-                .sort((a, b) => b.total - a.total);
-
-            if (sortedCountries.length === 0) {
-                document.getElementById('countriesTable').innerHTML = '<div class="empty-state"><div class="empty-state-icon">🌍</div><p>No country data yet. Visit tracking will begin automatically.</p></div>';
-                return;
+                // Create table with all-time totals (includes historical offsets)
+                let html = '<table><thead><tr><th>Rank</th><th>Country</th><th>Total Visits</th></tr></thead><tbody>';
+                data.countries.slice(0, 20).forEach((country, index) => {
+                    html += `<tr>
+                        <td class="rank">#${index + 1}</td>
+                        <td>${country.country_name}</td>
+                        <td><strong>${country.visit_count.toLocaleString()}</strong></td>
+                    </tr>`;
+                });
+                html += '</tbody></table>';
+                
+                document.getElementById('countriesTable').innerHTML = html;
+            } catch (error) {
+                console.error('Error loading country data:', error);
+                document.getElementById('countriesTable').innerHTML = '<div class="error">Failed to load country data</div>';
             }
-
-            // Create table
-            let html = '<table><thead><tr><th>Rank</th><th>Country</th><th>Total Visits</th></tr></thead><tbody>';
-            sortedCountries.slice(0, 20).forEach((country, index) => {
-                html += `<tr>
-                    <td class="rank">#${index + 1}</td>
-                    <td>${country.name}</td>
-                    <td><strong>${country.total.toLocaleString()}</strong></td>
-                </tr>`;
-            });
-            html += '</tbody></table>';
-            
-            document.getElementById('countriesTable').innerHTML = html;
         }
 
         // Display US states

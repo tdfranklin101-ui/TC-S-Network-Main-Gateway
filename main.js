@@ -4539,6 +4539,19 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (pathname === '/api/analytics/countries-all-time' && req.method === 'GET') {
+    try {
+      const countries = await analyticsTracker.getAllTimeCountryTotals();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, countries }));
+    } catch (error) {
+      console.error('Error fetching all-time country totals:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to fetch country totals' }));
+    }
+    return;
+  }
+
   // Health check endpoint - Cloud Run compatible
   if (pathname === '/health' || pathname === '/healthz' || pathname === '/_ah/health') {
     const healthData = { 
