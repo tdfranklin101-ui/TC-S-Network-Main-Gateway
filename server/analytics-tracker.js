@@ -14,7 +14,8 @@ class AnalyticsTracker {
     // Production database separate from workspace - needs offset restoration
     this.HISTORICAL_OFFSET = 9716;
     
-    // Historical country-level offsets (cumulative totals from pre-deployment database)
+    // Historical country-level offsets (cumulative page views from pre-deployment database)
+    // Validated Oct 11, 2025: 9,716 total cumulative page views since April 7, 2025
     this.COUNTRY_OFFSETS = {
       'US': 6226,
       'CA': 650,
@@ -29,7 +30,10 @@ class AnalyticsTracker {
       'NL': 114,
       'SE': 57,
       'ES': 33,
+      'BR': 28,
+      'PL': 25,
       'IT': 23,
+      'ZA': 12,
       'SG': 2
     };
   }
