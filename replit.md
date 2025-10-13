@@ -28,6 +28,7 @@ Preferred communication style: Simple, everyday language.
 - **Marketplace**: Integrates sign-in/registration modals directly into the marketplace experience, displaying username and Solar balance after authentication.
 - **Video Streaming**: Implements robust HTTP Range Request support for large video files, ensuring smooth playback and instant seeking/scrubbing across various devices.
 - **Theming**: Neon green (#39FF14) styling for key interactive elements, links, and Kid Solar branding. Foundation section uses black transparent backgrounds with white/cyan high-contrast text.
+- **Featured Film Showcase**: Prominent featured film section on main-platform.html displaying "The Rise of the Solar" short film (Vimeo embed). Positioned directly after Foundation hero section with neon green/cyan TC-S theme styling, animated background accents, responsive video player, and marketplace CTA. Section includes glowing borders, text shadows, and rotating background animation for visual impact.
 
 ### Technical Implementations
 - **Frontend**: Vanilla JavaScript for dynamic content rendering and real-time updates. D-ID AI agent is embedded via a CDN script.
