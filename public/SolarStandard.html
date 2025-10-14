@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Solar Protocol v1.0 — Open Energy Equivalence Standard</title>
+  <meta name="description" content="The Solar Standard defines 1 Solar = 4,913 kWh as the global baseline for ethical AI, renewable compute, and digital value alignment.">
+  <meta name="keywords" content="Solar Standard, TC-S Network, renewable token, computronium, AI energy equivalence, sustainable AI, open protocol">
+  <link rel="canonical" href="https://www.thecurrentsee.org/SolarStandard.html">
+  
+  <!-- Open Graph / Social Media -->
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://www.thecurrentsee.org/SolarStandard.html">
+  <meta property="og:title" content="Solar Protocol v1.0 — Open Energy Equivalence Standard">
+  <meta property="og:description" content="1 Solar = 4,913 kWh. Universal energy-based valuation for AI, compute, and digital assets with human-rights alignment.">
+  <meta property="og:site_name" content="TC-S Network Foundation">
+  
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Solar Protocol v1.0 — Open Energy Equivalence Standard">
+  <meta name="twitter:description" content="1 Solar = 4,913 kWh. Universal energy-based valuation for AI, compute, and digital assets.">
+  
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "Solar Protocol v1.0 — Open Energy Equivalence Standard",
+    "author": {
+      "@type": "Organization",
+      "name": "TC-S Network Foundation, Inc.",
+      "url": "https://www.thecurrentsee.org"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "TC-S Network Foundation, Inc.",
+      "url": "https://www.thecurrentsee.org"
+    },
+    "datePublished": "2025-10-14",
+    "dateModified": "2025-10-14",
+    "keywords": "Solar Standard, TC-S Network, computronium, renewable token, AI ethics, GBI",
+    "about": "Defines 1 Solar = 4,913 kWh as the baseline for transparent energy-accounting across AI, compute, and digital artifacts.",
+    "license": "https://creativecommons.org/licenses/by/4.0/",
+    "isAccessibleForFree": true,
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "https://www.thecurrentsee.org/SolarStandard.html"
+    }
+  }
+  </script>
+  
+  <style>
+    body {
+      font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; 
+      background: #0b0b0b; 
+      color: #dfffe9; 
+      line-height: 1.6; 
+      margin: 0; 
+      padding: 2rem;
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    h1 {
+      color: #00e6a5;
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+    h2 {
+      color: #00f5d4;
+      font-size: 1.8rem;
+      margin-top: 2.5rem;
+      margin-bottom: 1rem;
+    }
+    code {
+      background: #111; 
+      padding: 2px 5px; 
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+    }
+    pre {
+      background: #111;
+      padding: 1rem;
+      border-radius: 8px;
+      overflow-x: auto;
+      border-left: 4px solid #00e6a5;
+    }
+    pre code {
+      background: transparent;
+      padding: 0;
+    }
+    a {
+      color: #00e6a5;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    .standard-badge {
+      display: inline-block;
+      background: linear-gradient(135deg, #00e6a5, #00f5d4);
+      color: #000;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-weight: bold;
+      margin-bottom: 1rem;
+    }
+    footer {
+      margin-top: 3rem; 
+      padding-top: 2rem;
+      border-top: 1px solid #333;
+      font-size: 0.9rem; 
+      color: #888;
+    }
+    .api-example {
+      background: #1a1a1a;
+      padding: 1rem;
+      border-radius: 8px;
+      margin: 1rem 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="standard-badge">Open Standard v1.0</div>
+  <h1>Solar Protocol v1.0 — Open Energy Equivalence Standard</h1>
+  <p><strong>1 Solar = 4,913 kWh</strong>. The Solar Protocol defines a universal reference for energy-based valuation across AI, compute, and digital assets. It embeds human-rights alignment and ecological accountability directly into machine-readable metadata.</p>
+
+  <h2>Purpose</h2>
+  <p>To create a transparent, auditable, and ethical baseline for energy accounting in the age of artificial intelligence and distributed compute. Each Solar represents a day's worth of clean, renewable human energy income.</p>
+
+  <h2>JSON Specification</h2>
+  <p>Download the <a href="/SolarStandard.json">SolarStandard.json</a> file for direct API integration.</p>
+
+  <h2>Usage Example</h2>
+  <pre><code>{
+  "energy_consumed_kWh": 9826,
+  "solar_equivalent": 2,
+  "verification": "REC",
+  "renewable_source": "SOLAR"
+}</code></pre>
+
+  <h2>API Integration</h2>
+  <div class="api-example">
+    <p><strong>Endpoint:</strong> <code>GET /api/solar?kWh={value}</code></p>
+    <p><strong>Example:</strong> <a href="/api/solar?kWh=9826" target="_blank">/api/solar?kWh=9826</a></p>
+    <p><strong>Response:</strong></p>
+    <pre><code>{
+  "kWh": 9826,
+  "solar_equivalent": 2,
+  "unit": "Solar",
+  "reference": "Solar Standard v1.0"
+}</code></pre>
+  </div>
+
+  <h2>Key Fields</h2>
+  <ul>
+    <li><strong>asset_id:</strong> Unique identifier (UUID or hash)</li>
+    <li><strong>asset_type:</strong> AI_MODEL | DATA_CENTER | DIGITAL_ARTIFACT | TOKEN</li>
+    <li><strong>energy_consumed_kWh:</strong> Numeric value of energy consumed</li>
+    <li><strong>solar_equivalent:</strong> energy_consumed_kWh / 4913</li>
+    <li><strong>renewable_source:</strong> SOLAR | WIND | HYDRO | MIXED | UNKNOWN</li>
+    <li><strong>verification:</strong> PPA | REC | TC-S_LEDGER | SELF_REPORTED</li>
+  </ul>
+
+  <h2>Human Rights Alignment</h2>
+  <p>Every Solar Standard implementation must affirm:</p>
+  <ul>
+    <li>✅ Privacy compliant</li>
+    <li>✅ Non-discriminatory</li>
+    <li>✅ Accessible to all</li>
+    <li>✅ Auditable and transparent</li>
+  </ul>
+
+  <h2>Governance</h2>
+  <p>Maintained by the <strong>TC-S Network Foundation, Inc.</strong><br>
+  Licensed under <a href="https://creativecommons.org/licenses/by/4.0/">Creative Commons CC-BY 4.0</a><br>
+  Reference ledger: <a href="https://ledger.thecurrentsee.org">ledger.thecurrentsee.org</a></p>
+
+  <h2>Integration Partners</h2>
+  <p>The Solar Standard Protocol is designed for seamless integration with:</p>
+  <ul>
+    <li>AI training platforms and LLM providers</li>
+    <li>Data center energy management systems</li>
+    <li>Digital asset marketplaces</li>
+    <li>Renewable energy verification systems (RECs, PPAs)</li>
+    <li>Carbon accounting and ESG reporting tools</li>
+  </ul>
+
+  <footer>
+    <p>&copy; 2025 TC-S Network Foundation, Inc. — Building a Solar-based Global Basic Income and ethical AI future.</p>
+    <p><a href="/">← Back to TC-S Network</a> | <a href="/marketplace.html">Digital Artifact Market</a> | <a href="/main-platform.html">Foundation Platform</a></p>
+  </footer>
+</body>
+</html>

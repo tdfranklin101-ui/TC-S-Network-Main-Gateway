@@ -1,0 +1,33 @@
+{
+  "$schema": "https://schema.thecurrentsee.org/SolarStandard-v1.0.json",
+  "name": "Solar Standard Protocol",
+  "version": "1.0",
+  "description": "Open energy-equivalence and human-rights metadata framework for AI, compute, and digital assets.",
+  "unit_definition": {
+    "symbol": "Solar",
+    "base_equivalence_kWh": 4913,
+    "distribution_basis": "1 Solar per person per day",
+    "reference_date": "2025-04-07"
+  },
+  "fields": {
+    "asset_id": "unique identifier (UUID or hash)",
+    "asset_type": "AI_MODEL | DATA_CENTER | DIGITAL_ARTIFACT | TOKEN",
+    "energy_consumed_kWh": "numeric value",
+    "solar_equivalent": "energy_consumed_kWh / 4913",
+    "renewable_source": "SOLAR | WIND | HYDRO | MIXED | UNKNOWN",
+    "geo_origin": "ISO country or grid region",
+    "verification": "PPA | REC | TC-S_LEDGER | SELF_REPORTED",
+    "human_rights_alignment": {
+      "privacy_compliant": true,
+      "non_discriminatory": true,
+      "accessible_to_all": true,
+      "auditable": true
+    },
+    "timestamp": "ISO 8601 UTC"
+  },
+  "governance": {
+    "foundation": "TC-S Network Foundation, Inc.",
+    "licensing": "Creative Commons CC-BY 4.0",
+    "public_ledger_reference": "https://ledger.thecurrentsee.org"
+  }
+}
