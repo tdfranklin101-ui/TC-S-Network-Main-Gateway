@@ -47,7 +47,7 @@ Preferred communication style: Simple, everyday language.
 
 ### System Design Choices
 - **Deployment Strategy**: Optimized for Cloud Run with a lean deployment package (<450MB) and configured with necessary environment variables and a Procfile.
-- **Data Storage**: Primarily PostgreSQL with Drizzle ORM for structured member data, supplemented by JSON file fallbacks and in-memory storage for reliability. Multi-modal conversation history stored in-memory (Map<conversationId, messages[]>) with automatic cleanup after 1 hour of inactivity.
+- **Data Storage**: Primarily PostgreSQL with Drizzle ORM for structured member data, supplemented by JSON file fallbacks and in-memory storage for reliability. Multi-modal conversation history stored in-memory (Map<conversationId, messages[]>) with automatic cleanup after 1 hour of inactivity. **Database Separation (Oct 13, 2025)**: Production deployment (thecurrentsee.org) connected to production Neon database (ep-polished-truth-a6ufj6np.us-west-2), development workspace uses separate dev database (ep-spring-king-a5uj0576.us-east-2). New members joining production site are added to production database with automatic Genesis Date allocation. Existing members migrated to production with correct 189 Solar balances.
 - **Security**: Environment-based API key storage, session-based tracking, CORS configuration, and rate limiting for external API integrations (e.g., OpenAI).
 - **Error Handling**: Comprehensive error handling across the platform, including graceful fallbacks for external service issues and robust session management.
 
