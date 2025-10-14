@@ -4938,7 +4938,8 @@ const server = http.createServer(async (req, res) => {
         // Get artifact details by preview slug
         const artifactQuery = `
           SELECT id, title, category, file_type, preview_type, delivery_url, streaming_url, 
-                 description, creator_id, kwh_footprint, solar_amount_s, active
+                 description, creator_id, kwh_footprint, solar_amount_s, active,
+                 preview_file_url, master_file_url, trade_file_url
           FROM artifacts 
           WHERE preview_slug = $1 AND active = true
         `;
@@ -4966,20 +4967,22 @@ const server = http.createServer(async (req, res) => {
         let previewContent = '';
         let pageTitle = `Preview: ${artifact.title} - TC-S Network`;
         
-        if (artifact.preview_type === 'video' && artifact.delivery_url) {
+        if (artifact.preview_type === 'video' && (artifact.preview_file_url || artifact.delivery_url)) {
+          const videoUrl = artifact.preview_file_url || artifact.delivery_url;
           previewContent = `
             <div style="max-width: 800px; margin: 0 auto;">
               <video controls style="width: 100%; max-height: 400px;" preload="metadata">
-                <source src="${artifact.delivery_url}" type="${artifact.file_type}">
+                <source src="${videoUrl}" type="${artifact.file_type}">
                 Your browser does not support video playback.
               </video>
             </div>
           `;
-        } else if (artifact.preview_type === 'audio' && artifact.delivery_url) {
+        } else if (artifact.preview_type === 'audio' && (artifact.preview_file_url || artifact.delivery_url)) {
+          const audioUrl = artifact.preview_file_url || artifact.delivery_url;
           previewContent = `
             <div style="max-width: 600px; margin: 0 auto;">
               <audio controls style="width: 100%;" preload="metadata">
-                <source src="${artifact.delivery_url}" type="${artifact.file_type}">
+                <source src="${audioUrl}" type="${artifact.file_type}">
                 Your browser does not support audio playback.
               </audio>
             </div>
