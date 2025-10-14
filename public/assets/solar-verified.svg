@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="168" height="36" viewBox="0 0 168 36" role="img" aria-label="Verified by the Solar Standard Protocol">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#00E6A5"/>
+      <stop offset="1" stop-color="#00B38A"/>
+    </linearGradient>
+  </defs>
+  <rect rx="9" ry="9" width="168" height="36" fill="#0b0b0b" stroke="url(#g)"/>
+  <circle cx="18" cy="18" r="8" fill="none" stroke="url(#g)" stroke-width="2.5"/>
+  <path d="M14.2 18.3l2.5 2.6 5.3-5.8" fill="none" stroke="#00E6A5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="36" y="23" font-family="Inter, ui-sans-serif, system-ui" font-size="13" fill="#dfffe9" letter-spacing=".2px">
+    Verified by Solar Standard
+  </text>
+</svg>
