@@ -14,7 +14,7 @@
     
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      background: #000000;
       min-height: 100vh;
       display: flex;
       align-items: center;
@@ -35,51 +35,47 @@
     }
     
     .card {
-      background: #2c3e50;
+      background: rgba(0, 0, 0, 0.8);
       border-radius: 20px;
       padding: 40px 30px;
       text-align: center;
       transition: transform 0.3s ease, box-shadow 0.3s ease;
       position: relative;
       overflow: hidden;
+      border: 2px solid #00f5d4;
     }
     
     .card:hover {
       transform: translateY(-8px);
-      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+      box-shadow: 0 20px 40px rgba(0, 245, 212, 0.3);
     }
     
     .card-icon {
       width: 120px;
       height: 120px;
       margin: 0 auto 30px;
-      background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
-      border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       position: relative;
     }
     
-    .card-icon::before {
-      content: '';
-      position: absolute;
+    /* Octagon SVG styles */
+    .octagon-network {
       width: 100%;
       height: 100%;
-      border-radius: 50%;
-      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.3), transparent);
     }
     
-    .sun-icon {
-      font-size: 60px;
+    .card.foundation .card-icon {
+      filter: drop-shadow(0 0 20px rgba(0, 245, 212, 0.6));
     }
     
-    .card-icon.market {
-      background: linear-gradient(135deg, #4CAF50 0%, #45B049 100%);
+    .card.market .card-icon {
+      filter: drop-shadow(0 0 20px rgba(0, 255, 100, 0.6));
     }
     
-    .card-icon.private {
-      background: linear-gradient(135deg, #FF6F00 0%, #FF8F00 100%);
+    .card.private-networks .card-icon {
+      filter: drop-shadow(0 0 20px rgba(0, 191, 255, 0.6));
     }
     
     .card.private-networks {
@@ -87,7 +83,8 @@
       background-size: cover;
       background-position: center;
       background-blend-mode: overlay;
-      background-color: rgba(44, 62, 80, 0.85);
+      background-color: rgba(0, 0, 0, 0.3);
+      border-color: #00BFFF;
     }
     
     .card.private-networks::before {
@@ -97,7 +94,7 @@
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(0, 0, 0, 0.4);
+      background: rgba(255, 255, 255, 0.15);
       border-radius: 20px;
       z-index: 0;
     }
@@ -107,60 +104,89 @@
       z-index: 1;
     }
     
+    .card.foundation {
+      border-color: #00f5d4;
+      background: rgba(0, 20, 20, 0.95);
+    }
+    
+    .card.market {
+      border-color: #00ff64;
+      background: rgba(0, 20, 10, 0.95);
+    }
+    
     .card h2 {
-      color: #FFD700;
+      color: #00f5d4;
       font-size: 1.8rem;
       margin-bottom: 20px;
-      font-weight: 600;
+      font-weight: 700;
+      text-shadow: 0 0 10px rgba(0, 245, 212, 0.5);
+    }
+    
+    .card.market h2 {
+      color: #00ff64;
+      text-shadow: 0 0 10px rgba(0, 255, 100, 0.5);
+    }
+    
+    .card.private-networks h2 {
+      color: #00BFFF;
+      text-shadow: 0 0 10px rgba(0, 191, 255, 0.5);
     }
     
     .card p {
-      color: #B0BEC5;
+      color: #ffffff;
       font-size: 1.05rem;
       line-height: 1.7;
       margin-bottom: 30px;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+    }
+    
+    .card p.company-name {
+      font-size: 0.95rem;
+      color: #FFC107;
+      margin-bottom: 15px;
+      font-weight: 600;
+      text-shadow: 0 0 8px rgba(255, 193, 7, 0.6);
     }
     
     .card-button {
       display: inline-flex;
       align-items: center;
       gap: 10px;
-      background: linear-gradient(135deg, #4CAF50 0%, #66BB6A 100%);
-      color: white;
+      background: linear-gradient(135deg, #00f5d4 0%, #00c9a7 100%);
+      color: #000;
       text-decoration: none;
       padding: 14px 30px;
       border-radius: 30px;
-      font-weight: 600;
+      font-weight: 700;
       font-size: 1.1rem;
       transition: all 0.3s ease;
-      box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+      box-shadow: 0 4px 15px rgba(0, 245, 212, 0.4);
     }
     
     .card-button:hover {
-      background: linear-gradient(135deg, #66BB6A 0%, #4CAF50 100%);
-      box-shadow: 0 6px 20px rgba(76, 175, 80, 0.5);
+      background: linear-gradient(135deg, #00c9a7 0%, #00f5d4 100%);
+      box-shadow: 0 6px 20px rgba(0, 245, 212, 0.6);
       transform: translateY(-2px);
     }
     
-    .card-button.yellow {
-      background: linear-gradient(135deg, #FFC107 0%, #FFD54F 100%);
-      color: #000;
-      box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+    .card-button.green {
+      background: linear-gradient(135deg, #00ff64 0%, #00cc50 100%);
+      box-shadow: 0 4px 15px rgba(0, 255, 100, 0.4);
     }
     
-    .card-button.yellow:hover {
-      background: linear-gradient(135deg, #FFD54F 0%, #FFC107 100%);
-      box-shadow: 0 6px 20px rgba(255, 193, 7, 0.5);
+    .card-button.green:hover {
+      background: linear-gradient(135deg, #00cc50 0%, #00ff64 100%);
+      box-shadow: 0 6px 20px rgba(0, 255, 100, 0.6);
     }
     
-    .card-button.orange {
-      background: linear-gradient(135deg, #FF6F00 0%, #FF8F00 100%);
-      box-shadow: 0 4px 15px rgba(255, 111, 0, 0.3);
+    .card-button.blue {
+      background: linear-gradient(135deg, #00BFFF 0%, #0099CC 100%);
+      box-shadow: 0 4px 15px rgba(0, 191, 255, 0.4);
     }
     
-    .card-button.orange:hover {
-      background: linear-gradient(135deg, #FF8F00 0%, #FF6F00 100%);
-      box-shadow: 0 6px 20px rgba(255, 111, 0, 0.5);
+    .card-button.blue:hover {
+      background: linear-gradient(135deg, #0099CC 0%, #00BFFF 100%);
+      box-shadow: 0 6px 20px rgba(0, 191, 255, 0.6);
     }
     
     .arrow {
@@ -184,9 +210,24 @@
     <div class="cards-grid">
       
       <!-- Card 1: TC-S Network Foundation, Inc. -->
-      <div class="card" data-testid="card-foundation">
+      <div class="card foundation" data-testid="card-foundation">
         <div class="card-icon">
-          <span class="sun-icon">☀️</span>
+          <svg class="octagon-network" viewBox="0 0 100 100">
+            <!-- Octagon shape -->
+            <polygon points="30,8 70,8 92,30 92,70 70,92 30,92 8,70 8,30" 
+                     fill="none" stroke="#00f5d4" stroke-width="3"/>
+            <!-- Interior network lines -->
+            <line x1="30" y1="8" x2="70" y2="92" stroke="#00f5d4" stroke-width="1.5" opacity="0.6"/>
+            <line x1="70" y1="8" x2="30" y2="92" stroke="#00f5d4" stroke-width="1.5" opacity="0.6"/>
+            <line x1="8" y1="30" x2="92" y2="70" stroke="#00f5d4" stroke-width="1.5" opacity="0.6"/>
+            <line x1="8" y1="70" x2="92" y2="30" stroke="#00f5d4" stroke-width="1.5" opacity="0.6"/>
+            <line x1="30" y1="8" x2="92" y2="70" stroke="#00f5d4" stroke-width="1" opacity="0.4"/>
+            <line x1="70" y1="8" x2="8" y2="70" stroke="#00f5d4" stroke-width="1" opacity="0.4"/>
+            <line x1="92" y1="30" x2="30" y2="92" stroke="#00f5d4" stroke-width="1" opacity="0.4"/>
+            <line x1="8" y1="30" x2="70" y2="92" stroke="#00f5d4" stroke-width="1" opacity="0.4"/>
+            <!-- Center node -->
+            <circle cx="50" cy="50" r="4" fill="#00f5d4"/>
+          </svg>
         </div>
         <h2>TC-S Network Foundation, Inc.</h2>
         <p>
@@ -200,33 +241,63 @@
       </div>
       
       <!-- Card 2: Marketplace - Foundation using TC-S Network -->
-      <div class="card" data-testid="card-market">
-        <div class="card-icon market">
-          <span class="sun-icon">💰</span>
+      <div class="card market" data-testid="card-market">
+        <div class="card-icon">
+          <svg class="octagon-network" viewBox="0 0 100 100">
+            <!-- Octagon shape -->
+            <polygon points="30,8 70,8 92,30 92,70 70,92 30,92 8,70 8,30" 
+                     fill="none" stroke="#00ff64" stroke-width="3"/>
+            <!-- Interior network lines -->
+            <line x1="30" y1="8" x2="70" y2="92" stroke="#00ff64" stroke-width="1.5" opacity="0.6"/>
+            <line x1="70" y1="8" x2="30" y2="92" stroke="#00ff64" stroke-width="1.5" opacity="0.6"/>
+            <line x1="8" y1="30" x2="92" y2="70" stroke="#00ff64" stroke-width="1.5" opacity="0.6"/>
+            <line x1="8" y1="70" x2="92" y2="30" stroke="#00ff64" stroke-width="1.5" opacity="0.6"/>
+            <line x1="30" y1="8" x2="92" y2="70" stroke="#00ff64" stroke-width="1" opacity="0.4"/>
+            <line x1="70" y1="8" x2="8" y2="70" stroke="#00ff64" stroke-width="1" opacity="0.4"/>
+            <line x1="92" y1="30" x2="30" y2="92" stroke="#00ff64" stroke-width="1" opacity="0.4"/>
+            <line x1="8" y1="30" x2="70" y2="92" stroke="#00ff64" stroke-width="1" opacity="0.4"/>
+            <!-- Center node -->
+            <circle cx="50" cy="50" r="4" fill="#00ff64"/>
+          </svg>
         </div>
-        <h2>Foundation using TC-S Network</h2>
+        <h2>TC-S Network Foundation Solar Standard GBI Market</h2>
         <p>
           Browse and trade digital artifacts in the Solar-backed marketplace. Music, videos, art, and services. 
           Members upload content, set kWh pricing, and earn Solar. Join the creator economy powered by renewable energy.
         </p>
-        <a href="/marketplace.html" class="card-button yellow" data-testid="button-visit-market">
+        <a href="/marketplace.html" class="card-button green" data-testid="button-visit-market">
           Visit Market <span class="arrow">→</span>
         </a>
       </div>
       
       <!-- Card 3: TC-S Network Z Private Networks -->
       <div class="card private-networks" data-testid="card-private-networks">
-        <div class="card-icon private">
-          <span class="sun-icon">🔌</span>
+        <div class="card-icon">
+          <svg class="octagon-network" viewBox="0 0 100 100">
+            <!-- Octagon shape -->
+            <polygon points="30,8 70,8 92,30 92,70 70,92 30,92 8,70 8,30" 
+                     fill="none" stroke="#00BFFF" stroke-width="3"/>
+            <!-- Interior network lines -->
+            <line x1="30" y1="8" x2="70" y2="92" stroke="#00BFFF" stroke-width="1.5" opacity="0.6"/>
+            <line x1="70" y1="8" x2="30" y2="92" stroke="#00BFFF" stroke-width="1.5" opacity="0.6"/>
+            <line x1="8" y1="30" x2="92" y2="70" stroke="#00BFFF" stroke-width="1.5" opacity="0.6"/>
+            <line x1="8" y1="70" x2="92" y2="30" stroke="#00BFFF" stroke-width="1.5" opacity="0.6"/>
+            <line x1="30" y1="8" x2="92" y2="70" stroke="#00BFFF" stroke-width="1" opacity="0.4"/>
+            <line x1="70" y1="8" x2="8" y2="70" stroke="#00BFFF" stroke-width="1" opacity="0.4"/>
+            <line x1="92" y1="30" x2="30" y2="92" stroke="#00BFFF" stroke-width="1" opacity="0.4"/>
+            <line x1="8" y1="30" x2="70" y2="92" stroke="#00BFFF" stroke-width="1" opacity="0.4"/>
+            <!-- Center node -->
+            <circle cx="50" cy="50" r="4" fill="#00BFFF"/>
+          </svg>
         </div>
         <h2>TC-S Network Z Private Networks</h2>
-        <p style="font-size: 0.95rem; color: #FFC107; margin-bottom: 15px; font-weight: 600;">The Current-See PBC, Inc.</p>
+        <p class="company-name">The Current-See PBC, Inc.</p>
         <p>
           Commission your own renewable energy network. Generator Protocol for RECs/PPAs, 
           transparent wealth distribution, and programmable Solar Ray tokenization. 
           Full auditability, zero double-counting.
         </p>
-        <a href="https://solar-network-tdfranklin101.replit.app" class="card-button orange" data-testid="button-commission-network">
+        <a href="https://solar-network-tdfranklin101.replit.app" class="card-button blue" data-testid="button-commission-network">
           Commission Network <span class="arrow">→</span>
         </a>
       </div>
