@@ -1142,6 +1142,54 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Solar Standard Protocol API - Convert kWh to Solar
+  if (pathname === '/api/solar' && req.method === 'GET') {
+    try {
+      const urlParams = new URL(req.url, `http://${req.headers.host}`);
+      const kWh = urlParams.searchParams.get('kWh');
+      
+      if (!kWh) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ 
+          error: 'Missing kWh parameter',
+          usage: '/api/solar?kWh=9826'
+        }));
+        return;
+      }
+      
+      const kWhValue = parseFloat(kWh);
+      if (isNaN(kWhValue) || kWhValue < 0) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ 
+          error: 'Invalid kWh value. Must be a positive number.' 
+        }));
+        return;
+      }
+      
+      const solarEquivalent = kWhValue / 4913;
+      
+      res.writeHead(200, { 
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*' // Allow cross-origin API access
+      });
+      res.end(JSON.stringify({
+        kWh: kWhValue,
+        solar_equivalent: parseFloat(solarEquivalent.toFixed(6)),
+        unit: 'Solar',
+        reference: 'Solar Standard v1.0',
+        formula: '1 Solar = 4,913 kWh',
+        timestamp: new Date().toISOString()
+      }));
+      
+      console.log(`☀️ Solar API: ${kWhValue} kWh → ${solarEquivalent.toFixed(6)} Solar`);
+    } catch (error) {
+      console.error('Solar API error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Solar calculation failed' }));
+    }
+    return;
+  }
+
   // Login API endpoint
   if ((pathname === '/api/login' || pathname === '/api/users/login') && req.method === 'POST') {
     try {

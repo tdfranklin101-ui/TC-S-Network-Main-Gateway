@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Solar Protocol Feed</title>
+  <link href="https://www.thecurrentsee.org/SolarStandard.json" rel="self"/>
+  <updated>2025-10-14T08:49:00Z</updated>
+  <entry>
+    <id>urn:solar:standard:v1.0</id>
+    <title>Solar Standard Protocol v1.0</title>
+    <summary>Defines 1 Solar = 4,913 kWh. Open standard for ethical AI and renewable compute.</summary>
+    <link href="https://www.thecurrentsee.org/SolarStandard.html"/>
+  </entry>
+</feed>
