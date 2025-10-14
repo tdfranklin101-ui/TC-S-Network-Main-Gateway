@@ -44,6 +44,18 @@ Preferred communication style: Simple, everyday language.
 - **Authentication**: Session-based authentication with extended session durations (30 days), ensuring seamless user experience. Includes self-purchase prevention for marketplace listings. **FIXED (Oct 10, 2025)**: Complete Kid Solar authentication overhaul - changed `currentUser.id` to `currentUser.userId` throughout, added Number() coercion for all balance values to prevent TypeError, made login/signup work without page reload via async session refresh, and added balance display to Kid Solar welcome message. All 6 critical authentication issues resolved and architect-approved.
 - **Video Streaming Optimization**: MP4s re-encoded with `faststart` flag, and large files (>10MB) are delivered via HTTP 206 partial content to bypass Cloud Run's 32MB HTTP/1 response limit.
 - **Solar Distribution**: Daily 1 Solar token distribution per member since the Genesis Date (April 7, 2025).
+- **Solar Standard Protocol Documentation & SEO** - **NEW (Oct 14, 2025)**: Comprehensive protocol documentation with AI/search discoverability:
+  - **Machine-Readable Spec**: `/SolarStandard.json` - Full protocol specification with JSON schema
+  - **Human-Readable Docs**: `/SolarStandard.html` - SEO-optimized HTML documentation with JSON-LD structured data
+  - **Atom Feed**: `/SolarFeed.xml` - Syndication feed for protocol updates and indexed artifacts
+  - **Auto-Indexing System**: `/SolarStandard/generators/solar-index.js` - CLI tool to index artifacts with energy footprint data
+  - **Per-Artifact JSON-LD**: `/public/solar-index/{id}.json` - Individual structured data files for each indexed artifact
+  - **SEO Implementation**: All main pages (index.html, marketplace.html, main-platform.html) include:
+    - `rel="standard"` canonical links to Solar Standard Protocol
+    - `rel="alternate"` Atom feed links for AI discovery
+    - Comprehensive Open Graph and Twitter Card meta tags
+    - JSON-LD structured data (Organization, Marketplace, Service, FAQ schemas)
+    - Optimized meta descriptions and keywords for human and AI search engines
 
 ### System Design Choices
 - **Deployment Strategy**: Optimized for Cloud Run with a lean deployment package (<450MB) and configured with necessary environment variables and a Procfile.
@@ -66,6 +78,12 @@ Preferred communication style: Simple, everyday language.
 
 ### APIs and Integrations
 - **TC-S Computronium Market API**: Provides endpoints for market categories (`/market/categories`, `/market/artifacts/:category`), energy trading (`/energy`, `/energy/list`, `/energy/match`), and a text command interface for Kid Solar AI (`/kid/query`).
+- **Solar Standard Protocol API Suite** - **NEW (Oct 14, 2025)**: Complete API infrastructure for Solar Standard Protocol adoption:
+  - `/api/solar?kWh=VALUE` (GET) - Convert kWh to Solar equivalent using 1 Solar = 4,913 kWh formula
+  - `/api/solar-standard` (GET) - Returns protocol spec, version info, feed URLs, and health status
+  - `/api/solar/artifact` (POST) - Accept artifact energy data, return enriched JSON-LD with Solar metadata
+  - All endpoints CORS-enabled for cross-origin access by external applications and AI agents
+  - Auto-indexing system: Node.js generator (`SolarStandard/generators/solar-index.js`) creates per-artifact JSON-LD files and updates Atom feed
 - **OpenAI API**: For AI voice assistant features (Whisper, GPT-4o, TTS).
 - **Real-Time Solar Calculations**: Custom mathematical models for energy generation tracking.
 - **Member Management API**: RESTful endpoints for user data operations.

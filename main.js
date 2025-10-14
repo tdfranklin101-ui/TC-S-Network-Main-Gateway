@@ -1190,6 +1190,87 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Solar Standard Protocol - Spec + Health Check
+  if (pathname === '/api/solar-standard' && req.method === 'GET') {
+    res.writeHead(200, { 
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*'
+    });
+    res.end(JSON.stringify({
+      name: "Solar Standard Protocol",
+      version: "1.0",
+      unit: { symbol: "Solar", kWh: 4913 },
+      reference_date: "2025-04-07",
+      spec_url: "https://www.thecurrentsee.org/SolarStandard.json",
+      feed_url: "https://www.thecurrentsee.org/SolarFeed.xml",
+      status: "ok",
+      time: new Date().toISOString()
+    }));
+    console.log('📋 Solar Standard spec requested');
+    return;
+  }
+
+  // Solar Standard Protocol - Artifact Enrichment API
+  if (pathname === '/api/solar/artifact' && (req.method === 'POST' || req.method === 'OPTIONS')) {
+    // CORS preflight
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204, {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type'
+      });
+      res.end();
+      return;
+    }
+
+    try {
+      const body = await parseBody(req);
+      const kWh = Number(body.energy_consumed_kWh);
+      
+      if (!kWh) {
+        res.writeHead(400, { 
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        });
+        res.end(JSON.stringify({ error: 'energy_consumed_kWh required' }));
+        return;
+      }
+
+      const solarEquivalent = kWh / 4913;
+      const payload = {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        "name": body.name || body.id || "Solar-tracked asset",
+        "identifier": body.id || null,
+        "category": body.asset_type || "DIGITAL_ARTIFACT",
+        "additionalProperty": [
+          {"@type":"PropertyValue","name":"energy_consumed_kWh","value":kWh},
+          {"@type":"PropertyValue","name":"solar_equivalent","value":parseFloat(solarEquivalent.toFixed(6))},
+          {"@type":"PropertyValue","name":"renewable_source","value":body.renewable_source || "UNKNOWN"},
+          {"@type":"PropertyValue","name":"verification","value":body.verification || "SELF_REPORTED"},
+          {"@type":"PropertyValue","name":"geo_origin","value":body.geo_origin || "UNKNOWN"},
+          {"@type":"PropertyValue","name":"timestamp","value":new Date().toISOString()}
+        ]
+      };
+
+      res.writeHead(200, { 
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      });
+      res.end(JSON.stringify(payload));
+      
+      console.log(`🔖 Artifact enriched: ${body.id || 'unnamed'} = ${kWh} kWh → ${solarEquivalent.toFixed(6)} Solar`);
+    } catch (error) {
+      console.error('Artifact enrichment error:', error);
+      res.writeHead(500, { 
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      });
+      res.end(JSON.stringify({ error: 'Artifact enrichment failed' }));
+    }
+    return;
+  }
+
   // Login API endpoint
   if ((pathname === '/api/login' || pathname === '/api/users/login') && req.method === 'POST') {
     try {
