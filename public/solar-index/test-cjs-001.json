@@ -1,0 +1,45 @@
+{
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": "Test CommonJS Generator",
+  "identifier": "test-cjs-001",
+  "category": "AI_MODEL",
+  "isAccessoryOrSparePartFor": "Solar Standard v1.0",
+  "additionalProperty": [
+    {
+      "@type": "PropertyValue",
+      "name": "energy_consumed_kWh",
+      "value": 10000
+    },
+    {
+      "@type": "PropertyValue",
+      "name": "solar_equivalent",
+      "value": 2.035416
+    },
+    {
+      "@type": "PropertyValue",
+      "name": "renewable_source",
+      "value": "WIND"
+    },
+    {
+      "@type": "PropertyValue",
+      "name": "verification",
+      "value": "BLOCKCHAIN"
+    },
+    {
+      "@type": "PropertyValue",
+      "name": "geo_origin",
+      "value": "DE"
+    },
+    {
+      "@type": "PropertyValue",
+      "name": "timestamp",
+      "value": "2025-10-14T16:41:00.333Z"
+    }
+  ],
+  "url": "https://www.thecurrentsee.org/artifacts/test-cjs-001.html",
+  "brand": {
+    "@type": "Organization",
+    "name": "TC-S Network Foundation, Inc."
+  }
+}

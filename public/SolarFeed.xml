@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
   <title>Solar Protocol Feed</title>
-  <link href="https://www.thecurrentsee.org/SolarStandard.json" rel="self"/>
-  <updated>2025-10-14T08:49:00Z</updated>
+  <link href="https://www.thecurrentsee.org/SolarFeed.xml" rel="self"/>
+  <updated>2025-10-14T16:41:00.333Z</updated>
   <entry>
     <id>urn:solar:standard:v1.0</id>
     <title>Solar Standard Protocol v1.0</title>
@@ -22,5 +22,12 @@
     <summary>9826 kWh ⇒ 2 Solar (REC/SOLAR)</summary>
     <link href="https://www.thecurrentsee.org/solar-index/kid-solar-av-001.json"/>
     <updated>2025-10-14T16:34:08.277Z</updated>
+  </entry>
+  <entry>
+    <id>urn:solar:test-cjs-001</id>
+    <title>Test CommonJS Generator</title>
+    <summary>10000 kWh ⇒ 2.035416 Solar (BLOCKCHAIN/WIND)</summary>
+    <link href="https://www.thecurrentsee.org/solar-index/test-cjs-001.json"/>
+    <updated>2025-10-14T16:41:00.333Z</updated>
   </entry>
 </feed>

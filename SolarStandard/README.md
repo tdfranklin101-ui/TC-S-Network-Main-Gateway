@@ -5,7 +5,7 @@ Automatically index artifacts with energy footprint data and publish to Solar St
 ## Usage
 
 ```bash
-node SolarStandard/generators/solar-index.js \
+node SolarStandard/generators/solar-index.cjs \
   --id=artifact-123 \
   --type=DIGITAL_ARTIFACT \
   --kwh=2456.5 \
