@@ -1,13 +1,7 @@
 # The Current-See Platform
 
 ## Overview
-The Current-See platform is a prototype for a solar-backed global economic system. It integrates renewable energy tracking, a cryptocurrency-like token called SOLAR, member management, and an AI assistant named "Kid Solar." The platform provides real-time solar energy calculations, member wallet functionalities with automatic initialization, and an AI agent that offers polymathic assistance across renewable energy, physics, engineering, and sustainability. It also features a marketplace for digital artifacts and energy trading.
-
-**Deployment Status**: ✅ READY FOR PRODUCTION
-- Cloud Run optimized package (~250-450MB after exclusions)
-- All core features tested and operational
-- Kid Solar multimodal AI assistant fully functional
-- Marketplace wallet operations verified
+The Current-See platform is a prototype for a solar-backed global economic system. It integrates renewable energy tracking, a cryptocurrency-like token called SOLAR, member management, and an AI assistant named "Kid Solar." The platform provides real-time solar energy calculations, member wallet functionalities with automatic initialization, and an AI agent that offers polymathic assistance across renewable energy, physics, engineering, and sustainability. It also features a marketplace for digital artifacts and energy trading. The project's ambition is to establish a new global economic standard based on renewable energy.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -15,80 +9,30 @@ Preferred communication style: Simple, everyday language.
 ## System Architecture
 
 ### UI/UX Decisions
-- **Design Philosophy**: Emphasizes a clean, intuitive interface with clear navigation and real-time data display.
-- **3-Division Landing Page**: Homepage displays three organizational divisions: (1) TC-S Network Foundation, Inc. with black transparent background section (rgba(0,0,0,0.65)) featuring high-contrast white text and cyan "Solar Standard" heading, (2) Z Private Networks yellow commissioning header, and (3) TC-S Network Commission oversight references.
-- **Foundation Section Styling**: Black semi-transparent background with backdrop blur, high-contrast white lettering (font-weight 800-900), enhanced text shadows and glows, cyan (#00f5d4) accent for "The Solar Standard" heading, and yellow Foundation Signup CTA button.
-- **Solar Standard Educational Series**: Five-page educational navigation system explaining the Solar Standard:
-  - Page 2: Why the Reserve Matters (authenticity, permanence, distributive framework)
-  - Page 3: Governance & Transparency (algorithmic issuance, transparency protocol, trustless governance)
-  - Page 4: Marketplace & Networks (REC/PPA energy markets, computronium allocation, Z Private Networks)
-  - Page 5: Participation & Get Involved (roles for individuals, generators, institutions, and network operators with CTA to marketplace)
-  - All pages feature consistent Foundation design with breadcrumb navigation, Previous/Next links, and data-testid attributes for testing
-- **Kid Solar Command Center**: Multi-modal AI chat interface with slide-up panel design, supporting text, voice, image, and file inputs. Features conversation history with mixed-media message cards, iOS native file pickers (camera/gallery/documents), and real-time audio playback. All input modes maintain conversation context seamlessly.
-- **Marketplace**: Integrates sign-in/registration modals directly into the marketplace experience, displaying username and Solar balance after authentication.
-- **Video Streaming**: Implements robust HTTP Range Request support for large video files, ensuring smooth playback and instant seeking/scrubbing across various devices.
-- **Theming**: Neon green (#39FF14) styling for key interactive elements, links, and Kid Solar branding. Foundation section uses black transparent backgrounds with white/cyan high-contrast text.
-- **Featured Film Showcase**: Prominent featured film section on main-platform.html displaying "The Rise of the Solar" short film (Vimeo embed). Positioned directly after Foundation hero section with neon green/cyan TC-S theme styling, animated background accents, responsive video player, and marketplace CTA. Section includes glowing borders, text shadows, and rotating background animation for visual impact.
+The platform emphasizes a clean, intuitive interface with clear navigation and real-time data display. The landing page is divided into three organizational sections, using a black semi-transparent background with high-contrast white text, cyan accents for "The Solar Standard" heading, and neon green for interactive elements. A five-page educational system explains the Solar Standard protocol. The "Kid Solar Command Center" features a multi-modal AI chat interface with a slide-up panel design, supporting text, voice, image, and file inputs. The marketplace integrates sign-in/registration modals directly, displaying username and Solar balance post-authentication. Video streaming includes robust HTTP Range Request support for smooth playback. A prominent featured film section showcases "The Rise of the Solar."
 
 ### Technical Implementations
-- **Frontend**: Vanilla JavaScript for dynamic content rendering and real-time updates. D-ID AI agent is embedded via a CDN script.
-- **Backend**: Express.js server, designed for deployment flexibility across environments like Replit and Cloud Run. Utilizes CommonJS architecture for modules.
-- **Real-time Analytics**: Production-only tracking with daily page view aggregation, geographic analytics (countries and US states), and live member count. Development views are excluded for accurate public metrics. Environment detection via NODE_ENV and Replit deployment flags. **Analytics Metric**: Tracks actual page views (not total HTTP requests or static file loads) for accurate visitor engagement measurement. **Historical Offset System (Oct 2025)**: Validated baseline of 9,716 cumulative page views since Genesis (April 7, 2025) using historical database restoration and growth analysis. Implemented via code-level offsets (+9,716 total; country-level offsets for 18 countries: US: 6,226, CA: 650, GB: 460, DE: 325, CN: 276, AU: 265, IN: 226, JP: 200, RU: 183, FR: 153, NL: 114, SE: 57, ES: 33, BR: 28, PL: 25, IT: 23, ZA: 12, SG: 2). Offsets restore pre-deployment analytics when production database started fresh. New `/api/analytics/countries-all-time` endpoint serves augmented country totals. Baseline confirmed Oct 11, 2025 via validation: 180 days × ~106 page views/day ÷ 2 (growth factor) = 9,540 ≈ 9,716 actual.
-- **AI Multi-Modal Assistant**: Kid Solar Command Center integrates OpenAI's Whisper (STT), GPT-4o (NLU/Vision/Function Calling), and TTS (Nova voice) for natural language wallet control and multi-modal interactions. Supports text chat, voice commands, image analysis via Vision API, and file processing (PDF/TXT/DOC). **NEW (Oct 2025)**: Added OpenAI function calling for marketplace operations - Kid Solar can now execute purchases, preview artifacts, check wallet balance, list marketplace items, analyze uploads, and provide upload guidance through voice or text commands. Conversation context persisted across all input modes using in-memory state management and localStorage conversationId. Base64 audio delivery for TTS responses ensures seamless playback across devices.
-- **Marketplace & Energy Trading**: Features five market categories (Computronium Missions, Culture, Basic Needs, Rent Anything, Energy Trading) with artifact display and an in-memory energy trading ledger for RECs/PPAs.
-- **Member Content Upload System (Oct 2025)**: Three-tab upload interface for digital artifacts:
-  - **Local File Upload**: Direct file uploads with AI-powered "Identify Anything" kWh-to-Solar pricing
-  - **AI Music Creator**: URL import from AiSongMaker.io, Suno AI, and Udio platforms (members create externally, paste direct MP3/WAV/FLAC URLs)
-  - **Video Hosting**: URL import from Vimeo Create (AI video generator + hosting) and Runway AI (advanced AI video generation). Members create videos externally, paste player URLs (player.vimeo.com/video/...) or direct MP4/WEBM URLs. **Decision (Oct 2025)**: Using Vimeo + Runway AI as primary video platforms - provides immediate member access without API dependencies. Sora 2 API researched but not publicly available as of Oct 2025.
-- **Music Streaming Platform**: Separate from marketplace - Music Now (music-now.html) dynamically streams Monazite Foundation tracks + member uploads flagged with `isFreeStreaming: true`. Member uploaded audio served from `/uploads/member-content/audio/` with Range Request support.
-- **Authentication**: Session-based authentication with extended session durations (30 days), ensuring seamless user experience. Includes self-purchase prevention for marketplace listings. **FIXED (Oct 10, 2025)**: Complete Kid Solar authentication overhaul - changed `currentUser.id` to `currentUser.userId` throughout, added Number() coercion for all balance values to prevent TypeError, made login/signup work without page reload via async session refresh, and added balance display to Kid Solar welcome message. All 6 critical authentication issues resolved and architect-approved.
-- **Video Streaming Optimization**: MP4s re-encoded with `faststart` flag, and large files (>10MB) are delivered via HTTP 206 partial content to bypass Cloud Run's 32MB HTTP/1 response limit.
-- **Solar Distribution**: Daily 1 Solar token distribution per member since the Genesis Date (April 7, 2025).
-- **Solar Standard Protocol Documentation & SEO** - **NEW (Oct 14, 2025)**: Comprehensive protocol documentation with AI/search discoverability:
-  - **Machine-Readable Spec**: `/SolarStandard.json` - Full protocol specification with JSON schema
-  - **Human-Readable Docs**: `/SolarStandard.html` - SEO-optimized HTML documentation with JSON-LD structured data
-  - **Atom Feed**: `/SolarFeed.xml` - Syndication feed for protocol updates and indexed artifacts
-  - **Auto-Indexing System**: `/SolarStandard/generators/solar-index.js` - CLI tool to index artifacts with energy footprint data
-  - **Per-Artifact JSON-LD**: `/public/solar-index/{id}.json` - Individual structured data files for each indexed artifact
-  - **SEO Implementation**: All main pages (index.html, marketplace.html, main-platform.html) include:
-    - `rel="standard"` canonical links to Solar Standard Protocol
-    - `rel="alternate"` Atom feed links for AI discovery
-    - Comprehensive Open Graph and Twitter Card meta tags
-    - JSON-LD structured data (Organization, Marketplace, Service, FAQ schemas)
-    - Optimized meta descriptions and keywords for human and AI search engines
+The frontend uses Vanilla JavaScript, while the backend is an Express.js server optimized for Cloud Run. Real-time analytics track page views, geographic data, and live member counts, with historical offsets for accurate baseline metrics. The multi-modal AI assistant, Kid Solar, integrates OpenAI's Whisper (STT), GPT-4o (NLU/Vision/Function Calling), and TTS (Nova voice) for natural language wallet control and multi-modal interactions, including marketplace operations. The marketplace features five categories and an in-memory energy trading ledger. A member content upload system supports local files, AI-generated music via URLs, and video hosting via external platforms. Session-based authentication with extended durations ensures a seamless user experience, with all critical authentication issues resolved and architect-approved. Video streaming is optimized using `faststart` and HTTP 206 partial content for large files. A daily 1 Solar token distribution per member is implemented. Comprehensive Solar Standard Protocol documentation includes machine-readable specs, human-readable HTML documentation with SEO, an Atom feed, and an auto-indexing system for artifacts. A white paper collection, including the "Unified Intelligence Mesh," provides foundational vision and technical details.
 
 ### System Design Choices
-- **Deployment Strategy**: Optimized for Cloud Run with a lean deployment package (<450MB) and configured with necessary environment variables and a Procfile.
-- **Data Storage**: Primarily PostgreSQL with Drizzle ORM for structured member data, supplemented by JSON file fallbacks and in-memory storage for reliability. Multi-modal conversation history stored in-memory (Map<conversationId, messages[]>) with automatic cleanup after 1 hour of inactivity. **Database Separation (Oct 13, 2025)**: Production deployment (thecurrentsee.org) connected to production Neon database (ep-polished-truth-a6ufj6np.us-west-2), development workspace uses separate dev database (ep-spring-king-a5uj0576.us-east-2). New members joining production site are added to production database with automatic Genesis Date allocation. Existing members migrated to production with correct 189 Solar balances.
-- **Security**: Environment-based API key storage, session-based tracking, CORS configuration, and rate limiting for external API integrations (e.g., OpenAI).
-- **Error Handling**: Comprehensive error handling across the platform, including graceful fallbacks for external service issues and robust session management.
+The platform is optimized for Cloud Run with a lean deployment package. Data storage primarily uses PostgreSQL with Drizzle ORM, supplemented by JSON file fallbacks and in-memory storage for conversation history. Production and development environments use separate databases. Security measures include environment-based API key storage, session-based tracking, CORS configuration, and rate limiting for external API integrations. Comprehensive error handling ensures graceful fallbacks and robust session management.
 
 ## External Dependencies
 
 ### Third-Party Services
-- **OpenAI**: Utilized for GPT-4o model (text generation, natural language understanding, vision analysis), Whisper (speech-to-text), TTS (text-to-speech with Nova voice), and DALL-E (image creation).
-- **D-ID**: Provides the AI agent platform for interactive avatar experiences (Kid Solar, agent ID: `v2_agt_vhYf_e_C`).
-- **PostgreSQL**: Cloud-hosted relational database for persistent storage, supporting providers like Neon.
-- **AI Content Creation Platforms (Member-Accessible)** - **NEW (Oct 10, 2025)**: Implemented compact dropdown discovery system with 9 platforms:
-  - **Music Creators (3)**: Suno AI, Udio, AiSongMaker.io - AI music generation platforms
-  - **Video Creators (2)**: Vimeo Create (AI video + hosting), Runway AI (Gen-2/Gen-3 models)
-  - **Code Creators (4)**: Replit (app builder), OpenAI Codex (code gen), Bolt.new (full-stack AI), v0.dev (UI generator)
-  - **UX**: 3 compact dropdown buttons in Upload tab - click to reveal platform choices with descriptions
-  - Note: All external platforms accessed by members directly; no API keys required on TC-S platform side
+- **OpenAI**: Utilized for GPT-4o (text generation, NLU, vision analysis), Whisper (STT), TTS (Nova voice), and DALL-E (image creation).
+- **D-ID**: Provides the AI agent platform for interactive avatar experiences (Kid Solar).
+- **PostgreSQL**: Cloud-hosted relational database, supporting providers like Neon.
+- **AI Content Creation Platforms**: External platforms accessed directly by members for music (Suno AI, Udio, AiSongMaker.io), video (Vimeo Create, Runway AI), and code generation (Replit, OpenAI Codex, Bolt.new, v0.dev).
 
 ### APIs and Integrations
-- **TC-S Computronium Market API**: Provides endpoints for market categories (`/market/categories`, `/market/artifacts/:category`), energy trading (`/energy`, `/energy/list`, `/energy/match`), and a text command interface for Kid Solar AI (`/kid/query`).
-- **Solar Standard Protocol API Suite** - **NEW (Oct 14, 2025)**: Complete API infrastructure for Solar Standard Protocol adoption:
-  - `/api/solar?kWh=VALUE` (GET) - Convert kWh to Solar equivalent using 1 Solar = 4,913 kWh formula
-  - `/api/solar-standard` (GET) - Returns protocol spec, version info, feed URLs, and health status
-  - `/api/solar/artifact` (POST) - Accept artifact energy data, return enriched JSON-LD with Solar metadata
-  - All endpoints CORS-enabled for cross-origin access by external applications and AI agents
-  - Auto-indexing system: Node.js generator (`SolarStandard/generators/solar-index.js`) creates per-artifact JSON-LD files and updates Atom feed
+- **TC-S Computronium Market API**: Endpoints for market categories, energy trading, and Kid Solar AI text commands.
+- **Solar Standard Protocol API Suite**: Endpoints for kWh to Solar conversion, protocol specifications, artifact data enrichment, and an auto-indexing system. All endpoints are CORS-enabled.
 - **OpenAI API**: For AI voice assistant features (Whisper, GPT-4o, TTS).
 - **Real-Time Solar Calculations**: Custom mathematical models for energy generation tracking.
 - **Member Management API**: RESTful endpoints for user data operations.
 - **File Upload API**: For image processing and analysis.
-- **Health Check APIs**: For system monitoring and deployment verification.
+- **Health Check APIs**: For system monitoring.
 
 ### Databases
 - **Primary**: PostgreSQL (via Drizzle ORM).
