@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Example Artifact - Solar Standard Indexed</title>
+  
+  <!-- Solar Standard JSON-LD Structured Data -->
+  <script type="application/ld+json" src="/solar-index/example-ai-model-001.json"></script>
+  
+  <link rel="standard" href="https://www.thecurrentsee.org/SolarStandard.html" title="Solar Standard Protocol v1.0">
+  <link rel="alternate" type="application/atom+xml" href="https://www.thecurrentsee.org/SolarFeed.xml" title="Solar Protocol Feed">
+  
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #000;
+      color: #fff;
+      padding: 40px 20px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
+    .energy-badge {
+      display: inline-block;
+      background: linear-gradient(135deg, #00f5d4, #00c9a7);
+      color: #000;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-weight: 700;
+      margin: 10px 0;
+    }
+    
+    .verification {
+      background: rgba(0, 245, 212, 0.2);
+      border: 1px solid #00f5d4;
+      padding: 20px;
+      border-radius: 10px;
+      margin: 20px 0;
+    }
+    
+    code {
+      background: rgba(0, 245, 212, 0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+    }
+  </style>
+</head>
+<body>
+  <h1>Example Artifact Page</h1>
+  <p>This is a demonstration of how artifacts are indexed in the Solar Standard Protocol.</p>
+  
+  <div class="energy-badge">
+    ⚡ 4,913 kWh = 1.0 Solar
+  </div>
+  
+  <div class="verification">
+    <h3>Solar Standard Verification</h3>
+    <p><strong>Type:</strong> AI Model Training Run</p>
+    <p><strong>Energy Source:</strong> Solar (REC Verified)</p>
+    <p><strong>Geographic Origin:</strong> US-CA</p>
+    <p><strong>Indexed:</strong> ✅ Yes</p>
+    <p><strong>JSON-LD:</strong> <code>/solar-index/example-ai-model-001.json</code></p>
+    <p><strong>Feed Entry:</strong> <a href="/SolarFeed.xml" style="color: #00f5d4;">SolarFeed.xml</a></p>
+  </div>
+  
+  <h2>How It Works</h2>
+  <ol>
+    <li>Artifact creator runs the Solar index generator with energy footprint data</li>
+    <li>Generator creates JSON-LD structured data at <code>/solar-index/{id}.json</code></li>
+    <li>Generator updates the Atom feed at <code>/SolarFeed.xml</code></li>
+    <li>This HTML page embeds the JSON-LD for AI/search engine discovery</li>
+    <li>Energy footprint is permanently indexed and verifiable</li>
+  </ol>
+  
+  <h2>Generator Command Used</h2>
+  <pre style="background: rgba(0,245,212,0.1); padding: 15px; border-radius: 8px; overflow-x: auto;">
+node SolarStandard/generators/solar-index.js \
+  --id=example-ai-model-001 \
+  --type=AI_MODEL \
+  --kwh=4913 \
+  --name="Example GPT-4 Training Run" \
+  --verification=REC \
+  --source=SOLAR \
+  --geo=US-CA
+  </pre>
+  
+  <p style="margin-top: 40px;">
+    <a href="/SolarStandard.html" style="color: #00f5d4;">← Back to Solar Standard Protocol</a>
+  </p>
+</body>
+</html>

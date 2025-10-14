@@ -9,4 +9,11 @@
     <summary>Defines 1 Solar = 4,913 kWh. Open standard for ethical AI and renewable compute.</summary>
     <link href="https://www.thecurrentsee.org/SolarStandard.html"/>
   </entry>
+  <entry>
+    <id>urn:solar:example-ai-model-001</id>
+    <title>Example GPT-4 Training Run</title>
+    <summary>4913 kWh ⇒ 1 Solar (REC/SOLAR)</summary>
+    <link href="https://www.thecurrentsee.org/solar-index/example-ai-model-001.json"/>
+    <updated>2025-10-14T16:29:34.255Z</updated>
+  </entry>
 </feed>

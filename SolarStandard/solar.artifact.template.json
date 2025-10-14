@@ -1,0 +1,45 @@
+{
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": "{{ARTIFACT_NAME}}",
+  "identifier": "{{ARTIFACT_ID}}",
+  "category": "{{TYPE}}",
+  "isAccessoryOrSparePartFor": "Solar Standard v1.0",
+  "additionalProperty": [
+    {
+      "@type": "PropertyValue",
+      "name": "energy_consumed_kWh",
+      "value": "{{KWH}}"
+    },
+    {
+      "@type": "PropertyValue",
+      "name": "solar_equivalent",
+      "value": "{{SOLAR_EQUIVALENT}}"
+    },
+    {
+      "@type": "PropertyValue",
+      "name": "renewable_source",
+      "value": "{{SOURCE}}"
+    },
+    {
+      "@type": "PropertyValue",
+      "name": "verification",
+      "value": "{{VERIFICATION}}"
+    },
+    {
+      "@type": "PropertyValue",
+      "name": "geo_origin",
+      "value": "{{GEO}}"
+    },
+    {
+      "@type": "PropertyValue",
+      "name": "timestamp",
+      "value": "{{TIMESTAMP}}"
+    }
+  ],
+  "url": "https://www.thecurrentsee.org/artifacts/{{ARTIFACT_ID}}.html",
+  "brand": {
+    "@type": "Organization",
+    "name": "TC-S Network Foundation, Inc."
+  }
+}
