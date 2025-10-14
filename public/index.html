@@ -82,6 +82,31 @@
       background: linear-gradient(135deg, #FF6F00 0%, #FF8F00 100%);
     }
     
+    .card.private-networks {
+      background-image: url('/private-network-bg.jpeg');
+      background-size: cover;
+      background-position: center;
+      background-blend-mode: overlay;
+      background-color: rgba(44, 62, 80, 0.85);
+    }
+    
+    .card.private-networks::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 20px;
+      z-index: 0;
+    }
+    
+    .card.private-networks * {
+      position: relative;
+      z-index: 1;
+    }
+    
     .card h2 {
       color: #FFD700;
       font-size: 1.8rem;
@@ -158,12 +183,12 @@
   <div class="container">
     <div class="cards-grid">
       
-      <!-- Card 1: TC-S Networks Foundation -->
+      <!-- Card 1: TC-S Network Foundation, Inc. -->
       <div class="card" data-testid="card-foundation">
         <div class="card-icon">
           <span class="sun-icon">☀️</span>
         </div>
-        <h2>TC-S Networks Foundation</h2>
+        <h2>TC-S Network Foundation, Inc.</h2>
         <p>
           Explore the full Current-See ecosystem. Access solar generation tracking, member community, 
           talk with 21st Century polymath oracle Kid Solar, and comprehensive platform features 
@@ -174,12 +199,12 @@
         </a>
       </div>
       
-      <!-- Card 2: Market -->
+      <!-- Card 2: The Current-See PBC, Inc. -->
       <div class="card" data-testid="card-market">
         <div class="card-icon market">
           <span class="sun-icon">💰</span>
         </div>
-        <h2>Digital Artifact Market</h2>
+        <h2>The Current-See PBC, Inc.</h2>
         <p>
           Browse and trade digital artifacts in the Solar-backed marketplace. Music, videos, art, and services. 
           Members upload content, set kWh pricing, and earn Solar. Join the creator economy powered by renewable energy.
@@ -190,7 +215,7 @@
       </div>
       
       <!-- Card 3: Z Private Networks -->
-      <div class="card" data-testid="card-private-networks">
+      <div class="card private-networks" data-testid="card-private-networks">
         <div class="card-icon private">
           <span class="sun-icon">🔌</span>
         </div>
