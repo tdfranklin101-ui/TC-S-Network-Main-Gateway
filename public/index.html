@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TC-S Network - Foundation, Market & Private Networks</title>
-  <meta name="description" content="The TC-S Network: Foundation-backed Solar currency, Digital Artifact Marketplace, and Z Private Networks commissioning.">
+  <meta name="description" content="TC-S Network: Foundation-backed Solar currency, Digital Artifact Marketplace, and Z Private Networks commissioning.">
   <style>
     * {
       margin: 0;
@@ -13,234 +13,200 @@
     }
     
     body {
-      font-family: 'Helvetica Neue', Arial, sans-serif;
-      line-height: 1.6;
-      color: #333;
-    }
-    
-    /* Division 1: TC-S Network Foundation - Black Transparent */
-    .foundation-division {
-      background: rgba(0,0,0,0.65);
-      backdrop-filter: blur(10px);
-      color: white;
-      padding: 80px 20px;
-      text-align: center;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
       min-height: 100vh;
       display: flex;
-      flex-direction: column;
-      justify-content: center;
       align-items: center;
-    }
-    
-    .foundation-division h1 {
-      font-size: 3.5rem;
-      font-weight: 900;
-      color: white;
-      text-shadow: 0 0 20px rgba(255,255,255,0.5), 0 0 40px rgba(255,255,255,0.3);
-      margin-bottom: 20px;
-    }
-    
-    .foundation-division .solar-standard {
-      font-size: 2.5rem;
-      font-weight: 800;
-      color: #00f5d4;
-      text-shadow: 0 0 15px rgba(0,245,212,0.8), 0 0 30px rgba(0,245,212,0.5);
-      margin: 30px 0;
-    }
-    
-    .foundation-division p {
-      font-size: 1.3rem;
-      font-weight: 600;
-      color: white;
-      text-shadow: 0 2px 8px rgba(0,0,0,0.8);
-      max-width: 800px;
-      margin: 20px auto;
-      line-height: 1.8;
-    }
-    
-    .foundation-cta {
-      background: linear-gradient(135deg, #FFC107, #FF9800);
-      color: #000;
-      padding: 18px 40px;
-      font-size: 1.4rem;
-      font-weight: 900;
-      border: none;
-      border-radius: 50px;
-      cursor: pointer;
-      text-decoration: none;
-      display: inline-block;
-      margin-top: 30px;
-      box-shadow: 0 8px 25px rgba(255,193,7,0.4);
-      transition: all 0.3s ease;
-    }
-    
-    .foundation-cta:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 12px 35px rgba(255,193,7,0.6);
-    }
-    
-    /* Division 2: Z Private Networks - Yellow */
-    .private-networks-division {
-      background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
-      color: #1A237E;
-      padding: 80px 20px;
-      text-align: center;
-      min-height: 60vh;
-      display: flex;
-      flex-direction: column;
       justify-content: center;
-      align-items: center;
+      padding: 40px 20px;
     }
     
-    .private-networks-division h2 {
-      font-size: 3rem;
-      font-weight: 900;
-      color: #1A237E;
-      margin-bottom: 20px;
+    .container {
+      max-width: 1200px;
+      width: 100%;
     }
     
-    .private-networks-division p {
-      font-size: 1.2rem;
-      font-weight: 600;
-      color: #0D47A1;
-      max-width: 900px;
-      margin: 0 auto 30px;
-    }
-    
-    .private-networks-cta {
-      background: #00FF41;
-      color: #000;
-      padding: 16px 35px;
-      font-size: 1.2rem;
-      font-weight: 900;
-      border: none;
-      border-radius: 50px;
-      cursor: pointer;
-      text-decoration: none;
-      display: inline-block;
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 30px;
       margin-top: 20px;
-      box-shadow: 0 8px 25px rgba(0,255,65,0.4);
-      transition: all 0.3s ease;
     }
     
-    .private-networks-cta:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 12px 35px rgba(0,255,65,0.6);
-    }
-    
-    /* Division 3: TC-S Network Commission - Oversight */
-    .commission-division {
-      background: linear-gradient(135deg, #0057B8, #00695c);
-      color: white;
-      padding: 60px 20px;
+    .card {
+      background: #2c3e50;
+      border-radius: 20px;
+      padding: 40px 30px;
       text-align: center;
-      min-height: 40vh;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    }
+    
+    .card-icon {
+      width: 120px;
+      height: 120px;
+      margin: 0 auto 30px;
+      background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+      border-radius: 50%;
       display: flex;
-      flex-direction: column;
-      justify-content: center;
       align-items: center;
-    }
-    
-    .commission-division h2 {
-      font-size: 2.5rem;
-      font-weight: 800;
-      color: #FFC107;
-      margin-bottom: 20px;
-    }
-    
-    .commission-division p {
-      font-size: 1.1rem;
-      font-weight: 500;
-      color: rgba(255,255,255,0.95);
-      max-width: 800px;
-      margin: 0 auto;
-    }
-    
-    .commission-links {
-      margin-top: 30px;
-      display: flex;
-      gap: 20px;
-      flex-wrap: wrap;
       justify-content: center;
+      position: relative;
     }
     
-    .commission-links a {
-      color: #FFC107;
+    .card-icon::before {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.3), transparent);
+    }
+    
+    .sun-icon {
+      font-size: 60px;
+    }
+    
+    .card-icon.market {
+      background: linear-gradient(135deg, #4CAF50 0%, #45B049 100%);
+    }
+    
+    .card-icon.private {
+      background: linear-gradient(135deg, #FF6F00 0%, #FF8F00 100%);
+    }
+    
+    .card h2 {
+      color: #FFD700;
+      font-size: 1.8rem;
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
+    
+    .card p {
+      color: #B0BEC5;
+      font-size: 1.05rem;
+      line-height: 1.7;
+      margin-bottom: 30px;
+    }
+    
+    .card-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(135deg, #4CAF50 0%, #66BB6A 100%);
+      color: white;
       text-decoration: none;
+      padding: 14px 30px;
+      border-radius: 30px;
       font-weight: 600;
       font-size: 1.1rem;
-      transition: color 0.3s ease;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
     }
     
-    .commission-links a:hover {
-      color: #FFD54F;
-      text-decoration: underline;
+    .card-button:hover {
+      background: linear-gradient(135deg, #66BB6A 0%, #4CAF50 100%);
+      box-shadow: 0 6px 20px rgba(76, 175, 80, 0.5);
+      transform: translateY(-2px);
     }
     
-    /* Responsive */
+    .card-button.yellow {
+      background: linear-gradient(135deg, #FFC107 0%, #FFD54F 100%);
+      color: #000;
+      box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+    }
+    
+    .card-button.yellow:hover {
+      background: linear-gradient(135deg, #FFD54F 0%, #FFC107 100%);
+      box-shadow: 0 6px 20px rgba(255, 193, 7, 0.5);
+    }
+    
+    .card-button.orange {
+      background: linear-gradient(135deg, #FF6F00 0%, #FF8F00 100%);
+      box-shadow: 0 4px 15px rgba(255, 111, 0, 0.3);
+    }
+    
+    .card-button.orange:hover {
+      background: linear-gradient(135deg, #FF8F00 0%, #FF6F00 100%);
+      box-shadow: 0 6px 20px rgba(255, 111, 0, 0.5);
+    }
+    
+    .arrow {
+      font-size: 1.2rem;
+    }
+    
     @media (max-width: 768px) {
-      .foundation-division h1 {
-        font-size: 2.5rem;
+      .cards-grid {
+        grid-template-columns: 1fr;
       }
-      .foundation-division .solar-standard {
-        font-size: 1.8rem;
-      }
-      .private-networks-division h2,
-      .commission-division h2 {
-        font-size: 2rem;
+      
+      .card h2 {
+        font-size: 1.5rem;
       }
     }
   </style>
 </head>
 <body>
 
-  <!-- Division 1: TC-S Network Foundation, Inc. -->
-  <section class="foundation-division" data-testid="division-foundation">
-    <h1>TC-S Network Foundation, Inc.</h1>
-    <div class="solar-standard">The Solar Standard</div>
-    <p>
-      A new global economy backed by the Sun. Solar energy Global Basic Income. 
-      One Solar = 4,913 kWh of renewable energy. One Earth. Daily distribution since April 7, 2025.
-    </p>
-    <p>
-      Delivering dignity through energy-backed universal basic income. 
-      Transparent. Auditable. Permanent.
-    </p>
-    <a href="/main-platform.html" class="foundation-cta" data-testid="button-foundation-signup">
-      Foundation Signup
-    </a>
-  </section>
-
-  <!-- Division 2: Z Private Networks -->
-  <section class="private-networks-division" data-testid="division-private-networks">
-    <h2>Z Private Networks Commissioning</h2>
-    <p>
-      <strong>TC-S Network Z Private Networks</strong> — Commission your own renewable energy network. 
-      Renewable Energy Input Options for RECs, PPAs, and Solar Ray tokenization.
-    </p>
-    <p>
-      Generators join. RECs list in the Market. Optional Private Network PPAs with transparent wealth distribution.
-      Full auditability. Zero double-counting.
-    </p>
-    <a href="https://solar-network-tdfranklin101.replit.app" class="private-networks-cta" data-testid="button-commission-network">
-      Commission Network
-    </a>
-  </section>
-
-  <!-- Division 3: TC-S Network Commission -->
-  <section class="commission-division" data-testid="division-commission">
-    <h2>TC-S Network Commission</h2>
-    <p>
-      Oversight body for network protocols and private network commissioning. 
-      Ensuring transparency, auditability, and fairness across the TC-S ecosystem.
-    </p>
-    <div class="commission-links">
-      <a href="/whitepapers.html">White Papers</a>
-      <a href="/declaration.html">Declaration</a>
-      <a href="/founder_note.html">Founder's Note</a>
-      <a href="/analytics.html" data-testid="link-analytics">📊 Analytics Dashboard</a>
+  <div class="container">
+    <div class="cards-grid">
+      
+      <!-- Card 1: TC-S Networks Foundation -->
+      <div class="card" data-testid="card-foundation">
+        <div class="card-icon">
+          <span class="sun-icon">☀️</span>
+        </div>
+        <h2>TC-S Networks Foundation</h2>
+        <p>
+          Explore the full Current-See ecosystem. Access solar generation tracking, member community, 
+          talk with 21st Century polymath oracle Kid Solar, and comprehensive platform features 
+          including Music Now and educational resources.
+        </p>
+        <a href="/main-platform.html" class="card-button" data-testid="button-explore-platform">
+          Explore Platform (Free) <span class="arrow">→</span>
+        </a>
+      </div>
+      
+      <!-- Card 2: Market -->
+      <div class="card" data-testid="card-market">
+        <div class="card-icon market">
+          <span class="sun-icon">💰</span>
+        </div>
+        <h2>Digital Artifact Market</h2>
+        <p>
+          Browse and trade digital artifacts in the Solar-backed marketplace. Music, videos, art, and services. 
+          Members upload content, set kWh pricing, and earn Solar. Join the creator economy powered by renewable energy.
+        </p>
+        <a href="/marketplace.html" class="card-button yellow" data-testid="button-visit-market">
+          Visit Market <span class="arrow">→</span>
+        </a>
+      </div>
+      
+      <!-- Card 3: Z Private Networks -->
+      <div class="card" data-testid="card-private-networks">
+        <div class="card-icon private">
+          <span class="sun-icon">🔌</span>
+        </div>
+        <h2>Z Private Networks</h2>
+        <p>
+          Commission your own renewable energy network. Generator Protocol for RECs/PPAs, 
+          transparent wealth distribution, and programmable Solar Ray tokenization. 
+          Full auditability, zero double-counting.
+        </p>
+        <a href="https://solar-network-tdfranklin101.replit.app" class="card-button orange" data-testid="button-commission-network">
+          Commission Network <span class="arrow">→</span>
+        </a>
+      </div>
+      
     </div>
-  </section>
+  </div>
 
 </body>
 </html>
