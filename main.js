@@ -515,6 +515,38 @@ function initializeDailyDistribution() {
   console.log('📌 Manual trigger: POST /api/distribution/trigger');
 }
 
+// Solar Foundation Integrity Wheel - Audit and Hash Verification
+function initializeFoundationIntegrityWheel() {
+  console.log('🔒 Initializing Foundation Solar Integrity Wheel...');
+  
+  const { execSync } = require('child_process');
+  
+  // Schedule daily audit at 7:00 AM UTC
+  const auditJob = schedule.scheduleJob({ rule: '0 7 * * *', tz: 'UTC' }, () => {
+    try {
+      console.log('🔍 Running Foundation integrity audit...');
+      execSync('node scripts/solar_foundation_audit.js', { stdio: 'inherit' });
+    } catch (error) {
+      console.error('❌ Foundation audit error:', error.message);
+    }
+  });
+  
+  if (auditJob) {
+    console.log('✅ Foundation audit scheduled for 7:00 AM UTC daily');
+    console.log('🔄 Next audit:', auditJob.nextInvocation());
+  } else {
+    console.error('❌ Failed to schedule Foundation audit');
+  }
+  
+  // Wake-trigger: Run audit immediately on server start
+  try {
+    console.log('🔍 Running initial Foundation integrity audit...');
+    execSync('node scripts/solar_foundation_audit.js', { stdio: 'inherit' });
+  } catch (error) {
+    console.error('⚠️ Initial audit error:', error.message);
+  }
+}
+
 // Initialize database with error handling
 try {
   ensureSignupsTable();
@@ -5532,6 +5564,14 @@ server.listen(PORT, '0.0.0.0', () => {
   } catch (error) {
     console.warn('⚠️ Cron scheduling not available in this environment');
     console.log('📌 Use external cron or manual trigger: POST /api/distribution/trigger');
+  }
+  
+  // Initialize Foundation Solar Integrity Wheel
+  try {
+    initializeFoundationIntegrityWheel();
+  } catch (error) {
+    console.warn('⚠️ Foundation audit scheduling failed:', error.message);
+    console.log('📌 Manual audit: node scripts/solar_foundation_audit.js');
   }
 }).on('error', (err) => {
   console.error('❌ Server failed to start:', err);
