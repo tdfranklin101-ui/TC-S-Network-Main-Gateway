@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Solar Protocol Feed</title>
+  <link href="https://www.thecurrentsee.org/SolarFeed.xml" rel="self"/>
+  <updated>2025-10-14T21:56:07.607Z</updated>
+  <entry>
+    <id>urn:solar:standard:v1.0</id>
+    <title>Solar Standard Protocol v1.0</title>
+    <summary>Defines 1 Solar = 4,913 kWh. Open standard for ethical AI and renewable compute.</summary>
+    <link href="https://www.thecurrentsee.org/SolarStandard.html"/>
+  </entry>
+  <entry>
+    <id>urn:solar:example-ai-model-001</id>
+    <title>Example GPT-4 Training Run</title>
+    <summary>4913 kWh ⇒ 1 Solar (REC/SOLAR)</summary>
+    <link href="https://www.thecurrentsee.org/solar-index/example-ai-model-001.json"/>
+    <updated>2025-10-14T16:29:34.255Z</updated>
+  </entry>
+  <entry>
+    <id>urn:solar:kid-solar-av-001</id>
+    <title>Kid Solar Avatar – Intro Sequence</title>
+    <summary>9826 kWh ⇒ 2 Solar (REC/SOLAR)</summary>
+    <link href="https://www.thecurrentsee.org/solar-index/kid-solar-av-001.json"/>
+    <updated>2025-10-14T16:34:08.277Z</updated>
+  </entry>
+  <entry>
+    <id>urn:solar:test-cjs-001</id>
+    <title>Test CommonJS Generator</title>
+    <summary>10000 kWh ⇒ 2.035416 Solar (BLOCKCHAIN/WIND)</summary>
+    <link href="https://www.thecurrentsee.org/solar-index/test-cjs-001.json"/>
+    <updated>2025-10-14T16:41:00.333Z</updated>
+  </entry>
+  <entry>
+    <id>urn:solar:uim-white-paper-2025</id>
+    <title>The Unified Intelligence Mesh White Paper</title>
+    <summary>5000 kWh ⇒ 1.017708 Solar (TC-S_FOUNDATION/SOLAR)</summary>
+    <link href="https://www.thecurrentsee.org/solar-index/uim-white-paper-2025.json"/>
+    <updated>2025-10-14T21:56:07.607Z</updated>
+  </entry>
+</feed>
