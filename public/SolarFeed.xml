@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
   <title>Solar Protocol Feed</title>
   <link href="https://www.thecurrentsee.org/SolarFeed.xml" rel="self"/>
-  <updated>2025-10-14T16:41:00.333Z</updated>
+  <updated>2025-10-14T21:56:07.607Z</updated>
   <entry>
     <id>urn:solar:standard:v1.0</id>
     <title>Solar Standard Protocol v1.0</title>
@@ -29,5 +29,12 @@
     <summary>10000 kWh ⇒ 2.035416 Solar (BLOCKCHAIN/WIND)</summary>
     <link href="https://www.thecurrentsee.org/solar-index/test-cjs-001.json"/>
     <updated>2025-10-14T16:41:00.333Z</updated>
+  </entry>
+  <entry>
+    <id>urn:solar:uim-white-paper-2025</id>
+    <title>The Unified Intelligence Mesh White Paper</title>
+    <summary>5000 kWh ⇒ 1.017708 Solar (TC-S_FOUNDATION/SOLAR)</summary>
+    <link href="https://www.thecurrentsee.org/solar-index/uim-white-paper-2025.json"/>
+    <updated>2025-10-14T21:56:07.607Z</updated>
   </entry>
 </feed>

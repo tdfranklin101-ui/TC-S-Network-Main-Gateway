@@ -1,0 +1,45 @@
+{
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": "The Unified Intelligence Mesh White Paper",
+  "identifier": "uim-white-paper-2025",
+  "category": "DIGITAL_ARTIFACT",
+  "isAccessoryOrSparePartFor": "Solar Standard v1.0",
+  "additionalProperty": [
+    {
+      "@type": "PropertyValue",
+      "name": "energy_consumed_kWh",
+      "value": 5000
+    },
+    {
+      "@type": "PropertyValue",
+      "name": "solar_equivalent",
+      "value": 1.017708
+    },
+    {
+      "@type": "PropertyValue",
+      "name": "renewable_source",
+      "value": "SOLAR"
+    },
+    {
+      "@type": "PropertyValue",
+      "name": "verification",
+      "value": "TC-S_FOUNDATION"
+    },
+    {
+      "@type": "PropertyValue",
+      "name": "geo_origin",
+      "value": "US"
+    },
+    {
+      "@type": "PropertyValue",
+      "name": "timestamp",
+      "value": "2025-10-14T21:56:07.607Z"
+    }
+  ],
+  "url": "https://www.thecurrentsee.org/artifacts/uim-white-paper-2025.html",
+  "brand": {
+    "@type": "Organization",
+    "name": "TC-S Network Foundation, Inc."
+  }
+}
