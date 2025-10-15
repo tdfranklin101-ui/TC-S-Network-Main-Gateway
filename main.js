@@ -5481,6 +5481,7 @@ const server = http.createServer(async (req, res) => {
       '.jpg': 'image/jpeg',
       '.jpeg': 'image/jpeg',
       '.svg': 'image/svg+xml',
+      '.pdf': 'application/pdf',
       '.mp3': 'audio/mpeg',
       '.mp4': 'video/mp4',
       '.webm': 'video/webm',
