@@ -1,0 +1,10 @@
+{
+  "protocol": "Solar Standard v1.0",
+  "identifier": "urn:sha256:79cb6cf146c700b654d8aa55f17071e6060e682189e51733c2d46134f04a8f74",
+  "issuer": "https://www.thecurrentsee.org",
+  "repo": "https://github.com/tdfranklin101-ui/solar-standard",
+  "wallet": "https://cross-platform-mobile-tdfranklin101.replit.app",
+  "spec": "https://www.thecurrentsee.org/SolarStandard.json",
+  "feed": "https://www.thecurrentsee.org/SolarFeed.xml",
+  "updated": "2025-10-14T00:00:00Z"
+}

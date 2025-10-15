@@ -1,0 +1,9 @@
+{
+  "ok": true,
+  "identifier": "urn:sha256:79cb6cf146c700b654d8aa55f17071e6060e682189e51733c2d46134f04a8f74",
+  "spec": "https://www.thecurrentsee.org/SolarStandard.json",
+  "proof": "https://www.thecurrentsee.org/solar-index/solar-proof.json",
+  "repo": "https://github.com/tdfranklin101-ui/solar-standard",
+  "wallet": "https://cross-platform-mobile-tdfranklin101.replit.app",
+  "ts": "2025-10-14T00:00:00Z"
+}
