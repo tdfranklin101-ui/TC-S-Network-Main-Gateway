@@ -353,21 +353,51 @@
       font-size: 1.2rem;
     }
     
-    /* Solar Verification Badge - Compact for Mobile */
+    /* Solar Verification Badge - Minimal & Vertical */
     .solar-verify {
       text-align: center;
-      padding: 0.75rem 0;
-      background: rgba(0, 0, 0, 0.3);
+      padding: 1rem 0;
+      background: transparent;
     }
     
     .solar-verify img {
-      height: 28px;
-      opacity: 0.9;
+      height: 32px;
+      opacity: 0.7;
       transition: opacity 0.3s ease;
     }
     
     .solar-verify a:hover img {
       opacity: 1;
+    }
+    
+    .solar-verify-vertical {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      z-index: 100;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 8px;
+      border-radius: 8px;
+      backdrop-filter: blur(10px);
+    }
+    
+    .solar-verify-vertical a {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #00f5d4;
+      text-decoration: none;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+    
+    .solar-verify-vertical img {
+      width: 20px;
+      height: 20px;
+      transform: rotate(-90deg);
     }
     
     @media (max-width: 768px) {
@@ -380,21 +410,28 @@
       }
       
       .solar-verify {
-        padding: 0.5rem 0;
+        padding: 0.75rem 0;
       }
       
       .solar-verify img {
-        height: 24px;
+        height: 28px;
+      }
+      
+      .solar-verify-vertical {
+        bottom: 10px;
+        right: 10px;
+        padding: 6px;
       }
     }
   </style>
 </head>
 <body>
 
-  <!-- Solar Standard Verification Badge - Top -->
-  <div class="solar-verify">
-    <a href="/SolarStandard.html" rel="standard noopener" data-testid="link-solar-verified-top">
-      <img src="/assets/solar-verified.svg" alt="Verified by Solar Standard Protocol" loading="lazy">
+  <!-- Vertical Solar Verification - Fixed Position -->
+  <div class="solar-verify-vertical">
+    <a href="/SolarStandard.html" rel="standard noopener" data-testid="link-solar-verified-vertical">
+      <img src="/assets/solar-verified.svg" alt="Verified" loading="lazy">
+      <span>SOLAR STANDARD</span>
     </a>
   </div>
 
@@ -461,13 +498,6 @@
           Visit Market <span class="arrow">→</span>
         </a>
       </div>
-
-      <!-- Solar Standard Verification Badge - Middle -->
-      <div class="solar-verify" style="grid-column: 1 / -1;">
-        <a href="/SolarStandard.html" rel="standard noopener" data-testid="link-solar-verified-middle">
-          <img src="/assets/solar-verified.svg" alt="Verified by Solar Standard Protocol" loading="lazy">
-        </a>
-      </div>
       
       <!-- Card 3: TC-S Network Z Private Networks -->
       <div class="card private-networks" data-testid="card-private-networks">
@@ -504,9 +534,9 @@
     </div>
   </div>
 
-  <!-- Solar Standard Verification Badge - Bottom -->
+  <!-- Solar Standard Verification Badge - Footer (Desktop Only) -->
   <div class="solar-verify">
-    <a href="/SolarStandard.html" rel="standard noopener" data-testid="link-solar-verified-bottom">
+    <a href="/SolarStandard.html" rel="standard noopener" data-testid="link-solar-verified-footer">
       <img src="/assets/solar-verified.svg" alt="Verified by Solar Standard Protocol" loading="lazy">
     </a>
   </div>
