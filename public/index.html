@@ -353,6 +353,23 @@
       font-size: 1.2rem;
     }
     
+    /* Solar Verification Badge - Compact for Mobile */
+    .solar-verify {
+      text-align: center;
+      padding: 0.75rem 0;
+      background: rgba(0, 0, 0, 0.3);
+    }
+    
+    .solar-verify img {
+      height: 28px;
+      opacity: 0.9;
+      transition: opacity 0.3s ease;
+    }
+    
+    .solar-verify a:hover img {
+      opacity: 1;
+    }
+    
     @media (max-width: 768px) {
       .cards-grid {
         grid-template-columns: 1fr;
@@ -361,10 +378,25 @@
       .card h2 {
         font-size: 1.5rem;
       }
+      
+      .solar-verify {
+        padding: 0.5rem 0;
+      }
+      
+      .solar-verify img {
+        height: 24px;
+      }
     }
   </style>
 </head>
 <body>
+
+  <!-- Solar Standard Verification Badge - Top -->
+  <div class="solar-verify">
+    <a href="/SolarStandard.html" rel="standard noopener" data-testid="link-solar-verified-top">
+      <img src="/assets/solar-verified.svg" alt="Verified by Solar Standard Protocol" loading="lazy">
+    </a>
+  </div>
 
   <div class="container">
     <div class="cards-grid">
@@ -429,6 +461,13 @@
           Visit Market <span class="arrow">→</span>
         </a>
       </div>
+
+      <!-- Solar Standard Verification Badge - Middle -->
+      <div class="solar-verify" style="grid-column: 1 / -1;">
+        <a href="/SolarStandard.html" rel="standard noopener" data-testid="link-solar-verified-middle">
+          <img src="/assets/solar-verified.svg" alt="Verified by Solar Standard Protocol" loading="lazy">
+        </a>
+      </div>
       
       <!-- Card 3: TC-S Network Z Private Networks -->
       <div class="card private-networks" data-testid="card-private-networks">
@@ -465,10 +504,10 @@
     </div>
   </div>
 
-  <!-- Solar Standard Verification Badge -->
-  <div style="text-align: center; padding: 2rem 0; background: rgba(0,0,0,0.3);">
-    <a href="/SolarStandard.html" rel="standard noopener" data-testid="link-solar-verified">
-      <img src="/assets/solar-verified.svg" alt="Verified by Solar Standard Protocol" height="36">
+  <!-- Solar Standard Verification Badge - Bottom -->
+  <div class="solar-verify">
+    <a href="/SolarStandard.html" rel="standard noopener" data-testid="link-solar-verified-bottom">
+      <img src="/assets/solar-verified.svg" alt="Verified by Solar Standard Protocol" loading="lazy">
     </a>
   </div>
 
