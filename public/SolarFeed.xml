@@ -37,4 +37,11 @@
     <link href="https://www.thecurrentsee.org/solar-index/uim-white-paper-2025.json"/>
     <updated>2025-10-14T21:56:07.607Z</updated>
   </entry>
+  <entry>
+    <title>Solar Ping</title>
+    <id>urn:solar:ping:79cb6cf146c700b654d8aa55f17071e6060e682189e51733c2d46134f04a8f74</id>
+    <updated>2025-10-14T00:00:00Z</updated>
+    <link rel="alternate" type="application/json" href="https://www.thecurrentsee.org/solar-index/ping.json"/>
+    <summary>Solar Standard proof and cross-domain verification reference.</summary>
+  </entry>
 </feed>
