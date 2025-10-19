@@ -220,6 +220,76 @@
           <li><strong>Cumulative Reserve:</strong> Running total since Genesis Date (April 7, 2025)</li>
           <li><strong>Growth Rate:</strong> Percentage increase vs. baseline capacity</li>
         </ul>
+
+        <h3>Live Solar Reserve Data</h3>
+        <div class="callout" style="background: #051210; border-color: #39FF14; padding: 1.5rem;">
+          <p style="margin-top: 0; color: #39FF14; font-weight: 600;">
+            📊 Real-time data pulled from TC-S Solar Reserve Tracker
+          </p>
+          <div id="solar-live-widget">
+            <div class="widget" id="reserve-stats">
+              <div class="stat">
+                <div class="label">Date</div>
+                <div class="value" id="live-date">—</div>
+              </div>
+              <div class="stat">
+                <div class="label">Last Updated</div>
+                <div class="value" id="live-updated" style="font-size: 0.85rem;">—</div>
+              </div>
+              <div class="stat">
+                <div class="label">Global Renewable Output</div>
+                <div class="value" id="live-output">—</div>
+              </div>
+              <div class="stat">
+                <div class="label">Equivalent Solar Units</div>
+                <div class="value" id="live-solar">—</div>
+              </div>
+              <div class="stat">
+                <div class="label">Δ vs Genesis Baseline</div>
+                <div class="value" id="live-delta">—</div>
+              </div>
+              <div class="stat">
+                <div class="label">Cumulative Solar Since 2025-04-07</div>
+                <div class="value" id="live-cumulative">—</div>
+              </div>
+            </div>
+            <p style="margin: 1rem 0 0 0; font-size: 0.85rem; color: var(--muted);">
+              Data source: <a href="https://solar-reserve-tracker-tdfranklin101.replit.app" target="_blank" style="color: #39FF14;">solarreserveretracker.tdfranklin101.repl.co</a>
+            </p>
+          </div>
+        </div>
+
+        <script>
+          // Fetch live Solar Reserve data
+          async function loadSolarReserveData() {
+            try {
+              const response = await fetch('https://solar-reserve-tracker-tdfranklin101.replit.app/api/solar/reserve?region=global');
+              if (!response.ok) throw new Error('Failed to fetch');
+              const data = await response.json();
+              
+              // Update widget with live data
+              document.getElementById('live-date').textContent = data.date || '—';
+              document.getElementById('live-updated').textContent = data.lastUpdated || '—';
+              document.getElementById('live-output').textContent = data.globalRenewableOutput || '—';
+              document.getElementById('live-solar').textContent = data.equivalentSolarUnits || '—';
+              document.getElementById('live-delta').textContent = data.deltaVsGenesisBaseline || '—';
+              document.getElementById('live-cumulative').textContent = data.cumulativeSolarSinceGenesis || '—';
+            } catch (error) {
+              console.warn('Solar Reserve Tracker unavailable:', error);
+              // Keep placeholder values on error
+            }
+          }
+          
+          // Load data when page loads
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', loadSolarReserveData);
+          } else {
+            loadSolarReserveData();
+          }
+          
+          // Refresh every 5 minutes
+          setInterval(loadSolarReserveData, 5 * 60 * 1000);
+        </script>
       </section>
 
       <section id="adoption">
