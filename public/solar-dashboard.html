@@ -69,6 +69,79 @@
       color: #80fff0;
       font-size: 0.9rem;
     }
+    .compliance-notice {
+      background: linear-gradient(135deg, rgba(57, 255, 20, 0.15) 0%, rgba(0, 245, 212, 0.15) 100%);
+      border: 3px solid #39FF14;
+      border-radius: 16px;
+      padding: 2rem;
+      margin: 2rem auto;
+      max-width: 900px;
+      box-shadow: 0 0 30px rgba(57, 255, 20, 0.4), 0 8px 24px rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(10px);
+      position: relative;
+      overflow: hidden;
+    }
+    .compliance-notice::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(57, 255, 20, 0.1) 0%, transparent 70%);
+      animation: pulse-glow 3s ease-in-out infinite;
+      pointer-events: none;
+    }
+    @keyframes pulse-glow {
+      0%, 100% { opacity: 0.5; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.05); }
+    }
+    .compliance-badge {
+      display: inline-block;
+      background: linear-gradient(135deg, #39FF14, #00f5d4);
+      color: #000;
+      font-weight: 900;
+      padding: 0.6rem 1.5rem;
+      border-radius: 25px;
+      font-size: 0.9rem;
+      letter-spacing: 1.5px;
+      box-shadow: 0 4px 12px rgba(57, 255, 20, 0.5);
+      margin-bottom: 1rem;
+    }
+    .compliance-notice h3 {
+      color: #39FF14;
+      font-size: 1.8rem;
+      margin: 1rem 0;
+      text-shadow: 0 0 20px rgba(57, 255, 20, 0.5);
+    }
+    .compliance-notice p {
+      color: #e0fff8;
+      line-height: 1.7;
+      font-size: 1.05rem;
+    }
+    .compliance-links {
+      margin-top: 1.5rem;
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .compliance-links a {
+      background: rgba(0, 255, 204, 0.2);
+      border: 2px solid #00ffcc;
+      color: #00ffcc;
+      padding: 0.7rem 1.5rem;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+    .compliance-links a:hover {
+      background: #00ffcc;
+      color: #04100d;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(0, 255, 204, 0.5);
+    }
   </style>
 </head>
 
@@ -81,6 +154,29 @@
       Data sourced from TC-S SolarReserveTracker & verified energy databases.
     </p>
   </header>
+
+  <!-- GENIUS Act Compliance Notice -->
+  <div class="compliance-notice">
+    <div style="position: relative; z-index: 1;">
+      <div class="compliance-badge">⚖️ GENIUS ACT COMPLIANT</div>
+      <h3>Global Energy Networks & Infinite Universal Solar Protocol</h3>
+      <p>
+        This Solar Reserve Dashboard operates under the <strong>GENIUS Act Compliance Framework</strong>, 
+        ensuring transparent renewable energy accounting, zero double-counting, and auditable Solar token distribution.
+        All data is verified against dual-reserve architecture: <strong>1 Solar = 4,913 kWh</strong> renewable energy equivalency 
+        since Genesis (April 7, 2025).
+      </p>
+      <p>
+        <strong>Live Reserves:</strong> Real-time tracking of global renewable energy capacity allocated to TC-S Network Foundation members. 
+        Every member receives daily distributions with full retroactive accountability to Genesis Date.
+      </p>
+      <div class="compliance-links">
+        <a href="/genius-act-whitepaper.html">📄 Read GENIUS Act White Paper</a>
+        <a href="/foundation-update.html">📋 Foundation Updates</a>
+        <a href="/SolarStandard.html">⚡ Solar Standard Protocol</a>
+      </div>
+    </div>
+  </div>
 
   <section id="live-dashboard">
     <h3>Live Global Dashboard Feed</h3>
