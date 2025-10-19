@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>TC-S Network — GENIUS Act–Aligned Adoption Strategy & Solar Reserves</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="TC-S Network white paper: GENIUS Act–aligned adoption strategy, Solar-pegged reserves, and global Solar Reserve Database." />
+  <style>
+    :root{
+      --bg:#071311;
+      --panel:#0b1f1a;
+      --ink:#e8fff9;
+      --muted:#9ad9c9;
+      --accent:#00ffcc;
+      --accent-2:#20bfa1;
+      --line:#11322b;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;line-height:1.55}
+    a{color:var(--accent)}
+    .wrap{max-width:1100px;margin:0 auto;padding:24px}
+    header{background:linear-gradient(180deg,#0b1f1a 0%, #071311 100%);border-bottom:1px solid var(--line)}
+    .brand{display:flex;align-items:center;gap:14px}
+    .brand .logo{width:38px;height:38px;border-radius:8px;background:radial-gradient(120% 120% at 20% 20%, var(--accent) 0%, #0bffdd 35%, #0b1f1a 70%);box-shadow:0 0 24px rgba(0,255,204,.25)}
+    .kicker{color:var(--muted);letter-spacing:.08em;text-transform:uppercase;font-size:.8rem;margin-top:4px}
+    h1{margin:.25rem 0 0 0;font-size:clamp(1.6rem, 3.6vw, 2.4rem)}
+    .grid{display:grid;grid-template-columns: 280px 1fr;gap:26px;margin-top:22px}
+    nav{position:sticky;top:12px;align-self:start;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+    nav h3{margin:6px 0 10px;font-size:.95rem;color:var(--muted)}
+    nav a{display:block;padding:6px 8px;border-radius:8px;color:var(--ink);text-decoration:none}
+    nav a:hover{background:#0e2a24}
+    section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:20px}
+    h2{margin-top:0;color:#d7fff5;font-size:1.3rem}
+    h3{color:#c7f8ee}
+    .callout{border:1px dashed var(--accent-2);border-radius:12px;padding:14px;background:#0a1b17}
+    .widget{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
+    .stat{background:#0a1b17;border:1px solid var(--line);border-radius:10px;padding:12px}
+    .stat .label{color:var(--muted);font-size:.85rem}
+    .stat .value{font-size:1.15rem;color:var(--accent)}
+    table{width:100%;border-collapse:collapse;margin:8px 0 4px;border:1px solid var(--line)}
+    th,td{padding:10px;border-bottom:1px solid var(--line);vertical-align:top}
+    th{background:#0e2722;color:#c9fff3;text-align:left}
+    .foot{color:var(--muted);font-size:.9rem;margin-top:10px}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
+    @media (max-width: 980px){.grid{grid-template-columns:1fr}}
+    @media (max-width: 600px){.widget{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <div class="kicker">TC-S Network</div>
+          <h1>The Solar Standard — GENIUS Act–Aligned Adoption Strategy & Reserves</h1>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap grid">
+    <!-- NAV -->
+    <nav aria-label="White paper navigation">
+      <h3>Contents</h3>
+      <a href="#exec">Executive Summary</a>
+      <a href="#widget">Live Solar Reserve</a>
+      <a href="#genius">GENIUS Act Framework</a>
+      <a href="#solar-standard">The Solar Standard</a>
+      <a href="#dual">Dual-Reserve Architecture</a>
+      <a href="#reserve-db">Solar Reserve Database</a>
+      <a href="#adoption">Adoption Strategy</a>
+      <a href="#market">Market Dynamics</a>
+      <a href="#governance">Governance & Compliance</a>
+      <a href="#compare">Why Solar > Fiat Pegs</a>
+      <a href="#roadmap">Roadmap</a>
+      <a href="#conclusion">Conclusion</a>
+    </nav>
+
+    <!-- BODY -->
+    <main>
+      <section id="exec">
+        <h2>Executive Summary</h2>
+        <p>
+          The <strong>TC-S Network</strong> denominates value in <strong>Solar (S)</strong>, where 1&nbsp;Solar = <strong>4,913&nbsp;kWh</strong> of verified renewable electricity.
+          Under the <em>GENIUS Act</em> (2025), TC-S aligns its architecture with law while redefining reserves:
+          energy replaces currency as the ultimate measure of value.
+        </p>
+        <p>
+          TC-S deploys a dual-reserve system—<em>regulatory interoperability</em> via a Solar-pegged stable rail, and
+          <em>physical validation</em> via a global Solar Reserve Database—creating a bridge between the digital economy and planetary energy flows.
+        </p>
+        <div class="callout">
+          <strong>Mission:</strong> anchor economic value to measurable work (kWh).  
+          <br /> <strong>Genesis:</strong> April&nbsp;7, 2025.  
+          <br /> <strong>Baseline:</strong> 1&nbsp;Solar × 8.5&nbsp;million daily = 4.18×10<sup>10</sup>&nbsp;kWh/day.
+        </div>
+      </section>
+
+      <section id="widget" aria-live="polite">
+        <h2>Live Solar Reserve (Global)</h2>
+        <p class="foot">Data pulled live from <code>solarreserveretracker.tdfranklin101.repl.co</code></p>
+        <div class="widget" id="solar-widget">
+          <div class="stat"><div class="label">Date</div><div class="value" id="w-date">—</div></div>
+          <div class="stat"><div class="label">Global Renewable Output</div><div class="value" id="w-kwh">—</div></div>
+          <div class="stat"><div class="label">Equivalent Solar Units</div><div class="value" id="w-solar">—</div></div>
+          <div class="stat"><div class="label">Δ vs Genesis Baseline</div><div class="value" id="w-delta">—</div></div>
+          <div class="stat"><div class="label">Cumulative Solar Since 2025-04-07</div><div class="value" id="w-cumulative">—</div></div>
+          <div class="stat"><div class="label">Last Updated</div><div class="value" id="w-updated">—</div></div>
+        </div>
+      </section>
+
+      <section id="genius">
+        <h2>GENIUS Act Framework (Springboard)</h2>
+        <p>
+          The <strong>Guiding and Establishing National Innovation for U.S. Stablecoins Act</strong> establishes federal standards for transparent, reserve-backed digital instruments.
+          TC-S mirrors those principles while upgrading the reserve model from <em>fiat/Treasuries</em> to <em>renewable kWh</em>.
+        </p>
+      </section>
+
+      <section id="solar-standard">
+        <h2>The Solar Standard</h2>
+        <p>
+          <strong>1&nbsp;Solar (S) = 4,913&nbsp;kWh.</strong> Energy is measurable, universal, and cannot be printed.
+          This establishes an <em>energy-denominated economy</em> with intrinsic stability.
+        </p>
+      </section>
+
+      <section id="reserve-db">
+        <h2>Solar Reserve Database (Proof of Abundance)</h2>
+        <div class="callout">
+          The global earmark of <strong>+S&nbsp;1.7&nbsp;trillion Solar — steadily increasing</strong> expresses the symbolic and potential reserve of humanity’s solar income.
+          The tracker quantifies actual daily increases as new renewable capacity comes online.
+        </div>
+      </section>
+
+      <section id="conclusion">
+        <h2>Conclusion</h2>
+        <p>
+          TC-S operationalizes the GENIUS Act while transcending fiat limits. By measuring value in the sun’s work,
+          we align law with light — energy becomes the foundation of a lawful, regenerative economy.
+        </p>
+      </section>
+    </main>
+  </div>
+
+  <!-- Live Solar Reserve Fetch -->
+  <script>
+    (async function loadSolar() {
+      const URL = "https://solarreserveretracker.tdfranklin101.repl.co/solar/reserve";
+      const el = (id) => document.getElementById(id);
+      try {
+        const res = await fetch(URL, { cache: "no-store" });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const data = await res.json();
+        const n = (x) => (typeof x === "number" ? x : Number(x || 0));
+        const fmt = (x) => n(x).toLocaleString();
+
+        el("w-date").textContent = data.date || "—";
+        el("w-kwh").textContent = data.renewables_kwh ? `${fmt(data.renewables_kwh)} kWh` : "—";
+        el("w-solar").textContent = data.equivalent_solar ? `${fmt(data.equivalent_solar)} S` : "—";
+        el("w-delta").textContent = data.delta_percent !== undefined ? `${data.delta_percent}%` : "—";
+        el("w-cumulative").textContent = data.cumulative_solar ? `${fmt(data.cumulative_solar)} S` : "—";
+        el("w-updated").textContent = new Date().toLocaleString();
+      } catch (e) {
+        console.error("Solar Reserve fetch error:", e);
+        ["w-date","w-kwh","w-solar","w-delta","w-cumulative","w-updated"].forEach(id=>{el(id).textContent="—"});
+      }
+    })();
+  </script>
+</body>
+</html>
