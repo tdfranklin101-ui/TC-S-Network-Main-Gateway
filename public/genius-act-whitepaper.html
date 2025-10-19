@@ -2,69 +2,353 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
+  <title>TC-S Network — GENIUS Act–Aligned Adoption Strategy & Solar Reserves</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TC-S Foundation | Genius Act Compliance White Paper (Working Theory)</title>
-  <meta name="robots" content="noindex" />
-  <link rel="stylesheet" href="foundation.css" />
+  <meta name="description" content="TC-S Network white paper: GENIUS Act–aligned adoption strategy, Solar-pegged reserves, and global Solar Reserve Database." />
   <style>
-    body{background:#0b0f12;color:#e6f5f3;font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial;margin:0;padding:24px;max-width:960px}
-    h1{font-size:30px;margin-bottom:8px}
-    h2{font-size:22px;margin-top:24px}
-    p{margin:8px 0}
-    .note{color:#9fb7b3;font-size:14px}
-    a{color:#14b8a6;text-decoration:none}
-    a:hover{text-decoration:underline}
-    ul{padding-left:22px}
-    .divider{height:1px;background:#1c2a31;margin:24px 0}
-    footer{margin-top:40px;font-size:13px;color:#9fb7b3}
+    :root{
+      --bg:#071311;
+      --panel:#0b1f1a;
+      --ink:#e8fff9;
+      --muted:#9ad9c9;
+      --accent:#00ffcc;
+      --accent-2:#20bfa1;
+      --line:#11322b;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;line-height:1.55}
+    a{color:var(--accent)}
+    .wrap{max-width:1100px;margin:0 auto;padding:24px}
+    header{background:linear-gradient(180deg,#0b1f1a 0%, #071311 100%);border-bottom:1px solid var(--line)}
+    .brand{display:flex;align-items:center;gap:14px}
+    .brand .logo{width:38px;height:38px;border-radius:8px;background:radial-gradient(120% 120% at 20% 20%, var(--accent) 0%, #0bffdd 35%, #0b1f1a 70%);box-shadow:0 0 24px rgba(0,255,204,.25)}
+    .kicker{color:var(--muted);letter-spacing:.08em;text-transform:uppercase;font-size:.8rem;margin-top:4px}
+    h1{margin:.25rem 0 0 0;font-size:clamp(1.6rem, 3.6vw, 2.4rem)}
+    .grid{display:grid;grid-template-columns: 280px 1fr;gap:26px;margin-top:22px}
+    nav{position:sticky;top:12px;align-self:start;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+    nav h3{margin:6px 0 10px;font-size:.95rem;color:var(--muted)}
+    nav a{display:block;padding:6px 8px;border-radius:8px;color:var(--ink);text-decoration:none}
+    nav a:hover{background:#0e2a24}
+    section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:20px}
+    h2{margin-top:0;color:#d7fff5;font-size:1.3rem}
+    h3{color:#c7f8ee}
+    .callout{border:1px dashed var(--accent-2);border-radius:12px;padding:14px;background:#0a1b17}
+    .widget{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
+    .stat{background:#0a1b17;border:1px solid var(--line);border-radius:10px;padding:12px}
+    .stat .label{color:var(--muted);font-size:.85rem}
+    .stat .value{font-size:1.15rem;color:var(--accent)}
+    table{width:100%;border-collapse:collapse;margin:8px 0 4px;border:1px solid var(--line)}
+    th,td{padding:10px;border-bottom:1px solid var(--line);vertical-align:top}
+    th{background:#0e2722;color:#c9fff3;text-align:left}
+    .foot{color:var(--muted);font-size:.9rem;margin-top:10px}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
+    @media (max-width: 980px){.grid{grid-template-columns:1fr}}
+    @media (max-width: 600px){.widget{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
-  <h1>The Genius Act — Toward Ethical, Transparent & Human-Centered Intelligence</h1>
-  <p class="note"><strong>Working Theory Draft v0.3 — October 2025</strong><br>
-  Companion to the <a href="/uim-whitepaper.html">UIM White Paper</a> • TC-S Network Foundation Research Publication</p>
+  <header>
+    <div class="wrap">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <div class="kicker">TC-S Network</div>
+          <h1>The Solar Standard — GENIUS Act–Aligned Adoption Strategy & Reserves</h1>
+        </div>
+      </div>
+    </div>
+  </header>
 
-  <div class="divider"></div>
+  <div class="wrap grid">
+    <!-- NAV -->
+    <nav aria-label="White paper navigation">
+      <h3>Contents</h3>
+      <a href="#exec">Executive Summary</a>
+      <a href="#widget">Live Solar Reserve</a>
+      <a href="#genius">GENIUS Act Framework</a>
+      <a href="#solar-standard">The Solar Standard</a>
+      <a href="#dual">Dual-Reserve Architecture</a>
+      <a href="#reserve-db">Solar Reserve Database</a>
+      <a href="#adoption">Adoption Strategy</a>
+      <a href="#market">Market Dynamics</a>
+      <a href="#governance">Governance & Compliance</a>
+      <a href="#compare">Why Solar > Fiat Pegs</a>
+      <a href="#roadmap">Roadmap</a>
+      <a href="#conclusion">Conclusion</a>
+    </nav>
 
-  <h2>1 · Executive Summary</h2>
-  <p>The Genius Act outlines a moral and technical framework to ensure AI-augmented systems and energy-denominated economies uphold dignity, privacy, and ecological balance. It extends the UIM white paper from identity and wallet design to governance and compliance theory.</p>
+    <!-- BODY -->
+    <main>
+      <section id="exec">
+        <h2>Executive Summary</h2>
+        <p>
+          The <strong>TC-S Network</strong> denominates value in <strong>Solar (S)</strong>, where 1&nbsp;Solar = <strong>4,913&nbsp;kWh</strong> of verified renewable electricity.
+          Under the <em>GENIUS Act</em> (2025), TC-S aligns its architecture with law while redefining reserves:
+          energy replaces currency as the ultimate measure of value.
+        </p>
+        <p>
+          TC-S deploys a dual-reserve system—<em>regulatory interoperability</em> via a Solar-pegged stable rail, and
+          <em>physical validation</em> via a global Solar Reserve Database—creating a bridge between the digital economy and planetary energy flows.
+        </p>
+        <div class="callout">
+          <strong>Mission:</strong> anchor economic value to measurable work (kWh).  
+          <br /> <strong>Genesis:</strong> April&nbsp;7, 2025.  
+          <br /> <strong>Baseline:</strong> 1&nbsp;Solar × 8.5&nbsp;million daily = 4.18×10<sup>10</sup>&nbsp;kWh/day.
+        </div>
+      </section>
 
-  <h2>2 · Scope and Intent</h2>
-  <p>This document is an evolving research theory — not a statute or final policy. It serves as the Foundation's discussion draft for how public-benefit AI and energy markets should operate ethically across the TC-S ecosystem.</p>
+      <section id="widget" aria-live="polite">
+        <h2>Live Solar Reserve (Global)</h2>
+        <p class="foot">Data pulled live from <code>solarreserveretracker.tdfranklin101.repl.co</code></p>
+        <div class="widget" id="solar-widget">
+          <div class="stat"><div class="label">Date</div><div class="value" id="w-date">—</div></div>
+          <div class="stat"><div class="label">Global Renewable Output</div><div class="value" id="w-kwh">—</div></div>
+          <div class="stat"><div class="label">Equivalent Solar Units</div><div class="value" id="w-solar">—</div></div>
+          <div class="stat"><div class="label">Δ vs Genesis Baseline</div><div class="value" id="w-delta">—</div></div>
+          <div class="stat"><div class="label">Cumulative Solar Since 2025-04-07</div><div class="value" id="w-cumulative">—</div></div>
+          <div class="stat"><div class="label">Last Updated</div><div class="value" id="w-updated">—</div></div>
+        </div>
+      </section>
 
-  <h2>3 · Core Principles</h2>
-  <ul>
-    <li><strong>Data Dignity & Privacy →</strong> Minimize collection and store locally whenever possible.</li>
-    <li><strong>Energy Accountability →</strong> Every transaction and model cycle tied to measurable kWh inputs.</li>
-    <li><strong>Transparency →</strong> All pricing and governance formulas published for audit.</li>
-    <li><strong>Human Oversight →</strong> Humans approve policy changes and AI model updates.</li>
-    <li><strong>Market Integrity →</strong> Research-mode markets only until compliance certification is finalized.</li>
-    <li><strong>Environmental Responsibility →</strong> Renewable source disclosure and life-cycle accounting.</li>
-  </ul>
+      <section id="genius">
+        <h2>GENIUS Act Framework (Springboard)</h2>
+        <p>
+          The <strong>Guiding and Establishing National Innovation for U.S. Stablecoins Act</strong> establishes federal standards for transparent, reserve-backed digital instruments.
+          TC-S mirrors those principles while upgrading the reserve model from <em>fiat/Treasuries</em> to <em>renewable kWh</em>.
+        </p>
+      </section>
 
-  <h2>4 · Relation to UIM Framework</h2>
-  <p>Where UIM defines identity and wallet architecture, the Genius Act defines how those systems behave ethically under audit and oversight. Together they form the technical and moral spine of the Foundation's operations.</p>
+      <section id="solar-standard">
+        <h2>The Solar Standard</h2>
+        <p>
+          <strong>1&nbsp;Solar (S) = 4,913&nbsp;kWh.</strong> Energy is measurable, universal, and cannot be printed.
+          This establishes an <em>energy-denominated economy</em> with intrinsic stability.
+        </p>
+      </section>
 
-  <h2>5 · Implementation Path (Research Roadmap)</h2>
-  <ul>
-    <li>2026 Q1 – Q2 · Expert review and community comment period.</li>
-    <li>2026 Q3 · Public discussion and draft revision.</li>
-    <li>2027 · Inclusion in Foundation bylaws and compliance tooling.</li>
-  </ul>
+      <section id="dual">
+        <h2>Dual-Reserve Architecture</h2>
+        <p>
+          TC-S Network operates on two complementary reserve layers:
+        </p>
+        <h3>Layer 1: Regulatory Interoperability (Solar-Pegged Stable Rail)</h3>
+        <p>
+          A GENIUS Act-compliant stable instrument backed by a basket of renewable energy certificates (RECs), power purchase agreements (PPAs), and Solar-denominated reserves. This layer enables seamless integration with traditional financial systems while maintaining energy-based backing.
+        </p>
+        <h3>Layer 2: Physical Validation (Global Solar Reserve Database)</h3>
+        <p>
+          Real-time tracking of planetary renewable energy generation, converting daily global solar/wind/hydro output into Solar units (÷ 4,913 kWh). This creates an auditable, physics-based reserve that grows with humanity's renewable capacity.
+        </p>
+        <div class="callout">
+          <strong>Key Insight:</strong> Layer 1 satisfies regulatory requirements; Layer 2 anchors value to physical reality. Together they create a bridge between law and thermodynamics.
+        </div>
+      </section>
 
-  <h2>6 · Legal Context</h2>
-  <p>The Genius Act does not supersede law. It frames how the Foundation interprets and applies emerging AI and digital-asset regulations within a public-benefit model.</p>
+      <section id="reserve-db">
+        <h2>Solar Reserve Database (Proof of Abundance)</h2>
+        <div class="callout">
+          The global earmark of <strong>+S&nbsp;1.7&nbsp;trillion Solar — steadily increasing</strong> expresses the symbolic and potential reserve of humanity's solar income.
+          The tracker quantifies actual daily increases as new renewable capacity comes online.
+        </div>
+        <p>
+          The database aggregates renewable generation data from international energy agencies, grid operators, and satellite monitoring systems. Each daily entry converts total renewable output (kWh) into Solar units, creating a transparent, verifiable reserve metric.
+        </p>
+        <h3>Key Metrics Tracked</h3>
+        <ul>
+          <li><strong>Daily Renewable Output:</strong> Global solar, wind, hydro, geothermal generation in kWh</li>
+          <li><strong>Equivalent Solar Units:</strong> Daily output ÷ 4,913 kWh = Solar generated that day</li>
+          <li><strong>Cumulative Reserve:</strong> Running total since Genesis Date (April 7, 2025)</li>
+          <li><strong>Growth Rate:</strong> Percentage increase vs. baseline capacity</li>
+        </ul>
+      </section>
 
-  <h2>7 · Living Document & Feedback</h2>
-  <p>Scholars, regulators, and citizens are invited to review and comment. Feedback channels will open after peer review is complete. No sign-ups or solicitations are requested.</p>
+      <section id="adoption">
+        <h2>Adoption Strategy</h2>
+        <p>
+          TC-S Network pursues a phased rollout designed to build trust, demonstrate value, and scale responsibly:
+        </p>
+        <h3>Phase 1: Foundation & Demonstration (2025-2026)</h3>
+        <ul>
+          <li>Launch Solar Grid Market as public research prototype</li>
+          <li>Establish Solar Reserve Database with daily tracking</li>
+          <li>Distribute 1 Solar/day to founding members (8.5M baseline)</li>
+          <li>Publish white papers, protocol specs, and audit frameworks</li>
+        </ul>
+        <h3>Phase 2: Network Effects & Partnerships (2026-2027)</h3>
+        <ul>
+          <li>Integrate with renewable energy producers and utilities</li>
+          <li>Establish Solar-pegged stable rail for regulatory compliance</li>
+          <li>Onboard municipalities, cooperatives, and impact investors</li>
+          <li>Launch developer API for third-party Solar-denominated apps</li>
+        </ul>
+        <h3>Phase 3: Global Scale & Sovereignty (2027+)</h3>
+        <ul>
+          <li>Multi-currency bridges for international adoption</li>
+          <li>Renewable energy futures markets denominated in Solar</li>
+          <li>Central bank exploration of Solar-backed reserves</li>
+          <li>Full decentralization of governance and protocol development</li>
+        </ul>
+      </section>
 
-  <div class="divider"></div>
+      <section id="market">
+        <h2>Market Dynamics</h2>
+        <p>
+          Unlike fiat currencies subject to monetary policy whims, Solar's value is anchored to physics:
+        </p>
+        <h3>Supply Side: Renewable Capacity Growth</h3>
+        <p>
+          Global renewable capacity grows ~8-12% annually (IEA data). As more solar panels, wind turbines, and hydro installations come online, the Solar reserve expands proportionally. This creates predictable, physics-driven supply dynamics.
+        </p>
+        <h3>Demand Side: Energy-Intensive Economies</h3>
+        <p>
+          As AI, data centers, electric vehicles, and industrial processes electrify, demand for verifiable renewable energy surges. Solar becomes the natural unit of account for carbon-neutral value transfer.
+        </p>
+        <h3>Stability Mechanism</h3>
+        <p>
+          Solar doesn't fluctuate against energy—it <em>is</em> energy. While Solar/USD exchange rates may vary based on energy market prices, 1 Solar always equals 4,913 kWh of work. This creates intrinsic stability impossible in fiat systems.
+        </p>
+      </section>
 
-  <p class="note">
-    <strong>Disclaimer:</strong> This is a research publication for discussion purposes only. It is not a policy directive or regulatory submission. Updates and citations will be posted on the Foundation site.
-  </p>
+      <section id="governance">
+        <h2>Governance & Compliance</h2>
+        <p>
+          TC-S Network Foundation operates as a public benefit entity with multi-stakeholder governance:
+        </p>
+        <h3>Stakeholder Representation</h3>
+        <ul>
+          <li><strong>Energy Producers:</strong> Solar farms, wind cooperatives, hydro operators</li>
+          <li><strong>Protocol Users:</strong> Members holding Solar balances and using the network</li>
+          <li><strong>Technical Contributors:</strong> Developers maintaining Solar Standard infrastructure</li>
+          <li><strong>Public Interest:</strong> Environmental advocates, economists, ethicists</li>
+        </ul>
+        <h3>Compliance Framework</h3>
+        <p>
+          The Foundation adheres to GENIUS Act principles while pioneering energy-backed instruments:
+        </p>
+        <ul>
+          <li><strong>Reserve Transparency:</strong> Daily publication of Solar Reserve Database metrics</li>
+          <li><strong>Audit Rights:</strong> Third-party verification of energy accounting and reserve claims</li>
+          <li><strong>Consumer Protection:</strong> Clear disclaimers, no speculative promises, research-mode labeling</li>
+          <li><strong>AML/KYC Readiness:</strong> Infrastructure for regulatory compliance when fiat bridges activate</li>
+        </ul>
+        <div class="callout">
+          <strong>Core Principle:</strong> Regulation should enable innovation, not stifle it. TC-S collaborates with regulators to demonstrate how energy-backed systems can satisfy stability requirements while transcending fiat limitations.
+        </div>
+      </section>
 
-  <footer>© <span id="y"></span> TC-S Network Foundation · Working Theory Draft</footer>
-  <script>document.getElementById('y').textContent=new Date().getFullYear()</script>
+      <section id="compare">
+        <h2>Why Solar > Fiat Pegs</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Attribute</th>
+              <th>Fiat-Pegged Stablecoins</th>
+              <th>Solar (Energy-Backed)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Reserve Asset</strong></td>
+              <td>USD, Treasuries (central bank fiat)</td>
+              <td>Renewable kWh (measurable work)</td>
+            </tr>
+            <tr>
+              <td><strong>Inflation Risk</strong></td>
+              <td>Tied to monetary policy; devalues over time</td>
+              <td>Energy demand grows; kWh cannot be printed</td>
+            </tr>
+            <tr>
+              <td><strong>Verification</strong></td>
+              <td>Quarterly attestations; opaque custody</td>
+              <td>Real-time energy meter data; public database</td>
+            </tr>
+            <tr>
+              <td><strong>Environmental Impact</strong></td>
+              <td>Neutral to carbon-intensive economies</td>
+              <td>Incentivizes renewable capacity expansion</td>
+            </tr>
+            <tr>
+              <td><strong>Geopolitical Risk</strong></td>
+              <td>Vulnerable to sanctions, seizures, policy shifts</td>
+              <td>Universal physics; no single sovereign control</td>
+            </tr>
+            <tr>
+              <td><strong>Long-Term Stability</strong></td>
+              <td>Depends on issuing government's solvency</td>
+              <td>Anchored to sun's 5-billion-year energy budget</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Fiat pegs preserve the status quo. Solar transforms it—aligning economic incentives with planetary regeneration.
+        </p>
+      </section>
+
+      <section id="roadmap">
+        <h2>Roadmap</h2>
+        <h3>2025 Q4: Genesis & Foundation</h3>
+        <ul>
+          <li>✅ Launch Solar Grid Market prototype</li>
+          <li>✅ Publish UIM and GENIUS Act white papers</li>
+          <li>✅ Establish Solar Reserve Database tracking</li>
+          <li>🔄 Onboard founding members (target: 8.5M)</li>
+        </ul>
+        <h3>2026 Q1-Q2: Protocol Maturity</h3>
+        <ul>
+          <li>Third-party audit of Solar Standard protocol</li>
+          <li>Launch Solar-pegged stable rail (regulatory compliance layer)</li>
+          <li>Partner with 3+ renewable energy providers for direct REC integration</li>
+          <li>Open-source Solar Reserve Database indexer</li>
+        </ul>
+        <h3>2026 Q3-Q4: Network Expansion</h3>
+        <ul>
+          <li>Developer API for Solar-denominated applications</li>
+          <li>Multi-currency bridges (EUR, GBP, JPY solar pairs)</li>
+          <li>Municipal pilot programs (energy credit trading)</li>
+          <li>Academic partnerships for economic impact research</li>
+        </ul>
+        <h3>2027+: Planetary Scale</h3>
+        <ul>
+          <li>Central bank CBDC collaboration (Solar-backed digital currencies)</li>
+          <li>Renewable energy futures markets</li>
+          <li>Decentralized governance transition</li>
+          <li>1 billion+ members using Solar as primary unit of account</li>
+        </ul>
+      </section>
+
+      <section id="conclusion">
+        <h2>Conclusion</h2>
+        <p>
+          TC-S operationalizes the GENIUS Act while transcending fiat limits. By measuring value in the sun's work,
+          we align law with light — energy becomes the foundation of a lawful, regenerative economy.
+        </p>
+      </section>
+    </main>
+  </div>
+
+  <!-- Live Solar Reserve Fetch -->
+  <script>
+    (async function loadSolar() {
+      const URL = "https://solarreserveretracker.tdfranklin101.repl.co/solar/reserve";
+      const el = (id) => document.getElementById(id);
+      try {
+        const res = await fetch(URL, { cache: "no-store" });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const data = await res.json();
+        const n = (x) => (typeof x === "number" ? x : Number(x || 0));
+        const fmt = (x) => n(x).toLocaleString();
+
+        el("w-date").textContent = data.date || "—";
+        el("w-kwh").textContent = data.renewables_kwh ? `${fmt(data.renewables_kwh)} kWh` : "—";
+        el("w-solar").textContent = data.equivalent_solar ? `${fmt(data.equivalent_solar)} S` : "—";
+        el("w-delta").textContent = data.delta_percent !== undefined ? `${data.delta_percent}%` : "—";
+        el("w-cumulative").textContent = data.cumulative_solar ? `${fmt(data.cumulative_solar)} S` : "—";
+        el("w-updated").textContent = new Date().toLocaleString();
+      } catch (e) {
+        console.error("Solar Reserve fetch error:", e);
+        ["w-date","w-kwh","w-solar","w-delta","w-cumulative","w-updated"].forEach(id=>{el(id).textContent="—"});
+      }
+    })();
+  </script>
 </body>
 </html>
