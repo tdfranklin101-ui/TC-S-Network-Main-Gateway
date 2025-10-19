@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TC-S Network Foundation — Update & Compliance (Working Draft)</title>
+  <meta name="robots" content="noindex" />
+  <style>
+    :root{
+      --bg:#0b0f12;
+      --panel:#10161b;
+      --ink:#e6f5f3;
+      --muted:#9fb7b3;
+      --teal:#14b8a6;       /* Solar teal */
+      --teal-2:#08917f;
+      --line:#1c2a31;
+      --good:#3ddc97;
+      --warn:#faca15;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial}
+    a{color:var(--teal);text-decoration:none}
+    a:hover{color:var(--teal-2);text-decoration:underline}
+    .wrap{max-width:1080px;margin:auto;padding:28px}
+    .badge{display:inline-block;padding:2px 10px;border:1px solid var(--line);border-radius:999px;font-size:12px;color:var(--muted);background:#0e1419}
+    header{display:flex;gap:16px;align-items:center;margin-bottom:18px}
+    header .dot{width:10px;height:10px;border-radius:50%;background:var(--good);box-shadow:0 0 12px var(--good)}
+    h1{font-size:32px;line-height:1.25;margin:0 0 10px}
+    h2{font-size:22px;margin:0 0 12px}
+    h3{font-size:18px;margin:0 0 8px}
+    p{margin:8px 0}
+    .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+    .grid{display:grid;gap:16px}
+    @media(min-width:900px){ .grid-2{grid-template-columns:1.1fr .9fr} }
+    .btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+    .btn{
+      display:inline-flex;align-items:center;gap:10px;
+      padding:10px 14px;border-radius:10px;border:1px solid var(--line);
+      background:#0d1318;color:var(--ink);text-decoration:none;font-weight:600
+    }
+    .btn.primary{background:linear-gradient(135deg,var(--teal),var(--teal-2));color:#051314;border-color:transparent}
+    .btn.ghost{background:transparent}
+    .btn.disabled{opacity:.45;pointer-events:none}
+    .note{font-size:13px;color:var(--muted)}
+    .hero{
+      background:
+        radial-gradient(1200px 600px at 10% -20%, rgba(20,184,166,.25), transparent 50%),
+        radial-gradient(1000px 600px at 90% 0%, rgba(8,145,127,.18), transparent 50%),
+        var(--panel);
+      border:1px solid var(--line);border-radius:16px;padding:20px;margin:8px 0 20px
+    }
+    .tag{font-size:12px;padding:2px 8px;border:1px solid var(--line);border-radius:6px;color:var(--muted)}
+    .list{margin:8px 0 0 0;padding-left:18px}
+    .callout{border-left:3px solid var(--teal);padding-left:12px;color:var(--muted)}
+    /* Accordion */
+    details{background:#0e1419;border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0}
+    details[open]{background:#0f171d}
+    summary{cursor:pointer;list-style:none;font-weight:700;color:#d9fffb}
+    summary::-webkit-details-marker{display:none}
+    .kpi{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px}
+    .kpi .cell{background:#0d1419;border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-width:150px}
+    .kpi .num{font-weight:800;font-size:18px}
+    footer{margin:32px 0 8px;color:var(--muted);font-size:13px}
+    .wip{color:var(--warn)}
+    .sep{height:1px;background:var(--line);margin:18px 0}
+    code{background:#0a1115;border:1px solid var(--line);padding:1px 6px;border-radius:6px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+
+    <header>
+      <div class="dot"></div>
+      <div class="badge">TC-S Network Foundation • Update</div>
+    </header>
+
+    <section class="hero">
+      <h1>Solar Grid Market — Live Prototype</h1>
+      <p class="callout">
+        We’ve connected the Foundation’s research wallet to a public, browseable demo of the <strong>Solar Grid Market</strong>. 
+        It shows how kWh-footprinted digital artifacts and energy records can be priced and exchanged in <em>Solar</em> units
+        (1 Solar = 4,913 kWh). This is a <strong>research prototype</strong> intended for transparency and community review—not a commercial offering.
+      </p>
+
+      <div class="kpi">
+        <div class="cell"><div class="tag">Status</div><div class="num">Operational (Prototype)</div></div>
+        <div class="cell"><div class="tag">Access</div><div class="num">Open / Read-Only UX</div></div>
+        <div class="cell"><div class="tag">Scope</div><div class="num">GBI demo • Artifact listings • kWh→Solar pricing</div></div>
+      </div>
+
+      <div class="btns">
+        <a class="btn primary" href="https://solar-grid-market-tdfranklin101.replit.app" target="_blank" rel="noopener">Open Solar Grid (Prototype)</a>
+        <a class="btn" href="/uim-whitepaper.html">Read the UIM Whitepaper</a>
+        <span class="btn ghost disabled" aria-disabled="true" title="Coming soon">Mailing List (coming soon)</span>
+      </div>
+      <p class="note">This page is informational. No sale, no solicitation, and no user enrollment is requested or accepted here.</p>
+    </section>
+
+    <div class="grid grid-2">
+      <!-- Left: Compliance Working Theory -->
+      <section class="panel">
+        <h2>Genius Act Compliance — <span class="wip">Working Theory</span></h2>
+        <p class="note">
+          The Foundation is developing an internal compliance framework referred to as the <em>“Genius Act”</em> to guide responsible
+          research and public-benefit operations. The points below are <strong>draft principles</strong> under community/legal review.
+          They describe intent, not finalized policy or legal advice.
+        </p>
+
+        <details>
+          <summary>1) Data Dignity & Privacy</summary>
+          <ul class="list">
+            <li>User data minimization; no sale of personal data.</li>
+            <li>Clear purpose limitation for telemetry and analytics; opt-out where feasible.</li>
+            <li>Default non-custodial posture for wallets; user retains control of keys where applicable.</li>
+          </ul>
+        </details>
+
+        <details>
+          <summary>2) Energy-Backed Accounting (kWh→Solar)</summary>
+          <ul class="list">
+            <li>Transparent price equations linking artifacts to energy footprint (kWh) and Solar unit equivalence.</li>
+            <li>Ledger entries include provenance, timestamp, and conversion factors for auditability.</li>
+            <li>Retire-on-redemption model for energy delivery claims (where PPAs/RECs integrate in future phases).</li>
+          </ul>
+        </details>
+
+        <details>
+          <summary>3) Safety, Human Oversight & Model Governance</summary>
+          <ul class="list">
+            <li>Human-in-the-loop review for material changes, model updates, and policy shifts.</li>
+            <li>Documented model sources, assumptions, and limitations for any AI-assisted pricing or ranking.</li>
+            <li>Incident response runbooks and rollback capabilities for erroneous listings or balances.</li>
+          </ul>
+        </details>
+
+        <details>
+          <summary>4) Market Integrity (Research Mode)</summary>
+          <ul class="list">
+            <li>No promises of financial return or tradability; prototype is for demonstration and feedback.</li>
+            <li>Anti-fraud checks on artifact metadata; clear “prototype” labeling on all user-visible flows.</li>
+            <li>Public changelog for breaking changes and deprecations.</li>
+          </ul>
+        </details>
+
+        <details>
+          <summary>5) Legal & Regulatory Orientation</summary>
+          <ul class="list">
+            <li>Jurisdictional scan for consumer protection, digital assets, and energy credit interfaces.</li>
+            <li>AML/KYC readiness designs for any future fiat on-/off-ramps (not active in the prototype).</li>
+            <li>Foundation vs. PBC role separation and arm’s-length assistance to preserve public-benefit mandate.</li>
+          </ul>
+        </details>
+
+        <details>
+          <summary>6) Environmental Reporting</summary>
+          <ul class="list">
+            <li>Disclosure of energy accounting assumptions and generator sources when available.</li>
+            <li>Plans for third-party verification of renewable claims in future phases.</li>
+          </ul>
+        </details>
+
+        <div class="sep"></div>
+        <p class="note">
+          <strong>Disclaimer:</strong> The “Genius Act” items above are evolving research guidelines. They do not constitute legal policy,
+          certification, or compliance attestation. Final documentation will be published after expert review.
+        </p>
+      </section>
+
+      <!-- Right: Context & Links -->
+      <section class="panel">
+        <h2>Context & Reading</h2>
+        <h3>Unified Identity & Markets (UIM)</h3>
+        <p>
+          The UIM whitepaper outlines how wallets, identity, and energy-based accounting interoperate across the Foundation,
+          the Market, and private commissioning networks.
+        </p>
+        <p><a href="/uim-whitepaper.html">Open the UIM Whitepaper →</a></p>
+
+        <h3>What the Prototype Shows</h3>
+        <ul class="list">
+          <li>Daily GBI demo flow (1 Solar/day research setting).</li>
+          <li>Artifact listing with automatic kWh→Solar pricing.</li>
+          <li>Browseable grid UI for public transparency.</li>
+        </ul>
+
+        <h3>What It Does Not Do</h3>
+        <ul class="list">
+          <li>No commercial listings or sales; prototype interactions are sandboxed.</li>
+          <li>No fiat ramps, no securities features, and no promises of value accrual.</li>
+          <li>No production PPA/REC settlement—those integrations are planned for later phases.</li>
+        </ul>
+
+        <div class="sep"></div>
+        <h3>Live Link</h3>
+        <p>
+          <a class="btn" href="https://solar-grid-market-tdfranklin101.replit.app" target="_blank" rel="noopener">
+            Visit Solar Grid Market (Prototype)
+          </a>
+        </p>
+        <p class="note">If the demo is offline, it may be undergoing maintenance or iteration.</p>
+      </section>
+    </div>
+
+    <footer>
+      © <span id="y"></span> TC-S Network Foundation, Inc. • Public-benefit research prototype • All content provided for discussion.
+    </footer>
+  </div>
+  <script>document.getElementById('y').textContent=new Date().getFullYear()</script>
+</body>
+</html>
