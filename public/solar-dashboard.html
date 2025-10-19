@@ -231,45 +231,93 @@
       text-align: center;
     }
     
-    iframe {
-      width: 100%;
-      height: 800px;
-      border: none;
-      border-radius: 8px;
-      background: #000;
-      overflow: auto;
-      -webkit-overflow-scrolling: touch;
+    .hero-cta {
+      background: linear-gradient(135deg, rgba(11, 31, 26, 0.9), rgba(4, 60, 60, 0.8));
+      border: 2px solid #00ffcc;
+      border-radius: 16px;
+      padding: 3rem 2rem;
+      margin: 2rem 0;
+      text-align: center;
+      box-shadow: 0 8px 32px rgba(0, 255, 204, 0.15);
+    }
+    
+    .hero-cta h3 {
+      color: #00ffcc;
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+    
+    .hero-cta p {
+      color: #9ad9c9;
+      font-size: 1.1rem;
+      margin-bottom: 2rem;
+      line-height: 1.6;
     }
     
     .open-full-link {
-      display: block;
-      text-align: center;
-      margin: 1rem auto;
-      padding: 1rem 2rem;
+      display: inline-block;
+      margin: 0.5rem;
+      padding: 1.2rem 3rem;
       background: linear-gradient(135deg, #00ffcc, #39FF14);
       color: #04100d;
       text-decoration: none;
       font-weight: 700;
-      border-radius: 8px;
-      max-width: 300px;
-      font-size: 1rem;
+      border-radius: 12px;
+      font-size: 1.2rem;
       transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 20px rgba(0, 255, 204, 0.3);
     }
     
     .open-full-link:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(0, 255, 204, 0.4);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 30px rgba(0, 255, 204, 0.5);
     }
     
-    .mobile-note {
-      background: rgba(57, 255, 20, 0.1);
-      border: 1px solid #39FF14;
-      border-radius: 8px;
-      padding: 1rem;
-      margin: 1rem 0;
-      color: #00ffcc;
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin: 2rem 0;
+    }
+    
+    .feature-card {
+      background: rgba(11, 31, 26, 0.6);
+      border: 1px solid #11322b;
+      border-radius: 12px;
+      padding: 1.5rem;
       text-align: center;
-      display: none;
+    }
+    
+    .feature-card h4 {
+      color: #00ffcc;
+      font-size: 1.2rem;
+      margin-bottom: 0.8rem;
+    }
+    
+    .feature-card p {
+      color: #9ad9c9;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+    
+    .feature-icon {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    .timestamp-box {
+      background: rgba(0, 255, 204, 0.08);
+      border: 1px solid rgba(0, 255, 204, 0.3);
+      border-radius: 10px;
+      padding: 1rem;
+      margin: 1.5rem 0;
+      text-align: center;
+    }
+    
+    .timestamp-box p {
+      color: #00ffcc;
+      font-size: 1rem;
+      margin: 0.3rem 0;
     }
     
     .disclaimer {
@@ -399,22 +447,28 @@
         font-size: 1.1rem;
       }
       
-      iframe {
-        height: 500px;
-        min-height: 500px;
+      .hero-cta {
+        padding: 2rem 1.5rem;
+      }
+      
+      .hero-cta h3 {
+        font-size: 1.5rem;
+      }
+      
+      .open-full-link {
+        font-size: 1rem;
+        padding: 1rem 2rem;
+        display: block;
+        margin: 1rem auto;
+        max-width: 280px;
+      }
+      
+      .feature-grid {
+        grid-template-columns: 1fr;
       }
       
       .dashboard-container {
         padding: 1rem;
-      }
-      
-      .mobile-note {
-        display: block;
-      }
-      
-      .open-full-link {
-        font-size: 0.95rem;
-        padding: 0.9rem 1.5rem;
       }
     }
   </style>
@@ -431,35 +485,47 @@
   </header>
 
   <main>
-    <!-- Live Dashboard -->
-    <div class="dashboard-container">
+    <!-- Hero CTA -->
+    <div class="hero-cta">
       <h3>📊 Live Global Reserve Tracker</h3>
-      
-      <!-- Mobile optimization note -->
-      <div class="mobile-note">
-        📱 <strong>Mobile users:</strong> For best experience, tap "Open Full Dashboard" below to view in a new tab
-      </div>
-      
-      <iframe 
-        src="https://solar-reserve-tracker-tdfranklin101.replit.app"
-        title="SolarReserveTracker Live Dashboard"
-        loading="lazy"
-        scrolling="yes">
-      </iframe>
-      
-      <!-- Open Full Dashboard Link -->
+      <p>
+        View real-time renewable energy data from verified international sources. Track global kWh flows,
+        Solar equivalency calculations, and cumulative reserves since Genesis Date (April 7, 2025).
+      </p>
       <a href="https://solar-reserve-tracker-tdfranklin101.replit.app" target="_blank" rel="noopener noreferrer" class="open-full-link">
-        🚀 Open Full Dashboard →
+        🚀 Open Live Dashboard →
       </a>
       
-      <!-- Data Timestamp & Update Info -->
-      <div style="text-align: center; margin-top: 1rem; padding: 1rem; background: rgba(0, 255, 204, 0.05); border-radius: 8px; border: 1px solid rgba(0, 255, 204, 0.2);">
-        <p style="color: #00ffcc; font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem;">
-          📅 Data updated daily at 3:00 AM UTC
-        </p>
-        <p style="color: #9ad9c9; font-size: 0.85rem; margin: 0;">
-          Data source: <a href="https://solar-reserve-tracker-tdfranklin101.replit.app" target="_blank" style="color: #39FF14; text-decoration: none;">SolarReserveTracker</a>
-        </p>
+      <div class="timestamp-box">
+        <p><strong>📅 Data updates daily at 3:00 AM UTC</strong></p>
+        <p style="font-size: 0.9rem; color: #9ad9c9;">Global renewable energy aggregation from EIA, ENTSO-E, AEMO, IRENA, and other verified sources</p>
+      </div>
+    </div>
+
+    <!-- Feature Grid -->
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🌍</div>
+        <h4>Global Coverage</h4>
+        <p>Real-time data from US, EU, Asia, and worldwide renewable energy networks</p>
+      </div>
+      
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <h4>Live Metrics</h4>
+        <p>Daily renewables (kWh), Solar equivalency, cumulative totals, and delta tracking</p>
+      </div>
+      
+      <div class="feature-card">
+        <div class="feature-icon">🔐</div>
+        <h4>Verified Sources</h4>
+        <p>EIA, ENTSO-E, AEMO, IRENA, Ember Climate, NASA POWER, and regulatory agencies</p>
+      </div>
+      
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <h4>API Access</h4>
+        <p>JSON/CSV exports, regional filtering, and programmatic data access</p>
       </div>
     </div>
 
