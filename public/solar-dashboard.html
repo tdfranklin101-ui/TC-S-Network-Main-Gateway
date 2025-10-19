@@ -396,10 +396,16 @@
         title="SolarReserveTracker Live Dashboard"
         loading="lazy">
       </iframe>
-      <p style="text-align: center; margin-top: 1rem; color: #9ad9c9; font-size: 0.9rem;">
-        Data source: <a href="https://solar-reserve-tracker-tdfranklin101.replit.app" target="_blank" style="color: #39FF14; text-decoration: none;">SolarReserveTracker</a> 
-        • Updated automatically with verified energy databases
-      </p>
+      
+      <!-- Data Timestamp & Update Info -->
+      <div style="text-align: center; margin-top: 1rem; padding: 1rem; background: rgba(0, 255, 204, 0.05); border-radius: 8px; border: 1px solid rgba(0, 255, 204, 0.2);">
+        <p style="color: #00ffcc; font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem;">
+          📅 Data Aggregation Date: <span id="data-timestamp" style="color: #39FF14;">Loading...</span>
+        </p>
+        <p style="color: #9ad9c9; font-size: 0.85rem; margin: 0;">
+          Updates daily at 3:00 AM UTC • Data source: <a href="https://solar-reserve-tracker-tdfranklin101.replit.app" target="_blank" style="color: #39FF14; text-decoration: none;">SolarReserveTracker</a>
+        </p>
+      </div>
     </div>
 
     <!-- GENIUS Act Alignment Statement -->
@@ -507,6 +513,32 @@
             document.getElementById("solar-output").textContent = `Error: ${err.message}`;
           }
         }
+        
+        // Fetch and display data aggregation timestamp
+        async function fetchDataTimestamp() {
+          try {
+            const res = await fetch('https://solar-reserve-tracker-tdfranklin101.replit.app/api/solar/reserve?region=global');
+            if (!res.ok) throw new Error('API unavailable');
+            const data = await res.json();
+            
+            if (data.date) {
+              // Format the date nicely (e.g., "October 19, 2025")
+              const dateObj = new Date(data.date + 'T00:00:00Z');
+              const options = { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' };
+              const formattedDate = dateObj.toLocaleDateString('en-US', options);
+              
+              document.getElementById('data-timestamp').textContent = formattedDate;
+            } else {
+              document.getElementById('data-timestamp').textContent = 'Date unavailable';
+            }
+          } catch (err) {
+            document.getElementById('data-timestamp').textContent = 'Loading error';
+            console.error('Timestamp fetch error:', err);
+          }
+        }
+        
+        // Load timestamp on page load
+        fetchDataTimestamp();
       </script>
     </div>
   </main>
