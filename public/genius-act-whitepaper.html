@@ -17,14 +17,65 @@
     }
     *{box-sizing:border-box}
     html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;line-height:1.55}
-    a{color:var(--accent)}
+    a{color:var(--accent);text-decoration:none}
+    
+    /* Header Feature Block */
+    .viewer-header{
+      background:rgba(0,0,0,0.8);
+      padding:1rem 2rem;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      flex-wrap:wrap;
+      gap:1rem;
+      border-bottom:2px solid #39FF14;
+    }
+    .header-title{
+      color:#00f5d4;
+      margin:0;
+      font-size:1.5rem;
+      font-weight:700;
+    }
+    .header-title span{color:#39FF14}
+    .header-actions{
+      display:flex;
+      gap:1rem;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .btn{
+      padding:0.75rem 1.5rem;
+      border-radius:50px;
+      text-decoration:none;
+      font-weight:600;
+      transition:all 0.3s ease;
+      display:inline-flex;
+      align-items:center;
+      gap:0.5rem;
+      font-size:0.95rem;
+    }
+    .btn-primary{
+      background:#39FF14;
+      color:#000;
+      border:2px solid #39FF14;
+    }
+    .btn-primary:hover{
+      background:#00f5d4;
+      border-color:#00f5d4;
+      transform:translateY(-2px);
+    }
+    .btn-secondary{
+      background:transparent;
+      color:#00f5d4;
+      border:2px solid #00f5d4;
+    }
+    .btn-secondary:hover{
+      background:rgba(0,245,212,0.1);
+      transform:translateY(-2px);
+    }
+    
     .wrap{max-width:1100px;margin:0 auto;padding:24px}
-    header{background:linear-gradient(180deg,#0b1f1a 0%, #071311 100%);border-bottom:1px solid var(--line)}
-    .brand{display:flex;align-items:center;gap:14px}
-    .brand .logo{width:38px;height:38px;border-radius:8px;background:radial-gradient(120% 120% at 20% 20%, var(--accent) 0%, #0bffdd 35%, #0b1f1a 70%);box-shadow:0 0 24px rgba(0,255,204,.25)}
-    .kicker{color:var(--muted);letter-spacing:.08em;text-transform:uppercase;font-size:.8rem;margin-top:4px}
-    h1{margin:.25rem 0 0 0;font-size:clamp(1.6rem, 3.6vw, 2.4rem)}
-    .grid{display:grid;grid-template-columns: 280px 1fr;gap:26px;margin-top:22px}
+    .grid{display:grid;grid-template-columns:280px 1fr;gap:26px;margin-top:22px}
     nav{position:sticky;top:12px;align-self:start;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
     nav h3{margin:6px 0 10px;font-size:.95rem;color:var(--muted)}
     nav a{display:block;padding:6px 8px;border-radius:8px;color:var(--ink);text-decoration:none}
@@ -42,22 +93,31 @@
     th{background:#0e2722;color:#c9fff3;text-align:left}
     .foot{color:var(--muted);font-size:.9rem;margin-top:10px}
     .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
-    @media (max-width: 980px){.grid{grid-template-columns:1fr}}
-    @media (max-width: 600px){.widget{grid-template-columns:1fr}}
+    
+    @media (max-width: 980px){
+      .grid{grid-template-columns:1fr}
+      nav{position:relative;top:0}
+    }
+    @media (max-width: 768px){
+      .viewer-header{padding:1rem}
+      .header-title{font-size:1.2rem}
+      .header-actions{width:100%;justify-content:center}
+      .btn{flex:1;justify-content:center;font-size:0.85rem;padding:0.6rem 1rem}
+      .widget{grid-template-columns:1fr}
+    }
   </style>
 </head>
 <body>
-  <header>
-    <div class="wrap">
-      <div class="brand">
-        <div class="logo" aria-hidden="true"></div>
-        <div>
-          <div class="kicker">TC-S Network</div>
-          <h1>The Solar Standard — GENIUS Act–Aligned Adoption Strategy & Reserves</h1>
-        </div>
-      </div>
+  <!-- Header Feature Block -->
+  <div class="viewer-header">
+    <h1 class="header-title">
+      <span>GENIUS Act</span> White Paper
+    </h1>
+    <div class="header-actions">
+      <a href="#exec" class="btn btn-primary">📖 Read Online</a>
+      <a href="/main-platform.html" class="btn btn-secondary">← Back to Platform</a>
     </div>
-  </header>
+  </div>
 
   <div class="wrap grid">
     <!-- NAV -->
