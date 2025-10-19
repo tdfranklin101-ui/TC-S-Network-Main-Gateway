@@ -237,6 +237,39 @@
       border: none;
       border-radius: 8px;
       background: #000;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    .open-full-link {
+      display: block;
+      text-align: center;
+      margin: 1rem auto;
+      padding: 1rem 2rem;
+      background: linear-gradient(135deg, #00ffcc, #39FF14);
+      color: #04100d;
+      text-decoration: none;
+      font-weight: 700;
+      border-radius: 8px;
+      max-width: 300px;
+      font-size: 1rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .open-full-link:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 255, 204, 0.4);
+    }
+    
+    .mobile-note {
+      background: rgba(57, 255, 20, 0.1);
+      border: 1px solid #39FF14;
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 1rem 0;
+      color: #00ffcc;
+      text-align: center;
+      display: none;
     }
     
     .disclaimer {
@@ -367,11 +400,21 @@
       }
       
       iframe {
-        height: 600px;
+        height: 500px;
+        min-height: 500px;
       }
       
       .dashboard-container {
         padding: 1rem;
+      }
+      
+      .mobile-note {
+        display: block;
+      }
+      
+      .open-full-link {
+        font-size: 0.95rem;
+        padding: 0.9rem 1.5rem;
       }
     }
   </style>
@@ -391,19 +434,31 @@
     <!-- Live Dashboard -->
     <div class="dashboard-container">
       <h3>📊 Live Global Reserve Tracker</h3>
+      
+      <!-- Mobile optimization note -->
+      <div class="mobile-note">
+        📱 <strong>Mobile users:</strong> For best experience, tap "Open Full Dashboard" below to view in a new tab
+      </div>
+      
       <iframe 
         src="https://solar-reserve-tracker-tdfranklin101.replit.app"
         title="SolarReserveTracker Live Dashboard"
-        loading="lazy">
+        loading="lazy"
+        scrolling="yes">
       </iframe>
+      
+      <!-- Open Full Dashboard Link -->
+      <a href="https://solar-reserve-tracker-tdfranklin101.replit.app" target="_blank" rel="noopener noreferrer" class="open-full-link">
+        🚀 Open Full Dashboard →
+      </a>
       
       <!-- Data Timestamp & Update Info -->
       <div style="text-align: center; margin-top: 1rem; padding: 1rem; background: rgba(0, 255, 204, 0.05); border-radius: 8px; border: 1px solid rgba(0, 255, 204, 0.2);">
         <p style="color: #00ffcc; font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem;">
-          📅 Data Aggregation Date: <span id="data-timestamp" style="color: #39FF14;">Loading...</span>
+          📅 Data updated daily at 3:00 AM UTC
         </p>
         <p style="color: #9ad9c9; font-size: 0.85rem; margin: 0;">
-          Updates daily at 3:00 AM UTC • Data source: <a href="https://solar-reserve-tracker-tdfranklin101.replit.app" target="_blank" style="color: #39FF14; text-decoration: none;">SolarReserveTracker</a>
+          Data source: <a href="https://solar-reserve-tracker-tdfranklin101.replit.app" target="_blank" style="color: #39FF14; text-decoration: none;">SolarReserveTracker</a>
         </p>
       </div>
     </div>
@@ -513,32 +568,6 @@
             document.getElementById("solar-output").textContent = `Error: ${err.message}`;
           }
         }
-        
-        // Fetch and display data aggregation timestamp
-        async function fetchDataTimestamp() {
-          try {
-            const res = await fetch('https://solar-reserve-tracker-tdfranklin101.replit.app/api/solar/reserve?region=global');
-            if (!res.ok) throw new Error('API unavailable');
-            const data = await res.json();
-            
-            if (data.date) {
-              // Format the date nicely (e.g., "October 19, 2025")
-              const dateObj = new Date(data.date + 'T00:00:00Z');
-              const options = { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' };
-              const formattedDate = dateObj.toLocaleDateString('en-US', options);
-              
-              document.getElementById('data-timestamp').textContent = formattedDate;
-            } else {
-              document.getElementById('data-timestamp').textContent = 'Date unavailable';
-            }
-          } catch (err) {
-            document.getElementById('data-timestamp').textContent = 'Loading error';
-            console.error('Timestamp fetch error:', err);
-          }
-        }
-        
-        // Load timestamp on page load
-        fetchDataTimestamp();
       </script>
     </div>
   </main>
