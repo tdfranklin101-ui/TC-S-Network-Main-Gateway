@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TC-S Network Foundation — Solar Reserve Dashboard</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      background-color: #04100d;
+      color: #00ffcc;
+      text-align: center;
+    }
+    header {
+      padding: 2rem 1rem;
+      background: linear-gradient(90deg, #002f2f, #043c3c);
+      border-bottom: 2px solid #00ffcc;
+    }
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 0.3rem;
+    }
+    p {
+      max-width: 700px;
+      margin: auto;
+      color: #80fff0;
+      font-size: 1rem;
+    }
+    section {
+      padding: 2rem;
+    }
+    iframe {
+      width: 90%;
+      height: 600px;
+      border: none;
+      border-radius: 10px;
+      box-shadow: 0 0 12px rgba(0,255,200,0.2);
+    }
+    .region-buttons button {
+      margin: 0.3rem;
+      background: #00ffcc;
+      border: none;
+      color: #04100d;
+      font-weight: bold;
+      padding: 0.6rem 1.2rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .region-buttons button:hover {
+      background: #04ffe5;
+    }
+    pre {
+      text-align: left;
+      margin: 1.5rem auto;
+      width: 90%;
+      background: #000;
+      color: #00ffcc;
+      padding: 1rem;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 0.9rem;
+    }
+    footer {
+      margin-top: 3rem;
+      padding: 1rem;
+      border-top: 1px solid #003f3f;
+      color: #80fff0;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>☀️ TC-S Network Foundation</h1>
+    <h2>Solar Reserve Dashboard</h2>
+    <p>
+      Real-time renewable energy and reserve tracking — GENIUS Act-compliant and globally auditable.  
+      Data sourced from TC-S SolarReserveTracker & verified energy databases.
+    </p>
+  </header>
+
+  <section id="live-dashboard">
+    <h3>Live Global Dashboard Feed</h3>
+    <iframe 
+      src="https://solar-reserve-tracker-tdfranklin101.replit.app"
+      title="SolarReserveTracker Live Dashboard"
+      loading="lazy">
+    </iframe>
+    <p>
+      Embedded live view powered by <strong>SolarReserveTracker</strong> (TD-Franklin101).  
+      Updated automatically with GENIUS Act reserves and regional data.
+    </p>
+  </section>
+
+  <section id="regional-view">
+    <h3>Regional Reserve Data (Interactive API Feed)</h3>
+    <div class="region-buttons">
+      <button onclick="loadRegion('global')">🌍 Global</button>
+      <button onclick="loadRegion('us')">🇺🇸 US</button>
+      <button onclick="loadRegion('eu')">🇪🇺 EU</button>
+      <button onclick="loadRegion('asia')">🌏 Asia</button>
+    </div>
+
+    <pre id="solar-output">Click a region above to load live data...</pre>
+
+    <script>
+      async function loadRegion(region) {
+        const endpoint = `https://solar-reserve-tracker-tdfranklin101.replit.app/api/solar/reserve?region=${region}`;
+        document.getElementById("solar-output").textContent = "Fetching data...";
+        try {
+          const res = await fetch(endpoint);
+          if (!res.ok) throw new Error(`Server returned ${res.status}`);
+          const data = await res.json();
+          document.getElementById("solar-output").textContent = JSON.stringify(data, null, 2);
+        } catch (err) {
+          document.getElementById("solar-output").textContent = `Error: ${err.message}`;
+        }
+      }
+    </script>
+  </section>
+
+  <footer>
+    <p>
+      © 2025 TC-S Network Foundation, Inc. — GENIUS Act Compliance • Renewable Ledger Transparency •
+      1 Solar = 4,913 kWh equivalency since Genesis (April 7 2025)
+    </p>
+  </footer>
+</body>
+</html>
