@@ -5,38 +5,162 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TC-S Network Foundation — Solar Reserve Dashboard</title>
   <style>
-    body {
+    * {
       margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
       font-family: "Helvetica Neue", Arial, sans-serif;
       background-color: #04100d;
       color: #00ffcc;
-      text-align: center;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
+    
     header {
-      padding: 2rem 1rem;
+      padding: 1.5rem 1rem;
       background: linear-gradient(90deg, #002f2f, #043c3c);
       border-bottom: 2px solid #00ffcc;
+      text-align: center;
     }
-    h1 {
-      font-size: 2rem;
+    
+    header h1 {
+      font-size: 1.8rem;
       margin-bottom: 0.3rem;
+      color: #00ffcc;
     }
-    p {
-      max-width: 700px;
-      margin: auto;
+    
+    header h2 {
+      font-size: 1.3rem;
       color: #80fff0;
-      font-size: 1rem;
+      font-weight: 400;
+      margin-bottom: 0.5rem;
     }
-    section {
-      padding: 2rem;
+    
+    header p {
+      color: #9ad9c9;
+      font-size: 0.95rem;
+      max-width: 800px;
+      margin: 0 auto;
     }
+    
+    .compliance-badge {
+      display: inline-block;
+      background: linear-gradient(135deg, #39FF14, #00f5d4);
+      color: #000;
+      font-weight: 700;
+      padding: 0.4rem 1rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      letter-spacing: 1px;
+      margin-top: 0.5rem;
+    }
+    
+    main {
+      flex: 1;
+      width: 100%;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 1.5rem 1rem;
+    }
+    
+    .dashboard-container {
+      background: rgba(11, 31, 26, 0.8);
+      border: 1px solid #11322b;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+    
+    .dashboard-container h3 {
+      color: #00ffcc;
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+    
     iframe {
-      width: 90%;
-      height: 600px;
+      width: 100%;
+      height: 800px;
       border: none;
-      border-radius: 10px;
-      box-shadow: 0 0 12px rgba(0,255,200,0.2);
+      border-radius: 8px;
+      background: #000;
     }
+    
+    .disclaimer {
+      background: rgba(11, 31, 26, 0.6);
+      border: 1px solid #11322b;
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    
+    .disclaimer h3 {
+      color: #00ffcc;
+      font-size: 1.1rem;
+      margin-bottom: 0.8rem;
+    }
+    
+    .disclaimer p {
+      color: #9ad9c9;
+      line-height: 1.6;
+      font-size: 0.95rem;
+      margin-bottom: 0.8rem;
+    }
+    
+    .disclaimer ul {
+      list-style: none;
+      margin: 1rem 0;
+    }
+    
+    .disclaimer li {
+      color: #e8fff9;
+      margin: 0.5rem 0;
+      padding-left: 1.5rem;
+      position: relative;
+    }
+    
+    .disclaimer li:before {
+      content: "✓";
+      color: #39FF14;
+      position: absolute;
+      left: 0;
+      font-weight: bold;
+    }
+    
+    .disclaimer .note {
+      background: rgba(0, 255, 204, 0.08);
+      border-left: 3px solid #00ffcc;
+      padding: 0.8rem;
+      margin-top: 1rem;
+      border-radius: 4px;
+      color: #d4fff7;
+    }
+    
+    .disclaimer details {
+      margin-top: 1rem;
+      background: #071311;
+      border: 1px dashed #11322b;
+      border-radius: 6px;
+      padding: 0.6rem 0.8rem;
+    }
+    
+    .disclaimer summary {
+      cursor: pointer;
+      color: #00ffcc;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    
+    .region-buttons {
+      text-align: center;
+      margin: 1.5rem 0;
+    }
+    
     .region-buttons button {
       margin: 0.3rem;
       background: #00ffcc;
@@ -48,99 +172,59 @@
       cursor: pointer;
       transition: 0.2s;
     }
+    
     .region-buttons button:hover {
-      background: #04ffe5;
+      background: #39FF14;
+      transform: translateY(-2px);
     }
+    
     pre {
       text-align: left;
-      margin: 1.5rem auto;
-      width: 90%;
+      margin: 1rem auto;
+      max-width: 900px;
       background: #000;
       color: #00ffcc;
       padding: 1rem;
       border-radius: 8px;
       overflow-x: auto;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
     }
+    
     footer {
-      margin-top: 3rem;
-      padding: 1rem;
+      margin-top: auto;
+      padding: 1.5rem 1rem;
       border-top: 1px solid #003f3f;
       color: #80fff0;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
+      text-align: center;
+      background: rgba(0, 0, 0, 0.3);
     }
-    .compliance-notice {
-      background: linear-gradient(135deg, rgba(57, 255, 20, 0.15) 0%, rgba(0, 245, 212, 0.15) 100%);
-      border: 3px solid #39FF14;
-      border-radius: 16px;
-      padding: 2rem;
-      margin: 2rem auto;
-      max-width: 900px;
-      box-shadow: 0 0 30px rgba(57, 255, 20, 0.4), 0 8px 24px rgba(0, 0, 0, 0.6);
-      backdrop-filter: blur(10px);
-      position: relative;
-      overflow: hidden;
-    }
-    .compliance-notice::before {
-      content: '';
-      position: absolute;
-      top: -50%;
-      left: -50%;
-      width: 200%;
-      height: 200%;
-      background: radial-gradient(circle, rgba(57, 255, 20, 0.1) 0%, transparent 70%);
-      animation: pulse-glow 3s ease-in-out infinite;
-      pointer-events: none;
-    }
-    @keyframes pulse-glow {
-      0%, 100% { opacity: 0.5; transform: scale(1); }
-      50% { opacity: 1; transform: scale(1.05); }
-    }
-    .compliance-badge {
-      display: inline-block;
-      background: linear-gradient(135deg, #39FF14, #00f5d4);
-      color: #000;
-      font-weight: 900;
-      padding: 0.6rem 1.5rem;
-      border-radius: 25px;
-      font-size: 0.9rem;
-      letter-spacing: 1.5px;
-      box-shadow: 0 4px 12px rgba(57, 255, 20, 0.5);
-      margin-bottom: 1rem;
-    }
-    .compliance-notice h3 {
-      color: #39FF14;
-      font-size: 1.8rem;
-      margin: 1rem 0;
-      text-shadow: 0 0 20px rgba(57, 255, 20, 0.5);
-    }
-    .compliance-notice p {
-      color: #e0fff8;
-      line-height: 1.7;
-      font-size: 1.05rem;
-    }
-    .compliance-links {
-      margin-top: 1.5rem;
-      display: flex;
-      gap: 1rem;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-    .compliance-links a {
-      background: rgba(0, 255, 204, 0.2);
-      border: 2px solid #00ffcc;
+    
+    footer a {
       color: #00ffcc;
-      padding: 0.7rem 1.5rem;
-      border-radius: 8px;
       text-decoration: none;
-      font-weight: 600;
-      transition: all 0.3s ease;
     }
-    .compliance-links a:hover {
-      background: #00ffcc;
-      color: #04100d;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 15px rgba(0, 255, 204, 0.5);
+    
+    footer a:hover {
+      text-decoration: underline;
+    }
+    
+    @media (max-width: 768px) {
+      header h1 {
+        font-size: 1.4rem;
+      }
+      
+      header h2 {
+        font-size: 1.1rem;
+      }
+      
+      iframe {
+        height: 600px;
+      }
+      
+      .dashboard-container {
+        padding: 1rem;
+      }
     }
   </style>
 </head>
@@ -150,80 +234,31 @@
     <h1>☀️ TC-S Network Foundation</h1>
     <h2>Solar Reserve Dashboard</h2>
     <p>
-      Real-time renewable energy and reserve tracking — GENIUS Act-compliant and globally auditable.  
-      Data sourced from TC-S SolarReserveTracker & verified energy databases.
+      Real-time renewable energy tracking — GENIUS Act-compliant and globally auditable
     </p>
+    <div class="compliance-badge">⚖️ GENIUS ACT COMPLIANT</div>
   </header>
 
-  <!-- GENIUS Act Compliance Notice -->
-  <div class="compliance-notice">
-    <div style="position: relative; z-index: 1;">
-      <div class="compliance-badge">⚖️ GENIUS ACT COMPLIANT</div>
-      <h3>Global Energy Networks & Infinite Universal Solar Protocol</h3>
-      <p>
-        This Solar Reserve Dashboard operates under the <strong>GENIUS Act Compliance Framework</strong>, 
-        ensuring transparent renewable energy accounting, zero double-counting, and auditable Solar token distribution.
-        All data is verified against dual-reserve architecture: <strong>1 Solar = 4,913 kWh</strong> renewable energy equivalency 
-        since Genesis (April 7, 2025).
+  <main>
+    <!-- Live Dashboard -->
+    <div class="dashboard-container">
+      <h3>📊 Live Global Reserve Tracker</h3>
+      <iframe 
+        src="https://solar-reserve-tracker-tdfranklin101.replit.app"
+        title="SolarReserveTracker Live Dashboard"
+        loading="lazy">
+      </iframe>
+      <p style="text-align: center; margin-top: 1rem; color: #9ad9c9; font-size: 0.9rem;">
+        Data source: <a href="https://solar-reserve-tracker-tdfranklin101.replit.app" target="_blank" style="color: #39FF14; text-decoration: none;">SolarReserveTracker</a> 
+        • Updated automatically with verified energy databases
       </p>
-      <p>
-        <strong>Live Reserves:</strong> Real-time tracking of global renewable energy capacity allocated to TC-S Network Foundation members. 
-        Every member receives daily distributions with full retroactive accountability to Genesis Date.
-      </p>
-      <div class="compliance-links">
-        <a href="/genius-act-whitepaper.html">📄 Read GENIUS Act White Paper</a>
-        <a href="/foundation-update.html">📋 Foundation Updates</a>
-        <a href="/SolarStandard.html">⚡ Solar Standard Protocol</a>
-      </div>
     </div>
-  </div>
 
-  <section id="live-dashboard">
-    <h3>Live Global Dashboard Feed</h3>
-    <iframe 
-      src="https://solar-reserve-tracker-tdfranklin101.replit.app"
-      title="SolarReserveTracker Live Dashboard"
-      loading="lazy">
-    </iframe>
-    <p>
-      Embedded live view powered by <strong>SolarReserveTracker</strong> (TD-Franklin101).  
-      Updated automatically with GENIUS Act reserves and regional data.
-    </p>
-  </section>
-
-  <!-- TC-S Foundation • Educational & Research Disclaimer -->
-  <section class="tcs-disclaimer" aria-labelledby="tcs-disclaimer-title">
-    <style>
-      .tcs-disclaimer{
-        --bg:#04100d; --panel:#0b1f1a; --border:#11322b; --accent:#00ffcc; --muted:#9ad9c9;
-        margin:32px auto; padding:0; max-width:1100px; color:#e8fff9; font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;
-      }
-      .tcs-disclaimer .wrap{
-        background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:20px 22px;
-        box-shadow:0 0 0 1px rgba(0,255,204,0.06), 0 10px 30px rgba(0,0,0,0.25);
-      }
-      .tcs-disclaimer h2{
-        margin:0 0 8px; font-size:1.25rem; color:var(--accent); letter-spacing:.02em;
-      }
-      .tcs-disclaimer p{ margin:.55rem 0; line-height:1.55; color:#e8fff9; }
-      .tcs-disclaimer .muted{ color:var(--muted); }
-      .tcs-disclaimer ul{ margin:.5rem 0 .75rem 1.2rem; padding:0; }
-      .tcs-disclaimer li{ margin:.35rem 0; }
-      .tcs-disclaimer .note{
-        margin-top:10px; padding:10px 12px; border-left:3px solid var(--accent);
-        background:rgba(0,255,204,0.06); color:#d4fff7; border-radius:8px;
-      }
-      .tcs-disclaimer details{
-        margin-top:.5rem; background:#071311; border:1px dashed var(--border); border-radius:10px; padding:.6rem .8rem;
-      }
-      .tcs-disclaimer summary{ cursor:pointer; color:var(--accent); font-weight:600; }
-      @media (max-width:640px){ .tcs-disclaimer .wrap{padding:16px;} }
-    </style>
-
-    <div class="wrap">
-      <h2 id="tcs-disclaimer-title">Educational & Research Disclaimer (GENIUS Act–Aligned)</h2>
-
-      <p class="muted">
+    <!-- Educational Disclaimer -->
+    <div class="disclaimer">
+      <h3>Educational & Research Disclaimer (GENIUS Act–Aligned)</h3>
+      
+      <p>
         The <strong>Solar Reserve Tracker</strong> is an open, educational data aggregator. It compiles and
         normalizes renewable-energy metrics from verified sources to illustrate global kWh flows and
         their <em>Solar-equivalent</em> representation (<strong>1&nbsp;Solar&nbsp;=&nbsp;4,913&nbsp;kWh</strong>).
@@ -237,53 +272,59 @@
         <li><strong>No implied valuation:</strong> conversions, charts, and deltas are illustrative and non-financial.</li>
       </ul>
 
-      <p class="note">
+      <div class="note">
         <strong>Important:</strong> The tracker does not mint, issue, or promise redemption of any monetary instrument.
         It reports auditable energy-based metrics for educational demonstration and governance research.
-      </p>
+      </div>
 
       <details>
-        <summary>Data sources (non-exhaustive)</summary>
-        <p class="muted" style="margin-top:.4rem;">
+        <summary>Data sources (non-exhaustive) ▼</summary>
+        <p style="margin-top: 0.5rem; color: #9ad9c9; font-size: 0.9rem;">
           EIA (US), ENTSO-E (EU), AEMO (AU), IRENA, Ember Climate, NASA POWER,
           IHA (Hydro), FAOSTAT (Bioenergy), OLADE (LATAM), ENS (Greenland/Faroe).
           Aggregation methods and provenance are documented in the API.
         </p>
       </details>
     </div>
-  </section>
 
-  <section id="regional-view">
-    <h3>Regional Reserve Data (Interactive API Feed)</h3>
-    <div class="region-buttons">
-      <button onclick="loadRegion('global')">🌍 Global</button>
-      <button onclick="loadRegion('us')">🇺🇸 US</button>
-      <button onclick="loadRegion('eu')">🇪🇺 EU</button>
-      <button onclick="loadRegion('asia')">🌏 Asia</button>
-    </div>
+    <!-- Regional Data Section -->
+    <div class="dashboard-container">
+      <h3>🌍 Regional Reserve Data (Interactive API)</h3>
+      <div class="region-buttons">
+        <button onclick="loadRegion('global')">🌍 Global</button>
+        <button onclick="loadRegion('us')">🇺🇸 United States</button>
+        <button onclick="loadRegion('eu')">🇪🇺 European Union</button>
+        <button onclick="loadRegion('asia')">🌏 Asia</button>
+      </div>
 
-    <pre id="solar-output">Click a region above to load live data...</pre>
+      <pre id="solar-output">Click a region above to load live data...</pre>
 
-    <script>
-      async function loadRegion(region) {
-        const endpoint = `https://solar-reserve-tracker-tdfranklin101.replit.app/api/solar/reserve?region=${region}`;
-        document.getElementById("solar-output").textContent = "Fetching data...";
-        try {
-          const res = await fetch(endpoint);
-          if (!res.ok) throw new Error(`Server returned ${res.status}`);
-          const data = await res.json();
-          document.getElementById("solar-output").textContent = JSON.stringify(data, null, 2);
-        } catch (err) {
-          document.getElementById("solar-output").textContent = `Error: ${err.message}`;
+      <script>
+        async function loadRegion(region) {
+          const endpoint = `https://solar-reserve-tracker-tdfranklin101.replit.app/api/solar/reserve?region=${region}`;
+          document.getElementById("solar-output").textContent = "Fetching data...";
+          try {
+            const res = await fetch(endpoint);
+            if (!res.ok) throw new Error(`Server returned ${res.status}`);
+            const data = await res.json();
+            document.getElementById("solar-output").textContent = JSON.stringify(data, null, 2);
+          } catch (err) {
+            document.getElementById("solar-output").textContent = `Error: ${err.message}`;
+          }
         }
-      }
-    </script>
-  </section>
+      </script>
+    </div>
+  </main>
 
   <footer>
     <p>
-      © 2025 TC-S Network Foundation, Inc. — GENIUS Act Compliance • Renewable Ledger Transparency •
-      1 Solar = 4,913 kWh equivalency since Genesis (April 7 2025)
+      © 2025 TC-S Network Foundation, Inc. • 
+      <a href="/genius-act-whitepaper.html">GENIUS Act White Paper</a> • 
+      <a href="/SolarStandard.html">Solar Standard Protocol</a> • 
+      <a href="/main-platform.html">← Back to Platform</a>
+    </p>
+    <p style="margin-top: 0.5rem;">
+      1 Solar = 4,913 kWh equivalency since Genesis (April 7, 2025)
     </p>
   </footer>
 </body>
