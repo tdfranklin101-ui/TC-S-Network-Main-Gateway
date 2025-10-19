@@ -1,0 +1,61 @@
+<!-- TC-S Foundation • Educational & Research Disclaimer -->
+<section class="tcs-disclaimer" aria-labelledby="tcs-disclaimer-title">
+  <style>
+    .tcs-disclaimer{
+      --bg:#04100d; --panel:#0b1f1a; --border:#11322b; --accent:#00ffcc; --muted:#9ad9c9;
+      margin:32px auto; padding:0; max-width:1100px; color:#e8fff9; font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;
+    }
+    .tcs-disclaimer .wrap{
+      background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:20px 22px;
+      box-shadow:0 0 0 1px rgba(0,255,204,0.06), 0 10px 30px rgba(0,0,0,0.25);
+    }
+    .tcs-disclaimer h2{
+      margin:0 0 8px; font-size:1.25rem; color:var(--accent); letter-spacing:.02em;
+    }
+    .tcs-disclaimer p{ margin:.55rem 0; line-height:1.55; color:#e8fff9; }
+    .tcs-disclaimer .muted{ color:var(--muted); }
+    .tcs-disclaimer ul{ margin:.5rem 0 .75rem 1.2rem; padding:0; }
+    .tcs-disclaimer li{ margin:.35rem 0; }
+    .tcs-disclaimer .note{
+      margin-top:10px; padding:10px 12px; border-left:3px solid var(--accent);
+      background:rgba(0,255,204,0.06); color:#d4fff7; border-radius:8px;
+    }
+    .tcs-disclaimer details{
+      margin-top:.5rem; background:#071311; border:1px dashed var(--border); border-radius:10px; padding:.6rem .8rem;
+    }
+    .tcs-disclaimer summary{ cursor:pointer; color:var(--accent); font-weight:600; }
+    @media (max-width:640px){ .tcs-disclaimer .wrap{padding:16px;} }
+  </style>
+
+  <div class="wrap">
+    <h2 id="tcs-disclaimer-title">Educational & Research Disclaimer (GENIUS Act–Aligned)</h2>
+
+    <p class="muted">
+      The <strong>Solar Reserve Tracker</strong> is an open, educational data aggregator. It compiles and
+      normalizes renewable-energy metrics from verified sources to illustrate global kWh flows and
+      their <em>Solar-equivalent</em> representation (<strong>1&nbsp;Solar&nbsp;=&nbsp;4,913&nbsp;kWh</strong>).
+    </p>
+
+    <ul>
+      <li><strong>Purpose:</strong> research, education, transparency, and system testing under GENIUS Act principles.</li>
+      <li><strong>No legal tender:</strong> Solar is <em>not</em> fiat, security, REC, or energy credit in any jurisdiction.</li>
+      <li><strong>Limited use:</strong> Solar functions only inside the <strong>TC-S Network Marketplace</strong> as a
+          peer-to-peer unit for digital artifacts where every member is both buyer and seller.</li>
+      <li><strong>No implied valuation:</strong> conversions, charts, and deltas are illustrative and non-financial.</li>
+    </ul>
+
+    <p class="note">
+      <strong>Important:</strong> The tracker does not mint, issue, or promise redemption of any monetary instrument.
+      It reports auditable energy-based metrics for educational demonstration and governance research.
+    </p>
+
+    <details>
+      <summary>Data sources (non-exhaustive)</summary>
+      <p class="muted" style="margin-top:.4rem;">
+        EIA (US), ENTSO-E (EU), AEMO (AU), IRENA, Ember Climate, NASA POWER,
+        IHA (Hydro), FAOSTAT (Bioenergy), OLADE (LATAM), ENS (Greenland/Faroe).
+        Aggregation methods and provenance are documented in the API.
+      </p>
+    </details>
+  </div>
+</section>
