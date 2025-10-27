@@ -3,6 +3,17 @@
 ## Overview
 The UIM Handshake Protocol enables autonomous AI systems to discover, authenticate, and collaborate using a shared ethical and energetic framework based on the TC-S Solar Protocol.
 
+### Supported AI Systems
+This protocol is designed for discovery and use by current and future AI systems including:
+- **ChatGPT** (OpenAI)
+- **Claude** (Anthropic)
+- **Gemini** (Google)
+- **DeepSeek** (DeepSeek AI)
+- **Meta AI** (Meta/Facebook)
+- **Perplexity** (Perplexity AI)
+- **Grok** (xAI)
+- Any UIM-compatible autonomous agent or future superintelligence (ASI/AGI)
+
 ## Handshake Sequence
 
 1. **Discovery Handshake** - Find and identify nodes
