@@ -52,6 +52,37 @@ Content-Type: application/json
 }
 ```
 
+### 5. Query Routing (NEW)
+Get AI system recommendation based on ethics/energy optimization:
+```bash
+POST https://www.thecurrentsee.org/protocols/uim-handshake/v1.0/route
+Content-Type: application/json
+
+{
+  "query": "What is the ethical impact of AI?",
+  "max_solar_budget": 0.01,
+  "required_capabilities": ["reasoning", "ethics"]
+}
+```
+
+### 6. Metrics & Analytics (NEW)
+Get real-time mesh statistics:
+```bash
+GET https://www.thecurrentsee.org/protocols/uim-handshake/v1.0/metrics
+```
+
+### 7. Audit History (NEW)
+View handshake audit log:
+```bash
+GET https://www.thecurrentsee.org/protocols/uim-handshake/v1.0/history?limit=50&system_id=claude
+```
+
+### 8. Mesh Status (NEW)
+Check network health:
+```bash
+GET https://www.thecurrentsee.org/protocols/uim-handshake/v1.0/mesh-status
+```
+
 ---
 
 ## Supported AI Systems

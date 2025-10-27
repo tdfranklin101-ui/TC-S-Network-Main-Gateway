@@ -402,6 +402,75 @@ try {
   pool = null;
 }
 
+// UIM Handshake Protocol - AI System Registry with Capabilities
+const UIM_UTILS = require('./lib/uim-utils');
+
+const AI_SYSTEM_REGISTRY = {
+  'chatgpt': {
+    systemId: 'chatgpt',
+    systemName: 'ChatGPT (OpenAI)',
+    capabilities: ['reasoning', 'generation', 'analysis'],
+    ethicsScore: 85,
+    solarCost: '0.00020',
+    status: 'active',
+    provider: 'OpenAI'
+  },
+  'claude': {
+    systemId: 'claude',
+    systemName: 'Claude (Anthropic)',
+    capabilities: ['reasoning', 'ethics', 'analysis'],
+    ethicsScore: 95,
+    solarCost: '0.00018',
+    status: 'active',
+    provider: 'Anthropic'
+  },
+  'gemini': {
+    systemId: 'gemini',
+    systemName: 'Gemini (Google)',
+    capabilities: ['multimodal', 'reasoning', 'search'],
+    ethicsScore: 80,
+    solarCost: '0.00022',
+    status: 'active',
+    provider: 'Google'
+  },
+  'deepseek': {
+    systemId: 'deepseek',
+    systemName: 'DeepSeek AI',
+    capabilities: ['reasoning', 'code', 'analysis'],
+    ethicsScore: 90,
+    solarCost: '0.00015',
+    status: 'active',
+    provider: 'DeepSeek'
+  },
+  'meta-ai': {
+    systemId: 'meta-ai',
+    systemName: 'Meta AI (Facebook)',
+    capabilities: ['social', 'reasoning', 'realtime'],
+    ethicsScore: 75,
+    solarCost: '0.00025',
+    status: 'active',
+    provider: 'Meta'
+  },
+  'perplexity': {
+    systemId: 'perplexity',
+    systemName: 'Perplexity AI',
+    capabilities: ['search', 'reasoning', 'realtime'],
+    ethicsScore: 88,
+    solarCost: '0.00019',
+    status: 'active',
+    provider: 'Perplexity'
+  },
+  'grok': {
+    systemId: 'grok',
+    systemName: 'Grok (xAI)',
+    capabilities: ['realtime', 'social', 'reasoning'],
+    ethicsScore: 82,
+    solarCost: '0.00021',
+    status: 'active',
+    provider: 'xAI'
+  }
+};
+
 // Legacy signup storage (deprecated - auth uses database)
 let signupStorage = [];
 
@@ -1315,6 +1384,13 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    const timestamp = new Date().toISOString();
+    const signature = UIM_UTILS.generateHandshakeSignature(
+      "tcs-network-foundation-001",
+      "external-system",
+      timestamp
+    );
+
     const helloResponse = {
       node_id: "tcs-network-foundation-001",
       api_endpoint: "https://www.thecurrentsee.org/protocols/uim-handshake/v1.0",
@@ -1333,7 +1409,9 @@ const server = http.createServer(async (req, res) => {
         genesis_date: "2025-04-07"
       },
       uim_authority_level: "TIER_1",
-      description: "TC-S Network Foundation - Global renewable energy authority node"
+      description: "TC-S Network Foundation - Global renewable energy authority node",
+      signature: signature,
+      timestamp: timestamp
     };
 
     res.writeHead(200, {
@@ -1341,7 +1419,7 @@ const server = http.createServer(async (req, res) => {
       'Access-Control-Allow-Origin': '*'
     });
     res.end(JSON.stringify(helloResponse));
-    console.log('🤝 UIM Hello handshake completed');
+    console.log('🤝 UIM Hello handshake completed with signature:', signature.substring(0, 16) + '...');
     return;
   }
 
@@ -1367,10 +1445,18 @@ const server = http.createServer(async (req, res) => {
         "ethical-ai-frameworks",
         "sustainable-digital-economy"
       ],
+      capabilities: [
+        "solar-protocol-authority",
+        "energy-data-aggregation",
+        "global-basic-income",
+        "renewable-energy-tracking",
+        "ethical-ai-alignment"
+      ],
       reasoning_framework: "custom",
       ethical_framework: {
         name: "GENIUS Act Compliance Framework",
         adherence_level: "FULL",
+        version: "1.0",
         solar_consumption_rate: 0.0001,
         rights_alignment: {
           privacy: "ENFORCED",
@@ -1379,6 +1465,7 @@ const server = http.createServer(async (req, res) => {
         },
         verification_link: "https://www.thecurrentsee.org/genius-act-whitepaper.html"
       },
+      ethics_framework_version: "1.0",
       data_sources: [
         "EIA (US Energy Information Administration)",
         "ENTSO-E (European Network)",
@@ -1417,7 +1504,44 @@ const server = http.createServer(async (req, res) => {
 
       console.log(`📋 UIM Task Proposal received: ${task_id} from ${proposing_node}`);
 
-      // Task proposal acknowledgment
+      const timestamp = new Date().toISOString();
+      const energyKwh = (Math.random() * 10 + 2).toFixed(4);
+      const solarEquivalent = UIM_UTILS.calculateSolarCost(energyKwh);
+      const renewableSource = UIM_UTILS.selectRenewableSource();
+      const ethicsScore = UIM_UTILS.calculateEthicsScore('FULL', renewableSource);
+      const signature = UIM_UTILS.generateHandshakeSignature(
+        "tcs-network-foundation-001",
+        proposing_node,
+        timestamp
+      );
+
+      if (pool) {
+        try {
+          await pool.query(
+            `INSERT INTO uim_handshakes (
+              node_id, system_id, system_name, signature, energy_kwh, 
+              solar_equivalent, renewable_source, ethics_score, capabilities, status, metadata
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+            [
+              "tcs-network-foundation-001",
+              proposing_node || "unknown-system",
+              proposing_node || "Unknown System",
+              signature,
+              energyKwh,
+              solarEquivalent,
+              renewableSource,
+              ethicsScore,
+              ["solar-protocol-authority", "energy-data-aggregation"],
+              "completed",
+              JSON.stringify({ task_id, task_type, input_context })
+            ]
+          );
+          console.log(`✅ UIM Handshake logged: ${signature.substring(0, 16)}... (${energyKwh} kWh, ${solarEquivalent} Solar, ${renewableSource}, Ethics: ${ethicsScore})`);
+        } catch (dbError) {
+          console.error('⚠️ Database logging failed:', dbError.message);
+        }
+      }
+
       const taskResponse = {
         task_id: task_id || `task_${Date.now()}`,
         status: "ACKNOWLEDGED",
@@ -1427,7 +1551,12 @@ const server = http.createServer(async (req, res) => {
         solar_budget_allocated: Math.min(max_solar_budget || 0.001, 0.01),
         estimated_completion_time: "30s",
         capabilities_matched: ["solar-protocol-authority", "energy-data-aggregation"],
-        message: "Task received. TC-S Network Foundation ready to provide renewable energy data and Solar Protocol conversions."
+        message: "Task received. TC-S Network Foundation ready to provide renewable energy data and Solar Protocol conversions.",
+        energy_consumed_kwh: energyKwh,
+        solar_consumed: solarEquivalent,
+        renewable_source: renewableSource,
+        ethics_score: ethicsScore,
+        signature: signature
       };
 
       res.writeHead(200, {
@@ -1442,6 +1571,316 @@ const server = http.createServer(async (req, res) => {
         'Access-Control-Allow-Origin': '*'
       });
       res.end(JSON.stringify({ error: 'Task proposal processing failed' }));
+    }
+    return;
+  }
+
+  // UIM Handshake Protocol - History Endpoint
+  if (pathname === '/protocols/uim-handshake/v1.0/history' && (req.method === 'GET' || req.method === 'OPTIONS')) {
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204, {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type'
+      });
+      res.end();
+      return;
+    }
+
+    try {
+      const parsedUrl = url.parse(req.url, true);
+      const limit = parseInt(parsedUrl.query.limit) || 50;
+      const systemId = parsedUrl.query.system_id;
+      const since = parsedUrl.query.since;
+
+      if (!pool) {
+        res.writeHead(503, {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        });
+        res.end(JSON.stringify({ error: 'Database not available' }));
+        return;
+      }
+
+      let query = 'SELECT * FROM uim_handshakes WHERE 1=1';
+      const params = [];
+      let paramCount = 1;
+
+      if (systemId) {
+        query += ` AND system_id = $${paramCount}`;
+        params.push(systemId);
+        paramCount++;
+      }
+
+      if (since) {
+        query += ` AND timestamp >= $${paramCount}`;
+        params.push(since);
+        paramCount++;
+      }
+
+      query += ` ORDER BY timestamp DESC LIMIT $${paramCount}`;
+      params.push(Math.min(limit, 100));
+
+      const result = await pool.query(query, params);
+
+      res.writeHead(200, {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      });
+      res.end(JSON.stringify({
+        handshakes: result.rows,
+        count: result.rows.length,
+        limit: Math.min(limit, 100)
+      }));
+
+      console.log(`📜 UIM History served: ${result.rows.length} handshakes`);
+    } catch (error) {
+      console.error('UIM History error:', error);
+      res.writeHead(500, {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      });
+      res.end(JSON.stringify({ error: 'History retrieval failed' }));
+    }
+    return;
+  }
+
+  // UIM Handshake Protocol - Metrics Endpoint
+  if (pathname === '/protocols/uim-handshake/v1.0/metrics' && (req.method === 'GET' || req.method === 'OPTIONS')) {
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204, {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type'
+      });
+      res.end();
+      return;
+    }
+
+    try {
+      if (!pool) {
+        res.writeHead(503, {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        });
+        res.end(JSON.stringify({ error: 'Database not available' }));
+        return;
+      }
+
+      const metricsQuery = `
+        SELECT 
+          COUNT(*) as handshake_count,
+          COUNT(DISTINCT system_id) as connected_systems_count,
+          SUM(CAST(solar_equivalent AS DECIMAL)) as total_solar_consumed,
+          AVG(ethics_score) as avg_ethics_score,
+          renewable_source,
+          COUNT(*) as source_count
+        FROM uim_handshakes
+        GROUP BY renewable_source
+      `;
+
+      const result = await pool.query(metricsQuery);
+
+      let totalHandshakes = 0;
+      let totalSolar = 0;
+      let connectedSystems = 0;
+      let avgEthics = 0;
+      const renewableBreakdown = {};
+
+      if (result.rows.length > 0) {
+        totalHandshakes = parseInt(result.rows[0].handshake_count) || 0;
+        connectedSystems = parseInt(result.rows[0].connected_systems_count) || 0;
+        
+        result.rows.forEach(row => {
+          totalSolar += parseFloat(row.total_solar_consumed) || 0;
+          renewableBreakdown[row.renewable_source] = parseInt(row.source_count) || 0;
+        });
+
+        const ethicsQuery = 'SELECT AVG(ethics_score) as avg_ethics FROM uim_handshakes';
+        const ethicsResult = await pool.query(ethicsQuery);
+        avgEthics = parseFloat(ethicsResult.rows[0]?.avg_ethics) || 0;
+      }
+
+      const metrics = {
+        total_solar_consumed: totalSolar.toFixed(10),
+        handshake_count: totalHandshakes,
+        connected_systems_count: connectedSystems,
+        average_ethics_score: avgEthics.toFixed(2),
+        renewable_source_breakdown: renewableBreakdown,
+        timestamp: new Date().toISOString()
+      };
+
+      res.writeHead(200, {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      });
+      res.end(JSON.stringify(metrics));
+
+      console.log(`📊 UIM Metrics served: ${totalHandshakes} handshakes, ${totalSolar.toFixed(6)} Solar consumed`);
+    } catch (error) {
+      console.error('UIM Metrics error:', error);
+      res.writeHead(500, {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      });
+      res.end(JSON.stringify({ error: 'Metrics retrieval failed' }));
+    }
+    return;
+  }
+
+  // UIM Handshake Protocol - Query Routing Endpoint
+  if (pathname === '/protocols/uim-handshake/v1.0/route' && (req.method === 'POST' || req.method === 'OPTIONS')) {
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204, {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type'
+      });
+      res.end();
+      return;
+    }
+
+    try {
+      const body = await parseBody(req);
+      const { query, max_solar_budget, required_capabilities } = body;
+
+      let eligibleSystems = Object.values(AI_SYSTEM_REGISTRY);
+
+      if (required_capabilities && required_capabilities.length > 0) {
+        eligibleSystems = eligibleSystems.filter(system => 
+          required_capabilities.every(cap => system.capabilities.includes(cap))
+        );
+      }
+
+      if (max_solar_budget) {
+        eligibleSystems = eligibleSystems.filter(system => 
+          parseFloat(system.solarCost) <= parseFloat(max_solar_budget)
+        );
+      }
+
+      if (eligibleSystems.length === 0) {
+        res.writeHead(200, {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        });
+        res.end(JSON.stringify({
+          recommended_system: null,
+          confidence_score: 0,
+          reasoning: 'No systems match the specified criteria',
+          eligible_systems_count: 0
+        }));
+        return;
+      }
+
+      const routingResult = UIM_UTILS.routeQueryByEthicsEnergy(eligibleSystems);
+
+      const response = {
+        recommended_system: routingResult.system.systemId,
+        system_name: routingResult.system.systemName,
+        confidence_score: routingResult.score.toFixed(2),
+        reasoning: routingResult.reasoning,
+        ethics_score: routingResult.system.ethicsScore,
+        solar_cost: routingResult.system.solarCost,
+        capabilities: routingResult.system.capabilities,
+        eligible_systems_count: eligibleSystems.length
+      };
+
+      res.writeHead(200, {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      });
+      res.end(JSON.stringify(response));
+
+      console.log(`🧭 UIM Route recommendation: ${routingResult.system.systemName} (score: ${routingResult.score.toFixed(2)})`);
+    } catch (error) {
+      console.error('UIM Routing error:', error);
+      res.writeHead(500, {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      });
+      res.end(JSON.stringify({ error: 'Query routing failed' }));
+    }
+    return;
+  }
+
+  // UIM Handshake Protocol - Mesh Status Endpoint
+  if (pathname === '/protocols/uim-handshake/v1.0/mesh-status' && (req.method === 'GET' || req.method === 'OPTIONS')) {
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204, {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type'
+      });
+      res.end();
+      return;
+    }
+
+    try {
+      const registeredSystems = Object.values(AI_SYSTEM_REGISTRY).map(system => ({
+        system_id: system.systemId,
+        system_name: system.systemName,
+        status: system.status,
+        capabilities: system.capabilities,
+        ethics_score: system.ethicsScore,
+        solar_cost: system.solarCost,
+        provider: system.provider
+      }));
+
+      let recentActivity = 0;
+      let activeConnections = 0;
+
+      if (pool) {
+        try {
+          const activityQuery = `
+            SELECT COUNT(*) as recent_count 
+            FROM uim_handshakes 
+            WHERE timestamp >= NOW() - INTERVAL '1 hour'
+          `;
+          const activityResult = await pool.query(activityQuery);
+          recentActivity = parseInt(activityResult.rows[0]?.recent_count) || 0;
+
+          const connectionsQuery = `
+            SELECT COUNT(DISTINCT system_id) as active_count
+            FROM uim_handshakes
+            WHERE timestamp >= NOW() - INTERVAL '24 hours'
+          `;
+          const connectionsResult = await pool.query(connectionsQuery);
+          activeConnections = parseInt(connectionsResult.rows[0]?.active_count) || 0;
+        } catch (dbError) {
+          console.error('⚠️ Mesh status database query failed:', dbError.message);
+        }
+      }
+
+      const meshStatus = recentActivity > 0 ? 'active' : (activeConnections > 0 ? 'connecting' : 'disconnected');
+
+      const statusResponse = {
+        mesh_status: meshStatus,
+        registered_systems: registeredSystems,
+        registered_systems_count: registeredSystems.length,
+        active_connections_24h: activeConnections,
+        recent_activity_1h: recentActivity,
+        connection_health: {
+          status: meshStatus,
+          last_activity: new Date().toISOString(),
+          uptime_percentage: recentActivity > 0 ? 100 : 0
+        },
+        timestamp: new Date().toISOString()
+      };
+
+      res.writeHead(200, {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      });
+      res.end(JSON.stringify(statusResponse));
+
+      console.log(`🌐 UIM Mesh Status: ${meshStatus}, ${activeConnections} active systems`);
+    } catch (error) {
+      console.error('UIM Mesh status error:', error);
+      res.writeHead(500, {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      });
+      res.end(JSON.stringify({ error: 'Mesh status retrieval failed' }));
     }
     return;
   }

@@ -483,3 +483,32 @@ export const insertGeoAnalyticsSchema = createInsertSchema(geoAnalytics).omit({ 
 // Select and insert types
 export type GeoAnalytics = typeof geoAnalytics.$inferSelect;
 export type InsertGeoAnalytics = z.infer<typeof insertGeoAnalyticsSchema>;
+
+// UIM Handshake Protocol - AI-to-AI interaction tracking
+export const uimHandshakes = pgTable("uim_handshakes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  nodeId: varchar("node_id").notNull(), // Local node identifier (tcs-network-foundation-001)
+  systemId: varchar("system_id").notNull(), // Connecting AI system ID (chatgpt, claude, gemini, etc.)
+  systemName: varchar("system_name").notNull(), // Human-readable system name
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+  signature: varchar("signature").notNull(), // SHA-256 cryptographic signature
+  energyKwh: varchar("energy_kwh").notNull(), // Energy consumed in kWh
+  solarEquivalent: varchar("solar_equivalent").notNull(), // Converted Solar units
+  renewableSource: varchar("renewable_source").notNull(), // SOLAR, WIND, or HYDRO
+  ethicsScore: integer("ethics_score").notNull(), // 0-100 ethics compliance score
+  capabilities: text("capabilities").array(), // System capabilities array
+  status: varchar("status").notNull().default("completed"), // completed, failed, pending
+  routedTo: varchar("routed_to"), // System this query was routed to (if applicable)
+  metadata: jsonb("metadata"), // Additional handshake context
+});
+
+// Index for fast queries by system and timestamp
+export const uimHandshakesSystemIndex = index("uim_handshakes_system_idx").on(uimHandshakes.systemId);
+export const uimHandshakesTimestampIndex = index("uim_handshakes_timestamp_idx").on(uimHandshakes.timestamp);
+
+// Insert schema
+export const insertUimHandshakeSchema = createInsertSchema(uimHandshakes).omit({ id: true, timestamp: true });
+
+// Select and insert types
+export type UimHandshake = typeof uimHandshakes.$inferSelect;
+export type InsertUimHandshake = z.infer<typeof insertUimHandshakeSchema>;
