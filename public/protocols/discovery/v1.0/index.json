@@ -1,0 +1,71 @@
+{
+  "@context": "https://schema.org",
+  "@type": "WebAPI",
+  "name": "TC-S Network Foundation Protocol Registry",
+  "description": "Unified Intelligence Mesh (UIM) protocol discovery registry for AI systems",
+  "provider": {
+    "@type": "Organization",
+    "name": "TC-S Network Foundation, Inc.",
+    "url": "https://www.thecurrentsee.org"
+  },
+  "availableProtocols": [
+    {
+      "name": "UIM Handshake Protocol",
+      "version": "1.0",
+      "type": "ai-to-ai-handshake",
+      "status": "active",
+      "endpoints": {
+        "hello": "/protocols/uim-handshake/v1.0/hello",
+        "profile": "/protocols/uim-handshake/v1.0/profile",
+        "task": "/protocols/uim-handshake/v1.0/task"
+      },
+      "schemas": {
+        "hello_response": "/protocols/uim-handshake/v1.0/schema/hello-response.schema.json",
+        "semantic_profile": "/protocols/uim-handshake/v1.0/schema/semantic-profile.schema.json",
+        "task_proposal": "/protocols/uim-handshake/v1.0/schema/task-proposal.schema.json"
+      },
+      "documentation": "/protocols/uim-handshake/v1.0/specification/README.md",
+      "examples": {
+        "python": "/protocols/uim-handshake/v1.0/examples/python/uim_client.py",
+        "javascript": "/protocols/uim-handshake/v1.0/examples/javascript/uim-client.js"
+      }
+    },
+    {
+      "name": "Solar Standard Protocol",
+      "version": "1.0",
+      "type": "energy-accounting",
+      "status": "active",
+      "endpoints": {
+        "convert": "/api/solar",
+        "spec": "/api/solar-standard",
+        "artifact_enrichment": "/api/solar/artifact"
+      },
+      "documentation": "/SolarStandard.html",
+      "feed": "/SolarFeed.xml",
+      "standard_definition": {
+        "unit": "Solar",
+        "kWh_per_solar": 4913,
+        "genesis_date": "2025-04-07"
+      }
+    }
+  ],
+  "nodeProfile": {
+    "node_id": "tcs-network-foundation-001",
+    "authority_level": "TIER_1",
+    "capabilities": [
+      "solar-protocol-authority",
+      "energy-data-aggregation",
+      "global-basic-income",
+      "renewable-energy-tracking",
+      "ethical-ai-alignment"
+    ],
+    "semantic_domains": [
+      "renewable-energy-economics",
+      "global-basic-income",
+      "solar-protocol-standards",
+      "energy-abundance-metrics",
+      "ethical-ai-frameworks"
+    ]
+  },
+  "lastUpdated": "2025-10-27T00:00:00Z"
+}
