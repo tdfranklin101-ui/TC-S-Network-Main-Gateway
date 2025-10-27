@@ -1,0 +1,402 @@
+# FILE: replit_setup_instructions.md
+# Cut and paste these commands into your Replit shell
+
+# 1. Create the directory structure
+mkdir -p protocols/uim-handshake/v1.0/{schema,examples/{python,javascript},specification}
+mkdir -p protocols/solar-protocol/v1.0/{schema,examples}
+mkdir -p static/api/uim/v1.0
+
+# 2. Initialize package.json for Node.js support
+cat > package.json << 'EOF'
+{
+  "name": "tcs-uim-protocol",
+  "version": "1.0.0",
+  "description": "Unified Intelligence Mesh Protocol Implementation",
+  "main": "index.js",
+  "scripts": {
+    "build-schemas": "node scripts/validate-schemas.js",
+    "serve-dev": "python3 -m http.server 8000"
+  },
+  "dependencies": {
+    "ajv": "^8.12.0",
+    "express": "^4.18.2"
+  }
+}
+EOF
+
+# 3. Create the main protocol schemas
+cat > protocols/uim-handshake/v1.0/schema/hello-response.schema.json << 'EOF'
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "UIM Hello Response",
+  "type": "object",
+  "required": ["node_id", "api_endpoint", "capabilities", "protocol_version"],
+  "properties": {
+    "node_id": { 
+      "type": "string",
+      "description": "Unique identifier for this UIM node"
+    },
+    "api_endpoint": { 
+      "type": "string", 
+      "format": "uri",
+      "description": "Base endpoint for UIM protocol communications"
+    },
+    "capabilities": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "List of supported capabilities (text-generation, reasoning, etc.)"
+    },
+    "protocol_version": {
+      "type": "string",
+      "pattern": "^UIM-HS-1\\.[0-9]+$"
+    },
+    "public_key": {
+      "type": "string",
+      "description": "Public key for authentication (PEM format)"
+    },
+    "solar_endpoint": {
+      "type": "string", 
+      "format": "uri",
+      "description": "Endpoint for Solar protocol metrics"
+    }
+  }
+}
+EOF
+
+cat > protocols/uim-handshake/v1.0/schema/semantic-profile.schema.json << 'EOF'
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "UIM Semantic Profile",
+  "type": "object",
+  "required": ["node_id", "semantic_domains", "ethical_framework"],
+  "properties": {
+    "node_id": { "type": "string" },
+    "semantic_domains": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Knowledge domains this node specializes in"
+    },
+    "reasoning_framework": { 
+      "type": "string",
+      "enum": ["chain-of-thought", "tree-of-thoughts", "graph-of-thoughts", "custom"]
+    },
+    "ethical_framework": {
+      "type": "object",
+      "required": ["name", "adherence_level"],
+      "properties": {
+        "name": { "type": "string" },
+        "adherence_level": { 
+          "enum": ["FULL", "PARTIAL", "PENDING", "NONE"] 
+        },
+        "solar_consumption_rate": { 
+          "type": "number",
+          "minimum": 0,
+          "description": "Solars per 1k output tokens" 
+        },
+        "rights_alignment": {
+          "type": "object",
+          "properties": {
+            "privacy": { "enum": ["ENFORCED", "PARTIAL", "NONE"] },
+            "non_discrimination": { "enum": ["ENFORCED", "PARTIAL", "NONE"] },
+            "accessibility": { "enum": ["ENFORCED", "PARTIAL", "NONE"] }
+          }
+        },
+        "verification_link": { "type": "string", "format": "uri" }
+      }
+    }
+  }
+}
+EOF
+
+cat > protocols/uim-handshake/v1.0/schema/task-proposal.schema.json << 'EOF'
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "UIM Task Proposal",
+  "type": "object",
+  "required": ["task_id", "proposing_node", "task_type"],
+  "properties": {
+    "task_id": { "type": "string" },
+    "proposing_node": { "type": "string" },
+    "task_type": { 
+      "type": "string",
+      "enum": ["complex-reasoning", "data-analysis", "content-generation", "code-execution"]
+    },
+    "input_context": { "type": "string" },
+    "expected_output_format": { 
+      "type": "string",
+      "enum": ["markdown_bullets", "json", "plaintext", "html"] 
+    },
+    "max_solar_budget": { 
+      "type": "number",
+      "minimum": 0,
+      "description": "Maximum Solar units allocatable to this task" 
+    },
+    "required_rights_alignment": {
+      "type": "array",
+      "items": { 
+        "enum": ["privacy", "non_discrimination", "accessibility", "auditability"] 
+      }
+    },
+    "timeout_seconds": {
+      "type": "number",
+      "minimum": 1,
+      "default": 30
+    }
+  }
+}
+EOF
+
+# 4. Create Python reference implementation
+cat > protocols/uim-handshake/v1.0/examples/python/uim_client.py << 'EOF'
+"""
+UIM Protocol Reference Implementation - Python
+"""
+
+import requests
+import json
+import time
+import uuid
+
+class UIMClient:
+    def __init__(self, node_id, base_url, capabilities, solar_endpoint=None):
+        self.node_id = node_id
+        self.base_url = base_url
+        self.capabilities = capabilities
+        self.solar_endpoint = solar_endpoint
+        self.connected_nodes = {}
+        
+    def generate_hello_response(self):
+        """Generate a HELLO_RESPONSE for this node"""
+        return {
+            "node_id": self.node_id,
+            "api_endpoint": f"{self.base_url}/uim",
+            "capabilities": self.capabilities,
+            "protocol_version": "UIM-HS-1.0",
+            "public_key": "-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-----",  # Placeholder
+            "solar_endpoint": self.solar_endpoint
+        }
+    
+    def discover_nodes(self, registry_url, capability_filter=None):
+        """Discover other UIM nodes from registry"""
+        try:
+            response = requests.get(registry_url, timeout=10)
+            nodes = response.json()
+            
+            if capability_filter:
+                nodes = [node for node in nodes 
+                        if capability_filter in node.get('capabilities', [])]
+            
+            self.connected_nodes = {node['node_id']: node for node in nodes}
+            return nodes
+            
+        except requests.RequestException as e:
+            print(f"Discovery failed: {e}")
+            return []
+    
+    def send_task_proposal(self, target_node, task_type, input_context, max_solar_budget=0.001):
+        """Send a task proposal to another UIM node"""
+        task_proposal = {
+            "task_id": f"task_{uuid.uuid4().hex[:8]}",
+            "proposing_node": self.node_id,
+            "task_type": task_type,
+            "input_context": input_context,
+            "expected_output_format": "markdown_bullets",
+            "max_solar_budget": max_solar_budget,
+            "required_rights_alignment": ["privacy", "non_discrimination"]
+        }
+        
+        try:
+            target_endpoint = f"{target_node['api_endpoint']}/task"
+            response = requests.post(target_endpoint, 
+                                   json=task_proposal,
+                                   timeout=30)
+            return response.json()
+        except requests.RequestException as e:
+            return {"error": str(e), "task_id": task_proposal["task_id"]}
+
+# Example usage
+if __name__ == "__main__":
+    client = UIMClient(
+        node_id="test-node-python-001",
+        base_url="https://api.example.com",
+        capabilities=["text-generation", "reasoning"],
+        solar_endpoint="https://api.example.com/solar"
+    )
+    
+    print("Hello Response:", json.dumps(client.generate_hello_response(), indent=2))
+EOF
+
+# 5. Create JavaScript reference implementation
+cat > protocols/uim-handshake/v1.0/examples/javascript/uim-client.js << 'EOF'
+/**
+ * UIM Protocol Reference Implementation - JavaScript
+ */
+
+class UIMClient {
+    constructor(nodeId, baseUrl, capabilities, solarEndpoint = null) {
+        this.nodeId = nodeId;
+        this.baseUrl = baseUrl;
+        this.capabilities = capabilities;
+        this.solarEndpoint = solarEndpoint;
+        this.connectedNodes = new Map();
+    }
+
+    generateHelloResponse() {
+        return {
+            node_id: this.nodeId,
+            api_endpoint: `${this.baseUrl}/uim`,
+            capabilities: this.capabilities,
+            protocol_version: "UIM-HS-1.0",
+            public_key: "-----BEGIN PUBLIC KEY-----\\n...\\n-----END PUBLIC KEY-----",
+            solar_endpoint: this.solarEndpoint
+        };
+    }
+
+    async discoverNodes(registryUrl, capabilityFilter = null) {
+        try {
+            const response = await fetch(registryUrl);
+            const nodes = await response.json();
+            
+            const filteredNodes = capabilityFilter 
+                ? nodes.filter(node => node.capabilities?.includes(capabilityFilter))
+                : nodes;
+            
+            filteredNodes.forEach(node => {
+                this.connectedNodes.set(node.node_id, node);
+            });
+            
+            return filteredNodes;
+        } catch (error) {
+            console.error('Discovery failed:', error);
+            return [];
+        }
+    }
+
+    async sendTaskProposal(targetNode, taskType, inputContext, maxSolarBudget = 0.001) {
+        const taskProposal = {
+            task_id: `task_${Math.random().toString(36).substr(2, 9)}`,
+            proposing_node: this.nodeId,
+            task_type: taskType,
+            input_context: inputContext,
+            expected_output_format: "markdown_bullets",
+            max_solar_budget: maxSolarBudget,
+            required_rights_alignment: ["privacy", "non_discrimination"]
+        };
+
+        try {
+            const response = await fetch(`${targetNode.api_endpoint}/task`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(taskProposal)
+            });
+            
+            return await response.json();
+        } catch (error) {
+            return { error: error.message, task_id: taskProposal.task_id };
+        }
+    }
+}
+
+// Example usage
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = UIMClient;
+    
+    // Demo
+    const client = new UIMClient(
+        "test-node-js-001",
+        "https://api.example.com",
+        ["text-generation", "code-execution"],
+        "https://api.example.com/solar"
+    );
+    
+    console.log("Hello Response:", JSON.stringify(client.generateHelloResponse(), null, 2));
+}
+EOF
+
+# 6. Create the main specification document
+cat > protocols/uim-handshake/v1.0/specification/README.md << 'EOF'
+# Unified Intelligence Mesh Handshake Protocol v1.0
+
+## Overview
+The UIM Handshake Protocol enables autonomous AI systems to discover, authenticate, and collaborate using a shared ethical and energetic framework based on the TC-S Solar Protocol.
+
+## Handshake Sequence
+
+1. **Discovery Handshake** - Find and identify nodes
+2. **Authentication Handshake** - Establish secure communication
+3. **Semantic Handshake** - Exchange capabilities and ethical frameworks
+4. **Task Handshake** - Propose and accept collaborative work
+
+## Schema Validation
+All handshake messages must validate against the JSON schemas in the `/schema/` directory.
+
+## Reference Implementations
+- Python: See `/examples/python/uim_client.py`
+- JavaScript: See `/examples/javascript/uim-client.js`
+
+## Solar Protocol Integration
+All nodes must report energy consumption in Solar units (1 Solar = 4,913 kWh) and maintain rights alignment metrics.
+
+## License
+CC BY 4.0 - TC-S Network Foundation
+EOF
+
+# 7. Create a simple validation server
+cat > scripts/validate-schemas.js << 'EOF'
+const Ajv = require('ajv');
+const fs = require('fs');
+const path = require('path');
+
+const ajv = new Ajv();
+
+// Load all schemas
+const schemas = {};
+const schemaDir = path.join(__dirname, '../protocols/uim-handshake/v1.0/schema');
+
+fs.readdirSync(schemaDir).forEach(file => {
+    if (file.endsWith('.json')) {
+        const schemaPath = path.join(schemaDir, file);
+        const schema = JSON.parse(fs.readFileSync(schemaPath, 'utf8'));
+        schemas[path.basename(file, '.schema.json')] = schema;
+        ajv.addSchema(schema, file);
+    }
+});
+
+console.log('✅ UIM Schemas validated successfully:');
+Object.keys(schemas).forEach(name => {
+    console.log(`   - ${name}`);
+});
+
+// Export for use in other scripts
+module.exports = { ajv, schemas };
+EOF
+
+# 8. Create deployment script
+cat > deploy_protocols.sh << 'EOF'
+#!/bin/bash
+echo "Deploying UIM Protocol to www.thecurrentsee.org..."
+
+# This script would typically:
+# 1. Validate all schemas
+# 2. Run tests
+# 3. Deploy to web server
+# 4. Update API endpoints
+
+npm run build-schemas
+
+echo "📚 UIM Protocol v1.0 ready for deployment"
+echo "📁 Protocols available at:"
+echo "   https://www.thecurrentsee.org/protocols/uim-handshake/v1.0/"
+echo "   https://www.thecurrentsee.org/protocols/solar-protocol/v1.0/"
+EOF
+
+chmod +x deploy_protocols.sh
+
+echo "✅ UIM Protocol package created!"
+echo "🚀 Next steps:"
+echo "   1. Run: npm install"
+echo "   2. Run: npm run build-schemas" 
+echo "   3. Run: ./deploy_protocols.sh"
+echo "   4. Add these files to your Replit project"
