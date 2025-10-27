@@ -1303,6 +1303,149 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // UIM Handshake Protocol - Hello Response
+  if (pathname === '/protocols/uim-handshake/v1.0/hello' && (req.method === 'GET' || req.method === 'OPTIONS')) {
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204, {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type'
+      });
+      res.end();
+      return;
+    }
+
+    const helloResponse = {
+      node_id: "tcs-network-foundation-001",
+      api_endpoint: "https://www.thecurrentsee.org/protocols/uim-handshake/v1.0",
+      capabilities: [
+        "solar-protocol-authority",
+        "energy-data-aggregation",
+        "global-basic-income",
+        "renewable-energy-tracking",
+        "ethical-ai-alignment"
+      ],
+      protocol_version: "UIM-HS-1.0",
+      solar_endpoint: "https://www.thecurrentsee.org/api/solar",
+      solar_standard: {
+        unit: "Solar",
+        kWh_per_solar: 4913,
+        genesis_date: "2025-04-07"
+      },
+      uim_authority_level: "TIER_1",
+      description: "TC-S Network Foundation - Global renewable energy authority node"
+    };
+
+    res.writeHead(200, {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*'
+    });
+    res.end(JSON.stringify(helloResponse));
+    console.log('🤝 UIM Hello handshake completed');
+    return;
+  }
+
+  // UIM Handshake Protocol - Semantic Profile
+  if (pathname === '/protocols/uim-handshake/v1.0/profile' && (req.method === 'GET' || req.method === 'OPTIONS')) {
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204, {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type'
+      });
+      res.end();
+      return;
+    }
+
+    const semanticProfile = {
+      node_id: "tcs-network-foundation-001",
+      semantic_domains: [
+        "renewable-energy-economics",
+        "global-basic-income",
+        "solar-protocol-standards",
+        "energy-abundance-metrics",
+        "ethical-ai-frameworks",
+        "sustainable-digital-economy"
+      ],
+      reasoning_framework: "custom",
+      ethical_framework: {
+        name: "GENIUS Act Compliance Framework",
+        adherence_level: "FULL",
+        solar_consumption_rate: 0.0001,
+        rights_alignment: {
+          privacy: "ENFORCED",
+          non_discrimination: "ENFORCED",
+          accessibility: "ENFORCED"
+        },
+        verification_link: "https://www.thecurrentsee.org/genius-act-whitepaper.html"
+      },
+      data_sources: [
+        "EIA (US Energy Information Administration)",
+        "ENTSO-E (European Network)",
+        "AEMO (Australian Energy Market Operator)",
+        "IRENA (International Renewable Energy Agency)",
+        "Solar Reserve Tracker API"
+      ],
+      update_frequency: "daily_3am_utc",
+      last_updated: new Date().toISOString()
+    };
+
+    res.writeHead(200, {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*'
+    });
+    res.end(JSON.stringify(semanticProfile));
+    console.log('📊 UIM Semantic profile served');
+    return;
+  }
+
+  // UIM Handshake Protocol - Task Proposal Handler
+  if (pathname === '/protocols/uim-handshake/v1.0/task' && (req.method === 'POST' || req.method === 'OPTIONS')) {
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204, {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type'
+      });
+      res.end();
+      return;
+    }
+
+    try {
+      const body = await parseBody(req);
+      const { task_id, proposing_node, task_type, input_context, max_solar_budget } = body;
+
+      console.log(`📋 UIM Task Proposal received: ${task_id} from ${proposing_node}`);
+
+      // Task proposal acknowledgment
+      const taskResponse = {
+        task_id: task_id || `task_${Date.now()}`,
+        status: "ACKNOWLEDGED",
+        accepting_node: "tcs-network-foundation-001",
+        proposing_node,
+        task_type,
+        solar_budget_allocated: Math.min(max_solar_budget || 0.001, 0.01),
+        estimated_completion_time: "30s",
+        capabilities_matched: ["solar-protocol-authority", "energy-data-aggregation"],
+        message: "Task received. TC-S Network Foundation ready to provide renewable energy data and Solar Protocol conversions."
+      };
+
+      res.writeHead(200, {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      });
+      res.end(JSON.stringify(taskResponse));
+    } catch (error) {
+      console.error('UIM Task proposal error:', error);
+      res.writeHead(500, {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      });
+      res.end(JSON.stringify({ error: 'Task proposal processing failed' }));
+    }
+    return;
+  }
+
   // Login API endpoint
   if ((pathname === '/api/login' || pathname === '/api/users/login') && req.method === 'POST') {
     try {

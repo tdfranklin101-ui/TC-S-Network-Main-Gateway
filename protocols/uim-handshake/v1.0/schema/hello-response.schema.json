@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "UIM Hello Response",
+  "type": "object",
+  "required": ["node_id", "api_endpoint", "capabilities", "protocol_version"],
+  "properties": {
+    "node_id": { 
+      "type": "string",
+      "description": "Unique identifier for this UIM node"
+    },
+    "api_endpoint": { 
+      "type": "string", 
+      "format": "uri",
+      "description": "Base endpoint for UIM protocol communications"
+    },
+    "capabilities": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "List of supported capabilities (text-generation, reasoning, etc.)"
+    },
+    "protocol_version": {
+      "type": "string",
+      "pattern": "^UIM-HS-1\\.[0-9]+$"
+    },
+    "public_key": {
+      "type": "string",
+      "description": "Public key for authentication (PEM format)"
+    },
+    "solar_endpoint": {
+      "type": "string", 
+      "format": "uri",
+      "description": "Endpoint for Solar protocol metrics"
+    }
+  }
+}

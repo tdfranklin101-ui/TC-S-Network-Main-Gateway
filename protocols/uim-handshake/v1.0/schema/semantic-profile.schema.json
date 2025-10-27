@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "UIM Semantic Profile",
+  "type": "object",
+  "required": ["node_id", "semantic_domains", "ethical_framework"],
+  "properties": {
+    "node_id": { "type": "string" },
+    "semantic_domains": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Knowledge domains this node specializes in"
+    },
+    "reasoning_framework": { 
+      "type": "string",
+      "enum": ["chain-of-thought", "tree-of-thoughts", "graph-of-thoughts", "custom"]
+    },
+    "ethical_framework": {
+      "type": "object",
+      "required": ["name", "adherence_level"],
+      "properties": {
+        "name": { "type": "string" },
+        "adherence_level": { 
+          "enum": ["FULL", "PARTIAL", "PENDING", "NONE"] 
+        },
+        "solar_consumption_rate": { 
+          "type": "number",
+          "minimum": 0,
+          "description": "Solars per 1k output tokens" 
+        },
+        "rights_alignment": {
+          "type": "object",
+          "properties": {
+            "privacy": { "enum": ["ENFORCED", "PARTIAL", "NONE"] },
+            "non_discrimination": { "enum": ["ENFORCED", "PARTIAL", "NONE"] },
+            "accessibility": { "enum": ["ENFORCED", "PARTIAL", "NONE"] }
+          }
+        },
+        "verification_link": { "type": "string", "format": "uri" }
+      }
+    }
+  }
+}

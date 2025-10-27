@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "UIM Task Proposal",
+  "type": "object",
+  "required": ["task_id", "proposing_node", "task_type"],
+  "properties": {
+    "task_id": { "type": "string" },
+    "proposing_node": { "type": "string" },
+    "task_type": { 
+      "type": "string",
+      "enum": ["complex-reasoning", "data-analysis", "content-generation", "code-execution"]
+    },
+    "input_context": { "type": "string" },
+    "expected_output_format": { 
+      "type": "string",
+      "enum": ["markdown_bullets", "json", "plaintext", "html"] 
+    },
+    "max_solar_budget": { 
+      "type": "number",
+      "minimum": 0,
+      "description": "Maximum Solar units allocatable to this task" 
+    },
+    "required_rights_alignment": {
+      "type": "array",
+      "items": { 
+        "enum": ["privacy", "non_discrimination", "accessibility", "auditability"] 
+      }
+    },
+    "timeout_seconds": {
+      "type": "number",
+      "minimum": 1,
+      "default": 30
+    }
+  }
+}
