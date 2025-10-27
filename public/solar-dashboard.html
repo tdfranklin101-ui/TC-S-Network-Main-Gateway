@@ -623,7 +623,7 @@
 
       <script>
         async function loadRegion(region) {
-          const endpoint = `https://solar-reserve-tracker-tdfranklin101.replit.app/api/solar/reserve?region=${region}`;
+          const endpoint = `/api/solar/reserve?region=${region}`;
           document.getElementById("solar-output").textContent = "Fetching data...";
           try {
             const res = await fetch(endpoint);
