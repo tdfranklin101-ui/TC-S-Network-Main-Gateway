@@ -1,0 +1,415 @@
+import React, { useState, useEffect } from ‘react’;
+import { Network, Zap, Shield, CheckCircle, AlertCircle, Activity, Hash } from ‘lucide-react’;
+
+const UIMHandshakeSystem = () => {
+const [systems, setSystems] = useState([
+{
+id: ‘gpt’,
+name: ‘OpenAI GPT’,
+status: ‘idle’,
+solarCost: 0,
+lastHandshake: null,
+ethicsScore: 0,
+capabilities: [‘reasoning’, ‘generation’, ‘analysis’]
+},
+{
+id: ‘claude’,
+name: ‘Anthropic Claude’,
+status: ‘idle’,
+solarCost: 0,
+lastHandshake: null,
+ethicsScore: 0,
+capabilities: [‘reasoning’, ‘ethics’, ‘analysis’]
+},
+{
+id: ‘gemini’,
+name: ‘Google Gemini’,
+status: ‘idle’,
+solarCost: 0,
+lastHandshake: null,
+ethicsScore: 0,
+capabilities: [‘multimodal’, ‘reasoning’, ‘search’]
+},
+{
+id: ‘grok’,
+name: ‘xAI Grok’,
+status: ‘idle’,
+solarCost: 0,
+lastHandshake: null,
+ethicsScore: 0,
+capabilities: [‘realtime’, ‘social’, ‘reasoning’]
+}
+]);
+
+const [handshakes, setHandshakes] = useState([]);
+const [meshStatus, setMeshStatus] = useState(‘disconnected’);
+const [totalSolarConsumed, setTotalSolarConsumed] = useState(0);
+const [activeQuery, setActiveQuery] = useState(null);
+
+// Solar Standard Protocol constants
+const SOLAR_UNIT = 4913; // kWh per Solar
+
+const calculateSolarCost = (kWh) => {
+return (kWh / SOLAR_UNIT).toFixed(4);
+};
+
+const generateHandshakeSignature = (system1, system2) => {
+const timestamp = Date.now();
+const data = `${system1}-${system2}-${timestamp}`;
+// Simple hash simulation
+return btoa(data).substring(0, 16);
+};
+
+const initiateHandshake = (systemId) => {
+setSystems(prev => prev.map(sys =>
+sys.id === systemId
+? { …sys, status: ‘connecting’ }
+: sys
+));
+
+```
+setTimeout(() => {
+  const system = systems.find(s => s.id === systemId);
+  const energyCost = Math.random() * 10 + 2; // 2-12 kWh
+  const solarCost = parseFloat(calculateSolarCost(energyCost));
+  const ethicsScore = Math.random() * 30 + 70; // 70-100 ethics score
+  
+  const handshake = {
+    id: Date.now(),
+    systemId,
+    systemName: system.name,
+    timestamp: new Date().toISOString(),
+    signature: generateHandshakeSignature('uim-node', systemId),
+    energyConsumed: energyCost.toFixed(2),
+    solarEquivalent: solarCost,
+    ethicsAlignment: ethicsScore.toFixed(1),
+    renewableSource: ['SOLAR', 'WIND', 'HYDRO'][Math.floor(Math.random() * 3)],
+    humanRightsCompliant: true,
+    status: 'verified'
+  };
+
+  setHandshakes(prev => [handshake, ...prev].slice(0, 10));
+  
+  setSystems(prev => prev.map(sys => 
+    sys.id === systemId 
+      ? { 
+          ...sys, 
+          status: 'connected',
+          solarCost: sys.solarCost + solarCost,
+          lastHandshake: new Date().toISOString(),
+          ethicsScore: ethicsScore
+        }
+      : sys
+  ));
+
+  setTotalSolarConsumed(prev => prev + solarCost);
+  
+  // Check if mesh is fully connected
+  const allConnected = systems.every(s => 
+    s.id === systemId || s.status === 'connected'
+  );
+  if (allConnected) {
+    setMeshStatus('active');
+  }
+}, 1500);
+```
+
+};
+
+const initiateFullMesh = () => {
+setMeshStatus(‘connecting’);
+systems.forEach((system, index) => {
+setTimeout(() => {
+initiateHandshake(system.id);
+}, index * 2000);
+});
+};
+
+const routeQuery = (query) => {
+setActiveQuery(query);
+
+```
+// Route to system with best Solar efficiency and ethics score
+const connectedSystems = systems.filter(s => s.status === 'connected');
+if (connectedSystems.length === 0) {
+  alert('No systems connected. Please establish handshakes first.');
+  return;
+}
+
+const bestSystem = connectedSystems.reduce((best, current) => {
+  const currentScore = current.ethicsScore / (current.solarCost + 0.1);
+  const bestScore = best.ethicsScore / (best.solarCost + 0.1);
+  return currentScore > bestScore ? current : best;
+});
+
+setSystems(prev => prev.map(sys => 
+  sys.id === bestSystem.id
+    ? { ...sys, status: 'processing' }
+    : sys
+));
+
+setTimeout(() => {
+  setSystems(prev => prev.map(sys => 
+    sys.id === bestSystem.id
+      ? { ...sys, status: 'connected' }
+      : sys
+  ));
+  setActiveQuery(null);
+  alert(`Query routed to ${bestSystem.name}\nReason: Best ethics/energy ratio (${(bestSystem.ethicsScore / (bestSystem.solarCost + 0.1)).toFixed(2)})`);
+}, 2000);
+```
+
+};
+
+const resetMesh = () => {
+setSystems(prev => prev.map(sys => ({
+…sys,
+status: ‘idle’,
+solarCost: 0,
+lastHandshake: null,
+ethicsScore: 0
+})));
+setHandshakes([]);
+setMeshStatus(‘disconnected’);
+setTotalSolarConsumed(0);
+setActiveQuery(null);
+};
+
+const getStatusColor = (status) => {
+switch(status) {
+case ‘connected’: return ‘text-green-600 bg-green-50 border-green-200’;
+case ‘connecting’: return ‘text-yellow-600 bg-yellow-50 border-yellow-200’;
+case ‘processing’: return ‘text-blue-600 bg-blue-50 border-blue-200’;
+default: return ‘text-gray-600 bg-gray-50 border-gray-200’;
+}
+};
+
+const getMeshStatusColor = () => {
+switch(meshStatus) {
+case ‘active’: return ‘text-green-600’;
+case ‘connecting’: return ‘text-yellow-600’;
+default: return ‘text-gray-400’;
+}
+};
+
+return (
+<div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-6">
+<div className="max-w-7xl mx-auto">
+{/* Header */}
+<div className="text-center mb-8">
+<div className="flex items-center justify-center gap-3 mb-4">
+<Network className="w-12 h-12 text-blue-400" />
+<h1 className="text-4xl font-bold text-white">Unified Intelligence Mesh</h1>
+</div>
+<p className="text-blue-200 text-lg">Solar Standard Protocol • Cross-System Handshakes</p>
+<div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-950 rounded-full border border-blue-700">
+<Activity className={`w-5 h-5 ${getMeshStatusColor()}`} />
+<span className="text-white font-medium">
+Mesh Status: <span className={getMeshStatusColor()}>{meshStatus.toUpperCase()}</span>
+</span>
+</div>
+</div>
+
+```
+    {/* Solar Metrics */}
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div className="bg-gradient-to-br from-yellow-500 to-orange-600 rounded-xl p-6 shadow-lg">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-white/80 text-sm font-medium">Total Solar Consumed</p>
+            <p className="text-white text-3xl font-bold">{totalSolarConsumed.toFixed(4)}</p>
+            <p className="text-white/60 text-xs mt-1">☉ Solar Units</p>
+          </div>
+          <Zap className="w-12 h-12 text-white/30" />
+        </div>
+      </div>
+
+      <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-6 shadow-lg">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-white/80 text-sm font-medium">Connected Systems</p>
+            <p className="text-white text-3xl font-bold">
+              {systems.filter(s => s.status === 'connected').length}/{systems.length}
+            </p>
+            <p className="text-white/60 text-xs mt-1">Active Nodes</p>
+          </div>
+          <CheckCircle className="w-12 h-12 text-white/30" />
+        </div>
+      </div>
+
+      <div className="bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl p-6 shadow-lg">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-white/80 text-sm font-medium">Handshakes Completed</p>
+            <p className="text-white text-3xl font-bold">{handshakes.length}</p>
+            <p className="text-white/60 text-xs mt-1">Protocol Exchanges</p>
+          </div>
+          <Shield className="w-12 h-12 text-white/30" />
+        </div>
+      </div>
+    </div>
+
+    {/* Control Panel */}
+    <div className="bg-slate-800 rounded-xl p-6 mb-6 border border-slate-700">
+      <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+        <Network className="w-5 h-5" />
+        Mesh Control Panel
+      </h2>
+      <div className="flex gap-4">
+        <button
+          onClick={initiateFullMesh}
+          disabled={meshStatus === 'connecting' || meshStatus === 'active'}
+          className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
+        >
+          Initialize Full Mesh
+        </button>
+        <button
+          onClick={() => routeQuery('What is the ethical impact of AI?')}
+          disabled={meshStatus !== 'active'}
+          className="px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
+        >
+          Route Test Query
+        </button>
+        <button
+          onClick={resetMesh}
+          className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
+        >
+          Reset Mesh
+        </button>
+      </div>
+    </div>
+
+    {/* Systems Grid */}
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      {systems.map(system => (
+        <div
+          key={system.id}
+          className={`bg-slate-800 border-2 rounded-xl p-6 transition-all ${getStatusColor(system.status)}`}
+        >
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <h3 className="text-xl font-bold text-white">{system.name}</h3>
+              <p className="text-sm text-gray-400 capitalize">Status: {system.status}</p>
+            </div>
+            <div className={`px-3 py-1 rounded-full text-xs font-bold ${
+              system.status === 'connected' ? 'bg-green-500' :
+              system.status === 'connecting' ? 'bg-yellow-500' :
+              system.status === 'processing' ? 'bg-blue-500' :
+              'bg-gray-500'
+            } text-white`}>
+              {system.status === 'processing' ? 'PROCESSING' :
+               system.status === 'connected' ? 'ONLINE' :
+               system.status === 'connecting' ? 'SYNCING' : 'OFFLINE'}
+            </div>
+          </div>
+
+          <div className="space-y-2 mb-4">
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-400">Solar Cost:</span>
+              <span className="text-white font-mono">{system.solarCost.toFixed(4)} ☉</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-400">Ethics Score:</span>
+              <span className="text-white font-mono">{system.ethicsScore.toFixed(1)}/100</span>
+            </div>
+            {system.lastHandshake && (
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-400">Last Handshake:</span>
+                <span className="text-white text-xs">
+                  {new Date(system.lastHandshake).toLocaleTimeString()}
+                </span>
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-wrap gap-2 mb-4">
+            {system.capabilities.map(cap => (
+              <span key={cap} className="px-2 py-1 bg-slate-700 text-blue-300 text-xs rounded-full">
+                {cap}
+              </span>
+            ))}
+          </div>
+
+          <button
+            onClick={() => initiateHandshake(system.id)}
+            disabled={system.status !== 'idle'}
+            className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
+          >
+            {system.status === 'idle' ? 'Initiate Handshake' :
+             system.status === 'connecting' ? 'Establishing...' :
+             system.status === 'processing' ? 'Processing Query...' : 'Connected'}
+          </button>
+        </div>
+      ))}
+    </div>
+
+    {/* Handshake Log */}
+    <div className="bg-slate-800 rounded-xl p-6 border border-slate-700">
+      <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+        <Hash className="w-5 h-5" />
+        Recent Handshakes
+      </h2>
+      <div className="space-y-3 max-h-96 overflow-y-auto">
+        {handshakes.length === 0 ? (
+          <p className="text-gray-400 text-center py-8">No handshakes yet. Initialize the mesh to begin.</p>
+        ) : (
+          handshakes.map(handshake => (
+            <div key={handshake.id} className="bg-slate-900 rounded-lg p-4 border border-slate-700">
+              <div className="flex items-start justify-between mb-2">
+                <div>
+                  <h3 className="text-white font-bold">{handshake.systemName}</h3>
+                  <p className="text-xs text-gray-400">{new Date(handshake.timestamp).toLocaleString()}</p>
+                </div>
+                <CheckCircle className="w-5 h-5 text-green-500" />
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div>
+                  <span className="text-gray-400">Signature:</span>
+                  <p className="text-blue-300 font-mono">{handshake.signature}</p>
+                </div>
+                <div>
+                  <span className="text-gray-400">Energy:</span>
+                  <p className="text-white font-mono">{handshake.energyConsumed} kWh</p>
+                </div>
+                <div>
+                  <span className="text-gray-400">Solar Equiv:</span>
+                  <p className="text-yellow-300 font-mono">{handshake.solarEquivalent} ☉</p>
+                </div>
+                <div>
+                  <span className="text-gray-400">Ethics:</span>
+                  <p className="text-green-300 font-mono">{handshake.ethicsAlignment}/100</p>
+                </div>
+                <div>
+                  <span className="text-gray-400">Source:</span>
+                  <p className="text-white">{handshake.renewableSource}</p>
+                </div>
+                <div>
+                  <span className="text-gray-400">Rights:</span>
+                  <p className="text-green-300">✓ Compliant</p>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+
+    {/* Protocol Info */}
+    <div className="mt-6 bg-blue-950 border border-blue-800 rounded-xl p-6">
+      <h3 className="text-lg font-bold text-blue-200 mb-2">Solar Standard Protocol</h3>
+      <p className="text-blue-300 text-sm mb-2">
+        1 Solar = {SOLAR_UNIT.toLocaleString()} kWh (Average Daily Renewable Energy Per Human)
+      </p>
+      <p className="text-blue-400 text-xs">
+        Every AI interaction is measured in Solar units, creating accountability through energy equivalence.
+        The UIM routes queries to systems with optimal ethics/energy ratios, ensuring intelligence serves humanity.
+      </p>
+    </div>
+  </div>
+</div>
+```
+
+);
+};
+
+export default UIMHandshakeSystem;
