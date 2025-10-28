@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Satellite ID Anywhere - TC-S Network Foundation</title>
+  <meta name="description" content="Track and analyze any satellite in orbit using NORAD or COSPAR IDs. AI guidance included. Powered by TC-S Unified Intelligence Mesh.">
+  
+  <!-- UIM Service Discovery -->
+  <meta name="uim:service" content="satellite-id-anywhere">
+  <meta name="uim:version" content="1.0.0">
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #000000 0%, #001a1a 100%);
+      min-height: 100vh;
+      color: #ffffff;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    
+    header {
+      text-align: center;
+      padding: 40px 20px;
+      border-bottom: 1px solid rgba(0, 191, 255, 0.2);
+      margin-bottom: 40px;
+    }
+    
+    .logo {
+      color: #00f5d4;
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 2px;
+      margin-bottom: 10px;
+    }
+    
+    h1 {
+      color: #00BFFF;
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 15px;
+      text-shadow: 0 0 20px rgba(0, 191, 255, 0.5);
+    }
+    
+    .subtitle {
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 1.1rem;
+      margin-bottom: 10px;
+    }
+    
+    .uim-badge {
+      display: inline-block;
+      background: rgba(0, 255, 100, 0.1);
+      color: #00ff64;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border: 1px solid rgba(0, 255, 100, 0.3);
+    }
+    
+    .search-section {
+      background: rgba(0, 0, 0, 0.6);
+      border: 2px solid rgba(0, 191, 255, 0.3);
+      border-radius: 20px;
+      padding: 40px;
+      margin-bottom: 40px;
+      backdrop-filter: blur(10px);
+    }
+    
+    .input-group {
+      margin-bottom: 25px;
+    }
+    
+    label {
+      display: block;
+      color: #00BFFF;
+      font-weight: 600;
+      margin-bottom: 10px;
+      font-size: 0.95rem;
+    }
+    
+    input {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      border: 2px solid rgba(0, 191, 255, 0.3);
+      border-radius: 10px;
+      padding: 15px 20px;
+      color: #ffffff;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+    
+    input:focus {
+      outline: none;
+      border-color: #00BFFF;
+      box-shadow: 0 0 20px rgba(0, 191, 255, 0.3);
+    }
+    
+    input::placeholder {
+      color: rgba(255, 255, 255, 0.4);
+    }
+    
+    .button-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-top: 30px;
+    }
+    
+    button {
+      background: linear-gradient(135deg, #00BFFF 0%, #0099CC 100%);
+      color: #000;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0, 191, 255, 0.4);
+    }
+    
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 191, 255, 0.6);
+    }
+    
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    button.secondary {
+      background: transparent;
+      border: 2px solid #00BFFF;
+      color: #00BFFF;
+      box-shadow: none;
+    }
+    
+    button.secondary:hover {
+      background: rgba(0, 191, 255, 0.1);
+    }
+    
+    .examples {
+      margin-top: 20px;
+      padding: 20px;
+      background: rgba(0, 191, 255, 0.05);
+      border-radius: 10px;
+      border: 1px solid rgba(0, 191, 255, 0.1);
+    }
+    
+    .examples h3 {
+      color: #00BFFF;
+      font-size: 0.9rem;
+      margin-bottom: 10px;
+    }
+    
+    .example-links {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+    
+    .example-link {
+      color: #00ff64;
+      text-decoration: none;
+      font-size: 0.9rem;
+      padding: 5px 10px;
+      background: rgba(0, 255, 100, 0.1);
+      border-radius: 5px;
+      border: 1px solid rgba(0, 255, 100, 0.3);
+      transition: all 0.2s ease;
+    }
+    
+    .example-link:hover {
+      background: rgba(0, 255, 100, 0.2);
+      transform: translateY(-1px);
+    }
+    
+    .results-section {
+      display: none;
+      background: rgba(0, 0, 0, 0.6);
+      border: 2px solid rgba(0, 245, 212, 0.3);
+      border-radius: 20px;
+      padding: 40px;
+      backdrop-filter: blur(10px);
+    }
+    
+    .results-section.show {
+      display: block;
+      animation: slideIn 0.4s ease;
+    }
+    
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .satellite-card {
+      background: linear-gradient(135deg, rgba(0, 191, 255, 0.1) 0%, rgba(0, 245, 212, 0.1) 100%);
+      border: 1px solid rgba(0, 191, 255, 0.3);
+      border-radius: 15px;
+      padding: 30px;
+      margin-bottom: 20px;
+    }
+    
+    .satellite-name {
+      color: #00f5d4;
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      text-shadow: 0 0 10px rgba(0, 245, 212, 0.5);
+    }
+    
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+    }
+    
+    .info-item {
+      background: rgba(0, 0, 0, 0.4);
+      padding: 15px;
+      border-radius: 10px;
+      border-left: 4px solid #00BFFF;
+    }
+    
+    .info-label {
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 0.85rem;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .info-value {
+      color: #ffffff;
+      font-size: 1.2rem;
+      font-weight: 600;
+      font-family: 'Courier New', monospace;
+    }
+    
+    .error-message {
+      background: rgba(255, 50, 50, 0.1);
+      border: 2px solid rgba(255, 50, 50, 0.5);
+      border-radius: 10px;
+      padding: 20px;
+      color: #ff6b6b;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #00BFFF;
+    }
+    
+    .spinner {
+      border: 3px solid rgba(0, 191, 255, 0.1);
+      border-top: 3px solid #00BFFF;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .back-button {
+      display: inline-block;
+      color: #00f5d4;
+      text-decoration: none;
+      padding: 12px 24px;
+      background: rgba(0, 245, 212, 0.1);
+      border: 1px solid rgba(0, 245, 212, 0.3);
+      border-radius: 8px;
+      margin-bottom: 20px;
+      transition: all 0.3s ease;
+      font-weight: 600;
+    }
+    
+    .back-button:hover {
+      background: rgba(0, 245, 212, 0.2);
+      transform: translateX(-5px);
+    }
+    
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 2rem;
+      }
+      
+      .search-section {
+        padding: 25px;
+      }
+      
+      .button-group {
+        grid-template-columns: 1fr;
+      }
+      
+      .info-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .example-links {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="/" class="back-button" data-testid="link-back-home">← Back to Home</a>
+    
+    <header>
+      <div class="logo">TC-S NETWORK</div>
+      <h1>🛰️ Satellite ID Anywhere</h1>
+      <p class="subtitle">Track and analyze any satellite in orbit using NORAD or COSPAR IDs</p>
+      <div class="uim-badge">⚡ Powered by Unified Intelligence Mesh</div>
+    </header>
+    
+    <div class="search-section">
+      <div class="input-group">
+        <label for="norad-input">NORAD ID</label>
+        <input 
+          type="text" 
+          id="norad-input" 
+          placeholder="e.g., 25544 (International Space Station)" 
+          data-testid="input-norad"
+        />
+      </div>
+      
+      <div style="text-align: center; margin: 20px 0; color: rgba(255, 255, 255, 0.5);">— OR —</div>
+      
+      <div class="input-group">
+        <label for="cospar-input">COSPAR ID</label>
+        <input 
+          type="text" 
+          id="cospar-input" 
+          placeholder="e.g., 1998-067A (International Space Station)" 
+          data-testid="input-cospar"
+        />
+      </div>
+      
+      <div class="button-group">
+        <button id="search-btn" data-testid="button-search">🔍 Search Satellite</button>
+        <button id="clear-btn" class="secondary" data-testid="button-clear">Clear</button>
+      </div>
+      
+      <div class="examples">
+        <h3>Quick Examples:</h3>
+        <div class="example-links">
+          <a href="#" class="example-link" data-norad="25544" data-testid="link-example-iss">ISS (25544)</a>
+          <a href="#" class="example-link" data-norad="20580" data-testid="link-example-hubble">Hubble (20580)</a>
+          <a href="#" class="example-link" data-norad="43013" data-testid="link-example-jwst">JWST (43013)</a>
+          <a href="#" class="example-link" data-cospar="1998-067A" data-testid="link-example-iss-cospar">ISS (1998-067A)</a>
+        </div>
+      </div>
+    </div>
+    
+    <div id="results-section" class="results-section">
+      <!-- Results will be populated here -->
+    </div>
+  </div>
+  
+  <script>
+    const noradInput = document.getElementById('norad-input');
+    const cosparInput = document.getElementById('cospar-input');
+    const searchBtn = document.getElementById('search-btn');
+    const clearBtn = document.getElementById('clear-btn');
+    const resultsSection = document.getElementById('results-section');
+    
+    // Auto-clear other input when typing
+    noradInput.addEventListener('input', () => {
+      if (noradInput.value) cosparInput.value = '';
+    });
+    
+    cosparInput.addEventListener('input', () => {
+      if (cosparInput.value) noradInput.value = '';
+    });
+    
+    // Enter key support
+    noradInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') searchSatellite();
+    });
+    
+    cosparInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') searchSatellite();
+    });
+    
+    // Search button
+    searchBtn.addEventListener('click', searchSatellite);
+    
+    // Clear button
+    clearBtn.addEventListener('click', () => {
+      noradInput.value = '';
+      cosparInput.value = '';
+      resultsSection.classList.remove('show');
+      noradInput.focus();
+    });
+    
+    // Example links
+    document.querySelectorAll('.example-link').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const norad = e.target.dataset.norad;
+        const cospar = e.target.dataset.cospar;
+        
+        if (norad) {
+          noradInput.value = norad;
+          cosparInput.value = '';
+        } else if (cospar) {
+          cosparInput.value = cospar;
+          noradInput.value = '';
+        }
+        
+        searchSatellite();
+      });
+    });
+    
+    async function searchSatellite() {
+      const norad = noradInput.value.trim();
+      const cospar = cosparInput.value.trim();
+      
+      if (!norad && !cospar) {
+        showError('Please enter either a NORAD ID or COSPAR ID');
+        return;
+      }
+      
+      if (norad && cospar) {
+        showError('Please enter only one ID type (NORAD or COSPAR)');
+        return;
+      }
+      
+      showLoading();
+      
+      try {
+        const queryParam = norad ? `norad=${encodeURIComponent(norad)}` : `cospar=${encodeURIComponent(cospar)}`;
+        const response = await fetch(`/api/lookup?${queryParam}`);
+        
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || 'Satellite not found');
+        }
+        
+        const data = await response.json();
+        showResults(data);
+      } catch (error) {
+        showError(error.message);
+      }
+    }
+    
+    function showLoading() {
+      resultsSection.innerHTML = `
+        <div class="loading">
+          <div class="spinner"></div>
+          <p>Searching satellite database...</p>
+        </div>
+      `;
+      resultsSection.classList.add('show');
+    }
+    
+    function showError(message) {
+      resultsSection.innerHTML = `
+        <div class="error-message">
+          <strong>⚠️ Error</strong><br/>
+          ${message}
+        </div>
+      `;
+      resultsSection.classList.add('show');
+    }
+    
+    function showResults(data) {
+      resultsSection.innerHTML = `
+        <div class="satellite-card">
+          <div class="satellite-name">${data.name || 'Unknown Satellite'}</div>
+          <div class="info-grid">
+            <div class="info-item">
+              <div class="info-label">COSPAR ID</div>
+              <div class="info-value">${data.cospar || 'N/A'}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">NORAD ID</div>
+              <div class="info-value">${data.norad || 'N/A'}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Country</div>
+              <div class="info-value">${data.country || 'N/A'}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Orbital Period</div>
+              <div class="info-value">${data.period || 'N/A'}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Inclination</div>
+              <div class="info-value">${data.inclination || 'N/A'}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Apogee</div>
+              <div class="info-value">${data.apogee || 'N/A'}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Perigee</div>
+              <div class="info-value">${data.perigee || 'N/A'}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Data Source</div>
+              <div class="info-value">${data.source || 'N/A'}</div>
+            </div>
+          </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px; padding-top: 30px; border-top: 1px solid rgba(0, 191, 255, 0.2);">
+          <p style="color: rgba(255, 255, 255, 0.6); font-size: 0.9rem;">
+            🤖 <strong style="color: #00ff64;">AI Insights Coming Soon:</strong> Mission analysis, anomaly detection, and tracking predictions
+          </p>
+        </div>
+      `;
+      resultsSection.classList.add('show');
+    }
+  </script>
+</body>
+</html>
