@@ -1,0 +1,79 @@
+// Assuming Express initialized as: const app = express();
+
+// ================== LOGGING + REQUEST ID ==================
+const { randomUUID } = require('crypto');
+
+app.use((req, res, next) => {
+  const requestId = randomUUID();
+  req.requestId = requestId;
+  res.setHeader("X-Request-ID", requestId);
+  res.setHeader("Cache-Control", "public, max-age=30");
+  res.setHeader("X-Service-Version", "1.0.0");
+  res.setHeader("X-Build-SHA", "urn:sha256:79cb6cf146c700b654d8aa55f17071e6060e682189e51733c2d46134f04a8f74");
+
+  const start = Date.now();
+  res.on('finish', () => {
+    const entry = {
+      timestamp: new Date().toISOString(),
+      request_id: requestId,
+      method: req.method,
+      path: req.path,
+      status: res.statusCode,
+      latency_ms: Date.now() - start
+    };
+    console.log(JSON.stringify(entry));
+  });
+
+  next();
+});
+
+// ================== RATE LIMITER ==================
+const RATE_LIMIT = 60;
+const WINDOW_MS = 60000;
+const requests = {};
+
+function rateLimiter(req, res, next) {
+  const key = req.ip;
+  const now = Date.now();
+
+  if (!requests[key]) {
+    requests[key] = [];
+  }
+
+  requests[key] = requests[key].filter(ts => now - ts < WINDOW_MS);
+
+  if (requests[key].length >= RATE_LIMIT) {
+    return res.status(429).json({
+      error: "rate_limited",
+      retry_after_s: 30,
+      request_id: req.requestId
+    });
+  }
+
+  requests[key].push(now);
+  next();
+}
+app.use(rateLimiter);
+
+// ================== /STATUS ENDPOINT ==================
+app.get('/status', (req, res) => {
+  res.type('html').send(`
+    <html><body style="font-family:Arial;padding:15px">
+      <h2>TC-S Network Satellite ID Anywhere</h2>
+      <p>Status: ✅ Running</p>
+      <p>Version: 1.0.0</p>
+      <p>Build: urn:sha256:79cb6cf146c700b654d8aa55f17071e6060e682189e51733c2d46134f04a8f74</p>
+      <hr/>
+      <h3>API Reference</h3>
+      <ul>
+        <li><a href="/healthz">/healthz</a></li>
+        <li><a href="/readyz">/readyz</a></li>
+        <li><a href="/api/lookup?norad=25544">Lookup: ISS Example</a></li>
+        <li><a href="/openapi.json">OpenAPI Schema</a></li>
+        <li><a href="/.well-known/uim-handshake.json">UIM Handshake</a></li>
+      </ul>
+      <hr/>
+      <p>TC-S Unified Intelligence Mesh Adaptive Service</p>
+    </body></html>
+  `);
+});
