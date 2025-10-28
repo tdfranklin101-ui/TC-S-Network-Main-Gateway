@@ -87,10 +87,73 @@ try {
 
 const PORT = process.env.PORT || 8080;
 
-// UIM HEADERS + REQUEST ID
+// ================== UIM HEADERS + REQUEST ID + LOGGING ==================
+const UIM_VERSION = "1.0.0";
+const UIM_BUILD_SHA = "urn:sha256:79cb6cf146c700b654d8aa55f17071e6060e682189e51733c2d46134f04a8f74";
+
 function addUIMHeaders(req, res) {
-  res.setHeader("X-Request-ID", randomUUID());
-  res.setHeader("Cache-Control", "public, max-age=60");
+  const requestId = randomUUID();
+  req.requestId = requestId;
+  req.startTime = Date.now();
+  
+  res.setHeader("X-Request-ID", requestId);
+  res.setHeader("Cache-Control", "public, max-age=30");
+  res.setHeader("X-Service-Version", UIM_VERSION);
+  res.setHeader("X-Build-SHA", UIM_BUILD_SHA);
+  
+  // Log request on response finish
+  const originalEnd = res.end;
+  res.end = function(...args) {
+    const latency = Date.now() - req.startTime;
+    const logEntry = {
+      timestamp: new Date().toISOString(),
+      request_id: requestId,
+      method: req.method,
+      path: new URL(req.url, `http://${req.headers.host}`).pathname,
+      status: res.statusCode,
+      latency_ms: latency
+    };
+    console.log(JSON.stringify(logEntry));
+    originalEnd.apply(res, args);
+  };
+}
+
+// ================== RATE LIMITER ==================
+const RATE_LIMIT = 60; // requests per window
+const WINDOW_MS = 60000; // 1 minute window
+const requestCounts = new Map();
+
+function checkRateLimit(req, res) {
+  const key = req.headers['x-forwarded-for']?.split(',')[0].trim() 
+    || req.headers['x-real-ip'] 
+    || req.socket.remoteAddress 
+    || 'unknown';
+  const now = Date.now();
+
+  if (!requestCounts.has(key)) {
+    requestCounts.set(key, []);
+  }
+
+  const timestamps = requestCounts.get(key).filter(ts => now - ts < WINDOW_MS);
+  requestCounts.set(key, timestamps);
+
+  if (timestamps.length >= RATE_LIMIT) {
+    res.writeHead(429, { 
+      'Content-Type': 'application/json',
+      'Retry-After': '30'
+    });
+    res.end(JSON.stringify({
+      error: "rate_limited",
+      message: "Too many requests. Please try again later.",
+      retry_after_s: 30,
+      request_id: req.requestId
+    }));
+    return false;
+  }
+
+  timestamps.push(now);
+  requestCounts.set(key, timestamps);
+  return true;
 }
 
 // Simple session storage (in production, use Redis or database)
@@ -688,8 +751,13 @@ console.log('🎯 AI automatic promotion system active');
 const server = http.createServer(async (req, res) => {
   const pathname = new URL(req.url, `http://${req.headers.host}`).pathname;
   
-  // UIM Headers + Request ID
+  // UIM Headers + Request ID + Logging
   addUIMHeaders(req, res);
+  
+  // Rate Limiting (applies to all requests)
+  if (!checkRateLimit(req, res)) {
+    return; // Request was rate limited, response already sent
+  }
   
   // Track page visits for analytics (async, non-blocking)
   if (req.method === 'GET' && !pathname.startsWith('/api/') && !pathname.includes('.')) {
@@ -2028,6 +2096,137 @@ const server = http.createServer(async (req, res) => {
       ]
     }));
     console.log('🛰️ Readyz check: OK');
+    return;
+  }
+
+  // Satellite ID Anywhere - Status endpoint (Human-friendly)
+  if (pathname === '/status' && req.method === 'GET') {
+    res.writeHead(200, { 
+      'Content-Type': 'text/html',
+      'Access-Control-Allow-Origin': '*'
+    });
+    res.end(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TC-S Satellite ID Anywhere - Service Status</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #333;
+    }
+    .container {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    }
+    h2 { 
+      color: #667eea;
+      margin-top: 0;
+      border-bottom: 3px solid #667eea;
+      padding-bottom: 10px;
+    }
+    .status-badge {
+      display: inline-block;
+      background: #10b981;
+      color: white;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-weight: 600;
+      margin-left: 10px;
+    }
+    .metadata {
+      background: #f8fafc;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 20px 0;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+    }
+    .metadata p { margin: 8px 0; }
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+    li {
+      padding: 12px;
+      margin: 8px 0;
+      background: #f1f5f9;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+    li:hover {
+      background: #e2e8f0;
+      transform: translateX(4px);
+    }
+    a {
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    .footer {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 2px solid #e2e8f0;
+      color: #64748b;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>🛰️ TC-S Network Satellite ID Anywhere<span class="status-badge">✅ Running</span></h2>
+    
+    <div class="metadata">
+      <p><strong>Service Version:</strong> ${UIM_VERSION}</p>
+      <p><strong>Build SHA:</strong> ${UIM_BUILD_SHA}</p>
+      <p><strong>Request ID:</strong> ${req.requestId}</p>
+      <p><strong>Timestamp:</strong> ${new Date().toISOString()}</p>
+    </div>
+    
+    <hr/>
+    
+    <h3>📡 API Reference</h3>
+    <ul>
+      <li>🩺 <a href="/healthz">/healthz</a> - Health check endpoint</li>
+      <li>✅ <a href="/readyz">/readyz</a> - Readiness check endpoint</li>
+      <li>🛰️ <a href="/api/lookup?norad=25544">/api/lookup?norad=25544</a> - Lookup ISS by NORAD</li>
+      <li>🛰️ <a href="/api/lookup?cospar=1998-067A">/api/lookup?cospar=1998-067A</a> - Lookup ISS by COSPAR</li>
+      <li>📄 <a href="/openapi.json">/openapi.json</a> - OpenAPI Schema</li>
+      <li>🤝 <a href="/.well-known/uim-handshake.json">/.well-known/uim-handshake.json</a> - UIM Handshake Discovery</li>
+    </ul>
+    
+    <hr/>
+    
+    <h3>🌐 UIM Handshake Protocol</h3>
+    <ul>
+      <li>👋 <a href="/protocols/uim-handshake/v1.0/hello">/protocols/uim-handshake/v1.0/hello</a> - Node Discovery</li>
+      <li>📋 <a href="/protocols/uim-handshake/v1.0/profile">/protocols/uim-handshake/v1.0/profile</a> - Semantic Profile</li>
+      <li>🎯 <a href="/protocols/uim-handshake/v1.0/task">/protocols/uim-handshake/v1.0/task</a> - Task Proposal</li>
+      <li>📊 <a href="/protocols/uim-handshake/v1.0/history">/protocols/uim-handshake/v1.0/history</a> - Handshake History</li>
+      <li>📈 <a href="/protocols/uim-handshake/v1.0/metrics">/protocols/uim-handshake/v1.0/metrics</a> - Energy Metrics</li>
+      <li>🔀 <a href="/protocols/uim-handshake/v1.0/route">/protocols/uim-handshake/v1.0/route</a> - Query Routing</li>
+      <li>🔗 <a href="/protocols/uim-handshake/v1.0/mesh-status">/protocols/uim-handshake/v1.0/mesh-status</a> - Mesh Status</li>
+    </ul>
+    
+    <div class="footer">
+      <p><strong>TC-S Unified Intelligence Mesh</strong></p>
+      <p>Adaptive Service Layer • Solar Standard Protocol v1.0 • 1 Solar = 4,913 kWh</p>
+      <p>Foundation Node: tcs-network-foundation-001 (TIER_1)</p>
+    </div>
+  </div>
+</body>
+</html>`);
+    console.log('📊 Status page served');
     return;
   }
 
