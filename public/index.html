@@ -435,6 +435,22 @@
         padding: 6px;
       }
     }
+    
+    /* Satellite ID Anywhere Promo Mobile Responsive */
+    @media (max-width: 640px) {
+      [data-testid="section-satellite-id-promo"] ul {
+        grid-template-columns: 1fr !important;
+      }
+      
+      [data-testid="section-satellite-id-promo"] h2 {
+        font-size: 1.5rem !important;
+      }
+      
+      [data-testid="section-satellite-id-promo"] {
+        padding: 1.5rem !important;
+        margin: 2rem auto !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -457,6 +473,43 @@
          data-testid="button-solar-dashboard">
          🌞 View Solar Dashboard
       </a>
+    </div>
+
+    <!-- Satellite ID Anywhere Promotional Section -->
+    <div style="max-width: 800px; margin: 3rem auto; padding: 2.5rem; background: rgba(0, 0, 0, 0.8); border-radius: 20px; border: 2px solid #00BFFF; text-align: center; box-shadow: 0 10px 30px rgba(0, 191, 255, 0.2);" data-testid="section-satellite-id-promo">
+      <p style="color: #00f5d4; font-size: 0.95rem; font-weight: 600; margin-bottom: 0.5rem; letter-spacing: 1px; text-shadow: 0 0 8px rgba(0, 245, 212, 0.5);">TC-S NETWORK</p>
+      <h2 style="color: #00BFFF; font-size: 2rem; margin-bottom: 1rem; font-weight: 700; text-shadow: 0 0 10px rgba(0, 191, 255, 0.5);">Satellite ID Anywhere</h2>
+      <p style="color: #ffffff; font-size: 1.1rem; line-height: 1.6; margin-bottom: 0.5rem;">Track and analyze any satellite in orbit using NORAD or COSPAR IDs.</p>
+      <p style="color: #00ff64; font-size: 1rem; margin-bottom: 0.5rem; font-weight: 500;">AI guidance included.</p>
+      <p style="color: rgba(255, 255, 255, 0.8); font-size: 0.95rem; margin-bottom: 1.5rem;">Powered by TC-S Unified Intelligence Mesh.</p>
+      
+      <a href="/satellite-lookup.html" 
+         style="background: linear-gradient(135deg, #00BFFF 0%, #0099CC 100%); color: #000; padding: 1rem 2rem; border-radius: 30px; text-decoration: none; font-weight: 700; font-size: 1.1rem; display: inline-flex; align-items: center; gap: 10px; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0, 191, 255, 0.4); margin-bottom: 2rem;"
+         onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(0, 191, 255, 0.6)'"
+         onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(0, 191, 255, 0.4)'"
+         data-testid="button-launch-satellite-app">
+         Launch App <span style="font-size: 1.2rem;">→</span>
+      </a>
+      
+      <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid rgba(0, 191, 255, 0.2);">
+        <ul style="list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; text-align: left;">
+          <li style="color: rgba(255, 255, 255, 0.9); font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span style="color: #00BFFF; font-size: 1.2rem;">•</span> Worldwide live tracking map
+          </li>
+          <li style="color: rgba(255, 255, 255, 0.9); font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span style="color: #00BFFF; font-size: 1.2rem;">•</span> Real-time satellite profile cards
+          </li>
+          <li style="color: rgba(255, 255, 255, 0.9); font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span style="color: #00BFFF; font-size: 1.2rem;">•</span> AI-generated mission insights
+          </li>
+          <li style="color: rgba(255, 255, 255, 0.9); font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span style="color: #00BFFF; font-size: 1.2rem;">•</span> Operator and payload categorization
+          </li>
+          <li style="color: rgba(255, 255, 255, 0.9); font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem; grid-column: 1 / -1; justify-content: center;">
+            <span style="color: #00BFFF; font-size: 1.2rem;">•</span> Status alerts and anomaly reports
+          </li>
+        </ul>
+      </div>
     </div>
 
     <div class="cards-grid">
