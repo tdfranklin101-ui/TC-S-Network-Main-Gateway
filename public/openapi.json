@@ -1,0 +1,24 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Satellite ID Anywhere",
+    "version": "1.0.0",
+    "description": "Normalize satellite lookups by COSPAR or NORAD"
+  },
+  "paths": {
+    "/api/lookup": {
+      "get": {
+        "summary": "Lookup by COSPAR or NORAD",
+        "parameters": [
+          {"name": "cospar", "in": "query", "schema": {"type": "string"}},
+          {"name": "norad", "in": "query", "schema": {"type": "string"}}
+        ],
+        "responses": {
+          "200": {"description": "Record found"},
+          "400": {"description": "Invalid query"},
+          "404": {"description": "Not found"}
+        }
+      }
+    }
+  }
+}

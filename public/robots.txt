@@ -1,8 +1,3 @@
 User-agent: *
 Allow: /
-Disallow: /api/
-Disallow: /includes/
-Disallow: /js/ai/
-Disallow: /embedded-members
-
-Sitemap: https://www.thecurrentsee.org/sitemap.xml
+Sitemap: https://replit-node-tdfranklin101.replit.app/sitemap.xml

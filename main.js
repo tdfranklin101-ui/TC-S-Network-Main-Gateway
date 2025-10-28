@@ -40,6 +40,7 @@ try {
 
 const { fileTypeFromBuffer } = require('file-type');
 const crypto = require('crypto');
+const { randomUUID } = require('crypto');
 const schedule = require('node-schedule');
 // const { ObjectStorageService } = require('./server/objectStorage'); // Disabled for stable Music Now service
 
@@ -85,6 +86,12 @@ try {
 }
 
 const PORT = process.env.PORT || 8080;
+
+// UIM HEADERS + REQUEST ID
+function addUIMHeaders(req, res) {
+  res.setHeader("X-Request-ID", randomUUID());
+  res.setHeader("Cache-Control", "public, max-age=60");
+}
 
 // Simple session storage (in production, use Redis or database)
 const sessions = new Map();
@@ -680,6 +687,9 @@ console.log('🎯 AI automatic promotion system active');
 
 const server = http.createServer(async (req, res) => {
   const pathname = new URL(req.url, `http://${req.headers.host}`).pathname;
+  
+  // UIM Headers + Request ID
+  addUIMHeaders(req, res);
   
   // Track page visits for analytics (async, non-blocking)
   if (req.method === 'GET' && !pathname.startsWith('/api/') && !pathname.includes('.')) {
@@ -1984,6 +1994,103 @@ const server = http.createServer(async (req, res) => {
         'Access-Control-Allow-Origin': '*'
       });
       res.end(JSON.stringify({ error: 'Mesh status retrieval failed' }));
+    }
+    return;
+  }
+
+  // Satellite ID Anywhere - Healthz endpoint
+  if (pathname === '/healthz' && req.method === 'GET') {
+    res.writeHead(200, { 
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*'
+    });
+    res.end(JSON.stringify({
+      status: "GREEN",
+      service: "satellite-id-anywhere",
+      version: "1.0.0",
+      build_sha: "urn:sha256:79cb6cf146c700b654d8aa55f17071e6060e682189e51733c2d46134f04a8f74",
+      now: new Date().toISOString()
+    }));
+    console.log('🛰️ Healthz check: GREEN');
+    return;
+  }
+
+  // Satellite ID Anywhere - Readyz endpoint
+  if (pathname === '/readyz' && req.method === 'GET') {
+    res.writeHead(200, { 
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*'
+    });
+    res.end(JSON.stringify({
+      ready: true,
+      dependencies: [
+        { name: "catalog_source_primary", status: "OK" }
+      ]
+    }));
+    console.log('🛰️ Readyz check: OK');
+    return;
+  }
+
+  // Satellite ID Anywhere - Lookup API (COSPAR/NORAD)
+  if (pathname === '/api/lookup' && req.method === 'GET') {
+    try {
+      const urlParams = new URL(req.url, `http://${req.headers.host}`);
+      const cospar = urlParams.searchParams.get('cospar');
+      const norad = urlParams.searchParams.get('norad');
+      
+      if ((!cospar && !norad) || (cospar && norad)) {
+        res.writeHead(400, { 
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        });
+        res.end(JSON.stringify({
+          error: "bad_request",
+          message: "Provide either ?cospar or ?norad, not both."
+        }));
+        return;
+      }
+      
+      const id = cospar || norad;
+      const id_type = cospar ? "COSPAR" : "NORAD";
+      
+      // Mock data - ISS example
+      if (id === "25544" || id === "1998-067A") {
+        res.writeHead(200, { 
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        });
+        res.end(JSON.stringify({
+          id: id,
+          id_type,
+          names: ["ISS (ZARYA)", "International Space Station"],
+          launch: { date: "1998-11-20", site: "Baikonur" },
+          orbit: {
+            class: "LEO",
+            periapsis_km: 415,
+            apoapsis_km: 421,
+            inclination_deg: 51.6
+          },
+          operators: ["NASA", "Roscosmos", "ESA", "JAXA", "CSA"],
+          purpose: "Space station",
+          source: "TC-S normalized catalog v1",
+          last_updated: new Date().toISOString()
+        }));
+        console.log(`🛰️ Satellite lookup: ${id} (${id_type})`);
+        return;
+      }
+      
+      // Not found
+      res.writeHead(404, { 
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      });
+      res.end(JSON.stringify({
+        error: "not_found",
+        message: "Satellite record not found"
+      }));
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Internal server error' }));
     }
     return;
   }

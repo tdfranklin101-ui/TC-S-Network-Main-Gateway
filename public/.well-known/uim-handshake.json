@@ -1,0 +1,31 @@
+{
+  "uim_version": "0.2",
+  "service": {
+    "name": "TC-S Network Satellite ID Anywhere",
+    "slug": "satellite-id-anywhere",
+    "description": "Lookup and normalize satellite records by COSPAR or NORAD, emitting UIM-ready responses.",
+    "owner": "TC-S Network Foundation, Inc.",
+    "contact": "ops@thecurrentsee.org",
+    "homepage": "https://replit-node-tdfranklin101.replit.app"
+  },
+  "capabilities": [
+    "lookup.cospar",
+    "lookup.norad",
+    "normalize.record"
+  ],
+  "endpoints": {
+    "healthz": "/healthz",
+    "readyz": "/readyz",
+    "lookup": "/api/lookup",
+    "openapi": "/openapi.json"
+  },
+  "versioning": {
+    "semver": "1.0.0",
+    "build_sha": "urn:sha256:79cb6cf146c700b654d8aa55f17071e6060e682189e51733c2d46134f04a8f74",
+    "released_at": "2025-10-27T00:00:00Z"
+  },
+  "taxonomy": {
+    "domain": ["space", "satellite"],
+    "uim_tags": ["SAiSEO", "TC-S"]
+  }
+}
