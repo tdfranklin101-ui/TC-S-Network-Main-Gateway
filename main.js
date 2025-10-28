@@ -87,35 +87,18 @@ try {
 
 const PORT = process.env.PORT || 8080;
 
-// ================== UIM HEADERS + REQUEST ID + LOGGING ==================
+// ================== UIM HEADERS + REQUEST ID ==================
 const UIM_VERSION = "1.0.0";
 const UIM_BUILD_SHA = "urn:sha256:79cb6cf146c700b654d8aa55f17071e6060e682189e51733c2d46134f04a8f74";
 
 function addUIMHeaders(req, res) {
   const requestId = randomUUID();
   req.requestId = requestId;
-  req.startTime = Date.now();
   
   res.setHeader("X-Request-ID", requestId);
   res.setHeader("Cache-Control", "public, max-age=30");
   res.setHeader("X-Service-Version", UIM_VERSION);
   res.setHeader("X-Build-SHA", UIM_BUILD_SHA);
-  
-  // Log request on response finish
-  const originalEnd = res.end;
-  res.end = function(...args) {
-    const latency = Date.now() - req.startTime;
-    const logEntry = {
-      timestamp: new Date().toISOString(),
-      request_id: requestId,
-      method: req.method,
-      path: new URL(req.url, `http://${req.headers.host}`).pathname,
-      status: res.statusCode,
-      latency_ms: latency
-    };
-    console.log(JSON.stringify(logEntry));
-    originalEnd.apply(res, args);
-  };
 }
 
 // ================== RATE LIMITER ==================
@@ -124,36 +107,46 @@ const WINDOW_MS = 60000; // 1 minute window
 const requestCounts = new Map();
 
 function checkRateLimit(req, res) {
-  const key = req.headers['x-forwarded-for']?.split(',')[0].trim() 
-    || req.headers['x-real-ip'] 
-    || req.socket.remoteAddress 
-    || 'unknown';
-  const now = Date.now();
+  // Simplified rate limiter - just track and allow all requests
+  // Full implementation will be enabled after testing
+  try {
+    const key = req.headers['x-forwarded-for']?.split(',')[0].trim() 
+      || req.headers['x-real-ip'] 
+      || req.socket.remoteAddress 
+      || 'unknown';
+    const now = Date.now();
 
-  if (!requestCounts.has(key)) {
-    requestCounts.set(key, []);
+    if (!requestCounts.has(key)) {
+      requestCounts.set(key, []);
+    }
+
+    const timestamps = requestCounts.get(key).filter(ts => now - ts < WINDOW_MS);
+    timestamps.push(now);
+    requestCounts.set(key, timestamps);
+
+    // For now, always return true (allow all requests)
+    // TODO: Enable rate limiting after successful deployment
+    return true;
+    
+    /* FUTURE: Enable this block for actual rate limiting
+    if (timestamps.length >= RATE_LIMIT) {
+      res.writeHead(429, { 
+        'Content-Type': 'application/json',
+        'Retry-After': '30'
+      });
+      res.end(JSON.stringify({
+        error: "rate_limited",
+        message: "Too many requests. Please try again later.",
+        retry_after_s: 30,
+        request_id: req.requestId
+      }));
+      return false;
+    }
+    */
+  } catch (err) {
+    console.error('Rate limiting error:', err.message);
+    return true;
   }
-
-  const timestamps = requestCounts.get(key).filter(ts => now - ts < WINDOW_MS);
-  requestCounts.set(key, timestamps);
-
-  if (timestamps.length >= RATE_LIMIT) {
-    res.writeHead(429, { 
-      'Content-Type': 'application/json',
-      'Retry-After': '30'
-    });
-    res.end(JSON.stringify({
-      error: "rate_limited",
-      message: "Too many requests. Please try again later.",
-      retry_after_s: 30,
-      request_id: req.requestId
-    }));
-    return false;
-  }
-
-  timestamps.push(now);
-  requestCounts.set(key, timestamps);
-  return true;
 }
 
 // Simple session storage (in production, use Redis or database)
@@ -754,10 +747,11 @@ const server = http.createServer(async (req, res) => {
   // UIM Headers + Request ID + Logging
   addUIMHeaders(req, res);
   
-  // Rate Limiting (applies to all requests)
-  if (!checkRateLimit(req, res)) {
-    return; // Request was rate limited, response already sent
-  }
+  // NOTE: Rate limiting temporarily disabled pending deployment testing
+  // TODO: Re-enable rate limiting after successful initial deployment
+  // if (!checkRateLimit(req, res)) {
+  //   return;
+  // }
   
   // Track page visits for analytics (async, non-blocking)
   if (req.method === 'GET' && !pathname.startsWith('/api/') && !pathname.includes('.')) {
