@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>White Paper Suite · Part 4 — Safe SAI: Human Flourishing as the Primary Output</title>
+<meta name="description" content="Part 4: A safety-first blueprint for superintelligence where humanity is the beneficiary — life, dignity, opportunity, and environmental resilience — with measurable guardrails and public accountability.">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0b0f13;--panel:#0f141a;--panel2:#121822;--text:#e6f1ff;--muted:#a9b8c9;--teal:#12d6c5;--border:#1f2a36;--good:#1fd499;--warn:#f5b44c;--bad:#ff5f73}
+  *{box-sizing:border-box} html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+  a{color:#7af6ea;text-decoration:none} a:hover{text-decoration:underline}
+  .wrap{max-width:1100px;margin:0 auto;padding:28px}
+  header{padding:36px 0 12px;border-bottom:1px solid var(--border)}
+  .eyebrow{color:var(--teal);font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+  h1{font-size:clamp(28px,4vw,44px);line-height:1.1;margin:8px 0 8px}
+  .sub{color:var(--muted);max-width:920px}
+  .pill{display:inline-block;margin:6px 8px 0 0;padding:6px 10px;border:1px solid var(--border);border-radius:999px;color:var(--muted);font-size:12px}
+  .card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--border);border-radius:14px;padding:18px;margin-top:18px}
+  h2{font-size:22px;margin:0 0 8px} h3{font-size:18px;margin:14px 0 8px}
+  p{opacity:.96} .muted{color:var(--muted)}
+  .rule{height:1px;background:var(--border);margin:24px 0}
+  details.acc{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-top:12px}
+  details.acc[open] summary{background:rgba(18,214,197,.06)}
+  summary{cursor:pointer;list-style:none;padding:16px 18px;font-weight:700;display:flex;align-items:center;justify-content:space-between}
+  summary::-webkit-details-marker{display:none}
+  .content{padding:0 18px 18px 18px}
+  .badge{font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid var(--border);color:var(--muted)}
+  .ok{color:var(--good);border-color:rgba(31,212,153,.4)}
+  .warn{color:var(--warn);border-color:rgba(245,180,76,.4)}
+  .bad{color:var(--bad);border-color:rgba(255,95,115,.4)}
+  .kpi{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px}
+  .kpi .box{flex:1;min-width:220px;border:1px dashed var(--border);border-radius:12px;padding:12px;background:#0b1219}
+  .num{font-size:22px;font-weight:800;color:var(--teal)}
+  .tagrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .tag{font-size:12px;padding:6px 8px;border:1px solid var(--border);border-radius:8px;color:var(--muted)}
+  .callout{border-left:3px solid var(--teal);padding:10px 14px;background:rgba(18,214,197,.06);border-radius:8px}
+  code{background:#0b1219;border:1px solid var(--border);padding:2px 6px;border-radius:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">White Paper Suite · Part 4</div>
+    <h1>Safe SAI: Human Flourishing as the Primary Output</h1>
+    <p class="sub">Superintelligence must measurably expand the substance of life: healthspan, knowledge access, creative and economic opportunity, environmental resilience, and dignity. This chapter turns Solar directives into <em>safety governance</em>, <em>public accountability</em>, and <em>mission dashboards</em>.</p>
+    <div>
+      <a class="pill" href="/part-1-genius-act-reserve.html">Part 1</a>
+      <a class="pill" href="/part-2-uim-solar-standard.html">Part 2</a>
+      <a class="pill" href="/part-3-uim-organized-acceleration.html">Part 3</a>
+      <span class="pill" aria-current="page">Part 4</span>
+    </div>
+  </header>
+
+  <section class="card">
+    <h2>Principle: Purpose Before Power</h2>
+    <p class="callout"><strong>SAI serves human flourishing.</strong> The mesh approves capabilities only when they pass rights audits, clear energy accounting, and advance published social KPIs. “Can we?” is subordinate to “Should we?” and “Who benefits?”</p>
+    <div class="kpi">
+      <div class="box"><div class="num">5 Pillars</div><div class="muted">Life · Knowledge · Opportunity · Environment · Dignity</div></div>
+      <div class="box"><div class="num">Public KPIs</div><div class="muted">Open dashboards, mission ledgers, incident registries</div></div>
+      <div class="box"><div class="num">Receipts</div><div class="muted">Rights + energy + outcome proofs, not claims</div></div>
+    </div>
+  </section>
+
+  <details class="acc" open>
+    <summary>1. From Signals to Safeguards <span class="badge ok">Mechanism</span></summary>
+    <div class="content">
+      <p>The Part-3 averaging engine yields <code>D(c,t)</code> (priority demand). Safe SAI layers three gates before large-scale routing:</p>
+      <ol>
+        <li><strong>Rights Gate:</strong> model must meet privacy/safety/fairness thresholds; auditable controls active.</li>
+        <li><strong>Energy Gate:</strong> compute must declare source and kWh; Solar-priced budgets cap externalities.</li>
+        <li><strong>Mission Fit Gate:</strong> contribution to the relevant Pillar KPI is testable and non-illusory (no Goodharting).</li>
+      </ol>
+      <p>Only then does the router allocate ComputeShare. Gates are public; denials include reasons and appeal paths.</p>
+    </div>
+  </details>
+
+  <details class="acc">
+    <summary>2. Pillars & Metrics of Human Flourishing <span class="badge ok">Targets</span></summary>
+    <div class="content">
+      <ul>
+        <li><strong>Life:</strong> healthy life expectancy, disease-burden reduction, safety indices.</li>
+        <li><strong>Knowledge:</strong> learning gains, literacy breadth, research reproducibility.</li>
+        <li><strong>Opportunity:</strong> income mobility, SME formation, time-to-job, creator earnings.</li>
+        <li><strong>Environment:</strong> emissions avoided, biodiversity proxies, resilience scores.</li>
+        <li><strong>Dignity:</strong> due-process access, bias reduction, recourse efficacy.</li>
+      </ul>
+      <p>Each mission defines pre-registered KPIs, methods, and acceptable evidence. Receipts attach outcome measurements (privacy-preserving aggregations).</p>
+    </div>
+  </details>
+
+  <details class="acc">
+    <summary>3. Safety Engineering for SAI Capabilities <span class="badge warn">Controls</span></summary>
+    <div class="content">
+      <ul>
+        <li><strong>Capability tiering:</strong> higher-risk tools (autonomy, synthesis, bio, cyber) require stricter proofs, slower rollout, and shadow-mode evaluation.</li>
+        <li><strong>Containment:</strong> TEEs, deterministic sandboxes, rate-limited tool APIs, policy-constrained planning.</li>
+        <li><strong>Red-team exchanges:</strong> inter-lab adversarial testing with bounty incentives and mandatory post-mortems.</li>
+        <li><strong>Kill-switch federation:</strong> multi-party emergency controls with time-locks, quorum, and public disclosures.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="acc">
+    <summary>4. Equity & Anti-Capture Architecture <span class="badge warn">Justice</span></summary>
+    <div class="content">
+      <ul>
+        <li><strong>Universal Solar dividend:</strong> 1 Solar/day cannot be bought to amplify vote; redeemed tokens retire.</li>
+        <li><strong>Plural weighting:</strong> the implicit engine boosts underserved needs; anti-monopoly caps prevent dominance.</li>
+        <li><strong>Bicameral upgrades:</strong> People (Solar-weighted) × Nodes (stake/uptime) with rights veto and minority reports.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="acc">
+    <summary>5. Public Mission Ledger & Retirement Rules <span class="badge ok">Accountability</span></summary>
+    <div class="content">
+      <p>Each mission has:</p>
+      <ul>
+        <li><strong>Open dossier:</strong> scope, KPIs, risks, stakeholders, equity analysis.</li>
+        <li><strong>Milestones:</strong> objective thresholds that trigger partial/complete retirement.</li>
+        <li><strong>Receipts feed:</strong> energy, rights, and outcome proof streams.</li>
+      </ul>
+      <p>On retirement, ComputeShare auto-rebalances to the next highest <code>D(c,t)</code>. Historical gains remain visible for audit and learning.</p>
+    </div>
+  </details>
+
+  <details class="acc">
+    <summary>6. Developer & Enterprise On-Ramps <span class="badge ok">Adoption</span></summary>
+    <div class="content">
+      <ul>
+        <li><strong>Attribution markets:</strong> fractional credit for partial contributions; revenue shares enforced by receipts.</li>
+        <li><strong>Privacy tiers:</strong> sovereign and enterprise meshes connect via standard capability descriptors and proofs.</li>
+        <li><strong>Procurement advantage:</strong> Solar-audited compute qualifies for public/ESG contracts by default.</li>
+      </ul>
+    </div>
+  </details>
+
+  <section class="card">
+    <h2>Roadmap to Safe SAI</h2>
+    <ol>
+      <li>Publish Pillar KPIs and evidence standards; open comment period.</li>
+      <li>Launch Mission Ledger with at least 5 pilot challenges per Pillar.</li>
+      <li>Integrate the three gates (Rights, Energy, Mission Fit) into the router.</li>
+      <li>Stand up red-team exchange and incident registry; fund bounties.</li>
+      <li>Release public dashboards for <code>D(c,t)</code>, ComputeShare, outcomes, and retirements.</li>
+    </ol>
+    <p class="callout"><strong>North Star:</strong> Superintelligence is safe not because it is weak, but because its power is <em>aimed</em> — at flourishing, transparently, with receipts.</p>
+  </section>
+</div>
+<script>
+  document.querySelectorAll('details > summary').forEach(s=>{
+    s.addEventListener('keydown',e=>{
+      if(e.key===' '||e.key==='Enter'){e.preventDefault();s.parentElement.open=!s.parentElement.open;}
+    });
+  });
+</script>
+</body>
+</html>

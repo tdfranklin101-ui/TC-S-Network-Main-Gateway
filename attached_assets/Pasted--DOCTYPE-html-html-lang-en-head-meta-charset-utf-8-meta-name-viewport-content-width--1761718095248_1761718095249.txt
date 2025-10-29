@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>White Paper Suite · Part 3 — UIM → SAI via Ethical Algorithms & Solar Directives</title>
+<meta name="description" content="Part 3: Organized acceleration toward SAI. Ethical optimization, Solar directives, and a statistical averaging engine that blends explicit spend with inferred benefit-seeking signals to route compute in real time.">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0b0f13;--panel:#0f141a;--panel2:#121822;--text:#e6f1ff;--muted:#a9b8c9;--teal:#12d6c5;--border:#1f2a36;--good:#1fd499;--warn:#f5b44c;--bad:#ff5f73}
+  *{box-sizing:border-box} html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+  a{color:#7af6ea;text-decoration:none} a:hover{text-decoration:underline}
+  .wrap{max-width:1100px;margin:0 auto;padding:28px}
+  header{padding:36px 0 12px;border-bottom:1px solid var(--border)}
+  .eyebrow{color:var(--teal);font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+  h1{font-size:clamp(28px,4vw,44px);line-height:1.1;margin:8px 0 8px}
+  .sub{color:var(--muted);max-width:920px}
+  .pill{display:inline-block;margin:6px 8px 0 0;padding:6px 10px;border:1px solid var(--border);border-radius:999px;color:var(--muted);font-size:12px}
+  .card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--border);border-radius:14px;padding:18px;margin-top:18px}
+  h2{font-size:22px;margin:0 0 8px} h3{font-size:18px;margin:14px 0 8px}
+  p{opacity:.96} .muted{color:var(--muted)}
+  .rule{height:1px;background:var(--border);margin:24px 0}
+  details.acc{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-top:12px}
+  details.acc[open] summary{background:rgba(18,214,197,.06)}
+  summary{cursor:pointer;list-style:none;padding:16px 18px;font-weight:700;display:flex;align-items:center;justify-content:space-between}
+  summary::-webkit-details-marker{display:none}
+  .content{padding:0 18px 18px 18px}
+  .badge{font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid var(--border);color:var(--muted)}
+  .ok{color:var(--good);border-color:rgba(31,212,153,.4)}
+  .warn{color:var(--warn);border-color:rgba(245,180,76,.4)}
+  .bad{color:var(--bad);border-color:rgba(255,95,115,.4)}
+  .kpi{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px}
+  .kpi .box{flex:1;min-width:220px;border:1px dashed var(--border);border-radius:12px;padding:12px;background:#0b1219}
+  .num{font-size:22px;font-weight:800;color:var(--teal)}
+  .tagrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .tag{font-size:12px;padding:6px 8px;border:1px solid var(--border);border-radius:8px;color:var(--muted)}
+  .callout{border-left:3px solid var(--teal);padding:10px 14px;background:rgba(18,214,197,.06);border-radius:8px}
+  code{background:#0b1219;border:1px solid var(--border);padding:2px 6px;border-radius:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">White Paper Suite · Part 3</div>
+    <h1>UIM → SAI: Ethical Algorithms & Solar Directives</h1>
+    <p class="sub">Organized acceleration: compute is routed by <strong>performance</strong>, <strong>energy efficiency</strong>, and <strong>human-rights alignment</strong> — and <em>prioritized</em> by a Solar-based market of signals that blends explicit spending with inferred benefit-seeking. Actions follow thoughts: we plan precisely, then execute.</p>
+    <div>
+      <a class="pill" href="/part-1-genius-act-reserve.html">Part 1</a>
+      <a class="pill" href="/part-2-uim-solar-standard.html">Part 2</a>
+      <span class="pill" aria-current="page">Part 3</span>
+    </div>
+  </header>
+
+  <section class="card" id="thesis">
+    <h2>Thesis</h2>
+    <p class="callout"><strong>Evolution = Performance × Ethics × Energy Efficiency.</strong> The mesh promotes systems that are accurate, rights-aligned, and energy-thrifty. <em>Solar directives</em> add the steering: humanity’s priorities, expressed explicitly and implicitly, guide where intelligence concentrates next.</p>
+    <div class="kpi">
+      <div class="box"><div class="num">1 Solar / person / day</div><div class="muted">Universal access to compute & signaling.</div></div>
+      <div class="box"><div class="num">Mesh &gt; Silos</div><div class="muted">Interoperability and composite cognition.</div></div>
+      <div class="box"><div class="num">Proofs, not claims</div><div class="muted">Rights & energy receipts as machine-readable attestations.</div></div>
+    </div>
+  </section>
+
+  <details class="acc" open>
+    <summary>1. Ethical Optimization Algorithms <span class="badge ok">Core</span></summary>
+    <div class="content">
+      <p>Each model exposes auditable controls (privacy, safety, bias, recourse). Runtime monitors emit verifiable receipts (ZK attestations or enclave proofs) that thresholds were met. Routing multipliers reward models with higher verified alignment per unit energy:</p>
+      <p><code>TrafficWeight = f(Accuracy, Energy⁻¹, RightsScore)</code></p>
+      <p>RightsScore derives from machine-auditable law (GDPR/CCPA safety/privacy, fairness parity tests, appeal pathways). Fail → throttle & review. Pass → boost & propagate.</p>
+    </div>
+  </details>
+
+  <details class="acc">
+    <summary>2. Solar Directives via Statistical Averaging <span class="badge ok">Priority Engine</span></summary>
+    <div class="content">
+      <h3>2.1 Dual Signal Sources</h3>
+      <ul>
+        <li><strong>Explicit Spend:</strong> people <em>buy</em> queries or <em>stake</em> Solar to missions (e.g., “Alzheimer’s research”).</li>
+        <li><strong>Implicit Benefit Inference:</strong> the system infers priorities from revealed preferences — which services people use, measured benefit indices (health, time saved, risk reduced), and outcome lift across demographics.</li>
+      </ul>
+      <h3>2.2 Statistical Averaging Engine</h3>
+      <p>The directive signal for a challenge <code>c</code> at time <code>t</code> blends explicit and implicit components with adaptive weights:</p>
+      <p><code>D(c,t) = α(t)·Explicit(c,t) + (1−α(t))·Implicit(c,t)</code></p>
+      <ul>
+        <li><em>Explicit(c,t)</em>: sum of Solar queries, stakes, and bounties targeted to <code>c</code>, normalized by population.</li>
+        <li><em>Implicit(c,t)</em>: demand inferred from usage, unmet-need scores, QoL lift, and equity adjustments.</li>
+        <li><em>α(t)</em> adapts with market reliability (e.g., higher when explicit participation is broad and non-manipulated).</li>
+      </ul>
+      <p>Compute routing uses a market-clearing share:</p>
+      <p><code>ComputeShare(c,t) = D(c,t) / Σ_c D(c,t)</code></p>
+      <div class="callout"><strong>Result:</strong> real-time “supply & demand” for intelligence. People can spend directly, but the mesh also learns what people value from the benefits they actually pursue.</div>
+    </div>
+  </details>
+
+  <details class="acc">
+    <summary>3. The Solar Prioritization Loop <span class="badge ok">Steering</span></summary>
+    <div class="content">
+      <ol>
+        <li><strong>Signal:</strong> Explicit stakes + implicit benefits generate <em>D(c,t)</em>.</li>
+        <li><strong>Route:</strong> ComputeShare sends workloads to the best aligned, efficient models.</li>
+        <li><strong>Solve:</strong> Milestones are hit; receipts verify progress and outcome lift.</li>
+        <li><strong>Retire:</strong> When a target KPI passes a threshold, the challenge “retires”; share rebalances to the next need.</li>
+        <li><strong>Repeat:</strong> Humanity continuously reprioritizes; the mesh compounds capability.</li>
+      </ol>
+      <div class="tagrow">
+        <span class="tag">Market Clearing</span><span class="tag">Revealed Preferences</span><span class="tag">Equity Adjustments</span><span class="tag">Auto-Reallocation</span>
+      </div>
+    </div>
+  </details>
+
+  <details class="acc">
+    <summary>4. Implicit Demand: How We Infer What People Value <span class="badge warn">Inference</span></summary>
+    <div class="content">
+      <ul>
+        <li><strong>Usage:</strong> task volumes, repeat queries, dwell time, satisfaction.</li>
+        <li><strong>Outcome Lifts:</strong> health/time/income/learning gains, safety deltas.</li>
+        <li><strong>Unmet Need Index:</strong> waitlists, failure rates, complaint clusters.</li>
+        <li><strong>Equity Factor:</strong> boosts for underserved regions/demographics.</li>
+      </ul>
+      <p>All inference respects privacy: only aggregates and differentially private stats feed the engine; raw personal data never leaves enclaves.</p>
+    </div>
+  </details>
+
+  <details class="acc">
+    <summary>5. Anti-Gaming & Integrity Controls <span class="badge warn">Safeguards</span></summary>
+    <div class="content">
+      <ul>
+        <li><strong>Sybil-resistant personhood</strong> for explicit spend; rate limits; anomaly detection.</li>
+        <li><strong>Cross-oracle validation</strong> for implicit signals; randomized audits; penalties exceed expected gain.</li>
+        <li><strong>Rights & energy receipts</strong> required for routing eligibility.</li>
+        <li><strong>Transparency:</strong> public dashboards show <em>D(c,t)</em>, ComputeShare, milestones, and retirements.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="acc">
+    <summary>6. Why This Drives SAI Emergence Safely <span class="badge ok">Outcome</span></summary>
+    <div class="content">
+      <p>Every gain (algorithmic, ethical, energetic) is instantly reusable via receipts and capability descriptors. The averaging engine keeps priorities plural and dynamic, preventing single-point capture. Superintelligent behaviors emerge from <em>cooperation</em>, not centralization.</p>
+    </div>
+  </details>
+
+  <section class="card">
+    <h2>Action: Implement the Averaging Engine (MVP)</h2>
+    <ol>
+      <li>Define challenge catalog and KPIs; publish public IDs.</li>
+      <li>Wire explicit channels (stake, query bounties) to <em>Explicit(c,t)</em>.</li>
+      <li>Stand up privacy-preserving telemetry for <em>Implicit(c,t)</em> (DP + enclaves).</li>
+      <li>Publish <em>D(c,t)</em> and <em>ComputeShare</em> in a live dashboard; expose a routing API.</li>
+      <li>Run a 12-week pilot across 3–5 heterogeneous model families; measure retirements.</li>
+    </ol>
+  </section>
+</div>
+<script>
+  document.querySelectorAll('details > summary').forEach(s=>{
+    s.addEventListener('keydown',e=>{
+      if(e.key===' '||e.key==='Enter'){e.preventDefault();s.parentElement.open=!s.parentElement.open;}
+    });
+  });
+</script>
+</body>
+</html>
