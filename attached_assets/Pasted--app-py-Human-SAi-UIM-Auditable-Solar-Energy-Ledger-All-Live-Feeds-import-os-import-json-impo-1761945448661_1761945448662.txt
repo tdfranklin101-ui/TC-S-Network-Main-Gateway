@@ -1,0 +1,208 @@
+# app.py | Human + SAi/UIM Auditable Solar Energy Ledger (All Live Feeds)
+import os
+import json
+import math
+import hashlib
+import datetime
+import calendar
+import requests
+import psycopg2
+import psycopg2.extras
+from fastapi import FastAPI
+from fastapi.responses import HTMLResponse, JSONResponse
+
+DB_URL = os.getenv("SUPABASE_DB_URL")
+EIA_API_KEY = os.getenv("EIA_API_KEY")
+
+app = FastAPI(title="Human Auditable Energy Ledger – Live Feeds")
+
+def db():
+    return psycopg2.connect(DB_URL, sslmode="require")
+
+def sha256d(d: dict) -> str:
+    return hashlib.sha256(json.dumps(d, sort_keys=True).encode()).hexdigest()
+
+# ---- DB insert (auditable) ----
+def insert_record(category: str, source: dict, kwh_value: float, rights: dict, note: str = ""):
+    if kwh_value is None or not math.isfinite(kwh_value):
+        return
+    conn = db()
+    cur = conn.cursor()
+    # Ensure category
+    cur.execute("INSERT INTO categories (name) VALUES (%s) ON CONFLICT (name) DO NOTHING;", (category,))
+    cur.execute("SELECT id FROM categories WHERE name=%s;", (category,))
+    cat_id = cur.fetchone()[0]
+    # Ensure source
+    cur.execute("""
+        INSERT INTO data_sources (name, organization, verification_level, uri, source_type)
+        VALUES (%s,%s,%s,%s,%s)
+        ON CONFLICT (name) DO NOTHING;
+    """, (
+        source["name"],
+        source.get("organization",""),
+        source.get("verification_level","THIRD_PARTY"),
+        source.get("uri",""),
+        source.get("source_type","DIRECT"),
+    ))
+    cur.execute("SELECT id FROM data_sources WHERE name=%s;", (source["name"],))
+    src_id = cur.fetchone()[0]
+    payload = {
+        "category": category,
+        "kwh": kwh_value,
+        "source": source,
+        "rights_alignment": rights,
+        "day": str(datetime.date.today())
+    }
+    h = sha256d(payload)
+    cur.execute("""
+        INSERT INTO category_energy_audit
+            (category_id, source_id, day, kwh, rights_alignment, data_hash, notes)
+        VALUES (%s,%s,%s,%s,%s,%s,%s)
+        ON CONFLICT DO NOTHING;
+    """, (cat_id, src_id, datetime.date.today(), kwh_value, json.dumps(rights), h, note))
+    conn.commit()
+    conn.close()
+
+# ---- helpers ----
+def eia_month_to_daily_kwh(mwh_monthly: float, year: int, month: int) -> float:
+    """Convert monthly MWh to average daily kWh for that month."""
+    days = calendar.monthrange(year, month)[1]
+    return (mwh_monthly * 1000.0) / days  # MWh->kWh, then /days
+
+def get_latest_month_year():
+    today = datetime.date.today()
+    # EIA monthly data often lags ~1–2 months; we always parse the latest available entry from API
+    return today.year, today.month  # used for display; real month is read from API entries
+
+# ---- EIA v2 retail sales for sector (MWh monthly) ----
+# sector IDs: RES (residential), COM (commercial), IND (industrial), TRA (transportation), OTH (other)
+def eia_retail_sales_latest_mwh(sector: str):
+    if not EIA_API_KEY:
+        return None, None, None
+    url = (
+        f"https://api.eia.gov/v2/electricity/retail-sales/data/"
+        f"?api_key={EIA_API_KEY}&data[0]=sales&facets[sectorid][]={sector}"
+        f"&sort[0][column]=period&sort[0][direction]=desc&offset=0&length=1"
+    )
+    r = requests.get(url, timeout=20)
+    j = r.json()
+    row = j["response"]["data"][0]
+    # row keys include: "period" (YYYY-MM), "sales" (MWh), "sectorid"
+    period = row["period"]
+    y, m = map(int, period.split("-"))
+    mwh = float(row["sales"])
+    return mwh, y, m
+
+# ---- Category feed functions (DIRECT) ----
+def feed_housing_kwh():
+    mwh, y, m = eia_retail_sales_latest_mwh("RES")
+    return eia_month_to_daily_kwh(mwh, y, m), {"name":"EIA Retail Sales – Residential", "organization":"EIA", "verification_level":"THIRD_PARTY", "uri":"https://api.eia.gov", "source_type":"DIRECT"}, f"US monthly retail sales (RES) {y}-{m:02d}"
+
+def feed_digital_services_kwh():
+    # Using COM as direct proxy for commercial data centers/office ICT loads
+    mwh, y, m = eia_retail_sales_latest_mwh("COM")
+    return eia_month_to_daily_kwh(mwh, y, m), {"name":"EIA Retail Sales – Commercial", "organization":"EIA", "verification_level":"THIRD_PARTY", "uri":"https://api.eia.gov", "source_type":"DIRECT"}, f"US monthly retail sales (COM) {y}-{m:02d} – proxy for digital services"
+
+def feed_manufacturing_kwh():
+    mwh, y, m = eia_retail_sales_latest_mwh("IND")
+    return eia_month_to_daily_kwh(mwh, y, m), {"name":"EIA Retail Sales – Industrial", "organization":"EIA", "verification_level":"THIRD_PARTY", "uri":"https://api.eia.gov", "source_type":"DIRECT"}, f"US monthly retail sales (IND) {y}-{m:02d}"
+
+def feed_transport_kwh():
+    mwh, y, m = eia_retail_sales_latest_mwh("TRA")
+    return eia_month_to_daily_kwh(mwh, y, m), {"name":"EIA Retail Sales – Transportation", "organization":"EIA", "verification_level":"THIRD_PARTY", "uri":"https://api.eia.gov", "source_type":"DIRECT"}, f"US monthly retail sales (TRA) {y}-{m:02d}"
+
+def feed_food_agriculture_kwh():
+    # Best direct electric proxy from EIA is OTHER sector; agricultural electricity is commonly grouped here
+    mwh, y, m = eia_retail_sales_latest_mwh("OTH")
+    return eia_month_to_daily_kwh(mwh, y, m), {"name":"EIA Retail Sales – Other (Ag/Other)", "organization":"EIA", "verification_level":"THIRD_PARTY", "uri":"https://api.eia.gov", "source_type":"DIRECT"}, f"US monthly retail sales (OTH) {y}-{m:02d}"
+
+# ---- Money / Currency – DIRECT (Bitcoin energy, CBECI) ----
+def feed_money_kwh():
+    # Cambridge Bitcoin Electricity Consumption Index
+    url = "https://ccaf.io/cbeci/api/v1/bitcoin/energy"
+    r = requests.get(url, timeout=20).json()
+    # API returns yearly TWh bands; best_guess. Convert to daily kWh.
+    twh_year = float(r["best_guess"]["terawattHours"])
+    kwh_day = (twh_year * 1e9) / 365.0
+    src = {"name":"CBECI – Bitcoin Energy", "organization":"Cambridge Centre for Alternative Finance", "verification_level":"THIRD_PARTY", "uri":"https://ccaf.io/cbeci", "source_type":"DIRECT"}
+    return kwh_day, src, "Bitcoin best-guess daily energy (from annualized TWh)"
+
+# ---- Tiered fetch wrapper (DIRECT first, optional AGGREGATOR fallback slots) ----
+def tiered_fetch(fetch_fn, category_name, rights, fallback=None):
+    """
+    Try a direct source first. If it raises/None, optionally try fallback (AGGREGATOR).
+    Returns True if a record was inserted; False otherwise.
+    """
+    try:
+        kwh, source, note = fetch_fn()
+        insert_record(category_name, source, kwh, rights, note)
+        return True
+    except Exception as e:
+        # Optional: aggregator fallback (NOT used unless you wire one)
+        if fallback:
+            try:
+                kwh, source, note = fallback()
+                insert_record(category_name, source, kwh, rights, f"[AGGREGATOR] {note}")
+                return True
+            except Exception as ee:
+                print(f"{category_name} fallback failed:", ee)
+        print(f"{category_name} direct fetch failed:", e)
+        return False
+
+@app.post("/update")
+def update_all():
+    today = datetime.date.today()
+    rights = {"privacy":"ENFORCED","non_discrimination":"ENFORCED","auditability":"FULL"}
+
+    # Strict policy: if EIA key missing, we skip affected categories (no placeholders)
+    # MONEY (live Bitcoin)
+    tiered_fetch(feed_money_kwh, "money", rights)
+
+    # EIA-backed categories (DIRECT)
+    if EIA_API_KEY:
+        tiered_fetch(feed_housing_kwh, "housing", rights)
+        tiered_fetch(feed_digital_services_kwh, "digital-services", rights)
+        tiered_fetch(feed_manufacturing_kwh, "manufacturing", rights)
+        tiered_fetch(feed_transport_kwh, "transport", rights)
+        tiered_fetch(feed_food_agriculture_kwh, "food", rights)
+    else:
+        print("EIA_API_KEY missing; skipping housing, digital-services, manufacturing, transport, food.")
+
+    return {"status":"ok", "date": str(today)}
+
+# ---- Data/API for dashboard ----
+@app.get("/auditlog")
+def audit_log():
+    conn = db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("""
+        SELECT c.name AS category, s.name AS source, s.verification_level, s.source_type,
+               a.day, a.kwh, ROUND(a.kwh/4913.0, 6) AS solar_units,
+               a.data_hash, a.rights_alignment, a.notes
+        FROM category_energy_audit a
+        JOIN categories c ON a.category_id = c.id
+        JOIN data_sources s ON a.source_id = s.id
+        ORDER BY a.day DESC, c.name ASC;
+    """)
+    rows = cur.fetchall()
+    conn.close()
+    return JSONResponse(rows)
+
+@app.get("/data")
+def get_data():
+    conn = db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("""
+        SELECT c.name AS category, a.day, a.kwh, ROUND(a.kwh/4913.0,6) AS solar_units
+        FROM category_energy_audit a
+        JOIN categories c ON a.category_id = c.id
+        ORDER BY a.day, c.name;
+    """)
+    rows = cur.fetchall()
+    conn.close()
+    return JSONResponse(rows)
+
+@app.get("/", response_class=HTMLResponse)
+def root():
+    with open("static/dashboard.html") as f:
+        return f.read()

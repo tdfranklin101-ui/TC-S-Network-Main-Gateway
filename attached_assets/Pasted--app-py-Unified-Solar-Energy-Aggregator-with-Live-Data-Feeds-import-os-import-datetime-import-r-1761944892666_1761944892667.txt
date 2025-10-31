@@ -1,0 +1,135 @@
+# app.py  |  Unified Solar Energy Aggregator with Live Data Feeds
+import os
+import datetime
+import requests
+import hashlib
+import json
+import psycopg2
+import psycopg2.extras
+from fastapi import FastAPI
+from fastapi.responses import HTMLResponse, JSONResponse
+
+DB_URL = os.getenv("SUPABASE_DB_URL")
+EIA_API_KEY = os.getenv("EIA_API_KEY")        # You obtain this from EIA
+app = FastAPI(title="Solar Energy Aggregator – Live Feeds")
+
+def db():
+    return psycopg2.connect(DB_URL, sslmode="require")
+
+def sha256d(data:dict) -> str:
+    raw = json.dumps(data, sort_keys=True).encode()
+    return hashlib.sha256(raw).hexdigest()
+
+def insert_record(category, source_info, kwh_value, rights, note=""):
+    conn = db()
+    cur = conn.cursor()
+    # Ensure category exists
+    cur.execute("INSERT INTO categories (name) VALUES (%s) ON CONFLICT (name) DO NOTHING;", (category,))
+    cur.execute("SELECT id FROM categories WHERE name=%s;", (category,))
+    cid = cur.fetchone()[0]
+    # Ensure source exists
+    cur.execute("INSERT INTO data_sources (name, organization, verification_level, uri) VALUES (%s,%s,%s,%s) ON CONFLICT (name) DO NOTHING;",
+                (source_info["name"], source_info.get("organization",""), source_info["verification_level"], source_info.get("uri","")))
+    cur.execute("SELECT id FROM data_sources WHERE name=%s;", (source_info["name"],))
+    sid = cur.fetchone()[0]
+    # Compute hash
+    record_payload = {
+        "category": category,
+        "kwh": kwh_value,
+        "source": source_info,
+        "rights_alignment": rights,
+        "day": str(datetime.date.today())
+    }
+    h = sha256d(record_payload)
+    # Insert into audit table
+    cur.execute("""INSERT INTO category_energy_audit
+                   (category_id, source_id, day, kwh, rights_alignment, data_hash, notes)
+                   VALUES (%s, %s, %s, %s, %s, %s, %s)
+                   ON CONFLICT DO NOTHING;""",
+                (cid, sid, datetime.date.today(), kwh_value, json.dumps(rights), h, note))
+    conn.commit()
+    conn.close()
+
+# --- Live data functions ---
+def get_residential_electricity_kwh():
+    """Fetch residential electricity sales from EIA and convert to daily kWh."""
+    url = f"https://api.eia.gov/v2/electricity/retail-sales/data/?api_key={EIA_API_KEY}&facets[sectorid][]=RES&frequency=monthly"
+    try:
+        r = requests.get(url, timeout=15).json()
+        # Get latest monthly data point
+        value_mwh = float(r["response"]["data"][0]["value"])   # in MWh
+        value_kwh = value_mwh * 1_000
+        # Convert monthly to daily average
+        days_in_month = datetime.date.today().replace(day=1).month  # approximate
+        return value_kwh / days_in_month
+    except Exception as e:
+        print("Error fetching residential electricity:", e)
+        return None
+
+def get_transport_energy_kwh():
+    """Example: use EIA fuel + EV data. Placeholder to fill with direct dataset."""
+    url = f"https://api.eia.gov/v2/transportation/fuel-consumption/data/?api_key={EIA_API_KEY}&frequency=monthly"
+    try:
+        r = requests.get(url, timeout=15).json()
+        # parse value liters/gallons → convert to kWh (1 gallon ~ 33.7 kWh)
+        gallons = float(r["response"]["data"][0]["value"])
+        kwh = gallons * 33.7
+        return kwh / 30.0
+    except Exception as e:
+        print("Error fetching transport fuel data:", e)
+        return None
+
+# More functions for manufacturing, digital-services etc. analogously
+
+@app.post("/update")
+def update_all():
+    today = datetime.date.today()
+    rights = {"privacy":"ENFORCED", "non_discrimination":"ENFORCED", "auditability":"FULL"}
+
+    # Money / Crypto
+    # ... (existing crypto functions) ...
+    # insert_record("money", {...}, kwh_money, rights, "crypto & settlement energy")
+
+    # Housing / Residential
+    res_kwh = get_residential_electricity_kwh()
+    if res_kwh is not None:
+        insert_record("housing", {"name":"EIA Retail Sales Electric – RES", "organization":"EIA", "verification_level":"THIRD_PARTY", "uri":"https://api.eia.gov"}, res_kwh, rights, "residential electricity sales live feed")
+
+    # Transport
+    trans_kwh = get_transport_energy_kwh()
+    if trans_kwh is not None:
+        insert_record("transport", {"name":"EIA Transportation Fuel Consumption", "organization":"EIA", "verification_level":"THIRD_PARTY", "uri":"https://api.eia.gov"}, trans_kwh, rights, "transport fuel → kWh live feed")
+
+    # Similarly manufacturing, digital-services, food
+    # ...
+
+    return {"status":"ok","date": str(today)}
+
+@app.get("/data")
+def get_data():
+    conn = db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("""SELECT category_id, day, kwh, (kwh/4913.0) AS solar_units
+                   FROM category_energy_audit
+                   ORDER BY day;""")
+    rows = cur.fetchall()
+    conn.close()
+    return JSONResponse(rows)
+
+@app.get("/auditlog")
+def audit_log():
+    conn = db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("""SELECT c.name AS category, s.name AS source, s.verification_level, a.day, a.kwh, round(a.kwh/4913.0,6) AS solar_units, a.data_hash, a.rights_alignment, a.notes
+                   FROM category_energy_audit a
+                   JOIN categories c ON a.category_id=c.id
+                   JOIN data_sources s ON a.source_id=s.id
+                   ORDER BY a.day DESC;""")
+    rows = cur.fetchall()
+    conn.close()
+    return JSONResponse(rows)
+
+@app.get("/", response_class=HTMLResponse)
+def root():
+    with open("static/dashboard.html") as f:
+        return f.read()
