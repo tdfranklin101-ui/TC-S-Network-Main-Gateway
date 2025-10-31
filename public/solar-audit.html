@@ -285,7 +285,7 @@
 
       <!-- Chart -->
       <div class="chart-container">
-        <h3 style="margin-bottom: 20px; color: rgba(255, 255, 255, 0.9);">Daily Consumption by Sector (TWh)</h3>
+        <h3 style="margin-bottom: 20px; color: rgba(255, 255, 255, 0.9);">Daily Consumption by Sector (GWh)</h3>
         <div class="chart-wrapper">
           <canvas id="consumptionChart" data-testid="chart-consumption"></canvas>
         </div>
@@ -294,6 +294,35 @@
       <!-- Category Breakdown -->
       <h3 style="margin-bottom: 20px; color: rgba(255, 255, 255, 0.9); font-size: 1.5rem;">Sector Breakdown</h3>
       <div class="categories-grid" id="categories"></div>
+
+      <!-- Detailed Audit Log -->
+      <div class="chart-container" style="margin-top: 40px;">
+        <h3 style="margin-bottom: 20px; color: rgba(255, 255, 255, 0.9);">Detailed Audit Log (Last 100 Records)</h3>
+        <div style="overflow-x: auto;">
+          <table id="auditTable" style="width: 100%; border-collapse: collapse; font-size: 0.9rem;" data-testid="table-audit-log">
+            <thead>
+              <tr style="border-bottom: 2px solid rgba(0, 255, 224, 0.3);">
+                <th style="text-align: left; padding: 12px; color: #00ffe0;">Date</th>
+                <th style="text-align: left; padding: 12px; color: #00ffe0;">Category</th>
+                <th style="text-align: left; padding: 12px; color: #00ffe0;">kWh</th>
+                <th style="text-align: left; padding: 12px; color: #00ffe0;">Solar Units</th>
+                <th style="text-align: left; padding: 12px; color: #00ffe0;">Source</th>
+                <th style="text-align: left; padding: 12px; color: #00ffe0;">Verification</th>
+                <th style="text-align: left; padding: 12px; color: #00ffe0;">Type</th>
+                <th style="text-align: left; padding: 12px; color: #00ffe0;">Data Hash</th>
+                <th style="text-align: left; padding: 12px; color: #00ffe0;">Notes</th>
+              </tr>
+            </thead>
+            <tbody id="auditTableBody">
+              <tr>
+                <td colspan="9" style="text-align: center; padding: 40px; color: rgba(255, 255, 255, 0.5);">
+                  Loading audit entries...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -324,6 +353,7 @@
         displayGlobalStats(summary.global);
         displayCategories(summary.categories);
         displayChart(entries);
+        displayAuditTable(entries);
 
         document.getElementById('loading').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
@@ -373,7 +403,7 @@
         const date = entry.day;
         if (!dailyData[date]) dailyData[date] = {};
         if (!dailyData[date][entry.category]) dailyData[date][entry.category] = 0;
-        dailyData[date][entry.category] += parseFloat(entry.kwh) / 1e12; // Convert to TWh
+        dailyData[date][entry.category] += parseFloat(entry.kwh) / 1e6; // Convert to GWh
       });
 
       const sortedDates = Object.keys(dailyData).sort();
@@ -422,7 +452,7 @@
               beginAtZero: true,
               ticks: {
                 color: 'rgba(255, 255, 255, 0.7)',
-                callback: value => value.toFixed(2) + ' TWh'
+                callback: value => value.toFixed(2) + ' GWh'
               },
               grid: {
                 color: 'rgba(255, 255, 255, 0.1)'
@@ -441,6 +471,56 @@
           }
         }
       });
+    }
+
+    function displayAuditTable(entries) {
+      const lastHundred = entries.slice(0, 100);
+      const tbody = document.getElementById('auditTableBody');
+      
+      if (lastHundred.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="9" style="text-align: center; padding: 40px; color: rgba(255, 255, 255, 0.5);">
+              No audit entries found
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = lastHundred.map((entry, idx) => `
+        <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.1); transition: background-color 0.2s;" 
+            onmouseover="this.style.backgroundColor='rgba(0, 255, 224, 0.05)'"
+            onmouseout="this.style.backgroundColor='transparent'"
+            data-testid="row-audit-entry-${idx}">
+          <td style="padding: 12px;">${entry.day}</td>
+          <td style="padding: 12px;">${entry.category}</td>
+          <td style="padding: 12px;">${(parseFloat(entry.kwh) / 1e6).toFixed(3)} GWh</td>
+          <td style="padding: 12px;">${parseFloat(entry.solarUnits).toFixed(6)}</td>
+          <td style="padding: 12px;">
+            <div style="max-width: 200px;">
+              <div style="font-weight: 500;">${entry.source}</div>
+              ${entry.sourceOrganization ? `<div style="font-size: 0.8rem; color: rgba(255, 255, 255, 0.5);">${entry.sourceOrganization}</div>` : ''}
+            </div>
+          </td>
+          <td style="padding: 12px;">
+            <span style="padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; background: ${
+              entry.verificationLevel === 'TIER_1' ? 'rgba(0, 255, 224, 0.2)' : 
+              entry.verificationLevel === 'TIER_2' ? 'rgba(14, 165, 233, 0.2)' : 
+              'rgba(139, 92, 246, 0.2)'
+            };">
+              ${entry.verificationLevel}
+            </span>
+          </td>
+          <td style="padding: 12px; font-size: 0.85rem;">${entry.sourceType}</td>
+          <td style="padding: 12px; font-family: monospace; font-size: 0.75rem; color: rgba(255, 255, 255, 0.6);">
+            ${entry.dataHash.substring(0, 12)}...
+          </td>
+          <td style="padding: 12px; max-width: 200px; font-size: 0.85rem; color: rgba(255, 255, 255, 0.7);">
+            ${entry.notes || '-'}
+          </td>
+        </tr>
+      `).join('');
     }
 
     function formatNumber(num) {
