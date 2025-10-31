@@ -345,8 +345,39 @@
           fetch('/api/solar-audit/summary')
         ]);
 
-        const entries = await entriesRes.json();
-        const summary = await summaryRes.json();
+        // Check if responses are OK
+        if (!entriesRes.ok) {
+          throw new Error(`Entries API failed: ${entriesRes.status} ${entriesRes.statusText}`);
+        }
+        if (!summaryRes.ok) {
+          throw new Error(`Summary API failed: ${summaryRes.status} ${summaryRes.statusText}`);
+        }
+
+        const entriesText = await entriesRes.text();
+        const summaryText = await summaryRes.text();
+
+        let entries, summary;
+        try {
+          entries = JSON.parse(entriesText);
+        } catch (e) {
+          console.error('Failed to parse entries:', entriesText);
+          throw new Error('Invalid JSON from entries API');
+        }
+
+        try {
+          summary = JSON.parse(summaryText);
+        } catch (e) {
+          console.error('Failed to parse summary:', summaryText);
+          throw new Error('Invalid JSON from summary API');
+        }
+
+        // Validate data structure
+        if (!Array.isArray(entries)) {
+          throw new Error('Entries data is not an array');
+        }
+        if (!summary || !summary.categories || !summary.global) {
+          throw new Error('Invalid summary data structure');
+        }
 
         allEntries = entries;
 
@@ -358,10 +389,12 @@
         document.getElementById('loading').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
       } catch (error) {
+        console.error('Load data error:', error);
         document.getElementById('loading').innerHTML = `
           <div style="color: #ec4899;">
             <p>⚠️ Error loading audit data</p>
             <p style="font-size: 0.9rem; margin-top: 10px;">${error.message}</p>
+            <p style="font-size: 0.8rem; margin-top: 10px; color: rgba(255, 255, 255, 0.5);">Check browser console for details</p>
           </div>
         `;
       }
@@ -495,7 +528,7 @@
             data-testid="row-audit-entry-${idx}">
           <td style="padding: 12px;">${entry.day}</td>
           <td style="padding: 12px;">${entry.category}</td>
-          <td style="padding: 12px;">${(parseFloat(entry.kwh) / 1e6).toFixed(3)} GWh</td>
+          <td style="padding: 12px;">${parseFloat(entry.kwh).toLocaleString()}</td>
           <td style="padding: 12px;">${parseFloat(entry.solarUnits).toFixed(6)}</td>
           <td style="padding: 12px;">
             <div style="max-width: 200px;">
