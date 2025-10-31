@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Line } from "react-chartjs-2";
 import {
@@ -12,7 +11,7 @@ import {
   Legend,
   ChartOptions,
 } from "chart.js";
-import { Download, Zap, Database, TrendingUp, ArrowLeft } from "lucide-react";
+import { Download, Zap, Database, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -60,8 +59,6 @@ interface SummaryResponse {
 }
 
 export default function SolarAuditDashboard() {
-  const [view, setView] = useState<"landing" | "consumption">("landing");
-  
   const { data: entries, isLoading: entriesLoading } = useQuery<SolarAuditEntry[]>({
     queryKey: ["/api/solar-audit/entries"],
   });
@@ -168,77 +165,17 @@ export default function SolarAuditDashboard() {
 
   const lastHundredEntries = entries?.slice(0, 100) || [];
 
-  // Landing page view
-  if (view === "landing") {
-    return (
-      <div className="min-h-screen bg-[#0b0e10] text-[#e2f7ff] flex items-center justify-center p-6">
-        <div className="max-w-2xl mx-auto text-center space-y-12">
-          <div>
-            <h1 className="text-5xl font-bold mb-6" data-testid="heading-landing-title">
-              Understanding the Impact
-            </h1>
-            <p className="text-xl text-[#e2f7ff]/80 leading-relaxed">
-              Track global renewable energy distribution in real-time. Explore
-              regional clean power generation and off-grid capacity across 6 continents,
-              visualizing the path toward energy abundance.
-            </p>
-          </div>
-
-          <div className="space-y-4">
-            <a 
-              href="https://solar-reserve-tracker-tdfranklin101.replit.app"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block"
-            >
-              <Button
-                className="w-full bg-transparent border-2 border-[#e2f7ff]/30 text-[#e2f7ff] hover:bg-[#e2f7ff]/10 hover:border-[#00ffe0] py-6 text-lg transition-all"
-                data-testid="button-power-supply"
-              >
-                Global Power Supply
-              </Button>
-            </a>
-
-            <Button
-              onClick={() => setView("consumption")}
-              className="w-full bg-transparent border-2 border-[#e2f7ff]/30 text-[#e2f7ff] hover:bg-[#e2f7ff]/10 hover:border-[#00ffe0] py-6 text-lg transition-all"
-              data-testid="button-power-consumption"
-            >
-              Global Power Consumption
-            </Button>
-          </div>
-
-          <p className="text-sm text-[#e2f7ff]/50 mt-8">
-            Scroll down to explore the map ↓
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // Consumption dashboard view
   return (
     <div className="min-h-screen bg-[#0b0e10] text-[#e2f7ff] p-6">
       <div className="max-w-7xl mx-auto space-y-8">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button
-              onClick={() => setView("landing")}
-              variant="ghost"
-              className="text-[#00ffe0] hover:bg-[#00ffe0]/10"
-              data-testid="button-back-to-landing"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
-            <div>
-              <h1 className="text-4xl font-bold mb-2" data-testid="heading-dashboard-title">
-                Global Power Consumption
-              </h1>
-              <p className="text-[#e2f7ff]/70">
-                Regulatory-grade energy demand tracking with full lineage
-              </p>
-            </div>
+          <div>
+            <h1 className="text-4xl font-bold mb-2" data-testid="heading-dashboard-title">
+              Solar Audit Dashboard
+            </h1>
+            <p className="text-[#e2f7ff]/70">
+              Regulatory-grade energy demand tracking with full lineage
+            </p>
           </div>
           <Button
             onClick={handleDownloadJSON}
