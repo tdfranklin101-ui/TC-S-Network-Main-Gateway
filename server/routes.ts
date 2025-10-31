@@ -29,6 +29,9 @@ import crypto from "crypto";
 import fetch from "node-fetch";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Feature flag for Stripe integration (disabled by default)
+  const STRIPE_ENABLED = process.env.STRIPE_ENABLED === 'true';
+  
   // Add a simple health check endpoint for deployment checks
   app.get('/health', (req, res) => {
     res.status(200).send({ status: 'ok', timestamp: new Date().toISOString() });
@@ -673,7 +676,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Mount specialized API route modules
   app.use("/api/progression", progressionRoutes);
-  app.use("/api/payment", paymentsRoutes); 
+  
+  // Conditionally mount payment routes if Stripe is enabled
+  if (STRIPE_ENABLED) {
+    app.use("/api/payment", paymentsRoutes);
+  } else {
+    // Return 501 Not Implemented for payment routes when Stripe is disabled
+    app.use("/api/payment", (req, res) => {
+      res.status(501).json({
+        error: 'Payment system not configured',
+        message: 'Stripe integration is currently disabled. Set STRIPE_ENABLED=true to enable payment processing.'
+      });
+    });
+  }
+  
   app.use("/api/ai", aiRoutes);
 
   // Mount legacy AI routes (to be replaced)
