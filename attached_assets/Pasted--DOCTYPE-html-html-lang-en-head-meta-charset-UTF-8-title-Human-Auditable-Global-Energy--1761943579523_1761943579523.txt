@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Human Auditable Global Energy Ledger – Solar Network Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  body { background:#0b0e10; color:#e2f7ff; font-family:'Segoe UI',Arial,sans-serif; margin:0; }
+  h1 { color:#00ffe0; text-align:center; margin-top:25px; }
+  h2 { color:#ffa500; margin-top:40px; border-bottom:1px solid #333; padding-bottom:6px; }
+  .container { width:90%; max-width:1200px; margin:0 auto; }
+  .summary-box { background:#111417; padding:20px; border-radius:8px; margin:20px 0; }
+  .summary-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; text-align:center; }
+  .summary-item { background:#14181d; padding:10px; border-radius:6px; border:1px solid #222; }
+  .summary-item h3 { color:#00ffe0; margin:4px 0; }
+  table { width:100%; border-collapse:collapse; margin-top:20px; font-size:14px; }
+  th,td { border:1px solid #333; padding:6px 10px; text-align:left; }
+  th { background:#11181d; color:#00ffe0; }
+  tr:nth-child(even){background:#0f1215;}
+  canvas { max-width:100%; margin:30px 0; }
+  footer { text-align:center; font-size:13px; color:#888; margin:40px 0 20px 0; }
+  #exportBtn { background:#00ffe0; color:#000; border:none; padding:10px 16px;
+               border-radius:6px; cursor:pointer; font-weight:bold; margin:20px 0; }
+  #exportBtn:hover{background:#00cfd0;}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Human Auditable Global Energy Ledger</h1>
+  <p style="text-align:center;max-width:800px;margin:0 auto 20px;">
+    Aggregates daily energy consumption across all categories in kilowatt-hours (kWh) and Solar units 
+    (1 Solar = 4 913 kWh). Data is traceable, verified, and anchored to a cryptographic audit trail 
+    within the Unified Intelligence Mesh for cross-verification.
+  </p>
+
+  <div style="text-align:center">
+    <button id="exportBtn">⬇️ Download Full Audit Data (JSON)</button>
+  </div>
+
+  <section class="summary-box" id="globalSummary">
+    <h2>🌍 Global Energy Summary</h2>
+    <div class="summary-grid" id="summaryGrid"></div>
+    <p id="globalTotals" style="text-align:center;font-weight:bold;margin-top:20px;"></p>
+  </section>
+
+  <h2>📊 Daily Energy Trends</h2>
+  <canvas id="energyChart" height="120"></canvas>
+
+  <h2>📋 Detailed Category Records</h2>
+  <table id="detailTable">
+    <thead>
+      <tr>
+        <th>Date</th><th>Category</th><th>kWh</th><th>Solar Units</th>
+        <th>Source</th><th>Verification</th><th>Data Hash</th><th>Notes</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <footer>
+    Human Auditable Solar Network © 2025 – Data anchored to SAi/UIM mesh for transparency and research forecasting.
+  </footer>
+</div>
+
+<script>
+async function loadData(){
+  const res = await fetch('/auditlog');
+  const data = await res.json();
+
+  // --- compute summaries ---
+  const totals = {};
+  let globalKwh = 0, globalSolar = 0;
+  data.forEach(r=>{
+    if(!totals[r.category]) totals[r.category]={kwh:0,solar:0};
+    totals[r.category].kwh += +r.kwh;
+    totals[r.category].solar += +r.solar_units;
+    globalKwh += +r.kwh; globalSolar += +r.solar_units;
+  });
+
+  // --- summary boxes ---
+  const grid=document.getElementById('summaryGrid');
+  Object.keys(totals).forEach(cat=>{
+    const div=document.createElement('div');
+    div.className='summary-item';
+    div.innerHTML=`<h3>${cat}</h3>
+      <p>${totals[cat].kwh.toLocaleString(undefined,{maximumFractionDigits:0})} kWh</p>
+      <p>${totals[cat].solar.toFixed(2)} Solar Units</p>`;
+    grid.appendChild(div);
+  });
+  document.getElementById('globalTotals').innerText =
+    `Total Global Consumption: ${globalKwh.toLocaleString(undefined,{maximumFractionDigits:0})} kWh (${globalSolar.toFixed(2)} Solar Units)`;
+
+  // --- chart ---
+  const days=[...new Set(data.map(x=>x.day))];
+  const cats=[...new Set(data.map(x=>x.category))];
+  const colors=['#00ffe0','#ffa500','#ff007f','#00ff88','#66aaff','#ff4444','#cccc00'];
+  const datasets=cats.map((c,i)=>({
+    label:c,
+    data:days.map(d=>{
+      const f=data.find(x=>x.category===c && x.day===d);
+      return f?f.kwh/1e9:0; // display GWh
+    }),
+    borderColor:colors[i%colors.length],
+    fill:false,
+    tension:0.3
+  }));
+  new Chart(document.getElementById('energyChart'),{
+    type:'line',
+    data:{labels:days,datasets},
+    options:{
+      plugins:{title:{display:true,text:'Daily Energy Use by Category (GWh)',color:'#fff'}},
+      scales:{x:{ticks:{color:'#ccc'}},y:{ticks:{color:'#ccc'}}},
+      responsive:true, maintainAspectRatio:false
+    }
+  });
+
+  // --- table ---
+  const tbody=document.querySelector('#detailTable tbody');
+  data.slice(-100).reverse().forEach(r=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${r.day}</td>
+      <td>${r.category}</td>
+      <td>${(+r.kwh).toLocaleString()}</td>
+      <td>${(+r.solar_units).toFixed(3)}</td>
+      <td>${r.source}</td>
+      <td>${r.verification_level}</td>
+      <td style="font-family:monospace;font-size:11px;">${r.data_hash?.slice(0,16)}…</td>
+      <td>${r.notes||''}</td>`;
+    tbody.appendChild(tr);
+  });
+
+  // --- export button ---
+  document.getElementById('exportBtn').addEventListener('click',()=>{
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download='solar_energy_audit_data.json'; a.click();
+    URL.revokeObjectURL(url);
+  });
+}
+loadData();
+</script>
+</body>
+</html>
