@@ -18,6 +18,10 @@ externalPort = 5000
 localPort = 8080
 externalPort = 80
 
+[[ports]]
+localPort = 33855
+externalPort = 3000
+
 [agent]
 integrations = ["javascript_stripe:1.0.0", "javascript_openai:1.0.0"]
 
@@ -27,3 +31,7 @@ defaultBucketID = "replit-objstore-f95b4cf3-0db7-40d1-9680-54f5b997ed65"
 [userenv]
 
 [userenv.shared]
+
+[userenv.development]
+TESTING_STRIPE_SECRET_KEY = "sk_test_disabled"
+TESTING_VITE_STRIPE_PUBLIC_KEY = "pk_test_disabled"
