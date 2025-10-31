@@ -534,6 +534,7 @@ export const solarAuditDataSources = pgTable("solar_audit_data_sources", {
   organization: text("organization"),
   contact: text("contact"),
   verificationLevel: varchar("verification_level", { length: 20 }).notNull(), // SELF, THIRD_PARTY, METERED, MODELLED
+  sourceType: text("source_type").default('DIRECT'), // DIRECT or AGGREGATOR
   uri: text("uri"),
   createdAt: timestamp("created_at").defaultNow(),
 });

@@ -1485,7 +1485,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
 
   // Helper function to ensure data source exists (upsert)
-  async function ensureDataSource(name: string, verificationLevel: string, organization?: string, contact?: string, uri?: string): Promise<number> {
+  async function ensureDataSource(name: string, verificationLevel: string, organization?: string, contact?: string, uri?: string, sourceType?: string): Promise<number> {
     const existing = await db.select().from(solarAuditDataSources).where(eq(solarAuditDataSources.name, name));
     if (existing.length > 0) {
       return existing[0].id;
@@ -1495,7 +1495,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       verificationLevel: verificationLevel as any,
       organization,
       contact,
-      uri
+      uri,
+      sourceType: (sourceType || 'DIRECT') as any
     }).returning({ id: solarAuditDataSources.id });
     return result[0].id;
   }
@@ -1509,16 +1510,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     rightsAlignment: any, 
     notes?: string,
     sourceOrg?: string,
-    sourceUri?: string
+    sourceUri?: string,
+    sourceType?: string
   ) {
     const categoryId = await ensureCategory(categoryName);
-    const sourceId = await ensureDataSource(sourceName, sourceVerificationLevel, sourceOrg, undefined, sourceUri);
+    const sourceId = await ensureDataSource(sourceName, sourceVerificationLevel, sourceOrg, undefined, sourceUri, sourceType);
     
     const record = {
       category: categoryName,
       source: sourceName,
       kwh,
-      rights: rightsAlignment
+      rights: rightsAlignment,
+      day: new Date().toISOString().split('T')[0]
     };
     const dataHash = computeDataHash(record);
 
@@ -1530,7 +1533,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
       rightsAlignment,
       dataHash,
       notes
-    });
+    }).onConflictDoNothing(); // Prevent duplicate daily entries
+  }
+
+  // Helper function to convert monthly MWh to daily kWh
+  function eiaMonthToDailyKwh(mwhMonthly: number, year: number, month: number): number {
+    // Get days in the month
+    const daysInMonth = new Date(year, month, 0).getDate();
+    return (mwhMonthly * 1000.0) / daysInMonth; // MWh->kWh, then /days
+  }
+
+  // Fetch EIA retail sales data for a specific sector
+  interface EiaRetailSalesResult {
+    mwh: number;
+    year: number;
+    month: number;
+  }
+
+  async function eiaRetailSalesLatest(sector: string): Promise<EiaRetailSalesResult | null> {
+    const EIA_API_KEY = process.env.EIA_API_KEY;
+    if (!EIA_API_KEY) {
+      console.error('EIA_API_KEY not configured');
+      return null;
+    }
+
+    try {
+      const url = `https://api.eia.gov/v2/electricity/retail-sales/data/?api_key=${EIA_API_KEY}&frequency=monthly&data[0]=sales&facets[sectorid][]=${sector}&sort[0][column]=period&sort[0][direction]=desc&offset=0&length=1`;
+      const response = await fetch(url, { 
+        headers: { 'User-Agent': 'TC-S-Network-SAi-Audit/1.0' },
+        timeout: 20000
+      } as any);
+      
+      if (!response.ok) {
+        console.error(`EIA API error for sector ${sector}:`, response.status, response.statusText);
+        return null;
+      }
+      
+      const data = await response.json() as any;
+      const row = data?.response?.data?.[0];
+      
+      if (!row || !row.period || row.sales === undefined) {
+        console.error(`Invalid EIA response for sector ${sector}:`, JSON.stringify(row));
+        return null;
+      }
+      
+      const [year, month] = row.period.split('-').map((n: string) => parseInt(n));
+      // EIA v2 API returns the metric value in the field matching data[0] parameter (sales in this case)
+      const mwh = parseFloat(row.sales);
+      
+      return { mwh, year, month };
+    } catch (error) {
+      console.error(`Failed to fetch EIA data for sector ${sector}:`, error);
+      return null;
+    }
   }
 
   // Fetch live Bitcoin energy consumption from CBECI API
@@ -1556,6 +1611,172 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   }
 
+  // Live feed functions for each energy category (DIRECT sources)
+  async function feedHousingKwh(): Promise<{ kwh: number; source: any; note: string } | null> {
+    const result = await eiaRetailSalesLatest('RES');
+    if (!result) return null;
+    
+    const kwh = eiaMonthToDailyKwh(result.mwh, result.year, result.month);
+    return {
+      kwh,
+      source: {
+        name: 'EIA Retail Sales – Residential',
+        organization: 'U.S. Energy Information Administration',
+        verificationLevel: 'THIRD_PARTY',
+        uri: 'https://api.eia.gov',
+        sourceType: 'DIRECT'
+      },
+      note: `US monthly retail sales (RES) ${result.year}-${result.month.toString().padStart(2, '0')}`
+    };
+  }
+
+  async function feedDigitalServicesKwh(): Promise<{ kwh: number; source: any; note: string } | null> {
+    const result = await eiaRetailSalesLatest('COM');
+    if (!result) return null;
+    
+    const kwh = eiaMonthToDailyKwh(result.mwh, result.year, result.month);
+    return {
+      kwh,
+      source: {
+        name: 'EIA Retail Sales – Commercial',
+        organization: 'U.S. Energy Information Administration',
+        verificationLevel: 'THIRD_PARTY',
+        uri: 'https://api.eia.gov',
+        sourceType: 'DIRECT'
+      },
+      note: `US monthly retail sales (COM) ${result.year}-${result.month.toString().padStart(2, '0')} – proxy for digital services`
+    };
+  }
+
+  async function feedManufacturingKwh(): Promise<{ kwh: number; source: any; note: string } | null> {
+    const result = await eiaRetailSalesLatest('IND');
+    if (!result) return null;
+    
+    const kwh = eiaMonthToDailyKwh(result.mwh, result.year, result.month);
+    return {
+      kwh,
+      source: {
+        name: 'EIA Retail Sales – Industrial',
+        organization: 'U.S. Energy Information Administration',
+        verificationLevel: 'THIRD_PARTY',
+        uri: 'https://api.eia.gov',
+        sourceType: 'DIRECT'
+      },
+      note: `US monthly retail sales (IND) ${result.year}-${result.month.toString().padStart(2, '0')}`
+    };
+  }
+
+  async function feedTransportKwh(): Promise<{ kwh: number; source: any; note: string } | null> {
+    const result = await eiaRetailSalesLatest('TRA');
+    if (!result) return null;
+    
+    const kwh = eiaMonthToDailyKwh(result.mwh, result.year, result.month);
+    return {
+      kwh,
+      source: {
+        name: 'EIA Retail Sales – Transportation',
+        organization: 'U.S. Energy Information Administration',
+        verificationLevel: 'THIRD_PARTY',
+        uri: 'https://api.eia.gov',
+        sourceType: 'DIRECT'
+      },
+      note: `US monthly retail sales (TRA) ${result.year}-${result.month.toString().padStart(2, '0')}`
+    };
+  }
+
+  async function feedFoodAgricultureKwh(): Promise<{ kwh: number; source: any; note: string } | null> {
+    const result = await eiaRetailSalesLatest('OTH');
+    if (!result) return null;
+    
+    const kwh = eiaMonthToDailyKwh(result.mwh, result.year, result.month);
+    return {
+      kwh,
+      source: {
+        name: 'EIA Retail Sales – Other (Ag/Other)',
+        organization: 'U.S. Energy Information Administration',
+        verificationLevel: 'THIRD_PARTY',
+        uri: 'https://api.eia.gov',
+        sourceType: 'DIRECT'
+      },
+      note: `US monthly retail sales (OTH) ${result.year}-${result.month.toString().padStart(2, '0')}`
+    };
+  }
+
+  async function feedMoneyKwh(): Promise<{ kwh: number; source: any; note: string } | null> {
+    const bitcoinKwh = await getBitcoinKwh();
+    if (!bitcoinKwh) return null;
+    
+    // Include Ethereum and Solana estimates
+    const ethereumKwh = 0.01 * 1e9 / 365; // ~10 TWh/year
+    const solanaKwh = 8755 * 1e3 / 365; // ~8.755 GWh/year
+    const totalKwh = bitcoinKwh + ethereumKwh + solanaKwh;
+    
+    return {
+      kwh: totalKwh,
+      source: {
+        name: 'CBECI – Bitcoin Energy',
+        organization: 'Cambridge Centre for Alternative Finance',
+        verificationLevel: 'THIRD_PARTY',
+        uri: 'https://ccaf.io/cbeci',
+        sourceType: 'DIRECT'
+      },
+      note: `Bitcoin: ${(bitcoinKwh / 1e6).toFixed(2)} GWh/day, Ethereum: ${(ethereumKwh / 1e6).toFixed(2)} GWh/day, Solana: ${(solanaKwh / 1e6).toFixed(2)} GWh/day`
+    };
+  }
+
+  // Tiered fetch wrapper with error handling and fallback
+  async function tieredFetch(
+    fetchFn: () => Promise<{ kwh: number; source: any; note: string } | null>,
+    categoryName: string,
+    rights: any,
+    fallbackFn?: () => Promise<{ kwh: number; source: any; note: string } | null>
+  ): Promise<boolean> {
+    try {
+      const result = await fetchFn();
+      if (result) {
+        await insertEnergyRecord(
+          categoryName,
+          result.source.name,
+          result.source.verificationLevel,
+          result.kwh,
+          rights,
+          result.note,
+          result.source.organization,
+          result.source.uri,
+          result.source.sourceType
+        );
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error(`${categoryName} direct fetch failed:`, error);
+      
+      // Try fallback if provided
+      if (fallbackFn) {
+        try {
+          const fallbackResult = await fallbackFn();
+          if (fallbackResult) {
+            await insertEnergyRecord(
+              categoryName,
+              fallbackResult.source.name,
+              fallbackResult.source.verificationLevel,
+              fallbackResult.kwh,
+              rights,
+              `[AGGREGATOR FALLBACK] ${fallbackResult.note}`,
+              fallbackResult.source.organization,
+              fallbackResult.source.uri,
+              'AGGREGATOR'
+            );
+            return true;
+          }
+        } catch (fallbackError) {
+          console.error(`${categoryName} fallback failed:`, fallbackError);
+        }
+      }
+      return false;
+    }
+  }
+
   // POST /api/solar-audit/update - Fetch live data and populate audit ledger
   app.post('/api/solar-audit/update', async (req, res) => {
     try {
@@ -1565,54 +1786,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
         auditability: "FULL"
       };
 
-      // 1. Fetch live Bitcoin energy from CBECI
-      const bitcoinKwh = await getBitcoinKwh();
-      
-      // Crypto energy mix (Bitcoin + Ethereum estimate + Solana estimate)
-      const ethereumKwh = 0.01 * 1e9 / 365; // ~10 TWh/year
-      const solanaKwh = 8755 * 1e3 / 365; // ~8.755 GWh/year
-      
-      if (bitcoinKwh) {
-        const totalCryptoKwh = bitcoinKwh + ethereumKwh + solanaKwh;
-        await insertEnergyRecord(
-          'Money & Blockchain',
-          'CBECI + IEA Estimates',
-          'THIRD_PARTY',
-          totalCryptoKwh,
-          rights,
-          `Bitcoin: ${(bitcoinKwh / 1e6).toFixed(2)} GWh/day, Ethereum: ${(ethereumKwh / 1e6).toFixed(2)} GWh/day, Solana: ${(solanaKwh / 1e6).toFixed(2)} GWh/day`,
-          'Cambridge Centre for Alternative Finance + IEA',
-          'https://ccaf.io/cbeci'
-        );
+      const EIA_API_KEY = process.env.EIA_API_KEY;
+      let recordsCreated = 0;
+
+      // 1. Money/Blockchain (live Bitcoin via CBECI - always available)
+      const moneySuccess = await tieredFetch(feedMoneyKwh, 'money', rights);
+      if (moneySuccess) recordsCreated++;
+
+      // 2. EIA-backed categories (DIRECT sources - requires API key)
+      if (EIA_API_KEY) {
+        console.log('📊 Fetching live EIA data for 5 energy sectors...');
+        
+        const housingSuccess = await tieredFetch(feedHousingKwh, 'housing', rights);
+        if (housingSuccess) recordsCreated++;
+        
+        const digitalSuccess = await tieredFetch(feedDigitalServicesKwh, 'digital-services', rights);
+        if (digitalSuccess) recordsCreated++;
+        
+        const mfgSuccess = await tieredFetch(feedManufacturingKwh, 'manufacturing', rights);
+        if (mfgSuccess) recordsCreated++;
+        
+        const transportSuccess = await tieredFetch(feedTransportKwh, 'transport', rights);
+        if (transportSuccess) recordsCreated++;
+        
+        const foodSuccess = await tieredFetch(feedFoodAgricultureKwh, 'food', rights);
+        if (foodSuccess) recordsCreated++;
+        
+        console.log('✅ Solar Audit data updated successfully with live feeds');
+      } else {
+        console.warn('⚠️  EIA_API_KEY missing; skipping housing, digital-services, manufacturing, transport, food categories');
       }
 
-      // 2. Placeholder sector data (will be replaced with real APIs)
-      const sectors = {
-        'Transport': 3.1e9, // 3.1 billion kWh/day
-        'Housing & Buildings': 5.2e9,
-        'Food & Agriculture': 2.8e9,
-        'Digital Services & AI': 0.9e9,
-        'Manufacturing': 7.4e9
-      };
-
-      for (const [sector, kwhPerDay] of Object.entries(sectors)) {
-        await insertEnergyRecord(
-          sector,
-          'IEA Composite Model',
-          'MODELLED',
-          kwhPerDay,
-          rights,
-          'Estimated daily global consumption based on IEA datasets',
-          'International Energy Agency',
-          'https://www.iea.org'
-        );
-      }
-
-      console.log('✅ Solar Audit data updated successfully');
       res.json({ 
         status: 'ok', 
         date: new Date().toISOString().split('T')[0],
-        recordsCreated: Object.keys(sectors).length + (bitcoinKwh ? 1 : 0)
+        recordsCreated,
+        eiaDataAvailable: !!EIA_API_KEY
       });
     } catch (error) {
       console.error('Solar Audit update error:', error);
@@ -1630,6 +1839,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           source: solarAuditDataSources.name,
           sourceOrganization: solarAuditDataSources.organization,
           verificationLevel: solarAuditDataSources.verificationLevel,
+          sourceType: solarAuditDataSources.sourceType,
           day: solarAuditEntries.day,
           kwh: solarAuditEntries.kwh,
           solarUnits: solarAuditEntries.solarUnits,

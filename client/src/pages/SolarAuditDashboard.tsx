@@ -32,6 +32,7 @@ interface SolarAuditEntry {
   source: string;
   sourceOrganization: string;
   verificationLevel: string;
+  sourceType: string;
   day: string;
   kwh: string;
   solarUnits: string;
@@ -341,6 +342,7 @@ export default function SolarAuditDashboard() {
                       <th className="text-left p-3 text-[#00ffe0]">Solar Units</th>
                       <th className="text-left p-3 text-[#00ffe0]">Source</th>
                       <th className="text-left p-3 text-[#00ffe0]">Verification</th>
+                      <th className="text-left p-3 text-[#00ffe0]">Type</th>
                       <th className="text-left p-3 text-[#00ffe0]">Data Hash</th>
                       <th className="text-left p-3 text-[#00ffe0]">Notes</th>
                     </tr>
@@ -348,7 +350,7 @@ export default function SolarAuditDashboard() {
                   <tbody>
                     {lastHundredEntries.length === 0 ? (
                       <tr>
-                        <td colSpan={8} className="text-center p-8 text-[#e2f7ff]/50">
+                        <td colSpan={9} className="text-center p-8 text-[#e2f7ff]/50">
                           No audit entries found
                         </td>
                       </tr>
@@ -378,8 +380,21 @@ export default function SolarAuditDashboard() {
                             </div>
                           </td>
                           <td className="p-3">
-                            <span className="px-2 py-1 rounded text-xs bg-[#00ffe0]/10 text-[#00ffe0]">
+                            <span className={`px-2 py-1 rounded text-xs ${
+                              entry.verificationLevel === 'THIRD_PARTY' ? 'bg-[#10b981]/10 text-[#10b981]' :
+                              entry.verificationLevel === 'METERED' ? 'bg-[#00ffe0]/10 text-[#00ffe0]' :
+                              entry.verificationLevel === 'MODELLED' ? 'bg-[#f59e0b]/10 text-[#f59e0b]' :
+                              'bg-[#8b5cf6]/10 text-[#8b5cf6]'
+                            }`}>
                               {entry.verificationLevel}
+                            </span>
+                          </td>
+                          <td className="p-3">
+                            <span className={`px-2 py-1 rounded text-xs ${
+                              entry.sourceType === 'DIRECT' ? 'bg-[#00ffe0]/10 text-[#00ffe0]' :
+                              'bg-[#ec4899]/10 text-[#ec4899]'
+                            }`}>
+                              {entry.sourceType || 'DIRECT'}
                             </span>
                           </td>
                           <td className="p-3">
