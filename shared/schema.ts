@@ -85,7 +85,9 @@ export const songs = pgTable("songs", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
   metadata: jsonb("metadata"), // Additional song info (credits, etc.)
-});
+}, (table) => ({
+  titleIdx: index("songs_title_idx").on(table.title),
+}));
 
 // Play Events table for tracking song plays
 export const playEvents = pgTable("play_events", {
@@ -99,12 +101,10 @@ export const playEvents = pgTable("play_events", {
   completedPlay: boolean("completed_play").default(false), // Did they finish the song?
   source: varchar("source").default('web'), // 'web', 'mobile', 'api', etc.
   metadata: jsonb("metadata"), // Additional tracking data
-});
-
-// Index for faster queries
-export const songsTitleIndex = index("songs_title_idx").on(songs.title);
-export const playEventsSongIndex = index("play_events_song_idx").on(playEvents.songId);
-export const playEventsDateIndex = index("play_events_date_idx").on(playEvents.playedAt);
+}, (table) => ({
+  songIdx: index("play_events_song_idx").on(table.songId),
+  dateIdx: index("play_events_date_idx").on(table.playedAt),
+}));
 
 // Insert schemas
 export const insertSongSchema = createInsertSchema(songs);
@@ -502,11 +502,10 @@ export const uimHandshakes = pgTable("uim_handshakes", {
   status: varchar("status").notNull().default("completed"), // completed, failed, pending
   routedTo: varchar("routed_to"), // System this query was routed to (if applicable)
   metadata: jsonb("metadata"), // Additional handshake context
-});
-
-// Index for fast queries by system and timestamp
-export const uimHandshakesSystemIndex = index("uim_handshakes_system_idx").on(uimHandshakes.systemId);
-export const uimHandshakesTimestampIndex = index("uim_handshakes_timestamp_idx").on(uimHandshakes.timestamp);
+}, (table) => ({
+  systemIdx: index("uim_handshakes_system_idx").on(table.systemId),
+  timestampIdx: index("uim_handshakes_timestamp_idx").on(table.timestamp),
+}));
 
 // Insert schema
 export const insertUimHandshakeSchema = createInsertSchema(uimHandshakes).omit({ id: true, timestamp: true });
@@ -551,12 +550,11 @@ export const solarAuditEntries = pgTable("solar_audit_entries", {
   dataHash: text("data_hash"), // SHA256 of raw entry for immutability
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
-});
-
-// Indexes for fast queries
-export const solarAuditEntriesDayIndex = index("solar_audit_entries_day_idx").on(solarAuditEntries.day);
-export const solarAuditEntriesCategoryIndex = index("solar_audit_entries_category_idx").on(solarAuditEntries.categoryId);
-export const solarAuditEntriesSourceIndex = index("solar_audit_entries_source_idx").on(solarAuditEntries.sourceId);
+}, (table) => ({
+  dayIdx: index("solar_audit_entries_day_idx").on(table.day),
+  categoryIdx: index("solar_audit_entries_category_idx").on(table.categoryId),
+  sourceIdx: index("solar_audit_entries_source_idx").on(table.sourceId),
+}));
 
 // Insert schemas
 export const insertSolarAuditCategorySchema = createInsertSchema(solarAuditCategories).omit({ id: true, createdAt: true });
