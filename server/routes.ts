@@ -29,9 +29,6 @@ import crypto from "crypto";
 import fetch from "node-fetch";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Feature flag for Stripe integration (disabled by default)
-  const STRIPE_ENABLED = process.env.STRIPE_ENABLED === 'true';
-  
   // Add a simple health check endpoint for deployment checks
   app.get('/health', (req, res) => {
     res.status(200).send({ status: 'ok', timestamp: new Date().toISOString() });
@@ -252,32 +249,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(profile);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch profile" });
-    }
-  });
-
-  apiRouter.post("/user/:userId/topup", async (req, res) => {
-    try {
-      const { amount, stripePaymentIntentId } = req.body; // amount in Solar tokens
-      
-      // Create transaction record
-      const transaction = await storage.createTransaction({
-        userId: req.params.userId,
-        type: 'stripe_topup',
-        amount: amount,
-        currency: 'SOLAR',
-        status: 'completed',
-        stripePaymentIntentId,
-        description: `Top-up ${amount} Solar tokens`,
-        completedAt: new Date()
-      });
-      
-      // Update user balance
-      const updatedProfile = await storage.updateSolarBalance(req.params.userId, amount);
-      
-      res.json({ transaction, profile: updatedProfile });
-    } catch (error) {
-      console.error("Top-up error:", error);
-      res.status(500).json({ error: "Top-up failed" });
     }
   });
 
@@ -676,20 +647,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Mount specialized API route modules
   app.use("/api/progression", progressionRoutes);
-  
-  // Conditionally mount payment routes if Stripe is enabled
-  if (STRIPE_ENABLED) {
-    app.use("/api/payment", paymentsRoutes);
-  } else {
-    // Return 501 Not Implemented for payment routes when Stripe is disabled
-    app.use("/api/payment", (req, res) => {
-      res.status(501).json({
-        error: 'Payment system not configured',
-        message: 'Stripe integration is currently disabled. Set STRIPE_ENABLED=true to enable payment processing.'
-      });
-    });
-  }
-  
+  app.use("/api/payment", paymentsRoutes); 
   app.use("/api/ai", aiRoutes);
 
   // Mount legacy AI routes (to be replaced)
@@ -1274,40 +1232,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  apiRouter.post("/user/:userId/topup", async (req, res) => {
-    try {
-      const { userId } = req.params;
-      const { amount, stripePaymentIntentId } = req.body;
-      
-      if (!amount || !stripePaymentIntentId) {
-        return res.status(400).json({ error: "amount and stripePaymentIntentId required" });
-      }
-      
-      // TODO: Verify payment with Stripe and update balance
-      const profile = {
-        userId,
-        solarBalance: 1000 + amount, // Add to existing balance
-        totalEarned: 1000 + amount,
-        totalSpent: 0,
-        lastActivityAt: new Date().toISOString()
-      };
-      
-      const transaction = {
-        id: `txn_${Date.now()}`,
-        userId,
-        type: 'topup',
-        amount,
-        stripePaymentIntentId,
-        createdAt: new Date().toISOString()
-      };
-      
-      res.json({ profile, transaction });
-    } catch (error) {
-      console.error('Top-up error:', error);
-      res.status(500).json({ error: "Top-up failed", message: String(error) });
-    }
-  });
-
   apiRouter.post("/session/create", async (req, res) => {
     try {
       const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -1318,28 +1242,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Session creation error:', error);
       res.status(500).json({ error: "Session creation failed", message: String(error) });
-    }
-  });
-
-  // Stripe payment intent creation
-  apiRouter.post("/payment/create-intent", async (req, res) => {
-    try {
-      const { amount, currency = 'usd', userId } = req.body;
-      
-      if (!amount || amount < 250) { // Minimum $2.50 (250 cents)
-        return res.status(400).json({ error: "Minimum amount is $2.50" });
-      }
-      
-      // TODO: Create Stripe payment intent
-      // For now, return a mock response
-      res.json({
-        client_secret: `pi_mock_${Date.now()}_secret_mock`,
-        amount,
-        currency
-      });
-    } catch (error) {
-      console.error('Payment intent creation error:', error);
-      res.status(500).json({ error: "Payment intent creation failed", message: String(error) });
     }
   });
 

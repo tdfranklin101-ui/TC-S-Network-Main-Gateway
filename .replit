@@ -27,4 +27,3 @@ defaultBucketID = "replit-objstore-f95b4cf3-0db7-40d1-9680-54f5b997ed65"
 [userenv]
 
 [userenv.shared]
-STRIPE_ENABLED = "false"
