@@ -8,6 +8,8 @@ import {
   text,
   integer,
   boolean,
+  numeric,
+  date,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -512,3 +514,61 @@ export const insertUimHandshakeSchema = createInsertSchema(uimHandshakes).omit({
 // Select and insert types
 export type UimHandshake = typeof uimHandshakes.$inferSelect;
 export type InsertUimHandshake = z.infer<typeof insertUimHandshakeSchema>;
+
+// ============================================================
+// SOLAR INTELLIGENCE AUDIT LAYER (SAi-Audit)
+// Regulatory-grade energy demand tracking with full lineage
+// ============================================================
+
+// 1️⃣ Energy Categories
+export const solarAuditCategories = pgTable("solar_audit_categories", {
+  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  name: text("name").notNull().unique(),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// 2️⃣ Data Sources (auditors, APIs, metered systems)
+export const solarAuditDataSources = pgTable("solar_audit_data_sources", {
+  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  name: text("name").notNull(),
+  organization: text("organization"),
+  contact: text("contact"),
+  verificationLevel: varchar("verification_level", { length: 20 }).notNull(), // SELF, THIRD_PARTY, METERED, MODELLED
+  uri: text("uri"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// 3️⃣ Auditable Energy Entries (the core ledger)
+export const solarAuditEntries = pgTable("solar_audit_entries", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  categoryId: integer("category_id").references(() => solarAuditCategories.id).notNull(),
+  sourceId: integer("source_id").references(() => solarAuditDataSources.id).notNull(),
+  day: date("day").notNull(),
+  kwh: numeric("kwh", { precision: 18, scale: 3 }).notNull(),
+  solarUnits: numeric("solar_units", { precision: 18, scale: 6 }), // Will be computed: kwh / 4913.0
+  rightsAlignment: jsonb("rights_alignment"), // {"privacy":"ENFORCED", "transparency":"PUBLIC"}
+  dataHash: text("data_hash"), // SHA256 of raw entry for immutability
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Indexes for fast queries
+export const solarAuditEntriesDayIndex = index("solar_audit_entries_day_idx").on(solarAuditEntries.day);
+export const solarAuditEntriesCategoryIndex = index("solar_audit_entries_category_idx").on(solarAuditEntries.categoryId);
+export const solarAuditEntriesSourceIndex = index("solar_audit_entries_source_idx").on(solarAuditEntries.sourceId);
+
+// Insert schemas
+export const insertSolarAuditCategorySchema = createInsertSchema(solarAuditCategories).omit({ id: true, createdAt: true });
+export const insertSolarAuditDataSourceSchema = createInsertSchema(solarAuditDataSources).omit({ id: true, createdAt: true });
+export const insertSolarAuditEntrySchema = createInsertSchema(solarAuditEntries).omit({ id: true, createdAt: true });
+
+// Select types
+export type SolarAuditCategory = typeof solarAuditCategories.$inferSelect;
+export type SolarAuditDataSource = typeof solarAuditDataSources.$inferSelect;
+export type SolarAuditEntry = typeof solarAuditEntries.$inferSelect;
+
+// Insert types
+export type InsertSolarAuditCategory = z.infer<typeof insertSolarAuditCategorySchema>;
+export type InsertSolarAuditDataSource = z.infer<typeof insertSolarAuditDataSourceSchema>;
+export type InsertSolarAuditEntry = z.infer<typeof insertSolarAuditEntrySchema>;

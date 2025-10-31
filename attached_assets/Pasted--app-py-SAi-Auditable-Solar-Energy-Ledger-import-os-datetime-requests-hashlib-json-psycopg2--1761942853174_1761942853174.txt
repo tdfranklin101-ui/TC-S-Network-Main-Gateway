@@ -1,0 +1,72 @@
+# app.py | SAi Auditable Solar Energy Ledger
+import os, datetime, requests, hashlib, json, psycopg2, psycopg2.extras
+from fastapi import FastAPI
+from fastapi.responses import HTMLResponse, JSONResponse
+
+DB_URL=os.getenv("SUPABASE_DB_URL")
+app=FastAPI(title="SAi Auditable Energy Ledger")
+
+def db(): return psycopg2.connect(DB_URL, sslmode="require")
+
+def sha256d(data:dict)->str:
+    raw=json.dumps(data,sort_keys=True).encode()
+    return hashlib.sha256(raw).hexdigest()
+
+def insert_record(cat,src,kwh,rights,note=""):
+    conn=db(); cur=conn.cursor()
+    # Ensure category & source exist
+    cur.execute("INSERT INTO categories (name) VALUES (%s) ON CONFLICT DO NOTHING;",(cat,))
+    cur.execute("SELECT id FROM categories WHERE name=%s;",(cat,)); cid=cur.fetchone()[0]
+    cur.execute("INSERT INTO data_sources (name,verification_level) VALUES (%s,%s) ON CONFLICT (name) DO NOTHING;",
+                (src["name"],src["verification_level"]))
+    cur.execute("SELECT id FROM data_sources WHERE name=%s;",(src["name"],)); sid=cur.fetchone()[0]
+    record={"category":cat,"source":src,"kwh":kwh,"rights":rights}
+    h=sha256d(record)
+    cur.execute("""INSERT INTO category_energy_audit
+                   (category_id,source_id,day,kwh,rights_alignment,data_hash,notes)
+                   VALUES (%s,%s,%s,%s,%s,%s,%s);""",
+                (cid,sid,datetime.date.today(),kwh,json.dumps(rights),h,note))
+    conn.commit(); conn.close()
+
+# --- Example feeds ---
+def get_bitcoin_kwh():
+    try:
+        r=requests.get("https://ccaf.io/cbeci/api/v1/bitcoin/energy",timeout=10)
+        return float(r.json()["best_guess"]["terawattHours"])*1e9/365
+    except Exception: return None
+
+@app.post("/update")
+def update():
+    today=datetime.date.today()
+    rights={"privacy":"ENFORCED","non_discrimination":"ENFORCED","auditability":"FULL"}
+    # --- Money ---
+    btc=get_bitcoin_kwh(); eth=0.01*1e9/365; sol=8755*1e3/365
+    if btc:
+        insert_record("money",
+          {"name":"CBECI","verification_level":"THIRD_PARTY"},
+          btc+eth+sol, rights, "crypto energy mix")
+    # --- Other categories (sample constants) ---
+    sector={
+      "transport":3.1e9,"housing":5.2e9,"food":2.8e9,
+      "digital-services":0.9e9,"manufacturing":7.4e9
+    }
+    for k,v in sector.items():
+        insert_record(k,
+          {"name":"IEA Composite Model","verification_level":"MODELLED"},
+          v, rights, "placeholder dataset")
+    return {"status":"ok","date":str(today)}
+
+@app.get("/auditlog")
+def audit_log():
+    conn=db();cur=conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("""SELECT c.name AS category,s.name AS source,s.verification_level,
+                          a.day,a.kwh,a.solar_units,a.data_hash,a.rights_alignment
+                   FROM category_energy_audit a
+                   JOIN categories c ON a.category_id=c.id
+                   JOIN data_sources s ON a.source_id=s.id
+                   ORDER BY a.day DESC;""")
+    rows=cur.fetchall();conn.close();return JSONResponse(rows)
+
+@app.get("/",response_class=HTMLResponse)
+def root():
+    with open("static/dashboard.html") as f:return f.read()
