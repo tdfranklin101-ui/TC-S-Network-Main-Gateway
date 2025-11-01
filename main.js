@@ -465,6 +465,383 @@ try {
   pool = null;
 }
 
+// ============================================================
+// SOLAR INTELLIGENCE AUDIT LAYER (SAi-Audit) AUTOMATION
+// Regulatory-grade energy demand tracking with full automation
+// ============================================================
+
+// Helper: Compute SHA-256 hash for data integrity
+function computeDataHash(data) {
+  const raw = JSON.stringify(data, Object.keys(data).sort());
+  return crypto.createHash('sha256').update(raw).digest('hex');
+}
+
+// Helper: Ensure category exists (upsert)
+async function ensureCategory(name, description) {
+  if (!pool) return null;
+  
+  try {
+    const existing = await pool.query('SELECT id FROM solar_audit_categories WHERE name = $1', [name]);
+    if (existing.rows.length > 0) {
+      return existing.rows[0].id;
+    }
+    
+    const result = await pool.query(
+      'INSERT INTO solar_audit_categories (name, description) VALUES ($1, $2) RETURNING id',
+      [name, description || null]
+    );
+    return result.rows[0].id;
+  } catch (error) {
+    console.error('Error ensuring category:', error);
+    return null;
+  }
+}
+
+// Helper: Ensure data source exists (upsert)
+async function ensureDataSource(name, verificationLevel, organization, contact, uri, sourceType) {
+  if (!pool) return null;
+  
+  try {
+    const existing = await pool.query('SELECT id FROM solar_audit_data_sources WHERE name = $1', [name]);
+    if (existing.rows.length > 0) {
+      return existing.rows[0].id;
+    }
+    
+    const result = await pool.query(
+      'INSERT INTO solar_audit_data_sources (name, verification_level, organization, contact, uri, source_type) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
+      [name, verificationLevel, organization || null, contact || null, uri || null, sourceType || 'DIRECT']
+    );
+    return result.rows[0].id;
+  } catch (error) {
+    console.error('Error ensuring data source:', error);
+    return null;
+  }
+}
+
+// Helper: Insert auditable energy record
+async function insertEnergyRecord(categoryName, sourceName, sourceVerificationLevel, kwh, rightsAlignment, notes, sourceOrg, sourceUri, sourceType) {
+  if (!pool) return;
+  
+  try {
+    const categoryId = await ensureCategory(categoryName);
+    const sourceId = await ensureDataSource(sourceName, sourceVerificationLevel, sourceOrg, null, sourceUri, sourceType);
+    
+    if (!categoryId || !sourceId) {
+      console.error('Failed to ensure category or source');
+      return;
+    }
+    
+    const record = {
+      category: categoryName,
+      source: sourceName,
+      kwh,
+      rights: rightsAlignment,
+      day: new Date().toISOString().split('T')[0]
+    };
+    const dataHash = computeDataHash(record);
+    const solarUnits = kwh / 4913.0; // Convert kWh to Solar
+    
+    await pool.query(
+      `INSERT INTO solar_audit_entries (category_id, source_id, day, kwh, solar_units, rights_alignment, data_hash, notes)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       ON CONFLICT DO NOTHING`,
+      [categoryId, sourceId, record.day, kwh, solarUnits, JSON.stringify(rightsAlignment), dataHash, notes || null]
+    );
+    
+    console.log(`✅ Energy record: ${categoryName} - ${(kwh / 1e6).toFixed(2)} GWh`);
+  } catch (error) {
+    console.error('Error inserting energy record:', error);
+  }
+}
+
+// Helper: Convert monthly MWh to daily kWh
+function eiaMonthToDailyKwh(mwhMonthly, year, month) {
+  const daysInMonth = new Date(year, month, 0).getDate();
+  return (mwhMonthly * 1000.0) / daysInMonth; // MWh->kWh, then /days
+}
+
+// Fetch EIA retail sales data for a specific sector
+async function eiaRetailSalesLatest(sector) {
+  const EIA_API_KEY = process.env.EIA_API_KEY;
+  if (!EIA_API_KEY) {
+    console.error('EIA_API_KEY not configured');
+    return null;
+  }
+
+  try {
+    const url = `https://api.eia.gov/v2/electricity/retail-sales/data/?api_key=${EIA_API_KEY}&frequency=monthly&data[0]=sales&facets[sectorid][]=${sector}&sort[0][column]=period&sort[0][direction]=desc&offset=0&length=1`;
+    const response = await fetch(url, { 
+      headers: { 'User-Agent': 'TC-S-Network-SAi-Audit/1.0' }
+    });
+    
+    if (!response.ok) {
+      console.error(`EIA API error for sector ${sector}:`, response.status, response.statusText);
+      return null;
+    }
+    
+    const data = await response.json();
+    const row = data?.response?.data?.[0];
+    
+    if (!row || !row.period || row.sales === undefined) {
+      console.error(`Invalid EIA response for sector ${sector}:`, JSON.stringify(row));
+      return null;
+    }
+    
+    const [year, month] = row.period.split('-').map(n => parseInt(n));
+    const mwh = parseFloat(row.sales);
+    
+    return { mwh, year, month };
+  } catch (error) {
+    console.error(`Failed to fetch EIA data for sector ${sector}:`, error);
+    return null;
+  }
+}
+
+// Fetch live Bitcoin energy consumption from CBECI API
+async function getBitcoinKwh() {
+  try {
+    const response = await fetch('https://ccaf.io/cbeci/api/v1/bitcoin/energy', { 
+      headers: { 'User-Agent': 'TC-S-Network-SAi-Audit/1.0' }
+    });
+    if (!response.ok) {
+      console.error('CBECI API error:', response.status, response.statusText);
+      return null;
+    }
+    const data = await response.json();
+    const annualTWh = data?.best_guess?.terawattHours;
+    if (typeof annualTWh === 'number') {
+      return (annualTWh * 1e9) / 365; // TWh -> kWh per day
+    }
+    return null;
+  } catch (error) {
+    console.error('Failed to fetch Bitcoin energy data from CBECI:', error);
+    return null;
+  }
+}
+
+// Live feed functions for each energy category
+async function feedHousingKwh() {
+  const result = await eiaRetailSalesLatest('RES');
+  if (!result) return null;
+  
+  const kwh = eiaMonthToDailyKwh(result.mwh, result.year, result.month);
+  return {
+    kwh,
+    source: {
+      name: 'EIA Retail Sales – Residential',
+      organization: 'U.S. Energy Information Administration',
+      verificationLevel: 'THIRD_PARTY',
+      uri: 'https://api.eia.gov',
+      sourceType: 'DIRECT'
+    },
+    note: `US monthly retail sales (RES) ${result.year}-${result.month.toString().padStart(2, '0')}`
+  };
+}
+
+async function feedDigitalServicesKwh() {
+  const result = await eiaRetailSalesLatest('COM');
+  if (!result) return null;
+  
+  const kwh = eiaMonthToDailyKwh(result.mwh, result.year, result.month);
+  return {
+    kwh,
+    source: {
+      name: 'EIA Retail Sales – Commercial',
+      organization: 'U.S. Energy Information Administration',
+      verificationLevel: 'THIRD_PARTY',
+      uri: 'https://api.eia.gov',
+      sourceType: 'DIRECT'
+    },
+    note: `US monthly retail sales (COM) ${result.year}-${result.month.toString().padStart(2, '0')} – proxy for digital services`
+  };
+}
+
+async function feedManufacturingKwh() {
+  const result = await eiaRetailSalesLatest('IND');
+  if (!result) return null;
+  
+  const kwh = eiaMonthToDailyKwh(result.mwh, result.year, result.month);
+  return {
+    kwh,
+    source: {
+      name: 'EIA Retail Sales – Industrial',
+      organization: 'U.S. Energy Information Administration',
+      verificationLevel: 'THIRD_PARTY',
+      uri: 'https://api.eia.gov',
+      sourceType: 'DIRECT'
+    },
+    note: `US monthly retail sales (IND) ${result.year}-${result.month.toString().padStart(2, '0')}`
+  };
+}
+
+async function feedTransportKwh() {
+  const result = await eiaRetailSalesLatest('TRA');
+  if (!result) return null;
+  
+  const kwh = eiaMonthToDailyKwh(result.mwh, result.year, result.month);
+  return {
+    kwh,
+    source: {
+      name: 'EIA Retail Sales – Transportation',
+      organization: 'U.S. Energy Information Administration',
+      verificationLevel: 'THIRD_PARTY',
+      uri: 'https://api.eia.gov',
+      sourceType: 'DIRECT'
+    },
+    note: `US monthly retail sales (TRA) ${result.year}-${result.month.toString().padStart(2, '0')}`
+  };
+}
+
+async function feedFoodAgricultureKwh() {
+  const result = await eiaRetailSalesLatest('OTH');
+  if (!result) return null;
+  
+  const kwh = eiaMonthToDailyKwh(result.mwh, result.year, result.month);
+  return {
+    kwh,
+    source: {
+      name: 'EIA Retail Sales – Other (Ag/Other)',
+      organization: 'U.S. Energy Information Administration',
+      verificationLevel: 'THIRD_PARTY',
+      uri: 'https://api.eia.gov',
+      sourceType: 'DIRECT'
+    },
+    note: `US monthly retail sales (OTH) ${result.year}-${result.month.toString().padStart(2, '0')}`
+  };
+}
+
+async function feedMoneyKwh() {
+  const bitcoinKwh = await getBitcoinKwh();
+  if (!bitcoinKwh) return null;
+  
+  // Include Ethereum and Solana estimates
+  const ethereumKwh = 0.01 * 1e9 / 365; // ~10 TWh/year
+  const solanaKwh = 8755 * 1e3 / 365; // ~8.755 GWh/year
+  const totalKwh = bitcoinKwh + ethereumKwh + solanaKwh;
+  
+  return {
+    kwh: totalKwh,
+    source: {
+      name: 'CBECI – Bitcoin Energy',
+      organization: 'Cambridge Centre for Alternative Finance',
+      verificationLevel: 'THIRD_PARTY',
+      uri: 'https://ccaf.io/cbeci',
+      sourceType: 'DIRECT'
+    },
+    note: `Bitcoin: ${(bitcoinKwh / 1e6).toFixed(2)} GWh/day, Ethereum: ${(ethereumKwh / 1e6).toFixed(2)} GWh/day, Solana: ${(solanaKwh / 1e6).toFixed(2)} GWh/day`
+  };
+}
+
+// Tiered fetch wrapper with error handling
+async function tieredFetch(fetchFn, categoryName, rights) {
+  try {
+    const result = await fetchFn();
+    if (result) {
+      await insertEnergyRecord(
+        categoryName,
+        result.source.name,
+        result.source.verificationLevel,
+        result.kwh,
+        rights,
+        result.note,
+        result.source.organization,
+        result.source.uri,
+        result.source.sourceType
+      );
+      return true;
+    }
+    return false;
+  } catch (error) {
+    console.error(`${categoryName} fetch failed:`, error);
+    return false;
+  }
+}
+
+// Main update function - fetches all live data
+async function updateSolarAuditData() {
+  if (!pool) {
+    console.log('⚠️  Database not available - skipping solar audit update');
+    return { status: 'error', message: 'Database not available' };
+  }
+
+  console.log('🌍 Starting Solar Audit data update...');
+  
+  const rights = {
+    privacy: "ENFORCED",
+    non_discrimination: "ENFORCED",
+    auditability: "FULL"
+  };
+
+  const EIA_API_KEY = process.env.EIA_API_KEY;
+  let recordsCreated = 0;
+
+  // 1. Money/Blockchain (live Bitcoin via CBECI - always available)
+  const moneySuccess = await tieredFetch(feedMoneyKwh, 'money', rights);
+  if (moneySuccess) recordsCreated++;
+
+  // 2. EIA-backed categories (DIRECT sources - requires API key)
+  if (EIA_API_KEY) {
+    console.log('📊 Fetching live EIA data for 5 energy sectors...');
+    
+    const housingSuccess = await tieredFetch(feedHousingKwh, 'housing', rights);
+    if (housingSuccess) recordsCreated++;
+    
+    const digitalSuccess = await tieredFetch(feedDigitalServicesKwh, 'digital-services', rights);
+    if (digitalSuccess) recordsCreated++;
+    
+    const mfgSuccess = await tieredFetch(feedManufacturingKwh, 'manufacturing', rights);
+    if (mfgSuccess) recordsCreated++;
+    
+    const transportSuccess = await tieredFetch(feedTransportKwh, 'transport', rights);
+    if (transportSuccess) recordsCreated++;
+    
+    const foodSuccess = await tieredFetch(feedFoodAgricultureKwh, 'food', rights);
+    if (foodSuccess) recordsCreated++;
+    
+    console.log('✅ Solar Audit data updated successfully with live feeds');
+  } else {
+    console.warn('⚠️  EIA_API_KEY missing; skipping housing, digital-services, manufacturing, transport, food categories');
+  }
+
+  console.log(`✅ Solar Audit update complete: ${recordsCreated} records created`);
+  
+  return { 
+    status: 'ok', 
+    date: new Date().toISOString().split('T')[0],
+    recordsCreated,
+    eiaDataAvailable: !!EIA_API_KEY
+  };
+}
+
+// Schedule daily updates at 7:00 AM UTC
+function scheduleDailyUpdates() {
+  // Run at 7:00 AM UTC every day
+  schedule.scheduleJob('0 7 * * *', async () => {
+    console.log('⏰ Scheduled Solar Audit update triggered (7:00 AM UTC)');
+    await updateSolarAuditData();
+  });
+  console.log('📅 Solar Audit scheduled: Daily updates at 7:00 AM UTC');
+}
+
+// Initialize on server startup
+async function initializeSolarAudit() {
+  if (!pool) {
+    console.log('⚠️  Database not available - skipping Solar Audit initialization');
+    return;
+  }
+  
+  console.log('🚀 Initializing Solar Audit Layer...');
+  
+  // Schedule daily updates
+  scheduleDailyUpdates();
+  
+  // Trigger initial data fetch
+  setTimeout(async () => {
+    console.log('🔄 Running initial Solar Audit data fetch...');
+    await updateSolarAuditData();
+  }, 5000); // Wait 5 seconds after startup
+}
+
 // UIM Handshake Protocol - AI System Registry with Capabilities
 const UIM_UTILS = require('./lib/uim-utils');
 
@@ -5980,6 +6357,20 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // POST /api/solar-audit/update - Trigger data fetch
+  if (pathname === '/api/solar-audit/update' && req.method === 'POST') {
+    try {
+      const result = await updateSolarAuditData();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(result));
+    } catch (error) {
+      console.error('Solar Audit update error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Failed to update solar audit data', details: String(error) }));
+    }
+    return;
+  }
+
   // GET /api/solar-audit/entries - Return full audit log
   if (pathname === '/api/solar-audit/entries' && req.method === 'GET') {
     if (!pool) {
@@ -6649,6 +7040,17 @@ server.listen(PORT, '0.0.0.0', () => {
   } catch (error) {
     console.warn('⚠️ Foundation audit scheduling failed:', error.message);
     console.log('📌 Manual audit: node scripts/solar_foundation_audit.js');
+  }
+  
+  // Initialize Solar Audit Layer (SAi-Audit)
+  try {
+    initializeSolarAudit();
+    console.log('✅ Solar Audit Layer initialized');
+    console.log(`📊 Dashboard: http://localhost:${PORT}/solar-audit.html`);
+    console.log(`🔄 Manual update: POST http://localhost:${PORT}/api/solar-audit/update`);
+  } catch (error) {
+    console.warn('⚠️ Solar Audit initialization failed:', error.message);
+    console.log('📌 Dashboard still available but data fetch requires manual trigger');
   }
 }).on('error', (err) => {
   console.error('❌ Server failed to start:', err);
