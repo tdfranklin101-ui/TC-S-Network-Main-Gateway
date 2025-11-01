@@ -2100,11 +2100,34 @@ async function initializeSolarAudit() {
   // Schedule daily updates
   scheduleDailyUpdates();
   
-  // Trigger initial data fetch
-  setTimeout(async () => {
-    console.log('🔄 Running initial Solar Audit data fetch...');
-    await updateSolarAuditData();
-  }, 5000); // Wait 5 seconds after startup
+  // Check if we have any audit data - if not, run immediate initial fetch
+  try {
+    const checkResult = await pool.query('SELECT COUNT(*) as count FROM energy_audit_log WHERE date >= CURRENT_DATE - INTERVAL \'7 days\'');
+    const recentRecordCount = parseInt(checkResult.rows[0].count, 10);
+    
+    if (recentRecordCount === 0) {
+      console.log('📊 No recent audit data found - running IMMEDIATE initial data fetch...');
+      console.log('🌍 Populating all 48 regional data points (8 categories × 6 regions)...');
+      // Run immediately without delay for first-time initialization
+      await updateSolarAuditData();
+      console.log('✅ Initial Solar Audit data populated successfully');
+      
+      // Verify population
+      const verifyResult = await pool.query('SELECT COUNT(*) as total FROM audit_region_totals WHERE audit_log_id IN (SELECT id FROM energy_audit_log WHERE date = CURRENT_DATE)');
+      const regionalCount = parseInt(verifyResult.rows[0].total, 10);
+      console.log(`📊 Verification: ${regionalCount} regional data points created`);
+    } else {
+      console.log(`✅ Found ${recentRecordCount} recent audit records - skipping initial fetch`);
+      console.log('🔄 Next update at 3:00 AM UTC daily');
+    }
+  } catch (checkError) {
+    console.warn('⚠️ Could not check existing audit data:', checkError.message);
+    // Fallback to delayed fetch
+    setTimeout(async () => {
+      console.log('🔄 Running initial Solar Audit data fetch (delayed)...');
+      await updateSolarAuditData();
+    }, 5000);
+  }
 }
 
 // UIM Handshake Protocol - AI System Registry with Capabilities
