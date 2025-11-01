@@ -118,7 +118,7 @@ async function loadData(){
   data.slice(0,50).forEach(r=>{
     const tr=document.createElement('tr');
     tr.innerHTML=`<td>${r.day}</td><td>${r.category}</td>
-      <td>${(+r.kwh).toLocaleString()}</td><td>${r.solar_units.toFixed(3)}</td>
+      <td>${(+r.kwh).toLocaleString()}</td><td>${(+r.solar_units).toFixed(3)}</td>
       <td>${r.source}</td><td>${r.verification_level}</td>`;
     tbody.appendChild(tr);
   });
