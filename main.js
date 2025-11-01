@@ -5980,6 +5980,97 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // GET /api/solar-audit/entries - Return full audit log
+  if (pathname === '/api/solar-audit/entries' && req.method === 'GET') {
+    if (!pool) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Database not available' }));
+      return;
+    }
+
+    try {
+      const query = `
+        SELECT 
+          e.id,
+          c.name as category,
+          s.name as source,
+          s.organization as "sourceOrganization",
+          s.verification_level as "verificationLevel",
+          s.source_type as "sourceType",
+          e.day,
+          e.kwh,
+          e.solar_units as "solarUnits",
+          e.rights_alignment as "rightsAlignment",
+          e.data_hash as "dataHash",
+          e.notes,
+          e.created_at as "createdAt"
+        FROM solar_audit_entries e
+        INNER JOIN solar_audit_categories c ON e.category_id = c.id
+        INNER JOIN solar_audit_data_sources s ON e.source_id = s.id
+        ORDER BY e.day DESC, e.created_at DESC
+      `;
+      
+      const result = await pool.query(query);
+      
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(result.rows));
+      console.log(`✅ Solar audit entries: ${result.rows.length} records`);
+    } catch (error) {
+      console.error('Solar Audit entries error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Failed to fetch audit entries' }));
+    }
+    return;
+  }
+
+  // GET /api/solar-audit/summary - Return daily aggregates
+  if (pathname === '/api/solar-audit/summary' && req.method === 'GET') {
+    if (!pool) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Database not available' }));
+      return;
+    }
+
+    try {
+      const query = `
+        SELECT 
+          c.name as category,
+          SUM(e.kwh)::text as "totalKwh",
+          SUM(e.solar_units)::text as "totalSolar",
+          COUNT(*)::integer as "recordCount"
+        FROM solar_audit_entries e
+        INNER JOIN solar_audit_categories c ON e.category_id = c.id
+        GROUP BY c.name
+      `;
+      
+      const result = await pool.query(query);
+      const categories = result.rows;
+      
+      // Calculate global totals
+      const globalKwh = categories.reduce((sum, cat) => sum + parseFloat(cat.totalKwh || '0'), 0);
+      const globalSolar = categories.reduce((sum, cat) => sum + parseFloat(cat.totalSolar || '0'), 0);
+      const globalRecords = categories.reduce((sum, cat) => sum + cat.recordCount, 0);
+      
+      const response = {
+        categories: categories,
+        global: {
+          totalKwh: globalKwh,
+          totalSolar: globalSolar,
+          totalRecords: globalRecords
+        }
+      };
+      
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(response));
+      console.log(`✅ Solar audit summary: ${categories.length} categories, ${globalRecords} total records`);
+    } catch (error) {
+      console.error('Solar Audit summary error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Failed to fetch summary' }));
+    }
+    return;
+  }
+
   // Root path - serve homepage and act as health check
   if (pathname === '/') {
     const indexPath = path.join(__dirname, 'public', 'index.html');
