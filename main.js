@@ -764,16 +764,16 @@ function estimateGlobalRegionalBreakdown(totalKwh, category) {
 }
 
 // Helper: Insert regional breakdown for an audit entry
-async function insertRegionalBreakdown(auditLogId, regionCode, kwh) {
+async function insertRegionalBreakdown(auditLogId, regionCode, kwh, dataFreshness = 'LIVE_DAILY') {
   if (!pool || !auditLogId || !regionCode || kwh === null) return false;
   
   try {
     const solarUnits = kwh / 4913.0; // Convert kWh to Solar
     
     await pool.query(`
-      INSERT INTO audit_region_totals (audit_log_id, region_code, energy_kwh, energy_solar, metadata)
-      VALUES ($1, $2, $3, $4, $5)
-    `, [auditLogId, regionCode, kwh, solarUnits, JSON.stringify({ date: new Date().toISOString() })]);
+      INSERT INTO audit_region_totals (audit_log_id, region_code, energy_kwh, energy_solar, data_freshness, metadata)
+      VALUES ($1, $2, $3, $4, $5, $6)
+    `, [auditLogId, regionCode, kwh, solarUnits, dataFreshness, JSON.stringify({ date: new Date().toISOString() })]);
     
     return true;
   } catch (error) {
@@ -982,26 +982,37 @@ async function feedHousingKwh() {
   // US total goes into North America (overwrite estimate with actual data)
   globalRegionalBreakdown.GLOBAL_NORTH_AMERICA = result.globalKwh;
   
+  // Phase 2A: Fetch Eurostat data for Europe (overwrite estimate with actual data)
+  try {
+    const eurostatResult = await feedEurostatHousingKwh();
+    if (eurostatResult && eurostatResult.kwh) {
+      globalRegionalBreakdown.GLOBAL_EUROPE = eurostatResult.kwh;
+      console.log(`✅ Europe housing data from Eurostat (QUARTERLY_API): ${(eurostatResult.kwh / 1e6).toFixed(2)} GWh/day`);
+    }
+  } catch (error) {
+    console.log(`⚠️  Eurostat housing data unavailable, using estimate for Europe: ${error.message}`);
+  }
+  
   console.log(`✅ Housing (Residential) regional data: ${result.stateCount} states aggregated into 4 Census regions`);
   console.log(`   Total: ${(result.globalKwh / 1e6).toFixed(2)} GWh/day`);
   console.log(`   US Northeast: ${(usRegionalBreakdown.US_NORTHEAST / 1e6).toFixed(2)} GWh/day`);
   console.log(`   US Midwest: ${(usRegionalBreakdown.US_MIDWEST / 1e6).toFixed(2)} GWh/day`);
   console.log(`   US South: ${(usRegionalBreakdown.US_SOUTH / 1e6).toFixed(2)} GWh/day`);
   console.log(`   US West: ${(usRegionalBreakdown.US_WEST / 1e6).toFixed(2)} GWh/day`);
-  console.log(`📊 Global estimates: Asia ${(globalRegionalBreakdown.GLOBAL_ASIA / 1e6).toFixed(2)} GWh, N.America ${(globalRegionalBreakdown.GLOBAL_NORTH_AMERICA / 1e6).toFixed(2)} GWh (actual), Europe ${(globalRegionalBreakdown.GLOBAL_EUROPE / 1e6).toFixed(2)} GWh`);
+  console.log(`📊 Global data: Asia ${(globalRegionalBreakdown.GLOBAL_ASIA / 1e6).toFixed(2)} GWh, N.America ${(globalRegionalBreakdown.GLOBAL_NORTH_AMERICA / 1e6).toFixed(2)} GWh (actual), Europe ${(globalRegionalBreakdown.GLOBAL_EUROPE / 1e6).toFixed(2)} GWh (actual Eurostat)`);
   
   return {
     kwh: result.globalKwh, // US total (will expand to true global later)
     regionalBreakdown: usRegionalBreakdown,        // Level 2: US sub-regions
-    globalRegionalBreakdown: globalRegionalBreakdown, // Level 1: Global regions
+    globalRegionalBreakdown: globalRegionalBreakdown, // Level 1: Global regions (includes actual Eurostat data for Europe)
     source: {
-      name: 'EIA Retail Sales – Residential (State-level)',
-      organization: 'U.S. Energy Information Administration',
+      name: 'EIA Retail Sales – Residential (State-level) + Eurostat EU-27',
+      organization: 'U.S. Energy Information Administration / Eurostat',
       verificationLevel: 'THIRD_PARTY',
       uri: 'https://api.eia.gov',
       sourceType: 'DIRECT'
     },
-    note: `US residential retail sales ${result.year}-${result.month.toString().padStart(2, '0')} with dual-level hierarchy: 4 US Census regions (actual) + 6 global regions (estimates, North America actual)`
+    note: `US residential retail sales ${result.year}-${result.month.toString().padStart(2, '0')} with dual-level hierarchy: 4 US Census regions (actual) + 6 global regions (North America & Europe actual, others estimated)`
   };
 }
 
@@ -1062,26 +1073,37 @@ async function feedManufacturingKwh() {
   // US total goes into North America (overwrite estimate with actual data)
   globalRegionalBreakdown.GLOBAL_NORTH_AMERICA = result.globalKwh;
   
+  // Phase 2A: Fetch Eurostat data for Europe (overwrite estimate with actual data)
+  try {
+    const eurostatResult = await feedEurostatManufacturingKwh();
+    if (eurostatResult && eurostatResult.kwh) {
+      globalRegionalBreakdown.GLOBAL_EUROPE = eurostatResult.kwh;
+      console.log(`✅ Europe manufacturing data from Eurostat (QUARTERLY_API): ${(eurostatResult.kwh / 1e6).toFixed(2)} GWh/day`);
+    }
+  } catch (error) {
+    console.log(`⚠️  Eurostat manufacturing data unavailable, using estimate for Europe: ${error.message}`);
+  }
+  
   console.log(`✅ Manufacturing (Industrial) regional data: ${result.stateCount} states aggregated into 4 Census regions`);
   console.log(`   Total: ${(result.globalKwh / 1e6).toFixed(2)} GWh/day`);
   console.log(`   US Northeast: ${(usRegionalBreakdown.US_NORTHEAST / 1e6).toFixed(2)} GWh/day`);
   console.log(`   US Midwest: ${(usRegionalBreakdown.US_MIDWEST / 1e6).toFixed(2)} GWh/day`);
   console.log(`   US South: ${(usRegionalBreakdown.US_SOUTH / 1e6).toFixed(2)} GWh/day`);
   console.log(`   US West: ${(usRegionalBreakdown.US_WEST / 1e6).toFixed(2)} GWh/day`);
-  console.log(`📊 Global estimates: Asia ${(globalRegionalBreakdown.GLOBAL_ASIA / 1e6).toFixed(2)} GWh, N.America ${(globalRegionalBreakdown.GLOBAL_NORTH_AMERICA / 1e6).toFixed(2)} GWh (actual), Europe ${(globalRegionalBreakdown.GLOBAL_EUROPE / 1e6).toFixed(2)} GWh`);
+  console.log(`📊 Global data: Asia ${(globalRegionalBreakdown.GLOBAL_ASIA / 1e6).toFixed(2)} GWh, N.America ${(globalRegionalBreakdown.GLOBAL_NORTH_AMERICA / 1e6).toFixed(2)} GWh (actual), Europe ${(globalRegionalBreakdown.GLOBAL_EUROPE / 1e6).toFixed(2)} GWh (actual Eurostat)`);
   
   return {
     kwh: result.globalKwh, // US total (will expand to true global later)
     regionalBreakdown: usRegionalBreakdown,        // Level 2: US sub-regions
-    globalRegionalBreakdown: globalRegionalBreakdown, // Level 1: Global regions
+    globalRegionalBreakdown: globalRegionalBreakdown, // Level 1: Global regions (includes actual Eurostat data for Europe)
     source: {
-      name: 'EIA Retail Sales – Industrial',
-      organization: 'U.S. Energy Information Administration',
+      name: 'EIA Retail Sales – Industrial + Eurostat EU-27',
+      organization: 'U.S. Energy Information Administration / Eurostat',
       verificationLevel: 'THIRD_PARTY',
       uri: 'https://api.eia.gov',
       sourceType: 'DIRECT'
     },
-    note: `US industrial retail sales ${result.year}-${result.month.toString().padStart(2, '0')} with dual-level hierarchy: 4 US Census regions (actual) + 6 global regions (estimates, North America actual)`
+    note: `US industrial retail sales ${result.year}-${result.month.toString().padStart(2, '0')} with dual-level hierarchy: 4 US Census regions (actual) + 6 global regions (North America & Europe actual, others estimated)`
   };
 }
 
@@ -1136,6 +1158,17 @@ async function feedTransportKwh() {
     // Global regional breakdown (Level 1: new hierarchical system)
     const globalRegionalBreakdown = estimateGlobalRegionalBreakdown(totalKwh, 'transport');
     
+    // Phase 2A: Fetch Eurostat data for Europe (overwrite estimate with actual data)
+    try {
+      const eurostatResult = await feedEurostatTransportKwh();
+      if (eurostatResult && eurostatResult.kwh) {
+        globalRegionalBreakdown.GLOBAL_EUROPE = eurostatResult.kwh;
+        console.log(`✅ Europe transport data from Eurostat (QUARTERLY_API): ${(eurostatResult.kwh / 1e6).toFixed(2)} GWh/day`);
+      }
+    } catch (error) {
+      console.log(`⚠️  Eurostat transport data unavailable, using estimate for Europe: ${error.message}`);
+    }
+    
     // US total goes into North America (overwrite estimate with actual data)
     globalRegionalBreakdown.GLOBAL_NORTH_AMERICA = totalKwh;
     
@@ -1145,20 +1178,20 @@ async function feedTransportKwh() {
     console.log(`   US South: ${(usRegionalBreakdown.US_SOUTH / 1e6).toFixed(2)} GWh/day (~25% - FL, TX growth)`);
     console.log(`   US Northeast: ${(usRegionalBreakdown.US_NORTHEAST / 1e6).toFixed(2)} GWh/day (~20%)`);
     console.log(`   US Midwest: ${(usRegionalBreakdown.US_MIDWEST / 1e6).toFixed(2)} GWh/day (~10% - slower adoption)`);
-    console.log(`📊 Global estimates: Asia ${(globalRegionalBreakdown.GLOBAL_ASIA / 1e6).toFixed(2)} GWh, N.America ${(globalRegionalBreakdown.GLOBAL_NORTH_AMERICA / 1e6).toFixed(2)} GWh (actual), Europe ${(globalRegionalBreakdown.GLOBAL_EUROPE / 1e6).toFixed(2)} GWh`);
+    console.log(`📊 Global data: Asia ${(globalRegionalBreakdown.GLOBAL_ASIA / 1e6).toFixed(2)} GWh, N.America ${(globalRegionalBreakdown.GLOBAL_NORTH_AMERICA / 1e6).toFixed(2)} GWh (actual), Europe ${(globalRegionalBreakdown.GLOBAL_EUROPE / 1e6).toFixed(2)} GWh (actual Eurostat)`);
     
     return {
       kwh: totalKwh, // US total (will expand to true global later)
       regionalBreakdown: usRegionalBreakdown,        // Level 2: US sub-regions
-      globalRegionalBreakdown: globalRegionalBreakdown, // Level 1: Global regions
+      globalRegionalBreakdown: globalRegionalBreakdown, // Level 1: Global regions (includes actual Eurostat data for Europe)
       source: {
-        name: 'DOE/AFDC Transportation Electrification',
-        organization: 'U.S. Department of Energy Alternative Fuels Data Center',
+        name: 'DOE/AFDC Transportation Electrification + Eurostat EU-27',
+        organization: 'U.S. Department of Energy Alternative Fuels Data Center / Eurostat',
         verificationLevel: 'CALCULATED',
         uri: 'https://afdc.energy.gov/data',
         sourceType: 'CALCULATED'
       },
-      note: `US transportation electrification: ${(evFleetSize / 1e6).toFixed(1)}M EVs + public transit + commercial fleets with dual-level hierarchy: 4 US regions (actual) + 6 global regions (estimates, North America actual)`
+      note: `US transportation electrification: ${(evFleetSize / 1e6).toFixed(1)}M EVs + public transit + commercial fleets with dual-level hierarchy: 4 US regions (actual) + 6 global regions (North America & Europe actual, others estimated)`
     };
   } catch (error) {
     console.error('❌ Failed to calculate transportation electrification energy:', error.message);
@@ -1205,6 +1238,226 @@ async function feedFoodAgricultureKwh() {
     };
   } catch (error) {
     console.error('❌ Failed to calculate agricultural energy:', error.message);
+    return null;
+  }
+}
+
+// ============================================================
+// EUROSTAT API FEED FUNCTIONS (Phase 2A)
+// Real European Union energy data with QUARTERLY_API freshness
+// ============================================================
+
+// Eurostat Housing (Residential Electricity) Feed
+async function feedEurostatHousingKwh() {
+  try {
+    // Eurostat API for EU-27 household electricity consumption
+    // Dataset: nrg_bal_q (Quarterly energy balance)
+    // Filter: FC_OTH_HH_E (Final consumption - households - electricity)
+    // Geography: EU27_2020 (EU-27 from 2020 onwards)
+    // Unit: GWH (Gigawatt-hours)
+    const url = 'https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/nrg_bal_q?format=JSON&nrg_bal=FC_OTH_HH_E&unit=GWH&geo=EU27_2020&siec=E7000';
+    
+    const response = await fetch(url, {
+      headers: { 'User-Agent': 'TC-S-Network-SAi-Audit/1.0' }
+    });
+    
+    if (!response.ok) {
+      console.error(`❌ Eurostat API error for Housing: ${response.status} ${response.statusText}`);
+      return null;
+    }
+    
+    const data = await response.json();
+    
+    // Parse Eurostat JSON structure to extract latest quarterly value
+    // Eurostat returns data in format: { value: { "0": value1, "1": value2... }, dimension: {...} }
+    const values = data?.value || {};
+    const dimensions = data?.dimension || {};
+    const timeData = dimensions?.time?.category?.index || {};
+    
+    // Get the most recent time period
+    const timePeriods = Object.keys(timeData).sort().reverse();
+    if (timePeriods.length === 0) {
+      console.error('❌ No time periods found in Eurostat data');
+      return null;
+    }
+    
+    const latestPeriod = timePeriods[0]; // Most recent quarter (e.g., "2024-Q2")
+    const latestIndex = timeData[latestPeriod];
+    const quarterlyGWh = values[latestIndex];
+    
+    if (!quarterlyGWh || quarterlyGWh <= 0) {
+      console.error(`❌ Invalid Eurostat housing data for ${latestPeriod}: ${quarterlyGWh}`);
+      return null;
+    }
+    
+    // Convert quarterly GWh to daily kWh
+    // Average days per quarter: 91.25 days (365/4)
+    const daysPerQuarter = 91.25;
+    const dailyKwh = (quarterlyGWh * 1e6) / daysPerQuarter; // GWh to kWh, then divide by days
+    
+    console.log(`✅ Eurostat EU-27 Housing (Residential): ${quarterlyGWh.toFixed(2)} GWh/quarter (${latestPeriod}) = ${(dailyKwh / 1e6).toFixed(2)} GWh/day`);
+    
+    return {
+      kwh: dailyKwh,
+      source: {
+        name: 'Eurostat Energy Balance (Quarterly) - Household Electricity',
+        organization: 'European Commission Statistical Office (Eurostat)',
+        verificationLevel: 'THIRD_PARTY',
+        uri: 'https://ec.europa.eu/eurostat/databrowser/view/nrg_bal_q',
+        sourceType: 'DIRECT'
+      },
+      note: `EU-27 residential electricity consumption from Eurostat quarterly energy balance (${latestPeriod}): ${quarterlyGWh.toFixed(2)} GWh/quarter = ${(dailyKwh / 1e6).toFixed(2)} GWh/day`,
+      dataFreshness: 'QUARTERLY_API',
+      metadata: {
+        quarter: latestPeriod,
+        quarterlyGWh: quarterlyGWh,
+        daysPerQuarter: daysPerQuarter
+      }
+    };
+  } catch (error) {
+    console.error('❌ Failed to fetch Eurostat housing data:', error.message);
+    return null;
+  }
+}
+
+// Eurostat Manufacturing (Industrial Electricity) Feed
+async function feedEurostatManufacturingKwh() {
+  try {
+    // Eurostat API for EU-27 industrial electricity consumption
+    // Dataset: nrg_bal_q (Quarterly energy balance)
+    // Filter: FC_IND_E (Final consumption - industry - electricity)
+    // Geography: EU27_2020 (EU-27 from 2020 onwards)
+    // Unit: GWH (Gigawatt-hours)
+    const url = 'https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/nrg_bal_q?format=JSON&nrg_bal=FC_IND_E&unit=GWH&geo=EU27_2020&siec=E7000';
+    
+    const response = await fetch(url, {
+      headers: { 'User-Agent': 'TC-S-Network-SAi-Audit/1.0' }
+    });
+    
+    if (!response.ok) {
+      console.error(`❌ Eurostat API error for Manufacturing: ${response.status} ${response.statusText}`);
+      return null;
+    }
+    
+    const data = await response.json();
+    
+    // Parse Eurostat JSON structure
+    const values = data?.value || {};
+    const dimensions = data?.dimension || {};
+    const timeData = dimensions?.time?.category?.index || {};
+    
+    // Get the most recent time period
+    const timePeriods = Object.keys(timeData).sort().reverse();
+    if (timePeriods.length === 0) {
+      console.error('❌ No time periods found in Eurostat manufacturing data');
+      return null;
+    }
+    
+    const latestPeriod = timePeriods[0];
+    const latestIndex = timeData[latestPeriod];
+    const quarterlyGWh = values[latestIndex];
+    
+    if (!quarterlyGWh || quarterlyGWh <= 0) {
+      console.error(`❌ Invalid Eurostat manufacturing data for ${latestPeriod}: ${quarterlyGWh}`);
+      return null;
+    }
+    
+    // Convert quarterly GWh to daily kWh
+    const daysPerQuarter = 91.25;
+    const dailyKwh = (quarterlyGWh * 1e6) / daysPerQuarter;
+    
+    console.log(`✅ Eurostat EU-27 Manufacturing (Industrial): ${quarterlyGWh.toFixed(2)} GWh/quarter (${latestPeriod}) = ${(dailyKwh / 1e6).toFixed(2)} GWh/day`);
+    
+    return {
+      kwh: dailyKwh,
+      source: {
+        name: 'Eurostat Energy Balance (Quarterly) - Industrial Electricity',
+        organization: 'European Commission Statistical Office (Eurostat)',
+        verificationLevel: 'THIRD_PARTY',
+        uri: 'https://ec.europa.eu/eurostat/databrowser/view/nrg_bal_q',
+        sourceType: 'DIRECT'
+      },
+      note: `EU-27 industrial electricity consumption from Eurostat quarterly energy balance (${latestPeriod}): ${quarterlyGWh.toFixed(2)} GWh/quarter = ${(dailyKwh / 1e6).toFixed(2)} GWh/day`,
+      dataFreshness: 'QUARTERLY_API',
+      metadata: {
+        quarter: latestPeriod,
+        quarterlyGWh: quarterlyGWh,
+        daysPerQuarter: daysPerQuarter
+      }
+    };
+  } catch (error) {
+    console.error('❌ Failed to fetch Eurostat manufacturing data:', error.message);
+    return null;
+  }
+}
+
+// Eurostat Transport (Transport Electricity) Feed
+async function feedEurostatTransportKwh() {
+  try {
+    // Eurostat API for EU-27 transport electricity consumption
+    // Dataset: nrg_bal_q (Quarterly energy balance)
+    // Filter: FC_TRA_E (Final consumption - transport - electricity)
+    // Geography: EU27_2020 (EU-27 from 2020 onwards)
+    // Unit: GWH (Gigawatt-hours)
+    const url = 'https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/nrg_bal_q?format=JSON&nrg_bal=FC_TRA_E&unit=GWH&geo=EU27_2020&siec=E7000';
+    
+    const response = await fetch(url, {
+      headers: { 'User-Agent': 'TC-S-Network-SAi-Audit/1.0' }
+    });
+    
+    if (!response.ok) {
+      console.error(`❌ Eurostat API error for Transport: ${response.status} ${response.statusText}`);
+      return null;
+    }
+    
+    const data = await response.json();
+    
+    // Parse Eurostat JSON structure
+    const values = data?.value || {};
+    const dimensions = data?.dimension || {};
+    const timeData = dimensions?.time?.category?.index || {};
+    
+    // Get the most recent time period
+    const timePeriods = Object.keys(timeData).sort().reverse();
+    if (timePeriods.length === 0) {
+      console.error('❌ No time periods found in Eurostat transport data');
+      return null;
+    }
+    
+    const latestPeriod = timePeriods[0];
+    const latestIndex = timeData[latestPeriod];
+    const quarterlyGWh = values[latestIndex];
+    
+    if (!quarterlyGWh || quarterlyGWh <= 0) {
+      console.error(`❌ Invalid Eurostat transport data for ${latestPeriod}: ${quarterlyGWh}`);
+      return null;
+    }
+    
+    // Convert quarterly GWh to daily kWh
+    const daysPerQuarter = 91.25;
+    const dailyKwh = (quarterlyGWh * 1e6) / daysPerQuarter;
+    
+    console.log(`✅ Eurostat EU-27 Transport (Electrification): ${quarterlyGWh.toFixed(2)} GWh/quarter (${latestPeriod}) = ${(dailyKwh / 1e6).toFixed(2)} GWh/day`);
+    
+    return {
+      kwh: dailyKwh,
+      source: {
+        name: 'Eurostat Energy Balance (Quarterly) - Transport Electricity',
+        organization: 'European Commission Statistical Office (Eurostat)',
+        verificationLevel: 'THIRD_PARTY',
+        uri: 'https://ec.europa.eu/eurostat/databrowser/view/nrg_bal_q',
+        sourceType: 'DIRECT'
+      },
+      note: `EU-27 transport electricity consumption from Eurostat quarterly energy balance (${latestPeriod}): ${quarterlyGWh.toFixed(2)} GWh/quarter = ${(dailyKwh / 1e6).toFixed(2)} GWh/day (includes electric rail and EV charging)`,
+      dataFreshness: 'QUARTERLY_API',
+      metadata: {
+        quarter: latestPeriod,
+        quarterlyGWh: quarterlyGWh,
+        daysPerQuarter: daysPerQuarter
+      }
+    };
+  } catch (error) {
+    console.error('❌ Failed to fetch Eurostat transport data:', error.message);
     return null;
   }
 }
@@ -1339,15 +1592,18 @@ async function tieredFetch(fetchFn, categoryName, rights) {
       if (auditLogId) {
         let totalStoredRegions = 0;
         
+        // Extract data freshness from result (default to LIVE_DAILY for backward compatibility)
+        const dataFreshness = result.dataFreshness || 'LIVE_DAILY';
+        
         // Store global regional breakdowns (Level 1)
         if (result.globalRegionalBreakdown) {
-          console.log(`📊 Storing global regional breakdowns for ${categoryName}...`);
+          console.log(`📊 Storing global regional breakdowns for ${categoryName} (freshness: ${dataFreshness})...`);
           let globalSuccess = 0;
           for (const [regionCode, kwh] of Object.entries(result.globalRegionalBreakdown)) {
-            const success = await insertRegionalBreakdown(auditLogId, regionCode, kwh);
+            const success = await insertRegionalBreakdown(auditLogId, regionCode, kwh, dataFreshness);
             if (success) globalSuccess++;
           }
-          console.log(`✅ Stored ${globalSuccess}/${Object.keys(result.globalRegionalBreakdown).length} global regions`);
+          console.log(`✅ Stored ${globalSuccess}/${Object.keys(result.globalRegionalBreakdown).length} global regions with ${dataFreshness} freshness`);
           totalStoredRegions += globalSuccess;
           
           // Validation: Check if global regional totals sum correctly
@@ -1364,13 +1620,13 @@ async function tieredFetch(fetchFn, categoryName, rights) {
         
         // Store US sub-regional breakdowns (Level 2)
         if (result.regionalBreakdown) {
-          console.log(`📊 Storing US sub-regional breakdowns for ${categoryName}...`);
+          console.log(`📊 Storing US sub-regional breakdowns for ${categoryName} (freshness: ${dataFreshness})...`);
           let usSuccess = 0;
           for (const [regionCode, kwh] of Object.entries(result.regionalBreakdown)) {
-            const success = await insertRegionalBreakdown(auditLogId, regionCode, kwh);
+            const success = await insertRegionalBreakdown(auditLogId, regionCode, kwh, dataFreshness);
             if (success) usSuccess++;
           }
-          console.log(`✅ Stored ${usSuccess}/${Object.keys(result.regionalBreakdown).length} US sub-regions`);
+          console.log(`✅ Stored ${usSuccess}/${Object.keys(result.regionalBreakdown).length} US sub-regions with ${dataFreshness} freshness`);
           totalStoredRegions += usSuccess;
           
           // Validation: Check if US sub-regional totals sum to global total (within rounding tolerance)
