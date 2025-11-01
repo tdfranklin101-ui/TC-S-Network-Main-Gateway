@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Global Power Consumption & Solar Reserve Tracker</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  body { background:#0b0e10; color:#e2f7ff; font-family:'Inter',sans-serif; margin:0; }
+  h1 { color:#00ffe0; text-align:center; margin-top:25px; font-weight:600; }
+  h2 { color:#ffa500; margin-top:40px; border-bottom:1px solid #333; padding-bottom:6px; }
+  .container { width:90%; max-width:1250px; margin:0 auto; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; margin-top:15px;}
+  .tile { background:#111417; border:1px solid #1c2227; border-radius:10px; padding:18px; text-align:center;}
+  .tile h3 { margin:6px 0; color:#00ffe0;}
+  .tile p { font-size:14px; margin:3px 0;}
+  canvas { width:100%; max-width:100%; margin-top:20px; }
+  .section { margin-bottom:40px;}
+  .button { background:#00ffe0; color:#000; padding:10px 16px; border:none; border-radius:6px; cursor:pointer; font-weight:600;}
+  .button:hover{background:#00cfd0;}
+  footer { text-align:center; font-size:12px; color:#888; margin:30px 0;}
+  table { width:100%; border-collapse:collapse; font-size:13px;}
+  th,td{padding:6px 8px; border:1px solid #222;}
+  th{background:#11181d; color:#00ffe0;}
+  tr:nth-child(even){background:#0f1215;}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <h1>🌍 Global Energy Intelligence Dashboard</h1>
+  <p style="text-align:center;max-width:800px;margin:0 auto 20px;">
+    Real-time monitoring of global power consumption converted to Solar units.
+    Tracks cumulative totals since <b>April 7 2025</b> across six core sectors.
+  </p>
+
+  <div class="grid" id="totalsGrid"></div>
+
+  <div class="section">
+    <h2>📈 Global Energy Trend (Daily GWh)</h2>
+    <canvas id="globalTrend"></canvas>
+  </div>
+
+  <div class="section">
+    <h2>🔍 Sector Breakdown (Cumulative kWh)</h2>
+    <canvas id="sectorChart"></canvas>
+  </div>
+
+  <div class="section" style="text-align:center;">
+    <button id="exportBtn" class="button">⬇️ Download Full Audit Data (JSON)</button>
+  </div>
+
+  <div class="section">
+    <h2>🧾 Latest Audit Entries</h2>
+    <table id="auditTable">
+      <thead>
+        <tr><th>Date</th><th>Category</th><th>kWh</th><th>Solar Units</th><th>Source</th><th>Verification</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <footer>Data from verified international sources (EIA, ENTSO-E, IRENA, AEMO). All values cryptographically auditable.</footer>
+</div>
+
+<script>
+async function loadData(){
+  const res = await fetch('/auditlog');
+  const data = await res.json();
+
+  // --- compute totals ---
+  const cats=[...new Set(data.map(x=>x.category))];
+  const totals={};
+  let totalKwh=0,totalSolar=0;
+  data.forEach(r=>{
+    if(!totals[r.category]) totals[r.category]={kwh:0,solar:0};
+    totals[r.category].kwh += +r.kwh;
+    totals[r.category].solar += +r.solar_units;
+    totalKwh += +r.kwh;
+    totalSolar += +r.solar_units;
+  });
+
+  // --- summary tiles ---
+  const grid=document.getElementById('totalsGrid');
+  const globalTile=document.createElement('div');
+  globalTile.className='tile';
+  globalTile.innerHTML=`<h3>Total Global</h3>
+    <p><b>${totalKwh.toLocaleString(undefined,{maximumFractionDigits:0})}</b> kWh</p>
+    <p><b>${totalSolar.toFixed(2)}</b> Solar Units</p>`;
+  grid.appendChild(globalTile);
+
+  cats.forEach(c=>{
+    const div=document.createElement('div');
+    div.className='tile';
+    div.innerHTML=`<h3>${c}</h3>
+      <p>${totals[c].kwh.toLocaleString(undefined,{maximumFractionDigits:0})} kWh</p>
+      <p>${totals[c].solar.toFixed(2)} Solar</p>`;
+    grid.appendChild(div);
+  });
+
+  // --- global trend ---
+  const days=[...new Set(data.map(x=>x.day))].sort();
+  const dayTotals=days.map(d=>data.filter(x=>x.day===d).reduce((s,x)=>s+x.kwh,0)/1e9);
+  new Chart(document.getElementById('globalTrend'),{
+    type:'line',
+    data:{labels:days,datasets:[{label:'Global Energy (GWh)',data:dayTotals,borderColor:'#00ffe0',tension:0.3,fill:false}]},
+    options:{scales:{x:{ticks:{color:'#ccc'}},y:{ticks:{color:'#ccc'}}}}
+  });
+
+  // --- sector breakdown chart ---
+  new Chart(document.getElementById('sectorChart'),{
+    type:'bar',
+    data:{labels:cats,datasets:[{label:'Cumulative kWh',data:cats.map(c=>totals[c].kwh/1e9),backgroundColor:'#00ffe0'}]},
+    options:{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#ccc'}},y:{ticks:{color:'#ccc'}}}}
+  });
+
+  // --- audit table ---
+  const tbody=document.querySelector('#auditTable tbody');
+  data.slice(0,50).forEach(r=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${r.day}</td><td>${r.category}</td>
+      <td>${(+r.kwh).toLocaleString()}</td><td>${r.solar_units.toFixed(3)}</td>
+      <td>${r.source}</td><td>${r.verification_level}</td>`;
+    tbody.appendChild(tr);
+  });
+
+  // --- export JSON ---
+  document.getElementById('exportBtn').addEventListener('click',()=>{
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download='global_energy_audit.json';a.click();
+    URL.revokeObjectURL(url);
+  });
+}
+loadData();
+</script>
+</body>
+</html>
