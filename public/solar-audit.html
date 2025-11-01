@@ -1,589 +1,138 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Global Power Consumption Audit | Solar Intelligence Layer | TC-S Network Foundation</title>
-  
-  <!-- SEO Meta Tags -->
-  <meta name="description" content="Real-time global power consumption tracking across 6 critical sectors: Money/Blockchain, Housing, Transport, Food/Agriculture, Digital Services, and Manufacturing. Powered by live API feeds with regulatory-grade audit trails.">
-  <meta name="keywords" content="power consumption, energy audit, solar intelligence, global energy demand, EIA data, renewable energy tracking, blockchain energy, AI energy consumption">
-  
-  <!-- Open Graph -->
-  <meta property="og:title" content="Global Power Consumption Audit - Solar Intelligence Layer">
-  <meta property="og:description" content="Track global energy demand across 6 sectors with cryptographic integrity and regulatory-grade audit trails">
-  <meta property="og:type" content="website">
-  
-  <link rel="standard" href="/SolarStandard.html" title="Solar Standard Protocol v1.0">
-  <link rel="alternate" type="application/atom+xml" href="/SolarFeed.xml" title="Solar Protocol Feed">
-  
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
-      color: #ffffff;
-      min-height: 100vh;
-      padding: 20px;
-    }
-
-    .container {
-      max-width: 1400px;
-      margin: 0 auto;
-    }
-
-    header {
-      text-align: center;
-      margin-bottom: 40px;
-      padding: 30px 0;
-      border-bottom: 2px solid rgba(0, 255, 224, 0.3);
-    }
-
-    h1 {
-      font-size: 2.5rem;
-      font-weight: 700;
-      background: linear-gradient(135deg, #00ffe0 0%, #0ea5e9 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 10px;
-    }
-
-    .subtitle {
-      font-size: 1.1rem;
-      color: rgba(255, 255, 255, 0.7);
-      margin-top: 10px;
-    }
-
-    .dashboard-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 30px;
-      flex-wrap: wrap;
-      gap: 15px;
-    }
-
-    .btn {
-      background: linear-gradient(135deg, #00ffe0 0%, #0ea5e9 100%);
-      color: #0a0a0a;
-      border: none;
-      padding: 12px 24px;
-      border-radius: 8px;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 20px rgba(0, 255, 224, 0.3);
-    }
-
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 20px;
-      margin-bottom: 40px;
-    }
-
-    .stat-card {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(0, 255, 224, 0.2);
-      border-radius: 12px;
-      padding: 24px;
-      transition: all 0.3s ease;
-    }
-
-    .stat-card:hover {
-      border-color: rgba(0, 255, 224, 0.5);
-      background: rgba(255, 255, 255, 0.08);
-      transform: translateY(-4px);
-    }
-
-    .stat-icon {
-      width: 48px;
-      height: 48px;
-      background: linear-gradient(135deg, #00ffe0 0%, #0ea5e9 100%);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 16px;
-      font-size: 24px;
-    }
-
-    .stat-value {
-      font-size: 2rem;
-      font-weight: 700;
-      color: #00ffe0;
-      margin-bottom: 8px;
-    }
-
-    .stat-label {
-      font-size: 0.9rem;
-      color: rgba(255, 255, 255, 0.6);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .chart-container {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(0, 255, 224, 0.2);
-      border-radius: 12px;
-      padding: 30px;
-      margin-bottom: 40px;
-    }
-
-    .chart-wrapper {
-      height: 400px;
-      position: relative;
-    }
-
-    .categories-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 20px;
-      margin-bottom: 40px;
-    }
-
-    .category-card {
-      background: rgba(255, 255, 255, 0.05);
-      border-left: 4px solid;
-      border-radius: 12px;
-      padding: 24px;
-      transition: all 0.3s ease;
-    }
-
-    .category-card:hover {
-      background: rgba(255, 255, 255, 0.08);
-      transform: translateX(4px);
-    }
-
-    .category-name {
-      font-size: 1.2rem;
-      font-weight: 600;
-      margin-bottom: 16px;
-    }
-
-    .category-stats {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .category-stat {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .category-stat-label {
-      color: rgba(255, 255, 255, 0.6);
-      font-size: 0.9rem;
-    }
-
-    .category-stat-value {
-      color: #ffffff;
-      font-weight: 600;
-      font-size: 1.1rem;
-    }
-
-    .loading {
-      text-align: center;
-      padding: 60px 20px;
-      font-size: 1.2rem;
-      color: rgba(255, 255, 255, 0.6);
-    }
-
-    .spinner {
-      border: 4px solid rgba(0, 255, 224, 0.1);
-      border-top: 4px solid #00ffe0;
-      border-radius: 50%;
-      width: 50px;
-      height: 50px;
-      animation: spin 1s linear infinite;
-      margin: 0 auto 20px;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    @media (max-width: 768px) {
-      h1 {
-        font-size: 1.8rem;
-      }
-      
-      .dashboard-header {
-        flex-direction: column;
-        align-items: stretch;
-      }
-      
-      .categories-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
+<meta charset="UTF-8">
+<title>Global Power Consumption & Solar Reserve Tracker</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  body { background:#0b0e10; color:#e2f7ff; font-family:'Inter',sans-serif; margin:0; }
+  h1 { color:#00ffe0; text-align:center; margin-top:25px; font-weight:600; }
+  h2 { color:#ffa500; margin-top:40px; border-bottom:1px solid #333; padding-bottom:6px; }
+  .container { width:90%; max-width:1250px; margin:0 auto; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; margin-top:15px;}
+  .tile { background:#111417; border:1px solid #1c2227; border-radius:10px; padding:18px; text-align:center;}
+  .tile h3 { margin:6px 0; color:#00ffe0;}
+  .tile p { font-size:14px; margin:3px 0;}
+  canvas { width:100%; max-width:100%; margin-top:20px; }
+  .section { margin-bottom:40px;}
+  .button { background:#00ffe0; color:#000; padding:10px 16px; border:none; border-radius:6px; cursor:pointer; font-weight:600;}
+  .button:hover{background:#00cfd0;}
+  footer { text-align:center; font-size:12px; color:#888; margin:30px 0;}
+  table { width:100%; border-collapse:collapse; font-size:13px;}
+  th,td{padding:6px 8px; border:1px solid #222;}
+  th{background:#11181d; color:#00ffe0;}
+  tr:nth-child(even){background:#0f1215;}
+</style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>🌍 Global Power Consumption Audit</h1>
-      <p class="subtitle">Real-Time Solar Intelligence Layer • Tracking 6 Critical Sectors</p>
-      <p class="subtitle" style="font-size: 0.9rem; margin-top: 8px;">Powered by U.S. Energy Information Administration (EIA) API • Cryptographic Integrity</p>
-    </header>
+<div class="container">
 
-    <div class="dashboard-header">
-      <h2 style="color: rgba(255, 255, 255, 0.9); font-size: 1.5rem;">Dashboard Overview</h2>
-      <button class="btn" onclick="downloadJSON()" data-testid="button-download-json">
-        <span>⬇</span> Download Audit Data (JSON)
-      </button>
-    </div>
+  <h1>🌍 Global Energy Intelligence Dashboard</h1>
+  <p style="text-align:center;max-width:800px;margin:0 auto 20px;">
+    Real-time monitoring of global power consumption converted to Solar units.
+    Tracks cumulative totals since <b>April 7 2025</b> across six core sectors.
+  </p>
 
-    <div id="loading" class="loading">
-      <div class="spinner"></div>
-      <p>Loading global consumption data...</p>
-    </div>
+  <div class="grid" id="totalsGrid"></div>
 
-    <div id="dashboard" style="display: none;">
-      <!-- Global Stats -->
-      <div class="stats-grid">
-        <div class="stat-card" data-testid="card-global-kwh">
-          <div class="stat-icon">⚡</div>
-          <div class="stat-value" id="global-kwh">0</div>
-          <div class="stat-label">Total kWh Tracked</div>
-        </div>
-        <div class="stat-card" data-testid="card-global-solar">
-          <div class="stat-icon">☀️</div>
-          <div class="stat-value" id="global-solar">0</div>
-          <div class="stat-label">Total Solar Units</div>
-        </div>
-        <div class="stat-card" data-testid="card-global-records">
-          <div class="stat-icon">📊</div>
-          <div class="stat-value" id="global-records">0</div>
-          <div class="stat-label">Audit Entries</div>
-        </div>
-        <div class="stat-card" data-testid="card-global-trend">
-          <div class="stat-icon">📈</div>
-          <div class="stat-value" id="global-trend">6</div>
-          <div class="stat-label">Sectors Tracked</div>
-        </div>
-      </div>
-
-      <!-- Chart -->
-      <div class="chart-container">
-        <h3 style="margin-bottom: 20px; color: rgba(255, 255, 255, 0.9);">Daily Consumption by Sector (GWh)</h3>
-        <div class="chart-wrapper">
-          <canvas id="consumptionChart" data-testid="chart-consumption"></canvas>
-        </div>
-      </div>
-
-      <!-- Category Breakdown -->
-      <h3 style="margin-bottom: 20px; color: rgba(255, 255, 255, 0.9); font-size: 1.5rem;">Sector Breakdown</h3>
-      <div class="categories-grid" id="categories"></div>
-
-      <!-- Detailed Audit Log -->
-      <div class="chart-container" style="margin-top: 40px;">
-        <h3 style="margin-bottom: 20px; color: rgba(255, 255, 255, 0.9);">Detailed Audit Log (Last 100 Records)</h3>
-        <div style="overflow-x: auto;">
-          <table id="auditTable" style="width: 100%; border-collapse: collapse; font-size: 0.9rem;" data-testid="table-audit-log">
-            <thead>
-              <tr style="border-bottom: 2px solid rgba(0, 255, 224, 0.3);">
-                <th style="text-align: left; padding: 12px; color: #00ffe0;">Date</th>
-                <th style="text-align: left; padding: 12px; color: #00ffe0;">Category</th>
-                <th style="text-align: left; padding: 12px; color: #00ffe0;">kWh</th>
-                <th style="text-align: left; padding: 12px; color: #00ffe0;">Solar Units</th>
-                <th style="text-align: left; padding: 12px; color: #00ffe0;">Source</th>
-                <th style="text-align: left; padding: 12px; color: #00ffe0;">Verification</th>
-                <th style="text-align: left; padding: 12px; color: #00ffe0;">Type</th>
-                <th style="text-align: left; padding: 12px; color: #00ffe0;">Data Hash</th>
-                <th style="text-align: left; padding: 12px; color: #00ffe0;">Notes</th>
-              </tr>
-            </thead>
-            <tbody id="auditTableBody">
-              <tr>
-                <td colspan="9" style="text-align: center; padding: 40px; color: rgba(255, 255, 255, 0.5);">
-                  Loading audit entries...
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+  <div class="section">
+    <h2>📈 Global Energy Trend (Daily GWh)</h2>
+    <canvas id="globalTrend"></canvas>
   </div>
 
-  <script>
-    let allEntries = [];
-    
-    const categoryColors = {
-      'Money/Blockchain': '#00ffe0',
-      'Housing': '#0ea5e9',
-      'Transport': '#8b5cf6',
-      'Food/Agriculture': '#ec4899',
-      'Digital Services': '#f59e0b',
-      'Manufacturing': '#10b981'
-    };
+  <div class="section">
+    <h2>🔍 Sector Breakdown (Cumulative kWh)</h2>
+    <canvas id="sectorChart"></canvas>
+  </div>
 
-    async function loadData() {
-      try {
-        const [entriesRes, summaryRes] = await Promise.all([
-          fetch('/api/solar-audit/entries'),
-          fetch('/api/solar-audit/summary')
-        ]);
+  <div class="section" style="text-align:center;">
+    <button id="exportBtn" class="button">⬇️ Download Full Audit Data (JSON)</button>
+  </div>
 
-        // Check if responses are OK
-        if (!entriesRes.ok) {
-          throw new Error(`Entries API failed: ${entriesRes.status} ${entriesRes.statusText}`);
-        }
-        if (!summaryRes.ok) {
-          throw new Error(`Summary API failed: ${summaryRes.status} ${summaryRes.statusText}`);
-        }
+  <div class="section">
+    <h2>🧾 Latest Audit Entries</h2>
+    <table id="auditTable">
+      <thead>
+        <tr><th>Date</th><th>Category</th><th>kWh</th><th>Solar Units</th><th>Source</th><th>Verification</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 
-        const entriesText = await entriesRes.text();
-        const summaryText = await summaryRes.text();
+  <footer>Data from verified international sources (EIA, ENTSO-E, IRENA, AEMO). All values cryptographically auditable.</footer>
+</div>
 
-        let entries, summary;
-        try {
-          entries = JSON.parse(entriesText);
-        } catch (e) {
-          console.error('Failed to parse entries:', entriesText);
-          throw new Error('Invalid JSON from entries API');
-        }
+<script>
+async function loadData(){
+  const res = await fetch('/auditlog');
+  const data = await res.json();
 
-        try {
-          summary = JSON.parse(summaryText);
-        } catch (e) {
-          console.error('Failed to parse summary:', summaryText);
-          throw new Error('Invalid JSON from summary API');
-        }
+  // --- compute totals ---
+  const cats=[...new Set(data.map(x=>x.category))];
+  const totals={};
+  let totalKwh=0,totalSolar=0;
+  data.forEach(r=>{
+    if(!totals[r.category]) totals[r.category]={kwh:0,solar:0};
+    totals[r.category].kwh += +r.kwh;
+    totals[r.category].solar += +r.solar_units;
+    totalKwh += +r.kwh;
+    totalSolar += +r.solar_units;
+  });
 
-        // Validate data structure
-        if (!Array.isArray(entries)) {
-          throw new Error('Entries data is not an array');
-        }
-        if (!summary || !summary.categories || !summary.global) {
-          throw new Error('Invalid summary data structure');
-        }
+  // --- summary tiles ---
+  const grid=document.getElementById('totalsGrid');
+  const globalTile=document.createElement('div');
+  globalTile.className='tile';
+  globalTile.innerHTML=`<h3>Total Global</h3>
+    <p><b>${totalKwh.toLocaleString(undefined,{maximumFractionDigits:0})}</b> kWh</p>
+    <p><b>${totalSolar.toFixed(2)}</b> Solar Units</p>`;
+  grid.appendChild(globalTile);
 
-        allEntries = entries;
+  cats.forEach(c=>{
+    const div=document.createElement('div');
+    div.className='tile';
+    div.innerHTML=`<h3>${c}</h3>
+      <p>${totals[c].kwh.toLocaleString(undefined,{maximumFractionDigits:0})} kWh</p>
+      <p>${totals[c].solar.toFixed(2)} Solar</p>`;
+    grid.appendChild(div);
+  });
 
-        displayGlobalStats(summary.global);
-        displayCategories(summary.categories);
-        displayChart(entries);
-        displayAuditTable(entries);
+  // --- global trend ---
+  const days=[...new Set(data.map(x=>x.day))].sort();
+  const dayTotals=days.map(d=>data.filter(x=>x.day===d).reduce((s,x)=>s+x.kwh,0)/1e9);
+  new Chart(document.getElementById('globalTrend'),{
+    type:'line',
+    data:{labels:days,datasets:[{label:'Global Energy (GWh)',data:dayTotals,borderColor:'#00ffe0',tension:0.3,fill:false}]},
+    options:{scales:{x:{ticks:{color:'#ccc'}},y:{ticks:{color:'#ccc'}}}}
+  });
 
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('dashboard').style.display = 'block';
-      } catch (error) {
-        console.error('Load data error:', error);
-        document.getElementById('loading').innerHTML = `
-          <div style="color: #ec4899;">
-            <p>⚠️ Error loading audit data</p>
-            <p style="font-size: 0.9rem; margin-top: 10px;">${error.message}</p>
-            <p style="font-size: 0.8rem; margin-top: 10px; color: rgba(255, 255, 255, 0.5);">Check browser console for details</p>
-          </div>
-        `;
-      }
-    }
+  // --- sector breakdown chart ---
+  new Chart(document.getElementById('sectorChart'),{
+    type:'bar',
+    data:{labels:cats,datasets:[{label:'Cumulative kWh',data:cats.map(c=>totals[c].kwh/1e9),backgroundColor:'#00ffe0'}]},
+    options:{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#ccc'}},y:{ticks:{color:'#ccc'}}}}
+  });
 
-    function displayGlobalStats(global) {
-      document.getElementById('global-kwh').textContent = formatNumber(global.totalKwh);
-      document.getElementById('global-solar').textContent = formatSolar(global.totalSolar);
-      document.getElementById('global-records').textContent = global.totalRecords.toLocaleString();
-    }
+  // --- audit table ---
+  const tbody=document.querySelector('#auditTable tbody');
+  data.slice(0,50).forEach(r=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${r.day}</td><td>${r.category}</td>
+      <td>${(+r.kwh).toLocaleString()}</td><td>${r.solar_units.toFixed(3)}</td>
+      <td>${r.source}</td><td>${r.verification_level}</td>`;
+    tbody.appendChild(tr);
+  });
 
-    function displayCategories(categories) {
-      const container = document.getElementById('categories');
-      container.innerHTML = categories.map(cat => `
-        <div class="category-card" style="border-left-color: ${categoryColors[cat.category] || '#00ffe0'}" data-testid="card-category-${cat.category.toLowerCase().replace(/\//g, '-')}">
-          <div class="category-name" style="color: ${categoryColors[cat.category] || '#00ffe0'}">${cat.category}</div>
-          <div class="category-stats">
-            <div class="category-stat">
-              <span class="category-stat-label">Total kWh:</span>
-              <span class="category-stat-value" data-testid="text-kwh-${cat.category.toLowerCase().replace(/\//g, '-')}">${formatNumber(parseFloat(cat.totalKwh))}</span>
-            </div>
-            <div class="category-stat">
-              <span class="category-stat-label">Solar Units:</span>
-              <span class="category-stat-value" data-testid="text-solar-${cat.category.toLowerCase().replace(/\//g, '-')}">${formatSolar(parseFloat(cat.totalSolar))}</span>
-            </div>
-            <div class="category-stat">
-              <span class="category-stat-label">Records:</span>
-              <span class="category-stat-value" data-testid="text-records-${cat.category.toLowerCase().replace(/\//g, '-')}">${cat.recordCount.toLocaleString()}</span>
-            </div>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    function displayChart(entries) {
-      const dailyData = {};
-      
-      entries.forEach(entry => {
-        const date = entry.day;
-        if (!dailyData[date]) dailyData[date] = {};
-        if (!dailyData[date][entry.category]) dailyData[date][entry.category] = 0;
-        dailyData[date][entry.category] += parseFloat(entry.kwh) / 1e6; // Convert to GWh
-      });
-
-      const sortedDates = Object.keys(dailyData).sort();
-      const categories = [...new Set(entries.map(e => e.category))];
-
-      const datasets = categories.map(category => ({
-        label: category,
-        data: sortedDates.map(date => dailyData[date][category] || 0),
-        borderColor: categoryColors[category] || '#00ffe0',
-        backgroundColor: (categoryColors[category] || '#00ffe0') + '20',
-        tension: 0.4,
-        borderWidth: 2
-      }));
-
-      const ctx = document.getElementById('consumptionChart').getContext('2d');
-      new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: sortedDates,
-          datasets: datasets
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              position: 'bottom',
-              labels: {
-                color: 'rgba(255, 255, 255, 0.8)',
-                padding: 15,
-                font: { size: 12 }
-              }
-            },
-            tooltip: {
-              backgroundColor: 'rgba(10, 10, 10, 0.9)',
-              titleColor: '#00ffe0',
-              bodyColor: 'rgba(255, 255, 255, 0.9)',
-              borderColor: '#00ffe0',
-              borderWidth: 1,
-              padding: 12,
-              displayColors: true
-            }
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: {
-                color: 'rgba(255, 255, 255, 0.7)',
-                callback: value => value.toFixed(2) + ' GWh'
-              },
-              grid: {
-                color: 'rgba(255, 255, 255, 0.1)'
-              }
-            },
-            x: {
-              ticks: {
-                color: 'rgba(255, 255, 255, 0.7)',
-                maxRotation: 45,
-                minRotation: 45
-              },
-              grid: {
-                color: 'rgba(255, 255, 255, 0.05)'
-              }
-            }
-          }
-        }
-      });
-    }
-
-    function displayAuditTable(entries) {
-      const lastHundred = entries.slice(0, 100);
-      const tbody = document.getElementById('auditTableBody');
-      
-      if (lastHundred.length === 0) {
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="9" style="text-align: center; padding: 40px; color: rgba(255, 255, 255, 0.5);">
-              No audit entries found
-            </td>
-          </tr>
-        `;
-        return;
-      }
-
-      tbody.innerHTML = lastHundred.map((entry, idx) => `
-        <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.1); transition: background-color 0.2s;" 
-            onmouseover="this.style.backgroundColor='rgba(0, 255, 224, 0.05)'"
-            onmouseout="this.style.backgroundColor='transparent'"
-            data-testid="row-audit-entry-${idx}">
-          <td style="padding: 12px;">${entry.day}</td>
-          <td style="padding: 12px;">${entry.category}</td>
-          <td style="padding: 12px;">${parseFloat(entry.kwh).toLocaleString()}</td>
-          <td style="padding: 12px;">${parseFloat(entry.solarUnits).toFixed(6)}</td>
-          <td style="padding: 12px;">
-            <div style="max-width: 200px;">
-              <div style="font-weight: 500;">${entry.source}</div>
-              ${entry.sourceOrganization ? `<div style="font-size: 0.8rem; color: rgba(255, 255, 255, 0.5);">${entry.sourceOrganization}</div>` : ''}
-            </div>
-          </td>
-          <td style="padding: 12px;">
-            <span style="padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; background: ${
-              entry.verificationLevel === 'TIER_1' ? 'rgba(0, 255, 224, 0.2)' : 
-              entry.verificationLevel === 'TIER_2' ? 'rgba(14, 165, 233, 0.2)' : 
-              'rgba(139, 92, 246, 0.2)'
-            };">
-              ${entry.verificationLevel}
-            </span>
-          </td>
-          <td style="padding: 12px; font-size: 0.85rem;">${entry.sourceType}</td>
-          <td style="padding: 12px; font-family: monospace; font-size: 0.75rem; color: rgba(255, 255, 255, 0.6);">
-            ${entry.dataHash.substring(0, 12)}...
-          </td>
-          <td style="padding: 12px; max-width: 200px; font-size: 0.85rem; color: rgba(255, 255, 255, 0.7);">
-            ${entry.notes || '-'}
-          </td>
-        </tr>
-      `).join('');
-    }
-
-    function formatNumber(num) {
-      if (num >= 1e12) return (num / 1e12).toFixed(2) + ' T';
-      if (num >= 1e9) return (num / 1e9).toFixed(2) + ' B';
-      if (num >= 1e6) return (num / 1e6).toFixed(2) + ' M';
-      if (num >= 1e3) return (num / 1e3).toFixed(2) + ' K';
-      return num.toFixed(2);
-    }
-
-    function formatSolar(num) {
-      if (num >= 1e9) return (num / 1e9).toFixed(4) + ' B';
-      if (num >= 1e6) return (num / 1e6).toFixed(4) + ' M';
-      if (num >= 1e3) return (num / 1e3).toFixed(4) + ' K';
-      return num.toFixed(6);
-    }
-
-    function downloadJSON() {
-      const dataStr = JSON.stringify(allEntries, null, 2);
-      const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
-      const exportFileDefaultName = `solar-audit-${new Date().toISOString().split('T')[0]}.json`;
-      
-      const linkElement = document.createElement('a');
-      linkElement.setAttribute('href', dataUri);
-      linkElement.setAttribute('download', exportFileDefaultName);
-      linkElement.click();
-    }
-
-    // Load data on page load
-    loadData();
-  </script>
+  // --- export JSON ---
+  document.getElementById('exportBtn').addEventListener('click',()=>{
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download='global_energy_audit.json';a.click();
+    URL.revokeObjectURL(url);
+  });
+}
+loadData();
+</script>
 </body>
 </html>
