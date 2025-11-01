@@ -7849,6 +7849,7 @@ const server = http.createServer(async (req, res) => {
         SELECT 
           c.name as category,
           art.region_code,
+          ar.name as region_name,
           art.energy_kwh,
           art.energy_solar,
           art.data_freshness,
@@ -7856,6 +7857,7 @@ const server = http.createServer(async (req, res) => {
         FROM audit_region_totals art
         JOIN energy_audit_log el ON art.audit_log_id = el.id
         JOIN audit_categories c ON el.category_id = c.id
+        JOIN audit_regions ar ON art.region_code = ar.code
         WHERE el.date >= CURRENT_DATE - INTERVAL '7 days'
         ORDER BY el.date DESC, c.name, art.region_code
       `;
@@ -7877,6 +7879,7 @@ const server = http.createServer(async (req, res) => {
         if (row.region_code.startsWith('GLOBAL_')) {
           categoriesMap[row.category].regions.push({
             regionCode: row.region_code,
+            regionName: row.region_name,
             energyKwh: parseFloat(row.energy_kwh),
             energySolar: parseFloat(row.energy_solar),
             dataFreshness: row.data_freshness
