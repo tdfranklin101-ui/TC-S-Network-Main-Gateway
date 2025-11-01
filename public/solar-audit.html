@@ -99,7 +99,7 @@ async function loadData(){
 
   // --- global trend ---
   const days=[...new Set(data.map(x=>x.day))].sort();
-  const dayTotals=days.map(d=>data.filter(x=>x.day===d).reduce((s,x)=>s+x.kwh,0)/1e3);
+  const dayTotals=days.map(d=>data.filter(x=>x.day===d).reduce((s,x)=>s+(+x.kwh),0)/1e3);
   new Chart(document.getElementById('globalTrend'),{
     type:'line',
     data:{labels:days,datasets:[{label:'Global Energy (MWh)',data:dayTotals,borderColor:'#00ffe0',tension:0.3,fill:false}]},
@@ -107,10 +107,50 @@ async function loadData(){
   });
 
   // --- sector breakdown chart ---
+  // Sort categories by energy consumption for better visualization
+  const sortedCats = cats.sort((a,b) => totals[b].kwh - totals[a].kwh);
   new Chart(document.getElementById('sectorChart'),{
     type:'bar',
-    data:{labels:cats,datasets:[{label:'Cumulative MWh',data:cats.map(c=>totals[c].kwh/1e3),backgroundColor:'#00ffe0'}]},
-    options:{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#ccc'}},y:{ticks:{color:'#ccc'},beginAtZero:true}}}
+    data:{
+      labels:sortedCats,
+      datasets:[{
+        label:'Cumulative MWh',
+        data:sortedCats.map(c=>totals[c].kwh/1e3),
+        backgroundColor:'#00ffe0'
+      }]
+    },
+    options:{
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          callbacks:{
+            label: function(context) {
+              const gwh = context.parsed.y / 1000;
+              return `${gwh.toFixed(2)} GWh/day`;
+            }
+          }
+        }
+      },
+      scales:{
+        x:{ticks:{color:'#ccc'}},
+        y:{
+          type:'logarithmic',
+          ticks:{
+            color:'#ccc',
+            callback: function(value) {
+              if (value >= 1000000) return (value/1000000).toFixed(0) + 'M';
+              if (value >= 1000) return (value/1000).toFixed(0) + 'K';
+              return value;
+            }
+          },
+          title:{
+            display:true,
+            text:'MWh (log scale)',
+            color:'#00ffe0'
+          }
+        }
+      }
+    }
   });
 
   // --- audit table ---
