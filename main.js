@@ -6660,6 +6660,70 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // GET /api/solar-audit/logs - View update history
+  if (pathname === '/api/solar-audit/logs' && req.method === 'GET') {
+    if (!pool) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Database not available' }));
+      return;
+    }
+
+    try {
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      const limit = Math.max(1, Math.min(parseInt(url.searchParams.get('limit') || '20'), 200));
+      
+      const query = `
+        SELECT 
+          id,
+          started_at,
+          finished_at,
+          status,
+          updated,
+          missing,
+          error,
+          meta
+        FROM update_log 
+        ORDER BY started_at DESC 
+        LIMIT $1
+      `;
+      
+      const result = await pool.query(query, [limit]);
+      
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(result.rows));
+      console.log(`✅ Update logs: ${result.rows.length} entries`);
+    } catch (error) {
+      console.error('Update logs endpoint error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Failed to fetch update logs' }));
+    }
+    return;
+  }
+
+  // GET /api/solar-audit/last - Get last successful update timestamp
+  if (pathname === '/api/solar-audit/last' && req.method === 'GET') {
+    if (!pool) {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ last_update: null }));
+      return;
+    }
+
+    try {
+      const query = `SELECT finished_at FROM update_log WHERE status IN ('SUCCESS', 'PARTIAL') ORDER BY finished_at DESC LIMIT 1`;
+      const result = await pool.query(query);
+      
+      const lastUpdate = result.rows.length > 0 ? new Date(result.rows[0].finished_at).toISOString() : null;
+      
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ last_update: lastUpdate }));
+    } catch (error) {
+      console.error('Last update endpoint error:', error);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ last_update: null }));
+    }
+    return;
+  }
+
   // GET /ping - Health check with last update timestamp
   if (pathname === '/ping' && req.method === 'GET') {
     try {
