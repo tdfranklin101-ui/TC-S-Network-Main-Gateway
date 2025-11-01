@@ -12,6 +12,7 @@ import {
   date,
   doublePrecision,
   serial,
+  bigint,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -575,28 +576,34 @@ export type InsertSolarAuditDataSource = z.infer<typeof insertSolarAuditDataSour
 export type InsertSolarAuditEntry = z.infer<typeof insertSolarAuditEntrySchema>;
 
 // ============================================================
-// REGIONAL ENERGY BREAKDOWN SYSTEM (Phase 1)
-// Track energy consumption by geographic regions
+// REGIONAL ENERGY BREAKDOWN SYSTEM (Phase 2 - Hierarchical Global)
+// Track energy consumption by geographic regions with 2-level hierarchy
+// Level 1: 6 Global Regions (Asia, North America, Europe, Africa, Latin America, Oceania)
+// Level 2: US Census Sub-Regions (Northeast, Midwest, South, West) - children of North America
 // ============================================================
 
-// Regional taxonomy (US Census regions, global regions, etc.)
+// Regional taxonomy with hierarchical structure
 export const auditRegions = pgTable('audit_regions', {
-  code: varchar('code', { length: 50 }).primaryKey(), // e.g., 'US_NORTHEAST', 'GLOBAL_EU'
-  name: text('name').notNull(), // e.g., 'United States - Northeast'
-  categoryScope: varchar('category_scope', { length: 50 }).notNull(), // 'US_DOMESTIC', 'GLOBAL'
-  metadata: jsonb('metadata') // {countries: [], states: [], dataCenter: true, etc.}
+  code: varchar('code', { length: 50 }).primaryKey(), // e.g., 'GLOBAL_ASIA', 'US_NORTHEAST'
+  name: text('name').notNull(), // e.g., 'Asia (Global Primary)', 'United States - Northeast'
+  level: integer('level').notNull(), // 1 = global primary, 2 = sub-region
+  parentRegion: varchar('parent_region', { length: 50 }), // e.g., US regions have parent='GLOBAL_NORTH_AMERICA'
+  population: bigint('population', { mode: 'number' }), // Population for context (optional)
+  color: varchar('color', { length: 50 }), // Hex color for visualizations
+  metadata: jsonb('metadata') // {countries: [], states: [], description: '', etc.}
 });
 
-// Regional energy totals linked to audit entries
+// Regional energy totals linked to audit log entries
+// Note: audit_log_id references energy_audit_log.id (created via raw SQL in main.js, not Drizzle)
 export const auditRegionTotals = pgTable('audit_region_totals', {
   id: serial('id').primaryKey(),
-  auditEntryId: varchar('audit_entry_id').notNull().references(() => solarAuditEntries.id),
+  auditLogId: integer('audit_log_id').notNull(), // References energy_audit_log.id (SERIAL PRIMARY KEY)
   regionCode: varchar('region_code', { length: 50 }).notNull().references(() => auditRegions.code),
   energyKwh: doublePrecision('energy_kwh').notNull(),
   energySolar: doublePrecision('energy_solar').notNull(),
   metadata: jsonb('metadata') // store any region-specific details
 }, (table) => ({
-  auditEntryIdx: index('idx_region_totals_audit_entry').on(table.auditEntryId),
+  auditLogIdx: index('idx_region_totals_audit_log').on(table.auditLogId),
   regionIdx: index('idx_region_totals_region').on(table.regionCode),
 }));
 

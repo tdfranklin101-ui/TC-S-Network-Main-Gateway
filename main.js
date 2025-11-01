@@ -650,23 +650,37 @@ async function seedAuditRegions() {
       { code: 'US_WEST', name: 'United States - West', scope: 'US_DOMESTIC', parent: 'GLOBAL_NORTH_AMERICA', states: US_CENSUS_REGIONS.US_WEST.states }
     ];
     
-    // Upsert all regions with hierarchy metadata
+    // Upsert all regions with Phase 2 hierarchical columns
     for (const region of [...globalRegions, ...usRegions]) {
+      const isGlobal = region.code.startsWith('GLOBAL_');
+      const level = isGlobal ? 1 : 2; // 1 = global primary, 2 = sub-region
+      
       const metadata = {
-        population: region.population || null,
-        color: region.color || null,
-        parent: region.parent || null,
-        states: region.states || null
+        states: region.states || null,
+        scope: region.scope
       };
       
       await pool.query(`
-        INSERT INTO audit_regions (code, name, category_scope, metadata)
-        VALUES ($1, $2, $3, $4)
+        INSERT INTO audit_regions (code, name, level, parent_region, population, color, category_scope, metadata)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         ON CONFLICT (code) DO UPDATE SET
           name = EXCLUDED.name,
+          level = EXCLUDED.level,
+          parent_region = EXCLUDED.parent_region,
+          population = EXCLUDED.population,
+          color = EXCLUDED.color,
           category_scope = EXCLUDED.category_scope,
           metadata = EXCLUDED.metadata
-      `, [region.code, region.name, region.scope, JSON.stringify(metadata)]);
+      `, [
+        region.code, 
+        region.name, 
+        level, 
+        region.parent, 
+        region.population || null, 
+        region.color || null, 
+        region.scope, 
+        JSON.stringify(metadata)
+      ]);
     }
     
     console.log('✅ Seeded 10 regions: 6 global primary regions + 4 US sub-regions (hierarchical)');
