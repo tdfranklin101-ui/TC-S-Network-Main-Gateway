@@ -36,12 +36,12 @@
   <div class="grid" id="totalsGrid"></div>
 
   <div class="section">
-    <h2>📈 Global Energy Trend (Daily GWh)</h2>
+    <h2>📈 Global Energy Trend (Daily MWh)</h2>
     <canvas id="globalTrend"></canvas>
   </div>
 
   <div class="section">
-    <h2>🔍 Sector Breakdown (Cumulative kWh)</h2>
+    <h2>🔍 Sector Breakdown (Cumulative MWh)</h2>
     <canvas id="sectorChart"></canvas>
   </div>
 
@@ -99,18 +99,18 @@ async function loadData(){
 
   // --- global trend ---
   const days=[...new Set(data.map(x=>x.day))].sort();
-  const dayTotals=days.map(d=>data.filter(x=>x.day===d).reduce((s,x)=>s+x.kwh,0)/1e9);
+  const dayTotals=days.map(d=>data.filter(x=>x.day===d).reduce((s,x)=>s+x.kwh,0)/1e3);
   new Chart(document.getElementById('globalTrend'),{
     type:'line',
-    data:{labels:days,datasets:[{label:'Global Energy (GWh)',data:dayTotals,borderColor:'#00ffe0',tension:0.3,fill:false}]},
-    options:{scales:{x:{ticks:{color:'#ccc'}},y:{ticks:{color:'#ccc'}}}}
+    data:{labels:days,datasets:[{label:'Global Energy (MWh)',data:dayTotals,borderColor:'#00ffe0',tension:0.3,fill:false}]},
+    options:{scales:{x:{ticks:{color:'#ccc'}},y:{ticks:{color:'#ccc'},beginAtZero:true}}}
   });
 
   // --- sector breakdown chart ---
   new Chart(document.getElementById('sectorChart'),{
     type:'bar',
-    data:{labels:cats,datasets:[{label:'Cumulative kWh',data:cats.map(c=>totals[c].kwh/1e9),backgroundColor:'#00ffe0'}]},
-    options:{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#ccc'}},y:{ticks:{color:'#ccc'}}}}
+    data:{labels:cats,datasets:[{label:'Cumulative MWh',data:cats.map(c=>totals[c].kwh/1e3),backgroundColor:'#00ffe0'}]},
+    options:{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#ccc'}},y:{ticks:{color:'#ccc'},beginAtZero:true}}}
   });
 
   // --- audit table ---
