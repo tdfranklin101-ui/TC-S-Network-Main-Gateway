@@ -101,6 +101,11 @@
       <div class="banner-label">Data Status</div>
       <div class="banner-value" id="dataStatus">Checking...</div>
     </div>
+    <div class="banner-item">
+      <button class="button" id="manualTriggerBtn" data-testid="button-manual-trigger" onclick="triggerDataFetch()">
+        🔄 Fetch Live Data
+      </button>
+    </div>
   </div>
 
   <div class="data-vintage-notice" data-ai-notice="data-source-transparency" style="display:none;" id="freshnessNotice">
@@ -265,6 +270,60 @@ async function loadFreshnessData(){
   } catch (error) {
     console.error('Failed to load freshness data:', error);
     return null;
+  }
+}
+
+// Manual trigger for data fetching from all APIs
+async function triggerDataFetch(){
+  const btn = document.getElementById('manualTriggerBtn');
+  const statusEl = document.getElementById('dataStatus');
+  
+  if (!btn) return;
+  
+  // Show loading state
+  const originalText = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Fetching live data from APIs...';
+  btn.style.opacity = '0.6';
+  statusEl.textContent = '⏳ Fetching...';
+  
+  try {
+    // Call the data trigger endpoint (fetches from all 8 feed functions)
+    const res = await fetch('/api/solar-audit/update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+    if (!res.ok) {
+      throw new Error(`Server responded with ${res.status}`);
+    }
+    
+    const result = await res.json();
+    console.log('✅ Data fetch completed:', result);
+    
+    // Show success briefly
+    btn.innerHTML = '✓ Data fetched! Reloading...';
+    statusEl.textContent = '✓ Refreshing...';
+    
+    // Reload dashboard data after 1 second
+    setTimeout(() => {
+      location.reload();
+    }, 1000);
+    
+  } catch (error) {
+    console.error('❌ Failed to trigger data fetch:', error);
+    
+    // Show error state
+    btn.innerHTML = '❌ Failed - Try again';
+    statusEl.textContent = '❌ Fetch failed';
+    btn.style.opacity = '1';
+    
+    // Restore button after 3 seconds
+    setTimeout(() => {
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+      statusEl.textContent = 'Ready';
+    }, 3000);
   }
 }
 
