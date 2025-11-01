@@ -280,37 +280,68 @@ async function loadData(){
     buildCoverageMatrix(freshnessData);
   }
 
-  // --- compute totals ---
-  const cats=[...new Set(data.map(x=>x.category))];
-  const totals={};
-  let totalKwh=0,totalSolar=0;
-  data.forEach(r=>{
-    if(!totals[r.category]) totals[r.category]={kwh:0,solar:0};
-    totals[r.category].kwh += +r.kwh;
-    totals[r.category].solar += +r.solar_units;
-    totalKwh += +r.kwh;
-    totalSolar += +r.solar_units;
-  });
+  // --- compute TRUE GLOBAL TOTALS from all 6 regions ---
+  const grid = document.getElementById('totalsGrid');
+  let trueGlobalTotalKwh = 0;
+  let trueGlobalTotalSolar = 0;
+  const categoryTotals = {};
+  
+  // Calculate TRUE global totals from freshness data (all 6 regions)
+  if (freshnessData && freshnessData.categories) {
+    freshnessData.categories.forEach(categoryData => {
+      let categoryTotalKwh = 0;
+      let categoryTotalSolar = 0;
+      
+      if (categoryData.regions && categoryData.regions.length > 0) {
+        categoryData.regions.forEach(region => {
+          categoryTotalKwh += region.energyKwh || 0;
+          categoryTotalSolar += region.energySolar || 0;
+        });
+      }
+      
+      categoryTotals[categoryData.category] = {
+        kwh: categoryTotalKwh,
+        solar: categoryTotalSolar
+      };
+      
+      trueGlobalTotalKwh += categoryTotalKwh;
+      trueGlobalTotalSolar += categoryTotalSolar;
+    });
+  }
 
-  // --- summary tiles ---
-  const grid=document.getElementById('totalsGrid');
-  const globalTile=document.createElement('div');
-  globalTile.className='tile';
-  const globalGwhDaily = totalKwh / 1e6;
-  globalTile.innerHTML=`<h3>Total Global</h3>
+  // --- summary tiles with TRUE GLOBAL TOTALS ---
+  const globalTile = document.createElement('div');
+  globalTile.className = 'tile';
+  const globalGwhDaily = trueGlobalTotalKwh / 1e6;
+  globalTile.innerHTML = `<h3>Total Global</h3>
     <p><b>${globalGwhDaily.toFixed(2)} GWh/day</b></p>
-    <p>${totalKwh.toLocaleString(undefined,{maximumFractionDigits:0})} kWh</p>
-    <p>${totalSolar.toFixed(2)} Solar</p>`;
+    <p>${trueGlobalTotalKwh.toLocaleString(undefined,{maximumFractionDigits:0})} kWh</p>
+    <p>${trueGlobalTotalSolar.toFixed(2)} Solar</p>
+    <div style="font-size:10px; color:#00ffe0; margin-top:5px;">🌍 All 6 Regions</div>`;
   grid.appendChild(globalTile);
 
-  cats.forEach(c=>{
-    const div=document.createElement('div');
-    div.className='tile';
-    const gwhDaily = totals[c].kwh / 1e6;
-    div.innerHTML=`<h3>${c}</h3>
+  // Category tiles with TRUE global totals (all regions)
+  Object.entries(categoryTotals).forEach(([category, totals]) => {
+    const div = document.createElement('div');
+    div.className = 'tile';
+    const gwhDaily = totals.kwh / 1e6;
+    const categoryName = category.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    const icon = {
+      'housing': '🏠', 
+      'manufacturing': '🏭', 
+      'digital-services': '💻', 
+      'transport': '🚗', 
+      'food': '🌾', 
+      'money': '💰', 
+      'ai-ml': '🤖', 
+      'government-military': '🏛️'
+    }[category] || '📊';
+    
+    div.innerHTML = `<h3>${icon} ${categoryName}</h3>
       <p><b>${gwhDaily.toFixed(2)} GWh/day</b></p>
-      <p>${totals[c].kwh.toLocaleString(undefined,{maximumFractionDigits:0})} kWh</p>
-      <p>${totals[c].solar.toFixed(2)} Solar</p>`;
+      <p>${totals.kwh.toLocaleString(undefined,{maximumFractionDigits:0})} kWh</p>
+      <p>${totals.solar.toFixed(2)} Solar</p>
+      <div style="font-size:10px; color:#999; margin-top:5px;">Global total</div>`;
     grid.appendChild(div);
   });
 
@@ -340,165 +371,115 @@ async function loadData(){
     }
   }
 
-  // --- detailed source report ---
+  // --- detailed source report with ALL REGIONAL BREAKDOWNS ---
   const reportDiv = document.getElementById('detailedReport');
-  const categoryDetails = {
-    'housing': {
-      icon: '🏠',
-      name: 'Housing (Residential)',
-      location: 'United States',
-      geographicScope: '🇺🇸 United States Total',
-      methodology: 'Live EIA API - US Total monthly retail electricity sales',
-      narrative: 'Housing energy consumption tracks daily electricity usage across all residential buildings in the United States. This metric is critical because residential buildings account for approximately 40% of total US electricity demand, making them a primary target for solar adoption and energy efficiency improvements. Data is sourced from the EIA\'s monthly retail electricity sales reports (residential sector), converted to daily averages by dividing total monthly consumption (in GWh) by days in the month. Current scope covers the entire United States; regional breakdowns may be added in future updates. Source: <a href="https://www.eia.gov/electricity/data/browser/" target="_blank">EIA Electricity Data Browser</a>',
-      components: null
-    },
-    'manufacturing': {
-      icon: '🏭',
-      name: 'Manufacturing (Industrial)',
-      location: 'United States',
-      geographicScope: '🇺🇸 United States Total',
-      methodology: 'Live EIA API - US Total monthly industrial electricity sales',
-      narrative: 'Manufacturing energy consumption captures the industrial electricity demand across all US manufacturing facilities, including heavy industry, light manufacturing, and processing plants. This sector represents approximately 25% of total US electricity consumption and presents massive opportunities for solar integration through on-site generation and energy storage. Data is sourced from the EIA\'s industrial sector electricity sales, aggregated monthly and converted to daily averages (total GWh ÷ days in month). Coverage includes all 50 states with verified utility-reported data. Transitioning this sector to renewable energy is essential for achieving carbon neutrality. Source: <a href="https://www.eia.gov/electricity/data/browser/" target="_blank">EIA Electricity Data Browser</a>',
-      components: null
-    },
-    'food': {
-      icon: '🌾',
-      name: 'Food & Agriculture',
-      location: 'United States',
-      geographicScope: '🇺🇸 United States Total',
-      methodology: 'IEA/USDA Agricultural Energy Calculation',
-      narrative: 'Food and agriculture energy consumption encompasses the entire US food system from farm to fork, including crop cultivation, livestock operations, food processing, cold storage, and distribution networks. This sector is uniquely positioned for solar adoption due to abundant land availability and high daytime energy demand alignment with solar generation peaks. Calculated using USDA and IEA agricultural energy data (1.75 quadrillion BTU/year = 512.87 TWh/year ÷ 365 days = 1,405 GWh/day). Current methodology uses annualized estimates; real-time feed integration is planned for future updates. Source: <a href="https://www.usda.gov/energy" target="_blank">USDA Energy Office</a>',
-      components: [
-        {name: 'Annual Energy Consumption', value: '1.75 quadrillion BTU/year'},
-        {name: 'Annualized (TWh/year)', value: '512.87 TWh'},
-        {name: 'Daily Average', value: '1,405.13 GWh/day'}
-      ]
-    },
-    'money': {
-      icon: '💰',
-      name: 'Money & Blockchain',
-      location: 'Global',
-      geographicScope: '🌍 Global',
-      methodology: 'Live Bitcoin Network Hashrate Calculation',
-      narrative: 'Money and blockchain energy consumption measures the global electricity demand of cryptocurrency mining networks, primarily Bitcoin, Ethereum, and other proof-of-work systems. This sector is critical for solar transition because crypto mining operations can serve as flexible grid load balancers, absorbing excess renewable generation during peak production hours. Bitcoin energy is calculated from network hashrate (1,087 EH/s × 35 W/TH efficiency = 913 GWh/day). Ethereum\'s transition to proof-of-stake has reduced its footprint by 99.95%. This is the only truly global category, with mining operations distributed worldwide. Source: <a href="https://cbeci.org" target="_blank">Cambridge Bitcoin Electricity Consumption Index</a>',
-      components: [
-        {name: 'Bitcoin Network', value: '~1,087 EH/s × 35 W/TH = 913 GWh/day'},
-        {name: 'Network Efficiency Model', value: '35 W/TH (25-50 W/TH range)'},
-        {name: 'Ethereum + Solana (est)', value: 'Included in total'}
-      ]
-    },
-    'digital-services': {
-      icon: '💻',
-      name: 'Digital Services (Data Centers)',
-      location: 'United States',
-      geographicScope: '🇺🇸 United States Total',
-      methodology: 'LBNL Data Center Energy Study Calculation',
-      narrative: 'Digital services energy consumption tracks electricity usage across all US data centers, including hyperscale facilities (AWS, Google, Microsoft), enterprise data centers, and colocation providers. This sector is growing 10-15% annually and represents a strategic target for solar adoption due to predictable 24/7 baseload demand that pairs well with solar + storage solutions. Based on Lawrence Berkeley National Laboratory research estimating 97 TWh/year total US data center energy consumption (97,000 GWh ÷ 365 = 265.75 GWh/day). Coverage includes all facility types from edge computing to massive cloud infrastructure. Source: <a href="https://eta.lbl.gov/publications/united-states-data-center-energy" target="_blank">LBNL Data Center Energy Report</a>',
-      components: [
-        {name: 'Annual US Data Center Energy', value: '97 TWh/year'},
-        {name: 'Daily Average', value: '265.75 GWh/day'},
-        {name: 'Coverage', value: 'Hyperscale + Enterprise + Colocation'}
-      ]
-    },
-    'transport': {
-      icon: '🚗',
-      name: 'Transportation Electrification',
-      location: 'United States',
-      geographicScope: '🇺🇸 United States Total',
-      methodology: 'DOE/AFDC Comprehensive Calculation',
-      narrative: 'Transportation electrification measures daily electricity consumption from the rapidly expanding electric vehicle ecosystem, including passenger EVs, commercial delivery fleets, public transit systems, and charging infrastructure. This sector is the fastest-growing energy demand category and represents the most direct path for solar adoption through home charging integration and solar carports. Calculated from DOE/AFDC data: 3.3M EVs × 40 miles/day × 0.35 kWh/mile = 46.2 GWh, plus public transit (15 GWh), commercial fleets (8 GWh), and infrastructure overhead (2.3 GWh) = 71.5 GWh/day total. US-only scope. Source: <a href="https://afdc.energy.gov/data/" target="_blank">DOE Alternative Fuels Data Center</a>',
-      components: [
-        {name: 'Electric Vehicles', value: '3.3M vehicles × 40 mi/day × 0.35 kWh/mi = 46.2 GWh'},
-        {name: 'Public Transit', value: 'Electric buses + metro + rail = 15.0 GWh'},
-        {name: 'Commercial Fleets', value: 'Amazon, UPS, Uber/Lyft = 8.0 GWh'},
-        {name: 'Charging Infrastructure', value: '5% overhead = 2.3 GWh'},
-        {name: 'Total', value: '71.5 GWh/day'}
-      ]
-    }
-  };
-
-  // Create sorted categories array for detailed report (don't mutate original data)
-  const sortedCategories = [...cats].sort((a,b) => totals[b].kwh - totals[a].kwh);
   
-  // Build one card per category using aggregated totals
-  sortedCategories.forEach(category => {
-    const details = categoryDetails[category];
-    if (!details) return;
-    
-    // Get the latest record for this category to extract source info
-    const latestRecord = data.find(r => r.category === category);
-    if (!latestRecord) return;
-    
-    const gwhDaily = totals[category].kwh / 1e6;
-    const card = document.createElement('div');
-    card.className = 'source-card';
-    
-    let componentsHTML = '';
-    if (details.components) {
-      componentsHTML = `
-        <div class="component-breakdown">
-          <div class="meta-label">Component Breakdown</div>
-          ${details.components.map(comp => `
-            <div class="component-item">
-              <span>${comp.name}</span>
-              <span style="color:#00ffe0; font-weight:600;">${comp.value}</span>
+  // Category metadata
+  const categoryIcons = {
+    'housing': '🏠', 
+    'manufacturing': '🏭', 
+    'digital-services': '💻', 
+    'transport': '🚗', 
+    'food': '🌾', 
+    'money': '💰', 
+    'ai-ml': '🤖', 
+    'government-military': '🏛️'
+  };
+  
+  const regionNames = {
+    'GLOBAL_ASIA': 'Asia',
+    'GLOBAL_NORTH_AMERICA': 'North America',
+    'GLOBAL_EUROPE': 'Europe',
+    'GLOBAL_AFRICA': 'Africa',
+    'GLOBAL_LATIN_AMERICA': 'Latin America',
+    'GLOBAL_OCEANIA': 'Oceania'
+  };
+  
+  // Build detailed cards from freshness data with ALL regional breakdowns
+  if (freshnessData && freshnessData.categories) {
+    freshnessData.categories.forEach(categoryData => {
+      const category = categoryData.category;
+      const icon = categoryIcons[category] || '📊';
+      const categoryName = category.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+      
+      // Calculate TRUE global total from all 6 regions
+      let globalTotalKwh = 0;
+      let globalTotalSolar = 0;
+      
+      if (categoryData.regions && categoryData.regions.length > 0) {
+        categoryData.regions.forEach(region => {
+          globalTotalKwh += region.energyKwh || 0;
+          globalTotalSolar += region.energySolar || 0;
+        });
+      }
+      
+      const globalGwhDaily = (globalTotalKwh / 1e6).toFixed(2);
+      
+      const card = document.createElement('div');
+      card.className = 'source-card';
+      
+      // Build regional breakdown table
+      let regionsHTML = '';
+      if (categoryData.regions && categoryData.regions.length > 0) {
+        regionsHTML = `
+          <div class="regional-breakdown" style="margin-top:15px;">
+            <div class="meta-label" style="margin-bottom:10px;">🌍 Regional Breakdown (6 Regions):</div>
+            <div style="display:grid; gap:8px;">
+              ${categoryData.regions.map(region => {
+                const regionName = regionNames[region.code] || region.code;
+                const regionGwh = (region.energyKwh / 1e6).toFixed(2);
+                const regionSolar = region.energySolar.toFixed(2);
+                const freshness = region.dataFreshness || 'UNKNOWN';
+                const freshnessClass = freshness === 'LIVE_DAILY' ? 'freshness-live' : 
+                                      freshness === 'QUARTERLY_API' ? 'freshness-quarterly' : 
+                                      freshness === 'ANNUAL_DATASET' ? 'freshness-annual' : '';
+                const freshnessLabel = freshness.replace(/_/g, ' ');
+                
+                return `
+                  <div style="background:#0a0c0e; padding:10px; border-radius:5px; display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                      <span style="color:#fff; font-weight:600;">${regionName}</span>
+                      <span class="region-freshness ${freshnessClass}" style="margin-left:8px; font-size:10px;">${freshnessLabel}</span>
+                    </div>
+                    <div style="text-align:right;">
+                      <div style="color:#00ffe0; font-weight:600;">${regionGwh} GWh/day</div>
+                      <div style="color:#999; font-size:11px;">${regionSolar} Solar</div>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
             </div>
-          `).join('')}
+          </div>
+        `;
+      }
+      
+      card.innerHTML = `
+        <h3>${icon} ${categoryName}</h3>
+        <div class="geo-badge">🌍 GLOBAL TOTAL (All 6 Regions)</div>
+        <div class="source-meta">
+          <div class="meta-item">
+            <div class="meta-label">Daily Energy (Global)</div>
+            <div class="meta-value">${globalGwhDaily} GWh/day</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Total kWh (Global)</div>
+            <div class="meta-value">${globalTotalKwh.toLocaleString(undefined,{maximumFractionDigits:0})}</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Solar Units (Global)</div>
+            <div class="meta-value">${globalTotalSolar.toFixed(2)}</div>
+          </div>
+        </div>
+        ${regionsHTML}
+        <div class="data-vintage-notice" style="margin-top:15px; font-size:11px;">
+          <strong>Data Sources:</strong> Live APIs (EIA, DOE, USDA, Mempool), Quarterly APIs (Eurostat), IEA/UN 2023 datasets. 
+          Three-tier fallback ensures 100% coverage.
         </div>
       `;
-    }
-    
-    const narrativeId = `narrative-${category}`;
-    
-    card.innerHTML = `
-      <h3>${details.icon} ${details.name}</h3>
-      <div class="geo-badge">${details.geographicScope}</div>
-      <div class="source-meta">
-        <div class="meta-item">
-          <div class="meta-label">Daily Energy</div>
-          <div class="meta-value">${gwhDaily.toFixed(2)} GWh/day</div>
-        </div>
-        <div class="meta-item">
-          <div class="meta-label">Total kWh</div>
-          <div class="meta-value">${totals[category].kwh.toLocaleString(undefined,{maximumFractionDigits:0})}</div>
-        </div>
-        <div class="meta-item">
-          <div class="meta-label">Solar Units</div>
-          <div class="meta-value">${totals[category].solar.toFixed(2)}</div>
-        </div>
-      </div>
-      <div class="source-meta" style="margin-top:10px;">
-        <div class="meta-item">
-          <div class="meta-label">Data Source</div>
-          <div class="meta-value" style="font-size:12px;">${latestRecord.source}</div>
-        </div>
-        <div class="meta-item">
-          <div class="meta-label">Location</div>
-          <div class="meta-value">${details.location}</div>
-        </div>
-        <div class="meta-item">
-          <div class="meta-label">Verification</div>
-          <div class="meta-value">${latestRecord.verification_level}</div>
-        </div>
-      </div>
-      <div class="meta-item" style="margin-top:10px;">
-        <div class="meta-label">Methodology</div>
-        <div class="meta-value" style="font-size:12px; line-height:1.5;">${details.methodology}</div>
-      </div>
-      ${componentsHTML}
-      <div class="narrative-section">
-        <button class="narrative-toggle" data-target="${narrativeId}">
-          <span>📖 About This Metric</span>
-          <span class="toggle-icon">▼</span>
-        </button>
-        <div id="${narrativeId}" class="narrative-content">
-          <div class="narrative-text">${details.narrative}</div>
-        </div>
-      </div>
-    `;
-    
-    reportDiv.appendChild(card);
-  });
+      
+      reportDiv.appendChild(card);
+    });
+  }
   
   // Add toggle functionality for narratives
   document.querySelectorAll('.narrative-toggle').forEach(button => {
