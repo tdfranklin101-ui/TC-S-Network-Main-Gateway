@@ -10,6 +10,8 @@ import {
   boolean,
   numeric,
   date,
+  doublePrecision,
+  serial,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -571,3 +573,41 @@ export type SolarAuditEntry = typeof solarAuditEntries.$inferSelect;
 export type InsertSolarAuditCategory = z.infer<typeof insertSolarAuditCategorySchema>;
 export type InsertSolarAuditDataSource = z.infer<typeof insertSolarAuditDataSourceSchema>;
 export type InsertSolarAuditEntry = z.infer<typeof insertSolarAuditEntrySchema>;
+
+// ============================================================
+// REGIONAL ENERGY BREAKDOWN SYSTEM (Phase 1)
+// Track energy consumption by geographic regions
+// ============================================================
+
+// Regional taxonomy (US Census regions, global regions, etc.)
+export const auditRegions = pgTable('audit_regions', {
+  code: varchar('code', { length: 50 }).primaryKey(), // e.g., 'US_NORTHEAST', 'GLOBAL_EU'
+  name: text('name').notNull(), // e.g., 'United States - Northeast'
+  categoryScope: varchar('category_scope', { length: 50 }).notNull(), // 'US_DOMESTIC', 'GLOBAL'
+  metadata: jsonb('metadata') // {countries: [], states: [], dataCenter: true, etc.}
+});
+
+// Regional energy totals linked to audit entries
+export const auditRegionTotals = pgTable('audit_region_totals', {
+  id: serial('id').primaryKey(),
+  auditEntryId: varchar('audit_entry_id').notNull().references(() => solarAuditEntries.id),
+  regionCode: varchar('region_code', { length: 50 }).notNull().references(() => auditRegions.code),
+  energyKwh: doublePrecision('energy_kwh').notNull(),
+  energySolar: doublePrecision('energy_solar').notNull(),
+  metadata: jsonb('metadata') // store any region-specific details
+}, (table) => ({
+  auditEntryIdx: index('idx_region_totals_audit_entry').on(table.auditEntryId),
+  regionIdx: index('idx_region_totals_region').on(table.regionCode),
+}));
+
+// Insert schemas
+export const insertAuditRegionSchema = createInsertSchema(auditRegions);
+export const insertAuditRegionTotalSchema = createInsertSchema(auditRegionTotals).omit({ id: true });
+
+// Select types
+export type AuditRegion = typeof auditRegions.$inferSelect;
+export type AuditRegionTotal = typeof auditRegionTotals.$inferSelect;
+
+// Insert types
+export type InsertAuditRegion = z.infer<typeof insertAuditRegionSchema>;
+export type InsertAuditRegionTotal = z.infer<typeof insertAuditRegionTotalSchema>;

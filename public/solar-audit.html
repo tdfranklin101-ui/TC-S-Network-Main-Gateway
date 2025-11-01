@@ -31,6 +31,23 @@
   .component-breakdown{margin-top:15px; padding:12px; background:#0f1215; border-radius:5px;}
   .component-item{display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid #1a1d21;}
   .component-item:last-child{border-bottom:none;}
+  .update-banner{background:#111417; border:2px solid #00ffe0; border-radius:8px; padding:16px 24px; margin:20px auto 30px; max-width:900px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px;}
+  .update-banner.warning{border-color:#ffa500; background:#1a1410;}
+  .banner-item{display:flex; flex-direction:column; gap:4px;}
+  .banner-label{color:#999; font-size:11px; text-transform:uppercase; letter-spacing:0.5px;}
+  .banner-value{color:#00ffe0; font-weight:600; font-size:15px;}
+  .banner-value.warning{color:#ffa500;}
+  .geo-badge{display:inline-block; padding:6px 12px; background:#0a0c0e; border-radius:5px; font-size:13px; font-weight:600; margin-bottom:12px; border:1px solid #1c2227;}
+  .narrative-section{margin-top:20px; border-top:1px solid #1c2227; padding-top:15px;}
+  .narrative-toggle{background:#0a0c0e; border:none; color:#00ffe0; padding:10px 15px; width:100%; text-align:left; cursor:pointer; border-radius:5px; font-weight:600; font-size:14px; display:flex; justify-content:space-between; align-items:center; transition:background 0.2s;}
+  .narrative-toggle:hover{background:#0f1215;}
+  .narrative-content{max-height:0; overflow:hidden; transition:max-height 0.3s ease-out;}
+  .narrative-content.expanded{max-height:500px; transition:max-height 0.3s ease-in;}
+  .narrative-text{padding:15px; background:#0f1215; margin-top:8px; border-radius:5px; line-height:1.7; font-size:14px; color:#d1e8f0;}
+  .narrative-text a{color:#00ffe0; text-decoration:none; border-bottom:1px dotted #00ffe0;}
+  .narrative-text a:hover{color:#00cfd0;}
+  .toggle-icon{transition:transform 0.3s; font-size:18px;}
+  .toggle-icon.rotated{transform:rotate(180deg);}
 </style>
 </head>
 <body>
@@ -41,6 +58,21 @@
     Real-time monitoring of global power consumption converted to Solar units.
     Tracks cumulative totals since <b>April 7 2025</b> across six core sectors.
   </p>
+
+  <div id="updateBanner" class="update-banner">
+    <div class="banner-item">
+      <div class="banner-label">Last Updated</div>
+      <div class="banner-value" id="lastUpdate">Loading...</div>
+    </div>
+    <div class="banner-item">
+      <div class="banner-label">Auto-Refresh</div>
+      <div class="banner-value">Daily at 03:00 UTC</div>
+    </div>
+    <div class="banner-item">
+      <div class="banner-label">Data Status</div>
+      <div class="banner-value" id="dataStatus">Checking...</div>
+    </div>
+  </div>
 
   <div class="grid" id="totalsGrid"></div>
 
@@ -115,6 +147,32 @@ async function loadData(){
     grid.appendChild(div);
   });
 
+  // --- timestamp banner ---
+  const latestTimestamp = data.length > 0 ? data.reduce((latest, record) => {
+    const recordDate = new Date(record.day);
+    const latestDate = new Date(latest);
+    return recordDate > latestDate ? record.day : latest;
+  }, data[0].day) : null;
+
+  if (latestTimestamp) {
+    const lastUpdateDate = new Date(latestTimestamp);
+    const now = new Date();
+    const hoursSinceUpdate = (now - lastUpdateDate) / (1000 * 60 * 60);
+    
+    document.getElementById('lastUpdate').textContent = lastUpdateDate.toISOString();
+    
+    const banner = document.getElementById('updateBanner');
+    const statusEl = document.getElementById('dataStatus');
+    
+    if (hoursSinceUpdate > 24) {
+      banner.classList.add('warning');
+      statusEl.classList.add('warning');
+      statusEl.textContent = `⚠️ Data ${Math.floor(hoursSinceUpdate)}h old`;
+    } else {
+      statusEl.textContent = '✓ Current';
+    }
+  }
+
   // --- detailed source report ---
   const reportDiv = document.getElementById('detailedReport');
   const categoryDetails = {
@@ -122,21 +180,27 @@ async function loadData(){
       icon: '🏠',
       name: 'Housing (Residential)',
       location: 'United States',
+      geographicScope: '🇺🇸 United States Total',
       methodology: 'Live EIA API - US Total monthly retail electricity sales',
+      narrative: 'Housing energy consumption tracks daily electricity usage across all residential buildings in the United States. This metric is critical because residential buildings account for approximately 40% of total US electricity demand, making them a primary target for solar adoption and energy efficiency improvements. Data is sourced from the EIA\'s monthly retail electricity sales reports (residential sector), converted to daily averages by dividing total monthly consumption (in GWh) by days in the month. Current scope covers the entire United States; regional breakdowns may be added in future updates. Source: <a href="https://www.eia.gov/electricity/data/browser/" target="_blank">EIA Electricity Data Browser</a>',
       components: null
     },
     'manufacturing': {
       icon: '🏭',
       name: 'Manufacturing (Industrial)',
       location: 'United States',
+      geographicScope: '🇺🇸 United States Total',
       methodology: 'Live EIA API - US Total monthly industrial electricity sales',
+      narrative: 'Manufacturing energy consumption captures the industrial electricity demand across all US manufacturing facilities, including heavy industry, light manufacturing, and processing plants. This sector represents approximately 25% of total US electricity consumption and presents massive opportunities for solar integration through on-site generation and energy storage. Data is sourced from the EIA\'s industrial sector electricity sales, aggregated monthly and converted to daily averages (total GWh ÷ days in month). Coverage includes all 50 states with verified utility-reported data. Transitioning this sector to renewable energy is essential for achieving carbon neutrality. Source: <a href="https://www.eia.gov/electricity/data/browser/" target="_blank">EIA Electricity Data Browser</a>',
       components: null
     },
     'food': {
       icon: '🌾',
       name: 'Food & Agriculture',
       location: 'United States',
+      geographicScope: '🇺🇸 United States Total',
       methodology: 'IEA/USDA Agricultural Energy Calculation',
+      narrative: 'Food and agriculture energy consumption encompasses the entire US food system from farm to fork, including crop cultivation, livestock operations, food processing, cold storage, and distribution networks. This sector is uniquely positioned for solar adoption due to abundant land availability and high daytime energy demand alignment with solar generation peaks. Calculated using USDA and IEA agricultural energy data (1.75 quadrillion BTU/year = 512.87 TWh/year ÷ 365 days = 1,405 GWh/day). Current methodology uses annualized estimates; real-time feed integration is planned for future updates. Source: <a href="https://www.usda.gov/energy" target="_blank">USDA Energy Office</a>',
       components: [
         {name: 'Annual Energy Consumption', value: '1.75 quadrillion BTU/year'},
         {name: 'Annualized (TWh/year)', value: '512.87 TWh'},
@@ -147,7 +211,9 @@ async function loadData(){
       icon: '💰',
       name: 'Money & Blockchain',
       location: 'Global',
+      geographicScope: '🌍 Global',
       methodology: 'Live Bitcoin Network Hashrate Calculation',
+      narrative: 'Money and blockchain energy consumption measures the global electricity demand of cryptocurrency mining networks, primarily Bitcoin, Ethereum, and other proof-of-work systems. This sector is critical for solar transition because crypto mining operations can serve as flexible grid load balancers, absorbing excess renewable generation during peak production hours. Bitcoin energy is calculated from network hashrate (1,087 EH/s × 35 W/TH efficiency = 913 GWh/day). Ethereum\'s transition to proof-of-stake has reduced its footprint by 99.95%. This is the only truly global category, with mining operations distributed worldwide. Source: <a href="https://cbeci.org" target="_blank">Cambridge Bitcoin Electricity Consumption Index</a>',
       components: [
         {name: 'Bitcoin Network', value: '~1,087 EH/s × 35 W/TH = 913 GWh/day'},
         {name: 'Network Efficiency Model', value: '35 W/TH (25-50 W/TH range)'},
@@ -158,7 +224,9 @@ async function loadData(){
       icon: '💻',
       name: 'Digital Services (Data Centers)',
       location: 'United States',
+      geographicScope: '🇺🇸 United States Total',
       methodology: 'LBNL Data Center Energy Study Calculation',
+      narrative: 'Digital services energy consumption tracks electricity usage across all US data centers, including hyperscale facilities (AWS, Google, Microsoft), enterprise data centers, and colocation providers. This sector is growing 10-15% annually and represents a strategic target for solar adoption due to predictable 24/7 baseload demand that pairs well with solar + storage solutions. Based on Lawrence Berkeley National Laboratory research estimating 97 TWh/year total US data center energy consumption (97,000 GWh ÷ 365 = 265.75 GWh/day). Coverage includes all facility types from edge computing to massive cloud infrastructure. Source: <a href="https://eta.lbl.gov/publications/united-states-data-center-energy" target="_blank">LBNL Data Center Energy Report</a>',
       components: [
         {name: 'Annual US Data Center Energy', value: '97 TWh/year'},
         {name: 'Daily Average', value: '265.75 GWh/day'},
@@ -169,7 +237,9 @@ async function loadData(){
       icon: '🚗',
       name: 'Transportation Electrification',
       location: 'United States',
+      geographicScope: '🇺🇸 United States Total',
       methodology: 'DOE/AFDC Comprehensive Calculation',
+      narrative: 'Transportation electrification measures daily electricity consumption from the rapidly expanding electric vehicle ecosystem, including passenger EVs, commercial delivery fleets, public transit systems, and charging infrastructure. This sector is the fastest-growing energy demand category and represents the most direct path for solar adoption through home charging integration and solar carports. Calculated from DOE/AFDC data: 3.3M EVs × 40 miles/day × 0.35 kWh/mile = 46.2 GWh, plus public transit (15 GWh), commercial fleets (8 GWh), and infrastructure overhead (2.3 GWh) = 71.5 GWh/day total. US-only scope. Source: <a href="https://afdc.energy.gov/data/" target="_blank">DOE Alternative Fuels Data Center</a>',
       components: [
         {name: 'Electric Vehicles', value: '3.3M vehicles × 40 mi/day × 0.35 kWh/mi = 46.2 GWh'},
         {name: 'Public Transit', value: 'Electric buses + metro + rail = 15.0 GWh'},
@@ -211,8 +281,11 @@ async function loadData(){
       `;
     }
     
+    const narrativeId = `narrative-${category}`;
+    
     card.innerHTML = `
       <h3>${details.icon} ${details.name}</h3>
+      <div class="geo-badge">${details.geographicScope}</div>
       <div class="source-meta">
         <div class="meta-item">
           <div class="meta-label">Daily Energy</div>
@@ -246,9 +319,35 @@ async function loadData(){
         <div class="meta-value" style="font-size:12px; line-height:1.5;">${details.methodology}</div>
       </div>
       ${componentsHTML}
+      <div class="narrative-section">
+        <button class="narrative-toggle" data-target="${narrativeId}">
+          <span>📖 About This Metric</span>
+          <span class="toggle-icon">▼</span>
+        </button>
+        <div id="${narrativeId}" class="narrative-content">
+          <div class="narrative-text">${details.narrative}</div>
+        </div>
+      </div>
     `;
     
     reportDiv.appendChild(card);
+  });
+  
+  // Add toggle functionality for narratives
+  document.querySelectorAll('.narrative-toggle').forEach(button => {
+    button.addEventListener('click', function() {
+      const targetId = this.getAttribute('data-target');
+      const content = document.getElementById(targetId);
+      const icon = this.querySelector('.toggle-icon');
+      
+      if (content.classList.contains('expanded')) {
+        content.classList.remove('expanded');
+        icon.classList.remove('rotated');
+      } else {
+        content.classList.add('expanded');
+        icon.classList.add('rotated');
+      }
+    });
   });
 
   // --- global trend ---
