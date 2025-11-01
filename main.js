@@ -901,14 +901,14 @@ async function updateSolarAuditData() {
   }
 }
 
-// Schedule daily updates at 7:00 AM UTC
+// Schedule daily updates at 3:00 AM UTC
 function scheduleDailyUpdates() {
-  // Run at 7:00 AM UTC every day
-  schedule.scheduleJob('0 7 * * *', async () => {
-    console.log('⏰ Scheduled Solar Audit update triggered (7:00 AM UTC)');
+  // Run at 3:00 AM UTC every day
+  schedule.scheduleJob('0 3 * * *', async () => {
+    console.log('⏰ Scheduled Solar Audit update triggered (3:00 AM UTC)');
     await updateSolarAuditData();
   });
-  console.log('📅 Solar Audit scheduled: Daily updates at 7:00 AM UTC');
+  console.log('📅 Solar Audit scheduled: Daily updates at 3:00 AM UTC');
 }
 
 // Create Solar Audit tables
