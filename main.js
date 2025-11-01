@@ -579,14 +579,15 @@ async function insertEnergyRecord(categoryName, sourceName, sourceVerificationLe
   }
 }
 
-// Helper: Convert monthly MWh to daily kWh
-function eiaMonthToDailyKwh(mwhMonthly, year, month) {
-  if (mwhMonthly === null || mwhMonthly === undefined || isNaN(mwhMonthly)) {
-    console.error(`❌ Invalid MWh value: ${mwhMonthly} for ${year}-${month}`);
+// Helper: Convert monthly GWh (million kWh) to daily kWh
+// EIA API returns values in "million kilowatt hours" which is GWh
+function eiaMonthToDailyKwh(gwhMonthly, year, month) {
+  if (gwhMonthly === null || gwhMonthly === undefined || isNaN(gwhMonthly)) {
+    console.error(`❌ Invalid GWh value: ${gwhMonthly} for ${year}-${month}`);
     return 0;
   }
   const daysInMonth = new Date(year, month, 0).getDate();
-  return (mwhMonthly * 1000.0) / daysInMonth; // MWh->kWh, then /days
+  return (gwhMonthly * 1e6) / daysInMonth; // GWh (million kWh) -> kWh, then /days
 }
 
 // Helper: Convert Petajoules to kWh
@@ -610,7 +611,7 @@ async function eiaRetailSalesLatest(sector) {
   }
 
   try {
-    const url = `https://api.eia.gov/v2/electricity/retail-sales/data/?api_key=${EIA_API_KEY}&frequency=monthly&data[0]=sales&facets[sectorid][]=${sector}&sort[0][column]=period&sort[0][direction]=desc&offset=0&length=1`;
+    const url = `https://api.eia.gov/v2/electricity/retail-sales/data/?api_key=${EIA_API_KEY}&frequency=monthly&data[0]=sales&facets[sectorid][]=${sector}&facets[stateid][]=US&sort[0][column]=period&sort[0][direction]=desc&offset=0&length=1`;
     const response = await fetch(url, { 
       headers: { 'User-Agent': 'TC-S-Network-SAi-Audit/1.0' }
     });
@@ -835,7 +836,7 @@ async function feedFoodAgricultureKwh() {
     const dailyKwh = annualKwh / 365;
     
     // Log the calculated value for verification
-    console.log(`✅ Agriculture energy (calculated): ${(dailyKwh / 1e9).toFixed(2)} GWh/day from ${annualQuadBtu} quad BTU/year`);
+    console.log(`✅ Agriculture energy (calculated): ${(dailyKwh / 1e6).toFixed(2)} GWh/day from ${annualQuadBtu} quad BTU/year`);
     
     return {
       kwh: dailyKwh,
