@@ -6620,6 +6620,73 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // GET /auditlog - Returns flat array format for Chart.js dashboard
+  if (pathname === '/auditlog' && req.method === 'GET') {
+    if (!pool) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify([]));
+      return;
+    }
+
+    try {
+      const query = `
+        SELECT 
+          e.date::text as day,
+          c.name as category,
+          e.energy_kwh as kwh,
+          e.energy_solar as solar_units,
+          s.name as source,
+          CASE 
+            WHEN e.metadata->>'verificationLevel' IS NOT NULL 
+            THEN e.metadata->>'verificationLevel'
+            ELSE 'TIER_1'
+          END as verification_level
+        FROM energy_audit_log e
+        INNER JOIN audit_categories c ON e.category_id = c.id
+        INNER JOIN audit_data_sources s ON e.data_source_id = s.id
+        ORDER BY e.date DESC, e.created_at DESC
+      `;
+      
+      const result = await pool.query(query);
+      
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(result.rows));
+      console.log(`✅ Auditlog endpoint: ${result.rows.length} records`);
+    } catch (error) {
+      console.error('Auditlog endpoint error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify([]));
+    }
+    return;
+  }
+
+  // GET /ping - Health check with last update timestamp
+  if (pathname === '/ping' && req.method === 'GET') {
+    try {
+      let lastUpdate = null;
+      
+      if (pool) {
+        const query = `SELECT finished_at FROM update_log WHERE status IN ('SUCCESS', 'PARTIAL') ORDER BY finished_at DESC LIMIT 1`;
+        const result = await pool.query(query);
+        if (result.rows.length > 0) {
+          lastUpdate = result.rows[0].finished_at;
+        }
+      }
+      
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ 
+        alive: true, 
+        last_update: lastUpdate ? new Date(lastUpdate).toISOString() : null,
+        timestamp: new Date().toISOString()
+      }));
+    } catch (error) {
+      console.error('Ping endpoint error:', error);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ alive: true, last_update: null, timestamp: new Date().toISOString() }));
+    }
+    return;
+  }
+
   // Root path - serve homepage and act as health check
   if (pathname === '/') {
     const indexPath = path.join(__dirname, 'public', 'index.html');
