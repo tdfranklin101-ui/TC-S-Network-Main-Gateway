@@ -64,6 +64,15 @@
   .freshness-dot.live{background:#00ff88;}
   .freshness-dot.quarterly{background:#00ffe0;}
   .freshness-dot.annual{background:#ffa500;}
+  .coverage-table{width:100%; border-collapse:collapse; font-size:12px; background:#0f1215; border-radius:8px; overflow:hidden;}
+  .coverage-table th{background:#11181d; color:#00ffe0; padding:12px 8px; text-align:left; font-weight:600; border:1px solid #222;}
+  .coverage-table td{padding:10px 8px; border:1px solid #222; vertical-align:top;}
+  .coverage-table tbody tr:hover{background:#111417;}
+  .coverage-table .category-cell{color:#fff; font-weight:600;}
+  .coverage-table .region-cell{font-size:11px;}
+  .coverage-table .region-value{color:#00ffe0; font-weight:600; display:block; margin-bottom:2px;}
+  .coverage-table .region-freshness{font-size:10px; opacity:0.8;}
+  .matrix-header{position:sticky; top:0; z-index:10;}
 </style>
 </head>
 <body>
@@ -72,7 +81,7 @@
   <h1>🌍 Global Energy Intelligence Dashboard</h1>
   <p style="text-align:center;max-width:800px;margin:0 auto 20px;">
     Real-time monitoring of global power consumption converted to Solar units.
-    Tracks cumulative totals since <b>April 7 2025</b> across six core sectors.
+    Tracks cumulative totals since <b>April 7 2025</b> across <b>8 categories</b> and <b>6 global regions</b> (<b>48 data points</b>).
   </p>
 
   <div id="updateBanner" class="update-banner">
@@ -116,6 +125,14 @@
   <div class="grid" id="totalsGrid"></div>
 
   <div class="section">
+    <h2>🌐 Global Coverage Matrix (8 Categories × 6 Regions = 48 Data Points)</h2>
+    <p style="color:#999; font-size:14px; margin-bottom:15px;">
+      Complete energy audit coverage with real-time freshness indicators. Green=Live API, Cyan=Quarterly, Orange=Annual datasets.
+    </p>
+    <div id="coverageMatrix" style="overflow-x:auto;"></div>
+  </div>
+
+  <div class="section">
     <h2>📊 Detailed Data Source Report</h2>
     <div id="detailedReport"></div>
   </div>
@@ -148,6 +165,76 @@
 </div>
 
 <script>
+// Build 8×6 Coverage Matrix with freshness indicators
+function buildCoverageMatrix(freshnessData) {
+  const regions = ['GLOBAL_ASIA', 'GLOBAL_NORTH_AMERICA', 'GLOBAL_EUROPE', 'GLOBAL_AFRICA', 'GLOBAL_LATIN_AMERICA', 'GLOBAL_OCEANIA'];
+  const regionNames = {'GLOBAL_ASIA': 'Asia', 'GLOBAL_NORTH_AMERICA': 'N. America', 'GLOBAL_EUROPE': 'Europe', 'GLOBAL_AFRICA': 'Africa', 'GLOBAL_LATIN_AMERICA': 'Latin America', 'GLOBAL_OCEANIA': 'Oceania'};
+  const categoryIcons = {'housing': '🏠', 'manufacturing': '🏭', 'digital-services': '💻', 'transport': '🚗', 'food': '🌾', 'money': '💰', 'ai-ml': '🤖', 'government-military': '🏛️'};
+  
+  // Build category-region map from freshness data
+  const categoryRegionMap = {};
+  freshnessData.categories.forEach(cat => {
+    const categoryKey = cat.category;
+    categoryRegionMap[categoryKey] = {};
+    
+    if (cat.regions && cat.regions.length > 0) {
+      cat.regions.forEach(region => {
+        categoryRegionMap[categoryKey][region.code] = {
+          energyKwh: region.energyKwh,
+          energySolar: region.energySolar,
+          dataFreshness: region.dataFreshness
+        };
+      });
+    }
+  });
+  
+  // Build table
+  const container = document.getElementById('coverageMatrix');
+  let html = `<table class="coverage-table">
+    <thead class="matrix-header">
+      <tr>
+        <th style="width:150px;">Category</th>
+        ${regions.map(r => `<th>${regionNames[r]}</th>`).join('')}
+      </tr>
+    </thead>
+    <tbody>`;
+  
+  // Get all category keys (convert to kebab-case if needed)
+  const categories = Object.keys(categoryRegionMap);
+  
+  categories.forEach(category => {
+    const icon = categoryIcons[category] || '📊';
+    const categoryName = category.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    
+    html += `<tr>
+      <td class="category-cell">${icon} ${categoryName}</td>`;
+    
+    regions.forEach(regionCode => {
+      const regionData = categoryRegionMap[category]?.[regionCode];
+      if (regionData) {
+        const gwhDaily = (regionData.energyKwh / 1e6).toFixed(2);
+        const freshness = regionData.dataFreshness || 'UNKNOWN';
+        const freshnessClass = freshness === 'LIVE_DAILY' ? 'freshness-live' : 
+                              freshness === 'QUARTERLY_API' ? 'freshness-quarterly' : 
+                              freshness === 'ANNUAL_DATASET' ? 'freshness-annual' : 'freshness-estimate';
+        const freshnessLabel = freshness.replace(/_/g, ' ');
+        
+        html += `<td class="region-cell" data-ai-region="${regionCode}" data-ai-category="${category}" data-ai-freshness="${freshness}">
+          <span class="region-value">${gwhDaily} GWh/day</span>
+          <span class="region-freshness ${freshnessClass}">${freshnessLabel}</span>
+        </td>`;
+      } else {
+        html += `<td class="region-cell" style="opacity:0.5;">No data</td>`;
+      }
+    });
+    
+    html += `</tr>`;
+  });
+  
+  html += `</tbody></table>`;
+  container.innerHTML = html;
+}
+
 // Load data freshness information for transparency
 async function loadFreshnessData(){
   try {
@@ -186,7 +273,12 @@ async function loadData(){
   const data = await res.json();
   
   // Load freshness data in parallel
-  const freshnessPromise = loadFreshnessData();
+  const freshnessData = await loadFreshnessData();
+
+  // --- Build 8×6 Coverage Matrix ---
+  if (freshnessData && freshnessData.categories) {
+    buildCoverageMatrix(freshnessData);
+  }
 
   // --- compute totals ---
   const cats=[...new Set(data.map(x=>x.category))];
