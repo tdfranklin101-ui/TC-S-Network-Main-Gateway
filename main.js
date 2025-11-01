@@ -481,13 +481,13 @@ async function ensureCategory(name, description) {
   if (!pool) return null;
   
   try {
-    const existing = await pool.query('SELECT id FROM solar_audit_categories WHERE name = $1', [name]);
+    const existing = await pool.query('SELECT id FROM audit_categories WHERE name = $1', [name]);
     if (existing.rows.length > 0) {
       return existing.rows[0].id;
     }
     
     const result = await pool.query(
-      'INSERT INTO solar_audit_categories (name, description) VALUES ($1, $2) RETURNING id',
+      'INSERT INTO audit_categories (name, description) VALUES ($1, $2) RETURNING id',
       [name, description || null]
     );
     return result.rows[0].id;
@@ -502,33 +502,42 @@ async function ensureDataSource(name, verificationLevel, organization, contact, 
   if (!pool) return null;
   
   try {
-    const existing = await pool.query('SELECT id FROM solar_audit_data_sources WHERE name = $1', [name]);
+    const existing = await pool.query('SELECT id FROM audit_data_sources WHERE name = $1', [name]);
     if (existing.rows.length > 0) {
       return existing.rows[0].id;
     }
     
     const result = await pool.query(
-      'INSERT INTO solar_audit_data_sources (name, verification_level, organization, contact, uri, source_type) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
-      [name, verificationLevel, organization || null, contact || null, uri || null, sourceType || 'DIRECT']
+      'INSERT INTO audit_data_sources (name, verification_level, organization, contact, uri, source_type, url, description) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id',
+      [
+        name, 
+        verificationLevel, 
+        organization || null, 
+        contact || null, 
+        uri || null, 
+        sourceType || 'DIRECT',
+        uri || '', // url column (legacy)
+        `${organization || name} - ${verificationLevel || 'TIER_1'} verification` // description column (legacy)
+      ]
     );
     return result.rows[0].id;
   } catch (error) {
-    console.error('Error ensuring data source:', error);
+    console.error('❌ Error ensuring data source:', error.message);
     return null;
   }
 }
 
 // Helper: Insert auditable energy record
 async function insertEnergyRecord(categoryName, sourceName, sourceVerificationLevel, kwh, rightsAlignment, notes, sourceOrg, sourceUri, sourceType) {
-  if (!pool) return;
+  if (!pool) return false;
   
   try {
     const categoryId = await ensureCategory(categoryName);
     const sourceId = await ensureDataSource(sourceName, sourceVerificationLevel, sourceOrg, null, sourceUri, sourceType);
     
     if (!categoryId || !sourceId) {
-      console.error('Failed to ensure category or source');
-      return;
+      console.error(`❌ Failed to ensure category (${categoryId}) or source (${sourceId}) for ${categoryName}`);
+      return false;
     }
     
     const record = {
@@ -541,21 +550,39 @@ async function insertEnergyRecord(categoryName, sourceName, sourceVerificationLe
     const dataHash = computeDataHash(record);
     const solarUnits = kwh / 4913.0; // Convert kWh to Solar
     
-    await pool.query(
-      `INSERT INTO solar_audit_entries (category_id, source_id, day, kwh, solar_units, rights_alignment, data_hash, notes)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-       ON CONFLICT DO NOTHING`,
-      [categoryId, sourceId, record.day, kwh, solarUnits, JSON.stringify(rightsAlignment), dataHash, notes || null]
+    const metadata = {
+      rightsAlignment,
+      notes: notes || null,
+      verificationLevel: sourceVerificationLevel
+    };
+    
+    const result = await pool.query(
+      `INSERT INTO energy_audit_log (date, category_id, data_source_id, energy_kwh, energy_solar, data_hash, metadata)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       ON CONFLICT DO NOTHING
+       RETURNING id`,
+      [record.day, categoryId, sourceId, kwh, solarUnits, dataHash, JSON.stringify(metadata)]
     );
     
-    console.log(`✅ Energy record: ${categoryName} - ${(kwh / 1e6).toFixed(2)} GWh`);
+    if (result.rowCount > 0) {
+      console.log(`✅ Energy record: ${categoryName} - ${(kwh / 1e6).toFixed(2)} GWh`);
+      return true;
+    } else {
+      console.log(`⚠️  Duplicate skipped: ${categoryName} for ${record.day}`);
+      return false;
+    }
   } catch (error) {
-    console.error('Error inserting energy record:', error);
+    console.error(`❌ Error inserting energy record for ${categoryName}:`, error.message);
+    return false;
   }
 }
 
 // Helper: Convert monthly MWh to daily kWh
 function eiaMonthToDailyKwh(mwhMonthly, year, month) {
+  if (mwhMonthly === null || mwhMonthly === undefined || isNaN(mwhMonthly)) {
+    console.error(`❌ Invalid MWh value: ${mwhMonthly} for ${year}-${month}`);
+    return 0;
+  }
   const daysInMonth = new Date(year, month, 0).getDate();
   return (mwhMonthly * 1000.0) / daysInMonth; // MWh->kWh, then /days
 }
@@ -575,24 +602,29 @@ async function eiaRetailSalesLatest(sector) {
     });
     
     if (!response.ok) {
-      console.error(`EIA API error for sector ${sector}:`, response.status, response.statusText);
+      console.error(`❌ EIA API error for sector ${sector}:`, response.status, response.statusText);
       return null;
     }
     
     const data = await response.json();
     const row = data?.response?.data?.[0];
     
-    if (!row || !row.period || row.sales === undefined) {
-      console.error(`Invalid EIA response for sector ${sector}:`, JSON.stringify(row));
+    if (!row || !row.period || row.sales === undefined || row.sales === null) {
+      console.error(`❌ Invalid EIA response for sector ${sector}: sales=${row?.sales}, period=${row?.period}`);
       return null;
     }
     
     const [year, month] = row.period.split('-').map(n => parseInt(n));
     const mwh = parseFloat(row.sales);
     
+    if (isNaN(mwh) || mwh < 0) {
+      console.error(`❌ Invalid sales value for sector ${sector}: ${mwh}`);
+      return null;
+    }
+    
     return { mwh, year, month };
   } catch (error) {
-    console.error(`Failed to fetch EIA data for sector ${sector}:`, error);
+    console.error(`❌ Failed to fetch EIA data for sector ${sector}:`, error.message);
     return null;
   }
 }
@@ -737,7 +769,7 @@ async function tieredFetch(fetchFn, categoryName, rights) {
   try {
     const result = await fetchFn();
     if (result) {
-      await insertEnergyRecord(
+      const inserted = await insertEnergyRecord(
         categoryName,
         result.source.name,
         result.source.verificationLevel,
@@ -748,11 +780,11 @@ async function tieredFetch(fetchFn, categoryName, rights) {
         result.source.uri,
         result.source.sourceType
       );
-      return true;
+      return inserted;
     }
     return false;
   } catch (error) {
-    console.error(`${categoryName} fetch failed:`, error);
+    console.error(`❌ ${categoryName} fetch failed:`, error.message);
     return false;
   }
 }
