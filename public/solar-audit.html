@@ -22,6 +22,15 @@
   th,td{padding:6px 8px; border:1px solid #222;}
   th{background:#11181d; color:#00ffe0;}
   tr:nth-child(even){background:#0f1215;}
+  .source-card{background:#111417; border-left:4px solid #00ffe0; padding:20px; margin:15px 0; border-radius:8px;}
+  .source-card h3{color:#00ffe0; margin:0 0 12px 0;}
+  .source-meta{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:15px; margin:10px 0;}
+  .meta-item{background:#0a0c0e; padding:10px; border-radius:5px;}
+  .meta-label{color:#999; font-size:11px; text-transform:uppercase; margin-bottom:4px;}
+  .meta-value{color:#fff; font-weight:600; font-size:14px;}
+  .component-breakdown{margin-top:15px; padding:12px; background:#0f1215; border-radius:5px;}
+  .component-item{display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid #1a1d21;}
+  .component-item:last-child{border-bottom:none;}
 </style>
 </head>
 <body>
@@ -36,7 +45,12 @@
   <div class="grid" id="totalsGrid"></div>
 
   <div class="section">
-    <h2>📈 Global Energy Trend (Daily MWh)</h2>
+    <h2>📊 Detailed Data Source Report</h2>
+    <div id="detailedReport"></div>
+  </div>
+
+  <div class="section">
+    <h2>📈 Global Energy Trend (Daily GWh/day)</h2>
     <canvas id="globalTrend"></canvas>
   </div>
 
@@ -83,27 +97,189 @@ async function loadData(){
   const grid=document.getElementById('totalsGrid');
   const globalTile=document.createElement('div');
   globalTile.className='tile';
+  const globalGwhDaily = totalKwh / 1e6;
   globalTile.innerHTML=`<h3>Total Global</h3>
-    <p><b>${totalKwh.toLocaleString(undefined,{maximumFractionDigits:0})}</b> kWh</p>
-    <p><b>${totalSolar.toFixed(2)}</b> Solar Units</p>`;
+    <p><b>${globalGwhDaily.toFixed(2)} GWh/day</b></p>
+    <p>${totalKwh.toLocaleString(undefined,{maximumFractionDigits:0})} kWh</p>
+    <p>${totalSolar.toFixed(2)} Solar</p>`;
   grid.appendChild(globalTile);
 
   cats.forEach(c=>{
     const div=document.createElement('div');
     div.className='tile';
+    const gwhDaily = totals[c].kwh / 1e6;
     div.innerHTML=`<h3>${c}</h3>
+      <p><b>${gwhDaily.toFixed(2)} GWh/day</b></p>
       <p>${totals[c].kwh.toLocaleString(undefined,{maximumFractionDigits:0})} kWh</p>
       <p>${totals[c].solar.toFixed(2)} Solar</p>`;
     grid.appendChild(div);
   });
 
+  // --- detailed source report ---
+  const reportDiv = document.getElementById('detailedReport');
+  const categoryDetails = {
+    'housing': {
+      icon: '🏠',
+      name: 'Housing (Residential)',
+      location: 'United States',
+      methodology: 'Live EIA API - US Total monthly retail electricity sales',
+      components: null
+    },
+    'manufacturing': {
+      icon: '🏭',
+      name: 'Manufacturing (Industrial)',
+      location: 'United States',
+      methodology: 'Live EIA API - US Total monthly industrial electricity sales',
+      components: null
+    },
+    'food': {
+      icon: '🌾',
+      name: 'Food & Agriculture',
+      location: 'United States',
+      methodology: 'IEA/USDA Agricultural Energy Calculation',
+      components: [
+        {name: 'Annual Energy Consumption', value: '1.75 quadrillion BTU/year'},
+        {name: 'Annualized (TWh/year)', value: '512.87 TWh'},
+        {name: 'Daily Average', value: '1,405.13 GWh/day'}
+      ]
+    },
+    'money': {
+      icon: '💰',
+      name: 'Money & Blockchain',
+      location: 'Global',
+      methodology: 'Live Bitcoin Network Hashrate Calculation',
+      components: [
+        {name: 'Bitcoin Network', value: '~1,087 EH/s × 35 W/TH = 913 GWh/day'},
+        {name: 'Network Efficiency Model', value: '35 W/TH (25-50 W/TH range)'},
+        {name: 'Ethereum + Solana (est)', value: 'Included in total'}
+      ]
+    },
+    'digital-services': {
+      icon: '💻',
+      name: 'Digital Services (Data Centers)',
+      location: 'United States',
+      methodology: 'LBNL Data Center Energy Study Calculation',
+      components: [
+        {name: 'Annual US Data Center Energy', value: '97 TWh/year'},
+        {name: 'Daily Average', value: '265.75 GWh/day'},
+        {name: 'Coverage', value: 'Hyperscale + Enterprise + Colocation'}
+      ]
+    },
+    'transport': {
+      icon: '🚗',
+      name: 'Transportation Electrification',
+      location: 'United States',
+      methodology: 'DOE/AFDC Comprehensive Calculation',
+      components: [
+        {name: 'Electric Vehicles', value: '3.3M vehicles × 40 mi/day × 0.35 kWh/mi = 46.2 GWh'},
+        {name: 'Public Transit', value: 'Electric buses + metro + rail = 15.0 GWh'},
+        {name: 'Commercial Fleets', value: 'Amazon, UPS, Uber/Lyft = 8.0 GWh'},
+        {name: 'Charging Infrastructure', value: '5% overhead = 2.3 GWh'},
+        {name: 'Total', value: '71.5 GWh/day'}
+      ]
+    }
+  };
+
+  // Create sorted categories array for detailed report (don't mutate original data)
+  const sortedCategories = [...cats].sort((a,b) => totals[b].kwh - totals[a].kwh);
+  
+  // Build one card per category using aggregated totals
+  sortedCategories.forEach(category => {
+    const details = categoryDetails[category];
+    if (!details) return;
+    
+    // Get the latest record for this category to extract source info
+    const latestRecord = data.find(r => r.category === category);
+    if (!latestRecord) return;
+    
+    const gwhDaily = totals[category].kwh / 1e6;
+    const card = document.createElement('div');
+    card.className = 'source-card';
+    
+    let componentsHTML = '';
+    if (details.components) {
+      componentsHTML = `
+        <div class="component-breakdown">
+          <div class="meta-label">Component Breakdown</div>
+          ${details.components.map(comp => `
+            <div class="component-item">
+              <span>${comp.name}</span>
+              <span style="color:#00ffe0; font-weight:600;">${comp.value}</span>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+    
+    card.innerHTML = `
+      <h3>${details.icon} ${details.name}</h3>
+      <div class="source-meta">
+        <div class="meta-item">
+          <div class="meta-label">Daily Energy</div>
+          <div class="meta-value">${gwhDaily.toFixed(2)} GWh/day</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">Total kWh</div>
+          <div class="meta-value">${totals[category].kwh.toLocaleString(undefined,{maximumFractionDigits:0})}</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">Solar Units</div>
+          <div class="meta-value">${totals[category].solar.toFixed(2)}</div>
+        </div>
+      </div>
+      <div class="source-meta" style="margin-top:10px;">
+        <div class="meta-item">
+          <div class="meta-label">Data Source</div>
+          <div class="meta-value" style="font-size:12px;">${latestRecord.source}</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">Location</div>
+          <div class="meta-value">${details.location}</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">Verification</div>
+          <div class="meta-value">${latestRecord.verification_level}</div>
+        </div>
+      </div>
+      <div class="meta-item" style="margin-top:10px;">
+        <div class="meta-label">Methodology</div>
+        <div class="meta-value" style="font-size:12px; line-height:1.5;">${details.methodology}</div>
+      </div>
+      ${componentsHTML}
+    `;
+    
+    reportDiv.appendChild(card);
+  });
+
   // --- global trend ---
   const days=[...new Set(data.map(x=>x.day))].sort();
-  const dayTotals=days.map(d=>data.filter(x=>x.day===d).reduce((s,x)=>s+(+x.kwh),0)/1e3);
+  const dayTotals=days.map(d=>data.filter(x=>x.day===d).reduce((s,x)=>s+(+x.kwh),0)/1e6);
   new Chart(document.getElementById('globalTrend'),{
     type:'line',
-    data:{labels:days,datasets:[{label:'Global Energy (MWh)',data:dayTotals,borderColor:'#00ffe0',tension:0.3,fill:false}]},
-    options:{scales:{x:{ticks:{color:'#ccc'}},y:{ticks:{color:'#ccc'},beginAtZero:true}}}
+    data:{labels:days,datasets:[{label:'Global Energy (GWh/day)',data:dayTotals,borderColor:'#00ffe0',tension:0.3,fill:false}]},
+    options:{
+      plugins:{
+        tooltip:{
+          callbacks:{
+            label: function(context) {
+              return `${context.parsed.y.toFixed(2)} GWh/day`;
+            }
+          }
+        }
+      },
+      scales:{
+        x:{ticks:{color:'#ccc'}},
+        y:{
+          ticks:{color:'#ccc'},
+          beginAtZero:true,
+          title:{
+            display:true,
+            text:'GWh/day',
+            color:'#00ffe0'
+          }
+        }
+      }
+    }
   });
 
   // --- sector breakdown chart ---
