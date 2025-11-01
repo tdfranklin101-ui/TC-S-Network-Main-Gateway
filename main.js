@@ -7830,26 +7830,76 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // GET /api/solar-audit/last - Get last successful update timestamp
+  // GET /api/solar-audit/last - Get last successful update with categories and regional breakdowns
   if (pathname === '/api/solar-audit/last' && req.method === 'GET') {
     if (!pool) {
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ last_update: null }));
+      res.end(JSON.stringify({ last_update: null, categories: [] }));
       return;
     }
 
     try {
-      const query = `SELECT finished_at FROM update_log WHERE status IN ('SUCCESS', 'PARTIAL') ORDER BY finished_at DESC LIMIT 1`;
-      const result = await pool.query(query);
+      // Get last update timestamp
+      const updateQuery = `SELECT finished_at FROM update_log WHERE status IN ('SUCCESS', 'PARTIAL') ORDER BY finished_at DESC LIMIT 1`;
+      const updateResult = await pool.query(updateQuery);
+      const lastUpdate = updateResult.rows.length > 0 ? new Date(updateResult.rows[0].finished_at).toISOString() : null;
       
-      const lastUpdate = result.rows.length > 0 ? new Date(result.rows[0].finished_at).toISOString() : null;
+      // Get latest audit data with regional breakdowns
+      const dataQuery = `
+        SELECT 
+          c.name as category,
+          art.region_code,
+          art.energy_kwh,
+          art.energy_solar,
+          art.data_freshness,
+          el.date
+        FROM audit_region_totals art
+        JOIN energy_audit_log el ON art.audit_log_id = el.id
+        JOIN audit_categories c ON el.category_id = c.id
+        WHERE el.date >= CURRENT_DATE - INTERVAL '7 days'
+        ORDER BY el.date DESC, c.name, art.region_code
+      `;
+      
+      const dataResult = await pool.query(dataQuery);
+      
+      // Group by category
+      const categoriesMap = {};
+      dataResult.rows.forEach(row => {
+        if (!categoriesMap[row.category]) {
+          categoriesMap[row.category] = {
+            category: row.category,
+            regions: [],
+            dataFreshness: row.data_freshness
+          };
+        }
+        
+        // Only include global regions (not US sub-regions) for coverage matrix
+        if (row.region_code.startsWith('GLOBAL_')) {
+          categoriesMap[row.category].regions.push({
+            regionCode: row.region_code,
+            energyKwh: parseFloat(row.energy_kwh),
+            energySolar: parseFloat(row.energy_solar),
+            dataFreshness: row.data_freshness
+          });
+        }
+      });
+      
+      const categories = Object.values(categoriesMap);
+      
+      const response = {
+        timestamp: new Date().toISOString(),
+        last_update: lastUpdate,
+        nextUpdate: '3:00 AM UTC daily',
+        dataVintage: '2023-2024',
+        categories: categories
+      };
       
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ last_update: lastUpdate }));
+      res.end(JSON.stringify(response));
     } catch (error) {
       console.error('Last update endpoint error:', error);
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ last_update: null }));
+      res.end(JSON.stringify({ last_update: null, categories: [] }));
     }
     return;
   }
