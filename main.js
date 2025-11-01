@@ -759,58 +759,146 @@ async function tieredFetch(fetchFn, categoryName, rights) {
 
 // Main update function - fetches all live data
 async function updateSolarAuditData() {
+  const startTime = new Date();
+  let logId = null;
+  
   if (!pool) {
     console.log('⚠️  Database not available - skipping solar audit update');
     return { status: 'error', message: 'Database not available' };
   }
 
-  console.log('🌍 Starting Solar Audit data update...');
-  
-  const rights = {
-    privacy: "ENFORCED",
-    non_discrimination: "ENFORCED",
-    auditability: "FULL"
-  };
+  try {
+    // Log update start
+    const logResult = await pool.query(
+      `INSERT INTO update_log (started_at, status) VALUES ($1, 'PARTIAL') RETURNING id`,
+      [startTime]
+    );
+    logId = logResult.rows[0].id;
 
-  const EIA_API_KEY = process.env.EIA_API_KEY;
-  let recordsCreated = 0;
+    console.log('🌍 Starting Solar Audit data update...');
+    
+    const rights = {
+      privacy: "ENFORCED",
+      non_discrimination: "ENFORCED",
+      auditability: "FULL"
+    };
 
-  // 1. Money/Blockchain (live Bitcoin via CBECI - always available)
-  const moneySuccess = await tieredFetch(feedMoneyKwh, 'money', rights);
-  if (moneySuccess) recordsCreated++;
+    const EIA_API_KEY = process.env.EIA_API_KEY;
+    let recordsCreated = 0;
+    const completed = [];
+    const missing = [];
 
-  // 2. EIA-backed categories (DIRECT sources - requires API key)
-  if (EIA_API_KEY) {
-    console.log('📊 Fetching live EIA data for 5 energy sectors...');
+    // 1. Money/Blockchain (live Bitcoin via CBECI - always available)
+    const moneySuccess = await tieredFetch(feedMoneyKwh, 'money', rights);
+    if (moneySuccess) {
+      recordsCreated++;
+      completed.push('money');
+    } else {
+      missing.push('money');
+    }
+
+    // 2. EIA-backed categories (DIRECT sources - requires API key)
+    if (EIA_API_KEY) {
+      console.log('📊 Fetching live EIA data for 5 energy sectors...');
+      
+      const housingSuccess = await tieredFetch(feedHousingKwh, 'housing', rights);
+      if (housingSuccess) {
+        recordsCreated++;
+        completed.push('housing');
+      } else {
+        missing.push('housing');
+      }
+      
+      const digitalSuccess = await tieredFetch(feedDigitalServicesKwh, 'digital-services', rights);
+      if (digitalSuccess) {
+        recordsCreated++;
+        completed.push('digital-services');
+      } else {
+        missing.push('digital-services');
+      }
+      
+      const mfgSuccess = await tieredFetch(feedManufacturingKwh, 'manufacturing', rights);
+      if (mfgSuccess) {
+        recordsCreated++;
+        completed.push('manufacturing');
+      } else {
+        missing.push('manufacturing');
+      }
+      
+      const transportSuccess = await tieredFetch(feedTransportKwh, 'transport', rights);
+      if (transportSuccess) {
+        recordsCreated++;
+        completed.push('transport');
+      } else {
+        missing.push('transport');
+      }
+      
+      const foodSuccess = await tieredFetch(feedFoodAgricultureKwh, 'food', rights);
+      if (foodSuccess) {
+        recordsCreated++;
+        completed.push('food');
+      } else {
+        missing.push('food');
+      }
+      
+      console.log('✅ Solar Audit data updated successfully with live feeds');
+    } else {
+      console.warn('⚠️  EIA_API_KEY missing; skipping housing, digital-services, manufacturing, transport, food categories');
+      missing.push('housing', 'digital-services', 'manufacturing', 'transport', 'food');
+    }
+
+    console.log(`✅ Solar Audit update complete: ${recordsCreated} records created`);
+    console.log(`✅ Updated: ${completed.join(', ')}`);
+    if (missing.length > 0) {
+      console.log(`⚠️ Missing: ${missing.join(', ')}`);
+    }
     
-    const housingSuccess = await tieredFetch(feedHousingKwh, 'housing', rights);
-    if (housingSuccess) recordsCreated++;
+    // Log successful completion
+    const finishTime = new Date();
+    const duration = finishTime - startTime;
+    const status = missing.length === 6 ? 'FAIL' : (missing.length > 0 ? 'PARTIAL' : 'SUCCESS');
     
-    const digitalSuccess = await tieredFetch(feedDigitalServicesKwh, 'digital-services', rights);
-    if (digitalSuccess) recordsCreated++;
+    await pool.query(
+      `UPDATE update_log SET finished_at = $1, status = $2, updated = $3, missing = $4, meta = $5 WHERE id = $6`,
+      [
+        finishTime,
+        status,
+        JSON.stringify(completed),
+        JSON.stringify(missing),
+        JSON.stringify({ recordsCreated, duration_ms: duration }),
+        logId
+      ]
+    );
     
-    const mfgSuccess = await tieredFetch(feedManufacturingKwh, 'manufacturing', rights);
-    if (mfgSuccess) recordsCreated++;
+    return { 
+      status: 'ok', 
+      date: new Date().toISOString().split('T')[0],
+      recordsCreated,
+      eiaDataAvailable: !!EIA_API_KEY,
+      completed,
+      missing,
+      timestamp: finishTime.toISOString()
+    };
+  } catch (error) {
+    console.error('❌ Solar Audit update failed:', error);
     
-    const transportSuccess = await tieredFetch(feedTransportKwh, 'transport', rights);
-    if (transportSuccess) recordsCreated++;
+    // Log failure if we have a log ID
+    if (logId) {
+      try {
+        await pool.query(
+          `UPDATE update_log SET finished_at = $1, status = 'FAIL', error = $2 WHERE id = $3`,
+          [new Date(), error.message, logId]
+        );
+      } catch (logError) {
+        console.error('Failed to log error:', logError);
+      }
+    }
     
-    const foodSuccess = await tieredFetch(feedFoodAgricultureKwh, 'food', rights);
-    if (foodSuccess) recordsCreated++;
-    
-    console.log('✅ Solar Audit data updated successfully with live feeds');
-  } else {
-    console.warn('⚠️  EIA_API_KEY missing; skipping housing, digital-services, manufacturing, transport, food categories');
+    return { 
+      status: 'error', 
+      message: error.message 
+    };
   }
-
-  console.log(`✅ Solar Audit update complete: ${recordsCreated} records created`);
-  
-  return { 
-    status: 'ok', 
-    date: new Date().toISOString().split('T')[0],
-    recordsCreated,
-    eiaDataAvailable: !!EIA_API_KEY
-  };
 }
 
 // Schedule daily updates at 7:00 AM UTC
@@ -863,6 +951,25 @@ async function createSolarAuditTables() {
         created_at TIMESTAMP DEFAULT NOW(),
         UNIQUE(date, category_id, data_source_id)
       )
+    `);
+    
+    // Create update_log table to track each data refresh cycle
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS update_log (
+        id SERIAL PRIMARY KEY,
+        started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        finished_at TIMESTAMPTZ,
+        status VARCHAR(20) NOT NULL CHECK (status IN ('SUCCESS','PARTIAL','FAIL')),
+        updated JSONB,
+        missing JSONB,
+        error TEXT,
+        meta JSONB,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_update_log_started_at ON update_log (started_at DESC)
     `);
     
     console.log('✅ Solar Audit tables created/verified');
