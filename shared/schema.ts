@@ -601,7 +601,8 @@ export const auditRegionTotals = pgTable('audit_region_totals', {
   regionCode: varchar('region_code', { length: 50 }).notNull().references(() => auditRegions.code),
   energyKwh: doublePrecision('energy_kwh').notNull(),
   energySolar: doublePrecision('energy_solar').notNull(),
-  metadata: jsonb('metadata') // store any region-specific details
+  dataFreshness: varchar('data_freshness', { length: 20 }).default('LIVE_DAILY'), // LIVE_DAILY, QUARTERLY_API, ANNUAL_DATASET
+  metadata: jsonb('metadata') // store region-specific details + source info
 }, (table) => ({
   auditLogIdx: index('idx_region_totals_audit_log').on(table.auditLogId),
   regionIdx: index('idx_region_totals_region').on(table.regionCode),
