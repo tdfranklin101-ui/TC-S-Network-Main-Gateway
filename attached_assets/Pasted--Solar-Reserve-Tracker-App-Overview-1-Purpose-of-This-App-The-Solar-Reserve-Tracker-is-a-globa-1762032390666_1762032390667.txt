@@ -1,0 +1,45 @@
+📊 Solar Reserve Tracker - App Overview
+1. Purpose of This App:
+The Solar Reserve Tracker is a global renewable energy monitoring platform designed to:
+
+✅ Track Energy Abundance - Monitor real-time renewable energy production across 6 continents
+✅ Calculate the Energy Abundance Index (EAI) - A civilizational benchmark measuring clean power growth since Genesis (April 7, 2025)
+✅ Visualize Solar Economics - Show how renewable energy backs Solar token value using the "1 Solar per person" model
+✅ Serve as a Tier-1 SAi UIM Authority Dataset - Provide machine-readable, authoritative energy data for the global knowledge commons
+✅ Support Energy-Backed Economics - Enable data-driven decisions for Global Basic Income (GBI) systems based on clean energy production
+
+2. What's On This App:
+📍 Landing Page (/):
+
+Interactive Regional Map with 6 global regions
+"Understanding the Impact" hero section
+Two dashboard buttons (Power Production & Power Consumption)
+Global benchmarks: Daily Generation, Cumulative Totals, Progress Since Genesis
+📊 Dashboard (/dashboard):
+
+Executive Summary with current EAI value
+EAI Chart (dual metrics: yellow line + ESP green line)
+Regional Solar economics (authorized Solar, kWh per Solar, backing %)
+Source transparency (REC + off-grid breakdowns)
+Energy status badges (Total Surplus, Borderline GBI, Below Energy-Backed)
+JSON-LD structured data for SEO discoverability
+📡 Data Sources:
+
+9 REC sources: EIA, IEA Asia, ENTSO-E, IRENA Africa, AEMO, OLADE, IHA Hydro, FAO Bioenergy, Danish ENS Polar
+3 Off-grid sources: GOGLA, ESMAP, IRENA Off-Grid
+1 Theoretical source: NASA POWER satellite data
+🔌 API Endpoints:
+
+/api/solar/reserve - Solar reserve data
+/api/eai/current - Current EAI value
+/api/energy/regions/latest - Regional energy data
+/api/solar/daily-global - Daily global generation
+CSV/JSON export support
+3. Database Sharing:
+No, this app does NOT share a database with https://current-see-website-tdfranklin101.replit.app.
+
+Each Replit project has its own isolated PostgreSQL database:
+
+Solar Reserve Tracker (this app) → Own database tracking renewable energy production
+Current See Website (solar-audit app) → Own database tracking power consumption
+They are separate applications with independent data stores. The link between them is just the navigation button that sends users from the production dashboard to the consumption dashboard.
