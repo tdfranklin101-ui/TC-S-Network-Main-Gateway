@@ -823,6 +823,54 @@ function scheduleDailyUpdates() {
   console.log('📅 Solar Audit scheduled: Daily updates at 7:00 AM UTC');
 }
 
+// Create Solar Audit tables
+async function createSolarAuditTables() {
+  if (!pool) return;
+  
+  try {
+    // Create audit_categories table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS audit_categories (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) UNIQUE NOT NULL,
+        description TEXT,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    
+    // Create audit_data_sources table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS audit_data_sources (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) UNIQUE NOT NULL,
+        url TEXT,
+        description TEXT,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    
+    // Create energy_audit_log table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS energy_audit_log (
+        id SERIAL PRIMARY KEY,
+        date DATE NOT NULL,
+        category_id INTEGER REFERENCES audit_categories(id),
+        data_source_id INTEGER REFERENCES audit_data_sources(id),
+        energy_kwh DECIMAL(20, 2) NOT NULL,
+        energy_solar DECIMAL(20, 8) NOT NULL,
+        data_hash VARCHAR(64) NOT NULL,
+        metadata JSONB,
+        created_at TIMESTAMP DEFAULT NOW(),
+        UNIQUE(date, category_id, data_source_id)
+      )
+    `);
+    
+    console.log('✅ Solar Audit tables created/verified');
+  } catch (error) {
+    console.error('⚠️  Solar Audit table creation failed:', error.message);
+  }
+}
+
 // Initialize on server startup
 async function initializeSolarAudit() {
   if (!pool) {
@@ -831,6 +879,9 @@ async function initializeSolarAudit() {
   }
   
   console.log('🚀 Initializing Solar Audit Layer...');
+  
+  // Create tables first
+  await createSolarAuditTables();
   
   // Schedule daily updates
   scheduleDailyUpdates();
