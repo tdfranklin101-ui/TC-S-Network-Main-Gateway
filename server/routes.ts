@@ -2,7 +2,7 @@ import express, { type Express } from "express";
 import type { Server } from "http";
 import { createServer } from "http";
 import { storage } from "./storage";
-import { insertNewsletterSubscriptionSchema, insertContactMessageSchema, solarClock, songs, playEvents, insertPlayEventSchema, solarAuditCategories, solarAuditDataSources, solarAuditEntries, insertSolarAuditCategorySchema, insertSolarAuditDataSourceSchema, insertSolarAuditEntrySchema } from "@shared/schema";
+import { insertNewsletterSubscriptionSchema, insertContactMessageSchema, solarClock, songs, playEvents, insertPlayEventSchema, solarAuditCategories, solarAuditDataSources, solarAuditEntries, auditRegionTotals, auditRegions, insertSolarAuditCategorySchema, insertSolarAuditDataSourceSchema, insertSolarAuditEntrySchema } from "@shared/schema";
 import { setupWaitlistRoutes } from "./waitlist";
 import { setupAdminRoutes } from "./admin";
 import { setupAuth } from "./auth";
@@ -1850,6 +1850,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Data source creation error:', error);
       res.status(400).json({ error: 'Invalid data source', details: String(error) });
+    }
+  });
+
+  // GET /api/solar-audit/last - Return latest audit with regional breakdowns and data freshness
+  app.get('/api/solar-audit/last', async (req, res) => {
+    try {
+      // Get most recent audit entries (one per category for today)
+      const latestEntries = await db
+        .select({
+          id: solarAuditEntries.id,
+          category: solarAuditCategories.name,
+          categoryId: solarAuditEntries.categoryId,
+          source: solarAuditDataSources.name,
+          sourceOrganization: solarAuditDataSources.organization,
+          verificationLevel: solarAuditDataSources.verificationLevel,
+          day: solarAuditEntries.day,
+          kwh: solarAuditEntries.kwh,
+          solarUnits: solarAuditEntries.solarUnits,
+          notes: solarAuditEntries.notes,
+          createdAt: solarAuditEntries.createdAt
+        })
+        .from(solarAuditEntries)
+        .innerJoin(solarAuditCategories, eq(solarAuditEntries.categoryId, solarAuditCategories.id))
+        .innerJoin(solarAuditDataSources, eq(solarAuditEntries.sourceId, solarAuditDataSources.id))
+        .orderBy(desc(solarAuditEntries.day), desc(solarAuditEntries.createdAt))
+        .limit(20);
+
+      // Get regional breakdowns for these entries
+      const entryIds = latestEntries.map(e => e.id);
+      const regionalData = entryIds.length > 0 
+        ? await db
+            .select()
+            .from(auditRegionTotals)
+            .where(sql`${auditRegionTotals.auditLogId} IN (${sql.join(entryIds, sql`, `)})`)
+        : [];
+
+      // Get region metadata
+      const regions = await db
+        .select()
+        .from(auditRegions);
+
+      // Combine data: add regional breakdowns to each category
+      const categoriesWithRegions = latestEntries.reduce((acc, entry) => {
+        const categoryRegions = regionalData
+          .filter(r => Number(r.auditLogId) === Number(entry.id))
+          .map(r => {
+            const regionInfo = regions.find(reg => reg.code === r.regionCode);
+            return {
+              code: r.regionCode,
+              name: regionInfo?.name || r.regionCode,
+              level: regionInfo?.level || 1,
+              population: regionInfo?.population,
+              energyKwh: r.energyKwh,
+              energySolar: r.energySolar,
+              dataFreshness: r.dataFreshness,
+              metadata: r.metadata
+            };
+          });
+
+        acc.push({
+          ...entry,
+          regions: categoryRegions
+        });
+        return acc;
+      }, [] as any[]);
+
+      res.json({
+        timestamp: new Date().toISOString(),
+        nextUpdate: '03:00 UTC daily',
+        dataVintage: '2023-2024',
+        categories: categoriesWithRegions
+      });
+    } catch (error) {
+      console.error('Solar Audit last error:', error);
+      res.status(500).json({ error: 'Failed to fetch latest audit data' });
     }
   });
 

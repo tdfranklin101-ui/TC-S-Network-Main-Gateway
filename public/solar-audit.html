@@ -48,6 +48,22 @@
   .narrative-text a:hover{color:#00cfd0;}
   .toggle-icon{transition:transform 0.3s; font-size:18px;}
   .toggle-icon.rotated{transform:rotate(180deg);}
+  .freshness-badge{display:inline-block; padding:4px 10px; border-radius:4px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin:0 4px 4px 0;}
+  .freshness-live{background:#00ff8820; color:#00ff88; border:1px solid #00ff8840;}
+  .freshness-quarterly{background:#00ffe020; color:#00ffe0; border:1px solid #00ffe040;}
+  .freshness-annual{background:#ffa50020; color:#ffa500; border:1px solid #ffa50040;}
+  .freshness-estimate{background:#99999920; color:#999; border:1px solid #99999940;}
+  .regional-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px; margin:15px 0;}
+  .region-card{background:#0a0c0e; padding:12px; border-radius:5px; border-left:3px solid #00ffe0;}
+  .region-name{font-size:12px; color:#999; margin-bottom:4px;}
+  .region-value{font-size:14px; color:#fff; font-weight:600;}
+  .data-vintage-notice{background:#1a1410; border:1px solid #ffa500; border-radius:5px; padding:12px; margin:15px 0; font-size:13px; color:#ffa500;}
+  .source-freshness-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:10px;}
+  .freshness-indicator{display:flex; align-items:center; gap:6px; font-size:12px; padding:6px; background:#0a0c0e; border-radius:4px;}
+  .freshness-dot{width:8px; height:8px; border-radius:50%;}
+  .freshness-dot.live{background:#00ff88;}
+  .freshness-dot.quarterly{background:#00ffe0;}
+  .freshness-dot.annual{background:#ffa500;}
 </style>
 </head>
 <body>
@@ -66,12 +82,35 @@
     </div>
     <div class="banner-item">
       <div class="banner-label">Auto-Refresh</div>
-      <div class="banner-value">Daily at 03:00 UTC</div>
+      <div class="banner-value" id="nextUpdate">Daily at 03:00 UTC</div>
+    </div>
+    <div class="banner-item">
+      <div class="banner-label">Data Vintage</div>
+      <div class="banner-value" id="dataVintage">2023-2024</div>
     </div>
     <div class="banner-item">
       <div class="banner-label">Data Status</div>
       <div class="banner-value" id="dataStatus">Checking...</div>
     </div>
+  </div>
+
+  <div class="data-vintage-notice" data-ai-notice="data-source-transparency" style="display:none;" id="freshnessNotice">
+    <strong>📊 Data Source Transparency:</strong> This dashboard combines three data freshness tiers:
+    <div class="source-freshness-grid" style="margin-top:8px;">
+      <div class="freshness-indicator">
+        <span class="freshness-dot live"></span>
+        <span><strong>LIVE_DAILY:</strong> Real-time API data (EIA, DOE, USDA, DOD, Mempool)</span>
+      </div>
+      <div class="freshness-indicator">
+        <span class="freshness-dot quarterly"></span>
+        <span><strong>QUARTERLY_API:</strong> Eurostat quarterly updates (Europe regions)</span>
+      </div>
+      <div class="freshness-indicator">
+        <span class="freshness-dot annual"></span>
+        <span><strong>ANNUAL_DATASET:</strong> IEA/UN 2023 authoritative datasets (Global regions)</span>
+      </div>
+    </div>
+    Fallback hierarchy ensures 100% coverage: Live API → IEA/UN 2023 → Estimates (always non-zero).
   </div>
 
   <div class="grid" id="totalsGrid"></div>
@@ -109,9 +148,45 @@
 </div>
 
 <script>
+// Load data freshness information for transparency
+async function loadFreshnessData(){
+  try {
+    const res = await fetch('/api/solar-audit/last');
+    const freshnessData = await res.json();
+    
+    // Update banner with freshness info
+    if (freshnessData.timestamp) {
+      document.getElementById('lastUpdate').textContent = new Date(freshnessData.timestamp).toLocaleString();
+    }
+    if (freshnessData.nextUpdate) {
+      document.getElementById('nextUpdate').textContent = freshnessData.nextUpdate;
+    }
+    if (freshnessData.dataVintage) {
+      document.getElementById('dataVintage').textContent = freshnessData.dataVintage;
+    }
+    
+    // Show freshness notice with data
+    const notice = document.getElementById('freshnessNotice');
+    if (notice && freshnessData.categories && freshnessData.categories.length > 0) {
+      notice.style.display = 'block';
+      notice.setAttribute('data-ai-timestamp', freshnessData.timestamp);
+      notice.setAttribute('data-ai-next-update', freshnessData.nextUpdate);
+      notice.setAttribute('data-ai-vintage', freshnessData.dataVintage);
+    }
+    
+    return freshnessData;
+  } catch (error) {
+    console.error('Failed to load freshness data:', error);
+    return null;
+  }
+}
+
 async function loadData(){
   const res = await fetch('/auditlog');
   const data = await res.json();
+  
+  // Load freshness data in parallel
+  const freshnessPromise = loadFreshnessData();
 
   // --- compute totals ---
   const cats=[...new Set(data.map(x=>x.category))];
