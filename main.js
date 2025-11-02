@@ -5704,7 +5704,8 @@ const server = http.createServer(async (req, res) => {
           "'Ternal Flame": "https://storage.aisongmaker.io/audio/4a839c86-40d9-4272-989b-7a512184ddb6.mp3",
           "David Boyeez Hair": "https://storage.aisongmaker.io/audio/9b2b12e4-8626-41e4-b9e4-c7a563e40f97.mp3",
           "Starlight Forever": "https://storage.aisongmaker.io/audio/c51b1f15-eff7-41fb-b778-b1b9d914ce3a.mp3",
-          "Snowmancer One (Market Exclusive)": "/music/snowmancer-one.mp3"
+          "Snowmancer One (Market Exclusive)": "/music/snowmancer-one.mp3",
+          "No One Left (to care)": "/media/no-one-left-to-care-gidget-bardot.mp3"
         };
 
         const fileUrl = musicFiles[artifact.title] || artifact.delivery_url;
@@ -6252,6 +6253,15 @@ const server = http.createServer(async (req, res) => {
           url: '/music/snowmancer-one.mp3',
           collection: 'monazite',
           icon: '❄️'
+        },
+        {
+          id: 'gidget_1',
+          title: 'No One Left (to care)',
+          artist: 'Gidget Bardot',
+          url: '/media/no-one-left-to-care-gidget-bardot.mp3',
+          collection: 'gidget',
+          icon: '💖',
+          videoUrl: 'https://vimeo.com/1132091578?fl=pl&fe=sh'
         }
       ];
 
