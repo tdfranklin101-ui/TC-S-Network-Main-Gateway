@@ -24,6 +24,7 @@ The platform is optimized for Cloud Run with a lean deployment package. Data sto
 - **D-ID**: Provides the AI agent platform for interactive avatar experiences (Kid Solar).
 - **PostgreSQL**: Cloud-hosted relational database, supporting providers like Neon.
 - **AI Content Creation Platforms**: External platforms accessed directly by members for music (Suno AI, Udio, AiSongMaker.io), video (Vimeo Create, Runway AI, Sora, Meta Movie Gen), and code generation (Replit, OpenAI Codex, Bolt.new, v0.dev).
+- **Gidget Bardot Music Integration** (Nov 2, 2025): Official single "No One Left (to care)" integrated across platform with dedicated Music Now section (pink/magenta themed), marketplace listing (0.001 Solar, Foundation upload), MP3 streaming (7.5MB, 5:37), official Vimeo music video link, multi-platform streaming note (Apple Music, Spotify), searchable artist/title/tags, and JSON collection system (public/models/gidget-bardot-collection.json) merged with marketplace API for unified artifact discovery.
 
 ### APIs and Integrations
 - **TC-S Computronium Market API**: Endpoints for market categories, energy trading, and Kid Solar AI text commands.
