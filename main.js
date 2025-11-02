@@ -5100,6 +5100,8 @@ const server = http.createServer(async (req, res) => {
   // Get Available Artifacts API (for marketplace display)
   if (pathname === '/api/artifacts/available' && req.method === 'GET') {
     try {
+      let artifacts = [];
+      
       if (pool) {
         const artifactsQuery = `
           SELECT id, title, description, category, file_type, kwh_footprint, solar_amount_s, 
@@ -5112,7 +5114,7 @@ const server = http.createServer(async (req, res) => {
         
         const artifactsResult = await pool.query(artifactsQuery);
         
-        const artifacts = artifactsResult.rows.map(artifact => ({
+        artifacts = artifactsResult.rows.map(artifact => ({
           id: artifact.id,
           title: artifact.title,
           description: artifact.description,
@@ -5129,22 +5131,69 @@ const server = http.createServer(async (req, res) => {
           previewType: artifact.preview_type,
           previewSlug: artifact.preview_slug
         }));
-
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({
-          success: true,
-          totalArtifacts: artifacts.length,
-          artifacts: artifacts,
-          categories: ['music', 'video', 'art', 'document'],
-          priceRange: {
-            min: Math.min(...artifacts.map(a => a.solarPrice)),
-            max: Math.max(...artifacts.map(a => a.solarPrice))
-          }
-        }));
-      } else {
-        res.writeHead(503, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Database unavailable' }));
       }
+
+      // Load and merge JSON collection files
+      const collectionsToLoad = [
+        'public/models/monazite-collection.json',
+        'public/models/gidget-bardot-collection.json'
+      ];
+
+      for (const collectionPath of collectionsToLoad) {
+        try {
+          if (fs.existsSync(collectionPath)) {
+            const collectionData = JSON.parse(fs.readFileSync(collectionPath, 'utf8'));
+            const collectionArtifacts = collectionData.artifacts
+              .filter(artifact => artifact.isActive)
+              .map(artifact => ({
+                id: artifact.id,
+                title: artifact.title,
+                description: artifact.description,
+                category: artifact.category,
+                file_type: 'audio/mpeg',
+                kwhFootprint: parseFloat(artifact.energyKwh),
+                solarPrice: parseFloat(artifact.priceSolar),
+                formattedPrice: `${formatSolar(artifact.priceSolar)} Solar`,
+                isBonus: false,
+                coverArt: null,
+                deliveryMode: 'download',
+                creatorId: artifact.creatorEmail,
+                streamingUrl: artifact.filePath,
+                previewType: 'audio',
+                previewSlug: artifact.slug,
+                artist: artifact.artist,
+                album: artifact.album,
+                genre: artifact.genre,
+                tags: artifact.tags,
+                collection: artifact.collection,
+                videoUrl: artifact.videoUrl,
+                trackNumber: artifact.trackNumber,
+                durationSec: artifact.durationSec,
+                fileSize: artifact.fileSize
+              }));
+            
+            artifacts = artifacts.concat(collectionArtifacts);
+            console.log(`✅ Loaded ${collectionArtifacts.length} artifacts from ${path.basename(collectionPath)}`);
+          }
+        } catch (collectionError) {
+          console.warn(`⚠️ Could not load ${collectionPath}:`, collectionError.message);
+        }
+      }
+
+      // Calculate price range
+      const priceRange = artifacts.length > 0 ? {
+        min: Math.min(...artifacts.map(a => a.solarPrice)),
+        max: Math.max(...artifacts.map(a => a.solarPrice))
+      } : { min: 0, max: 0 };
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        totalArtifacts: artifacts.length,
+        artifacts: artifacts,
+        categories: ['music', 'video', 'art', 'document'],
+        priceRange: priceRange
+      }));
     } catch (error) {
       console.error('Artifacts listing error:', error);
       res.writeHead(500, { 'Content-Type': 'application/json' });

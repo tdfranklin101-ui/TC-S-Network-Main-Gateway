@@ -1,0 +1,38 @@
+{
+  "metadata": {
+    "collection": "gidget-bardot",
+    "creator": "tdfranklin101@thecurrentsee.org",
+    "totalTracks": 1,
+    "totalValue": 0.001,
+    "bundlePrice": null,
+    "savings": null,
+    "generatedAt": "2025-11-02T00:00:00.000Z",
+    "version": "1.0.0",
+    "pricingNote": "Realistic energy equivalent: 1 Solar = 4,913 kWh"
+  },
+  "artifacts": [
+    {
+      "id": "gidget_1762107798873_unique123",
+      "title": "No One Left (to care)",
+      "slug": "no-one-left-to-care",
+      "category": "music",
+      "collection": "gidget-bardot",
+      "creatorEmail": "tdfranklin101@thecurrentsee.org",
+      "filePath": "public/media/no-one-left-to-care-gidget-bardot.mp3",
+      "priceSolar": 0.001,
+      "energyKwh": 4.913,
+      "durationSec": 336.72,
+      "fileSize": 7527813,
+      "isActive": true,
+      "createdAt": "2025-11-02T00:00:00.000Z",
+      "trackNumber": 1,
+      "artist": "Gidget Bardot",
+      "album": "No One Left (to care) - Single",
+      "genre": "Indie Pop",
+      "tags": ["gidget-bardot", "indie-pop", "electronic", "foundation", "solar", "new-release"],
+      "description": "Official single by Gidget Bardot. Indie pop with electronic influences. Featured in official music video on Vimeo. Also available on Apple Music, Spotify, and other streaming platforms.",
+      "videoUrl": "https://vimeo.com/1132091578?fl=pl&fe=sh"
+    }
+  ],
+  "bundles": []
+}
