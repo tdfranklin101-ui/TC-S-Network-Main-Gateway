@@ -23,7 +23,7 @@ The platform is optimized for Cloud Run with a lean deployment package. Data sto
 - **OpenAI**: Utilized for GPT-4o (text generation, NLU, vision analysis), Whisper (STT), TTS (Nova voice), and DALL-E (image creation).
 - **D-ID**: Provides the AI agent platform for interactive avatar experiences (Kid Solar).
 - **PostgreSQL**: Cloud-hosted relational database, supporting providers like Neon.
-- **AI Content Creation Platforms**: External platforms accessed directly by members for music (Suno AI, Udio, AiSongMaker.io), video (Vimeo Create, Runway AI), and code generation (Replit, OpenAI Codex, Bolt.new, v0.dev).
+- **AI Content Creation Platforms**: External platforms accessed directly by members for music (Suno AI, Udio, AiSongMaker.io), video (Vimeo Create, Runway AI, Sora, Meta Movie Gen), and code generation (Replit, OpenAI Codex, Bolt.new, v0.dev).
 
 ### APIs and Integrations
 - **TC-S Computronium Market API**: Endpoints for market categories, energy trading, and Kid Solar AI text commands.
