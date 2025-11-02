@@ -219,6 +219,69 @@
           </a>
         </div>
         
+        <!-- GIDGET BARDOT - NEW MUSIC SECTION -->
+        <div style="margin: 40px 0; padding: 30px; background: linear-gradient(135deg, rgba(255, 0, 127, 0.15), rgba(220, 20, 60, 0.15)); border: 3px solid #ff007f; border-radius: 15px; box-shadow: 0 8px 20px rgba(255, 0, 127, 0.3);">
+            <h1 style="text-align: center; color: #ff007f; margin-bottom: 25px; font-size: 2.2em; text-shadow: 0 2px 8px rgba(255, 0, 127, 0.4);">🎵 GIDGET BARDOT - NEW MUSIC 🎵</h1>
+            
+            <!-- Artist Photo/Artwork -->
+            <div style="text-align: center; margin-bottom: 25px;">
+                <div style="width: 280px; height: 280px; margin: 0 auto; background: linear-gradient(135deg, #ff007f, #dc143c, #c71585); border-radius: 15px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 16px rgba(0,0,0,0.5); border: 3px solid #ff1493;">
+                    <div style="text-align: center; color: white;">
+                        <div style="font-size: 4rem; margin-bottom: 10px;">💖</div>
+                        <div style="font-size: 1.5rem; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">Gidget Bardot</div>
+                        <div style="font-size: 1rem; margin-top: 8px; opacity: 0.9;">Indie Pop • Electronic</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Track Player Section -->
+            <div style="background: rgba(0, 0, 0, 0.3); border: 2px solid rgba(255, 0, 127, 0.4); border-radius: 12px; padding: 25px; margin-bottom: 20px;">
+                <h3 style="color: #ff1493; text-align: center; margin-bottom: 20px; font-size: 1.4em;">🎶 Featured Single</h3>
+                
+                <!-- Track Button -->
+                <button class="track-button" data-testid="track-button-gidget" onclick="playGidgetTrack()" style="background: linear-gradient(135deg, #ff1493, #c71585); width: 100%; padding: 15px 20px; border: none; border-radius: 8px; color: white; font-size: 18px; font-weight: bold; cursor: pointer; transition: all 0.3s ease; margin-bottom: 15px;">
+                    💖 No One Left (to care) - Gidget Bardot
+                </button>
+                
+                <!-- Now Playing for Gidget -->
+                <div class="now-playing" id="nowPlayingGidget" style="display: none; color: #ff1493; border-color: #ff1493;">
+                    🎶 Now Playing: <span id="trackNameGidget">No One Left (to care)</span>
+                </div>
+                
+                <!-- Audio Player for Gidget -->
+                <audio id="audioPlayerGidget" class="audio-player" data-testid="audio-player-gidget" controls preload="none" style="width: 100%; margin: 15px 0;">
+                    Your browser does not support the audio element.
+                </audio>
+                
+                <!-- Video Link -->
+                <div style="text-align: center; margin: 20px 0;">
+                    <a href="https://vimeo.com/1132091578?fl=pl&fe=sh" target="_blank" rel="noopener noreferrer" data-testid="link-vimeo-video" style="display: inline-block; background: linear-gradient(135deg, #ff1493, #c71585); color: white; padding: 15px 30px; border-radius: 10px; text-decoration: none; font-weight: bold; font-size: 1.1rem; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(255, 20, 147, 0.4);">
+                        🎬 Watch Official Music Video on Vimeo
+                    </a>
+                </div>
+                
+                <!-- Streaming Platforms Note -->
+                <div style="background: rgba(255, 20, 147, 0.1); border: 2px solid #ff1493; border-radius: 10px; padding: 15px; margin-top: 20px; text-align: center;">
+                    <p style="color: #ff1493; margin: 0; font-size: 0.95rem; line-height: 1.6;">
+                        <strong>🎵 Multi-Platform Release:</strong><br>
+                        Single and video also available on selected streaming platforms<br>
+                        (Apple Music, Spotify, and you know the others)
+                    </p>
+                </div>
+            </div>
+            
+            <!-- About the Artist -->
+            <div style="background: rgba(255, 255, 255, 0.05); border-radius: 10px; padding: 20px; border: 1px solid rgba(255, 0, 127, 0.3);">
+                <h4 style="color: #ff007f; margin: 0 0 12px 0;">About Gidget Bardot</h4>
+                <p style="color: #ddd; margin: 0; line-height: 1.6; font-size: 0.95rem;">
+                    Emerging indie pop artist blending electronic elements with heartfelt lyrics. "No One Left (to care)" explores themes of connection and solitude in the digital age, featuring atmospheric production and captivating vocals.
+                </p>
+            </div>
+        </div>
+        
+        <!-- Visual Separator -->
+        <div style="height: 60px; background: linear-gradient(to bottom, transparent, rgba(255,140,0,0.1), transparent); margin: 40px 0;"></div>
+        
         <h1>🎵 MONAZITE MUSIC NOW COLLECTION 🎵</h1>
         <p style="text-align: center; font-size: 18px; margin-bottom: 20px;">
             Complete Catalog - 19 Tracks + 1 Bonus Market Track
@@ -318,56 +381,6 @@
             <audio id="audioPlayer" class="audio-player" data-testid="audio-player" controls preload="none">
                 Your browser does not support the audio element.
             </audio>
-        </div>
-        
-        <!-- GIDGET BARDOT COLLECTION SECTION -->
-        <div style="margin: 40px 0; padding: 30px; background: linear-gradient(135deg, rgba(255, 0, 127, 0.15), rgba(220, 20, 60, 0.15)); border: 3px solid #ff007f; border-radius: 15px; box-shadow: 0 8px 20px rgba(255, 0, 127, 0.3);">
-            <h1 style="text-align: center; color: #ff007f; margin-bottom: 25px; font-size: 2.2em; text-shadow: 0 2px 8px rgba(255, 0, 127, 0.4);">🎵 GIDGET BARDOT COLLECTION 🎵</h1>
-            
-            <!-- Artist Photo/Artwork -->
-            <div style="text-align: center; margin-bottom: 25px;">
-                <div style="width: 280px; height: 280px; margin: 0 auto; background: linear-gradient(135deg, #ff007f, #dc143c, #c71585); border-radius: 15px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 16px rgba(0,0,0,0.5); border: 3px solid #ff1493;">
-                    <div style="text-align: center; color: white;">
-                        <div style="font-size: 4rem; margin-bottom: 10px;">💖</div>
-                        <div style="font-size: 1.5rem; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">Gidget Bardot</div>
-                        <div style="font-size: 1rem; margin-top: 8px; opacity: 0.9;">Indie Pop • Electronic</div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Track Section -->
-            <div style="background: rgba(0, 0, 0, 0.3); border: 2px solid rgba(255, 0, 127, 0.4); border-radius: 12px; padding: 25px; margin-bottom: 20px;">
-                <h3 style="color: #ff1493; text-align: center; margin-bottom: 20px; font-size: 1.4em;">🎶 Featured Single</h3>
-                
-                <!-- Track Button - This will be dynamically loaded by the API -->
-                <div id="gidget-track-placeholder" style="text-align: center; padding: 15px; background: rgba(255, 0, 127, 0.1); border-radius: 8px; margin-bottom: 15px;">
-                    <p style="color: #ff1493; margin: 0; font-style: italic;">Loading "No One Left (to care)"...</p>
-                </div>
-                
-                <!-- Video Link -->
-                <div style="text-align: center; margin: 20px 0;">
-                    <a href="https://vimeo.com/1132091578?fl=pl&fe=sh" target="_blank" rel="noopener noreferrer" style="display: inline-block; background: linear-gradient(135deg, #ff1493, #c71585); color: white; padding: 15px 30px; border-radius: 10px; text-decoration: none; font-weight: bold; font-size: 1.1rem; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(255, 20, 147, 0.4);">
-                        🎬 Watch Official Music Video on Vimeo
-                    </a>
-                </div>
-                
-                <!-- Streaming Platforms Note -->
-                <div style="background: rgba(255, 20, 147, 0.1); border: 2px solid #ff1493; border-radius: 10px; padding: 15px; margin-top: 20px; text-align: center;">
-                    <p style="color: #ff1493; margin: 0; font-size: 0.95rem; line-height: 1.6;">
-                        <strong>🎵 Multi-Platform Release:</strong><br>
-                        Single and video also available on selected streaming platforms<br>
-                        (Apple Music, Spotify, and you know the others)
-                    </p>
-                </div>
-            </div>
-            
-            <!-- About the Artist -->
-            <div style="background: rgba(255, 255, 255, 0.05); border-radius: 10px; padding: 20px; border: 1px solid rgba(255, 0, 127, 0.3);">
-                <h4 style="color: #ff007f; margin: 0 0 12px 0;">About Gidget Bardot</h4>
-                <p style="color: #ddd; margin: 0; line-height: 1.6; font-size: 0.95rem;">
-                    Emerging indie pop artist blending electronic elements with heartfelt lyrics. "No One Left (to care)" explores themes of connection and solitude in the digital age, featuring atmospheric production and captivating vocals.
-                </p>
-            </div>
         </div>
         
         <!-- AI Music Intelligence Dashboard -->
@@ -781,6 +794,29 @@
             
             // Update display
             trackName.textContent = trackNames[index];
+            nowPlaying.style.display = 'block';
+            
+            // Try to play (may be blocked by autoplay policy)
+            player.play().catch(() => {
+                // Autoplay blocked - user can use controls
+            });
+        }
+        
+        function playGidgetTrack() {
+            // Play Gidget Bardot track in separate player
+            const player = document.getElementById('audioPlayerGidget');
+            const nowPlaying = document.getElementById('nowPlayingGidget');
+            const trackName = document.getElementById('trackNameGidget');
+            
+            // Load the track
+            player.src = '/media/no-one-left-to-care-gidget-bardot.mp3';
+            player.load();
+            
+            // Track the play event
+            trackPlayEvent('💖 No One Left (to care) - Gidget Bardot');
+            
+            // Update display
+            trackName.textContent = 'No One Left (to care)';
             nowPlaying.style.display = 'block';
             
             // Try to play (may be blocked by autoplay policy)
