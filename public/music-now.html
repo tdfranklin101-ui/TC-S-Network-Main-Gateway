@@ -822,9 +822,9 @@
                 console.log('⏸️ Paused Monazite player');
             }
             
-            // Load the track with cache-busting parameter to ensure fresh load
+            // Load the track - v2 filename to bypass CDN cache
             const timestamp = new Date().getTime();
-            const trackUrl = '/media/no-one-left-to-care-gidget-bardot.mp3?v=' + timestamp;
+            const trackUrl = '/media/no-one-left-gidget-bardot-v2.mp3?v=' + timestamp;
             
             console.log('📍 Setting player source to:', trackUrl);
             player.src = trackUrl;
