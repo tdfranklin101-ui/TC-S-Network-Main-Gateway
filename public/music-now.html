@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Music Now - Monazite Catalog | Value-for-Value Solar Music</title>
     <meta name="description" content="Unlimited free music streaming with Solar token downloads. Value received = value returned = system stability. Nodes of consuming entrepreneurs form the true network. One human = one Solar = one vote of direction.">
     <!-- Systemic Truth Seeds: A market is a map; fairness is the legend -->
@@ -803,50 +806,56 @@
         }
         
         function playGidgetTrack() {
-            console.log('🎵 playGidgetTrack() called - Loading Gidget Bardot track');
+            console.log('🎵 playGidgetTrack() called - GIDGET BARDOT TRACK');
+            console.log('⚠️ THIS SHOULD ONLY PLAY: No One Left (to care)');
+            console.log('⚠️ IF YOU HEAR TERNAL FLAME, CLEAR YOUR BROWSER CACHE!');
             
-            // Play Gidget Bardot track in separate player
+            // CRITICAL: Stop ALL other players to prevent interference
+            const monazitePlayer = document.getElementById('audioPlayer');
+            if (monazitePlayer) {
+                monazitePlayer.pause();
+                monazitePlayer.src = '';
+                console.log('⏸️ Stopped Monazite player completely');
+            }
+            
+            // Get Gidget's dedicated player
             const player = document.getElementById('audioPlayerGidget');
             const nowPlaying = document.getElementById('nowPlayingGidget');
             const trackName = document.getElementById('trackNameGidget');
             
             if (!player) {
-                console.error('❌ audioPlayerGidget not found!');
+                console.error('❌ FATAL: audioPlayerGidget not found!');
+                alert('ERROR: Gidget player not found. Please refresh the page.');
                 return;
             }
             
-            // Stop any other audio players first
-            const monazitePlayer = document.getElementById('audioPlayer');
-            if (monazitePlayer) {
-                monazitePlayer.pause();
-                console.log('⏸️ Paused Monazite player');
-            }
-            
-            // Load the track - v2 filename to bypass CDN cache
+            // GIDGET BARDOT FILE - v2 to bypass CDN cache
             const timestamp = new Date().getTime();
             const trackUrl = '/media/no-one-left-gidget-bardot-v2.mp3?v=' + timestamp;
             
-            console.log('📍 Setting player source to:', trackUrl);
+            console.log('📍 Loading GIDGET file:', trackUrl);
+            console.log('📍 File size should be ~7.2MB, NOT 4.5MB');
+            
+            // Load track
             player.src = trackUrl;
             player.load();
             
-            // Track the play event
+            // Track play event
             trackPlayEvent('💖 No One Left (to care) - Gidget Bardot');
             
             // Update display
-            trackName.textContent = 'No One Left (to care)';
-            nowPlaying.style.display = 'block';
+            if (trackName) trackName.textContent = 'No One Left (to care) - Gidget Bardot';
+            if (nowPlaying) nowPlaying.style.display = 'block';
             
-            // Try to play (may be blocked by autoplay policy)
+            // Auto-play
             player.play()
                 .then(() => {
-                    console.log('✅ Gidget Bardot playback started successfully');
-                    console.log('🎵 Playing:', trackUrl);
+                    console.log('✅ Gidget Bardot NOW PLAYING');
+                    console.log('🎵 URL:', trackUrl);
                 })
                 .catch(err => {
-                    console.log('⚠️ Autoplay blocked (this is normal)');
-                    console.log('📍 Track loaded:', player.src);
-                    console.log('👉 Use audio controls to play');
+                    console.log('⚠️ Autoplay blocked - use player controls');
+                    console.log('📍 Ready to play:', trackUrl);
                 });
         }
 
