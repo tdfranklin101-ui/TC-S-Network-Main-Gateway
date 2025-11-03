@@ -6302,17 +6302,12 @@ const server = http.createServer(async (req, res) => {
           url: '/music/snowmancer-one.mp3',
           collection: 'monazite',
           icon: '❄️'
-        },
-        {
-          id: 'gidget_1',
-          title: 'No One Left (to care)',
-          artist: 'Gidget Bardot',
-          url: '/media/no-one-left-to-care-gidget-bardot.mp3',
-          collection: 'gidget',
-          icon: '💖',
-          videoUrl: 'https://vimeo.com/1132091578?fl=pl&fe=sh'
         }
       ];
+      
+      // GIDGET BARDOT - Separate dedicated player section only
+      // NOT included in general track list to prevent duplicate/fallback issues
+      // Only accessible via dedicated playGidgetTrack() function
 
       // Get member uploaded music
       const memberMusic = Array.from(memberContentService.memberContent.values())
