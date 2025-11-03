@@ -803,20 +803,31 @@
         }
         
         function playGidgetTrack() {
+            console.log('🎵 playGidgetTrack() called - Loading Gidget Bardot track');
+            
             // Play Gidget Bardot track in separate player
             const player = document.getElementById('audioPlayerGidget');
             const nowPlaying = document.getElementById('nowPlayingGidget');
             const trackName = document.getElementById('trackNameGidget');
             
+            if (!player) {
+                console.error('❌ audioPlayerGidget not found!');
+                return;
+            }
+            
             // Stop any other audio players first
             const monazitePlayer = document.getElementById('audioPlayer');
             if (monazitePlayer) {
                 monazitePlayer.pause();
+                console.log('⏸️ Paused Monazite player');
             }
             
             // Load the track with cache-busting parameter to ensure fresh load
             const timestamp = new Date().getTime();
-            player.src = '/media/no-one-left-to-care-gidget-bardot.mp3?v=' + timestamp;
+            const trackUrl = '/media/no-one-left-to-care-gidget-bardot.mp3?v=' + timestamp;
+            
+            console.log('📍 Setting player source to:', trackUrl);
+            player.src = trackUrl;
             player.load();
             
             // Track the play event
@@ -827,10 +838,16 @@
             nowPlaying.style.display = 'block';
             
             // Try to play (may be blocked by autoplay policy)
-            player.play().catch(err => {
-                console.log('Gidget Bardot track loaded:', player.src);
-                console.log('Player ready, use controls to play');
-            });
+            player.play()
+                .then(() => {
+                    console.log('✅ Gidget Bardot playback started successfully');
+                    console.log('🎵 Playing:', trackUrl);
+                })
+                .catch(err => {
+                    console.log('⚠️ Autoplay blocked (this is normal)');
+                    console.log('📍 Track loaded:', player.src);
+                    console.log('👉 Use audio controls to play');
+                });
         }
 
         function shuffleArray(array) {
