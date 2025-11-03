@@ -808,8 +808,15 @@
             const nowPlaying = document.getElementById('nowPlayingGidget');
             const trackName = document.getElementById('trackNameGidget');
             
-            // Load the track
-            player.src = '/media/no-one-left-to-care-gidget-bardot.mp3';
+            // Stop any other audio players first
+            const monazitePlayer = document.getElementById('audioPlayer');
+            if (monazitePlayer) {
+                monazitePlayer.pause();
+            }
+            
+            // Load the track with cache-busting parameter to ensure fresh load
+            const timestamp = new Date().getTime();
+            player.src = '/media/no-one-left-to-care-gidget-bardot.mp3?v=' + timestamp;
             player.load();
             
             // Track the play event
@@ -820,8 +827,9 @@
             nowPlaying.style.display = 'block';
             
             // Try to play (may be blocked by autoplay policy)
-            player.play().catch(() => {
-                // Autoplay blocked - user can use controls
+            player.play().catch(err => {
+                console.log('Gidget Bardot track loaded:', player.src);
+                console.log('Player ready, use controls to play');
             });
         }
 
