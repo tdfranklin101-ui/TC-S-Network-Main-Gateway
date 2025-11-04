@@ -537,92 +537,58 @@
     </div>
 
     <script>
-        // MP3 track URLs
-        // Dynamically loaded tracks (Monazite + Member Uploads)
-        let tracks = [];
-        let trackNames = [];
-        let trackData = [];
-
-        // Load all music tracks from API
-        async function loadMusicTracks() {
-            try {
-                const response = await fetch('/api/music/all-tracks');
-                const data = await response.json();
-                
-                if (data.success) {
-                    trackData = data.tracks;
-                    tracks = trackData.map(t => t.url);
-                    trackNames = trackData.map(t => `${t.icon} ${t.title} ${t.artist !== 'TC-S Network' ? `by ${t.artist}` : ''}`);
-                    
-                    console.log(`🎵 Loaded ${data.totalCount} tracks: ${data.monaziteCount} Monazite + ${data.memberCount} Member uploads`);
-                    
-                    // Render track buttons
-                    renderTrackButtons();
-                    
-                    // Update track count display
-                    const trackCountEl = document.getElementById('track-count');
-                    if (trackCountEl) {
-                        trackCountEl.textContent = `${data.totalCount} Tracks Available (${data.monaziteCount} Foundation + ${data.memberCount} Member)`;
-                    }
-                } else {
-                    console.error('Failed to load music tracks');
-                }
-            } catch (error) {
-                console.error('Error loading music tracks:', error);
-            }
-        }
-
-        // Render track buttons dynamically
-        function renderTrackButtons() {
-            const trackList = document.querySelector('.track-list');
-            if (!trackList) return;
-            
-            trackList.innerHTML = '';
-            
-            trackData.forEach((track, index) => {
-                const button = document.createElement('button');
-                button.className = 'track-button';
-                button.textContent = `${track.icon} ${track.title}${track.artist !== 'TC-S Network' ? ` - ${track.artist}` : ''}`;
-                button.onclick = () => playTrack(index);
-                button.dataset.collection = track.collection;
-                trackList.appendChild(button);
-            });
-        }
-
-        // OLD HARDCODED - Kept as fallback
-        const fallbackTracks = [
-            'https://storage.aisongmaker.io/audio/4a839c86-40d9-4272-989b-7a512184ddb6.mp3', // 'Ternal Flame - Longevity Manifesto
-            'https://storage.aisongmaker.io/audio/9b2b12e4-8626-41e4-b9e4-c7a563e40f97.mp3', // David Boyeez Hair
-            'https://storage.aisongmaker.io/audio/015092c3-f687-4a01-9a81-dad42f2adce9.mp3', // Swampy Boogie Nights  
-            'https://storage.aisongmaker.io/audio/10db8911-0b74-4675-ba62-02182c1d7f6b.mp3', // The Heart is a Mule
-            'https://storage.aisongmaker.io/audio/418add3e-c1a5-4a76-b361-14d6a11794fe.mp3', // A Solar Day (groovin)
-            'https://storage.aisongmaker.io/audio/a2647129-991f-4105-aad2-e45210005bef.mp3', // A Solar Day (moovin)
-            'https://storage.aisongmaker.io/audio/09de8c9d-25a7-4b38-a6bd-c27b7de4629e.mp3', // Break Time Blues Rhapsody
-            'https://storage.aisongmaker.io/audio/c51b1f15-eff7-41fb-b778-b1b9d914ce3a.mp3', // Starlight Forever
-            'https://storage.aisongmaker.io/audio/ab1612d5-ccf4-4b4a-ab92-21b77bebdd46.mp3', // Light It From Within
-            'https://storage.aisongmaker.io/audio/675d577c-5ab9-45c9-b9d5-d4362f6bcc12.mp3', // Moonshine in St Kitts
-            'https://storage.aisongmaker.io/audio/94088af1-8318-401a-b277-b79fbbdb7475.mp3', // Solar Tempest Symphony
-            'https://storage.aisongmaker.io/audio/cb58c04e-fc7b-448a-a9e5-a642e168cacd.mp3', // Steel In His Soul
-            'https://storage.aisongmaker.io/audio/11802549-7cf8-4d4c-a708-44f04804f2ab.mp3', // We Said So
-            'https://storage.aisongmaker.io/audio/19d37c35-dc0b-4686-8bd7-71992f925670.mp3', // Funky Voodoo
-            'https://storage.aisongmaker.io/audio/255be09f-c09a-4d9a-8dbc-3c3ba65e9204.mp3', // Green and Blue (Rock)
-            'https://storage.aisongmaker.io/audio/01e05fb6-a7ac-4dd3-9500-00bb46625ef1.mp3', // Green and Blue (EDM)
-            'https://storage.aisongmaker.io/audio/49fc3427-e775-47f0-b5ea-8903006b07a0.mp3', // Lady Voodoo (Folk)
-            'https://storage.aisongmaker.io/audio/b2001c35-620a-4893-b046-4de20ad11422.mp3', // Lady Voodoo (Crying)
-            'https://storage.aisongmaker.io/audio/7abf4dac-2b12-434a-8d59-c115f8c54cb9.mp3', // Rasta Lady Voodoo
-            '/music/snowmancer-one.mp3'  // Snowmancer One (Bonus) - LOCAL FILE for Solar Downloads
+        // MONAZITE COLLECTION - Hardcoded 20 tracks (NO dynamic loading)
+        // Gidget Bardot uses separate player - NOT part of this array
+        const tracks = [
+            'https://storage.aisongmaker.io/audio/4a839c86-40d9-4272-989b-7a512184ddb6.mp3', // 0 - 'Ternal Flame
+            'https://storage.aisongmaker.io/audio/9b2b12e4-8626-41e4-b9e4-c7a563e40f97.mp3', // 1 - David Boyeez Hair
+            'https://storage.aisongmaker.io/audio/015092c3-f687-4a01-9a81-dad42f2adce9.mp3', // 2 - Swampy Boogie Nights  
+            'https://storage.aisongmaker.io/audio/10db8911-0b74-4675-ba62-02182c1d7f6b.mp3', // 3 - The Heart is a Mule
+            'https://storage.aisongmaker.io/audio/418add3e-c1a5-4a76-b361-14d6a11794fe.mp3', // 4 - A Solar Day (groovin)
+            'https://storage.aisongmaker.io/audio/a2647129-991f-4105-aad2-e45210005bef.mp3', // 5 - A Solar Day (moovin)
+            'https://storage.aisongmaker.io/audio/09de8c9d-25a7-4b38-a6bd-c27b7de4629e.mp3', // 6 - Break Time Blues Rhapsody
+            'https://storage.aisongmaker.io/audio/c51b1f15-eff7-41fb-b778-b1b9d914ce3a.mp3', // 7 - Starlight Forever
+            'https://storage.aisongmaker.io/audio/ab1612d5-ccf4-4b4a-ab92-21b77bebdd46.mp3', // 8 - Light It From Within
+            'https://storage.aisongmaker.io/audio/675d577c-5ab9-45c9-b9d5-d4362f6bcc12.mp3', // 9 - Moonshine in St Kitts
+            'https://storage.aisongmaker.io/audio/94088af1-8318-401a-b277-b79fbbdb7475.mp3', // 10 - Solar Tempest Symphony
+            'https://storage.aisongmaker.io/audio/cb58c04e-fc7b-448a-a9e5-a642e168cacd.mp3', // 11 - Steel In His Soul
+            'https://storage.aisongmaker.io/audio/11802549-7cf8-4d4c-a708-44f04804f2ab.mp3', // 12 - We Said So
+            'https://storage.aisongmaker.io/audio/19d37c35-dc0b-4686-8bd7-71992f925670.mp3', // 13 - Funky Voodoo
+            'https://storage.aisongmaker.io/audio/255be09f-c09a-4d9a-8dbc-3c3ba65e9204.mp3', // 14 - Green and Blue (Rock)
+            'https://storage.aisongmaker.io/audio/01e05fb6-a7ac-4dd3-9500-00bb46625ef1.mp3', // 15 - Green and Blue (EDM)
+            'https://storage.aisongmaker.io/audio/49fc3427-e775-47f0-b5ea-8903006b07a0.mp3', // 16 - Lady Voodoo (Folk)
+            'https://storage.aisongmaker.io/audio/b2001c35-620a-4893-b046-4de20ad11422.mp3', // 17 - Lady Voodoo (Crying)
+            'https://storage.aisongmaker.io/audio/7abf4dac-2b12-434a-8d59-c115f8c54cb9.mp3', // 18 - Rasta Lady Voodoo
+            '/music/snowmancer-one.mp3'  // 19 - Snowmancer One (Bonus)
         ];
 
-        const fallbackTrackNames = [
-            '🔥 \'Ternal Flame - Longevity Manifesto', '⭐ David Boyeez Hair', '🐊 Swampy Boogie Nights (Cajun Crawler)', 
-            '🎵 The Heart is a Mule', '🎶 A Solar Day (groovin)', '🎼 A Solar Day (moovin)',
-            '🎺 Break Time Blues Rhapsody', '⭐ Starlight Forever', '💡 Light It From Within',
-            '🌙 Moonshine in St Kitts', '⚡ Solar Tempest Symphony', '🔩 Steel In His Soul',
-            '💬 We Said So', '🗿 Funky Voodoo (Blues Jam)', '🗿 Green and Blue (Rock)',
-            '🗿 Green and Blue (EDM)', '🗿 Lady Voodoo (Folk Yah)', '🗿 Lady Voodoo (Crying)', 
+        const trackNames = [
+            '🔥 \'Ternal Flame - Longevity Manifesto',
+            '⭐ David Boyeez Hair',
+            '🐊 Swampy Boogie Nights (Cajun Crawler)',
+            '🎵 The Heart is a Mule',
+            '🎶 A Solar Day (groovin)',
+            '🎼 A Solar Day (moovin)',
+            '🎺 Break Time Blues Rhapsody',
+            '⭐ Starlight Forever',
+            '💡 Light It From Within',
+            '🌙 Moonshine in St Kitts',
+            '⚡ Solar Tempest Symphony',
+            '🔩 Steel In His Soul',
+            '💬 We Said So',
+            '🗿 Funky Voodoo (Blues Jam)',
+            '🗿 Green and Blue (Rock)',
+            '🗿 Green and Blue (EDM)',
+            '🗿 Lady Voodoo (Folk Yah)',
+            '🗿 Lady Voodoo (Crying)',
             '🗿 Rasta Lady Voodoo',
             '❄️ Snowmancer One (Market Exclusive)'
         ];
+
+        console.log('✅ Monazite Collection: 20 tracks loaded (hardcoded)');
+        console.log('⚠️ Gidget Bardot uses SEPARATE player - NOT in this array');
+
+        // REMOVED: No fallback needed - tracks are hardcoded above
 
         // Album playback variables
         let albumMode = false;
@@ -759,24 +725,15 @@
             }
         }
 
-        // Initialize track button states when page loads - ensure no restrictions
-        window.addEventListener('load', async function() {
-            // Load all tracks from API (Monazite + Member uploads)
-            await loadMusicTracks();
+        // Initialize page - NO API loading, tracks are hardcoded
+        window.addEventListener('load', function() {
+            console.log('🎵 Music Now page loaded');
+            console.log(`✅ Monazite Collection: ${tracks.length} tracks ready (hardcoded)`);
+            console.log('🎵 Gidget Bardot: Separate player - NOT in tracks array');
             
-            // Fallback to hardcoded if API fails
-            if (tracks.length === 0) {
-                console.warn('⚠️ Using fallback tracks');
-                tracks = fallbackTracks;
-                trackNames = fallbackTrackNames;
-            }
-            
-            // Remove any existing locks and ensure all tracks are playable
-            const buttons = document.querySelectorAll('.track-button');
-            buttons.forEach((button, index) => {
-                button.classList.remove('locked');
-                button.onclick = () => playTrack(index);
-            });
+            // All track buttons are hardcoded in HTML and already have onclick handlers
+            const buttons = document.querySelectorAll('.track-button[data-testid^="track-button-"]');
+            console.log(`🔘 Monazite buttons found: ${buttons.length}`);
             
             // Load real music statistics
             loadMusicStats();
@@ -805,57 +762,62 @@
             });
         }
         
+        // GIDGET BARDOT - COMPLETELY SEPARATE FUNCTION
+        // This function has NO connection to Monazite tracks array
         function playGidgetTrack() {
-            console.log('🎵 playGidgetTrack() called - GIDGET BARDOT TRACK');
-            console.log('⚠️ THIS SHOULD ONLY PLAY: No One Left (to care)');
-            console.log('⚠️ IF YOU HEAR TERNAL FLAME, CLEAR YOUR BROWSER CACHE!');
+            console.log('═══════════════════════════════════════════');
+            console.log('🎵 GIDGET BARDOT PLAYER - ISOLATED FUNCTION');
+            console.log('⚠️ SHOULD PLAY: "No One Left (to care)"');
+            console.log('⚠️ NOT CONNECTED TO MONAZITE TRACKS ARRAY');
+            console.log('═══════════════════════════════════════════');
             
-            // CRITICAL: Stop ALL other players to prevent interference
+            // STOP Monazite player completely
             const monazitePlayer = document.getElementById('audioPlayer');
             if (monazitePlayer) {
                 monazitePlayer.pause();
                 monazitePlayer.src = '';
-                console.log('⏸️ Stopped Monazite player completely');
+                monazitePlayer.load();
+                console.log('⏸️ Monazite player stopped and cleared');
             }
             
-            // Get Gidget's dedicated player
+            // Get Gidget's SEPARATE player element
             const player = document.getElementById('audioPlayerGidget');
             const nowPlaying = document.getElementById('nowPlayingGidget');
             const trackName = document.getElementById('trackNameGidget');
             
             if (!player) {
-                console.error('❌ FATAL: audioPlayerGidget not found!');
-                alert('ERROR: Gidget player not found. Please refresh the page.');
+                console.error('❌ FATAL ERROR: audioPlayerGidget element not found!');
+                alert('ERROR: Gidget player not found. Refresh page.');
                 return;
             }
             
-            // GIDGET BARDOT FILE - v2 to bypass CDN cache
+            // GIDGET FILE - v3 completely new filename
             const timestamp = new Date().getTime();
-            const trackUrl = '/media/no-one-left-gidget-bardot-v2.mp3?v=' + timestamp;
+            const gidgetUrl = '/media/gidget-bardot-no-one-left-v3.mp3?t=' + timestamp;
             
-            console.log('📍 Loading GIDGET file:', trackUrl);
-            console.log('📍 File size should be ~7.2MB, NOT 4.5MB');
+            console.log('📍 Loading:', gidgetUrl);
+            console.log('📍 Expected size: ~7.2MB (NOT 4.5MB)');
+            console.log('📍 If wrong song plays, clear browser cache!');
             
-            // Load track
-            player.src = trackUrl;
+            // Set source
+            player.src = gidgetUrl;
             player.load();
             
-            // Track play event
+            // Track analytics
             trackPlayEvent('💖 No One Left (to care) - Gidget Bardot');
             
-            // Update display
-            if (trackName) trackName.textContent = 'No One Left (to care) - Gidget Bardot';
+            // Update UI
+            if (trackName) trackName.textContent = 'No One Left (to care)';
             if (nowPlaying) nowPlaying.style.display = 'block';
             
-            // Auto-play
+            // Play
             player.play()
                 .then(() => {
-                    console.log('✅ Gidget Bardot NOW PLAYING');
-                    console.log('🎵 URL:', trackUrl);
+                    console.log('✅ PLAYING: Gidget Bardot');
+                    console.log('🎵 Source:', gidgetUrl);
                 })
                 .catch(err => {
-                    console.log('⚠️ Autoplay blocked - use player controls');
-                    console.log('📍 Ready to play:', trackUrl);
+                    console.log('⚠️ Autoplay blocked - use controls');
                 });
         }
 

@@ -5754,7 +5754,7 @@ const server = http.createServer(async (req, res) => {
           "David Boyeez Hair": "https://storage.aisongmaker.io/audio/9b2b12e4-8626-41e4-b9e4-c7a563e40f97.mp3",
           "Starlight Forever": "https://storage.aisongmaker.io/audio/c51b1f15-eff7-41fb-b778-b1b9d914ce3a.mp3",
           "Snowmancer One (Market Exclusive)": "/music/snowmancer-one.mp3",
-          "No One Left (to care)": "/media/no-one-left-gidget-bardot-v2.mp3"
+          "No One Left (to care)": "/media/gidget-bardot-no-one-left-v3.mp3"
         };
 
         const fileUrl = musicFiles[artifact.title] || artifact.delivery_url;
