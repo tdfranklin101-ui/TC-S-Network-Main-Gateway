@@ -166,31 +166,49 @@ class AnalyticsTracker {
     const replitDeployment = process.env.REPLIT_DEPLOYMENT;
     const replDeploy = process.env.REPL_DEPLOY;
     
-    // Production if NODE_ENV is production OR if it's a Replit deployment
-    return nodeEnv === 'production' || replitDeployment === '1' || replDeploy === '1';
+    // Production if:
+    // 1. NODE_ENV is explicitly 'production', OR
+    // 2. REPLIT_DEPLOYMENT is truthy (any non-empty value like '1', 'true', etc.), OR
+    // 3. REPL_DEPLOY is truthy
+    const isProd = nodeEnv === 'production' || 
+                   Boolean(replitDeployment && replitDeployment !== 'false' && replitDeployment !== '0') ||
+                   Boolean(replDeploy && replDeploy !== 'false' && replDeploy !== '0');
+    
+    // Log once on first check (only if not already logged)
+    if (!this._envLogged) {
+      console.log(`📊 Analytics Environment Detection:`);
+      console.log(`   NODE_ENV: ${nodeEnv || 'not set'}`);
+      console.log(`   REPLIT_DEPLOYMENT: ${replitDeployment || 'not set'}`);
+      console.log(`   REPL_DEPLOY: ${replDeploy || 'not set'}`);
+      console.log(`   → Environment: ${isProd ? 'PRODUCTION ✅' : 'DEVELOPMENT'}`);
+      this._envLogged = true;
+    }
+    
+    return isProd;
   }
 
   /**
    * Track a page visit with geographic data
-   * Updates daily aggregate counts (production only)
+   * Updates daily aggregate counts for ALL environments (tagged as prod/dev)
    * @param {string} ip - Visitor IP address
    */
   async trackVisit(ip) {
     try {
-      // Only track production visits
+      // Determine environment (track all, tag them appropriately)
       const environment = this.isProduction() ? 'production' : 'development';
-      if (environment !== 'production') {
-        return; // Skip development visits
-      }
 
       const location = this.getLocationFromIP(ip);
       if (!location) {
+        // Log only in development for debugging
+        if (environment === 'development') {
+          console.log(`📊 Analytics: Skipped (no valid geo location for IP: ${ip})`);
+        }
         return; // Skip if no valid location
       }
 
       const date = this.getCurrentDate();
 
-      // Upsert daily aggregate for production only
+      // Upsert daily aggregate (now tracks both dev and prod, tagged separately)
       await this.pool.query(`
         INSERT INTO geo_analytics (date, environment, country_code, country_name, state_code, state_name, visit_count, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, 1, CURRENT_TIMESTAMP)
@@ -207,7 +225,7 @@ class AnalyticsTracker {
         location.stateName
       ]);
 
-      console.log(`📊 Analytics: +1 production visit from ${location.countryName}${location.stateName ? ', ' + location.stateName : ''} for ${date}`);
+      console.log(`📊 Analytics [${environment}]: +1 visit from ${location.countryName}${location.stateName ? ', ' + location.stateName : ''} (${date})`);
     } catch (error) {
       console.error('❌ Analytics tracking error:', error.message);
       // Don't throw - tracking failures shouldn't break the site
