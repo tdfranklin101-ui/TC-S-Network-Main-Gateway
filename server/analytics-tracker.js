@@ -12,10 +12,13 @@ class AnalyticsTracker {
     this.pool = new Pool({ connectionString: databaseUrl });
     // Historical offset to restore pre-deployment visit count
     // Production database separate from workspace - needs offset restoration
-    this.HISTORICAL_OFFSET = 9716;
+    // Updated Nov 4, 2025: Adjusted from 9,716 to 10,272 to account for missed tracking
+    // Period: Oct 31-Nov 4 (Thu-Mon) = +556 visits from Replit analytics
+    // Baseline: 11,027 (Oct 31) + 600 requests (Nov 1-4) = 11,627 target
+    this.HISTORICAL_OFFSET = 10272;
     
     // Historical country-level offsets (cumulative page views from pre-deployment database)
-    // Validated Oct 11, 2025: 9,716 total cumulative page views since April 7, 2025
+    // Original baseline (Oct 11, 2025): 9,716 total cumulative page views since April 7, 2025
     this.COUNTRY_OFFSETS = {
       'US': 6226,
       'CA': 650,
