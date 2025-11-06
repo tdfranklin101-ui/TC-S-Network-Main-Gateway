@@ -2424,8 +2424,9 @@ const server = http.createServer(async (req, res) => {
       || req.headers['x-real-ip'] 
       || req.connection.remoteAddress 
       || req.socket.remoteAddress;
+    console.log(`🔍 Analytics trigger: ${req.method} ${pathname} from IP ${ip}`);
     analyticsTracker.trackVisit(ip).catch(err => {
-      console.error('Analytics tracking failed:', err.message);
+      console.error('❌ Analytics tracking failed:', err.message);
     });
   }
   
@@ -8501,9 +8502,19 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, '0.0.0.0', () => {
+  console.log(`\n${'='.repeat(60)}`);
+  console.log(`🚀 CURRENT-SEE PLATFORM STARTED`);
+  console.log(`${'='.repeat(60)}`);
   console.log(`✅ Server running on port ${PORT}`);
   console.log(`🌐 Access at: http://localhost:${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/health`);
+  console.log(`\n📊 ENVIRONMENT VARIABLES:`);
+  console.log(`   NODE_ENV: ${process.env.NODE_ENV || 'not set'}`);
+  console.log(`   REPLIT_DEPLOYMENT: ${process.env.REPLIT_DEPLOYMENT || 'not set'}`);
+  console.log(`   REPL_DEPLOY: ${process.env.REPL_DEPLOY || 'not set'}`);
+  console.log(`   PORT: ${PORT}`);
+  console.log(`   DATABASE_URL: ${process.env.DATABASE_URL ? 'SET ✅' : 'NOT SET ❌'}`);
+  console.log(`${'='.repeat(60)}\n`);
   console.log(`🎵 Music functions: Embedded in homepage (18 tracks)`);
   console.log(`🤖 D-ID Agent: Kid Solar ready`);
   console.log(`📱 Mobile responsive: Enabled`);

@@ -199,13 +199,11 @@ class AnalyticsTracker {
     try {
       // Determine environment (track all, tag them appropriately)
       const environment = this.isProduction() ? 'production' : 'development';
+      console.log(`📊 trackVisit() called - IP: ${ip}, Environment: ${environment}`);
 
       const location = this.getLocationFromIP(ip);
       if (!location) {
-        // Log only in development for debugging
-        if (environment === 'development') {
-          console.log(`📊 Analytics: Skipped (no valid geo location for IP: ${ip})`);
-        }
+        console.log(`⚠️  Analytics: Skipped - no valid geo location for IP: ${ip} (env: ${environment})`);
         return; // Skip if no valid location
       }
 
