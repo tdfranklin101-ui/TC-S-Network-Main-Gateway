@@ -44,17 +44,27 @@ class AnalyticsTracker {
   /**
    * Get geographic location from IP address
    * @param {string} ip - IP address to lookup
-   * @returns {object} Geographic data
+   * @returns {object} Geographic data (never null - uses fallback for unknown IPs)
    */
   getLocationFromIP(ip) {
-    // Skip private/local IPs
+    // Fallback location for private/internal IPs or unknown locations
+    const fallbackLocation = {
+      countryCode: 'XX',
+      countryName: 'Unknown',
+      stateCode: '',
+      stateName: ''
+    };
+
+    // Check for private/local IPs - use fallback but still track
     if (!ip || ip === '127.0.0.1' || ip === '::1' || ip.startsWith('192.168.') || ip.startsWith('10.')) {
-      return null;
+      console.log(`📍 Private/local IP detected: ${ip} - using fallback location`);
+      return fallbackLocation;
     }
 
     const geo = geoip.lookup(ip);
     if (!geo) {
-      return null;
+      console.log(`📍 GeoIP lookup failed for: ${ip} - using fallback location`);
+      return fallbackLocation;
     }
 
     // Use empty string for non-US states to ensure proper unique constraint
@@ -202,11 +212,8 @@ class AnalyticsTracker {
       console.log(`📊 trackVisit() called - IP: ${ip}, Environment: ${environment}`);
 
       const location = this.getLocationFromIP(ip);
-      if (!location) {
-        console.log(`⚠️  Analytics: Skipped - no valid geo location for IP: ${ip} (env: ${environment})`);
-        return; // Skip if no valid location
-      }
-
+      // Location is now never null - always has fallback
+      
       const date = this.getCurrentDate();
 
       // Upsert daily aggregate (now tracks both dev and prod, tagged separately)
@@ -226,9 +233,10 @@ class AnalyticsTracker {
         location.stateName
       ]);
 
-      console.log(`📊 Analytics [${environment}]: +1 visit from ${location.countryName}${location.stateName ? ', ' + location.stateName : ''} (${date})`);
+      console.log(`✅ Analytics [${environment}]: +1 visit from ${location.countryName}${location.stateName ? ', ' + location.stateName : ''} (${date})`);
     } catch (error) {
       console.error('❌ Analytics tracking error:', error.message);
+      console.error('❌ Error details:', error);
       // Don't throw - tracking failures shouldn't break the site
     }
   }
