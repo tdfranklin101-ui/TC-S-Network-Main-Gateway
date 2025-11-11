@@ -2652,6 +2652,105 @@
     });
   </script>
 
+  <!-- D-ID Microphone Permission Handler (Desktop Fix) -->
+  <script>
+    // Pre-request microphone permissions for desktop browsers
+    let microphonePermissionGranted = false;
+    let permissionHandlerAttached = false;
+
+    async function requestMicrophonePermission() {
+      console.log('🎤 Requesting microphone permission...');
+      
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        console.log('✅ Microphone permission granted');
+        microphonePermissionGranted = true;
+        
+        // Stop the stream immediately - we just needed permission
+        stream.getTracks().forEach(track => track.stop());
+        
+        return true;
+      } catch (error) {
+        console.error('❌ Microphone permission denied or error:', error);
+        alert('To talk with Kid Solar, please allow microphone access in your browser settings.\n\nClick the camera/microphone icon in your browser address bar, then reload the page.');
+        return false;
+      }
+    }
+
+    function attachPermissionHandler(didWidget) {
+      if (permissionHandlerAttached) return;
+      
+      console.log('🤖 D-ID widget found, attaching permission handler');
+      permissionHandlerAttached = true;
+      
+      // Request permission when widget is clicked
+      didWidget.addEventListener('click', async function(e) {
+        if (!microphonePermissionGranted) {
+          console.log('🎤 First click - requesting microphone permission');
+          e.preventDefault();
+          e.stopPropagation();
+          
+          const granted = await requestMicrophonePermission();
+          
+          if (granted) {
+            console.log('✅ Permission granted, triggering widget open');
+            // Allow the event to propagate on next tick
+            setTimeout(() => {
+              didWidget.dispatchEvent(new MouseEvent('click', {
+                bubbles: true,
+                cancelable: true,
+                view: window
+              }));
+            }, 100);
+          }
+        }
+      }, true); // Use capture phase
+    }
+
+    // Use MutationObserver to wait for D-ID widget injection
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('📱 D-ID permission handler loaded');
+      
+      // Check for existing widget first
+      const existingWidget = document.querySelector('did-fabio') || 
+                            document.querySelector('[id*="did-fabio"]') ||
+                            document.querySelector('button[aria-label*="Agent"]');
+      
+      if (existingWidget) {
+        attachPermissionHandler(existingWidget);
+      } else {
+        // Watch for widget being added to DOM
+        const observer = new MutationObserver(function(mutations) {
+          const didWidget = document.querySelector('did-fabio') || 
+                          document.querySelector('[id*="did-fabio"]') ||
+                          document.querySelector('button[aria-label*="Agent"]');
+          
+          if (didWidget && !permissionHandlerAttached) {
+            console.log('✅ D-ID widget detected via MutationObserver');
+            attachPermissionHandler(didWidget);
+            observer.disconnect(); // Stop observing once found
+          }
+        });
+        
+        observer.observe(document.body, {
+          childList: true,
+          subtree: true
+        });
+        
+        // Fallback: stop observing after 10 seconds
+        setTimeout(() => {
+          observer.disconnect();
+          console.log('⏱️ D-ID widget observation timeout');
+        }, 10000);
+      }
+    });
+
+    // Global function for manual permission request
+    window.enableKidSolarMicrophone = async function() {
+      await requestMicrophonePermission();
+    };
+  </script>
+
   <!-- D-ID AI Agent -->
   <script type="module"
         src="https://agent.d-id.com/v2/index.js"
