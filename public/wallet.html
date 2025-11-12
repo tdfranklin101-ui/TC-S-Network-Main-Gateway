@@ -1138,10 +1138,9 @@
                 <div class="col-md-6">
                     <div class="balance-card">
                         <div class="balance-label">Solar Balance</div>
-                        <div class="balance-value">3.01918 SOLAR</div>
+                        <div class="balance-value">0.0000 SOLAR</div>
                         <div class="balance-equivalent">
-                            <div>= 53,439.49 kWh</div>
-                            <div>= $410,608.48 USD</div>
+                            <div>= 0 kWh</div>
                         </div>
                     </div>
                 </div>
@@ -1157,15 +1156,15 @@
                         <div class="certificate-details">
                             <div class="detail-row">
                                 <div class="detail-label">Solar Units:</div>
-                                <div class="detail-value">3.01918</div>
+                                <div class="detail-value">0.0000</div>
                             </div>
                             <div class="detail-row">
                                 <div class="detail-label">Energy Equivalent:</div>
-                                <div class="detail-value">53,439.49 kWh</div>
+                                <div class="detail-value">0 kWh</div>
                             </div>
                             <div class="detail-row">
                                 <div class="detail-label">CO₂ Reduced:</div>
-                                <div class="detail-value">23,670.28 kg</div>
+                                <div class="detail-value">0 kg</div>
                             </div>
                             <div class="detail-row">
                                 <div class="detail-label">Issue Date:</div>
@@ -1410,9 +1409,9 @@
                         </div>
                         <div class="mb-3">
                             <label for="send-amount" class="form-label">Amount (SOLAR)</label>
-                            <input type="number" class="form-control" id="send-amount" min="0.00001" max="3.01918" step="0.00001" placeholder="0.00000" required>
+                            <input type="number" class="form-control" id="send-amount" min="0.0001" max="0" step="0.0001" placeholder="0.0000" required>
                             <div class="form-text">
-                                Available: 3.01918 SOLAR
+                                Available: 0.0000 SOLAR
                             </div>
                         </div>
                         <div class="mb-3">
@@ -2416,30 +2415,31 @@
         }
         
         function updateBalanceDisplay(balance) {
-            const KWH_PER_SOLAR = 17700000; // 17.7M kWh per Solar
-            const USD_PER_KWH = 0.007681; // Average US electricity rate
+            const KWH_PER_SOLAR = 4913; // 1 Solar = 4,913 kWh
             
             const kwhEquivalent = (balance * KWH_PER_SOLAR).toFixed(2);
-            const usdEquivalent = (balance * KWH_PER_SOLAR * USD_PER_KWH).toFixed(2);
             const co2Reduced = (parseFloat(kwhEquivalent) * 0.4431).toFixed(2); // kg CO2 per kWh
             
             // Update main balance display
             const balanceValueEl = document.querySelector('.balance-value');
             if (balanceValueEl) {
-                balanceValueEl.textContent = `${balance.toFixed(5)} SOLAR`;
+                balanceValueEl.textContent = `${balance.toFixed(4)} SOLAR`;
             }
             
             // Update balance equivalent
             const balanceEquivalentEls = document.querySelectorAll('.balance-equivalent div');
-            if (balanceEquivalentEls.length >= 2) {
+            if (balanceEquivalentEls.length >= 1) {
                 balanceEquivalentEls[0].textContent = `= ${Number(kwhEquivalent).toLocaleString()} kWh`;
-                balanceEquivalentEls[1].textContent = `= $${Number(usdEquivalent).toLocaleString()} USD`;
+                // Remove USD display (second element)
+                if (balanceEquivalentEls[1]) {
+                    balanceEquivalentEls[1].style.display = 'none';
+                }
             }
             
             // Update certificate details
             const detailValues = document.querySelectorAll('.detail-value');
             if (detailValues.length >= 3) {
-                detailValues[0].textContent = balance.toFixed(5); // Solar Units
+                detailValues[0].textContent = balance.toFixed(4); // Solar Units
                 detailValues[1].textContent = `${Number(kwhEquivalent).toLocaleString()} kWh`; // Energy Equivalent
                 detailValues[2].textContent = `${Number(co2Reduced).toLocaleString()} kg`; // CO2 Reduced
             }
@@ -2450,7 +2450,7 @@
                 sendAmountInput.max = balance;
                 const sendAmountHelp = sendAmountInput.nextElementSibling;
                 if (sendAmountHelp) {
-                    sendAmountHelp.textContent = `Available: ${balance.toFixed(5)} SOLAR`;
+                    sendAmountHelp.textContent = `Available: ${balance.toFixed(4)} SOLAR`;
                 }
             }
         }

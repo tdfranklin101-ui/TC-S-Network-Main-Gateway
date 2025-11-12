@@ -70,9 +70,9 @@ The `updateBalanceDisplay()` function dynamically updates all balance-related el
 - ✅ Available balance help text
 
 **Calculations:**
-- `kWh = balance × 17,700,000` (17.7M kWh per Solar)
-- `USD = kWh × $0.007681` (average US electricity rate)
-- `CO₂ = kWh × 0.4431 kg` (carbon reduction)
+- `kWh = balance × 4,913` (1 Solar = 4,913 kWh)
+- `CO₂ = kWh × 0.4431 kg` (carbon reduction per kWh)
+- **Note:** Solar is NOT convertible to USD - it's an energy-backed unit only
 
 ### 3. Integrated with Page Load
 
@@ -135,10 +135,10 @@ Expected: "Registration successful, 219 Solar allocated"
 2. Wait for page to load (~1 second)
 3. Check browser console for: "✅ Loaded wallet balance: 219 SOLAR for user BK"
 4. Verify displays show:
-   - Solar Balance: 219.00000 SOLAR
-   - Energy Equivalent: 3,876,300,000 kWh
-   - USD Equivalent: $29,775,237.30
-   - Certificate Solar Units: 219.00000
+   - Solar Balance: 219.0000 SOLAR
+   - Energy Equivalent: 1,075,947 kWh (219 × 4,913)
+   - Certificate Solar Units: 219.0000
+   - CO₂ Reduced: ~476,940 kg
 ```
 
 **3. Cross-Page Navigation Test:**
@@ -175,9 +175,9 @@ Expected: "Registration successful, 219 Solar allocated"
 | Step | Display |
 |------|---------|
 | Registration success | 219 SOLAR ✅ |
-| Navigate to wallet | 219.00000 SOLAR ✅ |
-| Refresh wallet page | 219.00000 SOLAR ✅ |
-| Navigate away and back | 219.00000 SOLAR ✅ |
+| Navigate to wallet | 219.0000 SOLAR ✅ |
+| Refresh wallet page | 219.0000 SOLAR ✅ |
+| Navigate away and back | 219.0000 SOLAR ✅ |
 | **Result:** Balance persists correctly! |
 
 ---
