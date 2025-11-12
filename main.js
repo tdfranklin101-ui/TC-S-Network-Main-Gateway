@@ -3954,17 +3954,32 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // Login API endpoint
-  if ((pathname === '/api/login' || pathname === '/api/users/login') && req.method === 'POST') {
-    try {
-      const body = await parseBody(req);
-      const { username, password } = body;
+  // Login API endpoint - with CORS support
+  if ((pathname === '/api/login' || pathname === '/api/users/login')) {
+    // Handle OPTIONS preflight
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204, {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type'
+      });
+      res.end();
+      return;
+    }
+    
+    if (req.method === 'POST') {
+      try {
+        const body = await parseBody(req);
+        const { username, password } = body;
 
-      if (!username || !password) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: false, error: 'Username and password are required' }));
-        return;
-      }
+        if (!username || !password) {
+          res.writeHead(400, { 
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+          });
+          res.end(JSON.stringify({ success: false, error: 'Username and password are required' }));
+          return;
+        }
 
       let loginSuccess = false;
       let userData = null;
@@ -4010,40 +4025,50 @@ const server = http.createServer(async (req, res) => {
         }
       }
 
-      if (loginSuccess) {
-        // Create session
-        const sessionId = createSession(userData.userId, userData);
-        
-        // Set secure session cookie
-        const cookieOptions = [
-          `tc_s_session=${sessionId}`,
-          'HttpOnly',
-          'SameSite=Lax',
-          'Path=/',
-          `Max-Age=${30 * 24 * 60 * 60}` // 30 days
-        ];
-        
-        if (process.env.NODE_ENV === 'production') {
-          cookieOptions.push('Secure');
+        if (loginSuccess) {
+          // Create session
+          const sessionId = createSession(userData.userId, userData);
+          
+          // Set secure session cookie
+          const cookieOptions = [
+            `tc_s_session=${sessionId}`,
+            'HttpOnly',
+            'SameSite=Lax',
+            'Path=/',
+            `Max-Age=${30 * 24 * 60 * 60}` // 30 days
+          ];
+          
+          if (process.env.NODE_ENV === 'production') {
+            cookieOptions.push('Secure');
+          }
+          
+          res.writeHead(200, { 
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Credentials': 'true',
+            'Set-Cookie': cookieOptions.join('; ')
+          });
+          res.end(JSON.stringify({
+            success: true,
+            message: 'Login successful',
+            ...userData
+          }));
+        } else {
+          res.writeHead(401, { 
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+          });
+          res.end(JSON.stringify({ success: false, error: 'Invalid username or password' }));
         }
-        
-        res.writeHead(200, { 
+      } catch (error) {
+        console.error('Login error:', error);
+        res.writeHead(500, { 
           'Content-Type': 'application/json',
-          'Set-Cookie': cookieOptions.join('; ')
+          'Access-Control-Allow-Origin': '*'
         });
-        res.end(JSON.stringify({
-          success: true,
-          message: 'Login successful',
-          ...userData
-        }));
-      } else {
-        res.writeHead(401, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: false, error: 'Invalid username or password' }));
+        res.end(JSON.stringify({ success: false, error: 'Login failed' }));
       }
-    } catch (error) {
-      console.error('Login error:', error);
-      res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ success: false, error: 'Login failed' }));
+      return;
     }
     return;
   }
@@ -4153,25 +4178,43 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // Registration API endpoint (for existing login.html page)
-  if (pathname === '/api/register' && req.method === 'POST') {
-    try {
-      const body = await parseBody(req);
-      const { username, displayName, email, password, isAnonymous, firstName, lastName } = body;
+  // Registration API endpoint (for existing login.html page) - with CORS support
+  if (pathname === '/api/register') {
+    // Handle OPTIONS preflight
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204, {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type'
+      });
+      res.end();
+      return;
+    }
+    
+    if (req.method === 'POST') {
+      try {
+        const body = await parseBody(req);
+        const { username, displayName, email, password, isAnonymous, firstName, lastName } = body;
 
-      // Validate required fields
-      if (!username || !email || !password || !displayName) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: false, error: 'All required fields must be provided' }));
-        return;
-      }
+        // Validate required fields
+        if (!username || !email || !password || !displayName) {
+          res.writeHead(400, { 
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+          });
+          res.end(JSON.stringify({ success: false, error: 'All required fields must be provided' }));
+          return;
+        }
 
-      // Validate password length
-      if (password.length < 6) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: false, error: 'Password must be at least 6 characters long' }));
-        return;
-      }
+        // Validate password length
+        if (password.length < 6) {
+          res.writeHead(400, { 
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+          });
+          res.end(JSON.stringify({ success: false, error: 'Password must be at least 6 characters long' }));
+          return;
+        }
 
       // Hash the password
       if (!bcrypt) {
@@ -4205,57 +4248,70 @@ const server = http.createServer(async (req, res) => {
         } catch (dbError) {
           console.error('Database registration error:', dbError);
           if (dbError.code === '23505') { // Unique constraint violation
-            res.writeHead(409, { 'Content-Type': 'application/json' });
+            res.writeHead(409, { 
+              'Content-Type': 'application/json',
+              'Access-Control-Allow-Origin': '*'
+            });
             res.end(JSON.stringify({ success: false, error: 'Username or email already exists' }));
             return;
           }
         }
-      }
-
-      if (success) {
-        // Create session for the new user
-        const userData = {
-          userId: userId,
-          username: username,
-          email: email,
-          firstName: firstName || '',
-          lastName: lastName || '',
-          solarBalance: initialSolarAllocation,
-          memberSince: currentDate.toISOString()
-        };
-        
-        const sessionId = createSession(userId, userData);
-        
-        // Set secure session cookie
-        const cookieOptions = [
-          `tc_s_session=${sessionId}`,
-          'HttpOnly',
-          'SameSite=Lax',
-          'Path=/',
-          `Max-Age=${30 * 24 * 60 * 60}` // 30 days
-        ];
-        
-        if (process.env.NODE_ENV === 'production') {
-          cookieOptions.push('Secure');
         }
-        
-        res.writeHead(200, { 
+
+        if (success) {
+          // Create session for the new user
+          const userData = {
+            userId: userId,
+            username: username,
+            email: email,
+            firstName: firstName || '',
+            lastName: lastName || '',
+            solarBalance: initialSolarAllocation,
+            memberSince: currentDate.toISOString()
+          };
+          
+          const sessionId = createSession(userId, userData);
+          
+          // Set secure session cookie
+          const cookieOptions = [
+            `tc_s_session=${sessionId}`,
+            'HttpOnly',
+            'SameSite=Lax',
+            'Path=/',
+            `Max-Age=${30 * 24 * 60 * 60}` // 30 days
+          ];
+          
+          if (process.env.NODE_ENV === 'production') {
+            cookieOptions.push('Secure');
+          }
+          
+          res.writeHead(200, { 
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Credentials': 'true',
+            'Set-Cookie': cookieOptions.join('; ')
+          });
+          res.end(JSON.stringify({
+            success: true,
+            message: 'Registration successful',
+            ...userData
+          }));
+        } else {
+          res.writeHead(500, { 
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+          });
+          res.end(JSON.stringify({ success: false, error: 'Failed to create account' }));
+        }
+      } catch (error) {
+        console.error('Registration error:', error);
+        res.writeHead(500, { 
           'Content-Type': 'application/json',
-          'Set-Cookie': cookieOptions.join('; ')
+          'Access-Control-Allow-Origin': '*'
         });
-        res.end(JSON.stringify({
-          success: true,
-          message: 'Registration successful',
-          ...userData
-        }));
-      } else {
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: false, error: 'Failed to create account' }));
+        res.end(JSON.stringify({ success: false, error: 'Registration failed' }));
       }
-    } catch (error) {
-      console.error('Registration error:', error);
-      res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ success: false, error: 'Registration failed' }));
+      return;
     }
     return;
   }
