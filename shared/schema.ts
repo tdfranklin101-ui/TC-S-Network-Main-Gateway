@@ -265,18 +265,21 @@ export type InsertContentLibrary = z.infer<typeof insertContentLibrarySchema>;
 // Members table - legacy member management system
 export const members = pgTable("members", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-  username: varchar("username").notNull().unique(),
-  name: varchar("name").notNull(),
-  email: varchar("email").notNull(),
-  joinedDate: timestamp("joined_date").defaultNow(),
-  totalSolar: text("total_solar").default("0"),
-  totalDollars: text("total_dollars").default("0"),
-  isAnonymous: boolean("is_anonymous").default(false),
-  isReserve: boolean("is_reserve").default(false),
-  lastDistributionDate: timestamp("last_distribution_date"),
+  username: text("username").notNull().unique(),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  joinedDate: text("joined_date").default(sql`CURRENT_TIMESTAMP`),
+  totalSolar: numeric("total_solar").notNull().default("1"),
+  totalDollars: numeric("total_dollars").notNull().default("0"),
+  isAnonymous: boolean("is_anonymous").notNull().default(false),
+  isReserve: boolean("is_reserve").notNull().default(false),
+  isPlaceholder: boolean("is_placeholder").notNull().default(false),
+  lastDistributionDate: text("last_distribution_date").default(sql`CURRENT_TIMESTAMP`),
   notes: text("notes"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  signupTimestamp: timestamp("signup_timestamp").defaultNow(),
+  passwordHash: text("password_hash"),
+  firstName: text("first_name"),
+  lastName: text("last_name"),
 });
 
 // Distribution logs for member payouts
@@ -353,7 +356,7 @@ export const products = pgTable("products", {
 });
 
 // Insert schemas for additional tables
-export const insertMemberSchema = createInsertSchema(members).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertMemberSchema = createInsertSchema(members).omit({ id: true, signupTimestamp: true });
 export const insertDistributionLogSchema = createInsertSchema(distributionLogs).omit({ id: true, timestamp: true });
 export const insertBackupLogSchema = createInsertSchema(backupLogs).omit({ id: true, timestamp: true });
 export const insertNewsletterSubscriptionSchema = createInsertSchema(newsletterSubscriptions).omit({ id: true, subscribedAt: true });
