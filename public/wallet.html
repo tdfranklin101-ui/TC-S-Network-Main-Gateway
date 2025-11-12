@@ -2386,7 +2386,74 @@
             setTimeout(() => {
                 walletAIDashboard = new WalletAIDashboard();
             }, 500);
+            
+            // Load user balance from session
+            loadUserBalance();
         });
+        
+        // CRITICAL FIX: Load actual user balance from session
+        async function loadUserBalance() {
+            try {
+                const response = await fetch('/api/session', {
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.authenticated && data.solarBalance !== undefined) {
+                        const balance = parseFloat(data.solarBalance) || 0;
+                        updateBalanceDisplay(balance);
+                        console.log(`✅ Loaded wallet balance: ${balance} SOLAR for user ${data.username}`);
+                    } else {
+                        console.warn('⚠️ User not authenticated or balance missing');
+                    }
+                } else {
+                    console.error('❌ Failed to load session');
+                }
+            } catch (error) {
+                console.error('❌ Error loading user balance:', error);
+            }
+        }
+        
+        function updateBalanceDisplay(balance) {
+            const KWH_PER_SOLAR = 17700000; // 17.7M kWh per Solar
+            const USD_PER_KWH = 0.007681; // Average US electricity rate
+            
+            const kwhEquivalent = (balance * KWH_PER_SOLAR).toFixed(2);
+            const usdEquivalent = (balance * KWH_PER_SOLAR * USD_PER_KWH).toFixed(2);
+            const co2Reduced = (parseFloat(kwhEquivalent) * 0.4431).toFixed(2); // kg CO2 per kWh
+            
+            // Update main balance display
+            const balanceValueEl = document.querySelector('.balance-value');
+            if (balanceValueEl) {
+                balanceValueEl.textContent = `${balance.toFixed(5)} SOLAR`;
+            }
+            
+            // Update balance equivalent
+            const balanceEquivalentEls = document.querySelectorAll('.balance-equivalent div');
+            if (balanceEquivalentEls.length >= 2) {
+                balanceEquivalentEls[0].textContent = `= ${Number(kwhEquivalent).toLocaleString()} kWh`;
+                balanceEquivalentEls[1].textContent = `= $${Number(usdEquivalent).toLocaleString()} USD`;
+            }
+            
+            // Update certificate details
+            const detailValues = document.querySelectorAll('.detail-value');
+            if (detailValues.length >= 3) {
+                detailValues[0].textContent = balance.toFixed(5); // Solar Units
+                detailValues[1].textContent = `${Number(kwhEquivalent).toLocaleString()} kWh`; // Energy Equivalent
+                detailValues[2].textContent = `${Number(co2Reduced).toLocaleString()} kg`; // CO2 Reduced
+            }
+            
+            // Update send form max amount
+            const sendAmountInput = document.getElementById('send-amount');
+            if (sendAmountInput) {
+                sendAmountInput.max = balance;
+                const sendAmountHelp = sendAmountInput.nextElementSibling;
+                if (sendAmountHelp) {
+                    sendAmountHelp.textContent = `Available: ${balance.toFixed(5)} SOLAR`;
+                }
+            }
+        }
     </script>
 
 <!-- FOOTER_PLACEHOLDER -->
