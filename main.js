@@ -4123,6 +4123,39 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Members List API endpoint - Public member directory
+  if (pathname === '/api/members' && req.method === 'GET') {
+    try {
+      if (!pool) {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Database unavailable' }));
+        return;
+      }
+
+      // Query members - only return public, privacy-safe information
+      const result = await pool.query(`
+        SELECT id, name, signup_timestamp 
+        FROM members 
+        ORDER BY signup_timestamp DESC
+      `);
+
+      res.writeHead(200, { 
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      });
+      res.end(JSON.stringify({
+        success: true,
+        totalMembers: result.rows.length,
+        members: result.rows
+      }));
+    } catch (error) {
+      console.error('Members list error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Failed to fetch members list' }));
+    }
+    return;
+  }
+
   // Session Check API endpoint - ENHANCED with balance safeguards
   if (pathname === '/api/session' && req.method === 'GET') {
     try {
