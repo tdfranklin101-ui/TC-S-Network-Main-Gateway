@@ -256,6 +256,56 @@ function destroySession(sessionId) {
   return sessions.delete(sessionId);
 }
 
+// Ensure member has a wallet (create if needed)
+async function ensureMemberWallet(memberId) {
+  if (!pool) {
+    throw new Error('Database unavailable');
+  }
+  
+  try {
+    const memberQuery = 'SELECT id, username, email, wallet_id FROM members WHERE id = $1';
+    const memberResult = await pool.query(memberQuery, [memberId]);
+    
+    if (memberResult.rows.length === 0) {
+      throw new Error('Member not found');
+    }
+    
+    const member = memberResult.rows[0];
+    
+    if (member.wallet_id) {
+      return member.wallet_id;
+    }
+    
+    console.log(`🔧 Creating wallet for member ${member.username} (ID: ${memberId})`);
+    
+    const createWalletQuery = `
+      WITH new_wallet AS (
+        INSERT INTO wallets (id, user_id, email, created_at)
+        VALUES (gen_random_uuid(), $1, $2, NOW())
+        RETURNING id
+      )
+      UPDATE members
+      SET wallet_id = (SELECT id FROM new_wallet)
+      WHERE id = $3
+      RETURNING wallet_id
+    `;
+    
+    const result = await pool.query(createWalletQuery, [
+      memberId.toString(),
+      member.email,
+      memberId
+    ]);
+    
+    const walletId = result.rows[0].wallet_id;
+    console.log(`✅ Created wallet ${walletId} for member ${member.username}`);
+    
+    return walletId;
+  } catch (error) {
+    console.error('Error ensuring member wallet:', error);
+    throw error;
+  }
+}
+
 // Cookie helper function
 function getCookie(req, name) {
   const cookies = req.headers.cookie;
@@ -4817,7 +4867,7 @@ const server = http.createServer(async (req, res) => {
       }
 
       // Get user's current balance from members table
-      const userQuery = 'SELECT id, username, total_solar FROM members WHERE id = $1';
+      const userQuery = 'SELECT id, username, total_solar, wallet_id FROM members WHERE id = $1';
       const userResult = await pool.query(userQuery, [userId]);
       
       if (userResult.rows.length === 0) {
@@ -4841,6 +4891,12 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
+      // Ensure user has a wallet (create if needed)
+      let walletId = user.wallet_id;
+      if (!walletId) {
+        walletId = await ensureMemberWallet(userId);
+      }
+
       // Process transaction (deduct Solar from members table)
       const newBalance = userBalance - requiredSolar;
       const updateBalanceQuery = 'UPDATE members SET total_solar = $1 WHERE id = $2';
@@ -4849,7 +4905,7 @@ const server = http.createServer(async (req, res) => {
       // Log balance change for purchase
       logBalanceChange('Purchase', user.id, user.username, userBalance, newBalance, `purchase_artifact_${artifactId}`);
 
-      // Record transaction
+      // Record transaction with correct wallet_id
       const transactionQuery = `
         INSERT INTO transactions (id, type, wallet_id, artifact_id, amount_s, note, created_at)
         VALUES (gen_random_uuid(), 'purchase', $1, $2, $3, $4, NOW())
@@ -4857,7 +4913,7 @@ const server = http.createServer(async (req, res) => {
       `;
       
       const transactionResult = await pool.query(transactionQuery, [
-        user.id, 
+        walletId, 
         artifactId, 
         requiredSolar,
         `Purchase of "${artifact.title}" for ${requiredSolar} Solar`
@@ -5187,20 +5243,30 @@ const server = http.createServer(async (req, res) => {
       const uploadedResult = await pool.query(uploadedQuery, [userId]);
       console.log(`✅ Found ${uploadedResult.rows.length} uploaded artifacts for user ${userId}`);
 
-      // Get user's purchased artifacts
-      const purchasedQuery = `
-        SELECT p.purchased_at, p.artifact_id, p.price_solar,
-               a.id, a.title, a.description, a.category, a.file_type, a.kwh_footprint, 
-               a.solar_amount_s, a.cover_art_url, a.delivery_mode, a.creator_id,
-               a.streaming_url, a.preview_type, a.preview_slug, a.file_path
-        FROM purchases p
-        JOIN artifacts a ON p.artifact_id = a.id
-        WHERE p.user_id = $1 AND a.active = true
-        ORDER BY p.purchased_at DESC
-      `;
+      // Get user's wallet_id for purchased artifacts
+      const memberQuery = 'SELECT wallet_id FROM members WHERE id = $1';
+      const memberResult = await pool.query(memberQuery, [userId]);
+      const walletId = memberResult.rows[0]?.wallet_id;
       
-      const purchasedResult = await pool.query(purchasedQuery, [userId]);
-      console.log(`✅ Found ${purchasedResult.rows.length} purchased artifacts for user ${userId}`);
+      let purchasedResult = { rows: [] };
+      if (walletId) {
+        // Get user's purchased artifacts via wallet_id
+        const purchasedQuery = `
+          SELECT t.created_at as purchase_date, t.artifact_id, t.amount_s,
+                 a.id, a.title, a.description, a.category, a.file_type, 
+                 a.kwh_footprint, a.solar_amount_s, a.cover_art_url, 
+                 a.delivery_mode, a.creator_id, a.streaming_url, 
+                 a.preview_type, a.preview_slug, a.file_path
+          FROM transactions t
+          JOIN artifacts a ON t.artifact_id = a.id
+          WHERE t.wallet_id = $1 AND t.type = 'purchase' AND a.active = true
+          ORDER BY t.created_at DESC
+        `;
+        purchasedResult = await pool.query(purchasedQuery, [walletId]);
+        console.log(`✅ Found ${purchasedResult.rows.length} purchased artifacts for user ${userId} (wallet: ${walletId})`);
+      } else {
+        console.log(`⚠️ No wallet_id for user ${userId} - purchased artifacts will be empty`);
+      }
 
       // Format uploaded artifacts
       const uploaded = {
@@ -5231,25 +5297,26 @@ const server = http.createServer(async (req, res) => {
       // Format purchased artifacts
       const purchased = {
         totalItems: purchasedResult.rows.length,
-        totalSpent: purchasedResult.rows.reduce((sum, p) => sum + parseFloat(p.price_solar || 0), 0),
-        artifacts: purchasedResult.rows.map(artifact => ({
-          id: artifact.id,
-          title: artifact.title,
-          description: artifact.description,
-          category: artifact.category,
-          fileType: artifact.file_type,
-          kwhFootprint: parseFloat(artifact.kwh_footprint),
-          solarPrice: parseFloat(artifact.solar_amount_s),
-          formattedPrice: `${formatSolar(artifact.solar_amount_s)} Solar`,
-          coverArt: artifact.cover_art_url,
-          deliveryMode: artifact.delivery_mode || 'download',
-          creatorId: artifact.creator_id,
-          streamingUrl: artifact.streaming_url,
-          previewType: artifact.preview_type,
-          previewSlug: artifact.preview_slug,
-          purchasedAt: artifact.purchased_at,
-          pricePaid: parseFloat(artifact.price_solar),
-          filePath: artifact.file_path,
+        totalSpent: purchasedResult.rows.reduce((sum, t) => sum + parseFloat(t.amount_s || 0), 0),
+        artifacts: purchasedResult.rows.map(transaction => ({
+          id: transaction.id,
+          title: transaction.title,
+          description: transaction.description,
+          category: transaction.category,
+          fileType: transaction.file_type,
+          kwhFootprint: parseFloat(transaction.kwh_footprint),
+          solarPrice: parseFloat(transaction.solar_amount_s),
+          amountPaid: parseFloat(transaction.amount_s),
+          formattedPrice: `${formatSolar(transaction.solar_amount_s)} Solar`,
+          formattedPaid: `${formatSolar(transaction.amount_s)} Solar`,
+          coverArt: transaction.cover_art_url,
+          deliveryMode: transaction.delivery_mode || 'download',
+          creatorId: transaction.creator_id,
+          streamingUrl: transaction.streaming_url,
+          previewType: transaction.preview_type,
+          previewSlug: transaction.preview_slug,
+          purchasedAt: transaction.purchase_date,
+          filePath: transaction.file_path,
           isOwned: true,
           ownership: 'purchased'
         }))
