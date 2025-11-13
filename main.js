@@ -4280,15 +4280,42 @@ const server = http.createServer(async (req, res) => {
                 currentBalance = cachedBalance;
                 balanceSource = 'cached_invalid_db';
               } else {
-                // All checks passed - use DB balance (including legitimate 0)
-                currentBalance = parsedBalance;
-                balanceSource = 'database';
-                
-                // Enhanced logging: distinguish NULL vs legitimate 0
+                // CRITICAL SAFEGUARD: Validate balance drops to zero
                 if (parsedBalance === 0 && cachedBalance > 0) {
-                  console.log(`📊 [BALANCE UPDATE] ${session.username}: ${cachedBalance} → 0 Solar (legitimate transaction or zero balance)`);
-                } else if (currentBalance !== cachedBalance) {
-                  logBalanceChange('Session Check', session.userId, session.username, cachedBalance, currentBalance, balanceSource);
+                  // Check for recent transactions that could explain the balance drop
+                  let hasRecentTransaction = false;
+                  try {
+                    const transactionCheck = await pool.query(
+                      `SELECT COUNT(*) as count FROM transactions 
+                       WHERE user_id = $1 AND created_at > NOW() - INTERVAL '1 hour'`,
+                      [session.userId]
+                    );
+                    hasRecentTransaction = transactionCheck.rows[0].count > 0;
+                  } catch (err) {
+                    console.error(`⚠️ Unable to verify transactions for ${session.username}:`, err.message);
+                  }
+                  
+                  if (hasRecentTransaction) {
+                    // Legitimate purchase - accept the 0
+                    console.log(`✅ [BALANCE VERIFIED] ${session.username}: ${cachedBalance} → 0 Solar (verified purchase)`);
+                    currentBalance = parsedBalance;
+                    balanceSource = 'database_verified_transaction';
+                  } else {
+                    // No transaction found - likely corruption
+                    console.error(`🚨 [BALANCE CORRUPTION] ${session.username}: ${cachedBalance} → 0 WITHOUT transaction!`);
+                    console.error(`🚨 REJECTING database 0 - using cached: ${cachedBalance}`);
+                    console.error(`🚨 Manual investigation required for user ID: ${session.userId}`);
+                    currentBalance = cachedBalance;
+                    balanceSource = 'cached_protected_from_corruption';
+                  }
+                } else {
+                  // All checks passed - use DB balance
+                  currentBalance = parsedBalance;
+                  balanceSource = 'database';
+                  
+                  if (currentBalance !== cachedBalance) {
+                    logBalanceChange('Session Check', session.userId, session.username, cachedBalance, currentBalance, balanceSource);
+                  }
                 }
                 
                 // Update session with current balance
