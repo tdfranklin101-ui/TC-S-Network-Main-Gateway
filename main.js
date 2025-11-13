@@ -4285,12 +4285,20 @@ const server = http.createServer(async (req, res) => {
                   // Check for recent transactions that could explain the balance drop
                   let hasRecentTransaction = false;
                   try {
-                    const transactionCheck = await pool.query(
-                      `SELECT COUNT(*) as count FROM transactions 
-                       WHERE user_id = $1 AND created_at > NOW() - INTERVAL '1 hour'`,
+                    // Get user's wallet_id first, then check transactions
+                    const walletCheck = await pool.query(
+                      `SELECT wallet_id FROM members WHERE id = $1`,
                       [session.userId]
                     );
-                    hasRecentTransaction = transactionCheck.rows[0].count > 0;
+                    
+                    if (walletCheck.rows[0]?.wallet_id) {
+                      const transactionCheck = await pool.query(
+                        `SELECT COUNT(*) as count FROM transactions 
+                         WHERE wallet_id = $1 AND created_at > NOW() - INTERVAL '1 hour'`,
+                        [walletCheck.rows[0].wallet_id]
+                      );
+                      hasRecentTransaction = parseInt(transactionCheck.rows[0].count) > 0;
+                    }
                   } catch (err) {
                     console.error(`⚠️ Unable to verify transactions for ${session.username}:`, err.message);
                   }
