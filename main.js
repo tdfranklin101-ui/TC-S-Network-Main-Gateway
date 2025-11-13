@@ -504,6 +504,33 @@ async function analyzeContentForPricing(fileBuffer, mimeType, metadata) {
 // Handles both DATABASE_URL (workspace) and PG* variables (deployed site)
 let pool = null;
 try {
+  // Determine SSL configuration - supports all PGSSLMODE options
+  let sslConfig;
+  const sslMode = process.env.PGSSLMODE || 'prefer';
+  
+  switch(sslMode) {
+    case 'disable':
+      sslConfig = false;
+      break;
+    case 'allow':
+    case 'prefer':
+      // Allow self-signed certificates (default for most cloud providers)
+      sslConfig = { rejectUnauthorized: false };
+      break;
+    case 'require':
+    case 'verify-ca':
+    case 'verify-full':
+      // Require valid certificates
+      sslConfig = { rejectUnauthorized: true };
+      if (process.env.PGSSLROOTCERT) {
+        sslConfig.ca = require('fs').readFileSync(process.env.PGSSLROOTCERT).toString();
+      }
+      break;
+    default:
+      // Safe default: allow self-signed certificates
+      sslConfig = { rejectUnauthorized: false };
+  }
+  
   if (process.env.DATABASE_URL) {
     // Use connection string (workspace/development)
     pool = new Pool({ 
@@ -511,7 +538,7 @@ try {
       max: 10,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 10000,
-      ssl: { rejectUnauthorized: false }
+      ssl: sslConfig
     });
     console.log('✅ Database connection ready (using DATABASE_URL)');
   } else if (process.env.PGHOST) {
@@ -525,7 +552,7 @@ try {
       max: 10,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 10000,
-      ssl: { rejectUnauthorized: false }
+      ssl: sslConfig
     });
     console.log('✅ Database connection ready (using PG* variables for production)');
   } else {
