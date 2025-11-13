@@ -518,10 +518,27 @@ try {
   pool = null;
 }
 
-// Note: pool uses DATABASE_URL which points to:
-// - Development database in workspace
-// - Production database when deployed to thecurrentsee.org
-// The deployed site automatically uses the correct production database
+// Production database pool - for querying live production member data
+let productionPool = null;
+try {
+  if (process.env.PRODUCTION_DATABASE_URL) {
+    productionPool = new Pool({ 
+      connectionString: process.env.PRODUCTION_DATABASE_URL,
+      max: 10,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 10000,
+      ssl: { rejectUnauthorized: false }
+    });
+    console.log('✅ Production database connection ready (for member listings)');
+  } else {
+    // Fallback to regular pool if PRODUCTION_DATABASE_URL not set
+    productionPool = pool;
+    console.log('ℹ️  Using development database for member listings (PRODUCTION_DATABASE_URL not set)');
+  }
+} catch (error) {
+  console.warn('⚠️ Production database connection failed, falling back to dev database:', error.message);
+  productionPool = pool;
+}
 
 // ============================================================
 // SOLAR INTELLIGENCE AUDIT LAYER (SAi-Audit) AUTOMATION
@@ -4128,18 +4145,17 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // Members List API endpoint - Public member directory
-  // Note: Uses pool which points to production DB when deployed, dev DB in workspace
+  // Members List API endpoint - Public member directory from PRODUCTION database
   if (pathname === '/api/members' && req.method === 'GET') {
     try {
-      if (!pool) {
+      if (!productionPool) {
         res.writeHead(503, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Database unavailable' }));
+        res.end(JSON.stringify({ error: 'Production database unavailable' }));
         return;
       }
 
-      // Query members - only return public, privacy-safe information
-      const result = await pool.query(`
+      // Query members from production database - only return public, privacy-safe information
+      const result = await productionPool.query(`
         SELECT id, name, signup_timestamp 
         FROM members 
         ORDER BY signup_timestamp DESC
