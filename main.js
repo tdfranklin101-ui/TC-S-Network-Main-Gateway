@@ -501,43 +501,40 @@ async function analyzeContentForPricing(fileBuffer, mimeType, metadata) {
 }
 
 // Enhanced database setup with robust error handling
+// Handles both DATABASE_URL (workspace) and PG* variables (deployed site)
 let pool = null;
 try {
   if (process.env.DATABASE_URL) {
+    // Use connection string (workspace/development)
     pool = new Pool({ 
       connectionString: process.env.DATABASE_URL,
       max: 10,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 10000,
-      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+      ssl: { rejectUnauthorized: false }
     });
-    console.log('✅ Database connection ready for music tracking');
-  }
-} catch (error) {
-  console.warn('⚠️ Database connection failed, using fallback mode:', error.message);
-  pool = null;
-}
-
-// Production database pool - for querying live production member data
-let productionPool = null;
-try {
-  if (process.env.PRODUCTION_DATABASE_URL) {
-    productionPool = new Pool({ 
-      connectionString: process.env.PRODUCTION_DATABASE_URL,
+    console.log('✅ Database connection ready (using DATABASE_URL)');
+  } else if (process.env.PGHOST) {
+    // Use individual PG* variables (deployed production site)
+    pool = new Pool({
+      host: process.env.PGHOST,
+      port: process.env.PGPORT || 5432,
+      database: process.env.PGDATABASE,
+      user: process.env.PGUSER,
+      password: process.env.PGPASSWORD,
       max: 10,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 10000,
       ssl: { rejectUnauthorized: false }
     });
-    console.log('✅ Production database connection ready (for member listings)');
+    console.log('✅ Database connection ready (using PG* variables for production)');
   } else {
-    // Fallback to regular pool if PRODUCTION_DATABASE_URL not set
-    productionPool = pool;
-    console.log('ℹ️  Using development database for member listings (PRODUCTION_DATABASE_URL not set)');
+    console.warn('⚠️ No database configuration found (neither DATABASE_URL nor PGHOST)');
+    pool = null;
   }
 } catch (error) {
-  console.warn('⚠️ Production database connection failed, falling back to dev database:', error.message);
-  productionPool = pool;
+  console.warn('⚠️ Database connection failed:', error.message);
+  pool = null;
 }
 
 // ============================================================
@@ -4145,17 +4142,17 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // Members List API endpoint - Public member directory from PRODUCTION database
+  // Members List API endpoint - Public member directory
   if (pathname === '/api/members' && req.method === 'GET') {
     try {
-      if (!productionPool) {
+      if (!pool) {
         res.writeHead(503, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Production database unavailable' }));
+        res.end(JSON.stringify({ error: 'Database unavailable' }));
         return;
       }
 
-      // Query members from production database - only return public, privacy-safe information
-      const result = await productionPool.query(`
+      // Query members - only return public, privacy-safe information
+      const result = await pool.query(`
         SELECT id, name, signup_timestamp 
         FROM members 
         ORDER BY signup_timestamp DESC
