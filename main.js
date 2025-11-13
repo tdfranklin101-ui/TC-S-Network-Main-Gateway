@@ -518,6 +518,24 @@ try {
   pool = null;
 }
 
+// Production database pool (for member listings and production data)
+let productionPool = null;
+try {
+  if (process.env.CURRENTSEE_DB_URL) {
+    productionPool = new Pool({ 
+      connectionString: process.env.CURRENTSEE_DB_URL,
+      max: 10,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 10000,
+      ssl: { rejectUnauthorized: false }
+    });
+    console.log('✅ Production database connection ready');
+  }
+} catch (error) {
+  console.warn('⚠️ Production database connection failed:', error.message);
+  productionPool = null;
+}
+
 // ============================================================
 // SOLAR INTELLIGENCE AUDIT LAYER (SAi-Audit) AUTOMATION
 // Regulatory-grade energy demand tracking with full automation
@@ -4123,17 +4141,17 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // Members List API endpoint - Public member directory
+  // Members List API endpoint - Public member directory (from PRODUCTION database)
   if (pathname === '/api/members' && req.method === 'GET') {
     try {
-      if (!pool) {
+      if (!productionPool) {
         res.writeHead(503, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Database unavailable' }));
+        res.end(JSON.stringify({ error: 'Production database unavailable' }));
         return;
       }
 
-      // Query members - only return public, privacy-safe information
-      const result = await pool.query(`
+      // Query members from PRODUCTION database - only return public, privacy-safe information
+      const result = await productionPool.query(`
         SELECT id, name, signup_timestamp 
         FROM members 
         ORDER BY signup_timestamp DESC
