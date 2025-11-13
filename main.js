@@ -2904,33 +2904,48 @@ const server = http.createServer(async (req, res) => {
             }
           }
           
+          // Prepare search tags - ensure it's always a valid array of strings or null
+          let searchTags = null;
+          if (aiCuration && aiCuration.success && Array.isArray(aiCuration.tags)) {
+            // Ensure all tags are strings (filter out any non-string values)
+            const filteredTags = aiCuration.tags.filter(tag => typeof tag === 'string');
+            searchTags = filteredTags.length > 0 ? filteredTags : null;
+          }
+          
+          // Log parameters before INSERT to catch type errors (only if processing succeeded)
+          if (fileProcessingResult && fileProcessingResult.masterFile && fileProcessingResult.masterFile.url) {
+            console.log(`📝 Upload INSERT params: artifactId=${artifactId}, slug=${finalSlug}, title=${title}, creator=${creatorId}`);
+            console.log(`📝 File URLs: master=${fileProcessingResult.masterFile.url.substring(0, 50)}..., preview=${fileProcessingResult.previewFile?.previewUrl?.substring(0, 50) || 'none'}...`);
+            console.log(`📝 Search tags: ${searchTags ? JSON.stringify(searchTags) : 'null'}`);
+          }
+          
           const result = await pool.query(insertQuery, [
-            artifactId, // Use the artifactId from file processing
-            finalSlug, // Auto-generated unique slug
-            title,
-            description || '',
-            category,
-            actualMime,
-            analysis.estimatedKwh,
-            finalSolarAmount, // Use AI-suggested pricing if available
-            0, // rays_amount (default to 0)
-            'download',
-            fileProcessingResult.tradeFile.url, // Legacy delivery_url points to trade file
-            creatorId,
-            fileProcessingResult.previewFile.thumbnailUrl,
-            true, // active - immediately available in marketplace (changed from false)
-            fileProcessingResult.masterFile.url,
-            fileProcessingResult.previewFile.previewUrl,
-            fileProcessingResult.tradeFile.url,
-            fileProcessingResult.masterFile.size,
-            fileProcessingResult.previewFile.previewSize || 0,
-            fileProcessingResult.tradeFile.size,
-            fileProcessingResult.metadata.fileDuration || null,
-            fileProcessingResult.previewFile.previewDuration || null,
-            fileProcessingResult.previewFile.previewType,
-            `${finalSlug}-preview`, // Generate preview slug
-            fileProcessingResult.processingStatus,
-            aiCuration && aiCuration.success ? aiCuration.tags : [] // AI-generated tags
+            artifactId, // $1 - Use the artifactId from file processing
+            finalSlug, // $2 - Auto-generated unique slug
+            title, // $3
+            description || '', // $4
+            category, // $5
+            actualMime, // $6
+            analysis.estimatedKwh, // $7
+            finalSolarAmount, // $8 - Use AI-suggested pricing if available
+            0, // $9 - rays_amount (default to 0)
+            'download', // $10
+            fileProcessingResult.tradeFile.url, // $11 - Legacy delivery_url points to trade file
+            creatorId, // $12
+            fileProcessingResult.previewFile.thumbnailUrl || null, // $13
+            true, // $14 - active - immediately available in marketplace
+            fileProcessingResult.masterFile.url, // $15
+            fileProcessingResult.previewFile.previewUrl || null, // $16
+            fileProcessingResult.tradeFile.url, // $17
+            fileProcessingResult.masterFile.size, // $18
+            fileProcessingResult.previewFile.previewSize || 0, // $19
+            fileProcessingResult.tradeFile.size, // $20
+            fileProcessingResult.metadata.fileDuration || null, // $21
+            fileProcessingResult.previewFile.previewDuration || null, // $22
+            fileProcessingResult.previewFile.previewType || null, // $23
+            `${finalSlug}-preview`, // $24 - Generate preview slug
+            fileProcessingResult.processingStatus || 'completed', // $25
+            searchTags // $26 - AI-generated tags (guaranteed array)
           ]);
 
           const dbArtifactId = result.rows[0].id;
@@ -2977,15 +2992,28 @@ const server = http.createServer(async (req, res) => {
           res.end(JSON.stringify({ error: 'Database unavailable for uploads' }));
         }
       } catch (error) {
-        console.error('Enhanced upload error:', error);
+        console.error('❌ Enhanced upload error:', error);
+        console.error('❌ Error stack:', error.stack);
+        console.error('❌ Error details:', JSON.stringify({
+          message: error.message,
+          code: error.code,
+          detail: error.detail,
+          hint: error.hint,
+          position: error.position
+        }, null, 2));
         
         // Cleanup any partial files on error
         if (fileProcessingResult && fileProcessingResult.artifactId) {
           await fileManager.cleanup(fileProcessingResult.artifactId);
         }
         
+        // Return detailed error to help debugging
         res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Enhanced upload failed: ' + error.message }));
+        res.end(JSON.stringify({ 
+          error: 'Upload failed: ' + error.message,
+          details: error.code ? `Database error code: ${error.code}` : 'Processing error',
+          hint: error.hint || 'Check file format and size'
+        }));
       } finally {
         // Always clean up temporary upload file
         if (tempFilePath && fs.existsSync(tempFilePath)) {
