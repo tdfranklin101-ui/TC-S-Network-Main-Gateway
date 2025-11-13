@@ -5154,6 +5154,122 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Get User's Items (uploaded + purchased) API
+  if (pathname === '/api/artifacts/my-items' && req.method === 'GET') {
+    try {
+      // Check authentication
+      const sessionId = getCookie(req, 'tc_s_session');
+      if (!sessionId || !sessions.get(sessionId)) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Authentication required' }));
+        return;
+      }
+
+      const userId = sessions.get(sessionId).userId;
+      console.log(`📊 Fetching my items for user ID: ${userId}`);
+
+      if (!pool) {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Database unavailable' }));
+        return;
+      }
+
+      // Get user's uploaded artifacts
+      const uploadedQuery = `
+        SELECT id, title, description, category, file_type, kwh_footprint, solar_amount_s,
+               cover_art_url, delivery_mode, creator_id, streaming_url, preview_type, 
+               preview_slug, created_at, file_path
+        FROM artifacts
+        WHERE creator_id = $1 AND active = true
+        ORDER BY created_at DESC
+      `;
+      
+      const uploadedResult = await pool.query(uploadedQuery, [userId]);
+      console.log(`✅ Found ${uploadedResult.rows.length} uploaded artifacts for user ${userId}`);
+
+      // Get user's purchased artifacts
+      const purchasedQuery = `
+        SELECT p.purchased_at, p.artifact_id, p.price_solar,
+               a.id, a.title, a.description, a.category, a.file_type, a.kwh_footprint, 
+               a.solar_amount_s, a.cover_art_url, a.delivery_mode, a.creator_id,
+               a.streaming_url, a.preview_type, a.preview_slug, a.file_path
+        FROM purchases p
+        JOIN artifacts a ON p.artifact_id = a.id
+        WHERE p.user_id = $1 AND a.active = true
+        ORDER BY p.purchased_at DESC
+      `;
+      
+      const purchasedResult = await pool.query(purchasedQuery, [userId]);
+      console.log(`✅ Found ${purchasedResult.rows.length} purchased artifacts for user ${userId}`);
+
+      // Format uploaded artifacts
+      const uploaded = {
+        totalItems: uploadedResult.rows.length,
+        totalValue: uploadedResult.rows.reduce((sum, a) => sum + parseFloat(a.solar_amount_s || 0), 0),
+        artifacts: uploadedResult.rows.map(artifact => ({
+          id: artifact.id,
+          title: artifact.title,
+          description: artifact.description,
+          category: artifact.category,
+          fileType: artifact.file_type,
+          kwhFootprint: parseFloat(artifact.kwh_footprint),
+          solarPrice: parseFloat(artifact.solar_amount_s),
+          formattedPrice: `${formatSolar(artifact.solar_amount_s)} Solar`,
+          coverArt: artifact.cover_art_url,
+          deliveryMode: artifact.delivery_mode || 'download',
+          creatorId: artifact.creator_id,
+          streamingUrl: artifact.streaming_url,
+          previewType: artifact.preview_type,
+          previewSlug: artifact.preview_slug,
+          uploadedAt: artifact.created_at,
+          filePath: artifact.file_path,
+          isOwned: true,
+          ownership: 'creator'
+        }))
+      };
+
+      // Format purchased artifacts
+      const purchased = {
+        totalItems: purchasedResult.rows.length,
+        totalSpent: purchasedResult.rows.reduce((sum, p) => sum + parseFloat(p.price_solar || 0), 0),
+        artifacts: purchasedResult.rows.map(artifact => ({
+          id: artifact.id,
+          title: artifact.title,
+          description: artifact.description,
+          category: artifact.category,
+          fileType: artifact.file_type,
+          kwhFootprint: parseFloat(artifact.kwh_footprint),
+          solarPrice: parseFloat(artifact.solar_amount_s),
+          formattedPrice: `${formatSolar(artifact.solar_amount_s)} Solar`,
+          coverArt: artifact.cover_art_url,
+          deliveryMode: artifact.delivery_mode || 'download',
+          creatorId: artifact.creator_id,
+          streamingUrl: artifact.streaming_url,
+          previewType: artifact.preview_type,
+          previewSlug: artifact.preview_slug,
+          purchasedAt: artifact.purchased_at,
+          pricePaid: parseFloat(artifact.price_solar),
+          filePath: artifact.file_path,
+          isOwned: true,
+          ownership: 'purchased'
+        }))
+      };
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        uploaded: uploaded,
+        purchased: purchased,
+        totalOwnedItems: uploaded.totalItems + purchased.totalItems
+      }));
+    } catch (error) {
+      console.error('❌ Error fetching my items:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Failed to fetch your items' }));
+    }
+    return;
+  }
+
   // Get Available Artifacts API (for marketplace display)
   if (pathname === '/api/artifacts/available' && req.method === 'GET') {
     try {
