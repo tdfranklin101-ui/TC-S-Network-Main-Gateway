@@ -4141,12 +4141,14 @@
                 button.style.opacity = '0.5';
                 button.style.cursor = 'wait';
                 button.title = 'Checking session...';
+                button.innerHTML = '⏳'; // Loading spinner
                 console.log('🔄 Kid Solar button: Loading state');
             } else if (sessionState === 'authenticated') {
                 button.disabled = false;
                 button.style.opacity = '1';
                 button.style.cursor = 'pointer';
                 button.title = 'Ask Kid Solar';
+                button.innerHTML = '☀️'; // Back to sun icon
                 console.log('✅ Kid Solar button: Ready (authenticated)');
             } else {
                 // Guest state
@@ -4154,6 +4156,7 @@
                 button.style.opacity = '1';
                 button.style.cursor = 'pointer';
                 button.title = 'Sign in to use Kid Solar';
+                button.innerHTML = '☀️'; // Sun icon (but requires login)
                 console.log('👤 Kid Solar button: Requires sign-in');
             }
         }
