@@ -2791,7 +2791,8 @@ const server = http.createServer(async (req, res) => {
           Object.assign(formData, req.body);
         }
 
-        const { title, description, tags, email } = formData;
+        const { title, tags, email } = formData;
+        let description = formData.description; // Use let so AI can enhance it
         const creatorId = userId; // Get from session instead of form
         
         if (!title) {
