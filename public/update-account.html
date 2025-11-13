@@ -141,7 +141,7 @@
                 </div>
                 
                 <div class="text-center mt-3">
-                    <a href="/login">Back to Login</a>
+                    <a href="/marketplace.html">Back to Login</a>
                 </div>
             </form>
         </div>
@@ -244,7 +244,7 @@
                     showNotification('success', 'Account updated successfully! You can now login with your new credentials. Redirecting...');
                     // Redirect to the login page after a short delay
                     setTimeout(() => {
-                        window.location.href = '/login';
+                        window.location.href = '/marketplace.html';
                     }, 3000);
                 } else {
                     const errorData = await response.json();

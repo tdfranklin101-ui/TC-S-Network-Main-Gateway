@@ -1333,8 +1333,8 @@ class MarketplaceApp {
       // Show login/register buttons
       if (this.headerActions) {
         this.headerActions.innerHTML = `
-          <a href="/login.html" class="register-btn">Login</a>
-          <a href="/register.html" class="register-btn">Register</a>
+          <button class="register-btn" onclick="marketplace.showSigninModal()">Sign In</button>
+          <button class="register-btn" onclick="marketplace.showSignupModal()">Join Network</button>
         `;
       }
       return;
