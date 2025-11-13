@@ -2392,6 +2392,8 @@
 
     <script>
         let currentUser = null;
+        let sessionState = 'loading'; // 'loading', 'authenticated', 'guest'
+        let sessionCheckPromise = null; // Track session check promise
         let allArtifacts = [];
         let filteredArtifacts = [];
         let monaziteCollection = null;
@@ -2493,8 +2495,9 @@
         window.addEventListener('load', function() {
             loadArtifacts();
             loadMonaziteCollection();
-            checkUserSession();
+            sessionCheckPromise = checkUserSession(); // Store promise
             setupEventListeners();
+            updateKidSolarButton(); // Initialize button state
         });
 
         function setupEventListeners() {
@@ -3362,6 +3365,8 @@
 
         async function checkUserSession() {
             console.log('🔍 Checking user session from server...');
+            sessionState = 'loading';
+            updateKidSolarButton(); // Update button to loading state
             
             try {
                 // Store current balance before checking (for comparison)
@@ -3408,12 +3413,14 @@
                             solarBalance: newBalance
                         };
                         
+                        sessionState = 'authenticated';
                         console.log(`✅ Server session active: ${currentUser.username} | Balance: ${currentUser.solarBalance} Solar`);
                         
                         // Cache to localStorage
                         localStorage.setItem('tc_s_user', JSON.stringify(currentUser));
                     } else {
                         console.log('❌ Server says: not authenticated');
+                        sessionState = 'guest';
                         currentUser = null;
                         localStorage.removeItem('tc_s_user');
                     }
@@ -3426,13 +3433,16 @@
                         console.warn('⚠️ Server check failed, keeping cached session as fallback');
                         try {
                             currentUser = JSON.parse(stored);
+                            sessionState = 'authenticated'; // Trust cached session
                             console.log('📦 Using cached session due to server error:', currentUser);
                         } catch (e) {
                             currentUser = null;
+                            sessionState = 'guest';
                             localStorage.removeItem('tc_s_user');
                         }
                     } else {
                         currentUser = null;
+                        sessionState = 'guest';
                         localStorage.removeItem('tc_s_user');
                     }
                 }
@@ -3444,17 +3454,21 @@
                 if (stored) {
                     try {
                         currentUser = JSON.parse(stored);
+                        sessionState = 'authenticated'; // Trust cached session
                         console.log('📦 Using cached user (server unreachable):', currentUser);
                     } catch (e) {
                         currentUser = null;
+                        sessionState = 'guest';
                         localStorage.removeItem('tc_s_user');
                     }
                 } else {
                     currentUser = null;
+                    sessionState = 'guest';
                 }
             }
             
             updateUserDisplay();
+            updateKidSolarButton(); // Update button state after session check
         }
 
         function updateUserDisplay() {
@@ -4117,14 +4131,46 @@
         let conversationId = localStorage.getItem('kid_solar_conversation_id') || `conv_${Date.now()}`;
         localStorage.setItem('kid_solar_conversation_id', conversationId);
 
+        // Update Kid Solar button state based on session
+        function updateKidSolarButton() {
+            const button = document.getElementById('floating-kid-solar-btn');
+            if (!button) return;
+            
+            if (sessionState === 'loading') {
+                button.disabled = true;
+                button.style.opacity = '0.5';
+                button.style.cursor = 'wait';
+                button.title = 'Checking session...';
+                console.log('🔄 Kid Solar button: Loading state');
+            } else if (sessionState === 'authenticated') {
+                button.disabled = false;
+                button.style.opacity = '1';
+                button.style.cursor = 'pointer';
+                button.title = 'Ask Kid Solar';
+                console.log('✅ Kid Solar button: Ready (authenticated)');
+            } else {
+                // Guest state
+                button.disabled = false;
+                button.style.opacity = '1';
+                button.style.cursor = 'pointer';
+                button.title = 'Sign in to use Kid Solar';
+                console.log('👤 Kid Solar button: Requires sign-in');
+            }
+        }
+        
         // Open chat panel (triggered from existing "Ask Kid Solar" button)
         async function openKidSolarChat() {
-            // Re-check session to ensure we have latest user data
-            await checkUserSession();
+            // If session is still loading, wait for it
+            if (sessionState === 'loading' && sessionCheckPromise) {
+                console.log('⏳ Waiting for session check to complete...');
+                await sessionCheckPromise;
+                console.log('✅ Session check complete, state:', sessionState);
+            }
             
-            // Use currentUser variable instead of re-checking localStorage
-            if (!currentUser) {
+            // Check authentication status
+            if (!currentUser || sessionState !== 'authenticated') {
                 alert('Please sign in to use Kid Solar');
+                showSigninModal(); // Open sign-in modal
                 return;
             }
             const user = currentUser;
