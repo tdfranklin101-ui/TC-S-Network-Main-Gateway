@@ -262,6 +262,19 @@ export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
 export type InsertUserProfile = z.infer<typeof insertUserProfileSchema>;
 export type InsertContentLibrary = z.infer<typeof insertContentLibrarySchema>;
 
+// Registrants table - waitlist registrations
+export const registrants = pgTable("registrants", {
+  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  email: text("email").notNull(),
+  name: text("name"),
+  interests: text("interests"),
+  registeredAt: timestamp("registered_at").default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const insertRegistrantSchema = createInsertSchema(registrants).omit({ id: true });
+export type Registrant = typeof registrants.$inferSelect;
+export type InsertRegistrant = z.infer<typeof insertRegistrantSchema>;
+
 // Wallets table - member wallet system
 export const wallets = pgTable("wallets", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
