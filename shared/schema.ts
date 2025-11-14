@@ -262,12 +262,29 @@ export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
 export type InsertUserProfile = z.infer<typeof insertUserProfileSchema>;
 export type InsertContentLibrary = z.infer<typeof insertContentLibrarySchema>;
 
+// Wallets table - member wallet system
+export const wallets = pgTable("wallets", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: text("user_id").notNull().unique(),
+  email: text("email").unique(),
+  passcodeHash: text("passcode_hash"),
+  balanceSolarS: numeric("balance_solar_s").default("0"),
+  balanceRays: integer("balance_rays").default(0),
+  lastDailyGrantAt: timestamp("last_daily_grant_at"),
+  birthdate: timestamp("birthdate"),
+  worldIdVerified: boolean("world_id_verified").default(false),
+  worldIdNullifierHash: text("world_id_nullifier_hash"),
+  worldIdVerificationLevel: text("world_id_verification_level"),
+  worldIdVerifiedAt: timestamp("world_id_verified_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Members table - legacy member management system
 export const members = pgTable("members", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
   username: text("username").notNull().unique(),
   name: text("name").notNull(),
-  email: text("email").notNull(),
+  email: text("email").notNull().unique(),
   joinedDate: text("joined_date").default(sql`CURRENT_TIMESTAMP`),
   totalSolar: numeric("total_solar").notNull().default("1"),
   totalDollars: numeric("total_dollars").notNull().default("0"),
@@ -280,6 +297,7 @@ export const members = pgTable("members", {
   passwordHash: text("password_hash"),
   firstName: text("first_name"),
   lastName: text("last_name"),
+  walletId: varchar("wallet_id").$type<string>().unique().references(() => wallets.id, { onDelete: "set null" }),
 });
 
 // Distribution logs for member payouts
