@@ -337,6 +337,21 @@ export const backupLogs = pgTable("backup_logs", {
   metadata: jsonb("metadata"), // Additional backup details
 });
 
+// Update log for system updates
+export const updateLog = pgTable("update_log", {
+  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  startedAt: timestamp("started_at", { withTimezone: true }).notNull().default(sql`now()`),
+  finishedAt: timestamp("finished_at", { withTimezone: true }),
+  status: varchar("status", { length: 20 }).notNull(),
+  updated: jsonb("updated"),
+  missing: jsonb("missing"),
+  error: text("error"),
+  meta: jsonb("meta"),
+  createdAt: timestamp("created_at").default(sql`now()`),
+}, (table) => ({
+  startedAtIdx: index("idx_update_log_started_at").on(table.startedAt),
+}));
+
 // Newsletter subscriptions
 export const newsletterSubscriptions = pgTable("newsletter_subscriptions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
