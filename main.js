@@ -2932,7 +2932,7 @@ const server = http.createServer(async (req, res) => {
             0, // $9 - rays_amount (default to 0)
             'download', // $10
             fileProcessingResult.tradeFile.url, // $11 - Legacy delivery_url points to trade file
-            creatorId, // $12
+            String(creatorId), // $12 - Convert to string (artifacts.creator_id is TEXT)
             fileProcessingResult.previewFile.thumbnailUrl || null, // $13
             true, // $14 - active - immediately available in marketplace
             fileProcessingResult.masterFile.url, // $15
