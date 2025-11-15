@@ -1,0 +1,89 @@
+Create the full multi-repo codebase for the TC-S Network platform.
+
+Generate the following GitHub repositories under my account, each initialized with:
+- MIT license
+- README.md
+- src/ folder
+- package.json (Node.js / TypeScript)
+- .gitignore
+- .env.example
+- minimal starter code (Express API or Next.js depending on repo)
+- instructions for deployment on Vercel
+- instructions for connecting to Supabase
+- folder structure exactly as defined below
+
+Here are the repositories to create:
+
+1. TC-S-Network-Marketplace
+   - Next.js app for marketplace, Identify Anything, and artifact grid
+   - Include: pages/, components/, supabaseClient.ts, hooks/, public/, api/
+   - README with setup + build + deploy instructions
+
+2. TC-S-Network-Wallet
+   - Solar Wallet standalone application (Next.js or Node API)
+   - Include: wallet engine placeholder, send/receive stubs, JSON-LD identity
+   - Supabase auth wiring
+   - README with API routes and architecture
+
+3. TC-S-Network-Members
+   - Members directory UI + API
+   - Include: search, profile pages, org index
+   - Supabase table wiring instructions
+
+4. TC-S-Network-Ledger
+   - Reference ledger (Node/Express API)
+   - Include: ledger routes, Solar reserve check, PPA retirement endpoint
+   - README defining endpoints
+
+5. TC-S-Network-Solar-Standard
+   - Documentation repository
+   - Include: /docs, /json-ld, /schemas
+   - Provide initial Solar Standard JSON-LD templates
+
+6. TC-S-Network-Kid-Solar
+   - AI persona + script repository
+   - Include: /scripts, /prompts, /voice/, /d-id/
+   - README explaining how to use prompts
+
+7. TC-S-Network-Satellite-ID-Anywhere
+   - Satellite tracker dashboard
+   - Include: Next.js, 3D globe component (Cesium or Three.js placeholder)
+   - routes: /api/loadTLE, /api/find
+   - lib: tleParser.ts, orbitMath.ts
+   - cron script: scripts/fetchTLE.js
+
+8. TC-S-Network-Shared
+   - Shared TypeScript utils, API clients, hooks
+   - Publish as internal npm package under @tcs-network/shared
+
+9. TC-S-UIM-Layer
+   - SAi + UIM handshake layer
+   - Include: Ed25519 signing, intent scoring placeholders
+   - /api/intents, /api/align-score
+
+10. TC-S-Commissioning-Engine
+    - Licensing + commissioning workflows
+    - Include: /contracts/, /licenses/, /api/commission
+    - README with operational steps
+
+11. TC-S-Dashboards
+    - Solar Index dashboard + REC + SAI dashboards
+    - Include: charts/, components/, api/power/, api/index/
+    - JSON-LD metadata for AI consumption
+
+GENERAL REQUIREMENTS:
+- All repos should be initialized with TypeScript.
+- Use Next.js for UI dashboards and apps.
+- Use Express for purely API-based repos.
+- Every repo must contain a complete README describing:
+  - local development
+  - environment variables
+  - linking to Supabase keys
+  - how to deploy to Vercel
+  - how to import shared utilities package
+
+After generating each repo:
+- Push to GitHub automatically.
+- Confirm the repo creation and provide links.
+
+Proceed now and create all repositories exactly as listed.
