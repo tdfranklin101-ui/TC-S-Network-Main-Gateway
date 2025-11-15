@@ -1,5 +1,6 @@
 {pkgs}: {
   deps = [
+    pkgs.gh
     pkgs.google-cloud-sdk-gce
     pkgs.nano
     pkgs.ffmpeg
