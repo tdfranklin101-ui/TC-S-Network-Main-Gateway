@@ -503,18 +503,52 @@ export const fileAccessLogs = pgTable("file_access_logs", {
   duration: integer("duration"), // Access duration in milliseconds
 });
 
+// Share tokens for artifact sharing
+export const shareTokens = pgTable("share_tokens", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  token: varchar("token").notNull().unique(),
+  artifactId: varchar("artifact_id").references(() => artifacts.id).notNull(),
+  creatorId: varchar("creator_id").references(() => users.id).notNull(),
+  expiresAt: timestamp("expires_at"),
+  maxUses: integer("max_uses"),
+  useCount: integer("use_count").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  isActive: boolean("is_active").default(true),
+});
+
+// Identify Anything AI submissions
+export const identifySubmissions = pgTable("identify_submissions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id),
+  imageUrl: text("image_url").notNull(),
+  prompt: text("prompt"),
+  aiResponse: text("ai_response"),
+  confidence: integer("confidence"),
+  tags: text("tags").array(),
+  processingStatus: varchar("processing_status").default("pending"),
+  processingError: text("processing_error"),
+  submittedAt: timestamp("submitted_at").defaultNow(),
+  completedAt: timestamp("completed_at"),
+});
+
 // Artifacts schemas
 export const insertArtifactSchema = createInsertSchema(artifacts).omit({ id: true, createdAt: true });
 export const insertDownloadTokenSchema = createInsertSchema(downloadTokens);
 export const insertFileAccessLogSchema = createInsertSchema(fileAccessLogs);
+export const insertShareTokenSchema = createInsertSchema(shareTokens);
+export const insertIdentifySubmissionSchema = createInsertSchema(identifySubmissions);
 
 export type Artifact = typeof artifacts.$inferSelect;
 export type DownloadToken = typeof downloadTokens.$inferSelect;
 export type FileAccessLog = typeof fileAccessLogs.$inferSelect;
+export type ShareToken = typeof shareTokens.$inferSelect;
+export type IdentifySubmission = typeof identifySubmissions.$inferSelect;
 
 export type InsertArtifact = z.infer<typeof insertArtifactSchema>;
 export type InsertDownloadToken = z.infer<typeof insertDownloadTokenSchema>;
 export type InsertFileAccessLog = z.infer<typeof insertFileAccessLogSchema>;
+export type InsertShareToken = z.infer<typeof insertShareTokenSchema>;
+export type InsertIdentifySubmission = z.infer<typeof insertIdentifySubmissionSchema>;
 
 // Geographic Analytics - Privacy-focused aggregate daily visit tracking (production only)
 export const geoAnalytics = pgTable("geo_analytics", {
