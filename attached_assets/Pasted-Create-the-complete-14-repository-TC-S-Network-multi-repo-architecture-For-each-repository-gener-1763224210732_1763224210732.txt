@@ -1,0 +1,204 @@
+Create the complete 14-repository TC-S Network multi-repo architecture.  
+For each repository, generate:
+
+- A new GitHub repository under my account
+- MIT License
+- README.md with full setup instructions
+- src/ folder
+- Next.js app for dashboards & UIs
+- Express API for backend-only repos
+- TypeScript everywhere
+- package.json
+- .gitignore
+- .env.example with Supabase environment variables
+- supabaseClient.ts (where relevant)
+- Basic folder scaffolding (pages/, components/, api/, lib/, scripts/)
+- Initial commit and push
+
+All repos must support:
+- Shared Supabase database connection
+- Shared importable utilities from @tcs-network/shared
+- Vercel deployment readiness
+- Consistent coding structure across repos
+
+=======================================
+CREATE THE FOLLOWING 14 REPOSITORIES:
+=======================================
+
+--------------------------------------------------
+1. TC-S-Network-Solar-Dashboard  (Foundation)
+--------------------------------------------------
+Purpose:
+- Public-facing Solar Index dashboard
+- Solar Clock, production, consumption, REC feeds
+Include:
+- /components/SolarIndex.tsx
+- /components/SolarClock.tsx
+- /api/production, /api/consumption
+- /lib/siCalculator.ts
+- JSON-LD metadata generator
+
+--------------------------------------------------
+2. TC-S-Network-Solar-Standard  (Foundation)
+--------------------------------------------------
+Purpose:
+- Solar Standard specifications and JSON-LD schemas
+Include:
+- /docs
+- /schemas
+- /json-ld
+No DB connection needed.
+
+--------------------------------------------------
+3. TC-S-SAI-Dashboard (Foundation)
+--------------------------------------------------
+Purpose:
+- Ethical indices dashboard (ESI, CSI, HDI, EBI)
+- UIM handshake visualizer
+Include:
+- /components/EthicsGauge.tsx
+- /api/ethics
+Connects to: solar_audit_entries, uim_handshakes.
+
+--------------------------------------------------
+4. TC-S-UIM-Layer (Foundation)
+--------------------------------------------------
+Purpose:
+- Intent scoring engine
+- Ed25519 signature validation
+- SAi ethical alignment gateway
+Include:
+- /api/intents
+- /api/compute-score
+- /lib/uimSigner.ts
+
+--------------------------------------------------
+5. TC-S-Network-Marketplace  (PBC)
+--------------------------------------------------
+Purpose:
+- Artifact grid, Identify Anything
+Include:
+- /components/ArtifactCard.tsx
+- /api/artifacts
+Tables referenced:
+artifacts, identify_submissions, download_tokens, share_tokens.
+
+--------------------------------------------------
+6. TC-S-Network-Wallet  (PBC)
+--------------------------------------------------
+Purpose:
+- Solar wallet standalone
+- Send / receive Solar tokens
+Include:
+- /components/WalletBalance.tsx
+- /api/wallet/send, /api/wallet/receive
+Tables:
+solar_accounts, transactions, entitlements.
+
+--------------------------------------------------
+7. TC-S-Network-Members  (PBC)
+--------------------------------------------------
+Purpose:
+- Member directory, profiles
+Include:
+/api/members
+Tables:
+members, distribution.
+
+--------------------------------------------------
+8. TC-S-Network-Z-Private  (PBC Enterprise)
+--------------------------------------------------
+Purpose:
+- Enterprise commissioning portal
+- Journey / Stadium / Event client configuration
+Include:
+- /clients
+- /commissioning
+- /licensing
+- /analytics
+Tables:
+network_commissioning_ledgers.
+
+--------------------------------------------------
+9. TC-S-Commissioning-Engine (PBC)
+--------------------------------------------------
+Purpose:
+- Commission creation
+- Licensing calculation
+- Wallet provisioning
+Include:
+/api/commission
+Tables:
+network_commissioning_ledgers, ledger_metadata.
+
+--------------------------------------------------
+10. TC-S-Network-Kid-Solar (AI)
+--------------------------------------------------
+Purpose:
+- Kid Solar persona, scripts, voice integration
+Include:
+- /scripts
+- /voice
+- /persona
+Tables:
+kid_solar_sessions, kid_solar_memories, kid_solar_conversations.
+
+--------------------------------------------------
+11. TC-S-Network-Music-System (AI / Media)
+--------------------------------------------------
+Purpose:
+- Music engine for songs + play events
+Include:
+- /api/songs
+- /api/play
+Tables:
+songs, play_events.
+
+--------------------------------------------------
+12. TC-S-Network-Satellite-ID-Anywhere (Infra)
+--------------------------------------------------
+Purpose:
+- Satellite tracking, TLE ingestion
+Include:
+- /components/Globe.tsx
+- /api/tle
+- /scripts/fetchTLE.js
+No DB interaction except log table (optional).
+
+--------------------------------------------------
+13. TC-S-Network-Ledger (Foundation Transparency)
+--------------------------------------------------
+Purpose:
+- Reference ledger + archives
+Include:
+/api/ledger
+Tables:
+ledger_archives, ledger_metadata.
+
+--------------------------------------------------
+14. TC-S-Network-Shared (Shared Utilities)
+--------------------------------------------------
+Purpose:
+- Shared TypeScript utilities, hooks, API clients
+Published as internal npm package:
+@tcs-network/shared
+Include:
+- /src/supabaseClient.ts
+- /src/types.ts
+- /src/utils.ts
+This repo must be installable by all others.
+
+=======================================
+AFTER CREATING ALL 14 REPOSITORIES:
+=======================================
+1. Push each initial commit to GitHub
+2. Provide links to all repos
+3. Ensure every repo’s README includes:
+   - Setup
+   - Install
+   - Env variables
+   - Development commands
+   - Deployment to Vercel
+   - How to import @tcs-network/shared
+4. Confirm completion of entire multi-repo scaffolding.
+Proceed now.
