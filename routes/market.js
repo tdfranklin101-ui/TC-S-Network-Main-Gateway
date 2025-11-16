@@ -15,8 +15,8 @@ const upload = multer({
   fileFilter: (req, file, cb) => {
     // Aligned with main marketplace upload - supports: Images, videos, documents, audio files
     const allowedMimes = [
-      // Audio files
-      'audio/mpeg', 'audio/wav', 'audio/flac', 'audio/mp4', 'audio/aac', 'audio/ogg', 'audio/webm',
+      // Audio files (mp3, wav, flac, aac, ogg, webm)
+      'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/flac', 'audio/aac', 'audio/ogg', 'audio/webm',
       // Image files
       'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/svg+xml', 'image/webp', 'image/bmp',
       // Video files  
