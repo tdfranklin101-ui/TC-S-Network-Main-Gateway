@@ -10,10 +10,13 @@ packages = ["freetype", "lcms2", "libimagequant", "libjpeg", "libtiff", "libwebp
 run = "node main.js"
 deploymentTarget = "autoscale"
 
-
 [[ports]]
 localPort = 8080
 externalPort = 80
+
+[[ports]]
+localPort = 33445
+externalPort = 3000
 
 [agent]
 integrations = ["javascript_stripe:1.0.0", "javascript_openai:1.0.0"]
