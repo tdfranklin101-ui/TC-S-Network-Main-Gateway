@@ -11,13 +11,21 @@ const MAX_CONVERSATION_LENGTH = 20;
 
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 },
+  limits: { fileSize: 100 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
+    // Aligned with main marketplace upload - supports: Images, videos, documents, audio files
     const allowedMimes = [
-      'audio/webm', 'audio/wav', 'audio/mp3', 'audio/mpeg',
-      'image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif',
-      'text/plain', 'application/pdf',
-      'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      // Audio files
+      'audio/mpeg', 'audio/wav', 'audio/flac', 'audio/mp4', 'audio/aac', 'audio/ogg', 'audio/webm',
+      // Image files
+      'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/svg+xml', 'image/webp', 'image/bmp',
+      // Video files  
+      'video/mp4', 'video/webm', 'video/quicktime', 'video/avi', 'video/mkv', 'video/x-msvideo',
+      // Document files
+      'text/plain', 'application/pdf', 'text/markdown', 'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
     ];
     
     if (allowedMimes.includes(file.mimetype)) {
