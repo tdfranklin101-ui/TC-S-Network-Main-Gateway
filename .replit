@@ -29,5 +29,5 @@ defaultBucketID = "replit-objstore-f95b4cf3-0db7-40d1-9680-54f5b997ed65"
 [userenv.shared]
 
 [userenv.development]
-TESTING_STRIPE_SECRET_KEY = "sk_test_disabled"
+TESTING_STRIPE_SECRET_KEY = "sk_test_disabled"&
 TESTING_VITE_STRIPE_PUBLIC_KEY = "pk_test_disabled"
