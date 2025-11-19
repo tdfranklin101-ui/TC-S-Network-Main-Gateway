@@ -337,7 +337,7 @@ const upload = multer({
     }
   }),
   limits: {
-    fileSize: 100 * 1024 * 1024, // Reduced to 100MB for better security
+    fileSize: 500 * 1024 * 1024, // Set to 500MB for file uploads
   },
   fileFilter: (req, file, cb) => {
     // Extended filter for marketplace artifacts - more permissive
