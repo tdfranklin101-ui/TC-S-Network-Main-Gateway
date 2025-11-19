@@ -5377,7 +5377,7 @@ const server = http.createServer(async (req, res) => {
       const uploadedQuery = `
         SELECT id, title, description, category, file_type, kwh_footprint, solar_amount_s,
                cover_art_url, delivery_mode, creator_id, streaming_url, preview_type, 
-               preview_slug, created_at, file_path
+               preview_slug, created_at, master_file_url, preview_file_url, trade_file_url
         FROM artifacts
         WHERE creator_id = $1 AND active = true
         ORDER BY created_at DESC
@@ -5399,7 +5399,7 @@ const server = http.createServer(async (req, res) => {
                  a.id, a.title, a.description, a.category, a.file_type, 
                  a.kwh_footprint, a.solar_amount_s, a.cover_art_url, 
                  a.delivery_mode, a.creator_id, a.streaming_url, 
-                 a.preview_type, a.preview_slug, a.file_path
+                 a.preview_type, a.preview_slug, a.master_file_url, a.preview_file_url, a.trade_file_url
           FROM transactions t
           JOIN artifacts a ON t.artifact_id = a.id
           WHERE t.wallet_id = $1 AND t.type = 'purchase' AND a.active = true
@@ -5431,7 +5431,9 @@ const server = http.createServer(async (req, res) => {
           previewType: artifact.preview_type,
           previewSlug: artifact.preview_slug,
           uploadedAt: artifact.created_at,
-          filePath: artifact.file_path,
+          masterFileUrl: artifact.master_file_url,
+          previewFileUrl: artifact.preview_file_url,
+          tradeFileUrl: artifact.trade_file_url,
           isOwned: true,
           ownership: 'creator'
         }))
@@ -5459,7 +5461,9 @@ const server = http.createServer(async (req, res) => {
           previewType: transaction.preview_type,
           previewSlug: transaction.preview_slug,
           purchasedAt: transaction.purchase_date,
-          filePath: transaction.file_path,
+          masterFileUrl: transaction.master_file_url,
+          previewFileUrl: transaction.preview_file_url,
+          tradeFileUrl: transaction.trade_file_url,
           isOwned: true,
           ownership: 'purchased'
         }))
