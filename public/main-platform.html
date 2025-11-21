@@ -472,6 +472,18 @@
           arrow.style.transform = 'rotate(180deg)';
         }
       }
+
+      function toggleGandhiEssay() {
+        const content = document.getElementById('gandhiEssayContent');
+        const arrow = document.getElementById('gandhiEssayArrow');
+        if (content.style.display === 'none' || content.style.display === '') {
+          content.style.display = 'block';
+          arrow.innerHTML = '▲';
+        } else {
+          content.style.display = 'none';
+          arrow.innerHTML = '▼';
+        }
+      }
     </script>
 
     <main>
@@ -1087,6 +1099,282 @@
                   " onmouseover="this.style.transform='translateY(-2px) scale(1.05)'; this.style.boxShadow='0 6px 24px rgba(31, 212, 153, 0.6)'" onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 4px 16px rgba(31, 212, 153, 0.4)'">
                     <span>🌟</span> Read White Paper
                   </a>
+                </div>
+              </div>
+            </div>
+
+            <!-- Featured Essay: Gandhi, Positive Alignment, and the March of the Poor -->
+            <div data-testid="featured-essay-gandhi" style="
+              background: linear-gradient(135deg, rgba(255, 215, 0, 0.12) 0%, rgba(0, 0, 0, 0.95) 50%);
+              border: 3px solid #FFD700;
+              border-radius: 16px;
+              padding: 2rem;
+              margin-bottom: 2rem;
+              box-shadow: 0 0 35px rgba(255, 215, 0, 0.4), 0 10px 30px rgba(0, 0, 0, 0.5);
+              backdrop-filter: blur(10px);
+              position: relative;
+              overflow: hidden;
+            ">
+              <!-- Featured Essay Badge -->
+              <div style="
+                position: absolute;
+                top: -10px;
+                right: 20px;
+                background: linear-gradient(135deg, #FFD700, #FFA500);
+                color: #000;
+                font-weight: 900;
+                padding: 8px 20px;
+                border-radius: 0 0 15px 15px;
+                font-size: 0.75rem;
+                letter-spacing: 2px;
+                box-shadow: 0 4px 15px rgba(255, 215, 0, 0.5);
+                text-transform: uppercase;
+              ">✨ Featured Essay</div>
+
+              <!-- Essay Title -->
+              <h2 style="
+                color: #FFD700;
+                font-size: 2rem;
+                font-weight: 900;
+                margin: 0 0 0.5rem 0;
+                text-shadow: 0 0 25px rgba(255, 215, 0, 0.8), 2px 2px 6px rgba(0, 0, 0, 1);
+                letter-spacing: 0.5px;
+                line-height: 1.2;
+              ">Gandhi, Positive Alignment, and the March of the Poor</h2>
+
+              <!-- Essay Subtitle -->
+              <p style="
+                color: #FFA500;
+                font-size: 1.1rem;
+                font-style: italic;
+                margin: 0 0 1.5rem 0;
+                text-shadow: 0 0 15px rgba(255, 165, 0, 0.6), 1px 1px 4px rgba(0, 0, 0, 0.9);
+                font-weight: 600;
+              ">A story of dignity becoming a human right — and a system built to guarantee it.</p>
+
+              <!-- First Paragraph (Always Visible) -->
+              <div style="
+                color: rgba(255, 255, 255, 0.95);
+                font-size: 1.05rem;
+                line-height: 1.8;
+                margin-bottom: 1.5rem;
+                text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.9);
+              ">
+                <p style="margin: 0 0 1rem 0;">
+                  When Gandhi stepped onto the dusty road in 1930, he was not marching toward the sea as one man.<br>
+                  He was marching with — and for — millions whose lives were shaped by poverty, silence, and endurance.<br>
+                  Farmers with cracked hands. Widows wrapped in coarse homespun cloth. Children whose only inheritance was the weight of an empire.
+                </p>
+                <p style="margin: 0 0 1rem 0;">
+                  He understood something the world would later codify in the Universal Declaration of Human Rights:
+                </p>
+                <p style="margin: 0; font-style: italic; color: #FFD700; padding-left: 1.5rem; border-left: 3px solid #FFD700;">
+                  Freedom is not given by governments; it is awakened within people.<br>
+                  Empowerment is a human right. Dignity cannot be taxed.
+                </p>
+              </div>
+
+              <!-- Read More Button -->
+              <div style="text-align: center; margin-bottom: 1rem;">
+                <button onclick="toggleGandhiEssay()" data-testid="button-toggle-gandhi-essay" style="
+                  background: linear-gradient(135deg, #FFD700, #FFA500);
+                  color: #000;
+                  padding: 0.8rem 2.5rem;
+                  border: none;
+                  border-radius: 50px;
+                  font-weight: 800;
+                  font-size: 1rem;
+                  cursor: pointer;
+                  transition: all 0.3s ease;
+                  box-shadow: 0 4px 16px rgba(255, 215, 0, 0.4);
+                  display: inline-flex;
+                  align-items: center;
+                  gap: 0.5rem;
+                " onmouseover="this.style.transform='translateY(-2px) scale(1.05)'; this.style.boxShadow='0 6px 24px rgba(255, 215, 0, 0.6)'" onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 4px 16px rgba(255, 215, 0, 0.4)'">
+                  Read Full Essay <span id="gandhiEssayArrow">▼</span>
+                </button>
+              </div>
+
+              <!-- Expandable Content -->
+              <div id="gandhiEssayContent" style="display: none;">
+                <!-- Continuing First Paragraph -->
+                <div style="
+                  color: rgba(255, 255, 255, 0.95);
+                  font-size: 1.05rem;
+                  line-height: 1.8;
+                  margin-bottom: 2rem;
+                  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.9);
+                ">
+                  <p style="margin: 0 0 1rem 0;">
+                    The Salt March was not simply civil disobedience.<br>
+                    It was the moment the poor became visible — a mass of humanity reclaiming agency by walking together.<br>
+                    They broke no windows.<br>
+                    They carried no weapons.<br>
+                    They carried only the truth that every person is born with equal right to life, liberty, and the ability to shape their own future.
+                  </p>
+                  <p style="margin: 0; font-weight: 600; color: #00ff41;">
+                    This is the essence of Positive Alignment:<br>
+                    a system designed so that the ones with the least power gain the most agency.
+                  </p>
+                </div>
+
+                <!-- Section: Positive Alignment as Gandhi Would Recognize It -->
+                <div style="margin-bottom: 2rem; padding: 1.5rem; background: rgba(0, 0, 0, 0.4); border-left: 4px solid #FFD700; border-radius: 8px;">
+                  <h3 style="
+                    color: #FFD700;
+                    font-size: 1.5rem;
+                    font-weight: 700;
+                    margin: 0 0 1rem 0;
+                    text-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+                  ">Positive Alignment as Gandhi Would Recognize It</h3>
+                  
+                  <p style="color: rgba(255, 255, 255, 0.95); font-size: 1.05rem; line-height: 1.8; margin: 0 0 1rem 0;">
+                    Gandhi believed empowerment should never depend on wealth, privilege, or permission.<br>
+                    The TC-S Network builds that principle directly into its architecture:
+                  </p>
+                  
+                  <ul style="color: rgba(255, 255, 255, 0.95); font-size: 1.05rem; line-height: 1.8; margin: 0 0 1rem 0; padding-left: 2rem;">
+                    <li>1 Solar per day for every person</li>
+                    <li>Economic dignity as a daily right, not a reward</li>
+                    <li>Energy-backed value that cannot be inflated, denied, or politically weaponized</li>
+                    <li>Tools that let the poorest identify, create, authenticate, and participate</li>
+                  </ul>
+                  
+                  <p style="color: rgba(255, 255, 255, 0.95); font-size: 1.05rem; line-height: 1.8; margin: 0 0 1rem 0;">
+                    This is not charity.<br>
+                    This is structural liberation — a design choice where power flows to people, not institutions.
+                  </p>
+                  
+                  <p style="color: rgba(255, 255, 255, 0.95); font-size: 1.05rem; line-height: 1.8; margin: 0;">
+                    Positive Alignment means the system itself cannot drift away from its purpose.<br>
+                    It means technology reinforces human rights, and economics protects the poor, not exploits them.
+                  </p>
+                </div>
+
+                <!-- Section: The March Continues -->
+                <div style="margin-bottom: 2rem; padding: 1.5rem; background: rgba(0, 255, 65, 0.08); border-left: 4px solid #00ff41; border-radius: 8px;">
+                  <h3 style="
+                    color: #00ff41;
+                    font-size: 1.5rem;
+                    font-weight: 700;
+                    margin: 0 0 1rem 0;
+                    text-shadow: 0 0 20px rgba(0, 255, 65, 0.6);
+                  ">The March Continues, But With Tools Gandhi Never Had</h3>
+                  
+                  <p style="color: rgba(255, 255, 255, 0.95); font-size: 1.05rem; line-height: 1.8; margin: 0 0 1rem 0;">
+                    Where the Salt March turned poverty into a moral force,<br>
+                    the TC-S Network turns dignity into a measurable economic right:
+                  </p>
+                  
+                  <ul style="color: rgba(255, 255, 255, 0.95); font-size: 1.05rem; line-height: 1.8; margin: 0 0 1rem 0; padding-left: 2rem;">
+                    <li><a href="#mobile-interface" style="color: #00ff41; text-decoration: none; font-weight: 600; text-shadow: 0 0 10px rgba(0, 255, 65, 0.4);" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">Identify Anything</a> lets individuals discover and assert value.</li>
+                    <li><a href="/satellite-lookup.html" style="color: #00ff41; text-decoration: none; font-weight: 600; text-shadow: 0 0 10px rgba(0, 255, 65, 0.4);" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">Satellite ID Anywhere</a> connects people to information beyond borders.</li>
+                    <li><a href="/marketplace.html" style="color: #00ff41; text-decoration: none; font-weight: 600; text-shadow: 0 0 10px rgba(0, 255, 65, 0.4);" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">Solar Grid Market</a> transforms creativity into daily trade.</li>
+                    <li><a href="/solar-dashboard.html" style="color: #00ff41; text-decoration: none; font-weight: 600; text-shadow: 0 0 10px rgba(0, 255, 65, 0.4);" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">The Solar Dashboard</a> makes agency visible in energy, AI, and global economics.</li>
+                    <li>Solar itself enforces fairness because energy does not lie, and dignity does not expire.</li>
+                  </ul>
+                </div>
+
+                <!-- Closing -->
+                <div style="
+                  color: rgba(255, 255, 255, 0.95);
+                  font-size: 1.05rem;
+                  line-height: 1.8;
+                  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.9);
+                  padding: 1.5rem;
+                  background: rgba(255, 215, 0, 0.08);
+                  border-radius: 8px;
+                  border: 1px solid rgba(255, 215, 0, 0.3);
+                ">
+                  <p style="margin: 0 0 1rem 0;">
+                    The poor once marched to the sea for salt.<br>
+                    Today, they connect to a network where daily resources meet them wherever they stand.
+                  </p>
+                  <p style="margin: 0 0 1rem 0; font-weight: 600;">
+                    The principles are the same.<br>
+                    The tools are new.<br>
+                    The purpose is unchanged:
+                  </p>
+                  <p style="margin: 0; font-style: italic; color: #FFD700; font-size: 1.1rem; font-weight: 700;">
+                    Empower every human.<br>
+                    Make dignity universal.<br>
+                    Turn basic income into a human right woven into the physics of the system.
+                  </p>
+                  <p style="margin: 1.5rem 0 0 0; color: #00ff41; font-weight: 600; text-align: center; font-size: 1.1rem;">
+                    The march of the poor did not end in 1930.<br>
+                    It became the blueprint.<br>
+                    And now, for the first time in history, the blueprint can be implemented —<br>
+                    <span style="color: #FFD700;">globally, peacefully, automatically, and permanently.</span>
+                  </p>
+                </div>
+
+                <!-- TC-S Network Applications Links Section -->
+                <div style="margin-top: 2rem; padding: 1.5rem; background: rgba(0, 0, 0, 0.6); border-radius: 12px; border: 2px solid #FFD700;">
+                  <h4 style="color: #FFD700; font-size: 1.3rem; margin: 0 0 1rem 0; text-align: center; text-shadow: 0 0 15px rgba(255, 215, 0, 0.6);">
+                    🌐 Explore the TC-S Network Applications
+                  </h4>
+                  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                    <a href="#mobile-interface" data-testid="link-identify-anything" style="
+                      display: block;
+                      padding: 1rem;
+                      background: linear-gradient(135deg, rgba(0, 255, 65, 0.15), rgba(0, 255, 65, 0.05));
+                      border: 1px solid #00ff41;
+                      border-radius: 8px;
+                      text-decoration: none;
+                      color: #00ff41;
+                      font-weight: 600;
+                      transition: all 0.3s ease;
+                      text-align: center;
+                      box-shadow: 0 2px 10px rgba(0, 255, 65, 0.2);
+                    " onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 4px 20px rgba(0, 255, 65, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 10px rgba(0, 255, 65, 0.2)'">
+                      🔍 Identify Anything
+                    </a>
+                    <a href="/satellite-lookup.html" data-testid="link-satellite-id" style="
+                      display: block;
+                      padding: 1rem;
+                      background: linear-gradient(135deg, rgba(0, 255, 65, 0.15), rgba(0, 255, 65, 0.05));
+                      border: 1px solid #00ff41;
+                      border-radius: 8px;
+                      text-decoration: none;
+                      color: #00ff41;
+                      font-weight: 600;
+                      transition: all 0.3s ease;
+                      text-align: center;
+                      box-shadow: 0 2px 10px rgba(0, 255, 65, 0.2);
+                    " onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 4px 20px rgba(0, 255, 65, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 10px rgba(0, 255, 65, 0.2)'">
+                      🛰️ Satellite ID Anywhere
+                    </a>
+                    <a href="/marketplace.html" data-testid="link-solar-market" style="
+                      display: block;
+                      padding: 1rem;
+                      background: linear-gradient(135deg, rgba(0, 255, 65, 0.15), rgba(0, 255, 65, 0.05));
+                      border: 1px solid #00ff41;
+                      border-radius: 8px;
+                      text-decoration: none;
+                      color: #00ff41;
+                      font-weight: 600;
+                      transition: all 0.3s ease;
+                      text-align: center;
+                      box-shadow: 0 2px 10px rgba(0, 255, 65, 0.2);
+                    " onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 4px 20px rgba(0, 255, 65, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 10px rgba(0, 255, 65, 0.2)'">
+                      🏪 Solar Grid Market
+                    </a>
+                    <a href="/solar-dashboard.html" data-testid="link-solar-dashboard" style="
+                      display: block;
+                      padding: 1rem;
+                      background: linear-gradient(135deg, rgba(0, 255, 65, 0.15), rgba(0, 255, 65, 0.05));
+                      border: 1px solid #00ff41;
+                      border-radius: 8px;
+                      text-decoration: none;
+                      color: #00ff41;
+                      font-weight: 600;
+                      transition: all 0.3s ease;
+                      text-align: center;
+                      box-shadow: 0 2px 10px rgba(0, 255, 65, 0.2);
+                    " onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 4px 20px rgba(0, 255, 65, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 10px rgba(0, 255, 65, 0.2)'">
+                      📊 The Solar Dashboard
+                    </a>
+                  </div>
                 </div>
               </div>
             </div>
