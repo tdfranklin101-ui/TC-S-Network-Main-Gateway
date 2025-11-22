@@ -1153,16 +1153,14 @@
               ">A story of dignity becoming a human right — and a system built to guarantee it.</p>
 
               <!-- Essay Video: The March -->
-              <div id="gandhiVideoContainer" style="
+              <div style="
                 margin: 0 0 1.5rem 0;
                 border-radius: 12px;
                 overflow: hidden;
                 box-shadow: 0 8px 25px rgba(255, 215, 0, 0.3), 0 0 40px rgba(0, 255, 65, 0.15);
                 border: 2px solid rgba(255, 215, 0, 0.4);
-                position: relative;
               ">
                 <video 
-                  id="gandhiVideo"
                   autoplay 
                   loop 
                   muted
@@ -1177,50 +1175,11 @@
                   onloadstart="console.log('Gandhi march video loading...')"
                   oncanplay="console.log('Gandhi march video ready'); this.play();"
                   onerror="console.error('Gandhi video error:', this.error);"
-                  crossorigin="anonymous"
                 >
                   <source src="/videos/gandhi-march.mov" type="video/mp4">
-                  <track kind="subtitles" src="/videos/gandhi-march.vtt" srclang="en" label="English" default>
                   Your browser does not support the video tag.
                 </video>
-                
-                <!-- Custom Mute/Unmute Button -->
-                <button id="gandhiMuteBtn" onclick="toggleGandhiVideoMute()" data-testid="button-mute-gandhi-video" style="
-                  position: absolute;
-                  bottom: 15px;
-                  right: 15px;
-                  background: rgba(0, 0, 0, 0.7);
-                  border: 2px solid #FFD700;
-                  border-radius: 50%;
-                  width: 50px;
-                  height: 50px;
-                  cursor: pointer;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  font-size: 24px;
-                  transition: all 0.3s ease;
-                  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
-                  z-index: 10;
-                " onmouseover="this.style.background='rgba(255, 215, 0, 0.2)'; this.style.boxShadow='0 6px 20px rgba(255, 215, 0, 0.7)'" onmouseout="this.style.background='rgba(0, 0, 0, 0.7)'; this.style.boxShadow='0 4px 12px rgba(255, 215, 0, 0.4)'">
-                  🔇
-                </button>
               </div>
-              
-              <script>
-                function toggleGandhiVideoMute() {
-                  const video = document.getElementById('gandhiVideo');
-                  const btn = document.getElementById('gandhiMuteBtn');
-                  
-                  if (video.muted) {
-                    video.muted = false;
-                    btn.innerHTML = '🔊';
-                  } else {
-                    video.muted = true;
-                    btn.innerHTML = '🔇';
-                  }
-                }
-              </script>
 
               <!-- First Paragraph (Always Visible) -->
               <div style="
