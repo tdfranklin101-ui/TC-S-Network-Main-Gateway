@@ -1161,82 +1161,25 @@
                 border: 2px solid rgba(255, 215, 0, 0.4);
                 background: #000;
                 position: relative;
+                padding-bottom: 56.25%;
+                height: 0;
               ">
-                <video 
-                  id="gandhiVideo"
-                  autoplay 
-                  loop 
-                  muted
-                  playsinline
-                  preload="auto"
+                <iframe 
+                  src="https://player.vimeo.com/video/1139544829?autoplay=1&loop=1&muted=1&background=1&autopause=0&title=0&byline=0&portrait=0"
                   data-testid="video-gandhi-march"
                   style="
+                    position: absolute;
+                    top: 0;
+                    left: 0;
                     width: 100%;
-                    height: auto;
-                    min-height: 400px;
-                    display: block;
+                    height: 100%;
                     opacity: 0.95;
-                    background: #000;
                   "
-                  onloadstart="console.log('Gandhi march video loading...')"
-                  onloadeddata="console.log('Gandhi video loaded, attempting play...'); this.play().catch(e => console.log('Play blocked:', e));"
-                  oncanplay="console.log('Gandhi march video ready'); this.play().catch(e => console.log('Play blocked:', e));"
-                  onerror="console.error('Gandhi video error:', this.error);"
-                >
-                  <source src="/videos/gandhi-march.mov" type="video/quicktime">
-                  Your browser does not support the video tag.
-                </video>
-                
-                <!-- Mute Button -->
-                <button id="gandhiMuteBtn" onclick="toggleGandhiMute()" data-testid="button-mute-gandhi" style="
-                  position: absolute;
-                  bottom: 20px;
-                  right: 20px;
-                  background: rgba(0, 0, 0, 0.7);
-                  border: 2px solid #FFD700;
-                  border-radius: 50%;
-                  width: 50px;
-                  height: 50px;
-                  cursor: pointer;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  font-size: 24px;
-                  transition: all 0.3s ease;
-                  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
-                  z-index: 10;
-                " onmouseover="this.style.background='rgba(255, 215, 0, 0.2)'; this.style.boxShadow='0 6px 20px rgba(255, 215, 0, 0.7)'" onmouseout="this.style.background='rgba(0, 0, 0, 0.7)'; this.style.boxShadow='0 4px 12px rgba(255, 215, 0, 0.4)'">
-                  🔇
-                </button>
+                  frameborder="0"
+                  allow="autoplay; fullscreen; picture-in-picture"
+                  allowfullscreen
+                ></iframe>
               </div>
-              
-              <script>
-                function toggleGandhiMute() {
-                  const video = document.getElementById('gandhiVideo');
-                  const btn = document.getElementById('gandhiMuteBtn');
-                  
-                  if (video.muted) {
-                    video.muted = false;
-                    btn.innerHTML = '🔊';
-                    console.log('Gandhi video unmuted');
-                  } else {
-                    video.muted = true;
-                    btn.innerHTML = '🔇';
-                    console.log('Gandhi video muted');
-                  }
-                  
-                  video.play().catch(e => console.log('Play error:', e));
-                }
-                
-                document.addEventListener('DOMContentLoaded', function() {
-                  const video = document.getElementById('gandhiVideo');
-                  if (video) {
-                    video.play().catch(e => {
-                      console.log('Autoplay blocked, waiting for user interaction');
-                    });
-                  }
-                });
-              </script>
 
               <!-- First Paragraph (Always Visible) -->
               <div style="
