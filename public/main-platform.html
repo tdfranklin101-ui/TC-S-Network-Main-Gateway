@@ -1166,8 +1166,9 @@
                   id="gandhiVideo"
                   autoplay 
                   loop 
+                  muted
                   playsinline
-                  preload="metadata"
+                  preload="auto"
                   data-testid="video-gandhi-march"
                   style="
                     width: 100%;
@@ -1178,7 +1179,8 @@
                     background: #000;
                   "
                   onloadstart="console.log('Gandhi march video loading...')"
-                  oncanplay="console.log('Gandhi march video ready'); this.play();"
+                  onloadeddata="console.log('Gandhi video loaded, attempting play...'); this.play().catch(e => console.log('Play blocked:', e));"
+                  oncanplay="console.log('Gandhi march video ready'); this.play().catch(e => console.log('Play blocked:', e));"
                   onerror="console.error('Gandhi video error:', this.error);"
                 >
                   <source src="/videos/gandhi-march.mov" type="video/quicktime">
@@ -1204,7 +1206,7 @@
                   box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
                   z-index: 10;
                 " onmouseover="this.style.background='rgba(255, 215, 0, 0.2)'; this.style.boxShadow='0 6px 20px rgba(255, 215, 0, 0.7)'" onmouseout="this.style.background='rgba(0, 0, 0, 0.7)'; this.style.boxShadow='0 4px 12px rgba(255, 215, 0, 0.4)'">
-                  🔊
+                  🔇
                 </button>
               </div>
               
@@ -1216,11 +1218,24 @@
                   if (video.muted) {
                     video.muted = false;
                     btn.innerHTML = '🔊';
+                    console.log('Gandhi video unmuted');
                   } else {
                     video.muted = true;
                     btn.innerHTML = '🔇';
+                    console.log('Gandhi video muted');
                   }
+                  
+                  video.play().catch(e => console.log('Play error:', e));
                 }
+                
+                document.addEventListener('DOMContentLoaded', function() {
+                  const video = document.getElementById('gandhiVideo');
+                  if (video) {
+                    video.play().catch(e => {
+                      console.log('Autoplay blocked, waiting for user interaction');
+                    });
+                  }
+                });
               </script>
 
               <!-- First Paragraph (Always Visible) -->
