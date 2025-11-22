@@ -1159,24 +1159,28 @@
                 overflow: hidden;
                 box-shadow: 0 8px 25px rgba(255, 215, 0, 0.3), 0 0 40px rgba(0, 255, 65, 0.15);
                 border: 2px solid rgba(255, 215, 0, 0.4);
+                background: #000;
               ">
                 <video 
                   autoplay 
                   loop 
                   muted
                   playsinline
+                  preload="metadata"
                   data-testid="video-gandhi-march"
                   style="
                     width: 100%;
                     height: auto;
+                    min-height: 400px;
                     display: block;
                     opacity: 0.95;
+                    background: #000;
                   "
                   onloadstart="console.log('Gandhi march video loading...')"
                   oncanplay="console.log('Gandhi march video ready'); this.play();"
                   onerror="console.error('Gandhi video error:', this.error);"
                 >
-                  <source src="/videos/gandhi-march.mov" type="video/mp4">
+                  <source src="/videos/gandhi-march.mov" type="video/quicktime">
                   Your browser does not support the video tag.
                 </video>
               </div>
