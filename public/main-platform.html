@@ -753,11 +753,10 @@ Represents global ethical stability of automated decision systems.`
                 `;
                 
                 others.forEach(idx => {
-                  const edu = indexEducation[idx.id];
-                  if (!edu) {
-                    console.warn(`No educational content for index: ${idx.id}`);
-                    return;
-                  }
+                  const edu = indexEducation[idx.id] || {
+                    title: idx.name,
+                    content: `<strong>Status:</strong> Educational content for this index is being prepared.\n\n<strong>Current Value:</strong> ${idx.value}${idx.unit}\n\n<strong>Description:</strong> ${idx.description}\n\nDetailed methodology documentation will be available soon.`
+                  };
                   html += `
                     <div style="background: rgba(0,0,0,0.5); border: 1px solid #00ff41; border-radius: 8px; padding: 1rem; display: flex; flex-direction: column;">
                       <div style="font-size: 0.9rem; color: #00ff41; font-weight: 600;">${idx.name}</div>
