@@ -1,0 +1,136 @@
+// --- TC-S Index Methodology Accordion Component ---
+// Drop directly into your page beneath the displayed indices.
+
+const IndexAccordion = () => {
+  const sections = [
+    {
+      title: "Solar Index (SI)",
+      content: `
+Solar Index measures global renewable energy abundance, stability, and efficiency.
+
+Formula:
+SI = 0.40*(Global Renewable Penetration) 
+   + 0.30*(Energy Storage Stability) 
+   + 0.30*(Grid Efficiency Ratio)
+
+Inputs:
+• Global daylight generation vs dark-cycle deficit  
+• Storage / battery reserve levels  
+• Transmission efficiency + losses  
+• Normalized to a 0–100 scale
+
+Purpose:
+Baseline health of humanity’s solar-energy future.
+      `
+    },
+    {
+      title: "Solar Reserve Health",
+      content: `
+Measures the stability, coverage, and fulfillment rate of the TC-S Solar Reserve.
+
+Formula:
+Reserve Health = (Current Reserve / Required Reserve) × Fulfillment Factor
+
+Inputs:
+• Global solar generator ledger from 2025–present  
+• Daily Solar → kWh equivalency  
+• Redemption load vs reserve remaining  
+
+Purpose:
+Shows whether global Solar distribution can remain stable long-term.
+      `
+    },
+    {
+      title: "Global Basic Income (GBI)",
+      content: `
+Measures the percentage of humans who can actively receive daily Solar.
+
+Formula:
+GBI = (Active Solar Claimants ÷ Total Humans) × 100
+
+Assumptions:
+• Smartphone penetration (2025): ~67%  
+• Digital identity penetration: ~62%  
+• Activation rate estimate: 70%  
+
+Example:
+3.5B active users ÷ 8.15B humans ≈ 42.9%
+
+Purpose:
+Represents global digital readiness for Solar-based income.
+      `
+    },
+    {
+      title: "Compute Alignment",
+      content: `
+Measures ethical compute allocation across AI and automated systems.
+
+Formula:
+Compute Alignment = (Aligned Compute Flow ÷ Total Compute Flow) × 100
+
+Inputs:
+• UIM Protocol alignment checks  
+• Ethics Engine accept/reject ratios  
+• Priority weighting for human-beneficial compute  
+
+Purpose:
+Shows how safely humanity’s compute infrastructure is trending.
+      `
+    },
+    {
+      title: "Market Liquidity",
+      content: `
+Measures health and velocity of TC-S digital market activity.
+
+Formula:
+Liquidity = (Token Velocity × Transaction Depth × Participant Spread)
+
+Inputs:
+• Marketplace activity  
+• Number of active wallets  
+• Volume of Solar Rays spent per 24h  
+• Listing-to-sale ratio  
+
+Purpose:
+Indicates digital economic flow strength.
+      `
+    },
+    {
+      title: "Ethical Alignment",
+      content: `
+Measures acceptance ratio of actions evaluated by the Ethics Engine.
+
+Formula:
+Ethical Alignment = (Approved Ethical Actions ÷ Total Evaluated Actions) × 100
+
+Inputs:
+• Ethics Engine decisions  
+• Safety filter evaluations  
+• Human-rights compliance factors  
+
+Purpose:
+Represents global ethical stability of automated decision systems.
+      `
+    }
+  ];
+
+  return (
+    <div className="mt-8 space-y-4">
+      {sections.map((section, idx) => (
+        <details
+          key={idx}
+          className="border border-green-500 rounded-lg p-4 bg-black/40 backdrop-blur-sm shadow-lg transition-all"
+        >
+          <summary className="cursor-pointer text-xl text-green-400 font-semibold hover:text-green-300">
+            {section.title} — Methodology
+          </summary>
+          <pre className="mt-3 whitespace-pre-wrap text-green-200 text-sm leading-6">
+            {section.content}
+          </pre>
+        </details>
+      ))}
+    </div>
+  );
+};
+
+export default IndexAccordion;
