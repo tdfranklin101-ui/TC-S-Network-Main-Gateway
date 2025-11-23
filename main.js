@@ -9056,17 +9056,19 @@ server.listen(PORT, '0.0.0.0', () => {
   }
 
   // Initialize TC-S Daily Indices Brief
-  try {
-    const generator = require('./scripts/generateDailyBrief');
-    await generator.generateBrief();
-    console.log('✅ TC-S Daily Indices Brief initialized');
-    console.log(`📊 API: http://localhost:${PORT}/api/daily-brief`);
-    console.log(`📊 JSON-LD: http://localhost:${PORT}/api/daily-brief/jsonld`);
-    console.log(`🔧 Manual trigger: POST http://localhost:${PORT}/api/daily-brief/generate`);
-  } catch (error) {
-    console.warn('⚠️ Daily Indices Brief initialization failed:', error.message);
-    console.log('📌 API still available but briefing may not be current');
-  }
+  setImmediate(async () => {
+    try {
+      const generator = require('./scripts/generateDailyBrief');
+      await generator.generateBrief();
+      console.log('✅ TC-S Daily Indices Brief initialized');
+      console.log(`📊 API: http://localhost:${PORT}/api/daily-brief`);
+      console.log(`📊 JSON-LD: http://localhost:${PORT}/api/daily-brief/jsonld`);
+      console.log(`🔧 Manual trigger: POST http://localhost:${PORT}/api/daily-brief/generate`);
+    } catch (error) {
+      console.warn('⚠️ Daily Indices Brief initialization failed:', error.message);
+      console.log('📌 API still available but briefing may not be current');
+    }
+  });
 }).on('error', (err) => {
   console.error('❌ Server failed to start:', err);
   process.exit(1);
