@@ -1,0 +1,123 @@
+#!/bin/bash
+
+echo "🔵 Deploying TC-S Daily Indices Brief Engine..."
+mkdir -p api lib scripts
+
+############################################
+# 1) Create indices model
+############################################
+cat > lib/indices.ts << 'EOF'
+export interface TCSIndex {
+  id: string;             // "si", "srh", etc.
+  name: string;
+  unit: string;           // "%", "ratio", etc.
+  value: number;          // numeric
+  description: string;    // human-readable
+  asOf: string;           // timestamp
+}
+
+export interface SolarSignals {
+  production: number;     // MW or kWh
+  consumption: number;    // MW or kWh
+}
+
+export interface DailyBrief {
+  date: string;
+  indices: TCSIndex[];
+  solar: SolarSignals;
+}
+EOF
+
+############################################
+# 2) Create daily brief API endpoint
+############################################
+cat > api/daily-brief.ts << 'EOF'
+import { DailyBrief } from "../lib/indices";
+import fs from "fs";
+import path from "path";
+
+export default function handler(req, res) {
+  const filePath = path.join(process.cwd(), "data", "daily-brief.json");
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: "Daily brief not generated yet" });
+  }
+
+  const content = fs.readFileSync(filePath, "utf-8");
+  const brief: DailyBrief = JSON.parse(content);
+
+  res.setHeader("Content-Type", "application/json");
+  return res.status(200).send(JSON.stringify(brief, null, 2));
+}
+EOF
+
+############################################
+# 3) Create generator script
+############################################
+mkdir -p data
+
+cat > scripts/generateDailyBrief.ts << 'EOF'
+import fs from "fs";
+import path from "path";
+import fetch from "node-fetch";
+import { DailyBrief, TCSIndex, SolarSignals } from "../lib/indices";
+
+async function fetchSolarSignals(): Promise<SolarSignals> {
+  const prod = await fetch("https://your-replit-app.repl.co/api/power-production").then(r => r.json());
+  const cons = await fetch("https://your-replit-app.repl.co/api/power-consumption").then(r => r.json());
+
+  return {
+    production: prod.value,
+    consumption: cons.value
+  };
+}
+
+async function main() {
+  const now = new Date().toISOString();
+
+  // TODO: Replace values with your real 6 index computations
+  const indices: TCSIndex[] = [
+    { id: "si",  name: "Solar Index", unit: "%",       value: 45.6, description: "Global solar abundance and efficiency measure.", asOf: now },
+    { id: "srh", name: "Solar Reserve Health", unit: "%", value: 78.2, description: "Reserve stability and fulfillment factor.", asOf: now },
+    { id: "gbi", name: "Global Basic Income Participation", unit: "%", value: 41.4, description: "Percentage of humans enrolled and claiming GBI.", asOf: now },
+    { id: "cai", name: "Compute Alignment", unit: "%", value: 88.9, description: "Ethically aligned compute flow index.", asOf: now },
+    { id: "mli", name: "Market Liquidity", unit: "%", value: 23.7, description: "Health of the TC-S digital marketplace.", asOf: now },
+    { id: "eai", name: "Ethical Alignment", unit: "%", value: 92.3, description: "Acceptance ratio of tasks from Ethics Engine.", asOf: now }
+  ];
+
+  const solar = await fetchSolarSignals();
+
+  const brief: DailyBrief = {
+    date: now.split("T")[0],
+    indices,
+    solar
+  };
+
+  const filePath = path.join(process.cwd(), "data", "daily-brief.json");
+  fs.writeFileSync(filePath, JSON.stringify(brief, null, 2));
+
+  console.log("✔ Daily Indices Brief generated:", filePath);
+}
+
+main();
+EOF
+
+############################################
+# 4) Add NPM scripts for easy triggering
+############################################
+if [ -f package.json ]; then
+  echo "🔧 Updating package.json..."
+  node << 'EOF'
+const fs = require('fs');
+let pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+
+pkg.scripts = pkg.scripts || {};
+pkg.scripts["generate:daily-brief"] = "ts-node scripts/generateDailyBrief.ts";
+
+fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));
+EOF
+fi
+
+echo "🎉 Daily Brief Engine Installed"
+echo "Run daily with:"
+echo "   npm run generate:daily-brief"
+echo "Or schedule via cron in Replit"
