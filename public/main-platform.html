@@ -216,6 +216,94 @@
     "inLanguage": "en"
   }
   </script>
+
+  <!-- TC-S Daily Indices JSON-LD - AI Semantic Discovery -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Dataset",
+    "name": "TC-S Network Daily Indices",
+    "description": "A daily machine-readable summary of the six core TC-S Network indices that measure global solar energy capacity, reserve health, basic income readiness, compute alignment, market liquidity, and ethical alignment.",
+    "url": "https://thecurrentsee.org",
+    "dateModified": "2025-11-23",
+    "creator": {
+      "@type": "Organization",
+      "name": "TC-S Network Foundation, Inc.",
+      "url": "https://thecurrentsee.org/foundation"
+    },
+    "datasetTimeInterval": "P1D",
+    "measurementTechnique": [
+      "Solar abundance and efficiency analysis",
+      "Reserve stability and fulfillment calculation",
+      "Global digital identity penetration estimation",
+      "Aligned compute flow verification",
+      "Token velocity and marketplace activity tracking",
+      "Ethical action acceptance evaluation"
+    ],
+    "hasPart": [
+      {
+        "@type": "Observation",
+        "name": "Solar Index (SI)",
+        "description": "Global solar abundance and efficiency measure — baseline operational health.",
+        "value": 0.46,
+        "unitText": "percent",
+        "dateObserved": "2025-11-23",
+        "measurementMethod": "Weighted composite of global renewable penetration (40%), storage stability (30%), and grid efficiency (30%).",
+        "url": "https://thecurrentsee.org/solar-index"
+      },
+      {
+        "@type": "Observation",
+        "name": "Solar Reserve Health",
+        "description": "Reserve stability and fulfillment factor across all regions.",
+        "value": 0.777,
+        "unitText": "percent",
+        "dateObserved": "2025-11-23",
+        "measurementMethod": "Reserve Health = Current Reserve ÷ Required Reserve × Fulfillment Factor.",
+        "url": "https://thecurrentsee.org/solar-reserve"
+      },
+      {
+        "@type": "Observation",
+        "name": "Global Basic Income (GBI)",
+        "description": "Percentage of humans enrolled and actively claiming Solar-based GBI.",
+        "value": 0.416,
+        "unitText": "percent",
+        "dateObserved": "2025-11-23",
+        "measurementMethod": "GBI = Active Solar Claimants ÷ Total Humans. Based on identity penetration, smartphone availability, and activation rate.",
+        "url": "https://thecurrentsee.org/gbi"
+      },
+      {
+        "@type": "Observation",
+        "name": "Compute Alignment",
+        "description": "Ethically aligned compute flow — superintelligence safety readiness.",
+        "value": 0.896,
+        "unitText": "percent",
+        "dateObserved": "2025-11-23",
+        "measurementMethod": "Aligned Compute Flow ÷ Total Compute Flow, using UIM Protocol + Ethics Engine approval ratios.",
+        "url": "https://thecurrentsee.org/compute-governance"
+      },
+      {
+        "@type": "Observation",
+        "name": "Market Liquidity",
+        "description": "Health of the TC-S digital marketplace and token velocity.",
+        "value": 0.243,
+        "unitText": "percent",
+        "dateObserved": "2025-11-23",
+        "measurementMethod": "Liquidity = Token Velocity × Transaction Depth × Participant Spread.",
+        "url": "https://thecurrentsee.org/market-grid"
+      },
+      {
+        "@type": "Observation",
+        "name": "Ethical Alignment",
+        "description": "Acceptance ratio of tasks evaluated by the Ethics Engine.",
+        "value": 0.929,
+        "unitText": "percent",
+        "dateObserved": "2025-11-23",
+        "measurementMethod": "Ethical Alignment = Approved Actions ÷ Total Evaluated Actions.",
+        "url": "https://thecurrentsee.org/ethics-engine"
+      }
+    ]
+  }
+  </script>
 </head>
 <body>
   <!-- Yellow Header Block - TC-S Network Commissioning (TOP OF PAGE) -->
@@ -547,6 +635,93 @@
           </div>
           
           <script>
+            // Educational content for each index
+            const indexEducation = {
+              'si': {
+                title: 'Solar Index (SI)',
+                content: `<strong>Formula:</strong>
+SI = 0.40×(Global Renewable Penetration) + 0.30×(Energy Storage Stability) + 0.30×(Grid Efficiency Ratio)
+
+<strong>Inputs:</strong>
+• Global daylight generation vs dark-cycle deficit
+• Storage / battery reserve levels
+• Transmission efficiency + losses
+• Normalized to a 0–100 scale
+
+<strong>Purpose:</strong>
+Baseline health of humanity's solar-energy future.`
+              },
+              'srh': {
+                title: 'Solar Reserve Health',
+                content: `<strong>Formula:</strong>
+Reserve Health = (Current Reserve ÷ Required Reserve) × Fulfillment Factor
+
+<strong>Inputs:</strong>
+• Global solar generator ledger from 2025–present
+• Daily Solar → kWh equivalency
+• Redemption load vs reserve remaining
+
+<strong>Purpose:</strong>
+Shows whether global Solar distribution can remain stable long-term.`
+              },
+              'gbi': {
+                title: 'Global Basic Income (GBI)',
+                content: `<strong>Formula:</strong>
+GBI = (Active Solar Claimants ÷ Total Humans) × 100
+
+<strong>Assumptions:</strong>
+• Smartphone penetration (2025): ~67%
+• Digital identity penetration: ~62%
+• Activation rate estimate: 70%
+
+<strong>Example:</strong>
+3.5B active users ÷ 8.15B humans ≈ 42.9%
+
+<strong>Purpose:</strong>
+Represents global digital readiness for Solar-based income.`
+              },
+              'cai': {
+                title: 'Compute Alignment',
+                content: `<strong>Formula:</strong>
+Compute Alignment = (Aligned Compute Flow ÷ Total Compute Flow) × 100
+
+<strong>Inputs:</strong>
+• UIM Protocol alignment checks
+• Ethics Engine accept/reject ratios
+• Priority weighting for human-beneficial compute
+
+<strong>Purpose:</strong>
+Shows how safely humanity's compute infrastructure is trending.`
+              },
+              'mli': {
+                title: 'Market Liquidity',
+                content: `<strong>Formula:</strong>
+Liquidity = (Token Velocity × Transaction Depth × Participant Spread)
+
+<strong>Inputs:</strong>
+• Marketplace activity
+• Number of active wallets
+• Volume of Solar Rays spent per 24h
+• Listing-to-sale ratio
+
+<strong>Purpose:</strong>
+Indicates digital economic flow strength.`
+              },
+              'eai': {
+                title: 'Ethical Alignment',
+                content: `<strong>Formula:</strong>
+Ethical Alignment = (Approved Ethical Actions ÷ Total Evaluated Actions) × 100
+
+<strong>Inputs:</strong>
+• Ethics Engine decisions
+• Safety filter evaluations
+• Human-rights compliance factors
+
+<strong>Purpose:</strong>
+Represents global ethical stability of automated decision systems.`
+              }
+            };
+
             fetch('/api/daily-brief')
               .then(res => res.json())
               .then(brief => {
@@ -564,19 +739,40 @@
                     <div style="font-size: 0.9rem; color: #00ff41; opacity: 0.7; margin-top: 0.5rem;">
                       as of ${brief.date}
                     </div>
+                    <details data-testid="details-educational-si" style="margin-top: 1.5rem; border: 1px solid rgba(0,255,65,0.4); border-radius: 8px; padding: 0; background: rgba(0,0,0,0.3); transition: all 0.3s ease; max-width: 600px; margin-left: auto; margin-right: auto;">
+                      <summary data-testid="summary-educational-si" style="cursor: pointer; padding: 1rem; color: #00ff41; font-size: 1rem; font-weight: 600; list-style: none; display: flex; justify-content: center; align-items: center; gap: 0.5rem;">
+                        <span style="font-size: 1.2rem;">📚</span> Learn More: ${indexEducation['si'].title}
+                      </summary>
+                      <div style="padding: 1rem 1.5rem 1.5rem; color: #00f5d4; font-size: 0.9rem; line-height: 1.7; text-align: left; white-space: pre-wrap; border-top: 1px solid rgba(0,255,65,0.2);">
+                        ${indexEducation['si'].content}
+                      </div>
+                    </details>
                   </div>
                   
-                  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-top: 1.5rem;">
+                  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-top: 1.5rem;">
                 `;
                 
                 others.forEach(idx => {
+                  const edu = indexEducation[idx.id];
+                  if (!edu) {
+                    console.warn(`No educational content for index: ${idx.id}`);
+                    return;
+                  }
                   html += `
-                    <div style="background: rgba(0,0,0,0.5); border: 1px solid #00ff41; border-radius: 8px; padding: 1rem;">
+                    <div style="background: rgba(0,0,0,0.5); border: 1px solid #00ff41; border-radius: 8px; padding: 1rem; display: flex; flex-direction: column;">
                       <div style="font-size: 0.9rem; color: #00ff41; font-weight: 600;">${idx.name}</div>
                       <div style="font-size: 1.8rem; color: #00f5d4; font-weight: bold; margin: 0.5rem 0;">
                         ${idx.value}${idx.unit}
                       </div>
-                      <div style="font-size: 0.8rem; color: #00ff41; opacity: 0.7;">${idx.description}</div>
+                      <div style="font-size: 0.8rem; color: #00ff41; opacity: 0.7; margin-bottom: 1rem;">${idx.description}</div>
+                      <details data-testid="details-educational-${idx.id}" style="margin-top: auto; border: 1px solid rgba(0,255,65,0.3); border-radius: 6px; padding: 0; background: rgba(0,0,0,0.4); transition: all 0.3s ease;">
+                        <summary data-testid="summary-educational-${idx.id}" style="cursor: pointer; padding: 0.7rem 0.8rem; color: #00ff41; font-size: 0.85rem; font-weight: 600; list-style: none; display: flex; justify-content: center; align-items: center; gap: 0.4rem; transition: all 0.2s ease;">
+                          <span style="font-size: 1rem;">📖</span> Methodology
+                        </summary>
+                        <div style="padding: 0.8rem 1rem; color: #00f5d4; font-size: 0.75rem; line-height: 1.6; text-align: left; white-space: pre-wrap; border-top: 1px solid rgba(0,255,65,0.2);">
+                          ${edu.content}
+                        </div>
+                      </details>
                     </div>
                   `;
                 });

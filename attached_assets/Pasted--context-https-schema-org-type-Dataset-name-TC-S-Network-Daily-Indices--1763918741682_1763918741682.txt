@@ -1,0 +1,85 @@
+{
+  "@context": "https://schema.org",
+  "@type": "Dataset",
+  "name": "TC-S Network Daily Indices",
+  "description": "A daily machine-readable summary of the six core TC-S Network indices that measure global solar energy capacity, reserve health, basic income readiness, compute alignment, market liquidity, and ethical alignment.",
+  "url": "https://thecurrentsee.org",
+  "dateModified": "2025-11-23",
+  "creator": {
+    "@type": "Organization",
+    "name": "TC-S Network Foundation, Inc.",
+    "url": "https://thecurrentsee.org/foundation"
+  },
+  "datasetTimeInterval": "P1D",
+  "measurementTechnique": [
+    "Solar abundance and efficiency analysis",
+    "Reserve stability and fulfillment calculation",
+    "Global digital identity penetration estimation",
+    "Aligned compute flow verification",
+    "Token velocity and marketplace activity tracking",
+    "Ethical action acceptance evaluation"
+  ],
+
+  "hasPart": [
+    {
+      "@type": "Observation",
+      "name": "Solar Index (SI)",
+      "description": "Global solar abundance and efficiency measure — baseline operational health.",
+      "value": 0.46,
+      "unitText": "percent",
+      "dateObserved": "2025-11-23",
+      "measurementMethod": "Weighted composite of global renewable penetration (40%), storage stability (30%), and grid efficiency (30%).",
+      "url": "https://thecurrentsee.org/solar-index"
+    },
+    {
+      "@type": "Observation",
+      "name": "Solar Reserve Health",
+      "description": "Reserve stability and fulfillment factor across all regions.",
+      "value": 0.777,
+      "unitText": "percent",
+      "dateObserved": "2025-11-23",
+      "measurementMethod": "Reserve Health = Current Reserve ÷ Required Reserve × Fulfillment Factor.",
+      "url": "https://thecurrentsee.org/solar-reserve"
+    },
+    {
+      "@type": "Observation",
+      "name": "Global Basic Income (GBI)",
+      "description": "Percentage of humans enrolled and actively claiming Solar-based GBI.",
+      "value": 0.416,
+      "unitText": "percent",
+      "dateObserved": "2025-11-23",
+      "measurementMethod": "GBI = Active Solar Claimants ÷ Total Humans. Based on identity penetration, smartphone availability, and activation rate.",
+      "url": "https://thecurrentsee.org/gbi"
+    },
+    {
+      "@type": "Observation",
+      "name": "Compute Alignment",
+      "description": "Ethically aligned compute flow — superintelligence safety readiness.",
+      "value": 0.896,
+      "unitText": "percent",
+      "dateObserved": "2025-11-23",
+      "measurementMethod": "Aligned Compute Flow ÷ Total Compute Flow, using UIM Protocol + Ethics Engine approval ratios.",
+      "url": "https://thecurrentsee.org/compute-governance"
+    },
+    {
+      "@type": "Observation",
+      "name": "Market Liquidity",
+      "description": "Health of the TC-S digital marketplace and token velocity.",
+      "value": 0.243,
+      "unitText": "percent",
+      "dateObserved": "2025-11-23",
+      "measurementMethod": "Liquidity = Token Velocity × Transaction Depth × Participant Spread.",
+      "url": "https://thecurrentsee.org/market-grid"
+    },
+    {
+      "@type": "Observation",
+      "name": "Ethical Alignment",
+      "description": "Acceptance ratio of tasks evaluated by the Ethics Engine.",
+      "value": 0.929,
+      "unitText": "percent",
+      "dateObserved": "2025-11-23",
+      "measurementMethod": "Ethical Alignment = Approved Actions ÷ Total Evaluated Actions.",
+      "url": "https://thecurrentsee.org/ethics-engine"
+    }
+  ]
+}
