@@ -1,6 +1,6 @@
 /**
  * TC-S Daily Indices Brief Generator
- * Generates the 6 core indices daily briefing
+ * Generates the 6 core indices daily briefing with AI trend analysis
  */
 
 const fs = require('fs');
@@ -9,10 +9,129 @@ const { TCSIndex, SolarSignals, DailyBrief } = require('../lib/indices');
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const BRIEF_FILE = path.join(DATA_DIR, 'daily-brief.json');
+const HISTORY_FILE = path.join(DATA_DIR, 'daily-brief-history.json');
+const TRENDS_FILE = path.join(DATA_DIR, 'daily-brief-trends.json');
 
 // Ensure data directory exists
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
+}
+
+/**
+ * Load historical briefs
+ */
+function loadHistory() {
+  if (fs.existsSync(HISTORY_FILE)) {
+    try {
+      return JSON.parse(fs.readFileSync(HISTORY_FILE, 'utf-8'));
+    } catch (error) {
+      console.warn('⚠️ Could not load history:', error.message);
+      return [];
+    }
+  }
+  return [];
+}
+
+/**
+ * Save brief to history
+ */
+function saveToHistory(brief) {
+  const history = loadHistory();
+  history.push({
+    date: brief.date,
+    indices: brief.indices.map(idx => ({ id: idx.id, value: idx.value })),
+    timestamp: new Date().toISOString()
+  });
+  
+  // Keep last 30 days
+  if (history.length > 30) {
+    history.shift();
+  }
+  
+  fs.writeFileSync(HISTORY_FILE, JSON.stringify(history, null, 2));
+  return history;
+}
+
+/**
+ * Analyze trends using AI
+ */
+async function analyzeTrendsWithAI(currentBrief, history) {
+  if (!process.env.OPENAI_API_KEY) {
+    return { 
+      analysisStatus: 'skipped', 
+      reason: 'No OpenAI API key configured',
+      note: 'Indices are updating on schedule - AI analysis requires OPENAI_API_KEY'
+    };
+  }
+
+  try {
+    const OpenAI = require('openai');
+    const client = new OpenAI.default({ apiKey: process.env.OPENAI_API_KEY });
+
+    // Prepare data for analysis
+    const last7Days = history.slice(-7);
+    const historicalData = last7Days.map(h => ({
+      date: h.date,
+      indices: h.indices.reduce((acc, idx) => {
+        acc[idx.id] = idx.value;
+        return acc;
+      }, {})
+    }));
+
+    const currentData = currentBrief.indices.reduce((acc, idx) => {
+      acc[idx.id] = idx.value;
+      return acc;
+    }, {});
+
+    // Build analysis prompt
+    const prompt = `Analyze these TC-S market health indices trends. Current values: ${JSON.stringify(currentData)}. 
+Historical data (last 7 days): ${JSON.stringify(historicalData)}.
+Provide a brief 2-3 sentence trend analysis with:
+1. Overall market direction (bullish/bearish/neutral)
+2. Key drivers of change
+3. One actionable insight
+Format: {"direction": "bullish|bearish|neutral", "analysis": "...", "insight": "..."}`;
+
+    const response = await client.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      temperature: 0.7,
+      max_tokens: 200
+    });
+
+    const analysisText = response.choices[0].message.content;
+    
+    // Try to parse JSON response
+    try {
+      const analysis = JSON.parse(analysisText);
+      return {
+        analysisStatus: 'success',
+        direction: analysis.direction,
+        analysis: analysis.analysis,
+        insight: analysis.insight,
+        generatedAt: new Date().toISOString()
+      };
+    } catch {
+      // If not JSON, return text analysis
+      return {
+        analysisStatus: 'success',
+        analysis: analysisText,
+        generatedAt: new Date().toISOString()
+      };
+    }
+  } catch (error) {
+    console.warn('⚠️ AI trend analysis failed:', error.message);
+    return {
+      analysisStatus: 'failed',
+      error: error.message,
+      note: 'Indices are updating on schedule - AI analysis requires valid OpenAI API key'
+    };
+  }
 }
 
 /**
@@ -90,7 +209,7 @@ function calculateIndices() {
 }
 
 /**
- * Main generation function
+ * Main generation function with trend analysis
  */
 async function generateBrief() {
   try {
@@ -107,11 +226,26 @@ async function generateBrief() {
     const jsonldFile = path.join(DATA_DIR, 'daily-brief.jsonld');
     fs.writeFileSync(jsonldFile, JSON.stringify(brief.toJSONLD(), null, 2));
     
+    // Save to history and perform trend analysis
+    const history = saveToHistory(brief);
+    const trends = await analyzeTrendsWithAI(brief, history);
+    
+    // Write trends file
+    fs.writeFileSync(TRENDS_FILE, JSON.stringify({
+      date: date,
+      generatedAt: new Date().toISOString(),
+      currentIndices: brief.indices,
+      trends: trends,
+      historyDays: history.length
+    }, null, 2));
+    
     console.log('✅ Daily Indices Brief generated:', date);
     console.log('   File:', BRIEF_FILE);
     console.log('   JSON-LD:', jsonldFile);
+    console.log('   Trends:', TRENDS_FILE);
+    console.log('   Analysis Status:', trends.analysisStatus);
     
-    return brief;
+    return { brief, trends, history };
   } catch (error) {
     console.error('❌ Error generating daily brief:', error);
     throw error;
@@ -120,7 +254,9 @@ async function generateBrief() {
 
 // Export for use in main.js and manual triggers
 module.exports = {
-  generateBrief
+  generateBrief,
+  loadHistory,
+  analyzeTrendsWithAI
 };
 
 // Run if called directly

@@ -1,0 +1,62 @@
+[
+  {
+    "date": "2025-11-23",
+    "indices": [
+      {
+        "id": "si",
+        "value": 45.6
+      },
+      {
+        "id": "srh",
+        "value": 78.7
+      },
+      {
+        "id": "gbi",
+        "value": 41.8
+      },
+      {
+        "id": "cai",
+        "value": 89.4
+      },
+      {
+        "id": "mli",
+        "value": 24.6
+      },
+      {
+        "id": "eai",
+        "value": 91.8
+      }
+    ],
+    "timestamp": "2025-11-23T04:29:11.869Z"
+  },
+  {
+    "date": "2025-11-23",
+    "indices": [
+      {
+        "id": "si",
+        "value": 45.3
+      },
+      {
+        "id": "srh",
+        "value": 77.4
+      },
+      {
+        "id": "gbi",
+        "value": 42.2
+      },
+      {
+        "id": "cai",
+        "value": 89.8
+      },
+      {
+        "id": "mli",
+        "value": 24
+      },
+      {
+        "id": "eai",
+        "value": 91.5
+      }
+    ],
+    "timestamp": "2025-11-23T04:29:35.164Z"
+  }
+]

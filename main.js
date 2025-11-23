@@ -8148,19 +8148,50 @@ const server = http.createServer(async (req, res) => {
   if (pathname === '/api/daily-brief/generate' && req.method === 'POST') {
     try {
       const generator = require('./scripts/generateDailyBrief');
-      const brief = await generator.generateBrief();
+      const result = await generator.generateBrief();
       
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ 
         message: 'Daily brief generated successfully',
-        date: brief.date,
-        indicesCount: brief.indices.length
+        date: result.brief.date,
+        indicesCount: result.brief.indices.length,
+        trendsAnalysis: result.trends.analysisStatus
       }));
       console.log('✅ Daily Brief generated manually');
     } catch (error) {
       console.error('❌ Error generating daily brief:', error);
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Failed to generate daily brief', message: error.message }));
+    }
+    return;
+  }
+
+  // GET /api/daily-brief/trends - Return AI trend analysis
+  if (pathname === '/api/daily-brief/trends' && req.method === 'GET') {
+    const fs = require('fs');
+    const path = require('path');
+    const TRENDS_FILE = path.join(process.cwd(), 'data', 'daily-brief-trends.json');
+    
+    try {
+      if (!fs.existsSync(TRENDS_FILE)) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Trends analysis not available yet' }));
+        return;
+      }
+      
+      const content = fs.readFileSync(TRENDS_FILE, 'utf-8');
+      const trends = JSON.parse(content);
+      
+      res.writeHead(200, { 
+        'Content-Type': 'application/json',
+        'Cache-Control': 'public, max-age=3600'
+      });
+      res.end(JSON.stringify(trends));
+      console.log('📊 Trends analysis served');
+    } catch (error) {
+      console.error('❌ Error fetching trends:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Failed to fetch trends analysis' }));
     }
     return;
   }
@@ -9055,15 +9086,42 @@ server.listen(PORT, '0.0.0.0', () => {
     console.log('📌 Dashboard still available but data fetch requires manual trigger');
   }
 
-  // Initialize TC-S Daily Indices Brief
+  // Initialize TC-S Daily Indices Brief with 24-hour scheduler
   setImmediate(async () => {
     try {
       const generator = require('./scripts/generateDailyBrief');
+      
+      // Initial generation
       await generator.generateBrief();
       console.log('✅ TC-S Daily Indices Brief initialized');
       console.log(`📊 API: http://localhost:${PORT}/api/daily-brief`);
       console.log(`📊 JSON-LD: http://localhost:${PORT}/api/daily-brief/jsonld`);
+      console.log(`📈 Trends: http://localhost:${PORT}/api/daily-brief/trends`);
       console.log(`🔧 Manual trigger: POST http://localhost:${PORT}/api/daily-brief/generate`);
+      
+      // Schedule 24-hour updates with AI trend analysis
+      // Run at 3:00 AM UTC daily
+      const dailyJob = schedule.scheduleJob('0 3 * * *', async () => {
+        try {
+          console.log('⏰ [SCHEDULER] Running 24-hour Daily Indices Brief update...');
+          const result = await generator.generateBrief();
+          console.log(`✅ [SCHEDULER] Daily Brief updated with ${result.brief.indices.length} indices`);
+          console.log(`📈 [SCHEDULER] AI Trends Analysis: ${result.trends.analysisStatus}`);
+          
+          if (result.trends.analysisStatus === 'success') {
+            console.log(`🤖 [SCHEDULER] Trend Direction: ${result.trends.direction}`);
+            if (result.trends.insight) {
+              console.log(`💡 [SCHEDULER] Insight: ${result.trends.insight}`);
+            }
+          }
+        } catch (error) {
+          console.error('❌ [SCHEDULER] Daily Brief update failed:', error.message);
+        }
+      });
+      
+      console.log('📅 [SCHEDULER] 24-hour Daily Brief schedule: Daily at 03:00 UTC');
+      console.log('🤖 [SCHEDULER] AI Trend Analysis: Enabled');
+      
     } catch (error) {
       console.warn('⚠️ Daily Indices Brief initialization failed:', error.message);
       console.log('📌 API still available but briefing may not be current');

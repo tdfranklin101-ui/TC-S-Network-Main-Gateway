@@ -1,6 +1,7 @@
 {
   "date": "2025-11-23",
-  "indices": [
+  "generatedAt": "2025-11-23T04:29:38.169Z",
+  "currentIndices": [
     {
       "id": "si",
       "name": "Solar Index",
@@ -50,8 +51,12 @@
       "asOf": "2025-11-23T04:29:35.160Z"
     }
   ],
-  "solar": {
-    "production": 2461.8,
-    "consumption": 1866.4
-  }
+  "trends": {
+    "analysisStatus": "success",
+    "direction": "neutral",
+    "analysis": "The market health indices show relatively stable values with slight fluctuations over the past two days. The stability in key indices like the sentiment index (si) and the customer activity index (cai) indicates a balanced market environment, although the market liquidity index (mli) remains low, suggesting potential concerns about trading activity. ",
+    "insight": "Monitor the mli closely as an increase could signal improved liquidity and potential for bullish momentum.",
+    "generatedAt": "2025-11-23T04:29:38.169Z"
+  },
+  "historyDays": 2
 }
