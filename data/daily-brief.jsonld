@@ -1,0 +1,63 @@
+{
+  "@context": "https://schema.org",
+  "@type": "DataSet",
+  "name": "TC-S Daily Indices Brief",
+  "description": "Daily briefing of TC-S core performance indices",
+  "datePublished": "2025-11-23",
+  "distribution": [
+    {
+      "@type": "DataDownload",
+      "name": "Solar Index",
+      "encodingFormat": "application/json",
+      "description": "Global solar abundance and efficiency measure — baseline operational health.",
+      "contentUrl": "https://api.thecurrentsee.org/api/daily-brief#si",
+      "value": 46.1,
+      "unit": "%"
+    },
+    {
+      "@type": "DataDownload",
+      "name": "Solar Reserve Health",
+      "encodingFormat": "application/json",
+      "description": "Reserve stability and fulfillment factor across all regions.",
+      "contentUrl": "https://api.thecurrentsee.org/api/daily-brief#srh",
+      "value": 78.3,
+      "unit": "%"
+    },
+    {
+      "@type": "DataDownload",
+      "name": "Global Basic Income",
+      "encodingFormat": "application/json",
+      "description": "Percentage of humans enrolled and actively claiming GBI.",
+      "contentUrl": "https://api.thecurrentsee.org/api/daily-brief#gbi",
+      "value": 42.2,
+      "unit": "%"
+    },
+    {
+      "@type": "DataDownload",
+      "name": "Compute Alignment",
+      "encodingFormat": "application/json",
+      "description": "Ethically aligned compute flow — safe superintelligence readiness.",
+      "contentUrl": "https://api.thecurrentsee.org/api/daily-brief#cai",
+      "value": 89.4,
+      "unit": "%"
+    },
+    {
+      "@type": "DataDownload",
+      "name": "Market Liquidity",
+      "encodingFormat": "application/json",
+      "description": "Health of the TC-S digital marketplace and token velocity.",
+      "contentUrl": "https://api.thecurrentsee.org/api/daily-brief#mli",
+      "value": 23.8,
+      "unit": "%"
+    },
+    {
+      "@type": "DataDownload",
+      "name": "Ethical Alignment",
+      "encodingFormat": "application/json",
+      "description": "Acceptance ratio of tasks from the Ethics Engine.",
+      "contentUrl": "https://api.thecurrentsee.org/api/daily-brief#eai",
+      "value": 93.1,
+      "unit": "%"
+    }
+  ]
+}

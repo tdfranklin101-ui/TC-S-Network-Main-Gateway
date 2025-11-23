@@ -1,0 +1,57 @@
+{
+  "date": "2025-11-23",
+  "indices": [
+    {
+      "id": "si",
+      "name": "Solar Index",
+      "unit": "%",
+      "value": 46.1,
+      "description": "Global solar abundance and efficiency measure — baseline operational health.",
+      "asOf": "2025-11-23T04:14:15.206Z"
+    },
+    {
+      "id": "srh",
+      "name": "Solar Reserve Health",
+      "unit": "%",
+      "value": 78.3,
+      "description": "Reserve stability and fulfillment factor across all regions.",
+      "asOf": "2025-11-23T04:14:15.206Z"
+    },
+    {
+      "id": "gbi",
+      "name": "Global Basic Income",
+      "unit": "%",
+      "value": 42.2,
+      "description": "Percentage of humans enrolled and actively claiming GBI.",
+      "asOf": "2025-11-23T04:14:15.206Z"
+    },
+    {
+      "id": "cai",
+      "name": "Compute Alignment",
+      "unit": "%",
+      "value": 89.4,
+      "description": "Ethically aligned compute flow — safe superintelligence readiness.",
+      "asOf": "2025-11-23T04:14:15.206Z"
+    },
+    {
+      "id": "mli",
+      "name": "Market Liquidity",
+      "unit": "%",
+      "value": 23.8,
+      "description": "Health of the TC-S digital marketplace and token velocity.",
+      "asOf": "2025-11-23T04:14:15.206Z"
+    },
+    {
+      "id": "eai",
+      "name": "Ethical Alignment",
+      "unit": "%",
+      "value": 93.1,
+      "description": "Acceptance ratio of tasks from the Ethics Engine.",
+      "asOf": "2025-11-23T04:14:15.206Z"
+    }
+  ],
+  "solar": {
+    "production": 2516.9,
+    "consumption": 1887.2
+  }
+}
