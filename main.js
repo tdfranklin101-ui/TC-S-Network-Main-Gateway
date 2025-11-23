@@ -8086,6 +8086,85 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // GET /api/daily-brief - Return today's TC-S indices briefing
+  if (pathname === '/api/daily-brief' && req.method === 'GET') {
+    const fs = require('fs');
+    const path = require('path');
+    const BRIEF_FILE = path.join(process.cwd(), 'data', 'daily-brief.json');
+    
+    try {
+      if (!fs.existsSync(BRIEF_FILE)) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Daily brief not generated yet' }));
+        return;
+      }
+      
+      const content = fs.readFileSync(BRIEF_FILE, 'utf-8');
+      const brief = JSON.parse(content);
+      
+      res.writeHead(200, { 
+        'Content-Type': 'application/json',
+        'Cache-Control': 'public, max-age=3600'
+      });
+      res.end(JSON.stringify(brief));
+      console.log('📊 Daily Brief served');
+    } catch (error) {
+      console.error('❌ Error fetching daily brief:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Failed to fetch daily brief' }));
+    }
+    return;
+  }
+
+  // GET /api/daily-brief/jsonld - Return JSON-LD format for AI indexing
+  if (pathname === '/api/daily-brief/jsonld' && req.method === 'GET') {
+    const fs = require('fs');
+    const path = require('path');
+    const JSONLD_FILE = path.join(process.cwd(), 'data', 'daily-brief.jsonld');
+    
+    try {
+      if (!fs.existsSync(JSONLD_FILE)) {
+        res.writeHead(404, { 'Content-Type': 'application/ld+json' });
+        res.end(JSON.stringify({ error: 'JSON-LD brief not available' }));
+        return;
+      }
+      
+      const content = fs.readFileSync(JSONLD_FILE, 'utf-8');
+      res.writeHead(200, { 
+        'Content-Type': 'application/ld+json',
+        'Cache-Control': 'public, max-age=3600'
+      });
+      res.end(content);
+      console.log('📊 Daily Brief JSON-LD served for AI indexing');
+    } catch (error) {
+      console.error('❌ Error fetching daily brief JSON-LD:', error);
+      res.writeHead(500, { 'Content-Type': 'application/ld+json' });
+      res.end(JSON.stringify({ error: 'Failed to fetch daily brief JSON-LD' }));
+    }
+    return;
+  }
+
+  // POST /api/daily-brief/generate - Manually trigger brief generation
+  if (pathname === '/api/daily-brief/generate' && req.method === 'POST') {
+    try {
+      const generator = require('./scripts/generateDailyBrief');
+      const brief = await generator.generateBrief();
+      
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ 
+        message: 'Daily brief generated successfully',
+        date: brief.date,
+        indicesCount: brief.indices.length
+      }));
+      console.log('✅ Daily Brief generated manually');
+    } catch (error) {
+      console.error('❌ Error generating daily brief:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Failed to generate daily brief', message: error.message }));
+    }
+    return;
+  }
+
   // POST /api/solar-audit/update - Trigger data fetch
   if (pathname === '/api/solar-audit/update' && req.method === 'POST') {
     try {
@@ -8974,6 +9053,19 @@ server.listen(PORT, '0.0.0.0', () => {
   } catch (error) {
     console.warn('⚠️ Solar Audit initialization failed:', error.message);
     console.log('📌 Dashboard still available but data fetch requires manual trigger');
+  }
+
+  // Initialize TC-S Daily Indices Brief
+  try {
+    const generator = require('./scripts/generateDailyBrief');
+    await generator.generateBrief();
+    console.log('✅ TC-S Daily Indices Brief initialized');
+    console.log(`📊 API: http://localhost:${PORT}/api/daily-brief`);
+    console.log(`📊 JSON-LD: http://localhost:${PORT}/api/daily-brief/jsonld`);
+    console.log(`🔧 Manual trigger: POST http://localhost:${PORT}/api/daily-brief/generate`);
+  } catch (error) {
+    console.warn('⚠️ Daily Indices Brief initialization failed:', error.message);
+    console.log('📌 API still available but briefing may not be current');
   }
 }).on('error', (err) => {
   console.error('❌ Server failed to start:', err);
