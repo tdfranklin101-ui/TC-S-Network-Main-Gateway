@@ -1,0 +1,246 @@
+const express = require('express');
+const bodyParser = require('body-parser');
+const cors = require('cors');
+const { v4: uuidv4 } = require('uuid');
+
+const app = express();
+const port = process.env.PORT || 3000;
+
+app.use(cors());
+app.use(bodyParser.json());
+
+// ===== IN-MEMORY DB FOR PROTOTYPE =====
+// Replace these with real DB calls (Supabase) later.
+const agents = {};
+const walletBalances = {};
+
+// helper: get or init wallet balance
+function getWalletBalance(walletAddress) {
+  if (!walletBalances[walletAddress]) {
+    walletBalances[walletAddress] = { balanceSolar: 1.0 }; // default 1 Solar for test
+  }
+  return walletBalances[walletAddress];
+}
+
+// helper: map actionType to rays cost (you can refine)
+function getActionRaysCost(actionType) {
+  switch (actionType) {
+    case 'create.artifact':
+      return 200;
+    case 'price.artifact':
+      return 500;
+    case 'analyze.risk':
+      return 800;
+    case 'commission.project':
+      return 10000;
+    case 'access.compute':
+      return 1000;
+    default:
+      return 100;
+  }
+}
+
+// helper: rays -> solar (1 Solar = 10,000 Rays)
+function raysToSolar(rays) {
+  return rays / 10000.0;
+}
+
+// ===== MIDDLEWARE: Solar metering =====
+function withSolarMetering(handler) {
+  return async (req, res) => {
+    try {
+      const { agentId } = req.params;
+      const agent = agents[agentId];
+      if (!agent) {
+        return res.status(404).json({ error: 'Agent not found' });
+      }
+
+      const { actionType } = req.body;
+      const raysCost = getActionRaysCost(actionType);
+      const solarCost = raysToSolar(raysCost);
+
+      // check per-action constraint
+      if (raysCost > agent.maxPerActionRays) {
+        return res.status(400).json({
+          error: 'Action exceeds max per-action Rays limit',
+          details: { raysCost, maxPerActionRays: agent.maxPerActionRays }
+        });
+      }
+
+      const wallet = getWalletBalance(agent.wallet_address);
+
+      if (wallet.balanceSolar < solarCost) {
+        return res.status(402).json({
+          error: 'Insufficient Solar balance',
+          details: { balanceSolar: wallet.balanceSolar, solarCost }
+        });
+      }
+
+      // deduct cost
+      wallet.balanceSolar -= solarCost;
+
+      // attach metering info to request
+      req.metering = { raysCost, solarCost };
+
+      // proceed to handler
+      return handler(req, res);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+  };
+}
+
+// ===== ROUTES =====
+
+// Basic health
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Register a personal agent (wallet holder)
+app.post('/api/agents/register-personal', (req, res) => {
+  const { walletAddress, displayName, avatarUrl } = req.body;
+
+  if (!walletAddress) {
+    return res.status(400).json({ error: 'walletAddress is required' });
+  }
+
+  const id = uuidv4();
+  const agent = {
+    id,
+    agentType: 'personal',
+    wallet_address: walletAddress,
+    display_name: displayName || `Agent-${id.slice(0, 6)}`,
+    avatar_url: avatarUrl || null,
+    autonomy_level: 'low',
+    daily_limit_solar: 1.0,
+    maxPerActionRays: 10000,
+    ethics_profile: {
+      udhrAligned: true,
+      solarStandardVersion: '1.0.0',
+      notes: 'Default UDHR-aligned personal agent'
+    },
+    metadata: {},
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
+
+  agents[id] = agent;
+  getWalletBalance(walletAddress); // init balance
+
+  res.json({ agent });
+});
+
+// Register a domain agent (app/service)
+app.post('/api/agents/register-domain', (req, res) => {
+  const { serviceId, displayName, capabilities } = req.body;
+
+  if (!serviceId) {
+    return res.status(400).json({ error: 'serviceId is required' });
+  }
+
+  const id = uuidv4();
+  const agent = {
+    id,
+    agentType: 'domain',
+    wallet_address: `service:${serviceId}`,
+    display_name: displayName || serviceId,
+    avatar_url: null,
+    autonomy_level: 'high',
+    daily_limit_solar: 1000.0,
+    maxPerActionRays: 1000000,
+    ethics_profile: {
+      udhrAligned: true,
+      solarStandardVersion: '1.0.0',
+      notes: 'Domain service agent'
+    },
+    capabilities: capabilities || ['create.artifact', 'price.artifact'],
+    metadata: {},
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
+
+  agents[id] = agent;
+  getWalletBalance(agent.wallet_address);
+
+  res.json({ agent });
+});
+
+// Get agent
+app.get('/api/agents/:agentId', (req, res) => {
+  const { agentId } = req.params;
+  const agent = agents[agentId];
+  if (!agent) {
+    return res.status(404).json({ error: 'Agent not found' });
+  }
+  res.json({ agent });
+});
+
+// Update agent settings (autonomy + limits)
+app.post('/api/agents/:agentId/settings', (req, res) => {
+  const { agentId } = req.params;
+  const agent = agents[agentId];
+  if (!agent) {
+    return res.status(404).json({ error: 'Agent not found' });
+  }
+
+  const { autonomyLevel, dailyLimitSolar, maxPerActionRays } = req.body;
+
+  if (autonomyLevel) {
+    agent.autonomy_level = autonomyLevel;
+  }
+  if (typeof dailyLimitSolar === 'number') {
+    agent.daily_limit_solar = dailyLimitSolar;
+  }
+  if (typeof maxPerActionRays === 'number') {
+    agent.maxPerActionRays = maxPerActionRays;
+  }
+  agent.updated_at = new Date().toISOString();
+
+  res.json({ agent });
+});
+
+// Agent action (agent -> agent with Solar metering)
+app.post('/api/agents/:agentId/actions', withSolarMetering(async (req, res) => {
+  const { agentId } = req.params;
+  const { targetAgentId, actionType, payload } = req.body;
+  const { raysCost, solarCost } = req.metering;
+
+  const agent = agents[agentId];
+  const target = targetAgentId ? agents[targetAgentId] : null;
+
+  const action = {
+    id: uuidv4(),
+    agent_id: agent.id,
+    target_agent_id: target ? target.id : null,
+    action_type: actionType,
+    solar_cost: solarCost,
+    rays_cost: raysCost,
+    payload,
+    status: 'completed',
+    created_at: new Date().toISOString(),
+    completed_at: new Date().toISOString()
+  };
+
+  // In-memory example: attach to agent
+  if (!agent._actions) agent._actions = [];
+  agent._actions.push(action);
+
+  res.json({
+    action,
+    metering: { raysCost, solarCost },
+    message: 'Action processed (stub). Domain agents will perform the real work.'
+  });
+}));
+
+// Get wallet balance
+app.get('/api/wallets/:walletAddress/balance', (req, res) => {
+  const { walletAddress } = req.params;
+  const wallet = getWalletBalance(walletAddress);
+  res.json({ walletAddress, balanceSolar: wallet.balanceSolar });
+});
+
+app.listen(port, () => {
+  console.log(`TC-S Agentic Network API listening on port ${port}`);
+});
