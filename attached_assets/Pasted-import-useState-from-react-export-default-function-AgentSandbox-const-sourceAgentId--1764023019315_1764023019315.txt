@@ -1,0 +1,101 @@
+import { useState } from 'react';
+
+export default function AgentSandbox() {
+  const [sourceAgentId, setSourceAgentId] = useState('');
+  const [targetAgentId, setTargetAgentId] = useState('');
+  const [actionType, setActionType] = useState('create.artifact');
+  const [payload, setPayload] = useState('{"prompt":"Neon band poster"}');
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleRun = async () => {
+    setLoading(true);
+    setResult(null);
+    try {
+      const res = await fetch(`/api/agents/${sourceAgentId}/actions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          targetAgentId: targetAgentId || null,
+          actionType,
+          payload: JSON.parse(payload)
+        })
+      });
+      const data = await res.json();
+      setResult(data);
+    } catch (err: any) {
+      setResult({ error: err.message });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="max-w-3xl mx-auto mt-12 space-y-6">
+      <h1 className="text-3xl font-bold">TC-S Agent Sandbox</h1>
+      <p className="text-gray-600">
+        Send Solar-metered actions from one agent to another. This is your live demo of the TC-S Agentic Network.
+      </p>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white shadow rounded-lg p-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Source Agent ID</label>
+          <input
+            className="mt-1 w-full border rounded-md px-3 py-2"
+            value={sourceAgentId}
+            onChange={e => setSourceAgentId(e.target.value)}
+          />
+
+          <label className="block text-sm font-medium text-gray-700 mt-4">
+            Target Agent ID (optional)
+          </label>
+          <input
+            className="mt-1 w-full border rounded-md px-3 py-2"
+            value={targetAgentId}
+            onChange={e => setTargetAgentId(e.target.value)}
+          />
+
+          <label className="block text-sm font-medium text-gray-700 mt-4">
+            Action Type
+          </label>
+          <select
+            className="mt-1 w-full border rounded-md px-3 py-2"
+            value={actionType}
+            onChange={e => setActionType(e.target.value)}
+          >
+            <option value="create.artifact">create.artifact</option>
+            <option value="price.artifact">price.artifact</option>
+            <option value="analyze.risk">analyze.risk</option>
+            <option value="commission.project">commission.project</option>
+            <option value="access.compute">access.compute</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            Payload (JSON)
+          </label>
+          <textarea
+            className="mt-1 w-full border rounded-md px-3 py-2 h-40 font-mono text-xs"
+            value={payload}
+            onChange={e => setPayload(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <button
+        onClick={handleRun}
+        disabled={loading}
+        className="px-4 py-2 rounded-md bg-black text-white text-sm font-medium"
+      >
+        {loading ? 'Running…' : 'Run Agent Action'}
+      </button>
+
+      {result && (
+        <div className="mt-6 bg-gray-900 text-gray-100 rounded-lg p-4 text-xs overflow-auto">
+          <pre>{JSON.stringify(result, null, 2)}</pre>
+        </div>
+      )}
+    </div>
+  );
+}

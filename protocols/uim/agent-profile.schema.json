@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thecurrentsee.org/protocols/uim/agent-profile.schema.json",
+  "title": "UIM Agent Profile",
+  "type": "object",
+  "required": ["@context", "id", "agentType", "wallet", "capabilities", "ethicsProfile"],
+  "properties": {
+    "@context": {
+      "type": "string",
+      "const": "https://uim.thecurrentsee.org/v1"
+    },
+    "id": {
+      "type": "string",
+      "description": "DID or URL for the agent"
+    },
+    "agentType": {
+      "type": "string",
+      "enum": ["personal", "domain", "system"]
+    },
+    "displayName": {
+      "type": "string"
+    },
+    "avatarUrl": {
+      "type": "string",
+      "format": "uri"
+    },
+    "wallet": {
+      "type": "object",
+      "required": ["address", "network"],
+      "properties": {
+        "address": { "type": "string" },
+        "network": { "type": "string", "const": "TC-S-Solar" }
+      }
+    },
+    "keys": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "publicKey"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["ed25519"]
+          },
+          "publicKey": {
+            "type": "string",
+            "description": "Base58 or hex encoded"
+          }
+        }
+      }
+    },
+    "capabilities": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "create.artifact",
+          "price.artifact",
+          "transact.market",
+          "commission.project",
+          "access.compute",
+          "access.power",
+          "analyze.risk",
+          "observe.telemetry"
+        ]
+      }
+    },
+    "solarPolicy": {
+      "type": "object",
+      "required": ["dailyLimitSolar", "maxPerActionRays", "autonomyLevel"],
+      "properties": {
+        "dailyLimitSolar": { "type": "number", "minimum": 0 },
+        "maxPerActionRays": { "type": "integer", "minimum": 0 },
+        "autonomyLevel": {
+          "type": "string",
+          "enum": ["low", "medium", "high"],
+          "description": "low = always ask, high = full autonomy within limits"
+        }
+      }
+    },
+    "ethicsProfile": {
+      "type": "object",
+      "required": ["udhrAligned", "solarStandardVersion", "notes"],
+      "properties": {
+        "udhrAligned": { "type": "boolean" },
+        "solarStandardVersion": { "type": "string" },
+        "notes": { "type": "string" },
+        "scores": {
+          "type": "object",
+          "properties": {
+            "ESI": { "type": "number", "minimum": 0, "maximum": 1 },
+            "EBI": { "type": "number", "minimum": 0, "maximum": 1 },
+            "HDI": { "type": "number", "minimum": 0, "maximum": 1 },
+            "CSI": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}

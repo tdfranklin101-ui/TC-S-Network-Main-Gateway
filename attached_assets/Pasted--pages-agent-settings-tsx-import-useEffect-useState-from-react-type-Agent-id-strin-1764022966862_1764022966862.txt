@@ -1,0 +1,145 @@
+// pages/agent/settings.tsx
+import { useEffect, useState } from 'react';
+
+type Agent = {
+  id: string;
+  display_name: string;
+  autonomy_level: 'low' | 'medium' | 'high';
+  daily_limit_solar: number;
+  maxPerActionRays: number;
+};
+
+export default function AgentSettingsPage() {
+  const [agent, setAgent] = useState<Agent | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const agentId = typeof window !== 'undefined'
+    ? window.localStorage.getItem('tcs_agent_id')
+    : null;
+
+  useEffect(() => {
+    if (!agentId) {
+      setLoading(false);
+      return;
+    }
+
+    fetch(`/api/agents/${agentId}`)
+      .then(res => res.json())
+      .then(data => {
+        setAgent(data.agent);
+      })
+      .finally(() => setLoading(false));
+  }, [agentId]);
+
+  const handleSave = async () => {
+    if (!agent || !agentId) return;
+    setSaving(true);
+    await fetch(`/api/agents/${agentId}/settings`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        autonomyLevel: agent.autonomy_level,
+        dailyLimitSolar: agent.daily_limit_solar,
+        maxPerActionRays: agent.maxPerActionRays
+      })
+    });
+    setSaving(false);
+  };
+
+  if (!agentId) {
+    return (
+      <div className="max-w-xl mx-auto mt-12">
+        <h1 className="text-2xl font-semibold mb-4">Agent Settings</h1>
+        <p className="text-gray-600">
+          No agent registered yet. Connect your wallet or create your personal agent first.
+        </p>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return <div className="max-w-xl mx-auto mt-12">Loading...</div>;
+  }
+
+  if (!agent) {
+    return (
+      <div className="max-w-xl mx-auto mt-12">
+        <h1 className="text-2xl font-semibold mb-4">Agent Settings</h1>
+        <p className="text-red-600">Agent not found.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-xl mx-auto mt-12 space-y-6">
+      <h1 className="text-3xl font-bold">Agent Settings</h1>
+      <p className="text-gray-600">
+        Configure how your Solar-backed personal agent acts on your behalf.
+      </p>
+
+      <div className="space-y-4 bg-white shadow rounded-lg p-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            Autonomy Level
+          </label>
+          <select
+            className="mt-1 block w-full border rounded-md px-3 py-2"
+            value={agent.autonomy_level}
+            onChange={e =>
+              setAgent({ ...agent, autonomy_level: e.target.value as Agent['autonomy_level'] })
+            }
+          >
+            <option value="low">Low – Always ask before acting</option>
+            <option value="medium">Medium – Ask before spending Solar</option>
+            <option value="high">High – Act freely within limits</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            Daily Solar Limit
+          </label>
+          <input
+            type="number"
+            min={0}
+            step={0.01}
+            className="mt-1 block w-full border rounded-md px-3 py-2"
+            value={agent.daily_limit_solar}
+            onChange={e =>
+              setAgent({ ...agent, daily_limit_solar: parseFloat(e.target.value) || 0 })
+            }
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Maximum Solar your agent can spend per day on your behalf.
+          </p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            Max Rays Per Action
+          </label>
+          <input
+            type="number"
+            min={0}
+            className="mt-1 block w-full border rounded-md px-3 py-2"
+            value={agent.maxPerActionRays}
+            onChange={e =>
+              setAgent({ ...agent, maxPerActionRays: parseInt(e.target.value || '0', 10) })
+            }
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Hard cap per action (1 Solar = 10,000 Rays).
+          </p>
+        </div>
+
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md bg-black text-white"
+        >
+          {saving ? 'Saving…' : 'Save Settings'}
+        </button>
+      </div>
+    </div>
+  );
+}
