@@ -1,0 +1,13 @@
+{
+  "@context": "https://uim.thecurrentsee.org/v1",
+  "type": "UIMHandshake",
+  "required": ["agentId", "solarCost", "payload", "signature"],
+  "properties": {
+    "agentId": { "type": "string" },
+    "solarCost": { "type": "number" },
+    "raysCost": { "type": "integer" },
+    "ethicsScore": { "type": "number" },
+    "payload": { "type": "object" },
+    "signature": { "type": "string" }
+  }
+}

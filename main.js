@@ -65,6 +65,9 @@ const marketRoutes = require('./routes/market');
 const energyRoutes = require('./routes/energy');
 const kidRoutes = require('./routes/kid');
 
+// TC-S Agentic Network routes
+const agentRoutes = require('./routes/agentRoutes');
+
 // Kid Solar Voice Assistant
 const KidSolarVoice = require('./server/kid-solar-voice');
 
@@ -2528,7 +2531,7 @@ const server = http.createServer(async (req, res) => {
   
   // TC-S Computronium Market API routes
   let body = null;
-  if (req.method === 'POST' && (pathname.startsWith('/market') || pathname.startsWith('/energy') || pathname.startsWith('/kid'))) {
+  if (req.method === 'POST' && (pathname.startsWith('/market') || pathname.startsWith('/energy') || pathname.startsWith('/kid') || pathname.startsWith('/api/agents') || pathname.startsWith('/api/wallets'))) {
     try {
       body = await parseBody(req);
     } catch (error) {
@@ -2550,6 +2553,11 @@ const server = http.createServer(async (req, res) => {
   // Try Kid Solar routes
   if (pathname.startsWith('/kid')) {
     if (await kidRoutes(req, res, pathname, body)) return;
+  }
+  
+  // Try TC-S Agentic Network routes
+  if (pathname.startsWith('/api/agents') || pathname.startsWith('/api/wallets')) {
+    if (await agentRoutes(req, res, pathname, body)) return;
   }
   
   // OLD Kid Solar Voice Interaction (replaced by multi-modal endpoint in routes/market.js)
