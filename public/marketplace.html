@@ -1797,8 +1797,8 @@
             <div class="header-subtitle">Solar Standard</div>
         </div>
         <div class="header-actions" id="header-actions">
-            <a href="/agent" class="register-btn" data-testid="link-agent-dashboard" style="display: inline-block; text-decoration: none; margin-right: 10px; background: linear-gradient(135deg, #00ffff, #00bfff);">🤖 My Agent</a>
-            <a href="/members.html" class="register-btn" data-testid="link-members" style="display: inline-block; text-decoration: none; margin-right: 10px;">👥 Members</a>
+            <a href="/agent.html" class="register-btn" data-testid="link-agent-dashboard" style="display: inline-block; text-decoration: none; margin-right: 10px; background: linear-gradient(135deg, #00ffff, #00bfff);">🤖 My Agent</a>
+            <a href="/members.html" class="register-btn" id="members-link" data-testid="link-members" style="display: inline-block; text-decoration: none; margin-right: 10px;">👥 Members</a>
             <button class="register-btn" id="signin-btn" onclick="showSigninModal()">Sign In</button>
             <button class="register-btn" id="register-btn" onclick="showSignupModal()">Join Network</button>
             <div class="user-menu" id="user-menu" style="display: none;">
@@ -1806,6 +1806,7 @@
                     <div class="user-name" id="header-username"></div>
                     <div class="solar-balance" id="header-balance"></div>
                 </div>
+                <a href="/agent.html" class="register-btn" style="display: inline-block; text-decoration: none; margin-right: 10px; background: linear-gradient(135deg, #00ffff, #00bfff);">🤖 Agent</a>
                 <button class="logout-btn" onclick="logoutUser()">Logout</button>
             </div>
         </div>
@@ -3538,8 +3539,48 @@
             }
         }
 
+        // Personal Agent Registration
+        async function registerPersonalAgent(displayName, walletAddress) {
+            try {
+                console.log('🤖 Registering personal agent for:', displayName);
+                
+                const response = await fetch('/api/agents/register-personal', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        walletAddress: walletAddress || displayName,
+                        displayName: displayName
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('✅ Personal agent registered:', data.agent);
+                    
+                    // Store agent ID in localStorage
+                    localStorage.setItem('tcs_agent_id', data.agent.id);
+                    localStorage.setItem('tcs_wallet_address', walletAddress || displayName);
+                    localStorage.setItem('tcs_user_name', displayName);
+                    
+                    return data.agent;
+                } else {
+                    console.warn('⚠️ Agent registration failed, continuing without agent');
+                    return null;
+                }
+            } catch (error) {
+                console.error('❌ Agent registration error:', error);
+                return null;
+            }
+        }
+
         async function logoutUser() {
             try {
+                // Clear agent data on logout
+                localStorage.removeItem('tcs_agent_id');
+                localStorage.removeItem('tcs_wallet_address');
+                localStorage.removeItem('tcs_user_name');
+                
                 // 1. First, destroy server-side session
                 const response = await fetch('/api/logout', {
                     method: 'POST',
@@ -3602,13 +3643,16 @@
                     // Re-check session from server FIRST to update currentUser
                     await checkUserSession();
                     
+                    // Register personal agent automatically
+                    await registerPersonalAgent(result.username, result.email || username);
+                    
                     // Close modal
                     closeSigninModal();
                     
                     // Refresh the page data with new user context
                     await checkAndSwitchTab(currentTab);
                     
-                    alert(`🌱 Welcome back, ${result.username}! Balance: ${(Number(result.solarBalance) || 0).toFixed(4)} Solar`);
+                    alert(`🌱 Welcome back, ${result.username}! Your agent is ready. Balance: ${(Number(result.solarBalance) || 0).toFixed(4)} Solar`);
                 } else {
                     alert(`❌ Sign in failed: ${result.error}`);
                 }
@@ -3664,13 +3708,16 @@
                     // Re-check session from server FIRST to update currentUser
                     await checkUserSession();
                     
+                    // Register personal agent automatically for new users
+                    await registerPersonalAgent(result.username || username, email);
+                    
                     // Close modal
                     closeSignupModal();
                     
                     // Refresh the page data with new user context
                     await checkAndSwitchTab(currentTab);
                     
-                    alert(`🌱 Welcome, ${result.username || username}! Balance: ${(Number(result.solarBalance) || 0).toFixed(4)} Solar`);
+                    alert(`🌱 Welcome, ${result.username || username}! Your personal agent is activated. Balance: ${(Number(result.solarBalance) || 0).toFixed(4)} Solar`);
                 } else {
                     alert(`❌ Signup failed: ${result.error}`);
                 }

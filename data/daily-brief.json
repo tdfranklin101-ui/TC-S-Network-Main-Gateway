@@ -1,57 +1,57 @@
 {
-  "date": "2025-11-24",
+  "date": "2025-11-25",
   "indices": [
     {
       "id": "si",
       "name": "Solar Index",
       "unit": "%",
-      "value": 44.9,
+      "value": 45.1,
       "description": "Global solar abundance and efficiency measure — baseline operational health.",
-      "asOf": "2025-11-24T22:31:59.595Z"
+      "asOf": "2025-11-25T03:07:57.050Z"
     },
     {
       "id": "srh",
       "name": "Solar Reserve Health",
       "unit": "%",
-      "value": 77.4,
+      "value": 78.5,
       "description": "Reserve stability and fulfillment factor across all regions.",
-      "asOf": "2025-11-24T22:31:59.595Z"
+      "asOf": "2025-11-25T03:07:57.050Z"
     },
     {
       "id": "gbi",
       "name": "Global Basic Income",
       "unit": "%",
-      "value": 41.5,
+      "value": 41,
       "description": "Percentage of humans enrolled and actively claiming GBI.",
-      "asOf": "2025-11-24T22:31:59.595Z"
+      "asOf": "2025-11-25T03:07:57.050Z"
     },
     {
       "id": "cai",
       "name": "Compute Alignment",
       "unit": "%",
-      "value": 89.5,
+      "value": 89.4,
       "description": "Ethically aligned compute flow — safe superintelligence readiness.",
-      "asOf": "2025-11-24T22:31:59.595Z"
+      "asOf": "2025-11-25T03:07:57.050Z"
     },
     {
       "id": "mli",
       "name": "Market Liquidity",
       "unit": "%",
-      "value": 23.6,
+      "value": 23.9,
       "description": "Health of the TC-S digital marketplace and token velocity.",
-      "asOf": "2025-11-24T22:31:59.595Z"
+      "asOf": "2025-11-25T03:07:57.050Z"
     },
     {
       "id": "eai",
       "name": "Ethical Alignment",
       "unit": "%",
-      "value": 92.1,
+      "value": 92.4,
       "description": "Acceptance ratio of tasks from the Ethics Engine.",
-      "asOf": "2025-11-24T22:31:59.595Z"
+      "asOf": "2025-11-25T03:07:57.050Z"
     }
   ],
   "solar": {
-    "production": 2489.2,
-    "consumption": 1880.5
+    "production": 2472,
+    "consumption": 1914.4
   }
 }
