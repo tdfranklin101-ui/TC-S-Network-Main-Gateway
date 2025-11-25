@@ -1,0 +1,147 @@
+import { useEffect, useState } from "react";
+import {
+  getPersonalAgentId,
+  registerPersonalAgent,
+  agentAction,
+  getSolarBalance
+} from "../../tcs-agent-bootstrap";
+
+export default function AgentPage() {
+  const [agentId, setAgentId] = useState<string | null>(null);
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [displayName, setDisplayName] = useState<string>("TC-S User");
+  const [balance, setBalance] = useState<number | null>(null);
+  const [status, setStatus] = useState<string>("Loading...");
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    const w = localStorage.getItem("tcs_wallet_address");
+    const n = localStorage.getItem("tcs_user_name") ?? "TC-S User";
+
+    setWalletAddress(w);
+    setDisplayName(n);
+
+    const id = getPersonalAgentId();
+    setAgentId(id);
+
+    if (w && id) {
+      getSolarBalance(w).then(res => setBalance(res.balanceSolar ?? 0));
+      setStatus("Active");
+      setLoading(false);
+    } else {
+      setStatus("Not Activated");
+      setLoading(false);
+    }
+  }, []);
+
+  async function activateAgent() {
+    if (!walletAddress) return;
+    setLoading(true);
+
+    const agent = await registerPersonalAgent(walletAddress, displayName);
+
+    setAgentId(agent.id);
+
+    const bal = await getSolarBalance(walletAddress);
+    setBalance(bal.balanceSolar);
+
+    setStatus("Active");
+    setLoading(false);
+  }
+
+  async function runTestAction() {
+    if (!agentId) return;
+    const result = await agentAction("diagnose.status", {
+      message: "Hello from the agent UI"
+    });
+
+    alert("Agent responded:\n" + JSON.stringify(result, null, 2));
+  }
+
+  return (
+    <div style={{ padding: "40px", maxWidth: "800px", margin: "auto" }}>
+      <h1 style={{ fontSize: "32px", marginBottom: "20px" }}>
+        🌞 Your TC-S Personal Agent
+      </h1>
+
+      <p style={{ opacity: 0.8 }}>
+        Your personal agent is a Solar-powered autonomous assistant that
+        performs tasks on your behalf across the TC-S Network. It uses your
+        daily Solar income (1 Solar = 10,000 Rays) to:
+      </p>
+
+      <ul>
+        <li>🔍 Identify Anything</li>
+        <li>📡 Read satellite streams</li>
+        <li>🌎 Analyze seismic activity</li>
+        <li>🧮 Help govern compute resources</li>
+        <li>🛒 Interact with the marketplace</li>
+        <li>🎨 Create AI artifacts and reports</li>
+      </ul>
+
+      <hr style={{ margin: "30px 0" }} />
+
+      <h2>Status: {status}</h2>
+
+      {loading && <p>Loading...</p>}
+
+      {!loading && status === "Not Activated" && (
+        <>
+          <p>
+            You don’t have an agent yet.  
+            Click below to create your Solar-powered autonomous agent.
+          </p>
+          <button
+            onClick={activateAgent}
+            style={{
+              padding: "12px 18px",
+              fontSize: "18px",
+              background: "#0070f3",
+              color: "#fff",
+              borderRadius: "8px"
+            }}
+          >
+            🚀 Activate My Agent
+          </button>
+        </>
+      )}
+
+      {status === "Active" && (
+        <>
+          <p><strong>Agent ID:</strong> {agentId}</p>
+          <p><strong>Wallet:</strong> {walletAddress}</p>
+          <p><strong>Solar Balance:</strong> {balance} Solar</p>
+
+          <button
+            onClick={runTestAction}
+            style={{
+              marginTop: "20px",
+              padding: "12px 18px",
+              fontSize: "18px",
+              background: "#444",
+              color: "#fff",
+              borderRadius: "8px"
+            }}
+          >
+            ⚡ Run Test Action
+          </button>
+        </>
+      )}
+
+      <hr style={{ margin: "30px 0" }} />
+
+      <h3>What is a TC-S Agent?</h3>
+      <p>
+        Every person receives 1 Solar per day.  
+        Your agent uses this energy standard to help you interact with AI,
+        data streams, governance systems, and digital markets — automatically
+        and transparently.
+      </p>
+
+      <p>
+        You control your agent’s autonomy, spending limits, and permissions in
+        this dashboard.
+      </p>
+    </div>
+  );
+}

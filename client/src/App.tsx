@@ -6,6 +6,7 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import TimerProgressionDemo from "@/pages/TimerProgressionDemo";
 import SolarAuditDashboard from "@/pages/SolarAuditDashboard";
+import AgentDashboard from "@/pages/AgentDashboard";
 import { useEffect } from "react";
 
 function Router() {
@@ -14,6 +15,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/demo" component={TimerProgressionDemo} />
       <Route path="/solar-audit" component={SolarAuditDashboard} />
+      <Route path="/agent" component={AgentDashboard} />
       {/* Fallback to 404 */}
       <Route component={NotFound} />
     </Switch>
