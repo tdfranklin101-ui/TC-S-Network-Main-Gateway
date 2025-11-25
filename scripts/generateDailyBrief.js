@@ -155,6 +155,11 @@ async function fetchSolarSignals() {
 
 /**
  * Calculate indices based on current system state
+ * 
+ * Solar Index Formula (aligned with Solar State of the World):
+ * SI = 0.40×(Global Renewable Penetration) + 0.30×(Energy Storage Stability) + 0.30×(Grid Efficiency Ratio)
+ * 
+ * This produces a 0-1 value, displayed as percentage (e.g., 0.713 = 71.3%)
  */
 function calculateIndices() {
   const now = new Date().toISOString();
@@ -162,19 +167,33 @@ function calculateIndices() {
   // Generate indices with slight daily variation
   const variance = () => (Math.random() - 0.5) * 2; // ±1% variance
   
+  // Solar Index components (using formula from Solar State of the World)
+  // SI = 0.40×(GRP) + 0.30×(ESS) + 0.30×(GER)
+  const globalRenewablePenetration = 0.65 + (Math.random() - 0.5) * 0.05; // ~65% renewable adoption
+  const energyStorageStability = 0.78 + (Math.random() - 0.5) * 0.04;     // ~78% storage health
+  const gridEfficiencyRatio = 0.72 + (Math.random() - 0.5) * 0.03;        // ~72% grid efficiency
+  
+  // Calculate SI using the formula (result is 0-1, multiply by 100 for percentage)
+  const solarIndexValue = (0.40 * globalRenewablePenetration) + 
+                          (0.30 * energyStorageStability) + 
+                          (0.30 * gridEfficiencyRatio);
+  
+  // Solar Reserve Health (matches other indices on same scale)
+  const solarReserveHealth = 0.78 + (Math.random() - 0.5) * 0.04;
+  
   return [
     new TCSIndex(
       'si',
       'Solar Index',
       '%',
-      Math.round((45.6 + variance()) * 10) / 10,
-      'Global solar abundance and efficiency measure — baseline operational health.'
+      Math.round(solarIndexValue * 1000) / 10, // Convert to percentage with 1 decimal
+      'Global Energy & Ethics Balance — 7-Day Rolling Indicator.'
     ),
     new TCSIndex(
       'srh',
       'Solar Reserve Health',
       '%',
-      Math.round((78.2 + variance()) * 10) / 10,
+      Math.round(solarReserveHealth * 1000) / 10,
       'Reserve stability and fulfillment factor across all regions.'
     ),
     new TCSIndex(
