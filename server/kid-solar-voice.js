@@ -185,6 +185,122 @@ Context:
             properties: {}
           }
         }
+      },
+      {
+        type: "function",
+        function: {
+          name: "price_artifact",
+          description: "Calculate the Solar price for an item based on its energy content using Identify Anything pricing. Uses kWh assessment to determine fair Solar value.",
+          parameters: {
+            type: "object",
+            properties: {
+              fileType: {
+                type: "string",
+                description: "Type of file: 'music', 'video', 'art', 'document', or 'other'",
+                enum: ["music", "video", "art", "document", "other"]
+              },
+              fileSizeMB: {
+                type: "number",
+                description: "File size in megabytes"
+              },
+              durationSeconds: {
+                type: "number",
+                description: "Duration in seconds (for audio/video)"
+              },
+              description: {
+                type: "string",
+                description: "Description of the item for AI pricing assessment"
+              }
+            },
+            required: ["fileType"]
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "list_artifact_for_sale",
+          description: "List an artifact for sale on the marketplace with a specified Solar price. Creates a new marketplace listing.",
+          parameters: {
+            type: "object",
+            properties: {
+              title: {
+                type: "string",
+                description: "Title of the artifact"
+              },
+              description: {
+                type: "string",
+                description: "Description of the artifact"
+              },
+              category: {
+                type: "string",
+                description: "Category: 'music', 'video', 'art', 'document'",
+                enum: ["music", "video", "art", "document"]
+              },
+              solarPrice: {
+                type: "number",
+                description: "Price in Solar tokens"
+              },
+              filePath: {
+                type: "string",
+                description: "Path to the uploaded file"
+              }
+            },
+            required: ["title", "category", "solarPrice"]
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "get_transaction_history",
+          description: "Get the user's recent transaction history showing purchases, sales, and Solar movements",
+          parameters: {
+            type: "object",
+            properties: {
+              limit: {
+                type: "integer",
+                description: "Number of transactions to return (default 10)",
+                default: 10
+              }
+            }
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "create_artifact",
+          description: "Create and upload a new artifact to the marketplace. Handles file upload and metadata.",
+          parameters: {
+            type: "object",
+            properties: {
+              title: {
+                type: "string",
+                description: "Title of the artifact"
+              },
+              description: {
+                type: "string",
+                description: "Description of the artifact"
+              },
+              category: {
+                type: "string",
+                description: "Category: 'music', 'video', 'art', 'document'",
+                enum: ["music", "video", "art", "document"]
+              },
+              tags: {
+                type: "array",
+                items: { type: "string" },
+                description: "Tags for searchability"
+              },
+              suggestedPrice: {
+                type: "number",
+                description: "Suggested Solar price (will be verified against kWh assessment)"
+              }
+            },
+            required: ["title", "category"]
+          }
+        }
       }
     ];
   }
@@ -348,6 +464,18 @@ User said: "${text}"`;
         
         case 'check_my_uploads':
           return await this.checkMyUploads(memberId);
+        
+        case 'price_artifact':
+          return await this.priceArtifact(args.fileType, args.fileSizeMB, args.durationSeconds, args.description);
+        
+        case 'list_artifact_for_sale':
+          return await this.listArtifactForSale(args.title, args.description, args.category, args.solarPrice, args.filePath, memberId);
+        
+        case 'get_transaction_history':
+          return await this.getTransactionHistory(memberId, args.limit || 10);
+        
+        case 'create_artifact':
+          return await this.createArtifact(args.title, args.description, args.category, args.tags, args.suggestedPrice, memberId, fileData);
         
         default:
           throw new Error(`Unknown function: ${functionName}`);
@@ -607,6 +735,331 @@ User said: "${text}"`;
 
     } catch (error) {
       console.error('Error listing marketplace items:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Price an artifact using kWh energy assessment (Identify Anything)
+   * Solar Standard: 1 Solar = 4,913 kWh
+   * Pricing is based on estimated energy to create, store, and distribute the artifact
+   */
+  async priceArtifact(fileType, fileSizeMB = 1, durationSeconds = 0, description = '') {
+    try {
+      // Validate inputs
+      if (!fileType || !['music', 'video', 'art', 'document', 'other'].includes(fileType)) {
+        return { success: false, error: 'Invalid file type. Must be: music, video, art, document, or other' };
+      }
+      
+      // Solar Standard: 1 Solar = 4,913 kWh (renewable energy equivalent)
+      const KWH_PER_SOLAR = 4913;
+      
+      // Base energy calculations based on file type
+      let estimatedKwh = 0;
+      let reasoning = '';
+      
+      const baseStorageEnergy = (fileSizeMB || 1) * 0.0001; // 0.0001 kWh per MB storage
+      const baseDistributionEnergy = 0.001; // Base distribution energy
+      
+      switch (fileType) {
+        case 'music':
+          const minutes = (durationSeconds || 180) / 60;
+          const recordingEnergy = minutes * 0.05; // 0.05 kWh per minute of recording
+          const productionEnergy = minutes * 0.02; // 0.02 kWh per minute of production
+          estimatedKwh = recordingEnergy + productionEnergy + baseStorageEnergy + baseDistributionEnergy;
+          reasoning = `Music: Recording (${recordingEnergy.toFixed(4)} kWh) + Production (${productionEnergy.toFixed(4)} kWh) + Storage (${baseStorageEnergy.toFixed(4)} kWh)`;
+          break;
+          
+        case 'video':
+          const videoMinutes = (durationSeconds || 300) / 60;
+          const filmingEnergy = videoMinutes * 0.15;
+          const editingEnergy = videoMinutes * 0.08;
+          const renderingEnergy = videoMinutes * 0.12;
+          estimatedKwh = filmingEnergy + editingEnergy + renderingEnergy + baseStorageEnergy + baseDistributionEnergy;
+          reasoning = `Video: Filming (${filmingEnergy.toFixed(4)} kWh) + Editing (${editingEnergy.toFixed(4)} kWh) + Rendering (${renderingEnergy.toFixed(4)} kWh)`;
+          break;
+          
+        case 'art':
+          const creationEnergy = 0.05;
+          const processingEnergy = (fileSizeMB || 1) * 0.001;
+          estimatedKwh = creationEnergy + processingEnergy + baseStorageEnergy + baseDistributionEnergy;
+          reasoning = `Digital art: Creation (${creationEnergy.toFixed(4)} kWh) + Processing (${processingEnergy.toFixed(4)} kWh)`;
+          break;
+          
+        case 'document':
+          const writingEnergy = 0.02;
+          const formattingEnergy = 0.005;
+          estimatedKwh = writingEnergy + formattingEnergy + baseStorageEnergy + baseDistributionEnergy;
+          reasoning = `Document: Writing (${writingEnergy.toFixed(4)} kWh) + Formatting (${formattingEnergy.toFixed(4)} kWh)`;
+          break;
+          
+        default:
+          estimatedKwh = baseStorageEnergy + baseDistributionEnergy + 0.01;
+          reasoning = `Generic file: Base energy estimate`;
+      }
+      
+      // Convert kWh to Solar
+      const solarPrice = estimatedKwh / KWH_PER_SOLAR;
+      
+      return {
+        success: true,
+        pricing: {
+          estimatedKwh: estimatedKwh.toFixed(6),
+          solarPrice: solarPrice.toFixed(6),
+          reasoning: reasoning,
+          fileType: fileType,
+          kwhPerSolar: KWH_PER_SOLAR
+        }
+      };
+      
+    } catch (error) {
+      console.error('Error pricing artifact:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * List an artifact for sale on the marketplace
+   * Creates an active listing that can be purchased immediately
+   */
+  async listArtifactForSale(title, description, category, solarPrice, filePath, memberId) {
+    const pool = getSharedPool();
+    if (!pool) {
+      return { success: false, error: 'Database unavailable' };
+    }
+
+    try {
+      // Validate required fields
+      if (!title || title.trim().length === 0) {
+        return { success: false, error: 'Title is required' };
+      }
+      if (!category || !['music', 'video', 'art', 'document'].includes(category)) {
+        return { success: false, error: 'Category must be: music, video, art, or document' };
+      }
+      if (!solarPrice || solarPrice <= 0) {
+        return { success: false, error: 'Price must be greater than 0' };
+      }
+
+      // Get member info
+      const memberResult = await pool.query(
+        'SELECT name, email FROM members WHERE id = $1',
+        [memberId]
+      );
+      const member = memberResult.rows[0];
+      
+      if (!member) {
+        return { success: false, error: 'Member not found' };
+      }
+
+      // Generate slug from title
+      const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      const uniqueSlug = `${slug}-${Date.now()}`;
+
+      // Calculate kWh equivalent (1 Solar = 4,913 kWh)
+      const kwhEquivalent = solarPrice * 4913;
+
+      // Insert artifact
+      const result = await pool.query(
+        `INSERT INTO artifacts (
+          title, slug, description, category, solar_amount_s, kwh_equivalent,
+          creator_email, active, created_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, true, NOW())
+        RETURNING id, title, slug, solar_amount_s`,
+        [title, uniqueSlug, description || '', category, solarPrice.toString(), kwhEquivalent, member.email]
+      );
+
+      const artifact = result.rows[0];
+
+      // Log the listing transaction
+      await pool.query(
+        `INSERT INTO transactions (user_id, type, amount, currency, status, description, metadata, completed_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())`,
+        [
+          memberId.toString(),
+          'artifact_listed',
+          0,
+          'SOLAR',
+          'completed',
+          `Listed for sale: ${title}`,
+          JSON.stringify({
+            artifactId: artifact.id,
+            artifactTitle: title,
+            solarPrice: solarPrice
+          })
+        ]
+      );
+
+      return {
+        success: true,
+        artifact: {
+          id: artifact.id,
+          title: artifact.title,
+          slug: artifact.slug,
+          price: solarPrice,
+          category: category
+        },
+        message: `Successfully listed "${title}" for ${solarPrice} Solar`
+      };
+
+    } catch (error) {
+      console.error('Error listing artifact for sale:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Get user's transaction history (ledger)
+   */
+  async getTransactionHistory(memberId, limit = 10) {
+    const pool = getSharedPool();
+    if (!pool) {
+      return { success: false, error: 'Database unavailable' };
+    }
+
+    try {
+      const result = await pool.query(
+        `SELECT id, type, amount, currency, status, description, metadata, completed_at
+         FROM transactions 
+         WHERE user_id = $1 
+         ORDER BY completed_at DESC 
+         LIMIT $2`,
+        [memberId.toString(), limit]
+      );
+
+      const transactions = result.rows.map(tx => ({
+        id: tx.id,
+        type: tx.type,
+        amount: parseFloat(tx.amount || 0),
+        currency: tx.currency,
+        status: tx.status,
+        description: tx.description,
+        details: tx.metadata,
+        date: tx.completed_at
+      }));
+
+      return {
+        success: true,
+        transactions: transactions,
+        count: transactions.length,
+        message: transactions.length > 0 
+          ? `Found ${transactions.length} recent transactions`
+          : 'No transactions found'
+      };
+
+    } catch (error) {
+      console.error('Error getting transaction history:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Create and upload a new artifact
+   * This creates a placeholder entry for the artifact. The actual file upload
+   * is handled separately through the marketplace upload UI.
+   * 
+   * Agent workflow:
+   * 1. User asks "Create artifact called X"
+   * 2. Kid Solar creates DB entry with metadata (pending status)
+   * 3. User then uploads file through marketplace UI
+   * 4. File upload links to the created entry
+   */
+  async createArtifact(title, description, category, tags, suggestedPrice, memberId, fileData = null) {
+    const pool = getSharedPool();
+    if (!pool) {
+      return { success: false, error: 'Database unavailable' };
+    }
+
+    try {
+      // Validate required fields
+      if (!title || title.trim().length === 0) {
+        return { success: false, error: 'Title is required' };
+      }
+      if (!category || !['music', 'video', 'art', 'document'].includes(category)) {
+        return { success: false, error: 'Category must be: music, video, art, or document' };
+      }
+
+      // Get member info
+      const memberResult = await pool.query(
+        'SELECT name, email FROM members WHERE id = $1',
+        [memberId]
+      );
+      const member = memberResult.rows[0];
+      
+      if (!member) {
+        return { success: false, error: 'Member not found' };
+      }
+
+      // Calculate price if not suggested (uses kWh energy assessment)
+      let finalPrice = suggestedPrice;
+      if (!finalPrice) {
+        const pricingResult = await this.priceArtifact(category, 1, 180, description);
+        finalPrice = parseFloat(pricingResult.pricing?.solarPrice || 0.001);
+      }
+
+      // Generate slug
+      const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      const uniqueSlug = `${slug}-${Date.now()}`;
+
+      // Calculate kWh equivalent
+      const kwhEquivalent = finalPrice * 4913;
+
+      // Insert artifact (pending review)
+      const result = await pool.query(
+        `INSERT INTO artifacts (
+          title, slug, description, category, solar_amount_s, kwh_equivalent,
+          creator_email, active, created_at, tags
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, false, NOW(), $8)
+        RETURNING id, title, slug, solar_amount_s`,
+        [
+          title, 
+          uniqueSlug, 
+          description || '', 
+          category, 
+          finalPrice.toString(), 
+          kwhEquivalent, 
+          member.email,
+          JSON.stringify(tags || [])
+        ]
+      );
+
+      const artifact = result.rows[0];
+
+      // Log creation transaction
+      await pool.query(
+        `INSERT INTO transactions (user_id, type, amount, currency, status, description, metadata, completed_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())`,
+        [
+          memberId.toString(),
+          'artifact_created',
+          0,
+          'SOLAR',
+          'pending',
+          `Created artifact: ${title}`,
+          JSON.stringify({
+            artifactId: artifact.id,
+            artifactTitle: title,
+            solarPrice: finalPrice,
+            status: 'pending_review'
+          })
+        ]
+      );
+
+      return {
+        success: true,
+        artifact: {
+          id: artifact.id,
+          title: artifact.title,
+          slug: artifact.slug,
+          price: finalPrice,
+          category: category,
+          status: 'pending_review'
+        },
+        message: `Created "${title}" (pending review). Suggested price: ${finalPrice.toFixed(6)} Solar`,
+        nextStep: 'Upload your file through the marketplace to complete the listing'
+      };
+
+    } catch (error) {
+      console.error('Error creating artifact:', error);
       return { success: false, error: error.message };
     }
   }
