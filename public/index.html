@@ -475,26 +475,54 @@
       </a>
     </div>
 
-    <!-- Satellite Solar Power & Personal Satellites Section -->
-    <div style="max-width: 800px; margin: 3rem auto; padding: 2.5rem; background: rgba(0, 0, 0, 0.8); border-radius: 20px; border: 2px solid #FFD700; text-align: left; box-shadow: 0 10px 30px rgba(255, 215, 0, 0.2);" data-testid="section-satellite-solar-power">
+    <!-- Open-Source EDA & 3D-Printed Chips Section -->
+    <div style="max-width: 800px; margin: 3rem auto; padding: 2.5rem; background: rgba(0, 0, 0, 0.8); border-radius: 20px; border: 2px solid #9D4EDD; text-align: left; box-shadow: 0 10px 30px rgba(157, 78, 221, 0.2);" data-testid="section-open-source-eda">
       <p style="color: #00f5d4; font-size: 0.95rem; font-weight: 600; margin-bottom: 0.5rem; letter-spacing: 1px; text-shadow: 0 0 8px rgba(0, 245, 212, 0.5); text-align: center;">TC-S NETWORK</p>
-      <h2 style="color: #FFD700; font-size: 2rem; margin-bottom: 1.5rem; font-weight: 700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5); text-align: center;">Satellite Solar Power & the Era of Personal Satellites</h2>
+      <h2 style="color: #9D4EDD; font-size: 2rem; margin-bottom: 1.5rem; font-weight: 700; text-shadow: 0 0 10px rgba(157, 78, 221, 0.5); text-align: center;">Manufacturing & 3D-Printed Chips</h2>
       
       <p style="color: #ffffff; font-size: 1.05rem; line-height: 1.7; margin-bottom: 1.5rem;">
-        Nearly every satellite orbiting Earth today—about <strong style="color: #FFD700;">13,500 active</strong> out of 16,600 total—is powered by solar energy. From low Earth orbit constellations to high-altitude communications platforms, solar photovoltaic (PV) arrays convert sunlight into electricity to sustain onboard systems, sensors, and communications. Only a handful rely on nuclear or battery-based power. This near-universal reliance on solar energy makes our planet's orbital layer effectively a solar-powered extension of civilization.
+        We're moving beyond 2D lithography into true atomic-scale 3D printing of chips. Using open-source EDA tools and digital twins, designers will be able to prototype, verify, and eventually print complex processors directly from code—no billion-dollar fabs, no masks, just programmable matter.
       </p>
       
-      <h3 style="color: #FFD700; font-size: 1.4rem; margin: 2rem 0 1rem; font-weight: 600; text-shadow: 0 0 8px rgba(255, 215, 0, 0.4);">The Coming Age of Personal Satellites</h3>
-      
-      <p style="color: #ffffff; font-size: 1.05rem; line-height: 1.7; margin-bottom: 1.5rem;">
-        As launch costs fall and hardware miniaturizes, we're entering a new era where individuals, artists, schools, and local communities can own, commission, or rent micro-satellites. These "personal satellites" will act as creative beacons, data mirrors, and communication hubs—each powered by sunlight and connected through the TC-S Network. Just as websites democratized information, personal satellites will democratize presence in space.
-      </p>
-      
-      <h3 style="color: #FFD700; font-size: 1.4rem; margin: 2rem 0 1rem; font-weight: 600; text-shadow: 0 0 8px rgba(255, 215, 0, 0.4);">Why the Foundation Provides Satellite Tracking Data</h3>
-      
-      <p style="color: #ffffff; font-size: 1.05rem; line-height: 1.7; margin-bottom: 0;">
-        The TC-S Network Foundation shares live satellite tracking data because transparency in orbit is as essential as transparency in finance or governance. Every Solar token and every beam of energy connects Earth's surface economy to its orbital infrastructure. By showing where satellites are, how they move, and how they harvest sunlight, the Foundation ensures that humanity's shared solar assets remain open, accountable, and ethically aligned—a clear window into our collective sky.
-      </p>
+      <div style="text-align: center;">
+        <a href="https://open-source-eda-tdfranklin101.replit.app" 
+           style="background: linear-gradient(135deg, #9D4EDD 0%, #7B2CBF 100%); color: #fff; padding: 1rem 2rem; border-radius: 30px; text-decoration: none; font-weight: 700; font-size: 1.1rem; display: inline-flex; align-items: center; gap: 10px; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(157, 78, 221, 0.4);"
+           onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(157, 78, 221, 0.6)'"
+           onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(157, 78, 221, 0.4)'"
+           data-testid="button-open-source-eda">
+           Explore the Open-Source EDA stack <span style="font-size: 1.2rem;">→</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Why Satellites Dropdown Section -->
+    <div style="max-width: 800px; margin: 3rem auto; padding: 0; background: rgba(0, 0, 0, 0.8); border-radius: 20px; border: 2px solid #FFD700; box-shadow: 0 10px 30px rgba(255, 215, 0, 0.2);" data-testid="section-satellite-solar-power">
+      <details style="width: 100%;">
+        <summary style="cursor: pointer; padding: 1.5rem 2.5rem; list-style: none; display: flex; align-items: center; justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 1rem;">
+            <span style="color: #FFD700; font-size: 1.5rem;">🛰️</span>
+            <span style="color: #FFD700; font-size: 1.3rem; font-weight: 700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);">Why Satellites? Solar Power & the Era of Personal Satellites</span>
+          </div>
+          <span style="color: #FFD700; font-size: 1.5rem; transition: transform 0.3s ease;" class="dropdown-arrow">▼</span>
+        </summary>
+        <div style="padding: 0 2.5rem 2.5rem 2.5rem; text-align: left;">
+          <p style="color: #ffffff; font-size: 1.05rem; line-height: 1.7; margin-bottom: 1.5rem;">
+            Nearly every satellite orbiting Earth today—about <strong style="color: #FFD700;">13,500 active</strong> out of 16,600 total—is powered by solar energy. From low Earth orbit constellations to high-altitude communications platforms, solar photovoltaic (PV) arrays convert sunlight into electricity to sustain onboard systems, sensors, and communications. Only a handful rely on nuclear or battery-based power. This near-universal reliance on solar energy makes our planet's orbital layer effectively a solar-powered extension of civilization.
+          </p>
+          
+          <h3 style="color: #FFD700; font-size: 1.4rem; margin: 2rem 0 1rem; font-weight: 600; text-shadow: 0 0 8px rgba(255, 215, 0, 0.4);">The Coming Age of Personal Satellites</h3>
+          
+          <p style="color: #ffffff; font-size: 1.05rem; line-height: 1.7; margin-bottom: 1.5rem;">
+            As launch costs fall and hardware miniaturizes, we're entering a new era where individuals, artists, schools, and local communities can own, commission, or rent micro-satellites. These "personal satellites" will act as creative beacons, data mirrors, and communication hubs—each powered by sunlight and connected through the TC-S Network. Just as websites democratized information, personal satellites will democratize presence in space.
+          </p>
+          
+          <h3 style="color: #FFD700; font-size: 1.4rem; margin: 2rem 0 1rem; font-weight: 600; text-shadow: 0 0 8px rgba(255, 215, 0, 0.4);">Why the Foundation Provides Satellite Tracking Data</h3>
+          
+          <p style="color: #ffffff; font-size: 1.05rem; line-height: 1.7; margin-bottom: 0;">
+            The TC-S Network Foundation shares live satellite tracking data because transparency in orbit is as essential as transparency in finance or governance. Every Solar token and every beam of energy connects Earth's surface economy to its orbital infrastructure. By showing where satellites are, how they move, and how they harvest sunlight, the Foundation ensures that humanity's shared solar assets remain open, accountable, and ethically aligned—a clear window into our collective sky.
+          </p>
+        </div>
+      </details>
     </div>
 
     <!-- Satellite ID Anywhere Promotional Section -->
