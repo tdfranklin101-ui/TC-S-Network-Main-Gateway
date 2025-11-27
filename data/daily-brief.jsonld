@@ -11,7 +11,7 @@
       "encodingFormat": "application/json",
       "description": "Global Energy & Ethics Balance — 7-Day Rolling Indicator.",
       "contentUrl": "https://api.thecurrentsee.org/api/daily-brief#si",
-      "value": 72.3,
+      "value": 72.2,
       "unit": "%"
     },
     {
@@ -20,7 +20,7 @@
       "encodingFormat": "application/json",
       "description": "Reserve stability and fulfillment factor across all regions.",
       "contentUrl": "https://api.thecurrentsee.org/api/daily-brief#srh",
-      "value": 79.1,
+      "value": 79.4,
       "unit": "%"
     },
     {
@@ -29,7 +29,7 @@
       "encodingFormat": "application/json",
       "description": "Percentage of humans enrolled and actively claiming GBI.",
       "contentUrl": "https://api.thecurrentsee.org/api/daily-brief#gbi",
-      "value": 42.3,
+      "value": 40.7,
       "unit": "%"
     },
     {
@@ -38,7 +38,7 @@
       "encodingFormat": "application/json",
       "description": "Ethically aligned compute flow — safe superintelligence readiness.",
       "contentUrl": "https://api.thecurrentsee.org/api/daily-brief#cai",
-      "value": 88.2,
+      "value": 88.1,
       "unit": "%"
     },
     {
@@ -47,7 +47,7 @@
       "encodingFormat": "application/json",
       "description": "Health of the TC-S digital marketplace and token velocity.",
       "contentUrl": "https://api.thecurrentsee.org/api/daily-brief#mli",
-      "value": 23.5,
+      "value": 23.8,
       "unit": "%"
     },
     {
@@ -56,7 +56,7 @@
       "encodingFormat": "application/json",
       "description": "Acceptance ratio of tasks from the Ethics Engine.",
       "contentUrl": "https://api.thecurrentsee.org/api/daily-brief#eai",
-      "value": 92.6,
+      "value": 91.4,
       "unit": "%"
     }
   ]
