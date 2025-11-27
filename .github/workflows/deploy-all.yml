@@ -1,0 +1,76 @@
+name: TC-S Ω-1 Master Deployment
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  deploy-master:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Main Gateway
+        uses: actions/checkout@v3
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel
+
+      - name: Pull Vercel Env
+        run: vercel pull --yes --environment=production
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy Main Gateway
+        run: vercel --prod --yes
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
+  deploy-satellite-apps:
+    needs: deploy-master
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        repo: [
+          "TC-S-Network-Wallet",
+          "TC-S-Network-Market-Grid",
+          "TC-S-Network-SolarStack",
+          "TC-S-Network-Indices",
+          "TC-S-Network-Satellite-ID",
+          "TC-S-Network-Seismic-ID",
+          "TC-S-Network-Identify-Anything",
+          "TC-S-Network-Z-Private",
+          "TC-S-Network-Compute",
+          "TC-S-Network-Apps",
+          "TC-S-Network-Licensing",
+          "TC-S-Network-Grid",
+          "TC-S-Network-ReserveTracker"
+        ]
+
+    steps:
+      - name: Checkout Satellite Repo
+        uses: actions/checkout@v3
+        with:
+          repository: tdfranklin101-ui/${{ matrix.repo }}
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel
+
+      - name: Pull Vercel Env
+        run: vercel pull --yes --environment=production
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy Satellite Repo
+        run: vercel --prod --yes
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
