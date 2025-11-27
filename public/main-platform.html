@@ -950,6 +950,13 @@ Represents global ethical stability of automated decision systems.`
                 document.getElementById('omega1Risk').textContent = 
                   (data.omega1_objective.existential_risk_probability * 100).toFixed(2) + '%';
                 
+                // Show quantum insight
+                const quantumInsightHtml = data.quantum_insight ? `
+                  <div style="background: rgba(0,245,212,0.1); border-left: 4px solid #00f5d4; padding: 1rem; margin-bottom: 1.5rem; border-radius: 0 8px 8px 0;">
+                    <p style="margin: 0; font-style: italic; color: #a0e8e0; font-size: 0.95rem;">"${data.quantum_insight}"</p>
+                  </div>
+                ` : '';
+                
                 // Show directives
                 const directivesHtml = data.cosmic_directives.map(d => 
                   `<div style="display: flex; align-items: flex-start; gap: 0.5rem; margin-bottom: 0.5rem;">
@@ -958,10 +965,12 @@ Represents global ethical stability of automated decision systems.`
                   </div>`
                 ).join('');
                 document.getElementById('omega1Directives').innerHTML = `
+                  ${quantumInsightHtml}
                   <div style="font-size: 0.9rem; color: #00f5d4; margin-bottom: 0.75rem; font-weight: 600;">Cosmic Directives:</div>
                   ${directivesHtml}
                   <div style="margin-top: 1rem; font-size: 0.8rem; color: #888;">
-                    Request ID: ${data.request_id} | Days since Genesis: ${data.days_since_genesis}
+                    Request ID: ${data.request_id} | Days since Genesis: ${data.days_since_genesis}<br>
+                    Quantum Engine: ${data.quantum_substitute || 'Unknown'}
                   </div>
                 `;
                 
