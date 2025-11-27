@@ -1120,6 +1120,63 @@ Represents global ethical stability of automated decision systems.`
               </div>
             </details>
             
+            <!-- Open Silicon Stack Simulator Connection -->
+            <div id="ossSimulatorSection" style="margin-bottom: 1.5rem; border: 2px dashed rgba(157,78,221,0.5); border-radius: 12px; background: linear-gradient(135deg, rgba(157,78,221,0.1), rgba(123,44,191,0.05)); padding: 1.5rem;" data-testid="section-oss-simulator">
+              <div style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; margin-bottom: 1rem;">
+                <span style="font-size: 1.5rem;">🔗</span>
+                <h3 style="color: #c9a0dc; font-size: 1.2rem; margin: 0;">Open Silicon Stack Simulator</h3>
+                <span id="ossConnectionStatus" style="background: #ffcc00; width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 10px #ffcc00;" title="Checking connection..."></span>
+              </div>
+              
+              <p style="text-align: center; color: #b0b0d0; font-size: 0.95rem; margin-bottom: 1.25rem; line-height: 1.6;">
+                Connect to our <strong style="color: #c9a0dc;">Open-Source EDA Digital Twin</strong> to simulate VexRiscv, OpenRAM, Skywater PDK, and OpenLane chip designs. Generate power traces directly from simulated workloads.
+              </p>
+              
+              <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-bottom: 1rem;">
+                <button id="ossOpenSimBtn" onclick="openOSSSimulator()" style="background: linear-gradient(135deg, #7B2CBF, #9D4EDD); color: #fff; border: none; padding: 0.85rem 1.75rem; border-radius: 25px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(157,78,221,0.4); display: flex; align-items: center; gap: 0.5rem;" data-testid="button-open-simulator">
+                  <span>🔬</span> Open Simulator
+                </button>
+                <button id="ossEmbedToggle" onclick="toggleOSSEmbed()" style="background: rgba(157,78,221,0.2); color: #c9a0dc; border: 1px solid rgba(157,78,221,0.4); padding: 0.85rem 1.75rem; border-radius: 25px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; gap: 0.5rem;" data-testid="button-embed-simulator">
+                  <span>📺</span> Embed Here
+                </button>
+              </div>
+              
+              <!-- Embedded Simulator (hidden by default) -->
+              <div id="ossEmbedContainer" style="display: none; margin-top: 1rem;">
+                <div style="position: relative; width: 100%; height: 500px; border-radius: 10px; overflow: hidden; border: 2px solid rgba(157,78,221,0.4);">
+                  <iframe id="ossSimulatorFrame" src="" style="width: 100%; height: 100%; border: none; background: #0a0a1a;" allow="fullscreen"></iframe>
+                  <button onclick="toggleOSSEmbed()" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); color: #fff; border: none; padding: 0.5rem 1rem; border-radius: 15px; cursor: pointer; font-size: 0.85rem;">✕ Close</button>
+                </div>
+              </div>
+              
+              <!-- Workflow Guide -->
+              <details style="margin-top: 1rem; border: 1px solid rgba(157,78,221,0.2); border-radius: 8px; background: rgba(0,0,0,0.2);" data-testid="details-oss-workflow">
+                <summary style="cursor: pointer; padding: 0.75rem 1rem; color: #c9a0dc; font-size: 0.9rem; list-style: none; display: flex; justify-content: space-between; align-items: center;">
+                  <span>📋 How to Generate Power Traces</span>
+                  <span>▼</span>
+                </summary>
+                <div style="padding: 1rem; color: #e0e0e0; font-size: 0.9rem; line-height: 1.8; border-top: 1px solid rgba(157,78,221,0.2);">
+                  <ol style="margin: 0; padding-left: 1.5rem;">
+                    <li style="margin-bottom: 0.75rem;">Open the <strong style="color: #c9a0dc;">Open Silicon Stack</strong> simulator above</li>
+                    <li style="margin-bottom: 0.75rem;">Select a chip architecture: <strong>VexRiscv</strong> (RISC-V core), <strong>OpenRAM</strong> (memory), or configure custom</li>
+                    <li style="margin-bottom: 0.75rem;">Choose your workload benchmark or configure a custom simulation</li>
+                    <li style="margin-bottom: 0.75rem;">Run the simulation and <strong style="color: #c9a0dc;">export the power trace as CSV</strong></li>
+                    <li style="margin-bottom: 0;">Upload the CSV below to calculate Solar energy cost</li>
+                  </ol>
+                  <div style="margin-top: 1rem; padding: 0.75rem; background: rgba(157,78,221,0.1); border-radius: 6px; border-left: 3px solid #9D4EDD;">
+                    <strong style="color: #c9a0dc;">Tip:</strong> The CSV should have columns <code style="background: rgba(0,0,0,0.3); padding: 0.2rem 0.4rem; border-radius: 4px;">time_s</code> and <code style="background: rgba(0,0,0,0.3); padding: 0.2rem 0.4rem; border-radius: 4px;">power_w</code>
+                  </div>
+                </div>
+              </details>
+            </div>
+            
+            <!-- Divider -->
+            <div style="display: flex; align-items: center; margin-bottom: 1.5rem; gap: 1rem;">
+              <div style="flex: 1; height: 1px; background: linear-gradient(to right, transparent, rgba(157,78,221,0.4), transparent);"></div>
+              <span style="color: #a0a0c0; font-size: 0.85rem; font-weight: 500;">OR UPLOAD EXISTING TRACE</span>
+              <div style="flex: 1; height: 1px; background: linear-gradient(to left, transparent, rgba(157,78,221,0.4), transparent);"></div>
+            </div>
+            
             <!-- Upload Form -->
             <form id="powerTwinForm" style="margin-bottom: 1.5rem;">
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
@@ -1321,6 +1378,85 @@ Represents global ethical stability of automated decision systems.`
               a.click();
               document.body.removeChild(a);
               URL.revokeObjectURL(url);
+            }
+            
+            // Open Silicon Stack Simulator Functions
+            const OSS_SIMULATOR_URL = 'https://open-source-eda-tdfranklin101.replit.app/';
+            let ossEmbedVisible = false;
+            
+            function openOSSSimulator() {
+              window.open(OSS_SIMULATOR_URL, '_blank', 'noopener,noreferrer');
+            }
+            
+            function toggleOSSEmbed() {
+              const container = document.getElementById('ossEmbedContainer');
+              const frame = document.getElementById('ossSimulatorFrame');
+              const btn = document.getElementById('ossEmbedToggle');
+              
+              ossEmbedVisible = !ossEmbedVisible;
+              
+              if (ossEmbedVisible) {
+                frame.src = OSS_SIMULATOR_URL;
+                container.style.display = 'block';
+                btn.innerHTML = '<span>📺</span> Hide Embed';
+                btn.style.background = 'rgba(0,255,65,0.2)';
+                btn.style.borderColor = '#00ff41';
+                btn.style.color = '#00ff41';
+              } else {
+                container.style.display = 'none';
+                frame.src = '';
+                btn.innerHTML = '<span>📺</span> Embed Here';
+                btn.style.background = 'rgba(157,78,221,0.2)';
+                btn.style.borderColor = 'rgba(157,78,221,0.4)';
+                btn.style.color = '#c9a0dc';
+              }
+            }
+            
+            // Check OSS Simulator connection status via backend API
+            async function checkOSSConnection() {
+              const statusDot = document.getElementById('ossConnectionStatus');
+              const openBtn = document.getElementById('ossOpenSimBtn');
+              const embedBtn = document.getElementById('ossEmbedToggle');
+              
+              // Start with pending state
+              statusDot.style.background = '#ffcc00';
+              statusDot.style.boxShadow = '0 0 10px #ffcc00';
+              statusDot.title = 'Checking simulator status...';
+              
+              try {
+                const response = await fetch('/api/power-twin/simulator/status');
+                const data = await response.json();
+                
+                if (data.success && data.simulator?.status === 'online') {
+                  statusDot.style.background = '#00ff41';
+                  statusDot.style.boxShadow = '0 0 10px #00ff41';
+                  statusDot.title = 'Simulator online';
+                } else if (data.simulator?.status === 'degraded') {
+                  statusDot.style.background = '#ffcc00';
+                  statusDot.style.boxShadow = '0 0 10px #ffcc00';
+                  statusDot.title = 'Simulator degraded: ' + (data.error || 'Performance issues');
+                } else {
+                  statusDot.style.background = '#ff6b6b';
+                  statusDot.style.boxShadow = '0 0 10px #ff6b6b';
+                  statusDot.title = 'Simulator offline: ' + (data.error || 'Unreachable');
+                  // Disable embed when offline
+                  if (embedBtn) {
+                    embedBtn.style.opacity = '0.5';
+                    embedBtn.title = 'Simulator offline - embed unavailable';
+                  }
+                }
+              } catch (e) {
+                statusDot.style.background = '#ff6b6b';
+                statusDot.style.boxShadow = '0 0 10px #ff6b6b';
+                statusDot.title = 'Could not check simulator status';
+              }
+            }
+            
+            // Check connection when page loads
+            if (document.readyState === 'loading') {
+              document.addEventListener('DOMContentLoaded', checkOSSConnection);
+            } else {
+              checkOSSConnection();
             }
           </script>
           

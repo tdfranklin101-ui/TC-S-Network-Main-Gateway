@@ -243,4 +243,97 @@ router.get('/constants', (req, res) => {
   });
 });
 
+// External Simulator Integration
+const OSS_SIMULATOR_URL = 'https://open-source-eda-tdfranklin101.replit.app';
+
+router.get('/simulator/status', async (req, res) => {
+  const simulatorInfo = {
+    name: 'Open Silicon Stack',
+    url: OSS_SIMULATOR_URL,
+    features: [
+      'VexRiscv RISC-V Core Simulation',
+      'OpenRAM Memory Generator',
+      'Skywater 130nm PDK',
+      'OpenLane RTL-to-GDSII Flow'
+    ],
+    power_trace_format: 'CSV with time_s, power_w columns',
+    integration: 'embedded_iframe'
+  };
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    const response = await fetch(OSS_SIMULATOR_URL, {
+      method: 'HEAD',
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+
+    if (response.ok) {
+      res.json({
+        success: true,
+        simulator: {
+          ...simulatorInfo,
+          status: 'online'
+        }
+      });
+    } else {
+      res.status(503).json({
+        success: false,
+        error: `Simulator returned status ${response.status}`,
+        simulator: {
+          ...simulatorInfo,
+          status: 'degraded'
+        }
+      });
+    }
+  } catch (error: any) {
+    const errorMessage = error.name === 'AbortError' ? 'Connection timeout' : 'Connection failed';
+    res.status(503).json({
+      success: false,
+      error: errorMessage,
+      simulator: {
+        ...simulatorInfo,
+        status: 'offline'
+      }
+    });
+  }
+});
+
+router.get('/simulator/info', (req, res) => {
+  res.json({
+    simulator: {
+      name: 'Open Silicon Stack',
+      description: 'Open-source EDA digital twin chip simulator showcasing VexRiscv, OpenRAM, Skywater PDK, and OpenLane',
+      url: OSS_SIMULATOR_URL,
+      supported_architectures: [
+        { name: 'VexRiscv', type: 'RISC-V Core', description: 'Configurable 32-bit RISC-V processor core' },
+        { name: 'OpenRAM', type: 'Memory', description: 'Open-source static RAM compiler' },
+        { name: 'Skywater 130nm', type: 'PDK', description: 'Open-source process design kit' },
+        { name: 'OpenLane', type: 'Flow', description: 'Automated RTL-to-GDSII synthesis flow' }
+      ],
+      workflow: [
+        'Select chip architecture or configure custom design',
+        'Choose workload benchmark',
+        'Run power simulation',
+        'Export power trace as CSV',
+        'Upload to Power Twin for Solar cost calculation'
+      ],
+      csv_format: {
+        required_columns: ['time_s', 'power_w'],
+        time_unit: 'seconds',
+        power_unit: 'watts',
+        example: 'time_s,power_w\\n0.0,0.5\\n0.001,0.6\\n0.002,0.55'
+      }
+    },
+    power_twin: {
+      version: 'tcs-power-twin-v1',
+      solar_conversion: '1 Solar = 4,913 kWh',
+      rays_conversion: '1 Solar = 10,000 Rays',
+      integration_method: 'left_riemann'
+    }
+  });
+});
+
 export default router;
