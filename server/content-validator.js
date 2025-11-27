@@ -223,6 +223,60 @@ class ContentValidator {
         credibility: 'high',
         relevance: ['renewable energy governance', 'policy framework', 'energy stewardship', 'regulatory oversight'],
         description: 'International standards for renewable energy governance and stewardship'
+      },
+
+      power_twin_system: {
+        source: 'TC-S Network Foundation',
+        title: 'Power Twin: Digital Energy Calculator Documentation',
+        url: 'https://www.thecurrentsee.org/power-twin',
+        credibility: 'high',
+        relevance: ['power twin', 'digital twin', 'energy calculator', 'chip power traces', 'solar cost'],
+        description: 'Converts chip workload power traces to Solar energy costs using left Riemann integration'
+      },
+
+      open_silicon_stack: {
+        source: 'Open Silicon Foundation',
+        title: 'Open Silicon Stack: VexRiscv, OpenRAM, Skywater PDK, OpenLane',
+        url: 'https://open-source-eda-tdfranklin101.replit.app',
+        credibility: 'high',
+        relevance: ['open source EDA', 'VexRiscv', 'OpenRAM', 'Skywater PDK', 'OpenLane', 'RISC-V', 'chip design'],
+        description: 'Open-source EDA digital twin for hardware simulation and power trace generation'
+      },
+
+      omega1_cosmic_trajectory: {
+        source: 'TC-S Network Foundation',
+        title: 'Ω-1 Cosmic Trajectory Engine: Minimum-Entropy Civilization Path',
+        url: 'https://www.thecurrentsee.org/omega1',
+        credibility: 'high',
+        relevance: ['omega-1', 'cosmic trajectory', 'civilization longevity', 'minimum entropy', 'strategic AI'],
+        description: 'AI-powered engine calculating optimal trajectory for multi-century human survival'
+      },
+
+      kid_solar_voice_assistant: {
+        source: 'TC-S Network Foundation',
+        title: 'Kid Solar: Multi-Modal AI Voice Assistant',
+        url: 'https://www.thecurrentsee.org/kid-solar',
+        credibility: 'high',
+        relevance: ['kid solar', 'voice assistant', 'AI agent', 'OpenAI Whisper', 'GPT-4o', 'marketplace operations'],
+        description: 'Solar-metered AI assistant with voice commands for marketplace and wallet operations'
+      },
+
+      risc_v_foundation: {
+        source: 'RISC-V International',
+        title: 'RISC-V: The Free and Open RISC Instruction Set Architecture',
+        url: 'https://riscv.org/',
+        credibility: 'high',
+        relevance: ['RISC-V', 'open source CPU', 'instruction set architecture', 'VexRiscv'],
+        description: 'Open standard instruction set architecture enabling open-source processor design'
+      },
+
+      skywater_pdk: {
+        source: 'Google/SkyWater Technology',
+        title: 'SkyWater Open Source PDK Documentation',
+        url: 'https://skywater-pdk.readthedocs.io/',
+        credibility: 'high',
+        relevance: ['Skywater PDK', 'process design kit', '130nm', 'open source silicon'],
+        description: 'First manufacturable open-source process design kit for chip fabrication'
       }
     };
   }
@@ -314,6 +368,44 @@ class ContentValidator {
     // Always include marketplace comparison for context
     if (contentType === 'marketplace' || content.toLowerCase().includes('marketplace')) {
       citations.push(this.citationDatabase.energy_marketplace_leaders);
+    }
+
+    // Power Twin and digital twin energy calculations
+    if (content.toLowerCase().includes('power twin') || content.toLowerCase().includes('digital twin') || 
+        content.toLowerCase().includes('power trace') || content.toLowerCase().includes('chip power')) {
+      citations.push(this.citationDatabase.power_twin_system);
+    }
+
+    // Open Silicon Stack and open-source EDA
+    if (content.toLowerCase().includes('open silicon') || content.toLowerCase().includes('vexriscv') ||
+        content.toLowerCase().includes('openram') || content.toLowerCase().includes('openlane') ||
+        content.toLowerCase().includes('skywater') || content.toLowerCase().includes('open source eda')) {
+      citations.push(this.citationDatabase.open_silicon_stack);
+    }
+
+    // Omega-1 Cosmic Trajectory Engine
+    if (content.toLowerCase().includes('omega-1') || content.toLowerCase().includes('omega1') ||
+        content.toLowerCase().includes('cosmic trajectory') || content.toLowerCase().includes('minimum entropy') ||
+        content.toLowerCase().includes('civilization longevity')) {
+      citations.push(this.citationDatabase.omega1_cosmic_trajectory);
+    }
+
+    // Kid Solar voice assistant
+    if (content.toLowerCase().includes('kid solar') || content.toLowerCase().includes('voice assistant') ||
+        content.toLowerCase().includes('ai agent') || content.toLowerCase().includes('solar-metered ai')) {
+      citations.push(this.citationDatabase.kid_solar_voice_assistant);
+    }
+
+    // RISC-V architecture
+    if (content.toLowerCase().includes('risc-v') || content.toLowerCase().includes('riscv') ||
+        content.toLowerCase().includes('vexriscv')) {
+      citations.push(this.citationDatabase.risc_v_foundation);
+    }
+
+    // Skywater PDK
+    if (content.toLowerCase().includes('skywater') || content.toLowerCase().includes('130nm pdk') ||
+        content.toLowerCase().includes('process design kit')) {
+      citations.push(this.citationDatabase.skywater_pdk);
     }
 
     return citations;

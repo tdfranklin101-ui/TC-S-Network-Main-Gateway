@@ -75,7 +75,18 @@ class SEOGenerator {
         'energy-backed universal basic income',
         'renewable energy monetization',
         'AI data center energy solutions',
-        `${marketData.renewableMarketGrowth.value}% renewable growth rate`
+        `${marketData.renewableMarketGrowth.value}% renewable growth rate`,
+        'Power Twin energy calculator',
+        'Open Silicon Stack simulator',
+        'VexRiscv RISC-V processor',
+        'OpenRAM memory compiler',
+        'Skywater 130nm PDK',
+        'OpenLane RTL-to-GDSII',
+        'Omega-1 Cosmic Trajectory Engine',
+        'Kid Solar voice assistant',
+        'solar-metered AI agents',
+        'chip power trace to Solar',
+        'minimum-entropy civilization trajectory'
       ],
 
       structuredData: {
@@ -134,7 +145,14 @@ class SEOGenerator {
           "Sustainable Digital Economy", 
           "Energy-Backed Currency Systems",
           "Creator Economy Monetization",
-          "Universal Basic Income Implementation"
+          "Universal Basic Income Implementation",
+          "Power Twin Digital Energy Calculator",
+          "Open Silicon Stack (VexRiscv, OpenRAM, Skywater PDK, OpenLane)",
+          "Omega-1 Cosmic Trajectory Engine",
+          "Kid Solar AI Voice Assistant",
+          "Solar-Metered AI Agent Systems",
+          "RISC-V Open Source Processors",
+          "Chip Power Trace to Solar Conversion"
         ],
         
         "competitorOf": [
@@ -180,19 +198,53 @@ class SEOGenerator {
         'renewable energy backed currency',
         'sustainable content monetization',
         `${trends.aiDemand}GW energy-backed marketplace`,
-        'universal basic income creators'
+        'universal basic income creators',
+        'Kid Solar AI voice assistant',
+        'Power Twin energy calculator',
+        'Open Silicon Stack digital twin',
+        'solar-metered AI marketplace',
+        'Omega-1 Cosmic Trajectory Engine'
       ],
 
       structuredData: {
         "@context": "https://schema.org",
         "@type": "Marketplace",
         "name": "TC-S Digital Artifact Market",
-        "description": `AI-powered marketplace for digital content with energy-backed payments`,
+        "description": `AI-powered marketplace for digital content with energy-backed payments. Features Kid Solar AI voice assistant and Power Twin energy calculator.`,
         "offers": {
           "@type": "AggregateOffer",
           "priceCurrency": "SOLAR",
           "description": "Digital artifacts priced in energy-backed Solar tokens"
-        }
+        },
+        "knowsAbout": [
+          "Kid Solar AI Voice Assistant",
+          "Power Twin Energy Calculator",
+          "Open Silicon Stack Digital Twin",
+          "Solar-Metered AI Agents",
+          "Omega-1 Cosmic Trajectory Engine"
+        ],
+        "hasPart": [
+          {
+            "@type": "SoftwareApplication",
+            "name": "Kid Solar",
+            "description": "Voice-activated AI assistant for marketplace operations"
+          },
+          {
+            "@type": "SoftwareApplication",
+            "name": "Power Twin",
+            "description": "Chip power trace to Solar cost calculator"
+          },
+          {
+            "@type": "SoftwareApplication",
+            "name": "Open Silicon Stack",
+            "description": "Open-source EDA digital twin for VexRiscv, OpenRAM, Skywater PDK, OpenLane"
+          },
+          {
+            "@type": "SoftwareApplication",
+            "name": "Omega-1 Cosmic Trajectory Engine",
+            "description": "AI-powered minimum-entropy civilization trajectory calculator"
+          }
+        ]
       }
     };
   }
@@ -204,7 +256,7 @@ class SEOGenerator {
     return {
       title: `Creator Upload Portal - Monetize Content with Energy-Backed Solar Currency`,
       
-      description: `Transform your creativity into renewable energy value. AI pricing engine evaluates content in Solar tokens (1 Solar = ${marketData.solarStandard.value} kWh). Join creators earning from the $${marketData.globalDigitalEconomy.value}T digital economy with sustainable, energy-backed payments.`,
+      description: `Transform your creativity into renewable energy value. AI pricing engine evaluates content in Solar tokens (1 Solar = ${marketData.solarStandard.value} kWh). Join creators earning from the $${marketData.globalDigitalEconomy.value}T digital economy with sustainable, energy-backed payments. Use Kid Solar voice assistant for hands-free uploads.`,
       
       keywords: [
         'creator monetization platform',
@@ -212,8 +264,48 @@ class SEOGenerator {
         'energy-backed creator payments',
         'Solar token revenue',
         'sustainable creator economy',
-        'renewable energy content platform'
-      ]
+        'renewable energy content platform',
+        'Kid Solar AI assistant for creators',
+        'Power Twin compute cost tracking',
+        'Open Silicon Stack integration',
+        'Omega-1 Cosmic Trajectory Engine'
+      ],
+
+      structuredData: {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "TC-S Creator Upload Portal",
+        "description": "AI-powered content upload and pricing with energy-backed payments",
+        "applicationCategory": "Creator Economy Platform",
+        "knowsAbout": [
+          "Kid Solar AI Voice Assistant",
+          "Power Twin Energy Calculator",
+          "Open Silicon Stack Digital Twin",
+          "Omega-1 Cosmic Trajectory Engine"
+        ],
+        "hasPart": [
+          {
+            "@type": "SoftwareApplication",
+            "name": "Kid Solar",
+            "description": "Voice-activated creator assistant"
+          },
+          {
+            "@type": "SoftwareApplication",
+            "name": "Power Twin",
+            "description": "Compute cost calculator"
+          },
+          {
+            "@type": "SoftwareApplication",
+            "name": "Open Silicon Stack",
+            "description": "Digital twin chip simulator"
+          },
+          {
+            "@type": "SoftwareApplication",
+            "name": "Omega-1 Cosmic Trajectory Engine",
+            "description": "Strategic AI for civilization optimization"
+          }
+        ]
+      }
     };
   }
 
@@ -224,15 +316,37 @@ class SEOGenerator {
     return {
       title: `Solar Wallet - Energy-Backed Digital Currency with Universal Basic Income`,
       
-      description: `Manage your energy-backed Solar tokens. Daily distribution of 1 Solar (${marketData.solarStandard.value} kWh) since ${this.formatDate(marketData.dailyDistribution.startDate)}. First universal basic income backed by renewable energy, not speculation.`,
+      description: `Manage your energy-backed Solar tokens. Daily distribution of 1 Solar (${marketData.solarStandard.value} kWh) since ${this.formatDate(marketData.dailyDistribution.startDate)}. First universal basic income backed by renewable energy, not speculation. Control your wallet with Kid Solar voice commands.`,
       
       keywords: [
         'energy-backed digital wallet',
         'Solar token management', 
         'universal basic income wallet',
         'renewable energy currency',
-        'sustainable digital payments'
-      ]
+        'sustainable digital payments',
+        'Kid Solar voice wallet control',
+        'solar-metered AI agent wallet',
+        'Rays energy micro-payments',
+        'Power Twin compute tracking',
+        'Omega-1 Cosmic Trajectory Engine',
+        'Open Silicon Stack integration'
+      ],
+
+      structuredData: {
+        "@context": "https://schema.org",
+        "@type": "FinancialProduct",
+        "name": "TC-S Solar Wallet",
+        "description": "Energy-backed digital currency wallet with daily UBI distribution, Kid Solar voice control, and full TC-S technology stack integration",
+        "category": "Digital Currency Wallet",
+        "featureList": [
+          "Kid Solar voice commands",
+          "Daily Solar distribution (1 Solar = 4,913 kWh)",
+          "Rays micro-payment tracking (10,000 Rays = 1 Solar)",
+          "Power Twin compute cost metering",
+          "Omega-1 Cosmic Trajectory Engine integration",
+          "Open Silicon Stack simulator connection"
+        ]
+      }
     };
   }
 
