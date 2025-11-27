@@ -3,7 +3,7 @@
   "@type": "DataSet",
   "name": "TC-S Daily Indices Brief",
   "description": "Daily briefing of TC-S core performance indices",
-  "datePublished": "2025-11-25",
+  "datePublished": "2025-11-27",
   "distribution": [
     {
       "@type": "DataDownload",
@@ -11,7 +11,7 @@
       "encodingFormat": "application/json",
       "description": "Global Energy & Ethics Balance — 7-Day Rolling Indicator.",
       "contentUrl": "https://api.thecurrentsee.org/api/daily-brief#si",
-      "value": 70.2,
+      "value": 70.8,
       "unit": "%"
     },
     {
@@ -20,7 +20,7 @@
       "encodingFormat": "application/json",
       "description": "Reserve stability and fulfillment factor across all regions.",
       "contentUrl": "https://api.thecurrentsee.org/api/daily-brief#srh",
-      "value": 77,
+      "value": 77.9,
       "unit": "%"
     },
     {
@@ -29,7 +29,7 @@
       "encodingFormat": "application/json",
       "description": "Percentage of humans enrolled and actively claiming GBI.",
       "contentUrl": "https://api.thecurrentsee.org/api/daily-brief#gbi",
-      "value": 41.3,
+      "value": 41.7,
       "unit": "%"
     },
     {
@@ -38,7 +38,7 @@
       "encodingFormat": "application/json",
       "description": "Ethically aligned compute flow — safe superintelligence readiness.",
       "contentUrl": "https://api.thecurrentsee.org/api/daily-brief#cai",
-      "value": 89.4,
+      "value": 88.9,
       "unit": "%"
     },
     {
@@ -56,7 +56,7 @@
       "encodingFormat": "application/json",
       "description": "Acceptance ratio of tasks from the Ethics Engine.",
       "contentUrl": "https://api.thecurrentsee.org/api/daily-brief#eai",
-      "value": 92.1,
+      "value": 93.1,
       "unit": "%"
     }
   ]
