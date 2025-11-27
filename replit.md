@@ -30,6 +30,7 @@ The platform is optimized for Cloud Run deployments. Data storage primarily uses
 - **Solar Standard Protocol API Suite**: Offers endpoints for kWh to Solar conversion, protocol specifications, artifact data enrichment, and an auto-indexing system, all CORS-enabled.
 - **Solar Intelligence Audit Layer (SAi-Audit)**: An automated 8-category global energy monitoring system with 48/48 global coverage and regulatory-grade audit trails, displaying Chart.js visualizations. It uses a three-tier data freshness system (live API, quarterly API, annual dataset) with robust fallbacks.
 - **UIM Handshake Protocol API**: Core endpoints for AI-to-AI communication, including node discovery, semantic capabilities exchange, and task proposal/acceptance.
+- **Ω-1 Cosmic Trajectory Engine API**: Endpoints at `/api/omega1/query` (cosmic trajectory calculation), `/api/omega1/status` (system health), `/api/omega1/indices/init` (indices initialization), and `/api/omega1/repos/status` (14-repository sync status). Calculates minimum-entropy trajectory for civilization longevity.
 - **OpenAI API**: Used for AI voice assistant features (Whisper, GPT-4o, TTS).
 - **Real-Time Solar Calculations**: Custom mathematical models for energy generation tracking.
 - **Member Management API**: RESTful endpoints for user data operations.

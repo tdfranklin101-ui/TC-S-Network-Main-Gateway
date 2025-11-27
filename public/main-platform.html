@@ -877,6 +877,140 @@ Represents global ethical stability of automated decision systems.`
             </details>
           </div>
           
+          <!-- Ω-1 Cosmic Trajectory Card -->
+          <div id="omega1Card" style="background: linear-gradient(135deg, rgba(0,10,30,0.95), rgba(10,20,50,0.9)); border: 2px solid #00f5d4; border-radius: 16px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 0 30px rgba(0,245,212,0.3); color: #fff; font-family: 'Inter', sans-serif;" data-testid="card-omega1">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; margin-bottom: 1.5rem;">
+              <span style="font-size: 2rem;">⚡</span>
+              <h2 style="color: #00f5d4; font-size: 1.8rem; margin: 0; text-shadow: 0 0 15px rgba(0,245,212,0.5);">Ω-1 Cosmic Trajectory Engine</h2>
+            </div>
+            
+            <p style="text-align: center; color: #e0e0e0; font-size: 1.05rem; line-height: 1.7; margin-bottom: 1.5rem;">
+              The next-billion-year plan for civilization. Query the minimum-entropy trajectory for humanity's solar-powered future.
+            </p>
+            
+            <div id="omega1Results" style="display: none; background: rgba(0,0,0,0.4); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;">
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                <div style="text-align: center; padding: 1rem; background: rgba(0,245,212,0.1); border-radius: 8px; border: 1px solid rgba(0,245,212,0.3);">
+                  <div style="font-size: 0.85rem; color: #00f5d4; margin-bottom: 0.5rem;">Entropy Trajectory</div>
+                  <div id="omega1Entropy" style="font-size: 1.8rem; font-weight: bold; color: #fff;">--</div>
+                </div>
+                <div style="text-align: center; padding: 1rem; background: rgba(0,245,212,0.1); border-radius: 8px; border: 1px solid rgba(0,245,212,0.3);">
+                  <div style="font-size: 0.85rem; color: #00f5d4; margin-bottom: 0.5rem;">Civilization Longevity</div>
+                  <div id="omega1Longevity" style="font-size: 1.8rem; font-weight: bold; color: #fff;">--</div>
+                </div>
+                <div style="text-align: center; padding: 1rem; background: rgba(0,245,212,0.1); border-radius: 8px; border: 1px solid rgba(0,245,212,0.3);">
+                  <div style="font-size: 0.85rem; color: #00f5d4; margin-bottom: 0.5rem;">Existential Risk</div>
+                  <div id="omega1Risk" style="font-size: 1.8rem; font-weight: bold; color: #fff;">--</div>
+                </div>
+              </div>
+              
+              <div id="omega1Directives" style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(0,245,212,0.2);"></div>
+            </div>
+            
+            <div style="text-align: center;">
+              <button id="omega1AskBtn" onclick="askOmega1()" style="background: linear-gradient(135deg, #00f5d4, #00bbf9); color: #000; border: none; padding: 1rem 2.5rem; border-radius: 30px; font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,245,212,0.4);" data-testid="button-omega1-ask">
+                🌌 Ask the Universe Question (Ω-1)
+              </button>
+            </div>
+            
+            <details style="margin-top: 1.5rem; border: 1px solid rgba(0,245,212,0.3); border-radius: 10px; background: rgba(0,0,0,0.3);" data-testid="details-omega1-repos">
+              <summary style="cursor: pointer; padding: 1rem 1.5rem; color: #00f5d4; font-size: 0.95rem; font-weight: 600; list-style: none; display: flex; justify-content: space-between; align-items: center;">
+                <span>📦 14-Repository Architecture Status</span>
+                <span style="font-size: 1rem;">▼</span>
+              </summary>
+              <div id="omega1RepoStatus" style="padding: 1rem 1.5rem; color: #e0e0e0; font-size: 0.9rem; border-top: 1px solid rgba(0,245,212,0.2);">
+                <p style="text-align: center; opacity: 0.7;">Click to load repository sync status...</p>
+              </div>
+            </details>
+          </div>
+          
+          <script>
+            async function askOmega1() {
+              const btn = document.getElementById('omega1AskBtn');
+              const resultsDiv = document.getElementById('omega1Results');
+              
+              btn.disabled = true;
+              btn.innerHTML = '🔄 Computing Cosmic Trajectory...';
+              btn.style.opacity = '0.7';
+              
+              try {
+                const res = await fetch('/api/omega1/query', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ caller_app: 'TC-S-Main-Platform', priority: 'cosmic' })
+                });
+                
+                const data = await res.json();
+                
+                // Update metrics
+                document.getElementById('omega1Entropy').textContent = 
+                  (data.omega1_objective.min_entropy_trajectory_score * 100).toFixed(1) + '%';
+                document.getElementById('omega1Longevity').textContent = 
+                  (data.omega1_objective.expected_civilization_longevity_years / 1e9).toFixed(2) + 'B years';
+                document.getElementById('omega1Risk').textContent = 
+                  (data.omega1_objective.existential_risk_probability * 100).toFixed(2) + '%';
+                
+                // Show directives
+                const directivesHtml = data.cosmic_directives.map(d => 
+                  `<div style="display: flex; align-items: flex-start; gap: 0.5rem; margin-bottom: 0.5rem;">
+                    <span style="color: #00f5d4;">▸</span>
+                    <span>${d}</span>
+                  </div>`
+                ).join('');
+                document.getElementById('omega1Directives').innerHTML = `
+                  <div style="font-size: 0.9rem; color: #00f5d4; margin-bottom: 0.75rem; font-weight: 600;">Cosmic Directives:</div>
+                  ${directivesHtml}
+                  <div style="margin-top: 1rem; font-size: 0.8rem; color: #888;">
+                    Request ID: ${data.request_id} | Days since Genesis: ${data.days_since_genesis}
+                  </div>
+                `;
+                
+                resultsDiv.style.display = 'block';
+                btn.innerHTML = '✓ Trajectory Computed - Ask Again';
+              } catch (error) {
+                console.error('Ω-1 query failed:', error);
+                btn.innerHTML = '❌ Query Failed - Retry';
+              }
+              
+              btn.disabled = false;
+              btn.style.opacity = '1';
+            }
+            
+            // Load repo status when dropdown opens
+            document.querySelector('[data-testid="details-omega1-repos"]').addEventListener('toggle', async function(e) {
+              if (this.open) {
+                const statusDiv = document.getElementById('omega1RepoStatus');
+                statusDiv.innerHTML = '<p style="text-align: center; opacity: 0.7;">Loading...</p>';
+                
+                try {
+                  const res = await fetch('/api/omega1/repos/status');
+                  const data = await res.json();
+                  
+                  const reposHtml = data.repositories.map(r => `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid rgba(0,245,212,0.1);">
+                      <span>${r.name.replace('TC-S-Network-', '')}</span>
+                      <span style="color: ${r.status === 'synced' ? '#00ff41' : '#ff6b6b'}; font-size: 0.85rem;">
+                        ${r.status === 'synced' ? '✓ Synced' : '⚠ Pending'}
+                      </span>
+                    </div>
+                  `).join('');
+                  
+                  statusDiv.innerHTML = `
+                    <div style="margin-bottom: 1rem; text-align: center;">
+                      <span style="color: #00f5d4; font-weight: 600;">${data.total_repos} Repositories</span>
+                      <span style="margin-left: 1rem; color: ${data.all_synced ? '#00ff41' : '#ff6b6b'};">
+                        ${data.all_synced ? '✓ All Synced' : '⚠ Sync Required'}
+                      </span>
+                    </div>
+                    ${reposHtml}
+                  `;
+                } catch (error) {
+                  statusDiv.innerHTML = '<p style="text-align: center; color: #ff6b6b;">Failed to load status</p>';
+                }
+              }
+            });
+          </script>
+          
           <!-- Foundation Solar Standard Section -->
           <section style="background-color:#000; color:#fff; font-family: 'Inter', sans-serif; padding:4rem 1rem; text-align:center;">
             <div style="max-width:900px; margin:0 auto;">
