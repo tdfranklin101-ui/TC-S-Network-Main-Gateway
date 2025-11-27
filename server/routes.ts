@@ -24,6 +24,7 @@ import progressionRoutes from "./routes/progression";
 import paymentsRoutes from "./routes/payments";
 import aiRoutes from "./routes/ai";
 import omega1Routes from "./routes/omega1";
+import powerTwinRoutes from "./routes/power-twin";
 import geoip from "geoip-lite";
 import multer from "multer";
 import crypto from "crypto";
@@ -651,6 +652,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/payment", paymentsRoutes); 
   app.use("/api/ai", aiRoutes);
   app.use("/api/omega1", omega1Routes);
+  app.use("/api/power-twin", powerTwinRoutes);
 
   // Mount legacy AI routes (to be replaced)
   app.use("/api/ai", aiRouter);
