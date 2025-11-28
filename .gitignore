@@ -28,3 +28,6 @@ debug_*
 !deploy-lightweight.js
 !package.json
 !replit.md
+# Large video files (exceed GitHub 100MB limit)
+public/videos/*.mp4
+*.mp4
