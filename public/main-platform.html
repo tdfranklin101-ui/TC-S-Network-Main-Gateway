@@ -1460,6 +1460,142 @@ Represents global ethical stability of automated decision systems.`
             }
           </script>
           
+          <!-- Seismic ID Anywhere Card - Global Earthquake Monitoring -->
+          <div id="seismicIdCard" style="background: linear-gradient(135deg, rgba(0,10,30,0.95), rgba(30,15,10,0.9)); border: 2px solid #ff6b35; border-radius: 16px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 0 30px rgba(255,107,53,0.3); color: #fff; font-family: 'Inter', sans-serif;" data-testid="card-seismic-id">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; margin-bottom: 1.5rem;">
+              <span style="font-size: 2rem;">🌍</span>
+              <h2 style="color: #ff9f6a; font-size: 1.8rem; margin: 0; text-shadow: 0 0 15px rgba(255,107,53,0.5);">Seismic ID Anywhere</h2>
+              <div id="seismicConnectionStatus" style="width: 12px; height: 12px; border-radius: 50%; background: #ffcc00; box-shadow: 0 0 10px #ffcc00; margin-left: 0.5rem;" title="Checking status..."></div>
+            </div>
+            
+            <p style="text-align: center; color: #e0e0e0; font-size: 1.05rem; line-height: 1.7; margin-bottom: 1.5rem;">
+              Monitor Earth's seismic activity in real-time. Track earthquakes worldwide, view magnitude data, and understand our planet's dynamic movements.
+            </p>
+            
+            <!-- What is this? dropdown -->
+            <details style="margin-bottom: 1.5rem; border: 1px solid rgba(255,107,53,0.3); border-radius: 10px; background: rgba(0,0,0,0.3);" data-testid="details-seismic-explainer">
+              <summary style="cursor: pointer; padding: 1rem 1.5rem; color: #ff9f6a; font-size: 1rem; font-weight: 600; list-style: none; display: flex; justify-content: space-between; align-items: center;">
+                <span>❓ What is Seismic ID Anywhere?</span>
+                <span style="font-size: 1rem;">▼</span>
+              </summary>
+              <div style="padding: 1.5rem; color: #e0e0e0; font-size: 0.95rem; line-height: 1.8; text-align: left; border-top: 1px solid rgba(255,107,53,0.2);">
+                <p style="margin-bottom: 1rem;">
+                  <strong style="color: #ff9f6a;">Seismic ID Anywhere</strong> is a real-time earthquake monitoring system that tracks seismic events across the globe. It connects to global seismograph networks to provide up-to-the-minute data on earthquakes.
+                </p>
+                <p style="margin-bottom: 1rem;">
+                  <strong>Key Features:</strong>
+                </p>
+                <ul style="margin: 0 0 1rem 1.5rem; padding: 0;">
+                  <li style="margin-bottom: 0.5rem;">🌐 <strong>Global Coverage</strong> - Monitor earthquakes from every continent</li>
+                  <li style="margin-bottom: 0.5rem;">📊 <strong>Magnitude Data</strong> - See Richter scale readings in real-time</li>
+                  <li style="margin-bottom: 0.5rem;">📍 <strong>Location Mapping</strong> - Pinpoint exact earthquake epicenters</li>
+                  <li style="margin-bottom: 0.5rem;">⏱️ <strong>Live Updates</strong> - Data refreshes continuously from USGS feeds</li>
+                </ul>
+                <div style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                  <p style="margin: 0 0 0.5rem 0;"><strong style="color: #ff6b35;">Why it matters:</strong></p>
+                  <p style="margin: 0;">Understanding Earth's seismic activity helps communities prepare for natural events and contributes to global geological research. This data is part of the TC-S Network's mission to connect people with planetary-scale information.</p>
+                </div>
+                <p style="margin: 0; font-style: italic; color: #ffb090;">
+                  Part of the TC-S "Identify Anywhere" suite — connecting you to Earth's vital signs.
+                </p>
+              </div>
+            </details>
+            
+            <!-- How to Use dropdown -->
+            <details style="margin-bottom: 1.5rem; border: 1px solid rgba(255,107,53,0.3); border-radius: 10px; background: rgba(0,0,0,0.3);" data-testid="details-seismic-howto">
+              <summary style="cursor: pointer; padding: 1rem 1.5rem; color: #ff9f6a; font-size: 1rem; font-weight: 600; list-style: none; display: flex; justify-content: space-between; align-items: center;">
+                <span>📋 How to Use</span>
+                <span style="font-size: 1rem;">▼</span>
+              </summary>
+              <div style="padding: 1.5rem; color: #e0e0e0; font-size: 0.95rem; line-height: 1.8; text-align: left; border-top: 1px solid rgba(255,107,53,0.2);">
+                <ol style="margin: 0; padding-left: 1.5rem;">
+                  <li style="margin-bottom: 0.75rem;">Click <strong style="color: #ff9f6a;">"Open Seismic ID"</strong> below to launch the monitoring dashboard</li>
+                  <li style="margin-bottom: 0.75rem;">View the <strong>world map</strong> showing recent earthquake locations</li>
+                  <li style="margin-bottom: 0.75rem;">Click on any earthquake marker to see <strong>detailed information</strong>:
+                    <ul style="margin: 0.5rem 0 0 1rem;">
+                      <li>Magnitude (Richter scale)</li>
+                      <li>Depth below surface</li>
+                      <li>Exact coordinates</li>
+                      <li>Time of occurrence</li>
+                    </ul>
+                  </li>
+                  <li style="margin-bottom: 0.75rem;">Use <strong>filters</strong> to view earthquakes by magnitude range or time period</li>
+                  <li style="margin-bottom: 0;">Data updates automatically — no refresh needed</li>
+                </ol>
+                <div style="margin-top: 1rem; padding: 0.75rem; background: rgba(255,107,53,0.1); border-radius: 6px; border-left: 3px solid #ff6b35;">
+                  <strong style="color: #ff9f6a;">Tip:</strong> Bookmark the app for quick access during significant seismic events
+                </div>
+              </div>
+            </details>
+            
+            <!-- Action Buttons -->
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+              <a href="https://seismic-id-anywhere-tdfranklin101.replit.app" target="_blank" id="seismicOpenBtn" style="display: inline-flex; align-items: center; gap: 0.5rem; background: linear-gradient(135deg, #ff6b35, #ff8c42); color: #fff; border: none; padding: 1rem 2rem; border-radius: 30px; font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(255,107,53,0.4); text-decoration: none;" data-testid="button-open-seismic">
+                <span>🌍</span> Open Seismic ID
+              </a>
+              <button onclick="toggleSeismicEmbed()" id="seismicEmbedToggle" style="display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(255,107,53,0.2); color: #ff9f6a; border: 1px solid rgba(255,107,53,0.4); padding: 0.75rem 1.5rem; border-radius: 20px; font-size: 0.95rem; cursor: pointer; transition: all 0.3s ease;" data-testid="button-embed-seismic">
+                <span>📺</span> Embed Here
+              </button>
+            </div>
+            
+            <!-- Embed Container (hidden by default) -->
+            <div id="seismicEmbedContainer" style="display: none; margin-top: 1.5rem; border-radius: 12px; overflow: hidden; border: 2px solid rgba(255,107,53,0.4);">
+              <iframe id="seismicFrame" src="" style="width: 100%; height: 500px; border: none; background: #111;" title="Seismic ID Anywhere"></iframe>
+            </div>
+          </div>
+          
+          <script>
+            const SEISMIC_URL = 'https://seismic-id-anywhere-tdfranklin101.replit.app';
+            let seismicEmbedVisible = false;
+            
+            function toggleSeismicEmbed() {
+              const container = document.getElementById('seismicEmbedContainer');
+              const frame = document.getElementById('seismicFrame');
+              const btn = document.getElementById('seismicEmbedToggle');
+              
+              seismicEmbedVisible = !seismicEmbedVisible;
+              
+              if (seismicEmbedVisible) {
+                frame.src = SEISMIC_URL;
+                container.style.display = 'block';
+                btn.innerHTML = '<span>📺</span> Hide Embed';
+                btn.style.background = 'rgba(0,255,65,0.2)';
+                btn.style.borderColor = '#00ff41';
+                btn.style.color = '#00ff41';
+              } else {
+                container.style.display = 'none';
+                frame.src = '';
+                btn.innerHTML = '<span>📺</span> Embed Here';
+                btn.style.background = 'rgba(255,107,53,0.2)';
+                btn.style.borderColor = 'rgba(255,107,53,0.4)';
+                btn.style.color = '#ff9f6a';
+              }
+            }
+            
+            // Check Seismic ID connection status
+            async function checkSeismicConnection() {
+              const statusDot = document.getElementById('seismicConnectionStatus');
+              
+              try {
+                const response = await fetch(SEISMIC_URL, { method: 'HEAD', mode: 'no-cors' });
+                statusDot.style.background = '#00ff41';
+                statusDot.style.boxShadow = '0 0 10px #00ff41';
+                statusDot.title = 'Seismic ID online';
+              } catch (e) {
+                statusDot.style.background = '#ff6b6b';
+                statusDot.style.boxShadow = '0 0 10px #ff6b6b';
+                statusDot.title = 'Could not verify status';
+              }
+            }
+            
+            // Check on page load
+            if (document.readyState === 'loading') {
+              document.addEventListener('DOMContentLoaded', checkSeismicConnection);
+            } else {
+              checkSeismicConnection();
+            }
+          </script>
+          
           <!-- Foundation Solar Standard Section -->
           <section style="background-color:#000; color:#fff; font-family: 'Inter', sans-serif; padding:4rem 1rem; text-align:center;">
             <div style="max-width:900px; margin:0 auto;">
