@@ -5,14 +5,11 @@
   "outputDirectory": "public",
   "functions": {
     "api/**/*.ts": {
-      "runtime": "@vercel/node@3.0.0",
+      "runtime": "@vercel/node@2.15.10",
       "maxDuration": 30
     }
   },
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" }
-  ],
-  "engines": {
-    "node": "18.x"
-  }
+  ]
 }
