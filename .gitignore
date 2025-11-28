@@ -31,3 +31,12 @@ debug_*
 # Large video files (exceed GitHub 100MB limit)
 public/videos/*.mp4
 *.mp4
+
+# Large video/media files (exceed GitHub 100MB limit)
+public/videos/*.mp4
+public/videos/*.mov
+public/videos/*.avi
+public/videos/*.mkv
+attached_assets/*.mov
+attached_assets/*.mp4
+*.mov
