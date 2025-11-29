@@ -4,10 +4,6 @@
   "framework": null,
   "buildCommand": null,
   "outputDirectory": "public",
-  "rewrites": [
-    { "source": "/health", "destination": "https://current-see-website-tdfranklin101.replit.app/health" },
-    { "source": "/api/:path*", "destination": "https://current-see-website-tdfranklin101.replit.app/api/:path*" }
-  ],
   "headers": [
     {
       "source": "/api/(.*)",

@@ -1,17 +1,44 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { createHash } from 'crypto';
 
-const GENESIS_DATE = new Date('2025-04-07').getTime();
-const SOLAR_KWH = 4913;
+const SOLAR_STANDARD = {
+  GENESIS_DATE: '2025-04-07',
+  GENESIS_TIMESTAMP: new Date('2025-04-07').getTime(),
+  KWH_PER_SOLAR: 4913,
+  RAYS_PER_SOLAR: 1000000,
+  VERSION: '1.0.0',
+  PROTOCOL_NAME: 'TC-S Solar Standard',
+  NETWORK_MODULES: 14
+} as const;
 
 function calculateSolarIndex(): number {
   const now = Date.now();
-  const daysSinceGenesis = Math.floor((now - GENESIS_DATE) / (1000 * 60 * 60 * 24));
+  const daysSinceGenesis = Math.floor(
+    (now - SOLAR_STANDARD.GENESIS_TIMESTAMP) / (1000 * 60 * 60 * 24)
+  );
   return Math.min(99, Math.max(85, 91.8 + Math.sin(daysSinceGenesis / 30) * 3));
+}
+
+function getDaysSinceGenesis(): number {
+  return Math.floor(
+    (Date.now() - SOLAR_STANDARD.GENESIS_TIMESTAMP) / (1000 * 60 * 60 * 24)
+  );
+}
+
+function getProtocolHash(): string {
+  const canonicalData = JSON.stringify({
+    genesis_date: SOLAR_STANDARD.GENESIS_DATE,
+    kwh_per_solar: SOLAR_STANDARD.KWH_PER_SOLAR,
+    rays_per_solar: SOLAR_STANDARD.RAYS_PER_SOLAR,
+    version: SOLAR_STANDARD.VERSION,
+    protocol_name: SOLAR_STANDARD.PROTOCOL_NAME
+  });
+  return createHash('sha256').update(canonicalData).digest('hex');
 }
 
 function generateKidSolarResponse(command: string): string {
   const si = calculateSolarIndex().toFixed(1);
-  const daysSinceGenesis = Math.floor((Date.now() - GENESIS_DATE) / (1000 * 60 * 60 * 24));
+  const daysSinceGenesis = getDaysSinceGenesis();
   
   const lowerCmd = command.toLowerCase();
   
@@ -19,15 +46,15 @@ function generateKidSolarResponse(command: string): string {
     return `The current Solar Index is ${si}%. This represents our global energy and ethics balance, calculated ${daysSinceGenesis} days since genesis on April 7, 2025.`;
   }
   
-  if (lowerCmd.includes('solar') && (lowerCmd.includes('what') || lowerCmd.includes('how much'))) {
-    return `1 Solar equals ${SOLAR_KWH} kilowatt-hours of renewable energy. That's enough to power an average American home for about 5 months!`;
+  if (lowerCmd.includes('solar') && (lowerCmd.includes('what') || lowerCmd.includes('how much') || lowerCmd.includes('worth') || lowerCmd.includes('value'))) {
+    return `1 Solar equals ${SOLAR_STANDARD.KWH_PER_SOLAR} kilowatt-hours of renewable energy. That's enough to power an average American home for about 5 months!`;
   }
   
   if (lowerCmd.includes('convert') && lowerCmd.includes('kwh')) {
     const kwhMatch = command.match(/(\d+(?:\.\d+)?)\s*kwh/i);
     if (kwhMatch) {
       const kwh = parseFloat(kwhMatch[1]);
-      const solar = (kwh / SOLAR_KWH).toFixed(6);
+      const solar = (kwh / SOLAR_STANDARD.KWH_PER_SOLAR).toFixed(6);
       return `${kwh} kWh equals ${solar} Solar tokens.`;
     }
   }
@@ -37,7 +64,7 @@ function generateKidSolarResponse(command: string): string {
   }
   
   if (lowerCmd.includes('help')) {
-    return `I can help you with: checking the Solar Index, converting kWh to Solar, understanding the Solar Standard (1 Solar = ${SOLAR_KWH} kWh), and navigating the TC-S marketplace. What would you like to know?`;
+    return `I can help you with: checking the Solar Index, converting kWh to Solar, understanding the Solar Standard (1 Solar = ${SOLAR_STANDARD.KWH_PER_SOLAR} kWh), and navigating the TC-S marketplace. What would you like to know?`;
   }
   
   if (lowerCmd.includes('genesis') || lowerCmd.includes('when')) {
@@ -48,7 +75,7 @@ function generateKidSolarResponse(command: string): string {
     return `The TC-S Marketplace offers digital artifacts across 5 categories: music, video, images, documents, and code. All priced in Solar tokens. Would you like me to help you explore?`;
   }
 
-  return `I understand you're asking about "${command}". As Kid Solar, I specialize in the Solar Standard economy. The current Solar Index is ${si}%, and 1 Solar = ${SOLAR_KWH} kWh. How can I assist you further?`;
+  return `I understand you're asking about "${command}". As Kid Solar, I specialize in the Solar Standard economy. The current Solar Index is ${si}%, and 1 Solar = ${SOLAR_STANDARD.KWH_PER_SOLAR} kWh. How can I assist you further?`;
 }
 
 export default function handler(req: VercelRequest, res: VercelResponse) {
@@ -61,7 +88,8 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const si = calculateSolarIndex();
-  const daysSinceGenesis = Math.floor((Date.now() - GENESIS_DATE) / (1000 * 60 * 60 * 24));
+  const daysSinceGenesis = getDaysSinceGenesis();
+  const protocolHash = getProtocolHash();
 
   if (req.method === 'GET') {
     return res.status(200).json({
@@ -78,6 +106,11 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
         solar_index: parseFloat(si.toFixed(1)),
         days_since_genesis: daysSinceGenesis
       },
+      solar_standard: {
+        kwh_per_solar: SOLAR_STANDARD.KWH_PER_SOLAR,
+        genesis_date: SOLAR_STANDARD.GENESIS_DATE,
+        protocol_hash: protocolHash.substring(0, 16)
+      },
       voice_enabled: true,
       models: {
         text: 'gpt-4o',
@@ -85,6 +118,8 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
         text_to_speech: 'tts-1',
         voice: 'nova'
       },
+      voice_endpoint: '/api/kid-solar/voice',
+      note: 'Voice processing requires OpenAI API - use Replit endpoint for full functionality',
       last_updated: new Date().toISOString()
     });
   }
@@ -110,6 +145,7 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
         metadata: {
           solar_index: parseFloat(si.toFixed(1)),
           days_since_genesis: daysSinceGenesis,
+          protocol_hash: protocolHash.substring(0, 16),
           timestamp: new Date().toISOString()
         }
       });

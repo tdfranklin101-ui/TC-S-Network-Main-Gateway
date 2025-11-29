@@ -1,8 +1,28 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { createHash } from 'crypto';
 
-const SOLAR_KWH = 4913.0;
-const RAYS_PER_SOLAR = 10000.0;
+const SOLAR_STANDARD = {
+  GENESIS_DATE: '2025-04-07',
+  GENESIS_TIMESTAMP: new Date('2025-04-07').getTime(),
+  KWH_PER_SOLAR: 4913,
+  RAYS_PER_SOLAR: 1000000,
+  VERSION: '1.0.0',
+  PROTOCOL_NAME: 'TC-S Solar Standard',
+  NETWORK_MODULES: 14
+} as const;
+
 const OSS_SIMULATOR_URL = 'https://open-source-eda-tdfranklin101.replit.app';
+
+function getProtocolHash(): string {
+  const canonicalData = JSON.stringify({
+    genesis_date: SOLAR_STANDARD.GENESIS_DATE,
+    kwh_per_solar: SOLAR_STANDARD.KWH_PER_SOLAR,
+    rays_per_solar: SOLAR_STANDARD.RAYS_PER_SOLAR,
+    version: SOLAR_STANDARD.VERSION,
+    protocol_name: SOLAR_STANDARD.PROTOCOL_NAME
+  });
+  return createHash('sha256').update(canonicalData).digest('hex');
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -13,15 +33,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).end();
   }
 
+  const protocolHash = getProtocolHash();
+
   const powerTwinInfo = {
     version: 'tcs-power-twin-v1',
     status: 'operational',
     description: 'Converts chip power traces into Solar energy costs using left Riemann integration',
     constants: {
-      solar_kwh: SOLAR_KWH,
-      rays_per_solar: RAYS_PER_SOLAR,
-      solar_standard: `1 Solar = ${SOLAR_KWH} kWh`,
-      rays_standard: '1 Solar = 10,000 Solar Rays'
+      solar_kwh: SOLAR_STANDARD.KWH_PER_SOLAR,
+      rays_per_solar: SOLAR_STANDARD.RAYS_PER_SOLAR,
+      solar_standard: `1 Solar = ${SOLAR_STANDARD.KWH_PER_SOLAR} kWh`,
+      rays_standard: `1 Solar = ${SOLAR_STANDARD.RAYS_PER_SOLAR.toLocaleString()} Solar Rays`,
+      genesis_date: SOLAR_STANDARD.GENESIS_DATE,
+      protocol_hash: protocolHash.substring(0, 16)
     },
     endpoints: {
       analyze: '/api/power-twin/analyze',
@@ -77,6 +101,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         'Skywater 130nm PDK',
         'OpenLane RTL-to-GDSII Flow'
       ]
+    },
+    integrity: {
+      protocol_hash: protocolHash.substring(0, 16),
+      check_url: '/api/integrity'
     },
     timestamp: new Date().toISOString()
   });
