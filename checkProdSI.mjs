@@ -1,10 +1,14 @@
 /**
  * Solar Index Production Mirror Verification
  * Verifies that both Replit and Vercel deployments calculate the same SI
+ * 
+ * Uses environment variables:
+ * - NEXT_PUBLIC_REPLIT_SITE_URL
+ * - NEXT_PUBLIC_VERCEL_SITE_URL
  */
 
-const REPLIT_PROD = 'https://current-see-website-tdfranklin101.replit.app';
-const VERCEL_PROD = 'https://tc-s-network-main-gatewayv1.vercel.app';
+const REPLIT_PROD = process.env.NEXT_PUBLIC_REPLIT_SITE_URL || 'https://current-see-website-tdfranklin101.replit.app';
+const VERCEL_PROD = process.env.NEXT_PUBLIC_VERCEL_SITE_URL || 'https://tc-s-network-main-gatewayv1.vercel.app';
 
 // Replicate the exact client-side SI calculation from main-platform.html line 840
 function calculateExpectedSI() {

@@ -27,3 +27,9 @@ integrations = ["perplexity_v0==1.0.0", "javascript_websocket==1.0.0", "javascri
 
 [objectStorage]
 defaultBucketID = "replit-objstore-f95b4cf3-0db7-40d1-9680-54f5b997ed65"
+
+[userenv]
+
+[userenv.shared]
+NEXT_PUBLIC_REPLIT_SITE_URL = "https://current-see-website-tdfranklin101.replit.app"
+NEXT_PUBLIC_VERCEL_SITE_URL = "https://tc-s-network-main-gatewayv1.vercel.app"

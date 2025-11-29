@@ -1,0 +1,64 @@
+import { useState } from "react";
+
+export function SIAlignmentTestButton() {
+  const [status, setStatus] = useState<null | string>(null);
+  const [running, setRunning] = useState(false);
+
+  const runTest = async () => {
+    setRunning(true);
+    setStatus("Running SI alignment test…");
+
+    try {
+      const replitUrl = process.env.NEXT_PUBLIC_REPLIT_SITE_URL!;
+      const vercelUrl = process.env.NEXT_PUBLIC_VERCEL_SITE_URL!;
+
+      // Assume both pages render "Solar Index" with a number nearby
+      const [replitHtml, vercelHtml] = await Promise.all([
+        fetch(replitUrl).then((r) => r.text()),
+        fetch(vercelUrl).then((r) => r.text()),
+      ]);
+
+      const extractSI = (html: string) => {
+        const match = html.match(/Solar Index[^0-9]*([0-9]+\.?[0-9]*)/i);
+        return match ? parseFloat(match[1]) : null;
+      };
+
+      const replitSI = extractSI(replitHtml);
+      const vercelSI = extractSI(vercelHtml);
+
+      if (replitSI == null || vercelSI == null) {
+        setStatus("❌ Could not parse SI from one or both sites.");
+      } else {
+        const diff = Math.abs(replitSI - vercelSI);
+        const aligned = diff < 0.1; // within 0.1% is considered aligned
+
+        setStatus(
+          `${aligned ? "✅" : "⚠️"} Replit SI: ${replitSI.toFixed(
+            1
+          )}%, Vercel SI: ${vercelSI.toFixed(1)}% (Δ = ${diff.toFixed(
+            2
+          )})`
+        );
+      }
+    } catch (err: any) {
+      setStatus(`❌ Error running test: ${err?.message ?? "Unknown error"}`);
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-2">
+      <button
+        onClick={runTest}
+        disabled={running}
+        className="px-4 py-2 rounded-md bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 disabled:opacity-60"
+      >
+        {running ? "Testing SI Alignment…" : "Run SI Alignment Test"}
+      </button>
+      {status && (
+        <p className="text-xs text-gray-300 whitespace-pre-line">{status}</p>
+      )}
+    </div>
+  );
+}
