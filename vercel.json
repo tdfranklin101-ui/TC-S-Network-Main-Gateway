@@ -4,13 +4,9 @@
   "framework": null,
   "buildCommand": null,
   "outputDirectory": "public",
-  "functions": {
-    "api/**/*.ts": {
-      "runtime": "@vercel/node@3.0.0"
-    }
-  },
   "rewrites": [
-    { "source": "/health", "destination": "/api/health" }
+    { "source": "/health", "destination": "https://current-see-website-tdfranklin101.replit.app/health" },
+    { "source": "/api/:path*", "destination": "https://current-see-website-tdfranklin101.replit.app/api/:path*" }
   ],
   "headers": [
     {
