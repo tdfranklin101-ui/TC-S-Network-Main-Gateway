@@ -7830,6 +7830,72 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Kid Solar AI Status endpoint
+  if (pathname === '/api/kid-solar' && req.method === 'GET') {
+    const GENESIS_DATE = new Date('2025-04-07').getTime();
+    const now = Date.now();
+    const daysSinceGenesis = Math.floor((now - GENESIS_DATE) / (1000 * 60 * 60 * 24));
+    const solarIndex = Math.min(99, Math.max(85, 91.8 + Math.sin(daysSinceGenesis / 30) * 3));
+    
+    res.writeHead(200, { 
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*'
+    });
+    res.end(JSON.stringify({
+      status: 'online',
+      name: 'Kid Solar',
+      version: '2.0.0',
+      capabilities: ['text_chat', 'solar_calculations', 'marketplace_navigation', 'wallet_inquiries'],
+      current_indices: {
+        solar_index: parseFloat(solarIndex.toFixed(1)),
+        days_since_genesis: daysSinceGenesis
+      },
+      voice_enabled: true,
+      models: { text: 'gpt-4o', speech_to_text: 'whisper-1', text_to_speech: 'tts-1', voice: 'nova' },
+      last_updated: new Date().toISOString()
+    }));
+    return;
+  }
+
+  // Power Twin Status endpoint  
+  if (pathname === '/api/power-twin/status' && req.method === 'GET') {
+    const SOLAR_KWH = 4913.0;
+    const RAYS_PER_SOLAR = 10000.0;
+    
+    res.writeHead(200, { 
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*'
+    });
+    res.end(JSON.stringify({
+      success: true,
+      power_twin: {
+        version: 'tcs-power-twin-v1',
+        status: 'operational',
+        description: 'Converts chip power traces into Solar energy costs using left Riemann integration',
+        constants: {
+          solar_kwh: SOLAR_KWH,
+          rays_per_solar: RAYS_PER_SOLAR,
+          solar_standard: `1 Solar = ${SOLAR_KWH} kWh`,
+          rays_standard: '1 Solar = 10,000 Solar Rays'
+        },
+        endpoints: {
+          analyze: '/api/power-twin/analyze',
+          calculate: '/api/power-twin/calculate',
+          constants: '/api/power-twin/constants'
+        },
+        integration_method: 'left_riemann'
+      },
+      simulator: {
+        name: 'Open Silicon Stack',
+        url: 'https://open-source-eda-tdfranklin101.replit.app',
+        status: 'available',
+        features: ['VexRiscv RISC-V Core', 'OpenRAM Memory', 'Skywater 130nm PDK', 'OpenLane Flow']
+      },
+      timestamp: new Date().toISOString()
+    }));
+    return;
+  }
+
   // Signup API endpoint
   if (pathname === '/api/signup' && req.method === 'POST') {
     try {
