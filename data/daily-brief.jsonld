@@ -2,8 +2,8 @@
   "@context": "https://schema.org",
   "@type": "DataSet",
   "name": "TC-S Daily Indices Brief",
-  "description": "Daily briefing of TC-S core performance indices including Power Twin, Open Silicon Stack, and Ω-1 Cosmic Trajectory Engine metrics",
-  "datePublished": "2025-11-27",
+  "description": "Daily briefing of TC-S core performance indices",
+  "datePublished": "2025-11-29",
   "distribution": [
     {
       "@type": "DataDownload",
@@ -11,7 +11,7 @@
       "encodingFormat": "application/json",
       "description": "Global Energy & Ethics Balance — 7-Day Rolling Indicator.",
       "contentUrl": "https://api.thecurrentsee.org/api/daily-brief#si",
-      "value": 71.4,
+      "value": 70.8,
       "unit": "%"
     },
     {
@@ -20,7 +20,7 @@
       "encodingFormat": "application/json",
       "description": "Reserve stability and fulfillment factor across all regions.",
       "contentUrl": "https://api.thecurrentsee.org/api/daily-brief#srh",
-      "value": 78.3,
+      "value": 76.8,
       "unit": "%"
     },
     {
@@ -29,7 +29,7 @@
       "encodingFormat": "application/json",
       "description": "Percentage of humans enrolled and actively claiming GBI.",
       "contentUrl": "https://api.thecurrentsee.org/api/daily-brief#gbi",
-      "value": 40.8,
+      "value": 41.8,
       "unit": "%"
     },
     {
@@ -38,7 +38,7 @@
       "encodingFormat": "application/json",
       "description": "Ethically aligned compute flow — safe superintelligence readiness.",
       "contentUrl": "https://api.thecurrentsee.org/api/daily-brief#cai",
-      "value": 89.4,
+      "value": 89.3,
       "unit": "%"
     },
     {
@@ -47,7 +47,7 @@
       "encodingFormat": "application/json",
       "description": "Health of the TC-S digital marketplace and token velocity.",
       "contentUrl": "https://api.thecurrentsee.org/api/daily-brief#mli",
-      "value": 23.7,
+      "value": 24.1,
       "unit": "%"
     },
     {
@@ -56,71 +56,8 @@
       "encodingFormat": "application/json",
       "description": "Acceptance ratio of tasks from the Ethics Engine.",
       "contentUrl": "https://api.thecurrentsee.org/api/daily-brief#eai",
-      "value": 92.5,
+      "value": 91.7,
       "unit": "%"
-    }
-  ],
-  "hasPart": [
-    {
-      "@type": "SoftwareApplication",
-      "name": "Power Twin",
-      "description": "Digital twin energy calculator that converts chip power traces to Solar energy costs using left Riemann integration. Bridges open-source EDA workflows with Solar economics.",
-      "applicationCategory": "Energy Calculator",
-      "operatingSystem": "Web Browser",
-      "url": "https://api.thecurrentsee.org/api/power-twin",
-      "featureList": [
-        "CSV power trace upload",
-        "Left Riemann energy integration",
-        "kWh to Solar conversion (1 Solar = 4,913 kWh)",
-        "Solar to Rays conversion (1 Solar = 10,000 Rays)",
-        "Open Silicon Stack simulator integration"
-      ]
-    },
-    {
-      "@type": "SoftwareApplication",
-      "name": "Open Silicon Stack Simulator",
-      "description": "Open-source EDA digital twin for hardware simulation and power trace generation. Supports VexRiscv RISC-V, OpenRAM, Skywater 130nm PDK, and OpenLane RTL-to-GDSII flows.",
-      "applicationCategory": "Chip Design Simulator",
-      "operatingSystem": "Web Browser",
-      "url": "https://open-source-eda-tdfranklin101.replit.app",
-      "featureList": [
-        "VexRiscv RISC-V CPU simulation",
-        "OpenRAM memory compiler",
-        "Skywater 130nm PDK integration",
-        "OpenLane RTL-to-GDSII flow",
-        "Power trace CSV export"
-      ]
-    },
-    {
-      "@type": "SoftwareApplication",
-      "name": "Ω-1 Cosmic Trajectory Engine",
-      "description": "AI-powered strategic calculator using GPT-4o to determine minimum-entropy trajectory for multi-century civilization longevity. First AI system optimizing for long-term human survival.",
-      "applicationCategory": "Strategic AI",
-      "operatingSystem": "Web Browser",
-      "url": "https://api.thecurrentsee.org/api/omega1",
-      "featureList": [
-        "Cosmic-scale strategic analysis",
-        "Minimum-entropy trajectory calculation",
-        "Multi-dimensional optimization",
-        "GPT-4o integration",
-        "Civilization longevity modeling"
-      ]
-    },
-    {
-      "@type": "SoftwareApplication",
-      "name": "Kid Solar Voice Assistant",
-      "description": "Multi-modal AI assistant with voice-activated marketplace operations and wallet control. Powered by OpenAI Whisper (STT), GPT-4o (NLU), and TTS Nova voice.",
-      "applicationCategory": "AI Voice Assistant",
-      "operatingSystem": "Web Browser",
-      "url": "https://www.thecurrentsee.org/kid-solar",
-      "featureList": [
-        "Voice command recognition (Whisper STT)",
-        "Natural language understanding (GPT-4o)",
-        "Text-to-speech response (Nova voice)",
-        "Marketplace query operations",
-        "Wallet control functions",
-        "Solar-metered AI compute budget"
-      ]
     }
   ]
 }

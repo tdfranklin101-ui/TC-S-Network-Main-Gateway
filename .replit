@@ -4,7 +4,7 @@ modules = ["nodejs-20", "python-3.11", "python3", "postgresql-16"]
 
 [nix]
 channel = "stable-22_11"
-packages = ["freetype", "gh", "jq", "lcms2", "libimagequant", "libjpeg", "libtiff", "libwebp", "libxcrypt", "nano", "openjpeg", "tcl", "tk", "zlib", "git-lfs"]
+packages = ["freetype", "gh", "git-lfs", "jq", "lcms2", "libimagequant", "libjpeg", "libtiff", "libwebp", "libxcrypt", "nano", "openjpeg", "tcl", "tk", "zlib"]
 
 [deployment]
 run = "node main.js"
