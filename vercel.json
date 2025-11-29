@@ -1,6 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
+  "framework": null,
+  "buildCommand": null,
+  "outputDirectory": "public",
   "functions": {
     "api/**/*.js": {
       "runtime": "nodejs22.x"
@@ -8,5 +11,8 @@
     "api/**/*.ts": {
       "runtime": "nodejs22.x"
     }
-  }
+  },
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/$1" }
+  ]
 }
