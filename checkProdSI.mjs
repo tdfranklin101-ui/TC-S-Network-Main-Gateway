@@ -1,7 +1,7 @@
 import https from 'https';
 import http from 'http';
 
-const REPLIT_PROD = process.env.REPLIT_URL || 'https://tc-s-network-main-gateway-tdfranklin101.replit.app';
+const REPLIT_PROD = 'https://current-see-website-tdfranklin101.replit.app';
 const VERCEL_PROD = 'https://tc-s-network-main-gatewayv1.vercel.app';
 
 function fetchURL(url) {
