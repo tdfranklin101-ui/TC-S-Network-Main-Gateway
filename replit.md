@@ -15,7 +15,15 @@ The platform features a clean, intuitive interface with clear navigation. The de
 The frontend uses Vanilla JavaScript, while the backend is an Express.js server optimized for Cloud Run. The platform integrates real-time analytics for page views and member counts. The multi-modal AI assistant, Kid Solar, leverages OpenAI's Whisper, GPT-4o, and TTS for natural language interactions, including marketplace operations and wallet control. Comprehensive AI SEO integration ensures discoverability across various AI systems and search engines, incorporating JSON-LD structured data and Open Graph metadata. The marketplace supports five categories and includes an in-memory energy trading ledger. A member content upload system handles local files, AI-generated music, and external video hosting. Session-based authentication is used for a seamless user experience. Video streaming is optimized with `faststart` and HTTP 206 partial content. A daily 1 Solar token distribution per member is implemented. The Solar Standard Protocol documentation includes machine-readable specifications, human-readable HTML, an Atom feed, and an auto-indexing system. The platform features a comprehensive 4-part white paper suite on the GENIUS Act, Unified Intelligence Mesh (UIM), ethical AI optimization, and safe superintelligence. A "Solar Integrity Wheel" provides a self-verification system with daily audits and SHA-256 hash verification of core protocol files. The UIM Handshake Protocol v1.0 enables AI-to-AI communication with cryptographic signatures, energy tracking, ethics scoring, and an audit log.
 
 ### System Design Choices
-The platform is optimized for Cloud Run deployments. Data storage primarily uses PostgreSQL with Drizzle ORM, supplemented by JSON file fallbacks and in-memory storage for conversation history. Separate databases are used for production and development environments. Security measures include environment-based API key storage, session-based tracking, CORS configuration, and rate limiting. Comprehensive error handling and robust session management are integral to the system's design.
+The platform is optimized for Cloud Run deployments. Data storage primarily uses PostgreSQL with Drizzle ORM, supplemented by JSON file fallbacks and in-memory storage for conversation history. **A single unified PostgreSQL database** is shared between Vercel and Replit deployments, ensuring consistent user data across both platforms. Security measures include environment-based API key storage, session-based tracking, CORS configuration, and rate limiting. Comprehensive error handling and robust session management are integral to the system's design.
+
+### Cross-Domain Authentication
+Session management uses **database-backed sessions** stored in the PostgreSQL `session` table (sid, sess, expire columns) for cross-domain authentication between Vercel (frontend) and Replit (backend). Key features:
+- Sessions persist across server restarts
+- 30-day session expiration
+- Cookies use `SameSite=None; Secure` for cross-domain access
+- Local cache (`sessionCache`) provides fast lookups with database as source of truth
+- Automatic cleanup of expired sessions every 15 minutes
 
 ## External Dependencies
 
