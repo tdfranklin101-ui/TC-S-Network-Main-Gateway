@@ -155,8 +155,22 @@ function checkRateLimit(req, res) {
   }
 }
 
-// Simple session storage (in production, use Redis or database)
-const sessions = new Map();
+// Database-backed session storage for cross-domain authentication
+// Sessions stored in PostgreSQL 'session' table with (sid, sess, expire) columns
+const sessionCache = new Map(); // Local cache for performance
+
+// Clean expired sessions periodically
+async function cleanExpiredSessions() {
+  if (!pool) return;
+  try {
+    await pool.query('DELETE FROM session WHERE expire < NOW()');
+  } catch (err) {
+    console.error('Session cleanup error:', err.message);
+  }
+}
+
+// Run cleanup every 15 minutes
+setInterval(cleanExpiredSessions, 15 * 60 * 1000);
 
 // Initialize enhanced file management system with error handling
 let fileManager;
@@ -224,39 +238,96 @@ function logBalanceChange(context, userId, username, oldBalance, newBalance, sou
   }
 }
 
-// Session helper functions
+// Session helper functions - DATABASE BACKED for cross-domain auth
 function generateSessionId() {
   return crypto.randomBytes(32).toString('hex');
 }
 
-function createSession(userId, userData) {
+async function createSession(userId, userData) {
   const sessionId = generateSessionId();
   const sessionData = {
     userId,
     ...userData,
-    createdAt: new Date(),
-    lastAccess: new Date()
+    createdAt: new Date().toISOString(),
+    lastAccess: new Date().toISOString()
   };
-  sessions.set(sessionId, sessionData);
   
-  // Log session creation with initial balance
-  const balance = userData.solarBalance || 0;
-  console.log(`🔐 [SESSION] Created for ${userData.username} (ID: ${userId}) | Balance: ${balance} Solar | Session: ${sessionId.substring(0, 8)}...`);
+  // 30 day expiration
+  const expire = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  
+  // Store in database for persistence across restarts and domains
+  if (pool) {
+    try {
+      await pool.query(
+        'INSERT INTO session (sid, sess, expire) VALUES ($1, $2, $3) ON CONFLICT (sid) DO UPDATE SET sess = $2, expire = $3',
+        [sessionId, JSON.stringify(sessionData), expire]
+      );
+      console.log(`🔐 [SESSION-DB] Created for ${userData.username} (ID: ${userId}) | Balance: ${userData.solarBalance || 0} Solar | Session: ${sessionId.substring(0, 8)}...`);
+    } catch (err) {
+      console.error('Session DB write error:', err.message);
+    }
+  }
+  
+  // Also cache locally for performance
+  sessionCache.set(sessionId, sessionData);
   
   return sessionId;
 }
 
-function getSession(sessionId) {
-  const session = sessions.get(sessionId);
+async function getSession(sessionId) {
+  if (!sessionId) return null;
+  
+  // Check local cache first
+  let session = sessionCache.get(sessionId);
   if (session) {
-    session.lastAccess = new Date();
+    session.lastAccess = new Date().toISOString();
     return session;
   }
+  
+  // Fallback to database lookup
+  if (pool) {
+    try {
+      const result = await pool.query(
+        'SELECT sess FROM session WHERE sid = $1 AND expire > NOW()',
+        [sessionId]
+      );
+      if (result.rows.length > 0) {
+        session = typeof result.rows[0].sess === 'string' 
+          ? JSON.parse(result.rows[0].sess) 
+          : result.rows[0].sess;
+        session.lastAccess = new Date().toISOString();
+        
+        // Update cache
+        sessionCache.set(sessionId, session);
+        
+        // Update last access in DB
+        await pool.query(
+          'UPDATE session SET sess = $1 WHERE sid = $2',
+          [JSON.stringify(session), sessionId]
+        );
+        
+        return session;
+      }
+    } catch (err) {
+      console.error('Session DB read error:', err.message);
+    }
+  }
+  
   return null;
 }
 
-function destroySession(sessionId) {
-  return sessions.delete(sessionId);
+async function destroySession(sessionId) {
+  sessionCache.delete(sessionId);
+  
+  if (pool) {
+    try {
+      await pool.query('DELETE FROM session WHERE sid = $1', [sessionId]);
+      return true;
+    } catch (err) {
+      console.error('Session DB delete error:', err.message);
+    }
+  }
+  return false;
 }
 
 // Ensure member has a wallet (create if needed)
@@ -2565,13 +2636,13 @@ const server = http.createServer(async (req, res) => {
     try {
       // Verify authentication first
       const sessionId = getCookie(req, 'tc_s_session');
-      if (!sessionId || !sessions.get(sessionId)) {
+      const session = await getSession(sessionId);
+      if (!sessionId || !session) {
         res.writeHead(401, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Authentication required' }));
         return;
       }
 
-      const session = sessions.get(sessionId);
       const authenticatedUserId = session.userId;
       const memberName = session.username || 'Member';
 
@@ -2733,13 +2804,14 @@ const server = http.createServer(async (req, res) => {
   if (pathname === '/api/creator/upload' && req.method === 'POST') {
     // Check authentication first
     const sessionId = getCookie(req, 'tc_s_session');
-    if (!sessionId || !sessions.get(sessionId)) {
+    const session = await getSession(sessionId);
+    if (!sessionId || !session) {
       res.writeHead(401, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Authentication required' }));
       return;
     }
 
-    const userId = sessions.get(sessionId).userId;
+    const userId = session.userId;
 
     upload.single('file')(req, res, async (err) => {
       if (err) {
@@ -4265,21 +4337,18 @@ const server = http.createServer(async (req, res) => {
       }
 
         if (loginSuccess) {
-          // Create session
-          const sessionId = createSession(userData.userId, userData);
+          // Create session (async - database-backed for cross-domain)
+          const sessionId = await createSession(userData.userId, userData);
           
-          // Set secure session cookie
+          // Set cross-domain session cookie (SameSite=None for Vercel/Replit)
           const cookieOptions = [
             `tc_s_session=${sessionId}`,
             'HttpOnly',
-            'SameSite=Lax',
+            'SameSite=None',
+            'Secure',
             'Path=/',
             `Max-Age=${30 * 24 * 60 * 60}` // 30 days
           ];
-          
-          if (process.env.NODE_ENV === 'production') {
-            cookieOptions.push('Secure');
-          }
           
           res.writeHead(200, { 
             'Content-Type': 'application/json',
@@ -4577,20 +4646,17 @@ const server = http.createServer(async (req, res) => {
             memberSince: currentDate.toISOString()
           };
           
-          const sessionId = createSession(userId, userData);
+          const sessionId = await createSession(userId, userData);
           
-          // Set secure session cookie
+          // Set cross-domain session cookie (SameSite=None for Vercel/Replit)
           const cookieOptions = [
             `tc_s_session=${sessionId}`,
             'HttpOnly',
-            'SameSite=Lax',
+            'SameSite=None',
+            'Secure',
             'Path=/',
             `Max-Age=${30 * 24 * 60 * 60}` // 30 days
           ];
-          
-          if (process.env.NODE_ENV === 'production') {
-            cookieOptions.push('Secure');
-          }
           
           res.writeHead(200, { 
             'Content-Type': 'application/json',
@@ -4700,7 +4766,7 @@ const server = http.createServer(async (req, res) => {
       const sessionId = cookies.tc_s_session;
       
       if (sessionId) {
-        destroySession(sessionId);
+        await destroySession(sessionId);
       }
       
       // Clear the session cookie
@@ -4858,20 +4924,17 @@ const server = http.createServer(async (req, res) => {
           membershipType: 'Foundation Market Member'
         };
         
-        const sessionId = createSession(userId, userData);
+        const sessionId = await createSession(userId, userData);
         
-        // Set persistent session cookie (30 days)
+        // Set cross-domain session cookie (SameSite=None for Vercel/Replit)
         const cookieOptions = [
           `tc_s_session=${sessionId}`,
           'HttpOnly',
-          'SameSite=Lax',
+          'SameSite=None',
+          'Secure',
           'Path=/',
           `Max-Age=${30 * 24 * 60 * 60}` // 30 days
         ];
-        
-        if (process.env.NODE_ENV === 'production') {
-          cookieOptions.push('Secure');
-        }
         
         res.writeHead(200, { 
           'Content-Type': 'application/json',
@@ -4966,25 +5029,22 @@ const server = http.createServer(async (req, res) => {
 
         console.log(`🌱 New member created: ${username} with ${initialSolarAmount} Solar (${daysSinceGenesis} days since genesis)`);
 
-        // Create session for immediate login
-        const sessionId = createSession(member.id, {
+        // Create session for immediate login (async - database-backed)
+        const sessionId = await createSession(member.id, {
           userId: member.id,
           username: member.username,
           solarBalance: parseFloat(member.total_solar) || 0
         });
         
-        // Set secure session cookie
+        // Set cross-domain session cookie (SameSite=None for Vercel/Replit)
         const cookieOptions = [
           `tc_s_session=${sessionId}`,
           'HttpOnly',
-          'SameSite=Lax',
+          'SameSite=None',
+          'Secure',
           'Path=/',
           `Max-Age=${30 * 24 * 60 * 60}` // 30 days
         ];
-        
-        if (process.env.NODE_ENV === 'production') {
-          cookieOptions.push('Secure');
-        }
 
         res.writeHead(200, { 
           'Content-Type': 'application/json',
@@ -5084,14 +5144,14 @@ const server = http.createServer(async (req, res) => {
 
       // Get session from cookie
       const sessionId = getCookie(req, 'tc_s_session');
+      const session = await getSession(sessionId);
       
-      if (!sessionId || !sessions.has(sessionId)) {
+      if (!sessionId || !session) {
         res.writeHead(401, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Not authenticated' }));
         return;
       }
 
-      const session = sessions.get(sessionId);
       const userId = session.userId;
 
       if (!pool) {
@@ -5472,13 +5532,14 @@ const server = http.createServer(async (req, res) => {
     try {
       // Check authentication
       const sessionId = getCookie(req, 'tc_s_session');
-      if (!sessionId || !sessions.get(sessionId)) {
+      const session = await getSession(sessionId);
+      if (!sessionId || !session) {
         res.writeHead(401, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Authentication required' }));
         return;
       }
 
-      const userId = sessions.get(sessionId).userId;
+      const userId = session.userId;
       console.log(`📊 Fetching my items for user ID: ${userId}`);
 
       if (!pool) {
@@ -5992,13 +6053,14 @@ const server = http.createServer(async (req, res) => {
     try {
       // Get user ID from session
       const sessionId = getCookie(req, 'tc_s_session');
-      if (!sessionId || !sessions.get(sessionId)) {
+      const session2 = await getSession(sessionId);
+      if (!sessionId || !session2) {
         res.writeHead(401, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Authentication required' }));
         return;
       }
 
-      const userId = sessions.get(sessionId).userId;
+      const userId = session2.userId;
 
       if (pool) {
         // Get uploaded artifacts (created by user) - both active and inactive
@@ -6092,13 +6154,14 @@ const server = http.createServer(async (req, res) => {
     try {
       // Get user ID from session
       const sessionId = getCookie(req, 'tc_s_session');
-      if (!sessionId || !sessions.get(sessionId)) {
+      const session3 = await getSession(sessionId);
+      if (!sessionId || !session3) {
         res.writeHead(401, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Authentication required' }));
         return;
       }
 
-      const userId = sessions.get(sessionId).userId;
+      const userId = session3.userId;
       const body = await parseBody(req);
       const { artifactId } = body;
 
