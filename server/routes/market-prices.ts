@@ -163,8 +163,10 @@ router.get('/', async (req, res) => {
       indices: {
         fiat: { name: 'Fiat (USD)', value: fiatIndex, unit: '' },
         btc: { name: 'Crypto (BTC)', value: btcIndex, unit: '' },
-        solar: { name: 'Solar Index', value: solarIndex, unit: '%' }
+        solar: { name: 'Solar Index', value: solarIndex, unit: '%' },
+        brent: { name: 'Brent Crude', value: Math.round(brentPrice ? brentPrice * 1.3 : 96), unit: '' }
       },
+      disclaimer: 'Any Solar/Fiat value shown is for demonstration purposes only. Solar is not legal tender, security, or financial instrument.',
       chartData: generateChartData(btcPrice, brentPrice)
     });
   } catch (error) {

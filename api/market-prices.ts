@@ -79,7 +79,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         btc: { name: 'Crypto (BTC)', value: btcIndex, unit: '' },
         solar: { name: 'Solar Index', value: solarIndex, unit: '%' },
         brent: { name: 'Brent Crude', value: brentIndex, unit: '' }
-      }
+      },
+      disclaimer: 'Any Solar/Fiat value shown is for demonstration purposes only. Solar is not legal tender, security, or financial instrument.'
     });
   } catch (error) {
     console.error('Market prices error:', error);
@@ -96,7 +97,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         btc: { name: 'Crypto (BTC)', value: 117, unit: '' },
         solar: { name: 'Solar Index', value: 88, unit: '%' },
         brent: { name: 'Brent Crude', value: 96, unit: '' }
-      }
+      },
+      disclaimer: 'Any Solar/Fiat value shown is for demonstration purposes only. Solar is not legal tender, security, or financial instrument.',
+      fallback: true
     });
   }
 }

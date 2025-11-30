@@ -3256,7 +3256,8 @@ const server = http.createServer(async (req, res) => {
           btc: { name: 'Crypto (BTC)', value: btcIndex, unit: '' },
           solar: { name: 'Solar Index', value: solarIndex, unit: '%' },
           brent: { name: 'Brent Crude', value: brentIndex, unit: '' }
-        }
+        },
+        disclaimer: 'Any Solar/Fiat value shown is for demonstration purposes only. Solar is not legal tender, security, or financial instrument.'
       }));
       console.log(`💰 Market Prices: BTC=$${btcPrice || 97500}, Brent=$${brentPrice}/bbl`);
     } catch (error) {
@@ -3280,6 +3281,7 @@ const server = http.createServer(async (req, res) => {
           solar: { name: 'Solar Index', value: 88, unit: '%' },
           brent: { name: 'Brent Crude', value: 96, unit: '' }
         },
+        disclaimer: 'Any Solar/Fiat value shown is for demonstration purposes only. Solar is not legal tender, security, or financial instrument.',
         fallback: true
       }));
     }
