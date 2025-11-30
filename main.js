@@ -3182,6 +3182,91 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Market Prices API - BTC and Brent Crude prices for dashboard
+  if (pathname === '/api/market-prices' && req.method === 'GET') {
+    try {
+      const SOLAR_KWH = 4913;
+      const ELECTRICITY_COST_PER_KWH = 0.12;
+      const solarUsdValue = SOLAR_KWH * ELECTRICITY_COST_PER_KWH;
+
+      // Fetch BTC price from CoinGecko
+      let btcPrice = null;
+      try {
+        const btcResponse = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd');
+        if (btcResponse.ok) {
+          const btcData = await btcResponse.json();
+          btcPrice = btcData?.bitcoin?.usd || null;
+        }
+      } catch (btcErr) {
+        console.warn('BTC price fetch failed:', btcErr.message);
+      }
+
+      // Fetch Brent Crude price from EIA
+      let brentPrice = 73.50; // Fallback value
+      const eiaApiKey = process.env.EIA_API_KEY;
+      if (eiaApiKey) {
+        try {
+          const brentResponse = await fetch(
+            `https://api.eia.gov/v2/petroleum/pri/spt/data/?api_key=${eiaApiKey}&frequency=daily&data[0]=value&facets[series][]=RBRTE&sort[0][column]=period&sort[0][direction]=desc&length=1`
+          );
+          if (brentResponse.ok) {
+            const brentData = await brentResponse.json();
+            brentPrice = brentData?.response?.data?.[0]?.value || 73.50;
+          }
+        } catch (brentErr) {
+          console.warn('Brent price fetch failed:', brentErr.message);
+        }
+      }
+
+      // Calculate indices (normalized for chart visibility)
+      const fiatIndex = 100;
+      const btcIndex = btcPrice ? Math.round((btcPrice / 1000) * 1.2) : 115;
+      const solarIndex = Math.round((solarUsdValue / 10) * 1.5);
+      const brentIndex = Math.round(brentPrice * 1.3);
+
+      res.writeHead(200, { 
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      });
+      res.end(JSON.stringify({
+        success: true,
+        timestamp: new Date().toISOString(),
+        prices: {
+          btc: {
+            price: btcPrice || 97500,
+            currency: 'USD',
+            symbol: 'BTC',
+            name: 'Bitcoin'
+          },
+          brent: {
+            price: brentPrice,
+            currency: 'USD',
+            unit: 'barrel',
+            symbol: 'RBRTE',
+            name: 'Brent Crude Oil'
+          },
+          solar: {
+            kwhValue: SOLAR_KWH,
+            usdValue: solarUsdValue.toFixed(2),
+            name: 'Solar Token'
+          }
+        },
+        indices: {
+          fiat: { name: 'Fiat (USD)', value: fiatIndex, unit: '' },
+          btc: { name: 'Crypto (BTC)', value: btcIndex, unit: '' },
+          solar: { name: 'Solar Index', value: solarIndex, unit: '%' },
+          brent: { name: 'Brent Crude', value: brentIndex, unit: '' }
+        }
+      }));
+      console.log(`💰 Market Prices: BTC=$${btcPrice || 'N/A'}, Brent=$${brentPrice}/bbl`);
+    } catch (error) {
+      console.error('Market prices error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to fetch market prices' }));
+    }
+    return;
+  }
+
   // Solar Reserve Data API - Regional renewable energy tracking
   if (pathname === '/api/solar/reserve' && req.method === 'GET') {
     try {
