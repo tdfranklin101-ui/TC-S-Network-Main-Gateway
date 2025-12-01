@@ -68,6 +68,9 @@ const kidRoutes = require('./routes/kid');
 // TC-S Agentic Network routes
 const agentRoutes = require('./routes/agentRoutes');
 
+// WPC (Watts Per Compute) efficiency calculator
+const { estimateFlops, estimateEnergy, computeWPC, joulesToSolar } = require('./lib/wpc.js');
+
 // Kid Solar Voice Assistant
 const KidSolarVoice = require('./server/kid-solar-voice');
 
@@ -3251,6 +3254,52 @@ const server = http.createServer(async (req, res) => {
       time: new Date().toISOString()
     }));
     console.log('📋 Solar Standard spec requested');
+    return;
+  }
+
+  // ===============================
+  //    WPC CALCULATION ENDPOINT
+  // ===============================
+  if (pathname === '/api/wpc/calculate' && req.method === 'POST') {
+    let body = '';
+
+    req.on('data', chunk => {
+      body += chunk.toString();
+    });
+
+    req.on('end', () => {
+      try {
+        const payload = JSON.parse(body);
+
+        const flops = estimateFlops(payload);
+        const joules = estimateEnergy(payload.powerWatts, payload.seconds);
+        const wpc = computeWPC(joules, flops);
+        const solarCost = joulesToSolar(joules);
+
+        const result = {
+          success: true,
+          flops,
+          joules,
+          wpc,
+          wpcRating: wpc < 1e-12 ? "A+" : wpc < 5e-12 ? "A" : wpc < 1e-11 ? "B" : "C",
+          solarCost,
+          rays: solarCost * 1000000, // 1 Solar = 1,000,000 Rays
+          timestamp: new Date().toISOString()
+        };
+
+        console.log(`⚡ WPC Calculate: ${flops.toExponential(2)} FLOPs, ${joules.toFixed(4)}J, WPC=${wpc.toExponential(3)}`);
+
+        res.writeHead(200, { 
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        });
+        res.end(JSON.stringify(result));
+      } catch (err) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message }));
+      }
+    });
+
     return;
   }
 
