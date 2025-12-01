@@ -1,0 +1,119 @@
+# 1. Clone all TC-S repos locally
+gh repo clone tdfranklin101-ui/TC-S-Network-Market-Grid
+gh repo clone tdfranklin101-ui/TC-S-Network-Wallet
+gh repo clone tdfranklin101-ui/TC-S-Network-Identify-Anything
+gh repo clone tdfranklin101-ui/TC-S-Network-Z-Private
+gh repo clone tdfranklin101-ui/TC-S-Network-Solar-Dashboard
+gh repo clone tdfranklin101-ui/TC-S-Network-Indices-Registry
+gh repo clone tdfranklin101-ui/TC-S-Network-Solar-Feed
+gh repo clone tdfranklin101-ui/TC-S-Network-Satellite-ID-Anywhere
+gh repo clone tdfranklin101-ui/TC-S-Network-Seismic-ID-Anywhere
+gh repo clone tdfranklin101-ui/TC-S-Network-GBI-Portal
+gh repo clone tdfranklin101-ui/TC-S-Network-Apps-Shared
+gh repo clone tdfranklin101-ui/TC-S-Network-Commissions
+gh repo clone tdfranklin101-ui/TC-S-Network-Solar-Reserve-Tracker
+gh repo clone tdfranklin101-ui/TC-S-Website
+
+# 2. Add shared WPC module to /shared/lib/wpc.ts
+cat << 'EOF' > TC-S-Network-Apps-Shared/lib/wpc.ts
+export function estimateFlops(model: string, tokens: number, resolution?: number) {
+  // rough FLOP estimation for LLMs, Vision, Diffusion
+  switch (model) {
+    case "llm":
+      return tokens * 50e9; // 50 GFLOP/token
+    case "vision":
+      return resolution ? resolution * resolution * 1e6 : 5e9;
+    case "diffusion":
+      return resolution ? resolution * resolution * 30e9 : 1e12;
+    default:
+      return 1e9;
+  }
+}
+
+export function computeWPC(joules: number, flops: number) {
+  return joules / flops;  // J/FLOP
+}
+
+export function estimateEnergyUsage(powerWatts: number, seconds: number) {
+  return powerWatts * seconds; // Joules
+}
+EOF
+
+# 3. Commit & push shared module
+cd TC-S-Network-Apps-Shared
+git add .
+git commit -m "Add WPC compute efficiency module"
+git push origin main
+
+# 4. Patch Identify Anything with compute profiler
+cd ../TC-S-Network-Identify-Anything
+mkdir -p lib
+cat << 'EOF' > lib/computeProfiler.ts
+import { estimateFlops, computeWPC, estimateEnergyUsage } from "../../TC-S-Network-Apps-Shared/lib/wpc";
+
+export async function profileCompute({ model, tokens, resolution, powerWatts=60, seconds=0.07 }) {
+  const flops = estimateFlops(model, tokens, resolution);
+  const joules = estimateEnergyUsage(powerWatts, seconds);
+  const wpc = computeWPC(joules, flops);
+
+  return { flops, joules, wpc };
+}
+EOF
+
+git add .
+git commit -m "Integrate WPC compute profiler into Identify Anything"
+git push origin main
+
+# 5. Patch GBI Market Grid with compute footprint fields
+cd ../TC-S-Network-Market-Grid
+cat << 'EOF' > components/WPCBadge.tsx
+export default function WPCBadge({ wpc }) {
+  const rating = wpc < 1e-12 ? "A+" : wpc < 5e-12 ? "A" : "B";
+  return (
+    <div className="p-2 bg-gray-800 text-yellow-300 rounded-lg text-sm">
+      Compute Efficiency (WPC): {wpc.toExponential(3)} — {rating}
+    </div>
+  );
+}
+EOF
+
+git add .
+git commit -m "Add WPC badge to marketplace artifacts"
+git push origin main
+
+# 6. Patch Z Private Commissioning Engine with WPC routing logic
+cd ../TC-S-Network-Z-Private
+cat << 'EOF' > lib/commissioning/wpcRouting.ts
+export function optimizeRoute(task) {
+  // Prefer lowest WPC hardware + lowest carbon intensity
+  return task.computeOptions.sort((a, b) => {
+    const wpcA = a.joules / a.flops;
+    const wpcB = b.joules / b.flops;
+    return wpcA - wpcB;
+  })[0];
+}
+EOF
+
+git add .
+git commit -m "Add WPC-aware routing to Z Private Network"
+git push origin main
+
+# 7. Patch Solar Dashboard with new Global WPC Index
+cd ../TC-S-Network-Solar-Dashboard
+cat << 'EOF' > components/WPCIndexCard.tsx
+export default function WPCIndexCard({ value }) {
+  return (
+    <div className="p-4 border border-solar-yellow/40 rounded-xl bg-black text-white">
+      <h2 className="text-lg font-bold mb-1">Global WPC Index</h2>
+      <p className="text-3xl font-extrabold">{value.toExponential(3)}</p>
+      <p className="text-xs opacity-70 mt-2">
+        Weighted average Joules-per-FLOP across TC-S computational operations.
+      </p>
+    </div>
+  );
+}
+EOF
+
+git add .
+git commit -m "Add Global WPC Index to Solar Dashboard"
+git push origin main
