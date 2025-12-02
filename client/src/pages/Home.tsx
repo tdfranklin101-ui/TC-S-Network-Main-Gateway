@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import Footer from "../components/Footer";
+import WPCPanel from "../components/tcs/WPCPanel";
 
 const Home = () => {
   const { toast } = useToast();
@@ -107,6 +108,16 @@ const Home = () => {
             >
               Try Solar Spender Prototype
             </a>
+          </div>
+          
+          {/* WPC Computronium Panel */}
+          <div className="mt-12">
+            <h3 className="text-2xl font-bold text-center mb-6 text-[#0057B8]">Compute Energy Intelligence</h3>
+            <p className="text-center text-gray-600 mb-6 max-w-2xl mx-auto">
+              Calculate the energy cost of AI compute operations in Solar tokens. 
+              Our WPC (Watts Per Compute) engine converts processing power to renewable energy units.
+            </p>
+            <WPCPanel />
           </div>
         </div>
       </section>
