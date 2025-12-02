@@ -1,14 +1,16 @@
 #!/bin/bash
 
-echo "🚀 TC-S COMPUTRONIUM DEPLOYER — CORRECTED VERSION"
-echo "=================================================="
+echo "🚀 TC-S COMPUTRONIUM DEPLOYER v1.1"
+echo "=================================="
+echo "Safe deployment with PR-ready patches"
+echo ""
 
-# ----------------------------------------
-# VARIABLES
-# ----------------------------------------
 GITHUB_USER="tdfranklin101-ui"
 WORK_DIR="/tmp/tcs-deployer"
 MAIN_GATEWAY_DIR=$(pwd)
+PATCHES_DIR="$MAIN_GATEWAY_DIR/wpc-patches"
+WPC_VERSION="1.0.0"
+WPC_BUILD="2024-12-02"
 
 REPOS=(
   "TC-S-Network-Identify-Anything"
@@ -26,148 +28,169 @@ REPOS=(
   "TC-S-Network-Z-Private"
 )
 
-# WPC Panel component source (from Main Gateway shared folder)
 WPC_PANEL_SOURCE="$MAIN_GATEWAY_DIR/shared/components/WPCPanel.tsx"
 
-# ----------------------------------------
-# FUNCTION: Detect framework and inject WPC
-# ----------------------------------------
-inject_wpc() {
+detect_framework() {
   local repo_path=$1
-  local repo_name=$(basename $repo_path)
-
-  echo ""
-  echo "🔧 Patching $repo_name ..."
-
-  # ----------------------------------------
-  # NEXT.JS APP ROUTER (app/page.tsx)
-  # ----------------------------------------
+  
   if [ -f "$repo_path/app/page.tsx" ]; then
-    echo " → Next.js App Router detected"
-    
-    # Create components directory if needed
-    mkdir -p "$repo_path/components/tcs"
-    
-    # Copy WPC Panel component
-    cp "$WPC_PANEL_SOURCE" "$repo_path/components/tcs/WPCPanel.tsx"
-    echo " → Copied WPCPanel.tsx to components/tcs/"
-
-    # Check if WPC is already imported
-    if grep -q "WPCPanel" "$repo_path/app/page.tsx"; then
-      echo " → WPCPanel already integrated, skipping injection"
-    else
-      # Inject import at top of file (after 'use client' if present)
-      if grep -q "'use client'" "$repo_path/app/page.tsx"; then
-        sed -i "s/'use client';/'use client';\nimport WPCPanel from '@\/components\/tcs\/WPCPanel';/" "$repo_path/app/page.tsx"
-      else
-        sed -i "1i import WPCPanel from '@/components/tcs/WPCPanel';" "$repo_path/app/page.tsx"
-      fi
-      
-      # Find the closing </main> or </div> and insert WPCPanel before it
-      if grep -q "</main>" "$repo_path/app/page.tsx"; then
-        sed -i 's/<\/main>/<WPCPanel \/>\n      <\/main>/' "$repo_path/app/page.tsx"
-      elif grep -q "</div>" "$repo_path/app/page.tsx"; then
-        # Only replace the last </div>
-        sed -i ':a;N;$!ba;s/\(.*\)<\/div>/\1<WPCPanel \/>\n      <\/div>/' "$repo_path/app/page.tsx"
-      fi
-      echo " → Injected WPCPanel into app/page.tsx"
-    fi
-    return 0
-
-  # ----------------------------------------
-  # NEXT.JS PAGES ROUTER (pages/index.tsx)
-  # ----------------------------------------
+    echo "nextjs-app"
   elif [ -f "$repo_path/pages/index.tsx" ] || [ -f "$repo_path/pages/index.js" ]; then
-    echo " → Next.js Pages Router detected"
-    
-    mkdir -p "$repo_path/components/tcs"
-    cp "$WPC_PANEL_SOURCE" "$repo_path/components/tcs/WPCPanel.tsx"
-    echo " → Copied WPCPanel.tsx to components/tcs/"
-
-    local index_file="$repo_path/pages/index.tsx"
-    [ ! -f "$index_file" ] && index_file="$repo_path/pages/index.js"
-
-    if grep -q "WPCPanel" "$index_file"; then
-      echo " → WPCPanel already integrated, skipping injection"
-    else
-      sed -i "1i import WPCPanel from '../components/tcs/WPCPanel';" "$index_file"
-      if grep -q "</main>" "$index_file"; then
-        sed -i 's/<\/main>/<WPCPanel \/>\n      <\/main>/' "$index_file"
-      elif grep -q "</div>" "$index_file"; then
-        sed -i ':a;N;$!ba;s/\(.*\)<\/div>/\1<WPCPanel \/>\n      <\/div>/' "$index_file"
-      fi
-      echo " → Injected WPCPanel into pages/index"
-    fi
-    return 0
-
-  # ----------------------------------------
-  # VITE + REACT (client/src/pages/Home.tsx)
-  # ----------------------------------------
+    echo "nextjs-pages"
   elif [ -d "$repo_path/client/src" ]; then
-    echo " → Vite + React app detected"
-    
-    mkdir -p "$repo_path/client/src/components/tcs"
-    cp "$WPC_PANEL_SOURCE" "$repo_path/client/src/components/tcs/WPCPanel.tsx"
-    echo " → Copied WPCPanel.tsx to client/src/components/tcs/"
-
-    local home_file="$repo_path/client/src/pages/Home.tsx"
-    if [ -f "$home_file" ]; then
-      if grep -q "WPCPanel" "$home_file"; then
-        echo " → WPCPanel already integrated, skipping injection"
-      else
-        sed -i "1i import WPCPanel from '../components/tcs/WPCPanel';" "$home_file"
-        if grep -q "</main>" "$home_file"; then
-          sed -i 's/<\/main>/<WPCPanel \/>\n      <\/main>/' "$home_file"
-        elif grep -q "</div>" "$home_file"; then
-          sed -i ':a;N;$!ba;s/\(.*\)<\/div>/\1<WPCPanel \/>\n      <\/div>/' "$home_file"
-        fi
-        echo " → Injected WPCPanel into client/src/pages/Home.tsx"
-      fi
-    else
-      echo " ⚠ Home.tsx not found at expected location"
-    fi
-    return 0
-
-  # ----------------------------------------
-  # SRC FOLDER STRUCTURE (src/index.tsx or src/App.tsx)
-  # ----------------------------------------
+    echo "vite-react"
   elif [ -d "$repo_path/src" ]; then
-    echo " → src/ folder structure detected"
-    
-    mkdir -p "$repo_path/src/components/tcs"
-    cp "$WPC_PANEL_SOURCE" "$repo_path/src/components/tcs/WPCPanel.tsx"
-    echo " → Copied WPCPanel.tsx to src/components/tcs/"
-
-    # Try App.tsx first, then index.tsx
-    local main_file=""
-    if [ -f "$repo_path/src/App.tsx" ]; then
-      main_file="$repo_path/src/App.tsx"
-    elif [ -f "$repo_path/src/index.tsx" ]; then
-      main_file="$repo_path/src/index.tsx"
-    fi
-
-    if [ -n "$main_file" ]; then
-      if grep -q "WPCPanel" "$main_file"; then
-        echo " → WPCPanel already integrated, skipping injection"
-      else
-        sed -i "1i import WPCPanel from './components/tcs/WPCPanel';" "$main_file"
-        echo " → Added WPCPanel import to $(basename $main_file)"
-      fi
-    fi
-    return 0
-
+    echo "react-src"
   else
-    echo " ⚠ Unknown structure. Listing top-level contents:"
-    ls -la "$repo_path" | head -15
-    return 1
+    echo "unknown"
   fi
 }
 
-# ----------------------------------------
-# MAIN EXECUTION
-# ----------------------------------------
+generate_patch_instructions() {
+  local repo_name=$1
+  local framework=$2
+  local repo_path="$WORK_DIR/$repo_name"
+  local patch_dir="$PATCHES_DIR/$repo_name"
+  
+  mkdir -p "$patch_dir/components/tcs"
+  
+  cp "$WPC_PANEL_SOURCE" "$patch_dir/components/tcs/WPCPanel.tsx"
+  
+  local readme="$patch_dir/INTEGRATION_README.md"
+  cat > "$readme" << EOF
+# WPC Integration for $repo_name
 
-# Verify WPC Panel source exists
+**WPC Version:** $WPC_VERSION
+**Build Date:** $WPC_BUILD
+**Framework Detected:** $framework
+
+## Files to Add
+
+1. Copy \`components/tcs/WPCPanel.tsx\` to your project's components folder
+
+## Integration Steps
+
+EOF
+
+  case $framework in
+    "nextjs-app")
+      cat >> "$readme" << 'EOF'
+### Next.js App Router Integration
+
+1. Copy the WPCPanel component:
+   ```bash
+   cp components/tcs/WPCPanel.tsx your-project/components/tcs/
+   ```
+
+2. Import and use in `app/page.tsx`:
+   ```tsx
+   import WPCPanel from '@/components/tcs/WPCPanel';
+   
+   export default function Page() {
+     return (
+       <main>
+         {/* Your existing content */}
+         <WPCPanel />
+       </main>
+     );
+   }
+   ```
+
+3. Ensure your `tsconfig.json` has the path alias:
+   ```json
+   {
+     "compilerOptions": {
+       "paths": {
+         "@/*": ["./*"]
+       }
+     }
+   }
+   ```
+EOF
+      ;;
+    "nextjs-pages")
+      cat >> "$readme" << 'EOF'
+### Next.js Pages Router Integration
+
+1. Copy the WPCPanel component:
+   ```bash
+   cp components/tcs/WPCPanel.tsx your-project/components/tcs/
+   ```
+
+2. Import and use in `pages/index.tsx`:
+   ```tsx
+   import WPCPanel from '../components/tcs/WPCPanel';
+   
+   export default function Home() {
+     return (
+       <div>
+         {/* Your existing content */}
+         <WPCPanel />
+       </div>
+     );
+   }
+   ```
+EOF
+      ;;
+    "vite-react")
+      cat >> "$readme" << 'EOF'
+### Vite + React Integration
+
+1. Copy the WPCPanel component:
+   ```bash
+   cp components/tcs/WPCPanel.tsx your-project/client/src/components/tcs/
+   ```
+
+2. Import and use in your Home page:
+   ```tsx
+   import WPCPanel from '../components/tcs/WPCPanel';
+   
+   export default function Home() {
+     return (
+       <div>
+         {/* Your existing content */}
+         <WPCPanel />
+       </div>
+     );
+   }
+   ```
+
+Note: Remove the 'use client' directive if not using Next.js.
+EOF
+      ;;
+    *)
+      cat >> "$readme" << 'EOF'
+### Manual Integration
+
+1. Identify your main page/component file
+2. Copy the WPCPanel component to an appropriate location
+3. Import and add <WPCPanel /> where you want it to appear
+4. Adjust import paths as needed for your project structure
+EOF
+      ;;
+  esac
+  
+  cat >> "$readme" << EOF
+
+## Verification
+
+After integration, you should see:
+- A dark panel with "WPC Compute Intelligence" header
+- Model type selector (LLM, Vision, Diffusion)
+- Input controls for tokens/resolution, power, and time
+- Real-time calculation of FLOPs, Energy, WPC, Solar, and Rays
+- Efficiency grade badge (A+ to D)
+- Version footer showing "TC-S Computronium Standard v$WPC_VERSION"
+
+## Need Help?
+
+Contact: TC-S Network Foundation
+Repository: https://github.com/$GITHUB_USER/TC-S-Network-Main-Gateway
+EOF
+
+  echo "$patch_dir"
+}
+
 if [ ! -f "$WPC_PANEL_SOURCE" ]; then
   echo "❌ ERROR: WPCPanel.tsx not found at $WPC_PANEL_SOURCE"
   echo "   Run this script from the Main Gateway root directory"
@@ -175,18 +198,17 @@ if [ ! -f "$WPC_PANEL_SOURCE" ]; then
 fi
 
 echo "✅ WPCPanel source found: $WPC_PANEL_SOURCE"
+echo "✅ WPC Version: $WPC_VERSION"
+echo ""
 
-# Create work directory
-rm -rf "$WORK_DIR"
-mkdir -p "$WORK_DIR"
+rm -rf "$WORK_DIR" "$PATCHES_DIR"
+mkdir -p "$WORK_DIR" "$PATCHES_DIR"
 cd "$WORK_DIR"
 
-echo ""
-echo "📥 Cloning repos and injecting WPC Panel..."
+echo "📥 Analyzing repos and generating patches..."
 echo ""
 
-SUCCESS_COUNT=0
-FAIL_COUNT=0
+PROCESSED=0
 
 for repo in "${REPOS[@]}"; do
   echo ""
@@ -194,55 +216,37 @@ for repo in "${REPOS[@]}"; do
   echo "📦 Processing: $repo"
   echo "════════════════════════════════════════════════"
 
-  # Clone the repo
   if gh repo clone "$GITHUB_USER/$repo" 2>/dev/null; then
     echo "✅ Cloned successfully"
     
-    # Inject WPC
-    if inject_wpc "$WORK_DIR/$repo"; then
-      echo ""
-      echo "💾 Committing and pushing..."
-      cd "$WORK_DIR/$repo"
-      
-      git add .
-      if git diff --cached --quiet; then
-        echo " → No changes to commit"
-      else
-        git commit -m "Add WPC Computronium Panel - TC-S Energy Intelligence"
-        if git push origin main 2>/dev/null || git push origin master 2>/dev/null; then
-          echo "✅ Pushed to GitHub"
-          ((SUCCESS_COUNT++))
-        else
-          echo "⚠ Push failed - check permissions"
-          ((FAIL_COUNT++))
-        fi
-      fi
-      cd "$WORK_DIR"
-    else
-      echo "⚠ Injection skipped"
-      ((FAIL_COUNT++))
-    fi
+    framework=$(detect_framework "$WORK_DIR/$repo")
+    echo " → Framework: $framework"
+    
+    patch_dir=$(generate_patch_instructions "$repo" "$framework")
+    echo " → Patch generated: $patch_dir"
+    
+    ((PROCESSED++))
   else
     echo "❌ Failed to clone $repo"
-    ((FAIL_COUNT++))
   fi
 done
 
-# ----------------------------------------
-# SUMMARY
-# ----------------------------------------
 echo ""
 echo "════════════════════════════════════════════════"
 echo "🎉 TC-S COMPUTRONIUM DEPLOYER — COMPLETE"
 echo "════════════════════════════════════════════════"
 echo ""
-echo "✅ Successfully patched: $SUCCESS_COUNT repos"
-echo "⚠  Skipped/Failed: $FAIL_COUNT repos"
+echo "📁 Patches generated: $PATCHES_DIR"
+echo "✅ Repos processed: $PROCESSED"
 echo ""
-echo "🌞 Vercel will auto-deploy all changed repos"
-echo "🔗 TC-S Computronium Network is now live!"
+echo "📋 Next Steps:"
+echo "1. Review generated patches in $PATCHES_DIR"
+echo "2. For each repo, follow the INTEGRATION_README.md"
+echo "3. Create a PR or commit the changes manually"
 echo ""
+echo "🌞 Safe deployment - no automatic pushes performed"
 
-# Cleanup
 cd "$MAIN_GATEWAY_DIR"
-echo "📁 Work directory: $WORK_DIR (preserved for debugging)"
+echo ""
+echo "Listing generated patches:"
+ls -la "$PATCHES_DIR"

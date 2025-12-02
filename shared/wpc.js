@@ -1,7 +1,11 @@
 /**
  * TC-S Shared WPC Engine (CommonJS)
  * Universal Compute-Energy Intelligence Module
+ * @version 1.0.0
  */
+
+const WPC_VERSION = "1.0.0";
+const WPC_BUILD = "2024-12-02";
 
 function estimateFlops({ model = "llm", tokens = 50, resolution = 512 }) {
   switch (model) {
@@ -60,6 +64,8 @@ function computeAll(params) {
 }
 
 module.exports = {
+  WPC_VERSION,
+  WPC_BUILD,
   estimateFlops,
   estimateEnergy,
   computeWPC,

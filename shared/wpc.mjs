@@ -1,6 +1,11 @@
 /**
  * TC-S Shared WPC Engine (ESM)
+ * Universal Compute-Energy Intelligence Module
+ * @version 1.0.0
  */
+
+export const WPC_VERSION = "1.0.0";
+export const WPC_BUILD = "2024-12-02";
 
 export function estimateFlops({ model = "llm", tokens = 50, resolution = 512 }) {
   switch (model) {

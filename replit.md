@@ -50,3 +50,40 @@ Session management uses **database-backed sessions** stored in the PostgreSQL `s
 ### Databases
 - **Primary**: PostgreSQL (via Drizzle ORM).
 - **Fallback/Supplemental**: JSON files, in-memory storage, and file-based conversation persistence.
+
+### WPC (Watts Per Compute) Module
+The WPC module provides universal compute-energy intelligence across the 14-repository hub-and-spoke architecture. Version 1.0.0 is the current standard.
+
+**Core Files (Main Gateway):**
+- `shared/wpc.js` - CommonJS version for Node.js backends
+- `shared/wpc.mjs` - ESM version for modern JavaScript
+- `shared/components/WPCPanel.tsx` - Universal React component with `'use client'` for Next.js compatibility
+- `client/src/components/tcs/WPCPanel.tsx` - Main Gateway-specific copy
+
+**Deployment:**
+- `scripts/deploy-wpc.sh` - Generates integration patches for all 13 satellite repos
+- `wpc-patches/` - Contains per-repo integration instructions and WPCPanel.tsx copies
+- Safe deployment: Creates patches and README instructions, no automatic pushes
+
+**Key Functions:**
+- `estimateFlops()` - Estimates FLOPs for LLM, vision, and diffusion models
+- `estimateEnergy()` - Calculates energy in Joules from watts × seconds
+- `computeWPC()` - Computes Joules per FLOP ratio
+- `joulesToKWh()` - Converts Joules to kilowatt-hours
+- `kWhToSolar()` - Converts kWh to Solar tokens (1 Solar = 4913 kWh)
+- `efficiencyGrade()` - Returns A+ to D efficiency rating
+
+**Satellite Repos (all use Next.js App Router):**
+1. TC-S-Network-Identify-Anything
+2. TC-S-Network-Market-Grid
+3. TC-S-Network-Satellite-ID-Anywhere
+4. TC-S-Network-Seismic-ID-Anywhere
+5. TC-S-Network-Solar-Dashboard
+6. TC-S-Network-Wallet
+7. TC-S-Network-Solar-Reserve
+8. TC-S-Network-GBI-Onboarding
+9. TC-S-Network-Compute-Governance
+10. TC-S-Network-Ethics-Engine
+11. TC-S-Network-UIM-Protocol
+12. TC-S-Network-Standards
+13. TC-S-Network-Z-Private

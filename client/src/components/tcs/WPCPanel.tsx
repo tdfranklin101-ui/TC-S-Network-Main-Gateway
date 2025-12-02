@@ -1,4 +1,9 @@
+'use client';
+
 import { useState, useEffect } from 'react';
+
+const WPC_VERSION = '1.0.0';
+const WPC_BUILD = '2024-12-02';
 
 interface WPCResult {
   flops: number;
@@ -219,8 +224,10 @@ export default function WPCPanel() {
       )}
 
       <div className="mt-4 text-center text-xs text-gray-500">
-        1 SOLAR = 4913 kWh | TC-S Computronium Standard
+        1 SOLAR = 4913 kWh | TC-S Computronium Standard v{WPC_VERSION}
       </div>
     </div>
   );
 }
+
+export { WPC_VERSION, WPC_BUILD };
