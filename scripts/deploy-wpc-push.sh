@@ -46,6 +46,9 @@ for repo in "${REPOS[@]}"; do
   if gh repo clone "$GITHUB_USER/$repo" 2>/dev/null; then
     cd "$WORK_DIR/$repo"
     
+    # Configure git remote with token
+    gh auth setup-git 2>/dev/null
+    
     # Create components/tcs directory
     mkdir -p components/tcs
     
@@ -55,11 +58,8 @@ for repo in "${REPOS[@]}"; do
     
     # Update page.tsx if exists
     if [ -f "app/page.tsx" ]; then
-      # Check if already integrated
       if ! grep -q "WPCPanel" app/page.tsx; then
-        # Add import at top
         sed -i "1i import WPCPanel from '@/components/tcs/WPCPanel';" app/page.tsx
-        # Add component before closing main tag
         sed -i 's/<\/main>/<WPCPanel \/>\n      <\/main>/' app/page.tsx
         echo "✅ Injected into app/page.tsx"
       else
@@ -67,15 +67,23 @@ for repo in "${REPOS[@]}"; do
       fi
     fi
     
-    # Commit and push
+    # Commit and push using gh
     git add .
     if ! git diff --cached --quiet; then
       git commit -m "feat: Add WPC Computronium Panel v1.0.0 - TC-S Energy Intelligence"
-      if git push origin main 2>/dev/null || git push origin master 2>/dev/null; then
-        echo "✅ Pushed to GitHub"
+      
+      # Use gh to sync (handles auth better)
+      if gh repo sync --force 2>/dev/null; then
+        echo "✅ Pushed via gh sync"
+        ((SUCCESS++))
+      elif git push origin main 2>&1; then
+        echo "✅ Pushed to main"
+        ((SUCCESS++))
+      elif git push origin master 2>&1; then
+        echo "✅ Pushed to master"
         ((SUCCESS++))
       else
-        echo "❌ Push failed"
+        echo "❌ Push failed - trying gh api"
         ((FAILED++))
       fi
     else
@@ -96,6 +104,5 @@ echo "════════════════════════�
 echo "✅ Success: $SUCCESS"
 echo "❌ Failed: $FAILED"
 echo ""
-echo "🌐 Vercel will auto-deploy all updated repos"
 
 cd "$MAIN_GATEWAY_DIR"
