@@ -1,0 +1,123 @@
+#!/bin/bash
+
+echo "🚀 TC-S COMPUTRONIUM DEPLOYER — ONE SHOT INITIALIZING"
+
+# ----------------------------------------
+# VARIABLES
+# ----------------------------------------
+GITHUB_USER="tdfranklin101-ui"
+REPOS=(
+  "TC-S-Network-Identify-Anything"
+  "TC-S-Network-Market-Grid"
+  "TC-S-Network-Satellite-ID-Anywhere"
+  "TC-S-Network-Seismic-ID-Anywhere"
+  "TC-S-Network-Solar-Dashboard"
+  "TC-S-Network-Wallet"
+  "TC-S-Network-Solar-Reserve"
+  "TC-S-Network-GBI-Onboarding"
+  "TC-S-Network-Compute-Governance"
+  "TC-S-Network-Ethics-Engine"
+  "TC-S-Network-UIM-Protocol"
+  "TC-S-Network-Standards"
+  "TC-S-Network-Z-Private"
+  "TC-S-Network-Main-Gateway"
+)
+
+SHARED_WPC_PATH="TC-S-Network-Apps-Shared/lib/wpc.js"
+
+# ----------------------------------------
+# FUNCTION: Inject WPC depending on framework
+# ----------------------------------------
+inject_wpc() {
+  local repo=$1
+
+  echo "🔧 Patching $repo ..."
+
+  # Detect framework
+  if [ -d "$repo/app" ]; then
+    # Next.js App Router
+    echo " → Next.js App Router detected"
+    cp $SHARED_WPC_PATH $repo/app/wpc.js
+
+    # Inject UI panel in app/page.tsx
+    cat >> $repo/app/page.tsx << 'EOF'
+
+{/* --- WPC COMPUTRONIUM PANEL --- */}
+import WPC from "./wpc";
+
+export default function Page() {
+  return (
+    <main>
+      <WPC />
+    </main>
+  );
+}
+EOF
+
+  elif [ -d "$repo/pages" ]; then
+    # Next.js Pages Router
+    echo " → Next.js Pages Router detected"
+    cp $SHARED_WPC_PATH $repo/pages/wpc.js
+
+    cat >> $repo/pages/index.tsx << 'EOF'
+
+{/* WPC COMPUTRONIUM PANEL */}
+import WPC from "./wpc";
+
+export default function Home() {
+  return (
+    <div>
+      <WPC />
+    </div>
+  );
+}
+EOF
+
+  elif [ -d "$repo/client/src" ]; then
+    # Vite + React (Main Gateway structure)
+    echo " → Vite + React app detected"
+    cp $SHARED_WPC_PATH $repo/client/src/wpc.js
+
+    cat >> $repo/client/src/pages/Home.tsx << 'EOF'
+
+{/* WPC COMPUTRONIUM PANEL */}
+import WPC from "../wpc";
+
+export default function Home() {
+  return (
+    <>
+      <WPC />
+    </>
+  );
+}
+EOF
+
+  else
+    echo " ⚠ Unknown structure. Skipping auto-injection."
+  fi
+}
+
+# ----------------------------------------
+# MAIN LOOP
+# ----------------------------------------
+echo "📥 Pulling repos + injecting computronium intelligence…"
+
+for repo in "${REPOS[@]}"; do
+  echo ""
+  echo "=========================="
+  echo "📦 Processing $repo"
+  echo "=========================="
+
+  gh repo clone $GITHUB_USER/$repo
+  inject_wpc $repo
+
+  echo "💾 Committing patches to GitHub..."
+  cd $repo
+  git add .
+  git commit -m "Automated WPC computronium injection"
+  git push origin main
+  cd ..
+done
+
+echo "🎉 ALL REPOS PATCHED & PUSHED — VERCEL WILL AUTO-DEPLOY"
+echo "🌞 TC-S COMPUTRONIUM NETWORK IS NOW LIVE ACROSS ALL 14 APPS"
