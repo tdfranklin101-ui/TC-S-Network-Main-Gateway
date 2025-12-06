@@ -3460,15 +3460,18 @@
                         try {
                             currentUser = JSON.parse(stored);
                             sessionState = 'authenticated'; // Trust cached session
+                            syncCurrentUser(); // Sync to window
                             console.log('📦 Using cached session due to server error:', currentUser);
                         } catch (e) {
                             currentUser = null;
                             sessionState = 'guest';
+                            syncCurrentUser();
                             localStorage.removeItem('tc_s_user');
                         }
                     } else {
                         currentUser = null;
                         sessionState = 'guest';
+                        syncCurrentUser();
                         localStorage.removeItem('tc_s_user');
                     }
                 }
@@ -3481,15 +3484,18 @@
                     try {
                         currentUser = JSON.parse(stored);
                         sessionState = 'authenticated'; // Trust cached session
+                        syncCurrentUser(); // Sync to window
                         console.log('📦 Using cached user (server unreachable):', currentUser);
                     } catch (e) {
                         currentUser = null;
                         sessionState = 'guest';
+                        syncCurrentUser();
                         localStorage.removeItem('tc_s_user');
                     }
                 } else {
                     currentUser = null;
                     sessionState = 'guest';
+                    syncCurrentUser();
                 }
             }
             

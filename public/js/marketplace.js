@@ -1671,19 +1671,32 @@ window.signupUser = async function() {
 
     if (response.ok) {
       // Update marketplace instance if available
+      const balance = parseFloat(result.solarBalance ?? result.initialSolarAmount ?? 0);
+      
+      // Create unified user object for both systems
+      const userObj = {
+        userId: result.userId,
+        username: result.username,
+        firstName: result.firstName || firstName || result.username,
+        email: result.email || email,
+        solarBalance: balance
+      };
+      
+      // Update external marketplace class
       if (window.marketplace) {
-        const balance = parseFloat(result.solarBalance ?? result.initialSolarAmount ?? 0);
-        window.marketplace.currentUser = {
-          userId: result.userId,
-          username: result.username,
-          firstName: result.firstName || firstName || result.username,
-          email: result.email || email,
-          solar_balance: balance  // Use underscore for consistency with UI
-        };
-        // IMPORTANT: Also update the separate solarBalance property that the UI uses
+        window.marketplace.currentUser = userObj;
         window.marketplace.solarBalance = balance;
         window.marketplace.updateUserInterface();
         window.marketplace.closeSignupModal();
+      }
+      
+      // Also update inline script's global currentUser
+      window.currentUser = userObj;
+      // Cache to localStorage for persistence
+      localStorage.setItem('tc_s_user', JSON.stringify(userObj));
+      // Call inline display update if available
+      if (typeof window.updateUserDisplay === 'function') {
+        window.updateUserDisplay();
       }
       
       alert(result.message || `🌱 Welcome to TC-S Network, ${result.username}!`);
