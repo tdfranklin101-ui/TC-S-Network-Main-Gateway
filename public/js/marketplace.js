@@ -61,10 +61,26 @@ class MarketplaceApp {
 
   async loadUserSession() {
     try {
+      // Check if inline script already loaded session (avoid duplicate fetches)
+      const cachedUser = localStorage.getItem('tc_s_user');
+      if (cachedUser && window.currentUser) {
+        try {
+          const cached = JSON.parse(cachedUser);
+          this.currentUser = cached;
+          this.solarBalance = cached.solarBalance || 0;
+          console.log(`👤 MarketplaceApp: Using inline session: ${this.currentUser.username} (${this.solarBalance} Solar)`);
+          this.updateUserInterface();
+          return;
+        } catch (e) {
+          // Continue with fresh fetch
+        }
+      }
+      
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 10000); // 10 second timeout
       
       const response = await fetch('/api/session', {
+        credentials: 'include',
         signal: controller.signal
       });
       clearTimeout(timeout);
@@ -78,14 +94,21 @@ class MarketplaceApp {
           return;
         }
         
-        if (data.success && data.user && typeof data.user === 'object') {
+        if (data.success && data.authenticated && data.user && typeof data.user === 'object') {
           this.currentUser = {
             ...data.user,
             id: data.user.id || null,
-            username: data.user.username || 'Unknown User'
+            username: data.user.username || 'Unknown User',
+            solarBalance: parseFloat(data.solarBalance) || 0
           };
           this.userProfile = data.userProfile || null;
           this.solarBalance = parseFloat(data.solarBalance) || 0;
+          
+          // Sync with global currentUser if it exists
+          if (typeof window.currentUser !== 'undefined') {
+            window.currentUser = this.currentUser;
+          }
+          
           this.updateUserInterface();
           console.log(`👤 User session loaded: ${this.currentUser.username} (${this.solarBalance} Solar)`);
         }
@@ -1521,8 +1544,9 @@ class MarketplaceApp {
 let marketplace;
 document.addEventListener('DOMContentLoaded', () => {
   marketplace = new MarketplaceApp();
-  // Make marketplace globally accessible for onclick handlers
+  // Make marketplace globally accessible for onclick handlers and inline script sync
   window.marketplace = marketplace;
+  window.marketplaceApp = marketplace; // Alias for inline script sync
 });
 
 // Global functions for HTML onclick handlers
@@ -1566,22 +1590,37 @@ window.signinUser = async function() {
 
     if (response.ok) {
       // Update marketplace instance if available
+      const balance = parseFloat(result.solarBalance ?? 0);
+      
+      // Create unified user object for both systems
+      const userObj = {
+        userId: result.userId,
+        username: result.username,
+        firstName: result.firstName || result.name || result.username,
+        email: result.email,
+        solarBalance: balance
+      };
+      
+      // Update external marketplace class
       if (window.marketplace) {
-        const balance = parseFloat(result.solarBalance ?? 0);
-        window.marketplace.currentUser = {
-          userId: result.userId,
-          username: result.username,
-          firstName: result.firstName || result.name || result.username,
-          email: result.email,
-          solar_balance: balance  // Use underscore for consistency with UI
-        };
-        // IMPORTANT: Also update the separate solarBalance property that the UI uses
+        window.marketplace.currentUser = userObj;
         window.marketplace.solarBalance = balance;
         window.marketplace.updateUserInterface();
         window.marketplace.closeSigninModal();
       }
       
-      const displayBalance = parseFloat(result.solarBalance ?? 0).toFixed(4);
+      // Also update inline script's global currentUser if it exists
+      if (typeof window.currentUser !== 'undefined' || window.currentUser === null) {
+        window.currentUser = userObj;
+        // Also cache to localStorage for persistence
+        localStorage.setItem('tc_s_user', JSON.stringify(userObj));
+        // Call inline display update if available
+        if (typeof window.updateUserDisplay === 'function') {
+          window.updateUserDisplay();
+        }
+      }
+      
+      const displayBalance = balance.toFixed(4);
       alert(`🌱 Welcome back, ${result.username}! Balance: ${displayBalance} Solar`);
     } else {
       alert(`❌ Sign in failed: ${result.error}`);

@@ -2401,13 +2401,20 @@
     </div>
 
     <script>
+        // Global user state - exposed on window for cross-script sync
         let currentUser = null;
+        window.currentUser = null; // Also expose on window for external scripts
         let sessionState = 'loading'; // 'loading', 'authenticated', 'guest'
         let sessionCheckPromise = null; // Track session check promise
         let allArtifacts = [];
         let filteredArtifacts = [];
         let monaziteCollection = null;
         let monaziteTracksVisible = false;
+        
+        // Helper to sync currentUser to window
+        function syncCurrentUser() {
+            window.currentUser = currentUser;
+        }
 
         // MISSING MODAL FUNCTIONS - Option 1 Fix
         function showSigninModal() {
@@ -3424,14 +3431,23 @@
                         };
                         
                         sessionState = 'authenticated';
+                        syncCurrentUser(); // Sync to window.currentUser
                         console.log(`✅ Server session active: ${currentUser.username} | Balance: ${currentUser.solarBalance} Solar`);
                         
                         // Cache to localStorage
                         localStorage.setItem('tc_s_user', JSON.stringify(currentUser));
+                        
+                        // Sync with external MarketplaceApp if it exists
+                        if (window.marketplaceApp) {
+                            window.marketplaceApp.currentUser = currentUser;
+                            window.marketplaceApp.solarBalance = newBalance;
+                            console.log('🔄 Synced balance to MarketplaceApp');
+                        }
                     } else {
                         console.log('❌ Server says: not authenticated');
                         sessionState = 'guest';
                         currentUser = null;
+                        syncCurrentUser(); // Sync null state
                         localStorage.removeItem('tc_s_user');
                     }
                 } else {
@@ -3481,6 +3497,9 @@
             updateKidSolarButton(); // Update button state after session check
         }
 
+        // Expose globally for external script sync
+        window.updateUserDisplay = updateUserDisplay;
+        
         function updateUserDisplay() {
             console.log('🔄 Updating user display, currentUser:', currentUser ? currentUser.username : 'null');
             
