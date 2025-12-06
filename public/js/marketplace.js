@@ -61,23 +61,47 @@ class MarketplaceApp {
 
   async loadUserSession() {
     try {
-      // Check if inline script already loaded session (avoid duplicate fetches)
+      // SINGLE SOURCE SESSION LOADING
+      // Wait for inline script's session promise instead of fetching ourselves
+      // This prevents the race condition where both scripts fetch /api/session
+      if (window.sessionLoadPromise) {
+        console.log('👤 MarketplaceApp: Waiting for inline script session...');
+        const result = await window.sessionLoadPromise;
+        
+        if (window.currentUser) {
+          this.currentUser = window.currentUser;
+          this.solarBalance = window.currentUser.solarBalance || 0;
+          console.log(`👤 MarketplaceApp: Synced from inline session: ${this.currentUser.username} (${this.solarBalance} Solar)`);
+          this.updateUserInterface();
+          return;
+        } else {
+          console.log('👤 MarketplaceApp: Inline session loaded - no user authenticated');
+          this.currentUser = null;
+          this.solarBalance = 0;
+          this.updateUserInterface();
+          return;
+        }
+      }
+      
+      // Fallback: If inline script's promise isn't available, check localStorage
       const cachedUser = localStorage.getItem('tc_s_user');
-      if (cachedUser && window.currentUser) {
+      if (cachedUser) {
         try {
           const cached = JSON.parse(cachedUser);
           this.currentUser = cached;
           this.solarBalance = cached.solarBalance || 0;
-          console.log(`👤 MarketplaceApp: Using inline session: ${this.currentUser.username} (${this.solarBalance} Solar)`);
+          console.log(`👤 MarketplaceApp: Using cached session: ${this.currentUser.username} (${this.solarBalance} Solar)`);
           this.updateUserInterface();
           return;
         } catch (e) {
-          // Continue with fresh fetch
+          // Continue with fresh fetch only as last resort
         }
       }
       
+      // LAST RESORT: Fetch session ourselves (should rarely happen)
+      console.warn('⚠️ MarketplaceApp: Falling back to independent session fetch');
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      const timeout = setTimeout(() => controller.abort(), 10000);
       
       const response = await fetch('/api/session', {
         credentials: 'include',
@@ -88,7 +112,6 @@ class MarketplaceApp {
       if (response.ok) {
         const data = await response.json();
         
-        // Validate response structure
         if (!data || typeof data !== 'object') {
           console.warn('Invalid session response structure');
           return;

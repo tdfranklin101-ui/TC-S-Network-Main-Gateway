@@ -2411,6 +2411,15 @@
         let monaziteCollection = null;
         let monaziteTracksVisible = false;
         
+        // SINGLE SOURCE SESSION LOADING
+        // This promise is the ONLY place that fetches /api/session
+        // External scripts (marketplace.js) must wait for this promise
+        let sessionLoadResolve;
+        window.sessionLoadPromise = new Promise(resolve => {
+            sessionLoadResolve = resolve;
+        });
+        window.sessionLoaded = false; // Flag to indicate session has been loaded
+        
         // Helper to sync currentUser to window
         function syncCurrentUser() {
             window.currentUser = currentUser;
@@ -3497,6 +3506,12 @@
                     sessionState = 'guest';
                     syncCurrentUser();
                 }
+            }
+            
+            // CRITICAL: Resolve the session promise so external scripts know session is loaded
+            window.sessionLoaded = true;
+            if (sessionLoadResolve) {
+                sessionLoadResolve({ currentUser, sessionState });
             }
             
             updateUserDisplay();
