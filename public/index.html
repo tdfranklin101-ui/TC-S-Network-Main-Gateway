@@ -462,11 +462,6 @@
 </head>
 <body>
 
-  <!-- Contact Bar -->
-  <div style="background: linear-gradient(135deg, #FFD700, #FFA500); color: #111; text-align: center; padding: 10px; font-weight: 600; font-size: 0.95rem;">
-    📧 Contact: <a href="mailto:hello@thecurrentsee.org" style="color: #111; text-decoration: none;">hello@thecurrentsee.org</a>
-  </div>
-
   <!-- Vertical Solar Verification - Fixed Position (ONLY) -->
   <div class="solar-verify-vertical">
     <a href="/SolarStandard.html" rel="standard noopener" data-testid="link-solar-verified-vertical">
@@ -486,14 +481,21 @@
          🌞 View Solar Dashboard
       </a>
     </div>
-    <!-- B2B Sale Offering Link -->
-    <div style="text-align: center; margin: 0 0 3rem 0;">
+    <!-- B2B Sale Offering & Contact Links -->
+    <div style="display: flex; justify-content: center; align-items: center; gap: 1rem; flex-wrap: wrap; margin: 0 0 3rem 0;">
       <a href="/sale-offering.html" 
          style="background:linear-gradient(135deg, #FFD700, #FFA500);color:#111;padding:0.8rem 1.5rem;border-radius:6px;text-decoration:none;font-weight:600;display:inline-block;transition:all 0.3s ease;box-shadow:0 4px 12px rgba(255,215,0,0.3);"
          onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(255,215,0,0.5)'"
          onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 12px rgba(255,215,0,0.3)'"
          data-testid="button-sale-offering-top">
          💼 B2B Sale Offering
+      </a>
+      <a href="mailto:hello@thecurrentsee.org" 
+         style="background:linear-gradient(135deg, #FFD700, #FFA500);color:#111;padding:0.8rem 1.5rem;border-radius:6px;text-decoration:none;font-weight:600;display:inline-block;transition:all 0.3s ease;box-shadow:0 4px 12px rgba(255,215,0,0.3);"
+         onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(255,215,0,0.5)'"
+         onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 12px rgba(255,215,0,0.3)'"
+         data-testid="button-contact-email">
+         📧 Contact Us
       </a>
     </div>
 
