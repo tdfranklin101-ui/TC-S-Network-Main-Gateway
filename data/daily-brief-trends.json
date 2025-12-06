@@ -1,62 +1,62 @@
 {
-  "date": "2025-11-29",
-  "generatedAt": "2025-11-29T19:01:53.317Z",
+  "date": "2025-12-06",
+  "generatedAt": "2025-12-06T20:35:34.494Z",
   "currentIndices": [
     {
       "id": "si",
       "name": "Solar Index",
       "unit": "%",
-      "value": 71.2,
+      "value": 69.8,
       "description": "Global Energy & Ethics Balance — 7-Day Rolling Indicator.",
-      "asOf": "2025-11-29T19:01:50.635Z"
+      "asOf": "2025-12-06T20:35:31.597Z"
     },
     {
       "id": "srh",
       "name": "Solar Reserve Health",
       "unit": "%",
-      "value": 77.6,
+      "value": 76.7,
       "description": "Reserve stability and fulfillment factor across all regions.",
-      "asOf": "2025-11-29T19:01:50.635Z"
+      "asOf": "2025-12-06T20:35:31.597Z"
     },
     {
       "id": "gbi",
       "name": "Global Basic Income",
       "unit": "%",
-      "value": 41.7,
+      "value": 41.5,
       "description": "Percentage of humans enrolled and actively claiming GBI.",
-      "asOf": "2025-11-29T19:01:50.635Z"
+      "asOf": "2025-12-06T20:35:31.597Z"
     },
     {
       "id": "cai",
       "name": "Compute Alignment",
       "unit": "%",
-      "value": 88,
+      "value": 88.6,
       "description": "Ethically aligned compute flow — safe superintelligence readiness.",
-      "asOf": "2025-11-29T19:01:50.635Z"
+      "asOf": "2025-12-06T20:35:31.597Z"
     },
     {
       "id": "mli",
       "name": "Market Liquidity",
       "unit": "%",
-      "value": 22.9,
+      "value": 23.3,
       "description": "Health of the TC-S digital marketplace and token velocity.",
-      "asOf": "2025-11-29T19:01:50.635Z"
+      "asOf": "2025-12-06T20:35:31.597Z"
     },
     {
       "id": "eai",
       "name": "Ethical Alignment",
       "unit": "%",
-      "value": 92,
+      "value": 92.6,
       "description": "Acceptance ratio of tasks from the Ethics Engine.",
-      "asOf": "2025-11-29T19:01:50.635Z"
+      "asOf": "2025-12-06T20:35:31.597Z"
     }
   ],
   "trends": {
     "analysisStatus": "success",
-    "direction": "neutral",
-    "analysis": "The TC-S market health indices show stability with slight fluctuations over the past week. The significant indices such as the sentiment index (si) and growth business index (gbi) remain relatively unchanged, while the customer acquisition index (cai) has seen minor declines. Overall, the market is maintaining a steady state without clear bullish or bearish tendencies.",
-    "insight": "Focus on enhancing customer engagement strategies to boost the customer acquisition index, as it currently shows a downward trend.",
-    "generatedAt": "2025-11-29T19:01:53.317Z"
+    "direction": "bearish",
+    "analysis": "The market is showing a downward trend, particularly evident in the significant drop of the sentiment index (si) from a high of 72.3 to the current 69.8. Key drivers include a decrease in sentiment and a slight decline in growth benchmarks, despite stability in the customer acquisition index (cai) and engagement index (eai).",
+    "insight": "Focus on improving sentiment through targeted marketing initiatives or customer engagement strategies to reverse the negative trend.",
+    "generatedAt": "2025-12-06T20:35:34.494Z"
   },
-  "historyDays": 16
+  "historyDays": 18
 }
