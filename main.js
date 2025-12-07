@@ -2884,36 +2884,64 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
-        // AI Content Analysis for pricing
-        const analysis = await analyzeContentForPricing(fileBuffer, actualMime, {
-          title,
-          description,
-          category,
-          fileSize: file.size,
-          filename: file.originalname
-        });
-
-        // Process file through enhanced three-copy workflow
-        console.log(`🔄 Processing upload through three-copy workflow: ${title}`);
-        fileProcessingResult = await fileManager.processUpload(
-          fileBuffer,
-          {
-            originalname: file.originalname,
-            mimetype: actualMime,
-            size: file.size
-          },
-          {
+        // AI Content Analysis for pricing - with fallback if AI fails
+        let analysis;
+        try {
+          console.log(`🔍 [UPLOAD] Starting AI content analysis for: ${title}`);
+          analysis = await analyzeContentForPricing(fileBuffer, actualMime, {
             title,
             description,
             category,
-            creatorId
-          }
-        );
+            fileSize: file.size,
+            filename: file.originalname
+          });
+          console.log(`✅ [UPLOAD] AI analysis complete: ${analysis.estimatedKwh} kWh, ${analysis.solarAmount} Solar`);
+        } catch (analysisError) {
+          console.warn(`⚠️ [UPLOAD] AI analysis failed, using fallback pricing: ${analysisError.message}`);
+          // Fallback pricing based on file size and type
+          const fileSizeMB = file.size / (1024 * 1024);
+          const baseKwh = fileSizeMB * 0.01; // 0.01 kWh per MB baseline
+          const categoryMultiplier = category === 'video' ? 2 : category === 'music' ? 1.5 : 1;
+          analysis = {
+            estimatedKwh: baseKwh * categoryMultiplier,
+            solarAmount: (baseKwh * categoryMultiplier) / 4913, // Convert kWh to Solar
+            reasoning: 'Fallback pricing (AI unavailable)'
+          };
+        }
 
-        if (!fileProcessingResult.success) {
+        // Process file through enhanced three-copy workflow
+        console.log(`🔄 [UPLOAD] Processing upload through three-copy workflow: ${title}`);
+        try {
+          fileProcessingResult = await fileManager.processUpload(
+            fileBuffer,
+            {
+              originalname: file.originalname,
+              mimetype: actualMime,
+              size: file.size
+            },
+            {
+              title,
+              description,
+              category,
+              creatorId
+            }
+          );
+        } catch (processingError) {
+          console.error(`❌ [UPLOAD] Three-copy processing threw error:`, processingError);
           res.writeHead(500, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ 
-            error: `File processing failed: ${fileProcessingResult.error}` 
+            error: `File processing error: ${processingError.message}`,
+            stage: 'three_copy_processing'
+          }));
+          return;
+        }
+
+        if (!fileProcessingResult || !fileProcessingResult.success) {
+          console.error(`❌ [UPLOAD] Three-copy processing failed:`, fileProcessingResult?.error);
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ 
+            error: `File processing failed: ${fileProcessingResult?.error || 'Unknown error'}`,
+            stage: 'three_copy_processing'
           }));
           return;
         }
