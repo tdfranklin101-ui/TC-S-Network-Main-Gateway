@@ -26,6 +26,10 @@ externalPort = 8080
 localPort = 37281
 externalPort = 3001
 
+[[ports]]
+localPort = 38173
+externalPort = 3002
+
 [agent]
 integrations = ["perplexity_v0==1.0.0", "javascript_websocket==1.0.0", "javascript_stripe==1.0.0", "javascript_openai==1.0.0", "javascript_anthropic==1.0.0"]
 
