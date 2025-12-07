@@ -1,38 +1,38 @@
 {
   "date": "2025-12-07",
-  "generatedAt": "2025-12-07T04:23:20.220Z",
+  "generatedAt": "2025-12-07T04:34:54.089Z",
   "currentIndices": [
     {
       "id": "si",
       "name": "Solar Index",
       "unit": "%",
-      "value": 71.3,
+      "value": 70.4,
       "description": "Global Energy & Ethics Balance — 7-Day Rolling Indicator.",
-      "asOf": "2025-12-07T04:23:17.620Z"
+      "asOf": "2025-12-07T04:34:51.415Z"
     },
     {
       "id": "srh",
       "name": "Solar Reserve Health",
       "unit": "%",
-      "value": 77.8,
+      "value": 76.4,
       "description": "Reserve stability and fulfillment factor across all regions.",
-      "asOf": "2025-12-07T04:23:17.620Z"
+      "asOf": "2025-12-07T04:34:51.415Z"
     },
     {
       "id": "gbi",
       "name": "Global Basic Income",
       "unit": "%",
-      "value": 40.5,
+      "value": 40.7,
       "description": "Percentage of humans enrolled and actively claiming GBI.",
-      "asOf": "2025-12-07T04:23:17.620Z"
+      "asOf": "2025-12-07T04:34:51.415Z"
     },
     {
       "id": "cai",
       "name": "Compute Alignment",
       "unit": "%",
-      "value": 88.2,
+      "value": 88.7,
       "description": "Ethically aligned compute flow — safe superintelligence readiness.",
-      "asOf": "2025-12-07T04:23:17.620Z"
+      "asOf": "2025-12-07T04:34:51.415Z"
     },
     {
       "id": "mli",
@@ -40,23 +40,23 @@
       "unit": "%",
       "value": 24.5,
       "description": "Health of the TC-S digital marketplace and token velocity.",
-      "asOf": "2025-12-07T04:23:17.620Z"
+      "asOf": "2025-12-07T04:34:51.415Z"
     },
     {
       "id": "eai",
       "name": "Ethical Alignment",
       "unit": "%",
-      "value": 92.5,
+      "value": 91.4,
       "description": "Acceptance ratio of tasks from the Ethics Engine.",
-      "asOf": "2025-12-07T04:23:17.620Z"
+      "asOf": "2025-12-07T04:34:51.415Z"
     }
   ],
   "trends": {
     "analysisStatus": "success",
     "direction": "neutral",
-    "analysis": "The market indices show relatively stable trends, with slight fluctuations in the values over the past week. Key drivers include a small increase in the sentiment index (si) and a consistent performance in the consumer activity index (cai), while the growth benchmark index (gbi) remains low, indicating mixed signals. Overall, the market's health appears steady but lacks strong bullish momentum due to low gbi values.",
-    "insight": "Consider focusing on strategies that enhance growth in the gbi, as improving this index could provide a stronger bullish signal for market performance.",
-    "generatedAt": "2025-12-07T04:23:20.220Z"
+    "analysis": "The current market health indices show stability, with most indices hovering around their recent averages. Notable fluctuations include a slight decrease in the Growth-Based Index (GBI) and a marginal increase in the Consumer Activity Index (CAI), suggesting mixed signals in market performance. Overall, the indices reflect a balanced sentiment, with no significant upward or downward trends observed.",
+    "insight": "Focus on enhancing Growth-Based Index (GBI) initiatives to stimulate market growth, as it has seen a decline and could benefit from targeted strategies to improve performance.",
+    "generatedAt": "2025-12-07T04:34:54.089Z"
   },
   "historyDays": 30
 }
