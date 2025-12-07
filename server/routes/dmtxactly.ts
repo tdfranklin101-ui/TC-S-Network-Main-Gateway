@@ -2,14 +2,57 @@ import { Router } from 'express';
 import { db } from '../db';
 import { dmtxactlyJobs, agentApiKeys, artifacts, members } from '@shared/schema';
 import { eq, and } from 'drizzle-orm';
-import OpenAI from 'openai';
 import crypto from 'crypto';
 
 const wpc = require('../../shared/wpc.js');
 
 const router = Router();
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const PREGENERATED_IMAGES: Record<string, string[]> = {
+  'hexagonal-tessellation': [
+    'https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?w=1024&q=80',
+    'https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=1024&q=80',
+    'https://images.unsplash.com/photo-1550684376-efcbd6e3f031?w=1024&q=80'
+  ],
+  'penrose-tiling': [
+    'https://images.unsplash.com/photo-1509114397022-ed747cca3f65?w=1024&q=80',
+    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1024&q=80',
+    'https://images.unsplash.com/photo-1618005198919-d3d4b5a92ead?w=1024&q=80'
+  ],
+  'voronoi-cells': [
+    'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=1024&q=80',
+    'https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=1024&q=80',
+    'https://images.unsplash.com/photo-1553356084-58ef4a67b2a7?w=1024&q=80'
+  ],
+  'islamic-geometric': [
+    'https://images.unsplash.com/photo-1564769662533-4f00a87b4056?w=1024&q=80',
+    'https://images.unsplash.com/photo-1585314062340-f1a5a7c9328d?w=1024&q=80',
+    'https://images.unsplash.com/photo-1609619385002-f40f1df85b87?w=1024&q=80'
+  ],
+  'fractal-mandelbrot': [
+    'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=1024&q=80',
+    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1024&q=80',
+    'https://images.unsplash.com/photo-1614850715649-1d0106293bd1?w=1024&q=80'
+  ],
+  'escher-transformation': [
+    'https://images.unsplash.com/photo-1618556450994-a6a128ef0d9d?w=1024&q=80',
+    'https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=1024&q=80',
+    'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=1024&q=80'
+  ],
+  'custom': [
+    'https://images.unsplash.com/photo-1550684376-efcbd6e3f031?w=1024&q=80',
+    'https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=1024&q=80',
+    'https://images.unsplash.com/photo-1618005198919-d3d4b5a92ead?w=1024&q=80',
+    'https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=1024&q=80',
+    'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=1024&q=80'
+  ]
+};
+
+function selectPregenerated(patternId: string, prompt: string): string {
+  const pool = PREGENERATED_IMAGES[patternId] || PREGENERATED_IMAGES['custom'];
+  const hash = prompt.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return pool[hash % pool.length];
+}
 
 const DMTXACTLY_PATTERNS = [
   {
@@ -148,9 +191,10 @@ router.get('/capabilities', (req, res) => {
       '/generate': {
         post: {
           operationId: 'generateArt',
-          summary: 'Generate tessellated visual art',
-          description: 'Create a new tessellated artwork using AI. Requires authentication. Compute cost deducted in Solar Rays.',
-          security: [{ apiKey: [] }],
+          summary: 'Generate tessellated visual art (pre-generated mode)',
+          description: 'Returns pre-generated tessellated artwork from curated collection. Currently free to use. FUTURE: Live AI generation will be available via Solar pay gate (cost in Solar Rays).',
+          'x-mode': 'pregenerated',
+          'x-future-paygate': 'Solar Rays required for live DALL-E generation',
           requestBody: {
             required: true,
             content: {
@@ -170,7 +214,7 @@ router.get('/capabilities', (req, res) => {
           },
           responses: {
             '200': {
-              description: 'Generated artwork with metadata',
+              description: 'Pre-generated artwork with metadata and compute tracking',
               content: {
                 'application/json': {
                   schema: {
@@ -178,12 +222,22 @@ router.get('/capabilities', (req, res) => {
                     properties: {
                       jobId: { type: 'string' },
                       imageUrl: { type: 'string' },
-                      previewUrl: { type: 'string' },
-                      solarCost: { type: 'number' },
-                      raysCost: { type: 'integer' },
-                      wpcGrade: { type: 'string' },
+                      prompt: { type: 'string' },
                       pattern: { type: 'string' },
-                      prompt: { type: 'string' }
+                      patternName: { type: 'string' },
+                      resolution: { type: 'integer' },
+                      mode: { type: 'string', enum: ['pregenerated', 'live'], description: 'Currently always pregenerated' },
+                      compute: {
+                        type: 'object',
+                        properties: {
+                          solarCost: { type: 'number' },
+                          raysCost: { type: 'integer' },
+                          wpcGrade: { type: 'string' },
+                          kWh: { type: 'number' }
+                        }
+                      },
+                      exportable: { type: 'boolean' },
+                      _notice: { type: 'string', description: 'System notice about generation mode' }
                     }
                   }
                 }
@@ -314,10 +368,6 @@ router.post('/generate', async (req, res) => {
       return res.status(400).json({ error: 'Missing required field: prompt' });
     }
     
-    if (!process.env.OPENAI_API_KEY) {
-      return res.status(503).json({ error: 'AI generation service not configured' });
-    }
-    
     let energyProfile = {
       model: 'diffusion',
       resolution: resolution,
@@ -325,31 +375,16 @@ router.post('/generate', async (req, res) => {
       seconds: 15
     };
     
-    let patternGuide = '';
+    let patternName = 'Custom';
     if (patternId) {
       const pattern = DMTXACTLY_PATTERNS.find(p => p.id === patternId);
       if (pattern) {
         energyProfile = { ...pattern.energyProfile, resolution };
-        patternGuide = `Style: ${pattern.name} (${pattern.geometry} geometry). `;
+        patternName = pattern.name;
       }
     }
     
-    const fullPrompt = `Create a high-quality tessellated digital artwork. ${patternGuide}${style ? `Art style: ${style}. ` : ''}Description: ${prompt}. Make it vibrant, mathematically precise, and visually stunning with intricate geometric patterns.`;
-    
-    const imageResponse = await openai.images.generate({
-      model: 'dall-e-3',
-      prompt: fullPrompt,
-      n: 1,
-      size: resolution >= 1792 ? '1792x1024' : '1024x1024',
-      quality: 'hd',
-      style: 'vivid'
-    });
-    
-    const imageUrl = imageResponse.data?.[0]?.url;
-    
-    if (!imageUrl) {
-      return res.status(500).json({ error: 'Failed to generate image' });
-    }
+    const imageUrl = selectPregenerated(patternId || 'custom', prompt);
     
     const metrics = wpc.computeAll(energyProfile);
     
@@ -357,7 +392,7 @@ router.post('/generate', async (req, res) => {
       jobType: 'generate',
       patternType: patternId || 'custom',
       prompt: prompt,
-      parameters: { resolution, style, patternId },
+      parameters: { resolution, style, patternId, mode: 'pregenerated' },
       status: 'completed',
       resultImageUrl: imageUrl,
       solarCost: metrics.solar.toString(),
@@ -372,7 +407,9 @@ router.post('/generate', async (req, res) => {
       imageUrl: imageUrl,
       prompt: prompt,
       pattern: patternId || 'custom',
+      patternName: patternName,
       resolution,
+      mode: 'pregenerated',
       compute: {
         solarCost: metrics.solar,
         raysCost: Math.ceil(metrics.rays),
@@ -381,7 +418,8 @@ router.post('/generate', async (req, res) => {
       },
       energyStandard: '1 Solar = 4,913 kWh = 1,000 Solar Rays',
       exportable: true,
-      exportEndpoint: '/api/dmtxactly/export'
+      exportEndpoint: '/api/dmtxactly/export',
+      _notice: 'Using pre-generated artwork. Live AI generation coming with Solar pay gate.'
     });
     
   } catch (error: any) {
