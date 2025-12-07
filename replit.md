@@ -25,6 +25,23 @@ Session management uses **database-backed sessions** stored in the PostgreSQL `s
 - Local cache (`sessionCache`) provides fast lookups with database as source of truth
 - Automatic cleanup of expired sessions every 15 minutes
 
+### Solar Balance Architecture (Single Source of Truth)
+**CRITICAL: All Solar balance operations MUST use `members.total_solar` as the single source of truth.**
+
+Data Flow:
+1. **Registration**: Creates member record with initial Solar allocation in `members.total_solar`
+2. **Session API** (`/api/session`): Queries `members.total_solar` directly from database, caches in session
+3. **Purchases** (`storage.purchaseArtifact`): Reads/writes `members.total_solar` via atomic transaction
+4. **Daily Distribution**: Updates `members.total_solar` during nightly distribution job
+5. **Frontend Display**: All balance displays (wallet.html, marketplace.html) fetch from `/api/session`
+
+Storage Methods (in `server/storage.ts`):
+- `getMemberSolarBalance(memberId: number)`: Query balance from members table
+- `updateMemberSolarBalance(memberId: number, newBalance: number)`: Update balance in members table
+- `purchaseArtifact(buyerId: number, artifactId: string)`: Atomic purchase with ledger entries
+
+Note: The `userProfiles.solarBalance` column exists for the separate progression/timer-gated content system. These are distinct features with independent balance tracking.
+
 ## External Dependencies
 
 ### Third-Party Services
