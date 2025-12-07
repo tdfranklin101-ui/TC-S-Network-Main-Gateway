@@ -58,6 +58,37 @@
         "kWh_per_solar": 4913,
         "genesis_date": "2025-04-07"
       }
+    },
+    {
+      "name": "DMTXACTLY Creative API",
+      "version": "1.0",
+      "type": "ai-agent-tool",
+      "status": "active",
+      "description": "AI-accessible API for generating tessellated visual art with Solar-metered compute",
+      "endpoints": {
+        "capabilities": "/api/dmtxactly/capabilities",
+        "patterns": "/api/dmtxactly/patterns",
+        "estimate": "/api/dmtxactly/estimate",
+        "generate": "/api/dmtxactly/generate",
+        "export": "/api/dmtxactly/export"
+      },
+      "openapi_spec": "/api/dmtxactly/capabilities",
+      "features": [
+        "Tessellated visual art generation",
+        "AI-enhanced creativity via DALL-E 3",
+        "Solar-metered compute (WPC tracking)",
+        "Direct marketplace export",
+        "Pattern presets (hexagonal, Penrose, Voronoi, Islamic, fractal, Escher)"
+      ],
+      "authentication": {
+        "type": "apiKey",
+        "header": "X-DMTXACTLY-API-Key",
+        "required_for": ["generate", "export"]
+      },
+      "energy_metering": {
+        "unit": "Solar Rays",
+        "conversion": "1 Solar = 1,000 Solar Rays = 4,913 kWh"
+      }
     }
   ],
   "nodeProfile": {
@@ -68,15 +99,21 @@
       "energy-data-aggregation",
       "global-basic-income",
       "renewable-energy-tracking",
-      "ethical-ai-alignment"
+      "ethical-ai-alignment",
+      "dmtxactly-creative-api",
+      "ai-agent-tool-provider",
+      "tessellated-art-generation"
     ],
     "semantic_domains": [
       "renewable-energy-economics",
       "global-basic-income",
       "solar-protocol-standards",
       "energy-abundance-metrics",
-      "ethical-ai-frameworks"
+      "ethical-ai-frameworks",
+      "ai-enhanced-creativity",
+      "generative-art",
+      "solar-metered-compute"
     ]
   },
-  "lastUpdated": "2025-10-27T00:00:00Z"
+  "lastUpdated": "2025-12-07T23:30:00Z"
 }
