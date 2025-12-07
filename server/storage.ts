@@ -138,6 +138,10 @@ export interface IStorage {
   // Solar accounts (legacy member system compatibility)
   getAllSolarAccounts(limit?: number, includeAnonymous?: boolean): Promise<Member[]>;
   createSolarAccount(data: { userId: string; isAnonymous: boolean; displayName: string }): Promise<Member>;
+  
+  // Solar balance operations (members.total_solar is single source of truth)
+  getMemberSolarBalance(memberId: number): Promise<number>;
+  updateMemberSolarBalance(memberId: number, newBalance: number): Promise<boolean>;
 
   // ============================================================
   // MARKETPLACE OPERATIONS - Artifact purchase and copy management
@@ -921,20 +925,43 @@ export class DatabaseStorage implements IStorage {
     if (!includeAnonymous && limit) {
       return await baseQuery
         .where(eq(members.isAnonymous, false))
-        .orderBy(desc(members.createdAt))
+        .orderBy(desc(members.signupTimestamp))
         .limit(limit);
     } else if (!includeAnonymous) {
       return await baseQuery
         .where(eq(members.isAnonymous, false))
-        .orderBy(desc(members.createdAt));
+        .orderBy(desc(members.signupTimestamp));
     } else if (limit) {
       return await baseQuery
-        .orderBy(desc(members.createdAt))
+        .orderBy(desc(members.signupTimestamp))
         .limit(limit);
     } else {
       return await baseQuery
-        .orderBy(desc(members.createdAt));
+        .orderBy(desc(members.signupTimestamp));
     }
+  }
+
+  // Get member Solar balance from members table (single source of truth)
+  async getMemberSolarBalance(memberId: number): Promise<number> {
+    const result = await db.select({ totalSolar: members.totalSolar })
+      .from(members)
+      .where(eq(members.id, memberId))
+      .limit(1);
+    
+    if (result.length === 0) {
+      return 0;
+    }
+    return parseFloat(result[0].totalSolar || '0');
+  }
+
+  // Update member Solar balance (single source of truth)
+  async updateMemberSolarBalance(memberId: number, newBalance: number): Promise<boolean> {
+    const result = await db.update(members)
+      .set({ totalSolar: String(newBalance) })
+      .where(eq(members.id, memberId))
+      .returning();
+    
+    return result.length > 0;
   }
 
   async createSolarAccount(data: { userId: string; isAnonymous: boolean; displayName: string }): Promise<Member> {
@@ -1144,16 +1171,23 @@ export class DatabaseStorage implements IStorage {
         return { success: false, error: 'You already own this artifact' };
       }
 
-      const buyerProfile = await this.getUserProfile(String(buyerId));
-      if (!buyerProfile) {
-        return { success: false, error: 'Buyer profile not found' };
+      // Get buyer balance from members.total_solar (single source of truth)
+      const buyerBalance = await this.getMemberSolarBalance(buyerId);
+      if (buyerBalance === 0) {
+        // Check if member exists
+        const memberExists = await db.select({ id: members.id })
+          .from(members)
+          .where(eq(members.id, buyerId))
+          .limit(1);
+        if (memberExists.length === 0) {
+          return { success: false, error: 'Member account not found' };
+        }
       }
 
       const price = parseFloat(artifact.solarAmountS || '0');
-      const buyerBalance = buyerProfile.solarBalance || 0;
 
       if (buyerBalance < price) {
-        return { success: false, error: `Insufficient Solar balance. Need ${price} Solar, have ${buyerBalance} Solar` };
+        return { success: false, error: `Insufficient Solar balance. Need ${price} Solar, have ${buyerBalance.toFixed(5)} Solar` };
       }
 
       const creatorId = artifact.creatorId;
