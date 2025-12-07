@@ -5616,9 +5616,25 @@ const server = http.createServer(async (req, res) => {
       const walletId = memberResult.rows[0]?.wallet_id;
       
       let purchasedResult = { rows: [] };
+      
+      // First check artifact_copies table (new ledger-based system)
+      const copiesQuery = `
+        SELECT ac.acquired_at as purchase_date, ac.artifact_id, ac.solar_paid as amount_s,
+               a.id, a.title, a.description, a.category, a.file_type, 
+               a.kwh_footprint, a.solar_amount_s, a.cover_art_url, 
+               a.delivery_mode, a.creator_id, a.streaming_url, 
+               a.preview_type, a.preview_slug, a.master_file_url, a.preview_file_url, a.trade_file_url
+        FROM artifact_copies ac
+        JOIN artifacts a ON ac.artifact_id = a.id
+        WHERE ac.owner_id = $1 AND ac.is_active = true AND a.active = true
+        ORDER BY ac.acquired_at DESC
+      `;
+      const copiesResult = await pool.query(copiesQuery, [userId]);
+      console.log(`✅ Found ${copiesResult.rows.length} artifact copies for user ${userId}`);
+      
+      // Also check legacy transactions table via wallet_id
       if (walletId) {
-        // Get user's purchased artifacts via wallet_id
-        const purchasedQuery = `
+        const transactionsQuery = `
           SELECT t.created_at as purchase_date, t.artifact_id, t.amount_s,
                  a.id, a.title, a.description, a.category, a.file_type, 
                  a.kwh_footprint, a.solar_amount_s, a.cover_art_url, 
@@ -5629,10 +5645,16 @@ const server = http.createServer(async (req, res) => {
           WHERE t.wallet_id = $1 AND t.type = 'purchase' AND a.active = true
           ORDER BY t.created_at DESC
         `;
-        purchasedResult = await pool.query(purchasedQuery, [walletId]);
-        console.log(`✅ Found ${purchasedResult.rows.length} purchased artifacts for user ${userId} (wallet: ${walletId})`);
+        const transactionsResult = await pool.query(transactionsQuery, [walletId]);
+        console.log(`✅ Found ${transactionsResult.rows.length} legacy purchases for user ${userId} (wallet: ${walletId})`);
+        
+        // Merge results, avoiding duplicates by artifact_id
+        const existingIds = new Set(copiesResult.rows.map(r => r.id));
+        const uniqueLegacy = transactionsResult.rows.filter(r => !existingIds.has(r.id));
+        purchasedResult = { rows: [...copiesResult.rows, ...uniqueLegacy] };
       } else {
-        console.log(`⚠️ No wallet_id for user ${userId} - purchased artifacts will be empty`);
+        purchasedResult = copiesResult;
+        console.log(`ℹ️ No wallet_id for user ${userId} - using only artifact_copies`);
       }
 
       // Format uploaded artifacts
@@ -6093,107 +6115,6 @@ const server = http.createServer(async (req, res) => {
       console.error('Preview resolver error:', error);
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Preview service error' }));
-    }
-    return;
-  }
-
-  // Get User's Items API (uploaded artifacts + purchased artifacts)
-  if (pathname === '/api/artifacts/my-items' && req.method === 'GET') {
-    try {
-      // Get user ID from session
-      const sessionId = getCookie(req, 'tc_s_session');
-      const session2 = await getSession(sessionId);
-      if (!sessionId || !session2) {
-        res.writeHead(401, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Authentication required' }));
-        return;
-      }
-
-      const userId = session2.userId;
-
-      if (pool) {
-        // Get uploaded artifacts (created by user) - both active and inactive
-        const uploadedQuery = `
-          SELECT id, title, description, category, file_type, kwh_footprint, solar_amount_s, 
-                 is_bonus, cover_art_url, delivery_mode, creator_id, created_at, active
-          FROM artifacts 
-          WHERE creator_id = $1
-          ORDER BY created_at DESC
-        `;
-        
-        const uploadedResult = await pool.query(uploadedQuery, [userId.toString()]);
-        
-        // Get purchased artifacts (bought by user)
-        const purchasedQuery = `
-          SELECT DISTINCT a.id, a.title, a.description, a.category, a.kwh_footprint, 
-                 a.solar_amount_s, a.is_bonus, a.cover_art_url, a.delivery_mode, 
-                 a.creator_id, a.file_type, t.created_at as purchase_date, t.amount_s as paid_amount
-          FROM artifacts a
-          INNER JOIN transactions t ON a.id = t.artifact_id
-          WHERE a.active = true AND t.wallet_id = $1 AND t.type = 'purchase'
-          ORDER BY t.created_at DESC
-        `;
-        
-        const purchasedResult = await pool.query(purchasedQuery, [userId]);
-
-        const uploadedArtifacts = uploadedResult.rows.map(artifact => ({
-          id: artifact.id,
-          title: artifact.title,
-          description: artifact.description,
-          category: artifact.category,
-          file_type: artifact.file_type,
-          kwhFootprint: parseFloat(artifact.kwh_footprint),
-          solarPrice: parseFloat(artifact.solar_amount_s),
-          formattedPrice: `${formatSolar(artifact.solar_amount_s)} Solar`,
-          isBonus: artifact.is_bonus,
-          coverArt: artifact.cover_art_url,
-          deliveryMode: artifact.delivery_mode || 'download',
-          creatorId: artifact.creator_id,
-          itemType: 'uploaded',
-          dateAdded: artifact.created_at,
-          active: artifact.active,
-          status: artifact.active ? 'published' : 'pending_approval'
-        }));
-
-        const purchasedArtifacts = purchasedResult.rows.map(artifact => ({
-          id: artifact.id,
-          title: artifact.title,
-          description: artifact.description,
-          category: artifact.category,
-          kwhFootprint: parseFloat(artifact.kwh_footprint),
-          solarPrice: parseFloat(artifact.solar_amount_s),
-          formattedPrice: `${formatSolar(artifact.paid_amount)} Solar`,
-          isBonus: artifact.is_bonus,
-          coverArt: artifact.cover_art_url,
-          deliveryMode: artifact.delivery_mode || 'download',
-          creatorId: artifact.creator_id,
-          fileType: artifact.file_type,
-          itemType: 'purchased',
-          dateAdded: artifact.purchase_date,
-          paidAmount: parseFloat(artifact.paid_amount)
-        }));
-
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({
-          success: true,
-          userId: userId,
-          uploaded: {
-            count: uploadedArtifacts.length,
-            artifacts: uploadedArtifacts
-          },
-          purchased: {
-            count: purchasedArtifacts.length,
-            artifacts: purchasedArtifacts
-          }
-        }));
-      } else {
-        res.writeHead(503, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Database unavailable' }));
-      }
-    } catch (error) {
-      console.error('My items error:', error);
-      res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Failed to get user items' }));
     }
     return;
   }
@@ -7143,123 +7064,82 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // NEW: Purchase Monazite tracks/bundles with Solar tokens
+  // MARKETPLACE PURCHASE API - Full database-backed purchase flow
+  // Uses atomic transactions, double-entry ledger, and creates artifact copies for buyers
   if (pathname === '/api/marketplace/purchase' && req.method === 'POST') {
     try {
       const body = await parseBody(req);
-      const { artifactId, bundleId, buyerEmail, solarAmount } = body;
-
-      if (!buyerEmail || (!artifactId && !bundleId) || !solarAmount) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ 
-          success: false, 
-          error: 'Missing required fields: buyerEmail, artifactId/bundleId, solarAmount' 
-        }));
-        return;
-      }
-
-      // Load Monazite collection
-      const fs = require('fs');
-      const manifestPath = 'public/models/monazite-collection.json';
-      const manifestData = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-
-      let item = null;
-      let itemType = '';
-
-      if (artifactId) {
-        item = manifestData.artifacts.find(a => a.id === artifactId && a.isActive);
-        itemType = 'track';
-      } else if (bundleId) {
-        item = manifestData.bundles.find(b => b.id === bundleId && b.isActive);
-        itemType = 'bundle';
-      }
-
-      if (!item) {
-        res.writeHead(404, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ 
-          success: false, 
-          error: 'Item not found or not available for purchase' 
-        }));
-        return;
-      }
-
-      // Verify price
-      if (Math.abs(solarAmount - item.priceSolar) > 0.0001) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ 
-          success: false, 
-          error: 'Price mismatch',
-          expected: item.priceSolar,
-          provided: solarAmount
-        }));
-        return;
-      }
-
-      // Check buyer's Solar balance (simplified - in production integrate with actual user accounts)
-      const buyerBalance = 172.5; // Your current balance - in production, query from database
+      const { artifactId } = body;
       
-      if (buyerBalance < solarAmount) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ 
-          success: false, 
-          error: 'Insufficient Solar balance',
-          required: solarAmount,
-          available: buyerBalance
-        }));
+      // Get authenticated user from session
+      const sessionId = getCookie(req, 'tc_s_session');
+      if (!sessionId) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Authentication required' }));
+        return;
+      }
+      
+      const session = getSession(sessionId);
+      if (!session || !session.userId) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Please sign in to make purchases' }));
         return;
       }
 
-      // Generate secure download token
-      const crypto = require('crypto');
-      const purchaseId = `purch_${Date.now()}_${crypto.randomBytes(8).toString('hex')}`;
-      const downloadToken = crypto.createHmac('sha256', 'monazite-secure-key')
-        .update(`${purchaseId}:${buyerEmail}:${item.id}:${Date.now()}`)
-        .digest('hex');
+      if (!artifactId) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Missing required field: artifactId' }));
+        return;
+      }
 
-      // Record purchase (simplified - in production, save to database)
-      const purchase = {
-        id: purchaseId,
-        buyerEmail: buyerEmail,
-        itemId: item.id,
-        itemType: itemType,
-        itemTitle: item.title,
-        priceSolar: solarAmount,
-        creatorEmail: item.creatorEmail,
-        creatorEarnings: Math.round(solarAmount * 0.85 * 10000) / 10000, // 85% to creator
-        platformFee: Math.round(solarAmount * 0.15 * 10000) / 10000, // 15% platform fee
-        purchasedAt: new Date().toISOString(),
-        downloadToken: downloadToken,
-        downloadExpires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hour expiry
-      };
+      // Use storage method for atomic purchase flow
+      const { storage } = require('./server/storage');
+      const result = await storage.purchaseArtifact(session.userId, artifactId);
+      
+      if (!result.success) {
+        console.log(`❌ Purchase failed for ${session.username}: ${result.error}`);
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: result.error }));
+        return;
+      }
+      
+      // Update session with new balance
+      if (result.ledgerEntries && result.ledgerEntries.length > 0) {
+        const buyerEntry = result.ledgerEntries.find(e => e.entryType === 'debit');
+        if (buyerEntry) {
+          session.solarBalance = parseFloat(buyerEntry.balanceAfter || '0');
+        }
+      }
 
-      console.log(`💰 SOLAR PURCHASE: ${buyerEmail} bought "${item.title}" for ${solarAmount} Solar`);
-      console.log(`🎯 Creator earnings: ${purchase.creatorEarnings} Solar (85%)`);
-      console.log(`🏛️ Platform fee: ${purchase.platformFee} Solar (15%)`);
+      console.log(`💰 SOLAR PURCHASE: ${session.username} bought artifact ${artifactId}`);
+      console.log(`📋 Transaction ID: ${result.copy?.purchaseTransactionId}`);
+      console.log(`🔐 Download token: ${result.downloadToken?.token}`);
 
-      const response = {
+      const artifact = await storage.getArtifact(artifactId);
+      
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
         success: true,
         purchase: {
-          id: purchase.id,
+          id: result.copy?.id,
+          transactionId: result.copy?.purchaseTransactionId,
           item: {
-            id: item.id,
-            title: item.title,
-            type: itemType
+            id: artifactId,
+            title: artifact?.title || 'Unknown',
+            type: artifact?.category || 'digital'
           },
           payment: {
-            amount: solarAmount,
+            amount: result.copy?.solarPaid,
             currency: 'Solar'
           },
           download: {
-            token: downloadToken,
-            expires: purchase.downloadExpires,
-            url: `/api/download/${downloadToken}`
+            token: result.downloadToken?.token,
+            expires: result.downloadToken?.expiresAt,
+            url: `/api/artifact-download/${result.downloadToken?.token}`
           }
         },
-        message: `Successfully purchased ${item.title}! Download available for 24 hours.`
-      };
-
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(response));
+        message: `Successfully purchased ${artifact?.title || 'item'}! Download available.`
+      }));
     } catch (error) {
       console.error('Purchase error:', error);
       res.writeHead(500, { 'Content-Type': 'application/json' });
@@ -7268,6 +7148,129 @@ const server = http.createServer(async (req, res) => {
         error: 'Purchase failed',
         message: error.message 
       }));
+    }
+    return;
+  }
+  
+  // MY ARTIFACTS API - Get user's purchased/owned artifact copies
+  if (pathname === '/api/my-artifacts' && req.method === 'GET') {
+    try {
+      // Get authenticated user from session
+      const sessionId = getCookie(req, 'tc_s_session');
+      if (!sessionId) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Authentication required', artifacts: [] }));
+        return;
+      }
+      
+      const session = getSession(sessionId);
+      if (!session || !session.userId) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Please sign in to view your artifacts', artifacts: [] }));
+        return;
+      }
+
+      const { storage } = require('./server/storage');
+      const copies = await storage.getUserArtifactCopies(session.userId);
+      
+      // Format response with artifact details
+      const artifacts = copies.map(copy => ({
+        copyId: copy.id,
+        artifactId: copy.artifactId,
+        acquiredAt: copy.acquiredAt,
+        acquiredMethod: copy.acquiredMethod,
+        solarPaid: copy.solarPaid,
+        artifact: {
+          id: copy.artifact.id,
+          slug: copy.artifact.slug,
+          title: copy.artifact.title,
+          description: copy.artifact.description,
+          category: copy.artifact.category,
+          fileType: copy.artifact.fileType,
+          coverArtUrl: copy.artifact.coverArtUrl,
+          creatorId: copy.artifact.creatorId,
+          kwhFootprint: copy.artifact.kwhFootprint,
+          solarAmountS: copy.artifact.solarAmountS,
+          tradeFileUrl: copy.artifact.tradeFileUrl,
+          previewFileUrl: copy.artifact.previewFileUrl
+        }
+      }));
+
+      console.log(`📚 Fetched ${artifacts.length} owned artifacts for ${session.username}`);
+      
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        count: artifacts.length,
+        artifacts: artifacts
+      }));
+    } catch (error) {
+      console.error('My artifacts error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ 
+        success: false, 
+        error: 'Failed to fetch your artifacts',
+        artifacts: []
+      }));
+    }
+    return;
+  }
+  
+  // ARTIFACT DOWNLOAD API - Secure download with token validation
+  if (pathname.startsWith('/api/artifact-download/') && req.method === 'GET') {
+    try {
+      const token = pathname.split('/api/artifact-download/')[1];
+      
+      if (!token) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Download token required' }));
+        return;
+      }
+
+      const { storage } = require('./server/storage');
+      const downloadToken = await storage.getDownloadToken(token);
+      
+      if (!downloadToken) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Invalid or expired download token' }));
+        return;
+      }
+      
+      // Check expiry
+      if (new Date() > new Date(downloadToken.expiresAt)) {
+        res.writeHead(410, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Download token has expired' }));
+        return;
+      }
+      
+      // Check download count
+      if (downloadToken.downloadCount >= (downloadToken.maxDownloads || 10)) {
+        res.writeHead(429, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Download limit exceeded' }));
+        return;
+      }
+      
+      // Get artifact details
+      const artifact = await storage.getArtifact(downloadToken.artifactId);
+      if (!artifact || !artifact.tradeFileUrl) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Artifact file not found' }));
+        return;
+      }
+      
+      // Increment download count
+      await storage.incrementDownloadCount(downloadToken.id);
+      
+      // Redirect to trade file URL (or stream it)
+      res.writeHead(302, { 
+        'Location': artifact.tradeFileUrl,
+        'Cache-Control': 'no-cache'
+      });
+      res.end();
+    } catch (error) {
+      console.error('Artifact download error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Download failed' }));
     }
     return;
   }

@@ -470,8 +470,8 @@ export type InsertProduct = z.infer<typeof insertProductSchema>;
 export const downloadTokens = pgTable("download_tokens", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   token: varchar("token").notNull().unique(), // Secure download token
-  artifactId: varchar("artifact_id").references(() => artifacts.id).notNull(),
-  userId: varchar("user_id").references(() => users.id).notNull(),
+  artifactId: varchar("artifact_id").notNull(), // References artifacts.id (UUID)
+  userId: integer("user_id").notNull(), // References users.id (INTEGER)
   expiresAt: timestamp("expires_at").notNull(), // Token expiration
   createdAt: timestamp("created_at").defaultNow(),
   
@@ -531,24 +531,74 @@ export const identifySubmissions = pgTable("identify_submissions", {
   completedAt: timestamp("completed_at"),
 });
 
+// ============================================================
+// ARTIFACT COPIES - Ownership tracking for purchased artifacts
+// Implements "create and copy" protocol: creator retains original,
+// buyer receives a copy with full access to trade file
+// ============================================================
+export const artifactCopies = pgTable("artifact_copies", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  artifactId: varchar("artifact_id").notNull(), // References artifacts.id (UUID)
+  ownerId: integer("owner_id").notNull(), // References users.id (INTEGER)
+  purchaseTransactionId: varchar("purchase_transaction_id"), // References the purchase transaction
+  copyNumber: integer("copy_number").default(1), // For limited editions
+  acquiredAt: timestamp("acquired_at").defaultNow(),
+  acquiredMethod: varchar("acquired_method").notNull().default("purchase"), // 'purchase', 'gift', 'airdrop', 'creator_mint'
+  solarPaid: numeric("solar_paid"), // Amount paid in Solar
+  isActive: boolean("is_active").default(true), // Can be revoked
+  metadata: jsonb("metadata"), // Additional copy-specific data
+}, (table) => ({
+  ownerIdx: index("artifact_copies_owner_idx").on(table.ownerId),
+  artifactIdx: index("artifact_copies_artifact_idx").on(table.artifactId),
+}));
+
+// ============================================================
+// MARKETPLACE LEDGER - Double-entry Solar accounting
+// Every Solar movement creates a debit and credit entry
+// ============================================================
+export const marketplaceLedger = pgTable("marketplace_ledger", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  transactionId: varchar("transaction_id").notNull(), // Groups debit/credit pair
+  entryType: varchar("entry_type").notNull(), // 'debit' or 'credit'
+  accountId: varchar("account_id").notNull(), // User ID or special account (FOUNDATION, FEES)
+  accountType: varchar("account_type").notNull(), // 'user', 'foundation', 'fees', 'creator'
+  amount: numeric("amount").notNull(), // Solar amount (always positive)
+  balanceAfter: numeric("balance_after"), // Account balance after this entry
+  referenceType: varchar("reference_type").notNull(), // 'purchase', 'grant', 'transfer', 'fee'
+  referenceId: varchar("reference_id"), // artifact_id, copy_id, etc.
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow(),
+  metadata: jsonb("metadata"),
+}, (table) => ({
+  transactionIdx: index("ledger_transaction_idx").on(table.transactionId),
+  accountIdx: index("ledger_account_idx").on(table.accountId),
+  dateIdx: index("ledger_date_idx").on(table.createdAt),
+}));
+
 // Artifacts schemas
 export const insertArtifactSchema = createInsertSchema(artifacts).omit({ id: true, createdAt: true });
 export const insertDownloadTokenSchema = createInsertSchema(downloadTokens);
 export const insertFileAccessLogSchema = createInsertSchema(fileAccessLogs);
 export const insertShareTokenSchema = createInsertSchema(shareTokens);
 export const insertIdentifySubmissionSchema = createInsertSchema(identifySubmissions);
+export const insertArtifactCopySchema = createInsertSchema(artifactCopies).omit({ id: true, acquiredAt: true });
+export const insertMarketplaceLedgerSchema = createInsertSchema(marketplaceLedger).omit({ id: true, createdAt: true });
 
 export type Artifact = typeof artifacts.$inferSelect;
 export type DownloadToken = typeof downloadTokens.$inferSelect;
 export type FileAccessLog = typeof fileAccessLogs.$inferSelect;
 export type ShareToken = typeof shareTokens.$inferSelect;
 export type IdentifySubmission = typeof identifySubmissions.$inferSelect;
+export type ArtifactCopy = typeof artifactCopies.$inferSelect;
+export type MarketplaceLedgerEntry = typeof marketplaceLedger.$inferSelect;
 
 export type InsertArtifact = z.infer<typeof insertArtifactSchema>;
 export type InsertDownloadToken = z.infer<typeof insertDownloadTokenSchema>;
 export type InsertFileAccessLog = z.infer<typeof insertFileAccessLogSchema>;
 export type InsertShareToken = z.infer<typeof insertShareTokenSchema>;
 export type InsertIdentifySubmission = z.infer<typeof insertIdentifySubmissionSchema>;
+export type InsertArtifactCopy = z.infer<typeof insertArtifactCopySchema>;
+export type InsertMarketplaceLedgerEntry = z.infer<typeof insertMarketplaceLedgerSchema>;
 
 // Geographic Analytics - Privacy-focused aggregate daily visit tracking (production only)
 export const geoAnalytics = pgTable("geo_analytics", {

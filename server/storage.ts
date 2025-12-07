@@ -3,13 +3,17 @@ import { db } from './db';
 import { 
   members, distributionLogs, backupLogs, products, newsletterSubscriptions, contactMessages,
   progressions, entitlements, transactions, userProfiles, contentLibrary, users,
+  artifacts, artifactCopies, marketplaceLedger, downloadTokens,
   type Member, type InsertMember, type DistributionLog, type InsertDistributionLog, 
   type BackupLog, type InsertBackupLog, type Product, type InsertProduct,
   type NewsletterSubscription, type InsertNewsletterSubscription,
   type ContactMessage, type InsertContactMessage, type Progression, type InsertProgression,
   type Entitlement, type InsertEntitlement, type Transaction, type InsertTransaction,
   type UserProfile, type InsertUserProfile, type ContentLibrary, type InsertContentLibrary,
-  type User, type InsertUser
+  type User, type InsertUser,
+  type Artifact, type ArtifactCopy, type InsertArtifactCopy,
+  type MarketplaceLedgerEntry, type InsertMarketplaceLedgerEntry,
+  type DownloadToken, type InsertDownloadToken
 } from '../shared/schema';
 import fs from 'fs';
 import path from 'path';
@@ -134,6 +138,39 @@ export interface IStorage {
   // Solar accounts (legacy member system compatibility)
   getAllSolarAccounts(limit?: number, includeAnonymous?: boolean): Promise<Member[]>;
   createSolarAccount(data: { userId: string; isAnonymous: boolean; displayName: string }): Promise<Member>;
+
+  // ============================================================
+  // MARKETPLACE OPERATIONS - Artifact purchase and copy management
+  // ============================================================
+  
+  // Artifact operations
+  getArtifact(id: string): Promise<Artifact | undefined>;
+  getArtifactBySlug(slug: string): Promise<Artifact | undefined>;
+  getAvailableArtifacts(): Promise<Artifact[]>;
+  
+  // Artifact copy operations (ownership tracking)
+  createArtifactCopy(data: InsertArtifactCopy): Promise<ArtifactCopy>;
+  getUserArtifactCopies(userId: number): Promise<(ArtifactCopy & { artifact: Artifact })[]>;
+  getArtifactCopy(userId: number, artifactId: string): Promise<ArtifactCopy | undefined>;
+  
+  // Download token operations
+  createDownloadToken(data: InsertDownloadToken): Promise<DownloadToken>;
+  getDownloadToken(token: string): Promise<DownloadToken | undefined>;
+  incrementDownloadCount(tokenId: string): Promise<void>;
+  
+  // Marketplace ledger operations (double-entry accounting)
+  createLedgerEntry(data: InsertMarketplaceLedgerEntry): Promise<MarketplaceLedgerEntry>;
+  getLedgerEntriesByTransaction(transactionId: string): Promise<MarketplaceLedgerEntry[]>;
+  getLedgerEntriesByAccount(accountId: string, limit?: number): Promise<MarketplaceLedgerEntry[]>;
+  
+  // Complete purchase flow (atomic transaction)
+  purchaseArtifact(buyerId: number, artifactId: string): Promise<{
+    success: boolean;
+    copy?: ArtifactCopy;
+    downloadToken?: DownloadToken;
+    ledgerEntries?: MarketplaceLedgerEntry[];
+    error?: string;
+  }>;
   
   // Session store for passport sessions
   sessionStore: any;
@@ -981,6 +1018,236 @@ export class DatabaseStorage implements IStorage {
         success: false,
         migrated: migratedCount,
         errors: [...errors, error instanceof Error ? error.message : String(error)]
+      };
+    }
+  }
+
+  // ============================================================
+  // MARKETPLACE OPERATIONS IMPLEMENTATION
+  // ============================================================
+
+  // Artifact operations
+  async getArtifact(id: string): Promise<Artifact | undefined> {
+    const result = await db.select().from(artifacts).where(eq(artifacts.id, id));
+    return result[0];
+  }
+
+  async getArtifactBySlug(slug: string): Promise<Artifact | undefined> {
+    const result = await db.select().from(artifacts).where(eq(artifacts.slug, slug));
+    return result[0];
+  }
+
+  async getAvailableArtifacts(): Promise<Artifact[]> {
+    return await db.select().from(artifacts).where(eq(artifacts.active, true)).orderBy(desc(artifacts.createdAt));
+  }
+
+  // Artifact copy operations
+  async createArtifactCopy(data: InsertArtifactCopy): Promise<ArtifactCopy> {
+    const result = await db.insert(artifactCopies).values(data).returning();
+    return result[0];
+  }
+
+  async getUserArtifactCopies(userId: number): Promise<(ArtifactCopy & { artifact: Artifact })[]> {
+    const copies = await db.select()
+      .from(artifactCopies)
+      .where(and(eq(artifactCopies.ownerId, userId), eq(artifactCopies.isActive, true)))
+      .orderBy(desc(artifactCopies.acquiredAt));
+    
+    // Join with artifacts
+    const result = [];
+    for (const copy of copies) {
+      const artifact = await this.getArtifact(copy.artifactId);
+      if (artifact) {
+        result.push({ ...copy, artifact });
+      }
+    }
+    return result;
+  }
+
+  async getArtifactCopy(userId: number, artifactId: string): Promise<ArtifactCopy | undefined> {
+    const result = await db.select()
+      .from(artifactCopies)
+      .where(and(
+        eq(artifactCopies.ownerId, userId),
+        eq(artifactCopies.artifactId, artifactId),
+        eq(artifactCopies.isActive, true)
+      ));
+    return result[0];
+  }
+
+  // Download token operations
+  async createDownloadToken(data: InsertDownloadToken): Promise<DownloadToken> {
+    const result = await db.insert(downloadTokens).values(data).returning();
+    return result[0];
+  }
+
+  async getDownloadToken(token: string): Promise<DownloadToken | undefined> {
+    const result = await db.select()
+      .from(downloadTokens)
+      .where(and(
+        eq(downloadTokens.token, token),
+        eq(downloadTokens.isRevoked, false)
+      ));
+    return result[0];
+  }
+
+  async incrementDownloadCount(tokenId: string): Promise<void> {
+    await db.update(downloadTokens)
+      .set({ 
+        downloadCount: sql`${downloadTokens.downloadCount} + 1`,
+        lastAccessedAt: new Date()
+      })
+      .where(eq(downloadTokens.id, tokenId));
+  }
+
+  // Marketplace ledger operations
+  async createLedgerEntry(data: InsertMarketplaceLedgerEntry): Promise<MarketplaceLedgerEntry> {
+    const result = await db.insert(marketplaceLedger).values(data).returning();
+    return result[0];
+  }
+
+  async getLedgerEntriesByTransaction(transactionId: string): Promise<MarketplaceLedgerEntry[]> {
+    return await db.select()
+      .from(marketplaceLedger)
+      .where(eq(marketplaceLedger.transactionId, transactionId))
+      .orderBy(marketplaceLedger.createdAt);
+  }
+
+  async getLedgerEntriesByAccount(accountId: string, limit: number = 100): Promise<MarketplaceLedgerEntry[]> {
+    return await db.select()
+      .from(marketplaceLedger)
+      .where(eq(marketplaceLedger.accountId, accountId))
+      .orderBy(desc(marketplaceLedger.createdAt))
+      .limit(limit);
+  }
+
+  // Complete purchase flow (atomic transaction)
+  async purchaseArtifact(buyerId: number, artifactId: string): Promise<{
+    success: boolean;
+    copy?: ArtifactCopy;
+    downloadToken?: DownloadToken;
+    ledgerEntries?: MarketplaceLedgerEntry[];
+    error?: string;
+  }> {
+    try {
+      // Pre-transaction validation (outside transaction for early fail)
+      const artifact = await this.getArtifact(artifactId);
+      if (!artifact) {
+        return { success: false, error: 'Artifact not found' };
+      }
+      if (!artifact.active) {
+        return { success: false, error: 'Artifact is not available for purchase' };
+      }
+
+      const existingCopy = await this.getArtifactCopy(buyerId, artifactId);
+      if (existingCopy) {
+        return { success: false, error: 'You already own this artifact' };
+      }
+
+      const buyerProfile = await this.getUserProfile(String(buyerId));
+      if (!buyerProfile) {
+        return { success: false, error: 'Buyer profile not found' };
+      }
+
+      const price = parseFloat(artifact.solarAmountS || '0');
+      const buyerBalance = buyerProfile.solarBalance || 0;
+
+      if (buyerBalance < price) {
+        return { success: false, error: `Insufficient Solar balance. Need ${price} Solar, have ${buyerBalance} Solar` };
+      }
+
+      const creatorId = artifact.creatorId;
+      const transactionId = `purchase_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Execute purchase in atomic transaction
+      const result = await db.transaction(async (tx) => {
+        const ledgerEntries: MarketplaceLedgerEntry[] = [];
+
+        // 1. Create debit ledger entry (buyer pays)
+        const [debitEntry] = await tx.insert(marketplaceLedger).values({
+          transactionId,
+          entryType: 'debit',
+          accountId: String(buyerId),
+          accountType: 'user',
+          amount: String(price),
+          balanceAfter: String(buyerBalance - price),
+          referenceType: 'purchase',
+          referenceId: artifactId,
+          description: `Purchase: ${artifact.title}`
+        }).returning();
+        ledgerEntries.push(debitEntry);
+
+        // 2. Create credit ledger entry (creator receives)
+        const [creditEntry] = await tx.insert(marketplaceLedger).values({
+          transactionId,
+          entryType: 'credit',
+          accountId: creatorId,
+          accountType: 'creator',
+          amount: String(price),
+          referenceType: 'purchase',
+          referenceId: artifactId,
+          description: `Sale: ${artifact.title}`
+        }).returning();
+        ledgerEntries.push(creditEntry);
+
+        // 3. Update buyer's Solar balance (deduct)
+        await tx.update(members)
+          .set({ totalSolar: String(buyerBalance - price) })
+          .where(eq(members.id, buyerId));
+
+        // 4. Update creator's Solar balance if they have a member profile
+        const creatorMember = await tx.select().from(members)
+          .where(or(
+            eq(members.id, parseInt(creatorId) || 0),
+            eq(members.username, creatorId)
+          ))
+          .limit(1);
+        
+        if (creatorMember.length > 0) {
+          const creatorBalance = parseFloat(creatorMember[0].totalSolar || '0');
+          await tx.update(members)
+            .set({ totalSolar: String(creatorBalance + price) })
+            .where(eq(members.id, creatorMember[0].id));
+        }
+
+        // 5. Create artifact copy for buyer
+        const [copy] = await tx.insert(artifactCopies).values({
+          artifactId,
+          ownerId: buyerId,
+          purchaseTransactionId: transactionId,
+          acquiredMethod: 'purchase',
+          solarPaid: String(price)
+        }).returning();
+
+        // 6. Create download token
+        const tokenValue = `dl_${Date.now()}_${Math.random().toString(36).substr(2, 16)}`;
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 30); // 30 day expiry
+
+        const [downloadToken] = await tx.insert(downloadTokens).values({
+          token: tokenValue,
+          artifactId,
+          userId: buyerId,
+          expiresAt,
+          accessType: 'trade_file',
+          maxDownloads: 10
+        }).returning();
+
+        return { copy, downloadToken, ledgerEntries };
+      });
+
+      return {
+        success: true,
+        copy: result.copy,
+        downloadToken: result.downloadToken,
+        ledgerEntries: result.ledgerEntries
+      };
+
+    } catch (error) {
+      console.error('Purchase error:', error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Unknown error during purchase' 
       };
     }
   }
