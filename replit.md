@@ -35,6 +35,8 @@ Data Flow:
 4. **Daily Distribution**: Updates `members.total_solar` during nightly distribution job
 5. **Frontend Display**: All balance displays (wallet.html, marketplace.html) fetch from `/api/session`
 
+**Important**: All `getSession()` calls MUST use `await` since it's an async function. Missing `await` causes session data to be a Promise object, resulting in `userId` and `solarBalance` being undefined.
+
 Storage Methods (in `server/storage.ts`):
 - `getMemberSolarBalance(memberId: number)`: Query balance from members table
 - `updateMemberSolarBalance(memberId: number, newBalance: number)`: Update balance in members table

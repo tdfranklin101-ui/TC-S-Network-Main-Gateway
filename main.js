@@ -4474,7 +4474,7 @@ const server = http.createServer(async (req, res) => {
         return;
       }
       
-      const session = getSession(sessionId);
+      const session = await getSession(sessionId);
       
       if (!session) {
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -7079,7 +7079,7 @@ const server = http.createServer(async (req, res) => {
         return;
       }
       
-      const session = getSession(sessionId);
+      const session = await getSession(sessionId);
       if (!session || !session.userId) {
         res.writeHead(401, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: false, error: 'Please sign in to make purchases' }));
@@ -7163,7 +7163,7 @@ const server = http.createServer(async (req, res) => {
         return;
       }
       
-      const session = getSession(sessionId);
+      const session = await getSession(sessionId);
       if (!session || !session.userId) {
         res.writeHead(401, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: false, error: 'Please sign in to view your artifacts', artifacts: [] }));
