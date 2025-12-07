@@ -5989,82 +5989,216 @@ const server = http.createServer(async (req, res) => {
       }
 
       const deliveryUrl = artifactResult.rows[0].delivery_url;
+      const artifact = artifactResult.rows[0];
       
-      // Stream video with Range request support for large files
+      // Stream media with Range request support
       try {
-        // First, get the file size with a HEAD request
-        const headResponse = await fetch(deliveryUrl, { method: 'HEAD' });
+        // Check if this is a local file path (@assets/ or relative path)
+        const isLocalFile = deliveryUrl.startsWith('@assets/') || 
+                           deliveryUrl.startsWith('/') || 
+                           deliveryUrl.startsWith('./') ||
+                           !deliveryUrl.startsWith('http');
         
-        if (!headResponse.ok) {
-          throw new Error(`Failed to fetch video info: ${headResponse.status}`);
-        }
-
-        const fileSize = parseInt(headResponse.headers.get('content-length') || '0', 10);
-        const artifact = artifactResult.rows[0];
-        const defaultType = artifact.category === 'music' ? 'audio/mpeg' : 'video/mp4';
-        const contentType = headResponse.headers.get('content-type') || defaultType;
-
-        // Check if client sent a Range header
-        const rangeHeader = req.headers.range;
-        
-        if (rangeHeader && fileSize > 0) {
-          // Parse Range header (format: "bytes=start-end")
-          const rangeParts = rangeHeader.replace(/bytes=/, '').split('-');
-          const start = parseInt(rangeParts[0], 10);
-          const end = rangeParts[1] ? parseInt(rangeParts[1], 10) : fileSize - 1;
+        if (isLocalFile) {
+          // Handle local file streaming with multiple fallback locations
+          // SECURITY: Define approved root directories to prevent path traversal
+          const approvedRoots = [
+            path.resolve(__dirname, 'public', 'attached_assets'),
+            path.resolve(__dirname, 'storage', 'trade'),
+            path.resolve(__dirname, 'public', 'music', 'monazite'),
+            path.resolve(__dirname, 'public', 'music'),
+            path.resolve(__dirname, 'public', 'previews')
+          ];
           
-          // Validate range
-          if (start >= fileSize || end >= fileSize) {
-            res.writeHead(416, {
-              'Content-Range': `bytes */${fileSize}`
-            });
-            res.end();
+          // SECURITY: Sanitize the delivery URL - strip any path traversal attempts
+          const sanitizeFilename = (input) => {
+            // Remove path traversal sequences and absolute path indicators
+            return input
+              .replace(/\.\./g, '')  // Remove ..
+              .replace(/^\/+/, '')   // Remove leading slashes
+              .replace(/\\/g, '/')   // Normalize backslashes
+              .split('/').pop() || ''; // Only take the filename part
+          };
+          
+          let localFilePath = null;
+          const possiblePaths = [];
+          
+          if (deliveryUrl.startsWith('@assets/')) {
+            // Extract and sanitize the asset name
+            const rawAssetName = deliveryUrl.replace('@assets/', '');
+            const assetName = sanitizeFilename(rawAssetName);
+            
+            if (!assetName) {
+              console.error('Invalid asset name after sanitization');
+              res.writeHead(400, { 'Content-Type': 'text/plain' });
+              res.end('Invalid file reference');
+              return;
+            }
+            
+            // Primary: attached_assets folder
+            possiblePaths.push(path.join(__dirname, 'public', 'attached_assets', assetName));
+            // Fallback: storage/trade folder
+            possiblePaths.push(path.join(__dirname, 'storage', 'trade', assetName));
+            // Fallback: music folder (check for matching filename)
+            const baseName = path.basename(assetName, path.extname(assetName));
+            const musicDir = path.join(__dirname, 'public', 'music', 'monazite');
+            if (fs.existsSync(musicDir)) {
+              const musicFiles = fs.readdirSync(musicDir);
+              const matchingFile = musicFiles.find(f => {
+                const fBase = path.basename(f, path.extname(f)).toLowerCase().replace(/[_\s]+/g, '');
+                const targetBase = baseName.toLowerCase().replace(/[_\s\d]+/g, '');
+                return fBase.includes(targetBase) || targetBase.includes(fBase.substring(3)); // Skip track number prefix
+              });
+              if (matchingFile) {
+                possiblePaths.push(path.join(musicDir, matchingFile));
+              }
+            }
+          } else {
+            // For other local paths, sanitize and only allow within public directory
+            const sanitizedPath = sanitizeFilename(deliveryUrl);
+            if (sanitizedPath) {
+              possiblePaths.push(path.join(__dirname, 'public', sanitizedPath));
+            }
+          }
+          
+          // Find the first existing file that is within approved roots
+          for (const p of possiblePaths) {
+            const resolvedPath = path.resolve(p);
+            // SECURITY: Verify the resolved path is within an approved root
+            const isWithinApprovedRoot = approvedRoots.some(root => resolvedPath.startsWith(root));
+            if (isWithinApprovedRoot && fs.existsSync(resolvedPath)) {
+              localFilePath = resolvedPath;
+              break;
+            }
+          }
+          
+          // Check if file exists
+          if (!localFilePath) {
+            console.error(`Local preview file not found or outside approved paths. Checked: ${possiblePaths.join(', ')}`);
+            res.writeHead(404, { 'Content-Type': 'text/plain' });
+            res.end('Media file not found on server');
             return;
           }
-
-          const chunkSize = (end - start) + 1;
-
-          // Fetch only the requested byte range from Google Cloud Storage
-          const rangeResponse = await fetch(deliveryUrl, {
-            headers: {
-              'Range': `bytes=${start}-${end}`
+          
+          const stat = fs.statSync(localFilePath);
+          const fileSize = stat.size;
+          
+          // Determine content type from extension
+          const ext = path.extname(localFilePath).toLowerCase();
+          const mimeTypes = {
+            '.mp3': 'audio/mpeg',
+            '.wav': 'audio/wav',
+            '.ogg': 'audio/ogg',
+            '.mp4': 'video/mp4',
+            '.webm': 'video/webm',
+            '.mov': 'video/quicktime',
+            '.m4a': 'audio/mp4'
+          };
+          const defaultType = artifact.category === 'music' ? 'audio/mpeg' : 'video/mp4';
+          const contentType = mimeTypes[ext] || defaultType;
+          
+          const rangeHeader = req.headers.range;
+          
+          if (rangeHeader && fileSize > 0) {
+            // Parse Range header for partial content
+            const rangeParts = rangeHeader.replace(/bytes=/, '').split('-');
+            const start = parseInt(rangeParts[0], 10);
+            const end = rangeParts[1] ? parseInt(rangeParts[1], 10) : fileSize - 1;
+            
+            if (start >= fileSize || end >= fileSize) {
+              res.writeHead(416, { 'Content-Range': `bytes */${fileSize}` });
+              res.end();
+              return;
             }
-          });
-
-          if (!rangeResponse.ok) {
-            throw new Error(`Failed to fetch range: ${rangeResponse.status}`);
+            
+            const chunkSize = (end - start) + 1;
+            const fileStream = fs.createReadStream(localFilePath, { start, end });
+            
+            res.writeHead(206, {
+              'Content-Type': contentType,
+              'Content-Length': chunkSize,
+              'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+              'Accept-Ranges': 'bytes',
+              'Cache-Control': 'public, max-age=3600'
+            });
+            
+            fileStream.pipe(res);
+            console.log(`📹 Streaming local ${artifact.category} range: ${start}-${end}/${fileSize} bytes`);
+          } else {
+            // Stream entire file
+            const fileStream = fs.createReadStream(localFilePath);
+            
+            res.writeHead(200, {
+              'Content-Type': contentType,
+              'Content-Length': fileSize,
+              'Accept-Ranges': 'bytes',
+              'Cache-Control': 'public, max-age=3600'
+            });
+            
+            fileStream.pipe(res);
+            console.log(`📹 Streaming full local ${artifact.category}: ${fileSize} bytes`);
           }
-
-          // Return HTTP 206 Partial Content
-          res.writeHead(206, {
-            'Content-Type': contentType,
-            'Content-Length': chunkSize,
-            'Content-Range': `bytes ${start}-${end}/${fileSize}`,
-            'Accept-Ranges': 'bytes',
-            'Cache-Control': 'public, max-age=3600'
-          });
-
-          // Stream the partial content
-          rangeResponse.body.pipe(res);
-          console.log(`📹 Streaming ${artifact.category} range: ${start}-${end}/${fileSize} bytes`);
-          
         } else {
-          // No Range header - send entire file (for small videos)
-          const response = await fetch(deliveryUrl);
+          // Handle remote HTTP URL streaming (original code)
+          const headResponse = await fetch(deliveryUrl, { method: 'HEAD' });
           
-          if (!response.ok) {
-            throw new Error(`Failed to fetch video: ${response.status}`);
+          if (!headResponse.ok) {
+            throw new Error(`Failed to fetch video info: ${headResponse.status}`);
           }
-          
-          res.writeHead(200, {
-            'Content-Type': contentType,
-            'Content-Length': fileSize,
-            'Accept-Ranges': 'bytes',
-            'Cache-Control': 'public, max-age=3600'
-          });
 
-          response.body.pipe(res);
-          console.log(`📹 Streaming full ${artifact.category}: ${fileSize} bytes`);
+          const fileSize = parseInt(headResponse.headers.get('content-length') || '0', 10);
+          const defaultType = artifact.category === 'music' ? 'audio/mpeg' : 'video/mp4';
+          const contentType = headResponse.headers.get('content-type') || defaultType;
+
+          const rangeHeader = req.headers.range;
+          
+          if (rangeHeader && fileSize > 0) {
+            const rangeParts = rangeHeader.replace(/bytes=/, '').split('-');
+            const start = parseInt(rangeParts[0], 10);
+            const end = rangeParts[1] ? parseInt(rangeParts[1], 10) : fileSize - 1;
+            
+            if (start >= fileSize || end >= fileSize) {
+              res.writeHead(416, { 'Content-Range': `bytes */${fileSize}` });
+              res.end();
+              return;
+            }
+
+            const chunkSize = (end - start) + 1;
+            const rangeResponse = await fetch(deliveryUrl, {
+              headers: { 'Range': `bytes=${start}-${end}` }
+            });
+
+            if (!rangeResponse.ok) {
+              throw new Error(`Failed to fetch range: ${rangeResponse.status}`);
+            }
+
+            res.writeHead(206, {
+              'Content-Type': contentType,
+              'Content-Length': chunkSize,
+              'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+              'Accept-Ranges': 'bytes',
+              'Cache-Control': 'public, max-age=3600'
+            });
+
+            rangeResponse.body.pipe(res);
+            console.log(`📹 Streaming ${artifact.category} range: ${start}-${end}/${fileSize} bytes`);
+          } else {
+            const response = await fetch(deliveryUrl);
+            
+            if (!response.ok) {
+              throw new Error(`Failed to fetch video: ${response.status}`);
+            }
+            
+            res.writeHead(200, {
+              'Content-Type': contentType,
+              'Content-Length': fileSize,
+              'Accept-Ranges': 'bytes',
+              'Cache-Control': 'public, max-age=3600'
+            });
+
+            response.body.pipe(res);
+            console.log(`📹 Streaming full ${artifact.category}: ${fileSize} bytes`);
+          }
         }
       } catch (streamError) {
         console.error('Media streaming error:', streamError);
