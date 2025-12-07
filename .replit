@@ -22,6 +22,10 @@ externalPort = 80
 localPort = 8080
 externalPort = 8080
 
+[[ports]]
+localPort = 37281
+externalPort = 3001
+
 [agent]
 integrations = ["perplexity_v0==1.0.0", "javascript_websocket==1.0.0", "javascript_stripe==1.0.0", "javascript_openai==1.0.0", "javascript_anthropic==1.0.0"]
 
@@ -33,3 +37,5 @@ defaultBucketID = "replit-objstore-f95b4cf3-0db7-40d1-9680-54f5b997ed65"
 [userenv.shared]
 NEXT_PUBLIC_REPLIT_SITE_URL = "https://current-see-website-tdfranklin101.replit.app"
 NEXT_PUBLIC_VERCEL_SITE_URL = "https://tc-s-network-main-gatewayv1.vercel.app"
+TESTING_VITE_STRIPE_PUBLIC_KEY = "pk_test_51R82FbIiiOxB2ouydaiG0lZMqqxJPsnEqlPWqLajtSnhWHBAsp9VNQVz8b7A4oF5x3qy28hzYhGeFwfsPw1JHnXP00NmR1Ue2n"
+TESTING_STRIPE_SECRET_KEY = "sk_test_51R82FbIiiOxB2ouyXUeTbzoTWFZ3UtG0NoWspXmxsOt1Xa5EHpl68n9Q80EqB5cPnYv16QUVRRzZNFtDyU9B3us600kQUMCGxQ"
