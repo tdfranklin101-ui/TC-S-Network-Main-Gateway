@@ -64,7 +64,8 @@
       "version": "1.0",
       "type": "ai-agent-tool",
       "status": "active",
-      "description": "AI-accessible API for generating tessellated visual art with Solar-metered compute",
+      "mode": "pregenerated",
+      "description": "AI-accessible API for tessellated visual art. Currently serves pre-generated artwork (free). Future: Live AI generation via Solar pay gate.",
       "endpoints": {
         "capabilities": "/api/dmtxactly/capabilities",
         "patterns": "/api/dmtxactly/patterns",
@@ -74,16 +75,15 @@
       },
       "openapi_spec": "/api/dmtxactly/capabilities",
       "features": [
-        "Tessellated visual art generation",
-        "AI-enhanced creativity via DALL-E 3",
-        "Solar-metered compute (WPC tracking)",
+        "Tessellated visual art (pre-generated collection)",
+        "Solar-metered compute tracking (WPC)",
         "Direct marketplace export",
-        "Pattern presets (hexagonal, Penrose, Voronoi, Islamic, fractal, Escher)"
+        "Pattern presets (hexagonal, Penrose, Voronoi, Islamic, fractal, Escher)",
+        "FUTURE: Live AI generation via Solar pay gate"
       ],
-      "authentication": {
-        "type": "apiKey",
-        "header": "X-DMTXACTLY-API-Key",
-        "required_for": ["generate", "export"]
+      "pricing": {
+        "current": "FREE (pre-generated artwork)",
+        "future": "Solar Rays (live DALL-E generation)"
       },
       "energy_metering": {
         "unit": "Solar Rays",
