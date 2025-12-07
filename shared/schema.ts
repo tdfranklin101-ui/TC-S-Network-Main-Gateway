@@ -752,3 +752,52 @@ export type AuditRegionTotal = typeof auditRegionTotals.$inferSelect;
 // Insert types
 export type InsertAuditRegion = z.infer<typeof insertAuditRegionSchema>;
 export type InsertAuditRegionTotal = z.infer<typeof insertAuditRegionTotalSchema>;
+
+// ============================================================
+// DMTXACTLY AI Agent API - Agent Authentication & Generation Jobs
+// ============================================================
+
+export const agentApiKeys = pgTable("agent_api_keys", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  agentName: text("agent_name").notNull(),
+  apiKeyHash: text("api_key_hash").notNull(),
+  scopes: text("scopes").array(),
+  memberId: integer("member_id").references(() => members.id),
+  isActive: boolean("is_active").default(true),
+  lastUsedAt: timestamp("last_used_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  metadata: jsonb("metadata"),
+});
+
+export const dmtxactlyJobs = pgTable("dmtxactly_jobs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  agentId: varchar("agent_id").references(() => agentApiKeys.id),
+  memberId: integer("member_id").references(() => members.id),
+  jobType: text("job_type").notNull(),
+  patternType: text("pattern_type"),
+  prompt: text("prompt"),
+  parameters: jsonb("parameters"),
+  status: text("status").default("pending"),
+  resultImageUrl: text("result_image_url"),
+  resultPreviewUrl: text("result_preview_url"),
+  solarCost: numeric("solar_cost", { precision: 18, scale: 8 }),
+  raysCost: integer("rays_cost"),
+  wpcGrade: text("wpc_grade"),
+  computeMetrics: jsonb("compute_metrics"),
+  artifactId: varchar("artifact_id").references(() => artifacts.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  completedAt: timestamp("completed_at"),
+  errorMessage: text("error_message"),
+});
+
+// Insert schemas
+export const insertAgentApiKeySchema = createInsertSchema(agentApiKeys).omit({ id: true, createdAt: true });
+export const insertDmtxactlyJobSchema = createInsertSchema(dmtxactlyJobs).omit({ id: true, createdAt: true });
+
+// Select types
+export type AgentApiKey = typeof agentApiKeys.$inferSelect;
+export type DmtxactlyJob = typeof dmtxactlyJobs.$inferSelect;
+
+// Insert types
+export type InsertAgentApiKey = z.infer<typeof insertAgentApiKeySchema>;
+export type InsertDmtxactlyJob = z.infer<typeof insertDmtxactlyJobSchema>;

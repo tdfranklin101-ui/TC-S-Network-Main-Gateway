@@ -26,6 +26,7 @@ import aiRoutes from "./routes/ai";
 import omega1Routes from "./routes/omega1";
 import powerTwinRoutes from "./routes/power-twin";
 import marketPricesRoutes from "./routes/market-prices";
+import dmtxactlyRoutes from "./routes/dmtxactly";
 import geoip from "geoip-lite";
 import multer from "multer";
 import crypto from "crypto";
@@ -655,6 +656,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/omega1", omega1Routes);
   app.use("/api/power-twin", powerTwinRoutes);
   app.use("/api/market-prices", marketPricesRoutes);
+  app.use("/api/dmtxactly", dmtxactlyRoutes);
 
   // Mount legacy AI routes (to be replaced)
   app.use("/api/ai", aiRouter);
