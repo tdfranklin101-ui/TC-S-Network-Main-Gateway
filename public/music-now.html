@@ -61,6 +61,41 @@
     }
     </script>
     
+    <!-- JSON-LD Structured Data - Batrhyme Featured Track -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "MusicRecording",
+      "name": "Break on the Bright Side",
+      "byArtist": {
+        "@type": "MusicGroup",
+        "name": "Batrhyme"
+      },
+      "duration": "PT4M30S",
+      "inAlbum": {
+        "@type": "MusicAlbum",
+        "name": "Singles"
+      },
+      "genre": "Hip-Hop",
+      "recordingOf": {
+        "@type": "MusicComposition",
+        "name": "Break on the Bright Side"
+      },
+      "offers": {
+        "@type": "Offer",
+        "price": "0.001",
+        "priceCurrency": "SOLAR",
+        "availability": "InStock",
+        "description": "Free streaming, 0.001 Solar for download"
+      },
+      "associatedMedia": {
+        "@type": "MediaObject",
+        "contentUrl": "https://www.thecurrentsee.org/media/batrhyme-break-on-the-bright-side.mp3",
+        "encodingFormat": "audio/mpeg"
+      }
+    }
+    </script>
+    
     <!-- JSON-LD Structured Data - Gidget Bardot Featured Track -->
     <script type="application/ld+json">
     {
@@ -309,6 +344,60 @@
             🚀 Visit Foundation Market
           </a>
         </div>
+        
+        <!-- BATRHYME - NEW MUSIC SECTION -->
+        <div id="batrhyme" style="margin: 40px 0; padding: 30px; background: linear-gradient(135deg, rgba(0, 0, 0, 0.8), rgba(0, 255, 136, 0.15)); border: 3px solid #00FF88; border-radius: 15px; box-shadow: 0 8px 20px rgba(0, 255, 136, 0.4); scroll-margin-top: 80px;">
+            <h1 style="text-align: center; color: #00FF88; margin-bottom: 25px; font-size: 2.2em; text-shadow: 0 2px 8px rgba(0, 255, 136, 0.6);">🎵 BATRHYME - NEW MUSIC 🎵</h1>
+            
+            <!-- Artist Photo/Artwork -->
+            <div style="text-align: center; margin-bottom: 25px;">
+                <div style="width: 280px; height: 280px; margin: 0 auto; background: linear-gradient(135deg, #000000, #0a1a0f, #1a2d1f); border-radius: 15px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 16px rgba(0, 255, 136, 0.3); border: 3px solid #00FF88;">
+                    <div style="text-align: center; color: #00FF88;">
+                        <div style="font-size: 4rem; margin-bottom: 10px;">☀️</div>
+                        <div style="font-size: 1.5rem; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">Batrhyme</div>
+                        <div style="font-size: 1rem; margin-top: 8px; opacity: 0.9; color: #00CC6A;">Hip-Hop • Positive Vibes</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Track Player Section -->
+            <div style="background: rgba(0, 0, 0, 0.6); border: 2px solid #00FF88; border-radius: 12px; padding: 25px; margin-bottom: 20px;">
+                <h3 style="color: #00FF88; text-align: center; margin-bottom: 20px; font-size: 1.4em;">🎶 Featured Single</h3>
+                
+                <!-- Track Button -->
+                <button class="track-button" data-testid="track-button-batrhyme" onclick="playBatrhymeTrack()" style="background: linear-gradient(135deg, #000000, #0a1a0f); border: 2px solid #00FF88; width: 100%; padding: 15px 20px; border-radius: 8px; color: #00FF88; font-size: 18px; font-weight: bold; cursor: pointer; transition: all 0.3s ease; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3);">
+                    ☀️ Break on the Bright Side - Batrhyme
+                </button>
+                
+                <!-- Now Playing for Batrhyme -->
+                <div class="now-playing" id="nowPlayingBatrhyme" style="display: none; color: #00FF88; border-color: #00FF88;">
+                    🎶 Now Playing: <span id="trackNameBatrhyme">Break on the Bright Side</span>
+                </div>
+                
+                <!-- Audio Player for Batrhyme -->
+                <audio id="audioPlayerBatrhyme" class="audio-player" data-testid="audio-player-batrhyme" controls preload="none" style="width: 100%; margin: 15px 0;">
+                    Your browser does not support the audio element.
+                </audio>
+                
+                <!-- Marketplace Link -->
+                <div style="text-align: center; margin: 20px 0;">
+                    <a href="/marketplace.html#batrhyme-break-on-the-bright-side" data-testid="link-batrhyme-marketplace" style="display: inline-block; background: linear-gradient(135deg, #000000, #0a1a0f); border: 2px solid #00FF88; color: #00FF88; padding: 15px 30px; border-radius: 10px; text-decoration: none; font-weight: bold; font-size: 1.1rem; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0, 255, 136, 0.4);">
+                        💾 Download in Marketplace (Solar)
+                    </a>
+                </div>
+            </div>
+            
+            <!-- About the Artist -->
+            <div style="background: rgba(0, 0, 0, 0.4); border-radius: 10px; padding: 20px; border: 1px solid #00CC6A;">
+                <h4 style="color: #00FF88; margin: 0 0 12px 0;">About Batrhyme</h4>
+                <p style="color: #ddd; margin: 0; line-height: 1.6; font-size: 0.95rem;">
+                    Uplifting hip-hop artist bringing positive energy and bright vibes. "Break on the Bright Side" is an anthem of optimism and resilience, featuring infectious beats and empowering lyrics that encourage looking at life from its brightest angle.
+                </p>
+            </div>
+        </div>
+        
+        <!-- Visual Separator -->
+        <div style="height: 60px; background: linear-gradient(to bottom, transparent, rgba(0,255,136,0.1), transparent); margin: 40px 0;"></div>
         
         <!-- GIDGET BARDOT - NEW MUSIC SECTION -->
         <div id="gidget-bardot" style="margin: 40px 0; padding: 30px; background: linear-gradient(135deg, rgba(0, 0, 0, 0.8), rgba(218, 165, 32, 0.15)); border: 3px solid #FFD700; border-radius: 15px; box-shadow: 0 8px 20px rgba(255, 215, 0, 0.4); scroll-margin-top: 80px;">
@@ -852,6 +941,70 @@
         
         // GIDGET BARDOT - COMPLETELY SEPARATE FUNCTION
         // This function has NO connection to Monazite tracks array
+        function playBatrhymeTrack() {
+            console.log('═══════════════════════════════════════════');
+            console.log('🎵 BATRHYME PLAYER - ISOLATED FUNCTION');
+            console.log('⚠️ SHOULD PLAY: "Break on the Bright Side"');
+            console.log('⚠️ NOT CONNECTED TO MONAZITE TRACKS ARRAY');
+            console.log('═══════════════════════════════════════════');
+            
+            // STOP Monazite player completely
+            const monazitePlayer = document.getElementById('audioPlayer');
+            if (monazitePlayer) {
+                monazitePlayer.pause();
+                monazitePlayer.src = '';
+                monazitePlayer.load();
+                console.log('⏸️ Monazite player stopped and cleared');
+            }
+            
+            // STOP Gidget player completely
+            const gidgetPlayer = document.getElementById('audioPlayerGidget');
+            if (gidgetPlayer) {
+                gidgetPlayer.pause();
+                gidgetPlayer.src = '';
+                gidgetPlayer.load();
+                console.log('⏸️ Gidget player stopped and cleared');
+            }
+            
+            // Get Batrhyme's SEPARATE player element
+            const player = document.getElementById('audioPlayerBatrhyme');
+            const nowPlaying = document.getElementById('nowPlayingBatrhyme');
+            const trackName = document.getElementById('trackNameBatrhyme');
+            
+            if (!player) {
+                console.error('❌ FATAL ERROR: audioPlayerBatrhyme element not found!');
+                alert('ERROR: Batrhyme player not found. Refresh page.');
+                return;
+            }
+            
+            // BATRHYME FILE
+            const timestamp = new Date().getTime();
+            const batrhymeUrl = '/media/batrhyme-break-on-the-bright-side.mp3?t=' + timestamp;
+            
+            console.log('📍 Loading:', batrhymeUrl);
+            
+            // Set source
+            player.src = batrhymeUrl;
+            player.load();
+            
+            // Track analytics
+            trackPlayEvent('☀️ Break on the Bright Side - Batrhyme');
+            
+            // Update UI
+            if (trackName) trackName.textContent = 'Break on the Bright Side';
+            if (nowPlaying) nowPlaying.style.display = 'block';
+            
+            // Play
+            player.play()
+                .then(() => {
+                    console.log('✅ PLAYING: Batrhyme');
+                    console.log('🎵 Source:', batrhymeUrl);
+                })
+                .catch(err => {
+                    console.log('⚠️ Autoplay blocked - use controls');
+                });
+        }
+
         function playGidgetTrack() {
             console.log('═══════════════════════════════════════════');
             console.log('🎵 GIDGET BARDOT PLAYER - ISOLATED FUNCTION');
