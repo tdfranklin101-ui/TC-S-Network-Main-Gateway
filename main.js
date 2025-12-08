@@ -9250,6 +9250,58 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
+  // Serve audio files from /media/ directory with streaming support
+  if (pathname.startsWith('/media/') && pathname.endsWith('.mp3')) {
+    // Strip leading slash to avoid path.join treating it as absolute path
+    const relativePath = pathname.slice(1); // '/media/file.mp3' -> 'media/file.mp3'
+    const mediaFilePath = path.join(__dirname, 'public', relativePath);
+    
+    if (fs.existsSync(mediaFilePath)) {
+      const stat = fs.statSync(mediaFilePath);
+      const fileSize = stat.size;
+      const range = req.headers.range;
+      
+      console.log(`🎵 Serving media file: ${pathname} (${fileSize} bytes)`);
+      
+      if (range) {
+        const parts = range.replace(/bytes=/, "").split("-");
+        const start = parseInt(parts[0], 10);
+        const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+        
+        const chunksize = (end - start) + 1;
+        const file = fs.createReadStream(mediaFilePath, { start, end });
+        
+        res.writeHead(206, {
+          'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+          'Accept-Ranges': 'bytes',
+          'Content-Length': chunksize,
+          'Content-Type': 'audio/mpeg',
+          'Cache-Control': 'public, max-age=31536000',
+          'Access-Control-Allow-Origin': '*'
+        });
+        
+        file.pipe(res);
+        console.log(`🎵 Streamed media range: ${start}-${end}/${fileSize}`);
+      } else {
+        res.writeHead(200, {
+          'Content-Length': fileSize,
+          'Content-Type': 'audio/mpeg',
+          'Accept-Ranges': 'bytes',
+          'Cache-Control': 'public, max-age=31536000',
+          'Access-Control-Allow-Origin': '*'
+        });
+        fs.createReadStream(mediaFilePath).pipe(res);
+        console.log(`🎵 Served full media file: ${pathname}`);
+      }
+      return;
+    } else {
+      console.log(`❌ Media file not found: ${mediaFilePath}`);
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      res.end('Media file not found');
+      return;
+    }
+  }
+
   // Handle root path - serve index.html
   if (pathname === '/') {
     const indexPath = path.join(__dirname, 'public', 'index.html');

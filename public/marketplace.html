@@ -1906,6 +1906,48 @@
             </div>
         </div>
 
+        <!-- NEW: Batrhyme Featured Single Section -->
+        <div id="batrhyme-break-on-the-bright-side" class="featured-section" style="margin: 30px 0; padding: 25px; background: linear-gradient(135deg, rgba(0, 0, 0, 0.9), rgba(0, 255, 136, 0.15)); border: 3px solid #00FF88; border-radius: 15px; box-shadow: 0 8px 20px rgba(0, 255, 136, 0.4); scroll-margin-top: 80px;">
+            <div class="featured-header" style="text-align: center; margin-bottom: 20px;">
+                <h2 style="color: #00FF88; font-size: 1.8rem; margin-bottom: 10px;">☀️ Featured Single: Batrhyme</h2>
+                <p style="color: #aaa; font-size: 1rem;">"Break on the Bright Side" - Hip-Hop anthem for the Solar age</p>
+            </div>
+            
+            <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: center; justify-content: center;">
+                <div style="flex: 1; min-width: 250px; max-width: 400px;">
+                    <div style="background: rgba(0, 0, 0, 0.6); border-radius: 12px; padding: 20px; border: 1px solid rgba(0, 255, 136, 0.3);">
+                        <div style="font-size: 1.3rem; font-weight: bold; color: #00FF88; margin-bottom: 10px;">☀️ Break on the Bright Side</div>
+                        <div style="color: #888; font-size: 0.9rem; margin-bottom: 15px;">Artist: <strong style="color: #00FF88;">Batrhyme</strong> • Genre: Hip-Hop • Duration: 4:30</div>
+                        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                            <div style="background: rgba(0, 255, 136, 0.1); padding: 8px 15px; border-radius: 6px; border: 1px solid rgba(0, 255, 136, 0.3);">
+                                <span style="color: #888; font-size: 0.8rem;">Price</span><br>
+                                <span style="color: #00FF88; font-weight: bold;">0.001 Solar</span>
+                            </div>
+                            <div style="background: rgba(0, 255, 136, 0.1); padding: 8px 15px; border-radius: 6px; border: 1px solid rgba(0, 255, 136, 0.3);">
+                                <span style="color: #888; font-size: 0.8rem;">Or</span><br>
+                                <span style="color: #00FF88; font-weight: bold;">1 Ray</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="flex: 1; min-width: 250px; max-width: 400px; display: flex; flex-direction: column; gap: 15px;">
+                    <a href="/music-now.html#batrhyme" data-testid="link-batrhyme-stream" style="display: block; background: linear-gradient(135deg, #000000, #0a1a0f); border: 2px solid #00FF88; color: #00FF88; padding: 15px 25px; border-radius: 10px; text-decoration: none; font-weight: bold; font-size: 1rem; text-align: center; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);">
+                        🎵 Stream Free on Music Now
+                    </a>
+                    <button onclick="purchaseBatrhymeSingle()" data-testid="button-purchase-batrhyme" style="background: linear-gradient(135deg, #00FF88, #00CC66); border: none; color: #000; padding: 15px 25px; border-radius: 10px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0, 255, 136, 0.4);">
+                        💫 Purchase for 0.001 Solar
+                    </button>
+                </div>
+            </div>
+            
+            <div style="margin-top: 20px; padding: 15px; background: rgba(0, 0, 0, 0.5); border-radius: 8px; border-left: 3px solid #00FF88;">
+                <p style="color: #aaa; font-size: 0.9rem; margin: 0; line-height: 1.6;">
+                    <strong style="color: #00FF88;">About the Track:</strong> "Break on the Bright Side" is Batrhyme's debut single on TC-S Network, blending conscious hip-hop with solar-powered optimism. The track celebrates the transition to renewable energy and the new economic paradigm where value flows like sunlight.
+                </p>
+            </div>
+        </div>
+
         <!-- User Info (Hidden by default) -->
         <div class="user-info" id="user-info">
             <div>Logged in as: <span id="username"></span></div>
@@ -2786,6 +2828,65 @@
                 }
             } catch (error) {
                 console.error('Track purchase error:', error);
+                alert('❌ Purchase failed. Please try again.');
+            }
+        }
+
+        async function purchaseBatrhymeSingle() {
+            if (!currentUser) {
+                showSignupModal();
+                return;
+            }
+
+            const batrhymeTrack = {
+                id: 'batrhyme-break-on-the-bright-side',
+                title: 'Break on the Bright Side',
+                artist: 'Batrhyme',
+                priceSolar: 0.001,
+                priceRays: 1,
+                genre: 'Hip-Hop',
+                duration: '4:30',
+                deliveryUrl: '/media/batrhyme-break-on-the-bright-side.mp3'
+            };
+
+            const confirmed = confirm(`☀️ Purchase "${batrhymeTrack.title}"?\n\nArtist: ${batrhymeTrack.artist}\nPrice: ${batrhymeTrack.priceSolar} Solar (or ${batrhymeTrack.priceRays} Ray)\nGenre: ${batrhymeTrack.genre}\nDuration: ${batrhymeTrack.duration}\n\nProceed with purchase?`);
+            
+            if (!confirmed) return;
+
+            try {
+                const response = await fetch('/api/marketplace/purchase', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        artifactId: batrhymeTrack.id,
+                        buyerEmail: currentUser.email || 'member@thecurrentsee.org',
+                        solarAmount: batrhymeTrack.priceSolar
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert(`☀️ ${result.message || 'Purchase successful!'}`);
+                    
+                    // Initiate track download
+                    const downloadUrl = batrhymeTrack.deliveryUrl;
+                    const link = document.createElement('a');
+                    link.href = downloadUrl;
+                    link.download = 'batrhyme-break-on-the-bright-side.mp3';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    console.log('☀️ Batrhyme track purchased:', result.purchase);
+                } else {
+                    alert(`❌ Purchase failed: ${result.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                console.error('Batrhyme purchase error:', error);
                 alert('❌ Purchase failed. Please try again.');
             }
         }
