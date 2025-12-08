@@ -720,6 +720,13 @@
       </div>
     </div>
 
+    <!-- Play All Singles Button -->
+    <div style="text-align: center; margin: 2rem auto; max-width: 800px;">
+      <button id="playAllButton" onclick="playAllSingles()" style="background: linear-gradient(135deg, #ff8c00, #ff6600); border: none; color: white; padding: 15px 40px; border-radius: 30px; font-weight: bold; font-size: 1.1rem; cursor: pointer; box-shadow: 0 4px 15px rgba(255, 140, 0, 0.4); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(255, 140, 0, 0.6)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(255, 140, 0, 0.4)'" data-testid="button-play-all-singles">
+        🎵 Play All Singles
+      </button>
+    </div>
+
     <div class="cards-grid">
       
       <!-- Card 1: TC-S Network Foundation, Inc. -->
@@ -913,6 +920,64 @@
         images[currentIndex].classList.add('active');
       }, 4000); // Rotate every 4 seconds
     })();
+
+    // Play All Singles functionality
+    let allSinglesMode = false;
+    
+    function playAllSingles() {
+      const button = document.getElementById('playAllButton');
+      const batrhymePlayer = document.getElementById('batrhymePlayerIndex');
+      const gidgetPlayer = document.getElementById('gidgetPlayerIndex');
+      
+      if (!allSinglesMode) {
+        // Start all singles mode
+        allSinglesMode = true;
+        button.textContent = '⏹️ Stop All Singles';
+        button.style.background = 'linear-gradient(135deg, #dc143c, #b91c3c)';
+        
+        // Play Batrhyme first
+        batrhymePlayer.play();
+        
+        // Set up auto-advance to Gidget when Batrhyme ends
+        batrhymePlayer.onended = () => {
+          if (allSinglesMode) {
+            gidgetPlayer.play();
+          }
+        };
+        
+        // After Gidget ends, loop back to Batrhyme or stop
+        gidgetPlayer.onended = () => {
+          if (allSinglesMode) {
+            // Loop back to Batrhyme
+            batrhymePlayer.currentTime = 0;
+            batrhymePlayer.play();
+          }
+        };
+      } else {
+        // Stop all singles mode
+        stopAllSingles();
+      }
+    }
+    
+    function stopAllSingles() {
+      const button = document.getElementById('playAllButton');
+      const batrhymePlayer = document.getElementById('batrhymePlayerIndex');
+      const gidgetPlayer = document.getElementById('gidgetPlayerIndex');
+      
+      allSinglesMode = false;
+      button.textContent = '🎵 Play All Singles';
+      button.style.background = 'linear-gradient(135deg, #ff8c00, #ff6600)';
+      
+      // Stop both players
+      batrhymePlayer.pause();
+      batrhymePlayer.currentTime = 0;
+      gidgetPlayer.pause();
+      gidgetPlayer.currentTime = 0;
+      
+      // Remove event listeners
+      batrhymePlayer.onended = null;
+      gidgetPlayer.onended = null;
+    }
   </script>
 
 </body>
