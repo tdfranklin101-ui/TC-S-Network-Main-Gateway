@@ -592,53 +592,58 @@
         <span style="background: linear-gradient(135deg, #000000, #0a1a0f); border: 2px solid #00FF88; color: #00FF88; font-weight: 900; padding: 0.5rem 1.2rem; border-radius: 25px; font-size: 0.85rem; letter-spacing: 1px; box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3); text-transform: uppercase; display: inline-block;">🆕 NEW MUSIC NOW SINGLE</span>
       </div>
       
-      <a href="/music-now.html#batrhyme" style="display: block; text-decoration: none; transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 32px rgba(0, 255, 136, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 24px rgba(0, 255, 136, 0.3)'" data-testid="link-batrhyme-music">
-        <div style="background: rgba(0, 0, 0, 0.8); padding: 1.5rem; border-radius: 12px; display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;">
-          <div style="background: linear-gradient(135deg, #000000, #0a1a0f); border: 2px solid #00FF88; width: 80px; height: 80px; border-radius: 12px; display: flex; justify-content: center; align-items: center; flex-shrink: 0; box-shadow: 0 4px 12px rgba(0, 255, 136, 0.4);">
-            <span style="color: #00FF88; font-size: 2.5rem; font-weight: bold;">☀️</span>
-          </div>
-          <div style="flex: 1; min-width: 250px;">
+      <div style="background: rgba(0, 0, 0, 0.8); padding: 1.5rem; border-radius: 12px;">
+        <div style="display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 1rem;">
+          <img src="/batrhyme-bright-side-cover.jpeg" alt="Break on the Bright Side - Batrhyme" style="width: 80px; height: 80px; border-radius: 12px; object-fit: cover; border: 2px solid #00FF88; box-shadow: 0 4px 12px rgba(0, 255, 136, 0.4); flex-shrink: 0; cursor: pointer;" onclick="document.getElementById('batrhymePlayerIndex').play(); this.style.boxShadow='0 0 20px rgba(0, 255, 136, 0.8)';" data-testid="img-batrhyme-cover">
+          <div style="flex: 1; min-width: 200px;">
             <h3 style="margin: 0 0 0.5rem 0; color: #00FF88; font-weight: 900; font-size: 1.4rem; text-shadow: 0 2px 8px rgba(0, 255, 136, 0.6);">Break on the Bright Side</h3>
             <p style="margin: 0; color: rgba(255, 255, 255, 0.9); font-size: 1rem;">by Batrhyme</p>
-            <p style="margin: 0.5rem 0 0 0; color: #00CC6A; font-size: 0.9rem; font-weight: 600;">🎵 New Single - Hip-Hop • Positive Vibes</p>
-            <p style="margin: 0.75rem 0 0 0; color: #00FF88; font-size: 0.95rem; font-weight: 600;">
-              Stream it now: <a href="/music-now.html#batrhyme" style="color: #00CC6A; text-decoration: underline; transition: color 0.2s;" onmouseover="this.style.color='#00FF88'" onmouseout="this.style.color='#00CC6A'">Music Now</a>
-            </p>
-            <p style="margin: 0.25rem 0 0 0; color: #00FF88; font-size: 0.95rem; font-weight: 600;">
-              or download: <a href="/marketplace.html#batrhyme-break-on-the-bright-side" style="color: #00CC6A; text-decoration: underline; transition: color 0.2s;" onmouseover="this.style.color='#00FF88'" onmouseout="this.style.color='#00CC6A'">Marketplace</a>
-            </p>
+            <p style="margin: 0.5rem 0 0 0; color: #00CC6A; font-size: 0.9rem; font-weight: 600;">🎵 Hip-Hop • Positive Vibes</p>
           </div>
-          <div style="color: #00FF88; font-size: 2rem; font-weight: bold; flex-shrink: 0;">→</div>
+          <button onclick="document.getElementById('batrhymePlayerIndex').play();" style="background: linear-gradient(135deg, #00FF88, #00CC66); border: none; color: #000; padding: 12px 24px; border-radius: 25px; font-weight: bold; font-size: 1rem; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(0, 255, 136, 0.4);" data-testid="button-play-batrhyme">
+            ▶️ Play
+          </button>
         </div>
-      </a>
+        <audio id="batrhymePlayerIndex" controls preload="none" style="width: 100%; margin: 0.5rem 0;" data-testid="audio-batrhyme-index">
+          <source src="/media/batrhyme-break-on-the-bright-side.mp3" type="audio/mpeg">
+        </audio>
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.75rem;">
+          <a href="/marketplace.html#batrhyme-break-on-the-bright-side" style="color: #00CC6A; font-size: 0.9rem; font-weight: 600; text-decoration: none; border: 1px solid #00CC6A; padding: 6px 12px; border-radius: 6px;" data-testid="link-batrhyme-download">💾 Download (0.001 Solar)</a>
+          <a href="/music-now.html#batrhyme" style="color: #00CC6A; font-size: 0.9rem; font-weight: 600; text-decoration: none; border: 1px solid #00CC6A; padding: 6px 12px; border-radius: 6px;" data-testid="link-batrhyme-musicnow">🎵 Music Now</a>
+        </div>
+      </div>
     </div>
 
-    <!-- Featured Music Video Section -->
-    <div style="max-width: 800px; margin: 1.5rem auto 2rem; padding: 2rem; background: linear-gradient(135deg, rgba(0, 0, 0, 0.95), rgba(26, 26, 26, 0.95)); border-radius: 16px; border: 3px solid #FFD700; box-shadow: 0 8px 24px rgba(255, 215, 0, 0.4);" data-testid="section-featured-video">
+    <!-- Featured Music - Gidget Bardot Section -->
+    <div style="max-width: 800px; margin: 1.5rem auto 2rem; padding: 2rem; background: linear-gradient(135deg, rgba(0, 0, 0, 0.95), rgba(26, 26, 26, 0.95)); border-radius: 16px; border: 3px solid #FFD700; box-shadow: 0 8px 24px rgba(255, 215, 0, 0.4);" data-testid="section-featured-gidget">
       <div style="text-align: center; margin-bottom: 1.5rem;">
-        <span style="background: linear-gradient(135deg, #000000, #1a1a1a); border: 2px solid #FFD700; color: #FFD700; font-weight: 900; padding: 0.5rem 1.2rem; border-radius: 25px; font-size: 0.85rem; letter-spacing: 1px; box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3); text-transform: uppercase; display: inline-block;">🎬 MUSIC NOW MUSIC VIDEO</span>
+        <span style="background: linear-gradient(135deg, #000000, #1a1a1a); border: 2px solid #FFD700; color: #FFD700; font-weight: 900; padding: 0.5rem 1.2rem; border-radius: 25px; font-size: 0.85rem; letter-spacing: 1px; box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3); text-transform: uppercase; display: inline-block;">🎬 NEW MUSIC NOW SINGLE + VIDEO</span>
       </div>
       
-      <a href="https://vimeo.com/1132091578?fl=pl&fe=sh" target="_blank" style="display: block; text-decoration: none; transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 32px rgba(255, 215, 0, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 24px rgba(255, 215, 0, 0.3)'" data-testid="link-gidget-bardot-video">
-        <div style="background: rgba(0, 0, 0, 0.8); padding: 1.5rem; border-radius: 12px; display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;">
-          <div style="background: linear-gradient(135deg, #000000, #1a1a1a); border: 2px solid #FFD700; width: 80px; height: 80px; border-radius: 12px; display: flex; justify-content: center; align-items: center; flex-shrink: 0; box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);">
-            <span style="color: #FFD700; font-size: 2.5rem; font-weight: bold;">▶️</span>
+      <div style="background: rgba(0, 0, 0, 0.8); padding: 1.5rem; border-radius: 12px;">
+        <div style="display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 1rem;">
+          <div style="background: linear-gradient(135deg, #000000, #1a1a1a); border: 2px solid #FFD700; width: 80px; height: 80px; border-radius: 12px; display: flex; justify-content: center; align-items: center; flex-shrink: 0; box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4); cursor: pointer;" onclick="document.getElementById('gidgetPlayerIndex').play(); this.style.boxShadow='0 0 20px rgba(255, 215, 0, 0.8)';" data-testid="img-gidget-cover">
+            <span style="color: #FFD700; font-size: 2.5rem;">✨</span>
           </div>
-          <div style="flex: 1; min-width: 250px;">
+          <div style="flex: 1; min-width: 200px;">
             <h3 style="margin: 0 0 0.5rem 0; color: #FFD700; font-weight: 900; font-size: 1.4rem; text-shadow: 0 2px 8px rgba(255, 215, 0, 0.6);">No One Left (to care)</h3>
             <p style="margin: 0; color: rgba(255, 255, 255, 0.9); font-size: 1rem;">by Gidget Bardot</p>
-            <p style="margin: 0.5rem 0 0 0; color: #DAA520; font-size: 0.9rem; font-weight: 600;">🎵 Official Music Video</p>
-            <p style="margin: 0.5rem 0 0 0; color: rgba(255, 255, 255, 0.6); font-size: 0.8rem; font-style: italic;">Single and video also available on selected streaming platforms (Apple, Spotify and you know the others)</p>
-            <p style="margin: 0.75rem 0 0 0; color: #FFD700; font-size: 0.95rem; font-weight: 600;">
-              You can stream it right here: <a href="/music-now.html#gidget-bardot" style="color: #DAA520; text-decoration: underline; transition: color 0.2s;" onmouseover="this.style.color='#FFD700'" onmouseout="this.style.color='#DAA520'">Music Now</a>
-            </p>
-            <p style="margin: 0.25rem 0 0 0; color: #FFD700; font-size: 0.95rem; font-weight: 600;">
-              or download in the marketplace here: <a href="/marketplace.html" style="color: #DAA520; text-decoration: underline; transition: color 0.2s;" onmouseover="this.style.color='#FFD700'" onmouseout="this.style.color='#DAA520'">Market</a>
-            </p>
+            <p style="margin: 0.5rem 0 0 0; color: #DAA520; font-size: 0.9rem; font-weight: 600;">🎵 Indie Pop • Electronic</p>
           </div>
-          <div style="color: #FFD700; font-size: 2rem; font-weight: bold; flex-shrink: 0;">→</div>
+          <button onclick="document.getElementById('gidgetPlayerIndex').play();" style="background: linear-gradient(135deg, #FFD700, #DAA520); border: none; color: #000; padding: 12px 24px; border-radius: 25px; font-weight: bold; font-size: 1rem; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);" data-testid="button-play-gidget">
+            ▶️ Play
+          </button>
         </div>
-      </a>
+        <audio id="gidgetPlayerIndex" controls preload="none" style="width: 100%; margin: 0.5rem 0;" data-testid="audio-gidget-index">
+          <source src="/media/gidget-bardot-no-one-left-v3.mp3" type="audio/mpeg">
+        </audio>
+        <p style="margin: 0.5rem 0; color: rgba(255, 255, 255, 0.6); font-size: 0.8rem; font-style: italic; text-align: center;">Also on Apple Music, Spotify and other streaming platforms</p>
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.75rem;">
+          <a href="https://vimeo.com/1132091578?fl=pl&fe=sh" target="_blank" style="color: #FFD700; font-size: 0.9rem; font-weight: 600; text-decoration: none; border: 1px solid #FFD700; padding: 6px 12px; border-radius: 6px;" data-testid="link-gidget-video">🎬 Music Video</a>
+          <a href="/marketplace.html#gidget-bardot-no-one-left" style="color: #DAA520; font-size: 0.9rem; font-weight: 600; text-decoration: none; border: 1px solid #DAA520; padding: 6px 12px; border-radius: 6px;" data-testid="link-gidget-download">💾 Download (0.001 Solar)</a>
+          <a href="/music-now.html#gidget-bardot" style="color: #DAA520; font-size: 0.9rem; font-weight: 600; text-decoration: none; border: 1px solid #DAA520; padding: 6px 12px; border-radius: 6px;" data-testid="link-gidget-musicnow">🎵 Music Now</a>
+        </div>
+      </div>
     </div>
 
     <div class="cards-grid">
