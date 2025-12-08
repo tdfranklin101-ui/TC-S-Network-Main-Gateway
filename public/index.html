@@ -293,6 +293,81 @@
       background: rgba(0, 20, 10, 0.95);
     }
     
+    /* DMTXACTLY Rotating Background Carousel */
+    .card.dmtxactly {
+      position: relative;
+      overflow: hidden;
+      border-color: #8B5CF6;
+    }
+    
+    .card.dmtxactly .bg-carousel {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 0;
+    }
+    
+    .card.dmtxactly .bg-carousel img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0;
+      transition: opacity 1.5s ease-in-out;
+    }
+    
+    .card.dmtxactly .bg-carousel img.active {
+      opacity: 1;
+    }
+    
+    .card.dmtxactly::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.55);
+      z-index: 1;
+      border-radius: 18px;
+    }
+    
+    .card.dmtxactly * {
+      position: relative;
+      z-index: 2;
+    }
+    
+    .card.dmtxactly h2 {
+      color: #ffffff;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9), 0 0 20px rgba(139, 92, 246, 0.8), 0 0 40px rgba(139, 92, 246, 0.4);
+      font-weight: 800;
+    }
+    
+    .card.dmtxactly p {
+      color: #ffffff;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9), 0 0 10px rgba(0, 0, 0, 0.5);
+      font-weight: 500;
+    }
+    
+    .card.dmtxactly .card-icon {
+      filter: drop-shadow(0 0 25px rgba(139, 92, 246, 0.9)) drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
+    }
+    
+    .card.dmtxactly .card-icon svg polygon,
+    .card.dmtxactly .card-icon svg line,
+    .card.dmtxactly .card-icon svg circle {
+      stroke: #ffffff;
+      fill: none;
+    }
+    
+    .card.dmtxactly .card-icon svg circle {
+      fill: #ffffff;
+    }
+    
     .card h2 {
       color: #00f5d4;
       font-size: 1.8rem;
@@ -678,8 +753,15 @@
         </a>
       </div>
       
-      <!-- Card: DMTXACTLY -->
+      <!-- Card: DMTXACTLY with Rotating Background -->
       <div class="card dmtxactly" data-testid="card-dmtxactly" style="border-color: #8B5CF6;">
+        <div class="bg-carousel" data-testid="dmtxactly-bg-carousel">
+          <img src="/dmtx-bg-1.png" class="active" alt="">
+          <img src="/dmtx-bg-2.png" alt="">
+          <img src="/dmtx-bg-3.png" alt="">
+          <img src="/dmtx-bg-4.png" alt="">
+          <img src="/dmtx-bg-5.jpeg" alt="">
+        </div>
         <div class="card-icon">
           <svg class="octagon-network" viewBox="0 0 100 100">
             <!-- Octagon shape -->
@@ -812,6 +894,25 @@
     "isBasedOn": "https://www.thecurrentsee.org/SolarStandard.html",
     "encodingFormat": "application/json"
   }
+  </script>
+
+  <script>
+    // DMTXACTLY Background Carousel Rotation
+    (function() {
+      const carousel = document.querySelector('.card.dmtxactly .bg-carousel');
+      if (!carousel) return;
+      
+      const images = carousel.querySelectorAll('img');
+      if (images.length === 0) return;
+      
+      let currentIndex = 0;
+      
+      setInterval(() => {
+        images[currentIndex].classList.remove('active');
+        currentIndex = (currentIndex + 1) % images.length;
+        images[currentIndex].classList.add('active');
+      }, 4000); // Rotate every 4 seconds
+    })();
   </script>
 
 </body>
