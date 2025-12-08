@@ -1,65 +1,5 @@
 [
   {
-    "date": "2025-11-24",
-    "indices": [
-      {
-        "id": "si",
-        "value": 44.9
-      },
-      {
-        "id": "srh",
-        "value": 77.4
-      },
-      {
-        "id": "gbi",
-        "value": 41.5
-      },
-      {
-        "id": "cai",
-        "value": 89.5
-      },
-      {
-        "id": "mli",
-        "value": 23.6
-      },
-      {
-        "id": "eai",
-        "value": 92.1
-      }
-    ],
-    "timestamp": "2025-11-24T22:31:59.597Z"
-  },
-  {
-    "date": "2025-11-25",
-    "indices": [
-      {
-        "id": "si",
-        "value": 45.1
-      },
-      {
-        "id": "srh",
-        "value": 78.5
-      },
-      {
-        "id": "gbi",
-        "value": 41
-      },
-      {
-        "id": "cai",
-        "value": 89.4
-      },
-      {
-        "id": "mli",
-        "value": 23.9
-      },
-      {
-        "id": "eai",
-        "value": 92.4
-      }
-    ],
-    "timestamp": "2025-11-25T03:07:57.055Z"
-  },
-  {
     "date": "2025-11-25",
     "indices": [
       {
@@ -898,5 +838,65 @@
       }
     ],
     "timestamp": "2025-12-07T04:34:51.417Z"
+  },
+  {
+    "date": "2025-12-08",
+    "indices": [
+      {
+        "id": "si",
+        "value": 72.4
+      },
+      {
+        "id": "srh",
+        "value": 77.6
+      },
+      {
+        "id": "gbi",
+        "value": 41
+      },
+      {
+        "id": "cai",
+        "value": 87.9
+      },
+      {
+        "id": "mli",
+        "value": 24
+      },
+      {
+        "id": "eai",
+        "value": 91.5
+      }
+    ],
+    "timestamp": "2025-12-08T00:13:37.502Z"
+  },
+  {
+    "date": "2025-12-08",
+    "indices": [
+      {
+        "id": "si",
+        "value": 72.4
+      },
+      {
+        "id": "srh",
+        "value": 76.6
+      },
+      {
+        "id": "gbi",
+        "value": 40.7
+      },
+      {
+        "id": "cai",
+        "value": 89.3
+      },
+      {
+        "id": "mli",
+        "value": 24.3
+      },
+      {
+        "id": "eai",
+        "value": 92.8
+      }
+    ],
+    "timestamp": "2025-12-08T00:14:53.644Z"
   }
 ]
