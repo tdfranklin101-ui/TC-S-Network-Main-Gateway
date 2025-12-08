@@ -1948,6 +1948,51 @@
             </div>
         </div>
 
+        <!-- NEW: Gidget Bardot Featured Single Section -->
+        <div id="gidget-bardot-no-one-left" class="featured-section" style="margin: 30px 0; padding: 25px; background: linear-gradient(135deg, rgba(0, 0, 0, 0.9), rgba(255, 215, 0, 0.15)); border: 3px solid #FFD700; border-radius: 15px; box-shadow: 0 8px 20px rgba(255, 215, 0, 0.4); scroll-margin-top: 80px;">
+            <div class="featured-header" style="text-align: center; margin-bottom: 20px;">
+                <h2 style="color: #FFD700; font-size: 1.8rem; margin-bottom: 10px;">✨ Featured Single: Gidget Bardot</h2>
+                <p style="color: #aaa; font-size: 1rem;">"No One Left (to care)" - Indie Pop for the digital age</p>
+            </div>
+            
+            <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: center; justify-content: center;">
+                <div style="flex: 1; min-width: 250px; max-width: 400px;">
+                    <div style="background: rgba(0, 0, 0, 0.6); border-radius: 12px; padding: 20px; border: 1px solid rgba(255, 215, 0, 0.3);">
+                        <div style="font-size: 1.3rem; font-weight: bold; color: #FFD700; margin-bottom: 10px;">✨ No One Left (to care)</div>
+                        <div style="color: #888; font-size: 0.9rem; margin-bottom: 15px;">Artist: <strong style="color: #FFD700;">Gidget Bardot</strong> • Genre: Indie Pop • Duration: 5:37</div>
+                        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                            <div style="background: rgba(255, 215, 0, 0.1); padding: 8px 15px; border-radius: 6px; border: 1px solid rgba(255, 215, 0, 0.3);">
+                                <span style="color: #888; font-size: 0.8rem;">Price</span><br>
+                                <span style="color: #FFD700; font-weight: bold;">0.001 Solar</span>
+                            </div>
+                            <div style="background: rgba(255, 215, 0, 0.1); padding: 8px 15px; border-radius: 6px; border: 1px solid rgba(255, 215, 0, 0.3);">
+                                <span style="color: #888; font-size: 0.8rem;">Or</span><br>
+                                <span style="color: #FFD700; font-weight: bold;">1 Ray</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="flex: 1; min-width: 250px; max-width: 400px; display: flex; flex-direction: column; gap: 15px;">
+                    <a href="/music-now.html#gidget-bardot" data-testid="link-gidget-stream" style="display: block; background: linear-gradient(135deg, #000000, #1a1a1a); border: 2px solid #FFD700; color: #FFD700; padding: 15px 25px; border-radius: 10px; text-decoration: none; font-weight: bold; font-size: 1rem; text-align: center; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);">
+                        🎵 Stream Free on Music Now
+                    </a>
+                    <a href="https://vimeo.com/1132091578?fl=pl&fe=sh" target="_blank" rel="noopener noreferrer" data-testid="link-gidget-video" style="display: block; background: linear-gradient(135deg, #000000, #1a1a1a); border: 2px solid #DAA520; color: #DAA520; padding: 12px 25px; border-radius: 10px; text-decoration: none; font-weight: bold; font-size: 0.95rem; text-align: center; transition: all 0.3s ease;">
+                        🎬 Watch Music Video on Vimeo
+                    </a>
+                    <button onclick="purchaseGidgetSingle()" data-testid="button-purchase-gidget" style="background: linear-gradient(135deg, #FFD700, #DAA520); border: none; color: #000; padding: 15px 25px; border-radius: 10px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);">
+                        💫 Purchase for 0.001 Solar
+                    </button>
+                </div>
+            </div>
+            
+            <div style="margin-top: 20px; padding: 15px; background: rgba(0, 0, 0, 0.5); border-radius: 8px; border-left: 3px solid #FFD700;">
+                <p style="color: #aaa; font-size: 0.9rem; margin: 0; line-height: 1.6;">
+                    <strong style="color: #FFD700;">About the Track:</strong> "No One Left (to care)" explores themes of connection and solitude in the digital age. Gidget Bardot's atmospheric vocals blend indie pop with electronic production, creating a haunting meditation on what it means to be truly seen in an increasingly disconnected world. Also available on Apple Music, Spotify, and other streaming platforms.
+                </p>
+            </div>
+        </div>
+
         <!-- User Info (Hidden by default) -->
         <div class="user-info" id="user-info">
             <div>Logged in as: <span id="username"></span></div>
@@ -2887,6 +2932,64 @@
                 }
             } catch (error) {
                 console.error('Batrhyme purchase error:', error);
+                alert('❌ Purchase failed. Please try again.');
+            }
+        }
+
+        async function purchaseGidgetSingle() {
+            if (!currentUser) {
+                showSignupModal();
+                return;
+            }
+
+            const gidgetTrack = {
+                id: 'gidget-bardot-no-one-left',
+                title: 'No One Left (to care)',
+                artist: 'Gidget Bardot',
+                priceSolar: 0.001,
+                priceRays: 1,
+                genre: 'Indie Pop',
+                duration: '5:37',
+                deliveryUrl: '/media/gidget-bardot-no-one-left-v3.mp3'
+            };
+
+            const confirmed = confirm(`✨ Purchase "${gidgetTrack.title}"?\n\nArtist: ${gidgetTrack.artist}\nPrice: ${gidgetTrack.priceSolar} Solar (or ${gidgetTrack.priceRays} Ray)\nGenre: ${gidgetTrack.genre}\nDuration: ${gidgetTrack.duration}\n\nProceed with purchase?`);
+            
+            if (!confirmed) return;
+
+            try {
+                const response = await fetch('/api/marketplace/purchase', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        artifactId: gidgetTrack.id,
+                        buyerEmail: currentUser.email || 'member@thecurrentsee.org',
+                        solarAmount: gidgetTrack.priceSolar
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert(`✨ ${result.message || 'Purchase successful!'}`);
+                    
+                    const downloadUrl = gidgetTrack.deliveryUrl;
+                    const link = document.createElement('a');
+                    link.href = downloadUrl;
+                    link.download = 'gidget-bardot-no-one-left.mp3';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    console.log('✨ Gidget Bardot track purchased:', result.purchase);
+                } else {
+                    alert(`❌ Purchase failed: ${result.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                console.error('Gidget Bardot purchase error:', error);
                 alert('❌ Purchase failed. Please try again.');
             }
         }

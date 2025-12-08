@@ -345,29 +345,29 @@
           </a>
         </div>
         
-        <!-- BATRHYME - NEW MUSIC SECTION -->
-        <div id="batrhyme" style="margin: 40px 0; padding: 30px; background: linear-gradient(135deg, rgba(0, 0, 0, 0.8), rgba(0, 255, 136, 0.15)); border: 3px solid #00FF88; border-radius: 15px; box-shadow: 0 8px 20px rgba(0, 255, 136, 0.4); scroll-margin-top: 80px;">
-            <h1 style="text-align: center; color: #00FF88; margin-bottom: 25px; font-size: 2.2em; text-shadow: 0 2px 8px rgba(0, 255, 136, 0.6);">🎵 BATRHYME - NEW MUSIC 🎵</h1>
+        <!-- FEATURED SINGLES - Standard Card Layout -->
+        <div class="player-section" style="background: linear-gradient(135deg, rgba(255, 140, 0, 0.1), rgba(218, 165, 32, 0.1)); border: 2px solid #ff8c00; margin-bottom: 25px;">
+            <h2 style="text-align: center; color: #ff8c00; margin-bottom: 20px; font-size: 1.6em;">🎤 FEATURED SINGLES 🎤</h2>
             
-            <!-- Artist Photo/Artwork -->
-            <div style="text-align: center; margin-bottom: 25px;">
-                <div style="width: 280px; height: 280px; margin: 0 auto; background: linear-gradient(135deg, #000000, #0a1a0f, #1a2d1f); border-radius: 15px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 16px rgba(0, 255, 136, 0.3); border: 3px solid #00FF88;">
-                    <div style="text-align: center; color: #00FF88;">
-                        <div style="font-size: 4rem; margin-bottom: 10px;">☀️</div>
-                        <div style="font-size: 1.5rem; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">Batrhyme</div>
-                        <div style="font-size: 1rem; margin-top: 8px; opacity: 0.9; color: #00CC6A;">Hip-Hop • Positive Vibes</div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Track Player Section -->
-            <div style="background: rgba(0, 0, 0, 0.6); border: 2px solid #00FF88; border-radius: 12px; padding: 25px; margin-bottom: 20px;">
-                <h3 style="color: #00FF88; text-align: center; margin-bottom: 20px; font-size: 1.4em;">🎶 Featured Single</h3>
-                
-                <!-- Track Button -->
-                <button class="track-button" data-testid="track-button-batrhyme" onclick="playBatrhymeTrack()" style="background: linear-gradient(135deg, #000000, #0a1a0f); border: 2px solid #00FF88; width: 100%; padding: 15px 20px; border-radius: 8px; color: #00FF88; font-size: 18px; font-weight: bold; cursor: pointer; transition: all 0.3s ease; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3);">
+            <!-- BATRHYME Card -->
+            <div id="batrhyme" style="margin-bottom: 20px; scroll-margin-top: 80px;">
+                <button class="track-button" data-testid="track-button-batrhyme" onclick="playBatrhymeTrack()" style="background: linear-gradient(135deg, #000000, #0a1a0f); border: 2px solid #00FF88; color: #00FF88;">
                     ☀️ Break on the Bright Side - Batrhyme
                 </button>
+                
+                <!-- Batrhyme Artwork -->
+                <div style="display: flex; gap: 15px; margin: 10px 0; justify-content: center; align-items: center;">
+                    <div style="width: 100px; height: 100px; background: linear-gradient(135deg, #000000, #0a1a0f); border-radius: 8px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0, 255, 136, 0.3); border: 2px solid #00FF88;">
+                        <div style="text-align: center; color: #00FF88;">
+                            <div style="font-size: 2rem;">☀️</div>
+                            <div style="font-size: 0.7rem; font-weight: bold;">Batrhyme</div>
+                        </div>
+                    </div>
+                    <div style="flex: 1; max-width: 300px;">
+                        <p style="color: #00FF88; margin: 0 0 5px 0; font-size: 0.85rem; font-weight: bold;">Hip-Hop • Positive Vibes</p>
+                        <p style="color: #aaa; margin: 0; font-size: 0.8rem; line-height: 1.4;">Uplifting anthem of optimism with infectious beats</p>
+                    </div>
+                </div>
                 
                 <!-- Now Playing for Batrhyme -->
                 <div class="now-playing" id="nowPlayingBatrhyme" style="display: none; color: #00FF88; border-color: #00FF88;">
@@ -375,53 +375,37 @@
                 </div>
                 
                 <!-- Audio Player for Batrhyme -->
-                <audio id="audioPlayerBatrhyme" class="audio-player" data-testid="audio-player-batrhyme" controls preload="none" style="width: 100%; margin: 15px 0;">
+                <audio id="audioPlayerBatrhyme" class="audio-player" data-testid="audio-player-batrhyme" controls preload="none" style="width: 100%; margin: 10px 0;">
                     Your browser does not support the audio element.
                 </audio>
                 
                 <!-- Marketplace Link -->
-                <div style="text-align: center; margin: 20px 0;">
-                    <a href="/marketplace.html#batrhyme-break-on-the-bright-side" data-testid="link-batrhyme-marketplace" style="display: inline-block; background: linear-gradient(135deg, #000000, #0a1a0f); border: 2px solid #00FF88; color: #00FF88; padding: 15px 30px; border-radius: 10px; text-decoration: none; font-weight: bold; font-size: 1.1rem; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0, 255, 136, 0.4);">
-                        💾 Download in Marketplace (Solar)
+                <div style="text-align: center; margin: 10px 0;">
+                    <a href="/marketplace.html#batrhyme-break-on-the-bright-side" data-testid="link-batrhyme-marketplace" style="display: inline-block; background: linear-gradient(135deg, #000000, #0a1a0f); border: 1px solid #00FF88; color: #00FF88; padding: 8px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 0.9rem; transition: all 0.3s ease;">
+                        💾 Download (0.001 Solar)
                     </a>
                 </div>
             </div>
             
-            <!-- About the Artist -->
-            <div style="background: rgba(0, 0, 0, 0.4); border-radius: 10px; padding: 20px; border: 1px solid #00CC6A;">
-                <h4 style="color: #00FF88; margin: 0 0 12px 0;">About Batrhyme</h4>
-                <p style="color: #ddd; margin: 0; line-height: 1.6; font-size: 0.95rem;">
-                    Uplifting hip-hop artist bringing positive energy and bright vibes. "Break on the Bright Side" is an anthem of optimism and resilience, featuring infectious beats and empowering lyrics that encourage looking at life from its brightest angle.
-                </p>
-            </div>
-        </div>
-        
-        <!-- Visual Separator -->
-        <div style="height: 60px; background: linear-gradient(to bottom, transparent, rgba(0,255,136,0.1), transparent); margin: 40px 0;"></div>
-        
-        <!-- GIDGET BARDOT - NEW MUSIC SECTION -->
-        <div id="gidget-bardot" style="margin: 40px 0; padding: 30px; background: linear-gradient(135deg, rgba(0, 0, 0, 0.8), rgba(218, 165, 32, 0.15)); border: 3px solid #FFD700; border-radius: 15px; box-shadow: 0 8px 20px rgba(255, 215, 0, 0.4); scroll-margin-top: 80px;">
-            <h1 style="text-align: center; color: #FFD700; margin-bottom: 25px; font-size: 2.2em; text-shadow: 0 2px 8px rgba(255, 215, 0, 0.6);">🎵 GIDGET BARDOT - NEW MUSIC 🎵</h1>
-            
-            <!-- Artist Photo/Artwork -->
-            <div style="text-align: center; margin-bottom: 25px;">
-                <div style="width: 280px; height: 280px; margin: 0 auto; background: linear-gradient(135deg, #000000, #1a1a1a, #2d2d2d); border-radius: 15px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 16px rgba(255, 215, 0, 0.3); border: 3px solid #FFD700;">
-                    <div style="text-align: center; color: #FFD700;">
-                        <div style="font-size: 4rem; margin-bottom: 10px;">✨</div>
-                        <div style="font-size: 1.5rem; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">Gidget Bardot</div>
-                        <div style="font-size: 1rem; margin-top: 8px; opacity: 0.9; color: #DAA520;">Indie Pop • Electronic</div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Track Player Section -->
-            <div style="background: rgba(0, 0, 0, 0.6); border: 2px solid #FFD700; border-radius: 12px; padding: 25px; margin-bottom: 20px;">
-                <h3 style="color: #FFD700; text-align: center; margin-bottom: 20px; font-size: 1.4em;">🎶 Featured Single</h3>
-                
-                <!-- Track Button -->
-                <button class="track-button" data-testid="track-button-gidget" onclick="playGidgetTrack()" style="background: linear-gradient(135deg, #000000, #1a1a1a); border: 2px solid #FFD700; width: 100%; padding: 15px 20px; border-radius: 8px; color: #FFD700; font-size: 18px; font-weight: bold; cursor: pointer; transition: all 0.3s ease; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);">
+            <!-- GIDGET BARDOT Card -->
+            <div id="gidget-bardot" style="scroll-margin-top: 80px;">
+                <button class="track-button" data-testid="track-button-gidget" onclick="playGidgetTrack()" style="background: linear-gradient(135deg, #000000, #1a1a1a); border: 2px solid #FFD700; color: #FFD700;">
                     ✨ No One Left (to care) - Gidget Bardot
                 </button>
+                
+                <!-- Gidget Bardot Artwork -->
+                <div style="display: flex; gap: 15px; margin: 10px 0; justify-content: center; align-items: center;">
+                    <div style="width: 100px; height: 100px; background: linear-gradient(135deg, #000000, #1a1a1a); border-radius: 8px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(255, 215, 0, 0.3); border: 2px solid #FFD700;">
+                        <div style="text-align: center; color: #FFD700;">
+                            <div style="font-size: 2rem;">✨</div>
+                            <div style="font-size: 0.7rem; font-weight: bold;">Gidget Bardot</div>
+                        </div>
+                    </div>
+                    <div style="flex: 1; max-width: 300px;">
+                        <p style="color: #FFD700; margin: 0 0 5px 0; font-size: 0.85rem; font-weight: bold;">Indie Pop • Electronic</p>
+                        <p style="color: #aaa; margin: 0; font-size: 0.8rem; line-height: 1.4;">Atmospheric vocals exploring connection in the digital age</p>
+                    </div>
+                </div>
                 
                 <!-- Now Playing for Gidget -->
                 <div class="now-playing" id="nowPlayingGidget" style="display: none; color: #FFD700; border-color: #FFD700;">
@@ -429,38 +413,26 @@
                 </div>
                 
                 <!-- Audio Player for Gidget -->
-                <audio id="audioPlayerGidget" class="audio-player" data-testid="audio-player-gidget" controls preload="none" style="width: 100%; margin: 15px 0;">
+                <audio id="audioPlayerGidget" class="audio-player" data-testid="audio-player-gidget" controls preload="none" style="width: 100%; margin: 10px 0;">
                     Your browser does not support the audio element.
                 </audio>
                 
-                <!-- Video Link -->
-                <div style="text-align: center; margin: 20px 0;">
-                    <a href="https://vimeo.com/1132091578?fl=pl&fe=sh" target="_blank" rel="noopener noreferrer" data-testid="link-vimeo-video" style="display: inline-block; background: linear-gradient(135deg, #000000, #1a1a1a); border: 2px solid #FFD700; color: #FFD700; padding: 15px 30px; border-radius: 10px; text-decoration: none; font-weight: bold; font-size: 1.1rem; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);">
-                        🎬 Watch Official Music Video on Vimeo
+                <!-- Links Row -->
+                <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 10px 0;">
+                    <a href="https://vimeo.com/1132091578?fl=pl&fe=sh" target="_blank" rel="noopener noreferrer" data-testid="link-vimeo-video" style="display: inline-block; background: linear-gradient(135deg, #000000, #1a1a1a); border: 1px solid #FFD700; color: #FFD700; padding: 8px 15px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 0.85rem; transition: all 0.3s ease;">
+                        🎬 Music Video
+                    </a>
+                    <a href="/marketplace.html#gidget-bardot-no-one-left" data-testid="link-gidget-marketplace" style="display: inline-block; background: linear-gradient(135deg, #000000, #1a1a1a); border: 1px solid #FFD700; color: #FFD700; padding: 8px 15px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 0.85rem; transition: all 0.3s ease;">
+                        💾 Download (0.001 Solar)
                     </a>
                 </div>
                 
                 <!-- Streaming Platforms Note -->
-                <div style="background: rgba(255, 215, 0, 0.1); border: 2px solid #DAA520; border-radius: 10px; padding: 15px; margin-top: 20px; text-align: center;">
-                    <p style="color: #FFD700; margin: 0; font-size: 0.95rem; line-height: 1.6;">
-                        <strong>🎵 Multi-Platform Release:</strong><br>
-                        Single and video also available on selected streaming platforms<br>
-                        (Apple Music, Spotify, and you know the others)
-                    </p>
+                <div style="text-align: center; margin-top: 10px; padding: 8px; background: rgba(255, 215, 0, 0.1); border-radius: 6px;">
+                    <p style="color: #DAA520; margin: 0; font-size: 0.8rem;">🎵 Also on Apple Music, Spotify & more</p>
                 </div>
             </div>
-            
-            <!-- About the Artist -->
-            <div style="background: rgba(0, 0, 0, 0.4); border-radius: 10px; padding: 20px; border: 1px solid #DAA520;">
-                <h4 style="color: #FFD700; margin: 0 0 12px 0;">About Gidget Bardot</h4>
-                <p style="color: #ddd; margin: 0; line-height: 1.6; font-size: 0.95rem;">
-                    Emerging indie pop artist blending electronic elements with heartfelt lyrics. "No One Left (to care)" explores themes of connection and solitude in the digital age, featuring atmospheric production and captivating vocals.
-                </p>
-            </div>
         </div>
-        
-        <!-- Visual Separator -->
-        <div style="height: 60px; background: linear-gradient(to bottom, transparent, rgba(255,140,0,0.1), transparent); margin: 40px 0;"></div>
         
         <h1>🎵 MONAZITE MUSIC NOW COLLECTION 🎵</h1>
         <p style="text-align: center; font-size: 18px; margin-bottom: 20px;">
