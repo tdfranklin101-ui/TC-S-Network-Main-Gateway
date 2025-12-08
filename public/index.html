@@ -720,12 +720,17 @@
       </div>
     </div>
 
-    <!-- Play All Singles Button -->
+    <!-- Play All Songs Button -->
     <div style="text-align: center; margin: 2rem auto; max-width: 800px;">
-      <button id="playAllButton" onclick="playAllSingles()" style="background: linear-gradient(135deg, #ff8c00, #ff6600); border: none; color: white; padding: 15px 40px; border-radius: 30px; font-weight: bold; font-size: 1.1rem; cursor: pointer; box-shadow: 0 4px 15px rgba(255, 140, 0, 0.4); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(255, 140, 0, 0.6)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(255, 140, 0, 0.4)'" data-testid="button-play-all-singles">
-        🎵 Play All Singles
+      <button id="playAllButton" onclick="playAllSongs()" style="background: linear-gradient(135deg, #ff8c00, #ff6600); border: none; color: white; padding: 15px 40px; border-radius: 30px; font-weight: bold; font-size: 1.1rem; cursor: pointer; box-shadow: 0 4px 15px rgba(255, 140, 0, 0.4); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(255, 140, 0, 0.6)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(255, 140, 0, 0.4)'" data-testid="button-play-all-songs">
+        🎵 Play All - Random, No Repeat
       </button>
     </div>
+
+    <!-- Hidden audio player for "Play All" feature -->
+    <audio id="playAllPlayer" style="display: none;" controls preload="none">
+      <source type="audio/mpeg">
+    </audio>
 
     <div class="cards-grid">
       
@@ -921,62 +926,99 @@
       }, 4000); // Rotate every 4 seconds
     })();
 
-    // Play All Singles functionality
-    let allSinglesMode = false;
+    // Play All Songs - Complete catalog with shuffle
+    const allSongsTracks = [
+      'https://storage.aisongmaker.io/audio/4a839c86-40d9-4272-989b-7a512184ddb6.mp3', // 0 - Ternal Flame
+      'https://storage.aisongmaker.io/audio/9b2b12e4-8626-41e4-b9e4-c7a563e40f97.mp3', // 1 - David Boyeez Hair
+      'https://storage.aisongmaker.io/audio/015092c3-f687-4a01-9a81-dad42f2adce9.mp3', // 2 - Swampy Boogie Nights  
+      'https://storage.aisongmaker.io/audio/10db8911-0b74-4675-ba62-02182c1d7f6b.mp3', // 3 - The Heart is a Mule
+      'https://storage.aisongmaker.io/audio/418add3e-c1a5-4a76-b361-14d6a11794fe.mp3', // 4 - A Solar Day (groovin)
+      'https://storage.aisongmaker.io/audio/a2647129-991f-4105-aad2-e45210005bef.mp3', // 5 - A Solar Day (moovin)
+      'https://storage.aisongmaker.io/audio/09de8c9d-25a7-4b38-a6bd-c27b7de4629e.mp3', // 6 - Break Time Blues Rhapsody
+      'https://storage.aisongmaker.io/audio/c51b1f15-eff7-41fb-b778-b1b9d914ce3a.mp3', // 7 - Starlight Forever
+      'https://storage.aisongmaker.io/audio/ab1612d5-ccf4-4b4a-ab92-21b77bebdd46.mp3', // 8 - Light It From Within
+      'https://storage.aisongmaker.io/audio/675d577c-5ab9-45c9-b9d5-d4362f6bcc12.mp3', // 9 - Moonshine in St Kitts
+      'https://storage.aisongmaker.io/audio/94088af1-8318-401a-b277-b79fbbdb7475.mp3', // 10 - Solar Tempest Symphony
+      'https://storage.aisongmaker.io/audio/cb58c04e-fc7b-448a-a9e5-a642e168cacd.mp3', // 11 - Steel In His Soul
+      'https://storage.aisongmaker.io/audio/11802549-7cf8-4d4c-a708-44f04804f2ab.mp3', // 12 - We Said So
+      'https://storage.aisongmaker.io/audio/19d37c35-dc0b-4686-8bd7-71992f925670.mp3', // 13 - Funky Voodoo
+      'https://storage.aisongmaker.io/audio/255be09f-c09a-4d9a-8dbc-3c3ba65e9204.mp3', // 14 - Green and Blue (Rock)
+      'https://storage.aisongmaker.io/audio/01e05fb6-a7ac-4dd3-9500-00bb46625ef1.mp3', // 15 - Green and Blue (EDM)
+      'https://storage.aisongmaker.io/audio/49fc3427-e775-47f0-b5ea-8903006b07a0.mp3', // 16 - Lady Voodoo (Folk)
+      'https://storage.aisongmaker.io/audio/b2001c35-620a-4893-b046-4de20ad11422.mp3', // 17 - Lady Voodoo (Crying)
+      'https://storage.aisongmaker.io/audio/7abf4dac-2b12-434a-8d59-c115f8c54cb9.mp3', // 18 - Rasta Lady Voodoo
+      '/media/batrhyme-break-on-the-bright-side.mp3', // 19 - Batrhyme
+      '/media/gidget-bardot-no-one-left-v3.mp3',      // 20 - Gidget Bardot
+      '/music/snowmancer-one.mp3'  // 21 - Snowmancer One (Bonus)
+    ];
+
+    let allSongsMode = false;
+    let shuffledSongs = [];
+    let currentSongIndex = 0;
     
-    function playAllSingles() {
+    function shuffleArray(array) {
+      const shuffled = [...array];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled;
+    }
+    
+    function playAllSongs() {
       const button = document.getElementById('playAllButton');
-      const batrhymePlayer = document.getElementById('batrhymePlayerIndex');
-      const gidgetPlayer = document.getElementById('gidgetPlayerIndex');
+      const player = document.getElementById('playAllPlayer');
       
-      if (!allSinglesMode) {
-        // Start all singles mode
-        allSinglesMode = true;
-        button.textContent = '⏹️ Stop All Singles';
+      if (!allSongsMode) {
+        // Start all songs mode
+        allSongsMode = true;
+        shuffledSongs = shuffleArray([...Array(allSongsTracks.length).keys()]);
+        currentSongIndex = 0;
+        button.textContent = '⏹️ Stop All Songs';
         button.style.background = 'linear-gradient(135deg, #dc143c, #b91c3c)';
         
-        // Play Batrhyme first
-        batrhymePlayer.play();
+        // Play first track
+        playNextAllSong();
         
-        // Set up auto-advance to Gidget when Batrhyme ends
-        batrhymePlayer.onended = () => {
-          if (allSinglesMode) {
-            gidgetPlayer.play();
-          }
-        };
-        
-        // After Gidget ends, loop back to Batrhyme or stop
-        gidgetPlayer.onended = () => {
-          if (allSinglesMode) {
-            // Loop back to Batrhyme
-            batrhymePlayer.currentTime = 0;
-            batrhymePlayer.play();
-          }
-        };
+        // Set up auto-advance
+        player.addEventListener('ended', playNextAllSong);
       } else {
-        // Stop all singles mode
-        stopAllSingles();
+        // Stop all songs mode
+        stopAllSongs();
       }
     }
     
-    function stopAllSingles() {
-      const button = document.getElementById('playAllButton');
-      const batrhymePlayer = document.getElementById('batrhymePlayerIndex');
-      const gidgetPlayer = document.getElementById('gidgetPlayerIndex');
+    function playNextAllSong() {
+      if (!allSongsMode) return;
       
-      allSinglesMode = false;
-      button.textContent = '🎵 Play All Singles';
+      const player = document.getElementById('playAllPlayer');
+      
+      if (currentSongIndex < shuffledSongs.length) {
+        const trackIndex = shuffledSongs[currentSongIndex];
+        player.src = allSongsTracks[trackIndex];
+        player.load();
+        player.play().catch(() => {});
+        currentSongIndex++;
+      } else {
+        // All songs finished
+        stopAllSongs();
+      }
+    }
+    
+    function stopAllSongs() {
+      const button = document.getElementById('playAllButton');
+      const player = document.getElementById('playAllPlayer');
+      
+      allSongsMode = false;
+      button.textContent = '🎵 Play All - Random, No Repeat';
       button.style.background = 'linear-gradient(135deg, #ff8c00, #ff6600)';
       
-      // Stop both players
-      batrhymePlayer.pause();
-      batrhymePlayer.currentTime = 0;
-      gidgetPlayer.pause();
-      gidgetPlayer.currentTime = 0;
+      // Stop player
+      player.pause();
+      player.src = '';
       
-      // Remove event listeners
-      batrhymePlayer.onended = null;
-      gidgetPlayer.onended = null;
+      // Remove event listener
+      player.removeEventListener('ended', playNextAllSong);
     }
   </script>
 
