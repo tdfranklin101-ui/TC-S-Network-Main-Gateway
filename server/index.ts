@@ -144,23 +144,6 @@ import './template-to-static';
 console.log('Static page generation complete');
 
 (async () => {
-  // Run schema push to ensure all tables exist
-  try {
-    console.log('Ensuring database schema is up to date...');
-    const createTables = (await import('./push-schema')).createTables;
-    await createTables();
-    console.log('Database schema updated successfully');
-  } catch (schemaError) {
-    console.error('Error updating database schema:', schemaError);
-  }
-
-  // Run data migrations from CSV to database
-  try {
-    await runMigrations();
-  } catch (error) {
-    console.error('Error running migrations:', error);
-  }
-
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
@@ -183,13 +166,34 @@ console.log('Static page generation complete');
   // ALWAYS serve the app on port 5000
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
-  const port = 5000;
+  const port = process.env.PORT || 5000;
   server.listen({
-    port: process.env.PORT || 5000,
+    port: port,
     host: "0.0.0.0",
     reusePort: true,
   }, () => {
-    log(`Server running on port ${process.env.PORT || 5000}`);
+    log(`Server running on port ${port}`);
     log(`Environment: ${process.env.NODE_ENV}`);
   });
+
+  // Run database operations in background (non-blocking)
+  // This allows the health checks to pass immediately
+  (async () => {
+    try {
+      // Run schema push to ensure all tables exist
+      console.log('Ensuring database schema is up to date...');
+      const createTables = (await import('./push-schema')).createTables;
+      await createTables();
+      console.log('Database schema updated successfully');
+    } catch (schemaError) {
+      console.error('Error updating database schema:', schemaError);
+    }
+
+    // Run data migrations from CSV to database
+    try {
+      await runMigrations();
+    } catch (error) {
+      console.error('Error running migrations:', error);
+    }
+  })();
 })();
