@@ -509,7 +509,7 @@
         <!-- Play All Button at Top -->
         <div style="text-align: center; margin: 25px 0;">
             <button id="playAllMusicButton" onclick="playAllMusic()" data-testid="button-play-all-music" style="padding: 15px 40px; background: linear-gradient(135deg, #ff8c00, #ff6600); border: none; border-radius: 12px; color: white; font-size: 18px; font-weight: bold; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 6px 20px rgba(255, 140, 0, 0.4);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 25px rgba(255, 140, 0, 0.6)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 6px 20px rgba(255, 140, 0, 0.4)'">
-                🎵 Play All - No Repeats (22 Songs)
+                🎵 Play All - No Repeats (23 Songs)
             </button>
         </div>
         
@@ -1202,12 +1202,12 @@
             }, 1000); // 1 second gap between tracks
         }
 
-        // ========== PLAY ALL MUSIC - 22 Songs (20 Monazite + 2 Singles) ==========
+        // ========== PLAY ALL MUSIC - 23 Songs (20 Monazite + 3 Singles) ==========
         let playAllMusicMode = false;
         let allMusicShuffled = [];
         let allMusicIndex = 0;
         
-        // All tracks: 20 Monazite + 2 Singles
+        // All tracks: 20 Monazite + 3 Singles
         const allMusicTracks = [
             // MONAZITE CATALOG (0-19)
             'https://storage.aisongmaker.io/audio/4a839c86-40d9-4272-989b-7a512184ddb6.mp3', // 0
@@ -1230,9 +1230,10 @@
             'https://storage.aisongmaker.io/audio/b2001c35-620a-4893-b046-4de20ad11422.mp3', // 17
             'https://storage.aisongmaker.io/audio/7abf4dac-2b12-434a-8d59-c115f8c54cb9.mp3', // 18
             '/music/snowmancer-one.mp3', // 19 - Snowmancer (20th Monazite track)
-            // SINGLES (20-21)
-            '/media/batrhyme-break-on-the-bright-side.mp3', // 20 - Batrhyme
-            '/media/gidget-bardot-no-one-left-v3.mp3'       // 21 - Gidget Bardot
+            // SINGLES (20-22)
+            '/media/batrhyme-break-on-the-bright-side.mp3', // 20 - Batrhyme: Break on the Bright Side
+            '/media/batrhyme-psychedelic-solar-punk-party.mp3', // 21 - Batrhyme: Psychedelic Solar Punk Party
+            '/media/gidget-bardot-no-one-left-v3.mp3'       // 22 - Gidget Bardot
         ];
 
         function playAllMusic() {
@@ -1280,7 +1281,7 @@
             const player = document.getElementById('playAllMusicPlayer');
             
             playAllMusicMode = false;
-            button.textContent = '🎵 Play All - No Repeats (22 Songs)';
+            button.textContent = '🎵 Play All - No Repeats (23 Songs)';
             button.style.background = 'linear-gradient(135deg, #ff8c00, #ff6600)';
             
             // Stop player
