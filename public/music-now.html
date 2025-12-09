@@ -388,6 +388,45 @@
                 </div>
             </div>
             
+            <!-- BATRHYME Card 2 - Psychedelic Solar Punk Party -->
+            <div id="batrhyme2" style="margin-bottom: 20px; scroll-margin-top: 80px;">
+                <button class="track-button" data-testid="track-button-batrhyme2" onclick="playBatrhyme2Track()" style="background: linear-gradient(135deg, #000000, #1a0a05); border: 2px solid #FF6B00; color: #FF6B00;">
+                    🌀 Psychedelic Solar Punk Party - Batrhyme
+                </button>
+                
+                <!-- Batrhyme 2 Artwork -->
+                <div style="display: flex; gap: 15px; margin: 10px 0; justify-content: center; align-items: center;">
+                    <img src="/batrhyme-psychedelic-cover.jpeg" alt="Psychedelic Solar Punk Party - Batrhyme" style="width: 100px; height: 100px; border-radius: 8px; object-fit: cover; box-shadow: 0 4px 8px rgba(255, 107, 0, 0.3); border: 2px solid #FF6B00;">
+                    <div style="flex: 1; max-width: 300px;">
+                        <p style="color: #FF6B00; margin: 0 0 5px 0; font-size: 0.85rem; font-weight: bold;">Solar punk • Psychedelic</p>
+                        <p style="color: #aaa; margin: 0; font-size: 0.8rem; line-height: 1.4;">Mind-expanding solar punk vibes for the new era</p>
+                    </div>
+                </div>
+                
+                <!-- Now Playing for Batrhyme 2 -->
+                <div class="now-playing" id="nowPlayingBatrhyme2" style="display: none; color: #FF6B00; border-color: #FF6B00;">
+                    🎶 Now Playing: <span id="trackNameBatrhyme2">Psychedelic Solar Punk Party</span>
+                </div>
+                
+                <!-- Audio Player for Batrhyme 2 -->
+                <audio id="audioPlayerBatrhyme2" class="audio-player" data-testid="audio-player-batrhyme2" controls preload="none" style="width: 100%; margin: 10px 0;">
+                    <source src="/media/batrhyme-psychedelic-solar-punk-party.mp3" type="audio/mpeg">
+                    Your browser does not support the audio element.
+                </audio>
+                
+                <!-- Marketplace Link -->
+                <div style="text-align: center; margin: 10px 0;">
+                    <a href="/marketplace.html#batrhyme-psychedelic-solar-punk-party" data-testid="link-batrhyme2-marketplace" style="display: inline-block; background: linear-gradient(135deg, #000000, #1a0a05); border: 1px solid #FF6B00; color: #FF6B00; padding: 8px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 0.9rem; transition: all 0.3s ease;">
+                        💾 Download (0.001 Solar)
+                    </a>
+                </div>
+                
+                <!-- Streaming Platforms Note -->
+                <div style="text-align: center; margin-top: 10px; padding: 8px; background: rgba(255, 107, 0, 0.1); border-radius: 6px;">
+                    <p style="color: #DAA520; margin: 0; font-size: 0.8rem;">🎵 Also on Apple Music, Spotify & more • 💫 Download via TC-S Network Foundation Marketplace</p>
+                </div>
+            </div>
+            
             <!-- GIDGET BARDOT Card -->
             <div id="gidget-bardot" style="scroll-margin-top: 80px;">
                 <button class="track-button" data-testid="track-button-gidget" onclick="playGidgetTrack()" style="background: linear-gradient(135deg, #000000, #1a1a1a); border: 2px solid #FFD700; color: #FFD700;">
@@ -978,6 +1017,64 @@
                 .then(() => {
                     console.log('✅ PLAYING: Batrhyme');
                     console.log('🎵 Source:', batrhymeUrl);
+                })
+                .catch(err => {
+                    console.log('⚠️ Autoplay blocked - use controls');
+                });
+        }
+
+        function playBatrhyme2Track() {
+            console.log('═══════════════════════════════════════════');
+            console.log('🎵 BATRHYME 2 PLAYER - ISOLATED FUNCTION');
+            console.log('⚠️ SHOULD PLAY: "Psychedelic Solar Punk Party"');
+            console.log('═══════════════════════════════════════════');
+            
+            // STOP other players
+            const monazitePlayer = document.getElementById('audioPlayer');
+            if (monazitePlayer) {
+                monazitePlayer.pause();
+                monazitePlayer.src = '';
+                monazitePlayer.load();
+            }
+            
+            const batrhyme1Player = document.getElementById('audioPlayerBatrhyme');
+            if (batrhyme1Player) {
+                batrhyme1Player.pause();
+            }
+            
+            const gidgetPlayer = document.getElementById('audioPlayerGidget');
+            if (gidgetPlayer) {
+                gidgetPlayer.pause();
+            }
+            
+            // Get Batrhyme 2's player element
+            const player = document.getElementById('audioPlayerBatrhyme2');
+            const nowPlaying = document.getElementById('nowPlayingBatrhyme2');
+            const trackName = document.getElementById('trackNameBatrhyme2');
+            
+            if (!player) {
+                console.error('❌ FATAL ERROR: audioPlayerBatrhyme2 element not found!');
+                alert('ERROR: Batrhyme 2 player not found. Refresh page.');
+                return;
+            }
+            
+            const timestamp = new Date().getTime();
+            const batrhyme2Url = '/media/batrhyme-psychedelic-solar-punk-party.mp3?t=' + timestamp;
+            
+            console.log('📍 Loading:', batrhyme2Url);
+            
+            player.src = batrhyme2Url;
+            player.load();
+            
+            trackPlayEvent('🌀 Psychedelic Solar Punk Party - Batrhyme');
+            
+            if (trackName) trackName.textContent = 'Psychedelic Solar Punk Party';
+            if (nowPlaying) nowPlaying.style.display = 'block';
+            
+            player.play()
+                .then(() => {
+                    console.log('✅ PLAYING: Batrhyme 2');
+                    console.log('🎵 Source:', batrhyme2Url);
                 })
                 .catch(err => {
                     console.log('⚠️ Autoplay blocked - use controls');
