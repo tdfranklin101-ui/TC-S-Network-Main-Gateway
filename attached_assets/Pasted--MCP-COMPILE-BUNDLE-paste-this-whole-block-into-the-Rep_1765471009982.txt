@@ -1,0 +1,206 @@
+# MCP-COMPILE BUNDLE (paste this whole block into the Replit shell)
+# Prereqs: ffmpeg must be available in the environment
+# Also: upload your original MP4 as "base.mp4" in the project root.
+
+mkdir -p public
+
+cat << 'EOF' > package.json
+{
+  "name": "tcs-daily-solar-greeting",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.19.0",
+    "node-cron": "^3.0.3"
+  }
+}
+EOF
+
+cat << 'EOF' > index.js
+const express = require('express');
+const cron = require('node-cron');
+const { exec } = require('child_process');
+const path = require('path');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Serve static assets from /public
+app.use(express.static('public'));
+
+function generateVideo() {
+  const now = new Date();
+  const dateStr = now.toISOString().slice(0, 10); // YYYY-MM-DD
+
+  const message =
+    "Good morning, have a Solar Day! See you tomorrow. Today is " +
+    dateStr +
+    ".";
+
+  // Escape characters that conflict with ffmpeg drawtext syntax
+  const escaped = message
+    .replace(/:/g, '\\\\:')
+    .replace(/'/g, "\\\\'");
+
+  const cmd =
+    `ffmpeg -y -i base.mp4 ` +
+    `-vf "drawtext=text='${escaped}':` +
+    `fontcolor=white:fontsize=36:` +
+    `x=(w-text_w)/2:y=(h-text_h)-40:` +
+    `box=1:boxcolor=black@0.5:boxborderw=10" ` +
+    `-c:a copy public/greeting.mp4`;
+
+  console.log("Running ffmpeg command:", cmd);
+
+  exec(cmd, (error, stdout, stderr) => {
+    if (error) {
+      console.error("Error generating video:", error);
+      console.error(stderr);
+      return;
+    }
+    console.log("Daily Solar greeting video generated for", dateStr);
+  });
+}
+
+// Generate on startup so there's always a current video
+generateVideo();
+
+// Schedule to run every day at 12:01 AM (server time)
+cron.schedule('1 0 * * *', generateVideo);
+
+// Root route serves the popup page
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.listen(PORT, () => {
+  console.log(`TC-S Daily Solar Greeting server running on port ${PORT}`);
+});
+EOF
+
+cat << 'EOF' > public/index.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>TC-S Daily Solar Greeting</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #050608;
+      color: #ffffff;
+    }
+
+    /* Fullscreen overlay for popup video */
+    #videoOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .overlay-content {
+      max-width: 90vw;
+      max-height: 80vh;
+    }
+
+    .overlay-content video {
+      width: 100%;
+      height: auto;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+    }
+
+    /* Floating replay button (visible after first play) */
+    #replayButton {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 10px 18px;
+      background-color: #ffcc00;
+      color: #000000;
+      border: none;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      z-index: 1001;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      display: none;
+    }
+
+    #replayButton:hover {
+      opacity: 0.9;
+    }
+
+    /* Optional base content under the popup */
+    .page-shell {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      text-align: center;
+      padding: 2rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="page-shell">
+    <div>
+      <h1>Welcome to The Current-See</h1>
+      <p>Your daily Solar greeting will appear in a moment.</p>
+    </div>
+  </div>
+
+  <!-- Popup overlay with video -->
+  <div id="videoOverlay">
+    <div class="overlay-content">
+      <video id="dailyVideo" autoplay>
+        <source src="/greeting.mp4" type="video/mp4" />
+        Your browser does not support the video tag.
+      </video>
+    </div>
+  </div>
+
+  <!-- Replay button appears after first playback finishes -->
+  <button id="replayButton">Replay Solar Greeting</button>
+
+  <script>
+    window.addEventListener('load', function () {
+      const overlay = document.getElementById('videoOverlay');
+      const video = document.getElementById('dailyVideo');
+      const replayButton = document.getElementById('replayButton');
+
+      // Ensure overlay is visible initially
+      overlay.style.display = 'flex';
+
+      // When the video ends, hide overlay and show replay button
+      video.addEventListener('ended', function () {
+        overlay.style.display = 'none';
+        replayButton.style.display = 'block';
+      });
+
+      // Replay button: show popup again and restart the video
+      replayButton.addEventListener('click', function () {
+        overlay.style.display = 'flex';
+        video.currentTime = 0;
+        video.play();
+      });
+    });
+  </script>
+</body>
+</html>
+EOF
+
+npm install
+echo "✅ Setup complete. In Replit, ensure base.mp4 exists in the project root, then click Run to start the server."

@@ -42,6 +42,8 @@ const { fileTypeFromBuffer } = require('file-type');
 const crypto = require('crypto');
 const { randomUUID } = require('crypto');
 const schedule = require('node-schedule');
+const cron = require('node-cron');
+const { exec } = require('child_process');
 // const { ObjectStorageService } = require('./server/objectStorage'); // Disabled for stable Music Now service
 
 // Import seed rotation system
@@ -9519,6 +9521,44 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
+// ================== DAILY SOLAR GREETING VIDEO ==================
+function generateDailySolarGreeting() {
+  const baseVideoPath = path.join(__dirname, 'base.mp4');
+  const outputPath = path.join(__dirname, 'public', 'greeting.mp4');
+  
+  if (!fs.existsSync(baseVideoPath)) {
+    console.warn('⚠️ base.mp4 not found - skipping greeting video generation');
+    return;
+  }
+  
+  const now = new Date();
+  const dateStr = now.toISOString().slice(0, 10);
+  
+  const message = "Good morning, have a Solar Day! See you tomorrow. Today is " + dateStr + ".";
+  
+  const escaped = message
+    .replace(/:/g, '\\\\:')
+    .replace(/'/g, "\\\\'");
+  
+  const cmd = 
+    `ffmpeg -y -i "${baseVideoPath}" ` +
+    `-vf "drawtext=text='${escaped}':` +
+    `fontcolor=white:fontsize=36:` +
+    `x=(w-text_w)/2:y=(h-text_h)-40:` +
+    `box=1:boxcolor=black@0.5:boxborderw=10" ` +
+    `-c:a copy "${outputPath}"`;
+  
+  console.log("🌅 Generating daily Solar greeting video...");
+  
+  exec(cmd, (error, stdout, stderr) => {
+    if (error) {
+      console.error("❌ Error generating greeting video:", error.message);
+      return;
+    }
+    console.log("✅ Daily Solar greeting video generated for", dateStr);
+  });
+}
+
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`\n${'='.repeat(60)}`);
   console.log(`🚀 CURRENT-SEE PLATFORM STARTED`);
@@ -9595,6 +9635,15 @@ server.listen(PORT, '0.0.0.0', () => {
   } catch (error) {
     console.warn('⚠️ Foundation audit scheduling failed:', error.message);
     console.log('📌 Manual audit: node scripts/solar_foundation_audit.js');
+  }
+  
+  // Initialize Daily Solar Greeting Video
+  try {
+    generateDailySolarGreeting();
+    cron.schedule('1 0 * * *', generateDailySolarGreeting);
+    console.log('🌅 Daily Solar Greeting: Scheduled for 12:01 AM');
+  } catch (error) {
+    console.warn('⚠️ Daily greeting video scheduling failed:', error.message);
   }
   
   // Initialize Solar Audit Layer (SAi-Audit)

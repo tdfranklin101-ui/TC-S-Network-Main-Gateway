@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Daily Solar Greeting - TC-S Network Foundation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Start your day with a Solar greeting from The Current-See platform" />
+  <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #050608 0%, #0a1628 100%);
+      color: #ffffff;
+    }
+
+    #videoOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.9);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .overlay-content {
+      max-width: 90vw;
+      max-height: 80vh;
+      position: relative;
+    }
+
+    .overlay-content video {
+      width: 100%;
+      max-width: 800px;
+      height: auto;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(255, 165, 0, 0.3);
+      border: 2px solid #FF8C00;
+    }
+
+    .close-button {
+      position: absolute;
+      top: -15px;
+      right: -15px;
+      width: 36px;
+      height: 36px;
+      background: #FF8C00;
+      border: none;
+      border-radius: 50%;
+      color: #000;
+      font-size: 20px;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      z-index: 1001;
+    }
+
+    .close-button:hover {
+      background: #FFD700;
+      transform: scale(1.1);
+    }
+
+    #replayButton {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      padding: 15px 25px;
+      background: linear-gradient(135deg, #FF8C00, #FF6600);
+      color: #000000;
+      border: none;
+      border-radius: 999px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      z-index: 1001;
+      box-shadow: 0 6px 20px rgba(255, 140, 0, 0.5);
+      display: none;
+      transition: all 0.3s ease;
+    }
+
+    #replayButton:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(255, 140, 0, 0.7);
+    }
+
+    .page-shell {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .page-shell h1 {
+      color: #FF8C00;
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      text-shadow: 0 0 20px rgba(255, 140, 0, 0.5);
+    }
+
+    .page-shell p {
+      color: #aaa;
+      font-size: 1.2rem;
+      max-width: 600px;
+      line-height: 1.6;
+    }
+
+    .solar-icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.1); opacity: 0.8; }
+    }
+
+    .nav-links {
+      margin-top: 2rem;
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .nav-links a {
+      color: #FF8C00;
+      text-decoration: none;
+      padding: 10px 20px;
+      border: 2px solid #FF8C00;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .nav-links a:hover {
+      background: #FF8C00;
+      color: #000;
+    }
+  </style>
+</head>
+<body>
+  <div class="page-shell">
+    <div class="solar-icon">☀️</div>
+    <h1>Welcome to The Current-See</h1>
+    <p>Your daily Solar greeting plays automatically. Start each day with the energy of the sun and the promise of a sustainable future.</p>
+    <div class="nav-links">
+      <a href="/" data-testid="link-home">Home</a>
+      <a href="/main-platform.html" data-testid="link-platform">Foundation Platform</a>
+      <a href="/marketplace.html" data-testid="link-marketplace">Marketplace</a>
+      <a href="/music-now.html" data-testid="link-music">Music Now</a>
+    </div>
+  </div>
+
+  <div id="videoOverlay">
+    <div class="overlay-content">
+      <button class="close-button" onclick="closeOverlay()" data-testid="button-close-overlay">&times;</button>
+      <video id="dailyVideo" autoplay data-testid="video-daily-greeting">
+        <source src="/greeting.mp4" type="video/mp4" />
+        Your browser does not support the video tag.
+      </video>
+    </div>
+  </div>
+
+  <button id="replayButton" data-testid="button-replay-greeting">☀️ Replay Solar Greeting</button>
+
+  <script>
+    window.addEventListener('load', function () {
+      const overlay = document.getElementById('videoOverlay');
+      const video = document.getElementById('dailyVideo');
+      const replayButton = document.getElementById('replayButton');
+
+      overlay.style.display = 'flex';
+
+      video.addEventListener('ended', function () {
+        overlay.style.display = 'none';
+        replayButton.style.display = 'block';
+      });
+
+      video.addEventListener('error', function() {
+        console.warn('Greeting video not yet generated');
+        overlay.style.display = 'none';
+        replayButton.style.display = 'block';
+        replayButton.textContent = '☀️ Video Loading...';
+      });
+
+      replayButton.addEventListener('click', function () {
+        overlay.style.display = 'flex';
+        video.currentTime = 0;
+        video.play();
+      });
+    });
+
+    function closeOverlay() {
+      document.getElementById('videoOverlay').style.display = 'none';
+      document.getElementById('replayButton').style.display = 'block';
+    }
+  </script>
+</body>
+</html>
