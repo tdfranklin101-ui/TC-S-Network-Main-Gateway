@@ -9522,9 +9522,8 @@ const server = http.createServer(async (req, res) => {
 });
 
 // ================== DAILY SOLAR GREETING VIDEO ==================
-async function generateDailySolarGreeting() {
+function generateDailySolarGreeting() {
   const baseVideoPath = path.join(__dirname, 'base.mp4');
-  const audioPath = path.join(__dirname, 'public', 'greeting-audio.mp3');
   const outputPath = path.join(__dirname, 'public', 'greeting.mp4');
   
   if (!fs.existsSync(baseVideoPath)) {
@@ -9532,52 +9531,33 @@ async function generateDailySolarGreeting() {
     return;
   }
   
-  const apiKey = process.env.OPENAI_API_KEY || process.env.NEW_OPENAI_API_KEY;
-  if (!apiKey) {
-    console.warn('⚠️ OpenAI API key not found - skipping greeting video generation');
-    return;
-  }
-  
   const now = new Date();
-  const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-  const dateStr = now.toLocaleDateString('en-US', options);
+  const dateStr = now.toISOString().slice(0, 10); // YYYY-MM-DD
   
-  const message = `Good morning, have a Solar Day! See you tomorrow. Today is ${dateStr}.`;
+  const message = "Good morning, have a Solar Day! See you tomorrow. Today is " + dateStr + ".";
   
-  console.log("🌅 Generating daily Solar greeting video with TTS...");
+  // Escape characters that conflict with ffmpeg drawtext syntax
+  const escaped = message
+    .replace(/:/g, '\\\\:')
+    .replace(/'/g, "\\\\'");
   
-  try {
-    // Generate speech with OpenAI TTS
-    const OpenAI = require('openai');
-    const openai = new OpenAI({ apiKey });
-    
-    const mp3Response = await openai.audio.speech.create({
-      model: "tts-1",
-      voice: "nova",
-      input: message,
-    });
-    
-    const buffer = Buffer.from(await mp3Response.arrayBuffer());
-    fs.writeFileSync(audioPath, buffer);
-    console.log("✅ TTS audio generated:", audioPath);
-    
-    // Combine base video with new audio
-    const cmd = `ffmpeg -y -i "${baseVideoPath}" -i "${audioPath}" -c:v copy -c:a aac -map 0:v:0 -map 1:a:0 -shortest "${outputPath}"`;
-    
-    exec(cmd, (error, stdout, stderr) => {
-      if (error) {
-        console.error("❌ Error combining video with audio:", error.message);
-        return;
-      }
-      console.log("✅ Daily Solar greeting video generated for", dateStr);
-      
-      // Clean up temp audio file
-      try { fs.unlinkSync(audioPath); } catch (e) {}
-    });
-    
-  } catch (error) {
-    console.error("❌ Error generating greeting:", error.message);
-  }
+  const cmd =
+    `ffmpeg -y -i "${baseVideoPath}" ` +
+    `-vf "drawtext=text='${escaped}':` +
+    `fontcolor=white:fontsize=36:` +
+    `x=(w-text_w)/2:y=(h-text_h)-40:` +
+    `box=1:boxcolor=black@0.5:boxborderw=10" ` +
+    `-c:a copy "${outputPath}"`;
+  
+  console.log("🌅 Generating daily Solar greeting video...");
+  
+  exec(cmd, (error, stdout, stderr) => {
+    if (error) {
+      console.error("❌ Error generating video:", error.message);
+      return;
+    }
+    console.log("✅ Daily Solar greeting video generated for", dateStr);
+  });
 }
 
 server.listen(PORT, '0.0.0.0', () => {
