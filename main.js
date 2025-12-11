@@ -9661,7 +9661,7 @@ server.listen(PORT, '0.0.0.0', () => {
   // Initialize Daily Solar Greeting Video
   try {
     generateDailySolarGreeting();
-    cron.schedule('1 0 * * *', generateDailySolarGreeting);
+    cron.schedule('1 8 * * *', generateDailySolarGreeting); // 12:01 AM PST (8:01 AM UTC)
     console.log('🌅 Daily Solar Greeting: Scheduled for 12:01 AM');
   } catch (error) {
     console.warn('⚠️ Daily greeting video scheduling failed:', error.message);
