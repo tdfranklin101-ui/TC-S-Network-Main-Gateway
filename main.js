@@ -9522,42 +9522,66 @@ const server = http.createServer(async (req, res) => {
 });
 
 // ================== DAILY SOLAR GREETING VIDEO ==================
-function generateDailySolarGreeting() {
-  const baseVideoPath = path.join(__dirname, 'base.mp4');
+async function generateDailySolarGreeting() {
   const outputPath = path.join(__dirname, 'public', 'greeting.mp4');
   
-  if (!fs.existsSync(baseVideoPath)) {
-    console.warn('⚠️ base.mp4 not found - skipping greeting video generation');
+  const apiKey = process.env.PIKA_API_KEY;
+  if (!apiKey) {
+    console.warn('⚠️ PIKA_API_KEY (FAL.ai) not found - skipping greeting video generation');
     return;
   }
   
   const now = new Date();
-  const dateStr = now.toISOString().slice(0, 10); // YYYY-MM-DD
+  const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+  const dateStr = now.toLocaleDateString('en-US', options);
   
-  const message = "Good morning, have a Solar Day! See you tomorrow. Today is " + dateStr + ".";
+  const prompt = `A warm, friendly animated character with golden skin resembling the sun, speaking directly to camera with a gentle smile. The character is saying "Good morning, have a Solar Day! See you tomorrow. Today is ${dateStr}." Bright, cheerful solar energy atmosphere with soft golden light. The character has expressive eyes and speaks clearly with visible mouth movements.`;
   
-  // Escape characters that conflict with ffmpeg drawtext syntax
-  const escaped = message
-    .replace(/:/g, '\\\\:')
-    .replace(/'/g, "\\\\'");
+  console.log("🌅 Generating daily Solar greeting video via FAL.ai...");
+  console.log("📅 Date:", dateStr);
   
-  const cmd =
-    `ffmpeg -y -i "${baseVideoPath}" ` +
-    `-vf "drawtext=text='${escaped}':` +
-    `fontcolor=white:fontsize=36:` +
-    `x=(w-text_w)/2:y=(h-text_h)-40:` +
-    `box=1:boxcolor=black@0.5:boxborderw=10" ` +
-    `-c:a copy "${outputPath}"`;
-  
-  console.log("🌅 Generating daily Solar greeting video...");
-  
-  exec(cmd, (error, stdout, stderr) => {
-    if (error) {
-      console.error("❌ Error generating video:", error.message);
-      return;
+  try {
+    const response = await fetch('https://fal.run/fal-ai/cogvideox-5b', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Key ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ prompt })
+    });
+    
+    if (!response.ok) {
+      throw new Error(`FAL.ai API error: ${response.status}`);
     }
-    console.log("✅ Daily Solar greeting video generated for", dateStr);
-  });
+    
+    const result = await response.json();
+    
+    if (result.video && result.video.url) {
+      // Download the generated video with error handling
+      const videoResponse = await fetch(result.video.url);
+      if (!videoResponse.ok) {
+        throw new Error(`Failed to download video: ${videoResponse.status}`);
+      }
+      
+      const videoBuffer = Buffer.from(await videoResponse.arrayBuffer());
+      if (videoBuffer.length < 1000) {
+        throw new Error('Downloaded video is too small, likely corrupted');
+      }
+      
+      // Write to temp file first, then rename for atomic update
+      const tempPath = outputPath + '.tmp';
+      fs.writeFileSync(tempPath, videoBuffer);
+      fs.renameSync(tempPath, outputPath);
+      
+      console.log("✅ Daily Solar greeting video generated for", dateStr);
+      console.log("📁 Saved to:", outputPath, `(${(videoBuffer.length / 1024).toFixed(0)}KB)`);
+    } else {
+      console.error("❌ No video URL in response:", JSON.stringify(result));
+    }
+  } catch (error) {
+    console.error("❌ Error generating greeting video:", error.message);
+    // Keep previous day's video if regeneration fails
+  }
 }
 
 server.listen(PORT, '0.0.0.0', () => {
@@ -9641,7 +9665,7 @@ server.listen(PORT, '0.0.0.0', () => {
   // Initialize Daily Solar Greeting Video
   try {
     generateDailySolarGreeting();
-    cron.schedule('1 8 * * *', generateDailySolarGreeting); // 12:01 AM PST (8:01 AM UTC)
+    cron.schedule('1 0 * * *', generateDailySolarGreeting, { timezone: 'America/Los_Angeles' }); // 12:01 AM PST
     console.log('🌅 Daily Solar Greeting: Scheduled for 12:01 AM');
   } catch (error) {
     console.warn('⚠️ Daily greeting video scheduling failed:', error.message);
