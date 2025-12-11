@@ -9523,11 +9523,23 @@ const server = http.createServer(async (req, res) => {
 
 // ================== DAILY SOLAR GREETING VIDEO ==================
 async function generateDailySolarGreeting() {
+  const imagePath = path.join(__dirname, 'public', 'base-frame.jpg');
+  const audioPath = path.join(__dirname, 'public', 'greeting-audio.mp3');
   const outputPath = path.join(__dirname, 'public', 'greeting.mp4');
   
-  const apiKey = process.env.PIKA_API_KEY;
-  if (!apiKey) {
+  const falKey = process.env.PIKA_API_KEY;
+  const openaiKey = process.env.OPENAI_API_KEY || process.env.NEW_OPENAI_API_KEY;
+  
+  if (!falKey) {
     console.warn('⚠️ PIKA_API_KEY (FAL.ai) not found - skipping greeting video generation');
+    return;
+  }
+  if (!openaiKey) {
+    console.warn('⚠️ OpenAI API key not found - skipping greeting video generation');
+    return;
+  }
+  if (!fs.existsSync(imagePath)) {
+    console.warn('⚠️ base-frame.jpg not found - skipping greeting video generation');
     return;
   }
   
@@ -9535,29 +9547,56 @@ async function generateDailySolarGreeting() {
   const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
   const dateStr = now.toLocaleDateString('en-US', options);
   
-  const prompt = `A warm, friendly animated character with golden skin resembling the sun, speaking directly to camera with a gentle smile. The character is saying "Good morning, have a Solar Day! See you tomorrow. Today is ${dateStr}." Bright, cheerful solar energy atmosphere with soft golden light. The character has expressive eyes and speaks clearly with visible mouth movements.`;
+  const message = `Good morning, have a Solar Day! See you tomorrow. Today is ${dateStr}.`;
   
-  console.log("🌅 Generating daily Solar greeting video via FAL.ai...");
+  console.log("🌅 Generating daily Solar greeting video...");
   console.log("📅 Date:", dateStr);
   
   try {
-    const response = await fetch('https://fal.run/fal-ai/cogvideox-5b', {
+    // Step 1: Generate TTS audio with OpenAI
+    console.log("🎤 Generating TTS audio...");
+    const OpenAI = require('openai');
+    const openai = new OpenAI({ apiKey: openaiKey });
+    
+    const mp3Response = await openai.audio.speech.create({
+      model: "tts-1",
+      voice: "nova",
+      input: message,
+    });
+    
+    const audioBuffer = Buffer.from(await mp3Response.arrayBuffer());
+    fs.writeFileSync(audioPath, audioBuffer);
+    console.log("✅ TTS audio generated");
+    
+    // Step 2: Convert files to data URLs for FAL.ai
+    console.log("🎬 Generating lip-synced video with SadTalker...");
+    const imageB64 = fs.readFileSync(imagePath).toString('base64');
+    const audioB64 = audioBuffer.toString('base64');
+    
+    const imageDataUrl = 'data:image/jpeg;base64,' + imageB64;
+    const audioDataUrl = 'data:audio/mpeg;base64,' + audioB64;
+    
+    // Step 3: Generate lip-synced video via SadTalker
+    const response = await fetch('https://fal.run/fal-ai/sadtalker', {
       method: 'POST',
       headers: {
-        'Authorization': `Key ${apiKey}`,
+        'Authorization': `Key ${falKey}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ prompt })
+      body: JSON.stringify({
+        source_image_url: imageDataUrl,
+        driven_audio_url: audioDataUrl
+      })
     });
     
     if (!response.ok) {
-      throw new Error(`FAL.ai API error: ${response.status}`);
+      const errText = await response.text();
+      throw new Error(`SadTalker API error: ${response.status} - ${errText}`);
     }
     
     const result = await response.json();
     
     if (result.video && result.video.url) {
-      // Download the generated video with error handling
       const videoResponse = await fetch(result.video.url);
       if (!videoResponse.ok) {
         throw new Error(`Failed to download video: ${videoResponse.status}`);
@@ -9568,7 +9607,6 @@ async function generateDailySolarGreeting() {
         throw new Error('Downloaded video is too small, likely corrupted');
       }
       
-      // Write to temp file first, then rename for atomic update
       const tempPath = outputPath + '.tmp';
       fs.writeFileSync(tempPath, videoBuffer);
       fs.renameSync(tempPath, outputPath);
@@ -9578,9 +9616,12 @@ async function generateDailySolarGreeting() {
     } else {
       console.error("❌ No video URL in response:", JSON.stringify(result));
     }
+    
+    // Cleanup temp audio
+    try { fs.unlinkSync(audioPath); } catch (e) {}
+    
   } catch (error) {
     console.error("❌ Error generating greeting video:", error.message);
-    // Keep previous day's video if regeneration fails
   }
 }
 
