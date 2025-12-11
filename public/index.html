@@ -947,5 +947,121 @@
 
   </script>
 
+  <!-- Daily Solar Greeting Popup -->
+  <style>
+    #solarGreetingOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.92);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+    #solarGreetingOverlay.hidden { display: none; }
+    .greeting-content {
+      max-width: 90vw;
+      max-height: 80vh;
+      position: relative;
+    }
+    .greeting-content video {
+      width: 100%;
+      max-width: 700px;
+      height: auto;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(255, 165, 0, 0.4);
+      border: 2px solid #FF8C00;
+    }
+    .greeting-close {
+      position: absolute;
+      top: -12px;
+      right: -12px;
+      width: 32px;
+      height: 32px;
+      background: #FF8C00;
+      border: none;
+      border-radius: 50%;
+      color: #000;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    }
+    .greeting-close:hover { background: #FFD700; transform: scale(1.1); }
+    #replaySolarGreeting {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 12px 20px;
+      background: linear-gradient(135deg, #FF8C00, #FF6600);
+      color: #000;
+      border: none;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      z-index: 1000;
+      box-shadow: 0 4px 15px rgba(255, 140, 0, 0.5);
+      display: none;
+    }
+    #replaySolarGreeting:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255, 140, 0, 0.7); }
+  </style>
+
+  <div id="solarGreetingOverlay">
+    <div class="greeting-content">
+      <button class="greeting-close" onclick="closeSolarGreeting()" data-testid="button-close-greeting">&times;</button>
+      <video id="solarGreetingVideo" autoplay controls data-testid="video-solar-greeting">
+        <source src="/greeting.mp4" type="video/mp4">
+      </video>
+    </div>
+  </div>
+  <button id="replaySolarGreeting" onclick="replaySolarGreeting()" data-testid="button-replay-greeting">☀️ Solar Greeting</button>
+
+  <script>
+    (function() {
+      const overlay = document.getElementById('solarGreetingOverlay');
+      const video = document.getElementById('solarGreetingVideo');
+      const replayBtn = document.getElementById('replaySolarGreeting');
+      const GREETING_KEY = 'solarGreetingShown';
+      const today = new Date().toISOString().slice(0, 10);
+      
+      if (localStorage.getItem(GREETING_KEY) === today) {
+        overlay.classList.add('hidden');
+        replayBtn.style.display = 'block';
+      } else {
+        overlay.classList.remove('hidden');
+      }
+      
+      video.addEventListener('ended', function() {
+        localStorage.setItem(GREETING_KEY, today);
+        overlay.classList.add('hidden');
+        replayBtn.style.display = 'block';
+      });
+      
+      video.addEventListener('error', function() {
+        overlay.classList.add('hidden');
+        replayBtn.style.display = 'block';
+      });
+    })();
+    
+    function closeSolarGreeting() {
+      const today = new Date().toISOString().slice(0, 10);
+      localStorage.setItem('solarGreetingShown', today);
+      document.getElementById('solarGreetingOverlay').classList.add('hidden');
+      document.getElementById('replaySolarGreeting').style.display = 'block';
+    }
+    
+    function replaySolarGreeting() {
+      const overlay = document.getElementById('solarGreetingOverlay');
+      const video = document.getElementById('solarGreetingVideo');
+      overlay.classList.remove('hidden');
+      video.currentTime = 0;
+      video.play();
+    }
+  </script>
+
 </body>
 </html>
