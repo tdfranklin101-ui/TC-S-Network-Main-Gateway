@@ -1,3 +1,7 @@
 User-agent: *
 Allow: /
-Sitemap: https://replit-node-tdfranklin101.replit.app/sitemap.xml
+Disallow: /admin
+Disallow: /api/admin
+Disallow: /private
+
+Sitemap: https://www.thecurrentsee.org/sitemap.xml
