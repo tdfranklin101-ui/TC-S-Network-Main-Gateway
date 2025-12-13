@@ -10,6 +10,7 @@ import {
   wallets 
 } from "@shared/schema";
 import { nightMarketJuggler, composePrompt } from "../gumballs/nightMarketJuggler";
+import { isAuthenticated } from "../replitAuth";
 
 const router = express.Router();
 
@@ -22,9 +23,9 @@ async function getWalletByUserId(userId: string) {
 }
 
 // GET /api/gumball/me - Current user session with promptCredits
-router.get("/me", async (req, res) => {
+router.get("/me", isAuthenticated, async (req, res) => {
   try {
-    const userId = req.query.userId as string || (req.user as any)?.claims?.sub;
+    const userId = (req.user as any)?.claims?.sub;
     
     if (!userId) {
       return res.json({ 
@@ -78,13 +79,13 @@ router.get("/products", async (req, res) => {
 });
 
 // POST /api/gumball/buy - Redirect to external checkout
-router.post("/buy", async (req, res) => {
+router.post("/buy", isAuthenticated, async (req, res) => {
   try {
-    const { productId, currency, userId } = req.body;
-    const authenticatedUserId = (req.user as any)?.claims?.sub || userId;
+    const { productId, currency } = req.body;
+    const authenticatedUserId = (req.user as any)?.claims?.sub;
     
-    if (!productId || !currency || !authenticatedUserId) {
-      return res.status(400).json({ error: "Missing productId, currency, or userId" });
+    if (!productId || !currency) {
+      return res.status(400).json({ error: "Missing productId or currency" });
     }
     
     const product = await db.select()
@@ -108,7 +109,7 @@ router.post("/buy", async (req, res) => {
     
     // Create transaction record
     const transaction = await db.insert(gumballTransactions).values({
-      visitorId,
+      visitorId: authenticatedUserId,
       productId,
       currency: currency.toUpperCase(),
       status: "pending",
@@ -132,10 +133,16 @@ router.post("/buy", async (req, res) => {
   }
 });
 
-// POST /api/gumball/confirm - Confirm a purchase (webhook or manual)
+// POST /api/gumball/confirm - Confirm a purchase (webhook only)
 router.post("/confirm", async (req, res) => {
   try {
-    const { transactionId } = req.body;
+    const { transactionId, webhookSecret } = req.body;
+    
+    // Require webhook secret for confirmation (admin/webhook only)
+    const validSecret = process.env.GUMBALL_WEBHOOK_SECRET;
+    if (!validSecret || webhookSecret !== validSecret) {
+      return res.status(403).json({ error: "Invalid webhook secret" });
+    }
     
     if (!transactionId) {
       return res.status(400).json({ error: "Missing transactionId" });
@@ -154,8 +161,11 @@ router.post("/confirm", async (req, res) => {
       return res.json({ message: "Already confirmed", transaction });
     }
     
-    // Ensure wallet exists before crediting
-    await getOrCreateVisitorWallet(transaction.visitorId);
+    // Wallet should already exist for the user
+    const wallet = await getWalletByUserId(transaction.visitorId);
+    if (!wallet) {
+      return res.status(400).json({ error: "No wallet found for user" });
+    }
     
     // Update transaction status
     await db.update(gumballTransactions)
@@ -187,14 +197,9 @@ router.post("/confirm", async (req, res) => {
 });
 
 // POST /api/gumball/vend - Atomically decrement credit and create gumball
-router.post("/vend", async (req, res) => {
+router.post("/vend", isAuthenticated, async (req, res) => {
   try {
-    const { userId } = req.body;
-    const authenticatedUserId = (req.user as any)?.claims?.sub || userId;
-    
-    if (!authenticatedUserId) {
-      return res.status(400).json({ error: "Not authenticated" });
-    }
+    const authenticatedUserId = (req.user as any)?.claims?.sub;
     
     const wallet = await getWalletByUserId(authenticatedUserId);
     if (!wallet) {
@@ -209,7 +214,7 @@ router.post("/vend", async (req, res) => {
     const updatedWallet = await db.update(wallets)
       .set({ promptCredits: sql`${wallets.promptCredits} - 1` })
       .where(and(
-        eq(wallets.userId, visitorId),
+        eq(wallets.userId, authenticatedUserId),
         sql`${wallets.promptCredits} >= 1`
       ))
       .returning();
@@ -222,7 +227,7 @@ router.post("/vend", async (req, res) => {
     const generator = nightMarketJuggler;
     
     const gumball = await db.insert(gumballs).values({
-      visitorId,
+      visitorId: authenticatedUserId,
       title: generator.title,
       type: generator.type,
       promptMain: generator.promptMain,
@@ -241,12 +246,13 @@ router.post("/vend", async (req, res) => {
 });
 
 // POST /api/gumball/run - Create job with composed prompt
-router.post("/run", async (req, res) => {
+router.post("/run", isAuthenticated, async (req, res) => {
   try {
-    const { gumballId, remixId, visitorId } = req.body;
+    const { gumballId, remixId } = req.body;
+    const authenticatedUserId = (req.user as any)?.claims?.sub;
     
-    if (!gumballId || !visitorId) {
-      return res.status(400).json({ error: "Missing gumballId or visitorId" });
+    if (!gumballId) {
+      return res.status(400).json({ error: "Missing gumballId" });
     }
     
     const gumball = await db.select()
@@ -263,7 +269,7 @@ router.post("/run", async (req, res) => {
     
     // Create job
     const job = await db.insert(gumballJobs).values({
-      visitorId,
+      visitorId: authenticatedUserId,
       gumballId,
       status: "QUEUED",
       provider: "SORA_MANUAL",
@@ -309,18 +315,18 @@ router.get("/job/:jobId", async (req, res) => {
   }
 });
 
-// GET /api/gumball/jobs - Get all jobs for a visitor
-router.get("/jobs", async (req, res) => {
+// GET /api/gumball/jobs - Get all jobs for the authenticated user
+router.get("/jobs", isAuthenticated, async (req, res) => {
   try {
-    const visitorId = req.query.visitorId as string;
+    const userId = (req.user as any)?.claims?.sub;
     
-    if (!visitorId) {
-      return res.status(400).json({ error: "Missing visitorId" });
+    if (!userId) {
+      return res.status(401).json({ error: "Not authenticated" });
     }
     
     const jobs = await db.select()
       .from(gumballJobs)
-      .where(eq(gumballJobs.visitorId, visitorId))
+      .where(eq(gumballJobs.visitorId, userId))
       .orderBy(desc(gumballJobs.createdAt));
     
     res.json(jobs);
@@ -330,18 +336,18 @@ router.get("/jobs", async (req, res) => {
   }
 });
 
-// GET /api/gumball/gumballs - Get all gumballs for a visitor
-router.get("/gumballs", async (req, res) => {
+// GET /api/gumball/gumballs - Get all gumballs for the authenticated user
+router.get("/gumballs", isAuthenticated, async (req, res) => {
   try {
-    const visitorId = req.query.visitorId as string;
+    const userId = (req.user as any)?.claims?.sub;
     
-    if (!visitorId) {
-      return res.status(400).json({ error: "Missing visitorId" });
+    if (!userId) {
+      return res.status(401).json({ error: "Not authenticated" });
     }
     
     const userGumballs = await db.select()
       .from(gumballs)
-      .where(eq(gumballs.visitorId, visitorId))
+      .where(eq(gumballs.visitorId, userId))
       .orderBy(desc(gumballs.createdAt));
     
     res.json(userGumballs);
@@ -352,9 +358,10 @@ router.get("/gumballs", async (req, res) => {
 });
 
 // POST /api/gumball/deliver - Manual asset delivery
-router.post("/deliver", async (req, res) => {
+router.post("/deliver", isAuthenticated, async (req, res) => {
   try {
     const { jobId, videoUrl, thumbnailUrl } = req.body;
+    const authenticatedUserId = (req.user as any)?.claims?.sub;
     
     if (!jobId) {
       return res.status(400).json({ error: "Missing jobId" });
@@ -367,6 +374,11 @@ router.post("/deliver", async (req, res) => {
     
     if (!job) {
       return res.status(404).json({ error: "Job not found" });
+    }
+    
+    // Security: Verify the authenticated user owns this job
+    if (job.visitorId !== authenticatedUserId) {
+      return res.status(403).json({ error: "You do not own this job" });
     }
     
     const createdAssets = [];
