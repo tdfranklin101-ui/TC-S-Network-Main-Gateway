@@ -1,0 +1,43 @@
+export type RemixOption = { id: string; label: string; gumball_design: string };
+
+export function buildNightMarketJugglerGumball() {
+  const title = "Night Market Juggler Cameo — 3 Gumballs";
+  const type = "sora_prompt_bundle";
+
+  const promptMain =
+    "Cinematic, realistic live-action. A busy nighttime street market with warm lanterns, light rain, and reflective pavement. The camera tracks forward at waist height through the crowd, shallow depth of field, soft bokeh. A charismatic street performer appears in a brief cameo, stepping into frame for 3 seconds and juggling exactly three gumballs in a smooth cascade pattern, smiling at the camera, then disappearing back into the crowd. The gumballs are glossy, perfectly spherical, candy-like, with crisp specular highlights and realistic physics. Natural motion blur on the hands, gumballs remain sharp and readable. 10–12 seconds, 24 fps, gentle handheld feel, filmic lighting, no text, no logos, no brand names.";
+
+  const remix: RemixOption[] = [
+    { id: "R1", label: "Aurora Swirl", gumball_design: "Pearly white base with flowing rainbow opal swirls, subtle iridescence." },
+    { id: "R2", label: "Solar Ember", gumball_design: "Translucent amber with tiny glowing embers suspended inside like candy inclusions." },
+    { id: "R3", label: "Deep Ocean", gumball_design: "Deep cobalt blue with faint caustic-like highlights and glassy finish." },
+    { id: "R4", label: "Neon Speckle", gumball_design: "Matte black base with bright neon micro-speckles, high contrast." },
+    { id: "R5", label: "Crystal Clear", gumball_design: "Perfectly clear candy-glass spheres with internal prismatic refraction." },
+    { id: "R6", label: "Frosted Mint", gumball_design: "Pale mint green with frosted surface and fine sugar-like sparkle." },
+    { id: "R7", label: "Galaxy Core", gumball_design: "Midnight purple with a swirling starfield effect inside, subtle nebula haze." },
+    { id: "R8", label: "Citrus Pop", gumball_design: "Bright orange/yellow gradient with tiny bubble inclusions, juicy candy look." },
+    { id: "R9", label: "Cherry Chrome", gumball_design: "Rich cherry red with a mirror-like chrome sheen, highly reflective." },
+    { id: "R10", label: "Marble Classic", gumball_design: "Vintage gumball machine style: bold red/blue/white marbling, nostalgic." }
+  ];
+
+  const mcpRunbook = {
+    inputs: {
+      duration_sec: 12,
+      fps: 24,
+      aspect_ratio: "16:9",
+      camera: "gentle handheld",
+      style: "filmic, realistic",
+      no_text_no_logos: true
+    },
+    steps: [
+      { step: "compose_prompt", action: "merge_base_with_remix" },
+      { step: "render", action: "call_provider", provider: "SORA_MANUAL" },
+      { step: "deliver", action: "publish_asset", target: "library" }
+    ],
+    outputs: {
+      expected: ["video_mp4", "thumbnail_jpg", "prompt_txt"]
+    }
+  };
+
+  return { title, type, promptMain, remix, mcpRunbook };
+}

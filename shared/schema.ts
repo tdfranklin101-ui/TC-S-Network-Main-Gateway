@@ -283,6 +283,7 @@ export const wallets = pgTable("wallets", {
   passcodeHash: text("passcode_hash"),
   balanceSolarS: numeric("balance_solar_s").default("0"),
   balanceRays: integer("balance_rays").default(0),
+  promptCredits: integer("prompt_credits").default(0), // Gumball Machine pull credits
   lastDailyGrantAt: timestamp("last_daily_grant_at"),
   birthdate: timestamp("birthdate"),
   worldIdVerified: boolean("world_id_verified").default(false),
@@ -801,3 +802,99 @@ export type DmtxactlyJob = typeof dmtxactlyJobs.$inferSelect;
 // Insert types
 export type InsertAgentApiKey = z.infer<typeof insertAgentApiKeySchema>;
 export type InsertDmtxactlyJob = z.infer<typeof insertDmtxactlyJobSchema>;
+
+// ============================================================
+// DIGITAL GUMBALL MACHINE - Prompt Gumball Vending System
+// MCP-COMPILE Bundle: Rays-based pricing, off-site payments,
+// job execution with manual delivery workflow
+// ============================================================
+
+// Gumball Products (pull bundles with Rays pricing)
+export const gumballProducts = pgTable("gumball_products", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  pulls: integer("pulls").notNull(),
+  priceRays: integer("price_rays").notNull(),
+  active: boolean("active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Gumball Transactions (purchase records with checkout links)
+export const gumballTransactions = pgTable("gumball_transactions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  visitorId: varchar("visitor_id").notNull(),
+  productId: varchar("product_id").references(() => gumballProducts.id).notNull(),
+  currency: varchar("currency").notNull(), // 'USD', 'BTC', 'SOLAR'
+  status: varchar("status").notNull().default("pending"), // pending, confirmed, failed, refunded
+  checkoutUrl: text("checkout_url"),
+  priceRays: integer("price_rays").notNull(),
+  pullsPurchased: integer("pulls_purchased").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  confirmedAt: timestamp("confirmed_at"),
+}, (table) => ({
+  visitorIdx: index("gumball_transactions_visitor_idx").on(table.visitorId),
+  statusIdx: index("gumball_transactions_status_idx").on(table.status),
+}));
+
+// Gumballs (vended prompt gumballs with remix options)
+export const gumballs = pgTable("gumballs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  visitorId: varchar("visitor_id").notNull(),
+  title: text("title").notNull(),
+  type: varchar("type").notNull(), // 'video', 'image', 'audio', etc.
+  promptMain: text("prompt_main").notNull(),
+  remixJson: jsonb("remix_json"), // Array of remix options
+  mcpRunbook: jsonb("mcp_runbook"), // MCP execution runbook
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  visitorIdx: index("gumballs_visitor_idx").on(table.visitorId),
+}));
+
+// Gumball Jobs (execution pipeline: QUEUED → RUNNING → AWAITING_ASSET → DELIVERED)
+export const gumballJobs = pgTable("gumball_jobs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  visitorId: varchar("visitor_id").notNull(),
+  gumballId: varchar("gumball_id").references(() => gumballs.id).notNull(),
+  status: varchar("status").notNull().default("QUEUED"), // QUEUED, RUNNING, AWAITING_ASSET, DELIVERED, FAILED
+  provider: varchar("provider").default("SORA_MANUAL"), // SORA_MANUAL, PIKA, RUNWAY, etc.
+  composedPrompt: text("composed_prompt"), // Base prompt + selected remix merged
+  selectedRemixId: varchar("selected_remix_id"), // Which remix was selected
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  visitorIdx: index("gumball_jobs_visitor_idx").on(table.visitorId),
+  statusIdx: index("gumball_jobs_status_idx").on(table.status),
+  gumballIdx: index("gumball_jobs_gumball_idx").on(table.gumballId),
+}));
+
+// Gumball Assets (delivered video/image assets)
+export const gumballAssets = pgTable("gumball_assets", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  jobId: varchar("job_id").references(() => gumballJobs.id).notNull(),
+  kind: varchar("kind").notNull(), // 'video', 'thumbnail', 'preview', 'prompt_txt'
+  url: text("url").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  jobIdx: index("gumball_assets_job_idx").on(table.jobId),
+}));
+
+// Insert schemas
+export const insertGumballProductSchema = createInsertSchema(gumballProducts).omit({ id: true, createdAt: true });
+export const insertGumballTransactionSchema = createInsertSchema(gumballTransactions).omit({ id: true, createdAt: true });
+export const insertGumballSchema = createInsertSchema(gumballs).omit({ id: true, createdAt: true });
+export const insertGumballJobSchema = createInsertSchema(gumballJobs).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertGumballAssetSchema = createInsertSchema(gumballAssets).omit({ id: true, createdAt: true });
+
+// Select types
+export type GumballProduct = typeof gumballProducts.$inferSelect;
+export type GumballTransaction = typeof gumballTransactions.$inferSelect;
+export type Gumball = typeof gumballs.$inferSelect;
+export type GumballJob = typeof gumballJobs.$inferSelect;
+export type GumballAsset = typeof gumballAssets.$inferSelect;
+
+// Insert types
+export type InsertGumballProduct = z.infer<typeof insertGumballProductSchema>;
+export type InsertGumballTransaction = z.infer<typeof insertGumballTransactionSchema>;
+export type InsertGumball = z.infer<typeof insertGumballSchema>;
+export type InsertGumballJob = z.infer<typeof insertGumballJobSchema>;
+export type InsertGumballAsset = z.infer<typeof insertGumballAssetSchema>;

@@ -1,0 +1,227 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+
+type Product = { id: string; name: string; pulls: number; priceRays: number; priceSolar: number };
+
+export default function Page() {
+  const [me, setMe] = useState<{ userId: string; promptCredits: number } | null>(null);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [currency, setCurrency] = useState<"USD" | "BTC" | "SOLAR">("USD");
+  const [lastGumball, setLastGumball] = useState<any>(null);
+  const [selectedRemix, setSelectedRemix] = useState<string>("R1");
+  const [job, setJob] = useState<any>(null);
+  const [deliverVideoUrl, setDeliverVideoUrl] = useState("");
+  const [deliverThumbUrl, setDeliverThumbUrl] = useState("");
+
+  async function refreshMe() {
+    const r = await fetch("/api/me", { cache: "no-store" });
+    setMe(await r.json());
+  }
+
+  async function loadProducts() {
+    const r = await fetch("/api/products", { cache: "no-store" });
+    const j = await r.json();
+    setProducts(j.products);
+  }
+
+  useEffect(() => {
+    refreshMe();
+    loadProducts();
+  }, []);
+
+  async function buy(productId: string) {
+    const r = await fetch("/api/buy", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ productId, currency })
+    });
+    const j = await r.json();
+    if (!r.ok) {
+      alert(j.error || "Buy failed");
+      return;
+    }
+    window.open(j.redirectUrl, "_blank", "noopener,noreferrer");
+  }
+
+  async function vend() {
+    const r = await fetch("/api/vend", { method: "POST" });
+    const j = await r.json();
+    if (!r.ok) {
+      if (j.error === "OUT_OF_PULLS") alert("Out of pulls. Buy a roll first (off-site).");
+      else alert(j.error || "Vend failed");
+      return;
+    }
+    setLastGumball(j);
+    setSelectedRemix("R1");
+    setJob(null);
+    await refreshMe();
+  }
+
+  async function run() {
+    if (!lastGumball?.gumballId) return;
+    const r = await fetch("/api/run", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ gumballId: lastGumball.gumballId, remixId: selectedRemix })
+    });
+    const j = await r.json();
+    if (!r.ok) {
+      alert(j.error || "Run failed");
+      return;
+    }
+    setJob(j);
+  }
+
+  async function pollJob() {
+    if (!job?.jobId) return;
+    const r = await fetch("/api/job", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ jobId: job.jobId })
+    });
+    const j = await r.json();
+    if (!r.ok) {
+      alert(j.error || "Job fetch failed");
+      return;
+    }
+    setJob({ ...job, ...j });
+  }
+
+  async function deliver() {
+    if (!job?.jobId) return;
+    const r = await fetch("/api/deliver", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ jobId: job.jobId, videoUrl: deliverVideoUrl || undefined, thumbnailUrl: deliverThumbUrl || undefined })
+    });
+    const j = await r.json();
+    if (!r.ok) {
+      alert(j.error || "Deliver failed");
+      return;
+    }
+    await pollJob();
+  }
+
+  const remixOptions = useMemo(() => lastGumball?.remix || [], [lastGumball]);
+
+  return (
+    <div>
+      <h1 style={{ marginBottom: 4 }}>TC-S Digital Gumball Machine</h1>
+      <div style={{ opacity: 0.8, marginBottom: 16 }}>
+        Off-site payments only. Rays pricing. Agentic MCP runbook → job execution → delivery.
+      </div>
+
+      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 16 }}>
+        <div style={{ padding: 12, border: "1px solid #ddd", borderRadius: 10, minWidth: 260 }}>
+          <div><b>Session</b></div>
+          <div>User: <code>{me?.userId ?? "…"}</code></div>
+          <div>Pulls: <b>{me?.promptCredits ?? "…"}</b></div>
+          <button onClick={refreshMe} style={{ marginTop: 8 }}>Refresh</button>
+        </div>
+
+        <div style={{ padding: 12, border: "1px solid #ddd", borderRadius: 10, minWidth: 340 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <b>Buy Rolls (off-site)</b>
+            <select value={currency} onChange={(e) => setCurrency(e.target.value as any)}>
+              <option value="USD">USD</option>
+              <option value="BTC">BTC</option>
+              <option value="SOLAR">Solar</option>
+            </select>
+          </div>
+          <div style={{ marginTop: 8, display: "grid", gap: 8 }}>
+            {products.map(p => (
+              <button key={p.id} onClick={() => buy(p.id)}>
+                {p.name} — {p.pulls} pulls — {p.priceRays} Rays ({p.priceSolar.toFixed(6)} Solar)
+              </button>
+            ))}
+          </div>
+          <div style={{ marginTop: 8, fontSize: 12, opacity: 0.8 }}>
+            Set CHECKOUT_* secrets to hosted checkout URLs.
+          </div>
+        </div>
+
+        <div style={{ padding: 12, border: "1px solid #ddd", borderRadius: 10, minWidth: 260 }}>
+          <div><b>Vend</b></div>
+          <button onClick={vend} style={{ marginTop: 8, width: "100%" }}>🎱 Vend a Prompt Gumball (costs 1 pull)</button>
+          <div style={{ marginTop: 8, fontSize: 12, opacity: 0.8 }}>
+            Each vend delivers: base Sora prompt + 10 remix gumball designs + MCP runbook.
+          </div>
+        </div>
+      </div>
+
+      {lastGumball && (
+        <div style={{ padding: 12, border: "1px solid #ddd", borderRadius: 10, marginBottom: 16 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+            <div>
+              <b>Gumball</b>: {lastGumball.title}<br />
+              <span style={{ fontSize: 12, opacity: 0.8 }}>ID: <code>{lastGumball.gumballId}</code></span>
+            </div>
+            <div>
+              <b>Pick remix</b>{" "}
+              <select value={selectedRemix} onChange={(e) => setSelectedRemix(e.target.value)}>
+                {remixOptions.map((r: any) => <option key={r.id} value={r.id}>{r.id} — {r.label}</option>)}
+              </select>{" "}
+              <button onClick={run}>RUN (queue job)</button>{" "}
+              <button onClick={() => navigator.clipboard.writeText(lastGumball.promptMain)}>Copy Base Prompt</button>
+            </div>
+          </div>
+
+          <pre style={{ whiteSpace: "pre-wrap", marginTop: 12, padding: 12, background: "#fafafa", borderRadius: 10 }}>
+{lastGumball.promptMain}
+          </pre>
+
+          <div style={{ marginTop: 12 }}>
+            <b>Remix designs</b>
+            <ul>
+              {remixOptions.map((r: any) => (
+                <li key={r.id}><code>{r.id}</code> <b>{r.label}</b> — {r.gumball_design}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
+
+      {job && (
+        <div style={{ padding: 12, border: "1px solid #ddd", borderRadius: 10 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+            <div>
+              <b>Job</b>: <code>{job.jobId}</code><br />
+              Status: <b>{job.status}</b> · Provider: <b>{job.provider}</b>
+            </div>
+            <div>
+              <button onClick={pollJob}>Refresh Job</button>{" "}
+              <button onClick={() => navigator.clipboard.writeText(job.composedPrompt)}>Copy Composed Prompt</button>
+            </div>
+          </div>
+
+          <pre style={{ whiteSpace: "pre-wrap", marginTop: 12, padding: 12, background: "#fafafa", borderRadius: 10 }}>
+{job.composedPrompt}
+          </pre>
+
+          <div style={{ marginTop: 12 }}>
+            <b>Manual delivery (until Sora API is wired)</b>
+            <div style={{ display: "grid", gap: 8, maxWidth: 720, marginTop: 8 }}>
+              <input placeholder="Video URL (mp4)" value={deliverVideoUrl} onChange={(e) => setDeliverVideoUrl(e.target.value)} />
+              <input placeholder="Thumbnail URL (jpg)" value={deliverThumbUrl} onChange={(e) => setDeliverThumbUrl(e.target.value)} />
+              <button onClick={deliver}>Mark Delivered</button>
+            </div>
+          </div>
+
+          {job.assets && (
+            <div style={{ marginTop: 12 }}>
+              <b>Assets</b>
+              <ul>
+                {job.assets.map((a: any, idx: number) => (
+                  <li key={idx}>
+                    <code>{a.kind}</code>: {a.url ? <a href={a.url} target="_blank" rel="noreferrer">{a.url}</a> : <i>(pending)</i>}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
