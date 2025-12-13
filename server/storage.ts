@@ -3,7 +3,7 @@ import { db } from './db';
 import { 
   members, distributionLogs, backupLogs, products, newsletterSubscriptions, contactMessages,
   progressions, entitlements, transactions, userProfiles, contentLibrary, users,
-  artifacts, artifactCopies, marketplaceLedger, downloadTokens,
+  artifacts, artifactCopies, marketplaceLedger, downloadTokens, wallets,
   type Member, type InsertMember, type DistributionLog, type InsertDistributionLog, 
   type BackupLog, type InsertBackupLog, type Product, type InsertProduct,
   type NewsletterSubscription, type InsertNewsletterSubscription,
@@ -13,7 +13,8 @@ import {
   type User, type InsertUser,
   type Artifact, type ArtifactCopy, type InsertArtifactCopy,
   type MarketplaceLedgerEntry, type InsertMarketplaceLedgerEntry,
-  type DownloadToken, type InsertDownloadToken
+  type DownloadToken, type InsertDownloadToken,
+  type Wallet
 } from '../shared/schema';
 import fs from 'fs';
 import path from 'path';
@@ -175,6 +176,17 @@ export interface IStorage {
     ledgerEntries?: MarketplaceLedgerEntry[];
     error?: string;
   }>;
+
+  // ============================================================
+  // WALLET OPERATIONS - For Replit Auth wallet claiming
+  // ============================================================
+  getWalletByEmail(email: string): Promise<Wallet | undefined>;
+  getWalletByUserId(userId: string): Promise<Wallet | undefined>;
+  linkWalletToUser(walletId: string, userId: string): Promise<Wallet | undefined>;
+  createWallet(data: { userId: string; email?: string; balanceSolarS?: string; balanceRays?: number; promptCredits?: number }): Promise<Wallet>;
+  
+  // Upsert user for Replit Auth
+  upsertUser(data: { id: string; email?: string | null; firstName?: string | null; lastName?: string | null; profileImageUrl?: string | null }): Promise<User>;
   
   // Session store for passport sessions
   sessionStore: any;
@@ -1284,6 +1296,64 @@ export class DatabaseStorage implements IStorage {
         error: error instanceof Error ? error.message : 'Unknown error during purchase' 
       };
     }
+  }
+
+  // ============================================================
+  // WALLET OPERATIONS - For Replit Auth wallet claiming
+  // ============================================================
+  
+  async getWalletByEmail(email: string): Promise<Wallet | undefined> {
+    const result = await db.select().from(wallets).where(eq(wallets.email, email));
+    return result[0];
+  }
+  
+  async getWalletByUserId(userId: string): Promise<Wallet | undefined> {
+    const result = await db.select().from(wallets).where(eq(wallets.userId, userId));
+    return result[0];
+  }
+  
+  async linkWalletToUser(walletId: string, userId: string): Promise<Wallet | undefined> {
+    const result = await db.update(wallets)
+      .set({ userId })
+      .where(eq(wallets.id, walletId))
+      .returning();
+    return result[0];
+  }
+  
+  async createWallet(data: { userId: string; email?: string; balanceSolarS?: string; balanceRays?: number; promptCredits?: number }): Promise<Wallet> {
+    const result = await db.insert(wallets).values({
+      userId: data.userId,
+      email: data.email || null,
+      balanceSolarS: data.balanceSolarS || "0",
+      balanceRays: data.balanceRays || 0,
+      promptCredits: data.promptCredits || 0,
+    }).returning();
+    return result[0];
+  }
+  
+  // Upsert user for Replit Auth
+  async upsertUser(data: { id: string; email?: string | null; firstName?: string | null; lastName?: string | null; profileImageUrl?: string | null }): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values({
+        id: data.id,
+        email: data.email,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        profileImageUrl: data.profileImageUrl,
+      })
+      .onConflictDoUpdate({
+        target: users.id,
+        set: {
+          email: data.email,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          profileImageUrl: data.profileImageUrl,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return user;
   }
 }
 

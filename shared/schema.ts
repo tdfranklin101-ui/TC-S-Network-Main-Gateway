@@ -13,9 +13,22 @@ import {
   doublePrecision,
   serial,
   bigint,
+  json,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+
+// Session storage table for Replit Auth
+// (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
+export const sessions = pgTable(
+  "session",
+  {
+    sid: varchar("sid").primaryKey(),
+    sess: json("sess").notNull(),
+    expire: timestamp("expire").notNull(),
+  },
+  (table) => [index("IDX_session_expire").on(table.expire)],
+);
 
 // Kid Solar Memory Sessions
 export const kidSolarSessions = pgTable("kid_solar_sessions", {
@@ -418,6 +431,7 @@ export type BackupLog = typeof backupLogs.$inferSelect;
 export type NewsletterSubscription = typeof newsletterSubscriptions.$inferSelect;
 export type ContactMessage = typeof contactMessages.$inferSelect;
 export type SolarClock = typeof solarClock.$inferSelect;
+export type Wallet = typeof wallets.$inferSelect;
 export type Product = typeof products.$inferSelect;
 
 // Digital Artifacts for marketplace
