@@ -28,6 +28,7 @@ import powerTwinRoutes from "./routes/power-twin";
 import marketPricesRoutes from "./routes/market-prices";
 import dmtxactlyRoutes from "./routes/dmtxactly";
 import gumballRoutes from "./routes/gumball";
+import { startGumballWorker } from "./gumball-worker";
 import geoip from "geoip-lite";
 import multer from "multer";
 import crypto from "crypto";
@@ -2028,6 +2029,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+
+  // Start gumball worker
+  startGumballWorker();
 
   const httpServer = createServer(app);
   return httpServer;

@@ -137,7 +137,7 @@ router.post("/buy", async (req, res) => {
 // POST /api/gumball/confirm - Confirm a purchase (webhook or manual)
 router.post("/confirm", async (req, res) => {
   try {
-    const { transactionId, visitorId } = req.body;
+    const { transactionId } = req.body;
     
     if (!transactionId) {
       return res.status(400).json({ error: "Missing transactionId" });
@@ -156,19 +156,31 @@ router.post("/confirm", async (req, res) => {
       return res.json({ message: "Already confirmed", transaction });
     }
     
+    // Ensure wallet exists before crediting
+    await getOrCreateVisitorWallet(transaction.visitorId);
+    
     // Update transaction status
     await db.update(gumballTransactions)
       .set({ status: "confirmed", confirmedAt: new Date() })
       .where(eq(gumballTransactions.id, transactionId));
     
-    // Add credits to wallet
-    await db.update(wallets)
+    // Add credits to wallet and verify update succeeded
+    const updatedWallet = await db.update(wallets)
       .set({ promptCredits: sql`COALESCE(${wallets.promptCredits}, 0) + ${transaction.pullsPurchased}` })
-      .where(eq(wallets.userId, transaction.visitorId));
+      .where(eq(wallets.userId, transaction.visitorId))
+      .returning();
+    
+    if (updatedWallet.length === 0) {
+      console.error(`[GumballConfirm] Failed to credit wallet for visitor ${transaction.visitorId}`);
+      return res.status(500).json({ error: "Failed to credit wallet" });
+    }
+    
+    console.log(`[GumballConfirm] Credited ${transaction.pullsPurchased} credits to ${transaction.visitorId}, new balance: ${updatedWallet[0].promptCredits}`);
     
     res.json({ 
       success: true, 
-      creditsAdded: transaction.pullsPurchased 
+      creditsAdded: transaction.pullsPurchased,
+      newBalance: updatedWallet[0].promptCredits
     });
   } catch (error) {
     console.error("Error confirming gumball purchase:", error);
