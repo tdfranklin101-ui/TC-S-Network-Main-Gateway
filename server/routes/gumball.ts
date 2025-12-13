@@ -16,40 +16,37 @@ const router = express.Router();
 // Constants
 const RAYS_PER_SOLAR = 10000;
 
-// Helper: Get or create visitor wallet by visitorId
-async function getOrCreateVisitorWallet(visitorId: string) {
-  let wallet = await db.select().from(wallets).where(eq(wallets.userId, visitorId)).then(r => r[0]);
-  
-  if (!wallet) {
-    const result = await db.insert(wallets).values({
-      userId: visitorId,
-      promptCredits: 0,
-      balanceRays: 0,
-      balanceSolarS: "0"
-    }).returning();
-    wallet = result[0];
-  }
-  
-  return wallet;
+// Helper: Get wallet by userId
+async function getWalletByUserId(userId: string) {
+  return db.select().from(wallets).where(eq(wallets.userId, userId)).then(r => r[0]);
 }
 
 // GET /api/gumball/me - Current user session with promptCredits
 router.get("/me", async (req, res) => {
   try {
-    const visitorId = req.query.visitorId as string || (req.session as any)?.visitorId;
+    const userId = req.query.userId as string || (req.user as any)?.claims?.sub;
     
-    if (!visitorId) {
+    if (!userId) {
       return res.json({ 
-        visitorId: null, 
+        userId: null, 
         promptCredits: 0, 
-        message: "No session - provide visitorId query param" 
+        message: "Not authenticated" 
       });
     }
     
-    const wallet = await getOrCreateVisitorWallet(visitorId);
+    const wallet = await getWalletByUserId(userId);
+    
+    if (!wallet) {
+      return res.json({
+        userId,
+        promptCredits: 0,
+        balanceRays: 0,
+        message: "No wallet found - please claim your wallet first"
+      });
+    }
     
     res.json({
-      visitorId,
+      userId,
       promptCredits: wallet.promptCredits || 0,
       balanceRays: wallet.balanceRays || 0
     });
@@ -83,10 +80,11 @@ router.get("/products", async (req, res) => {
 // POST /api/gumball/buy - Redirect to external checkout
 router.post("/buy", async (req, res) => {
   try {
-    const { productId, currency, visitorId } = req.body;
+    const { productId, currency, userId } = req.body;
+    const authenticatedUserId = (req.user as any)?.claims?.sub || userId;
     
-    if (!productId || !currency || !visitorId) {
-      return res.status(400).json({ error: "Missing productId, currency, or visitorId" });
+    if (!productId || !currency || !authenticatedUserId) {
+      return res.status(400).json({ error: "Missing productId, currency, or userId" });
     }
     
     const product = await db.select()
@@ -191,13 +189,17 @@ router.post("/confirm", async (req, res) => {
 // POST /api/gumball/vend - Atomically decrement credit and create gumball
 router.post("/vend", async (req, res) => {
   try {
-    const { visitorId } = req.body;
+    const { userId } = req.body;
+    const authenticatedUserId = (req.user as any)?.claims?.sub || userId;
     
-    if (!visitorId) {
-      return res.status(400).json({ error: "Missing visitorId" });
+    if (!authenticatedUserId) {
+      return res.status(400).json({ error: "Not authenticated" });
     }
     
-    const wallet = await getOrCreateVisitorWallet(visitorId);
+    const wallet = await getWalletByUserId(authenticatedUserId);
+    if (!wallet) {
+      return res.status(400).json({ error: "No wallet found - please claim your wallet first" });
+    }
     
     if (!wallet.promptCredits || wallet.promptCredits < 1) {
       return res.status(400).json({ error: "Insufficient prompt credits", promptCredits: wallet.promptCredits || 0 });

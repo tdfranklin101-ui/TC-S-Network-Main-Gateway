@@ -5,7 +5,7 @@ import { storage } from "./storage";
 import { insertNewsletterSubscriptionSchema, insertContactMessageSchema, solarClock, songs, playEvents, insertPlayEventSchema, solarAuditCategories, solarAuditDataSources, solarAuditEntries, auditRegionTotals, auditRegions, insertSolarAuditCategorySchema, insertSolarAuditDataSourceSchema, insertSolarAuditEntrySchema } from "@shared/schema";
 import { setupWaitlistRoutes } from "./waitlist";
 import { setupAdminRoutes } from "./admin";
-import { setupAuth } from "./auth";
+import { setupReplitAuth } from "./replitAuth";
 import { setupDistributionRoutes } from "./distribution";
 import cookieParser from "cookie-parser";
 import fs from "fs";
@@ -82,8 +82,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Add cookie parser middleware for authentication
   app.use(cookieParser());
   
-  // Set up authentication
-  setupAuth(app);
+  // Set up Replit authentication
+  await setupReplitAuth(app);
   
   const apiRouter = express.Router();
   

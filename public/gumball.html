@@ -392,9 +392,17 @@
                 <span class="credits-count" data-testid="text-credits-count">0</span>
                 <span class="credits-label">Prompt Credits</span>
             </div>
-            <div>
-                <span data-testid="text-visitor-id" style="color: var(--text-secondary); font-size: 0.9rem;"></span>
+            <div id="auth-section">
+                <span id="user-info" data-testid="text-user-info" style="color: var(--text-secondary); font-size: 0.9rem;"></span>
+                <a href="/api/login" id="login-btn" class="btn btn-solar" data-testid="button-login" style="display: none;">Login to Play</a>
+                <a href="/api/logout" id="logout-btn" class="btn" data-testid="button-logout" style="display: none; background: var(--border-color);">Logout</a>
             </div>
+        </div>
+        
+        <div id="login-prompt" class="card hidden" style="margin-bottom: 20px; text-align: center; padding: 40px;">
+            <h2 style="color: var(--accent-cyan); margin-bottom: 15px;">🔐 Sign In Required</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 20px;">Log in to claim your wallet and start playing the Gumball Machine!</p>
+            <a href="/api/login" class="btn btn-vend" data-testid="button-login-main">Login with Replit</a>
         </div>
         
         <div class="main-grid">
@@ -468,24 +476,85 @@
     
     <script>
         // State
-        let visitorId = localStorage.getItem('gumball_visitor_id');
+        let currentUser = null;
+        let currentWallet = null;
         let currentGumball = null;
         let currentJob = null;
         let selectedRemixId = null;
         
-        // Initialize
-        if (!visitorId) {
-            visitorId = 'visitor_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
-            localStorage.setItem('gumball_visitor_id', visitorId);
+        // Check authentication and load user data
+        async function checkAuth() {
+            try {
+                const res = await fetch('/api/auth/user', { credentials: 'include' });
+                if (res.ok) {
+                    const data = await res.json();
+                    currentUser = data;
+                    currentWallet = data.wallet;
+                    showAuthenticatedUI();
+                    
+                    if (!currentWallet) {
+                        await claimWallet();
+                    } else {
+                        updateCreditsDisplay();
+                    }
+                    return true;
+                }
+            } catch (err) {
+                console.error('Auth check error:', err);
+            }
+            showUnauthenticatedUI();
+            return false;
         }
         
-        document.querySelector('[data-testid="text-visitor-id"]').textContent = visitorId.slice(0, 20) + '...';
+        function showAuthenticatedUI() {
+            document.getElementById('login-btn').style.display = 'none';
+            document.getElementById('logout-btn').style.display = 'inline-block';
+            document.getElementById('login-prompt').classList.add('hidden');
+            document.querySelector('.main-grid').classList.remove('hidden');
+            
+            const userInfo = document.getElementById('user-info');
+            const name = currentUser.firstName || currentUser.email?.split('@')[0] || 'User';
+            userInfo.textContent = `Welcome, ${name}!`;
+        }
+        
+        function showUnauthenticatedUI() {
+            document.getElementById('login-btn').style.display = 'inline-block';
+            document.getElementById('logout-btn').style.display = 'none';
+            document.getElementById('login-prompt').classList.remove('hidden');
+            document.querySelector('.main-grid').classList.add('hidden');
+        }
+        
+        async function claimWallet() {
+            try {
+                const res = await fetch('/api/auth/claim-wallet', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+                const data = await res.json();
+                if (data.wallet) {
+                    currentWallet = data.wallet;
+                    updateCreditsDisplay();
+                    showToast(data.message);
+                }
+            } catch (err) {
+                console.error('Error claiming wallet:', err);
+            }
+        }
+        
+        function updateCreditsDisplay() {
+            document.querySelector('[data-testid="text-credits-count"]').textContent = currentWallet?.promptCredits || 0;
+            updateVendButton();
+        }
         
         // API calls
         async function fetchMe() {
+            if (!currentUser) return;
             try {
-                const res = await fetch(`/api/gumball/me?visitorId=${visitorId}`);
+                const res = await fetch(`/api/gumball/me?userId=${currentUser.id}`, { credentials: 'include' });
                 const data = await res.json();
+                if (data.promptCredits !== undefined) {
+                    currentWallet = { ...currentWallet, promptCredits: data.promptCredits };
+                }
                 document.querySelector('[data-testid="text-credits-count"]').textContent = data.promptCredits || 0;
                 updateVendButton();
             } catch (err) {
@@ -525,11 +594,16 @@
         }
         
         async function buyProduct(productId, currency) {
+            if (!currentUser) {
+                showToast('Please log in first');
+                return;
+            }
             try {
                 const res = await fetch('/api/gumball/buy', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ productId, currency, visitorId })
+                    credentials: 'include',
+                    body: JSON.stringify({ productId, currency, userId: currentUser.id })
                 });
                 const data = await res.json();
                 
@@ -543,11 +617,16 @@
         }
         
         async function vendGumball() {
+            if (!currentUser) {
+                showToast('Please log in first');
+                return;
+            }
             try {
                 const res = await fetch('/api/gumball/vend', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ visitorId })
+                    credentials: 'include',
+                    body: JSON.stringify({ userId: currentUser.id })
                 });
                 const data = await res.json();
                 
@@ -763,8 +842,14 @@
         }
         
         // Initialize
-        fetchMe();
-        fetchProducts();
+        async function init() {
+            const isAuth = await checkAuth();
+            if (isAuth) {
+                await fetchMe();
+            }
+            await fetchProducts();
+        }
+        init();
     </script>
 </body>
 </html>
