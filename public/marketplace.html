@@ -2127,12 +2127,19 @@
             <!-- Not Found Panel -->
             <div id="not-found-panel" class="not-found-panel" style="display: none;" data-testid="div-not-found">
                 <h3>🔍 No Items Found</h3>
-                <p>We couldn't find what you're looking for, but you can request it!</p>
+                <p>We couldn't find what you're looking for in the marketplace.</p>
+                <p style="margin-top: 10px; font-size: 0.95em; color: #aaa;">
+                    <strong style="color: #00f5d4;">Want this item?</strong> Submit a request below and our AI Scout will search approved vendors. 
+                    A Foundation administrator will review recommendations before any listing is created.
+                </p>
             </div>
 
             <!-- Request Item Panel -->
             <div id="request-item-panel" class="request-item-panel" style="display: none;" data-testid="panel-request-item">
                 <h4>📦 Request This Item</h4>
+                <p style="font-size: 0.9em; color: #888; margin-bottom: 15px;">
+                    All requests require human approval. Our team reviews each request to ensure quality and fair pricing.
+                </p>
                 <form id="request-form" onsubmit="submitItemRequest(event)">
                     <div class="request-form-group">
                         <label for="request-query">What are you looking for?</label>
@@ -2185,8 +2192,14 @@
             <!-- Request Confirmation -->
             <div id="request-confirmation" class="request-confirmation" data-testid="div-request-confirmation">
                 <h4>✅ Request Submitted Successfully!</h4>
-                <p>We've received your request and our procurement team will work on finding what you need.</p>
-                <p>You'll be notified when we have updates.</p>
+                <p>Our AI Scout is now searching approved vendors (Amazon, Walmart, eBay) for your item.</p>
+                <p style="margin-top: 8px;"><strong style="color: #00f5d4;">What happens next:</strong></p>
+                <ul style="text-align: left; margin: 10px 20px; color: #aaa; font-size: 0.9em;">
+                    <li>AI Scout generates vendor recommendations</li>
+                    <li>Foundation admin reviews and approves (required)</li>
+                    <li>Item becomes available in marketplace</li>
+                </ul>
+                <p style="font-size: 0.85em; color: #888;">Requests are not instantly fulfilled - human review ensures quality.</p>
                 <div class="request-id" id="request-id-display"></div>
             </div>
         </div>

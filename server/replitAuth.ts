@@ -158,6 +158,65 @@ export async function setupReplitAuth(app: Express) {
     }
   });
 
+  // Session endpoint - returns current user and Solar balance
+  app.get('/api/session', async (req: any, res) => {
+    if (!req.isAuthenticated || !req.isAuthenticated() || !req.user) {
+      return res.json({ success: false, authenticated: false });
+    }
+    
+    try {
+      const userId = req.user.claims?.sub;
+      const userEmail = req.user.claims?.email;
+      
+      if (!userId) {
+        return res.json({ success: false, authenticated: false });
+      }
+      
+      const user = await storage.getUser(userId);
+      
+      // CRITICAL: Get Solar balance from members.total_solar (single source of truth)
+      let solarBalance = 0;
+      let balanceSource = 'default';
+      
+      if (userEmail) {
+        const member = await storage.getMemberByEmail(userEmail);
+        if (member) {
+          solarBalance = parseFloat(member.totalSolar || '0');
+          balanceSource = 'members.total_solar';
+        }
+      }
+      
+      // Also try to get wallet info
+      let wallet = null;
+      if (userEmail) {
+        wallet = await storage.getWalletByEmail(userEmail);
+      }
+      
+      res.json({ 
+        success: true,
+        authenticated: true,
+        user: {
+          id: userId,
+          email: userEmail,
+          username: user?.firstName || userEmail?.split('@')[0] || 'Member',
+          firstName: user?.firstName,
+          lastName: user?.lastName,
+          profileImageUrl: user?.profileImageUrl,
+        },
+        solarBalance,
+        balanceSource,
+        wallet: wallet ? {
+          id: wallet.id,
+          balanceSolarS: wallet.balanceSolarS,
+          balanceRays: wallet.balanceRays,
+        } : null
+      });
+    } catch (error) {
+      console.error('Error getting session:', error);
+      res.json({ success: false, authenticated: false, error: 'Session error' });
+    }
+  });
+
   // Claim wallet endpoint - links a pre-populated wallet to the user
   app.post('/api/auth/claim-wallet', isAuthenticated, async (req: any, res) => {
     try {
