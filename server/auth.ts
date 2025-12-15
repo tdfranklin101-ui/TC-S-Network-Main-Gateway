@@ -283,8 +283,28 @@ export function setupAuth(app: Express) {
     }
     
     try {
-      // Get user's Solar profile
+      // Get user's Solar profile from userProfiles
       const userProfile = await storage.getUserProfile(req.user.id);
+      
+      // CRITICAL: Get Solar balance from members.total_solar (single source of truth)
+      let solarBalance = 0;
+      let balanceSource = 'default';
+      
+      if (req.user.email) {
+        const member = await storage.getMemberByEmail(req.user.email);
+        if (member) {
+          solarBalance = parseFloat(member.totalSolar || '0');
+          balanceSource = 'members.total_solar';
+        } else {
+          // Fallback to userProfile if no member record found
+          solarBalance = userProfile?.solarBalance || 0;
+          balanceSource = 'userProfiles.solarBalance (no member record)';
+        }
+      } else {
+        // No email, use userProfile balance
+        solarBalance = userProfile?.solarBalance || 0;
+        balanceSource = 'userProfiles.solarBalance (no email)';
+      }
       
       // Remove password from response
       const userResponse = { ...req.user, password: undefined };
@@ -293,7 +313,8 @@ export function setupAuth(app: Express) {
         authenticated: true,
         user: userResponse,
         userProfile,
-        solarBalance: userProfile?.solarBalance || 0
+        solarBalance,
+        balanceSource
       });
     } catch (error) {
       console.error('Error getting session:', error);
