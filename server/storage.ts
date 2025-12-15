@@ -4,6 +4,7 @@ import {
   members, distributionLogs, backupLogs, products, newsletterSubscriptions, contactMessages,
   progressions, entitlements, transactions, userProfiles, contentLibrary, users,
   artifacts, artifactCopies, marketplaceLedger, downloadTokens, wallets,
+  marketItems, marketRequests, procurementRecommendations, procurementReviews,
   type Member, type InsertMember, type DistributionLog, type InsertDistributionLog, 
   type BackupLog, type InsertBackupLog, type Product, type InsertProduct,
   type NewsletterSubscription, type InsertNewsletterSubscription,
@@ -14,7 +15,11 @@ import {
   type Artifact, type ArtifactCopy, type InsertArtifactCopy,
   type MarketplaceLedgerEntry, type InsertMarketplaceLedgerEntry,
   type DownloadToken, type InsertDownloadToken,
-  type Wallet
+  type Wallet,
+  type MarketItem, type InsertMarketItem,
+  type MarketRequest, type InsertMarketRequest,
+  type ProcurementRecommendation, type InsertProcurementRecommendation,
+  type ProcurementReview, type InsertProcurementReview
 } from '../shared/schema';
 import fs from 'fs';
 import path from 'path';
@@ -190,6 +195,32 @@ export interface IStorage {
   
   // Session store for passport sessions
   sessionStore: any;
+
+  // ============================================================
+  // MARKETPLACE SEARCH & PROCUREMENT OPERATIONS
+  // ============================================================
+  
+  // Market Items methods
+  searchMarketItems(query: string, limit?: number): Promise<MarketItem[]>;
+  getMarketItemById(id: string): Promise<MarketItem | undefined>;
+  getMarketItemsByStatus(status: string): Promise<MarketItem[]>;
+  createMarketItem(item: InsertMarketItem): Promise<MarketItem>;
+  updateMarketItem(id: string, updates: Partial<InsertMarketItem>): Promise<MarketItem | undefined>;
+  publishMarketItem(id: string): Promise<MarketItem | undefined>;
+
+  // Market Requests methods
+  createMarketRequest(request: InsertMarketRequest): Promise<MarketRequest>;
+  getMarketRequestById(id: string): Promise<MarketRequest | undefined>;
+  getMarketRequestsByStatus(status: string): Promise<MarketRequest[]>;
+  updateMarketRequestStatus(id: string, status: string): Promise<MarketRequest | undefined>;
+
+  // Procurement Recommendations methods
+  createProcurementRecommendation(rec: InsertProcurementRecommendation): Promise<ProcurementRecommendation>;
+  getRecommendationsByRequestId(requestId: string): Promise<ProcurementRecommendation[]>;
+
+  // Procurement Reviews methods
+  createProcurementReview(review: InsertProcurementReview): Promise<ProcurementReview>;
+  getReviewByRequestId(requestId: string): Promise<ProcurementReview | undefined>;
 }
 
 // Implementation of the storage interface using Drizzle ORM
@@ -1354,6 +1385,107 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return user;
+  }
+
+  // ============================================================
+  // MARKETPLACE SEARCH & PROCUREMENT OPERATIONS IMPLEMENTATION
+  // ============================================================
+
+  // Market Items methods
+  async searchMarketItems(query: string, limit = 20): Promise<MarketItem[]> {
+    const normalizedQuery = `%${query.toLowerCase()}%`;
+    return db.select().from(marketItems)
+      .where(
+        and(
+          eq(marketItems.status, 'ACTIVE'),
+          or(
+            sql`LOWER(${marketItems.searchText}) LIKE ${normalizedQuery}`,
+            sql`LOWER(${marketItems.title}) LIKE ${normalizedQuery}`
+          )
+        )
+      )
+      .limit(limit);
+  }
+
+  async getMarketItemById(id: string): Promise<MarketItem | undefined> {
+    const result = await db.select().from(marketItems).where(eq(marketItems.id, id));
+    return result[0];
+  }
+
+  async getMarketItemsByStatus(status: string): Promise<MarketItem[]> {
+    return db.select().from(marketItems)
+      .where(eq(marketItems.status, status))
+      .orderBy(desc(marketItems.createdAt));
+  }
+
+  async createMarketItem(item: InsertMarketItem): Promise<MarketItem> {
+    const result = await db.insert(marketItems).values(item).returning();
+    return result[0];
+  }
+
+  async updateMarketItem(id: string, updates: Partial<InsertMarketItem>): Promise<MarketItem | undefined> {
+    const result = await db.update(marketItems)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(marketItems.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async publishMarketItem(id: string): Promise<MarketItem | undefined> {
+    const result = await db.update(marketItems)
+      .set({ status: 'ACTIVE', updatedAt: new Date() })
+      .where(eq(marketItems.id, id))
+      .returning();
+    return result[0];
+  }
+
+  // Market Requests methods
+  async createMarketRequest(request: InsertMarketRequest): Promise<MarketRequest> {
+    const result = await db.insert(marketRequests).values(request).returning();
+    return result[0];
+  }
+
+  async getMarketRequestById(id: string): Promise<MarketRequest | undefined> {
+    const result = await db.select().from(marketRequests).where(eq(marketRequests.id, id));
+    return result[0];
+  }
+
+  async getMarketRequestsByStatus(status: string): Promise<MarketRequest[]> {
+    return db.select().from(marketRequests)
+      .where(eq(marketRequests.status, status))
+      .orderBy(desc(marketRequests.createdAt));
+  }
+
+  async updateMarketRequestStatus(id: string, status: string): Promise<MarketRequest | undefined> {
+    const result = await db.update(marketRequests)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(marketRequests.id, id))
+      .returning();
+    return result[0];
+  }
+
+  // Procurement Recommendations methods
+  async createProcurementRecommendation(rec: InsertProcurementRecommendation): Promise<ProcurementRecommendation> {
+    const result = await db.insert(procurementRecommendations).values(rec).returning();
+    return result[0];
+  }
+
+  async getRecommendationsByRequestId(requestId: string): Promise<ProcurementRecommendation[]> {
+    return db.select().from(procurementRecommendations)
+      .where(eq(procurementRecommendations.requestId, requestId))
+      .orderBy(desc(procurementRecommendations.createdAt));
+  }
+
+  // Procurement Reviews methods
+  async createProcurementReview(review: InsertProcurementReview): Promise<ProcurementReview> {
+    const result = await db.insert(procurementReviews).values(review).returning();
+    return result[0];
+  }
+
+  async getReviewByRequestId(requestId: string): Promise<ProcurementReview | undefined> {
+    const result = await db.select().from(procurementReviews)
+      .where(eq(procurementReviews.requestId, requestId));
+    return result[0];
   }
 }
 
