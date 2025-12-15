@@ -28,6 +28,7 @@ import powerTwinRoutes from "./routes/power-twin";
 import marketPricesRoutes from "./routes/market-prices";
 import dmtxactlyRoutes from "./routes/dmtxactly";
 import gumballRoutes from "./routes/gumball";
+import marketplaceRoutes from "./routes/marketplace";
 import { startGumballWorker } from "./gumball-worker";
 import geoip from "geoip-lite";
 import multer from "multer";
@@ -660,6 +661,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/market-prices", marketPricesRoutes);
   app.use("/api/dmtxactly", dmtxactlyRoutes);
   app.use("/api/gumball", gumballRoutes);
+  app.use(marketplaceRoutes);
 
   // Mount legacy AI routes (to be replaced)
   app.use("/api/ai", aiRouter);
