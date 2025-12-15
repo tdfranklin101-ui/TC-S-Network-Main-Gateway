@@ -99,7 +99,8 @@ try {
   };
 }
 
-const PORT = process.env.PORT || 8080;
+// For Replit Autoscale deployment: internal port 3002 maps to external port 80
+const PORT = process.env.PORT || 3002;
 
 // ================== UIM HEADERS + REQUEST ID ==================
 const UIM_VERSION = "1.0.0";
