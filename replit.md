@@ -65,6 +65,32 @@ Note: The `userProfiles.solarBalance` column exists for the separate progression
 - **Member Management API**: RESTful endpoints for user data operations.
 - **File Upload API**: For image processing and analysis.
 - **Health Check APIs**: For system monitoring.
+- **Marketplace Search & Procurement API**: 
+  - `GET /api/market/search?q=...` - Search active marketplace items
+  - `POST /api/market/requests` - Submit request for unavailable items
+  - `GET /api/admin/procurement/requests` - Admin: view pending requests
+  - `GET /api/admin/procurement/recommendations` - Admin: view AI recommendations
+  - `POST /api/admin/procurement/review` - Admin: approve/reject requests
+  - `POST /api/market/items/publish` - Admin: publish draft items
+
+### Marketplace Search & Procurement System
+The platform implements an AI-powered procurement scout system with human-in-the-loop approval:
+
+**User Flow:**
+1. User searches marketplace via `/api/market/search`
+2. If no matches found, user submits item request via `/api/market/requests`
+3. AI Procurement Scout automatically generates recommendations from allowed portals (Amazon, Walmart, eBay)
+4. Foundation admin reviews recommendations at `/admin/procurement-review.html`
+5. Admin can APPROVE (creates draft item), REJECT, or request MORE_INFO
+6. Approved items become DRAFT listings; separate publish action makes them ACTIVE
+
+**Database Tables:**
+- `market_items` - Products/services in marketplace (DRAFT/ACTIVE/ARCHIVED)
+- `market_requests` - User requests for unavailable items (NEW → SCOUTING → REVIEW_READY → APPROVED/REJECTED/PUBLISHED)
+- `procurement_recommendations` - AI-generated vendor recommendations with fit scores
+- `procurement_reviews` - Human review decisions with approval mode
+
+**Security:** Admin routes require `X-Admin: true` header. Agent recommends only; no auto-procurement or auto-publishing.
 
 ### Databases
 - **Primary**: PostgreSQL (via Drizzle ORM).
