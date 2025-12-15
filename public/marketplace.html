@@ -1785,6 +1785,277 @@
                 border-radius: 12px 12px 0 0;
             }
         }
+
+        /* Search Box Styles */
+        .search-container {
+            margin: 25px 0;
+            background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .search-input {
+            flex: 1;
+            background: #0a0a0a;
+            border: 2px solid #333;
+            color: #ffffff;
+            padding: 14px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #00ffff;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+        }
+
+        .search-input::placeholder {
+            color: #666;
+        }
+
+        .search-btn {
+            background: linear-gradient(135deg, #00ffff, #00bfff);
+            color: #000;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .search-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 255, 255, 0.4);
+        }
+
+        .search-btn:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Search Results Styles */
+        .search-results-container {
+            margin-top: 25px;
+            display: none;
+        }
+
+        .search-results-container.visible {
+            display: block;
+        }
+
+        .search-results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .search-results-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #00ffff;
+        }
+
+        .search-results-count {
+            font-size: 14px;
+            color: #888;
+        }
+
+        .search-results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .clear-search-btn {
+            background: rgba(255, 107, 53, 0.1);
+            color: #ff6b35;
+            border: 1px solid #ff6b35;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .clear-search-btn:hover {
+            background: rgba(255, 107, 53, 0.2);
+        }
+
+        /* Not Found Panel */
+        .not-found-panel {
+            text-align: center;
+            padding: 40px 20px;
+            background: rgba(255, 193, 7, 0.05);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            border-radius: 12px;
+            margin-top: 20px;
+        }
+
+        .not-found-panel h3 {
+            font-size: 24px;
+            color: #ffc107;
+            margin-bottom: 10px;
+        }
+
+        .not-found-panel p {
+            color: #888;
+            margin-bottom: 20px;
+        }
+
+        /* Request Item Panel */
+        .request-item-panel {
+            background: linear-gradient(135deg, #1a1a1a, #2a1a2a);
+            border: 2px solid #00ffff;
+            border-radius: 12px;
+            padding: 30px;
+            margin-top: 20px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .request-item-panel h4 {
+            font-size: 20px;
+            color: #00ffff;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .request-form-group {
+            margin-bottom: 20px;
+        }
+
+        .request-form-group label {
+            display: block;
+            color: #ccc;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .request-form-group input,
+        .request-form-group select {
+            width: 100%;
+            background: #0a0a0a;
+            border: 1px solid #333;
+            color: #ffffff;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .request-form-group input:focus,
+        .request-form-group select:focus {
+            outline: none;
+            border-color: #00ffff;
+        }
+
+        .request-form-group .hint {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .submit-request-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #00ffff, #00bfff);
+            color: #000;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .submit-request-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 255, 255, 0.4);
+        }
+
+        .submit-request-btn:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Request Confirmation */
+        .request-confirmation {
+            text-align: center;
+            padding: 30px;
+            background: rgba(40, 167, 69, 0.1);
+            border: 1px solid #28a745;
+            border-radius: 12px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .request-confirmation.visible {
+            display: block;
+        }
+
+        .request-confirmation h4 {
+            font-size: 22px;
+            color: #28a745;
+            margin-bottom: 10px;
+        }
+
+        .request-confirmation p {
+            color: #888;
+            line-height: 1.5;
+        }
+
+        .request-confirmation .request-id {
+            font-family: monospace;
+            background: #1a1a1a;
+            padding: 8px 16px;
+            border-radius: 6px;
+            color: #00ffff;
+            display: inline-block;
+            margin-top: 15px;
+        }
+
+        .search-loading {
+            text-align: center;
+            padding: 30px;
+            color: #00ffff;
+        }
+
+        .search-loading .spinner {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 3px solid #333;
+            border-top-color: #00ffff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
     <meta name="description" content="Upload, price, and sell digital content with AI-powered Solar currency. Join the creator economy within the $16T digital marketplace. Each Solar token backed by 4913 kWh renewable energy. Daily distribution since April 7, 2025.">
     <meta name="keywords" content="digital asset marketplace 2025, creator economy platform, AI-powered content pricing, Solar token payments, renewable energy backed currency, sustainable content monetization, 44GW energy-backed marketplace, universal basic income creators">
@@ -1821,6 +2092,104 @@
     <div class="container">
         <h1 class="market-title">Digital Artifact Market</h1>
         <p class="market-subtitle" id="artifact-count">Loading artifacts...</p>
+
+        <!-- Search Section -->
+        <div class="search-container">
+            <div class="search-box">
+                <input 
+                    type="text" 
+                    id="search-input" 
+                    class="search-input" 
+                    placeholder="Search for items, music, videos, tools..."
+                    data-testid="input-search"
+                    onkeydown="handleSearchKeydown(event)"
+                />
+                <button 
+                    id="search-btn" 
+                    class="search-btn" 
+                    onclick="performSearch()"
+                    data-testid="button-search"
+                >
+                    🔍 Search
+                </button>
+            </div>
+
+            <!-- Search Results Container -->
+            <div id="search-results-container" class="search-results-container" data-testid="div-search-results">
+                <div class="search-results-header">
+                    <span class="search-results-title">Search Results</span>
+                    <span class="search-results-count" id="search-results-count"></span>
+                    <button class="clear-search-btn" onclick="clearSearch()">Clear Search</button>
+                </div>
+                <div id="search-results-grid" class="search-results-grid"></div>
+            </div>
+
+            <!-- Not Found Panel -->
+            <div id="not-found-panel" class="not-found-panel" style="display: none;" data-testid="div-not-found">
+                <h3>🔍 No Items Found</h3>
+                <p>We couldn't find what you're looking for, but you can request it!</p>
+            </div>
+
+            <!-- Request Item Panel -->
+            <div id="request-item-panel" class="request-item-panel" style="display: none;" data-testid="panel-request-item">
+                <h4>📦 Request This Item</h4>
+                <form id="request-form" onsubmit="submitItemRequest(event)">
+                    <div class="request-form-group">
+                        <label for="request-query">What are you looking for?</label>
+                        <input 
+                            type="text" 
+                            id="request-query" 
+                            readonly
+                            style="background: #1a1a1a; color: #00ffff;"
+                        />
+                    </div>
+                    <div class="request-form-group">
+                        <label for="request-budget">Budget (Optional)</label>
+                        <input 
+                            type="text" 
+                            id="request-budget" 
+                            placeholder="e.g., 0.01 Solar, $50, or any amount"
+                            data-testid="input-budget"
+                        />
+                        <div class="hint">Your preferred price range</div>
+                    </div>
+                    <div class="request-form-group">
+                        <label for="request-condition">Condition Preference</label>
+                        <select id="request-condition" data-testid="select-condition">
+                            <option value="">Any condition</option>
+                            <option value="new">New only</option>
+                            <option value="used">Used acceptable</option>
+                            <option value="refurbished">Refurbished acceptable</option>
+                        </select>
+                    </div>
+                    <div class="request-form-group">
+                        <label for="request-urgency">Urgency</label>
+                        <select id="request-urgency" data-testid="select-urgency">
+                            <option value="normal">Normal - within a few days</option>
+                            <option value="low">Low - whenever available</option>
+                            <option value="high">High - as soon as possible</option>
+                            <option value="urgent">Urgent - need it today</option>
+                        </select>
+                    </div>
+                    <button 
+                        type="submit" 
+                        class="submit-request-btn" 
+                        id="submit-request-btn"
+                        data-testid="button-submit-request"
+                    >
+                        Submit Request
+                    </button>
+                </form>
+            </div>
+
+            <!-- Request Confirmation -->
+            <div id="request-confirmation" class="request-confirmation" data-testid="div-request-confirmation">
+                <h4>✅ Request Submitted Successfully!</h4>
+                <p>We've received your request and our procurement team will work on finding what you need.</p>
+                <p>You'll be notified when we have updates.</p>
+                <div class="request-id" id="request-id-display"></div>
+            </div>
+        </div>
         
         <!-- Members Directory Link -->
         <div style="text-align: center; margin: 20px 0;">
@@ -4470,6 +4839,219 @@
         });
     </script>
     
+    <!-- Search and Request Functionality -->
+    <script>
+        // Search state
+        let lastSearchQuery = '';
+        let isSearching = false;
+
+        // Handle Enter key in search input
+        function handleSearchKeydown(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                performSearch();
+            }
+        }
+
+        // Perform search
+        async function performSearch() {
+            const searchInput = document.getElementById('search-input');
+            const query = searchInput.value.trim();
+            
+            if (!query) {
+                clearSearch();
+                return;
+            }
+
+            if (isSearching) return;
+            isSearching = true;
+            lastSearchQuery = query;
+
+            const searchBtn = document.getElementById('search-btn');
+            const resultsContainer = document.getElementById('search-results-container');
+            const resultsGrid = document.getElementById('search-results-grid');
+            const notFoundPanel = document.getElementById('not-found-panel');
+            const requestPanel = document.getElementById('request-item-panel');
+            const confirmationPanel = document.getElementById('request-confirmation');
+
+            // Reset panels
+            notFoundPanel.style.display = 'none';
+            requestPanel.style.display = 'none';
+            confirmationPanel.classList.remove('visible');
+
+            // Show loading state
+            searchBtn.disabled = true;
+            searchBtn.innerHTML = '<span class="spinner" style="display: inline-block; width: 16px; height: 16px; border: 2px solid #333; border-top-color: #000; border-radius: 50%; animation: spin 1s linear infinite;"></span> Searching...';
+            resultsContainer.classList.add('visible');
+            resultsGrid.innerHTML = '<div class="search-loading"><span class="spinner"></span>Searching marketplace...</div>';
+
+            try {
+                const response = await fetch(`/api/market/search?q=${encodeURIComponent(query)}&limit=20`);
+                const data = await response.json();
+
+                resultsGrid.innerHTML = '';
+
+                if (data.notFound || data.items.length === 0) {
+                    // Show not found and request panels
+                    resultsContainer.classList.remove('visible');
+                    notFoundPanel.style.display = 'block';
+                    requestPanel.style.display = 'block';
+                    
+                    // Pre-fill the request query
+                    document.getElementById('request-query').value = query;
+                    document.getElementById('search-results-count').textContent = '0 results';
+                } else {
+                    // Show search results
+                    document.getElementById('search-results-count').textContent = `${data.items.length} result${data.items.length !== 1 ? 's' : ''}`;
+                    
+                    data.items.forEach(item => {
+                        const card = createSearchResultCard(item);
+                        resultsGrid.appendChild(card);
+                    });
+                }
+            } catch (error) {
+                console.error('Search error:', error);
+                resultsGrid.innerHTML = '<div style="text-align: center; color: #ff6b35; padding: 20px;">Error searching. Please try again.</div>';
+            } finally {
+                isSearching = false;
+                searchBtn.disabled = false;
+                searchBtn.innerHTML = '🔍 Search';
+            }
+        }
+
+        // Create search result card
+        function createSearchResultCard(item) {
+            const card = document.createElement('div');
+            card.className = 'artifact-card';
+            card.setAttribute('data-testid', `card-item-${item.id}`);
+
+            const price = item.priceSolar || item.priceRay || '0';
+            const priceUnit = item.priceSolar ? 'Solar' : 'Ray';
+            
+            card.innerHTML = `
+                <div class="artifact-category">${item.category || 'General'}</div>
+                <div class="artifact-title">${escapeHtml(item.title || 'Untitled')}</div>
+                <div class="artifact-price">${price} ${priceUnit}</div>
+                ${item.kwhEstimate ? `<div class="artifact-kwh">${item.kwhEstimate} kWh energy value</div>` : ''}
+                ${item.description ? `<p style="color: #888; font-size: 14px; margin-bottom: 15px; line-height: 1.4;">${escapeHtml(item.description.substring(0, 120))}${item.description.length > 120 ? '...' : ''}</p>` : ''}
+                <button class="purchase-btn" onclick="viewArtifactDetails('${item.id}')">View Details</button>
+            `;
+            
+            return card;
+        }
+
+        // Helper to escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Clear search
+        function clearSearch() {
+            const searchInput = document.getElementById('search-input');
+            const resultsContainer = document.getElementById('search-results-container');
+            const notFoundPanel = document.getElementById('not-found-panel');
+            const requestPanel = document.getElementById('request-item-panel');
+            const confirmationPanel = document.getElementById('request-confirmation');
+
+            searchInput.value = '';
+            lastSearchQuery = '';
+            resultsContainer.classList.remove('visible');
+            notFoundPanel.style.display = 'none';
+            requestPanel.style.display = 'none';
+            confirmationPanel.classList.remove('visible');
+            
+            // Reset request form
+            document.getElementById('request-query').value = '';
+            document.getElementById('request-budget').value = '';
+            document.getElementById('request-condition').value = '';
+            document.getElementById('request-urgency').value = 'normal';
+        }
+
+        // View artifact details (placeholder - integrates with existing marketplace)
+        function viewArtifactDetails(artifactId) {
+            // Try to find and click on the artifact in the main grid
+            const mainCard = document.querySelector(`.artifact-card[data-id="${artifactId}"]`);
+            if (mainCard) {
+                mainCard.click();
+            } else {
+                console.log('View artifact:', artifactId);
+                alert('Opening artifact details...');
+            }
+        }
+
+        // Submit item request
+        async function submitItemRequest(event) {
+            event.preventDefault();
+
+            const submitBtn = document.getElementById('submit-request-btn');
+            const query = document.getElementById('request-query').value.trim();
+            const budget = document.getElementById('request-budget').value.trim();
+            const condition = document.getElementById('request-condition').value;
+            const urgency = document.getElementById('request-urgency').value;
+
+            if (!query) {
+                alert('Please enter what you are looking for');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+
+            // Get user ID if logged in
+            let requestedByUserId = 'anonymous';
+            if (typeof currentUser !== 'undefined' && currentUser && currentUser.userId) {
+                requestedByUserId = currentUser.userId;
+            }
+
+            const constraints = {};
+            if (budget) constraints.budget = budget;
+            if (condition) constraints.condition = condition;
+            if (urgency) constraints.urgency = urgency;
+
+            try {
+                const response = await fetch('/api/market/requests', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        query,
+                        constraints,
+                        requestedByUserId
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.requestId) {
+                    // Show confirmation
+                    const requestPanel = document.getElementById('request-item-panel');
+                    const confirmationPanel = document.getElementById('request-confirmation');
+                    const requestIdDisplay = document.getElementById('request-id-display');
+
+                    requestPanel.style.display = 'none';
+                    confirmationPanel.classList.add('visible');
+                    requestIdDisplay.textContent = `Request ID: ${data.requestId}`;
+
+                    // Reset form
+                    document.getElementById('request-budget').value = '';
+                    document.getElementById('request-condition').value = '';
+                    document.getElementById('request-urgency').value = 'normal';
+                } else {
+                    throw new Error(data.error || 'Failed to submit request');
+                }
+            } catch (error) {
+                console.error('Request submission error:', error);
+                alert('Failed to submit request. Please try again.');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Request';
+            }
+        }
+    </script>
+
     <!-- Marketplace functionality -->
     <script src="/js/marketplace.js"></script>
 

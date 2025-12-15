@@ -146,7 +146,8 @@ r.post("/api/admin/procurement/review", requireAdmin, async (req, res) => {
   }
 
   if (decision === "MORE_INFO_NEEDED") {
-    return res.json({ ok: true, status: "REVIEW_READY" });
+    await db.update(marketRequests).set({ status: "NEW" }).where(eq(marketRequests.id, requestId));
+    return res.json({ ok: true, status: "NEW", message: "Request returned for more information" });
   }
 
   if (!approvedRecId) {
