@@ -912,3 +912,99 @@ export type InsertGumballTransaction = z.infer<typeof insertGumballTransactionSc
 export type InsertGumball = z.infer<typeof insertGumballSchema>;
 export type InsertGumballJob = z.infer<typeof insertGumballJobSchema>;
 export type InsertGumballAsset = z.infer<typeof insertGumballAssetSchema>;
+
+// ============================================
+// MARKETPLACE SEARCH & PROCUREMENT SYSTEM
+// ============================================
+
+// Market Items - Products/services available in marketplace
+export const marketItems = pgTable("market_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: text("title").notNull(),
+  description: text("description"),
+  tags: text("tags").array(),
+  category: varchar("category"),
+  priceSolar: numeric("price_solar", { precision: 18, scale: 6 }),
+  priceFiatOptional: numeric("price_fiat_optional", { precision: 10, scale: 2 }),
+  kwhEstimate: numeric("kwh_estimate", { precision: 12, scale: 4 }),
+  sourceType: varchar("source_type").notNull().default("INTERNAL_STOCK"), // INTERNAL_STOCK, EXTERNAL_FULFILLMENT
+  sourceUrl: text("source_url"),
+  vendorName: varchar("vendor_name"),
+  status: varchar("status").notNull().default("DRAFT"), // DRAFT, ACTIVE, ARCHIVED
+  searchText: text("search_text"), // Normalized for search indexing
+  imageUrl: text("image_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  createdByUserId: varchar("created_by_user_id"),
+  metadata: jsonb("metadata"),
+}, (table) => ({
+  statusIdx: index("market_items_status_idx").on(table.status),
+  categoryIdx: index("market_items_category_idx").on(table.category),
+  searchIdx: index("market_items_search_idx").on(table.searchText),
+}));
+
+// Market Requests - User requests for items not found
+export const marketRequests = pgTable("market_requests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  query: text("query").notNull(),
+  constraints: jsonb("constraints"), // { budget, condition, location, urgency }
+  requestedByUserId: varchar("requested_by_user_id").notNull(),
+  status: varchar("status").notNull().default("NEW"), // NEW, SCOUTING, REVIEW_READY, APPROVED, REJECTED, PUBLISHED
+  resultCountAtRequestTime: integer("result_count_at_request_time").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  statusIdx: index("market_requests_status_idx").on(table.status),
+  userIdx: index("market_requests_user_idx").on(table.requestedByUserId),
+}));
+
+// Procurement Recommendations - AI scout agent recommendations
+export const procurementRecommendations = pgTable("procurement_recommendations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  requestId: varchar("request_id").references(() => marketRequests.id).notNull(),
+  vendorName: varchar("vendor_name"),
+  productTitle: text("product_title").notNull(),
+  sourceUrl: text("source_url"),
+  priceEstimateFiat: numeric("price_estimate_fiat", { precision: 10, scale: 2 }),
+  shippingNotes: text("shipping_notes"),
+  kwhEstimate: numeric("kwh_estimate", { precision: 12, scale: 4 }),
+  fitScore: integer("fit_score"), // 0-100
+  agentRationale: text("agent_rationale"),
+  riskFlags: text("risk_flags").array(), // ['restricted', 'uncertain_match', etc.]
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  requestIdx: index("procurement_recs_request_idx").on(table.requestId),
+}));
+
+// Procurement Reviews - Human review decisions
+export const procurementReviews = pgTable("procurement_reviews", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  requestId: varchar("request_id").references(() => marketRequests.id).notNull(),
+  reviewerUserId: varchar("reviewer_user_id").notNull(),
+  decision: varchar("decision").notNull(), // APPROVED, REJECTED, MORE_INFO_NEEDED
+  notes: text("notes"),
+  approvedRecId: varchar("approved_rec_id").references(() => procurementRecommendations.id),
+  publishMode: varchar("publish_mode"), // FOUNDATION_STOCK, EXTERNAL_FULFILLMENT
+  createdDraftItemId: varchar("created_draft_item_id").references(() => marketItems.id),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  requestIdx: index("procurement_reviews_request_idx").on(table.requestId),
+}));
+
+// Insert schemas
+export const insertMarketItemSchema = createInsertSchema(marketItems).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertMarketRequestSchema = createInsertSchema(marketRequests).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertProcurementRecommendationSchema = createInsertSchema(procurementRecommendations).omit({ id: true, createdAt: true });
+export const insertProcurementReviewSchema = createInsertSchema(procurementReviews).omit({ id: true, createdAt: true });
+
+// Select types
+export type MarketItem = typeof marketItems.$inferSelect;
+export type MarketRequest = typeof marketRequests.$inferSelect;
+export type ProcurementRecommendation = typeof procurementRecommendations.$inferSelect;
+export type ProcurementReview = typeof procurementReviews.$inferSelect;
+
+// Insert types
+export type InsertMarketItem = z.infer<typeof insertMarketItemSchema>;
+export type InsertMarketRequest = z.infer<typeof insertMarketRequestSchema>;
+export type InsertProcurementRecommendation = z.infer<typeof insertProcurementRecommendationSchema>;
+export type InsertProcurementReview = z.infer<typeof insertProcurementReviewSchema>;

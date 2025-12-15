@@ -1,0 +1,153 @@
+Here’s a clean way to implement this as an agent-based “Search → Request → Recommend → Human-approve → List” loop (no auto-buying, human in the loop before procurement + market placement).
+
+1) User flow (what happens in the app)
+	1.	User searches marketplace: "portable solar charger"
+	2.	If matches exist: show results (ranked).
+	3.	If no matches: show a “Request this item” panel:
+	•	user confirms/edits query
+	•	optional constraints (budget, condition new/used, location, urgency)
+	•	submits request
+	4.	System creates a MarketplaceRequest record and triggers an AI Procurement Scout agent.
+	5.	Agent returns recommendations (fulfillment portals + candidate products/links + rationale + estimated cost/kWh footprint).
+	6.	Foundation human review screen:
+	•	approve / reject / ask for clarification
+	•	choose a procurement mode:
+	•	“Foundation will procure & stock”
+	•	“List as external fulfillment link (affiliate / partner)”
+	7.	On approval, system creates a Draft Market Listing (still unpublished until a final “Publish” click).
+
+⸻
+
+2) Data model (minimal tables)
+
+MarketItems
+	•	itemId (PK)
+	•	title, description, tags[], category
+	•	priceSolar, priceFiatOptional
+	•	kwhEstimate, sourceType (INTERNAL_STOCK | EXTERNAL_FULFILLMENT)
+	•	sourceUrl, vendorName
+	•	status (ACTIVE | DRAFT | ARCHIVED)
+	•	searchText (normalized string for search indexing)
+
+MarketRequests
+	•	requestId (PK)
+	•	query, constraints (json)
+	•	requestedByUserId, createdAt
+	•	status (NEW | SCOUTING | REVIEW_READY | APPROVED | REJECTED | PUBLISHED)
+	•	resultCountAtRequestTime
+
+ProcurementRecommendations
+	•	requestId (PK) + recId (SK) (or separate PK)
+	•	vendorName, productTitle, sourceUrl
+	•	priceEstimateFiat, shippingNotes
+	•	kwhEstimate, fitScore (0–100)
+	•	agentRationale (short)
+	•	risksFlags[] (restricted items, uncertain match, etc.)
+	•	createdAt
+
+ProcurementReviews
+	•	requestId (PK)
+	•	reviewerUserId, decision, notes
+	•	approvedRecId (optional)
+	•	createdAt
+
+⸻
+
+3) Search implementation (pick one)
+
+Option A (fast + simple): DynamoDB + “good-enough” search
+	•	Normalize searchText (lowercase, strip punctuation)
+	•	Store title + tags + category + key phrases
+	•	Query via:
+	•	prefix match on a token GSI, or
+	•	lightweight scan with contains (OK for small catalog, not for scale)
+
+Option B (recommended for real search): OpenSearch (or OpenSearch Serverless)
+	•	Index MarketItems with analyzers (stemming, synonyms)
+	•	Support fuzzy matching, ranking, autocomplete
+	•	Your API becomes: GET /market/search?q=... → OpenSearch → itemIds → fetch details
+
+If you expect the marketplace to grow, Option B saves pain.
+
+⸻
+
+4) API endpoints
+
+Marketplace
+	•	GET /api/market/search?q=...
+	•	returns { items: [...], total }
+	•	POST /api/market/requests
+	•	body: { query, constraints }
+	•	returns { requestId, status }
+
+Procurement / agent pipeline
+	•	POST /api/procurement/scout (internal only)
+	•	triggered automatically when request created
+	•	GET /api/procurement/requests?status=REVIEW_READY
+	•	GET /api/procurement/recommendations?requestId=...
+	•	POST /api/procurement/review
+	•	body: { requestId, decision, notes, approvedRecId, publishMode }
+	•	POST /api/market/items/publish
+	•	body: { draftItemId }
+
+⸻
+
+5) Frontend behavior (simple pattern)
+	•	Search box → call /api/market/search?q=...
+	•	If total === 0, render:
+	•	“Not found. Request it?”
+	•	button calls /api/market/requests
+	•	Show request status (polling /api/market/requests/:id or websocket later)
+
+⸻
+
+6) Agent design (Procurement Scout)
+
+Trigger: when a MarketRequests.status goes NEW → SCOUTING.
+
+Agent responsibilities
+	•	interpret request + constraints
+	•	search permitted fulfillment sources
+	•	extract top candidates (3–10)
+	•	estimate:
+	•	fit score
+	•	approximate kWh footprint (your existing “Identify Anything/kWh estimate” logic can be reused here)
+	•	total cost estimate (item + shipping)
+	•	produce structured recs + flags
+	•	write to ProcurementRecommendations
+	•	set request to REVIEW_READY
+
+Hard rule: agent cannot purchase or publish. Only recommends.
+
+⸻
+
+7) Human-in-the-loop review screen (Foundation)
+
+A single dashboard table:
+	•	request query / age / requester / status
+	•	click row → see rec list with:
+	•	links, price/kWh estimates, rationale, flags
+	•	buttons:
+	•	Approve (choose procurement mode + optionally edit listing text)
+	•	Reject (with reason)
+	•	Request more info (sends question to user)
+
+⸻
+
+8) Guardrails you’ll want on day 1
+	•	Rate limit requests per user/day + basic spam filtering
+	•	Restricted goods policy (weapons, controlled substances, etc.) → agent must flag and auto-route to “REJECT_REVIEW_REQUIRED”
+	•	Source allowlist for portals (you decide what’s acceptable)
+	•	“No scraping” by default: prefer APIs/affiliate feeds/manual link curation
+	•	Full audit trail: every recommendation + review decision stored
+
+⸻
+
+9) What I’d implement next (smallest viable slice)
+	1.	Add /api/market/search with your current DB (even if basic matching).
+	2.	Add MarketRequests + “Request this item” UI when no results.
+	3.	Add a single internal admin page for Foundation to view requests.
+	4.	Add Procurement Scout agent that returns 3 links + short rationale + kWh estimate.
+	5.	Add “Approve → creates DRAFT item” button; “Publish” is separate.
+
+If you tell me whether your marketplace is currently backed by DynamoDB or Supabase (and whether you’re open to OpenSearch), I’ll write this as Replit cut-and-paste routes + table schemas + the agent prompt + the admin dashboard page in the style of your current app.
