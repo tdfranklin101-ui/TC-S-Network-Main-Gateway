@@ -28,30 +28,35 @@ function requireAdmin(req: Request, res: Response, next: NextFunction) {
 }
 
 r.get("/api/market/search", async (req, res) => {
-  const qRaw = String(req.query.q ?? "").trim();
-  const q = normalizeSearchText(qRaw);
-  const limit = Math.min(Number(req.query.limit ?? 20), 50);
+  try {
+    const qRaw = String(req.query.q ?? "").trim();
+    const q = normalizeSearchText(qRaw);
+    const limit = Math.min(Number(req.query.limit ?? 20), 50);
 
-  if (!q) return res.json({ items: [], total: 0 });
+    if (!q) return res.json({ items: [], total: 0, notFound: false });
 
-  const items = await db
-    .select()
-    .from(marketItems)
-    .where(
-      and(
-        eq(marketItems.status, "ACTIVE"),
-        sql`${marketItems.searchText} ILIKE ${"%" + q + "%"}`
+    const items = await db
+      .select()
+      .from(marketItems)
+      .where(
+        and(
+          eq(marketItems.status, "ACTIVE"),
+          sql`${marketItems.searchText} ILIKE ${"%" + q + "%"}`
+        )
       )
-    )
-    .orderBy(desc(marketItems.createdAt))
-    .limit(limit);
+      .orderBy(desc(marketItems.createdAt))
+      .limit(limit);
 
-  return res.json({
-    items,
-    total: items.length,
-    notFound: items.length === 0,
-    requestHint: items.length === 0 ? { query: qRaw } : null,
-  });
+    return res.json({
+      items,
+      total: items.length,
+      notFound: items.length === 0,
+      requestHint: items.length === 0 ? { query: qRaw } : null,
+    });
+  } catch (error) {
+    console.error("Marketplace search error:", error);
+    return res.status(500).json({ error: "Search failed", items: [], total: 0 });
+  }
 });
 
 r.post("/api/market/requests", async (req, res) => {
