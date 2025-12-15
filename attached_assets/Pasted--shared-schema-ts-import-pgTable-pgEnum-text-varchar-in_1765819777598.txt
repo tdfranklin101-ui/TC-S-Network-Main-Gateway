@@ -1,0 +1,133 @@
+// shared/schema.ts
+import {
+  pgTable,
+  pgEnum,
+  text,
+  varchar,
+  integer,
+  numeric,
+  jsonb,
+  timestamp,
+  uuid,
+  index,
+} from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+
+// ---------- Enums ----------
+export const marketItemStatus = pgEnum("market_item_status", ["DRAFT", "ACTIVE", "ARCHIVED"]);
+export const marketSourceType = pgEnum("market_source_type", ["INTERNAL_STOCK", "EXTERNAL_FULFILLMENT"]);
+export const marketRequestStatus = pgEnum("market_request_status", [
+  "NEW",
+  "SCOUTING",
+  "REVIEW_READY",
+  "APPROVED",
+  "REJECTED",
+  "PUBLISHED",
+]);
+
+export const procurementDecision = pgEnum("procurement_decision", ["APPROVE", "REJECT", "NEED_INFO"]);
+export const publishMode = pgEnum("publish_mode", ["DRAFT_ONLY", "PUBLISH_NOW"]);
+
+// ---------- Tables ----------
+export const marketItems = pgTable(
+  "market_items",
+  {
+    id: uuid("id").default(sql`gen_random_uuid()`).primaryKey(),
+
+    title: varchar("title", { length: 240 }).notNull(),
+    description: text("description").default("").notNull(),
+    category: varchar("category", { length: 80 }).default("general").notNull(),
+    tags: jsonb("tags").$type<string[]>().default([]).notNull(),
+
+    // pricing
+    priceSolar: numeric("price_solar", { precision: 18, scale: 4 }).default("0.0000").notNull(),
+    priceFiatCents: integer("price_fiat_cents"), // optional convenience
+
+    // energy metadata
+    kwhEstimate: numeric("kwh_estimate", { precision: 18, scale: 6 }).default("0").notNull(),
+
+    // fulfillment
+    sourceType: marketSourceType("source_type").default("INTERNAL_STOCK").notNull(),
+    vendorName: varchar("vendor_name", { length: 120 }),
+    sourceUrl: text("source_url"),
+
+    status: marketItemStatus("status").default("DRAFT").notNull(),
+
+    // used for search (app-maintained string)
+    searchText: text("search_text").default("").notNull(),
+
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({
+    statusIdx: index("market_items_status_idx").on(t.status),
+    searchIdx: index("market_items_search_text_idx").on(t.searchText),
+  })
+);
+
+export const marketRequests = pgTable(
+  "market_requests",
+  {
+    id: uuid("id").default(sql`gen_random_uuid()`).primaryKey(),
+
+    query: text("query").notNull(),
+    constraints: jsonb("constraints").$type<Record<string, any>>().default({}).notNull(),
+
+    requestedByUserId: varchar("requested_by_user_id", { length: 120 }),
+    status: marketRequestStatus("status").default("NEW").notNull(),
+
+    resultCountAtRequestTime: integer("result_count_at_request_time").default(0).notNull(),
+
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({
+    statusCreatedIdx: index("market_requests_status_created_idx").on(t.status, t.createdAt),
+  })
+);
+
+export const procurementRecommendations = pgTable(
+  "procurement_recommendations",
+  {
+    id: uuid("id").default(sql`gen_random_uuid()`).primaryKey(),
+    requestId: uuid("request_id").notNull(),
+
+    vendorName: varchar("vendor_name", { length: 120 }).notNull(),
+    productTitle: varchar("product_title", { length: 240 }).notNull(),
+    sourceUrl: text("source_url").notNull(),
+
+    priceEstimateFiatCents: integer("price_estimate_fiat_cents"),
+    shippingNotes: text("shipping_notes"),
+
+    kwhEstimate: numeric("kwh_estimate", { precision: 18, scale: 6 }).default("0").notNull(),
+    fitScore: integer("fit_score").default(0).notNull(),
+
+    agentRationale: text("agent_rationale").default("").notNull(),
+    riskFlags: jsonb("risk_flags").$type<string[]>().default([]).notNull(),
+
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({
+    reqIdx: index("procurement_recs_request_idx").on(t.requestId),
+  })
+);
+
+export const procurementReviews = pgTable(
+  "procurement_reviews",
+  {
+    id: uuid("id").default(sql`gen_random_uuid()`).primaryKey(),
+    requestId: uuid("request_id").notNull(),
+
+    reviewerUserId: varchar("reviewer_user_id", { length: 120 }),
+    decision: procurementDecision("decision").notNull(),
+    notes: text("notes").default("").notNull(),
+
+    approvedRecommendationId: uuid("approved_recommendation_id"),
+    publishMode: publishMode("publish_mode").default("DRAFT_ONLY").notNull(),
+
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({
+    reqIdx: index("procurement_reviews_request_idx").on(t.requestId),
+  })
+);
