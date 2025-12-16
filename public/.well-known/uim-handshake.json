@@ -8,6 +8,13 @@
     "contact": "ops@thecurrentsee.org",
     "homepage": "https://replit-node-tdfranklin101.replit.app"
   },
+  "network": {
+    "name": "TC-S Network",
+    "description": "The Current-See hosts the TC-S Network—an AI-guided commissioning and marketplace platform using Solar currency, stewarded by the TC-S Foundation. Use cases include Global Basic Income Networks, private network deployments (venues, cities, enterprises), and energy-based valuation, pricing, and distribution—wrapped in an AI energetic + ethical decision layer for real-world trade and governance.",
+    "foundation": "TC-S Foundation",
+    "currency": "Solar",
+    "use_cases": ["Global Basic Income Networks", "Private Network Deployments", "Energy-Based Valuation", "AI Ethical Decision Layer", "Real-World Trade and Governance"]
+  },
   "capabilities": [
     "lookup.cospar",
     "lookup.norad",
