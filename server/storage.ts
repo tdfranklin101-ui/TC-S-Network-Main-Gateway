@@ -252,7 +252,26 @@ export class DatabaseStorage implements IStorage {
   }
   
   async getMemberByEmail(email: string): Promise<Member | undefined> {
-    const result = await db.select().from(members).where(eq(members.email, email));
+    // Normalize email for case-insensitive matching
+    const normalizedEmail = email.toLowerCase().trim();
+    console.log(`[STORAGE] getMemberByEmail called with: "${email}" -> normalized: "${normalizedEmail}"`);
+    
+    // Try exact match first (normalized)
+    let result = await db.select().from(members).where(eq(members.email, normalizedEmail));
+    if (result[0]) {
+      console.log(`[STORAGE] Found member by exact match: ID=${result[0].id}, email="${result[0].email}", balance=${result[0].totalSolar}`);
+      return result[0];
+    }
+    
+    // Try case-insensitive match using SQL LOWER()
+    result = await db.select().from(members).where(
+      sql`LOWER(TRIM(${members.email})) = ${normalizedEmail}`
+    );
+    if (result[0]) {
+      console.log(`[STORAGE] Found member by case-insensitive match: ID=${result[0].id}, email="${result[0].email}", balance=${result[0].totalSolar}`);
+    } else {
+      console.log(`[STORAGE] No member found for email: "${normalizedEmail}"`);
+    }
     return result[0];
   }
   

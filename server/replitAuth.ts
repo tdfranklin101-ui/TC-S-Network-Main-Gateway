@@ -177,12 +177,20 @@ export async function setupReplitAuth(app: Express) {
       // CRITICAL: Get Solar balance from members.total_solar (single source of truth)
       let solarBalance = 0;
       let balanceSource = 'default';
+      let memberDebug = 'no_email';
       
       if (userEmail) {
+        const normalizedEmail = userEmail.toLowerCase().trim();
+        console.log(`[SESSION] Looking up member for email: "${normalizedEmail}"`);
         const member = await storage.getMemberByEmail(userEmail);
         if (member) {
           solarBalance = parseFloat(member.totalSolar || '0');
           balanceSource = 'members.total_solar';
+          memberDebug = `found:${member.id}`;
+          console.log(`[SESSION] Found member ${member.id} with balance ${solarBalance} Solar`);
+        } else {
+          memberDebug = 'not_found';
+          console.log(`[SESSION] No member found for email: "${normalizedEmail}"`);
         }
       }
       
@@ -205,6 +213,7 @@ export async function setupReplitAuth(app: Express) {
         },
         solarBalance,
         balanceSource,
+        memberLookup: memberDebug,
         wallet: wallet ? {
           id: wallet.id,
           balanceSolarS: wallet.balanceSolarS,

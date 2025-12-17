@@ -3080,6 +3080,43 @@ const server = http.createServer(async (req, res) => {
           const artifactSlug = result.rows[0].slug;
           const solarPrice = result.rows[0].solar_amount_s;
 
+          // Also create market_items entry so upload appears in marketplace search
+          try {
+            const marketItemId = String(dbArtifactId); // Ensure string type for varchar column
+            const normalizedSearch = `${title} ${description || ''} ${category} ${(searchTags || []).join(' ')}`.toLowerCase().replace(/[^a-z0-9\s]+/g, ' ').replace(/\s+/g, ' ').trim();
+            console.log(`🔍 Creating market_item with ID: ${marketItemId}, searchText: "${normalizedSearch.substring(0, 50)}..."`);
+            
+            const marketItemInsert = `
+              INSERT INTO market_items (
+                id, title, description, tags, category, price_solar, kwh_estimate,
+                source_type, status, search_text, image_url, created_by_user_id, metadata
+              ) VALUES (
+                $1, $2, $3, $4, $5, $6, $7, 'INTERNAL_STOCK', 'ACTIVE', $8, $9, $10, $11
+              ) ON CONFLICT (id) DO UPDATE SET
+                title = EXCLUDED.title,
+                description = EXCLUDED.description,
+                status = 'ACTIVE',
+                updated_at = NOW()
+            `;
+            await pool.query(marketItemInsert, [
+              marketItemId, // Explicitly cast to string for varchar column
+              title,
+              description || '',
+              searchTags || [],
+              category,
+              finalSolarAmount,
+              analysis.estimatedKwh,
+              normalizedSearch,
+              fileProcessingResult.previewFile.thumbnailUrl || null,
+              String(creatorId),
+              JSON.stringify({ artifactId: marketItemId, artifactSlug: artifactSlug, uploadType: 'id_anything' })
+            ]);
+            console.log(`🛒 Market item created for artifact: ${marketItemId} - searchable in marketplace`);
+          } catch (marketErr) {
+            console.error('⚠️ Failed to create market_item entry (artifact still saved):', marketErr.message);
+            console.error('⚠️ Market item error details:', marketErr.code, marketErr.detail);
+          }
+
           console.log(`🚀 Enhanced Upload Complete: "${title}" (${artifactSlug}) by ${creatorId} - ${formatSolar(solarPrice)} Solar`);
           console.log(`📁 Files: Master (${fileProcessingResult.masterFile.size}B), Preview (${fileProcessingResult.previewFile.previewSize || 0}B), Trade (${fileProcessingResult.tradeFile.size}B)`);
 
