@@ -1,21 +1,79 @@
 {
-  "uim_version": "0.2",
+  "uim_version": "0.3",
   "service": {
-    "name": "TC-S Network Satellite ID Anywhere",
-    "slug": "satellite-id-anywhere",
-    "description": "Lookup and normalize satellite records by COSPAR or NORAD, emitting UIM-ready responses.",
+    "name": "The Current-See | TC-S Network Foundation",
+    "slug": "tcs-network-foundation",
+    "description": "The Current-See hosts the TC-S Network—an AI-guided commissioning and marketplace platform using Solar currency. Features Foundation Apps collection (Music Now, Radio Astronomy Now, Power Twin) and Kid Solar AI assistant for all transactions.",
     "owner": "TC-S Network Foundation, Inc.",
     "contact": "ops@thecurrentsee.org",
-    "homepage": "https://replit-node-tdfranklin101.replit.app"
+    "homepage": "https://www.thecurrentsee.org"
   },
   "network": {
     "name": "TC-S Network",
     "description": "The Current-See hosts the TC-S Network—an AI-guided commissioning and marketplace platform using Solar currency, stewarded by the TC-S Foundation. Use cases include Global Basic Income Networks, private network deployments (venues, cities, enterprises), and energy-based valuation, pricing, and distribution—wrapped in an AI energetic + ethical decision layer for real-world trade and governance.",
     "foundation": "TC-S Foundation",
     "currency": "Solar",
+    "currency_standard": "1 Solar = 4,913 kWh",
     "use_cases": ["Global Basic Income Networks", "Private Network Deployments", "Energy-Based Valuation", "AI Ethical Decision Layer", "Real-World Trade and Governance"]
   },
+  "agent_interface": {
+    "name": "Kid Solar",
+    "type": "Multi-Modal AI Assistant",
+    "description": "Voice-activated AI assistant that interfaces with all Foundation Apps and marketplace for Solar transactions",
+    "capabilities": ["voice_commands", "text_commands", "marketplace_queries", "wallet_operations", "app_navigation", "solar_transactions"],
+    "transaction_currency": "Solar",
+    "endpoint": "/api/kid-solar"
+  },
+  "foundation_apps": [
+    {
+      "name": "Music Now",
+      "slug": "music-now",
+      "description": "Foundation music collection featuring artists Batrhyme, Gidget Bardot, and Monazite",
+      "endpoint": "/music-now.html",
+      "artists": ["Batrhyme", "Gidget Bardot", "Monazite"],
+      "kid_solar_commands": ["play music", "browse artists", "purchase track"]
+    },
+    {
+      "name": "Radio Astronomy Now",
+      "slug": "radio-astronomy-now",
+      "description": "Live radio astronomy events and celestial observations",
+      "endpoint": "https://astro-events-live-tdfranklin101.replit.app",
+      "kid_solar_commands": ["show astronomy events", "track celestial object"]
+    },
+    {
+      "name": "Power Twin",
+      "slug": "power-twin",
+      "description": "Digital twin demonstration converting chip power traces to Solar energy costs via left Riemann integration",
+      "endpoint": "/api/power-twin/calculate",
+      "type": "digital_twin",
+      "integration": "Open Silicon Stack (VexRiscv, OpenRAM, Skywater PDK, OpenLane)",
+      "kid_solar_commands": ["calculate power cost", "analyze chip trace", "convert to solar"]
+    },
+    {
+      "name": "Marketplace",
+      "slug": "marketplace",
+      "description": "AI-powered marketplace with Procurement Scout for Solar transactions",
+      "endpoint": "/marketplace.html",
+      "kid_solar_commands": ["search marketplace", "browse items", "purchase item", "check wallet"]
+    },
+    {
+      "name": "Solar Wallet",
+      "slug": "wallet",
+      "description": "Solar balance management and transaction history",
+      "endpoint": "/wallet.html",
+      "kid_solar_commands": ["check balance", "view transactions", "send solar"]
+    }
+  ],
   "capabilities": [
+    "kid_solar.chat",
+    "kid_solar.voice",
+    "marketplace.search",
+    "marketplace.purchase",
+    "wallet.balance",
+    "wallet.transfer",
+    "power_twin.calculate",
+    "music.stream",
+    "astronomy.events",
     "lookup.cospar",
     "lookup.norad",
     "normalize.record"
@@ -23,16 +81,20 @@
   "endpoints": {
     "healthz": "/healthz",
     "readyz": "/readyz",
+    "kid_solar": "/api/kid-solar",
+    "marketplace_search": "/api/market/search",
+    "wallet": "/api/wallet",
+    "power_twin": "/api/power-twin/calculate",
     "lookup": "/api/lookup",
     "openapi": "/openapi.json"
   },
   "versioning": {
-    "semver": "1.0.0",
+    "semver": "1.1.0",
     "build_sha": "urn:sha256:79cb6cf146c700b654d8aa55f17071e6060e682189e51733c2d46134f04a8f74",
-    "released_at": "2025-10-27T00:00:00Z"
+    "released_at": "2025-12-24T00:00:00Z"
   },
   "taxonomy": {
-    "domain": ["space", "satellite"],
-    "uim_tags": ["SAiSEO", "TC-S"]
+    "domain": ["renewable-energy", "global-basic-income", "ai-marketplace", "digital-twin", "music", "astronomy"],
+    "uim_tags": ["SAiSEO", "TC-S", "Foundation-Apps", "Kid-Solar", "Agent-Discoverable"]
   }
 }

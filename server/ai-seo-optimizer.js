@@ -90,8 +90,24 @@ class AISEOOptimizer {
           type: 'Multi-Modal AI Assistant',
           function: 'Voice-activated marketplace operations and wallet control',
           technologies: ['OpenAI Whisper (STT)', 'GPT-4o (NLU/reasoning)', 'TTS Nova voice'],
-          capabilities: ['Voice commands', 'Function calling', 'Marketplace queries', 'Wallet operations'],
-          innovation: 'Energy-metered AI agent with Solar-powered compute budget'
+          capabilities: ['Voice commands', 'Function calling', 'Marketplace queries', 'Wallet operations', 'Foundation Apps navigation', 'Solar transactions'],
+          innovation: 'Energy-metered AI agent with Solar-powered compute budget',
+          agentDiscoverable: true,
+          transactionInterface: 'All Foundation Apps'
+        },
+        'Foundation Apps Collection': {
+          type: 'Agent-Discoverable App Suite',
+          function: 'Curated collection of TC-S Network Foundation applications',
+          apps: [
+            { name: 'Music Now', description: 'Foundation music (Batrhyme, Gidget Bardot, Monazite)', endpoint: '/music-now.html' },
+            { name: 'Radio Astronomy Now', description: 'Live celestial observations', endpoint: 'https://astro-events-live-tdfranklin101.replit.app' },
+            { name: 'Power Twin', description: 'Digital twin chip-to-Solar calculator', endpoint: '/api/power-twin/calculate' },
+            { name: 'Marketplace', description: 'AI-powered procurement marketplace', endpoint: '/marketplace.html' },
+            { name: 'Solar Wallet', description: 'Balance and transaction management', endpoint: '/wallet.html' }
+          ],
+          agentInterface: 'Kid Solar',
+          transactionCurrency: 'Solar',
+          innovation: 'All apps interface with Kid Solar for agent-discoverable transactions'
         }
       },
 
@@ -242,6 +258,19 @@ class AISEOOptimizer {
           implementation: 'Kid Solar voice assistant with daily Solar allowance',
           innovation: 'First energy-backed personal AI agent system',
           economics: '1 Solar = 10,000 Rays for AI compute operations'
+        },
+        'Foundation Apps Collection': {
+          concept: 'Agent-discoverable curated application suite',
+          implementation: 'Music Now, Radio Astronomy Now, Power Twin, Marketplace, Solar Wallet',
+          innovation: 'All apps interface with Kid Solar AI for Solar transactions',
+          agentDiscovery: 'UIM handshake protocol enables AI agents to discover and interact with apps',
+          transactionInterface: 'Kid Solar handles all transactions across Foundation Apps'
+        },
+        'Agent-Discoverable Platform': {
+          concept: 'AI systems can discover and interact with platform features',
+          implementation: 'UIM Handshake Protocol with Foundation Apps endpoints',
+          innovation: 'First renewable energy platform with full AI agent discoverability',
+          protocols: ['UIM Handshake v1.0', 'Solar Standard Protocol', 'Kid Solar Interface']
         }
       }
     };
