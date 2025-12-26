@@ -1,62 +1,62 @@
 {
-  "date": "2025-12-23",
-  "generatedAt": "2025-12-23T23:41:08.828Z",
+  "date": "2025-12-26",
+  "generatedAt": "2025-12-26T19:13:44.360Z",
   "currentIndices": [
     {
       "id": "si",
       "name": "Solar Index",
       "unit": "%",
-      "value": 71,
+      "value": 72.1,
       "description": "Global Energy & Ethics Balance — 7-Day Rolling Indicator.",
-      "asOf": "2025-12-23T23:41:06.549Z"
+      "asOf": "2025-12-26T19:13:41.644Z"
     },
     {
       "id": "srh",
       "name": "Solar Reserve Health",
       "unit": "%",
-      "value": 79.3,
+      "value": 78.2,
       "description": "Reserve stability and fulfillment factor across all regions.",
-      "asOf": "2025-12-23T23:41:06.549Z"
+      "asOf": "2025-12-26T19:13:41.644Z"
     },
     {
       "id": "gbi",
       "name": "Global Basic Income",
       "unit": "%",
-      "value": 41.9,
+      "value": 42.2,
       "description": "Percentage of humans enrolled and actively claiming GBI.",
-      "asOf": "2025-12-23T23:41:06.549Z"
+      "asOf": "2025-12-26T19:13:41.644Z"
     },
     {
       "id": "cai",
       "name": "Compute Alignment",
       "unit": "%",
-      "value": 88.5,
+      "value": 89.4,
       "description": "Ethically aligned compute flow — safe superintelligence readiness.",
-      "asOf": "2025-12-23T23:41:06.549Z"
+      "asOf": "2025-12-26T19:13:41.644Z"
     },
     {
       "id": "mli",
       "name": "Market Liquidity",
       "unit": "%",
-      "value": 22.8,
+      "value": 23.9,
       "description": "Health of the TC-S digital marketplace and token velocity.",
-      "asOf": "2025-12-23T23:41:06.549Z"
+      "asOf": "2025-12-26T19:13:41.644Z"
     },
     {
       "id": "eai",
       "name": "Ethical Alignment",
       "unit": "%",
-      "value": 92.6,
+      "value": 92.3,
       "description": "Acceptance ratio of tasks from the Ethics Engine.",
-      "asOf": "2025-12-23T23:41:06.549Z"
+      "asOf": "2025-12-26T19:13:41.644Z"
     }
   ],
   "trends": {
     "analysisStatus": "success",
-    "direction": "neutral",
-    "analysis": "The market indices show mixed signals, with slight improvements in the sentiment index (si) and consumer activity index (cai), while the market liquidity index (mli) has decreased. The stability in the growth and business index (gbi) indicates a lack of significant change in market conditions. Overall, the indices suggest a balanced market with no strong bullish or bearish momentum.",
-    "insight": "Monitor the mli closely; if it continues to decline, consider strategies to enhance liquidity in the market.",
-    "generatedAt": "2025-12-23T23:41:08.828Z"
+    "direction": "bullish",
+    "analysis": "The market indices show a generally upward trend over the past week, with improvements in the overall market sentiment indicated by rising values in the stability index (si), service health index (srh), and customer acquisition index (cai). Key drivers of this positive shift include increased customer acquisition and stable service health, despite a slight decline in the growth balance index (gbi) and market liquidity index (mli).",
+    "insight": "Maintaining focus on enhancing customer acquisition strategies could further strengthen market momentum.",
+    "generatedAt": "2025-12-26T19:13:44.360Z"
   },
   "historyDays": 30
 }
