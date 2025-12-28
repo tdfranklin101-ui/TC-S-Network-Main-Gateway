@@ -62,6 +62,13 @@
       "description": "Solar balance management and transaction history",
       "endpoint": "/wallet.html",
       "kid_solar_commands": ["check balance", "view transactions", "send solar"]
+    },
+    {
+      "name": "EventOps.net",
+      "slug": "eventops",
+      "description": "Run events with AI ops support and human verification. Jobs are posted as needs arise—people claim them, complete them, and get confirmed.",
+      "endpoint": "https://farm-ops--tdfranklin101.replit.app",
+      "kid_solar_commands": ["post job", "claim task", "verify completion", "list open jobs"]
     }
   ],
   "capabilities": [
@@ -74,6 +81,9 @@
     "power_twin.calculate",
     "music.stream",
     "astronomy.events",
+    "eventops.post_job",
+    "eventops.claim_task",
+    "eventops.verify",
     "lookup.cospar",
     "lookup.norad",
     "normalize.record"

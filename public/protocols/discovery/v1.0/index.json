@@ -49,6 +49,12 @@
       "description": "Solar balance and transaction management",
       "endpoint": "/wallet.html",
       "kidSolarCommands": ["check balance", "view transactions"]
+    },
+    {
+      "name": "EventOps.net",
+      "description": "Run events with AI ops support and human verification. Jobs posted as needs arise—people claim, complete, and get confirmed.",
+      "endpoint": "https://farm-ops--tdfranklin101.replit.app",
+      "kidSolarCommands": ["post job", "claim task", "verify completion"]
     }
   ],
   "supportedAISystems": [
@@ -155,7 +161,7 @@
       "marketplace-transactions",
       "wallet-operations"
     ],
-    "foundation_apps": ["Music Now", "Radio Astronomy Now", "Power Twin", "Marketplace", "Solar Wallet"],
+    "foundation_apps": ["Music Now", "Radio Astronomy Now", "Power Twin", "Marketplace", "Solar Wallet", "EventOps.net"],
     "semantic_domains": [
       "agent-discoverable-apps",
       "kid-solar-transactions",
