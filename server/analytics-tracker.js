@@ -15,12 +15,16 @@ class AnalyticsTracker {
     // Updated Nov 4, 2025: Adjusted from 9,716 to 10,272 to account for missed tracking
     // Period: Oct 31-Nov 4 (Thu-Mon) = +556 visits from Replit analytics
     // Baseline: 11,027 (Oct 31) + 600 requests (Nov 1-4) = 11,627 target
-    this.HISTORICAL_OFFSET = 10272;
+    // HISTORICAL_OFFSET accounts for pre-database visitors + Nov 7-Dec 31 2025 tracking gap
+    // Gap caused by isProduction() failing to detect Cloud Run deployment (fixed Dec 31, 2025)
+    // Dec 2025 Replit Analytics: 676 unique IPs (added to previous offset)
+    this.HISTORICAL_OFFSET = 10948;
     
     // Historical country-level offsets (cumulative page views from pre-deployment database)
     // Original baseline (Oct 11, 2025): 9,716 total cumulative page views since April 7, 2025
+    // Updated Dec 31, 2025: Added ~600 US visitors from Dec tracking gap
     this.COUNTRY_OFFSETS = {
-      'US': 6226,
+      'US': 6826,
       'CA': 650,
       'GB': 460,
       'DE': 325,
