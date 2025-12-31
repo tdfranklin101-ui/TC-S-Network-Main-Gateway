@@ -171,41 +171,34 @@ class AnalyticsTracker {
 
   /**
    * Detect if running in production environment
+   * Cloud Run indicator K_SERVICE is the most reliable for Replit deployments
    * @returns {boolean} True if production
    */
   isProduction() {
-    // Check for production indicators - multiple methods for Replit Cloud Run
+    // Check for production indicators
     const nodeEnv = process.env.NODE_ENV;
     const replitDeployment = process.env.REPLIT_DEPLOYMENT;
     const replDeploy = process.env.REPL_DEPLOY;
-    const kService = process.env.K_SERVICE; // Cloud Run sets this
-    const port = process.env.PORT; // Cloud Run typically sets PORT=8080
-    const replitSlug = process.env.REPL_SLUG;
-    const replitOwner = process.env.REPL_OWNER;
+    const kService = process.env.K_SERVICE; // Cloud Run sets this - most reliable indicator
     
     // Production if:
     // 1. NODE_ENV is explicitly 'production', OR
     // 2. REPLIT_DEPLOYMENT is truthy, OR
     // 3. REPL_DEPLOY is truthy, OR
-    // 4. K_SERVICE is set (Cloud Run indicator), OR
-    // 5. PORT=8080 without localhost development indicators
+    // 4. K_SERVICE is set (Cloud Run indicator - primary detection for Replit deployments)
     const isCloudRun = Boolean(kService);
-    const isProductionPort = port === '8080' && !process.env.REPLIT_DEV_DOMAIN;
     
     const isProd = nodeEnv === 'production' || 
                    Boolean(replitDeployment && replitDeployment !== 'false' && replitDeployment !== '0') ||
                    Boolean(replDeploy && replDeploy !== 'false' && replDeploy !== '0') ||
-                   isCloudRun ||
-                   isProductionPort;
+                   isCloudRun;
     
     // Log once on first check (only if not already logged)
     if (!this._envLogged) {
       console.log(`📊 Analytics Environment Detection:`);
       console.log(`   NODE_ENV: ${nodeEnv || 'not set'}`);
       console.log(`   REPLIT_DEPLOYMENT: ${replitDeployment || 'not set'}`);
-      console.log(`   REPL_DEPLOY: ${replDeploy || 'not set'}`);
       console.log(`   K_SERVICE (Cloud Run): ${kService || 'not set'}`);
-      console.log(`   PORT: ${port || 'not set'}`);
       console.log(`   → Environment: ${isProd ? 'PRODUCTION ✅' : 'DEVELOPMENT'}`);
       this._envLogged = true;
     }
