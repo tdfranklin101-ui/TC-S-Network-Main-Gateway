@@ -11,7 +11,7 @@
       "encodingFormat": "application/json",
       "description": "Global Energy & Ethics Balance — 7-Day Rolling Indicator.",
       "contentUrl": "https://api.thecurrentsee.org/api/daily-brief#si",
-      "value": 71.8,
+      "value": 71.4,
       "unit": "%"
     },
     {
@@ -20,7 +20,7 @@
       "encodingFormat": "application/json",
       "description": "Reserve stability and fulfillment factor across all regions.",
       "contentUrl": "https://api.thecurrentsee.org/api/daily-brief#srh",
-      "value": 79.8,
+      "value": 77.5,
       "unit": "%"
     },
     {
@@ -29,7 +29,7 @@
       "encodingFormat": "application/json",
       "description": "Percentage of humans enrolled and actively claiming GBI.",
       "contentUrl": "https://api.thecurrentsee.org/api/daily-brief#gbi",
-      "value": 41.8,
+      "value": 41.3,
       "unit": "%"
     },
     {
@@ -38,7 +38,7 @@
       "encodingFormat": "application/json",
       "description": "Ethically aligned compute flow — safe superintelligence readiness.",
       "contentUrl": "https://api.thecurrentsee.org/api/daily-brief#cai",
-      "value": 89.4,
+      "value": 88.3,
       "unit": "%"
     },
     {
