@@ -2378,6 +2378,51 @@
             </div>
         </div>
 
+        <!-- NEW: Batrhyme Featured Single 3 - Omen on the Hudson -->
+        <div id="batrhyme-omen-on-the-hudson" class="featured-section" style="margin: 30px 0; padding: 25px; background: linear-gradient(135deg, rgba(0, 0, 0, 0.9), rgba(212, 160, 23, 0.15)); border: 3px solid #D4A017; border-radius: 15px; box-shadow: 0 8px 20px rgba(212, 160, 23, 0.4); scroll-margin-top: 80px;" data-testid="card-batrhyme-omen-marketplace">
+            <div class="featured-header" style="text-align: center; margin-bottom: 20px;">
+                <h2 style="color: #D4A017; font-size: 1.8rem; margin-bottom: 10px;">🌅 Featured Single: Batrhyme</h2>
+                <p style="color: #aaa; font-size: 1rem;">"Omen on the Hudson (Quanta Masque)" - Epic solar punk prophecy</p>
+            </div>
+            
+            <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: center; justify-content: center;">
+                <div style="flex: 1; min-width: 250px; max-width: 400px;">
+                    <div style="background: rgba(0, 0, 0, 0.6); border-radius: 12px; padding: 20px; border: 1px solid rgba(212, 160, 23, 0.3);">
+                        <div style="font-size: 1.3rem; font-weight: bold; color: #D4A017; margin-bottom: 10px;">🌅 Omen on the Hudson (Quanta Masque)</div>
+                        <div style="color: #888; font-size: 0.9rem; margin-bottom: 15px;">Artist: <strong style="color: #D4A017;">Batrhyme</strong> • Genre: Hip-Hop</div>
+                        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                            <div style="background: rgba(212, 160, 23, 0.1); padding: 8px 15px; border-radius: 6px; border: 1px solid rgba(212, 160, 23, 0.3);">
+                                <span style="color: #888; font-size: 0.8rem;">Price</span><br>
+                                <span style="color: #D4A017; font-weight: bold;">0.001 Solar</span>
+                            </div>
+                            <div style="background: rgba(212, 160, 23, 0.1); padding: 8px 15px; border-radius: 6px; border: 1px solid rgba(212, 160, 23, 0.3);">
+                                <span style="color: #888; font-size: 0.8rem;">Or</span><br>
+                                <span style="color: #D4A017; font-weight: bold;">1 Ray</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="flex: 1; min-width: 250px; max-width: 400px; display: flex; flex-direction: column; gap: 15px;">
+                    <a href="/music-now.html#batrhyme" data-testid="link-batrhyme-omen-stream" style="display: block; background: linear-gradient(135deg, #000000, #1a1005); border: 2px solid #D4A017; color: #D4A017; padding: 15px 25px; border-radius: 10px; text-decoration: none; font-weight: bold; font-size: 1rem; text-align: center; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(212, 160, 23, 0.3);">
+                        🎵 Stream Free on Music Now
+                    </a>
+                    <button onclick="purchaseBatrhymeOmenSingle()" data-testid="button-purchase-batrhyme-omen" style="background: linear-gradient(135deg, #D4A017, #B8860B); border: none; color: #000; padding: 15px 25px; border-radius: 10px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(212, 160, 23, 0.4);">
+                        💫 Purchase for 0.001 Solar
+                    </button>
+                </div>
+            </div>
+            
+            <div style="margin-top: 20px; padding: 15px; background: rgba(0, 0, 0, 0.5); border-radius: 8px; border-left: 3px solid #D4A017;">
+                <p style="color: #aaa; font-size: 0.9rem; margin: 0 0 10px 0; line-height: 1.6;">
+                    <strong style="color: #D4A017;">About the Track:</strong> "Omen on the Hudson (Quanta Masque)" weaves a prophetic narrative of solar awakening over the Hudson River. Batrhyme delivers visionary verses against an epic soundscape, channeling the energy of dawn breaking over New York's skyline.
+                </p>
+                <p style="color: #888; font-size: 0.85rem; margin: 0; line-height: 1.5;">
+                    <strong style="color: #D4A017;">Available Everywhere:</strong> Stream for free on Apple Music, Spotify, and your favorite platforms • <strong style="color: #FFD700;">Download via TC-S Network Foundation Marketplace</strong> for 0.001 Solar or 1 Ray to support the artist and platform
+                </p>
+            </div>
+        </div>
+
         <!-- NEW: Gidget Bardot Featured Single Section -->
         <div id="gidget-bardot-no-one-left" class="featured-section" style="margin: 30px 0; padding: 25px; background: linear-gradient(135deg, rgba(0, 0, 0, 0.9), rgba(255, 215, 0, 0.15)); border: 3px solid #FFD700; border-radius: 15px; box-shadow: 0 8px 20px rgba(255, 215, 0, 0.4); scroll-margin-top: 80px;">
             <div class="featured-header" style="text-align: center; margin-bottom: 20px;">
@@ -3518,6 +3563,64 @@
                 }
             } catch (error) {
                 console.error('Batrhyme 2 purchase error:', error);
+                alert('❌ Purchase failed. Please try again.');
+            }
+        }
+
+        async function purchaseBatrhymeOmenSingle() {
+            if (!currentUser) {
+                showSignupModal();
+                return;
+            }
+
+            const batrhymeOmenTrack = {
+                id: 'batrhyme-omen-on-the-hudson',
+                title: 'Omen on the Hudson (Quanta Masque)',
+                artist: 'Batrhyme',
+                priceSolar: 0.001,
+                priceRays: 1,
+                genre: 'Hip-Hop',
+                duration: '4:00',
+                deliveryUrl: '/omen-on-the-hudson.mp3'
+            };
+
+            const confirmed = confirm(`🌅 Purchase "${batrhymeOmenTrack.title}"?\n\nArtist: ${batrhymeOmenTrack.artist}\nPrice: ${batrhymeOmenTrack.priceSolar} Solar (or ${batrhymeOmenTrack.priceRays} Ray)\nGenre: ${batrhymeOmenTrack.genre}\nDuration: ${batrhymeOmenTrack.duration}\n\nProceed with purchase?`);
+            
+            if (!confirmed) return;
+
+            try {
+                const response = await fetch('/api/marketplace/purchase', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        artifactId: batrhymeOmenTrack.id,
+                        buyerEmail: currentUser.email || 'member@thecurrentsee.org',
+                        solarAmount: batrhymeOmenTrack.priceSolar
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert(`🌅 ${result.message || 'Purchase successful!'}`);
+                    
+                    const downloadUrl = batrhymeOmenTrack.deliveryUrl;
+                    const link = document.createElement('a');
+                    link.href = downloadUrl;
+                    link.download = 'batrhyme-omen-on-the-hudson.mp3';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    console.log('🌅 Batrhyme Omen track purchased:', result.purchase);
+                } else {
+                    alert(`❌ Purchase failed: ${result.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                console.error('Batrhyme Omen purchase error:', error);
                 alert('❌ Purchase failed. Please try again.');
             }
         }

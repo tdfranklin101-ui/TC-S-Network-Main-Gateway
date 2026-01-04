@@ -427,6 +427,44 @@
                 </div>
             </div>
             
+            <!-- BATRHYME Card 3 - Omen on the Hudson -->
+            <div id="batrhyme3" style="margin-bottom: 20px; scroll-margin-top: 80px;">
+                <button class="track-button" data-testid="track-button-batrhyme3" onclick="playBatrhyme3Track()" style="background: linear-gradient(135deg, #000000, #1a1005); border: 2px solid #D4A017; color: #D4A017;">
+                    🌅 Omen on the Hudson (Quanta Masque) - Batrhyme
+                </button>
+                
+                <!-- Batrhyme 3 Artwork -->
+                <div style="display: flex; gap: 15px; margin: 10px 0; justify-content: center; align-items: center;">
+                    <img src="/assets/omen-on-the-hudson-cover.png" alt="Omen on the Hudson - Batrhyme" style="width: 100px; height: 100px; border-radius: 8px; object-fit: cover; box-shadow: 0 4px 8px rgba(212, 160, 23, 0.3); border: 2px solid #D4A017;">
+                    <div style="flex: 1; max-width: 300px;">
+                        <p style="color: #D4A017; margin: 0 0 5px 0; font-size: 0.85rem; font-weight: bold;">Hip-Hop • Solar Punk Prophecy</p>
+                        <p style="color: #aaa; margin: 0; font-size: 0.8rem; line-height: 1.4;">Visionary verses channeling dawn over the Hudson River</p>
+                    </div>
+                </div>
+                
+                <!-- Now Playing for Batrhyme 3 -->
+                <div class="now-playing" id="nowPlayingBatrhyme3" style="display: none; color: #D4A017; border-color: #D4A017;">
+                    🎶 Now Playing: <span id="trackNameBatrhyme3">Omen on the Hudson (Quanta Masque)</span>
+                </div>
+                
+                <!-- Audio Player for Batrhyme 3 -->
+                <audio id="audioPlayerBatrhyme3" class="audio-player" data-testid="audio-player-batrhyme3" controls preload="none" style="width: 100%; margin: 10px 0;">
+                    <source src="/omen-on-the-hudson.mp3" type="audio/mpeg">
+                    Your browser does not support the audio element.
+                </audio>
+                
+                <!-- Marketplace Link -->
+                <div style="text-align: center; margin: 10px 0;">
+                    <a href="/marketplace.html#batrhyme-omen-on-the-hudson" data-testid="link-batrhyme3-marketplace" style="display: inline-block; background: linear-gradient(135deg, #000000, #1a1005); border: 1px solid #D4A017; color: #D4A017; padding: 8px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 0.9rem; transition: all 0.3s ease;">
+                        💾 Download (0.001 Solar)
+                    </a>
+                </div>
+                
+                <!-- Streaming Platforms Note -->
+                <div style="text-align: center; margin-top: 10px; padding: 8px; background: rgba(212, 160, 23, 0.1); border-radius: 6px;">
+                    <p style="color: #DAA520; margin: 0; font-size: 0.8rem;">🎵 Also on Apple Music, Spotify & more • 💫 Download via TC-S Network Foundation Marketplace</p>
+                </div>
+            </div>
             
             <!-- GIDGET BARDOT Card -->
             <div id="gidget-bardot" style="scroll-margin-top: 80px;">
@@ -1082,6 +1120,69 @@
                 });
         }
 
+        function playBatrhyme3Track() {
+            console.log('═══════════════════════════════════════════');
+            console.log('🎵 BATRHYME 3 PLAYER - ISOLATED FUNCTION');
+            console.log('⚠️ SHOULD PLAY: "Omen on the Hudson (Quanta Masque)"');
+            console.log('═══════════════════════════════════════════');
+            
+            // STOP other players
+            const monazitePlayer = document.getElementById('audioPlayer');
+            if (monazitePlayer) {
+                monazitePlayer.pause();
+                monazitePlayer.src = '';
+                monazitePlayer.load();
+            }
+            
+            const batrhyme1Player = document.getElementById('audioPlayerBatrhyme');
+            if (batrhyme1Player) {
+                batrhyme1Player.pause();
+            }
+            
+            const batrhyme2Player = document.getElementById('audioPlayerBatrhyme2');
+            if (batrhyme2Player) {
+                batrhyme2Player.pause();
+            }
+            
+            const gidgetPlayer = document.getElementById('audioPlayerGidget');
+            if (gidgetPlayer) {
+                gidgetPlayer.pause();
+            }
+            
+            // Get Batrhyme 3's player element
+            const player = document.getElementById('audioPlayerBatrhyme3');
+            const nowPlaying = document.getElementById('nowPlayingBatrhyme3');
+            const trackName = document.getElementById('trackNameBatrhyme3');
+            
+            if (!player) {
+                console.error('❌ FATAL ERROR: audioPlayerBatrhyme3 element not found!');
+                alert('ERROR: Batrhyme 3 player not found. Refresh page.');
+                return;
+            }
+            
+            const timestamp = new Date().getTime();
+            const batrhyme3Url = '/omen-on-the-hudson.mp3?t=' + timestamp;
+            
+            console.log('📍 Loading:', batrhyme3Url);
+            
+            player.src = batrhyme3Url;
+            player.load();
+            
+            trackPlayEvent('🌅 Omen on the Hudson (Quanta Masque) - Batrhyme');
+            
+            if (trackName) trackName.textContent = 'Omen on the Hudson (Quanta Masque)';
+            if (nowPlaying) nowPlaying.style.display = 'block';
+            
+            player.play()
+                .then(() => {
+                    console.log('✅ PLAYING: Batrhyme 3');
+                    console.log('🎵 Source:', batrhyme3Url);
+                })
+                .catch(err => {
+                    console.log('⚠️ Autoplay blocked - use controls');
+                });
+        }
+
         function playGidgetTrack() {
             console.log('═══════════════════════════════════════════');
             console.log('🎵 GIDGET BARDOT PLAYER - ISOLATED FUNCTION');
@@ -1203,12 +1304,12 @@
             }, 1000); // 1 second gap between tracks
         }
 
-        // ========== PLAY ALL MUSIC - 23 Songs (20 Monazite + 3 Singles) ==========
+        // ========== PLAY ALL MUSIC - 24 Songs (20 Monazite + 4 Singles) ==========
         let playAllMusicMode = false;
         let allMusicShuffled = [];
         let allMusicIndex = 0;
         
-        // All tracks: 20 Monazite + 3 Singles
+        // All tracks: 20 Monazite + 4 Singles
         const allMusicTracks = [
             // MONAZITE CATALOG (0-19)
             'https://storage.aisongmaker.io/audio/4a839c86-40d9-4272-989b-7a512184ddb6.mp3', // 0
@@ -1231,10 +1332,11 @@
             'https://storage.aisongmaker.io/audio/b2001c35-620a-4893-b046-4de20ad11422.mp3', // 17
             'https://storage.aisongmaker.io/audio/7abf4dac-2b12-434a-8d59-c115f8c54cb9.mp3', // 18
             '/music/snowmancer-one.mp3', // 19 - Snowmancer (20th Monazite track)
-            // SINGLES (20-22)
+            // SINGLES (20-23)
             '/media/batrhyme-break-on-the-bright-side.mp3', // 20 - Batrhyme: Break on the Bright Side
             '/media/batrhyme-psychedelic-solar-punk-party.mp3', // 21 - Batrhyme: Psychedelic Solar Punk Party
-            '/media/gidget-bardot-no-one-left-v3.mp3'       // 22 - Gidget Bardot
+            '/media/gidget-bardot-no-one-left-v3.mp3',      // 22 - Gidget Bardot
+            '/omen-on-the-hudson.mp3'                        // 23 - Batrhyme: Omen on the Hudson (Quanta Masque)
         ];
 
         function playAllMusic() {
