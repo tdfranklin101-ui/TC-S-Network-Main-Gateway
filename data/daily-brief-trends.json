@@ -1,62 +1,62 @@
 {
   "date": "2026-01-04",
-  "generatedAt": "2026-01-04T19:00:52.447Z",
+  "generatedAt": "2026-01-04T19:48:26.210Z",
   "currentIndices": [
     {
       "id": "si",
       "name": "Solar Index",
       "unit": "%",
-      "value": 71.4,
+      "value": 71.1,
       "description": "Global Energy & Ethics Balance — 7-Day Rolling Indicator.",
-      "asOf": "2026-01-04T19:00:50.340Z"
+      "asOf": "2026-01-04T19:48:23.838Z"
     },
     {
       "id": "srh",
       "name": "Solar Reserve Health",
       "unit": "%",
-      "value": 77.5,
+      "value": 76.5,
       "description": "Reserve stability and fulfillment factor across all regions.",
-      "asOf": "2026-01-04T19:00:50.340Z"
+      "asOf": "2026-01-04T19:48:23.838Z"
     },
     {
       "id": "gbi",
       "name": "Global Basic Income",
       "unit": "%",
-      "value": 41.3,
+      "value": 41,
       "description": "Percentage of humans enrolled and actively claiming GBI.",
-      "asOf": "2026-01-04T19:00:50.340Z"
+      "asOf": "2026-01-04T19:48:23.838Z"
     },
     {
       "id": "cai",
       "name": "Compute Alignment",
       "unit": "%",
-      "value": 88.3,
+      "value": 88.8,
       "description": "Ethically aligned compute flow — safe superintelligence readiness.",
-      "asOf": "2026-01-04T19:00:50.340Z"
+      "asOf": "2026-01-04T19:48:23.838Z"
     },
     {
       "id": "mli",
       "name": "Market Liquidity",
       "unit": "%",
-      "value": 23.8,
+      "value": 24.4,
       "description": "Health of the TC-S digital marketplace and token velocity.",
-      "asOf": "2026-01-04T19:00:50.340Z"
+      "asOf": "2026-01-04T19:48:23.838Z"
     },
     {
       "id": "eai",
       "name": "Ethical Alignment",
       "unit": "%",
-      "value": 93.1,
+      "value": 92,
       "description": "Acceptance ratio of tasks from the Ethics Engine.",
-      "asOf": "2026-01-04T19:00:50.340Z"
+      "asOf": "2026-01-04T19:48:23.838Z"
     }
   ],
   "trends": {
     "analysisStatus": "success",
     "direction": "neutral",
-    "analysis": "The market indices show a mixed performance with slight fluctuations across the board. While the Sentiment Index (si) has seen a minor increase, the Growth Barometer Index (gbi) is experiencing a downward trend, indicating some uncertainty in market conditions. The Consumer Activity Index (cai) remains strong, which is a positive sign for overall market stability.",
-    "insight": "Consider focusing on sectors tied to consumer activity, as the robust cai suggests resilience in consumer demand despite mixed signals from other indices.",
-    "generatedAt": "2026-01-04T19:00:52.447Z"
+    "analysis": "The overall market health indices show stability with slight fluctuations in most indicators over the past week. The sentiment index (si) and social reach health (srh) have experienced minor dips, while the customer acquisition index (cai) remains strong, suggesting a mixed market sentiment. Despite some volatility, the overall trends indicate a balanced state rather than a clear bullish or bearish direction.",
+    "insight": "Focus on enhancing customer retention strategies given the strong customer acquisition index and the slight declines in sentiment and reach, which could indicate a need for improved engagement.",
+    "generatedAt": "2026-01-04T19:48:26.210Z"
   },
   "historyDays": 30
 }
