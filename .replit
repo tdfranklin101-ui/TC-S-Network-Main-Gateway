@@ -8,7 +8,7 @@ packages = ["ffmpeg", "freetype", "gh", "git-lfs", "jq", "lcms2", "libimagequant
 
 [deployment]
 run = "node main.js"
-deploymentTarget = "cloudrun"
+deploymentTarget = "gce"
 
 [[ports]]
 localPort = 3002
