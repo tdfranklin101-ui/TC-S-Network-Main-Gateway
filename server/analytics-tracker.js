@@ -175,7 +175,7 @@ class AnalyticsTracker {
 
   /**
    * Detect if running in production environment
-   * Cloud Run indicator K_SERVICE is the most reliable for Replit deployments
+   * Supports Autoscale (K_SERVICE), Reserved VM, and Static deployments
    * @returns {boolean} True if production
    */
   isProduction() {
@@ -183,26 +183,34 @@ class AnalyticsTracker {
     const nodeEnv = process.env.NODE_ENV;
     const replitDeployment = process.env.REPLIT_DEPLOYMENT;
     const replDeploy = process.env.REPL_DEPLOY;
-    const kService = process.env.K_SERVICE; // Cloud Run sets this - most reliable indicator
+    const kService = process.env.K_SERVICE; // Cloud Run/Autoscale sets this
+    const replitDev = process.env.REPLIT_DEV; // Only set in development workspace
+    const replSlug = process.env.REPL_SLUG;
+    const replOwner = process.env.REPL_OWNER;
     
     // Production if:
     // 1. NODE_ENV is explicitly 'production', OR
-    // 2. REPLIT_DEPLOYMENT is truthy, OR
+    // 2. REPLIT_DEPLOYMENT is set to '1' (Reserved VM and other deployments), OR
     // 3. REPL_DEPLOY is truthy, OR
-    // 4. K_SERVICE is set (Cloud Run indicator - primary detection for Replit deployments)
+    // 4. K_SERVICE is set (Cloud Run/Autoscale indicator), OR
+    // 5. REPLIT_DEV is NOT set and we have REPL_SLUG (Reserved VM detection)
     const isCloudRun = Boolean(kService);
+    const isReservedVM = !replitDev && Boolean(replSlug);
     
     const isProd = nodeEnv === 'production' || 
-                   Boolean(replitDeployment && replitDeployment !== 'false' && replitDeployment !== '0') ||
+                   replitDeployment === '1' ||
                    Boolean(replDeploy && replDeploy !== 'false' && replDeploy !== '0') ||
-                   isCloudRun;
+                   isCloudRun ||
+                   isReservedVM;
     
     // Log once on first check (only if not already logged)
     if (!this._envLogged) {
       console.log(`📊 Analytics Environment Detection:`);
       console.log(`   NODE_ENV: ${nodeEnv || 'not set'}`);
       console.log(`   REPLIT_DEPLOYMENT: ${replitDeployment || 'not set'}`);
-      console.log(`   K_SERVICE (Cloud Run): ${kService || 'not set'}`);
+      console.log(`   K_SERVICE (Autoscale): ${kService || 'not set'}`);
+      console.log(`   REPLIT_DEV: ${replitDev || 'not set'}`);
+      console.log(`   Reserved VM detection: ${isReservedVM ? 'YES' : 'NO'}`);
       console.log(`   → Environment: ${isProd ? 'PRODUCTION ✅' : 'DEVELOPMENT'}`);
       this._envLogged = true;
     }
