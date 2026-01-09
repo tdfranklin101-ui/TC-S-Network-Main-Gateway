@@ -12,7 +12,6 @@ deploymentTarget = "cloudrun"
 
 [[ports]]
 localPort = 3000
-externalPort = 3000
 
 [[ports]]
 localPort = 3002
@@ -20,23 +19,6 @@ externalPort = 80
 
 [[ports]]
 localPort = 8080
-externalPort = 8080
-
-[[ports]]
-localPort = 36505
-externalPort = 3003
-
-[[ports]]
-localPort = 37281
-externalPort = 3001
-
-[[ports]]
-localPort = 38173
-externalPort = 3002
-
-[[ports]]
-localPort = 40067
-externalPort = 4200
 
 [agent]
 integrations = ["perplexity_v0:1.0.0", "javascript_websocket:1.0.0", "javascript_stripe:1.0.0", "javascript_openai:1.0.0", "javascript_anthropic:1.0.0"]
