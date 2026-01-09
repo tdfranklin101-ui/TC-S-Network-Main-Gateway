@@ -2,14 +2,16 @@
  * Geographic Analytics Tracker
  * Privacy-focused aggregate visitor tracking by country and US state
  * Stores only monthly totals - no individual user tracking
+ * Uses cloud-based ip-api.com for always up-to-date geo-location
  */
 
-const geoip = require('geoip-lite');
 const { Pool } = require('@neondatabase/serverless');
 
 class AnalyticsTracker {
   constructor(databaseUrl) {
     this.pool = new Pool({ connectionString: databaseUrl });
+    this.geoCache = new Map(); // Cache geo lookups for 1 hour to reduce API calls
+    this.CACHE_TTL = 60 * 60 * 1000; // 1 hour in milliseconds
     // Historical offset to restore pre-deployment visit count
     // Production database separate from workspace - needs offset restoration
     // Updated Nov 4, 2025: Adjusted from 9,716 to 10,272 to account for missed tracking
@@ -46,11 +48,11 @@ class AnalyticsTracker {
   }
 
   /**
-   * Get geographic location from IP address
+   * Get geographic location from IP address using cloud API
    * @param {string} ip - IP address to lookup
-   * @returns {object} Geographic data (never null - uses fallback for unknown IPs)
+   * @returns {Promise<object>} Geographic data (never null - uses fallback for unknown IPs)
    */
-  getLocationFromIP(ip) {
+  async getLocationFromIP(ip) {
     // Fallback location for private/internal IPs or unknown locations
     const fallbackLocation = {
       countryCode: 'XX',
@@ -65,19 +67,53 @@ class AnalyticsTracker {
       return fallbackLocation;
     }
 
-    const geo = geoip.lookup(ip);
-    if (!geo) {
-      console.log(`📍 GeoIP lookup failed for: ${ip} - using fallback location`);
-      return fallbackLocation;
+    // Check cache first
+    const cached = this.geoCache.get(ip);
+    if (cached && (Date.now() - cached.timestamp) < this.CACHE_TTL) {
+      console.log(`📍 Using cached geo for: ${ip}`);
+      return cached.location;
     }
 
-    // Use empty string for non-US states to ensure proper unique constraint
-    return {
-      countryCode: geo.country,
-      countryName: this.getCountryName(geo.country),
-      stateCode: geo.country === 'US' && geo.region ? geo.region : '',
-      stateName: geo.country === 'US' && geo.region ? this.getUSStateName(geo.region) : ''
-    };
+    try {
+      // Use ip-api.com (free, no API key required, 45 requests/minute limit)
+      const response = await fetch(`http://ip-api.com/json/${ip}?fields=status,country,countryCode,region,regionName`);
+      const data = await response.json();
+
+      if (data.status === 'success') {
+        const location = {
+          countryCode: data.countryCode,
+          countryName: data.country,
+          stateCode: data.countryCode === 'US' && data.region ? data.region : '',
+          stateName: data.countryCode === 'US' && data.regionName ? data.regionName : ''
+        };
+        
+        // Cache the result
+        this.geoCache.set(ip, { location, timestamp: Date.now() });
+        console.log(`📍 Cloud geo lookup: ${ip} → ${data.country}`);
+        return location;
+      }
+    } catch (error) {
+      console.log(`📍 Cloud geo lookup failed for ${ip}: ${error.message}`);
+    }
+
+    // Fallback to local geoip-lite if cloud fails
+    try {
+      const geoip = require('geoip-lite');
+      const geo = geoip.lookup(ip);
+      if (geo) {
+        return {
+          countryCode: geo.country,
+          countryName: this.getCountryName(geo.country),
+          stateCode: geo.country === 'US' && geo.region ? geo.region : '',
+          stateName: geo.country === 'US' && geo.region ? this.getUSStateName(geo.region) : ''
+        };
+      }
+    } catch (e) {
+      console.log(`📍 Local geoip fallback also failed`);
+    }
+
+    console.log(`📍 GeoIP lookup failed for: ${ip} - using fallback location`);
+    return fallbackLocation;
   }
 
   /**
@@ -229,7 +265,7 @@ class AnalyticsTracker {
       const environment = this.isProduction() ? 'production' : 'development';
       console.log(`📊 trackVisit() called - IP: ${ip}, Environment: ${environment}`);
 
-      const location = this.getLocationFromIP(ip);
+      const location = await this.getLocationFromIP(ip);
       // Location is now never null - always has fallback
       
       const date = this.getCurrentDate();
