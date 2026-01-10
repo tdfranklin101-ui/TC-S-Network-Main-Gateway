@@ -9721,87 +9721,92 @@ server.listen(PORT, '0.0.0.0', () => {
   });
   
   console.log(`🚀 CLOUD RUN READY - SINGLE PORT CONFIGURATION`);
+  console.log(`✅ Health check ready - deferring heavy initialization tasks...`);
   
-  // Initialize daily Solar distribution
-  // Note: Cron jobs work in dev but not in Autoscale deployment
-  // For production, use External Cron (Replit Deployments settings) to call:
-  // POST https://your-app.replit.app/api/distribution/trigger
-  try {
-    initializeDailyDistribution();
-  } catch (error) {
-    console.warn('⚠️ Cron scheduling not available in this environment');
-    console.log('📌 Use external cron or manual trigger: POST /api/distribution/trigger');
-  }
-  
-  // Initialize Foundation Solar Integrity Wheel
-  try {
-    initializeFoundationIntegrityWheel();
-  } catch (error) {
-    console.warn('⚠️ Foundation audit scheduling failed:', error.message);
-    console.log('📌 Manual audit: node scripts/solar_foundation_audit.js');
-  }
-  
-  // Initialize Daily Solar Greeting Video
-  try {
-    generateDailySolarGreeting();
-    cron.schedule('1 0 * * *', generateDailySolarGreeting, { timezone: 'America/Los_Angeles' }); // 12:01 AM PST
-    console.log('🌅 Daily Solar Greeting: Scheduled for 12:01 AM');
-  } catch (error) {
-    console.warn('⚠️ Daily greeting video scheduling failed:', error.message);
-  }
-  
-  // Initialize Solar Audit Layer (SAi-Audit)
-  try {
-    initializeSolarAudit();
-    console.log('✅ Solar Audit Layer initialized');
-    console.log(`📊 Dashboard: http://localhost:${PORT}/solar-audit.html`);
-    console.log(`🔄 Manual update: POST http://localhost:${PORT}/api/solar-audit/update`);
-  } catch (error) {
-    console.warn('⚠️ Solar Audit initialization failed:', error.message);
-    console.log('📌 Dashboard still available but data fetch requires manual trigger');
-  }
-
-  // Initialize TC-S Daily Indices Brief with 24-hour scheduler
-  setImmediate(async () => {
+  // CRITICAL: Defer ALL heavy initialization to allow health checks to respond immediately
+  // This prevents deployment timeouts due to slow startup
+  setTimeout(() => {
+    console.log(`🔄 Starting deferred initialization tasks...`);
+    
+    // Initialize daily Solar distribution
     try {
-      const generator = require('./scripts/generateDailyBrief');
-      
-      // Initial generation
-      await generator.generateBrief();
-      console.log('✅ TC-S Daily Indices Brief initialized');
-      console.log(`📊 API: http://localhost:${PORT}/api/daily-brief`);
-      console.log(`📊 JSON-LD: http://localhost:${PORT}/api/daily-brief/jsonld`);
-      console.log(`📈 Trends: http://localhost:${PORT}/api/daily-brief/trends`);
-      console.log(`🔧 Manual trigger: POST http://localhost:${PORT}/api/daily-brief/generate`);
-      
-      // Schedule 24-hour updates with AI trend analysis
-      // Run at 3:00 AM UTC daily
-      const dailyJob = schedule.scheduleJob('0 3 * * *', async () => {
-        try {
-          console.log('⏰ [SCHEDULER] Running 24-hour Daily Indices Brief update...');
-          const result = await generator.generateBrief();
-          console.log(`✅ [SCHEDULER] Daily Brief updated with ${result.brief.indices.length} indices`);
-          console.log(`📈 [SCHEDULER] AI Trends Analysis: ${result.trends.analysisStatus}`);
-          
-          if (result.trends.analysisStatus === 'success') {
-            console.log(`🤖 [SCHEDULER] Trend Direction: ${result.trends.direction}`);
-            if (result.trends.insight) {
-              console.log(`💡 [SCHEDULER] Insight: ${result.trends.insight}`);
-            }
-          }
-        } catch (error) {
-          console.error('❌ [SCHEDULER] Daily Brief update failed:', error.message);
-        }
-      });
-      
-      console.log('📅 [SCHEDULER] 24-hour Daily Brief schedule: Daily at 03:00 UTC');
-      console.log('🤖 [SCHEDULER] AI Trend Analysis: Enabled');
-      
+      initializeDailyDistribution();
     } catch (error) {
-      console.warn('⚠️ Daily Indices Brief initialization failed:', error.message);
-      console.log('📌 API still available but briefing may not be current');
+      console.warn('⚠️ Cron scheduling not available in this environment');
+      console.log('📌 Use external cron or manual trigger: POST /api/distribution/trigger');
     }
-  });
+    
+    // Initialize Foundation Solar Integrity Wheel
+    try {
+      initializeFoundationIntegrityWheel();
+    } catch (error) {
+      console.warn('⚠️ Foundation audit scheduling failed:', error.message);
+      console.log('📌 Manual audit: node scripts/solar_foundation_audit.js');
+    }
+    
+    // Initialize Daily Solar Greeting Video (async, non-blocking)
+    try {
+      generateDailySolarGreeting();
+      cron.schedule('1 0 * * *', generateDailySolarGreeting, { timezone: 'America/Los_Angeles' });
+      console.log('🌅 Daily Solar Greeting: Scheduled for 12:01 AM');
+    } catch (error) {
+      console.warn('⚠️ Daily greeting video scheduling failed:', error.message);
+    }
+    
+    // Initialize Solar Audit Layer (SAi-Audit)
+    try {
+      initializeSolarAudit();
+      console.log('✅ Solar Audit Layer initialized');
+      console.log(`📊 Dashboard: http://localhost:${PORT}/solar-audit.html`);
+      console.log(`🔄 Manual update: POST http://localhost:${PORT}/api/solar-audit/update`);
+    } catch (error) {
+      console.warn('⚠️ Solar Audit initialization failed:', error.message);
+      console.log('📌 Dashboard still available but data fetch requires manual trigger');
+    }
+
+    // Initialize TC-S Daily Indices Brief with 24-hour scheduler
+    setImmediate(async () => {
+      try {
+        const generator = require('./scripts/generateDailyBrief');
+        
+        // Initial generation
+        await generator.generateBrief();
+        console.log('✅ TC-S Daily Indices Brief initialized');
+        console.log(`📊 API: http://localhost:${PORT}/api/daily-brief`);
+        console.log(`📊 JSON-LD: http://localhost:${PORT}/api/daily-brief/jsonld`);
+        console.log(`📈 Trends: http://localhost:${PORT}/api/daily-brief/trends`);
+        console.log(`🔧 Manual trigger: POST http://localhost:${PORT}/api/daily-brief/generate`);
+        
+        // Schedule 24-hour updates with AI trend analysis
+        const dailyJob = schedule.scheduleJob('0 3 * * *', async () => {
+          try {
+            console.log('⏰ [SCHEDULER] Running 24-hour Daily Indices Brief update...');
+            const result = await generator.generateBrief();
+            console.log(`✅ [SCHEDULER] Daily Brief updated with ${result.brief.indices.length} indices`);
+            console.log(`📈 [SCHEDULER] AI Trends Analysis: ${result.trends.analysisStatus}`);
+            
+            if (result.trends.analysisStatus === 'success') {
+              console.log(`🤖 [SCHEDULER] Trend Direction: ${result.trends.direction}`);
+              if (result.trends.insight) {
+                console.log(`💡 [SCHEDULER] Insight: ${result.trends.insight}`);
+              }
+            }
+          } catch (error) {
+            console.error('❌ [SCHEDULER] Daily Brief update failed:', error.message);
+          }
+        });
+        
+        console.log('📅 [SCHEDULER] 24-hour Daily Brief schedule: Daily at 03:00 UTC');
+        console.log('🤖 [SCHEDULER] AI Trend Analysis: Enabled');
+        
+      } catch (error) {
+        console.warn('⚠️ Daily Indices Brief initialization failed:', error.message);
+        console.log('📌 API still available but briefing may not be current');
+      }
+    });
+    
+    console.log(`✅ All deferred initialization tasks started`);
+  }, 2000); // Wait 2 seconds after server starts to begin heavy tasks
 }).on('error', (err) => {
   console.error('❌ Server failed to start:', err);
   process.exit(1);
