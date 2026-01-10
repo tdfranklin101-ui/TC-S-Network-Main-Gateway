@@ -155,6 +155,48 @@
         .user-menu.visible {
             display: flex;
         }
+        
+        /* Mobile responsive header */
+        @media (max-width: 768px) {
+            .header-actions {
+                display: flex;
+                gap: 8px;
+            }
+            
+            .header-actions .register-btn:not(#signin-btn):not(#register-btn) {
+                display: none;
+            }
+            
+            .header-actions #signin-btn,
+            .header-actions #register-btn {
+                padding: 6px 10px;
+                font-size: 12px;
+            }
+            
+            .user-menu.visible {
+                display: flex;
+                gap: 8px;
+            }
+            
+            .user-menu .user-info {
+                display: flex;
+                flex-direction: column;
+                gap: 2px;
+            }
+            
+            .user-menu .solar-balance {
+                font-size: 11px;
+            }
+            
+            .user-menu .logout-btn {
+                padding: 4px 8px;
+                font-size: 11px;
+            }
+            
+            .header-menu {
+                display: none;
+            }
+        }
 
         .user-avatar {
             width: 36px;
@@ -2076,7 +2118,7 @@
             <a href="/members.html" class="register-btn" id="members-link" data-testid="link-members" style="display: inline-block; text-decoration: none; margin-right: 10px;">👥 Members</a>
             <button class="register-btn" id="signin-btn" onclick="showSigninModal()">Sign In</button>
             <button class="register-btn" id="register-btn" onclick="showSignupModal()">Join Network</button>
-            <div class="user-menu" id="user-menu" style="display: none;">
+            <div class="user-menu" id="user-menu">
                 <div class="user-info">
                     <div class="user-name" id="header-username"></div>
                     <div class="solar-balance" id="header-balance"></div>
