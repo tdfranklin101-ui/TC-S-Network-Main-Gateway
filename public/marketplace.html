@@ -4647,8 +4647,8 @@
                     // Close modal
                     closeSigninModal();
                     
-                    // Refresh the page data with new user context
-                    await checkAndSwitchTab(currentTab);
+                    // Final display update after modal close
+                    updateUserDisplay();
                     
                     alert(`🌱 Welcome back, ${result.username}! Your agent is ready. Balance: ${loginBalance.toFixed(4)} Solar`);
                 } else {
@@ -4730,8 +4730,8 @@
                     // Close modal
                     closeSignupModal();
                     
-                    // Refresh the page data with new user context
-                    await checkAndSwitchTab(currentTab);
+                    // Final display update after modal close
+                    updateUserDisplay();
                     
                     alert(`🌱 Welcome, ${result.username || username}! Your personal agent is activated. Balance: ${signupBalance.toFixed(4)} Solar`);
                 } else {
