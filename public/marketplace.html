@@ -4650,7 +4650,11 @@
                     // Final display update after modal close
                     updateUserDisplay();
                     
-                    alert(`🌱 Welcome back, ${result.username}! Your agent is ready. Balance: ${loginBalance.toFixed(4)} Solar`);
+                    // Use setTimeout to ensure DOM updates before alert blocks the thread
+                    const welcomeMsg = `🌱 Welcome back, ${result.username}! Your agent is ready. Balance: ${loginBalance.toFixed(4)} Solar`;
+                    setTimeout(() => {
+                        alert(welcomeMsg);
+                    }, 100);
                 } else {
                     alert(`❌ Sign in failed: ${result.error}`);
                 }
@@ -4733,7 +4737,11 @@
                     // Final display update after modal close
                     updateUserDisplay();
                     
-                    alert(`🌱 Welcome, ${result.username || username}! Your personal agent is activated. Balance: ${signupBalance.toFixed(4)} Solar`);
+                    // Use setTimeout to ensure DOM updates before alert blocks the thread
+                    const welcomeMsg = `🌱 Welcome, ${result.username || username}! Your personal agent is activated. Balance: ${signupBalance.toFixed(4)} Solar`;
+                    setTimeout(() => {
+                        alert(welcomeMsg);
+                    }, 100);
                 } else {
                     alert(`❌ Signup failed: ${result.error}`);
                 }
