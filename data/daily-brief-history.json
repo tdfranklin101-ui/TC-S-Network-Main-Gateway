@@ -4,66 +4,6 @@
     "indices": [
       {
         "id": "si",
-        "value": 71.3
-      },
-      {
-        "id": "srh",
-        "value": 77.8
-      },
-      {
-        "id": "gbi",
-        "value": 40.5
-      },
-      {
-        "id": "cai",
-        "value": 88.2
-      },
-      {
-        "id": "mli",
-        "value": 24.5
-      },
-      {
-        "id": "eai",
-        "value": 92.5
-      }
-    ],
-    "timestamp": "2025-12-07T04:23:17.622Z"
-  },
-  {
-    "date": "2025-12-07",
-    "indices": [
-      {
-        "id": "si",
-        "value": 71.6
-      },
-      {
-        "id": "srh",
-        "value": 77.6
-      },
-      {
-        "id": "gbi",
-        "value": 41.7
-      },
-      {
-        "id": "cai",
-        "value": 88.2
-      },
-      {
-        "id": "mli",
-        "value": 22.7
-      },
-      {
-        "id": "eai",
-        "value": 92.3
-      }
-    ],
-    "timestamp": "2025-12-07T04:32:12.552Z"
-  },
-  {
-    "date": "2025-12-07",
-    "indices": [
-      {
-        "id": "si",
         "value": 71.2
       },
       {
@@ -898,5 +838,65 @@
       }
     ],
     "timestamp": "2026-01-07T15:58:30.271Z"
+  },
+  {
+    "date": "2026-01-10",
+    "indices": [
+      {
+        "id": "si",
+        "value": 70.1
+      },
+      {
+        "id": "srh",
+        "value": 77.5
+      },
+      {
+        "id": "gbi",
+        "value": 41.9
+      },
+      {
+        "id": "cai",
+        "value": 88.9
+      },
+      {
+        "id": "mli",
+        "value": 24.4
+      },
+      {
+        "id": "eai",
+        "value": 92.4
+      }
+    ],
+    "timestamp": "2026-01-10T16:27:08.543Z"
+  },
+  {
+    "date": "2026-01-10",
+    "indices": [
+      {
+        "id": "si",
+        "value": 70.5
+      },
+      {
+        "id": "srh",
+        "value": 76.7
+      },
+      {
+        "id": "gbi",
+        "value": 41.8
+      },
+      {
+        "id": "cai",
+        "value": 89.8
+      },
+      {
+        "id": "mli",
+        "value": 23.6
+      },
+      {
+        "id": "eai",
+        "value": 93
+      }
+    ],
+    "timestamp": "2026-01-10T16:29:55.635Z"
   }
 ]

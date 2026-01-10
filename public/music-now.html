@@ -928,10 +928,16 @@
             closeModal();
         }
         
-        // Load real music statistics
+        // Load real music statistics with timeout
         async function loadMusicStats() {
             try {
-                const response = await fetch('/api/music/stats');
+                // Add 3 second timeout to prevent hanging
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 3000);
+                
+                const response = await fetch('/api/music/stats', { signal: controller.signal });
+                clearTimeout(timeoutId);
+                
                 if (response.ok) {
                     const stats = await response.json();
                     
@@ -955,11 +961,9 @@
                     }
                     
                     console.log('📊 Music stats loaded:', stats);
-                } else {
-                    console.warn('Failed to load music stats');
                 }
             } catch (error) {
-                console.warn('Error loading music stats:', error);
+                console.log('Using default music stats (API unavailable)');
                 // Keep default values on error
             }
         }
@@ -1536,16 +1540,22 @@
 
             async loadPersonalizedRecommendations() {
                 try {
+                    // Add 3 second timeout to prevent hanging
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 3000);
+                    
                     const response = await fetch(`${this.apiBase}/content-recommendations`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         credentials: 'include',
+                        signal: controller.signal,
                         body: JSON.stringify({
                             contentTypes: ['music_track'],
                             maxRecommendations: 6,
                             context: 'music_platform'
                         })
                     });
+                    clearTimeout(timeoutId);
 
                     if (response.ok) {
                         const recommendations = await response.json();
@@ -1554,7 +1564,7 @@
                         this.showPlaceholderRecommendations();
                     }
                 } catch (error) {
-                    console.error('Error loading recommendations:', error);
+                    console.log('Using placeholder recommendations (API unavailable)');
                     this.showPlaceholderRecommendations();
                 }
             }
@@ -1613,16 +1623,22 @@
 
             async updateMarketIntelligence() {
                 try {
+                    // Add 3 second timeout to prevent hanging
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 3000);
+                    
                     const response = await fetch(`${this.apiBase}/market-overview?timeframe=7&contentTypes=music`, {
-                        credentials: 'include'
+                        credentials: 'include',
+                        signal: controller.signal
                     });
+                    clearTimeout(timeoutId);
 
                     if (response.ok) {
                         const marketData = await response.json();
                         this.updateMarketDisplays(marketData);
                     }
                 } catch (error) {
-                    console.error('Error loading market data:', error);
+                    console.log('Using placeholder market data (API unavailable)');
                     // Market display already has placeholder data
                 }
             }
