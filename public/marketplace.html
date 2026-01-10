@@ -4620,8 +4620,26 @@
                 if (response.ok) {
                     console.log('✅ Sign-in successful:', result);
                     
-                    // Re-check session from server FIRST to update currentUser
-                    await checkUserSession();
+                    // IMMEDIATELY set currentUser with login response data (authoritative balance)
+                    const loginBalance = Number(result.solarBalance) || 0;
+                    currentUser = {
+                        userId: result.userId,
+                        username: result.username,
+                        solarBalance: loginBalance
+                    };
+                    sessionState = 'authenticated';
+                    syncCurrentUser();
+                    updateUserDisplay();
+                    console.log(`💰 Login balance set: ${loginBalance} Solar`);
+                    
+                    // Cache the balance to protect against session lookup issues
+                    if (result.userId) {
+                        sessionStorage.setItem(BALANCE_CACHE_KEY, JSON.stringify({
+                            balance: loginBalance,
+                            userId: result.userId,
+                            timestamp: Date.now()
+                        }));
+                    }
                     
                     // Register personal agent automatically
                     await registerPersonalAgent(result.username, result.email || username);
@@ -4632,7 +4650,7 @@
                     // Refresh the page data with new user context
                     await checkAndSwitchTab(currentTab);
                     
-                    alert(`🌱 Welcome back, ${result.username}! Your agent is ready. Balance: ${(Number(result.solarBalance) || 0).toFixed(4)} Solar`);
+                    alert(`🌱 Welcome back, ${result.username}! Your agent is ready. Balance: ${loginBalance.toFixed(4)} Solar`);
                 } else {
                     alert(`❌ Sign in failed: ${result.error}`);
                 }
@@ -4685,8 +4703,26 @@
                 if (response.ok) {
                     console.log('✅ Registration successful:', result);
                     
-                    // Re-check session from server FIRST to update currentUser
-                    await checkUserSession();
+                    // IMMEDIATELY set currentUser with registration response data (authoritative balance)
+                    const signupBalance = Number(result.solarBalance) || 0;
+                    currentUser = {
+                        userId: result.userId,
+                        username: result.username || username,
+                        solarBalance: signupBalance
+                    };
+                    sessionState = 'authenticated';
+                    syncCurrentUser();
+                    updateUserDisplay();
+                    console.log(`💰 Registration balance set: ${signupBalance} Solar`);
+                    
+                    // Cache the balance to protect against session lookup issues
+                    if (result.userId) {
+                        sessionStorage.setItem(BALANCE_CACHE_KEY, JSON.stringify({
+                            balance: signupBalance,
+                            userId: result.userId,
+                            timestamp: Date.now()
+                        }));
+                    }
                     
                     // Register personal agent automatically for new users
                     await registerPersonalAgent(result.username || username, email);
@@ -4697,7 +4733,7 @@
                     // Refresh the page data with new user context
                     await checkAndSwitchTab(currentTab);
                     
-                    alert(`🌱 Welcome, ${result.username || username}! Your personal agent is activated. Balance: ${(Number(result.solarBalance) || 0).toFixed(4)} Solar`);
+                    alert(`🌱 Welcome, ${result.username || username}! Your personal agent is activated. Balance: ${signupBalance.toFixed(4)} Solar`);
                 } else {
                     alert(`❌ Signup failed: ${result.error}`);
                 }
