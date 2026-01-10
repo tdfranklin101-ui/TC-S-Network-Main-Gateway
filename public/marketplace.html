@@ -145,11 +145,15 @@
         }
 
         .user-menu {
-            display: flex;
+            display: none;
             align-items: center;
             gap: 10px;
             color: #ffffff;
             font-size: 14px;
+        }
+        
+        .user-menu.visible {
+            display: flex;
         }
 
         .user-avatar {
@@ -4483,7 +4487,7 @@
                     console.log('   - Hidden register button');
                 }
                 if (userMenu) {
-                    userMenu.style.display = 'flex';
+                    userMenu.classList.add('visible');
                     console.log('   - Showing user menu (logout button)');
                 }
                 if (headerUsername) headerUsername.textContent = currentUser.username;
@@ -4504,7 +4508,7 @@
                     console.log('   - Showing register button');
                 }
                 if (userMenu) {
-                    userMenu.style.display = 'none';
+                    userMenu.classList.remove('visible');
                     console.log('   - Hidden user menu (logout button)');
                 }
             }
