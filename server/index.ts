@@ -79,6 +79,14 @@ app.get('/dmtxactly.html', (req, res) => {
   res.sendFile(path.join(process.cwd(), 'public', 'dmtxactly.html'));
 });
 
+app.get('/solar-dashboard.html', (req, res) => {
+  res.sendFile(path.join(process.cwd(), 'public', 'solar-dashboard.html'));
+});
+
+app.get('/sale-offering.html', (req, res) => {
+  res.sendFile(path.join(process.cwd(), 'public', 'sale-offering.html'));
+});
+
 // White paper HTML files
 app.get('/white_paper_1.html', (req, res) => {
   res.sendFile(path.join(process.cwd(), 'public', 'white_paper_1.html'));
