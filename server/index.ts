@@ -75,6 +75,10 @@ app.get('/signup.html', (req, res) => {
   res.sendFile(path.join(process.cwd(), 'public', 'signup.html'));
 });
 
+app.get('/dmtxactly.html', (req, res) => {
+  res.sendFile(path.join(process.cwd(), 'public', 'dmtxactly.html'));
+});
+
 // White paper HTML files
 app.get('/white_paper_1.html', (req, res) => {
   res.sendFile(path.join(process.cwd(), 'public', 'white_paper_1.html'));
