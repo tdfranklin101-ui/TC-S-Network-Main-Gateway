@@ -438,7 +438,15 @@
             </p>
         </div>
         
-        <section class="video-section">
+        <!-- Page Index -->
+        <nav class="page-index" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-bottom: 2rem; padding: 1rem; background: rgba(0, 0, 0, 0.4); border-radius: 12px; border: 1px solid rgba(139, 92, 246, 0.3);">
+            <a href="#introduction" style="color: #8B5CF6; text-decoration: none; padding: 8px 16px; border-radius: 20px; background: rgba(139, 92, 246, 0.15); font-weight: 600; transition: all 0.3s;">📹 Introduction</a>
+            <a href="#featured-video" style="color: #8B5CF6; text-decoration: none; padding: 8px 16px; border-radius: 20px; background: rgba(139, 92, 246, 0.15); font-weight: 600; transition: all 0.3s;">🎬 Featured Video</a>
+            <a href="#launch-app" style="color: #8B5CF6; text-decoration: none; padding: 8px 16px; border-radius: 20px; background: rgba(139, 92, 246, 0.15); font-weight: 600; transition: all 0.3s;">🚀 Launch App</a>
+            <a href="#music" style="color: #00FF88; text-decoration: none; padding: 8px 16px; border-radius: 20px; background: rgba(0, 255, 136, 0.15); font-weight: 600; transition: all 0.3s;">🎵 Music</a>
+        </nav>
+        
+        <section class="video-section" id="introduction">
             <h2 class="section-title">Introduction</h2>
             <div class="video-container" data-testid="video-container">
                 <iframe 
@@ -450,7 +458,25 @@
             </div>
         </section>
         
-        <section class="app-section">
+        <section class="video-section" id="featured-video">
+            <h2 class="section-title">Featured Video</h2>
+            <div class="video-container" data-testid="featured-video-container">
+                <iframe 
+                    src="https://player.vimeo.com/video/1153233227?badge=0&autopause=0&player_id=0&app_id=58479"
+                    allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media"
+                    title="DMTXACTLY Featured Video"
+                    data-testid="featured-video-iframe">
+                </iframe>
+            </div>
+            <p style="text-align: center; margin-top: 1rem;">
+                <a href="https://vimeo.com/1153233227" target="_blank" rel="noopener noreferrer" 
+                   style="color: #8B5CF6; text-decoration: none; font-weight: 600;">
+                    Watch on Vimeo →
+                </a>
+            </p>
+        </section>
+        
+        <section class="app-section" id="launch-app">
             <h2 class="app-title">Launch the App</h2>
             <p class="app-description">
                 Ready to explore? Launch the DMTXACTLY app and start creating on the TC-S Network.
@@ -465,7 +491,7 @@
         </section>
         
         <!-- Featured Music Section -->
-        <section class="app-section" style="margin-top: 2rem; background: linear-gradient(135deg, rgba(0, 0, 0, 0.8), rgba(0, 255, 136, 0.1)); border: 2px solid #00FF88;">
+        <section class="app-section" id="music" style="margin-top: 2rem; background: linear-gradient(135deg, rgba(0, 0, 0, 0.8), rgba(0, 255, 136, 0.1)); border: 2px solid #00FF88;">
             <h2 class="app-title" style="color: #00FF88;">🎵 Featured Music - Batrhyme</h2>
             <p class="app-description" style="color: rgba(255, 255, 255, 0.9);">
                 Experience "Break on the Bright Side" by Batrhyme - the soundtrack of creative optimism on the TC-S Network. Available on Apple Music, Spotify & more • Download via TC-S Network Foundation Marketplace for 0.001 Solar.
