@@ -475,7 +475,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     limits: { fileSize: 100 * 1024 * 1024 } // 100MB limit for artifacts
   });
 
-  // Creator artifact upload endpoint
+  // Creator artifact upload endpoint - uses three-copy file management system
   apiRouter.post("/creator/upload", artifactUpload.single('file'), async (req, res) => {
     try {
       // Check if user is logged in - access session from express-session middleware
@@ -499,6 +499,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ success: false, error: "Title must be at least 3 characters" });
       }
 
+      // Use the three-copy file management system
+      // @ts-ignore - JavaScript file without type definitions
+      const ArtifactFileManager = require('./artifact-file-manager');
+      const fileManager = new ArtifactFileManager();
+      
+      const fileInfo = {
+        originalname: file.originalname,
+        mimetype: file.mimetype,
+        size: file.size
+      };
+      
+      const metadata = {
+        title,
+        description,
+        category,
+        creatorId: String(userId)
+      };
+      
+      // Process through three-copy workflow: Master → Preview → Trade
+      const processResult = await fileManager.processUpload(file.buffer, fileInfo, metadata);
+      
+      if (!processResult.success) {
+        return res.status(500).json({ 
+          success: false, 
+          error: "File processing failed", 
+          message: processResult.error 
+        });
+      }
+
       // Generate slug from title
       const slug = `${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${Date.now()}`;
 
@@ -506,7 +535,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const solarAmount = (kwhEstimate / 4913).toFixed(4);
       const raysAmount = Math.ceil(parseFloat(solarAmount) * 1000);
 
-      // Determine file type
+      // Determine preview type from file
       const fileType = file.mimetype || 'application/octet-stream';
       let previewType = 'other';
       if (fileType.startsWith('image/')) previewType = 'image';
@@ -514,22 +543,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       else if (fileType.startsWith('audio/')) previewType = 'audio';
       else if (fileType.includes('pdf')) previewType = 'pdf';
 
-      // Store file in object storage
-      const { Client } = await import('@replit/object-storage');
-      const client = new Client();
-      
-      const fileExtension = file.originalname.split('.').pop() || 'bin';
-      const storagePath = `artifacts/${slug}.${fileExtension}`;
-      
-      await client.uploadFromBytes(storagePath, file.buffer);
-      
-      // Get public URL for the file
-      const fileUrl = `/storage/${storagePath}`;
-
       // Import artifacts table
       const { artifacts } = await import('@shared/schema');
 
-      // Create artifact in database
+      // Create artifact in database with all three file URLs
       const [artifact] = await db.insert(artifacts).values({
         slug,
         title,
@@ -540,18 +557,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         solarAmountS: solarAmount,
         raysAmount,
         deliveryMode: 'download',
-        deliveryUrl: fileUrl,
+        deliveryUrl: processResult.tradeFile.url,
         creatorId: String(userId),
-        masterFileUrl: fileUrl,
-        previewFileUrl: fileUrl,
-        tradeFileUrl: fileUrl,
-        masterFileSize: file.size,
-        previewType,
+        masterFileUrl: processResult.masterFile.url,
+        previewFileUrl: processResult.previewFile.previewUrl || processResult.previewFile.url,
+        tradeFileUrl: processResult.tradeFile.url,
+        masterFileSize: processResult.masterFile.size,
+        previewFileSize: processResult.previewFile.previewSize || 0,
+        tradeFileSize: processResult.tradeFile.size,
+        previewType: processResult.previewFile.type || previewType,
+        fileDuration: processResult.metadata?.duration || null,
+        previewDuration: processResult.previewFile.previewDuration || null,
         processingStatus: 'completed',
         active: true
       }).returning();
 
-      console.log(`✅ Artifact uploaded: ${artifact.title} by user ${userId}`);
+      console.log(`✅ Artifact uploaded with 3-copy system: ${artifact.title} by user ${userId}`);
+      console.log(`   Master: ${processResult.masterFile.size}B | Preview: ${processResult.previewFile.previewSize}B | Trade: ${processResult.tradeFile.size}B`);
 
       res.json({
         success: true,
@@ -564,6 +586,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           kwhFootprint: kwhEstimate,
           solarPrice: solarAmount,
           marketplaceUrl: `/marketplace.html#${artifact.slug}`
+        },
+        files: {
+          master: { size: processResult.masterFile.size },
+          preview: { size: processResult.previewFile.previewSize, type: processResult.previewFile.type },
+          trade: { size: processResult.tradeFile.size }
         }
       });
 
