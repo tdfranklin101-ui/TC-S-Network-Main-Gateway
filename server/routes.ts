@@ -469,6 +469,114 @@ export async function registerRoutes(app: Express): Promise<Server> {
     limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
   });
 
+  // Configure multer for artifact uploads (larger file size)
+  const artifactUpload = multer({ 
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 100 * 1024 * 1024 } // 100MB limit for artifacts
+  });
+
+  // Creator artifact upload endpoint
+  apiRouter.post("/creator/upload", artifactUpload.single('file'), async (req, res) => {
+    try {
+      // Check if user is logged in - access session from express-session middleware
+      const userId = (req.session as any)?.userId || (req as any).user?.id;
+      if (!userId) {
+        return res.status(401).json({ success: false, error: "Please sign in to upload artifacts" });
+      }
+
+      const file = req.file;
+      if (!file) {
+        return res.status(400).json({ success: false, error: "No file provided" });
+      }
+
+      // Get form data
+      const title = String(req.body.title || '').trim();
+      const description = String(req.body.description || '').trim();
+      const category = String(req.body.category || 'other').toLowerCase();
+      const kwhEstimate = parseFloat(req.body.kwh_estimate) || 0.1;
+
+      if (!title || title.length < 3) {
+        return res.status(400).json({ success: false, error: "Title must be at least 3 characters" });
+      }
+
+      // Generate slug from title
+      const slug = `${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${Date.now()}`;
+
+      // Calculate Solar price from kWh (1 Solar = 4,913 kWh)
+      const solarAmount = (kwhEstimate / 4913).toFixed(4);
+      const raysAmount = Math.ceil(parseFloat(solarAmount) * 1000);
+
+      // Determine file type
+      const fileType = file.mimetype || 'application/octet-stream';
+      let previewType = 'other';
+      if (fileType.startsWith('image/')) previewType = 'image';
+      else if (fileType.startsWith('video/')) previewType = 'video';
+      else if (fileType.startsWith('audio/')) previewType = 'audio';
+      else if (fileType.includes('pdf')) previewType = 'pdf';
+
+      // Store file in object storage
+      const { Client } = await import('@replit/object-storage');
+      const client = new Client();
+      
+      const fileExtension = file.originalname.split('.').pop() || 'bin';
+      const storagePath = `artifacts/${slug}.${fileExtension}`;
+      
+      await client.uploadFromBytes(storagePath, file.buffer);
+      
+      // Get public URL for the file
+      const fileUrl = `/storage/${storagePath}`;
+
+      // Import artifacts table
+      const { artifacts } = await import('@shared/schema');
+
+      // Create artifact in database
+      const [artifact] = await db.insert(artifacts).values({
+        slug,
+        title,
+        description: description || `Uploaded by member: ${title}`,
+        category,
+        fileType,
+        kwhFootprint: kwhEstimate.toFixed(4),
+        solarAmountS: solarAmount,
+        raysAmount,
+        deliveryMode: 'download',
+        deliveryUrl: fileUrl,
+        creatorId: String(userId),
+        masterFileUrl: fileUrl,
+        previewFileUrl: fileUrl,
+        tradeFileUrl: fileUrl,
+        masterFileSize: file.size,
+        previewType,
+        processingStatus: 'completed',
+        active: true
+      }).returning();
+
+      console.log(`✅ Artifact uploaded: ${artifact.title} by user ${userId}`);
+
+      res.json({
+        success: true,
+        message: `"${title}" uploaded successfully! Priced at ${solarAmount} Solar • Category: ${category}`,
+        artifact: {
+          id: artifact.id,
+          slug: artifact.slug,
+          title: artifact.title,
+          category: artifact.category,
+          kwhFootprint: kwhEstimate,
+          solarPrice: solarAmount,
+          marketplaceUrl: `/marketplace.html#${artifact.slug}`
+        }
+      });
+
+    } catch (error: any) {
+      console.error('Creator upload error:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Upload failed", 
+        message: error.message 
+      });
+    }
+  });
+
   // AI API endpoints
   const aiRouter = express.Router();
 

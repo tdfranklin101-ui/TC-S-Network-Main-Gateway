@@ -57,6 +57,37 @@ app.use(express.urlencoded({ extended: false }));
 // Serve static files from public folder with higher priority
 app.use(express.static(path.join(process.cwd(), 'public')));
 
+// Serve files from object storage
+app.get('/storage/*', async (req, res) => {
+  try {
+    const storagePath = req.path.replace('/storage/', '');
+    const { Client } = await import('@replit/object-storage');
+    const client = new Client();
+    
+    const result = await client.downloadAsBytes(storagePath);
+    if (result.ok) {
+      // Determine content type from file extension
+      const ext = storagePath.split('.').pop()?.toLowerCase();
+      const contentTypes: Record<string, string> = {
+        'jpg': 'image/jpeg', 'jpeg': 'image/jpeg', 'png': 'image/png', 'gif': 'image/gif',
+        'webp': 'image/webp', 'mp4': 'video/mp4', 'webm': 'video/webm',
+        'mp3': 'audio/mpeg', 'wav': 'audio/wav', 'ogg': 'audio/ogg',
+        'pdf': 'application/pdf', 'txt': 'text/plain', 'json': 'application/json'
+      };
+      const contentType = contentTypes[ext || ''] || 'application/octet-stream';
+      
+      res.set('Content-Type', contentType);
+      res.set('Content-Length', String(result.value.length));
+      res.send(result.value);
+    } else {
+      res.status(404).json({ error: 'File not found' });
+    }
+  } catch (error: any) {
+    console.error('Object storage error:', error);
+    res.status(500).json({ error: 'Failed to retrieve file' });
+  }
+});
+
 // Explicit route for solar_counter.js to ensure it's available in production
 app.get('/solar_counter.js', (req, res) => {
   res.sendFile(path.join(process.cwd(), 'public', 'solar_counter.js'));
