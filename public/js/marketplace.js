@@ -349,19 +349,22 @@ class MarketplaceApp {
       const formattedBalance = (this.solarBalance || 0).toFixed(4);
       
       headerActions.innerHTML = `
-        <div class="user-menu">
-          <div class="user-avatar">${userInitial}</div>
+        <div class="user-menu visible">
           <div class="user-info">
             <div class="user-name">${this.currentUser.firstName || this.currentUser.username}</div>
-            <div class="solar-balance">${formattedBalance} Solar</div>
+            <div class="solar-balance" id="header-balance">${formattedBalance} Solar</div>
           </div>
+          <a href="/agent.html" class="register-btn" style="display: inline-block; text-decoration: none; margin-right: 10px; background: linear-gradient(135deg, #00ffff, #00bfff);">🤖 Agent</a>
           <button class="logout-btn" onclick="marketplace.logout()">Logout</button>
         </div>
       `;
     } else {
       // Show register/login buttons for non-authenticated users
       headerActions.innerHTML = `
-        <a href="/signup.html" class="register-btn">Join TC-S Network</a>
+        <a href="/agent.html" class="register-btn" style="display: inline-block; text-decoration: none; margin-right: 10px; background: linear-gradient(135deg, #00ffff, #00bfff);">🤖 My Agent</a>
+        <a href="/members.html" class="register-btn" style="display: inline-block; text-decoration: none; margin-right: 10px;">👥 Members</a>
+        <button class="register-btn" id="signin-btn" onclick="showSigninModal()">Sign In</button>
+        <button class="register-btn" id="register-btn" onclick="showSignupModal()">Join Network</button>
       `;
     }
   }
@@ -1374,52 +1377,6 @@ class MarketplaceApp {
     }
   }
 
-  updateUserInterface() {
-    if (!this.currentUser) {
-      // Show login/register buttons
-      if (this.headerActions) {
-        this.headerActions.innerHTML = `
-          <button class="register-btn" onclick="marketplace.showSigninModal()">Sign In</button>
-          <button class="register-btn" onclick="marketplace.showSignupModal()">Join Network</button>
-        `;
-      }
-      return;
-    }
-
-    // Show user info
-    if (this.userInfo) {
-      this.userInfo.innerHTML = `
-        <div class="user-details">
-          <div>Welcome, <strong>${this.escapeHtml(this.currentUser.name)}</strong></div>
-          <div class="solar-balance">${this.formatPrice(this.currentUser.solar_balance || 0)} Solar</div>
-        </div>
-      `;
-      this.userInfo.classList.add('visible');
-    }
-
-    // Show user menu in header
-    if (this.headerActions) {
-      this.headerActions.innerHTML = `
-        <div class="user-menu">
-          <span>${this.escapeHtml(this.currentUser.name)}</span>
-          <span class="solar-balance">${this.formatPrice(this.currentUser.solar_balance || 0)}☀️</span>
-          <button class="logout-btn" onclick="marketplace.logout()">Logout</button>
-        </div>
-      `;
-    }
-  }
-
-  async logout() {
-    try {
-      await fetch('/api/logout', { method: 'POST' });
-      this.currentUser = null;
-      this.updateUserInterface();
-      this.applyFilters(); // Refresh view
-      console.log('👋 Logged out successfully');
-    } catch (error) {
-      console.error('Logout failed:', error);
-    }
-  }
 
   // Utility methods
   formatCategory(category) {
