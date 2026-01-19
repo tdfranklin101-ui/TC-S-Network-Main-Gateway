@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TC-S LifeLens - Identify Anything + Rob Low Guidance</title>
+    <meta name="description" content="AI-powered item identification, condition notes, and market context — plus a human-needs fit check that helps you decide with less regret.">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+            color: #ffffff;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: rgba(0, 0, 0, 0.9);
+            border-bottom: 1px solid #20B2AA;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .back-link {
+            color: #20B2AA;
+            text-decoration: none;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .header-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #20B2AA;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-subtitle {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 3rem 1rem;
+            background: rgba(32, 178, 170, 0.1);
+            border-radius: 20px;
+            border: 1px solid rgba(32, 178, 170, 0.3);
+            margin-bottom: 2rem;
+        }
+
+        .hero h1 {
+            font-size: 2.5rem;
+            color: #20B2AA;
+            margin-bottom: 0.5rem;
+        }
+
+        .hero .byline {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .hero .tagline {
+            font-size: 1.2rem;
+            color: #ffffff;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero .description {
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.6;
+            max-width: 700px;
+            margin: 0 auto 2rem;
+        }
+
+        .upload-area {
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px dashed #20B2AA;
+            border-radius: 16px;
+            padding: 3rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 2rem;
+        }
+
+        .upload-area:hover {
+            background: rgba(32, 178, 170, 0.1);
+            border-color: #3dd9d0;
+        }
+
+        .upload-area.dragover {
+            background: rgba(32, 178, 170, 0.2);
+            border-color: #3dd9d0;
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .upload-text {
+            font-size: 1.2rem;
+            color: #20B2AA;
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-subtext {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+        }
+
+        .description-input {
+            width: 100%;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid #333;
+            border-radius: 12px;
+            color: #ffffff;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .description-input:focus {
+            outline: none;
+            border-color: #20B2AA;
+        }
+
+        .description-input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .analyze-btn {
+            width: 100%;
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, #20B2AA 0%, #1a9089 100%);
+            border: none;
+            border-radius: 12px;
+            color: #ffffff;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .analyze-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(32, 178, 170, 0.4);
+        }
+
+        .analyze-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .feature-card {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .feature-title {
+            color: #20B2AA;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .feature-desc {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        .results-section {
+            display: none;
+            margin-top: 2rem;
+        }
+
+        .results-section.active {
+            display: block;
+        }
+
+        .result-card {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid #20B2AA;
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(32, 178, 170, 0.3);
+        }
+
+        .result-header h3 {
+            color: #20B2AA;
+            font-size: 1.2rem;
+        }
+
+        .result-content {
+            color: rgba(255, 255, 255, 0.85);
+            line-height: 1.7;
+        }
+
+        .result-content ul {
+            margin: 0.5rem 0 0.5rem 1.5rem;
+        }
+
+        .result-content li {
+            margin-bottom: 0.5rem;
+        }
+
+        .spectrum-bar {
+            background: linear-gradient(to right, #ff4444 0%, #ffaa00 25%, #44ff44 50%, #00aaff 75%, #aa44ff 100%);
+            height: 20px;
+            border-radius: 10px;
+            margin: 1rem 0;
+            position: relative;
+        }
+
+        .spectrum-marker {
+            position: absolute;
+            top: -8px;
+            width: 4px;
+            height: 36px;
+            background: #ffffff;
+            border-radius: 2px;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+        }
+
+        .spectrum-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 0.5rem;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #ffffff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .preview-image {
+            max-width: 300px;
+            max-height: 300px;
+            border-radius: 12px;
+            margin: 1rem auto;
+            display: block;
+            border: 2px solid #20B2AA;
+        }
+
+        .principle-box {
+            background: rgba(32, 178, 170, 0.1);
+            border-left: 4px solid #20B2AA;
+            padding: 1rem 1.5rem;
+            margin: 2rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .principle-box p {
+            color: rgba(255, 255, 255, 0.8);
+            font-style: italic;
+            line-height: 1.6;
+        }
+
+        .hidden-input {
+            display: none;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.85rem;
+        }
+
+        footer a {
+            color: #20B2AA;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <a href="/" class="back-link">← Home</a>
+            <div>
+                <div class="header-title">🔍 TC-S LifeLens</div>
+                <div class="header-subtitle">by TC-S Network Foundation, Inc.</div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <section class="hero">
+            <h1>🔍 TC-S LifeLens</h1>
+            <p class="byline">by TC-S Network Foundation, Inc.</p>
+            <p class="tagline"><strong>Identify Anything + Rob Low Guidance</strong></p>
+            <p class="description">
+                AI-powered item identification, condition notes, and market context — plus a human-needs "fit check" that helps you decide with less regret.
+            </p>
+        </section>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">📸</div>
+                <div class="feature-title">Identify Items</div>
+                <div class="feature-desc">Photo + description analysis reveals what it is and key features</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔧</div>
+                <div class="feature-title">Condition Notes</div>
+                <div class="feature-desc">What matters, what to inspect, practical considerations</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">💰</div>
+                <div class="feature-title">Market Context</div>
+                <div class="feature-desc">Typical pricing bands and where to buy</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎯</div>
+                <div class="feature-title">Rob Low Lens</div>
+                <div class="feature-desc">Needs/wants mapping + spectrum guidance (you're the active variable)</div>
+            </div>
+        </div>
+
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📷</div>
+            <div class="upload-text">Drop an image here or click to upload</div>
+            <div class="upload-subtext">Supports JPG, PNG, WEBP up to 10MB</div>
+            <input type="file" id="fileInput" class="hidden-input" accept="image/*">
+        </div>
+
+        <img id="previewImage" class="preview-image" style="display: none;" alt="Preview">
+
+        <textarea 
+            class="description-input" 
+            id="descriptionInput" 
+            placeholder="Optional: Add any context about the item, your situation, or specific questions you have...
+
+Examples:
+• Found this at an estate sale, thinking about flipping it
+• Considering this for my home gym setup
+• Is this worth repairing or should I get a new one?"
+        ></textarea>
+
+        <button class="analyze-btn" id="analyzeBtn" disabled>
+            <span id="btnText">🔍 Analyze Item</span>
+        </button>
+
+        <div class="principle-box">
+            <p><strong>Principle:</strong> Pattern-aware, not verdict-based. LifeLens shows a spectrum so you can match what fits your reality.</p>
+        </div>
+
+        <section class="results-section" id="resultsSection">
+            <div class="result-card" id="identificationCard">
+                <div class="result-header">
+                    <span style="font-size: 1.5rem;">🏷️</span>
+                    <h3>Identification</h3>
+                </div>
+                <div class="result-content" id="identificationContent"></div>
+            </div>
+
+            <div class="result-card" id="conditionCard">
+                <div class="result-header">
+                    <span style="font-size: 1.5rem;">🔧</span>
+                    <h3>Condition & Practical Notes</h3>
+                </div>
+                <div class="result-content" id="conditionContent"></div>
+            </div>
+
+            <div class="result-card" id="marketCard">
+                <div class="result-header">
+                    <span style="font-size: 1.5rem;">💰</span>
+                    <h3>Market Context</h3>
+                </div>
+                <div class="result-content" id="marketContent"></div>
+            </div>
+
+            <div class="result-card" id="robLowCard">
+                <div class="result-header">
+                    <span style="font-size: 1.5rem;">🎯</span>
+                    <h3>Rob Low Lens: Fit Check</h3>
+                </div>
+                <div class="result-content" id="robLowContent"></div>
+            </div>
+        </section>
+    </div>
+
+    <footer>
+        <p>Best for: Everyday decisions across any category — tools, fitness gear, electronics, home goods, gifts, repairs, upgrades.</p>
+        <p style="margin-top: 0.5rem;">
+            <a href="/">← Back to TC-S Network</a> | 
+            <a href="/marketplace.html">Marketplace</a>
+        </p>
+    </footer>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const previewImage = document.getElementById('previewImage');
+        const descriptionInput = document.getElementById('descriptionInput');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const btnText = document.getElementById('btnText');
+        const resultsSection = document.getElementById('resultsSection');
+
+        let selectedFile = null;
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                handleFile(file);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        });
+
+        function handleFile(file) {
+            if (file.size > 10 * 1024 * 1024) {
+                alert('File too large. Please select an image under 10MB.');
+                return;
+            }
+            selectedFile = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImage.src = e.target.result;
+                previewImage.style.display = 'block';
+                analyzeBtn.disabled = false;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        analyzeBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+
+            analyzeBtn.disabled = true;
+            btnText.innerHTML = '<span class="loading-spinner"></span> Analyzing...';
+            resultsSection.classList.remove('active');
+
+            try {
+                const formData = new FormData();
+                formData.append('image', selectedFile);
+                formData.append('description', descriptionInput.value);
+
+                const response = await fetch('/api/lifelens/analyze', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    displayResults(result.analysis);
+                } else {
+                    alert('Analysis failed: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Analysis error:', error);
+                alert('Failed to analyze image. Please try again.');
+            } finally {
+                analyzeBtn.disabled = false;
+                btnText.innerHTML = '🔍 Analyze Item';
+            }
+        });
+
+        function displayResults(analysis) {
+            document.getElementById('identificationContent').innerHTML = analysis.identification || 'No identification data available.';
+            document.getElementById('conditionContent').innerHTML = analysis.condition || 'No condition notes available.';
+            document.getElementById('marketContent').innerHTML = analysis.market || 'No market context available.';
+            document.getElementById('robLowContent').innerHTML = analysis.robLow || 'No fit check data available.';
+            
+            resultsSection.classList.add('active');
+            resultsSection.scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>

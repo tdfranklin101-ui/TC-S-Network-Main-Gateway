@@ -475,6 +475,111 @@ export async function registerRoutes(app: Express): Promise<Server> {
     limits: { fileSize: 100 * 1024 * 1024 } // 100MB limit for artifacts
   });
 
+  // TC-S LifeLens - AI-powered item identification and analysis
+  apiRouter.post("/lifelens/analyze", upload.single('image'), async (req, res) => {
+    try {
+      const file = req.file;
+      if (!file) {
+        return res.status(400).json({ success: false, error: "No image provided" });
+      }
+
+      const description = String(req.body.description || '').trim();
+      
+      // Convert image to base64 for OpenAI Vision API
+      const base64Image = file.buffer.toString('base64');
+      const mimeType = file.mimetype || 'image/jpeg';
+      
+      // Use OpenAI GPT-4 Vision for analysis
+      const OpenAI = (await import('openai')).default;
+      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      
+      const systemPrompt = `You are TC-S LifeLens, an AI-powered item identification and analysis assistant. Your role is to help users make better decisions about items they're considering.
+
+Your analysis should be:
+- Pattern-aware, not verdict-based
+- Practical and actionable
+- Honest about uncertainties
+- Focused on helping the user match their reality
+
+For each item, provide analysis in these four categories:
+
+1. IDENTIFICATION: What is this item? Key features, brand/model if visible, specifications
+2. CONDITION & PRACTICAL NOTES: What matters to inspect, potential issues, durability considerations
+3. MARKET CONTEXT: Typical price ranges (low/mid/high), where to buy, value assessment
+4. ROB LOW LENS (Fit Check): Help map this to needs vs wants. Consider:
+   - Is this a genuine need or an acquired want?
+   - What problem does this solve?
+   - Alternatives to consider
+   - The user is the active variable - show the spectrum, don't give verdicts
+
+Format your response as JSON with these keys:
+{
+  "identification": "<HTML formatted analysis>",
+  "condition": "<HTML formatted analysis>",
+  "market": "<HTML formatted analysis>",
+  "robLow": "<HTML formatted analysis with spectrum guidance>"
+}
+
+Use <strong>, <ul>, <li>, <p> tags for formatting. Be concise but thorough.`;
+
+      const userPrompt = description 
+        ? `Analyze this item. User context: "${description}"`
+        : `Analyze this item and provide a comprehensive assessment.`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { 
+            role: "user", 
+            content: [
+              { type: "text", text: userPrompt },
+              { 
+                type: "image_url", 
+                image_url: { 
+                  url: `data:${mimeType};base64,${base64Image}`,
+                  detail: "high"
+                }
+              }
+            ]
+          }
+        ],
+        max_tokens: 2000,
+        response_format: { type: "json_object" }
+      });
+
+      const analysisText = response.choices[0]?.message?.content || '{}';
+      let analysis;
+      
+      try {
+        analysis = JSON.parse(analysisText);
+      } catch (parseError) {
+        // If JSON parsing fails, create structured response from text
+        analysis = {
+          identification: analysisText,
+          condition: "Analysis format error - please try again.",
+          market: "Analysis format error - please try again.",
+          robLow: "Analysis format error - please try again."
+        };
+      }
+
+      console.log(`✅ LifeLens analysis completed for image (${file.size} bytes)`);
+      
+      res.json({
+        success: true,
+        analysis
+      });
+
+    } catch (error: any) {
+      console.error('LifeLens analysis error:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Analysis failed", 
+        message: error.message 
+      });
+    }
+  });
+
   // Creator artifact upload endpoint - uses three-copy file management system
   apiRouter.post("/creator/upload", artifactUpload.single('file'), async (req, res) => {
     try {
