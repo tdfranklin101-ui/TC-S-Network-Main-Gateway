@@ -102,90 +102,35 @@
             margin: 0 auto 2rem;
         }
 
-        .upload-area {
-            background: rgba(0, 0, 0, 0.6);
-            border: 2px dashed #20B2AA;
-            border-radius: 16px;
-            padding: 3rem 2rem;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-bottom: 2rem;
-        }
-
-        .upload-area:hover {
-            background: rgba(32, 178, 170, 0.1);
-            border-color: #3dd9d0;
-        }
-
-        .upload-area.dragover {
-            background: rgba(32, 178, 170, 0.2);
-            border-color: #3dd9d0;
-        }
-
-        .upload-icon {
-            font-size: 4rem;
-            margin-bottom: 1rem;
-        }
-
-        .upload-text {
-            font-size: 1.2rem;
-            color: #20B2AA;
-            margin-bottom: 0.5rem;
-        }
-
-        .upload-subtext {
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 0.9rem;
-        }
-
-        .description-input {
-            width: 100%;
-            padding: 1rem;
-            background: rgba(0, 0, 0, 0.6);
-            border: 1px solid #333;
-            border-radius: 12px;
-            color: #ffffff;
-            font-size: 1rem;
-            margin-bottom: 1rem;
-            resize: vertical;
-            min-height: 100px;
-        }
-
-        .description-input:focus {
-            outline: none;
-            border-color: #20B2AA;
-        }
-
-        .description-input::placeholder {
-            color: rgba(255, 255, 255, 0.4);
-        }
-
-        .analyze-btn {
-            width: 100%;
-            padding: 1rem 2rem;
+        .launch-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 1rem 2.5rem;
             background: linear-gradient(135deg, #20B2AA 0%, #1a9089 100%);
             border: none;
             border-radius: 12px;
             color: #ffffff;
-            font-size: 1.1rem;
+            font-size: 1.2rem;
             font-weight: 600;
-            cursor: pointer;
+            text-decoration: none;
             transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(32, 178, 170, 0.3);
+        }
+
+        .launch-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(32, 178, 170, 0.5);
+        }
+
+        .section-title {
+            color: #20B2AA;
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        .analyze-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(32, 178, 170, 0.4);
-        }
-
-        .analyze-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
+            gap: 0.5rem;
         }
 
         .features-grid {
@@ -220,115 +165,74 @@
             line-height: 1.4;
         }
 
-        .results-section {
-            display: none;
-            margin-top: 2rem;
-        }
-
-        .results-section.active {
-            display: block;
-        }
-
-        .result-card {
-            background: rgba(0, 0, 0, 0.6);
-            border: 1px solid #20B2AA;
+        .content-section {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid #333;
             border-radius: 16px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
         }
 
-        .result-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 1rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid rgba(32, 178, 170, 0.3);
-        }
-
-        .result-header h3 {
-            color: #20B2AA;
-            font-size: 1.2rem;
-        }
-
-        .result-content {
-            color: rgba(255, 255, 255, 0.85);
+        .content-section p {
+            color: rgba(255, 255, 255, 0.8);
             line-height: 1.7;
+            margin-bottom: 1rem;
         }
 
-        .result-content ul {
-            margin: 0.5rem 0 0.5rem 1.5rem;
+        .content-section p:last-child {
+            margin-bottom: 0;
         }
 
-        .result-content li {
-            margin-bottom: 0.5rem;
-        }
-
-        .spectrum-bar {
-            background: linear-gradient(to right, #ff4444 0%, #ffaa00 25%, #44ff44 50%, #00aaff 75%, #aa44ff 100%);
-            height: 20px;
-            border-radius: 10px;
-            margin: 1rem 0;
-            position: relative;
-        }
-
-        .spectrum-marker {
-            position: absolute;
-            top: -8px;
-            width: 4px;
-            height: 36px;
-            background: #ffffff;
-            border-radius: 2px;
-            box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
-        }
-
-        .spectrum-labels {
+        .best-for-list {
             display: flex;
-            justify-content: space-between;
-            font-size: 0.75rem;
-            color: rgba(255, 255, 255, 0.6);
-            margin-top: 0.5rem;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-top: 1rem;
         }
 
-        .loading-spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: #ffffff;
-            animation: spin 1s ease-in-out infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .preview-image {
-            max-width: 300px;
-            max-height: 300px;
-            border-radius: 12px;
-            margin: 1rem auto;
-            display: block;
-            border: 2px solid #20B2AA;
+        .best-for-item {
+            background: rgba(32, 178, 170, 0.15);
+            border: 1px solid rgba(32, 178, 170, 0.3);
+            border-radius: 20px;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.85);
         }
 
         .principle-box {
             background: rgba(32, 178, 170, 0.1);
             border-left: 4px solid #20B2AA;
-            padding: 1rem 1.5rem;
+            padding: 1.5rem;
             margin: 2rem 0;
-            border-radius: 0 8px 8px 0;
+            border-radius: 0 12px 12px 0;
+        }
+
+        .principle-box .label {
+            color: #20B2AA;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
         }
 
         .principle-box p {
             color: rgba(255, 255, 255, 0.8);
             font-style: italic;
             line-height: 1.6;
+            margin: 0;
         }
 
-        .hidden-input {
-            display: none;
+        .cta-section {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(32, 178, 170, 0.05);
+            border-radius: 16px;
+            border: 1px solid rgba(32, 178, 170, 0.2);
+            margin-top: 2rem;
+        }
+
+        .cta-section p {
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 1.5rem;
         }
 
         footer {
@@ -345,6 +249,18 @@
 
         footer a:hover {
             text-decoration: underline;
+        }
+
+        @media (max-width: 600px) {
+            .hero h1 {
+                font-size: 1.8rem;
+            }
+            .container {
+                padding: 1rem;
+            }
+            .content-section {
+                padding: 1.5rem;
+            }
         }
     </style>
 </head>
@@ -367,197 +283,69 @@
             <p class="description">
                 AI-powered item identification, condition notes, and market context — plus a human-needs "fit check" that helps you decide with less regret.
             </p>
+            <a href="https://lifelens-tdfranklin101.replit.app" target="_blank" rel="noopener" class="launch-btn">
+                🚀 Launch App <span>→</span>
+            </a>
         </section>
 
-        <div class="features-grid">
-            <div class="feature-card">
-                <div class="feature-icon">📸</div>
-                <div class="feature-title">Identify Items</div>
-                <div class="feature-desc">Photo + description analysis reveals what it is and key features</div>
+        <section class="content-section">
+            <h2 class="section-title">📋 What it does</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">📸</div>
+                    <div class="feature-title">Identify Items</div>
+                    <div class="feature-desc">Photo + description analysis reveals what it is and key features</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔧</div>
+                    <div class="feature-title">Condition Notes</div>
+                    <div class="feature-desc">What matters, what to inspect, practical considerations</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💰</div>
+                    <div class="feature-title">Market Context</div>
+                    <div class="feature-desc">Typical pricing bands and where to buy</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎯</div>
+                    <div class="feature-title">Rob Low Lens</div>
+                    <div class="feature-desc">Needs/wants mapping + spectrum guidance (you're the active variable)</div>
+                </div>
             </div>
-            <div class="feature-card">
-                <div class="feature-icon">🔧</div>
-                <div class="feature-title">Condition Notes</div>
-                <div class="feature-desc">What matters, what to inspect, practical considerations</div>
+        </section>
+
+        <section class="content-section">
+            <h2 class="section-title">🎯 Best for</h2>
+            <p>Everyday decisions across any category — when you want clarity before you commit.</p>
+            <div class="best-for-list">
+                <span class="best-for-item">🔧 Tools</span>
+                <span class="best-for-item">🏋️ Fitness Gear</span>
+                <span class="best-for-item">📱 Electronics</span>
+                <span class="best-for-item">🏠 Home Goods</span>
+                <span class="best-for-item">🎁 Gifts</span>
+                <span class="best-for-item">🔩 Repairs</span>
+                <span class="best-for-item">⬆️ Upgrades</span>
             </div>
-            <div class="feature-card">
-                <div class="feature-icon">💰</div>
-                <div class="feature-title">Market Context</div>
-                <div class="feature-desc">Typical pricing bands and where to buy</div>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">🎯</div>
-                <div class="feature-title">Rob Low Lens</div>
-                <div class="feature-desc">Needs/wants mapping + spectrum guidance (you're the active variable)</div>
-            </div>
-        </div>
-
-        <div class="upload-area" id="uploadArea">
-            <div class="upload-icon">📷</div>
-            <div class="upload-text">Drop an image here or click to upload</div>
-            <div class="upload-subtext">Supports JPG, PNG, WEBP up to 10MB</div>
-            <input type="file" id="fileInput" class="hidden-input" accept="image/*">
-        </div>
-
-        <img id="previewImage" class="preview-image" style="display: none;" alt="Preview">
-
-        <textarea 
-            class="description-input" 
-            id="descriptionInput" 
-            placeholder="Optional: Add any context about the item, your situation, or specific questions you have...
-
-Examples:
-• Found this at an estate sale, thinking about flipping it
-• Considering this for my home gym setup
-• Is this worth repairing or should I get a new one?"
-        ></textarea>
-
-        <button class="analyze-btn" id="analyzeBtn" disabled>
-            <span id="btnText">🔍 Analyze Item</span>
-        </button>
+        </section>
 
         <div class="principle-box">
-            <p><strong>Principle:</strong> Pattern-aware, not verdict-based. LifeLens shows a spectrum so you can match what fits your reality.</p>
+            <div class="label">Principle</div>
+            <p>Pattern-aware, not verdict-based. LifeLens shows a spectrum so you can match what fits your reality.</p>
         </div>
 
-        <section class="results-section" id="resultsSection">
-            <div class="result-card" id="identificationCard">
-                <div class="result-header">
-                    <span style="font-size: 1.5rem;">🏷️</span>
-                    <h3>Identification</h3>
-                </div>
-                <div class="result-content" id="identificationContent"></div>
-            </div>
-
-            <div class="result-card" id="conditionCard">
-                <div class="result-header">
-                    <span style="font-size: 1.5rem;">🔧</span>
-                    <h3>Condition & Practical Notes</h3>
-                </div>
-                <div class="result-content" id="conditionContent"></div>
-            </div>
-
-            <div class="result-card" id="marketCard">
-                <div class="result-header">
-                    <span style="font-size: 1.5rem;">💰</span>
-                    <h3>Market Context</h3>
-                </div>
-                <div class="result-content" id="marketContent"></div>
-            </div>
-
-            <div class="result-card" id="robLowCard">
-                <div class="result-header">
-                    <span style="font-size: 1.5rem;">🎯</span>
-                    <h3>Rob Low Lens: Fit Check</h3>
-                </div>
-                <div class="result-content" id="robLowContent"></div>
-            </div>
+        <section class="cta-section">
+            <p>Ready to analyze an item and get clarity on your decision?</p>
+            <a href="https://lifelens-tdfranklin101.replit.app" target="_blank" rel="noopener" class="launch-btn">
+                🚀 Launch LifeLens App <span>→</span>
+            </a>
         </section>
     </div>
 
     <footer>
-        <p>Best for: Everyday decisions across any category — tools, fitness gear, electronics, home goods, gifts, repairs, upgrades.</p>
-        <p style="margin-top: 0.5rem;">
+        <p>
             <a href="/">← Back to TC-S Network</a> | 
             <a href="/marketplace.html">Marketplace</a>
         </p>
     </footer>
-
-    <script>
-        const uploadArea = document.getElementById('uploadArea');
-        const fileInput = document.getElementById('fileInput');
-        const previewImage = document.getElementById('previewImage');
-        const descriptionInput = document.getElementById('descriptionInput');
-        const analyzeBtn = document.getElementById('analyzeBtn');
-        const btnText = document.getElementById('btnText');
-        const resultsSection = document.getElementById('resultsSection');
-
-        let selectedFile = null;
-
-        uploadArea.addEventListener('click', () => fileInput.click());
-
-        uploadArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadArea.classList.add('dragover');
-        });
-
-        uploadArea.addEventListener('dragleave', () => {
-            uploadArea.classList.remove('dragover');
-        });
-
-        uploadArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadArea.classList.remove('dragover');
-            const file = e.dataTransfer.files[0];
-            if (file && file.type.startsWith('image/')) {
-                handleFile(file);
-            }
-        });
-
-        fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                handleFile(file);
-            }
-        });
-
-        function handleFile(file) {
-            if (file.size > 10 * 1024 * 1024) {
-                alert('File too large. Please select an image under 10MB.');
-                return;
-            }
-            selectedFile = file;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                previewImage.src = e.target.result;
-                previewImage.style.display = 'block';
-                analyzeBtn.disabled = false;
-            };
-            reader.readAsDataURL(file);
-        }
-
-        analyzeBtn.addEventListener('click', async () => {
-            if (!selectedFile) return;
-
-            analyzeBtn.disabled = true;
-            btnText.innerHTML = '<span class="loading-spinner"></span> Analyzing...';
-            resultsSection.classList.remove('active');
-
-            try {
-                const formData = new FormData();
-                formData.append('image', selectedFile);
-                formData.append('description', descriptionInput.value);
-
-                const response = await fetch('/api/lifelens/analyze', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    displayResults(result.analysis);
-                } else {
-                    alert('Analysis failed: ' + (result.error || 'Unknown error'));
-                }
-            } catch (error) {
-                console.error('Analysis error:', error);
-                alert('Failed to analyze image. Please try again.');
-            } finally {
-                analyzeBtn.disabled = false;
-                btnText.innerHTML = '🔍 Analyze Item';
-            }
-        });
-
-        function displayResults(analysis) {
-            document.getElementById('identificationContent').innerHTML = analysis.identification || 'No identification data available.';
-            document.getElementById('conditionContent').innerHTML = analysis.condition || 'No condition notes available.';
-            document.getElementById('marketContent').innerHTML = analysis.market || 'No market context available.';
-            document.getElementById('robLowContent').innerHTML = analysis.robLow || 'No fit check data available.';
-            
-            resultsSection.classList.add('active');
-            resultsSection.scrollIntoView({ behavior: 'smooth' });
-        }
-    </script>
 </body>
 </html>
