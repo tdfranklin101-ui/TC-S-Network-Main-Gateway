@@ -1,0 +1,114 @@
+# TC-S Network Foundation - AI Discovery File
+# Last Updated: 2025-01-20
+# Format: LLMs.txt for AI Crawler Discovery
+
+## Organization
+Name: TC-S Network Foundation, Inc.
+Parent: The Current See PBC Inc.
+Mission: We steward Solar value and commission ethical, energy-based AI marketplaces for everyone.
+Website: https://www.thecurrentsee.org
+Protocol: Solar Standard Protocol v1.0
+
+## Core Concept
+Solar Token: 1 Solar = 4,913 kWh of renewable energy
+Distribution: Daily distribution to all members since April 7, 2025
+Purpose: Global basic income platform powered by renewable energy
+
+## Foundation Apps
+
+### TC-S LifeLens
+URL: https://ia-rl-v-1--tdfranklin101.replit.app/
+Info Page: https://www.thecurrentsee.org/lifelens.html
+Description: AI-powered item identification system with Robbins Maslow needs hierarchy guidance
+Capabilities:
+- Identify items from photos and descriptions
+- Condition assessment and practical notes
+- Market pricing context and value bands
+- Robbins Maslow needs hierarchy mapping (needs vs wants analysis)
+- Decision confidence scoring
+- Regret-minimizing recommendations
+Framework: Combines Maslow's hierarchy of needs with Tony Robbins' six human needs
+UIM Service: lifelens-item-analyzer
+Version: 1.0.0
+
+### Satellite ID Anywhere
+URL: https://replit-node-tdfranklin101.replit.app
+Description: Track and analyze any satellite in orbit using NORAD or COSPAR IDs
+Capabilities: lookup.cospar, lookup.norad, normalize.record
+UIM Service: satellite-id-anywhere
+
+### Seismic ID Anywhere
+URL: https://seismic-id-anywhere-tdfranklin101.replit.app
+Description: Real-time earthquake tracking and seismic event analysis
+
+### Music Now
+Description: AI-powered music creation and streaming platform
+
+### Radio Astronomy Now
+Description: Live radio astronomy data feeds and celestial object tracking
+
+### Power Twin
+URL: /api/power-twin/analyze
+Description: Converts chip power traces into Solar energy costs using left Riemann integration
+Capabilities: CSV file upload, JSON input, constant calculations, external simulator integration
+
+### EventOps.net
+Description: Event operations management and coordination platform
+
+### Solar Marketplace
+URL: https://www.thecurrentsee.org/marketplace.html
+Description: Digital marketplace for artifacts, music, and energy trading
+Categories: Music, Art, Code, Data, Physical Items
+Payment: Solar tokens
+
+## APIs
+
+### Solar Standard Protocol API
+- kWh to Solar conversion
+- Protocol specifications
+- Artifact data enrichment
+- Auto-indexing system
+
+### Market Prices API
+Endpoint: /api/market-prices
+Description: Real-time BTC and Brent Crude oil prices with Solar index normalization
+
+### UIM Handshake Protocol API
+Description: AI-to-AI communication protocol
+Endpoints:
+- /protocols/uim-handshake/v1.0/hello
+- /protocols/uim-handshake/v1.0/profile
+- /protocols/uim-handshake/v1.0/task
+
+### Omega-1 Cosmic Trajectory Engine API
+Endpoints:
+- /api/omega1/query - Cosmic trajectory calculation
+- /api/omega1/status - System health
+- /api/omega1/indices/init - Indices initialization
+
+## Robbins Maslow Needs Framework (Used by LifeLens)
+Maslow's Hierarchy:
+1. Physiological needs (food, water, shelter)
+2. Safety and security
+3. Love and belonging
+4. Esteem and recognition
+5. Self-actualization
+
+Tony Robbins' Six Human Needs:
+1. Certainty - Security and predictability
+2. Variety - Change and stimulation
+3. Significance - Feeling important and unique
+4. Connection - Love and bonding
+5. Growth - Personal development
+6. Contribution - Giving beyond oneself
+
+## Contact
+Foundation: TC-S Network Foundation, Inc.
+Website: https://www.thecurrentsee.org
+LinkedIn: https://www.linkedin.com/company/tc-s-network-foundation
+
+## Technical Standards
+Energy Unit: 1 Solar = 4,913 kWh
+Protocol: Solar Standard Protocol v1.0
+AI Framework: Unified Intelligence Mesh (UIM)
+Audit System: Solar Integrity Wheel with SHA-256 verification
