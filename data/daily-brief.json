@@ -1,5 +1,5 @@
 {
-  "date": "2026-01-19",
+  "date": "2026-01-22",
   "indices": [
     {
       "id": "si",
@@ -7,31 +7,31 @@
       "unit": "%",
       "value": 70.7,
       "description": "Global Energy & Ethics Balance — 7-Day Rolling Indicator.",
-      "asOf": "2026-01-19T19:28:47.563Z"
+      "asOf": "2026-01-22T20:09:36.796Z"
     },
     {
       "id": "srh",
       "name": "Solar Reserve Health",
       "unit": "%",
-      "value": 78.4,
+      "value": 77.7,
       "description": "Reserve stability and fulfillment factor across all regions.",
-      "asOf": "2026-01-19T19:28:47.563Z"
+      "asOf": "2026-01-22T20:09:36.796Z"
     },
     {
       "id": "gbi",
       "name": "Global Basic Income",
       "unit": "%",
-      "value": 40.7,
+      "value": 41.6,
       "description": "Percentage of humans enrolled and actively claiming GBI.",
-      "asOf": "2026-01-19T19:28:47.563Z"
+      "asOf": "2026-01-22T20:09:36.796Z"
     },
     {
       "id": "cai",
       "name": "Compute Alignment",
       "unit": "%",
-      "value": 89.4,
+      "value": 89.3,
       "description": "Ethically aligned compute flow — safe superintelligence readiness.",
-      "asOf": "2026-01-19T19:28:47.563Z"
+      "asOf": "2026-01-22T20:09:36.796Z"
     },
     {
       "id": "mli",
@@ -39,19 +39,19 @@
       "unit": "%",
       "value": 24.2,
       "description": "Health of the TC-S digital marketplace and token velocity.",
-      "asOf": "2026-01-19T19:28:47.563Z"
+      "asOf": "2026-01-22T20:09:36.796Z"
     },
     {
       "id": "eai",
       "name": "Ethical Alignment",
       "unit": "%",
-      "value": 91.7,
+      "value": 92.2,
       "description": "Acceptance ratio of tasks from the Ethics Engine.",
-      "asOf": "2026-01-19T19:28:47.563Z"
+      "asOf": "2026-01-22T20:09:36.796Z"
     }
   ],
   "solar": {
-    "production": 2510,
-    "consumption": 1858.6
+    "production": 2537.6,
+    "consumption": 1877.3
   }
 }
