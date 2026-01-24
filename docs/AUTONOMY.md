@@ -237,3 +237,308 @@ The test covers:
 - Multi-signature support for critical actions
 - No secrets or PII in logs
 - Safe error messages (no internal details exposed)
+
+---
+
+# Autonomy Spine v2 - Marketplace Operations
+
+Version 2 extends the policy-gated framework with full marketplace support including asset management, rules-based pricing, order processing, ledger posting, and automated settlement.
+
+## Marketplace Action Types (17 new operations)
+
+### Asset Operations
+| Action Type | Risk | Approval | Description |
+|-------------|------|----------|-------------|
+| `ASSET.CREATE` | low | auto | Create asset from user input (photos, description) |
+| `ASSET.ENRICH` | low | auto | AI-powered enrichment (categorization, kWh estimate) |
+| `ASSET.LIST` | low | admin | Publish asset to marketplace (requires price) |
+| `ASSET.UNLIST` | low | admin | Remove from marketplace |
+| `ASSET.UPDATE` | low | admin | Modify asset details or quantity |
+
+### Pricing Operations
+| Action Type | Risk | Approval | Description |
+|-------------|------|----------|-------------|
+| `PRICE.QUOTE` | low | auto | Generate price quote with fee breakdown |
+| `PRICE.PUBLISH` | medium | admin | Set final price for asset |
+| `PRICE.UPDATE_RULES` | high | admin | Modify network pricing rules |
+
+### Order Operations
+| Action Type | Risk | Approval | Description |
+|-------------|------|----------|-------------|
+| `ORDER.CREATE` | medium | auth | Create order with inventory reservation |
+| `ORDER.CAPTURE_PAYMENT` | high | auth | Confirm payment receipt |
+| `ORDER.FULFILL` | medium | admin | Mark order delivered |
+
+### Ledger & Settlement
+| Action Type | Risk | Approval | Description |
+|-------------|------|----------|-------------|
+| `LEDGER.POST` | high | admin | Append event to immutable ledger |
+| `SETTLEMENT.RUN` | high | admin | Execute periodic settlement |
+
+### Support Operations
+| Action Type | Risk | Approval | Description |
+|-------------|------|----------|-------------|
+| `MODERATION.REVIEW` | low | auto | Content policy check |
+| `SEARCH.FULFILLMENT.RECOMMEND` | low | auto | AI procurement recommendations |
+| `ALERT.CREATE` | low | auto | System alerts and notifications |
+
+## Marketplace API Endpoints
+
+### Asset Creation
+```http
+POST /api/agentic/marketplace/asset
+Content-Type: application/json
+
+{
+  "title": "Solar Panel 250W",
+  "description": "Monocrystalline solar panel, excellent condition",
+  "category": "energy_trading",
+  "condition": "like_new",
+  "quantity": 5,
+  "imageUrls": ["https://..."],
+  "tags": ["solar", "renewable", "energy"]
+}
+```
+
+### Asset Enrichment
+```http
+POST /api/agentic/marketplace/enrich
+Content-Type: application/json
+
+{
+  "assetId": "uuid",
+  "forceRefresh": false
+}
+```
+
+### Price Quote
+```http
+POST /api/agentic/marketplace/price/quote
+Content-Type: application/json
+
+{
+  "assetId": "uuid",
+  "networkId": "default"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "result": {
+    "assetId": "uuid",
+    "recommendedPrice": 12.50,
+    "currency": "solar",
+    "breakdown": {
+      "vendorNet": 10.00,
+      "commissionerFee": 1.25,
+      "tcsFee": 0.25,
+      "taxAmount": 1.00
+    },
+    "confidence": 85,
+    "priceRange": { "min": 10.00, "max": 15.00 },
+    "requiresApproval": false
+  }
+}
+```
+
+### Publish Price (Admin)
+```http
+POST /api/agentic/marketplace/price/publish
+X-Session-Token: <admin-session-sid>
+Content-Type: application/json
+
+{
+  "assetId": "uuid",
+  "priceSolar": 12.50
+}
+```
+
+**Alternative: Admin Secret Key (for service-to-service)**
+```http
+X-Admin: true
+X-Admin-Key: <ADMIN_SECRET_KEY>
+```
+
+### List Asset (Admin)
+```http
+POST /api/agentic/marketplace/list
+X-Session-Token: <admin-session-sid>
+Content-Type: application/json
+
+{
+  "assetId": "uuid"
+}
+```
+
+### Create Order (Auth Required)
+```http
+POST /api/agentic/marketplace/order
+X-Session-Token: <valid-session-sid>
+Content-Type: application/json
+
+{
+  "items": [
+    { "assetId": "uuid", "quantity": 2 }
+  ],
+  "paymentMethod": "solar",
+  "pickupPreference": "in_store"
+}
+```
+
+**Alternative: Bearer Token**
+```http
+Authorization: Bearer <valid-session-sid>
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "result": {
+    "orderId": "uuid",
+    "status": "reserved",
+    "totalSolar": 25.00,
+    "verificationCode": "XYZ123",
+    "reservationExpiry": "2024-01-01T12:30:00Z"
+  }
+}
+```
+
+### Capture Payment (Auth Required + Order Ownership)
+```http
+POST /api/agentic/marketplace/capture-payment
+X-Session-Token: <valid-session-sid>
+Content-Type: application/json
+
+{
+  "orderId": "uuid",
+  "paymentIntentId": "pi_xxx",
+  "solarAmount": 25.00
+}
+```
+
+### Fulfill Order (Admin)
+```http
+POST /api/agentic/marketplace/fulfill
+X-Session-Token: <admin-session-sid>
+Content-Type: application/json
+
+{
+  "orderId": "uuid",
+  "verificationMethod": "qr",
+  "verificationCode": "XYZ123",
+  "staffId": "staff-123"
+}
+```
+
+### Post Ledger Entry (Admin)
+```http
+POST /api/agentic/marketplace/ledger
+X-Session-Token: <admin-session-sid>
+Content-Type: application/json
+
+{
+  "eventType": "adjustment",
+  "orderId": "uuid",
+  "amount": 5.00,
+  "currency": "solar",
+  "description": "Refund for damaged item"
+}
+```
+
+### Run Settlement (Admin)
+```http
+POST /api/agentic/marketplace/settlement
+X-Session-Token: <admin-session-sid>
+Content-Type: application/json
+
+{
+  "networkId": "default",
+  "periodStart": "2024-01-01T00:00:00Z",
+  "periodEnd": "2024-01-31T23:59:59Z",
+  "dryRun": false
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "result": {
+    "settlementId": "uuid",
+    "ordersSettled": 42,
+    "totalVolume": 1250.00,
+    "splits": {
+      "vendors": 1000.00,
+      "commissioner": 125.00,
+      "tcs": 25.00,
+      "taxBucket": 100.00
+    }
+  }
+}
+```
+
+## Pricing Engine
+
+### Default Fee Structure
+| Fee Type | Rate | Description |
+|----------|------|-------------|
+| Commissioner Margin | 10% | Network operator fee |
+| TC-S Foundation | 2% | Platform fee |
+| Tax Rate | 8% | Configurable per network |
+| Vendor Net | 80% | Amount paid to seller |
+
+### Configuration (per network)
+```json
+{
+  "networkId": "default",
+  "commissionerMargin": 0.10,
+  "tcsMargin": 0.02,
+  "taxRate": 0.08,
+  "taxInclusive": true,
+  "currency": "solar"
+}
+```
+
+### Confidence Scoring
+- **High (>80%)**: Auto-approved, comparable items found
+- **Medium (50-80%)**: Recommended for review
+- **Low (<50%)**: Requires manual pricing
+
+## Database Schema (v2 additions)
+
+| Table | Purpose |
+|-------|---------|
+| `inventory` | Asset stock tracking (total, available, reserved) |
+| `orders` | Order records with status tracking |
+| `order_items` | Line items per order |
+| `ledger_events` | Append-only financial ledger |
+| `settlements` | Settlement run records |
+| `network_config` | Network-specific pricing rules |
+
+## Agent Registry
+
+| Agent ID | Type | Risk Level | Permissions |
+|----------|------|------------|-------------|
+| `marketplace-agent-v1` | marketplace | medium | ASSET.*, MODERATION.*, SEARCH.* |
+| `pricing-agent-v1` | pricing | medium | PRICE.* |
+| `order-agent-v1` | orders | high | ORDER.CREATE, ORDER.CAPTURE_PAYMENT |
+| `fulfillment-agent-v1` | fulfillment | medium | ORDER.FULFILL, LEDGER.POST |
+| `settlement-agent-v1` | settlement | high | SETTLEMENT.RUN, LEDGER.POST |
+
+## Key Invariants
+
+1. **Inventory integrity**: Changes only via ORDER actions
+2. **Price immutability**: Published prices only changed via PRICE.PUBLISH
+3. **Append-only ledger**: LEDGER.POST creates immutable entries
+4. **Reservation expiry**: 30-minute hold with automatic release
+5. **Settlement splits**: Vendor/commissioner/TC-S/tax tracked separately
+
+## Architecture Files (v2)
+
+| File | Purpose |
+|------|---------|
+| `server/agentic/pricing-engine.js` | Pricing calculations and fee splits |
+| `server/agentic/handlers/marketplace-handlers.js` | Marketplace action handlers |

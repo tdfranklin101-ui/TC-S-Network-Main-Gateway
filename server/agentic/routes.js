@@ -65,32 +65,39 @@ async function validateApiKey(req, pool) {
 async function validateAdminAccess(req, pool) {
   const adminHeader = req.headers['x-admin'];
   const adminKey = req.headers['x-admin-key'];
-  const userId = req.headers['x-user-id'];
+  const sessionToken = req.headers['x-session-token'];
+  const authHeader = req.headers['authorization'];
   
   if (adminHeader === 'true' && adminKey === process.env.ADMIN_SECRET_KEY) {
     return { valid: true, role: 'admin', userId: 'system-admin' };
   }
   
-  if (userId) {
+  const token = sessionToken || (authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null);
+  
+  if (token) {
     try {
       const result = await pool.query(
-        'SELECT id, username, role FROM members WHERE id::text = $1',
-        [userId]
+        `SELECT s.sess, m.id as user_id, m.username, m.role 
+         FROM session s 
+         LEFT JOIN members m ON (s.sess->>'userId')::int = m.id
+         WHERE s.sid = $1 AND s.expire > NOW()`,
+        [token]
       );
       
-      if (result.rows.length > 0) {
+      if (result.rows.length > 0 && result.rows[0].user_id) {
         const member = result.rows[0];
         const role = member.role || 'member';
         if (ADMIN_ROLES.includes(role)) {
-          return { valid: true, role, userId: member.id };
+          return { valid: true, role, userId: member.user_id };
         }
+        return { valid: false, error: 'Admin role required' };
       }
     } catch (error) {
-      console.error('Admin validation error:', error);
+      console.error('Admin session validation error:', error);
     }
   }
   
-  return { valid: false, error: 'Admin access required' };
+  return { valid: false, error: 'Admin access requires valid session token' };
 }
 
 async function validateApproverAccess(req, pool) {
@@ -100,6 +107,73 @@ async function validateApproverAccess(req, pool) {
   }
   
   return { valid: false, error: 'Approver access required' };
+}
+
+async function validateUserSession(req, pool) {
+  const sessionToken = req.headers['x-session-token'];
+  const authHeader = req.headers['authorization'];
+  
+  if (sessionToken) {
+    try {
+      const result = await pool.query(
+        `SELECT s.sess, m.id as user_id, m.username 
+         FROM session s 
+         LEFT JOIN members m ON (s.sess->>'userId')::int = m.id
+         WHERE s.sid = $1 AND s.expire > NOW()`,
+        [sessionToken]
+      );
+      if (result.rows.length > 0 && result.rows[0].user_id) {
+        return { valid: true, userId: result.rows[0].user_id, username: result.rows[0].username };
+      }
+    } catch (error) {
+      console.error('Session token validation error:', error);
+    }
+  }
+  
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.substring(7);
+    try {
+      const result = await pool.query(
+        `SELECT s.sess, m.id as user_id, m.username 
+         FROM session s 
+         LEFT JOIN members m ON (s.sess->>'userId')::int = m.id
+         WHERE s.sid = $1 AND s.expire > NOW()`,
+        [token]
+      );
+      if (result.rows.length > 0 && result.rows[0].user_id) {
+        return { valid: true, userId: result.rows[0].user_id, username: result.rows[0].username };
+      }
+    } catch (error) {
+      console.error('Bearer token validation error:', error);
+    }
+  }
+
+  const adminAuth = await validateAdminAccess(req, pool);
+  if (adminAuth.valid) {
+    return { valid: true, userId: adminAuth.userId, username: 'admin', isAdmin: true };
+  }
+  
+  return { valid: false, error: 'Valid session token required (X-Session-Token or Authorization: Bearer)' };
+}
+
+async function validateOrderOwnership(pool, orderId, userId) {
+  try {
+    const result = await pool.query(
+      'SELECT buyer_id FROM orders WHERE id = $1',
+      [orderId]
+    );
+    if (result.rows.length === 0) {
+      return { valid: false, error: 'Order not found' };
+    }
+    const buyerId = result.rows[0].buyer_id;
+    if (String(buyerId) !== String(userId)) {
+      return { valid: false, error: 'You do not own this order' };
+    }
+    return { valid: true };
+  } catch (error) {
+    console.error('Order ownership validation error:', error);
+    return { valid: false, error: 'Failed to verify order ownership' };
+  }
 }
 
 async function handleAgenticRoutes(req, res, pathname, body, pool) {
@@ -626,11 +700,19 @@ async function handleAgenticRoutes(req, res, pathname, body, pool) {
       res.end(JSON.stringify({ error: 'Missing assetId or priceSolar' }));
       return true;
     }
+
+    const adminAuth = await validateAdminAccess(req, pool);
+    if (!adminAuth.valid) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Admin access required for price publishing' }));
+      return true;
+    }
+
     try {
       const result = await executorInstance.submitAction({
         actionType: 'PRICE.PUBLISH',
         agentId: 'pricing-agent-v1',
-        requesterId: body.userId || 'system',
+        requesterId: adminAuth.userId || 'system',
         payload: body
       });
       res.writeHead(result.success ? 200 : 400, { 'Content-Type': 'application/json' });
@@ -648,11 +730,19 @@ async function handleAgenticRoutes(req, res, pathname, body, pool) {
       res.end(JSON.stringify({ error: 'Missing assetId' }));
       return true;
     }
+
+    const adminAuth = await validateAdminAccess(req, pool);
+    if (!adminAuth.valid) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Admin access required for asset listing' }));
+      return true;
+    }
+
     try {
       const result = await executorInstance.submitAction({
         actionType: 'ASSET.LIST',
         agentId: 'marketplace-agent-v1',
-        requesterId: body.userId || 'system',
+        requesterId: adminAuth.userId || 'system',
         payload: { assetId: body.assetId }
       });
       res.writeHead(result.success ? 200 : 400, { 'Content-Type': 'application/json' });
@@ -665,17 +755,71 @@ async function handleAgenticRoutes(req, res, pathname, body, pool) {
   }
 
   if (pathname === '/api/agentic/marketplace/order' && req.method === 'POST') {
-    if (!body?.buyerId || !body?.items || !Array.isArray(body.items)) {
+    if (!body?.items || !Array.isArray(body.items)) {
       res.writeHead(400, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Missing buyerId or items array' }));
+      res.end(JSON.stringify({ error: 'Missing items array' }));
       return true;
     }
+
+    const userAuth = await validateUserSession(req, pool);
+    if (!userAuth.valid) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Authentication required for orders' }));
+      return true;
+    }
+
     try {
       const result = await executorInstance.submitAction({
         actionType: 'ORDER.CREATE',
         agentId: 'order-agent-v1',
-        requesterId: body.buyerId,
-        payload: body
+        requesterId: userAuth.userId,
+        payload: {
+          ...body,
+          buyerId: userAuth.userId
+        }
+      });
+      res.writeHead(result.success ? 200 : 400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(result));
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: error.message }));
+    }
+    return true;
+  }
+
+  if (pathname === '/api/agentic/marketplace/capture-payment' && req.method === 'POST') {
+    if (!body?.orderId) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Missing orderId' }));
+      return true;
+    }
+
+    const userAuth = await validateUserSession(req, pool);
+    if (!userAuth.valid) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: userAuth.error || 'Authentication required' }));
+      return true;
+    }
+
+    if (!userAuth.isAdmin) {
+      const ownershipCheck = await validateOrderOwnership(pool, body.orderId, userAuth.userId);
+      if (!ownershipCheck.valid) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: ownershipCheck.error || 'Access denied' }));
+        return true;
+      }
+    }
+
+    try {
+      const result = await executorInstance.submitAction({
+        actionType: 'ORDER.CAPTURE_PAYMENT',
+        agentId: 'order-agent-v1',
+        requesterId: userAuth.userId,
+        payload: {
+          orderId: body.orderId,
+          paymentIntentId: body.paymentIntentId,
+          solarAmount: body.solarAmount
+        }
       });
       res.writeHead(result.success ? 200 : 400, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(result));
@@ -705,6 +849,30 @@ async function handleAgenticRoutes(req, res, pathname, body, pool) {
         actionType: 'ORDER.FULFILL',
         agentId: 'fulfillment-agent-v1',
         requesterId: adminAuth.userId || 'staff',
+        payload: body
+      });
+      res.writeHead(result.success ? 200 : 400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(result));
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: error.message }));
+    }
+    return true;
+  }
+
+  if (pathname === '/api/agentic/marketplace/ledger' && req.method === 'POST') {
+    const adminAuth = await validateAdminAccess(req, pool);
+    if (!adminAuth.valid) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Admin access required for ledger operations' }));
+      return true;
+    }
+
+    try {
+      const result = await executorInstance.submitAction({
+        actionType: 'LEDGER.POST',
+        agentId: 'settlement-agent-v1',
+        requesterId: adminAuth.userId || 'system',
         payload: body
       });
       res.writeHead(result.success ? 200 : 400, { 'Content-Type': 'application/json' });
