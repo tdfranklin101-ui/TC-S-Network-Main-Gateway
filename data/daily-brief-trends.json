@@ -1,62 +1,62 @@
 {
-  "date": "2026-01-23",
-  "generatedAt": "2026-01-23T01:43:38.748Z",
+  "date": "2026-01-24",
+  "generatedAt": "2026-01-24T03:52:50.455Z",
   "currentIndices": [
     {
       "id": "si",
       "name": "Solar Index",
       "unit": "%",
-      "value": 72.1,
+      "value": 70.8,
       "description": "Global Energy & Ethics Balance — 7-Day Rolling Indicator.",
-      "asOf": "2026-01-23T01:43:35.667Z"
+      "asOf": "2026-01-24T03:52:47.500Z"
     },
     {
       "id": "srh",
       "name": "Solar Reserve Health",
       "unit": "%",
-      "value": 76.7,
+      "value": 78.8,
       "description": "Reserve stability and fulfillment factor across all regions.",
-      "asOf": "2026-01-23T01:43:35.667Z"
+      "asOf": "2026-01-24T03:52:47.500Z"
     },
     {
       "id": "gbi",
       "name": "Global Basic Income",
       "unit": "%",
-      "value": 40.6,
+      "value": 40.7,
       "description": "Percentage of humans enrolled and actively claiming GBI.",
-      "asOf": "2026-01-23T01:43:35.667Z"
+      "asOf": "2026-01-24T03:52:47.500Z"
     },
     {
       "id": "cai",
       "name": "Compute Alignment",
       "unit": "%",
-      "value": 88.5,
+      "value": 89.7,
       "description": "Ethically aligned compute flow — safe superintelligence readiness.",
-      "asOf": "2026-01-23T01:43:35.667Z"
+      "asOf": "2026-01-24T03:52:47.500Z"
     },
     {
       "id": "mli",
       "name": "Market Liquidity",
       "unit": "%",
-      "value": 24.6,
+      "value": 22.8,
       "description": "Health of the TC-S digital marketplace and token velocity.",
-      "asOf": "2026-01-23T01:43:35.667Z"
+      "asOf": "2026-01-24T03:52:47.500Z"
     },
     {
       "id": "eai",
       "name": "Ethical Alignment",
       "unit": "%",
-      "value": 92.4,
+      "value": 91.9,
       "description": "Acceptance ratio of tasks from the Ethics Engine.",
-      "asOf": "2026-01-23T01:43:35.667Z"
+      "asOf": "2026-01-24T03:52:47.500Z"
     }
   ],
   "trends": {
     "analysisStatus": "success",
-    "direction": "bullish",
-    "analysis": "The current values indicate a generally positive trend, with a significant increase in the Sentiment Index (SI) from 70.9 to 72.1 and a stable Consumer Activity Index (CAI) at 88.5. The slight drop in the Growth Business Index (GBI) to 40.6 and the Market Liquidity Index (MLI) to 24.6 suggests some caution, but overall the market sentiment remains optimistic.",
-    "insight": "Investors should consider increasing their exposure to equities while monitoring the GBI and MLI for potential signs of weakness.",
-    "generatedAt": "2026-01-23T01:43:38.748Z"
+    "direction": "neutral",
+    "analysis": "The TC-S market health indices show stability with slight fluctuations over the past week. The significant indicators such as the consumer activities index (cai) remain strong at 89.7, while the market liquidity index (mli) has decreased to 22.8, suggesting mixed signals in market dynamics. Overall, the indices reflect a balance between positive consumer sentiment and declining liquidity, leading to a neutral market outlook.",
+    "insight": "Focus on enhancing liquidity measures to bolster overall market health and encourage further consumer engagement.",
+    "generatedAt": "2026-01-24T03:52:50.455Z"
   },
   "historyDays": 30
 }

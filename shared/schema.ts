@@ -1008,3 +1008,157 @@ export type InsertMarketItem = z.infer<typeof insertMarketItemSchema>;
 export type InsertMarketRequest = z.infer<typeof insertMarketRequestSchema>;
 export type InsertProcurementRecommendation = z.infer<typeof insertProcurementRecommendationSchema>;
 export type InsertProcurementReview = z.infer<typeof insertProcurementReviewSchema>;
+
+// ============================================================================
+// AGENTIC FRAMEWORK TABLES
+// Policy-gated action system for autonomous agents
+// ============================================================================
+
+// Action status enum values
+export const ACTION_STATUS = {
+  PENDING: 'pending',
+  APPROVED: 'approved',
+  REJECTED: 'rejected',
+  EXECUTING: 'executing',
+  COMPLETED: 'completed',
+  FAILED: 'failed'
+} as const;
+
+// Risk level enum values
+export const RISK_LEVEL = {
+  LOW: 'low',
+  MEDIUM: 'medium',
+  HIGH: 'high',
+  CRITICAL: 'critical'
+} as const;
+
+// Action Requests - core table for policy-gated agent actions
+export const actionRequests = pgTable("action_requests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  actionType: varchar("action_type").notNull(),
+  agentId: varchar("agent_id").notNull(),
+  agentName: varchar("agent_name"),
+  requesterId: varchar("requester_id"),
+  riskLevel: varchar("risk_level").notNull().default('low'),
+  status: varchar("status").notNull().default('pending'),
+  payload: jsonb("payload").notNull(),
+  validationResult: jsonb("validation_result"),
+  policyChecks: jsonb("policy_checks"),
+  executionResult: jsonb("execution_result"),
+  errorMessage: text("error_message"),
+  approvedBy: varchar("approved_by"),
+  approvedAt: timestamp("approved_at"),
+  executedAt: timestamp("executed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  expiresAt: timestamp("expires_at"),
+  metadata: jsonb("metadata")
+}, (table) => ({
+  statusIdx: index("action_requests_status_idx").on(table.status),
+  agentIdx: index("action_requests_agent_idx").on(table.agentId),
+  typeIdx: index("action_requests_type_idx").on(table.actionType),
+  createdIdx: index("action_requests_created_idx").on(table.createdAt)
+}));
+
+// Agent Registry - registered agents and their permissions
+export const agentRegistry = pgTable("agent_registry", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  agentName: varchar("agent_name").notNull().unique(),
+  agentType: varchar("agent_type").notNull(),
+  description: text("description"),
+  allowedActions: jsonb("allowed_actions").notNull().default(sql`'[]'::jsonb`),
+  maxRiskLevel: varchar("max_risk_level").notNull().default('low'),
+  rateLimit: integer("rate_limit").default(100),
+  rateLimitWindow: integer("rate_limit_window").default(3600),
+  isActive: boolean("is_active").default(true),
+  lastActivity: timestamp("last_activity"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  metadata: jsonb("metadata")
+}, (table) => ({
+  nameIdx: index("agent_registry_name_idx").on(table.agentName),
+  typeIdx: index("agent_registry_type_idx").on(table.agentType)
+}));
+
+// Policy Rules - deterministic rules for action validation
+export const policyRules = pgTable("policy_rules", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  ruleName: varchar("rule_name").notNull().unique(),
+  ruleType: varchar("rule_type").notNull(),
+  actionTypes: jsonb("action_types").notNull().default(sql`'[]'::jsonb`),
+  conditions: jsonb("conditions").notNull(),
+  priority: integer("priority").default(100),
+  isActive: boolean("is_active").default(true),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+}, (table) => ({
+  ruleNameIdx: index("policy_rules_name_idx").on(table.ruleName),
+  priorityIdx: index("policy_rules_priority_idx").on(table.priority)
+}));
+
+// Network Specifications - for Commissioning Agent
+export const networkSpecs = pgTable("network_specs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  networkType: varchar("network_type").notNull(),
+  capabilities: jsonb("capabilities").notNull().default(sql`'[]'::jsonb`),
+  region: varchar("region").default('global'),
+  energySource: varchar("energy_source"),
+  status: varchar("status").notNull().default('draft'),
+  actionRequestId: varchar("action_request_id").references(() => actionRequests.id),
+  createdByAgentId: varchar("created_by_agent_id"),
+  initialSolarAllocation: numeric("initial_solar_allocation").default("0"),
+  createdAt: timestamp("created_at").defaultNow(),
+  activatedAt: timestamp("activated_at"),
+  metadata: jsonb("metadata")
+}, (table) => ({
+  nameIdx: index("network_specs_name_idx").on(table.name),
+  statusIdx: index("network_specs_status_idx").on(table.status)
+}));
+
+// Action Audit Log - immutable log of all actions
+export const actionAuditLog = pgTable("action_audit_log", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  actionRequestId: varchar("action_request_id").references(() => actionRequests.id),
+  eventType: varchar("event_type").notNull(),
+  eventData: jsonb("event_data"),
+  agentId: varchar("agent_id"),
+  timestamp: timestamp("timestamp").defaultNow(),
+  ipAddress: varchar("ip_address"),
+  userAgent: varchar("user_agent")
+}, (table) => ({
+  actionIdx: index("action_audit_log_action_idx").on(table.actionRequestId),
+  timestampIdx: index("action_audit_log_timestamp_idx").on(table.timestamp)
+}));
+
+// Insert schemas for agentic framework
+export const insertActionRequestSchema = createInsertSchema(actionRequests).omit({ 
+  id: true, createdAt: true, updatedAt: true 
+});
+export const insertAgentRegistrySchema = createInsertSchema(agentRegistry).omit({ 
+  id: true, createdAt: true, updatedAt: true 
+});
+export const insertPolicyRuleSchema = createInsertSchema(policyRules).omit({ 
+  id: true, createdAt: true, updatedAt: true 
+});
+export const insertNetworkSpecSchema = createInsertSchema(networkSpecs).omit({ 
+  id: true, createdAt: true 
+});
+export const insertActionAuditLogSchema = createInsertSchema(actionAuditLog).omit({ 
+  id: true, timestamp: true 
+});
+
+// Select types for agentic framework
+export type ActionRequest = typeof actionRequests.$inferSelect;
+export type AgentRegistryEntry = typeof agentRegistry.$inferSelect;
+export type PolicyRule = typeof policyRules.$inferSelect;
+export type NetworkSpec = typeof networkSpecs.$inferSelect;
+export type ActionAuditLogEntry = typeof actionAuditLog.$inferSelect;
+
+// Insert types for agentic framework
+export type InsertActionRequest = z.infer<typeof insertActionRequestSchema>;
+export type InsertAgentRegistry = z.infer<typeof insertAgentRegistrySchema>;
+export type InsertPolicyRule = z.infer<typeof insertPolicyRuleSchema>;
+export type InsertNetworkSpec = z.infer<typeof insertNetworkSpecSchema>;
+export type InsertActionAuditLog = z.infer<typeof insertActionAuditLogSchema>;

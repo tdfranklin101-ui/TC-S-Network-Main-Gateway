@@ -73,6 +73,9 @@ const agentRoutes = require('./routes/agentRoutes');
 // DMTXACTLY Creative API routes (pre-generated mode)
 const dmtxactlyRoutes = require('./routes/dmtxactly');
 
+// TC-S Agentic Framework (Policy-gated actions)
+const { handleAgenticRoutes, initializeAgenticFramework } = require('./server/agentic/routes');
+
 // WPC (Watts Per Compute) efficiency calculator
 const { estimateFlops, estimateEnergy, computeWPC, joulesToSolar } = require('./lib/wpc.js');
 
@@ -2648,6 +2651,16 @@ const server = http.createServer(async (req, res) => {
       } catch (e) {}
     }
     if (await dmtxactlyRoutes(req, res, pathname, body)) return;
+  }
+  
+  // Try TC-S Agentic Framework routes (Policy-gated actions)
+  if (pathname.startsWith('/api/agentic')) {
+    if (!body && req.method === 'POST') {
+      try {
+        body = await parseBody(req);
+      } catch (e) {}
+    }
+    if (await handleAgenticRoutes(req, res, pathname, body, pool)) return;
   }
   
   // OLD Kid Solar Voice Interaction (replaced by multi-modal endpoint in routes/market.js)
