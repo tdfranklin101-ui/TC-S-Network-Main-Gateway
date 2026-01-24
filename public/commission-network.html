@@ -670,6 +670,7 @@
         if (result.success) {
           submittedRequestId = result.actionRequestId;
           showResult(true, result);
+          startPolling();
         } else {
           showResult(false, result);
         }
@@ -687,57 +688,110 @@
       currentStep = 4;
       updateSteps();
       
+      updateResultDisplay(result);
+    }
+    
+    function updateResultDisplay(result) {
       const icon = document.getElementById('resultIcon');
       const title = document.getElementById('resultTitle');
       const message = document.getElementById('resultMessage');
       const details = document.getElementById('requestDetails');
+      const status = result.status;
       
-      if (success && result.status === 'pending') {
-        icon.textContent = '⏳';
-        title.textContent = 'Network Submitted for Approval';
-        title.style.color = 'var(--solar-gold)';
-        message.textContent = 'Your network creation request has been submitted and is pending human approval.';
-        details.innerHTML = `
-          <div class="review-item">
-            <span class="review-label">Request ID</span>
-            <span class="review-value" style="font-family: monospace; font-size: 0.85rem;">${result.actionRequestId}</span>
-          </div>
-          <div class="review-item">
-            <span class="review-label">Status</span>
-            <span class="status-badge status-pending">Pending Approval</span>
-          </div>
+      const statusConfig = {
+        pending: {
+          icon: '⏳',
+          title: 'Pending Approval',
+          color: 'var(--solar-gold)',
+          message: 'Your network creation request is waiting for admin approval.',
+          badge: '<span class="status-badge status-pending">Pending</span>'
+        },
+        approved: {
+          icon: '✓',
+          title: 'Approved - Ready to Execute',
+          color: '#3b82f6',
+          message: 'Your request has been approved. An admin will execute it shortly.',
+          badge: '<span class="status-badge status-approved">Approved</span>'
+        },
+        running: {
+          icon: '⚡',
+          title: 'Executing...',
+          color: '#8b5cf6',
+          message: 'Your network is being created. Please wait.',
+          badge: '<span style="background: rgba(139, 92, 246, 0.2); color: #8b5cf6; padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.85rem;">Running</span>'
+        },
+        succeeded: {
+          icon: '✅',
+          title: 'Network Created Successfully',
+          color: 'var(--solar-green)',
+          message: 'Your network is now active and ready to use!',
+          badge: '<span style="background: rgba(57, 255, 20, 0.2); color: var(--solar-green); padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.85rem;">Active</span>'
+        },
+        failed: {
+          icon: '❌',
+          title: 'Execution Failed',
+          color: '#ef4444',
+          message: result.error_message || 'The network creation failed. Please try again.',
+          badge: '<span style="background: rgba(239, 68, 68, 0.2); color: #ef4444; padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.85rem;">Failed</span>'
+        },
+        rejected: {
+          icon: '🚫',
+          title: 'Request Rejected',
+          color: '#6b7280',
+          message: result.error_message || 'Your request was rejected by an admin.',
+          badge: '<span style="background: rgba(107, 114, 128, 0.2); color: #6b7280; padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.85rem;">Rejected</span>'
+        }
+      };
+      
+      const config = statusConfig[status] || statusConfig.pending;
+      
+      icon.textContent = config.icon;
+      title.textContent = config.title;
+      title.style.color = config.color;
+      message.textContent = config.message;
+      
+      let detailsHtml = `
+        <div class="review-item">
+          <span class="review-label">Request ID</span>
+          <span class="review-value" style="font-family: monospace; font-size: 0.85rem;">${result.actionRequestId || result.id || submittedRequestId}</span>
+        </div>
+        <div class="review-item">
+          <span class="review-label">Status</span>
+          ${config.badge}
+        </div>
+      `;
+      
+      if (result.result?.checks) {
+        const passedChecks = result.result.checks.filter(c => c.passed).length;
+        detailsHtml += `
           <div class="review-item">
             <span class="review-label">Policy Checks</span>
-            <span class="review-value">${result.result?.checks?.filter(c => c.passed).length || 0} / ${result.result?.checks?.length || 0} passed</span>
-          </div>
-        `;
-      } else if (success && result.status === 'approved') {
-        icon.textContent = '✅';
-        title.textContent = 'Network Created Successfully';
-        title.style.color = 'var(--solar-green)';
-        message.textContent = 'Your network is now active and ready to use.';
-        details.innerHTML = `
-          <div class="review-item">
-            <span class="review-label">Network ID</span>
-            <span class="review-value" style="font-family: monospace;">${result.networkId || result.actionRequestId}</span>
-          </div>
-          <div class="review-item">
-            <span class="review-label">Status</span>
-            <span class="status-badge status-approved">Active</span>
-          </div>
-        `;
-      } else {
-        icon.textContent = '❌';
-        title.textContent = 'Submission Failed';
-        title.style.color = '#ef4444';
-        message.textContent = result.error || result.reason || 'An error occurred while submitting your network.';
-        details.innerHTML = `
-          <div class="review-item">
-            <span class="review-label">Error</span>
-            <span class="review-value">${result.error || result.reason || 'Unknown error'}</span>
+            <span class="review-value">${passedChecks} / ${result.result.checks.length} passed</span>
           </div>
         `;
       }
+      
+      if (status === 'succeeded' && result.result) {
+        const networkResult = result.result;
+        if (networkResult.networkId) {
+          detailsHtml += `
+            <div class="review-item">
+              <span class="review-label">Network ID</span>
+              <span class="review-value" style="font-family: monospace;">${networkResult.networkId}</span>
+            </div>
+          `;
+        }
+        if (networkResult.name) {
+          detailsHtml += `
+            <div class="review-item">
+              <span class="review-label">Network Name</span>
+              <span class="review-value">${networkResult.name}</span>
+            </div>
+          `;
+        }
+      }
+      
+      details.innerHTML = detailsHtml;
     }
     
     async function checkStatus() {
@@ -747,17 +801,37 @@
       }
       
       try {
-        const response = await fetch(`/api/agentic/action/status?requestId=${submittedRequestId}`);
+        const response = await fetch(`/api/agentic/actions/${submittedRequestId}`);
         const result = await response.json();
         
         if (result.success) {
-          alert(`Status: ${result.status}\nNetwork: ${result.network_spec?.name || 'N/A'}`);
+          updateResultDisplay(result);
         } else {
           alert('Could not retrieve status');
         }
       } catch (error) {
         alert('Error checking status: ' + error.message);
       }
+    }
+    
+    let statusPollInterval = null;
+    
+    function startPolling() {
+      if (statusPollInterval) clearInterval(statusPollInterval);
+      statusPollInterval = setInterval(async () => {
+        if (submittedRequestId) {
+          try {
+            const response = await fetch(`/api/agentic/actions/${submittedRequestId}`);
+            const result = await response.json();
+            if (result.success) {
+              updateResultDisplay(result);
+              if (result.status === 'succeeded' || result.status === 'failed' || result.status === 'rejected') {
+                clearInterval(statusPollInterval);
+              }
+            }
+          } catch (e) {}
+        }
+      }, 5000);
     }
   </script>
 </body>

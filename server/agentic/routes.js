@@ -277,6 +277,117 @@ async function handleAgenticRoutes(req, res, pathname, body, pool) {
     return true;
   }
 
+  if (pathname === '/api/agentic/action/execute' && req.method === 'POST') {
+    if (!body || !body.requestId) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Missing requestId' }));
+      return true;
+    }
+
+    const approverAuth = await validateApproverAccess(req, pool);
+    if (!approverAuth.valid) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: approverAuth.error || 'Executor access required' }));
+      return true;
+    }
+
+    try {
+      const executorId = approverAuth.userId || body.executorId || 'system';
+      const result = await executorInstance.triggerExecution(body.requestId, executorId);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, ...result, executedBy: executorId }));
+    } catch (error) {
+      res.writeHead(error.message.includes('Cannot execute') ? 400 : 500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: error.message }));
+    }
+    return true;
+  }
+
+  const actionsMatch = pathname.match(/^\/api\/agentic\/actions\/([^\/]+)$/);
+  if (actionsMatch && req.method === 'GET') {
+    const requestId = actionsMatch[1];
+    try {
+      const status = await executorInstance.getActionStatus(requestId);
+      if (!status) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Action request not found' }));
+        return true;
+      }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, ...status }));
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: error.message }));
+    }
+    return true;
+  }
+
+  const approveMatch = pathname.match(/^\/api\/agentic\/actions\/([^\/]+)\/approve$/);
+  if (approveMatch && req.method === 'POST') {
+    const requestId = approveMatch[1];
+    const approverAuth = await validateApproverAccess(req, pool);
+    if (!approverAuth.valid) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: approverAuth.error || 'Approver access required' }));
+      return true;
+    }
+
+    try {
+      const approverId = approverAuth.userId || body?.approverId || 'admin';
+      const result = await executorInstance.approveAction(requestId, approverId);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, ...result, approvedBy: approverId }));
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: error.message }));
+    }
+    return true;
+  }
+
+  const executeMatch = pathname.match(/^\/api\/agentic\/actions\/([^\/]+)\/execute$/);
+  if (executeMatch && req.method === 'POST') {
+    const requestId = executeMatch[1];
+    const approverAuth = await validateApproverAccess(req, pool);
+    if (!approverAuth.valid) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: approverAuth.error || 'Executor access required' }));
+      return true;
+    }
+
+    try {
+      const executorId = approverAuth.userId || body?.executorId || 'admin';
+      const result = await executorInstance.triggerExecution(requestId, executorId);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, ...result, executedBy: executorId }));
+    } catch (error) {
+      res.writeHead(error.message.includes('Cannot execute') ? 400 : 500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: error.message }));
+    }
+    return true;
+  }
+
+  const rejectMatch = pathname.match(/^\/api\/agentic\/actions\/([^\/]+)\/reject$/);
+  if (rejectMatch && req.method === 'POST') {
+    const requestId = rejectMatch[1];
+    const approverAuth = await validateApproverAccess(req, pool);
+    if (!approverAuth.valid) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: approverAuth.error || 'Approver access required' }));
+      return true;
+    }
+
+    try {
+      const rejectorId = approverAuth.userId || body?.rejectorId || 'admin';
+      const result = await executorInstance.rejectAction(requestId, rejectorId, body?.reason || 'Rejected by admin');
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, ...result, rejectedBy: rejectorId }));
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: error.message }));
+    }
+    return true;
+  }
+
   if (pathname === '/api/agentic/pending' && req.method === 'GET') {
     const url = new URL(req.url, `http://${req.headers.host}`);
     const agentId = url.searchParams.get('agentId');
@@ -285,6 +396,29 @@ async function handleAgenticRoutes(req, res, pathname, body, pool) {
       const pending = await executorInstance.getPendingActions(agentId);
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ success: true, count: pending.length, actions: pending }));
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: error.message }));
+    }
+    return true;
+  }
+
+  if (pathname === '/api/agentic/actions/list' && req.method === 'GET') {
+    const adminAuth = await validateAdminAccess(req, pool);
+    if (!adminAuth.valid) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Admin access required', reason: adminAuth.error }));
+      return true;
+    }
+
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    const limit = parseInt(url.searchParams.get('limit')) || 50;
+    const status = url.searchParams.get('status');
+
+    try {
+      const actions = await executorInstance.getAllActions(limit, status);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, count: actions.length, actions }));
     } catch (error) {
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: error.message }));

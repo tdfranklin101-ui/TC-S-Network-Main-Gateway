@@ -166,6 +166,35 @@ class ActionExecutor {
       allApprovers: approvals.map(a => a.approverId)
     });
 
+    return { 
+      requestId, 
+      status: 'approved', 
+      message: 'Action approved. Ready for execution.',
+      approvals: approvals.length,
+      nextStep: 'Call POST /api/agentic/actions/:id/execute to run this action'
+    };
+  }
+
+  async triggerExecution(requestId, executorId) {
+    const result = await this.pool.query(
+      'SELECT * FROM action_requests WHERE id = $1',
+      [requestId]
+    );
+
+    if (result.rows.length === 0) {
+      throw new Error('Action request not found');
+    }
+
+    const request = result.rows[0];
+
+    if (request.status !== 'approved') {
+      throw new Error(`Cannot execute action with status: ${request.status}. Must be 'approved' first.`);
+    }
+
+    await this.logAuditEvent(requestId, 'execution_triggered', {
+      triggeredBy: executorId
+    });
+
     return await this.executeAction(requestId);
   }
 
@@ -495,6 +524,22 @@ class ActionExecutor {
     }
 
     query += ' ORDER BY created_at ASC';
+    
+    const result = await this.pool.query(query, params);
+    return result.rows;
+  }
+
+  async getAllActions(limit = 50, status = null) {
+    let query = 'SELECT * FROM action_requests';
+    const params = [];
+    
+    if (status) {
+      query += ' WHERE status = $1';
+      params.push(status);
+    }
+    
+    query += ' ORDER BY created_at DESC LIMIT $' + (params.length + 1);
+    params.push(limit);
     
     const result = await this.pool.query(query, params);
     return result.rows;
