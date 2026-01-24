@@ -542,3 +542,132 @@ Content-Type: application/json
 |------|---------|
 | `server/agentic/pricing-engine.js` | Pricing calculations and fee splits |
 | `server/agentic/handlers/marketplace-handlers.js` | Marketplace action handlers |
+| `server/agentic/security.js` | Scoped admin keys, intent logging, RBAC |
+| `server/agentic/scheduler.js` | Daily schedulers for settlements and reports |
+| `scripts/golden-path-test.js` | End-to-end smoke test script |
+
+## Security Features (v2.1)
+
+### Scoped Admin Keys
+Admin keys can be scoped to specific operations:
+```
+X-Admin-Key: actions.execute:<KEY>   # Can execute actions
+X-Admin-Key: settlement.run:<KEY>    # Can run settlements only
+X-Admin-Key: pricing.publish:<KEY>   # Can publish prices only
+```
+
+### Intent Logging
+All privileged operations log:
+- `who`: User ID or service identity
+- `action_type`: Operation type (e.g., SETTLEMENT.RUN)
+- `route`: API endpoint
+- `req_id`: Request ID for correlation
+- `payload_hash`: SHA-256 hash of request body
+- `timestamp`: When the operation occurred
+
+### Replay Protection
+Set `X-Req-Id` header on privileged requests. Duplicate IDs within 5 minutes are rejected:
+```http
+POST /api/agentic/marketplace/settlement
+X-Req-Id: unique-request-id-123
+X-Session-Token: <admin-session>
+```
+
+### RBAC Roles
+| Role | Description | Key Permissions |
+|------|-------------|-----------------|
+| `member` | Standard user | ORDER.CREATE, SEARCH.* |
+| `seller` | Can create listings | ASSET.CREATE, PRICE.QUOTE |
+| `staff` | Can fulfill orders | FULFILLMENT.CONFIRM |
+| `commissioner_admin` | Network operator | PRICE.*, LISTING.*, MODERATION.* |
+| `tcs_admin` | Full system access | *.* (all operations) |
+
+## Scheduler Operations
+
+### Daily Jobs
+| Job Type | Schedule | Description |
+|----------|----------|-------------|
+| `settlement.daily` | 2:00 AM | Auto-run previous day's settlement |
+| `report.daily` | 3:00 AM | Generate daily activity report |
+| `risk.scan` | Hourly | Scan for suspicious activity |
+| `inventory.audit` | Weekly | Check inventory discrepancies |
+| `session.cleanup` | Daily | Remove expired sessions |
+
+### Scheduler API
+
+**Get scheduler status**
+```http
+GET /api/agentic/scheduler/status
+X-Session-Token: <admin-session>
+```
+
+**Trigger job manually**
+```http
+POST /api/agentic/scheduler/trigger
+X-Session-Token: <admin-session>
+Content-Type: application/json
+
+{
+  "jobType": "settlement.daily"
+}
+```
+
+**List job types**
+```http
+GET /api/agentic/scheduler/job-types
+```
+
+## Security Hardening
+
+### Scoped Admin Keys
+All privileged operations require a scoped admin key with appropriate permissions:
+
+| Scope | Allowed Actions |
+|-------|-----------------|
+| `actions.execute` | ASSET.*, PRICE.*, ORDER.*, LEDGER.*, SETTLEMENT.*, MODERATION.* |
+| `actions.approve` | All action approvals |
+| `actions.reject` | All action rejections |
+| `settlement.run` | SETTLEMENT.RUN, SETTLEMENT.PREVIEW |
+| `pricing.publish` | PRICE.QUOTE, PRICE.PUBLISH |
+| `scheduler.manage` | SCHEDULER.* |
+| `admin.full` | All operations |
+
+### Replay Protection
+All privileged endpoints require `X-Req-Id` header:
+```http
+POST /api/agentic/actions/:id/approve
+X-Req-Id: unique-uuid-per-request
+X-Admin-Key: scoped-key
+```
+
+Duplicate request IDs within 5 minutes are rejected.
+
+### Intent Logging
+All privileged operations are logged with:
+- User ID and role
+- Action type and route
+- Request ID for correlation
+- Payload hash (SHA-256)
+- Timestamp and duration
+- Success/error status
+
+### RBAC Enforcement
+Routes enforce role-based access control via `validateWithRBAC`:
+```javascript
+const scopedAuth = await validateWithRBAC(req, pool, 'actions.approve');
+if (!scopedAuth.valid) {
+  return 403; // Role or scope insufficient
+}
+```
+
+## Golden Path Test
+
+Run the end-to-end smoke test:
+```bash
+node scripts/golden-path-test.js
+```
+
+Tests the complete flow:
+1. ASSET.CREATE → 2. ASSET.ENRICH → 3. PRICE.QUOTE → 4. PRICE.PUBLISH
+5. LISTING.PUBLISH → 6. ORDER.CREATE → 7. PAYMENT.CAPTURE
+8. FULFILLMENT.CONFIRM → 9. LEDGER.POST → 10. SETTLEMENT.RUN

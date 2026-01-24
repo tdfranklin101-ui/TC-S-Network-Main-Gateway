@@ -1,26 +1,54 @@
 /**
  * TC-S Network Foundation - Agentic Framework API Routes
- * Version: 1.0.1
+ * Version: 1.1.0
  * 
- * Security Update: Added authentication and authorization checks
+ * Security Update v2: Scoped admin keys, intent logging, replay protection, RBAC
  */
 
 const { ActionExecutor } = require('./executor');
 const { CommissioningAgent } = require('./agents/commissioning-agent');
 const { getAllActions, getHighRiskActions, getActionById, RISK_LEVELS } = require('./api-surface');
+const { 
+  initializeIntentLogger, 
+  getIntentLogger, 
+  createIntentLogTable,
+  checkReplayProtection,
+  validateScopedAdminAccess,
+  hashPayload,
+  ROLES,
+  checkRolePermission,
+  getRoutePermissions
+} = require('./security');
+const { Scheduler, JOB_TYPES } = require('./scheduler');
 
 let executorInstance = null;
 let commissioningAgentInstance = null;
+let schedulerInstance = null;
 
-const ADMIN_ROLES = ['admin', 'foundation', 'operator'];
-const APPROVER_ROLES = ['admin', 'foundation', 'approver'];
+const ADMIN_ROLES = ['admin', 'foundation', 'operator', 'tcs_admin', 'commissioner_admin'];
+const APPROVER_ROLES = ['admin', 'foundation', 'approver', 'tcs_admin', 'commissioner_admin'];
 
 async function initializeAgenticFramework(pool) {
   executorInstance = new ActionExecutor(pool);
   commissioningAgentInstance = new CommissioningAgent(pool);
   await commissioningAgentInstance.initialize();
-  console.log('✅ Agentic Framework initialized');
-  return { executor: executorInstance, commissioningAgent: commissioningAgentInstance };
+  
+  await createIntentLogTable(pool);
+  initializeIntentLogger(pool);
+  
+  schedulerInstance = new Scheduler(pool, executorInstance);
+  await schedulerInstance.initialize();
+  
+  if (process.env.ENABLE_SCHEDULER !== 'false') {
+    schedulerInstance.start(60000);
+  }
+  
+  console.log('✅ Agentic Framework initialized with security module and scheduler');
+  return { executor: executorInstance, commissioningAgent: commissioningAgentInstance, scheduler: schedulerInstance };
+}
+
+function getScheduler() {
+  return schedulerInstance;
 }
 
 function getExecutor() {
@@ -176,9 +204,66 @@ async function validateOrderOwnership(pool, orderId, userId) {
   }
 }
 
+async function logPrivilegedCall(req, options = {}) {
+  const logger = getIntentLogger();
+  if (!logger) return null;
+  
+  const startTime = Date.now();
+  const logId = await logger.log({
+    userId: options.userId || 'unknown',
+    role: options.role || 'unknown',
+    actionType: options.actionType,
+    route: options.route || req.url,
+    method: req.method,
+    reqId: req.headers['x-req-id'],
+    payloadHash: options.payload ? hashPayload(options.payload) : null,
+    ip: req.headers['x-forwarded-for'] || req.socket?.remoteAddress,
+    userAgent: req.headers['user-agent'],
+    success: options.success !== false,
+    error: options.error,
+    metadata: options.metadata
+  });
+  
+  return { logId, startTime };
+}
+
+async function validateWithRBAC(req, pool, requiredAction) {
+  const routePerms = getRoutePermissions(req.url?.split('?')[0], req.method);
+  
+  const scopedAuth = await validateScopedAdminAccess(req, pool, requiredAction);
+  
+  if (scopedAuth.valid) {
+    if (routePerms && routePerms.requiredRoles) {
+      const roleMatch = routePerms.requiredRoles.some(r => 
+        r === scopedAuth.role || 
+        (scopedAuth.role === 'admin' || scopedAuth.role === 'tcs_admin') ||
+        (scopedAuth.role === 'commissioner_admin' && ['seller', 'staff', 'member'].includes(r))
+      );
+      if (roleMatch || checkRolePermission(scopedAuth.role, requiredAction)) {
+        return scopedAuth;
+      }
+    } else {
+      return scopedAuth;
+    }
+  }
+  
+  if (scopedAuth.role && routePerms?.requiredRoles) {
+    return { valid: false, error: `Role '${scopedAuth.role}' not authorized for ${requiredAction}` };
+  }
+  
+  return scopedAuth;
+}
+
 async function handleAgenticRoutes(req, res, pathname, body, pool) {
   if (!executorInstance) {
     await initializeAgenticFramework(pool);
+  }
+  
+  const replayCheck = checkReplayProtection(req.headers['x-req-id']);
+  if (!replayCheck.valid) {
+    res.writeHead(409, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: replayCheck.error, reqId: replayCheck.reqId }));
+    return true;
   }
 
   if (pathname === '/api/agentic/actions' && req.method === 'GET') {
@@ -301,16 +386,24 @@ async function handleAgenticRoutes(req, res, pathname, body, pool) {
       res.end(JSON.stringify({ error: 'Missing requestId' }));
       return true;
     }
+    
+    if (!req.headers['x-req-id']) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'X-Req-Id header required for privileged operations' }));
+      return true;
+    }
 
-    const approverAuth = await validateApproverAccess(req, pool);
-    if (!approverAuth.valid) {
+    const scopedAuth = await validateWithRBAC(req, pool, 'actions.approve');
+    if (!scopedAuth.valid) {
+      await logPrivilegedCall(req, { actionType: 'actions.approve', route: pathname, success: false, error: scopedAuth.error });
       res.writeHead(403, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: approverAuth.error || 'Approver access required' }));
+      res.end(JSON.stringify({ error: scopedAuth.error || 'Approver access required' }));
       return true;
     }
 
     try {
-      const approverId = approverAuth.userId || body.approverId;
+      await logPrivilegedCall(req, { actionType: 'actions.approve', route: pathname, userId: scopedAuth.userId, role: scopedAuth.role, payload: { requestId: body.requestId } });
+      const approverId = scopedAuth.userId || body.approverId;
       const result = await executorInstance.approveAction(body.requestId, approverId);
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ ...result, approvedBy: approverId }));
@@ -327,16 +420,24 @@ async function handleAgenticRoutes(req, res, pathname, body, pool) {
       res.end(JSON.stringify({ error: 'Missing requestId' }));
       return true;
     }
+    
+    if (!req.headers['x-req-id']) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'X-Req-Id header required for privileged operations' }));
+      return true;
+    }
 
-    const approverAuth = await validateApproverAccess(req, pool);
-    if (!approverAuth.valid) {
+    const scopedAuth = await validateWithRBAC(req, pool, 'actions.reject');
+    if (!scopedAuth.valid) {
+      await logPrivilegedCall(req, { actionType: 'actions.reject', route: pathname, success: false, error: scopedAuth.error });
       res.writeHead(403, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: approverAuth.error || 'Approver access required' }));
+      res.end(JSON.stringify({ error: scopedAuth.error || 'Approver access required' }));
       return true;
     }
 
     try {
-      const rejectorId = approverAuth.userId || body.rejectorId;
+      await logPrivilegedCall(req, { actionType: 'actions.reject', route: pathname, userId: scopedAuth.userId, role: scopedAuth.role, payload: { requestId: body.requestId, reason: body.reason } });
+      const rejectorId = scopedAuth.userId || body.rejectorId;
       const result = await executorInstance.rejectAction(
         body.requestId, 
         rejectorId, 
@@ -357,16 +458,24 @@ async function handleAgenticRoutes(req, res, pathname, body, pool) {
       res.end(JSON.stringify({ error: 'Missing requestId' }));
       return true;
     }
+    
+    if (!req.headers['x-req-id']) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'X-Req-Id header required for privileged operations' }));
+      return true;
+    }
 
-    const approverAuth = await validateApproverAccess(req, pool);
-    if (!approverAuth.valid) {
+    const scopedAuth = await validateWithRBAC(req, pool, 'actions.execute');
+    if (!scopedAuth.valid) {
+      await logPrivilegedCall(req, { actionType: 'actions.execute', route: pathname, success: false, error: scopedAuth.error });
       res.writeHead(403, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: approverAuth.error || 'Executor access required' }));
+      res.end(JSON.stringify({ error: scopedAuth.error || 'Executor access required' }));
       return true;
     }
 
     try {
-      const executorId = approverAuth.userId || body.executorId || 'system';
+      await logPrivilegedCall(req, { actionType: 'actions.execute', route: pathname, userId: scopedAuth.userId, role: scopedAuth.role, payload: { requestId: body.requestId } });
+      const executorId = scopedAuth.userId || body.executorId || 'system';
       const result = await executorInstance.triggerExecution(body.requestId, executorId);
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ success: true, ...result, executedBy: executorId }));
@@ -399,15 +508,24 @@ async function handleAgenticRoutes(req, res, pathname, body, pool) {
   const approveMatch = pathname.match(/^\/api\/agentic\/actions\/([^\/]+)\/approve$/);
   if (approveMatch && req.method === 'POST') {
     const requestId = approveMatch[1];
-    const approverAuth = await validateApproverAccess(req, pool);
-    if (!approverAuth.valid) {
+    
+    if (!req.headers['x-req-id']) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'X-Req-Id header required for privileged operations' }));
+      return true;
+    }
+    
+    const scopedAuth = await validateWithRBAC(req, pool, 'actions.approve');
+    if (!scopedAuth.valid) {
+      await logPrivilegedCall(req, { actionType: 'actions.approve', route: pathname, success: false, error: scopedAuth.error });
       res.writeHead(403, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: approverAuth.error || 'Approver access required' }));
+      res.end(JSON.stringify({ error: scopedAuth.error || 'Approver access required' }));
       return true;
     }
 
     try {
-      const approverId = approverAuth.userId || body?.approverId || 'admin';
+      await logPrivilegedCall(req, { actionType: 'actions.approve', route: pathname, userId: scopedAuth.userId, role: scopedAuth.role, payload: { requestId } });
+      const approverId = scopedAuth.userId || body?.approverId || 'admin';
       const result = await executorInstance.approveAction(requestId, approverId);
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ success: true, ...result, approvedBy: approverId }));
@@ -421,15 +539,24 @@ async function handleAgenticRoutes(req, res, pathname, body, pool) {
   const executeMatch = pathname.match(/^\/api\/agentic\/actions\/([^\/]+)\/execute$/);
   if (executeMatch && req.method === 'POST') {
     const requestId = executeMatch[1];
-    const approverAuth = await validateApproverAccess(req, pool);
-    if (!approverAuth.valid) {
+    
+    if (!req.headers['x-req-id']) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'X-Req-Id header required for privileged operations' }));
+      return true;
+    }
+    
+    const scopedAuth = await validateWithRBAC(req, pool, 'actions.execute');
+    if (!scopedAuth.valid) {
+      await logPrivilegedCall(req, { actionType: 'actions.execute', route: pathname, success: false, error: scopedAuth.error });
       res.writeHead(403, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: approverAuth.error || 'Executor access required' }));
+      res.end(JSON.stringify({ error: scopedAuth.error || 'Executor access required' }));
       return true;
     }
 
     try {
-      const executorId = approverAuth.userId || body?.executorId || 'admin';
+      await logPrivilegedCall(req, { actionType: 'actions.execute', route: pathname, userId: scopedAuth.userId, role: scopedAuth.role, payload: { requestId } });
+      const executorId = scopedAuth.userId || body?.executorId || 'admin';
       const result = await executorInstance.triggerExecution(requestId, executorId);
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ success: true, ...result, executedBy: executorId }));
@@ -443,15 +570,24 @@ async function handleAgenticRoutes(req, res, pathname, body, pool) {
   const rejectMatch = pathname.match(/^\/api\/agentic\/actions\/([^\/]+)\/reject$/);
   if (rejectMatch && req.method === 'POST') {
     const requestId = rejectMatch[1];
-    const approverAuth = await validateApproverAccess(req, pool);
-    if (!approverAuth.valid) {
+    
+    if (!req.headers['x-req-id']) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'X-Req-Id header required for privileged operations' }));
+      return true;
+    }
+    
+    const scopedAuth = await validateWithRBAC(req, pool, 'actions.reject');
+    if (!scopedAuth.valid) {
+      await logPrivilegedCall(req, { actionType: 'actions.reject', route: pathname, success: false, error: scopedAuth.error });
       res.writeHead(403, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: approverAuth.error || 'Approver access required' }));
+      res.end(JSON.stringify({ error: scopedAuth.error || 'Approver access required' }));
       return true;
     }
 
     try {
-      const rejectorId = approverAuth.userId || body?.rejectorId || 'admin';
+      await logPrivilegedCall(req, { actionType: 'actions.reject', route: pathname, userId: scopedAuth.userId, role: scopedAuth.role, payload: { requestId, reason: body?.reason } });
+      const rejectorId = scopedAuth.userId || body?.rejectorId || 'admin';
       const result = await executorInstance.rejectAction(requestId, rejectorId, body?.reason || 'Rejected by admin');
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ success: true, ...result, rejectedBy: rejectorId }));
@@ -700,19 +836,30 @@ async function handleAgenticRoutes(req, res, pathname, body, pool) {
       res.end(JSON.stringify({ error: 'Missing assetId or priceSolar' }));
       return true;
     }
+    
+    if (!req.headers['x-req-id']) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'X-Req-Id header required for privileged operations' }));
+      return true;
+    }
 
-    const adminAuth = await validateAdminAccess(req, pool);
-    if (!adminAuth.valid) {
+    const scopedAuth = await validateWithRBAC(req, pool, 'PRICE.PUBLISH');
+    if (!scopedAuth.valid) {
+      await logPrivilegedCall(req, { actionType: 'PRICE.PUBLISH', route: pathname, success: false, error: scopedAuth.error });
       res.writeHead(403, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Admin access required for price publishing' }));
+      res.end(JSON.stringify({ error: scopedAuth.error || 'Admin access required for price publishing' }));
       return true;
     }
 
     try {
+      await logPrivilegedCall(req, { 
+        actionType: 'PRICE.PUBLISH', route: pathname, userId: scopedAuth.userId, 
+        role: scopedAuth.role, payload: body 
+      });
       const result = await executorInstance.submitAction({
         actionType: 'PRICE.PUBLISH',
         agentId: 'pricing-agent-v1',
-        requesterId: adminAuth.userId || 'system',
+        requesterId: scopedAuth.userId || 'system',
         payload: body
       });
       res.writeHead(result.success ? 200 : 400, { 'Content-Type': 'application/json' });
@@ -861,18 +1008,29 @@ async function handleAgenticRoutes(req, res, pathname, body, pool) {
   }
 
   if (pathname === '/api/agentic/marketplace/ledger' && req.method === 'POST') {
-    const adminAuth = await validateAdminAccess(req, pool);
-    if (!adminAuth.valid) {
+    if (!req.headers['x-req-id']) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'X-Req-Id header required for privileged operations' }));
+      return true;
+    }
+    
+    const scopedAuth = await validateWithRBAC(req, pool, 'LEDGER.POST');
+    if (!scopedAuth.valid) {
+      await logPrivilegedCall(req, { actionType: 'LEDGER.POST', route: pathname, success: false, error: scopedAuth.error });
       res.writeHead(403, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Admin access required for ledger operations' }));
+      res.end(JSON.stringify({ error: scopedAuth.error || 'Admin access required for ledger operations' }));
       return true;
     }
 
     try {
+      await logPrivilegedCall(req, { 
+        actionType: 'LEDGER.POST', route: pathname, userId: scopedAuth.userId, 
+        role: scopedAuth.role, payload: body 
+      });
       const result = await executorInstance.submitAction({
         actionType: 'LEDGER.POST',
         agentId: 'settlement-agent-v1',
-        requesterId: adminAuth.userId || 'system',
+        requesterId: scopedAuth.userId || 'system',
         payload: body
       });
       res.writeHead(result.success ? 200 : 400, { 'Content-Type': 'application/json' });
@@ -885,24 +1043,37 @@ async function handleAgenticRoutes(req, res, pathname, body, pool) {
   }
 
   if (pathname === '/api/agentic/marketplace/settlement' && req.method === 'POST') {
-    const adminAuth = await validateAdminAccess(req, pool);
-    if (!adminAuth.valid) {
+    if (!req.headers['x-req-id']) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'X-Req-Id header required for privileged operations' }));
+      return true;
+    }
+    
+    const scopedAuth = await validateWithRBAC(req, pool, 'SETTLEMENT.RUN');
+    if (!scopedAuth.valid) {
+      await logPrivilegedCall(req, { actionType: 'SETTLEMENT.RUN', route: pathname, success: false, error: scopedAuth.error });
       res.writeHead(403, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Admin access required for settlement' }));
+      res.end(JSON.stringify({ error: scopedAuth.error || 'Admin access required for settlement' }));
       return true;
     }
 
+    const settlementPayload = {
+      networkId: body.networkId || 'default',
+      periodStart: body.periodStart || new Date(Date.now() - 24*60*60*1000).toISOString(),
+      periodEnd: body.periodEnd || new Date().toISOString(),
+      dryRun: body.dryRun || false
+    };
+
     try {
+      await logPrivilegedCall(req, { 
+        actionType: 'SETTLEMENT.RUN', route: pathname, userId: scopedAuth.userId, 
+        role: scopedAuth.role, payload: settlementPayload 
+      });
       const result = await executorInstance.submitAction({
         actionType: 'SETTLEMENT.RUN',
         agentId: 'settlement-agent-v1',
-        requesterId: adminAuth.userId || 'system',
-        payload: {
-          networkId: body.networkId || 'default',
-          periodStart: body.periodStart || new Date(Date.now() - 24*60*60*1000).toISOString(),
-          periodEnd: body.periodEnd || new Date().toISOString(),
-          dryRun: body.dryRun || false
-        }
+        requesterId: scopedAuth.userId || 'system',
+        payload: settlementPayload
       });
       res.writeHead(result.success ? 200 : 400, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(result));
@@ -930,6 +1101,71 @@ async function handleAgenticRoutes(req, res, pathname, body, pool) {
     return true;
   }
 
+  // ============================================================================
+  // SCHEDULER OPERATIONS
+  // ============================================================================
+
+  if (pathname === '/api/agentic/scheduler/status' && req.method === 'GET') {
+    const scopedAuth = await validateWithRBAC(req, pool, 'SCHEDULER.STATUS');
+    if (!scopedAuth.valid) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: scopedAuth.error || 'Admin access required' }));
+      return true;
+    }
+
+    try {
+      const jobs = await schedulerInstance.getJobStatus();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, jobs, isRunning: schedulerInstance.isRunning }));
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: error.message }));
+    }
+    return true;
+  }
+
+  if (pathname === '/api/agentic/scheduler/trigger' && req.method === 'POST') {
+    if (!req.headers['x-req-id']) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'X-Req-Id header required for privileged operations' }));
+      return true;
+    }
+    
+    const scopedAuth = await validateWithRBAC(req, pool, 'SCHEDULER.TRIGGER');
+    if (!scopedAuth.valid) {
+      await logPrivilegedCall(req, { actionType: 'SCHEDULER.TRIGGER', route: pathname, success: false, error: scopedAuth.error });
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: scopedAuth.error || 'Admin access required' }));
+      return true;
+    }
+
+    if (!body?.jobType) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Missing jobType', validTypes: Object.values(JOB_TYPES) }));
+      return true;
+    }
+
+    try {
+      await logPrivilegedCall(req, { 
+        actionType: 'SCHEDULER.TRIGGER', route: pathname, userId: scopedAuth.userId, 
+        role: scopedAuth.role, payload: body 
+      });
+      const result = await schedulerInstance.triggerJob(body.jobType);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, jobType: body.jobType, result }));
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: error.message }));
+    }
+    return true;
+  }
+
+  if (pathname === '/api/agentic/scheduler/job-types' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ success: true, jobTypes: JOB_TYPES }));
+    return true;
+  }
+
   return false;
 }
 
@@ -937,5 +1173,6 @@ module.exports = {
   handleAgenticRoutes,
   initializeAgenticFramework,
   getExecutor,
-  getCommissioningAgent
+  getCommissioningAgent,
+  getScheduler
 };

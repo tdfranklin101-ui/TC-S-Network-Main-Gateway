@@ -1132,6 +1132,50 @@ export const settlements = pgTable("settlements", {
   periodIdx: index("settlements_period_idx").on(table.periodStart, table.periodEnd),
 }));
 
+// Intent Log - audit trail for privileged operations
+export const intentLog = pgTable("intent_log", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  timestamp: timestamp("timestamp").defaultNow(),
+  who: varchar("who").notNull(),
+  role: varchar("role"),
+  actionType: varchar("action_type"),
+  route: varchar("route"),
+  method: varchar("method"),
+  reqId: varchar("req_id"),
+  payloadHash: varchar("payload_hash"),
+  ip: varchar("ip"),
+  userAgent: text("user_agent"),
+  success: boolean("success").default(true),
+  error: text("error"),
+  durationMs: integer("duration_ms"),
+  metadata: jsonb("metadata"),
+}, (table) => ({
+  timestampIdx: index("intent_log_timestamp_idx").on(table.timestamp),
+  whoIdx: index("intent_log_who_idx").on(table.who),
+  actionTypeIdx: index("intent_log_action_type_idx").on(table.actionType),
+  reqIdIdx: index("intent_log_req_id_idx").on(table.reqId),
+}));
+
+// Scheduled Jobs - for daily schedulers
+export const scheduledJobs = pgTable("scheduled_jobs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  jobType: varchar("job_type").notNull(),
+  schedule: varchar("schedule").notNull(),
+  lastRunAt: timestamp("last_run_at"),
+  nextRunAt: timestamp("next_run_at"),
+  status: varchar("status").default("pending"),
+  networkId: varchar("network_id"),
+  config: jsonb("config"),
+  lastResult: jsonb("last_result"),
+  isEnabled: boolean("is_enabled").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  jobTypeIdx: index("scheduled_jobs_type_idx").on(table.jobType),
+  nextRunIdx: index("scheduled_jobs_next_run_idx").on(table.nextRunAt),
+  statusIdx: index("scheduled_jobs_status_idx").on(table.status),
+}));
+
 // Network configuration - pricing rules, fee splits, constraints
 export const networkConfig = pgTable("network_config", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -1173,6 +1217,8 @@ export const insertOrderItemSchema = createInsertSchema(orderItems).omit({ id: t
 export const insertLedgerEventSchema = createInsertSchema(ledgerEvents).omit({ id: true, postedAt: true });
 export const insertSettlementSchema = createInsertSchema(settlements).omit({ id: true, createdAt: true });
 export const insertNetworkConfigSchema = createInsertSchema(networkConfig).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertIntentLogSchema = createInsertSchema(intentLog).omit({ id: true, timestamp: true });
+export const insertScheduledJobSchema = createInsertSchema(scheduledJobs).omit({ id: true, createdAt: true, updatedAt: true });
 
 // Select types for new tables
 export type Inventory = typeof inventory.$inferSelect;
@@ -1181,6 +1227,8 @@ export type OrderItem = typeof orderItems.$inferSelect;
 export type LedgerEvent = typeof ledgerEvents.$inferSelect;
 export type Settlement = typeof settlements.$inferSelect;
 export type NetworkConfig = typeof networkConfig.$inferSelect;
+export type IntentLog = typeof intentLog.$inferSelect;
+export type ScheduledJob = typeof scheduledJobs.$inferSelect;
 
 // Insert types for new tables
 export type InsertInventory = z.infer<typeof insertInventorySchema>;
@@ -1189,6 +1237,8 @@ export type InsertOrderItem = z.infer<typeof insertOrderItemSchema>;
 export type InsertLedgerEvent = z.infer<typeof insertLedgerEventSchema>;
 export type InsertSettlement = z.infer<typeof insertSettlementSchema>;
 export type InsertNetworkConfig = z.infer<typeof insertNetworkConfigSchema>;
+export type InsertIntentLog = z.infer<typeof insertIntentLogSchema>;
+export type InsertScheduledJob = z.infer<typeof insertScheduledJobSchema>;
 
 // Order status enum
 export const ORDER_STATUS = {

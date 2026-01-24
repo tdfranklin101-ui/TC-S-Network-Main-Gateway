@@ -120,7 +120,7 @@ The WPC module provides universal compute-energy intelligence across the 14-repo
 
 **Satellite Repos (all use Next.js App Router):**
 1. TC-S-Network-Identify-Anything
-2. TC-S-Network-Market-Grid
+2. TC-S-Network-Market-Grid (reference: https://solar-grid-market-tdfranklin101.replit.app)
 3. TC-S-Network-Satellite-ID-Anywhere
 4. TC-S-Network-Seismic-ID-Anywhere
 5. TC-S-Network-Solar-Dashboard
@@ -132,3 +132,30 @@ The WPC module provides universal compute-energy intelligence across the 14-repo
 11. TC-S-Network-UIM-Protocol
 12. TC-S-Network-Standards
 13. TC-S-Network-Z-Private
+
+## Security Hardening (Autonomy Spine v2.1)
+
+### Scoped Admin Keys
+All privileged operations require a scoped admin key with appropriate permissions:
+- `actions.execute`, `actions.approve`, `actions.reject`
+- `settlement.run`, `pricing.publish`, `scheduler.manage`
+- `admin.full` for full access
+
+### RBAC System (5 Roles)
+- `member`: Basic marketplace access
+- `seller`: Asset creation, pricing
+- `staff`: Order fulfillment
+- `commissioner_admin`: Network operations
+- `tcs_admin`: Full system access
+
+### Security Features
+- **Intent Logging**: All privileged operations logged with user, role, action, payload hash
+- **Replay Protection**: X-Req-Id required on privileged endpoints, 5-min deduplication
+- **validateWithRBAC**: Combines scoped admin keys + RBAC permission checks
+- **Route Permissions**: 18 privileged routes mapped with required roles
+
+### Key Files
+- `server/agentic/security.js`: Scoped keys, RBAC, intent logging, replay protection
+- `server/agentic/scheduler.js`: Daily schedulers for settlements/reports
+- `server/agentic/routes.js`: Agentic API routes with security enforcement
+- `docs/AUTONOMY.md`: Full security documentation

@@ -1,0 +1,146 @@
+{
+  "passed": 0,
+  "failed": 10,
+  "steps": [
+    {
+      "step": "1. ASSET.CREATE",
+      "status": "RUN",
+      "message": "Creating test asset...",
+      "timestamp": "2026-01-24T05:36:58.670Z",
+      "data": null
+    },
+    {
+      "step": "1. ASSET.CREATE",
+      "status": "FAIL",
+      "message": "connect ECONNREFUSED 127.0.0.1:5000",
+      "timestamp": "2026-01-24T05:36:58.693Z",
+      "data": null
+    },
+    {
+      "step": "2. ASSET.ENRICH",
+      "status": "RUN",
+      "message": "Enriching asset null...",
+      "timestamp": "2026-01-24T05:36:58.693Z",
+      "data": null
+    },
+    {
+      "step": "2. ASSET.ENRICH",
+      "status": "FAIL",
+      "message": "No asset ID from previous step",
+      "timestamp": "2026-01-24T05:36:58.693Z",
+      "data": null
+    },
+    {
+      "step": "3. PRICE.QUOTE",
+      "status": "RUN",
+      "message": "Getting price quote for null...",
+      "timestamp": "2026-01-24T05:36:58.693Z",
+      "data": null
+    },
+    {
+      "step": "3. PRICE.QUOTE",
+      "status": "FAIL",
+      "message": "No asset ID",
+      "timestamp": "2026-01-24T05:36:58.694Z",
+      "data": null
+    },
+    {
+      "step": "4. PRICE.PUBLISH",
+      "status": "RUN",
+      "message": "Publishing price 10 Solar...",
+      "timestamp": "2026-01-24T05:36:58.694Z",
+      "data": null
+    },
+    {
+      "step": "4. PRICE.PUBLISH",
+      "status": "FAIL",
+      "message": "No asset ID",
+      "timestamp": "2026-01-24T05:36:58.694Z",
+      "data": null
+    },
+    {
+      "step": "5. LISTING.PUBLISH",
+      "status": "RUN",
+      "message": "Listing asset null...",
+      "timestamp": "2026-01-24T05:36:58.695Z",
+      "data": null
+    },
+    {
+      "step": "5. LISTING.PUBLISH",
+      "status": "FAIL",
+      "message": "No asset ID",
+      "timestamp": "2026-01-24T05:36:58.695Z",
+      "data": null
+    },
+    {
+      "step": "6. ORDER.CREATE",
+      "status": "RUN",
+      "message": "Creating order for null...",
+      "timestamp": "2026-01-24T05:36:58.695Z",
+      "data": null
+    },
+    {
+      "step": "6. ORDER.CREATE",
+      "status": "FAIL",
+      "message": "No asset ID",
+      "timestamp": "2026-01-24T05:36:58.695Z",
+      "data": null
+    },
+    {
+      "step": "7. PAYMENT.CAPTURE",
+      "status": "RUN",
+      "message": "Capturing payment for order undefined...",
+      "timestamp": "2026-01-24T05:36:58.695Z",
+      "data": null
+    },
+    {
+      "step": "7. PAYMENT.CAPTURE",
+      "status": "FAIL",
+      "message": "No order ID",
+      "timestamp": "2026-01-24T05:36:58.695Z",
+      "data": null
+    },
+    {
+      "step": "8. FULFILLMENT.CONFIRM",
+      "status": "RUN",
+      "message": "Fulfilling order undefined...",
+      "timestamp": "2026-01-24T05:36:58.696Z",
+      "data": null
+    },
+    {
+      "step": "8. FULFILLMENT.CONFIRM",
+      "status": "FAIL",
+      "message": "No order ID",
+      "timestamp": "2026-01-24T05:36:58.696Z",
+      "data": null
+    },
+    {
+      "step": "9. LEDGER.POST",
+      "status": "RUN",
+      "message": "Posting ledger entry for order undefined...",
+      "timestamp": "2026-01-24T05:36:58.696Z",
+      "data": null
+    },
+    {
+      "step": "9. LEDGER.POST",
+      "status": "FAIL",
+      "message": "No order ID",
+      "timestamp": "2026-01-24T05:36:58.696Z",
+      "data": null
+    },
+    {
+      "step": "10. SETTLEMENT.RUN",
+      "status": "RUN",
+      "message": "Running settlement...",
+      "timestamp": "2026-01-24T05:36:58.696Z",
+      "data": null
+    },
+    {
+      "step": "10. SETTLEMENT.RUN",
+      "status": "FAIL",
+      "message": "connect ECONNREFUSED 127.0.0.1:5000",
+      "timestamp": "2026-01-24T05:36:58.699Z",
+      "data": null
+    }
+  ]
+}
