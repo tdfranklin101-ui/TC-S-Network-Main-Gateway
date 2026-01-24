@@ -554,6 +554,214 @@ async function handleAgenticRoutes(req, res, pathname, body, pool) {
     return true;
   }
 
+  // ============================================================================
+  // MARKETPLACE OPERATIONS - Autonomy Spine v2
+  // ============================================================================
+
+  if (pathname === '/api/agentic/marketplace/asset' && req.method === 'POST') {
+    try {
+      const result = await executorInstance.submitAction({
+        actionType: 'ASSET.CREATE',
+        agentId: 'marketplace-agent-v1',
+        agentName: 'Marketplace Agent',
+        requesterId: body.userId || 'anonymous',
+        payload: body.asset || body
+      });
+      res.writeHead(result.success ? 200 : 400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(result));
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: error.message }));
+    }
+    return true;
+  }
+
+  if (pathname === '/api/agentic/marketplace/enrich' && req.method === 'POST') {
+    if (!body?.assetId) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Missing assetId' }));
+      return true;
+    }
+    try {
+      const result = await executorInstance.submitAction({
+        actionType: 'ASSET.ENRICH',
+        agentId: 'marketplace-agent-v1',
+        requesterId: body.userId || 'system',
+        payload: { assetId: body.assetId, forceRefresh: body.forceRefresh }
+      });
+      res.writeHead(result.success ? 200 : 400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(result));
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: error.message }));
+    }
+    return true;
+  }
+
+  if (pathname === '/api/agentic/marketplace/price/quote' && req.method === 'POST') {
+    if (!body?.assetId) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Missing assetId' }));
+      return true;
+    }
+    try {
+      const result = await executorInstance.submitAction({
+        actionType: 'PRICE.QUOTE',
+        agentId: 'pricing-agent-v1',
+        requesterId: body.userId || 'system',
+        payload: { assetId: body.assetId, networkId: body.networkId || 'default' }
+      });
+      res.writeHead(result.success ? 200 : 400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(result));
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: error.message }));
+    }
+    return true;
+  }
+
+  if (pathname === '/api/agentic/marketplace/price/publish' && req.method === 'POST') {
+    if (!body?.assetId || body.priceSolar === undefined) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Missing assetId or priceSolar' }));
+      return true;
+    }
+    try {
+      const result = await executorInstance.submitAction({
+        actionType: 'PRICE.PUBLISH',
+        agentId: 'pricing-agent-v1',
+        requesterId: body.userId || 'system',
+        payload: body
+      });
+      res.writeHead(result.success ? 200 : 400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(result));
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: error.message }));
+    }
+    return true;
+  }
+
+  if (pathname === '/api/agentic/marketplace/list' && req.method === 'POST') {
+    if (!body?.assetId) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Missing assetId' }));
+      return true;
+    }
+    try {
+      const result = await executorInstance.submitAction({
+        actionType: 'ASSET.LIST',
+        agentId: 'marketplace-agent-v1',
+        requesterId: body.userId || 'system',
+        payload: { assetId: body.assetId }
+      });
+      res.writeHead(result.success ? 200 : 400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(result));
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: error.message }));
+    }
+    return true;
+  }
+
+  if (pathname === '/api/agentic/marketplace/order' && req.method === 'POST') {
+    if (!body?.buyerId || !body?.items || !Array.isArray(body.items)) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Missing buyerId or items array' }));
+      return true;
+    }
+    try {
+      const result = await executorInstance.submitAction({
+        actionType: 'ORDER.CREATE',
+        agentId: 'order-agent-v1',
+        requesterId: body.buyerId,
+        payload: body
+      });
+      res.writeHead(result.success ? 200 : 400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(result));
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: error.message }));
+    }
+    return true;
+  }
+
+  if (pathname === '/api/agentic/marketplace/fulfill' && req.method === 'POST') {
+    if (!body?.orderId) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Missing orderId' }));
+      return true;
+    }
+
+    const adminAuth = await validateAdminAccess(req, pool);
+    if (!adminAuth.valid) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Admin access required for fulfillment' }));
+      return true;
+    }
+
+    try {
+      const result = await executorInstance.submitAction({
+        actionType: 'ORDER.FULFILL',
+        agentId: 'fulfillment-agent-v1',
+        requesterId: adminAuth.userId || 'staff',
+        payload: body
+      });
+      res.writeHead(result.success ? 200 : 400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(result));
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: error.message }));
+    }
+    return true;
+  }
+
+  if (pathname === '/api/agentic/marketplace/settlement' && req.method === 'POST') {
+    const adminAuth = await validateAdminAccess(req, pool);
+    if (!adminAuth.valid) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Admin access required for settlement' }));
+      return true;
+    }
+
+    try {
+      const result = await executorInstance.submitAction({
+        actionType: 'SETTLEMENT.RUN',
+        agentId: 'settlement-agent-v1',
+        requesterId: adminAuth.userId || 'system',
+        payload: {
+          networkId: body.networkId || 'default',
+          periodStart: body.periodStart || new Date(Date.now() - 24*60*60*1000).toISOString(),
+          periodEnd: body.periodEnd || new Date().toISOString(),
+          dryRun: body.dryRun || false
+        }
+      });
+      res.writeHead(result.success ? 200 : 400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(result));
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: error.message }));
+    }
+    return true;
+  }
+
+  if (pathname === '/api/agentic/marketplace/action-types' && req.method === 'GET') {
+    const { getAllActions } = require('./api-surface');
+    const actions = getAllActions();
+    const marketplaceActions = actions.filter(a => 
+      a.id.startsWith('ASSET.') || 
+      a.id.startsWith('PRICE.') || 
+      a.id.startsWith('ORDER.') ||
+      a.id.startsWith('LEDGER.') ||
+      a.id.startsWith('SETTLEMENT.') ||
+      a.id.startsWith('MODERATION.') ||
+      a.id.startsWith('SEARCH.')
+    );
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ success: true, count: marketplaceActions.length, actions: marketplaceActions }));
+    return true;
+  }
+
   return false;
 }
 

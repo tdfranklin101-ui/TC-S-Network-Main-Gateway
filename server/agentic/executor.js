@@ -8,13 +8,16 @@
 
 const { getActionById, RISK_LEVELS } = require('./api-surface');
 const { PolicyEngine, POLICY_DECISIONS } = require('./policy');
+const { MarketplaceHandlers } = require('./handlers/marketplace-handlers');
 
 class ActionExecutor {
   constructor(pool) {
     this.pool = pool;
     this.policyEngine = new PolicyEngine(pool);
     this.handlers = {};
+    this.marketplaceHandlers = new MarketplaceHandlers(pool);
     this.registerDefaultHandlers();
+    this.registerMarketplaceHandlers();
   }
 
   registerDefaultHandlers() {
@@ -27,6 +30,26 @@ class ActionExecutor {
     this.handlers['QUERY_MARKETPLACE'] = this.executeQueryMarketplace.bind(this);
     this.handlers['GENERATE_REPORT'] = this.executeGenerateReport.bind(this);
     this.handlers['LOG_ETHICS_EVENT'] = this.executeLogEthicsEvent.bind(this);
+  }
+
+  registerMarketplaceHandlers() {
+    const mh = this.marketplaceHandlers;
+    this.handlers['ASSET.CREATE'] = mh.executeAssetCreate.bind(mh);
+    this.handlers['ASSET.ENRICH'] = mh.executeAssetEnrich.bind(mh);
+    this.handlers['ASSET.LIST'] = mh.executeAssetList.bind(mh);
+    this.handlers['ASSET.UNLIST'] = mh.executeAssetUnlist.bind(mh);
+    this.handlers['ASSET.UPDATE'] = mh.executeAssetUpdate.bind(mh);
+    this.handlers['PRICE.QUOTE'] = mh.executePriceQuote.bind(mh);
+    this.handlers['PRICE.PUBLISH'] = mh.executePricePublish.bind(mh);
+    this.handlers['PRICE.UPDATE_RULES'] = mh.executePriceUpdateRules.bind(mh);
+    this.handlers['ORDER.CREATE'] = mh.executeOrderCreate.bind(mh);
+    this.handlers['ORDER.CAPTURE_PAYMENT'] = mh.executeOrderCapturePayment.bind(mh);
+    this.handlers['ORDER.FULFILL'] = mh.executeOrderFulfill.bind(mh);
+    this.handlers['LEDGER.POST'] = mh.executeLedgerPost.bind(mh);
+    this.handlers['SETTLEMENT.RUN'] = mh.executeSettlementRun.bind(mh);
+    this.handlers['MODERATION.REVIEW'] = mh.executeModerationReview.bind(mh);
+    this.handlers['SEARCH.FULFILLMENT.RECOMMEND'] = mh.executeSearchFulfillmentRecommend.bind(mh);
+    this.handlers['ALERT.CREATE'] = mh.executeAlertCreate.bind(mh);
   }
 
   registerHandler(actionType, handler) {

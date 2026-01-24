@@ -1010,6 +1010,215 @@ export type InsertProcurementRecommendation = z.infer<typeof insertProcurementRe
 export type InsertProcurementReview = z.infer<typeof insertProcurementReviewSchema>;
 
 // ============================================================================
+// MARKETPLACE OPERATIONS - Autonomy Spine v2
+// Inventory, Orders, Settlement, Network Configuration
+// ============================================================================
+
+// Inventory tracking - quantity and reservations per asset
+export const inventory = pgTable("inventory", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  assetId: varchar("asset_id").notNull(),
+  networkId: varchar("network_id"),
+  quantityTotal: integer("quantity_total").notNull().default(1),
+  quantityAvailable: integer("quantity_available").notNull().default(1),
+  quantityReserved: integer("quantity_reserved").notNull().default(0),
+  reorderThreshold: integer("reorder_threshold").default(0),
+  warehouseLocation: varchar("warehouse_location"),
+  lastRestockAt: timestamp("last_restock_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  assetIdx: index("inventory_asset_idx").on(table.assetId),
+  networkIdx: index("inventory_network_idx").on(table.networkId),
+}));
+
+// Orders - buyer intent and lifecycle
+export const orders = pgTable("orders", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  buyerId: varchar("buyer_id").notNull(),
+  networkId: varchar("network_id"),
+  status: varchar("status").notNull().default("pending"),
+  totalSolar: numeric("total_solar", { precision: 18, scale: 6 }),
+  totalFiat: numeric("total_fiat", { precision: 10, scale: 2 }),
+  currency: varchar("currency").default("usd"),
+  paymentMethod: varchar("payment_method"),
+  paymentIntentId: varchar("payment_intent_id"),
+  paymentCapturedAt: timestamp("payment_captured_at"),
+  fulfillmentStatus: varchar("fulfillment_status").default("pending"),
+  fulfillmentMethod: varchar("fulfillment_method"),
+  fulfilledAt: timestamp("fulfilled_at"),
+  fulfilledBy: varchar("fulfilled_by"),
+  verificationCode: varchar("verification_code"),
+  pickupAddress: text("pickup_address"),
+  shippingAddress: jsonb("shipping_address"),
+  notes: text("notes"),
+  reservationExpiresAt: timestamp("reservation_expires_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  metadata: jsonb("metadata"),
+}, (table) => ({
+  buyerIdx: index("orders_buyer_idx").on(table.buyerId),
+  statusIdx: index("orders_status_idx").on(table.status),
+  networkIdx: index("orders_network_idx").on(table.networkId),
+  createdIdx: index("orders_created_idx").on(table.createdAt),
+}));
+
+// Order items - individual line items in an order
+export const orderItems = pgTable("order_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  orderId: varchar("order_id").references(() => orders.id).notNull(),
+  assetId: varchar("asset_id").notNull(),
+  quantity: integer("quantity").notNull().default(1),
+  unitPriceSolar: numeric("unit_price_solar", { precision: 18, scale: 6 }),
+  unitPriceFiat: numeric("unit_price_fiat", { precision: 10, scale: 2 }),
+  totalPriceSolar: numeric("total_price_solar", { precision: 18, scale: 6 }),
+  totalPriceFiat: numeric("total_price_fiat", { precision: 10, scale: 2 }),
+  vendorId: varchar("vendor_id"),
+  feeBreakdown: jsonb("fee_breakdown"),
+  status: varchar("status").default("reserved"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  orderIdx: index("order_items_order_idx").on(table.orderId),
+  assetIdx: index("order_items_asset_idx").on(table.assetId),
+}));
+
+// Ledger events - immutable transaction log (append-only)
+export const ledgerEvents = pgTable("ledger_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  eventType: varchar("event_type").notNull(),
+  orderId: varchar("order_id"),
+  orderItemId: varchar("order_item_id"),
+  settlementId: varchar("settlement_id"),
+  amount: numeric("amount", { precision: 18, scale: 6 }).notNull(),
+  currency: varchar("currency").notNull().default("solar"),
+  fromAccountId: varchar("from_account_id"),
+  toAccountId: varchar("to_account_id"),
+  fromAccountType: varchar("from_account_type"),
+  toAccountType: varchar("to_account_type"),
+  description: text("description"),
+  networkId: varchar("network_id"),
+  actionRequestId: varchar("action_request_id"),
+  postedAt: timestamp("posted_at").defaultNow(),
+  metadata: jsonb("metadata"),
+}, (table) => ({
+  orderIdx: index("ledger_events_order_idx").on(table.orderId),
+  settlementIdx: index("ledger_events_settlement_idx").on(table.settlementId),
+  eventTypeIdx: index("ledger_events_type_idx").on(table.eventType),
+  postedIdx: index("ledger_events_posted_idx").on(table.postedAt),
+}));
+
+// Settlements - periodic fund distribution runs
+export const settlements = pgTable("settlements", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  networkId: varchar("network_id").notNull(),
+  periodStart: timestamp("period_start").notNull(),
+  periodEnd: timestamp("period_end").notNull(),
+  status: varchar("status").notNull().default("pending"),
+  ordersSettled: integer("orders_settled").default(0),
+  totalVolumeSolar: numeric("total_volume_solar", { precision: 18, scale: 6 }),
+  totalVolumeFiat: numeric("total_volume_fiat", { precision: 10, scale: 2 }),
+  vendorPayouts: numeric("vendor_payouts", { precision: 18, scale: 6 }),
+  commissionerFees: numeric("commissioner_fees", { precision: 18, scale: 6 }),
+  tcsFees: numeric("tcs_fees", { precision: 18, scale: 6 }),
+  taxBucket: numeric("tax_bucket", { precision: 18, scale: 6 }),
+  microFees: numeric("micro_fees", { precision: 18, scale: 6 }),
+  actionRequestId: varchar("action_request_id"),
+  settledAt: timestamp("settled_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  metadata: jsonb("metadata"),
+}, (table) => ({
+  networkIdx: index("settlements_network_idx").on(table.networkId),
+  statusIdx: index("settlements_status_idx").on(table.status),
+  periodIdx: index("settlements_period_idx").on(table.periodStart, table.periodEnd),
+}));
+
+// Network configuration - pricing rules, fee splits, constraints
+export const networkConfig = pgTable("network_config", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  networkId: varchar("network_id").notNull(),
+  configKey: varchar("config_key").notNull(),
+  configValue: jsonb("config_value").notNull(),
+  description: text("description"),
+  version: integer("version").notNull().default(1),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedBy: varchar("updated_by"),
+}, (table) => ({
+  networkKeyIdx: index("network_config_network_key_idx").on(table.networkId, table.configKey),
+  activeIdx: index("network_config_active_idx").on(table.isActive),
+}));
+
+// Default network pricing configuration
+export const DEFAULT_PRICING_CONFIG = {
+  commissionerMargin: 0.10,
+  tcsMargin: 0.02,
+  taxRate: 0.08,
+  microFeePerTransaction: 0.001,
+  taxIncluded: true,
+  categoryFloors: {},
+  categoryCeilings: {},
+  allowedCategories: ['computronium', 'culture', 'basic_needs', 'energy_trading', 'services'],
+  autoListThresholds: {
+    maxRiskScore: 20,
+    minConfidence: 80,
+    maxPriceDeviation: 0.15
+  }
+};
+
+// Insert schemas for new tables
+export const insertInventorySchema = createInsertSchema(inventory).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertOrderSchema = createInsertSchema(orders).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertOrderItemSchema = createInsertSchema(orderItems).omit({ id: true, createdAt: true });
+export const insertLedgerEventSchema = createInsertSchema(ledgerEvents).omit({ id: true, postedAt: true });
+export const insertSettlementSchema = createInsertSchema(settlements).omit({ id: true, createdAt: true });
+export const insertNetworkConfigSchema = createInsertSchema(networkConfig).omit({ id: true, createdAt: true, updatedAt: true });
+
+// Select types for new tables
+export type Inventory = typeof inventory.$inferSelect;
+export type Order = typeof orders.$inferSelect;
+export type OrderItem = typeof orderItems.$inferSelect;
+export type LedgerEvent = typeof ledgerEvents.$inferSelect;
+export type Settlement = typeof settlements.$inferSelect;
+export type NetworkConfig = typeof networkConfig.$inferSelect;
+
+// Insert types for new tables
+export type InsertInventory = z.infer<typeof insertInventorySchema>;
+export type InsertOrder = z.infer<typeof insertOrderSchema>;
+export type InsertOrderItem = z.infer<typeof insertOrderItemSchema>;
+export type InsertLedgerEvent = z.infer<typeof insertLedgerEventSchema>;
+export type InsertSettlement = z.infer<typeof insertSettlementSchema>;
+export type InsertNetworkConfig = z.infer<typeof insertNetworkConfigSchema>;
+
+// Order status enum
+export const ORDER_STATUS = {
+  PENDING: 'pending',
+  RESERVED: 'reserved',
+  PAYMENT_PENDING: 'payment_pending',
+  PAID: 'paid',
+  FULFILLING: 'fulfilling',
+  FULFILLED: 'fulfilled',
+  CANCELLED: 'cancelled',
+  REFUNDED: 'refunded',
+  DISPUTED: 'disputed'
+} as const;
+
+// Ledger event types
+export const LEDGER_EVENT_TYPE = {
+  SALE: 'sale',
+  REFUND: 'refund',
+  FEE_COMMISSIONER: 'fee_commissioner',
+  FEE_TCS: 'fee_tcs',
+  FEE_MICRO: 'fee_micro',
+  TAX: 'tax',
+  SETTLEMENT_VENDOR: 'settlement_vendor',
+  SETTLEMENT_COMMISSIONER: 'settlement_commissioner',
+  SETTLEMENT_TCS: 'settlement_tcs',
+  SETTLEMENT_TAX: 'settlement_tax',
+  ADJUSTMENT: 'adjustment'
+} as const;
+
+// ============================================================================
 // AGENTIC FRAMEWORK TABLES
 // Policy-gated action system for autonomous agents
 // ============================================================================
