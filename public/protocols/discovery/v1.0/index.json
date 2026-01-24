@@ -55,6 +55,14 @@
       "description": "Run events with AI ops support and human verification. Jobs posted as needs arise—people claim, complete, and get confirmed.",
       "endpoint": "https://farm-ops--tdfranklin101.replit.app",
       "kidSolarCommands": ["post job", "claim task", "verify completion"]
+    },
+    {
+      "name": "Agent Dashboard",
+      "description": "Agentic network commissioning application with RBAC-enforced privileged operations, intent logging, scheduler jobs, and marketplace administration",
+      "endpoint": "/agent-dashboard.html",
+      "type": "administrative_console",
+      "kidSolarCommands": ["review pending actions", "approve marketplace item", "view intent logs", "manage schedulers"],
+      "securityFeatures": ["RBAC 5-tier roles", "replay protection", "scoped admin keys", "audit trails"]
     }
   ],
   "supportedAISystems": [
@@ -159,9 +167,15 @@
       "ai-agent-tool-provider",
       "tessellated-art-generation",
       "marketplace-transactions",
-      "wallet-operations"
+      "wallet-operations",
+      "agentic-network-commissioning",
+      "agent-dashboard-administration",
+      "rbac-privileged-operations",
+      "intent-logging-audit",
+      "scheduler-job-management",
+      "replay-protection-security"
     ],
-    "foundation_apps": ["Music Now", "Radio Astronomy Now", "Power Twin", "Marketplace", "Solar Wallet", "EventOps.net"],
+    "foundation_apps": ["Music Now", "Radio Astronomy Now", "Power Twin", "Marketplace", "Solar Wallet", "EventOps.net", "Agent Dashboard"],
     "semantic_domains": [
       "agent-discoverable-apps",
       "kid-solar-transactions",
@@ -174,8 +188,12 @@
       "ethical-ai-frameworks",
       "ai-enhanced-creativity",
       "generative-art",
-      "solar-metered-compute"
+      "solar-metered-compute",
+      "agentic-network-commissioning",
+      "autonomous-agent-governance",
+      "privileged-action-management",
+      "rbac-security-enforcement"
     ]
   },
-  "lastUpdated": "2025-12-24T12:00:00Z"
+  "lastUpdated": "2026-01-24T12:00:00Z"
 }
