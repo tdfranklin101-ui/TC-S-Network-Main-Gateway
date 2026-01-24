@@ -453,7 +453,7 @@
                 </div>
                 
                 <!-- Audio Player for Batrhyme 3 -->
-                <audio id="audioPlayerBatrhyme3" class="audio-player" data-testid="audio-player-batrhyme3" controls preload="none" data-src="/omen-on-the-hudson.mp3" style="width: 100%; margin: 10px 0;">
+                <audio id="audioPlayerBatrhyme3" class="audio-player" data-testid="audio-player-batrhyme3" controls preload="none" data-src="/media/omen-on-the-hudson.mp3" style="width: 100%; margin: 10px 0;">
                     Your browser does not support the audio element.
                 </audio>
                 <div id="loadingBatrhyme3" style="display: none; text-align: center; padding: 8px; color: #D4A017; font-size: 0.85rem;">
@@ -1175,7 +1175,7 @@
             if (loadingEl) loadingEl.style.display = 'block';
             
             const timestamp = new Date().getTime();
-            const batrhyme3Url = '/omen-on-the-hudson.mp3?t=' + timestamp;
+            const batrhyme3Url = '/media/omen-on-the-hudson.mp3?t=' + timestamp;
             
             console.log('📍 Loading:', batrhyme3Url);
             
@@ -1372,7 +1372,7 @@
             '/media/batrhyme-break-on-the-bright-side.mp3', // 20 - Batrhyme: Break on the Bright Side
             '/media/batrhyme-psychedelic-solar-punk-party.mp3', // 21 - Batrhyme: Psychedelic Solar Punk Party
             '/media/gidget-bardot-no-one-left-v3.mp3',      // 22 - Gidget Bardot
-            '/omen-on-the-hudson.mp3'                        // 23 - Batrhyme: Omen on the Hudson (Quanta Masque)
+            '/media/omen-on-the-hudson.mp3'                   // 23 - Batrhyme: Omen on the Hudson (Quanta Masque)
         ];
 
         function playAllMusic() {
