@@ -1,65 +1,5 @@
 [
   {
-    "date": "2025-12-08",
-    "indices": [
-      {
-        "id": "si",
-        "value": 70.4
-      },
-      {
-        "id": "srh",
-        "value": 77.2
-      },
-      {
-        "id": "gbi",
-        "value": 40.8
-      },
-      {
-        "id": "cai",
-        "value": 88.7
-      },
-      {
-        "id": "mli",
-        "value": 23.2
-      },
-      {
-        "id": "eai",
-        "value": 92
-      }
-    ],
-    "timestamp": "2025-12-08T07:23:21.093Z"
-  },
-  {
-    "date": "2025-12-08",
-    "indices": [
-      {
-        "id": "si",
-        "value": 70.3
-      },
-      {
-        "id": "srh",
-        "value": 78.7
-      },
-      {
-        "id": "gbi",
-        "value": 42.4
-      },
-      {
-        "id": "cai",
-        "value": 88.3
-      },
-      {
-        "id": "mli",
-        "value": 24.1
-      },
-      {
-        "id": "eai",
-        "value": 92.1
-      }
-    ],
-    "timestamp": "2025-12-08T19:22:07.321Z"
-  },
-  {
     "date": "2025-12-09",
     "indices": [
       {
@@ -898,5 +838,65 @@
       }
     ],
     "timestamp": "2026-01-24T03:52:47.502Z"
+  },
+  {
+    "date": "2026-01-24",
+    "indices": [
+      {
+        "id": "si",
+        "value": 69.7
+      },
+      {
+        "id": "srh",
+        "value": 79.3
+      },
+      {
+        "id": "gbi",
+        "value": 41.6
+      },
+      {
+        "id": "cai",
+        "value": 88.2
+      },
+      {
+        "id": "mli",
+        "value": 24.4
+      },
+      {
+        "id": "eai",
+        "value": 92.4
+      }
+    ],
+    "timestamp": "2026-01-24T04:00:54.538Z"
+  },
+  {
+    "date": "2026-01-24",
+    "indices": [
+      {
+        "id": "si",
+        "value": 69.6
+      },
+      {
+        "id": "srh",
+        "value": 78.5
+      },
+      {
+        "id": "gbi",
+        "value": 41.5
+      },
+      {
+        "id": "cai",
+        "value": 88.5
+      },
+      {
+        "id": "mli",
+        "value": 23.6
+      },
+      {
+        "id": "eai",
+        "value": 92.7
+      }
+    ],
+    "timestamp": "2026-01-24T04:01:23.521Z"
   }
 ]
