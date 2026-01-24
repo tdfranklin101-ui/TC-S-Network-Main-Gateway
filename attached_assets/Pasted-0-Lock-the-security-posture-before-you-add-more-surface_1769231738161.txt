@@ -1,0 +1,180 @@
+0) Lock the security posture before you add more surface area
+
+You now have:
+	•	X-Session-Token / Authorization: Bearer validated against a session table
+	•	Admin routes require admin role
+	•	S2S bypass via X-Admin=true + X-Admin-Key
+	•	Order capture checks buyer ownership (or admin override)
+
+Do these 4 upgrades next (small, huge payoff):
+	1.	Rotate + scope the X-Admin-Key
+	•	Treat it like a production secret (env var only, never in frontend)
+	•	Add “scope claims” (even if just a list): ["actions.execute","settlement.run","pricing.publish"]
+	2.	Add “intent logging” to every privileged call
+	•	Store: who, why, action_id, route, payload_hash, timestamp
+	3.	Add replay protection for S2S calls
+	•	Require X-Req-Id + reject duplicates within a time window
+	4.	Permission boundaries (RBAC)
+	•	Roles: member, seller, staff, commissioner_admin, tcs_admin
+	•	Map routes + action types to roles
+
+This keeps autonomy from becoming an accidental open bar.
+
+⸻
+
+1) Prove the end-to-end loop with a single “Golden Path”
+
+Before you add 20 features, make one workflow bulletproof:
+
+Golden Path v1
+	1.	Create Asset (photo + text)
+	2.	Enrich Asset (AI metadata)
+	3.	Price Quote
+	4.	Publish Listing
+	5.	Create Order
+	6.	Capture Payment / Token debit
+	7.	Fulfill (QR pickup or staff confirm)
+	8.	Ledger Post (append-only)
+	9.	Settlement (split + tax bucket + microfees)
+
+Deliverable: one script (or smoke test) that runs this path end-to-end and leaves behind a clean ledger trail.
+
+⸻
+
+2) Turn “Actions” into first-class business operations
+
+Right now your spine can approve/execute actions. Next you make actions mean something by defining Action Types and handlers.
+
+Minimum Action Types to implement next
+
+Marketplace
+	•	ASSET.CREATE
+	•	ASSET.ENRICH
+	•	LISTING.PUBLISH
+	•	LISTING.UNPUBLISH
+
+Pricing
+	•	PRICE.QUOTE
+	•	PRICE.PUBLISH (often approval-gated)
+
+Commerce
+	•	ORDER.CREATE
+	•	PAYMENT.CAPTURE
+	•	FULFILLMENT.CONFIRM
+	•	LEDGER.POST
+	•	SETTLEMENT.RUN
+
+Required fields every action should store
+	•	type, status, requested_by, approved_by, executed_by
+	•	entity_ref (asset_id / listing_id / order_id)
+	•	inputs (original payload)
+	•	outputs (result payload)
+	•	policy_snapshot (what rules were in effect)
+	•	audit (request id, IP/user agent optional, timestamps)
+
+That “policy snapshot” is how you explain why the agent did the thing six months later.
+
+⸻
+
+3) Marketplace data model: the minimal set that doesn’t collapse later
+
+You need these tables/collections (names flexible):
+	•	assets (canonical item identity)
+	•	listings (what’s for sale + price + terms)
+	•	inventory (quantity + reservations)
+	•	orders / order_items
+	•	ledger_events (append-only, immutable)
+	•	members (roles, limits)
+	•	network_config (fees, taxes, rules)
+	•	moderation_cases (flags/decisions)
+
+Invariants (non-negotiable):
+	•	Inventory only changes via ORDER.* and FULFILLMENT.*
+	•	Ledger never edits, only appends
+	•	Listing price only changes via PRICE.* actions
+
+This is what makes automation safe.
+
+⸻
+
+4) Asset creation pipeline: “multi-modal in → compliant listing out”
+
+Make the asset pipeline a deterministic state machine:
+	1.	ASSET.CREATE (user upload)
+	2.	ASSET.ENRICH (AI adds: title/category/condition guess/attributes/kWh estimate/risk score)
+	3.	MODERATION.AUTO (low risk = auto pass; else create moderation_case)
+	4.	PRICE.QUOTE
+	5.	PRICE.PUBLISH (auto if within policy bounds; otherwise approval)
+	6.	LISTING.PUBLISH
+
+Automation rule: only auto-list when:
+	•	risk low
+	•	confidence high
+	•	price within configured min/max for that network
+	•	required fields present (photo count, pickup rules, etc.)
+
+⸻
+
+5) Pricing engine v1: rules first, AI second
+
+You want pricing to be “explainable and controllable” for commissioners.
+
+Pricing output must include
+	•	display_price (tax-inclusive)
+	•	fee_breakdown (microfee, commissioner, TC-S, tax bucket, seller net)
+	•	confidence + explanation
+	•	requires_approval boolean
+
+Pricing inputs (commissioned network knobs)
+	•	tax-inclusive rule (always true per your spec)
+	•	microfee percent / flat
+	•	commissioner revenue share
+	•	category floors/ceilings
+	•	allowed discount caps
+	•	“energy overlay” settings (kWh influence weight)
+
+AI can recommend, but rules enforce.
+
+⸻
+
+6) Operating the commissioned network: schedulers + exception handling
+
+“Full automation” isn’t just listing and checkout — it’s daily operations.
+
+Add schedulers that generate actions
+	•	Hourly: RISK.SCAN → ALERT.CREATE (fraud, weird pricing, rapid refunds)
+	•	Daily: SETTLEMENT.RUN, REPORT.DAILY
+	•	Weekly: INVENTORY.AUDIT, POLICY.REVIEW_SUGGESTIONS
+
+Add exception workflows (the real-world stuff)
+	•	Disputes: DISPUTE.OPEN → DISPUTE.RESOLVE
+	•	Refunds: REFUND.ISSUE (approval-gated)
+	•	Support override: admin can act, but every override writes an audit event
+
+⸻
+
+7) The “Not Found → Procurement/Recommendation” expansion loop
+
+This makes your marketplace self-growing:
+	1.	User searches / requests item
+	2.	If local results low: SEARCH.FULFILLMENT.RECOMMEND
+	3.	Agent returns: suggested external sources (links), estimated price, lead time, confidence
+	4.	Human-in-loop approves:
+	•	add as “affiliate item” (link listing) or
+	•	procure + stock (later, if you want)
+	5.	Listing appears in marketplace with clear labeling
+
+Autonomy expands supply without letting the system buy a forklift fleet impulsively.
+
+⸻
+
+Your immediate next sprint (tight, lethal, shippable)
+	1.	Implement Action Types + handlers for:
+ASSET.CREATE → ASSET.ENRICH → PRICE.QUOTE → PRICE.PUBLISH → LISTING.PUBLISH → ORDER.CREATE → PAYMENT.CAPTURE → FULFILLMENT.CONFIRM → LEDGER.POST → SETTLEMENT.RUN
+	2.	Build the minimal marketplace tables + invariants
+	3.	Add a single smoke script that runs the Golden Path end-to-end
+	4.	Add daily settlement scheduler + daily report output
+
+When that’s done, you don’t have a prototype — you have a commissioned network that can run itself, with humans only touching exceptions and policy.
+
+Keep going in this order and the autonomy spine becomes what it wants to be: a marketplace organism with a nervous system, an immune system, and a bookkeeping brain.
