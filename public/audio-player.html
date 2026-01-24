@@ -436,6 +436,9 @@
                 <!-- Batrhyme 3 Artwork + Video -->
                 <div style="display: flex; gap: 15px; margin: 10px 0; justify-content: center; align-items: center;">
                     <div style="display: flex; flex-direction: column; gap: 8px; flex-shrink: 0;">
+                        <video autoplay muted loop playsinline poster="/assets/omen-on-the-hudson-cover.png" style="width: 100px; height: 100px; border-radius: 8px; object-fit: cover; box-shadow: 0 4px 8px rgba(212, 160, 23, 0.3); border: 2px solid #D4A017;">
+                            <source src="/assets/omen-on-the-hudson-clip-silent.mp4" type="video/mp4">
+                        </video>
                         <img src="/assets/omen-on-the-hudson-cover.png" alt="Omen on the Hudson - Batrhyme" style="width: 100px; height: 100px; border-radius: 8px; object-fit: cover; box-shadow: 0 4px 8px rgba(212, 160, 23, 0.3); border: 2px solid #D4A017;">
                     </div>
                     <div style="flex: 1; max-width: 300px;">
@@ -450,8 +453,7 @@
                 </div>
                 
                 <!-- Audio Player for Batrhyme 3 -->
-                <audio id="audioPlayerBatrhyme3" class="audio-player" data-testid="audio-player-batrhyme3" controls preload="metadata" style="width: 100%; margin: 10px 0;">
-                    <source src="/omen-on-the-hudson.mp3" type="audio/mpeg">
+                <audio id="audioPlayerBatrhyme3" class="audio-player" data-testid="audio-player-batrhyme3" controls preload="none" data-src="/omen-on-the-hudson.mp3" style="width: 100%; margin: 10px 0;">
                     Your browser does not support the audio element.
                 </audio>
                 <div id="loadingBatrhyme3" style="display: none; text-align: center; padding: 8px; color: #D4A017; font-size: 0.85rem;">
@@ -1898,6 +1900,29 @@
                 }
             `;
             document.head.appendChild(style);
+            
+            // Lazy-load audio sources when user clicks play on audio controls
+            document.querySelectorAll('audio[data-src]').forEach(function(audio) {
+                audio.addEventListener('play', function() {
+                    if (!audio.src && audio.dataset.src) {
+                        const loadingId = audio.id.replace('audioPlayer', 'loading');
+                        const loadingEl = document.getElementById(loadingId);
+                        if (loadingEl) {
+                            loadingEl.style.display = 'block';
+                            loadingEl.innerHTML = '⏳ Loading audio...';
+                        }
+                        audio.src = audio.dataset.src + '?t=' + Date.now();
+                        audio.load();
+                        audio.oncanplaythrough = function() {
+                            if (loadingEl) loadingEl.style.display = 'none';
+                            audio.play();
+                        };
+                        audio.onerror = function() {
+                            if (loadingEl) loadingEl.innerHTML = '❌ Error loading. <a href="' + audio.dataset.src + '" style="color:#D4A017;">Direct link</a>';
+                        };
+                    }
+                }, { once: true });
+            });
             
             // Initialize only AI Dashboard (progression system removed)
             setTimeout(() => {
