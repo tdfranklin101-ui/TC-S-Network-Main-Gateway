@@ -453,10 +453,13 @@
                 </div>
                 
                 <!-- Audio Player for Batrhyme 3 -->
-                <audio id="audioPlayerBatrhyme3" class="audio-player" data-testid="audio-player-batrhyme3" controls preload="none" style="width: 100%; margin: 10px 0;">
+                <audio id="audioPlayerBatrhyme3" class="audio-player" data-testid="audio-player-batrhyme3" controls preload="metadata" style="width: 100%; margin: 10px 0;">
                     <source src="/omen-on-the-hudson.mp3" type="audio/mpeg">
                     Your browser does not support the audio element.
                 </audio>
+                <div id="loadingBatrhyme3" style="display: none; text-align: center; padding: 8px; color: #D4A017; font-size: 0.85rem;">
+                    ⏳ Loading audio... Please wait
+                </div>
                 
                 <!-- Marketplace Link -->
                 <div style="text-align: center; margin: 10px 0;">
@@ -1169,10 +1172,33 @@
                 return;
             }
             
+            const loadingEl = document.getElementById('loadingBatrhyme3');
+            if (loadingEl) loadingEl.style.display = 'block';
+            
             const timestamp = new Date().getTime();
             const batrhyme3Url = '/omen-on-the-hudson.mp3?t=' + timestamp;
             
             console.log('📍 Loading:', batrhyme3Url);
+            
+            player.onerror = function(e) {
+                console.error('❌ Audio error:', e);
+                if (loadingEl) loadingEl.innerHTML = '❌ Error loading audio. <a href="' + batrhyme3Url + '" style="color: #D4A017;">Try direct link</a>';
+            };
+            
+            player.oncanplay = function() {
+                if (loadingEl) loadingEl.style.display = 'none';
+            };
+            
+            player.onwaiting = function() {
+                if (loadingEl) {
+                    loadingEl.style.display = 'block';
+                    loadingEl.innerHTML = '⏳ Buffering... Please wait';
+                }
+            };
+            
+            player.onplaying = function() {
+                if (loadingEl) loadingEl.style.display = 'none';
+            };
             
             player.src = batrhyme3Url;
             player.load();
@@ -1186,9 +1212,11 @@
                 .then(() => {
                     console.log('✅ PLAYING: Batrhyme 3');
                     console.log('🎵 Source:', batrhyme3Url);
+                    if (loadingEl) loadingEl.style.display = 'none';
                 })
                 .catch(err => {
                     console.log('⚠️ Autoplay blocked - use controls');
+                    if (loadingEl) loadingEl.innerHTML = '👆 Tap play button above to start';
                 });
         }
 
