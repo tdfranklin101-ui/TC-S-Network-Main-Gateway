@@ -1,62 +1,62 @@
 {
   "date": "2026-01-24",
-  "generatedAt": "2026-01-24T04:01:26.376Z",
+  "generatedAt": "2026-01-24T05:59:59.064Z",
   "currentIndices": [
     {
       "id": "si",
       "name": "Solar Index",
       "unit": "%",
-      "value": 69.6,
+      "value": 69.4,
       "description": "Global Energy & Ethics Balance — 7-Day Rolling Indicator.",
-      "asOf": "2026-01-24T04:01:23.519Z"
+      "asOf": "2026-01-24T05:59:55.865Z"
     },
     {
       "id": "srh",
       "name": "Solar Reserve Health",
       "unit": "%",
-      "value": 78.5,
+      "value": 76.3,
       "description": "Reserve stability and fulfillment factor across all regions.",
-      "asOf": "2026-01-24T04:01:23.519Z"
+      "asOf": "2026-01-24T05:59:55.865Z"
     },
     {
       "id": "gbi",
       "name": "Global Basic Income",
       "unit": "%",
-      "value": 41.5,
+      "value": 41.8,
       "description": "Percentage of humans enrolled and actively claiming GBI.",
-      "asOf": "2026-01-24T04:01:23.519Z"
+      "asOf": "2026-01-24T05:59:55.865Z"
     },
     {
       "id": "cai",
       "name": "Compute Alignment",
       "unit": "%",
-      "value": 88.5,
+      "value": 88.4,
       "description": "Ethically aligned compute flow — safe superintelligence readiness.",
-      "asOf": "2026-01-24T04:01:23.519Z"
+      "asOf": "2026-01-24T05:59:55.865Z"
     },
     {
       "id": "mli",
       "name": "Market Liquidity",
       "unit": "%",
-      "value": 23.6,
+      "value": 24.1,
       "description": "Health of the TC-S digital marketplace and token velocity.",
-      "asOf": "2026-01-24T04:01:23.519Z"
+      "asOf": "2026-01-24T05:59:55.865Z"
     },
     {
       "id": "eai",
       "name": "Ethical Alignment",
       "unit": "%",
-      "value": 92.7,
+      "value": 93.2,
       "description": "Acceptance ratio of tasks from the Ethics Engine.",
-      "asOf": "2026-01-24T04:01:23.519Z"
+      "asOf": "2026-01-24T05:59:55.865Z"
     }
   ],
   "trends": {
     "analysisStatus": "success",
-    "direction": "bearish",
-    "analysis": "The overall market direction appears bearish, as the majority of the indices have shown a downward trend over the past week. The slight decline in the sentiment index (si) from 70.7 to 69.6 and the decrease in the market liquidity index (mli) from 24.2 to 23.6 are contributing factors to this trend.",
-    "insight": "Consider adjusting investment strategies to mitigate risk, particularly focusing on sectors influenced by liquidity and sentiment changes.",
-    "generatedAt": "2026-01-24T04:01:26.376Z"
+    "direction": "neutral",
+    "analysis": "The market health indices show mixed signals, with the overall stability in the current values closely mirroring the historical trends observed over the last week. Notably, the Consumer Activity Index (cai) remains strong, while the Market Liquidity Index (mli) is low, indicating potential concerns regarding liquidity despite healthy consumer activity.",
+    "insight": "Focus on improving liquidity measures to enhance overall market health, while leveraging the strong consumer activity to drive sales and revenue.",
+    "generatedAt": "2026-01-24T05:59:59.064Z"
   },
   "historyDays": 30
 }

@@ -2654,7 +2654,7 @@ const server = http.createServer(async (req, res) => {
   }
   
   // Try TC-S Agentic Framework routes (Policy-gated actions)
-  if (pathname.startsWith('/api/agentic')) {
+  if (pathname.startsWith('/api/agentic') || pathname === '/api/me' || pathname === '/api/audit' || pathname.startsWith('/api/admin/assets') || pathname.startsWith('/api/admin/settlements')) {
     if (!body && req.method === 'POST') {
       try {
         body = await parseBody(req);

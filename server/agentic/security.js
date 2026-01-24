@@ -66,7 +66,13 @@ const ROUTE_PERMISSIONS = {
   '/api/agentic/actions/:id/reject': { methods: ['POST'], requiredRoles: ['commissioner_admin', 'tcs_admin'], action: 'actions.reject' },
   '/api/agentic/actions/:id/execute': { methods: ['POST'], requiredRoles: ['commissioner_admin', 'tcs_admin'], action: 'actions.execute' },
   '/api/agentic/scheduler/status': { methods: ['GET'], requiredRoles: ['commissioner_admin', 'tcs_admin'], action: 'SCHEDULER.STATUS' },
-  '/api/agentic/scheduler/trigger': { methods: ['POST'], requiredRoles: ['tcs_admin'], action: 'SCHEDULER.TRIGGER' }
+  '/api/agentic/scheduler/trigger': { methods: ['POST'], requiredRoles: ['tcs_admin'], action: 'SCHEDULER.TRIGGER' },
+  '/api/audit': { methods: ['GET'], requiredRoles: ['commissioner_admin', 'tcs_admin'], action: 'AUDIT.VIEW' },
+  '/api/admin/assets': { methods: ['GET'], requiredRoles: ['commissioner_admin', 'tcs_admin'], action: 'ASSET.VIEW_ADMIN' },
+  '/api/admin/assets/:id/approve': { methods: ['POST'], requiredRoles: ['commissioner_admin', 'tcs_admin'], action: 'ASSET.APPROVE' },
+  '/api/admin/assets/:id/reject': { methods: ['POST'], requiredRoles: ['commissioner_admin', 'tcs_admin'], action: 'MODERATION.REJECT' },
+  '/api/admin/settlements': { methods: ['GET'], requiredRoles: ['commissioner_admin', 'tcs_admin'], action: 'SETTLEMENT.VIEW' },
+  '/api/admin/settlements/:id': { methods: ['GET'], requiredRoles: ['commissioner_admin', 'tcs_admin'], action: 'SETTLEMENT.VIEW' }
 };
 
 function matchRoutePermission(pathname, method) {
@@ -100,8 +106,11 @@ function cleanupReplayCache() {
 
 setInterval(cleanupReplayCache, 60000);
 
-function checkReplayProtection(reqId) {
+function checkReplayProtection(reqId, strict = false) {
   if (!reqId) {
+    if (strict) {
+      return { valid: false, error: 'X-Req-Id header required for privileged operations' };
+    }
     return { valid: true, warning: 'No X-Req-Id provided - replay protection disabled for this request' };
   }
 
@@ -321,13 +330,14 @@ async function createIntentLogTable(pool) {
   console.log('✅ Intent log table ready');
 }
 
-async function validateScopedAdminAccess(req, pool, requiredAction) {
+async function validateScopedAdminAccess(req, pool, requiredAction, options = {}) {
   const adminKey = req.headers['x-admin-key'];
   const sessionToken = req.headers['x-session-token'];
   const authHeader = req.headers['authorization'];
   const reqId = req.headers['x-req-id'];
 
-  const replayCheck = checkReplayProtection(reqId);
+  const strictReplay = options.strictReplay !== false;
+  const replayCheck = checkReplayProtection(reqId, strictReplay);
   if (!replayCheck.valid) {
     return { valid: false, error: replayCheck.error, replayRejected: true };
   }

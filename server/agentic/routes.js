@@ -266,6 +266,321 @@ async function handleAgenticRoutes(req, res, pathname, body, pool) {
     return true;
   }
 
+  // ============================================================================
+  // USER INFO + RBAC GATING
+  // ============================================================================
+
+  if (pathname === '/api/me' && req.method === 'GET') {
+    const sessionToken = req.headers['x-session-token'];
+    const authHeader = req.headers['authorization'];
+    const adminKey = req.headers['x-admin-key'];
+
+    if (adminKey) {
+      const scopedAuth = await validateScopedAdminAccess(req, pool, 'admin.full');
+      if (scopedAuth.valid) {
+        await logPrivilegedCall(req, {
+          actionType: 'API_ME.ADMIN', route: pathname, userId: scopedAuth.userId,
+          role: scopedAuth.role
+        });
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          memberId: scopedAuth.userId,
+          username: 'System Admin',
+          role: 'tcs_admin',
+          networkId: 'default',
+          permissions: ['*'],
+          authMethod: scopedAuth.authMethod
+        }));
+        return true;
+      }
+    }
+
+    const token = sessionToken || (authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null);
+    
+    if (token) {
+      try {
+        const result = await pool.query(
+          `SELECT s.sess, m.id as member_id, m.username, m.role, m.email
+           FROM session s 
+           LEFT JOIN members m ON (s.sess->>'userId')::int = m.id
+           WHERE s.sid = $1 AND s.expire > NOW()`,
+          [token]
+        );
+        
+        if (result.rows.length > 0 && result.rows[0].member_id) {
+          const member = result.rows[0];
+          const role = member.role || 'member';
+          const roleInfo = ROLES[role] || ROLES.member;
+          
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({
+            memberId: member.member_id,
+            username: member.username,
+            email: member.email,
+            role: role,
+            networkId: 'default',
+            permissions: roleInfo.permissions || []
+          }));
+          return true;
+        }
+      } catch (error) {
+        console.error('Error fetching user info:', error);
+      }
+    }
+
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      memberId: null,
+      username: 'Guest',
+      role: 'member',
+      networkId: 'default',
+      permissions: ROLES.member.permissions
+    }));
+    return true;
+  }
+
+  // ============================================================================
+  // INTENT LOG / AUDIT TRAIL
+  // ============================================================================
+
+  if (pathname === '/api/audit' && req.method === 'GET') {
+    const scopedAuth = await validateWithRBAC(req, pool, 'AUDIT.VIEW');
+    if (!scopedAuth.valid) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: scopedAuth.error || 'Admin access required for audit logs' }));
+      return true;
+    }
+
+    await logPrivilegedCall(req, {
+      actionType: 'AUDIT.VIEW', route: pathname, userId: scopedAuth.userId,
+      role: scopedAuth.role
+    });
+
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    const userFilter = url.searchParams.get('user');
+    const actionFilter = url.searchParams.get('action');
+    const fromDate = url.searchParams.get('from');
+    const toDate = url.searchParams.get('to');
+    const limit = parseInt(url.searchParams.get('limit') || '100', 10);
+    const cursor = url.searchParams.get('cursor');
+
+    try {
+      let query = 'SELECT * FROM intent_log WHERE 1=1';
+      const params = [];
+      let paramIdx = 1;
+
+      if (userFilter) {
+        query += ` AND who ILIKE $${paramIdx}`;
+        params.push(`%${userFilter}%`);
+        paramIdx++;
+      }
+      if (actionFilter) {
+        query += ` AND action_type ILIKE $${paramIdx}`;
+        params.push(`%${actionFilter}%`);
+        paramIdx++;
+      }
+      if (fromDate) {
+        query += ` AND timestamp >= $${paramIdx}`;
+        params.push(fromDate);
+        paramIdx++;
+      }
+      if (toDate) {
+        query += ` AND timestamp <= $${paramIdx}`;
+        params.push(toDate + 'T23:59:59Z');
+        paramIdx++;
+      }
+      if (cursor) {
+        query += ` AND timestamp < $${paramIdx}`;
+        params.push(cursor);
+        paramIdx++;
+      }
+
+      query += ` ORDER BY timestamp DESC LIMIT $${paramIdx}`;
+      params.push(Math.min(limit, 500));
+
+      const result = await pool.query(query, params);
+      const logs = result.rows;
+      const nextCursor = logs.length > 0 ? logs[logs.length - 1].timestamp : null;
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        count: logs.length,
+        logs,
+        nextCursor
+      }));
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: error.message }));
+    }
+    return true;
+  }
+
+  // ============================================================================
+  // MARKETPLACE ADMIN ENDPOINTS
+  // ============================================================================
+
+  if (pathname === '/api/admin/assets' && req.method === 'GET') {
+    const scopedAuth = await validateWithRBAC(req, pool, 'ASSET.VIEW_ADMIN');
+    if (!scopedAuth.valid) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: scopedAuth.error || 'Admin access required' }));
+      return true;
+    }
+
+    await logPrivilegedCall(req, {
+      actionType: 'ASSET.VIEW_ADMIN', route: pathname, userId: scopedAuth.userId,
+      role: scopedAuth.role
+    });
+
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    const statusFilter = url.searchParams.get('status') || 'draft';
+
+    try {
+      const result = await pool.query(
+        `SELECT id, name, title, category, status, created_at, updated_at
+         FROM market_items
+         WHERE status = $1
+         ORDER BY created_at DESC
+         LIMIT 100`,
+        [statusFilter.toUpperCase()]
+      );
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, assets: result.rows }));
+    } catch (error) {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, assets: [] }));
+    }
+    return true;
+  }
+
+  if (pathname.match(/^\/api\/admin\/assets\/[^/]+\/approve$/) && req.method === 'POST') {
+    const assetId = pathname.split('/')[4];
+    const scopedAuth = await validateWithRBAC(req, pool, 'ASSET.APPROVE');
+    
+    if (!scopedAuth.valid) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: scopedAuth.error || 'Admin access required' }));
+      return true;
+    }
+
+    try {
+      await logPrivilegedCall(req, {
+        actionType: 'ASSET.APPROVE', route: pathname, userId: scopedAuth.userId,
+        role: scopedAuth.role, payload: { assetId }
+      });
+
+      await pool.query(
+        `UPDATE market_items SET status = 'ACTIVE', updated_at = NOW() WHERE id = $1`,
+        [assetId]
+      );
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, message: 'Asset approved' }));
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: error.message }));
+    }
+    return true;
+  }
+
+  if (pathname.match(/^\/api\/admin\/assets\/[^/]+\/reject$/) && req.method === 'POST') {
+    const assetId = pathname.split('/')[4];
+    const scopedAuth = await validateWithRBAC(req, pool, 'MODERATION.REJECT');
+    
+    if (!scopedAuth.valid) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: scopedAuth.error || 'Admin access required' }));
+      return true;
+    }
+
+    try {
+      await logPrivilegedCall(req, {
+        actionType: 'ASSET.REJECT', route: pathname, userId: scopedAuth.userId,
+        role: scopedAuth.role, payload: { assetId, reason: body?.reason }
+      });
+
+      await pool.query(
+        `UPDATE market_items SET status = 'ARCHIVED', updated_at = NOW() WHERE id = $1`,
+        [assetId]
+      );
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, message: 'Asset rejected' }));
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: error.message }));
+    }
+    return true;
+  }
+
+  if (pathname === '/api/admin/settlements' && req.method === 'GET') {
+    const scopedAuth = await validateWithRBAC(req, pool, 'SETTLEMENT.VIEW');
+    if (!scopedAuth.valid) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: scopedAuth.error || 'Admin access required' }));
+      return true;
+    }
+
+    await logPrivilegedCall(req, {
+      actionType: 'SETTLEMENT.VIEW', route: pathname, userId: scopedAuth.userId,
+      role: scopedAuth.role
+    });
+
+    try {
+      const result = await pool.query(
+        `SELECT id, network_id, period_start, period_end, status, total_solar, created_at
+         FROM settlements
+         ORDER BY created_at DESC
+         LIMIT 50`
+      );
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, settlements: result.rows }));
+    } catch (error) {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, settlements: [] }));
+    }
+    return true;
+  }
+
+  if (pathname.match(/^\/api\/admin\/settlements\/[^/]+$/) && req.method === 'GET') {
+    const scopedAuth = await validateWithRBAC(req, pool, 'SETTLEMENT.VIEW');
+    if (!scopedAuth.valid) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: scopedAuth.error || 'Admin access required' }));
+      return true;
+    }
+
+    const settlementId = pathname.split('/')[4];
+
+    await logPrivilegedCall(req, {
+      actionType: 'SETTLEMENT.VIEW_DETAIL', route: pathname, userId: scopedAuth.userId,
+      role: scopedAuth.role, metadata: { settlementId }
+    });
+
+    try {
+      const result = await pool.query(
+        `SELECT * FROM settlements WHERE id = $1`,
+        [settlementId]
+      );
+
+      if (result.rows.length === 0) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Settlement not found' }));
+        return true;
+      }
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, settlement: result.rows[0] }));
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: error.message }));
+    }
+    return true;
+  }
+
   if (pathname === '/api/agentic/actions' && req.method === 'GET') {
     const actions = getAllActions();
     res.writeHead(200, { 'Content-Type': 'application/json' });
