@@ -8719,6 +8719,21 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // POST /api/solar-greeting/regenerate - Manually regenerate daily greeting video
+  if (pathname === '/api/solar-greeting/regenerate' && req.method === 'POST') {
+    try {
+      console.log('🌅 Manual greeting regeneration triggered');
+      generateDailySolarGreeting();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, message: 'Daily Solar greeting regeneration started', date: new Date().toISOString() }));
+    } catch (error) {
+      console.error('Greeting regeneration error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Failed to regenerate greeting', details: String(error) }));
+    }
+    return;
+  }
+
   // POST /api/solar-audit/update - Trigger data fetch
   if (pathname === '/api/solar-audit/update' && req.method === 'POST') {
     try {
