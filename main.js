@@ -9610,13 +9610,14 @@ async function generateDailySolarGreeting() {
   }
   
   const now = new Date();
-  const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-  const dateStr = now.toLocaleDateString('en-US', options);
+  const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' };
+  const utcDateStr = now.toLocaleDateString('en-US', options);
+  const utcTimeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC', hour12: true });
   
-  const message = `Good morning, have a Solar Day! See you tomorrow. Today is ${dateStr}.`;
+  const message = `Good morning, have a Solar Day! Today is ${utcDateStr}, ${utcTimeStr} UTC. Your local time may differ. See you tomorrow!`;
   
   console.log("🌅 Generating daily Solar greeting video...");
-  console.log("📅 Date:", dateStr);
+  console.log("📅 Date:", utcDateStr, utcTimeStr, "UTC");
   
   try {
     // Step 1: Generate TTS audio with OpenAI
@@ -9677,7 +9678,7 @@ async function generateDailySolarGreeting() {
       fs.writeFileSync(tempPath, videoBuffer);
       fs.renameSync(tempPath, outputPath);
       
-      console.log("✅ Daily Solar greeting video generated for", dateStr);
+      console.log("✅ Daily Solar greeting video generated for", utcDateStr);
       console.log("📁 Saved to:", outputPath, `(${(videoBuffer.length / 1024).toFixed(0)}KB)`);
     } else {
       console.error("❌ No video URL in response:", JSON.stringify(result));
@@ -9773,10 +9774,11 @@ server.listen(PORT, '0.0.0.0', () => {
     }
     
     // Initialize Daily Solar Greeting Video (async, non-blocking)
+    // Regenerates at UTC midnight to always serve fresh date
     try {
       generateDailySolarGreeting();
-      cron.schedule('1 0 * * *', generateDailySolarGreeting, { timezone: 'America/Los_Angeles' });
-      console.log('🌅 Daily Solar Greeting: Scheduled for 12:01 AM');
+      cron.schedule('0 0 * * *', generateDailySolarGreeting); // UTC midnight (no timezone = UTC)
+      console.log('🌅 Daily Solar Greeting: Scheduled for 00:00 UTC midnight');
     } catch (error) {
       console.warn('⚠️ Daily greeting video scheduling failed:', error.message);
     }
