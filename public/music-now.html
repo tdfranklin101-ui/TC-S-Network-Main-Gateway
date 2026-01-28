@@ -780,27 +780,28 @@
 
     <script>
         // MONAZITE COLLECTION - Hardcoded 20 tracks (NO dynamic loading)
+        // Monazite Collection - now served from Object Storage
         // Gidget Bardot uses separate player - NOT part of this array
         const tracks = [
-            'https://storage.aisongmaker.io/audio/4a839c86-40d9-4272-989b-7a512184ddb6.mp3', // 0 - 'Ternal Flame
-            'https://storage.aisongmaker.io/audio/9b2b12e4-8626-41e4-b9e4-c7a563e40f97.mp3', // 1 - David Boyeez Hair
-            'https://storage.aisongmaker.io/audio/015092c3-f687-4a01-9a81-dad42f2adce9.mp3', // 2 - Swampy Boogie Nights  
-            'https://storage.aisongmaker.io/audio/10db8911-0b74-4675-ba62-02182c1d7f6b.mp3', // 3 - The Heart is a Mule
-            'https://storage.aisongmaker.io/audio/418add3e-c1a5-4a76-b361-14d6a11794fe.mp3', // 4 - A Solar Day (groovin)
-            'https://storage.aisongmaker.io/audio/a2647129-991f-4105-aad2-e45210005bef.mp3', // 5 - A Solar Day (moovin)
-            'https://storage.aisongmaker.io/audio/09de8c9d-25a7-4b38-a6bd-c27b7de4629e.mp3', // 6 - Break Time Blues Rhapsody
-            'https://storage.aisongmaker.io/audio/c51b1f15-eff7-41fb-b778-b1b9d914ce3a.mp3', // 7 - Starlight Forever
-            'https://storage.aisongmaker.io/audio/ab1612d5-ccf4-4b4a-ab92-21b77bebdd46.mp3', // 8 - Light It From Within
-            'https://storage.aisongmaker.io/audio/675d577c-5ab9-45c9-b9d5-d4362f6bcc12.mp3', // 9 - Moonshine in St Kitts
-            'https://storage.aisongmaker.io/audio/94088af1-8318-401a-b277-b79fbbdb7475.mp3', // 10 - Solar Tempest Symphony
-            'https://storage.aisongmaker.io/audio/cb58c04e-fc7b-448a-a9e5-a642e168cacd.mp3', // 11 - Steel In His Soul
-            'https://storage.aisongmaker.io/audio/11802549-7cf8-4d4c-a708-44f04804f2ab.mp3', // 12 - We Said So
-            'https://storage.aisongmaker.io/audio/19d37c35-dc0b-4686-8bd7-71992f925670.mp3', // 13 - Funky Voodoo
-            'https://storage.aisongmaker.io/audio/255be09f-c09a-4d9a-8dbc-3c3ba65e9204.mp3', // 14 - Green and Blue (Rock)
-            'https://storage.aisongmaker.io/audio/01e05fb6-a7ac-4dd3-9500-00bb46625ef1.mp3', // 15 - Green and Blue (EDM)
-            'https://storage.aisongmaker.io/audio/49fc3427-e775-47f0-b5ea-8903006b07a0.mp3', // 16 - Lady Voodoo (Folk)
-            'https://storage.aisongmaker.io/audio/b2001c35-620a-4893-b046-4de20ad11422.mp3', // 17 - Lady Voodoo (Crying)
-            'https://storage.aisongmaker.io/audio/7abf4dac-2b12-434a-8d59-c115f8c54cb9.mp3', // 18 - Rasta Lady Voodoo
+            '/music/monazite/01_Ternal_Flame_Longevity_Manifesto.mp3', // 0 - 'Ternal Flame
+            '/music/monazite/02_David_Boyeez_Hair.mp3', // 1 - David Boyeez Hair
+            '/music/monazite/03_Swampy_Boogie_Nights_Cajun_Crawler.mp3', // 2 - Swampy Boogie Nights  
+            '/music/monazite/04_The_Heart_is_a_Mule.mp3', // 3 - The Heart is a Mule
+            '/music/monazite/05_A_Solar_Day_groovin.mp3', // 4 - A Solar Day (groovin)
+            '/music/monazite/06_A_Solar_Day_moovin.mp3', // 5 - A Solar Day (moovin)
+            '/music/monazite/07_Break_Time_Blues_Rhapsody.mp3', // 6 - Break Time Blues Rhapsody
+            '/music/monazite/08_Starlight_Forever.mp3', // 7 - Starlight Forever
+            '/music/monazite/09_Light_It_From_Within.mp3', // 8 - Light It From Within
+            '/music/monazite/10_Moonshine_in_St_Kitts.mp3', // 9 - Moonshine in St Kitts
+            '/music/monazite/11_Solar_Tempest_Symphony.mp3', // 10 - Solar Tempest Symphony
+            '/music/monazite/12_Steel_In_His_Soul.mp3', // 11 - Steel In His Soul
+            '/music/monazite/13_We_Said_So.mp3', // 12 - We Said So
+            '/music/monazite/14_Funky_Voodoo_Blues_Jam.mp3', // 13 - Funky Voodoo
+            '/music/monazite/15_Green_and_Blue_Rock.mp3', // 14 - Green and Blue (Rock)
+            '/music/monazite/16_Green_and_Blue_EDM.mp3', // 15 - Green and Blue (EDM)
+            '/music/monazite/17_Lady_Voodoo_Folk_Yah.mp3', // 16 - Lady Voodoo (Folk)
+            '/music/monazite/18_Lady_Voodoo_Crying.mp3', // 17 - Lady Voodoo (Crying)
+            '/music/monazite/19_Rasta_Lady_Voodoo.mp3', // 18 - Rasta Lady Voodoo
             '/music/snowmancer-one.mp3'  // 19 - Snowmancer One (Bonus)
         ];
 
@@ -827,7 +828,8 @@
             '❄️ Snowmancer One (Market Exclusive)'
         ];
 
-        console.log('✅ Monazite Collection: 20 tracks loaded (hardcoded)');
+        console.log('✅ Monazite Collection: 20 tracks loaded (Object Storage)');
+        console.log('📡 All tracks served from /music/monazite/* via Object Storage');
         console.log('⚠️ Gidget Bardot uses SEPARATE player - NOT in this array');
 
         // REMOVED: No fallback needed - tracks are hardcoded above

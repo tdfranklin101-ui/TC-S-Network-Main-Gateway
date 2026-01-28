@@ -8784,10 +8784,10 @@ const server = http.createServer(async (req, res) => {
       req.on('end', async () => {
         const { collection, track, adminKey } = JSON.parse(body);
         
-        // Simple admin key check (should be enhanced with RBAC in production)
-        if (adminKey !== process.env.ADMIN_KEY && adminKey !== 'tcs-admin-2026') {
+        // Require ADMIN_KEY environment variable (no hardcoded fallback)
+        if (!process.env.ADMIN_KEY || adminKey !== process.env.ADMIN_KEY) {
           res.writeHead(403, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Unauthorized' }));
+          res.end(JSON.stringify({ error: 'Unauthorized - valid admin key required' }));
           return;
         }
         
@@ -9492,62 +9492,11 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
-  // Serve audio files from Object Storage with streaming support
+  // Serve audio files with streaming support
   // Handles /media/*.mp3 and /music/*.mp3 (including Monazite collection)
+  // Priority: Local filesystem (efficient streaming) -> Object Storage (fallback)
   if ((pathname.startsWith('/media/') || pathname.startsWith('/music/')) && pathname.endsWith('.mp3')) {
-    const objectPath = `public${pathname}`; // '/media/file.mp3' -> 'public/media/file.mp3'
-    
-    try {
-      const { Client } = require('@replit/object-storage');
-      const storageClient = new Client();
-      
-      // Check if file exists in Object Storage
-      const exists = await storageClient.exists(objectPath);
-      
-      if (exists) {
-        console.log(`🎵 Serving media from Object Storage: ${objectPath}`);
-        
-        // Download from Object Storage and stream to client
-        const audioData = await storageClient.downloadAsBytes(objectPath);
-        const fileSize = audioData.length;
-        const range = req.headers.range;
-        
-        if (range) {
-          const parts = range.replace(/bytes=/, "").split("-");
-          const start = parseInt(parts[0], 10);
-          const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
-          const chunksize = (end - start) + 1;
-          
-          res.writeHead(206, {
-            'Content-Range': `bytes ${start}-${end}/${fileSize}`,
-            'Accept-Ranges': 'bytes',
-            'Content-Length': chunksize,
-            'Content-Type': 'audio/mpeg',
-            'Cache-Control': 'public, max-age=31536000',
-            'Access-Control-Allow-Origin': '*'
-          });
-          
-          res.end(audioData.slice(start, end + 1));
-          console.log(`🎵 Streamed media range: ${start}-${end}/${fileSize}`);
-        } else {
-          res.writeHead(200, {
-            'Content-Length': fileSize,
-            'Content-Type': 'audio/mpeg',
-            'Accept-Ranges': 'bytes',
-            'Cache-Control': 'public, max-age=31536000',
-            'Access-Control-Allow-Origin': '*'
-          });
-          res.end(audioData);
-          console.log(`🎵 Served full media file: ${pathname} (${fileSize} bytes)`);
-        }
-        return;
-      }
-    } catch (err) {
-      console.error(`⚠️ Object Storage error for ${pathname}:`, err.message);
-      // Fall through to local file fallback
-    }
-    
-    // Fallback to local file system
+    // Try local file system first (more efficient for range streaming)
     const relativePath = pathname.slice(1);
     const mediaFilePath = path.join(__dirname, 'public', relativePath);
     
@@ -9606,12 +9555,40 @@ const server = http.createServer(async (req, res) => {
         console.log(`🎵 Served full local media: ${pathname}`);
       }
       return;
-    } else {
-      console.log(`❌ Media file not found: ${mediaFilePath}`);
-      res.writeHead(404, { 'Content-Type': 'text/plain' });
-      res.end('Media file not found');
-      return;
     }
+    
+    // Fallback to Object Storage if local file not found
+    try {
+      const { Client } = require('@replit/object-storage');
+      const storageClient = new Client();
+      const objectPath = `public${pathname}`;
+      
+      const exists = await storageClient.exists(objectPath);
+      
+      if (exists) {
+        console.log(`🎵 Serving media from Object Storage (fallback): ${objectPath}`);
+        
+        // Use streaming for Object Storage
+        const stream = await storageClient.downloadAsStream(objectPath);
+        
+        res.writeHead(200, {
+          'Content-Type': 'audio/mpeg',
+          'Accept-Ranges': 'bytes',
+          'Cache-Control': 'public, max-age=31536000',
+          'Access-Control-Allow-Origin': '*'
+        });
+        
+        stream.pipe(res);
+        return;
+      }
+    } catch (err) {
+      console.error(`⚠️ Object Storage fallback error for ${pathname}:`, err.message);
+    }
+    
+    console.log(`❌ Media file not found: ${pathname}`);
+    res.writeHead(404, { 'Content-Type': 'text/plain' });
+    res.end('Media file not found');
+    return;
   }
 
   // Handle root path - serve index.html
