@@ -9318,10 +9318,62 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
-  // Serve audio files from /media/ directory with streaming support
+  // Serve audio files from Object Storage with streaming support
   if (pathname.startsWith('/media/') && pathname.endsWith('.mp3')) {
-    // Strip leading slash to avoid path.join treating it as absolute path
-    const relativePath = pathname.slice(1); // '/media/file.mp3' -> 'media/file.mp3'
+    const objectPath = `public${pathname}`; // '/media/file.mp3' -> 'public/media/file.mp3'
+    
+    try {
+      const { Client } = require('@replit/object-storage');
+      const storageClient = new Client();
+      
+      // Check if file exists in Object Storage
+      const exists = await storageClient.exists(objectPath);
+      
+      if (exists) {
+        console.log(`🎵 Serving media from Object Storage: ${objectPath}`);
+        
+        // Download from Object Storage and stream to client
+        const audioData = await storageClient.downloadAsBytes(objectPath);
+        const fileSize = audioData.length;
+        const range = req.headers.range;
+        
+        if (range) {
+          const parts = range.replace(/bytes=/, "").split("-");
+          const start = parseInt(parts[0], 10);
+          const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+          const chunksize = (end - start) + 1;
+          
+          res.writeHead(206, {
+            'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+            'Accept-Ranges': 'bytes',
+            'Content-Length': chunksize,
+            'Content-Type': 'audio/mpeg',
+            'Cache-Control': 'public, max-age=31536000',
+            'Access-Control-Allow-Origin': '*'
+          });
+          
+          res.end(audioData.slice(start, end + 1));
+          console.log(`🎵 Streamed media range: ${start}-${end}/${fileSize}`);
+        } else {
+          res.writeHead(200, {
+            'Content-Length': fileSize,
+            'Content-Type': 'audio/mpeg',
+            'Accept-Ranges': 'bytes',
+            'Cache-Control': 'public, max-age=31536000',
+            'Access-Control-Allow-Origin': '*'
+          });
+          res.end(audioData);
+          console.log(`🎵 Served full media file: ${pathname} (${fileSize} bytes)`);
+        }
+        return;
+      }
+    } catch (err) {
+      console.error(`⚠️ Object Storage error for ${pathname}:`, err.message);
+      // Fall through to local file fallback
+    }
+    
+    // Fallback to local file system
+    const relativePath = pathname.slice(1);
     const mediaFilePath = path.join(__dirname, 'public', relativePath);
     
     if (fs.existsSync(mediaFilePath)) {
@@ -9329,15 +9381,22 @@ const server = http.createServer(async (req, res) => {
       const fileSize = stat.size;
       const range = req.headers.range;
       
-      console.log(`🎵 Serving media file: ${pathname} (${fileSize} bytes)`);
+      console.log(`🎵 Serving media from local: ${pathname} (${fileSize} bytes)`);
       
       if (range) {
         const parts = range.replace(/bytes=/, "").split("-");
         const start = parseInt(parts[0], 10);
         const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
-        
         const chunksize = (end - start) + 1;
         const file = fs.createReadStream(mediaFilePath, { start, end });
+        
+        file.on('error', (err) => {
+          console.error(`❌ Media stream error: ${pathname}`, err.code, err.message);
+          if (!res.headersSent) {
+            res.writeHead(500, { 'Content-Type': 'text/plain' });
+            res.end('Error streaming media file');
+          }
+        });
         
         res.writeHead(206, {
           'Content-Range': `bytes ${start}-${end}/${fileSize}`,
@@ -9351,6 +9410,16 @@ const server = http.createServer(async (req, res) => {
         file.pipe(res);
         console.log(`🎵 Streamed media range: ${start}-${end}/${fileSize}`);
       } else {
+        const file = fs.createReadStream(mediaFilePath);
+        
+        file.on('error', (err) => {
+          console.error(`❌ Media read error: ${pathname}`, err.code, err.message);
+          if (!res.headersSent) {
+            res.writeHead(500, { 'Content-Type': 'text/plain' });
+            res.end('Error reading media file');
+          }
+        });
+        
         res.writeHead(200, {
           'Content-Length': fileSize,
           'Content-Type': 'audio/mpeg',
@@ -9358,8 +9427,8 @@ const server = http.createServer(async (req, res) => {
           'Cache-Control': 'public, max-age=31536000',
           'Access-Control-Allow-Origin': '*'
         });
-        fs.createReadStream(mediaFilePath).pipe(res);
-        console.log(`🎵 Served full media file: ${pathname}`);
+        file.pipe(res);
+        console.log(`🎵 Served full local media: ${pathname}`);
       }
       return;
     } else {
