@@ -1,0 +1,69 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2026-01-27T00:00:00Z",
+  "collections": {
+    "monazite": {
+      "name": "The Monazite Collection",
+      "artist": "Various Artists",
+      "description": "19 tracks of solar-powered sounds",
+      "tracks": [
+        {"id": "mon-01", "title": "Ternal Flame Longevity Manifesto", "file": "/music/monazite/01_Ternal_Flame_Longevity_Manifesto.mp3", "duration": "3:12"},
+        {"id": "mon-02", "title": "David Boyeez Hair", "file": "/music/monazite/02_David_Boyeez_Hair.mp3", "duration": "4:01"},
+        {"id": "mon-03", "title": "Swampy Boogie Nights Cajun Crawler", "file": "/music/monazite/03_Swampy_Boogie_Nights_Cajun_Crawler.mp3", "duration": "3:48"},
+        {"id": "mon-04", "title": "The Heart is a Mule", "file": "/music/monazite/04_The_Heart_is_a_Mule.mp3", "duration": "3:52"},
+        {"id": "mon-05", "title": "A Solar Day (Groovin)", "file": "/music/monazite/05_A_Solar_Day_groovin.mp3", "duration": "3:05"},
+        {"id": "mon-06", "title": "A Solar Day (Moovin)", "file": "/music/monazite/06_A_Solar_Day_moovin.mp3", "duration": "4:06"},
+        {"id": "mon-07", "title": "Break Time Blues Rhapsody", "file": "/music/monazite/07_Break_Time_Blues_Rhapsody.mp3", "duration": "4:08"},
+        {"id": "mon-08", "title": "Starlight Forever", "file": "/music/monazite/08_Starlight_Forever.mp3", "duration": "4:02"},
+        {"id": "mon-09", "title": "Light It From Within", "file": "/music/monazite/09_Light_It_From_Within.mp3", "duration": "3:48"},
+        {"id": "mon-10", "title": "Moonshine in St Kitts", "file": "/music/monazite/10_Moonshine_in_St_Kitts.mp3", "duration": "3:14"},
+        {"id": "mon-11", "title": "Solar Tempest Symphony", "file": "/music/monazite/11_Solar_Tempest_Symphony.mp3", "duration": "1:58"},
+        {"id": "mon-12", "title": "Steel In His Soul", "file": "/music/monazite/12_Steel_In_His_Soul.mp3", "duration": "3:32"},
+        {"id": "mon-13", "title": "We Said So", "file": "/music/monazite/13_We_Said_So.mp3", "duration": "4:02"},
+        {"id": "mon-14", "title": "Funky Voodoo Blues Jam", "file": "/music/monazite/14_Funky_Voodoo_Blues_Jam.mp3", "duration": "3:58"},
+        {"id": "mon-15", "title": "Green and Blue (Rock)", "file": "/music/monazite/15_Green_and_Blue_Rock.mp3", "duration": "3:44"},
+        {"id": "mon-16", "title": "Green and Blue (EDM)", "file": "/music/monazite/16_Green_and_Blue_EDM.mp3", "duration": "2:48"},
+        {"id": "mon-17", "title": "Lady Voodoo Folk Yah", "file": "/music/monazite/17_Lady_Voodoo_Folk_Yah.mp3", "duration": "3:52"},
+        {"id": "mon-18", "title": "Lady Voodoo Crying", "file": "/music/monazite/18_Lady_Voodoo_Crying.mp3", "duration": "4:02"},
+        {"id": "mon-19", "title": "Rasta Lady Voodoo", "file": "/music/monazite/19_Rasta_Lady_Voodoo.mp3", "duration": "2:56"}
+      ]
+    },
+    "singles": {
+      "name": "Featured Singles",
+      "description": "Latest releases from TC-S artists",
+      "tracks": [
+        {"id": "sin-01", "title": "No One Left (To Care)", "artist": "Gidget Bardot", "file": "/media/gidget-bardot-no-one-left-v3.mp3", "duration": "5:30", "videoClip": "/video-clips/no-one-left-clip.mp4"},
+        {"id": "sin-02", "title": "Break on the Bright Side", "artist": "BatRhyme", "file": "/media/batrhyme-break-on-the-bright-side.mp3", "duration": "5:41", "videoClip": "/video-clips/batrhyme-bright-side-clip.mp4"},
+        {"id": "sin-03", "title": "Psychedelic Solar Punk Party", "artist": "BatRhyme", "file": "/media/batrhyme-psychedelic-solar-punk-party.mp3", "duration": "3:19"},
+        {"id": "sin-04", "title": "Omen on the Hudson", "artist": "Various", "file": "/media/omen-on-the-hudson.mp3", "duration": "7:38"},
+        {"id": "sin-05", "title": "Snowmancer One", "artist": "Various", "file": "/music/snowmancer-one.mp3", "duration": "3:22"}
+      ]
+    }
+  },
+  "fullPlaylist": [
+    "/media/gidget-bardot-no-one-left-v3.mp3",
+    "/media/batrhyme-break-on-the-bright-side.mp3",
+    "/media/batrhyme-psychedelic-solar-punk-party.mp3",
+    "/media/omen-on-the-hudson.mp3",
+    "/music/snowmancer-one.mp3",
+    "/music/monazite/01_Ternal_Flame_Longevity_Manifesto.mp3",
+    "/music/monazite/02_David_Boyeez_Hair.mp3",
+    "/music/monazite/03_Swampy_Boogie_Nights_Cajun_Crawler.mp3",
+    "/music/monazite/04_The_Heart_is_a_Mule.mp3",
+    "/music/monazite/05_A_Solar_Day_groovin.mp3",
+    "/music/monazite/06_A_Solar_Day_moovin.mp3",
+    "/music/monazite/07_Break_Time_Blues_Rhapsody.mp3",
+    "/music/monazite/08_Starlight_Forever.mp3",
+    "/music/monazite/09_Light_It_From_Within.mp3",
+    "/music/monazite/10_Moonshine_in_St_Kitts.mp3",
+    "/music/monazite/11_Solar_Tempest_Symphony.mp3",
+    "/music/monazite/12_Steel_In_His_Soul.mp3",
+    "/music/monazite/13_We_Said_So.mp3",
+    "/music/monazite/14_Funky_Voodoo_Blues_Jam.mp3",
+    "/music/monazite/15_Green_and_Blue_Rock.mp3",
+    "/music/monazite/16_Green_and_Blue_EDM.mp3",
+    "/music/monazite/17_Lady_Voodoo_Folk_Yah.mp3",
+    "/music/monazite/18_Lady_Voodoo_Crying.mp3",
+    "/music/monazite/19_Rasta_Lady_Voodoo.mp3"
+  ]
+}

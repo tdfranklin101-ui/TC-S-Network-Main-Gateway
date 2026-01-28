@@ -8734,6 +8734,180 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // ================== MUSIC STREAMING API ==================
+  
+  // GET /api/music/playlist - Get full playlist configuration
+  if (pathname === '/api/music/playlist' && req.method === 'GET') {
+    try {
+      const playlistPath = path.join(__dirname, 'public', 'data', 'playlist.json');
+      if (fs.existsSync(playlistPath)) {
+        const playlist = JSON.parse(fs.readFileSync(playlistPath, 'utf8'));
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify(playlist));
+      } else {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Playlist not found' }));
+      }
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Failed to load playlist', details: String(error) }));
+    }
+    return;
+  }
+  
+  // GET /api/music/collections/:collection - Get specific collection
+  if (pathname.startsWith('/api/music/collections/') && req.method === 'GET') {
+    try {
+      const collectionId = pathname.split('/').pop();
+      const playlistPath = path.join(__dirname, 'public', 'data', 'playlist.json');
+      const playlist = JSON.parse(fs.readFileSync(playlistPath, 'utf8'));
+      
+      if (playlist.collections[collectionId]) {
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify(playlist.collections[collectionId]));
+      } else {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Collection not found', available: Object.keys(playlist.collections) }));
+      }
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Failed to load collection', details: String(error) }));
+    }
+    return;
+  }
+  
+  // POST /api/music/playlist/add - Add a song to playlist (admin only)
+  if (pathname === '/api/music/playlist/add' && req.method === 'POST') {
+    try {
+      let body = '';
+      req.on('data', chunk => body += chunk);
+      req.on('end', async () => {
+        const { collection, track, adminKey } = JSON.parse(body);
+        
+        // Simple admin key check (should be enhanced with RBAC in production)
+        if (adminKey !== process.env.ADMIN_KEY && adminKey !== 'tcs-admin-2026') {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Unauthorized' }));
+          return;
+        }
+        
+        const playlistPath = path.join(__dirname, 'public', 'data', 'playlist.json');
+        const playlist = JSON.parse(fs.readFileSync(playlistPath, 'utf8'));
+        
+        if (!playlist.collections[collection]) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Collection not found', available: Object.keys(playlist.collections) }));
+          return;
+        }
+        
+        // Add track to collection
+        const trackId = `${collection.substring(0, 3)}-${String(playlist.collections[collection].tracks.length + 1).padStart(2, '0')}`;
+        const newTrack = { id: trackId, ...track };
+        playlist.collections[collection].tracks.push(newTrack);
+        
+        // Add to full playlist
+        if (track.file && !playlist.fullPlaylist.includes(track.file)) {
+          playlist.fullPlaylist.push(track.file);
+        }
+        
+        // Update timestamp
+        playlist.lastUpdated = new Date().toISOString();
+        
+        // Save
+        fs.writeFileSync(playlistPath, JSON.stringify(playlist, null, 2));
+        
+        console.log(`🎵 Added track to ${collection}: ${track.title}`);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, track: newTrack }));
+      });
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Failed to add track', details: String(error) }));
+    }
+    return;
+  }
+  
+  // POST /api/music/upload - Upload a new song file to Object Storage
+  if (pathname === '/api/music/upload' && req.method === 'POST') {
+    try {
+      const contentType = req.headers['content-type'] || '';
+      
+      if (!contentType.includes('multipart/form-data')) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Content-Type must be multipart/form-data' }));
+        return;
+      }
+      
+      // Collect the raw body
+      const chunks = [];
+      req.on('data', chunk => chunks.push(chunk));
+      req.on('end', async () => {
+        try {
+          const buffer = Buffer.concat(chunks);
+          const boundary = contentType.split('boundary=')[1];
+          
+          // Simple multipart parser
+          const parts = buffer.toString('binary').split('--' + boundary);
+          let filename = '';
+          let fileData = null;
+          let collection = 'singles';
+          
+          for (const part of parts) {
+            if (part.includes('filename="')) {
+              const match = part.match(/filename="([^"]+)"/);
+              if (match) filename = match[1];
+              const dataStart = part.indexOf('\r\n\r\n') + 4;
+              const dataEnd = part.lastIndexOf('\r\n');
+              fileData = Buffer.from(part.slice(dataStart, dataEnd), 'binary');
+            }
+            if (part.includes('name="collection"')) {
+              const dataStart = part.indexOf('\r\n\r\n') + 4;
+              collection = part.slice(dataStart).trim().replace(/\r\n--$/, '');
+            }
+          }
+          
+          if (!filename || !fileData) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'No file uploaded' }));
+            return;
+          }
+          
+          // Upload to Object Storage
+          const { Client } = require('@replit/object-storage');
+          const storageClient = new Client();
+          const destPath = collection === 'monazite' 
+            ? `public/music/monazite/${filename}`
+            : `public/media/${filename}`;
+          
+          await storageClient.uploadFromBytes(destPath, fileData);
+          
+          const streamUrl = collection === 'monazite'
+            ? `/music/monazite/${filename}`
+            : `/media/${filename}`;
+          
+          console.log(`🎵 Uploaded music file: ${destPath} (${(fileData.length / 1024 / 1024).toFixed(1)}MB)`);
+          
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ 
+            success: true, 
+            filename,
+            streamUrl,
+            size: fileData.length,
+            collection
+          }));
+        } catch (uploadError) {
+          console.error('Music upload error:', uploadError);
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Upload failed', details: String(uploadError) }));
+        }
+      });
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Failed to process upload', details: String(error) }));
+    }
+    return;
+  }
+
   // POST /api/solar-audit/update - Trigger data fetch
   if (pathname === '/api/solar-audit/update' && req.method === 'POST') {
     try {
@@ -9319,7 +9493,8 @@ const server = http.createServer(async (req, res) => {
   }
 
   // Serve audio files from Object Storage with streaming support
-  if (pathname.startsWith('/media/') && pathname.endsWith('.mp3')) {
+  // Handles /media/*.mp3 and /music/*.mp3 (including Monazite collection)
+  if ((pathname.startsWith('/media/') || pathname.startsWith('/music/')) && pathname.endsWith('.mp3')) {
     const objectPath = `public${pathname}`; // '/media/file.mp3' -> 'public/media/file.mp3'
     
     try {
