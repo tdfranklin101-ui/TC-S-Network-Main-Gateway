@@ -9495,9 +9495,33 @@ const server = http.createServer(async (req, res) => {
   // Serve attached_assets with Object Storage fallback for large image files
   // Priority: Local filesystem -> Object Storage (for production reliability)
   if (pathname.startsWith('/attached_assets/') && (pathname.endsWith('.png') || pathname.endsWith('.jpeg') || pathname.endsWith('.jpg'))) {
-    const relativePath = pathname.slice(1); // Remove leading slash
-    const localFilePath = path.join(__dirname, relativePath);
+    // SECURITY: Sanitize filename to prevent path traversal
+    const rawFilename = pathname.replace('/attached_assets/', '');
+    const sanitizedFilename = rawFilename
+      .replace(/\.\./g, '')  // Remove path traversal
+      .replace(/^\/+/, '')   // Remove leading slashes
+      .replace(/\\/g, '/')   // Normalize backslashes
+      .split('/').pop() || ''; // Only take filename
+    
+    if (!sanitizedFilename || sanitizedFilename !== rawFilename) {
+      console.error(`❌ Blocked path traversal attempt: ${pathname}`);
+      res.writeHead(400, { 'Content-Type': 'text/plain' });
+      res.end('Invalid file path');
+      return;
+    }
+    
+    const localFilePath = path.join(__dirname, 'attached_assets', sanitizedFilename);
+    const resolvedPath = path.resolve(localFilePath);
+    const approvedRoot = path.resolve(__dirname, 'attached_assets');
     const contentType = pathname.endsWith('.png') ? 'image/png' : 'image/jpeg';
+    
+    // SECURITY: Verify resolved path is within approved directory
+    if (!resolvedPath.startsWith(approvedRoot)) {
+      console.error(`❌ Path escapes approved root: ${resolvedPath}`);
+      res.writeHead(403, { 'Content-Type': 'text/plain' });
+      res.end('Access denied');
+      return;
+    }
     
     // Try local filesystem first
     if (fs.existsSync(localFilePath)) {
