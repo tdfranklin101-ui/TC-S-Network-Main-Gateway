@@ -9492,6 +9492,93 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
+  // Serve attached_assets with Object Storage fallback for large image files
+  // Priority: Local filesystem -> Object Storage (for production reliability)
+  if (pathname.startsWith('/attached_assets/') && (pathname.endsWith('.png') || pathname.endsWith('.jpeg') || pathname.endsWith('.jpg'))) {
+    const relativePath = pathname.slice(1); // Remove leading slash
+    const localFilePath = path.join(__dirname, relativePath);
+    const contentType = pathname.endsWith('.png') ? 'image/png' : 'image/jpeg';
+    
+    // Try local filesystem first
+    if (fs.existsSync(localFilePath)) {
+      try {
+        const stat = fs.statSync(localFilePath);
+        const file = fs.createReadStream(localFilePath);
+        
+        file.on('error', async (err) => {
+          console.error(`❌ Attached asset stream error: ${pathname}`, err.code);
+          if (!res.headersSent) {
+            // Fallback to Object Storage on EIO error
+            try {
+              const { Client } = require('@replit/object-storage');
+              const storageClient = new Client();
+              const objectPath = `public${pathname}`;
+              const exists = await storageClient.exists(objectPath);
+              
+              if (exists) {
+                console.log(`🖼️ Fallback to Object Storage: ${objectPath}`);
+                const stream = await storageClient.downloadAsStream(objectPath);
+                res.writeHead(200, {
+                  'Content-Type': contentType,
+                  'Cache-Control': 'public, max-age=31536000',
+                  'Access-Control-Allow-Origin': '*'
+                });
+                stream.pipe(res);
+                return;
+              }
+            } catch (osErr) {
+              console.error(`❌ Object Storage fallback failed:`, osErr.message);
+            }
+            res.writeHead(500, { 'Content-Type': 'text/plain' });
+            res.end('Error reading image file');
+          }
+        });
+        
+        res.writeHead(200, {
+          'Content-Length': stat.size,
+          'Content-Type': contentType,
+          'Cache-Control': 'public, max-age=31536000',
+          'Access-Control-Allow-Origin': '*'
+        });
+        file.pipe(res);
+        console.log(`🖼️ Served attached asset: ${pathname} (${stat.size} bytes)`);
+        return;
+      } catch (err) {
+        console.error(`❌ Error reading attached asset: ${pathname}`, err.message);
+      }
+    }
+    
+    // Fallback to Object Storage if local file not found
+    try {
+      const { Client } = require('@replit/object-storage');
+      const storageClient = new Client();
+      const objectPath = `public${pathname}`;
+      
+      const exists = await storageClient.exists(objectPath);
+      
+      if (exists) {
+        console.log(`🖼️ Serving attached asset from Object Storage: ${objectPath}`);
+        const stream = await storageClient.downloadAsStream(objectPath);
+        
+        res.writeHead(200, {
+          'Content-Type': contentType,
+          'Cache-Control': 'public, max-age=31536000',
+          'Access-Control-Allow-Origin': '*'
+        });
+        
+        stream.pipe(res);
+        return;
+      }
+    } catch (err) {
+      console.error(`⚠️ Object Storage error for ${pathname}:`, err.message);
+    }
+    
+    console.log(`❌ Attached asset not found: ${pathname}`);
+    res.writeHead(404, { 'Content-Type': 'text/plain' });
+    res.end('Image not found');
+    return;
+  }
+
   // Serve audio files with streaming support
   // Handles /media/*.mp3 and /music/*.mp3 (including Monazite collection)
   // Priority: Local filesystem (efficient streaming) -> Object Storage (fallback)
