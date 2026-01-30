@@ -9679,17 +9679,50 @@ const server = http.createServer(async (req, res) => {
       if (exists) {
         console.log(`🎵 Serving media from Object Storage (fallback): ${objectPath}`);
         
-        // Use streaming for Object Storage
-        const stream = await storageClient.downloadAsStream(objectPath);
+        // Download full file to get size for proper Range support
+        const { data: audioBuffer } = await storageClient.downloadAsBytes(objectPath);
+        const fileSize = audioBuffer.length;
+        const range = req.headers.range;
         
-        res.writeHead(200, {
-          'Content-Type': 'audio/mpeg',
-          'Accept-Ranges': 'bytes',
-          'Cache-Control': 'public, max-age=31536000',
-          'Access-Control-Allow-Origin': '*'
-        });
-        
-        stream.pipe(res);
+        if (range) {
+          // Handle Range request for seeking support
+          const parts = range.replace(/bytes=/, "").split("-");
+          const start = parseInt(parts[0], 10);
+          const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+          
+          if (start >= fileSize || end >= fileSize) {
+            res.writeHead(416, { 'Content-Range': `bytes */${fileSize}` });
+            res.end();
+            return;
+          }
+          
+          const chunkSize = (end - start) + 1;
+          const chunk = audioBuffer.slice(start, end + 1);
+          
+          res.writeHead(206, {
+            'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+            'Accept-Ranges': 'bytes',
+            'Content-Length': chunkSize,
+            'Content-Type': 'audio/mpeg',
+            'Cache-Control': 'public, max-age=31536000',
+            'Access-Control-Allow-Origin': '*'
+          });
+          
+          res.end(Buffer.from(chunk));
+          console.log(`🎵 Streamed Object Storage range: ${start}-${end}/${fileSize}`);
+        } else {
+          // Full file download
+          res.writeHead(200, {
+            'Content-Type': 'audio/mpeg',
+            'Content-Length': fileSize,
+            'Accept-Ranges': 'bytes',
+            'Cache-Control': 'public, max-age=31536000',
+            'Access-Control-Allow-Origin': '*'
+          });
+          
+          res.end(Buffer.from(audioBuffer));
+          console.log(`🎵 Served full Object Storage media: ${fileSize} bytes`);
+        }
         return;
       }
     } catch (err) {
