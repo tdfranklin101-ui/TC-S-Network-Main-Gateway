@@ -9945,7 +9945,7 @@ async function generateDailySolarGreeting() {
   const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' };
   const utcDateStr = now.toLocaleDateString('en-US', options);
   
-  const message = `Good morning, have a Solar Day! Today is ${utcDateStr}. Your local time may differ. See you tomorrow!`;
+  const message = `Good morning, have a Solar Day! Today is ${utcDateStr} UTC. Have a clear day, life is what YOU make it!`;
   
   console.log("🌅 Generating daily Solar greeting video...");
   console.log("📅 Date:", utcDateStr, "UTC");
