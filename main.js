@@ -361,7 +361,7 @@ function determineGatewayRoute(userType, intent, context) {
   // EXPLORER PATH - Learn & Discover
   return {
     path: 'explore',
-    route: '/solar-standard-page1.html',
+    route: '/SolarStandard.html',
     network: null,
     onboarding: {
       steps: [
