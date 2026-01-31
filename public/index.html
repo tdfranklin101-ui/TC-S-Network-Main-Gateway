@@ -27,6 +27,12 @@
       overflow-x: hidden;
     }
     
+    /* Ensure D-ID agent remains floating */
+    [data-agent-id], [data-name="did-agent"] {
+      position: fixed !important;
+      z-index: 999999 !important;
+    }
+    
     .gateway-container {
       min-height: 100vh;
       display: flex;

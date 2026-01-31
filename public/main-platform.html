@@ -5624,7 +5624,9 @@ Represents global ethical stability of automated decision systems.`
     // Initialize when page loads
     document.addEventListener('DOMContentLoaded', () => {
       monitorDidAgentForSessionStart();
-      initializeSignupForm();
+      if (typeof initializeSignupForm === 'function') {
+        initializeSignupForm();
+      }
     });
     
     // Multimodal button creation disabled
