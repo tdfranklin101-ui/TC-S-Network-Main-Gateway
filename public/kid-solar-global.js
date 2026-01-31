@@ -14,19 +14,28 @@
 
   function injectDIDAgent() {
     if (document.querySelector('script[data-name="did-agent"]')) {
+      console.log('☀️ Kid Solar already present');
       return;
     }
 
     const script = document.createElement('script');
     script.type = 'module';
     script.src = KID_SOLAR_CONFIG.scriptSrc;
-    script.dataset.mode = KID_SOLAR_CONFIG.mode;
-    script.dataset.clientKey = KID_SOLAR_CONFIG.clientKey;
-    script.dataset.agentId = KID_SOLAR_CONFIG.agentId;
-    script.dataset.name = KID_SOLAR_CONFIG.name;
-    script.dataset.monitor = KID_SOLAR_CONFIG.monitor;
-    script.dataset.orientation = KID_SOLAR_CONFIG.orientation;
-    script.dataset.position = KID_SOLAR_CONFIG.position;
+    script.setAttribute('data-mode', KID_SOLAR_CONFIG.mode);
+    script.setAttribute('data-client-key', KID_SOLAR_CONFIG.clientKey);
+    script.setAttribute('data-agent-id', KID_SOLAR_CONFIG.agentId);
+    script.setAttribute('data-name', KID_SOLAR_CONFIG.name);
+    script.setAttribute('data-monitor', KID_SOLAR_CONFIG.monitor);
+    script.setAttribute('data-orientation', KID_SOLAR_CONFIG.orientation);
+    script.setAttribute('data-position', KID_SOLAR_CONFIG.position);
+    
+    script.onload = function() {
+      console.log('☀️ Kid Solar D-ID script loaded successfully');
+    };
+    
+    script.onerror = function(e) {
+      console.error('☀️ Kid Solar D-ID script failed to load:', e);
+    };
     
     document.body.appendChild(script);
     
