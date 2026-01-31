@@ -232,6 +232,26 @@
       font-weight: 600;
     }
     
+    .drive-own-btn {
+      display: inline-block;
+      padding: 0.875rem 2rem;
+      background: transparent;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 12px;
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 1rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.3s ease;
+    }
+    
+    .drive-own-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.5);
+      color: #ffffff;
+      transform: translateY(-2px);
+    }
+    
     @media (max-width: 768px) {
       .gateway-cards {
         grid-template-columns: 1fr;
@@ -317,9 +337,18 @@
       </a>
     </div>
     
+    <!-- Drive on your own button -->
+    <div style="margin-top: 2.5rem; text-align: center;">
+      <a href="/homepage-full.html" class="drive-own-btn" onclick="trackGatewayChoice('self', 'explorer')">
+        🚗 Drive on your own
+      </a>
+      <p style="color: rgba(255,255,255,0.5); font-size: 0.8rem; margin-top: 0.5rem;">
+        Skip the guided tour and explore everything
+      </p>
+    </div>
+    
     <footer class="gateway-footer">
       <p>
-        <a href="/homepage-full.html">View Full Platform</a> · 
         <a href="/whitepapers.html">Whitepapers</a> · 
         <a href="/agent.html">Talk to Kid Solar</a> · 
         <a href="mailto:hello@thecurrentsee.org">Contact</a>
