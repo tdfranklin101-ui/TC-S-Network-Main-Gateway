@@ -82,7 +82,9 @@
       '/agent.html': { area: 'Agent Center', hint: 'Personal AI agent' },
       '/wallet.html': { area: 'Solar Wallet', hint: 'Balance & transactions' },
       '/dmtxactly.html': { area: 'DMTXACTLY', hint: 'Creative platform' },
-      '/whitepapers.html': { area: 'Whitepapers', hint: 'Documentation' }
+      '/whitepapers.html': { area: 'Whitepapers', hint: 'Documentation' },
+      '/music-now.html': { area: 'Music Now', hint: 'Music streaming' },
+      '/solar-dashboard.html': { area: 'Solar Dashboard', hint: 'Energy metrics' }
     };
     
     return contexts[path] || { area: 'TC-S Network', hint: 'General assistance' };
