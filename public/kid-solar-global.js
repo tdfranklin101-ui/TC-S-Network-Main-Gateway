@@ -5,9 +5,31 @@
     const style = document.createElement('style');
     style.id = 'kid-solar-global-styles';
     style.textContent = `
+      /* Ensure D-ID agent is visible above all overlays */
+      [data-agent-id], [data-name="did-agent"], did-agent, .did-widget, .fabio-widget {
+        position: fixed !important;
+        z-index: 999999 !important;
+        display: block !important;
+        visibility: visible !important;
+      }
+      
+      /* D-ID widget container - above solar greeting (z-index 9999) */
+      .did-agent-container, #did-agent, iframe[src*="d-id"] {
+        position: fixed !important;
+        z-index: 999999 !important;
+      }
+      
+      /* Ensure solar greeting doesn't block D-ID */
+      #solarGreetingOverlay {
+        pointer-events: auto;
+      }
+      #solarGreetingOverlay.hidden {
+        pointer-events: none !important;
+      }
+      
       #kid-solar-context-badge {
         position: fixed;
-        bottom: 120px;
+        bottom: 140px;
         right: 20px;
         background: linear-gradient(135deg, rgba(255, 140, 0, 0.9), rgba(255, 100, 0, 0.9));
         color: #000;
@@ -18,8 +40,6 @@
         z-index: 9990;
         box-shadow: 0 4px 15px rgba(255, 140, 0, 0.4);
         display: none;
-        cursor: pointer;
-        transition: transform 0.2s, box-shadow 0.2s;
         pointer-events: none;
       }
       
