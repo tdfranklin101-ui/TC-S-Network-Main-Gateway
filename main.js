@@ -3052,6 +3052,184 @@ const server = http.createServer(async (req, res) => {
     }
   }
   
+  // D-ID Agent API Endpoints for Kid Solar Avatar
+  if (pathname === '/api/did/create-stream' && req.method === 'POST') {
+    try {
+      const DID_API_KEY = process.env.DID_API_KEY;
+      if (!DID_API_KEY) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'D-ID API key not configured' }));
+        return;
+      }
+
+      const response = await fetch('https://api.d-id.com/talks/streams', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${DID_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          source_url: 'https://create-images-results.d-id.com/DefaultPresenters/Noelle_f/image.jpeg',
+          driver_url: 'bank://lively'
+        })
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        console.error('D-ID stream creation error:', data);
+        res.writeHead(response.status, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: data.description || 'Failed to create stream' }));
+        return;
+      }
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        streamId: data.id,
+        sessionId: data.session_id,
+        offer: data.offer,
+        iceServers: data.ice_servers
+      }));
+    } catch (error) {
+      console.error('D-ID create stream error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: error.message }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/did/start-stream' && req.method === 'POST') {
+    try {
+      const body = await parseBody(req);
+      const { streamId, sessionId, answer } = body;
+      
+      if (!streamId || !sessionId || !answer) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Missing streamId, sessionId, or answer' }));
+        return;
+      }
+
+      const DID_API_KEY = process.env.DID_API_KEY;
+      const response = await fetch(`https://api.d-id.com/talks/streams/${streamId}/sdp`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${DID_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          answer,
+          session_id: sessionId
+        })
+      });
+
+      const data = await response.json();
+      res.writeHead(response.ok ? 200 : response.status, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(data));
+    } catch (error) {
+      console.error('D-ID start stream error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: error.message }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/did/ice-candidate' && req.method === 'POST') {
+    try {
+      const body = await parseBody(req);
+      const { streamId, sessionId, candidate } = body;
+      
+      const DID_API_KEY = process.env.DID_API_KEY;
+      const response = await fetch(`https://api.d-id.com/talks/streams/${streamId}/ice`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${DID_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          candidate,
+          session_id: sessionId
+        })
+      });
+
+      const data = await response.json();
+      res.writeHead(response.ok ? 200 : response.status, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(data));
+    } catch (error) {
+      console.error('D-ID ICE error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: error.message }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/did/talk' && req.method === 'POST') {
+    try {
+      const body = await parseBody(req);
+      const { streamId, sessionId, text } = body;
+      
+      if (!streamId || !sessionId || !text) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Missing streamId, sessionId, or text' }));
+        return;
+      }
+
+      const DID_API_KEY = process.env.DID_API_KEY;
+      const response = await fetch(`https://api.d-id.com/talks/streams/${streamId}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${DID_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          script: {
+            type: 'text',
+            input: text,
+            provider: {
+              type: 'microsoft',
+              voice_id: 'en-US-JennyNeural'
+            }
+          },
+          session_id: sessionId,
+          driver_url: 'bank://lively'
+        })
+      });
+
+      const data = await response.json();
+      res.writeHead(response.ok ? 200 : response.status, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(data));
+    } catch (error) {
+      console.error('D-ID talk error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: error.message }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/did/close-stream' && req.method === 'POST') {
+    try {
+      const body = await parseBody(req);
+      const { streamId, sessionId } = body;
+      
+      const DID_API_KEY = process.env.DID_API_KEY;
+      const response = await fetch(`https://api.d-id.com/talks/streams/${streamId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Basic ${DID_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ session_id: sessionId })
+      });
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true }));
+    } catch (error) {
+      console.error('D-ID close stream error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: error.message }));
+    }
+    return;
+  }
+
   // OLD Kid Solar Voice Interaction (replaced by multi-modal endpoint in routes/market.js)
   if (false && pathname === '/api/kid-solar/voice' && req.method === 'POST') {
     try {
