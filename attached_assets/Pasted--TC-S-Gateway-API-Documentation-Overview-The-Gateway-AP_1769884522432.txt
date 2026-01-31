@@ -1,0 +1,457 @@
+# TC-S Gateway API Documentation
+
+## Overview
+
+The Gateway API is an intelligent routing system that determines the optimal onboarding path for users based on their intent, profile, and context. It integrates with Kid Solar and the agent dashboard to provide seamless, personalized entry points into the TC-S ecosystem.
+
+## Architecture
+
+```
+User Input → Gateway API → Intent Detection → Route Determination → Onboarding Flow
+                ↓
+         Kid Solar Integration
+                ↓
+         Agent Dashboard
+                ↓
+         Wallet/Marketplace/Commission
+```
+
+## Core Endpoints
+
+### 1. POST /api/gateway/route
+
+**Purpose:** Determine appropriate entry path based on explicit user type and intent
+
+**Request:**
+
+```json
+{
+  "userType": "individual" | "organization" | "explorer" | null,
+  "intent": "trade" | "create" | "commission" | "learn" | null,
+  "context": {
+    "organizationType": "festival" | "campus" | "coworking" | "community" | null,
+    "participantCount": 200,
+    "timeline": "immediate" | "planning" | "exploring",
+    "budget": "pilot" | "annual" | "enterprise" | null
+  }
+}
+```
+
+**Response:**
+
+```json
+{
+  "path": "gbi",
+  "route": "/marketplace",
+  "network": "foundation",
+  "onboarding": {
+    "steps": [
+      {
+        "id": "wallet_creation",
+        "title": "Create Your Solar Wallet",
+        "description": "Get your energy-backed wallet...",
+        "action": "POST /api/wallet/create",
+        "estimatedTime": 30
+      }
+    ],
+    "estimatedTime": 390,
+    "firstAction": "Create wallet and receive your first Solar distribution"
+  },
+  "recommendations": [
+    "Browse marketplace to see current listings",
+    "Check out DMTXACTLY for AI creative tools"
+  ],
+  "assistantMessage": "Welcome to the Solar economy! I'll help you get set up..."
+}
+```
+
+### 2. POST /api/gateway/intent
+
+**Purpose:** AI-powered intent detection from natural language (integrates with Kid Solar)
+
+**Request:**
+
+```json
+{
+  "message": "I want to start a marketplace for my music festival with 500 attendees"
+}
+```
+
+**Response:**
+
+```json
+{
+  "detectedIntent": "commission",
+  "confidence": 0.92,
+  "suggestedPath": {
+    "path": "commission",
+    "route": "/commission-network",
+    ...
+  }
+}
+```
+
+**Low Confidence Response:**
+
+```json
+{
+  "detectedIntent": "unknown",
+  "confidence": 0.45,
+  "clarifyingQuestions": [
+    "Are you joining as an individual or representing an organization?",
+    "What are you hoping to accomplish?"
+  ]
+}
+```
+
+### 3. GET /api/gateway/status/:userId
+
+**Purpose:** Track user onboarding progress
+
+**Response:**
+
+```json
+{
+  "userId": "user_123",
+  "path": "gbi",
+  "currentStep": 2,
+  "totalSteps": 4,
+  "completedSteps": ["wallet_creation", "marketplace_tour"],
+  "nextAction": {
+    "id": "first_listing",
+    "title": "Create Your First Listing",
+    "action": "POST /api/marketplace/listing/create"
+  },
+  "progress": 0.5
+}
+```
+
+## Integration Patterns
+
+### Pattern 1: Homepage Integration
+
+Replace or supplement your current homepage with intelligent routing:
+
+```javascript
+// On homepage load
+async function initializeGateway() {
+  const response = await fetch('/api/gateway/route', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      userType: null, // Let them choose
+      intent: null
+    })
+  });
+  
+  const route = await response.json();
+  displayPathOptions(route);
+}
+
+// User clicks "I want to join"
+async function handleUserChoice(choice) {
+  const response = await fetch('/api/gateway/route', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      userType: choice === 'join' ? 'individual' : 'organization',
+      intent: choice === 'join' ? 'trade' : 'commission'
+    })
+  });
+  
+  const route = await response.json();
+  beginOnboarding(route);
+}
+```
+
+### Pattern 2: Kid Solar Integration
+
+Let users talk to Kid Solar, which uses the gateway API to route them:
+
+```javascript
+// Kid Solar conversation
+async function handleKidSolarMessage(userMessage) {
+  const response = await fetch('/api/gateway/intent', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      message: userMessage
+    })
+  });
+  
+  const intent = await response.json();
+  
+  if (intent.confidence > 0.7) {
+    // High confidence - proceed with suggestion
+    kidSolar.say(intent.suggestedPath.assistantMessage);
+    beginOnboarding(intent.suggestedPath);
+  } else {
+    // Low confidence - ask clarifying questions
+    kidSolar.ask(intent.clarifyingQuestions[0]);
+  }
+}
+```
+
+### Pattern 3: Progressive Onboarding
+
+Track user progress through the onboarding flow:
+
+```javascript
+async function checkOnboardingProgress(userId) {
+  const response = await fetch(`/api/gateway/status/${userId}`);
+  const status = await response.json();
+  
+  // Show progress bar
+  updateProgressBar(status.progress);
+  
+  // Show next action
+  displayNextStep(status.nextAction);
+  
+  // Celebrate completed steps
+  if (status.completedSteps.includes('wallet_creation')) {
+    showConfetti('Wallet created! 🎉');
+  }
+}
+```
+
+## Use Cases
+
+### Use Case 1: Smart Homepage
+
+Instead of overwhelming visitors with everything, let them self-select:
+
+```html
+<!-- Replace current homepage with: -->
+<div id="gateway">
+  <h1>Welcome to TC-S</h1>
+  <button onclick="routeUser('individual')">Join & Earn Solar</button>
+  <button onclick="routeUser('organization')">Commission a Network</button>
+  <button onclick="routeUser('explorer')">Learn More</button>
+</div>
+
+<script>
+async function routeUser(type) {
+  const route = await fetch('/api/gateway/route', {
+    method: 'POST',
+    body: JSON.stringify({ userType: type })
+  }).then(r => r.json());
+  
+  window.location.href = route.route;
+}
+</script>
+```
+
+### Use Case 2: Conversational Onboarding
+
+Let Kid Solar guide users through natural conversation:
+
+```javascript
+// Kid Solar sees new visitor
+kidSolar: "Hi! I'm Kid Solar. What brings you to TC-S today?"
+
+user: "I want to start earning money with my art"
+
+// Behind the scenes: POST /api/gateway/intent
+{
+  "detectedIntent": "trade",
+  "confidence": 0.95,
+  "suggestedPath": { "path": "gbi", ... }
+}
+
+kidSolar: "Great! I can help you join the Solar economy and set up your marketplace. 
+           You'll get 1 Solar daily (4,913 kWh value) and can list your art right away.
+           Let's create your wallet first - it takes about 30 seconds. Ready?"
+```
+
+### Use Case 3: Festival Landing Page
+
+A festival finds your site. The gateway automatically customizes their experience:
+
+```javascript
+// Festival organizer visits site
+user: "We're running a 3-day music festival with 50 vendors and 2000 attendees. 
+       Can we use Solar for all transactions?"
+
+// POST /api/gateway/intent
+{
+  "detectedIntent": "commission",
+  "confidence": 0.88,
+  "suggestedPath": {
+    "path": "commission",
+    "pilotDetails": {
+      "useCase": "Music festivals, art fairs...",
+      "outcomes": ["Zero payment processing fees", ...]
+    }
+  }
+}
+
+// Gateway shows customized commission page with:
+// - Festival-specific use case
+// - ROI calculator (3% of $500K vendor sales = $15K saved)
+// - Timeline (30-day pilot starting 2 months before event)
+// - Direct booking link for discovery call
+```
+
+## Implementation Roadmap
+
+### Phase 1: Basic Routing (Week 1)
+
+- [ ] Deploy gateway API endpoints
+- [ ] Create simple 3-button homepage (Join | Commission | Learn)
+- [ ] Route users to appropriate existing pages
+
+### Phase 2: Intent Detection (Week 2-3)
+
+- [ ] Integrate with Kid Solar for NLP
+- [ ] Test intent detection accuracy
+- [ ] Add clarifying question flow
+
+### Phase 3: Progress Tracking (Week 3-4)
+
+- [ ] Database schema for onboarding status
+- [ ] Progress UI components
+- [ ] Email triggers at key steps
+
+### Phase 4: Optimization (Week 4+)
+
+- [ ] A/B test different routing strategies
+- [ ] Refine intent detection prompts
+- [ ] Add conversion analytics
+
+## Database Schema
+
+```sql
+-- User onboarding tracking
+CREATE TABLE onboarding_sessions (
+  id UUID PRIMARY KEY,
+  user_id UUID REFERENCES users(id),
+  path VARCHAR(20), -- 'gbi', 'commission', 'explore'
+  current_step INT,
+  completed_steps JSONB,
+  started_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+  completed_at TIMESTAMP
+);
+
+-- Intent detection log (for improvement)
+CREATE TABLE intent_detections (
+  id UUID PRIMARY KEY,
+  user_message TEXT,
+  detected_intent VARCHAR(50),
+  confidence FLOAT,
+  was_correct BOOLEAN, -- feedback loop
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Route decisions (analytics)
+CREATE TABLE route_decisions (
+  id UUID PRIMARY KEY,
+  user_id UUID,
+  input_type VARCHAR(20),
+  input_intent VARCHAR(20),
+  output_path VARCHAR(20),
+  created_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+## Testing
+
+```bash
+# Test individual path
+curl -X POST http://localhost:8000/api/gateway/route \
+  -H "Content-Type: application/json" \
+  -d '{"userType": "individual"}'
+
+# Test organization path
+curl -X POST http://localhost:8000/api/gateway/route \
+  -H "Content-Type: application/json" \
+  -d '{
+    "userType": "organization",
+    "context": {
+      "organizationType": "festival",
+      "participantCount": 500,
+      "timeline": "immediate"
+    }
+  }'
+
+# Test intent detection
+curl -X POST http://localhost:8000/api/gateway/intent \
+  -H "Content-Type: application/json" \
+  -d '{"message": "I want to earn Solar by selling my photography"}'
+
+# Test onboarding status
+curl http://localhost:8000/api/gateway/status/user_123
+```
+
+## Kid Solar Integration Example
+
+```javascript
+// In Kid Solar's message handler
+async function handleUserMessage(userId, message) {
+  // Check if this is first interaction
+  const isNewUser = await checkIfNewUser(userId);
+  
+  if (isNewUser) {
+    // Use gateway to determine path
+    const intent = await fetch('/api/gateway/intent', {
+      method: 'POST',
+      body: JSON.stringify({ message })
+    }).then(r => r.json());
+    
+    if (intent.confidence > 0.7) {
+      // Start guided onboarding
+      return {
+        response: intent.suggestedPath.assistantMessage,
+        actions: [
+          {
+            label: "Let's do it!",
+            action: () => beginOnboarding(intent.suggestedPath)
+          },
+          {
+            label: "Tell me more first",
+            action: () => showPathDetails(intent.suggestedPath.path)
+          }
+        ]
+      };
+    } else {
+      // Ask clarifying questions
+      return {
+        response: intent.clarifyingQuestions[0],
+        followUp: true
+      };
+    }
+  }
+  
+  // Existing user - normal Kid Solar behavior
+  return await normalConversation(userId, message);
+}
+```
+
+## Metrics to Track
+
+1. **Conversion Rate by Entry Point**
+- Homepage button clicks → completed onboarding
+- Kid Solar conversation → completed onboarding
+- Direct link → completed onboarding
+1. **Intent Detection Accuracy**
+- Confidence scores distribution
+- User corrections (when they choose different path than suggested)
+- Clarifying questions needed (%)
+1. **Onboarding Completion**
+- Drop-off by step
+- Time to completion
+- Steps skipped vs. completed
+1. **Path Distribution**
+- % GBI vs. Commission vs. Explore
+- Organization type breakdown (for commission path)
+- Participant count ranges
+
+## Next Steps
+
+1. **Deploy Gateway API** (Python or Node version)
+1. **Update homepage** to use choose-your-path interface
+1. **Integrate with Kid Solar** for conversational routing
+1. **Add analytics** to track conversion
+1. **Iterate based on data**
+
+The gateway transforms your site from “here’s everything at once” to “here’s exactly what you need, right now.”

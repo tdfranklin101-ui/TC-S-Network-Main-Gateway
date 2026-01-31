@@ -1,0 +1,490 @@
+“””
+TC-S Gateway API - Python Implementation
+Intelligent routing system for user onboarding
+“””
+
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel, Field
+from typing import Optional, List, Dict, Any
+from enum import Enum
+import re
+
+app = FastAPI(title=“TC-S Gateway API”, version=“1.0.0”)
+
+# Request/Response Models
+
+class UserType(str, Enum):
+INDIVIDUAL = “individual”
+ORGANIZATION = “organization”
+EXPLORER = “explorer”
+
+class Intent(str, Enum):
+TRADE = “trade”
+CREATE = “create”
+COMMISSION = “commission”
+LEARN = “learn”
+
+class OrganizationType(str, Enum):
+FESTIVAL = “festival”
+CAMPUS = “campus”
+COWORKING = “coworking”
+COMMUNITY = “community”
+
+class Timeline(str, Enum):
+IMMEDIATE = “immediate”
+PLANNING = “planning”
+EXPLORING = “exploring”
+
+class Budget(str, Enum):
+PILOT = “pilot”
+ANNUAL = “annual”
+ENTERPRISE = “enterprise”
+
+class Context(BaseModel):
+organization_type: Optional[OrganizationType] = None
+participant_count: Optional[int] = None
+timeline: Timeline = Timeline.EXPLORING
+budget: Optional[Budget] = None
+
+class RouteRequest(BaseModel):
+user_type: Optional[UserType] = None
+intent: Optional[Intent] = None
+context: Optional[Context] = None
+
+class OnboardingStep(BaseModel):
+id: str
+title: str
+description: str
+action: str
+estimated_time: int  # seconds
+
+class RouteResponse(BaseModel):
+path: str
+route: str
+network: Optional[str]
+onboarding: Dict[str, Any]
+recommendations: List[str]
+assistant_message: str
+pilot_details: Optional[Dict[str, Any]] = None
+
+class IntentRequest(BaseModel):
+message: str
+
+class IntentResponse(BaseModel):
+detected_intent: str
+confidence: float
+suggested_path: Optional[RouteResponse] = None
+clarifying_questions: Optional[List[str]] = None
+
+# Core Routing Logic
+
+@app.post(”/api/gateway/route”, response_model=RouteResponse)
+async def route_user(request: RouteRequest):
+“””
+Determines appropriate onboarding path based on user type and intent
+“””
+return determine_route(request.user_type, request.intent, request.context)
+
+def determine_route(
+user_type: Optional[UserType],
+intent: Optional[Intent],
+context: Optional[Context]
+) -> RouteResponse:
+
+```
+# INDIVIDUAL PATH - GBI Network
+if user_type == UserType.INDIVIDUAL or intent in [Intent.TRADE, Intent.CREATE]:
+    return RouteResponse(
+        path="gbi",
+        route="/marketplace",
+        network="foundation",
+        onboarding={
+            "steps": [
+                {
+                    "id": "wallet_creation",
+                    "title": "Create Your Solar Wallet",
+                    "description": "Get your energy-backed wallet. First Solar arrives at UTC midnight.",
+                    "action": "POST /api/wallet/create",
+                    "estimated_time": 30
+                },
+                {
+                    "id": "marketplace_tour",
+                    "title": "Explore the Marketplace",
+                    "description": "See what people are trading. Everything priced in kWh.",
+                    "action": "GET /marketplace?tour=true",
+                    "estimated_time": 120
+                },
+                {
+                    "id": "first_listing",
+                    "title": "Create Your First Listing (Optional)",
+                    "description": "List something to sell or a service you offer. AI helps with pricing.",
+                    "action": "POST /api/marketplace/listing/create",
+                    "estimated_time": 180
+                },
+                {
+                    "id": "meet_kid_solar",
+                    "title": "Meet Kid Solar",
+                    "description": "Your personal AI assistant. Ask anything.",
+                    "action": "GET /agent?intro=true",
+                    "estimated_time": 60
+                }
+            ],
+            "estimated_time": 390,
+            "first_action": "Create wallet and receive your first Solar distribution"
+        },
+        recommendations=[
+            "Browse marketplace to see current listings",
+            "Check out DMTXACTLY for AI creative tools",
+            "Listen to Music Now (24 tracks from Solar artists)",
+            "Talk to Kid Solar about energy pricing"
+        ],
+        assistant_message=(
+            "Welcome to the Solar economy! I'll help you get set up. "
+            "You'll receive 1 Solar (10,000 Rays) daily starting at UTC midnight. "
+            "Let's create your wallet first."
+        )
+    )
+
+# ORGANIZATION PATH - Commissioned Network
+if user_type == UserType.ORGANIZATION or intent == Intent.COMMISSION:
+    pilot_type = determine_pilot_type(context)
+    
+    return RouteResponse(
+        path="commission",
+        route="/commission-network",
+        network="commissioned",
+        onboarding={
+            "steps": [
+                {
+                    "id": "discovery_call",
+                    "title": "Discovery Call",
+                    "description": "We learn about your needs, values, and use case.",
+                    "action": "SCHEDULE /api/calendar/book",
+                    "estimated_time": 1800
+                },
+                {
+                    "id": "network_design",
+                    "title": "Network Configuration",
+                    "description": "We design your subdomain, distribution rules, ethics layer.",
+                    "action": "DESIGN /api/network/configure",
+                    "estimated_time": 172800
+                },
+                {
+                    "id": "pilot_launch",
+                    "title": "Pilot Deployment",
+                    "description": f"{30 if context and context.timeline == Timeline.IMMEDIATE else 60}-day pilot with your community.",
+                    "action": "DEPLOY /api/network/launch",
+                    "estimated_time": 2592000
+                },
+                {
+                    "id": "analysis",
+                    "title": "Results & Case Study",
+                    "description": "Full report on transactions, impact, recommendations.",
+                    "action": "ANALYZE /api/network/report",
+                    "estimated_time": 259200
+                }
+            ],
+            "estimated_time": 5616000,
+            "first_action": "Schedule 30-minute discovery call"
+        },
+        recommendations=[
+            f"Pilot pricing: $5,000 for {30 if context and context.timeline == Timeline.IMMEDIATE else 60} days",
+            f"Estimated participants: {context.participant_count if context and context.participant_count else '50-200'}",
+            f"Best for: {pilot_type['use_case']}",
+            f"Expected outcomes: {', '.join(pilot_type['outcomes'])}"
+        ],
+        assistant_message=(
+            f"I can help you commission a Solar network for "
+            f"{context.organization_type.value if context and context.organization_type else 'your organization'}. "
+            "Let's start with a discovery call to understand your needs. "
+            "I'll connect you with our commissioning team."
+        ),
+        pilot_details=pilot_type
+    )
+
+# EXPLORER PATH - Learn & Discover
+return RouteResponse(
+    path="explore",
+    route="/learn",
+    network=None,
+    onboarding={
+        "steps": [
+            {
+                "id": "solar_standard",
+                "title": "Understand the Solar Standard",
+                "description": "Learn how energy-backed currency works.",
+                "action": "GET /SolarStandard.html",
+                "estimated_time": 600
+            },
+            {
+                "id": "whitepaper",
+                "title": "Read the Vision",
+                "description": "11 chapters on energy economics and global basic income.",
+                "action": "GET /whitepaper",
+                "estimated_time": 3600
+            },
+            {
+                "id": "apps_tour",
+                "title": "Try Foundation Apps",
+                "description": "LifeLens, Satellite ID, Seismic tracking, and more.",
+                "action": "GET /main-platform.html",
+                "estimated_time": 900
+            },
+            {
+                "id": "decide_path",
+                "title": "Choose Your Path",
+                "description": "After learning, decide: Join GBI or Commission Network",
+                "action": "POST /api/gateway/route",
+                "estimated_time": 0
+            }
+        ],
+        "estimated_time": 5100,
+        "first_action": "Explore the Solar Standard and foundation apps"
+    },
+    recommendations=[
+        "Start with the Solar Standard Protocol",
+        "Listen to Music Now while reading",
+        "Check out the UIM whitepaper (AI mesh intelligence)",
+        "Try LifeLens to see energy pricing in action"
+    ],
+    assistant_message=(
+        "Curious about energy-backed economies? I can guide you through the concepts, "
+        "show you working examples, and help you decide if you want to join or commission a network."
+    )
+)
+```
+
+def determine_pilot_type(context: Optional[Context]) -> Dict[str, Any]:
+“””
+Returns pilot specifications based on organization type
+“””
+pilot_types = {
+OrganizationType.FESTIVAL: {
+“use_case”: “Music festivals, art fairs, community gatherings”,
+“outcomes”: [
+“Zero payment processing fees”,
+“Real-time sustainability tracking”,
+“Volunteer coordination via Solar incentives”,
+“Attendee engagement gamification”
+],
+“duration”: 30,
+“complexity”: “medium”
+},
+OrganizationType.CAMPUS: {
+“use_case”: “College sustainability programs, research initiatives”,
+“outcomes”: [
+“Living laboratory for energy economics”,
+“Publishable research data”,
+“Student engagement beyond theory”,
+“Grant-fundable impact metrics”
+],
+“duration”: 60,
+“complexity”: “low”
+},
+OrganizationType.COWORKING: {
+“use_case”: “Co-working spaces, innovation hubs”,
+“outcomes”: [
+“True community formation through economic interdependence”,
+“Skill/service exchange marketplace”,
+“Competitive differentiation”,
+“Member value visibility”
+],
+“duration”: 45,
+“complexity”: “medium”
+},
+OrganizationType.COMMUNITY: {
+“use_case”: “Regenerative agriculture, permaculture, mutual aid”,
+“outcomes”: [
+“Non-monetary contribution valuation”,
+“Energy accounting for food production”,
+“Tool/skill sharing infrastructure”,
+“Proof of regenerative economic viability”
+],
+“duration”: 60,
+“complexity”: “high”
+}
+}
+
+```
+org_type = context.organization_type if context and context.organization_type else OrganizationType.COMMUNITY
+return pilot_types.get(org_type, pilot_types[OrganizationType.COMMUNITY])
+```
+
+# Intent Detection
+
+@app.post(”/api/gateway/intent”, response_model=IntentResponse)
+async def detect_intent(request: IntentRequest):
+“””
+AI-powered intent detection from natural language
+Integrates with Kid Solar or LLM for classification
+“””
+intent_data = await analyze_intent(request.message)
+
+```
+if intent_data["confidence"] < 0.7:
+    return IntentResponse(
+        detected_intent=intent_data["type"],
+        confidence=intent_data["confidence"],
+        clarifying_questions=[
+            "Are you joining as an individual or representing an organization?",
+            "What are you hoping to accomplish?",
+            "Do you want to participate in the existing network or create your own?"
+        ]
+    )
+
+route = determine_route(
+    intent_data.get("user_type"),
+    intent_data.get("intent"),
+    intent_data.get("context")
+)
+
+return IntentResponse(
+    detected_intent=intent_data["type"],
+    confidence=intent_data["confidence"],
+    suggested_path=route
+)
+```
+
+async def analyze_intent(message: str) -> Dict[str, Any]:
+“””
+Analyzes natural language to determine user intent
+TODO: Integrate with actual LLM (Claude, GPT, etc.)
+“””
+msg = message.lower()
+
+```
+# Organization signals
+if re.search(r'festival|event|campus|university|venue|community|our organization|we need', msg):
+    return {
+        "type": Intent.COMMISSION,
+        "user_type": UserType.ORGANIZATION,
+        "intent": Intent.COMMISSION,
+        "confidence": 0.85,
+        "context": extract_context(message)
+    }
+
+# Individual/creator signals
+if re.search(r'i want|join|earn|trade|create|sell|my wallet|daily solar', msg):
+    return {
+        "type": Intent.TRADE,
+        "user_type": UserType.INDIVIDUAL,
+        "intent": Intent.TRADE,
+        "confidence": 0.9,
+        "context": None
+    }
+
+# Explorer signals
+if re.search(r'learn|understand|how does|what is|whitepaper|curious', msg):
+    return {
+        "type": Intent.LEARN,
+        "user_type": UserType.EXPLORER,
+        "intent": Intent.LEARN,
+        "confidence": 0.8,
+        "context": None
+    }
+
+return {
+    "type": "unknown",
+    "user_type": None,
+    "intent": None,
+    "confidence": 0.3,
+    "context": None
+}
+```
+
+def extract_context(message: str) -> Context:
+“””
+Extracts context clues from natural language
+“””
+msg = message.lower()
+
+```
+org_type = None
+if re.search(r'festival', msg):
+    org_type = OrganizationType.FESTIVAL
+elif re.search(r'campus|university|college', msg):
+    org_type = OrganizationType.CAMPUS
+elif re.search(r'coworking|workspace', msg):
+    org_type = OrganizationType.COWORKING
+elif re.search(r'farm|permaculture|regenerative', msg):
+    org_type = OrganizationType.COMMUNITY
+
+timeline = Timeline.EXPLORING
+if re.search(r'asap|immediately|soon|next month', msg):
+    timeline = Timeline.IMMEDIATE
+elif re.search(r'planning|considering', msg):
+    timeline = Timeline.PLANNING
+
+budget = None
+if re.search(r'pilot|test|proof', msg):
+    budget = Budget.PILOT
+elif re.search(r'annual|year|ongoing', msg):
+    budget = Budget.ANNUAL
+elif re.search(r'enterprise|large scale|custom', msg):
+    budget = Budget.ENTERPRISE
+
+# Extract participant count
+participant_count = None
+numbers = re.findall(r'\d+', message)
+if numbers:
+    participant_count = int(numbers[0])
+
+return Context(
+    organization_type=org_type,
+    participant_count=participant_count,
+    timeline=timeline,
+    budget=budget
+)
+```
+
+# Onboarding Status Tracking
+
+class OnboardingStatus(BaseModel):
+user_id: str
+path: str
+current_step: int
+total_steps: int
+completed_steps: List[str]
+next_action: OnboardingStep
+progress: float
+
+@app.get(”/api/gateway/status/{user_id}”, response_model=OnboardingStatus)
+async def get_onboarding_status(user_id: str):
+“””
+Check onboarding progress for a user
+TODO: Integrate with actual database
+“””
+# Placeholder - implement with your database
+status = await fetch_user_status(user_id)
+return status
+
+async def fetch_user_status(user_id: str) -> OnboardingStatus:
+“””
+Fetch user onboarding status from database
+“””
+# TODO: Implement with actual DB query
+return OnboardingStatus(
+user_id=user_id,
+path=“gbi”,
+current_step=2,
+total_steps=4,
+completed_steps=[“wallet_creation”, “marketplace_tour”],
+next_action=OnboardingStep(
+id=“first_listing”,
+title=“Create Your First Listing”,
+description=“List something or offer a service”,
+action=“POST /api/marketplace/listing/create”,
+estimated_time=180
+),
+progress=0.5
+)
+
+# Health check
+
+@app.get(”/health”)
+async def health_check():
+return {“status”: “healthy”, “service”: “tc-s-gateway-api”}
+
+if **name** == “**main**”:
+import uvicorn
+uvicorn.run(app, host=“0.0.0.0”, port=8000)
