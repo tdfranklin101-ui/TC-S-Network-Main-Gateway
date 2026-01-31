@@ -1,11 +1,20 @@
 (function() {
   'use strict';
 
+  const DID_CONFIG = {
+    src: 'https://agent.d-id.com/v2/index.js',
+    mode: 'fabio',
+    clientKey: 'YXV0aDB8Njg3NjgyNDI2M2Q2ODI4MmIwOWFiYmUzOlR2cUplanVzeWc1cjlKV2ZNV0NKaQ==',
+    agentId: 'v2_agt_vhYf_e_C',
+    orientation: 'horizontal',
+    position: 'right'
+  };
+
   function addKidSolarStyles() {
     const style = document.createElement('style');
     style.id = 'kid-solar-global-styles';
     style.textContent = `
-      /* Ensure D-ID agent is visible above all overlays */
+      /* D-ID agent styling - highest priority */
       [data-agent-id], [data-name="did-agent"], did-agent, .did-widget, .fabio-widget {
         position: fixed !important;
         z-index: 999999 !important;
@@ -13,20 +22,11 @@
         visibility: visible !important;
       }
       
-      /* D-ID widget container - above solar greeting (z-index 9999) */
-      .did-agent-container, #did-agent, iframe[src*="d-id"] {
-        position: fixed !important;
+      iframe[src*="d-id"] {
         z-index: 999999 !important;
       }
       
-      /* Ensure solar greeting doesn't block D-ID */
-      #solarGreetingOverlay {
-        pointer-events: auto;
-      }
-      #solarGreetingOverlay.hidden {
-        pointer-events: none !important;
-      }
-      
+      /* Context badge */
       #kid-solar-context-badge {
         position: fixed;
         bottom: 140px;
@@ -37,7 +37,7 @@
         border-radius: 20px;
         font-size: 11px;
         font-weight: 600;
-        z-index: 9990;
+        z-index: 999998;
         box-shadow: 0 4px 15px rgba(255, 140, 0, 0.4);
         display: none;
         pointer-events: none;
@@ -56,6 +56,7 @@
       '/': { area: 'Gateway', hint: 'Help users choose their path' },
       '/index.html': { area: 'Gateway', hint: 'Help users choose their path' },
       '/homepage-full.html': { area: 'Main Platform', hint: 'Full platform overview' },
+      '/main-platform.html': { area: 'Main Platform', hint: 'Full platform overview' },
       '/marketplace.html': { area: 'Marketplace', hint: 'Solar economy & trading' },
       '/commission-network.html': { area: 'Commission Network', hint: 'Organization pilots' },
       '/SolarStandard.html': { area: 'Solar Standard', hint: 'Protocol education' },
@@ -70,20 +71,43 @@
     return contexts[path] || { area: 'TC-S Network', hint: 'General assistance' };
   }
 
+  function injectDIDAgent() {
+    if (document.querySelector('script[data-agent-id="' + DID_CONFIG.agentId + '"]')) {
+      console.log('☀️ D-ID already loaded');
+      return;
+    }
+    
+    const script = document.createElement('script');
+    script.type = 'module';
+    script.src = DID_CONFIG.src;
+    script.setAttribute('data-mode', DID_CONFIG.mode);
+    script.setAttribute('data-client-key', DID_CONFIG.clientKey);
+    script.setAttribute('data-agent-id', DID_CONFIG.agentId);
+    script.setAttribute('data-name', 'did-agent');
+    script.setAttribute('data-monitor', 'true');
+    script.setAttribute('data-orientation', DID_CONFIG.orientation);
+    script.setAttribute('data-position', DID_CONFIG.position);
+    
+    script.onload = function() {
+      console.log('☀️ D-ID Kid Solar loaded successfully');
+    };
+    
+    script.onerror = function(e) {
+      console.error('☀️ D-ID load error:', e);
+    };
+    
+    document.body.appendChild(script);
+    console.log('☀️ D-ID Kid Solar injected');
+  }
+
   function createContextBadge() {
+    if (document.getElementById('kid-solar-context-badge')) return;
+    
     const badge = document.createElement('div');
     badge.id = 'kid-solar-context-badge';
     const context = getPageContext();
     badge.innerHTML = `☀️ ${context.area}`;
     badge.title = context.hint;
-    
-    badge.addEventListener('click', function() {
-      const agent = document.querySelector('[data-name="did-agent"]');
-      if (agent && agent.shadowRoot) {
-        const button = agent.shadowRoot.querySelector('button');
-        if (button) button.click();
-      }
-    });
     
     document.body.appendChild(badge);
     
@@ -93,21 +117,22 @@
   }
 
   function init() {
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', function() {
-        addKidSolarStyles();
-        createContextBadge();
-      });
-    } else {
-      addKidSolarStyles();
-      createContextBadge();
-    }
+    addKidSolarStyles();
+    createContextBadge();
+    
+    setTimeout(injectDIDAgent, 500);
+    
     console.log('☀️ Kid Solar context ready on', window.location.pathname);
   }
 
-  init();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
   
   window.KidSolar = {
-    getContext: getPageContext
+    getContext: getPageContext,
+    reload: injectDIDAgent
   };
 })();
