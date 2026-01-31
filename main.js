@@ -259,7 +259,7 @@ function determineGatewayRoute(userType, intent, context) {
   if (userType === 'individual' || intent === 'trade' || intent === 'create') {
     return {
       path: 'gbi',
-      route: '/wallet.html',
+      route: '/marketplace.html',
       network: 'foundation',
       onboarding: {
         steps: [
