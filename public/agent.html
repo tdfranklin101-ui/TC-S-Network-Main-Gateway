@@ -462,6 +462,86 @@
                 document.getElementById('agent-name').textContent = userName;
             }
         });
+
+        // Kid Solar Session Management
+        function generateSessionId() {
+            return 'ks_' + Date.now() + '_' + Math.random().toString(36).substring(2, 15);
+        }
+
+        async function initializeKidSolarSession() {
+            let sessionId = sessionStorage.getItem('kid_solar_session_id');
+            if (!sessionId) {
+                sessionId = generateSessionId();
+                sessionStorage.setItem('kid_solar_session_id', sessionId);
+            }
+
+            try {
+                const response = await fetch('/api/kid-solar/session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sessionId,
+                        action: 'start',
+                        context: {
+                            page: 'agent',
+                            timestamp: new Date().toISOString()
+                        }
+                    })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    console.log('Kid Solar session initialized:', sessionId);
+                }
+            } catch (error) {
+                console.log('Session initialization:', error.message);
+            }
+        }
+
+        // Monitor for D-ID agent activity
+        function monitorDidAgentForSessionStart() {
+            let sessionStarted = false;
+            let checkCount = 0;
+            const maxChecks = 30;
+
+            const checkForAgent = setInterval(() => {
+                checkCount++;
+                const agentElements = document.querySelectorAll('[data-agent-id], iframe, div[role="dialog"]');
+                const hasVisibleElements = Array.from(agentElements).some(el => {
+                    const rect = el.getBoundingClientRect();
+                    return rect.width > 0 && rect.height > 0;
+                });
+
+                if (hasVisibleElements && !sessionStarted) {
+                    sessionStarted = true;
+                    console.log('D-ID agent detected - starting session');
+                    initializeKidSolarSession();
+                    clearInterval(checkForAgent);
+                }
+
+                if (checkCount >= maxChecks) {
+                    if (!sessionStarted) {
+                        initializeKidSolarSession();
+                    }
+                    clearInterval(checkForAgent);
+                }
+            }, 1000);
+        }
+
+        // Start monitoring when page loads
+        monitorDidAgentForSessionStart();
+    </script>
+
+    <!-- Kid Solar D-ID AI Agent -->
+    <script type="module"
+        src="https://agent.d-id.com/v2/index.js"
+        data-mode="fabio"
+        data-client-key="YXV0aDB8Njg3NjgyNDI2M2Q2ODI4MmIwOWFiYmUzOlR2cUplanVzeWc1cjlKV2ZNV0NKaQ=="
+        data-agent-id="v2_agt_vhYf_e_C"
+        data-name="did-agent"
+        data-monitor="true"
+        data-orientation="horizontal"
+        data-position="right">
     </script>
 </body>
 </html>

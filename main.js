@@ -3230,6 +3230,41 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Kid Solar Session Management
+  if (pathname === '/api/kid-solar/session' && req.method === 'POST') {
+    try {
+      const body = await parseBody(req);
+      const { sessionId, action, context } = body;
+      
+      if (action === 'start') {
+        console.log(`🌞 Kid Solar session started: ${sessionId}`);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: true,
+          sessionId,
+          message: 'Kid Solar session initialized',
+          timestamp: new Date().toISOString()
+        }));
+      } else if (action === 'end') {
+        console.log(`🌙 Kid Solar session ended: ${sessionId}`);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: true,
+          sessionId,
+          message: 'Kid Solar session ended'
+        }));
+      } else {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, sessionId }));
+      }
+    } catch (error) {
+      console.error('Kid Solar session error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: error.message }));
+    }
+    return;
+  }
+
   // OLD Kid Solar Voice Interaction (replaced by multi-modal endpoint in routes/market.js)
   if (false && pathname === '/api/kid-solar/voice' && req.method === 'POST') {
     try {
