@@ -5,53 +5,53 @@
       "id": "si",
       "name": "Solar Index",
       "unit": "%",
-      "value": 72,
+      "value": 70.6,
       "description": "Global Energy & Ethics Balance — 7-Day Rolling Indicator.",
-      "asOf": "2026-01-31T19:11:58.022Z"
+      "asOf": "2026-01-31T23:17:55.140Z"
     },
     {
       "id": "srh",
       "name": "Solar Reserve Health",
       "unit": "%",
-      "value": 79,
+      "value": 76.6,
       "description": "Reserve stability and fulfillment factor across all regions.",
-      "asOf": "2026-01-31T19:11:58.022Z"
+      "asOf": "2026-01-31T23:17:55.140Z"
     },
     {
       "id": "gbi",
       "name": "Global Basic Income",
       "unit": "%",
-      "value": 41.4,
+      "value": 41.1,
       "description": "Percentage of humans enrolled and actively claiming GBI.",
-      "asOf": "2026-01-31T19:11:58.022Z"
+      "asOf": "2026-01-31T23:17:55.140Z"
     },
     {
       "id": "cai",
       "name": "Compute Alignment",
       "unit": "%",
-      "value": 88.1,
+      "value": 88.6,
       "description": "Ethically aligned compute flow — safe superintelligence readiness.",
-      "asOf": "2026-01-31T19:11:58.022Z"
+      "asOf": "2026-01-31T23:17:55.140Z"
     },
     {
       "id": "mli",
       "name": "Market Liquidity",
       "unit": "%",
-      "value": 23.1,
+      "value": 24.3,
       "description": "Health of the TC-S digital marketplace and token velocity.",
-      "asOf": "2026-01-31T19:11:58.022Z"
+      "asOf": "2026-01-31T23:17:55.140Z"
     },
     {
       "id": "eai",
       "name": "Ethical Alignment",
       "unit": "%",
-      "value": 91.8,
+      "value": 93.1,
       "description": "Acceptance ratio of tasks from the Ethics Engine.",
-      "asOf": "2026-01-31T19:11:58.022Z"
+      "asOf": "2026-01-31T23:17:55.140Z"
     }
   ],
   "solar": {
-    "production": 2452,
-    "consumption": 1904.3
+    "production": 2461.5,
+    "consumption": 1924.6
   }
 }
