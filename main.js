@@ -250,6 +250,293 @@ function logBalanceChange(context, userId, username, oldBalance, newBalance, sou
   }
 }
 
+// ============================================
+// TC-S Gateway API Helper Functions
+// ============================================
+
+function determineGatewayRoute(userType, intent, context) {
+  // INDIVIDUAL PATH - Join GBI Network
+  if (userType === 'individual' || intent === 'trade' || intent === 'create') {
+    return {
+      path: 'gbi',
+      route: '/wallet.html',
+      network: 'foundation',
+      onboarding: {
+        steps: [
+          {
+            id: 'wallet_creation',
+            title: 'Create Your Solar Wallet',
+            description: 'Get your energy-backed wallet. First Solar arrives at UTC midnight.',
+            action: 'POST /api/wallet/create',
+            estimatedTime: 30
+          },
+          {
+            id: 'marketplace_tour',
+            title: 'Explore the Marketplace',
+            description: 'See what people are trading. Everything priced in kWh.',
+            action: 'GET /marketplace?tour=true',
+            estimatedTime: 120
+          },
+          {
+            id: 'first_listing',
+            title: 'Create Your First Listing (Optional)',
+            description: 'List something to sell or a service you offer. AI helps with pricing.',
+            action: 'POST /api/marketplace/listing/create',
+            estimatedTime: 180
+          },
+          {
+            id: 'meet_kid_solar',
+            title: 'Meet Kid Solar',
+            description: 'Your personal AI assistant. Ask anything.',
+            action: 'GET /agent?intro=true',
+            estimatedTime: 60
+          }
+        ],
+        estimatedTime: 390,
+        firstAction: 'Create wallet and receive your first Solar distribution'
+      },
+      recommendations: [
+        'Browse marketplace to see current listings',
+        'Check out DMTXACTLY for AI creative tools',
+        'Listen to Music Now (24 tracks from Solar artists)',
+        'Talk to Kid Solar about energy pricing'
+      ],
+      assistantMessage: "Welcome to the Solar economy! I'll help you get set up. You'll receive 1 Solar (10,000 Rays) daily starting at UTC midnight. Let's create your wallet first."
+    };
+  }
+
+  // ORGANIZATION PATH - Commission Network
+  if (userType === 'organization' || intent === 'commission') {
+    const pilotType = determineGatewayPilotType(context);
+    
+    return {
+      path: 'commission',
+      route: '/commission-network.html',
+      network: 'commissioned',
+      onboarding: {
+        steps: [
+          {
+            id: 'discovery_call',
+            title: 'Discovery Call',
+            description: 'We learn about your needs, values, and use case.',
+            action: 'SCHEDULE /api/calendar/book',
+            estimatedTime: 1800
+          },
+          {
+            id: 'network_design',
+            title: 'Network Configuration',
+            description: 'We design your subdomain, distribution rules, ethics layer.',
+            action: 'DESIGN /api/network/configure',
+            estimatedTime: 172800
+          },
+          {
+            id: 'pilot_launch',
+            title: 'Pilot Deployment',
+            description: `${context?.timeline === 'immediate' ? '30' : '60'}-day pilot with your community.`,
+            action: 'DEPLOY /api/network/launch',
+            estimatedTime: 2592000
+          },
+          {
+            id: 'analysis',
+            title: 'Results & Case Study',
+            description: 'Full report on transactions, impact, recommendations.',
+            action: 'ANALYZE /api/network/report',
+            estimatedTime: 259200
+          }
+        ],
+        estimatedTime: 5616000,
+        firstAction: 'Schedule 30-minute discovery call'
+      },
+      recommendations: [
+        `Pilot pricing: $5,000 for ${context?.timeline === 'immediate' ? '30' : '60'} days`,
+        `Estimated participants: ${context?.participantCount || '50-200'}`,
+        `Best for: ${pilotType.useCase}`,
+        `Expected outcomes: ${pilotType.outcomes.join(', ')}`
+      ],
+      assistantMessage: `I can help you commission a Solar network for ${context?.organizationType || 'your organization'}. Let's start with a discovery call to understand your needs. I'll connect you with our commissioning team.`,
+      pilotDetails: pilotType
+    };
+  }
+
+  // EXPLORER PATH - Learn & Discover
+  return {
+    path: 'explore',
+    route: '/solar-standard-page1.html',
+    network: null,
+    onboarding: {
+      steps: [
+        {
+          id: 'solar_standard',
+          title: 'Understand the Solar Standard',
+          description: 'Learn how energy-backed currency works.',
+          action: 'GET /solar-standard-page1.html',
+          estimatedTime: 600
+        },
+        {
+          id: 'whitepaper',
+          title: 'Read the Vision',
+          description: '11 chapters on energy economics and global basic income.',
+          action: 'GET /whitepapers.html',
+          estimatedTime: 3600
+        },
+        {
+          id: 'apps_tour',
+          title: 'Try Foundation Apps',
+          description: 'LifeLens, Satellite ID, Seismic tracking, and more.',
+          action: 'GET /homepage-full.html',
+          estimatedTime: 900
+        },
+        {
+          id: 'decide_path',
+          title: 'Choose Your Path',
+          description: 'After learning, decide: Join GBI or Commission Network',
+          action: 'POST /api/gateway/route',
+          estimatedTime: 0
+        }
+      ],
+      estimatedTime: 5100,
+      firstAction: 'Explore the Solar Standard and foundation apps'
+    },
+    recommendations: [
+      'Start with the Solar Standard Protocol',
+      'Listen to Music Now while reading',
+      'Check out the UIM whitepaper (AI mesh intelligence)',
+      'Try LifeLens to see energy pricing in action'
+    ],
+    assistantMessage: "Curious about energy-backed economies? I can guide you through the concepts, show you working examples, and help you decide if you want to join or commission a network."
+  };
+}
+
+function determineGatewayPilotType(context) {
+  const pilotTypes = {
+    festival: {
+      useCase: 'Music festivals, art fairs, community gatherings',
+      outcomes: [
+        'Zero payment processing fees',
+        'Real-time sustainability tracking',
+        'Volunteer coordination via Solar incentives',
+        'Attendee engagement gamification'
+      ],
+      duration: 30,
+      complexity: 'medium'
+    },
+    campus: {
+      useCase: 'College sustainability programs, research initiatives',
+      outcomes: [
+        'Living laboratory for energy economics',
+        'Publishable research data',
+        'Student engagement beyond theory',
+        'Grant-fundable impact metrics'
+      ],
+      duration: 60,
+      complexity: 'low'
+    },
+    coworking: {
+      useCase: 'Co-working spaces, innovation hubs',
+      outcomes: [
+        'True community formation through economic interdependence',
+        'Skill/service exchange marketplace',
+        'Competitive differentiation',
+        'Member value visibility'
+      ],
+      duration: 45,
+      complexity: 'medium'
+    },
+    community: {
+      useCase: 'Regenerative agriculture, permaculture, mutual aid',
+      outcomes: [
+        'Non-monetary contribution valuation',
+        'Energy accounting for food production',
+        'Tool/skill sharing infrastructure',
+        'Proof of regenerative economic viability'
+      ],
+      duration: 60,
+      complexity: 'high'
+    }
+  };
+
+  const orgType = context?.organizationType;
+  return pilotTypes[orgType] || pilotTypes.community;
+}
+
+function detectGatewayIntent(message) {
+  const msg = message.toLowerCase();
+
+  // Organization signals
+  if (/festival|event|campus|university|venue|community|our organization|we need/.test(msg)) {
+    return {
+      type: 'commission',
+      userType: 'organization',
+      intent: 'commission',
+      confidence: 0.85,
+      context: extractGatewayContext(message)
+    };
+  }
+
+  // Individual/creator signals
+  if (/i want|join|earn|trade|create|sell|my wallet|daily solar/.test(msg)) {
+    return {
+      type: 'trade',
+      userType: 'individual',
+      intent: 'trade',
+      confidence: 0.9,
+      context: null
+    };
+  }
+
+  // Explorer signals
+  if (/learn|understand|how does|what is|whitepaper|curious/.test(msg)) {
+    return {
+      type: 'learn',
+      userType: 'explorer',
+      intent: 'learn',
+      confidence: 0.8,
+      context: null
+    };
+  }
+
+  return {
+    type: 'unknown',
+    userType: null,
+    intent: null,
+    confidence: 0.3,
+    context: null
+  };
+}
+
+function extractGatewayContext(message) {
+  const msg = message.toLowerCase();
+
+  // Extract organization type
+  let organizationType = null;
+  if (/festival/.test(msg)) organizationType = 'festival';
+  else if (/campus|university|college/.test(msg)) organizationType = 'campus';
+  else if (/coworking|workspace/.test(msg)) organizationType = 'coworking';
+  else if (/farm|permaculture|regenerative/.test(msg)) organizationType = 'community';
+
+  // Extract participant count
+  const countMatch = message.match(/\d+/);
+  const participantCount = countMatch ? parseInt(countMatch[0]) : null;
+
+  // Extract timeline
+  let timeline = 'exploring';
+  if (/asap|immediately|soon|next month/.test(msg)) timeline = 'immediate';
+  else if (/planning|considering|exploring/.test(msg)) timeline = 'planning';
+
+  // Extract budget
+  let budget = null;
+  if (/pilot|test|proof/.test(msg)) budget = 'pilot';
+  else if (/annual|year|ongoing/.test(msg)) budget = 'annual';
+  else if (/enterprise|large scale|custom/.test(msg)) budget = 'enterprise';
+
+  return {
+    organizationType,
+    participantCount,
+    timeline,
+    budget
+  };
+}
+
 // Session helper functions - DATABASE BACKED for cross-domain auth
 function generateSessionId() {
   return crypto.randomBytes(32).toString('hex');
@@ -2661,6 +2948,108 @@ const server = http.createServer(async (req, res) => {
       } catch (e) {}
     }
     if (await handleAgenticRoutes(req, res, pathname, body, pool)) return;
+  }
+  
+  // ============================================
+  // TC-S Gateway API - Intelligent User Routing
+  // ============================================
+  
+  // POST /api/gateway/route - Determine appropriate entry path
+  if (pathname === '/api/gateway/route' && req.method === 'POST') {
+    try {
+      if (!body) body = await parseBody(req);
+      const { userType, intent, context } = body || {};
+      
+      const route = determineGatewayRoute(userType, intent, context);
+      
+      // Log the route decision for analytics
+      console.log(`📍 Gateway route: ${userType || 'unknown'} → ${route.path}`);
+      
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(route));
+      return;
+    } catch (error) {
+      console.error('Gateway route error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Failed to determine route' }));
+      return;
+    }
+  }
+  
+  // POST /api/gateway/intent - AI-powered intent detection
+  if (pathname === '/api/gateway/intent' && req.method === 'POST') {
+    try {
+      if (!body) body = await parseBody(req);
+      const { message } = body || {};
+      
+      if (!message) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Message is required' }));
+        return;
+      }
+      
+      const intent = detectGatewayIntent(message);
+      
+      if (intent.confidence < 0.7) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          detectedIntent: intent.type,
+          confidence: intent.confidence,
+          clarifyingQuestions: [
+            'Are you joining as an individual or representing an organization?',
+            'What are you hoping to accomplish?',
+            'Do you want to participate in the existing network or create your own?'
+          ]
+        }));
+        return;
+      }
+      
+      const route = determineGatewayRoute(intent.userType, intent.intent, intent.context);
+      
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        detectedIntent: intent.type,
+        confidence: intent.confidence,
+        suggestedPath: route
+      }));
+      return;
+    } catch (error) {
+      console.error('Gateway intent error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Failed to detect intent' }));
+      return;
+    }
+  }
+  
+  // GET /api/gateway/status/:userId - Check onboarding progress
+  if (pathname.startsWith('/api/gateway/status/') && req.method === 'GET') {
+    try {
+      const userId = pathname.split('/').pop();
+      
+      // Placeholder status - would integrate with database
+      const status = {
+        userId,
+        path: 'gbi',
+        currentStep: 1,
+        totalSteps: 4,
+        completedSteps: ['wallet_creation'],
+        nextAction: {
+          id: 'marketplace_tour',
+          title: 'Explore the Marketplace',
+          action: 'GET /marketplace?tour=true'
+        },
+        progress: 0.25
+      };
+      
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(status));
+      return;
+    } catch (error) {
+      console.error('Gateway status error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Failed to get status' }));
+      return;
+    }
   }
   
   // OLD Kid Solar Voice Interaction (replaced by multi-modal endpoint in routes/market.js)
