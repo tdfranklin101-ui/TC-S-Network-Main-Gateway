@@ -1,0 +1,264 @@
+“””
+TC-S Voucher Module - Database Models
+Database schema for digital vouchers system
+“””
+
+from sqlalchemy import (
+Column, String, Integer, Decimal, DateTime, Boolean,
+ForeignKey, Text, JSON, Enum as SQLEnum
+)
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
+from datetime import datetime
+import enum
+import uuid
+
+Base = declarative_base()
+
+class VoucherType(enum.Enum):
+“”“Types of vouchers available”””
+GOODS_PICKUP = “goods_pickup”          # Physical goods to pickup
+SERVICE = “service”                    # Services rendered in person
+ADMISSION = “admission”                # Event/venue entry
+EXPERIENCE = “experience”              # Activities, workshops, etc.
+RENTAL = “rental”                      # Tool/equipment rental
+SUBSCRIPTION = “subscription”          # Recurring access
+
+class VoucherStatus(enum.Enum):
+“”“Lifecycle status of a voucher”””
+ACTIVE = “active”                      # Valid, not yet redeemed
+REDEEMED = “redeemed”                  # Successfully used
+EXPIRED = “expired”                    # Past expiration date
+CANCELLED = “cancelled”                # Cancelled by vendor/buyer
+REFUNDED = “refunded”                  # Refunded to buyer
+
+class RedemptionMethod(enum.Enum):
+“”“How the voucher gets redeemed”””
+QR_CODE = “qr_code”                   # Scan QR code
+VOUCHER_CODE = “voucher_code”         # Enter code manually
+NFC = “nfc”                           # NFC tap (future)
+BIOMETRIC = “biometric”               # Fingerprint/face (future)
+
+# ============================================================================
+
+# VOUCHER LISTING (What vendors create/sell)
+
+# ============================================================================
+
+class VoucherListing(Base):
+“””
+Marketplace listing for vouchers
+Vendors create these to sell access to goods/services
+“””
+**tablename** = “voucher_listings”
+
+```
+# Identity
+id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+vendor_id = Column(String(36), ForeignKey("users.id"), nullable=False)
+listing_id = Column(String(36), ForeignKey("marketplace_listings.id"))
+
+# Basic Info
+title = Column(String(200), nullable=False)
+description = Column(Text)
+voucher_type = Column(SQLEnum(VoucherType), nullable=False)
+
+# Pricing & Availability
+price_rays = Column(Integer, nullable=False)  # Price in Rays
+energy_kwh = Column(Decimal(10, 4))           # Energy footprint
+quantity_available = Column(Integer)           # NULL = unlimited
+quantity_sold = Column(Integer, default=0)
+
+# Redemption Details
+redemption_location = Column(Text)             # Physical address or coordinates
+redemption_instructions = Column(Text)         # How to redeem
+redemption_hours = Column(String(500))         # When it can be redeemed
+redemption_method = Column(SQLEnum(RedemptionMethod), default=RedemptionMethod.QR_CODE)
+
+# Validity
+valid_from = Column(DateTime, default=datetime.utcnow)
+valid_until = Column(DateTime)                 # Expiration date
+redemption_window_hours = Column(Integer)      # Hours after purchase before expires
+
+# Terms
+terms_conditions = Column(Text)                # Legal terms
+refund_policy = Column(Text)                   # Refund rules
+transferable = Column(Boolean, default=False)  # Can be gifted/resold
+
+# Metadata
+category = Column(String(100))                 # "food", "wellness", "education", etc.
+tags = Column(JSON)                            # ["organic", "vegan", etc.]
+images = Column(JSON)                          # Array of image URLs
+
+# Status
+active = Column(Boolean, default=True)
+created_at = Column(DateTime, default=datetime.utcnow)
+updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+# Relationships
+vendor = relationship("User", foreign_keys=[vendor_id])
+vouchers = relationship("Voucher", back_populates="listing")
+```
+
+# ============================================================================
+
+# VOUCHER INSTANCE (Individual purchased voucher)
+
+# ============================================================================
+
+class Voucher(Base):
+“””
+Individual voucher instance purchased by a buyer
+Each purchase creates a unique voucher with unique code
+“””
+**tablename** = “vouchers”
+
+```
+# Identity
+id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+voucher_code = Column(String(20), unique=True, nullable=False)  # e.g., TC-8F3D2A
+
+# Relationships
+listing_id = Column(String(36), ForeignKey("voucher_listings.id"), nullable=False)
+buyer_id = Column(String(36), ForeignKey("users.id"), nullable=False)
+vendor_id = Column(String(36), ForeignKey("users.id"), nullable=False)
+
+# Transaction
+transaction_id = Column(String(36), ForeignKey("transactions.id"))
+price_paid_rays = Column(Integer, nullable=False)
+
+# Status
+status = Column(SQLEnum(VoucherStatus), default=VoucherStatus.ACTIVE)
+
+# Redemption
+redeemed_at = Column(DateTime)
+redeemed_by = Column(String(36), ForeignKey("users.id"))  # Vendor who redeemed it
+redemption_location_actual = Column(String(500))           # Where it was actually redeemed
+redemption_notes = Column(Text)                            # Any notes from redemption
+
+# Validity
+purchased_at = Column(DateTime, default=datetime.utcnow)
+expires_at = Column(DateTime, nullable=False)
+
+# Transfer tracking (if transferable)
+original_buyer_id = Column(String(36), ForeignKey("users.id"))
+transfer_history = Column(JSON)  # Array of {from_user, to_user, timestamp}
+
+# QR/Barcode data
+qr_code_data = Column(Text)      # Base64 encoded QR code image
+barcode_data = Column(String(50)) # If using barcode instead
+
+# Metadata
+metadata = Column(JSON)           # Flexible additional data
+created_at = Column(DateTime, default=datetime.utcnow)
+
+# Relationships
+listing = relationship("VoucherListing", back_populates="vouchers")
+buyer = relationship("User", foreign_keys=[buyer_id])
+vendor = relationship("User", foreign_keys=[vendor_id])
+redeemer = relationship("User", foreign_keys=[redeemed_by])
+```
+
+# ============================================================================
+
+# REDEMPTION LOG (Audit trail)
+
+# ============================================================================
+
+class VoucherRedemption(Base):
+“””
+Immutable log of redemption attempts
+Used for analytics and dispute resolution
+“””
+**tablename** = “voucher_redemptions”
+
+```
+id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+voucher_id = Column(String(36), ForeignKey("vouchers.id"), nullable=False)
+
+# Attempt details
+attempted_at = Column(DateTime, default=datetime.utcnow)
+attempted_by = Column(String(36), ForeignKey("users.id"))  # Vendor attempting redemption
+success = Column(Boolean, nullable=False)
+
+# Location data
+location_lat = Column(Decimal(10, 8))
+location_lon = Column(Decimal(11, 8))
+location_name = Column(String(200))
+
+# Device/method
+redemption_method = Column(SQLEnum(RedemptionMethod))
+device_info = Column(JSON)        # Browser, OS, etc.
+ip_address = Column(String(45))
+
+# Result
+failure_reason = Column(String(200))  # If failed, why?
+notes = Column(Text)
+
+# Relationships
+voucher = relationship("Voucher")
+vendor = relationship("User", foreign_keys=[attempted_by])
+```
+
+# ============================================================================
+
+# VENDOR SETTINGS (How vendors want to handle vouchers)
+
+# ============================================================================
+
+class VendorVoucherSettings(Base):
+“””
+Vendor-specific settings for voucher handling
+“””
+**tablename** = “vendor_voucher_settings”
+
+```
+id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+vendor_id = Column(String(36), ForeignKey("users.id"), unique=True, nullable=False)
+
+# Notification preferences
+notify_on_purchase = Column(Boolean, default=True)
+notify_on_redemption = Column(Boolean, default=True)
+notification_email = Column(String(200))
+notification_phone = Column(String(20))
+
+# Redemption rules
+allow_early_redemption = Column(Boolean, default=False)  # Before valid_from
+allow_late_redemption_grace_hours = Column(Integer, default=0)  # Hours after expiry
+require_buyer_present = Column(Boolean, default=False)  # Must show buyer ID
+
+# Business info
+business_name = Column(String(200))
+business_address = Column(Text)
+business_hours = Column(JSON)
+contact_info = Column(JSON)
+
+# Auto-refund rules
+auto_refund_if_not_redeemed = Column(Boolean, default=False)
+auto_refund_days_before_expiry = Column(Integer)
+
+created_at = Column(DateTime, default=datetime.utcnow)
+updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+# Relationships
+vendor = relationship("User")
+```
+
+# ============================================================================
+
+# INDEXES for Performance
+
+# ============================================================================
+
+“””
+CREATE INDEX idx_vouchers_code ON vouchers(voucher_code);
+CREATE INDEX idx_vouchers_buyer ON vouchers(buyer_id);
+CREATE INDEX idx_vouchers_vendor ON vouchers(vendor_id);
+CREATE INDEX idx_vouchers_status ON vouchers(status);
+CREATE INDEX idx_vouchers_expires ON vouchers(expires_at);
+CREATE INDEX idx_listings_vendor ON voucher_listings(vendor_id);
+CREATE INDEX idx_listings_type ON voucher_listings(voucher_type);
+CREATE INDEX idx_listings_active ON voucher_listings(active);
+CREATE INDEX idx_redemptions_voucher ON voucher_redemptions(voucher_id);
+CREATE INDEX idx_redemptions_vendor ON voucher_redemptions(attempted_by);
+“””
