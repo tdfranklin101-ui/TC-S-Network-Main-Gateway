@@ -8294,6 +8294,888 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // ============================================================
+  // TC-S VOUCHER MODULE API ROUTES
+  // Alternative request fulfillment system alongside marketplace
+  // ============================================================
+
+  // Helper function to generate unique voucher codes
+  function generateVoucherCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = 'TC-';
+    for (let i = 0; i < 6; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+  }
+
+  // 1. GET /api/vouchers/listings - Search/browse voucher listings
+  if (pathname === '/api/vouchers/listings' && req.method === 'GET') {
+    try {
+      if (!pool) {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Database unavailable' }));
+        return;
+      }
+
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      const voucherType = url.searchParams.get('voucher_type');
+      const category = url.searchParams.get('category');
+      const maxPriceRays = url.searchParams.get('max_price_rays');
+      const activeOnly = url.searchParams.get('active_only') !== 'false';
+
+      let query = `
+        SELECT 
+          vl.*,
+          m.username as vendor_name,
+          m.email as vendor_email,
+          (vl.quantity_available - COALESCE(vl.quantity_sold, 0)) as available_quantity
+        FROM voucher_listings vl
+        LEFT JOIN members m ON vl.vendor_id = m.id::text
+        WHERE 1=1
+      `;
+      const params = [];
+      let paramIndex = 1;
+
+      if (activeOnly) {
+        query += ` AND vl.active = true AND (vl.valid_until IS NULL OR vl.valid_until > NOW())`;
+      }
+
+      if (voucherType) {
+        query += ` AND vl.voucher_type = $${paramIndex++}`;
+        params.push(voucherType);
+      }
+
+      if (category) {
+        query += ` AND vl.category = $${paramIndex++}`;
+        params.push(category);
+      }
+
+      if (maxPriceRays) {
+        query += ` AND vl.price_rays <= $${paramIndex++}`;
+        params.push(parseInt(maxPriceRays));
+      }
+
+      query += ` ORDER BY vl.created_at DESC LIMIT 100`;
+
+      const result = await pool.query(query, params);
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        count: result.rows.length,
+        listings: result.rows.map(row => ({
+          id: row.id,
+          title: row.title,
+          description: row.description,
+          voucher_type: row.voucher_type,
+          category: row.category,
+          price_rays: row.price_rays,
+          energy_kwh: row.energy_kwh,
+          vendor_id: row.vendor_id,
+          vendor_name: row.vendor_name,
+          redemption_location: row.redemption_location,
+          redemption_instructions: row.redemption_instructions,
+          redemption_hours: row.redemption_hours,
+          valid_from: row.valid_from,
+          valid_until: row.valid_until,
+          redemption_window_hours: row.redemption_window_hours,
+          available_quantity: row.available_quantity,
+          quantity_available: row.quantity_available,
+          quantity_sold: row.quantity_sold || 0,
+          transferable: row.transferable,
+          images: row.images,
+          tags: row.tags,
+          active: row.active,
+          created_at: row.created_at
+        }))
+      }));
+    } catch (error) {
+      console.error('Voucher listings error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to fetch voucher listings' }));
+    }
+    return;
+  }
+
+  // 2. POST /api/vouchers/listings/create - Vendor creates a voucher listing
+  if (pathname === '/api/vouchers/listings/create' && req.method === 'POST') {
+    try {
+      const sessionId = getCookie(req, 'tc_s_session');
+      if (!sessionId) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Authentication required' }));
+        return;
+      }
+
+      const session = await getSession(sessionId);
+      if (!session || !session.userId) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Please sign in to create listings' }));
+        return;
+      }
+
+      if (!pool) {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Database unavailable' }));
+        return;
+      }
+
+      const body = await parseBody(req);
+      const {
+        title,
+        description,
+        voucher_type,
+        price_rays,
+        redemption_location,
+        redemption_instructions,
+        quantity_available,
+        valid_until,
+        valid_from,
+        redemption_window_hours,
+        redemption_hours,
+        redemption_method,
+        terms_conditions,
+        refund_policy,
+        transferable,
+        category,
+        tags,
+        images
+      } = body;
+
+      if (!title || !voucher_type || !price_rays) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Missing required fields: title, voucher_type, price_rays' }));
+        return;
+      }
+
+      // Generate energy estimate: price_rays * 0.01 for energy_kwh
+      const energy_kwh = parseFloat(price_rays) * 0.01;
+      const listingId = randomUUID();
+
+      const insertQuery = `
+        INSERT INTO voucher_listings (
+          id, vendor_id, title, description, voucher_type, price_rays, energy_kwh,
+          quantity_available, quantity_sold, redemption_location, redemption_instructions,
+          redemption_hours, redemption_method, valid_from, valid_until, redemption_window_hours,
+          terms_conditions, refund_policy, transferable, category, tags, images, active, created_at
+        ) VALUES (
+          $1, $2, $3, $4, $5, $6, $7, $8, 0, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, true, NOW()
+        ) RETURNING *
+      `;
+
+      const result = await pool.query(insertQuery, [
+        listingId,
+        session.userId.toString(),
+        title,
+        description || null,
+        voucher_type,
+        parseInt(price_rays),
+        energy_kwh,
+        quantity_available || null,
+        redemption_location || null,
+        redemption_instructions || null,
+        redemption_hours || null,
+        redemption_method || 'in_person',
+        valid_from ? new Date(valid_from) : null,
+        valid_until ? new Date(valid_until) : null,
+        redemption_window_hours || null,
+        terms_conditions || null,
+        refund_policy || null,
+        transferable !== false,
+        category || null,
+        tags ? JSON.stringify(tags) : null,
+        images ? JSON.stringify(images) : null
+      ]);
+
+      console.log(`🎫 Voucher listing created: "${title}" by ${session.username} (${price_rays} Rays)`);
+
+      res.writeHead(201, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        message: 'Voucher listing created successfully',
+        listing: result.rows[0]
+      }));
+    } catch (error) {
+      console.error('Create voucher listing error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to create voucher listing' }));
+    }
+    return;
+  }
+
+  // 3. POST /api/vouchers/purchase - Buyer purchases a voucher
+  if (pathname === '/api/vouchers/purchase' && req.method === 'POST') {
+    try {
+      const sessionId = getCookie(req, 'tc_s_session');
+      if (!sessionId) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Authentication required' }));
+        return;
+      }
+
+      const session = await getSession(sessionId);
+      if (!session || !session.userId) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Please sign in to purchase vouchers' }));
+        return;
+      }
+
+      if (!pool) {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Database unavailable' }));
+        return;
+      }
+
+      const body = await parseBody(req);
+      const { listing_id, quantity = 1 } = body;
+
+      if (!listing_id) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Missing required field: listing_id' }));
+        return;
+      }
+
+      // Get listing details
+      const listingResult = await pool.query(
+        'SELECT * FROM voucher_listings WHERE id = $1 AND active = true',
+        [listing_id]
+      );
+
+      if (listingResult.rows.length === 0) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Voucher listing not found or inactive' }));
+        return;
+      }
+
+      const listing = listingResult.rows[0];
+
+      // Check availability
+      const availableQty = (listing.quantity_available || Infinity) - (listing.quantity_sold || 0);
+      if (quantity > availableQty) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: `Only ${availableQty} vouchers available` }));
+        return;
+      }
+
+      // Check if listing is still valid
+      if (listing.valid_until && new Date(listing.valid_until) < new Date()) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'This voucher listing has expired' }));
+        return;
+      }
+
+      // Calculate total cost in Rays
+      const totalRays = listing.price_rays * quantity;
+
+      // Check buyer's balance (total_solar is in Solar, 1 Solar = 10000 Rays)
+      const buyerResult = await pool.query(
+        'SELECT id, username, total_solar FROM members WHERE id = $1',
+        [session.userId]
+      );
+
+      if (buyerResult.rows.length === 0) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Buyer account not found' }));
+        return;
+      }
+
+      const buyer = buyerResult.rows[0];
+      const buyerRays = (parseFloat(buyer.total_solar) || 0) * 10000;
+
+      if (buyerRays < totalRays) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ 
+          success: false, 
+          error: `Insufficient Rays. You have ${Math.floor(buyerRays)} Rays, need ${totalRays} Rays`
+        }));
+        return;
+      }
+
+      // Prevent buying own vouchers
+      if (listing.vendor_id === session.userId.toString()) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Cannot purchase your own voucher' }));
+        return;
+      }
+
+      // Process purchase atomically
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+
+        const purchasedVouchers = [];
+        const transactionId = randomUUID();
+
+        for (let i = 0; i < quantity; i++) {
+          // Generate unique voucher code
+          let voucherCode;
+          let codeExists = true;
+          while (codeExists) {
+            voucherCode = generateVoucherCode();
+            const codeCheck = await client.query(
+              'SELECT id FROM vouchers WHERE voucher_code = $1',
+              [voucherCode]
+            );
+            codeExists = codeCheck.rows.length > 0;
+          }
+
+          // Calculate expiration
+          let expiresAt;
+          if (listing.redemption_window_hours) {
+            expiresAt = new Date(Date.now() + listing.redemption_window_hours * 60 * 60 * 1000);
+          } else if (listing.valid_until) {
+            expiresAt = new Date(listing.valid_until);
+          } else {
+            // Default: 1 year from purchase
+            expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+          }
+
+          // Generate QR code data
+          const qrCodeData = JSON.stringify({
+            voucher_code: voucherCode,
+            listing_id: listing.id,
+            title: listing.title,
+            vendor_id: listing.vendor_id,
+            price_rays: listing.price_rays,
+            purchased_at: new Date().toISOString(),
+            expires_at: expiresAt.toISOString()
+          });
+
+          const voucherId = randomUUID();
+
+          // Create voucher record
+          await client.query(`
+            INSERT INTO vouchers (
+              id, voucher_code, listing_id, buyer_id, vendor_id, transaction_id,
+              price_paid_rays, status, purchased_at, expires_at, original_buyer_id,
+              qr_code_data, created_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'active', NOW(), $8, $4, $9, NOW())
+          `, [
+            voucherId,
+            voucherCode,
+            listing.id,
+            session.userId.toString(),
+            listing.vendor_id,
+            transactionId,
+            listing.price_rays,
+            expiresAt,
+            qrCodeData
+          ]);
+
+          purchasedVouchers.push({
+            id: voucherId,
+            voucher_code: voucherCode,
+            expires_at: expiresAt,
+            qr_code_data: qrCodeData
+          });
+        }
+
+        // Deduct Rays from buyer (convert to Solar)
+        const solarDeduction = totalRays / 10000;
+        await client.query(
+          'UPDATE members SET total_solar = total_solar - $1 WHERE id = $2',
+          [solarDeduction, session.userId]
+        );
+
+        // Add Rays to vendor (convert to Solar)
+        await client.query(
+          'UPDATE members SET total_solar = total_solar + $1 WHERE id = $2::integer',
+          [solarDeduction, listing.vendor_id]
+        );
+
+        // Update listing quantity sold
+        await client.query(
+          'UPDATE voucher_listings SET quantity_sold = COALESCE(quantity_sold, 0) + $1, updated_at = NOW() WHERE id = $2',
+          [quantity, listing.id]
+        );
+
+        await client.query('COMMIT');
+
+        console.log(`🎫 Voucher purchase: ${session.username} bought ${quantity}x "${listing.title}" for ${totalRays} Rays`);
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: true,
+          message: `Successfully purchased ${quantity} voucher(s)`,
+          transaction_id: transactionId,
+          total_rays_paid: totalRays,
+          vouchers: purchasedVouchers,
+          new_balance_rays: Math.floor((buyerRays - totalRays))
+        }));
+
+      } catch (txError) {
+        await client.query('ROLLBACK');
+        throw txError;
+      } finally {
+        client.release();
+      }
+
+    } catch (error) {
+      console.error('Voucher purchase error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to complete purchase' }));
+    }
+    return;
+  }
+
+  // 4. GET /api/vouchers/my-vouchers - Get buyer's purchased vouchers
+  if (pathname === '/api/vouchers/my-vouchers' && req.method === 'GET') {
+    try {
+      const sessionId = getCookie(req, 'tc_s_session');
+      if (!sessionId) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Authentication required', vouchers: [] }));
+        return;
+      }
+
+      const session = await getSession(sessionId);
+      if (!session || !session.userId) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Please sign in to view your vouchers', vouchers: [] }));
+        return;
+      }
+
+      if (!pool) {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Database unavailable', vouchers: [] }));
+        return;
+      }
+
+      const result = await pool.query(`
+        SELECT 
+          v.*,
+          vl.title as listing_title,
+          vl.description as listing_description,
+          vl.voucher_type,
+          vl.redemption_location,
+          vl.redemption_instructions,
+          vl.redemption_hours,
+          vl.images as listing_images,
+          m.username as vendor_name
+        FROM vouchers v
+        JOIN voucher_listings vl ON v.listing_id = vl.id
+        LEFT JOIN members m ON v.vendor_id = m.id::text
+        WHERE v.buyer_id = $1
+        ORDER BY v.purchased_at DESC
+      `, [session.userId.toString()]);
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        count: result.rows.length,
+        vouchers: result.rows.map(row => ({
+          id: row.id,
+          voucher_code: row.voucher_code,
+          status: row.status,
+          price_paid_rays: row.price_paid_rays,
+          purchased_at: row.purchased_at,
+          expires_at: row.expires_at,
+          redeemed_at: row.redeemed_at,
+          qr_code_data: row.qr_code_data,
+          listing: {
+            id: row.listing_id,
+            title: row.listing_title,
+            description: row.listing_description,
+            voucher_type: row.voucher_type,
+            redemption_location: row.redemption_location,
+            redemption_instructions: row.redemption_instructions,
+            redemption_hours: row.redemption_hours,
+            images: row.listing_images
+          },
+          vendor_name: row.vendor_name,
+          is_expired: new Date(row.expires_at) < new Date(),
+          is_redeemable: row.status === 'active' && new Date(row.expires_at) >= new Date()
+        }))
+      }));
+    } catch (error) {
+      console.error('My vouchers error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to fetch vouchers', vouchers: [] }));
+    }
+    return;
+  }
+
+  // 5. POST /api/vouchers/redeem/validate - Vendor validates a voucher code
+  if (pathname === '/api/vouchers/redeem/validate' && req.method === 'POST') {
+    try {
+      if (!pool) {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Database unavailable' }));
+        return;
+      }
+
+      const body = await parseBody(req);
+      const { voucher_code } = body;
+
+      if (!voucher_code) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Missing required field: voucher_code' }));
+        return;
+      }
+
+      const result = await pool.query(`
+        SELECT 
+          v.*,
+          vl.title as listing_title,
+          vl.description as listing_description,
+          vl.voucher_type,
+          vl.redemption_location,
+          vl.redemption_instructions,
+          vl.terms_conditions,
+          m.username as buyer_name
+        FROM vouchers v
+        JOIN voucher_listings vl ON v.listing_id = vl.id
+        LEFT JOIN members m ON v.buyer_id = m.id::text
+        WHERE v.voucher_code = $1
+      `, [voucher_code.toUpperCase()]);
+
+      if (result.rows.length === 0) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ 
+          success: false, 
+          valid: false,
+          error: 'Voucher code not found'
+        }));
+        return;
+      }
+
+      const voucher = result.rows[0];
+      const isExpired = new Date(voucher.expires_at) < new Date();
+      const isRedeemed = voucher.status === 'redeemed';
+      const isActive = voucher.status === 'active' && !isExpired;
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        valid: isActive,
+        voucher: {
+          id: voucher.id,
+          voucher_code: voucher.voucher_code,
+          status: voucher.status,
+          expires_at: voucher.expires_at,
+          purchased_at: voucher.purchased_at,
+          redeemed_at: voucher.redeemed_at,
+          price_paid_rays: voucher.price_paid_rays,
+          buyer_name: voucher.buyer_name,
+          vendor_id: voucher.vendor_id
+        },
+        listing: {
+          id: voucher.listing_id,
+          title: voucher.listing_title,
+          description: voucher.listing_description,
+          voucher_type: voucher.voucher_type,
+          redemption_location: voucher.redemption_location,
+          redemption_instructions: voucher.redemption_instructions,
+          terms_conditions: voucher.terms_conditions
+        },
+        validation: {
+          is_active: voucher.status === 'active',
+          is_expired: isExpired,
+          is_redeemed: isRedeemed,
+          can_redeem: isActive,
+          message: isActive 
+            ? 'Voucher is valid and can be redeemed' 
+            : isRedeemed 
+              ? 'Voucher has already been redeemed'
+              : isExpired 
+                ? 'Voucher has expired'
+                : 'Voucher is not active'
+        }
+      }));
+    } catch (error) {
+      console.error('Voucher validation error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to validate voucher' }));
+    }
+    return;
+  }
+
+  // 6. POST /api/vouchers/redeem/confirm - Vendor confirms redemption
+  if (pathname === '/api/vouchers/redeem/confirm' && req.method === 'POST') {
+    try {
+      const sessionId = getCookie(req, 'tc_s_session');
+      if (!sessionId) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Authentication required' }));
+        return;
+      }
+
+      const session = await getSession(sessionId);
+      if (!session || !session.userId) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Please sign in to confirm redemption' }));
+        return;
+      }
+
+      if (!pool) {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Database unavailable' }));
+        return;
+      }
+
+      const body = await parseBody(req);
+      const { voucher_code, notes } = body;
+
+      if (!voucher_code) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Missing required field: voucher_code' }));
+        return;
+      }
+
+      // Get voucher and verify vendor
+      const voucherResult = await pool.query(
+        'SELECT * FROM vouchers WHERE voucher_code = $1',
+        [voucher_code.toUpperCase()]
+      );
+
+      if (voucherResult.rows.length === 0) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Voucher not found' }));
+        return;
+      }
+
+      const voucher = voucherResult.rows[0];
+
+      // Verify the session user is the vendor
+      if (voucher.vendor_id !== session.userId.toString()) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Only the vendor can confirm redemption' }));
+        return;
+      }
+
+      // Check voucher status
+      if (voucher.status !== 'active') {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ 
+          success: false, 
+          error: `Voucher cannot be redeemed. Current status: ${voucher.status}` 
+        }));
+        return;
+      }
+
+      // Check expiration
+      if (new Date(voucher.expires_at) < new Date()) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Voucher has expired' }));
+        return;
+      }
+
+      // Process redemption atomically
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+
+        // Update voucher status
+        await client.query(`
+          UPDATE vouchers 
+          SET status = 'redeemed', 
+              redeemed_at = NOW(), 
+              redeemed_by = $1,
+              redemption_notes = $2
+          WHERE id = $3
+        `, [session.userId.toString(), notes || null, voucher.id]);
+
+        // Create redemption record
+        const redemptionId = randomUUID();
+        await client.query(`
+          INSERT INTO voucher_redemptions (
+            id, voucher_id, attempted_at, attempted_by, success, notes
+          ) VALUES ($1, $2, NOW(), $3, true, $4)
+        `, [redemptionId, voucher.id, session.userId.toString(), notes || null]);
+
+        await client.query('COMMIT');
+
+        console.log(`✅ Voucher redeemed: ${voucher.voucher_code} by vendor ${session.username}`);
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: true,
+          message: 'Voucher successfully redeemed',
+          voucher: {
+            id: voucher.id,
+            voucher_code: voucher.voucher_code,
+            status: 'redeemed',
+            redeemed_at: new Date().toISOString(),
+            redeemed_by: session.userId.toString()
+          },
+          redemption_id: redemptionId
+        }));
+
+      } catch (txError) {
+        await client.query('ROLLBACK');
+        throw txError;
+      } finally {
+        client.release();
+      }
+
+    } catch (error) {
+      console.error('Voucher redemption error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to confirm redemption' }));
+    }
+    return;
+  }
+
+  // 7. GET /api/vouchers/vendor/listings - Get vendor's own listings
+  if (pathname === '/api/vouchers/vendor/listings' && req.method === 'GET') {
+    try {
+      const sessionId = getCookie(req, 'tc_s_session');
+      if (!sessionId) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Authentication required', listings: [] }));
+        return;
+      }
+
+      const session = await getSession(sessionId);
+      if (!session || !session.userId) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Please sign in to view your listings', listings: [] }));
+        return;
+      }
+
+      if (!pool) {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Database unavailable', listings: [] }));
+        return;
+      }
+
+      const result = await pool.query(`
+        SELECT 
+          vl.*,
+          (SELECT COUNT(*) FROM vouchers v WHERE v.listing_id = vl.id) as total_sold,
+          (SELECT COUNT(*) FROM vouchers v WHERE v.listing_id = vl.id AND v.status = 'redeemed') as total_redeemed,
+          (SELECT SUM(v.price_paid_rays) FROM vouchers v WHERE v.listing_id = vl.id) as total_revenue_rays
+        FROM voucher_listings vl
+        WHERE vl.vendor_id = $1
+        ORDER BY vl.created_at DESC
+      `, [session.userId.toString()]);
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        count: result.rows.length,
+        listings: result.rows.map(row => ({
+          id: row.id,
+          title: row.title,
+          description: row.description,
+          voucher_type: row.voucher_type,
+          category: row.category,
+          price_rays: row.price_rays,
+          energy_kwh: row.energy_kwh,
+          quantity_available: row.quantity_available,
+          quantity_sold: row.quantity_sold || 0,
+          available_quantity: (row.quantity_available || Infinity) - (row.quantity_sold || 0),
+          redemption_location: row.redemption_location,
+          redemption_instructions: row.redemption_instructions,
+          valid_from: row.valid_from,
+          valid_until: row.valid_until,
+          active: row.active,
+          created_at: row.created_at,
+          stats: {
+            total_sold: parseInt(row.total_sold) || 0,
+            total_redeemed: parseInt(row.total_redeemed) || 0,
+            total_revenue_rays: parseInt(row.total_revenue_rays) || 0,
+            pending_redemption: (parseInt(row.total_sold) || 0) - (parseInt(row.total_redeemed) || 0)
+          }
+        }))
+      }));
+    } catch (error) {
+      console.error('Vendor listings error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to fetch vendor listings', listings: [] }));
+    }
+    return;
+  }
+
+  // 8. GET /api/vouchers/vendor/sales - Get vendor's sold vouchers
+  if (pathname === '/api/vouchers/vendor/sales' && req.method === 'GET') {
+    try {
+      const sessionId = getCookie(req, 'tc_s_session');
+      if (!sessionId) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Authentication required', sales: [] }));
+        return;
+      }
+
+      const session = await getSession(sessionId);
+      if (!session || !session.userId) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Please sign in to view your sales', sales: [] }));
+        return;
+      }
+
+      if (!pool) {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Database unavailable', sales: [] }));
+        return;
+      }
+
+      const result = await pool.query(`
+        SELECT 
+          v.*,
+          vl.title as listing_title,
+          vl.voucher_type,
+          m.username as buyer_name,
+          m.email as buyer_email
+        FROM vouchers v
+        JOIN voucher_listings vl ON v.listing_id = vl.id
+        LEFT JOIN members m ON v.buyer_id = m.id::text
+        WHERE v.vendor_id = $1
+        ORDER BY v.purchased_at DESC
+      `, [session.userId.toString()]);
+
+      // Calculate summary stats
+      const totalRevenue = result.rows.reduce((sum, v) => sum + (v.price_paid_rays || 0), 0);
+      const redeemedCount = result.rows.filter(v => v.status === 'redeemed').length;
+      const activeCount = result.rows.filter(v => v.status === 'active').length;
+      const expiredCount = result.rows.filter(v => v.status === 'active' && new Date(v.expires_at) < new Date()).length;
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        count: result.rows.length,
+        summary: {
+          total_sales: result.rows.length,
+          total_revenue_rays: totalRevenue,
+          total_revenue_solar: (totalRevenue / 10000).toFixed(4),
+          redeemed: redeemedCount,
+          active: activeCount,
+          expired_unredeemed: expiredCount
+        },
+        sales: result.rows.map(row => ({
+          id: row.id,
+          voucher_code: row.voucher_code,
+          status: row.status,
+          price_paid_rays: row.price_paid_rays,
+          purchased_at: row.purchased_at,
+          expires_at: row.expires_at,
+          redeemed_at: row.redeemed_at,
+          listing: {
+            id: row.listing_id,
+            title: row.listing_title,
+            voucher_type: row.voucher_type
+          },
+          buyer: {
+            id: row.buyer_id,
+            name: row.buyer_name,
+            email: row.buyer_email
+          },
+          is_expired: new Date(row.expires_at) < new Date(),
+          is_redeemed: row.status === 'redeemed'
+        }))
+      }));
+    } catch (error) {
+      console.error('Vendor sales error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to fetch sales', sales: [] }));
+    }
+    return;
+  }
+
+  // END TC-S VOUCHER MODULE API ROUTES
+  // ============================================================
+
   // AI Automatic Promotion System API Endpoints
   if (pathname === '/api/ai-promotion/analytics' && req.method === 'GET') {
     try {

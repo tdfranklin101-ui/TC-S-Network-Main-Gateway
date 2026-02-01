@@ -1421,3 +1421,140 @@ export type InsertAgentRegistry = z.infer<typeof insertAgentRegistrySchema>;
 export type InsertPolicyRule = z.infer<typeof insertPolicyRuleSchema>;
 export type InsertNetworkSpec = z.infer<typeof insertNetworkSpecSchema>;
 export type InsertActionAuditLog = z.infer<typeof insertActionAuditLogSchema>;
+
+// ============================================================================
+// TC-S VOUCHER MODULE - Alternative Request Fulfillment System
+// Vouchers for physical goods, services, admissions, experiences, rentals
+// ============================================================================
+
+// Voucher Listings - What vendors create/sell
+export const voucherListings = pgTable("voucher_listings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  vendorId: varchar("vendor_id").notNull(),
+  listingId: varchar("listing_id"),
+  title: varchar("title", { length: 200 }).notNull(),
+  description: text("description"),
+  voucherType: varchar("voucher_type").notNull(), // goods_pickup, service, admission, experience, rental, subscription
+  priceRays: integer("price_rays").notNull(),
+  energyKwh: numeric("energy_kwh", { precision: 10, scale: 4 }),
+  quantityAvailable: integer("quantity_available"),
+  quantitySold: integer("quantity_sold").default(0),
+  redemptionLocation: text("redemption_location"),
+  redemptionInstructions: text("redemption_instructions"),
+  redemptionHours: varchar("redemption_hours", { length: 500 }),
+  redemptionMethod: varchar("redemption_method").default("qr_code"), // qr_code, voucher_code, nfc, biometric
+  validFrom: timestamp("valid_from").defaultNow(),
+  validUntil: timestamp("valid_until"),
+  redemptionWindowHours: integer("redemption_window_hours"),
+  termsConditions: text("terms_conditions"),
+  refundPolicy: text("refund_policy"),
+  transferable: boolean("transferable").default(false),
+  category: varchar("category", { length: 100 }),
+  tags: jsonb("tags"),
+  images: jsonb("images"),
+  active: boolean("active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+}, (table) => ({
+  vendorIdx: index("voucher_listings_vendor_idx").on(table.vendorId),
+  typeIdx: index("voucher_listings_type_idx").on(table.voucherType),
+  activeIdx: index("voucher_listings_active_idx").on(table.active),
+  categoryIdx: index("voucher_listings_category_idx").on(table.category)
+}));
+
+// Vouchers - Individual purchased voucher instances
+export const vouchers = pgTable("vouchers", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  voucherCode: varchar("voucher_code", { length: 20 }).unique().notNull(),
+  listingId: varchar("listing_id").references(() => voucherListings.id).notNull(),
+  buyerId: varchar("buyer_id").notNull(),
+  vendorId: varchar("vendor_id").notNull(),
+  transactionId: varchar("transaction_id"),
+  pricePaidRays: integer("price_paid_rays").notNull(),
+  status: varchar("status").default("active"), // active, redeemed, expired, cancelled, refunded
+  redeemedAt: timestamp("redeemed_at"),
+  redeemedBy: varchar("redeemed_by"),
+  redemptionLocationActual: varchar("redemption_location_actual", { length: 500 }),
+  redemptionNotes: text("redemption_notes"),
+  purchasedAt: timestamp("purchased_at").defaultNow(),
+  expiresAt: timestamp("expires_at").notNull(),
+  originalBuyerId: varchar("original_buyer_id"),
+  transferHistory: jsonb("transfer_history"),
+  qrCodeData: text("qr_code_data"),
+  barcodeData: varchar("barcode_data", { length: 50 }),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow()
+}, (table) => ({
+  codeIdx: index("vouchers_code_idx").on(table.voucherCode),
+  buyerIdx: index("vouchers_buyer_idx").on(table.buyerId),
+  vendorIdx: index("vouchers_vendor_idx").on(table.vendorId),
+  statusIdx: index("vouchers_status_idx").on(table.status),
+  expiresIdx: index("vouchers_expires_idx").on(table.expiresAt)
+}));
+
+// Voucher Redemptions - Immutable audit trail
+export const voucherRedemptions = pgTable("voucher_redemptions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  voucherId: varchar("voucher_id").references(() => vouchers.id).notNull(),
+  attemptedAt: timestamp("attempted_at").defaultNow(),
+  attemptedBy: varchar("attempted_by"),
+  success: boolean("success").notNull(),
+  locationLat: numeric("location_lat", { precision: 10, scale: 8 }),
+  locationLon: numeric("location_lon", { precision: 11, scale: 8 }),
+  locationName: varchar("location_name", { length: 200 }),
+  redemptionMethod: varchar("redemption_method"),
+  deviceInfo: jsonb("device_info"),
+  ipAddress: varchar("ip_address", { length: 45 }),
+  failureReason: varchar("failure_reason", { length: 200 }),
+  notes: text("notes")
+}, (table) => ({
+  voucherIdx: index("voucher_redemptions_voucher_idx").on(table.voucherId),
+  vendorIdx: index("voucher_redemptions_vendor_idx").on(table.attemptedBy)
+}));
+
+// Vendor Voucher Settings - Per-vendor preferences
+export const vendorVoucherSettings = pgTable("vendor_voucher_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  vendorId: varchar("vendor_id").unique().notNull(),
+  notifyOnPurchase: boolean("notify_on_purchase").default(true),
+  notifyOnRedemption: boolean("notify_on_redemption").default(true),
+  notificationEmail: varchar("notification_email", { length: 200 }),
+  notificationPhone: varchar("notification_phone", { length: 20 }),
+  allowEarlyRedemption: boolean("allow_early_redemption").default(false),
+  allowLateRedemptionGraceHours: integer("allow_late_redemption_grace_hours").default(0),
+  requireBuyerPresent: boolean("require_buyer_present").default(false),
+  businessName: varchar("business_name", { length: 200 }),
+  businessAddress: text("business_address"),
+  businessHours: jsonb("business_hours"),
+  contactInfo: jsonb("contact_info"),
+  autoRefundIfNotRedeemed: boolean("auto_refund_if_not_redeemed").default(false),
+  autoRefundDaysBeforeExpiry: integer("auto_refund_days_before_expiry"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+// Insert schemas for voucher module
+export const insertVoucherListingSchema = createInsertSchema(voucherListings).omit({
+  id: true, createdAt: true, updatedAt: true, quantitySold: true
+});
+export const insertVoucherSchema = createInsertSchema(vouchers).omit({
+  id: true, createdAt: true
+});
+export const insertVoucherRedemptionSchema = createInsertSchema(voucherRedemptions).omit({
+  id: true, attemptedAt: true
+});
+export const insertVendorVoucherSettingsSchema = createInsertSchema(vendorVoucherSettings).omit({
+  id: true, createdAt: true, updatedAt: true
+});
+
+// Select types for voucher module
+export type VoucherListing = typeof voucherListings.$inferSelect;
+export type VoucherInstance = typeof vouchers.$inferSelect;
+export type VoucherRedemption = typeof voucherRedemptions.$inferSelect;
+export type VendorVoucherSettings = typeof vendorVoucherSettings.$inferSelect;
+
+// Insert types for voucher module
+export type InsertVoucherListing = z.infer<typeof insertVoucherListingSchema>;
+export type InsertVoucher = z.infer<typeof insertVoucherSchema>;
+export type InsertVoucherRedemption = z.infer<typeof insertVoucherRedemptionSchema>;
+export type InsertVendorVoucherSettings = z.infer<typeof insertVendorVoucherSettingsSchema>;
