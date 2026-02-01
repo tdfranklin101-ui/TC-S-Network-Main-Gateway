@@ -2298,6 +2298,9 @@
             <button class="tab" data-tab="upload">
                 <span>🚀</span> Upload
             </button>
+            <button class="tab" data-tab="vouchers">
+                <span>🎟️</span> Vouchers
+            </button>
         </div>
 
         <!-- NEW: Monazite Collection Feature Section -->
@@ -2948,6 +2951,164 @@
         </div>
     </div>
 
+    <!-- Vouchers Tab Content - Alternative Request Fulfillment System -->
+    <div id="vouchers-content" class="tab-content" style="display: none;">
+        <div class="voucher-header" style="text-align: center; padding: 20px; background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(0, 255, 255, 0.1)); border-radius: 15px; margin-bottom: 20px;">
+            <h2 style="color: #00FFFF; margin-bottom: 10px;">🎟️ TC-S Voucher Marketplace</h2>
+            <p style="color: #aaa;">Physical goods, services, admissions & experiences - redeemable with QR codes</p>
+        </div>
+        
+        <!-- Voucher Sub-tabs -->
+        <div class="voucher-sub-tabs" style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center;">
+            <button class="voucher-tab active" onclick="switchVoucherTab('browse')" data-voucher-tab="browse" style="background: linear-gradient(135deg, #00FFFF, #0099CC); border: none; padding: 12px 20px; border-radius: 25px; color: #000; font-weight: bold; cursor: pointer;">
+                🔍 Browse Vouchers
+            </button>
+            <button class="voucher-tab" onclick="switchVoucherTab('my-vouchers')" data-voucher-tab="my-vouchers" style="background: rgba(255,255,255,0.1); border: 1px solid #00FFFF; padding: 12px 20px; border-radius: 25px; color: #00FFFF; font-weight: bold; cursor: pointer;">
+                🎫 My Vouchers
+            </button>
+            <button class="voucher-tab" onclick="switchVoucherTab('create')" data-voucher-tab="create" style="background: rgba(255,255,255,0.1); border: 1px solid #FFD700; padding: 12px 20px; border-radius: 25px; color: #FFD700; font-weight: bold; cursor: pointer;">
+                ➕ Create Listing
+            </button>
+            <button class="voucher-tab" onclick="switchVoucherTab('redeem')" data-voucher-tab="redeem" style="background: rgba(255,255,255,0.1); border: 1px solid #39FF14; padding: 12px 20px; border-radius: 25px; color: #39FF14; font-weight: bold; cursor: pointer;">
+                ✅ Redeem Voucher
+            </button>
+        </div>
+        
+        <!-- Browse Vouchers Section -->
+        <div id="voucher-browse" class="voucher-section">
+            <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
+                <select id="voucher-type-filter" style="background: rgba(0,0,0,0.5); border: 1px solid #00FFFF; color: #fff; padding: 10px 15px; border-radius: 8px; flex: 1; min-width: 150px;">
+                    <option value="">All Types</option>
+                    <option value="goods_pickup">🛒 Goods Pickup</option>
+                    <option value="service">🔧 Services</option>
+                    <option value="admission">🎫 Admission</option>
+                    <option value="experience">🎭 Experiences</option>
+                    <option value="rental">🔑 Rentals</option>
+                    <option value="subscription">📅 Subscriptions</option>
+                </select>
+                <select id="voucher-category-filter" style="background: rgba(0,0,0,0.5); border: 1px solid #00FFFF; color: #fff; padding: 10px 15px; border-radius: 8px; flex: 1; min-width: 150px;">
+                    <option value="">All Categories</option>
+                    <option value="food">🍕 Food & Dining</option>
+                    <option value="wellness">💆 Wellness & Spa</option>
+                    <option value="entertainment">🎬 Entertainment</option>
+                    <option value="education">📚 Education</option>
+                    <option value="transportation">🚗 Transportation</option>
+                    <option value="retail">🛍️ Retail</option>
+                </select>
+                <button onclick="loadVoucherListings()" style="background: linear-gradient(135deg, #00FFFF, #0099CC); border: none; padding: 10px 20px; border-radius: 8px; color: #000; font-weight: bold; cursor: pointer;">
+                    🔍 Search
+                </button>
+            </div>
+            <div id="voucher-listings-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+                <div style="text-align: center; color: #888; padding: 40px;">Loading voucher listings...</div>
+            </div>
+        </div>
+        
+        <!-- My Vouchers Section -->
+        <div id="voucher-my-vouchers" class="voucher-section" style="display: none;">
+            <div id="my-vouchers-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px;">
+                <div style="text-align: center; color: #888; padding: 40px;">Sign in to view your vouchers</div>
+            </div>
+        </div>
+        
+        <!-- Create Voucher Listing Section -->
+        <div id="voucher-create" class="voucher-section" style="display: none;">
+            <div style="background: rgba(0,0,0,0.5); padding: 25px; border-radius: 15px; border: 1px solid #FFD700;">
+                <h3 style="color: #FFD700; margin-bottom: 20px;">➕ Create New Voucher Listing</h3>
+                <form id="create-voucher-form">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div style="grid-column: 1 / -1;">
+                            <label style="color: #aaa; display: block; margin-bottom: 5px;">Title *</label>
+                            <input type="text" id="voucher-title" required maxlength="200" style="width: 100%; background: rgba(255,255,255,0.1); border: 1px solid #555; color: #fff; padding: 12px; border-radius: 8px;" placeholder="e.g., Coffee & Pastry Combo">
+                        </div>
+                        <div>
+                            <label style="color: #aaa; display: block; margin-bottom: 5px;">Voucher Type *</label>
+                            <select id="voucher-type" required style="width: 100%; background: rgba(0,0,0,0.5); border: 1px solid #555; color: #fff; padding: 12px; border-radius: 8px;">
+                                <option value="">Select type...</option>
+                                <option value="goods_pickup">🛒 Goods Pickup</option>
+                                <option value="service">🔧 Service</option>
+                                <option value="admission">🎫 Admission</option>
+                                <option value="experience">🎭 Experience</option>
+                                <option value="rental">🔑 Rental</option>
+                                <option value="subscription">📅 Subscription</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="color: #aaa; display: block; margin-bottom: 5px;">Price (Rays) *</label>
+                            <input type="number" id="voucher-price-rays" required min="1" style="width: 100%; background: rgba(255,255,255,0.1); border: 1px solid #555; color: #fff; padding: 12px; border-radius: 8px;" placeholder="e.g., 150">
+                        </div>
+                        <div style="grid-column: 1 / -1;">
+                            <label style="color: #aaa; display: block; margin-bottom: 5px;">Description</label>
+                            <textarea id="voucher-description" rows="3" style="width: 100%; background: rgba(255,255,255,0.1); border: 1px solid #555; color: #fff; padding: 12px; border-radius: 8px; resize: vertical;" placeholder="Describe what the voucher covers..."></textarea>
+                        </div>
+                        <div>
+                            <label style="color: #aaa; display: block; margin-bottom: 5px;">Redemption Location *</label>
+                            <input type="text" id="voucher-location" required style="width: 100%; background: rgba(255,255,255,0.1); border: 1px solid #555; color: #fff; padding: 12px; border-radius: 8px;" placeholder="e.g., 123 Main St, City">
+                        </div>
+                        <div>
+                            <label style="color: #aaa; display: block; margin-bottom: 5px;">Category</label>
+                            <select id="voucher-category" style="width: 100%; background: rgba(0,0,0,0.5); border: 1px solid #555; color: #fff; padding: 12px; border-radius: 8px;">
+                                <option value="">Select category...</option>
+                                <option value="food">🍕 Food & Dining</option>
+                                <option value="wellness">💆 Wellness & Spa</option>
+                                <option value="entertainment">🎬 Entertainment</option>
+                                <option value="education">📚 Education</option>
+                                <option value="transportation">🚗 Transportation</option>
+                                <option value="retail">🛍️ Retail</option>
+                            </select>
+                        </div>
+                        <div style="grid-column: 1 / -1;">
+                            <label style="color: #aaa; display: block; margin-bottom: 5px;">Redemption Instructions *</label>
+                            <textarea id="voucher-instructions" required rows="2" style="width: 100%; background: rgba(255,255,255,0.1); border: 1px solid #555; color: #fff; padding: 12px; border-radius: 8px; resize: vertical;" placeholder="e.g., Show QR code at counter"></textarea>
+                        </div>
+                        <div>
+                            <label style="color: #aaa; display: block; margin-bottom: 5px;">Quantity Available</label>
+                            <input type="number" id="voucher-quantity" min="1" style="width: 100%; background: rgba(255,255,255,0.1); border: 1px solid #555; color: #fff; padding: 12px; border-radius: 8px;" placeholder="Leave empty for unlimited">
+                        </div>
+                        <div>
+                            <label style="color: #aaa; display: block; margin-bottom: 5px;">Valid Until</label>
+                            <input type="date" id="voucher-valid-until" style="width: 100%; background: rgba(255,255,255,0.1); border: 1px solid #555; color: #fff; padding: 12px; border-radius: 8px;">
+                        </div>
+                        <div>
+                            <label style="color: #aaa; display: block; margin-bottom: 5px;">Redemption Hours</label>
+                            <input type="text" id="voucher-hours" style="width: 100%; background: rgba(255,255,255,0.1); border: 1px solid #555; color: #fff; padding: 12px; border-radius: 8px;" placeholder="e.g., Mon-Fri 9am-5pm">
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" id="voucher-transferable">
+                            <label for="voucher-transferable" style="color: #aaa;">Transferable (can be gifted)</label>
+                        </div>
+                    </div>
+                    <button type="submit" style="width: 100%; margin-top: 20px; background: linear-gradient(135deg, #FFD700, #DAA520); border: none; padding: 15px; border-radius: 10px; color: #000; font-weight: bold; font-size: 1rem; cursor: pointer;">
+                        🎟️ Create Voucher Listing
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Redeem Voucher Section (for vendors) -->
+        <div id="voucher-redeem" class="voucher-section" style="display: none;">
+            <div style="background: rgba(0,0,0,0.5); padding: 25px; border-radius: 15px; border: 1px solid #39FF14; max-width: 500px; margin: 0 auto;">
+                <h3 style="color: #39FF14; margin-bottom: 20px; text-align: center;">✅ Redeem Customer Voucher</h3>
+                <div style="margin-bottom: 20px;">
+                    <label style="color: #aaa; display: block; margin-bottom: 5px;">Enter Voucher Code</label>
+                    <input type="text" id="redeem-voucher-code" maxlength="20" style="width: 100%; background: rgba(255,255,255,0.1); border: 1px solid #39FF14; color: #fff; padding: 15px; border-radius: 8px; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 2px; text-align: center;" placeholder="TC-XXXXXX">
+                </div>
+                <button onclick="validateVoucherCode()" style="width: 100%; background: linear-gradient(135deg, #39FF14, #32CD32); border: none; padding: 15px; border-radius: 10px; color: #000; font-weight: bold; font-size: 1rem; cursor: pointer; margin-bottom: 15px;">
+                    🔍 Validate Voucher
+                </button>
+                <div id="voucher-validation-result" style="display: none; padding: 15px; border-radius: 10px; margin-top: 15px;"></div>
+            </div>
+            
+            <!-- Vendor's Sold Vouchers -->
+            <div style="margin-top: 30px;">
+                <h3 style="color: #00FFFF; margin-bottom: 15px;">📊 Your Voucher Sales</h3>
+                <div id="vendor-sales-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px;">
+                    <div style="text-align: center; color: #888; padding: 30px;">Sign in to view your sales</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Music Preview Modal -->
     <div class="music-preview-modal" id="music-preview-modal" style="display: none;">
         <div class="music-modal-content">
@@ -3302,10 +3463,18 @@
                     await checkUserSession();
                     
                     if (tabType === 'my-listings') {
+                        document.getElementById('vouchers-content').style.display = 'none';
                         showMyListings();
                     } else if (tabType === 'upload') {
                         window.location.href = '/creator-upload.html';
+                    } else if (tabType === 'vouchers') {
+                        document.getElementById('vouchers-content').style.display = 'block';
+                        document.getElementById('monazite-section').style.display = 'none';
+                        document.getElementById('artifacts-grid').style.display = 'none';
+                        document.querySelector('.filters').style.display = 'none';
+                        loadVoucherListings();
                     } else {
+                        document.getElementById('vouchers-content').style.display = 'none';
                         showAllMarket();
                     }
                 });
@@ -5905,6 +6074,344 @@
                 
                 container.appendChild(preview);
             });
+        }
+
+        // ============================================================================
+        // TC-S VOUCHER MODULE - UI Functions
+        // ============================================================================
+
+        function switchVoucherTab(tabName) {
+            // Hide all voucher sections
+            document.querySelectorAll('.voucher-section').forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            // Remove active state from all voucher tabs
+            document.querySelectorAll('.voucher-tab').forEach(tab => {
+                tab.style.background = 'rgba(255,255,255,0.1)';
+                tab.style.color = tab.dataset.voucherTab === 'create' ? '#FFD700' : 
+                                  tab.dataset.voucherTab === 'redeem' ? '#39FF14' : '#00FFFF';
+                tab.style.border = tab.dataset.voucherTab === 'create' ? '1px solid #FFD700' :
+                                   tab.dataset.voucherTab === 'redeem' ? '1px solid #39FF14' : '1px solid #00FFFF';
+            });
+            
+            // Show selected section
+            const sectionId = tabName === 'browse' ? 'voucher-browse' : 
+                              tabName === 'my-vouchers' ? 'voucher-my-vouchers' :
+                              tabName === 'create' ? 'voucher-create' : 'voucher-redeem';
+            document.getElementById(sectionId).style.display = 'block';
+            
+            // Set active tab style
+            const activeTab = document.querySelector(`[data-voucher-tab="${tabName}"]`);
+            if (activeTab) {
+                const colors = { browse: '#00FFFF', 'my-vouchers': '#00FFFF', create: '#FFD700', redeem: '#39FF14' };
+                activeTab.style.background = `linear-gradient(135deg, ${colors[tabName]}, ${colors[tabName]}99)`;
+                activeTab.style.color = '#000';
+                activeTab.style.border = 'none';
+            }
+            
+            // Load data for the tab
+            if (tabName === 'browse') loadVoucherListings();
+            if (tabName === 'my-vouchers') loadMyVouchers();
+            if (tabName === 'redeem') loadVendorSales();
+        }
+
+        async function loadVoucherListings() {
+            const grid = document.getElementById('voucher-listings-grid');
+            if (!grid) return;
+            grid.innerHTML = '<div style="text-align: center; color: #888; padding: 40px;">Loading...</div>';
+            
+            const typeFilter = document.getElementById('voucher-type-filter');
+            const categoryFilter = document.getElementById('voucher-category-filter');
+            const type = typeFilter ? typeFilter.value : '';
+            const category = categoryFilter ? categoryFilter.value : '';
+            
+            try {
+                let url = '/api/vouchers/listings?active_only=true';
+                if (type) url += `&voucher_type=${type}`;
+                if (category) url += `&category=${category}`;
+                
+                const response = await fetch(url, { credentials: 'include' });
+                const data = await response.json();
+                
+                if (data.success && data.listings && data.listings.length > 0) {
+                    grid.innerHTML = data.listings.map(listing => `
+                        <div class="voucher-card" style="background: rgba(0,0,0,0.6); border: 1px solid #00FFFF; border-radius: 15px; padding: 20px; transition: transform 0.2s;">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                                <span style="background: rgba(0,255,255,0.2); padding: 4px 10px; border-radius: 15px; font-size: 0.8rem; color: #00FFFF;">
+                                    ${getVoucherTypeEmoji(listing.voucher_type)} ${listing.voucher_type.replace('_', ' ')}
+                                </span>
+                                ${listing.quantity_available ? `<span style="color: #aaa; font-size: 0.8rem;">${listing.quantity_available - (listing.quantity_sold || 0)} left</span>` : ''}
+                            </div>
+                            <h4 style="color: #fff; margin: 10px 0;">${escapeHtmlVoucher(listing.title)}</h4>
+                            <p style="color: #888; font-size: 0.9rem; margin-bottom: 10px;">${escapeHtmlVoucher(listing.description || '').substring(0, 100)}${listing.description?.length > 100 ? '...' : ''}</p>
+                            <div style="color: #aaa; font-size: 0.85rem; margin-bottom: 10px;">
+                                📍 ${escapeHtmlVoucher(listing.redemption_location || 'Contact vendor')}
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
+                                <div>
+                                    <span style="color: #FFD700; font-weight: bold; font-size: 1.1rem;">${listing.price_rays.toLocaleString()} Rays</span>
+                                    <span style="color: #666; font-size: 0.8rem; display: block;">${(listing.price_rays / 10000).toFixed(4)} Solar</span>
+                                </div>
+                                <button onclick="purchaseVoucher('${listing.id}')" style="background: linear-gradient(135deg, #FFD700, #DAA520); border: none; padding: 10px 20px; border-radius: 8px; color: #000; font-weight: bold; cursor: pointer;">
+                                    🎟️ Get Voucher
+                                </button>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    grid.innerHTML = '<div style="text-align: center; color: #888; padding: 40px; grid-column: 1 / -1;">No voucher listings available. Be the first to create one!</div>';
+                }
+            } catch (error) {
+                console.error('Error loading voucher listings:', error);
+                grid.innerHTML = '<div style="text-align: center; color: #ff6666; padding: 40px;">Error loading vouchers. Please try again.</div>';
+            }
+        }
+
+        async function loadMyVouchers() {
+            const grid = document.getElementById('my-vouchers-grid');
+            if (!grid) return;
+            grid.innerHTML = '<div style="text-align: center; color: #888; padding: 40px;">Loading your vouchers...</div>';
+            
+            try {
+                const response = await fetch('/api/vouchers/my-vouchers', { credentials: 'include' });
+                const data = await response.json();
+                
+                if (!data.success) {
+                    grid.innerHTML = '<div style="text-align: center; color: #888; padding: 40px;">Sign in to view your vouchers</div>';
+                    return;
+                }
+                
+                if (data.vouchers && data.vouchers.length > 0) {
+                    grid.innerHTML = data.vouchers.map(v => `
+                        <div class="my-voucher-card" style="background: ${v.status === 'active' ? 'rgba(0,100,0,0.3)' : 'rgba(100,100,100,0.3)'}; border: 2px solid ${v.status === 'active' ? '#39FF14' : '#666'}; border-radius: 15px; padding: 20px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                <span style="font-family: monospace; font-size: 1.2rem; color: #FFD700; letter-spacing: 2px;">${v.voucher_code}</span>
+                                <span style="background: ${v.status === 'active' ? '#39FF14' : '#666'}; color: #000; padding: 3px 10px; border-radius: 10px; font-size: 0.8rem; font-weight: bold; text-transform: uppercase;">${v.status}</span>
+                            </div>
+                            <h4 style="color: #fff; margin: 10px 0;">${escapeHtmlVoucher(v.listing?.title || 'Voucher')}</h4>
+                            <p style="color: #aaa; font-size: 0.9rem;">📍 ${escapeHtmlVoucher(v.listing?.redemption_location || 'See details')}</p>
+                            <p style="color: #888; font-size: 0.85rem;">📋 ${escapeHtmlVoucher(v.listing?.redemption_instructions || 'Present voucher code')}</p>
+                            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
+                                ${v.status === 'active' && v.qr_code_data ? `
+                                    <div style="text-align: center; background: #fff; padding: 15px; border-radius: 10px; margin-bottom: 10px;">
+                                        <div style="font-size: 2rem; color: #000;">📱</div>
+                                        <div style="font-family: monospace; font-size: 1.5rem; color: #000; font-weight: bold;">${v.voucher_code}</div>
+                                        <div style="font-size: 0.8rem; color: #666;">Show this code to vendor</div>
+                                    </div>
+                                ` : ''}
+                                <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #888;">
+                                    <span>Purchased: ${new Date(v.purchased_at).toLocaleDateString()}</span>
+                                    <span>${v.is_expired ? '⚠️ Expired' : `Expires: ${new Date(v.expires_at).toLocaleDateString()}`}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    grid.innerHTML = '<div style="text-align: center; color: #888; padding: 40px; grid-column: 1 / -1;">You haven\'t purchased any vouchers yet. Browse available vouchers to get started!</div>';
+                }
+            } catch (error) {
+                console.error('Error loading my vouchers:', error);
+                grid.innerHTML = '<div style="text-align: center; color: #ff6666; padding: 40px;">Error loading vouchers. Please try again.</div>';
+            }
+        }
+
+        async function purchaseVoucher(listingId) {
+            if (!confirm('Purchase this voucher? The cost will be deducted from your Solar balance.')) return;
+            
+            try {
+                const response = await fetch('/api/vouchers/purchase', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ listing_id: listingId, quantity: 1 })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(`Voucher purchased! Your code: ${data.vouchers[0].voucher_code}\n\nView it in "My Vouchers" tab.`);
+                    loadVoucherListings();
+                    if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
+                } else {
+                    alert(data.error || 'Failed to purchase voucher');
+                }
+            } catch (error) {
+                console.error('Purchase error:', error);
+                alert('Error purchasing voucher. Please try again.');
+            }
+        }
+
+        // Initialize voucher form handler
+        document.addEventListener('DOMContentLoaded', function() {
+            const voucherForm = document.getElementById('create-voucher-form');
+            if (voucherForm) {
+                voucherForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    const formData = {
+                        title: document.getElementById('voucher-title').value,
+                        description: document.getElementById('voucher-description').value,
+                        voucher_type: document.getElementById('voucher-type').value,
+                        price_rays: parseInt(document.getElementById('voucher-price-rays').value),
+                        redemption_location: document.getElementById('voucher-location').value,
+                        redemption_instructions: document.getElementById('voucher-instructions').value,
+                        category: document.getElementById('voucher-category').value,
+                        quantity_available: document.getElementById('voucher-quantity').value ? parseInt(document.getElementById('voucher-quantity').value) : null,
+                        valid_until: document.getElementById('voucher-valid-until').value || null,
+                        redemption_hours: document.getElementById('voucher-hours').value,
+                        transferable: document.getElementById('voucher-transferable').checked
+                    };
+                    
+                    try {
+                        const response = await fetch('/api/vouchers/listings/create', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            credentials: 'include',
+                            body: JSON.stringify(formData)
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            alert('Voucher listing created successfully!');
+                            voucherForm.reset();
+                            switchVoucherTab('browse');
+                        } else {
+                            alert(data.error || 'Failed to create listing');
+                        }
+                    } catch (error) {
+                        console.error('Create listing error:', error);
+                        alert('Error creating voucher listing. Please try again.');
+                    }
+                });
+            }
+        });
+
+        async function validateVoucherCode() {
+            const code = document.getElementById('redeem-voucher-code').value.trim().toUpperCase();
+            const resultDiv = document.getElementById('voucher-validation-result');
+            
+            if (!code) {
+                alert('Please enter a voucher code');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/vouchers/redeem/validate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ voucher_code: code })
+                });
+                
+                const data = await response.json();
+                resultDiv.style.display = 'block';
+                
+                if (data.valid) {
+                    resultDiv.style.background = 'rgba(0,100,0,0.3)';
+                    resultDiv.style.border = '1px solid #39FF14';
+                    resultDiv.innerHTML = `
+                        <div style="color: #39FF14; font-weight: bold; margin-bottom: 10px;">✅ Valid Voucher</div>
+                        <div style="color: #fff;"><strong>${escapeHtmlVoucher(data.voucher.listing?.title || 'Voucher')}</strong></div>
+                        <div style="color: #aaa; margin: 10px 0;">Buyer: ${escapeHtmlVoucher(data.voucher.buyer_info || 'Customer')}</div>
+                        <div style="color: #888; font-size: 0.9rem; margin-bottom: 15px;">📋 ${escapeHtmlVoucher(data.voucher.listing?.redemption_instructions || 'Provide service/goods')}</div>
+                        <button onclick="confirmRedemption('${code}')" style="width: 100%; background: linear-gradient(135deg, #39FF14, #32CD32); border: none; padding: 12px; border-radius: 8px; color: #000; font-weight: bold; cursor: pointer;">
+                            ✅ Confirm Redemption
+                        </button>
+                    `;
+                } else {
+                    resultDiv.style.background = 'rgba(100,0,0,0.3)';
+                    resultDiv.style.border = '1px solid #ff6666';
+                    resultDiv.innerHTML = `
+                        <div style="color: #ff6666; font-weight: bold;">❌ ${data.error || 'Invalid Voucher'}</div>
+                        <div style="color: #888; margin-top: 5px;">${data.message || 'This voucher cannot be redeemed'}</div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Validation error:', error);
+                resultDiv.style.display = 'block';
+                resultDiv.style.background = 'rgba(100,0,0,0.3)';
+                resultDiv.innerHTML = '<div style="color: #ff6666;">Error validating voucher</div>';
+            }
+        }
+
+        async function confirmRedemption(code) {
+            if (!confirm('Confirm redemption? This will mark the voucher as used.')) return;
+            
+            try {
+                const response = await fetch('/api/vouchers/redeem/confirm', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ voucher_code: code })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Voucher redeemed successfully!');
+                    document.getElementById('redeem-voucher-code').value = '';
+                    document.getElementById('voucher-validation-result').style.display = 'none';
+                    loadVendorSales();
+                } else {
+                    alert(data.error || 'Failed to redeem voucher');
+                }
+            } catch (error) {
+                console.error('Redemption error:', error);
+                alert('Error redeeming voucher. Please try again.');
+            }
+        }
+
+        async function loadVendorSales() {
+            const grid = document.getElementById('vendor-sales-grid');
+            if (!grid) return;
+            
+            try {
+                const response = await fetch('/api/vouchers/vendor/sales', { credentials: 'include' });
+                const data = await response.json();
+                
+                if (!data.success) {
+                    grid.innerHTML = '<div style="text-align: center; color: #888; padding: 30px;">Sign in to view your sales</div>';
+                    return;
+                }
+                
+                if (data.sales && data.sales.length > 0) {
+                    grid.innerHTML = data.sales.map(sale => `
+                        <div style="background: rgba(0,0,0,0.4); border: 1px solid ${sale.status === 'redeemed' ? '#39FF14' : '#00FFFF'}; border-radius: 10px; padding: 15px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span style="font-family: monospace; color: #FFD700;">${sale.voucher_code}</span>
+                                <span style="color: ${sale.status === 'redeemed' ? '#39FF14' : '#00FFFF'}; font-size: 0.85rem;">${sale.status}</span>
+                            </div>
+                            <div style="color: #fff; font-size: 0.9rem;">${escapeHtmlVoucher(sale.listing?.title || 'Voucher')}</div>
+                            <div style="color: #888; font-size: 0.8rem; margin-top: 5px;">
+                                Sold: ${new Date(sale.purchased_at).toLocaleDateString()} • ${sale.price_paid_rays} Rays
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    grid.innerHTML = '<div style="text-align: center; color: #888; padding: 30px; grid-column: 1 / -1;">No sales yet. Create voucher listings to start selling!</div>';
+                }
+            } catch (error) {
+                console.error('Error loading vendor sales:', error);
+            }
+        }
+
+        function getVoucherTypeEmoji(type) {
+            const emojis = {
+                'goods_pickup': '🛒',
+                'service': '🔧',
+                'admission': '🎫',
+                'experience': '🎭',
+                'rental': '🔑',
+                'subscription': '📅'
+            };
+            return emojis[type] || '🎟️';
+        }
+
+        function escapeHtmlVoucher(str) {
+            if (!str) return '';
+            return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         }
     </script>
   <!-- Kid Solar Controller - Persistent across pages -->
