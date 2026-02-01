@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meet Kid Solar - Your AI Guide | TC-S Network Foundation</title>
+  <meta name="description" content="Learn about Kid Solar, the multi-modal AI assistant for the Solar economy. Voice, text, and visual interactions powered by advanced AI.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #0a0a0a 0%, #111827 50%, #0a0a0a 100%);
+      min-height: 100vh;
+      color: #ffffff;
+      line-height: 1.6;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+    
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #00f5d4;
+      text-decoration: none;
+      font-size: 0.9rem;
+      margin-bottom: 2rem;
+      transition: opacity 0.2s;
+    }
+    .back-link:hover { opacity: 0.8; }
+    
+    .hero {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+    
+    .hero-icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+    }
+    
+    h1 {
+      font-size: clamp(2rem, 5vw, 2.5rem);
+      font-weight: 800;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #FFD700 0%, #FF8C00 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .subtitle {
+      font-size: 1.1rem;
+      color: rgba(255, 255, 255, 0.7);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    
+    .section {
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 16px;
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .section h2 {
+      font-size: 1.3rem;
+      color: #00f5d4;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .section p {
+      color: rgba(255, 255, 255, 0.8);
+      margin-bottom: 1rem;
+    }
+    
+    .section p:last-child { margin-bottom: 0; }
+    
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    
+    .feature-card {
+      background: rgba(255, 140, 0, 0.1);
+      border: 1px solid rgba(255, 140, 0, 0.3);
+      border-radius: 12px;
+      padding: 1.25rem;
+      text-align: center;
+    }
+    
+    .feature-card .icon {
+      font-size: 2rem;
+      margin-bottom: 0.75rem;
+    }
+    
+    .feature-card h3 {
+      font-size: 1rem;
+      color: #FFD700;
+      margin-bottom: 0.5rem;
+    }
+    
+    .feature-card p {
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.6);
+    }
+    
+    .tip-box {
+      background: rgba(0, 245, 212, 0.1);
+      border: 1px solid rgba(0, 245, 212, 0.3);
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      margin-top: 1rem;
+    }
+    
+    .tip-box strong {
+      color: #00f5d4;
+    }
+    
+    .cta-section {
+      text-align: center;
+      margin-top: 2rem;
+    }
+    
+    .cta-btn {
+      display: inline-block;
+      padding: 1rem 2rem;
+      background: linear-gradient(135deg, #FF8C00, #FF6600);
+      color: #000;
+      text-decoration: none;
+      font-weight: 700;
+      border-radius: 999px;
+      font-size: 1.1rem;
+      transition: all 0.3s;
+      box-shadow: 0 4px 20px rgba(255, 140, 0, 0.4);
+    }
+    
+    .cta-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 30px rgba(255, 140, 0, 0.6);
+    }
+    
+    .examples {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 1rem;
+    }
+    
+    .examples h4 {
+      color: #FFD700;
+      font-size: 0.9rem;
+      margin-bottom: 0.75rem;
+    }
+    
+    .examples ul {
+      list-style: none;
+      padding: 0;
+    }
+    
+    .examples li {
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 0.85rem;
+      padding: 0.4rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    .examples li:last-child { border-bottom: none; }
+    
+    .examples li::before {
+      content: '"';
+      color: #00f5d4;
+    }
+    
+    .examples li::after {
+      content: '"';
+      color: #00f5d4;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="/" class="back-link">← Back to Gateway</a>
+    
+    <div class="hero">
+      <div class="hero-icon">☀️🤖</div>
+      <h1>Meet Kid Solar</h1>
+      <p class="subtitle">
+        Your AI guide to the Solar economy. A multi-modal assistant that sees, hears, and speaks—designed to help you navigate the future of energy-backed currency.
+      </p>
+    </div>
+    
+    <div class="section">
+      <h2>🌟 Who is Kid Solar?</h2>
+      <p>
+        Kid Solar is the official AI ambassador of the TC-S Network Foundation. Built on advanced language models and powered by D-ID's streaming avatar technology, Kid Solar represents the bridge between human curiosity and machine intelligence.
+      </p>
+      <p>
+        More than just a chatbot, Kid Solar embodies the principles of the Solar Standard—transparency, accessibility, and the belief that energy should power human potential, not just machines.
+      </p>
+    </div>
+    
+    <div class="section">
+      <h2>🎤 Multi-Modal Interaction</h2>
+      <p>
+        Kid Solar understands and responds through multiple channels. Choose how you want to communicate:
+      </p>
+      
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="icon">💬</div>
+          <h3>Text Chat</h3>
+          <p>Type your questions and get detailed written responses</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">🎙️</div>
+          <h3>Voice Input</h3>
+          <p>Speak naturally and Kid Solar listens with Whisper AI</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">🔊</div>
+          <h3>Voice Output</h3>
+          <p>Hear responses spoken aloud with natural TTS</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">👁️</div>
+          <h3>Visual Avatar</h3>
+          <p>Watch Kid Solar's animated face respond in real-time</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="section">
+      <h2>💡 What Can You Ask?</h2>
+      <p>
+        Kid Solar is knowledgeable about the Solar economy, renewable energy, blockchain concepts, and the TC-S Network Foundation's mission. Here are some ways to engage:
+      </p>
+      
+      <div class="examples">
+        <h4>Example Questions:</h4>
+        <ul>
+          <li>What is the Solar Standard and how does it work?</li>
+          <li>How do I earn Solar tokens?</li>
+          <li>Explain the relationship between energy and currency</li>
+          <li>What makes 1 Solar equal to 4,913 kWh?</li>
+          <li>How can my organization join the network?</li>
+          <li>What is the Global Basic Income vision?</li>
+        </ul>
+      </div>
+      
+      <div class="tip-box">
+        <strong>Pro Tip:</strong> Kid Solar appears automatically when you visit the gateway. Look for the floating avatar in the corner—just click to start chatting, or use the "Sign Off Kid Solar" button if you prefer to explore on your own.
+      </div>
+    </div>
+    
+    <div class="section">
+      <h2>🔮 The Vision</h2>
+      <p>
+        Kid Solar represents more than an AI assistant. It's a prototype for ethical AI development—one that serves human flourishing rather than corporate extraction. Every interaction with Kid Solar is a small step toward a future where AI and humanity work together to solve our greatest challenges.
+      </p>
+      <p>
+        As part of the Unified Intelligence Mesh, Kid Solar can communicate with other AI systems, share knowledge, and contribute to a collective intelligence focused on sustainability and human welfare.
+      </p>
+    </div>
+    
+    <div class="cta-section">
+      <a href="/agent.html" class="cta-btn">☀️ Talk to Kid Solar Now</a>
+      <p style="margin-top: 1rem; color: rgba(255,255,255,0.5); font-size: 0.85rem;">
+        Or return to the <a href="/" style="color: #00f5d4;">Gateway</a> to explore other paths
+      </p>
+    </div>
+  </div>
+  
+  <script src="/js/kid-solar-controller.js"></script>
+</body>
+</html>
