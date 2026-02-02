@@ -117,9 +117,104 @@
     }
     
     /* D-ID Agent Float Styles */
-    [data-agent-id], [data-name="did-agent"] {
+    [data-agent-id], [data-name="did-agent"],
+    .did-agent, #did-agent-fabio, 
+    [id^="did-agent"], [class^="did-agent"],
+    div[data-name="did-agent"] ~ div,
+    iframe[src*="d-id.com"] {
       position: fixed !important;
       z-index: 999999 !important;
+      bottom: 20px !important;
+      right: 20px !important;
+    }
+    
+    /* D-ID Chat Widget Visibility */
+    .DIDAgent, .did-widget, .did-chat-widget {
+      position: fixed !important;
+      bottom: 20px !important;
+      right: 20px !important;
+      z-index: 999999 !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      display: block !important;
+    }
+
+    /* Floating Shuffle Player */
+    .shuffle-player {
+      position: fixed;
+      top: 80px;
+      right: 20px;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(10px);
+      border: 2px solid var(--neon-green);
+      border-radius: 50px;
+      padding: 8px 16px;
+      box-shadow: 0 0 20px rgba(57, 255, 20, 0.3);
+      transition: all 0.3s ease;
+    }
+
+    .shuffle-player:hover {
+      box-shadow: 0 0 30px rgba(57, 255, 20, 0.5);
+    }
+
+    .shuffle-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, var(--neon-green), #00ff88);
+      border: none;
+      border-radius: 30px;
+      padding: 10px 20px;
+      color: #000;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .shuffle-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px rgba(57, 255, 20, 0.6);
+    }
+
+    .shuffle-btn svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .shuffle-now-playing {
+      color: #fff;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.8rem;
+      max-width: 150px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: none;
+    }
+
+    .shuffle-now-playing.active {
+      display: block;
+    }
+
+    .shuffle-now-playing span {
+      color: var(--neon-green);
+      font-weight: 600;
+    }
+
+    @media (max-width: 768px) {
+      .shuffle-player {
+        top: auto;
+        bottom: 20px;
+        right: 20px;
+        left: 20px;
+        justify-content: center;
+      }
     }
 
     /* Animated Gradient Background */
@@ -2340,6 +2435,23 @@
   </style>
 </head>
 <body>
+  <!-- Floating Shuffle Player -->
+  <div class="shuffle-player" id="shufflePlayer">
+    <button class="shuffle-btn" id="shuffleBtn" onclick="toggleShufflePlay()">
+      <svg id="shufflePlayIcon" viewBox="0 0 24 24" fill="currentColor">
+        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+      </svg>
+      <svg id="shufflePauseIcon" viewBox="0 0 24 24" fill="currentColor" style="display:none;">
+        <rect x="6" y="4" width="4" height="16"></rect>
+        <rect x="14" y="4" width="4" height="16"></rect>
+      </svg>
+      <span id="shuffleBtnText">SHUFFLE ALL</span>
+    </button>
+    <div class="shuffle-now-playing" id="shuffleNowPlaying">
+      Now: <span id="shuffleSongName">-</span>
+    </div>
+  </div>
+
   <!-- Animated Background -->
   <div class="gradient-bg"></div>
   <div class="solar-grid"></div>
@@ -3287,8 +3399,115 @@
         progressBar.style.width = '0%';
         timeDisplay.textContent = '0:00';
         currentlyPlaying = null;
+        
+        // If shuffle mode is active, play next shuffled song
+        if (shuffleActive && shuffleQueue.length > 0) {
+          playNextShuffled();
+        }
       });
     });
+
+    // ========== SHUFFLE PLAYER ==========
+    const allSongs = [
+      { id: 'psychedelic', name: 'Psychedelic Solarpunk Party' },
+      { id: 'snowmancer', name: 'Snowmancer One' },
+      { id: 'solarday', name: 'Solar Day' },
+      { id: 'wesaidso', name: 'We Said So' }
+    ];
+    
+    let shuffleActive = false;
+    let shuffleQueue = [];
+    let currentShuffleIndex = 0;
+
+    function shuffleArray(array) {
+      const shuffled = [...array];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled;
+    }
+
+    function toggleShufflePlay() {
+      const playIcon = document.getElementById('shufflePlayIcon');
+      const pauseIcon = document.getElementById('shufflePauseIcon');
+      const btnText = document.getElementById('shuffleBtnText');
+      const nowPlaying = document.getElementById('shuffleNowPlaying');
+      
+      if (!shuffleActive) {
+        // Start shuffle playback
+        shuffleActive = true;
+        shuffleQueue = shuffleArray(allSongs);
+        currentShuffleIndex = 0;
+        
+        playIcon.style.display = 'none';
+        pauseIcon.style.display = 'block';
+        btnText.textContent = 'PLAYING';
+        nowPlaying.classList.add('active');
+        
+        playShuffledSong(shuffleQueue[0]);
+      } else {
+        // Stop shuffle playback
+        shuffleActive = false;
+        
+        // Stop current audio
+        if (currentlyPlaying) {
+          const audio = document.getElementById(`audio-${currentlyPlaying}`);
+          audio.pause();
+          const card = document.querySelector(`[data-song="${currentlyPlaying}"]`);
+          if (card) {
+            card.querySelector('.play-icon').style.display = 'block';
+            card.querySelector('.pause-icon').style.display = 'none';
+          }
+          currentlyPlaying = null;
+        }
+        
+        playIcon.style.display = 'block';
+        pauseIcon.style.display = 'none';
+        btnText.textContent = 'SHUFFLE ALL';
+        nowPlaying.classList.remove('active');
+      }
+    }
+
+    function playShuffledSong(song) {
+      // Stop any currently playing
+      if (currentlyPlaying) {
+        const prevAudio = document.getElementById(`audio-${currentlyPlaying}`);
+        const prevCard = document.querySelector(`[data-song="${currentlyPlaying}"]`);
+        prevAudio.pause();
+        if (prevCard) {
+          prevCard.querySelector('.play-icon').style.display = 'block';
+          prevCard.querySelector('.pause-icon').style.display = 'none';
+        }
+      }
+      
+      // Play new song
+      const audio = document.getElementById(`audio-${song.id}`);
+      const card = document.querySelector(`[data-song="${song.id}"]`);
+      
+      audio.play();
+      currentlyPlaying = song.id;
+      
+      if (card) {
+        card.querySelector('.play-icon').style.display = 'none';
+        card.querySelector('.pause-icon').style.display = 'block';
+      }
+      
+      // Update now playing display
+      document.getElementById('shuffleSongName').textContent = song.name;
+    }
+
+    function playNextShuffled() {
+      currentShuffleIndex++;
+      
+      if (currentShuffleIndex >= shuffleQueue.length) {
+        // Reshuffle and start over for continuous play
+        shuffleQueue = shuffleArray(allSongs);
+        currentShuffleIndex = 0;
+      }
+      
+      playShuffledSong(shuffleQueue[currentShuffleIndex]);
+    }
 
     // ========== MOOD SELECTOR ==========
     const moodConfig = {
@@ -3568,6 +3787,7 @@
   </script>
 
   <!-- D-ID Kid Solar Avatar -->
+  <div id="did-container" style="position: fixed; bottom: 20px; right: 20px; z-index: 999999;"></div>
   <script
     type="module"
     src="https://agent.d-id.com/v2/index.js"
@@ -3575,7 +3795,17 @@
     data-mode="fabio"
     data-client-key="Z29vZ2xlLW9hdXRoMnwxMDI1NzYwODgwMDkzNDc1NDkwODQ6bU5qd2dLMklFTDFVaW5xMzVOaHJP"
     data-agent-id="v2_agt_vhYf_e_C"
-    data-monitor="true">
+    data-monitor="true"
+    data-position="right">
+  </script>
+  <script>
+    // D-ID Agent fallback check
+    setTimeout(() => {
+      const agentElements = document.querySelectorAll('[class*="did"], [id*="did"], iframe[src*="d-id"]');
+      if (agentElements.length === 0) {
+        console.log('D-ID Agent may not have loaded - checking for widget');
+      }
+    }, 5000);
   </script>
 
   <!-- Footer -->
