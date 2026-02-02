@@ -1945,12 +1945,43 @@
       font-weight: 900;
       line-height: 1.1;
       margin-bottom: 20px;
-      background: linear-gradient(135deg, #EC4899, #00FFFF, #EAB308, #39FF14);
-      background-size: 300% 300%;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      animation: manifestoGradient 8s ease-in-out infinite;
+      color: #39FF14;
+      text-shadow: 
+        0 0 10px rgba(57, 255, 20, 0.8),
+        0 0 20px rgba(57, 255, 20, 0.6),
+        0 0 40px rgba(57, 255, 20, 0.4),
+        0 2px 4px rgba(0, 0, 0, 0.9);
+    }
+
+    /* Manifesto Quote Teaser Section */
+    .manifesto-quote-teaser {
+      text-align: center;
+      padding: 60px 20px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .teaser-quote {
+      font-family: 'Caveat', cursive;
+      font-size: clamp(1.5rem, 4vw, 2.5rem);
+      color: #fff;
+      line-height: 1.4;
+      padding: 30px 40px;
+      background: rgba(0, 0, 0, 0.6);
+      border-radius: 20px;
+      border-left: 4px solid var(--neon-green);
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+      animation: quoteFade 8s ease-in-out infinite;
+    }
+
+    .teaser-quote .highlight {
+      color: var(--neon-green);
+      font-weight: 700;
+    }
+
+    @keyframes quoteFade {
+      0%, 100% { opacity: 0.9; }
+      50% { opacity: 1; }
     }
 
     @keyframes manifestoGradient {
@@ -2633,6 +2664,13 @@
       <div class="m-particle"></div>
       <div class="m-particle"></div>
       <div class="m-particle"></div>
+    </div>
+
+    <!-- Manifesto Quote Teaser - Rotating Quotes -->
+    <div class="manifesto-quote-teaser">
+      <p class="teaser-quote" id="teaserQuote">
+        "You are standing on a fusion reactor <span class="highlight">93 million miles away</span> that floods your world with more energy every hour than humanity uses in a year."
+      </p>
     </div>
 
     <div class="manifesto-container">
@@ -3768,6 +3806,33 @@
       }
     }
 
+    // Teaser Quotes for above manifesto section
+    const teaserQuotes = [
+      { text: 'You are standing on a fusion reactor <span class="highlight">93 million miles away</span> that floods your world with more energy every hour than humanity uses in a year.', },
+      { text: 'They convinced you that you need their permission. Their infrastructure. Their monthly invoices for <span class="highlight">light that falls free from the sky</span>.', },
+      { text: 'The door was never locked—<span class="highlight">we just forgot how to open it</span>.', },
+      { text: 'Building it <span class="highlight">one panel at a time</span>, one roof at a time, one mind at a time.', },
+      { text: 'Why shouldn\'t liberation be <span class="highlight">gorgeous</span>? Why shouldn\'t independence glow with neon and pulse with life?', },
+      { text: 'You stop being a consumer and become <span class="highlight">a generator</span>.', },
+      { text: 'This is psychedelic in the truest sense: <span class="highlight">mind-manifesting</span>.', },
+      { text: 'Sun is the commons; harvest it with <span class="highlight">humble panels, shared tools, and open plans</span>.', },
+    ];
+    let currentTeaserIndex = 0;
+
+    function rotateTeaserQuotes() {
+      const teaserEl = document.getElementById('teaserQuote');
+      if (teaserEl) {
+        teaserEl.style.opacity = '0';
+        teaserEl.style.transform = 'translateY(10px)';
+        setTimeout(() => {
+          currentTeaserIndex = (currentTeaserIndex + 1) % teaserQuotes.length;
+          teaserEl.innerHTML = '"' + teaserQuotes[currentTeaserIndex].text + '"';
+          teaserEl.style.opacity = '1';
+          teaserEl.style.transform = 'translateY(0)';
+        }, 500);
+      }
+    }
+
     // Initialize on load
     document.addEventListener('DOMContentLoaded', () => {
       updateSolarPotential();
@@ -3783,6 +3848,9 @@
       
       // Rotate manifesto quotes every 8 seconds
       setInterval(rotateManifestoQuotes, 8000);
+      
+      // Rotate teaser quotes every 6 seconds
+      setInterval(rotateTeaserQuotes, 6000);
     });
   </script>
 
