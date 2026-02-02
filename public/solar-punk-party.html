@@ -2305,8 +2305,8 @@
 
     <!-- CTA Buttons -->
     <div class="cta-container">
-      <a href="#manifesto" class="cta-button cta-primary">Read the Manifesto</a>
-      <a href="homepage-full.html" class="cta-button cta-secondary">Join the Movement</a>
+      <a href="#songs" class="cta-button cta-primary">Play the Music</a>
+      <a href="#manifesto" class="cta-button cta-secondary">Read the Manifesto</a>
     </div>
   </section>
 
@@ -2422,13 +2422,13 @@
   </section>
 
   <!-- Four-Song Showcase -->
-  <section class="song-showcase">
+  <section class="song-showcase" id="songs">
     <h2 class="section-title">The Soundtrack of Dawn</h2>
     <p class="showcase-intro">Four anthems for the solar revolution. Click to expand and play.</p>
     
     <div class="song-cards">
       <!-- Song 1: Psychedelic Solarpunk Party -->
-      <div class="song-card song-1" data-song="psychedelic">
+      <div class="song-card song-1 expanded" data-song="psychedelic">
         <div class="song-header" onclick="toggleSong('psychedelic')">
           <div class="song-icon">
             <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -3312,5 +3312,23 @@
       setInterval(animateNetwork, 5000);
     });
   </script>
+
+  <!-- Footer -->
+  <footer style="padding: 60px 20px; text-align: center; background: linear-gradient(180deg, transparent, rgba(0,0,0,0.8)); border-top: 1px solid rgba(0,255,255,0.2);">
+    <div style="max-width: 800px; margin: 0 auto;">
+      <p style="font-family: 'Orbitron', sans-serif; font-size: 1.2rem; color: var(--cyan); margin-bottom: 20px;">
+        👁️⚡ See the current. Be the current. Shape the currency.
+      </p>
+      <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; margin-bottom: 30px;">
+        <a href="/homepage-full.html" style="color: var(--neon-green); text-decoration: none; font-weight: 600; padding: 10px 20px; border: 1px solid var(--neon-green); border-radius: 20px; transition: all 0.3s;">TC-S Home</a>
+        <a href="/marketplace.html" style="color: var(--gold); text-decoration: none; font-weight: 600; padding: 10px 20px; border: 1px solid var(--gold); border-radius: 20px; transition: all 0.3s;">Marketplace</a>
+        <a href="/music-now.html" style="color: var(--pink); text-decoration: none; font-weight: 600; padding: 10px 20px; border: 1px solid var(--pink); border-radius: 20px; transition: all 0.3s;">Music Now</a>
+        <a href="/solar-dashboard.html" style="color: var(--purple); text-decoration: none; font-weight: 600; padding: 10px 20px; border: 1px solid var(--purple); border-radius: 20px; transition: all 0.3s;">Solar Dashboard</a>
+      </div>
+      <p style="font-family: 'Caveat', cursive; font-size: 1.3rem; color: rgba(255,255,255,0.6);">
+        The Psychedelic Solarpunk Party • TC-S Network Foundation
+      </p>
+    </div>
+  </footer>
 </body>
 </html>
