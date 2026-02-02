@@ -153,6 +153,37 @@ TC-S Network Foundation operates under **FULL** GENIUS Act adherence:
 
 ---
 
+## Featured Experiences
+
+### Psychedelic Solar Punk Party
+**URL:** https://www.thecurrentsee.org/solar-punk-party.html  
+**Node ID:** `tcs-pspp-001`  
+**Description:** Branded movement landing page - "Power Your Own Dawn"
+
+**Interactive Features:**
+| Feature | Description | AI Capability |
+|---------|-------------|---------------|
+| Kid Solar Avatar | D-ID powered AI assistant (agent ID: v2_agt_vhYf_e_C) | Voice interaction, solar education |
+| Soundtrack of Dawn | 4 original tracks with no-repeat shuffle | Audio playback, mood setting |
+| Community Network | Live solar rig visualization (sample data) | Network status monitoring |
+| Solar Visualizer | Real-time energy generation display | Data visualization |
+| Build Your Rig | Off-grid solar independence guide | Educational content |
+| Grow Your Gardens | Solar garden planning tools | Planning assistance |
+| Tessellated Envoy | DMT-inspired consciousness content | Philosophical dialogue |
+| Hamburger Navigation | Mobile-optimized section menu | UX navigation |
+
+**Agent Discovery Endpoints:**
+- Page metadata: `ai:capabilities`, `ai:protocol`, `ai:node-id`, `ai:features` meta tags
+- Structured data: JSON-LD with schema.org vocabulary
+- UIM Service: `pspp-movement-portal`
+
+### DMT×actly Portal
+**URL:** https://www.thecurrentsee.org/dmtxactly.html  
+**Description:** Consciousness expansion featuring Tessellated Envoy AI  
+**UIM Service:** `tessellated-envoy-ai`
+
+---
+
 ## Reference Implementations
 
 ### Python Client

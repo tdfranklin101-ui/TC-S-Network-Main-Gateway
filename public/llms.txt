@@ -1,5 +1,5 @@
 # TC-S Network Foundation - AI Discovery File
-# Last Updated: 2025-01-20
+# Last Updated: 2025-02-02
 # Format: LLMs.txt for AI Crawler Discovery
 
 ## Organization
@@ -60,6 +60,29 @@ URL: https://www.thecurrentsee.org/marketplace.html
 Description: Digital marketplace for artifacts, music, and energy trading
 Categories: Music, Art, Code, Data, Physical Items
 Payment: Solar tokens
+
+### Psychedelic Solar Punk Party
+URL: https://www.thecurrentsee.org/solar-punk-party.html
+Description: Branded movement landing page - Power Your Own Dawn
+Features:
+- Soundtrack of Dawn: 4 original solar punk tracks with no-repeat shuffle playback
+- Kid Solar AI Avatar: D-ID powered assistant (agent ID v2_agt_vhYf_e_C)
+- Community Network Visualization: Live solar rig monitoring (sample data)
+- Solar Visualizer: Real-time energy generation display
+- The Manifesto: Movement philosophy and vision
+- Build Your Off-Grid Rig: Complete solar independence guide
+- Grow Your Power Gardens: Solar garden planning tools
+- Tessellated Envoy: DMT-inspired consciousness content
+- Choose Your Vibe: Mood-based experience selector
+- Hamburger Navigation: Mobile-optimized section navigation
+UIM Service: pspp-movement-portal
+Interactive Elements: Audio players, AI avatar, visualizations, navigation menu
+
+### DMT×actly Portal
+URL: https://www.thecurrentsee.org/dmtxactly.html
+Description: Consciousness expansion content featuring Tessellated Envoy AI
+Features: DMT education, AI dialogue, consciousness exploration
+UIM Service: tessellated-envoy-ai
 
 ## APIs
 
