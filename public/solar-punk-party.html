@@ -2249,12 +2249,109 @@
       0%, 100% { opacity: 0.3; transform: scale(1); }
       50% { opacity: 1; transform: scale(1.5); }
     }
+
+    /* Ghostly Fractal Watermarks */
+    .fractal-watermarks {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: -1;
+      overflow: hidden;
+    }
+
+    .fractal-layer {
+      position: absolute;
+      width: 200%;
+      height: 200%;
+      opacity: 0.04;
+      animation: fractalDrift 60s linear infinite;
+    }
+
+    .fractal-layer:nth-child(1) {
+      top: -50%;
+      left: -50%;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400'%3E%3Cg fill='none' stroke='%23ffffff' stroke-width='0.5'%3E%3Ccircle cx='200' cy='200' r='50'/%3E%3Ccircle cx='200' cy='200' r='80'/%3E%3Ccircle cx='200' cy='200' r='110'/%3E%3Ccircle cx='200' cy='200' r='140'/%3E%3Ccircle cx='200' cy='200' r='170'/%3E%3Cpath d='M200 30 L200 370 M30 200 L370 200 M60 60 L340 340 M340 60 L60 340'/%3E%3Cpolygon points='200,50 350,200 200,350 50,200'/%3E%3Cpolygon points='200,80 320,200 200,320 80,200'/%3E%3Cpolygon points='200,110 290,200 200,290 110,200'/%3E%3C/g%3E%3C/svg%3E");
+      background-size: 300px 300px;
+      animation-duration: 80s;
+    }
+
+    .fractal-layer:nth-child(2) {
+      top: -25%;
+      left: -25%;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400'%3E%3Cg fill='none' stroke='%23ffffff' stroke-width='0.3'%3E%3Cpath d='M200 0 Q400 200 200 400 Q0 200 200 0'/%3E%3Cpath d='M0 200 Q200 0 400 200 Q200 400 0 200'/%3E%3Ccircle cx='200' cy='200' r='100'/%3E%3Ccircle cx='200' cy='100' r='30'/%3E%3Ccircle cx='200' cy='300' r='30'/%3E%3Ccircle cx='100' cy='200' r='30'/%3E%3Ccircle cx='300' cy='200' r='30'/%3E%3Cpath d='M100 100 Q200 150 300 100 Q250 200 300 300 Q200 250 100 300 Q150 200 100 100'/%3E%3C/g%3E%3C/svg%3E");
+      background-size: 450px 450px;
+      animation-duration: 120s;
+      animation-direction: reverse;
+      opacity: 0.03;
+    }
+
+    .fractal-layer:nth-child(3) {
+      top: -30%;
+      left: -30%;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 500 500'%3E%3Cg fill='none' stroke='%23ffffff' stroke-width='0.4'%3E%3Cpath d='M250 50 L450 200 L380 420 L120 420 L50 200 Z'/%3E%3Cpath d='M250 100 L400 210 L340 380 L160 380 L100 210 Z'/%3E%3Cpath d='M250 150 L350 220 L300 340 L200 340 L150 220 Z'/%3E%3Ccircle cx='250' cy='250' r='60'/%3E%3Cpath d='M250 50 L250 450 M50 250 L450 250'/%3E%3Cpath d='M250 250 L450 200 M250 250 L380 420 M250 250 L120 420 M250 250 L50 200'/%3E%3C/g%3E%3C/svg%3E");
+      background-size: 500px 500px;
+      animation-duration: 100s;
+      opacity: 0.035;
+    }
+
+    .fractal-layer:nth-child(4) {
+      top: -40%;
+      left: -40%;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 600'%3E%3Cg fill='none' stroke='%23ffffff' stroke-width='0.3'%3E%3Cpath d='M300 50 C500 100 550 300 500 400 C450 500 350 550 300 550 C250 550 150 500 100 400 C50 300 100 100 300 50'/%3E%3Cpath d='M300 100 C450 130 480 280 450 360 C420 440 350 480 300 480 C250 480 180 440 150 360 C120 280 150 130 300 100'/%3E%3Cpath d='M300 150 C400 170 420 270 400 330 C380 390 340 420 300 420 C260 420 220 390 200 330 C180 270 200 170 300 150'/%3E%3Ccircle cx='300' cy='300' r='50'/%3E%3Cpath d='M300 50 L300 550'/%3E%3Cpath d='M50 300 L550 300'/%3E%3C/g%3E%3C/svg%3E");
+      background-size: 600px 600px;
+      animation-duration: 90s;
+      animation-direction: reverse;
+      opacity: 0.025;
+    }
+
+    @keyframes fractalDrift {
+      0% { transform: translate(0, 0) rotate(0deg); }
+      25% { transform: translate(-5%, -3%) rotate(90deg); }
+      50% { transform: translate(-10%, 0) rotate(180deg); }
+      75% { transform: translate(-5%, 3%) rotate(270deg); }
+      100% { transform: translate(0, 0) rotate(360deg); }
+    }
+
+    /* Mandala Pulse Overlay */
+    .mandala-watermark {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      width: 150vmax;
+      height: 150vmax;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: -1;
+      opacity: 0.02;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 800'%3E%3Cg fill='none' stroke='%23ffffff' stroke-width='0.5'%3E%3Ccircle cx='400' cy='400' r='50'/%3E%3Ccircle cx='400' cy='400' r='100'/%3E%3Ccircle cx='400' cy='400' r='150'/%3E%3Ccircle cx='400' cy='400' r='200'/%3E%3Ccircle cx='400' cy='400' r='250'/%3E%3Ccircle cx='400' cy='400' r='300'/%3E%3Ccircle cx='400' cy='400' r='350'/%3E%3Cpath d='M400 50 L400 750'/%3E%3Cpath d='M50 400 L750 400'/%3E%3Cpath d='M152 152 L648 648'/%3E%3Cpath d='M648 152 L152 648'/%3E%3Cpath d='M400 50 L648 400 L400 750 L152 400 Z'/%3E%3Cpath d='M225 225 L575 225 L575 575 L225 575 Z' transform='rotate(45 400 400)'/%3E%3C/g%3E%3C/svg%3E");
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      animation: mandalaPulse 30s ease-in-out infinite;
+    }
+
+    @keyframes mandalaPulse {
+      0%, 100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 0.02; }
+      50% { transform: translate(-50%, -50%) scale(1.1) rotate(180deg); opacity: 0.04; }
+    }
   </style>
 </head>
 <body>
   <!-- Animated Background -->
   <div class="gradient-bg"></div>
   <div class="solar-grid"></div>
+  
+  <!-- Ghostly Fractal Watermarks -->
+  <div class="fractal-watermarks">
+    <div class="fractal-layer"></div>
+    <div class="fractal-layer"></div>
+    <div class="fractal-layer"></div>
+    <div class="fractal-layer"></div>
+  </div>
+  <div class="mandala-watermark"></div>
   
   <!-- Fractal Network -->
   <div class="fractal-network" id="fractalNetwork"></div>
