@@ -546,6 +546,168 @@
   </div>
 
   <div class="container">
+    <!-- Featured: Psychedelic Solar Punk Party -->
+    <a href="/solar-punk-party.html" class="featured-party-card" data-testid="link-solar-punk-party">
+      <div class="party-glow"></div>
+      <div class="party-content">
+        <span class="party-badge">NEW EXPERIENCE</span>
+        <h2 class="party-title">POWER YOUR OWN DAWN</h2>
+        <p class="party-tagline">Personal Solar. Global Connection. Infinite Joy.</p>
+        <span class="party-cta">Enter the Solar Punk Party →</span>
+      </div>
+      <div class="dancing-figures">
+        <div class="mini-dancer" style="animation-delay: 0s;"></div>
+        <div class="mini-dancer" style="animation-delay: 0.2s;"></div>
+        <div class="mini-dancer rainbow" style="animation-delay: 0.3s;"></div>
+        <div class="mini-dancer" style="animation-delay: 0.4s;"></div>
+        <div class="mini-dancer" style="animation-delay: 0.6s;"></div>
+      </div>
+    </a>
+    
+    <style>
+      .featured-party-card {
+        display: block;
+        position: relative;
+        margin: 1.5rem auto 2rem auto;
+        padding: 2rem 2.5rem;
+        max-width: 800px;
+        background: linear-gradient(135deg, 
+          rgba(139, 92, 246, 0.9) 0%, 
+          rgba(236, 72, 153, 0.9) 25%, 
+          rgba(249, 115, 22, 0.9) 50%, 
+          rgba(234, 179, 8, 0.9) 75%,
+          rgba(139, 92, 246, 0.9) 100%
+        );
+        background-size: 400% 400%;
+        animation: partyGradient 8s ease infinite;
+        border-radius: 20px;
+        text-decoration: none;
+        overflow: hidden;
+        box-shadow: 0 10px 40px rgba(139, 92, 246, 0.4), 0 0 60px rgba(236, 72, 153, 0.2);
+        transition: all 0.4s ease;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+      }
+      
+      .featured-party-card:hover {
+        transform: translateY(-5px) scale(1.02);
+        box-shadow: 0 20px 60px rgba(139, 92, 246, 0.5), 0 0 100px rgba(236, 72, 153, 0.4);
+      }
+      
+      @keyframes partyGradient {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
+      
+      .party-glow {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 150%;
+        height: 150%;
+        transform: translate(-50%, -50%);
+        background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
+        pointer-events: none;
+      }
+      
+      .party-content {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+      }
+      
+      .party-badge {
+        display: inline-block;
+        background: rgba(0, 0, 0, 0.4);
+        color: #00ffcc;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.15em;
+        padding: 6px 16px;
+        border-radius: 20px;
+        margin-bottom: 12px;
+        text-shadow: 0 0 10px #00ffcc;
+      }
+      
+      .party-title {
+        font-family: 'Orbitron', 'Segoe UI', sans-serif;
+        font-size: clamp(1.5rem, 4vw, 2.5rem);
+        font-weight: 900;
+        color: #fff;
+        margin: 0 0 8px 0;
+        text-shadow: 0 4px 20px rgba(0,0,0,0.5), 0 0 40px rgba(255,255,255,0.3);
+        letter-spacing: 0.05em;
+      }
+      
+      .party-tagline {
+        font-size: clamp(0.9rem, 2vw, 1.2rem);
+        color: rgba(255, 255, 255, 0.95);
+        margin: 0 0 16px 0;
+        font-weight: 400;
+        letter-spacing: 0.1em;
+      }
+      
+      .party-cta {
+        display: inline-block;
+        background: rgba(0, 255, 255, 0.9);
+        color: #000;
+        font-weight: 700;
+        padding: 10px 24px;
+        border-radius: 30px;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+      }
+      
+      .featured-party-card:hover .party-cta {
+        background: #fff;
+        box-shadow: 0 0 30px rgba(255, 255, 255, 0.7);
+        transform: scale(1.05);
+      }
+      
+      .dancing-figures {
+        position: absolute;
+        bottom: 10px;
+        right: 20px;
+        display: flex;
+        gap: 8px;
+        opacity: 0.8;
+      }
+      
+      .mini-dancer {
+        width: 8px;
+        height: 25px;
+        background: linear-gradient(180deg, #00ffcc, #8B5CF6);
+        border-radius: 4px 4px 2px 2px;
+        animation: miniDance 0.8s ease-in-out infinite;
+      }
+      
+      .mini-dancer.rainbow {
+        background: linear-gradient(180deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #8b00ff);
+        animation: miniDance 0.8s ease-in-out infinite, rainbowShift 2s linear infinite;
+      }
+      
+      @keyframes miniDance {
+        0%, 100% { transform: translateY(0) scaleY(1); }
+        50% { transform: translateY(-8px) scaleY(1.1); }
+      }
+      
+      @keyframes rainbowShift {
+        0% { filter: hue-rotate(0deg); }
+        100% { filter: hue-rotate(360deg); }
+      }
+      
+      @media (max-width: 600px) {
+        .featured-party-card {
+          margin: 1rem;
+          padding: 1.5rem;
+        }
+        .dancing-figures {
+          display: none;
+        }
+      }
+    </style>
+
     <!-- Solar Reserve Dashboard Link -->
     <div style="text-align: center; margin: 2rem 0 1rem 0;">
       <a href="/solar-dashboard.html" 
