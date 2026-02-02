@@ -1076,148 +1076,69 @@
             const trackName = document.getElementById('trackNameBatrhyme');
             
             stopAllAudio('audioPlayerBatrhyme');
-            
-            const timestamp = new Date().getTime();
-            const batrhymeUrl = '/media/batrhyme-break-on-the-bright-side.mp3?t=' + timestamp;
-            audio.src = batrhymeUrl;
-            audio.load();
-            
-            if (trackName) trackName.textContent = 'Break on the Bright Side';
-            if (nowPlaying) nowPlaying.style.display = 'block';
-            audio.play().catch(() => {});
-        }
-
         function playBatrhyme2Track() {
-            const audio = document.getElementById('audioPlayerBatrhyme2');
-            const nowPlaying = document.getElementById('nowPlayingBatrhyme2');
-            const trackName = document.getElementById('trackNameBatrhyme2');
+            const audio = document.getElementById("audioPlayerBatrhyme2");
+            const nowPlaying = document.getElementById("nowPlayingBatrhyme2");
+            const trackName = document.getElementById("trackNameBatrhyme2");
             
-            stopAllAudio('audioPlayerBatrhyme2');
+            stopAllAudio("audioPlayerBatrhyme2");
             
             const timestamp = new Date().getTime();
-            const batrhymeUrl = '/media/batrhyme-psychedelic-solar-punk-party.mp3?t=' + timestamp;
+            const batrhymeUrl = "/media/batrhyme-psychedelic-solar-punk-party.mp3?t=" + timestamp;
             audio.src = batrhymeUrl;
             audio.load();
             
-            if (trackName) trackName.textContent = 'Psychedelic Solar Punk Party';
-            if (nowPlaying) nowPlaying.style.display = 'block';
+            if (trackName) trackName.textContent = "Psychedelic Solar Punk Party";
+            if (nowPlaying) nowPlaying.style.display = "block";
             audio.play().catch(() => {});
         }
 
         function playBatrhyme3Track() {
-            const audio = document.getElementById('audioPlayerBatrhyme3');
-            const nowPlaying = document.getElementById('nowPlayingBatrhyme3');
-            const trackName = document.getElementById('trackNameBatrhyme3');
-            const loader = document.getElementById('loadingBatrhyme3');
+            const audio = document.getElementById("audioPlayerBatrhyme3");
+            const nowPlaying = document.getElementById("nowPlayingBatrhyme3");
+            const trackName = document.getElementById("trackNameBatrhyme3");
+            const loader = document.getElementById("loadingBatrhyme3");
             
-            stopAllAudio('audioPlayerBatrhyme3');
+            stopAllAudio("audioPlayerBatrhyme3");
             
             const timestamp = new Date().getTime();
-            const batrhymeUrl = '/media/omen-on-the-hudson.mp3?t=' + timestamp;
+            const batrhymeUrl = "/media/omen-on-the-hudson.mp3?t=" + timestamp;
             audio.src = batrhymeUrl;
             audio.load();
             
-            if (trackName) trackName.textContent = 'Omen on the Hudson (Quanta Masque)';
-            if (nowPlaying) nowPlaying.style.display = 'block';
-            if (loader) loader.style.display = 'block';
+            if (trackName) trackName.textContent = "Omen on the Hudson (Quanta Masque)";
+            if (nowPlaying) nowPlaying.style.display = "block";
+            if (loader) loader.style.display = "block";
             
             audio.play().then(() => {
-                if (loader) loader.style.display = 'none';
+                if (loader) loader.style.display = "none";
             }).catch(() => {
-                if (loader) loader.style.display = 'none';
+                if (loader) loader.style.display = "none";
             });
         }
 
         function playGidgetTrack() {
-            const audio = document.getElementById('audioPlayerGidget');
-            const nowPlaying = document.getElementById('nowPlayingGidget');
-            const trackName = document.getElementById('trackNameGidget');
+            const audio = document.getElementById("audioPlayerGidget");
+            const nowPlaying = document.getElementById("nowPlayingGidget");
+            const trackName = document.getElementById("trackNameGidget");
             
-            stopAllAudio('audioPlayerGidget');
+            stopAllAudio("audioPlayerGidget");
             
             const timestamp = new Date().getTime();
-            const gidgetUrl = '/media/gidget-bardot-no-one-left-v3.mp3?t=' + timestamp;
+            const gidgetUrl = "/media/gidget-bardot-no-one-left-v3.mp3?t=" + timestamp;
             audio.src = gidgetUrl;
             audio.load();
             
-            if (trackName) trackName.textContent = 'No One Left (to care)';
-            if (nowPlaying) nowPlaying.style.display = 'block';
+            if (trackName) trackName.textContent = "No One Left (to care)";
+            if (nowPlaying) nowPlaying.style.display = "block";
             audio.play().catch(() => {});
         }
 
         function playMonaziteTrack() {
-            if (typeof playTrack === 'function') {
+            if (typeof playTrack === "function") {
                 playTrack(0);
             }
         }
-                    console.log('✅ PLAYING: Batrhyme 3');
-                    console.log('🎵 Source:', batrhyme3Url);
-                    if (loadingEl) loadingEl.style.display = 'none';
-                })
-                .catch(err => {
-                    console.log('⚠️ Autoplay blocked - use controls');
-                    if (loadingEl) loadingEl.innerHTML = '👆 Tap play button above to start';
-                });
-        }
-
-        function playGidgetTrack() {
-            console.log('═══════════════════════════════════════════');
-            console.log('🎵 GIDGET BARDOT PLAYER - ISOLATED FUNCTION');
-            console.log('⚠️ SHOULD PLAY: "No One Left (to care)"');
-            console.log('⚠️ NOT CONNECTED TO MONAZITE TRACKS ARRAY');
-            console.log('═══════════════════════════════════════════');
-            
-            // STOP Monazite player completely
-            const monazitePlayer = document.getElementById('audioPlayer');
-            if (monazitePlayer) {
-                monazitePlayer.pause();
-                monazitePlayer.src = '';
-                monazitePlayer.load();
-                console.log('⏸️ Monazite player stopped and cleared');
-            }
-            
-            // Get Gidget's SEPARATE player element
-            const player = document.getElementById('audioPlayerGidget');
-            const nowPlaying = document.getElementById('nowPlayingGidget');
-            const trackName = document.getElementById('trackNameGidget');
-            
-            if (!player) {
-                console.error('❌ FATAL ERROR: audioPlayerGidget element not found!');
-                alert('ERROR: Gidget player not found. Refresh page.');
-                return;
-            }
-            
-            // GIDGET FILE - v3 completely new filename
-            const timestamp = new Date().getTime();
-            const gidgetUrl = '/media/gidget-bardot-no-one-left-v3.mp3?t=' + timestamp;
-            
-            console.log('📍 Loading:', gidgetUrl);
-            console.log('📍 Expected size: ~7.2MB (NOT 4.5MB)');
-            console.log('📍 If wrong song plays, clear browser cache!');
-            
-            // Set source
-            player.src = gidgetUrl;
-            player.load();
-            
-            // Track analytics
-            trackPlayEvent('💖 No One Left (to care) - Gidget Bardot');
-            
-            // Update UI
-            if (trackName) trackName.textContent = 'No One Left (to care)';
-            if (nowPlaying) nowPlaying.style.display = 'block';
-            
-            // Play
-            player.play()
-                .then(() => {
-                    console.log('✅ PLAYING: Gidget Bardot');
-                    console.log('🎵 Source:', gidgetUrl);
-                })
-                .catch(err => {
-                    console.log('⚠️ Autoplay blocked - use controls');
-                });
-        }
-
-        function shuffleArray(array) {
             const shuffled = [...array];
             for (let i = shuffled.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
