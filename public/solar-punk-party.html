@@ -3550,20 +3550,35 @@
       playShuffledSong(shuffleQueue[currentShuffleIndex]);
     }
 
-    // Auto-advance for card players even when NOT in shuffle mode
-    ['psychedelic', 'snowmancer', 'solarday', 'wesaidso'].forEach((songId, index, array) => {
+    // No-repeat shuffle for all card players - plays all songs in random order before any repeats
+    let cardShuffleQueue = shuffleArray([...allSongs]);
+    let cardShuffleIndex = 0;
+    
+    function getNextShuffledSong(currentSongId) {
+      // Find and remove current song from consideration, get next random
+      const currentIdx = cardShuffleQueue.findIndex(s => s.id === currentSongId);
+      cardShuffleIndex = (currentIdx + 1) % cardShuffleQueue.length;
+      
+      // If we've played all songs, reshuffle
+      if (cardShuffleIndex === 0) {
+        cardShuffleQueue = shuffleArray([...allSongs]);
+      }
+      
+      return cardShuffleQueue[cardShuffleIndex];
+    }
+    
+    ['psychedelic', 'snowmancer', 'solarday', 'wesaidso'].forEach((songId) => {
       const audio = document.getElementById(`audio-${songId}`);
       if (audio) {
         audio.onended = () => {
           if (shuffleActive && shuffleQueue.length > 0) {
             playNextShuffled();
           } else {
-            const nextIndex = (index + 1) % array.length;
-            const nextSongId = array[nextIndex];
-            // Delay slightly to allow UI to reset
+            // No-repeat shuffle: get next random song
+            const nextSong = getNextShuffledSong(songId);
             setTimeout(() => {
-              toggleSong(nextSongId); // Expand the next card
-              togglePlay(nextSongId); // Play the next song
+              toggleSong(nextSong.id);
+              togglePlay(nextSong.id);
             }, 300);
           }
         };

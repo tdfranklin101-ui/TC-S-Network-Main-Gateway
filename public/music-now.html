@@ -1045,12 +1045,36 @@
 
         // Initialize auto-advance
         document.addEventListener('DOMContentLoaded', () => {
-            mainPlaylist.forEach((id, index) => {
+            // No-repeat shuffle - plays all songs in random order before any repeats
+            let shuffledPlaylist = shufflePlaylist([...mainPlaylist]);
+            let shuffleIndex = 0;
+            
+            function shufflePlaylist(arr) {
+                const shuffled = [...arr];
+                for (let i = shuffled.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                }
+                return shuffled;
+            }
+            
+            function getNextShuffledTrack(currentId) {
+                const currentIdx = shuffledPlaylist.indexOf(currentId);
+                shuffleIndex = (currentIdx + 1) % shuffledPlaylist.length;
+                
+                // Reshuffle when we've played all songs
+                if (shuffleIndex === 0) {
+                    shuffledPlaylist = shufflePlaylist([...mainPlaylist]);
+                }
+                
+                return shuffledPlaylist[shuffleIndex];
+            }
+            
+            mainPlaylist.forEach((id) => {
                 const audio = document.getElementById(id);
                 if (audio) {
                     audio.onended = () => {
-                        const nextIndex = (index + 1) % mainPlaylist.length;
-                        const nextAudioId = mainPlaylist[nextIndex];
+                        const nextAudioId = getNextShuffledTrack(id);
                         const suffix = nextAudioId.replace('audioPlayer', '');
                         const playFnName = 'play' + suffix + 'Track';
                         if (typeof window[playFnName] === 'function') {
