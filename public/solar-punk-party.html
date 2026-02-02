@@ -1697,6 +1697,296 @@
       line-height: 1.6;
     }
 
+    /* ========== MANIFESTO SECTION ========== */
+    .manifesto-section {
+      padding: 100px 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .manifesto-section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: 
+        radial-gradient(ellipse at 20% 30%, rgba(236, 72, 153, 0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 70%, rgba(0, 255, 255, 0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(139, 92, 246, 0.1) 0%, transparent 60%);
+      animation: manifestoAura 20s ease-in-out infinite;
+    }
+
+    @keyframes manifestoAura {
+      0%, 100% { opacity: 0.7; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.05); }
+    }
+
+    .manifesto-container {
+      max-width: 900px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 2;
+    }
+
+    .manifesto-header {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+
+    .manifesto-badge {
+      display: inline-block;
+      padding: 8px 20px;
+      background: linear-gradient(135deg, rgba(236, 72, 153, 0.3), rgba(139, 92, 246, 0.3));
+      border: 1px solid rgba(236, 72, 153, 0.5);
+      border-radius: 30px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.75rem;
+      letter-spacing: 3px;
+      color: #EC4899;
+      text-transform: uppercase;
+      margin-bottom: 25px;
+      animation: badgePulse 3s ease-in-out infinite;
+    }
+
+    @keyframes badgePulse {
+      0%, 100% { box-shadow: 0 0 15px rgba(236, 72, 153, 0.3); }
+      50% { box-shadow: 0 0 30px rgba(236, 72, 153, 0.6); }
+    }
+
+    .manifesto-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 900;
+      line-height: 1.1;
+      margin-bottom: 20px;
+      background: linear-gradient(135deg, #EC4899, #00FFFF, #EAB308, #39FF14);
+      background-size: 300% 300%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: manifestoGradient 8s ease-in-out infinite;
+    }
+
+    @keyframes manifestoGradient {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+
+    .manifesto-subtitle {
+      font-family: 'Caveat', cursive;
+      font-size: 1.8rem;
+      color: var(--cyan);
+      text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+    }
+
+    .manifesto-blocks {
+      display: flex;
+      flex-direction: column;
+      gap: 35px;
+    }
+
+    .manifesto-block {
+      background: rgba(26, 10, 46, 0.7);
+      border-radius: 20px;
+      padding: 30px 35px;
+      position: relative;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.5s ease;
+      cursor: pointer;
+      overflow: hidden;
+    }
+
+    .manifesto-block::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--pink), var(--cyan), var(--neon-green));
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .manifesto-block:hover {
+      transform: translateY(-5px);
+      border-color: rgba(0, 255, 255, 0.3);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    }
+
+    .manifesto-block:hover::before {
+      opacity: 1;
+    }
+
+    .block-icon {
+      font-size: 2rem;
+      margin-bottom: 15px;
+      display: block;
+    }
+
+    .block-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--pink);
+      margin-bottom: 15px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .block-text {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.05rem;
+      line-height: 1.8;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .block-text .highlight {
+      color: var(--cyan);
+      font-weight: 600;
+    }
+
+    .block-text .golden {
+      color: var(--gold);
+      font-weight: 600;
+    }
+
+    .block-text .green {
+      color: var(--neon-green);
+      font-weight: 600;
+    }
+
+    /* Special styling for different block themes */
+    .manifesto-block.truth-block {
+      border-left: 3px solid var(--pink);
+    }
+
+    .manifesto-block.power-block {
+      border-left: 3px solid var(--cyan);
+    }
+
+    .manifesto-block.power-block .block-title { color: var(--cyan); }
+
+    .manifesto-block.awakening-block {
+      border-left: 3px solid var(--neon-green);
+    }
+
+    .manifesto-block.awakening-block .block-title { color: var(--neon-green); }
+
+    .manifesto-block.psychedelic-block {
+      border-left: 3px solid var(--purple);
+    }
+
+    .manifesto-block.psychedelic-block .block-title { color: var(--purple); }
+
+    .manifesto-block.exponential-block {
+      border-left: 3px solid var(--gold);
+    }
+
+    .manifesto-block.exponential-block .block-title { color: var(--gold); }
+
+    .manifesto-block.movement-block {
+      border-left: 3px solid var(--pink);
+      background: linear-gradient(135deg, rgba(236, 72, 153, 0.1), rgba(26, 10, 46, 0.7));
+    }
+
+    /* Closing Declaration */
+    .manifesto-closing {
+      text-align: center;
+      margin-top: 60px;
+      padding: 40px;
+      background: linear-gradient(135deg, rgba(0, 255, 255, 0.1), rgba(57, 255, 20, 0.1));
+      border-radius: 30px;
+      border: 2px solid rgba(0, 255, 255, 0.3);
+    }
+
+    .closing-text {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.3rem;
+      color: #fff;
+      margin-bottom: 25px;
+      line-height: 1.6;
+    }
+
+    .closing-text .cyan { color: var(--cyan); }
+
+    .manifesto-tagline {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(1.2rem, 3vw, 1.8rem);
+      font-weight: 900;
+      margin-top: 20px;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 15px;
+      display: inline-block;
+    }
+
+    .tagline-emoji {
+      font-size: 1.5rem;
+      margin: 0 10px;
+      animation: iconPulse 2s ease-in-out infinite;
+    }
+
+    .tagline-text {
+      background: linear-gradient(90deg, var(--cyan), var(--neon-green), var(--gold));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    @keyframes iconPulse {
+      0%, 100% { transform: scale(1); opacity: 0.8; }
+      50% { transform: scale(1.2); opacity: 1; }
+    }
+
+    /* Floating particles for manifesto */
+    .manifesto-particles {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .m-particle {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      background: var(--cyan);
+      border-radius: 50%;
+      opacity: 0.4;
+      animation: floatParticle 15s linear infinite;
+    }
+
+    .m-particle:nth-child(1) { left: 10%; animation-delay: 0s; background: var(--pink); }
+    .m-particle:nth-child(2) { left: 20%; animation-delay: 2s; background: var(--cyan); }
+    .m-particle:nth-child(3) { left: 35%; animation-delay: 4s; background: var(--neon-green); }
+    .m-particle:nth-child(4) { left: 50%; animation-delay: 6s; background: var(--gold); }
+    .m-particle:nth-child(5) { left: 65%; animation-delay: 8s; background: var(--purple); }
+    .m-particle:nth-child(6) { left: 80%; animation-delay: 10s; background: var(--pink); }
+    .m-particle:nth-child(7) { left: 90%; animation-delay: 12s; background: var(--cyan); }
+
+    @keyframes floatParticle {
+      0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+      10% { opacity: 0.6; }
+      90% { opacity: 0.6; }
+      100% { transform: translateY(-100px) rotate(720deg); opacity: 0; }
+    }
+
+    @media (max-width: 768px) {
+      .manifesto-block {
+        padding: 25px 20px;
+      }
+      
+      .manifesto-closing {
+        padding: 25px 20px;
+      }
+    }
+
     /* Solar Arrays Section */
     .solar-arrays {
       padding: 100px 20px;
@@ -2015,8 +2305,119 @@
 
     <!-- CTA Buttons -->
     <div class="cta-container">
-      <a href="homepage-full.html" class="cta-button cta-primary">Join the Movement</a>
-      <a href="solar-dashboard.html" class="cta-button cta-secondary">Explore Solar</a>
+      <a href="#manifesto" class="cta-button cta-primary">Read the Manifesto</a>
+      <a href="homepage-full.html" class="cta-button cta-secondary">Join the Movement</a>
+    </div>
+  </section>
+
+  <!-- THE MANIFESTO -->
+  <section class="manifesto-section" id="manifesto">
+    <div class="manifesto-particles">
+      <div class="m-particle"></div>
+      <div class="m-particle"></div>
+      <div class="m-particle"></div>
+      <div class="m-particle"></div>
+      <div class="m-particle"></div>
+      <div class="m-particle"></div>
+      <div class="m-particle"></div>
+    </div>
+
+    <div class="manifesto-container">
+      <div class="manifesto-header">
+        <span class="manifesto-badge">The Movement</span>
+        <h2 class="manifesto-title">The Psychedelic Solarpunk Party Manifesto</h2>
+        <p class="manifesto-subtitle">The Grid Is a Lie You've Been Living Inside</p>
+      </div>
+
+      <div class="manifesto-blocks">
+        <!-- Block 1: The Con -->
+        <div class="manifesto-block truth-block">
+          <span class="block-icon">🔌</span>
+          <h3 class="block-title">The Biggest Con in Human History</h3>
+          <p class="block-text">
+            They told you power comes from somewhere else. From distant plants burning ancient dead things. From corporations that own the sun's light before it even hits your roof. From a grid that fails when you need it most, then sends you a bill for the privilege of dependency.
+          </p>
+        </div>
+
+        <!-- Block 2: The Truth -->
+        <div class="manifesto-block power-block">
+          <span class="block-icon">☀️</span>
+          <h3 class="block-title">The Truth They Don't Want You to See</h3>
+          <p class="block-text">
+            You are standing on a fusion reactor <span class="highlight">93 million miles away</span> that floods your world with more energy every hour than humanity uses in a year. And they convinced you that you can't touch it. That you need their permission. Their infrastructure. Their monthly invoices for <span class="golden">light that falls free from the sky</span>.
+          </p>
+        </div>
+
+        <!-- Block 3: The Awakening -->
+        <div class="manifesto-block awakening-block">
+          <span class="block-icon">👁️</span>
+          <h3 class="block-title">We Woke Up</h3>
+          <p class="block-text">
+            The Psychedelic Solarpunk Party exists because some of us woke up. We saw the pattern. We recognized the cage. And we realized <span class="green">the door was never locked</span>—we just forgot how to open it.
+          </p>
+        </div>
+
+        <!-- Block 4: Remembering Power -->
+        <div class="manifesto-block power-block">
+          <span class="block-icon">🏠</span>
+          <h3 class="block-title">You're Already Powerful</h3>
+          <p class="block-text">
+            Going off-grid isn't about survivalism or paranoia. It's about remembering that you're already powerful. Your roof is <span class="highlight">real estate the sun pays rent on</span> every single day. Your battery is a bank account that compounds in photons. Your solar panel is a declaration of independence written in <span class="golden">silicon and light</span>.
+          </p>
+        </div>
+
+        <!-- Block 5: The Shift -->
+        <div class="manifesto-block psychedelic-block">
+          <span class="block-icon">⚡</span>
+          <h3 class="block-title">When Everything Changes</h3>
+          <p class="block-text">
+            When you generate your own current, everything changes. Not just your electric bill. <span class="highlight">Your consciousness.</span> You stop being a consumer and become a generator. You stop asking permission and start making decisions. The first morning you make coffee with yesterday's sunshine, something breaks open in your chest. It's not nostalgia. It's not futurism. It's <span class="green">now-ism</span>—the recognition that the future we need is available in the present moment.
+          </p>
+        </div>
+
+        <!-- Block 6: Mind-Manifesting -->
+        <div class="manifesto-block psychedelic-block">
+          <span class="block-icon">🌀</span>
+          <h3 class="block-title">Psychedelic: Mind-Manifesting</h3>
+          <p class="block-text">
+            This is psychedelic in the truest sense: <span class="golden">mind-manifesting</span>. Your mind manifests a different relationship with power—literal electrical power and the power to shape your own life. You see the network differently. You see yourself differently. You see the sun differently. What was background radiation becomes <span class="highlight">active relationship</span>.
+          </p>
+        </div>
+
+        <!-- Block 7: Exponential -->
+        <div class="manifesto-block exponential-block">
+          <span class="block-icon">🔥</span>
+          <h3 class="block-title">The Exponential Spread</h3>
+          <p class="block-text">
+            When you see it, you can't unsee it. You start noticing how many roofs in your neighborhood are bare. How much sun is going to waste. So you tell someone. You show them your setup. You help them install their first panel. And suddenly there are <span class="green">two of you. Then five. Then fifty.</span> This is how it spreads. Not through policy. <span class="golden">Through perception.</span>
+          </p>
+        </div>
+
+        <!-- Block 8: The Movement -->
+        <div class="manifesto-block movement-block">
+          <span class="block-icon">🌍</span>
+          <h3 class="block-title">Building the Revolution</h3>
+          <p class="block-text">
+            The Psychedelic Solarpunk Party isn't waiting for the revolution. We're <span class="highlight">building it one panel at a time</span>, one roof at a time, one mind at a time. We're weaving a mesh network of power generation that doesn't ask permission from the utility company or the government or the oil cartel. We're creating <span class="golden">beauty while we do it</span>—because why shouldn't liberation be gorgeous? Why shouldn't independence glow with neon and pulse with life?
+          </p>
+        </div>
+      </div>
+
+      <!-- Closing Declaration -->
+      <div class="manifesto-closing">
+        <p class="closing-text">
+          The grid kept you dependent. <span class="cyan">The sun sets you free.</span><br>
+          We'll show you how to see it.
+        </p>
+        <p class="closing-text">
+          <strong>Welcome to the party. The light is already here. You just have to plug in.</strong>
+        </p>
+        <div class="manifesto-tagline">
+          <span class="tagline-emoji">👁️</span>
+          <span class="tagline-text">See the current. Be the current. Shape the currency.</span>
+          <span class="tagline-emoji">⚡</span>
+        </div>
+      </div>
     </div>
   </section>
 
