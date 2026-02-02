@@ -137,6 +137,131 @@
       --card-glow: rgba(139, 92, 246, 0.3);
     }
     
+    /* Psychedelic Solar Punk Party Featured Card */
+    .party-featured-card {
+      display: block;
+      position: relative;
+      margin: 2rem auto 0;
+      padding: 2rem 2.5rem;
+      max-width: 800px;
+      width: calc(100% - 2rem);
+      background: linear-gradient(135deg, 
+        rgba(139, 92, 246, 0.9) 0%, 
+        rgba(236, 72, 153, 0.9) 25%, 
+        rgba(249, 115, 22, 0.9) 50%, 
+        rgba(234, 179, 8, 0.9) 75%,
+        rgba(139, 92, 246, 0.9) 100%
+      );
+      background-size: 400% 400%;
+      animation: partyGradient 8s ease infinite;
+      border-radius: 20px;
+      text-decoration: none;
+      overflow: hidden;
+      box-shadow: 0 10px 40px rgba(139, 92, 246, 0.4), 0 0 60px rgba(236, 72, 153, 0.2);
+      transition: all 0.4s ease;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .party-featured-card:hover {
+      transform: translateY(-5px) scale(1.02);
+      box-shadow: 0 20px 60px rgba(139, 92, 246, 0.5), 0 0 100px rgba(236, 72, 153, 0.4);
+    }
+    
+    @keyframes partyGradient {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    
+    .party-glow {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 150%;
+      height: 150%;
+      transform: translate(-50%, -50%);
+      background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    
+    .party-content {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+    }
+    
+    .party-badge {
+      display: inline-block;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 0.4rem 1rem;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: #fff;
+      margin-bottom: 0.75rem;
+      text-shadow: 0 0 10px rgba(255,255,255,0.5);
+    }
+    
+    .party-title {
+      font-size: clamp(1.5rem, 4vw, 2rem);
+      font-weight: 900;
+      color: #fff;
+      text-shadow: 0 2px 20px rgba(0,0,0,0.5);
+      margin-bottom: 0.5rem;
+    }
+    
+    .party-tagline {
+      font-size: 1rem;
+      color: rgba(255,255,255,0.95);
+      margin-bottom: 1rem;
+      font-style: italic;
+    }
+    
+    .party-cta-btn {
+      display: inline-block;
+      background: rgba(0,0,0,0.5);
+      padding: 0.75rem 1.5rem;
+      border-radius: 30px;
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.9rem;
+      transition: all 0.3s;
+    }
+    
+    .party-featured-card:hover .party-cta-btn {
+      background: rgba(0,0,0,0.7);
+      transform: scale(1.05);
+    }
+    
+    .dancing-figures {
+      position: absolute;
+      bottom: 10px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      pointer-events: none;
+    }
+    
+    .mini-dancer {
+      width: 8px;
+      height: 20px;
+      background: rgba(255,255,255,0.6);
+      border-radius: 4px;
+      animation: dance 0.5s ease-in-out infinite alternate;
+    }
+    
+    .mini-dancer.rainbow {
+      background: linear-gradient(180deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3, #54a0ff);
+    }
+    
+    @keyframes dance {
+      0% { transform: scaleY(1) translateY(0); }
+      100% { transform: scaleY(1.3) translateY(-5px); }
+    }
+    
     .card-icon {
       width: 60px;
       height: 60px;
@@ -420,6 +545,24 @@
         </ul>
       </div>
     </div>
+    
+    <!-- Psychedelic Solar Punk Party Featured Card -->
+    <a href="/solar-punk-party.html" class="party-featured-card" data-testid="link-solar-punk-party" onclick="trackGatewayChoice('party', 'experience')">
+      <div class="party-glow"></div>
+      <div class="party-content">
+        <span class="party-badge">NEW EXPERIENCE</span>
+        <h2 class="party-title">Psychedelic Solar Punk Party</h2>
+        <p class="party-tagline">Personal Solar. Global Connection. Infinite Joy.</p>
+        <span class="party-cta-btn">Power Your Own Dawn →</span>
+      </div>
+      <div class="dancing-figures">
+        <div class="mini-dancer" style="animation-delay: 0s;"></div>
+        <div class="mini-dancer" style="animation-delay: 0.2s;"></div>
+        <div class="mini-dancer rainbow" style="animation-delay: 0.3s;"></div>
+        <div class="mini-dancer" style="animation-delay: 0.4s;"></div>
+        <div class="mini-dancer" style="animation-delay: 0.6s;"></div>
+      </div>
+    </a>
     
     <!-- Direct Access Section -->
     <div style="text-align: center; margin-top: 2.5rem; padding: 1.5rem; background: rgba(255, 140, 0, 0.1); border-radius: 16px; border: 1px solid rgba(255, 140, 0, 0.3); max-width: 500px;">
