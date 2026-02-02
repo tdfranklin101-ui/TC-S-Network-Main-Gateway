@@ -3426,21 +3426,24 @@
       
       audio.addEventListener('timeupdate', () => {
         const percent = (audio.currentTime / audio.duration) * 100;
-        progressBar.style.width = percent + '%';
-        timeDisplay.textContent = formatTime(audio.currentTime);
+        if (progressBar) progressBar.style.width = percent + '%';
+        if (timeDisplay) timeDisplay.textContent = formatTime(audio.currentTime);
       });
       
       audio.addEventListener('ended', () => {
         const card = document.querySelector(`[data-song="${songId}"]`);
-        card.querySelector('.play-icon').style.display = 'block';
-        card.querySelector('.pause-icon').style.display = 'none';
-        progressBar.style.width = '0%';
-        timeDisplay.textContent = '0:00';
-        currentlyPlaying = null;
+        if (card) {
+          card.querySelector('.play-icon').style.display = 'block';
+          card.querySelector('.pause-icon').style.display = 'none';
+        }
+        if (progressBar) progressBar.style.width = '0%';
+        if (timeDisplay) timeDisplay.textContent = '0:00';
         
         // If shuffle mode is active, play next shuffled song
         if (shuffleActive && shuffleQueue.length > 0) {
           playNextShuffled();
+        } else {
+          currentlyPlaying = null;
         }
       });
     });
@@ -3546,6 +3549,26 @@
       
       playShuffledSong(shuffleQueue[currentShuffleIndex]);
     }
+
+    // Auto-advance for card players even when NOT in shuffle mode
+    ['psychedelic', 'snowmancer', 'solarday', 'wesaidso'].forEach((songId, index, array) => {
+      const audio = document.getElementById(`audio-${songId}`);
+      if (audio) {
+        audio.onended = () => {
+          if (shuffleActive && shuffleQueue.length > 0) {
+            playNextShuffled();
+          } else {
+            const nextIndex = (index + 1) % array.length;
+            const nextSongId = array[nextIndex];
+            // Delay slightly to allow UI to reset
+            setTimeout(() => {
+              toggleSong(nextSongId); // Expand the next card
+              togglePlay(nextSongId); // Play the next song
+            }, 300);
+          }
+        };
+      }
+    });
 
     // ========== MOOD SELECTOR ==========
     const moodConfig = {

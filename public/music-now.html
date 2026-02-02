@@ -1012,206 +1012,144 @@
         
         // GIDGET BARDOT - COMPLETELY SEPARATE FUNCTION
         // This function has NO connection to Monazite tracks array
+        // Playlist management for auto-advance
+        const mainPlaylist = [
+            'audioPlayerBatrhyme',
+            'audioPlayerBatrhyme2',
+            'audioPlayerBatrhyme3',
+            'audioPlayerGidget'
+        ];
+
+        function stopAllAudio(exceptId = null) {
+            mainPlaylist.forEach(id => {
+                if (id !== exceptId) {
+                    const audio = document.getElementById(id);
+                    if (audio) {
+                        audio.pause();
+                        const suffix = id.replace('audioPlayer', '');
+                        const nowPlaying = document.getElementById('nowPlaying' + suffix);
+                        if (nowPlaying) nowPlaying.style.display = 'none';
+                    }
+                }
+            });
+            // Stop monazite separately if not excepted
+            if (exceptId !== 'audioPlayer') {
+                const monPlayer = document.getElementById('audioPlayer');
+                if (monPlayer) {
+                    monPlayer.pause();
+                    monPlayer.src = '';
+                    monPlayer.load();
+                }
+            }
+        }
+
+        // Initialize auto-advance
+        document.addEventListener('DOMContentLoaded', () => {
+            mainPlaylist.forEach((id, index) => {
+                const audio = document.getElementById(id);
+                if (audio) {
+                    audio.onended = () => {
+                        const nextIndex = (index + 1) % mainPlaylist.length;
+                        const nextAudioId = mainPlaylist[nextIndex];
+                        const suffix = nextAudioId.replace('audioPlayer', '');
+                        const playFnName = 'play' + suffix + 'Track';
+                        if (typeof window[playFnName] === 'function') {
+                            window[playFnName]();
+                        }
+                    };
+                }
+            });
+            
+            // Handle Monazite player ended separately since it's a list
+            const monPlayer = document.getElementById('audioPlayer');
+            if (monPlayer) {
+                monPlayer.addEventListener('ended', () => {
+                    // Start Batrhyme playlist after Monazite finishes
+                    playBatrhymeTrack();
+                });
+            }
+        });
+
         function playBatrhymeTrack() {
-            console.log('═══════════════════════════════════════════');
-            console.log('🎵 BATRHYME PLAYER - ISOLATED FUNCTION');
-            console.log('⚠️ SHOULD PLAY: "Break on the Bright Side"');
-            console.log('⚠️ NOT CONNECTED TO MONAZITE TRACKS ARRAY');
-            console.log('═══════════════════════════════════════════');
-            
-            // STOP Monazite player completely
-            const monazitePlayer = document.getElementById('audioPlayer');
-            if (monazitePlayer) {
-                monazitePlayer.pause();
-                monazitePlayer.src = '';
-                monazitePlayer.load();
-                console.log('⏸️ Monazite player stopped and cleared');
-            }
-            
-            // STOP Gidget player completely
-            const gidgetPlayer = document.getElementById('audioPlayerGidget');
-            if (gidgetPlayer) {
-                gidgetPlayer.pause();
-                gidgetPlayer.src = '';
-                gidgetPlayer.load();
-                console.log('⏸️ Gidget player stopped and cleared');
-            }
-            
-            // Get Batrhyme's SEPARATE player element
-            const player = document.getElementById('audioPlayerBatrhyme');
+            const audio = document.getElementById('audioPlayerBatrhyme');
             const nowPlaying = document.getElementById('nowPlayingBatrhyme');
             const trackName = document.getElementById('trackNameBatrhyme');
             
-            if (!player) {
-                console.error('❌ FATAL ERROR: audioPlayerBatrhyme element not found!');
-                alert('ERROR: Batrhyme player not found. Refresh page.');
-                return;
-            }
+            stopAllAudio('audioPlayerBatrhyme');
             
-            // BATRHYME FILE
             const timestamp = new Date().getTime();
             const batrhymeUrl = '/media/batrhyme-break-on-the-bright-side.mp3?t=' + timestamp;
+            audio.src = batrhymeUrl;
+            audio.load();
             
-            console.log('📍 Loading:', batrhymeUrl);
-            
-            // Set source
-            player.src = batrhymeUrl;
-            player.load();
-            
-            // Track analytics
-            trackPlayEvent('☀️ Break on the Bright Side - Batrhyme');
-            
-            // Update UI
             if (trackName) trackName.textContent = 'Break on the Bright Side';
             if (nowPlaying) nowPlaying.style.display = 'block';
-            
-            // Play
-            player.play()
-                .then(() => {
-                    console.log('✅ PLAYING: Batrhyme');
-                    console.log('🎵 Source:', batrhymeUrl);
-                })
-                .catch(err => {
-                    console.log('⚠️ Autoplay blocked - use controls');
-                });
+            audio.play().catch(() => {});
         }
 
         function playBatrhyme2Track() {
-            console.log('═══════════════════════════════════════════');
-            console.log('🎵 BATRHYME 2 PLAYER - ISOLATED FUNCTION');
-            console.log('⚠️ SHOULD PLAY: "Psychedelic Solar Punk Party"');
-            console.log('═══════════════════════════════════════════');
-            
-            // STOP other players
-            const monazitePlayer = document.getElementById('audioPlayer');
-            if (monazitePlayer) {
-                monazitePlayer.pause();
-                monazitePlayer.src = '';
-                monazitePlayer.load();
-            }
-            
-            const batrhyme1Player = document.getElementById('audioPlayerBatrhyme');
-            if (batrhyme1Player) {
-                batrhyme1Player.pause();
-            }
-            
-            const gidgetPlayer = document.getElementById('audioPlayerGidget');
-            if (gidgetPlayer) {
-                gidgetPlayer.pause();
-            }
-            
-            // Get Batrhyme 2's player element
-            const player = document.getElementById('audioPlayerBatrhyme2');
+            const audio = document.getElementById('audioPlayerBatrhyme2');
             const nowPlaying = document.getElementById('nowPlayingBatrhyme2');
             const trackName = document.getElementById('trackNameBatrhyme2');
             
-            if (!player) {
-                console.error('❌ FATAL ERROR: audioPlayerBatrhyme2 element not found!');
-                alert('ERROR: Batrhyme 2 player not found. Refresh page.');
-                return;
-            }
+            stopAllAudio('audioPlayerBatrhyme2');
             
             const timestamp = new Date().getTime();
-            const batrhyme2Url = '/media/batrhyme-psychedelic-solar-punk-party.mp3?t=' + timestamp;
-            
-            console.log('📍 Loading:', batrhyme2Url);
-            
-            player.src = batrhyme2Url;
-            player.load();
-            
-            trackPlayEvent('🌀 Psychedelic Solar Punk Party - Batrhyme');
+            const batrhymeUrl = '/media/batrhyme-psychedelic-solar-punk-party.mp3?t=' + timestamp;
+            audio.src = batrhymeUrl;
+            audio.load();
             
             if (trackName) trackName.textContent = 'Psychedelic Solar Punk Party';
             if (nowPlaying) nowPlaying.style.display = 'block';
-            
-            player.play()
-                .then(() => {
-                    console.log('✅ PLAYING: Batrhyme 2');
-                    console.log('🎵 Source:', batrhyme2Url);
-                })
-                .catch(err => {
-                    console.log('⚠️ Autoplay blocked - use controls');
-                });
+            audio.play().catch(() => {});
         }
 
         function playBatrhyme3Track() {
-            console.log('═══════════════════════════════════════════');
-            console.log('🎵 BATRHYME 3 PLAYER - ISOLATED FUNCTION');
-            console.log('⚠️ SHOULD PLAY: "Omen on the Hudson (Quanta Masque)"');
-            console.log('═══════════════════════════════════════════');
-            
-            // STOP other players
-            const monazitePlayer = document.getElementById('audioPlayer');
-            if (monazitePlayer) {
-                monazitePlayer.pause();
-                monazitePlayer.src = '';
-                monazitePlayer.load();
-            }
-            
-            const batrhyme1Player = document.getElementById('audioPlayerBatrhyme');
-            if (batrhyme1Player) {
-                batrhyme1Player.pause();
-            }
-            
-            const batrhyme2Player = document.getElementById('audioPlayerBatrhyme2');
-            if (batrhyme2Player) {
-                batrhyme2Player.pause();
-            }
-            
-            const gidgetPlayer = document.getElementById('audioPlayerGidget');
-            if (gidgetPlayer) {
-                gidgetPlayer.pause();
-            }
-            
-            // Get Batrhyme 3's player element
-            const player = document.getElementById('audioPlayerBatrhyme3');
+            const audio = document.getElementById('audioPlayerBatrhyme3');
             const nowPlaying = document.getElementById('nowPlayingBatrhyme3');
             const trackName = document.getElementById('trackNameBatrhyme3');
+            const loader = document.getElementById('loadingBatrhyme3');
             
-            if (!player) {
-                console.error('❌ FATAL ERROR: audioPlayerBatrhyme3 element not found!');
-                alert('ERROR: Batrhyme 3 player not found. Refresh page.');
-                return;
-            }
-            
-            const loadingEl = document.getElementById('loadingBatrhyme3');
-            if (loadingEl) loadingEl.style.display = 'block';
+            stopAllAudio('audioPlayerBatrhyme3');
             
             const timestamp = new Date().getTime();
-            const batrhyme3Url = '/media/omen-on-the-hudson.mp3?t=' + timestamp;
-            
-            console.log('📍 Loading:', batrhyme3Url);
-            
-            player.onerror = function(e) {
-                console.error('❌ Audio error:', e);
-                if (loadingEl) loadingEl.innerHTML = '❌ Error loading audio. <a href="' + batrhyme3Url + '" style="color: #D4A017;">Try direct link</a>';
-            };
-            
-            player.oncanplay = function() {
-                if (loadingEl) loadingEl.style.display = 'none';
-            };
-            
-            player.onwaiting = function() {
-                if (loadingEl) {
-                    loadingEl.style.display = 'block';
-                    loadingEl.innerHTML = '⏳ Buffering... Please wait';
-                }
-            };
-            
-            player.onplaying = function() {
-                if (loadingEl) loadingEl.style.display = 'none';
-            };
-            
-            player.src = batrhyme3Url;
-            player.load();
-            
-            trackPlayEvent('🌅 Omen on the Hudson (Quanta Masque) - Batrhyme');
+            const batrhymeUrl = '/media/omen-on-the-hudson.mp3?t=' + timestamp;
+            audio.src = batrhymeUrl;
+            audio.load();
             
             if (trackName) trackName.textContent = 'Omen on the Hudson (Quanta Masque)';
             if (nowPlaying) nowPlaying.style.display = 'block';
+            if (loader) loader.style.display = 'block';
             
-            player.play()
-                .then(() => {
+            audio.play().then(() => {
+                if (loader) loader.style.display = 'none';
+            }).catch(() => {
+                if (loader) loader.style.display = 'none';
+            });
+        }
+
+        function playGidgetTrack() {
+            const audio = document.getElementById('audioPlayerGidget');
+            const nowPlaying = document.getElementById('nowPlayingGidget');
+            const trackName = document.getElementById('trackNameGidget');
+            
+            stopAllAudio('audioPlayerGidget');
+            
+            const timestamp = new Date().getTime();
+            const gidgetUrl = '/media/gidget-bardot-no-one-left-v3.mp3?t=' + timestamp;
+            audio.src = gidgetUrl;
+            audio.load();
+            
+            if (trackName) trackName.textContent = 'No One Left (to care)';
+            if (nowPlaying) nowPlaying.style.display = 'block';
+            audio.play().catch(() => {});
+        }
+
+        function playMonaziteTrack() {
+            if (typeof playTrack === 'function') {
+                playTrack(0);
+            }
+        }
                     console.log('✅ PLAYING: Batrhyme 3');
                     console.log('🎵 Source:', batrhyme3Url);
                     if (loadingEl) loadingEl.style.display = 'none';
