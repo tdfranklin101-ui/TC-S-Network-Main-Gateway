@@ -166,9 +166,38 @@
     }
     
     .burger-menu.open {
-      max-height: 600px;
+      max-height: 80vh;
       opacity: 1;
       padding: 10px 0;
+      overflow-y: auto;
+    }
+    
+    .burger-close {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 1.5rem;
+      background: none;
+      border: none;
+      color: var(--gold);
+      cursor: pointer;
+      padding: 5px;
+      line-height: 1;
+    }
+    
+    .burger-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 99998;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    
+    .burger-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
     }
     
     .burger-menu-header {
@@ -2583,12 +2612,16 @@
   </style>
 </head>
 <body>
+  <!-- Hamburger Navigation Overlay -->
+  <div class="burger-overlay" id="burgerOverlay" onclick="closeBurgerMenu()"></div>
+  
   <!-- Hamburger Navigation Menu -->
   <nav class="burger-nav" id="burgerNav">
     <button class="burger-btn" id="burgerBtn" onclick="toggleBurgerMenu()" aria-label="Site Navigation">
       🍔
     </button>
     <div class="burger-menu" id="burgerMenu">
+      <button class="burger-close" onclick="closeBurgerMenu()" aria-label="Close menu">✕</button>
       <div class="burger-menu-header">
         <h3>Navigate the Party</h3>
       </div>
@@ -3511,24 +3544,26 @@
     function toggleBurgerMenu() {
       const btn = document.getElementById('burgerBtn');
       const menu = document.getElementById('burgerMenu');
-      btn.classList.toggle('open');
-      menu.classList.toggle('open');
+      const overlay = document.getElementById('burgerOverlay');
+      const isOpen = menu.classList.contains('open');
+      
+      if (isOpen) {
+        closeBurgerMenu();
+      } else {
+        btn.classList.add('open');
+        menu.classList.add('open');
+        overlay.classList.add('open');
+      }
     }
     
     function closeBurgerMenu() {
       const btn = document.getElementById('burgerBtn');
       const menu = document.getElementById('burgerMenu');
+      const overlay = document.getElementById('burgerOverlay');
       btn.classList.remove('open');
       menu.classList.remove('open');
+      overlay.classList.remove('open');
     }
-    
-    // Close menu when clicking outside
-    document.addEventListener('click', (e) => {
-      const nav = document.getElementById('burgerNav');
-      if (nav && !nav.contains(e.target)) {
-        closeBurgerMenu();
-      }
-    });
     
     // Smooth scroll behavior
     document.querySelectorAll('.burger-menu a[href^="#"]').forEach(anchor => {
