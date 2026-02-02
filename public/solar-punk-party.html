@@ -39,39 +39,42 @@
       z-index: 10;
       padding: 2rem 1rem;
       text-align: center;
-      background: linear-gradient(180deg, rgba(26, 10, 46, 0.95) 0%, transparent 100%);
+      background: linear-gradient(180deg, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.6) 50%, transparent 100%);
     }
     
     .welcome-inner {
       max-width: 800px;
       margin: 0 auto;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 1.5rem 2rem;
+      border-radius: 20px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
     }
     
     .welcome-label {
       display: block;
       font-family: 'Space Grotesk', sans-serif;
       font-size: 0.9rem;
-      color: rgba(255,255,255,0.7);
+      color: #ffffff;
       letter-spacing: 2px;
       text-transform: uppercase;
       margin-bottom: 0.5rem;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.8);
     }
     
     .welcome-title {
       font-family: 'Orbitron', sans-serif;
       font-size: clamp(1.8rem, 5vw, 2.5rem);
       font-weight: 900;
-      background: linear-gradient(135deg, var(--pink) 0%, var(--violet) 50%, var(--cyan) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      color: #ffffff;
       margin-bottom: 1rem;
-      text-shadow: 0 0 40px rgba(139, 92, 246, 0.5);
+      text-shadow: 0 2px 8px rgba(0,0,0,0.9), 0 0 30px rgba(139, 92, 246, 0.6);
     }
     
     .tagline-rotator {
       position: relative;
-      height: 2rem;
+      height: 2.5rem;
       margin-bottom: 1rem;
     }
     
@@ -79,11 +82,17 @@
       position: absolute;
       width: 100%;
       font-family: 'Caveat', cursive;
-      font-size: 1.4rem;
-      color: var(--gold);
+      font-size: 1.5rem;
+      color: #1a1a1a;
+      background: linear-gradient(135deg, var(--gold), #FFD700);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
       opacity: 0;
       transform: translateY(10px);
       transition: all 0.6s ease;
+      text-shadow: none;
+      filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5));
     }
     
     .rotating-tagline.active {
@@ -94,16 +103,17 @@
     .welcome-manifesto-quote {
       font-family: 'Space Grotesk', sans-serif;
       font-size: 0.95rem;
-      color: var(--neon-green);
+      color: #0a0a0a;
       font-style: italic;
-      opacity: 0.9;
       padding: 0.75rem 1.5rem;
-      background: rgba(57, 255, 20, 0.1);
+      background: linear-gradient(135deg, var(--neon-green), #32CD32);
       border-radius: 30px;
-      border: 1px solid rgba(57, 255, 20, 0.3);
+      border: 2px solid rgba(0, 0, 0, 0.2);
       display: inline-block;
       margin-top: 0.5rem;
       transition: all 0.5s ease;
+      font-weight: 600;
+      box-shadow: 0 4px 15px rgba(57, 255, 20, 0.3);
     }
     
     /* D-ID Agent Float Styles */
