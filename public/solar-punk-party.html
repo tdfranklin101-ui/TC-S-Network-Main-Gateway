@@ -33,6 +33,85 @@
       min-height: 100vh;
     }
 
+    /* Welcome Banner Styles */
+    .welcome-banner {
+      position: relative;
+      z-index: 10;
+      padding: 2rem 1rem;
+      text-align: center;
+      background: linear-gradient(180deg, rgba(26, 10, 46, 0.95) 0%, transparent 100%);
+    }
+    
+    .welcome-inner {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
+    .welcome-label {
+      display: block;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.9rem;
+      color: rgba(255,255,255,0.7);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+    
+    .welcome-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(1.8rem, 5vw, 2.5rem);
+      font-weight: 900;
+      background: linear-gradient(135deg, var(--pink) 0%, var(--violet) 50%, var(--cyan) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 1rem;
+      text-shadow: 0 0 40px rgba(139, 92, 246, 0.5);
+    }
+    
+    .tagline-rotator {
+      position: relative;
+      height: 2rem;
+      margin-bottom: 1rem;
+    }
+    
+    .rotating-tagline {
+      position: absolute;
+      width: 100%;
+      font-family: 'Caveat', cursive;
+      font-size: 1.4rem;
+      color: var(--gold);
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.6s ease;
+    }
+    
+    .rotating-tagline.active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
+    .welcome-manifesto-quote {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.95rem;
+      color: var(--neon-green);
+      font-style: italic;
+      opacity: 0.9;
+      padding: 0.75rem 1.5rem;
+      background: rgba(57, 255, 20, 0.1);
+      border-radius: 30px;
+      border: 1px solid rgba(57, 255, 20, 0.3);
+      display: inline-block;
+      margin-top: 0.5rem;
+      transition: all 0.5s ease;
+    }
+    
+    /* D-ID Agent Float Styles */
+    [data-agent-id], [data-name="did-agent"] {
+      position: fixed !important;
+      z-index: 999999 !important;
+    }
+
     /* Animated Gradient Background */
     .gradient-bg {
       position: fixed;
@@ -2183,6 +2262,21 @@
     </div>
   </nav>
 
+  <!-- Welcome Banner with Rotating Taglines -->
+  <div class="welcome-banner">
+    <div class="welcome-inner">
+      <span class="welcome-label">Welcome to the</span>
+      <h2 class="welcome-title">Psychedelic Solar Punk Party</h2>
+      <div class="tagline-rotator">
+        <p class="rotating-tagline active" data-index="0">"Turn every shadow into a river of good"</p>
+        <p class="rotating-tagline" data-index="1">"Ghosts in the wires, gardens in the grid"</p>
+        <p class="rotating-tagline" data-index="2">"You shine, I shine — it's a Solar Day"</p>
+        <p class="rotating-tagline" data-index="3">"Reclaim the light. Rewrite the script."</p>
+      </div>
+      <p class="welcome-manifesto-quote" id="manifestoQuote">"The door was never locked—we just forgot how to open it."</p>
+    </div>
+  </div>
+
   <!-- Hero Section -->
   <section class="hero">
     <!-- Rooftop Party Scene -->
@@ -3301,6 +3395,47 @@
       document.getElementById('networkPower').textContent = power + ' MW';
     }
 
+    // ========== ROTATING TAGLINES ==========
+    const songTaglines = [
+      '"Turn every shadow into a river of good"',
+      '"Ghosts in the wires, gardens in the grid"',
+      '"You shine, I shine — it\'s a Solar Day"',
+      '"Reclaim the light. Rewrite the script."'
+    ];
+    
+    const manifestoQuotes = [
+      '"The door was never locked—we just forgot how to open it."',
+      '"Your roof is real estate the sun pays rent on."',
+      '"Building it one panel at a time, one roof at a time, one mind at a time."',
+      '"Beauty while we do it—because why shouldn\'t liberation be gorgeous?"',
+      '"You stop being a consumer and become a generator."',
+      '"This is psychedelic in the truest sense: mind-manifesting."',
+      '"Not through policy. Through perception."',
+      '"Light that falls free from the sky."'
+    ];
+    
+    let currentTaglineIndex = 0;
+    let currentManifestoIndex = 0;
+    
+    function rotateTaglines() {
+      const taglines = document.querySelectorAll('.rotating-tagline');
+      taglines.forEach(t => t.classList.remove('active'));
+      currentTaglineIndex = (currentTaglineIndex + 1) % taglines.length;
+      taglines[currentTaglineIndex].classList.add('active');
+    }
+    
+    function rotateManifestoQuotes() {
+      const quoteEl = document.getElementById('manifestoQuote');
+      if (quoteEl) {
+        quoteEl.style.opacity = '0';
+        setTimeout(() => {
+          currentManifestoIndex = (currentManifestoIndex + 1) % manifestoQuotes.length;
+          quoteEl.textContent = manifestoQuotes[currentManifestoIndex];
+          quoteEl.style.opacity = '0.9';
+        }, 500);
+      }
+    }
+
     // Initialize on load
     document.addEventListener('DOMContentLoaded', () => {
       updateSolarPotential();
@@ -3310,7 +3445,24 @@
       // Update visualizer periodically
       setInterval(updateSolarPotential, 30000);
       setInterval(animateNetwork, 5000);
+      
+      // Rotate taglines every 4 seconds
+      setInterval(rotateTaglines, 4000);
+      
+      // Rotate manifesto quotes every 8 seconds
+      setInterval(rotateManifestoQuotes, 8000);
     });
+  </script>
+
+  <!-- D-ID Kid Solar Avatar -->
+  <script
+    type="module"
+    src="https://agent.d-id.com/v2/index.js"
+    data-name="did-agent"
+    data-mode="fabio"
+    data-client-key="Z29vZ2xlLW9hdXRoMnwxMDI1NzYwODgwMDkzNDc1NDkwODQ6bU5qd2dLMklFTDFVaW5xMzVOaHJP"
+    data-agent-id="v2_agt_vhYf_e_C"
+    data-monitor="true">
   </script>
 
   <!-- Footer -->
