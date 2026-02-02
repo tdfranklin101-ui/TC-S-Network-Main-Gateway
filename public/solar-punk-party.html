@@ -3786,26 +3786,29 @@
     });
   </script>
 
-  <!-- D-ID Kid Solar Avatar -->
-  <div id="did-container" style="position: fixed; bottom: 20px; right: 20px; z-index: 999999;"></div>
-  <script
-    type="module"
-    src="https://agent.d-id.com/v2/index.js"
-    data-name="did-agent"
-    data-mode="fabio"
-    data-client-key="Z29vZ2xlLW9hdXRoMnwxMDI1NzYwODgwMDkzNDc1NDkwODQ6bU5qd2dLMklFTDFVaW5xMzVOaHJP"
-    data-agent-id="v2_agt_vhYf_e_C"
-    data-monitor="true"
-    data-position="right">
-  </script>
+  <!-- D-ID Kid Solar Avatar - Using Controller for Robust Loading -->
+  <script src="/js/kid-solar-controller.js"></script>
   <script>
-    // D-ID Agent fallback check
-    setTimeout(() => {
-      const agentElements = document.querySelectorAll('[class*="did"], [id*="did"], iframe[src*="d-id"]');
-      if (agentElements.length === 0) {
-        console.log('D-ID Agent may not have loaded - checking for widget');
-      }
-    }, 5000);
+    // Auto-activate Kid Solar on this page
+    document.addEventListener('DOMContentLoaded', () => {
+      // Give page a moment to load, then inject D-ID agent directly
+      setTimeout(() => {
+        if (!document.querySelector('script[data-agent-id]')) {
+          const script = document.createElement('script');
+          script.type = 'module';
+          script.src = 'https://agent.d-id.com/v2/index.js';
+          script.setAttribute('data-mode', 'fabio');
+          script.setAttribute('data-client-key', 'Z29vZ2xlLW9hdXRoMnwxMDI1NzYwODgwMDkzNDc1NDkwODQ6bU5qd2dLMklFTDFVaW5xMzVOaHJP');
+          script.setAttribute('data-agent-id', 'v2_agt_vhYf_e_C');
+          script.setAttribute('data-name', 'did-agent');
+          script.setAttribute('data-monitor', 'true');
+          script.setAttribute('data-orientation', 'horizontal');
+          script.setAttribute('data-position', 'right');
+          document.body.appendChild(script);
+          console.log('☀️ Kid Solar D-ID agent injected on Party page');
+        }
+      }, 1000);
+    });
   </script>
 
   <!-- Footer -->
