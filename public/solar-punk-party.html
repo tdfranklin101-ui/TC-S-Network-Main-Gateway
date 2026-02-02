@@ -979,6 +979,653 @@
       }
     }
 
+    /* Mood Selector Section */
+    .mood-selector-section {
+      padding: 80px 20px;
+      text-align: center;
+    }
+
+    .mood-intro {
+      font-family: 'Caveat', cursive;
+      font-size: 1.3rem;
+      color: rgba(255, 255, 255, 0.8);
+      margin-bottom: 40px;
+    }
+
+    .mood-buttons {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      max-width: 900px;
+      margin: 0 auto 30px;
+    }
+
+    .mood-btn {
+      padding: 25px 20px;
+      border-radius: 16px;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: all 0.4s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      background: rgba(0, 0, 0, 0.3);
+    }
+
+    .mood-btn.party-mode {
+      border-color: rgba(236, 72, 153, 0.5);
+      background: linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(0, 255, 255, 0.1));
+    }
+    .mood-btn.party-mode:hover, .mood-btn.party-mode.active {
+      border-color: #EC4899;
+      box-shadow: 0 0 30px rgba(236, 72, 153, 0.5);
+      transform: translateY(-5px);
+    }
+
+    .mood-btn.hacker-mode {
+      border-color: rgba(59, 130, 246, 0.5);
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.1));
+    }
+    .mood-btn.hacker-mode:hover, .mood-btn.hacker-mode.active {
+      border-color: #3B82F6;
+      box-shadow: 0 0 30px rgba(59, 130, 246, 0.5);
+      transform: translateY(-5px);
+    }
+
+    .mood-btn.grounded-mode {
+      border-color: rgba(34, 197, 94, 0.5);
+      background: linear-gradient(135deg, rgba(234, 179, 8, 0.2), rgba(34, 197, 94, 0.1));
+    }
+    .mood-btn.grounded-mode:hover, .mood-btn.grounded-mode.active {
+      border-color: #22C55E;
+      box-shadow: 0 0 30px rgba(34, 197, 94, 0.5);
+      transform: translateY(-5px);
+    }
+
+    .mood-btn.revolutionary-mode {
+      border-color: rgba(139, 92, 246, 0.5);
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(234, 179, 8, 0.1));
+    }
+    .mood-btn.revolutionary-mode:hover, .mood-btn.revolutionary-mode.active {
+      border-color: #A78BFA;
+      box-shadow: 0 0 30px rgba(139, 92, 246, 0.5);
+      transform: translateY(-5px);
+    }
+
+    .mood-emoji {
+      font-size: 2.5rem;
+    }
+
+    .mood-label {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .mood-song {
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .current-mood-display {
+      padding: 15px 30px;
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 30px;
+      display: inline-block;
+    }
+
+    .mood-status {
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    #currentMoodText {
+      color: var(--cyan);
+    }
+
+    /* Solar Power Visualizer */
+    .solar-visualizer-section {
+      padding: 80px 20px;
+    }
+
+    .visualizer-intro {
+      text-align: center;
+      font-family: 'Caveat', cursive;
+      font-size: 1.3rem;
+      color: rgba(255, 255, 255, 0.8);
+      margin-bottom: 40px;
+    }
+
+    .visualizer-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 25px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .viz-panel {
+      background: rgba(26, 10, 46, 0.8);
+      border: 1px solid rgba(0, 255, 255, 0.3);
+      border-radius: 20px;
+      padding: 25px;
+      transition: all 0.3s ease;
+    }
+
+    .viz-panel:hover {
+      border-color: var(--cyan);
+      box-shadow: 0 10px 40px rgba(0, 255, 255, 0.15);
+    }
+
+    .viz-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .viz-icon {
+      font-size: 1.5rem;
+    }
+
+    .viz-header h3 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.1rem;
+      color: var(--cyan);
+      margin: 0;
+    }
+
+    /* Solar Gauge */
+    .solar-gauge {
+      text-align: center;
+    }
+
+    .gauge-ring {
+      position: relative;
+      width: 120px;
+      height: 120px;
+      margin: 0 auto 15px;
+    }
+
+    .gauge-ring svg {
+      transform: rotate(-90deg);
+      width: 100%;
+      height: 100%;
+    }
+
+    .gauge-bg {
+      fill: none;
+      stroke: rgba(255, 255, 255, 0.1);
+      stroke-width: 8;
+    }
+
+    .gauge-fill {
+      fill: none;
+      stroke: var(--cyan);
+      stroke-width: 8;
+      stroke-linecap: round;
+      stroke-dasharray: 283;
+      stroke-dashoffset: 283;
+      transition: stroke-dashoffset 1s ease;
+    }
+
+    .gauge-value {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+
+    .gauge-number {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #fff;
+      display: block;
+    }
+
+    .gauge-unit {
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .location-info {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 0.9rem;
+    }
+
+    .solar-time {
+      color: var(--gold);
+      font-weight: 600;
+    }
+
+    .detect-btn {
+      margin-top: 15px;
+      padding: 10px 20px;
+      background: linear-gradient(135deg, var(--cyan), var(--neon-green));
+      border: none;
+      border-radius: 20px;
+      color: #000;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .detect-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px var(--cyan);
+    }
+
+    /* Freedom Converter */
+    .freedom-converter {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .freedom-input {
+      flex: 1;
+    }
+
+    .freedom-input label {
+      display: block;
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.6);
+      margin-bottom: 8px;
+    }
+
+    .freedom-input input {
+      width: 100%;
+      padding: 12px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      color: #fff;
+      font-size: 1.1rem;
+      font-family: 'Orbitron', sans-serif;
+    }
+
+    .freedom-arrow {
+      font-size: 1.5rem;
+      color: var(--cyan);
+    }
+
+    .freedom-result {
+      text-align: center;
+      flex: 1;
+    }
+
+    .freedom-days {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 900;
+      color: var(--neon-green);
+      text-shadow: 0 0 20px var(--neon-green);
+    }
+
+    .freedom-label {
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .freedom-solar {
+      font-size: 0.9rem;
+      color: var(--gold);
+      margin-top: 5px;
+    }
+
+    .freedom-breakdown {
+      display: flex;
+      justify-content: space-around;
+      padding-top: 15px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .breakdown-item {
+      text-align: center;
+    }
+
+    .breakdown-value {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.1rem;
+      color: #fff;
+      display: block;
+    }
+
+    .breakdown-label {
+      font-size: 0.75rem;
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    /* Network Map */
+    .network-map {
+      position: relative;
+      height: 200px;
+      margin-bottom: 20px;
+    }
+
+    .network-lines {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .network-line {
+      stroke: var(--cyan);
+      stroke-width: 1;
+      opacity: 0.4;
+      animation: linePulse 2s ease-in-out infinite;
+    }
+
+    .network-line:nth-child(odd) { animation-delay: 0.5s; }
+
+    @keyframes linePulse {
+      0%, 100% { opacity: 0.2; }
+      50% { opacity: 0.6; }
+    }
+
+    .network-node {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      background: var(--cyan);
+      border-radius: 50%;
+      box-shadow: 0 0 15px var(--cyan);
+      animation: nodeGlow 3s ease-in-out infinite;
+    }
+
+    .central-node {
+      width: 20px;
+      height: 20px;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: var(--neon-green);
+      box-shadow: 0 0 25px var(--neon-green);
+    }
+
+    .node-1 { top: 25%; left: 20%; animation-delay: 0.2s; }
+    .node-2 { top: 25%; left: 80%; animation-delay: 0.4s; }
+    .node-3 { top: 50%; left: 15%; animation-delay: 0.6s; }
+    .node-4 { top: 50%; left: 85%; animation-delay: 0.8s; }
+    .node-5 { top: 75%; left: 20%; animation-delay: 1s; }
+    .node-6 { top: 75%; left: 80%; animation-delay: 1.2s; }
+    .node-7 { top: 15%; left: 50%; animation-delay: 1.4s; }
+    .node-8 { top: 85%; left: 50%; animation-delay: 1.6s; }
+
+    .network-stats {
+      display: flex;
+      justify-content: space-around;
+    }
+
+    .stat-item {
+      text-align: center;
+    }
+
+    .stat-value {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.2rem;
+      color: var(--cyan);
+      display: block;
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    /* Build Your Rig Section */
+    .build-rig-section {
+      padding: 80px 20px;
+      background: linear-gradient(180deg, transparent, rgba(139, 92, 246, 0.05), transparent);
+    }
+
+    .rig-intro {
+      text-align: center;
+      font-family: 'Caveat', cursive;
+      font-size: 1.3rem;
+      color: rgba(255, 255, 255, 0.8);
+      margin-bottom: 40px;
+    }
+
+    .rig-tools {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 25px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .rig-tool {
+      background: rgba(26, 10, 46, 0.8);
+      border: 1px solid rgba(57, 255, 20, 0.3);
+      border-radius: 20px;
+      padding: 25px;
+      transition: all 0.3s ease;
+    }
+
+    .rig-tool:hover {
+      border-color: var(--neon-green);
+      box-shadow: 0 10px 40px rgba(57, 255, 20, 0.15);
+    }
+
+    .tool-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .tool-icon {
+      font-size: 1.5rem;
+    }
+
+    .tool-header h3 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.1rem;
+      color: var(--neon-green);
+      margin: 0;
+    }
+
+    /* Calculator */
+    .calculator-form {
+      margin-bottom: 20px;
+    }
+
+    .calc-row {
+      margin-bottom: 15px;
+    }
+
+    .calc-row label {
+      display: block;
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.7);
+      margin-bottom: 8px;
+    }
+
+    .calc-row select {
+      width: 100%;
+      padding: 12px;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      color: #fff;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+
+    .cost-result {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 15px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .cost-total {
+      margin-bottom: 10px;
+    }
+
+    .cost-label {
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.6);
+      display: block;
+    }
+
+    .cost-value {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--neon-green);
+    }
+
+    .cost-payback, .cost-savings {
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.7);
+      margin-top: 5px;
+    }
+
+    .cost-payback strong, .cost-savings strong {
+      color: var(--gold);
+    }
+
+    /* Components */
+    .components-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .component-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 10px;
+    }
+
+    .component-icon {
+      font-size: 1.3rem;
+    }
+
+    .component-info {
+      flex: 1;
+    }
+
+    .component-info strong {
+      display: block;
+      color: #fff;
+      font-size: 0.95rem;
+    }
+
+    .component-info span {
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .component-price {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.9rem;
+      color: var(--gold);
+    }
+
+    /* DIY Links */
+    .diy-links {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .diy-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 15px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 10px;
+      color: #fff;
+      text-decoration: none;
+      transition: all 0.3s ease;
+    }
+
+    .diy-link:hover {
+      background: rgba(0, 255, 255, 0.1);
+      transform: translateX(5px);
+    }
+
+    .link-icon {
+      font-size: 1.2rem;
+    }
+
+    .link-text {
+      font-size: 0.9rem;
+    }
+
+    .installer-cta {
+      text-align: center;
+      padding-top: 15px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .installer-cta p {
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.6);
+      margin-bottom: 10px;
+    }
+
+    .installer-btn {
+      display: inline-block;
+      padding: 12px 25px;
+      background: linear-gradient(135deg, var(--gold), #FFA500);
+      color: #000;
+      text-decoration: none;
+      border-radius: 25px;
+      font-weight: 700;
+      transition: all 0.3s ease;
+    }
+
+    .installer-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px var(--gold);
+    }
+
+    /* Theme Transitions for Mood Selector */
+    body.mood-party .gradient-bg {
+      background: linear-gradient(135deg, #EC4899, #00FFFF, #EAB308, #EC4899);
+    }
+    body.mood-hacker .gradient-bg {
+      background: linear-gradient(135deg, #3B82F6, #8B5CF6, #C0C0C0, #3B82F6);
+    }
+    body.mood-grounded .gradient-bg {
+      background: linear-gradient(135deg, #EAB308, #22C55E, #78350F, #EAB308);
+    }
+    body.mood-revolutionary .gradient-bg {
+      background: linear-gradient(135deg, #8B5CF6, #EAB308, #1E3A5F, #8B5CF6);
+    }
+
+    @media (max-width: 600px) {
+      .mood-buttons {
+        grid-template-columns: 1fr 1fr;
+      }
+      
+      .freedom-converter {
+        flex-direction: column;
+      }
+      
+      .freedom-arrow {
+        transform: rotate(90deg);
+      }
+    }
+
     /* Urban Gardens Section */
     .urban-gardens {
       padding: 100px 20px;
@@ -1601,6 +2248,276 @@
     </div>
   </section>
 
+  <!-- Mood Selector Section -->
+  <section class="mood-selector-section">
+    <h2 class="section-title">Choose Your Vibe</h2>
+    <p class="mood-intro">Select your energy and watch the world transform.</p>
+    
+    <div class="mood-buttons">
+      <button class="mood-btn party-mode" onclick="setMood('party')" data-mood="party">
+        <span class="mood-emoji">🎉</span>
+        <span class="mood-label">Party Mode</span>
+        <span class="mood-song">Psychedelic Solarpunk Party</span>
+      </button>
+      <button class="mood-btn hacker-mode" onclick="setMood('hacker')" data-mood="hacker">
+        <span class="mood-emoji">🧠</span>
+        <span class="mood-label">Hacker Mode</span>
+        <span class="mood-song">Snowmancer One</span>
+      </button>
+      <button class="mood-btn grounded-mode" onclick="setMood('grounded')" data-mood="grounded">
+        <span class="mood-emoji">🌱</span>
+        <span class="mood-label">Grounded Mode</span>
+        <span class="mood-song">Solar Day</span>
+      </button>
+      <button class="mood-btn revolutionary-mode" onclick="setMood('revolutionary')" data-mood="revolutionary">
+        <span class="mood-emoji">🔥</span>
+        <span class="mood-label">Revolutionary Mode</span>
+        <span class="mood-song">We Said So</span>
+      </button>
+    </div>
+    
+    <div class="current-mood-display" id="moodDisplay">
+      <span class="mood-status">Current Vibe: <strong id="currentMoodText">Party Mode</strong></span>
+    </div>
+  </section>
+
+  <!-- Solar Power Visualizer Section -->
+  <section class="solar-visualizer-section">
+    <h2 class="section-title">Solar Power Visualizer</h2>
+    <p class="visualizer-intro">See your solar potential in real-time.</p>
+    
+    <div class="visualizer-container">
+      <!-- Location Solar Potential -->
+      <div class="viz-panel location-panel">
+        <div class="viz-header">
+          <span class="viz-icon">📍</span>
+          <h3>Your Solar Potential</h3>
+        </div>
+        <div class="solar-gauge">
+          <div class="gauge-ring">
+            <svg viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="45" class="gauge-bg"/>
+              <circle cx="50" cy="50" r="45" class="gauge-fill" id="solarGaugeFill"/>
+            </svg>
+            <div class="gauge-value">
+              <span class="gauge-number" id="solarWatts">0</span>
+              <span class="gauge-unit">W/m²</span>
+            </div>
+          </div>
+          <div class="location-info">
+            <span id="locationName">Detecting location...</span>
+            <span class="solar-time" id="solarTime">--:--</span>
+          </div>
+        </div>
+        <button class="detect-btn" onclick="detectLocation()">
+          <span>🔄</span> Detect My Location
+        </button>
+      </div>
+
+      <!-- Watts to Freedom Converter -->
+      <div class="viz-panel freedom-panel">
+        <div class="viz-header">
+          <span class="viz-icon">⚡</span>
+          <h3>Days of Freedom</h3>
+        </div>
+        <div class="freedom-converter">
+          <div class="freedom-input">
+            <label>Your Solar Setup (Watts)</label>
+            <input type="number" id="wattsInput" value="400" min="0" max="100000" onchange="calculateFreedom()">
+          </div>
+          <div class="freedom-arrow">→</div>
+          <div class="freedom-result">
+            <div class="freedom-days" id="freedomDays">0</div>
+            <div class="freedom-label">Days of Energy Freedom</div>
+            <div class="freedom-solar" id="freedomSolar">0 Solar/year</div>
+          </div>
+        </div>
+        <div class="freedom-breakdown">
+          <div class="breakdown-item">
+            <span class="breakdown-value" id="dailyKwh">0</span>
+            <span class="breakdown-label">kWh/day</span>
+          </div>
+          <div class="breakdown-item">
+            <span class="breakdown-value" id="yearlyKwh">0</span>
+            <span class="breakdown-label">kWh/year</span>
+          </div>
+          <div class="breakdown-item">
+            <span class="breakdown-value" id="co2Saved">0</span>
+            <span class="breakdown-label">kg CO₂ saved</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Community Network Map -->
+      <div class="viz-panel network-panel">
+        <div class="viz-header">
+          <span class="viz-icon">🌐</span>
+          <h3>Community Network</h3>
+        </div>
+        <div class="network-map" id="networkMap">
+          <div class="network-node central-node"></div>
+          <div class="network-node node-1"></div>
+          <div class="network-node node-2"></div>
+          <div class="network-node node-3"></div>
+          <div class="network-node node-4"></div>
+          <div class="network-node node-5"></div>
+          <div class="network-node node-6"></div>
+          <div class="network-node node-7"></div>
+          <div class="network-node node-8"></div>
+          <svg class="network-lines" viewBox="0 0 200 200">
+            <line x1="100" y1="100" x2="40" y2="50" class="network-line"/>
+            <line x1="100" y1="100" x2="160" y2="50" class="network-line"/>
+            <line x1="100" y1="100" x2="30" y2="100" class="network-line"/>
+            <line x1="100" y1="100" x2="170" y2="100" class="network-line"/>
+            <line x1="100" y1="100" x2="40" y2="150" class="network-line"/>
+            <line x1="100" y1="100" x2="160" y2="150" class="network-line"/>
+            <line x1="100" y1="100" x2="100" y2="30" class="network-line"/>
+            <line x1="100" y1="100" x2="100" y2="170" class="network-line"/>
+          </svg>
+        </div>
+        <div class="network-stats">
+          <div class="stat-item">
+            <span class="stat-value" id="networkNodes">2,847</span>
+            <span class="stat-label">Active Nodes</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-value" id="networkPower">14.2 MW</span>
+            <span class="stat-label">Total Power</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Build Your Rig Section -->
+  <section class="build-rig-section">
+    <h2 class="section-title">Build Your Off-Grid Rig</h2>
+    <p class="rig-intro">Your complete guide to off-grid solar electric power independence.</p>
+    
+    <div class="rig-tools">
+      <!-- Cost Calculator -->
+      <div class="rig-tool calculator-tool">
+        <div class="tool-header">
+          <span class="tool-icon">🧮</span>
+          <h3>Cost Calculator</h3>
+        </div>
+        <div class="calculator-form">
+          <div class="calc-row">
+            <label>System Size</label>
+            <select id="systemSize" onchange="updateCost()">
+              <option value="400">Starter (400W)</option>
+              <option value="1000">Basic (1kW)</option>
+              <option value="3000" selected>Standard (3kW)</option>
+              <option value="5000">Power (5kW)</option>
+              <option value="10000">Pro (10kW)</option>
+            </select>
+          </div>
+          <div class="calc-row">
+            <label>Battery Storage</label>
+            <select id="batterySize" onchange="updateCost()">
+              <option value="0">No Battery</option>
+              <option value="5">5 kWh</option>
+              <option value="10" selected>10 kWh</option>
+              <option value="20">20 kWh</option>
+            </select>
+          </div>
+          <div class="calc-row">
+            <label>Installation</label>
+            <select id="installType" onchange="updateCost()">
+              <option value="diy">DIY ($0)</option>
+              <option value="partial">Partial Help ($500)</option>
+              <option value="full" selected>Full Install ($2000)</option>
+            </select>
+          </div>
+        </div>
+        <div class="cost-result">
+          <div class="cost-total">
+            <span class="cost-label">Estimated Cost</span>
+            <span class="cost-value" id="totalCost">$8,500</span>
+          </div>
+          <div class="cost-payback">
+            <span>Payback: <strong id="paybackYears">6.5 years</strong></span>
+          </div>
+          <div class="cost-savings">
+            <span>30yr Savings: <strong id="totalSavings">$45,000</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Component Recommendations -->
+      <div class="rig-tool components-tool">
+        <div class="tool-header">
+          <span class="tool-icon">🔧</span>
+          <h3>Recommended Components</h3>
+        </div>
+        <div class="components-list">
+          <div class="component-item">
+            <span class="component-icon">☀️</span>
+            <div class="component-info">
+              <strong>Solar Panels</strong>
+              <span>400W Monocrystalline</span>
+            </div>
+            <span class="component-price">$150/panel</span>
+          </div>
+          <div class="component-item">
+            <span class="component-icon">🔋</span>
+            <div class="component-info">
+              <strong>Battery</strong>
+              <span>LiFePO4 10kWh</span>
+            </div>
+            <span class="component-price">$3,500</span>
+          </div>
+          <div class="component-item">
+            <span class="component-icon">⚡</span>
+            <div class="component-info">
+              <strong>Inverter</strong>
+              <span>Hybrid 5kW</span>
+            </div>
+            <span class="component-price">$1,200</span>
+          </div>
+          <div class="component-item">
+            <span class="component-icon">📊</span>
+            <div class="component-info">
+              <strong>Monitor</strong>
+              <span>Smart Energy Meter</span>
+            </div>
+            <span class="component-price">$150</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- DIY Resources -->
+      <div class="rig-tool diy-tool">
+        <div class="tool-header">
+          <span class="tool-icon">🎬</span>
+          <h3>DIY Tutorials</h3>
+        </div>
+        <div class="diy-links">
+          <a href="https://www.youtube.com/results?search_query=diy+solar+panel+installation" target="_blank" class="diy-link">
+            <span class="link-icon">▶️</span>
+            <span class="link-text">Panel Installation Guide</span>
+          </a>
+          <a href="https://www.youtube.com/results?search_query=solar+battery+setup+tutorial" target="_blank" class="diy-link">
+            <span class="link-icon">▶️</span>
+            <span class="link-text">Battery Setup Tutorial</span>
+          </a>
+          <a href="https://www.youtube.com/results?search_query=solar+inverter+wiring" target="_blank" class="diy-link">
+            <span class="link-icon">▶️</span>
+            <span class="link-text">Inverter Wiring Basics</span>
+          </a>
+          <a href="https://www.youtube.com/results?search_query=off+grid+solar+complete+guide" target="_blank" class="diy-link">
+            <span class="link-icon">▶️</span>
+            <span class="link-text">Complete Off-Grid Guide</span>
+          </a>
+        </div>
+        <div class="installer-cta">
+          <p>Need professional help?</p>
+          <a href="https://www.energysage.com/solar/" target="_blank" class="installer-btn">Find Local Installers →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- Urban Gardens Section -->
   <section class="urban-gardens">
     <h2 class="section-title">Grow Your Power</h2>
@@ -1769,6 +2686,229 @@
         timeDisplay.textContent = '0:00';
         currentlyPlaying = null;
       });
+    });
+
+    // ========== MOOD SELECTOR ==========
+    const moodConfig = {
+      party: {
+        name: 'Party Mode',
+        songId: 'psychedelic',
+        primary: '#EC4899',
+        secondary: '#00FFFF'
+      },
+      hacker: {
+        name: 'Hacker Mode',
+        songId: 'snowmancer',
+        primary: '#3B82F6',
+        secondary: '#8B5CF6'
+      },
+      grounded: {
+        name: 'Grounded Mode',
+        songId: 'solarday',
+        primary: '#22C55E',
+        secondary: '#EAB308'
+      },
+      revolutionary: {
+        name: 'Revolutionary Mode',
+        songId: 'wesaidso',
+        primary: '#A78BFA',
+        secondary: '#EAB308'
+      }
+    };
+
+    let currentMood = 'party';
+
+    function setMood(mood) {
+      currentMood = mood;
+      const config = moodConfig[mood];
+      
+      // Update body class for theme
+      document.body.className = `mood-${mood}`;
+      
+      // Update active button
+      document.querySelectorAll('.mood-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      document.querySelector(`[data-mood="${mood}"]`).classList.add('active');
+      
+      // Update mood display
+      document.getElementById('currentMoodText').textContent = config.name;
+      document.getElementById('currentMoodText').style.color = config.primary;
+      
+      // Expand and optionally play the corresponding song
+      toggleSong(config.songId);
+    }
+
+    // Initialize party mode as default
+    document.querySelector('[data-mood="party"]').classList.add('active');
+
+    // ========== SOLAR POWER VISUALIZER ==========
+    let userLat = 40.7128;
+    let userLon = -74.0060;
+
+    function detectLocation() {
+      const btn = document.querySelector('.detect-btn');
+      btn.innerHTML = '<span>⏳</span> Detecting...';
+      
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            userLat = position.coords.latitude;
+            userLon = position.coords.longitude;
+            updateSolarPotential();
+            btn.innerHTML = '<span>✓</span> Location Found';
+            setTimeout(() => {
+              btn.innerHTML = '<span>🔄</span> Detect My Location';
+            }, 2000);
+          },
+          (error) => {
+            console.log('Geolocation error:', error);
+            document.getElementById('locationName').textContent = 'Location unavailable - using estimate';
+            updateSolarPotential();
+            btn.innerHTML = '<span>🔄</span> Detect My Location';
+          }
+        );
+      } else {
+        document.getElementById('locationName').textContent = 'Geolocation not supported';
+        updateSolarPotential();
+        btn.innerHTML = '<span>🔄</span> Detect My Location';
+      }
+    }
+
+    function updateSolarPotential() {
+      const hour = new Date().getHours();
+      const isDaytime = hour >= 6 && hour <= 20;
+      
+      // Estimate solar irradiance based on time and latitude
+      let baseIrradiance = 0;
+      if (isDaytime) {
+        const solarNoon = 12;
+        const hoursFromNoon = Math.abs(hour - solarNoon);
+        const latitudeFactor = Math.cos(userLat * Math.PI / 180);
+        baseIrradiance = Math.max(0, 1000 * latitudeFactor * Math.cos(hoursFromNoon * Math.PI / 14));
+      }
+      
+      // Add some randomness for realism
+      const irradiance = Math.round(baseIrradiance * (0.8 + Math.random() * 0.4));
+      
+      // Update gauge
+      const maxIrradiance = 1000;
+      const percent = Math.min(100, (irradiance / maxIrradiance) * 100);
+      const offset = 283 - (283 * percent / 100);
+      document.getElementById('solarGaugeFill').style.strokeDashoffset = offset;
+      
+      // Animate the number
+      animateValue('solarWatts', irradiance);
+      
+      // Update location name (reverse geocoding would require API)
+      const latDir = userLat >= 0 ? 'N' : 'S';
+      const lonDir = userLon >= 0 ? 'E' : 'W';
+      document.getElementById('locationName').textContent = 
+        `${Math.abs(userLat).toFixed(2)}°${latDir}, ${Math.abs(userLon).toFixed(2)}°${lonDir}`;
+      
+      // Update time
+      document.getElementById('solarTime').textContent = new Date().toLocaleTimeString();
+    }
+
+    function animateValue(elementId, target) {
+      const element = document.getElementById(elementId);
+      const start = parseInt(element.textContent) || 0;
+      const duration = 1000;
+      const startTime = performance.now();
+      
+      function update(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const value = Math.round(start + (target - start) * progress);
+        element.textContent = value;
+        
+        if (progress < 1) {
+          requestAnimationFrame(update);
+        }
+      }
+      requestAnimationFrame(update);
+    }
+
+    // ========== FREEDOM CALCULATOR ==========
+    function calculateFreedom() {
+      const watts = parseInt(document.getElementById('wattsInput').value) || 0;
+      
+      // Assume 5 peak sun hours per day average
+      const peakSunHours = 5;
+      const dailyKwh = (watts * peakSunHours) / 1000;
+      const yearlyKwh = dailyKwh * 365;
+      
+      // Average household uses ~30 kWh/day
+      const avgDailyUsage = 30;
+      const freedomDays = Math.round((yearlyKwh / avgDailyUsage));
+      
+      // 1 Solar = 4913 kWh
+      const solarPerYear = (yearlyKwh / 4913).toFixed(4);
+      
+      // CO2 savings (0.4 kg per kWh average)
+      const co2Saved = Math.round(yearlyKwh * 0.4);
+      
+      // Update display
+      animateValue('freedomDays', freedomDays);
+      document.getElementById('freedomSolar').textContent = `${solarPerYear} Solar/year`;
+      document.getElementById('dailyKwh').textContent = dailyKwh.toFixed(1);
+      document.getElementById('yearlyKwh').textContent = Math.round(yearlyKwh).toLocaleString();
+      document.getElementById('co2Saved').textContent = co2Saved.toLocaleString();
+    }
+
+    // ========== COST CALCULATOR ==========
+    function updateCost() {
+      const systemSize = parseInt(document.getElementById('systemSize').value);
+      const batterySize = parseInt(document.getElementById('batterySize').value);
+      const installType = document.getElementById('installType').value;
+      
+      // Cost estimates per watt and per kWh
+      const costPerWatt = 0.80; // Panel cost
+      const batteryPerKwh = 350; // LiFePO4 battery cost
+      const inverterCost = systemSize <= 1000 ? 300 : systemSize <= 3000 ? 800 : 1500;
+      const bos = systemSize * 0.20; // Balance of system (wiring, mounting, etc.)
+      
+      const installCost = installType === 'diy' ? 0 : installType === 'partial' ? 500 : 2000;
+      
+      const panelCost = systemSize * costPerWatt;
+      const batteryCost = batterySize * batteryPerKwh;
+      const totalCost = panelCost + batteryCost + inverterCost + bos + installCost;
+      
+      // Payback calculation (assuming $0.15/kWh electricity rate, 5 sun hours)
+      const yearlyKwh = (systemSize * 5 * 365) / 1000;
+      const yearlySavings = yearlyKwh * 0.15;
+      const paybackYears = yearlySavings > 0 ? (totalCost / yearlySavings).toFixed(1) : '∞';
+      
+      // 30-year savings
+      const totalSavings = Math.round(yearlySavings * 30 - totalCost);
+      
+      document.getElementById('totalCost').textContent = '$' + Math.round(totalCost).toLocaleString();
+      document.getElementById('paybackYears').textContent = paybackYears + ' years';
+      document.getElementById('totalSavings').textContent = '$' + totalSavings.toLocaleString();
+    }
+
+    // ========== NETWORK ANIMATION ==========
+    function animateNetwork() {
+      // Random node count fluctuation
+      const baseNodes = 2847;
+      const nodes = baseNodes + Math.floor(Math.random() * 20 - 10);
+      document.getElementById('networkNodes').textContent = nodes.toLocaleString();
+      
+      // Random power fluctuation
+      const basePower = 14.2;
+      const power = (basePower + (Math.random() * 0.4 - 0.2)).toFixed(1);
+      document.getElementById('networkPower').textContent = power + ' MW';
+    }
+
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', () => {
+      updateSolarPotential();
+      calculateFreedom();
+      updateCost();
+      
+      // Update visualizer periodically
+      setInterval(updateSolarPotential, 30000);
+      setInterval(animateNetwork, 5000);
     });
   </script>
 </body>
