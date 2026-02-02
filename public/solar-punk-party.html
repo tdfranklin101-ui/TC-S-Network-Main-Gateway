@@ -149,14 +149,15 @@
     }
     
     .burger-menu {
-      position: absolute;
-      top: 70px;
-      left: 0;
-      background: rgba(10, 5, 20, 0.95);
+      position: fixed;
+      top: 90px;
+      left: 20px;
+      right: 20px;
+      max-width: 300px;
+      background: rgba(10, 5, 20, 0.98);
       border: 2px solid var(--gold);
       border-radius: 15px;
       padding: 0;
-      min-width: 280px;
       max-height: 0;
       overflow: hidden;
       opacity: 0;
@@ -166,10 +167,35 @@
     }
     
     .burger-menu.open {
-      max-height: 80vh;
+      max-height: calc(100vh - 120px);
       opacity: 1;
       padding: 10px 0;
       overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    @media (max-width: 480px) {
+      .burger-menu {
+        left: 10px;
+        right: 10px;
+        top: 80px;
+        max-width: none;
+      }
+      
+      .burger-menu.open {
+        max-height: calc(100vh - 100px);
+      }
+      
+      .burger-btn {
+        width: 50px;
+        height: 50px;
+        font-size: 2rem;
+      }
+      
+      .burger-nav {
+        top: 15px;
+        left: 15px;
+      }
     }
     
     .burger-close {
@@ -218,14 +244,39 @@
     .burger-menu a {
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 12px 20px;
+      gap: 10px;
+      padding: 10px 15px;
       color: #fff;
       text-decoration: none;
       font-family: 'Space Grotesk', sans-serif;
-      font-size: 1rem;
+      font-size: 0.95rem;
       transition: all 0.2s ease;
       border-left: 3px solid transparent;
+    }
+    
+    @media (max-width: 480px) {
+      .burger-menu a {
+        padding: 8px 12px;
+        font-size: 0.9rem;
+        gap: 8px;
+      }
+      
+      .burger-menu a .nav-icon {
+        font-size: 1.1rem;
+        width: 24px;
+      }
+      
+      .burger-menu-header {
+        padding: 10px 15px 8px;
+      }
+      
+      .burger-menu-header h3 {
+        font-size: 0.75rem;
+      }
+      
+      .burger-menu-divider {
+        margin: 5px 12px;
+      }
     }
     
     .burger-menu a:hover {
