@@ -11397,10 +11397,7 @@ const server = http.createServer(async (req, res) => {
       return;
     }
     
-    // Regular static files
-    const content = fs.readFileSync(filePath);
-    
-    // Set content type based on extension
+    // Regular static files - with streaming for better reliability
     const contentTypes = {
       '.html': 'text/html; charset=utf-8',
       '.css': 'text/css',
@@ -11417,17 +11414,52 @@ const server = http.createServer(async (req, res) => {
       '.mov': 'video/quicktime'
     };
     
-    res.writeHead(200, { 'Content-Type': contentTypes[ext] || 'application/octet-stream' });
-    res.end(content);
-    console.log(`✅ Served static file: ${pathname}`);
+    try {
+      const fileStats = fs.statSync(filePath);
+      res.writeHead(200, { 
+        'Content-Type': contentTypes[ext] || 'application/octet-stream',
+        'Content-Length': fileStats.size
+      });
+      const stream = fs.createReadStream(filePath);
+      stream.on('error', (err) => {
+        console.error(`❌ Stream error for ${pathname}:`, err.message);
+        if (!res.headersSent) {
+          res.writeHead(500, { 'Content-Type': 'text/plain' });
+        }
+        res.end('Server error reading file');
+      });
+      stream.pipe(res);
+      console.log(`✅ Served static file: ${pathname} (${fileStats.size} bytes)`);
+    } catch (err) {
+      console.error(`❌ Error serving ${pathname}:`, err.message);
+      res.writeHead(500, { 'Content-Type': 'text/plain' });
+      res.end('Server error');
+    }
   } else {
     // Try adding .html extension for extensionless URLs
     const htmlFilePath = path.join(__dirname, 'public', pathname + '.html');
     if (fs.existsSync(htmlFilePath) && fs.statSync(htmlFilePath).isFile()) {
-      const content = fs.readFileSync(htmlFilePath, 'utf8');
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-      res.end(content);
-      console.log(`✅ Served HTML file: ${pathname}.html`);
+      try {
+        const fileStats = fs.statSync(htmlFilePath);
+        res.writeHead(200, { 
+          'Content-Type': 'text/html; charset=utf-8',
+          'Content-Length': fileStats.size
+        });
+        const stream = fs.createReadStream(htmlFilePath);
+        stream.on('error', (err) => {
+          console.error(`❌ Stream error for ${pathname}.html:`, err.message);
+          if (!res.headersSent) {
+            res.writeHead(500, { 'Content-Type': 'text/plain' });
+          }
+          res.end('Server error reading file');
+        });
+        stream.pipe(res);
+        console.log(`✅ Served HTML file: ${pathname}.html (${fileStats.size} bytes)`);
+      } catch (err) {
+        console.error(`❌ Error serving ${pathname}.html:`, err.message);
+        res.writeHead(500, { 'Content-Type': 'text/plain' });
+        res.end('Server error');
+      }
     } else {
       res.writeHead(404, { 'Content-Type': 'text/plain' });
       res.end('Not found');
