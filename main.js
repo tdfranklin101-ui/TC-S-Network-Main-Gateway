@@ -2,6 +2,56 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
+// ================== EARLY HEALTH CHECK - START IMMEDIATELY ==================
+// This ensures deployment health checks pass while heavy initialization runs
+const PORT = process.env.PORT || 3002;
+let mainServerReady = false;
+let mainServer = null;
+
+const earlyServer = http.createServer((req, res) => {
+  const pathname = require('url').parse(req.url).pathname;
+  
+  // Health check endpoints - respond immediately
+  if (pathname === '/health' || pathname === '/healthz' || pathname === '/_ah/health') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ 
+      status: 'healthy', 
+      timestamp: new Date().toISOString(),
+      server: mainServerReady ? 'ready' : 'initializing',
+      port: PORT
+    }));
+    return;
+  }
+  
+  // Serve basic index during initialization
+  if (!mainServerReady) {
+    const indexPath = path.join(__dirname, 'public', 'index.html');
+    if (fs.existsSync(indexPath)) {
+      try {
+        const content = fs.readFileSync(indexPath, 'utf8');
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end(content);
+        return;
+      } catch (e) {
+        // Fall through to loading message
+      }
+    }
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end('<html><body style="background:#0a0a0a;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0"><div style="text-align:center"><h1>TC-S Network</h1><p>Initializing platform...</p></div></body></html>');
+    return;
+  }
+  
+  // Once main server is ready, forward to it
+  if (mainServer) {
+    mainServer.emit('request', req, res);
+  }
+});
+
+earlyServer.listen(PORT, '0.0.0.0', () => {
+  console.log(`\n🚀 Early health check server started on port ${PORT}`);
+  console.log(`✅ Health check ready - initializing full platform...`);
+});
+
 // Add process error handlers to prevent crashes from database issues
 process.on('uncaughtException', (error) => {
   console.error('🚨 Uncaught Exception:', error);
@@ -102,8 +152,7 @@ try {
   };
 }
 
-// For Replit Autoscale deployment: internal port 3002 maps to external port 80
-const PORT = process.env.PORT || 3002;
+// PORT is defined at top of file for early health check server
 
 // ================== UIM HEADERS + REQUEST ID ==================
 const UIM_VERSION = "1.0.0";
@@ -11572,24 +11621,31 @@ async function generateDailySolarGreeting() {
   }
 }
 
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`\n${'='.repeat(60)}`);
-  console.log(`🚀 CURRENT-SEE PLATFORM STARTED`);
-  console.log(`${'='.repeat(60)}`);
-  console.log(`✅ Server running on port ${PORT}`);
-  console.log(`🌐 Access at: http://localhost:${PORT}`);
-  console.log(`📊 Health check: http://localhost:${PORT}/health`);
-  console.log(`\n📊 ENVIRONMENT VARIABLES:`);
-  console.log(`   NODE_ENV: ${process.env.NODE_ENV || 'not set'}`);
-  console.log(`   REPLIT_DEPLOYMENT: ${process.env.REPLIT_DEPLOYMENT || 'not set'}`);
-  console.log(`   REPL_DEPLOY: ${process.env.REPL_DEPLOY || 'not set'}`);
-  console.log(`   PORT: ${PORT}`);
-  console.log(`   DATABASE_URL: ${process.env.DATABASE_URL ? 'SET ✅' : 'NOT SET ❌'}`);
-  console.log(`${'='.repeat(60)}\n`);
-  console.log(`🎵 Music functions: Embedded in homepage (18 tracks)`);
-  console.log(`🤖 D-ID Agent: Kid Solar ready`);
-  console.log(`📱 Mobile responsive: Enabled`);
-  console.log(`🔗 Links: Q&A and waitlist working`);
+// Mark main server as ready and hand over to early server
+mainServer = server;
+mainServerReady = true;
+console.log(`\n${'='.repeat(60)}`);
+console.log(`🚀 CURRENT-SEE PLATFORM STARTED`);
+console.log(`${'='.repeat(60)}`);
+console.log(`✅ Main server initialized - handling requests via early server on port ${PORT}`);
+console.log(`🌐 Access at: http://localhost:${PORT}`);
+console.log(`📊 Health check: http://localhost:${PORT}/health`);
+console.log(`\n📊 ENVIRONMENT VARIABLES:`);
+console.log(`   NODE_ENV: ${process.env.NODE_ENV || 'not set'}`);
+console.log(`   REPLIT_DEPLOYMENT: ${process.env.REPLIT_DEPLOYMENT || 'not set'}`);
+console.log(`   REPL_DEPLOY: ${process.env.REPL_DEPLOY || 'not set'}`);
+console.log(`   PORT: ${PORT}`);
+console.log(`   DATABASE_URL: ${process.env.DATABASE_URL ? 'SET ✅' : 'NOT SET ❌'}`);
+console.log(`${'='.repeat(60)}\n`);
+console.log(`🎵 Music functions: Embedded in homepage (18 tracks)`);
+console.log(`🤖 D-ID Agent: Kid Solar ready`);
+console.log(`📱 Mobile responsive: Enabled`);
+console.log(`🔗 Links: Q&A and waitlist working`);
+console.log(`🚀 CLOUD RUN READY - SINGLE PORT CONFIGURATION`);
+console.log(`✅ Health check ready - deferring heavy initialization tasks...`);
+
+// Start deferred initialization
+setImmediate(() => {
   
   // Initialize Seed Rotation System with comprehensive error handling
   setImmediate(async () => {
@@ -11717,15 +11773,12 @@ server.listen(PORT, '0.0.0.0', () => {
     
     console.log(`✅ All deferred initialization tasks started`);
   }, 2000); // Wait 2 seconds after server starts to begin heavy tasks
-}).on('error', (err) => {
-  console.error('❌ Server failed to start:', err);
-  process.exit(1);
 });
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
   console.log('🛑 Server shutting down gracefully...');
-  server.close(() => {
+  earlyServer.close(() => {
     console.log('✅ Server stopped');
     process.exit(0);
   });
@@ -11733,7 +11786,7 @@ process.on('SIGTERM', () => {
 
 process.on('SIGINT', () => {
   console.log('🛑 Server interrupted, shutting down...');
-  server.close(() => {
+  earlyServer.close(() => {
     console.log('✅ Server stopped');
     process.exit(0);
   });
