@@ -1,62 +1,62 @@
 {
-  "date": "2026-02-03",
-  "generatedAt": "2026-02-03T04:24:08.284Z",
+  "date": "2026-02-05",
+  "generatedAt": "2026-02-05T17:41:22.638Z",
   "currentIndices": [
     {
       "id": "si",
       "name": "Solar Index",
       "unit": "%",
-      "value": 72.2,
+      "value": 71.2,
       "description": "Global Energy & Ethics Balance — 7-Day Rolling Indicator.",
-      "asOf": "2026-02-03T04:24:04.628Z"
+      "asOf": "2026-02-05T17:41:19.689Z"
     },
     {
       "id": "srh",
       "name": "Solar Reserve Health",
       "unit": "%",
-      "value": 78,
+      "value": 79.7,
       "description": "Reserve stability and fulfillment factor across all regions.",
-      "asOf": "2026-02-03T04:24:04.628Z"
+      "asOf": "2026-02-05T17:41:19.689Z"
     },
     {
       "id": "gbi",
       "name": "Global Basic Income",
       "unit": "%",
-      "value": 41.7,
+      "value": 41.9,
       "description": "Percentage of humans enrolled and actively claiming GBI.",
-      "asOf": "2026-02-03T04:24:04.628Z"
+      "asOf": "2026-02-05T17:41:19.689Z"
     },
     {
       "id": "cai",
       "name": "Compute Alignment",
       "unit": "%",
-      "value": 88.7,
+      "value": 89.1,
       "description": "Ethically aligned compute flow — safe superintelligence readiness.",
-      "asOf": "2026-02-03T04:24:04.628Z"
+      "asOf": "2026-02-05T17:41:19.689Z"
     },
     {
       "id": "mli",
       "name": "Market Liquidity",
       "unit": "%",
-      "value": 23.5,
+      "value": 24.3,
       "description": "Health of the TC-S digital marketplace and token velocity.",
-      "asOf": "2026-02-03T04:24:04.628Z"
+      "asOf": "2026-02-05T17:41:19.689Z"
     },
     {
       "id": "eai",
       "name": "Ethical Alignment",
       "unit": "%",
-      "value": 92.3,
+      "value": 92.7,
       "description": "Acceptance ratio of tasks from the Ethics Engine.",
-      "asOf": "2026-02-03T04:24:04.628Z"
+      "asOf": "2026-02-05T17:41:19.689Z"
     }
   ],
   "trends": {
     "analysisStatus": "success",
-    "direction": "bullish",
-    "analysis": "The overall market is trending bullish, indicated by an increase in the sentiment index (si) to 72.2, up from a low of 70.6 in the past week. Other indices, particularly the economic activity index (eai) at 92.3, and the consumer activity index (cai) at 88.7, also show strong performance, suggesting growing confidence in the market. However, the growth barrier index (gbi) remains relatively low at 41.7, indicating some underlying challenges.",
-    "insight": "Focus on enhancing strategies to improve the growth barrier index, as addressing these challenges could further bolster overall market confidence and performance.",
-    "generatedAt": "2026-02-03T04:24:08.284Z"
+    "direction": "neutral",
+    "analysis": "The market health indices show stability with slight fluctuations over the past week. While the sentiment index (si) and market liquidity index (mli) have shown minor increases, other indices like the growth business index (gbi) and consumer activity index (cai) have remained relatively stable, indicating a lack of strong directional momentum.",
+    "insight": "Focus on maintaining current strategies, as the market is stable; however, consider exploring opportunities in sectors showing slight improvement in sentiment and liquidity.",
+    "generatedAt": "2026-02-05T17:41:22.638Z"
   },
   "historyDays": 30
 }
