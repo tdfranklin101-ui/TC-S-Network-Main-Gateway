@@ -223,21 +223,27 @@ class AnalyticsTracker {
     const replitDev = process.env.REPLIT_DEV; // Only set in development workspace
     const replSlug = process.env.REPL_SLUG;
     const replOwner = process.env.REPL_OWNER;
+    const port = process.env.PORT;
     
     // Production if:
     // 1. NODE_ENV is explicitly 'production', OR
     // 2. REPLIT_DEPLOYMENT is set to '1' (Reserved VM and other deployments), OR
     // 3. REPL_DEPLOY is truthy, OR
     // 4. K_SERVICE is set (Cloud Run/Autoscale indicator), OR
-    // 5. REPLIT_DEV is NOT set and we have REPL_SLUG (Reserved VM detection)
+    // 5. REPLIT_DEV is NOT set and we have REPL_SLUG (Reserved VM detection), OR
+    // 6. PORT is set (deployment typically sets PORT), OR
+    // 7. Default to production if no clear development indicator (REPLIT_DEV not set)
     const isCloudRun = Boolean(kService);
     const isReservedVM = !replitDev && Boolean(replSlug);
+    const hasDeploymentPort = Boolean(port);
+    const noClearDevIndicator = !replitDev;
     
     const isProd = nodeEnv === 'production' || 
                    replitDeployment === '1' ||
                    Boolean(replDeploy && replDeploy !== 'false' && replDeploy !== '0') ||
                    isCloudRun ||
-                   isReservedVM;
+                   isReservedVM ||
+                   (hasDeploymentPort && noClearDevIndicator);
     
     // Log once on first check (only if not already logged)
     if (!this._envLogged) {
@@ -246,6 +252,7 @@ class AnalyticsTracker {
       console.log(`   REPLIT_DEPLOYMENT: ${replitDeployment || 'not set'}`);
       console.log(`   K_SERVICE (Autoscale): ${kService || 'not set'}`);
       console.log(`   REPLIT_DEV: ${replitDev || 'not set'}`);
+      console.log(`   PORT: ${port || 'not set'}`);
       console.log(`   Reserved VM detection: ${isReservedVM ? 'YES' : 'NO'}`);
       console.log(`   → Environment: ${isProd ? 'PRODUCTION ✅' : 'DEVELOPMENT'}`);
       this._envLogged = true;
