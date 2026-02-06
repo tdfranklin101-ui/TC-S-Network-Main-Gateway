@@ -2311,7 +2311,62 @@
             <div class="scout-header">
                 <h2>🔍 Marketplace Scout - Search the Web</h2>
                 <p>Find products across the internet - powered by AI</p>
+                <div class="provisioning-guide">
+                    <button class="guide-toggle" onclick="toggleGuide()">📖 Instructions & Provisioning Guide ▼</button>
+                    <div id="guide-content" class="guide-content">
+                        <p><strong>How to find and provision items:</strong></p>
+                        <ul>
+                            <li><strong>Find & Buy:</strong> Use the category buttons below to scout for items on the web. Prices are shown in fiat/retail.</li>
+                            <li><strong>Provision Tracks:</strong> Once found, you can request a <strong>Service Voucher</strong> for 3D printing, repair, or custom fabrication.</li>
+                            <li><strong>Solar Standard:</strong> Most items can be provisioned via <strong>Member Listings</strong> using Solar currency (1 Solar = 4,913 kWh).</li>
+                            <li><strong>Admin Review:</strong> All scouted requests go to the Admin Review queue for quality check before being listed.</li>
+                        </ul>
+                    </div>
+                </div>
             </div>
+
+            <style>
+                .provisioning-guide { margin: 15px auto; max-width: 600px; text-align: left; }
+                .guide-toggle { 
+                    background: rgba(0, 191, 255, 0.1); 
+                    border: 1px solid #00bfff; 
+                    color: #00bfff; 
+                    padding: 8px 16px; 
+                    border-radius: 20px; 
+                    cursor: pointer; 
+                    font-size: 14px; 
+                    width: 100%;
+                    transition: all 0.3s ease;
+                }
+                .guide-toggle:hover { background: rgba(0, 191, 255, 0.2); }
+                .guide-content { 
+                    display: none; 
+                    background: rgba(10, 10, 10, 0.9); 
+                    border: 1px solid rgba(0, 191, 255, 0.3); 
+                    padding: 15px; 
+                    border-radius: 12px; 
+                    margin-top: 10px;
+                    font-size: 14px;
+                    line-height: 1.5;
+                    color: #8ecae6;
+                }
+                .guide-content ul { padding-left: 20px; margin-top: 8px; }
+                .guide-content li { margin-bottom: 8px; }
+            </style>
+
+            <script>
+                function toggleGuide() {
+                    const content = document.getElementById('guide-content');
+                    const btn = document.querySelector('.guide-toggle');
+                    if (content.style.display === 'block') {
+                        content.style.display = 'none';
+                        btn.innerHTML = '📖 Instructions & Provisioning Guide ▼';
+                    } else {
+                        content.style.display = 'block';
+                        btn.innerHTML = '📖 Instructions & Provisioning Guide ▲';
+                    }
+                }
+            </script>
 
             <!-- LifeLens panel moved to its own tab -->
 
