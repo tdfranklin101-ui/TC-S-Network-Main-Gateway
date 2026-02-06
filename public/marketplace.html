@@ -2313,6 +2313,8 @@
                 <p>Find products across the internet - powered by AI</p>
             </div>
 
+            <!-- LifeLens panel moved to its own tab -->
+
             <div class="scout-categories">
                 <div class="scout-btn-row" style="margin-bottom: 15px;">
                     <button class="scout-cat-btn all-btn active" onclick="scoutFilter(this, '')">🌐 All Categories</button>
@@ -2431,6 +2433,9 @@
             </button>
             <button class="tab" data-tab="my-listings">
                 <span>📋</span> My Items
+            </button>
+            <button class="tab" data-tab="lifelens">
+                <span>🧿</span> LifeLens
             </button>
             <button class="tab" data-tab="upload">
                 <span>🚀</span> Upload
@@ -2736,6 +2741,383 @@
             </div>
             <div class="my-artifacts-grid" id="my-artifacts-grid">
                 <!-- User's artifacts will be loaded here -->
+            </div>
+        </div>
+
+        <div id="lifelens-content" class="tab-content" style="display: none;">
+            <div class="ll-panel">
+                <style>
+                    .ll-panel { margin: 20px 0; padding: 20px; background: linear-gradient(135deg, rgba(138,43,226,0.08), rgba(0,255,136,0.08)); border: 1px solid rgba(138,43,226,0.4); border-radius: 14px; box-shadow: 0 0 15px rgba(138,43,226,0.15); }
+                    .ll-header { text-align: center; margin-bottom: 16px; }
+                    .ll-header h3 { font-size: 22px; color: #8a2be2; margin-bottom: 4px; text-shadow: 0 0 8px rgba(138,43,226,0.4); }
+                    .ll-header p { color: #aaa; font-size: 13px; }
+                    .ll-modes { display: flex; gap: 8px; justify-content: center; margin-bottom: 18px; }
+                    .ll-mode-tab { padding: 8px 20px; border-radius: 20px; border: 1px solid rgba(138,43,226,0.4); background: rgba(10,10,10,0.6); color: #ccc; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.25s; }
+                    .ll-mode-tab.active { background: rgba(138,43,226,0.2); border-color: #8a2be2; color: #8a2be2; box-shadow: 0 0 12px rgba(138,43,226,0.3); }
+                    .ll-mode-tab:hover { border-color: #8a2be2; }
+                    .ll-inputs { display: flex; gap: 20px; justify-content: center; margin-bottom: 16px; flex-wrap: wrap; }
+                    .ll-input-btn { width: 90px; height: 90px; border-radius: 50%; background: rgba(10,10,10,0.8); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s; border: 2px solid; }
+                    .ll-input-btn:hover { transform: translateY(-3px); }
+                    .ll-input-btn .ll-emoji { font-size: 28px; margin-bottom: 4px; }
+                    .ll-input-btn .ll-label { font-size: 10px; color: #ccc; font-weight: 600; text-transform: uppercase; }
+                    .ll-input-btn.camera { border-color: rgba(0,255,136,0.5); }
+                    .ll-input-btn.camera:hover { border-color: #00ff88; box-shadow: 0 0 15px rgba(0,255,136,0.3); }
+                    .ll-input-btn.upload { border-color: rgba(0,191,255,0.5); }
+                    .ll-input-btn.upload:hover { border-color: #00bfff; box-shadow: 0 0 15px rgba(0,191,255,0.3); }
+                    .ll-input-btn.voice { border-color: rgba(138,43,226,0.5); }
+                    .ll-input-btn.voice:hover { border-color: #8a2be2; box-shadow: 0 0 15px rgba(138,43,226,0.3); }
+                    .ll-spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(138,43,226,0.3); border-top-color: #8a2be2; border-radius: 50%; animation: llspin 0.8s linear infinite; margin-right: 8px; vertical-align: middle; }
+                    @keyframes llspin { to { transform: rotate(360deg); } }
+                    .ll-agent-badge { text-align: center; margin-top: 14px; font-size: 11px; color: #666; letter-spacing: 0.5px; }
+                    @media (max-width: 768px) {
+                        .ll-input-btn { width: 75px; height: 75px; }
+                        .ll-input-btn .ll-emoji { font-size: 24px; }
+                        .ll-header h3 { font-size: 18px; }
+                    }
+                </style>
+
+                <div class="ll-header">
+                    <h3>🧿 LifeLens - Hybrid Intelligence</h3>
+                    <p>Snap a photo or speak to identify, buy, or list anything</p>
+                </div>
+
+                <div class="ll-modes">
+                    <button class="ll-mode-tab active" data-mode="buy" onclick="setLifeLensMode('buy')">🛒 Find & Buy</button>
+                    <button class="ll-mode-tab" data-mode="sell" onclick="setLifeLensMode('sell')">💰 List & Sell</button>
+                    <button class="ll-mode-tab" data-mode="voucher" onclick="setLifeLensMode('voucher')">🎟️ Service Voucher</button>
+                </div>
+
+                <div class="ll-inputs">
+                    <div class="ll-input-btn camera" onclick="lifeLensCapture('ll-camera-input')">
+                        <span class="ll-emoji">📷</span>
+                        <span class="ll-label">Camera</span>
+                    </div>
+                    <div class="ll-input-btn upload" onclick="lifeLensCapture('ll-upload-input')">
+                        <span class="ll-emoji">🖼️</span>
+                        <span class="ll-label">Upload</span>
+                    </div>
+                    <div class="ll-input-btn voice" id="ll-voice-btn" onclick="lifeLensVoice()">
+                        <span class="ll-emoji">🎤</span>
+                        <span class="ll-label">Voice</span>
+                    </div>
+                </div>
+
+                <div id="ll-rob-low-section" style="margin:16px 0;padding:14px;background:rgba(255,140,0,0.05);border:1px solid rgba(255,140,0,0.25);border-radius:10px;">
+                    <details id="ll-rob-low-ref" style="margin-bottom:12px;">
+                        <summary style="cursor:pointer;color:#ff8c00;font-size:13px;font-weight:700;letter-spacing:0.5px;">📖 Rob Low Reference (Needs + Decision Lens)</summary>
+                        <div style="margin-top:10px;font-size:12px;color:#bbb;line-height:1.6;">
+                            <p style="margin-bottom:8px;"><b style="color:#ffa500;">How to read this:</b> LifeLens doesn't assume your baseline or judge you. It shows a <b>spectrum</b> of real-world patterns (use intensity, fit, risk, confidence) so <b>you</b> can self-locate fast.</p>
+                            <p style="margin-bottom:8px;"><b style="color:#ffa500;">You are integral:</b> the item is one variable — your goals, context, and starting point complete the meaning. This is guidance for better decisions, not a diagnosis.</p>
+                            <p style="margin-bottom:10px;opacity:0.85;"><b>Pattern-aware, not verdict-based:</b> LifeLens maps tradeoffs across a spectrum so you can match what fits your situation.</p>
+                            <div style="display:flex;gap:16px;flex-wrap:wrap;">
+                                <div style="flex:1;min-width:200px;">
+                                    <div style="color:#00bfff;font-weight:700;font-size:11px;text-transform:uppercase;margin-bottom:6px;">Maslow's Hierarchy</div>
+                                    <div style="font-size:11px;color:#aaa;line-height:1.7;">
+                                        <b style="color:#ccc;">Physiological:</b> food, water, sleep, health<br>
+                                        <b style="color:#ccc;">Safety:</b> shelter, stability, protection<br>
+                                        <b style="color:#ccc;">Love/Belonging:</b> connection, community<br>
+                                        <b style="color:#ccc;">Esteem:</b> competence, achievement, respect<br>
+                                        <b style="color:#ccc;">Self-Actualization:</b> growth, purpose, creativity<br>
+                                        <b style="color:#ccc;">Transcendence:</b> service beyond self, awe
+                                    </div>
+                                </div>
+                                <div style="flex:1;min-width:200px;">
+                                    <div style="color:#8a2be2;font-weight:700;font-size:11px;text-transform:uppercase;margin-bottom:6px;">Robbins' Core Needs</div>
+                                    <div style="font-size:11px;color:#aaa;line-height:1.7;">
+                                        <b style="color:#ccc;">Certainty:</b> comfort, predictability, reduced risk<br>
+                                        <b style="color:#ccc;">Variety:</b> novelty, challenge, exploration<br>
+                                        <b style="color:#ccc;">Significance:</b> importance, pride, uniqueness<br>
+                                        <b style="color:#ccc;">Love/Connection:</b> closeness, belonging<br>
+                                        <b style="color:#ccc;">Growth:</b> learning, expanding, improving<br>
+                                        <b style="color:#ccc;">Contribution:</b> giving, serving, legacy
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </details>
+
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+                        <div style="flex:1;min-width:160px;">
+                            <label style="font-size:10px;color:#ff8c00;text-transform:uppercase;letter-spacing:1px;font-weight:700;display:block;margin-bottom:4px;">Intent Mode</label>
+                            <select id="ll-intent-mode" style="width:100%;padding:8px 10px;background:rgba(10,10,10,0.8);border:1px solid rgba(255,140,0,0.3);border-radius:8px;color:#e0e0e0;font-size:13px;outline:none;">
+                                <option value="curious">Just curious / informational</option>
+                                <option value="considering" selected>Considering purchase / decision help</option>
+                                <option value="ready">Ready to buy (sanity check)</option>
+                                <option value="collecting">Collecting / multiples (anti-hoarding check)</option>
+                                <option value="gift">Gift for someone else</option>
+                            </select>
+                        </div>
+                        <div style="flex:1;min-width:160px;">
+                            <label style="font-size:10px;color:#ff8c00;text-transform:uppercase;letter-spacing:1px;font-weight:700;display:block;margin-bottom:4px;">Goal (optional)</label>
+                            <input id="ll-goal" type="text" placeholder="e.g. upgrade my setup" style="width:100%;padding:8px 10px;background:rgba(10,10,10,0.8);border:1px solid rgba(255,140,0,0.3);border-radius:8px;color:#e0e0e0;font-size:13px;outline:none;box-sizing:border-box;">
+                        </div>
+                    </div>
+                    <div style="margin-bottom:8px;">
+                        <label style="font-size:10px;color:#ff8c00;text-transform:uppercase;letter-spacing:1px;font-weight:700;display:block;margin-bottom:4px;">Context (optional — why this item?)</label>
+                        <textarea id="ll-context" rows="2" placeholder="e.g. I already have one but it's broken..." style="width:100%;padding:8px 10px;background:rgba(10,10,10,0.8);border:1px solid rgba(255,140,0,0.3);border-radius:8px;color:#e0e0e0;font-size:13px;outline:none;resize:vertical;box-sizing:border-box;"></textarea>
+                    </div>
+                    <label style="font-size:12px;color:#ccc;cursor:pointer;display:flex;align-items:center;gap:6px;">
+                        <input type="checkbox" id="ll-rob-low-enabled" checked style="accent-color:#ff8c00;"> Enable Rob Low Lens
+                    </label>
+                </div>
+
+                <input type="file" id="ll-camera-input" accept="image/*" capture="environment" style="display:none;" onchange="lifeLensHandleImage(this)">
+                <input type="file" id="ll-upload-input" accept="image/*" style="display:none;" onchange="lifeLensHandleImage(this)">
+
+                <div id="ll-preview" style="display:none;text-align:center;margin:12px 0;"></div>
+                <div id="ll-status" style="display:none;text-align:center;margin:8px 0;"></div>
+                <div id="ll-results" style="display:none;"></div>
+
+                <div class="ll-agent-badge">🌐 Connected to TC-S Agent Network • Hybrid Intelligence: Human + AI</div>
+
+                <script>
+                    var lifeLensMode = 'buy';
+                    var lifeLensResult = null;
+
+                    function setLifeLensMode(mode) {
+                        lifeLensMode = mode;
+                        document.querySelectorAll('.ll-mode-tab').forEach(function(t) { t.classList.remove('active'); });
+                        document.querySelector('.ll-mode-tab[data-mode="' + mode + '"]').classList.add('active');
+                        if (lifeLensResult) { lifeLensShowResult(lifeLensResult); }
+                    }
+
+                    function lifeLensCapture(inputId) {
+                        document.getElementById(inputId).click();
+                    }
+
+                    function lifeLensHandleImage(input) {
+                        var file = input.files[0];
+                        if (!file) return;
+
+                        var reader = new FileReader();
+                        reader.onload = function(e) {
+                            var base64 = e.target.result;
+                            var preview = document.getElementById('ll-preview');
+                            preview.innerHTML = '<img src="' + base64 + '" style="max-width:200px;max-height:150px;border-radius:10px;border:1px solid rgba(138,43,226,0.4);">';
+                            preview.style.display = 'block';
+
+                            var status = document.getElementById('ll-status');
+                            status.innerHTML = '<div style="color:#8a2be2;font-size:14px;"><span class="ll-spinner"></span> Analyzing with Hybrid Intelligence...</div>';
+                            status.style.display = 'block';
+                            document.getElementById('ll-results').style.display = 'none';
+
+                            var robLowEnabled = document.getElementById('ll-rob-low-enabled').checked;
+                            var payload = { image: base64 };
+                            if (robLowEnabled) {
+                                payload.robLow = {
+                                    intent: document.getElementById('ll-intent-mode').value,
+                                    context: document.getElementById('ll-context').value.trim(),
+                                    goal: document.getElementById('ll-goal').value.trim()
+                                };
+                            }
+
+                            fetch('/api/lifelens/identify', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(payload)
+                            })
+                            .then(function(r) { return r.json(); })
+                            .then(function(data) {
+                                if (data.success && data.identification) {
+                                    lifeLensResult = data.identification;
+                                    lifeLensShowResult(data.identification);
+                                } else {
+                                    status.innerHTML = '<div style="color:#ff6b6b;">Could not identify item. Try another photo or use voice.</div>';
+                                }
+                            })
+                            .catch(function(err) {
+                                status.innerHTML = '<div style="color:#ff6b6b;">Connection error. Please try again.</div>';
+                            });
+                        };
+                        reader.readAsDataURL(file);
+                    }
+
+                    function lifeLensVoice() {
+                        var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                        if (!SpeechRecognition) {
+                            alert('Voice input not supported in this browser. Try Chrome or Edge.');
+                            return;
+                        }
+
+                        var recognition = new SpeechRecognition();
+                        recognition.continuous = false;
+                        recognition.interimResults = false;
+                        recognition.lang = 'en-US';
+
+                        var voiceBtn = document.getElementById('ll-voice-btn');
+                        voiceBtn.style.borderColor = '#ff1493';
+                        voiceBtn.style.boxShadow = '0 0 20px rgba(255,20,147,0.5)';
+
+                        var status = document.getElementById('ll-status');
+                        status.innerHTML = '<div style="color:#ff1493;font-size:14px;">🎤 Listening... speak now</div>';
+                        status.style.display = 'block';
+
+                        recognition.onresult = function(event) {
+                            var transcript = event.results[0][0].transcript;
+                            voiceBtn.style.borderColor = 'rgba(138,43,226,0.5)';
+                            voiceBtn.style.boxShadow = 'none';
+
+                            var preview = document.getElementById('ll-preview');
+                            preview.innerHTML = '<div style="background:rgba(138,43,226,0.1);padding:12px 16px;border-radius:10px;border:1px solid rgba(138,43,226,0.3);color:#e0e0e0;font-size:15px;">🎤 "' + transcript + '"</div>';
+                            preview.style.display = 'block';
+
+                            lifeLensResult = { name: transcript, searchQuery: transcript, category: 'General', description: 'Voice search: ' + transcript };
+                            lifeLensShowResult(lifeLensResult);
+                        };
+
+                        recognition.onerror = function(event) {
+                            voiceBtn.style.borderColor = 'rgba(138,43,226,0.5)';
+                            voiceBtn.style.boxShadow = 'none';
+                            status.innerHTML = '<div style="color:#ff6b6b;">Voice error: ' + event.error + '. Please try again.</div>';
+                        };
+
+                        recognition.onend = function() {
+                            voiceBtn.style.borderColor = 'rgba(138,43,226,0.5)';
+                            voiceBtn.style.boxShadow = 'none';
+                        };
+
+                        recognition.start();
+                    }
+
+                    function llSection(icon, title, content, color) {
+                        if (!content) return '';
+                        return '<div style="margin-bottom:14px;">' +
+                            '<div style="font-size:11px;color:' + color + ';text-transform:uppercase;letter-spacing:1.2px;font-weight:700;margin-bottom:5px;">' + icon + ' ' + title + '</div>' +
+                            '<div style="font-size:13px;color:#d0d0d0;line-height:1.5;padding:10px 12px;background:rgba(255,255,255,0.03);border-left:3px solid ' + color + ';border-radius:0 6px 6px 0;">' + content + '</div>' +
+                        '</div>';
+                    }
+
+                    function llConditionBadge(condition) {
+                        if (!condition) return '';
+                        var colors = { 'New': '#00ff88', 'Like New': '#00ff88', 'Excellent': '#00bfff', 'Good': '#ffa500', 'Fair': '#ff6b35', 'Poor': '#ff4444', 'Unknown': '#888' };
+                        var c = condition.split('/')[0].trim();
+                        var badgeColor = colors[c] || '#ffa500';
+                        return '<span style="display:inline-block;padding:3px 10px;background:rgba(0,0,0,0.4);border:1px solid ' + badgeColor + ';border-radius:12px;color:' + badgeColor + ';font-size:12px;font-weight:bold;">' + condition + '</span>';
+                    }
+
+                    function lifeLensShowResult(result) {
+                        var status = document.getElementById('ll-status');
+                        status.style.display = 'none';
+
+                        var resultsDiv = document.getElementById('ll-results');
+                        var itemName = result.name || 'Item Identified';
+
+                        var html = '<div style="background:rgba(10,10,10,0.9);border:1px solid rgba(0,255,136,0.3);border-radius:14px;padding:20px;margin-top:14px;box-shadow:0 0 20px rgba(0,255,136,0.1);">';
+
+                        html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">';
+                        html += '<div style="font-size:20px;font-weight:bold;color:#00ff88;flex:1;">✅ ' + itemName + '</div>';
+                        if (result.condition) html += llConditionBadge(result.condition);
+                        html += '</div>';
+                        if (result.category) html += '<div style="font-size:12px;color:#8a2be2;margin-bottom:14px;font-weight:600;">📂 ' + result.category + '</div>';
+
+                        html += llSection('👁️', 'What AI Sees', result.physicalDescription, '#00bfff');
+                        html += llSection('🔬', 'Raw Analysis', result.rawAnalysis, '#8a2be2');
+
+                        if (result.condition || result.conditionNotes) {
+                            var condContent = '';
+                            if (result.condition) condContent += '<strong style="color:#ffa500;">Condition: ' + result.condition + '</strong>';
+                            if (result.conditionNotes) condContent += (condContent ? '<br>' : '') + result.conditionNotes;
+                            html += llSection('📋', 'Condition Assessment', condContent, '#ffa500');
+                        }
+
+                        html += llSection('💰', 'Pricing Analysis', result.pricingAnalysis, '#00ff88');
+
+                        if (result.kwhFootprint) {
+                            html += '<div style="margin-bottom:14px;">';
+                            html += '<div style="font-size:11px;color:#ffd700;text-transform:uppercase;letter-spacing:1.2px;font-weight:700;margin-bottom:5px;">⚡ kWh Energy Footprint</div>';
+                            html += '<div style="font-size:13px;color:#d0d0d0;line-height:1.5;padding:10px 12px;background:rgba(255,215,0,0.04);border-left:3px solid #ffd700;border-radius:0 6px 6px 0;">' + result.kwhFootprint + '</div>';
+                            html += '</div>';
+                        }
+
+                        if (result.solarPricing) {
+                            html += '<div style="margin-bottom:14px;">';
+                            html += '<div style="font-size:11px;color:#ff8c00;text-transform:uppercase;letter-spacing:1.2px;font-weight:700;margin-bottom:5px;">☀️ Solar Standard Pricing</div>';
+                            html += '<div style="font-size:13px;color:#d0d0d0;line-height:1.5;padding:10px 12px;background:rgba(255,140,0,0.04);border-left:3px solid #ff8c00;border-radius:0 6px 6px 0;">' + result.solarPricing + '</div>';
+                            html += '<div style="font-size:10px;color:#666;margin-top:4px;padding-left:15px;font-style:italic;">1 Solar = 4,913 kWh — energy-backed value standard</div>';
+                            html += '</div>';
+                        }
+
+                        if (result.provisionNotes) {
+                            html += llSection('🛤️', 'Recommended Provision', result.provisionNotes, '#ff69b4');
+                        }
+
+                        if (result.robLowNeeds || result.robLowDecisionLens) {
+                            html += '<div style="margin-top:16px;padding:14px;background:rgba(255,140,0,0.05);border:1px solid rgba(255,140,0,0.2);border-radius:10px;">';
+                            html += '<div style="font-size:13px;color:#ff8c00;font-weight:700;margin-bottom:10px;letter-spacing:0.5px;">📖 Rob Low Decision Lens</div>';
+                            if (result.robLowNeeds) {
+                                html += '<div style="margin-bottom:12px;">';
+                                html += '<div style="font-size:10px;color:#00bfff;text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:4px;">Needs Mapping (Maslow + Robbins)</div>';
+                                html += '<div style="font-size:13px;color:#d0d0d0;line-height:1.5;padding:10px 12px;background:rgba(0,191,255,0.03);border-left:3px solid #00bfff;border-radius:0 6px 6px 0;">' + result.robLowNeeds + '</div>';
+                                html += '</div>';
+                            }
+                            if (result.robLowDecisionLens) {
+                                html += '<div>';
+                                html += '<div style="font-size:10px;color:#8a2be2;text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:4px;">Decision Guidance</div>';
+                                html += '<div style="font-size:13px;color:#d0d0d0;line-height:1.5;padding:10px 12px;background:rgba(138,43,226,0.03);border-left:3px solid #8a2be2;border-radius:0 6px 6px 0;">' + result.robLowDecisionLens + '</div>';
+                                html += '</div>';
+                            }
+                            html += '<div style="font-size:10px;color:#666;margin-top:8px;font-style:italic;text-align:center;">Pattern-aware guidance — you are integral, the item is one variable</div>';
+                            html += '</div>';
+                        }
+
+                        html += '<div style="border-top:1px solid rgba(255,255,255,0.1);margin-top:16px;padding-top:14px;">';
+                        html += '<div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1.2px;font-weight:700;margin-bottom:10px;">⚡ Provision Tracks</div>';
+
+                        if (lifeLensMode === 'buy') {
+                            html += '<div style="display:flex;flex-direction:column;gap:8px;">';
+                            html += '<button onclick="lifeLensTrack(\'scout\')" style="width:100%;padding:10px 14px;background:linear-gradient(135deg,#8a2be2,#00bfff);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:bold;cursor:pointer;text-align:left;transition:all 0.3s;">🌐 Search Online — Find via web (fiat pricing)</button>';
+                            html += '<button onclick="lifeLensTrack(\'member\')" style="width:100%;padding:10px 14px;background:linear-gradient(135deg,#00ff88,#00cc66);color:#000;border:none;border-radius:8px;font-size:14px;font-weight:bold;cursor:pointer;text-align:left;transition:all 0.3s;">👥 Member Listings — Buy from network (Solar ☀️)</button>';
+                            html += '<button onclick="lifeLensTrack(\'service\')" style="width:100%;padding:10px 14px;background:linear-gradient(135deg,#ffa500,#ff6b35);color:#000;border:none;border-radius:8px;font-size:14px;font-weight:bold;cursor:pointer;text-align:left;transition:all 0.3s;">🎟️ Service Voucher — 3D printing, repairs & more</button>';
+                            html += '</div>';
+                        } else if (lifeLensMode === 'sell') {
+                            html += '<div style="display:flex;flex-direction:column;gap:8px;">';
+                            html += '<button onclick="lifeLensTrack(\'list\')" style="width:100%;padding:12px;background:linear-gradient(135deg,#ffa500,#ff6b35);color:#000;border:none;border-radius:8px;font-size:15px;font-weight:bold;cursor:pointer;transition:all 0.3s;">📤 List This Item on Marketplace (Solar ☀️)</button>';
+                            html += '<div style="font-size:12px;color:#888;text-align:center;">Every member is a buyer AND a creator/seller</div>';
+                            html += '</div>';
+                        } else {
+                            html += '<div style="display:flex;flex-direction:column;gap:8px;">';
+                            html += '<button onclick="lifeLensTrack(\'voucher\')" style="width:100%;padding:12px;background:linear-gradient(135deg,#ffa500,#ff8c42);color:#000;border:none;border-radius:8px;font-size:15px;font-weight:bold;cursor:pointer;transition:all 0.3s;">🎟️ Issue Service Voucher for This Item</button>';
+                            html += '<div style="font-size:12px;color:#888;text-align:center;">3D printing, repairs, custom fabrication & professional services</div>';
+                            html += '</div>';
+                        }
+
+                        html += '</div></div>';
+                        resultsDiv.innerHTML = html;
+                        resultsDiv.style.display = 'block';
+                    }
+
+                    function lifeLensTrack(track) {
+                        if (!lifeLensResult) return;
+                        var query = lifeLensResult.searchQuery || lifeLensResult.name;
+
+                        if (track === 'scout') {
+                            var iframe = document.getElementById('marketplace-scout-iframe');
+                            iframe.src = 'https://marketplace-scout.replit.app/?q=' + encodeURIComponent(query);
+                            document.querySelectorAll('#marketplace-scout-section .scout-cat-btn').forEach(function(b) { b.classList.remove('active'); });
+                            iframe.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        } else if (track === 'member') {
+                            var searchInput = document.getElementById('search-input');
+                            if (searchInput) {
+                                searchInput.value = query;
+                                searchInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                var searchBtn = document.getElementById('search-btn');
+                                if (searchBtn) searchBtn.click();
+                            }
+                        } else if (track === 'list') {
+                            var uploadTab = document.querySelector('.tab[data-tab="upload"]');
+                            if (uploadTab) {
+                                uploadTab.click();
+                                uploadTab.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }
+                        } else if (track === 'service' || track === 'voucher') {
+                            var voucherTab = document.querySelector('.tab[data-tab="vouchers"]');
+                            if (voucherTab) {
+                                voucherTab.click();
+                                voucherTab.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }
+                        }
+                    }
+                </script>
             </div>
         </div>
 
@@ -3595,23 +3977,33 @@
                     
                     const tabType = this.dataset.tab;
                     
-                    // ALWAYS re-check session from server when switching tabs
                     console.log('🔄 Tab switched to:', tabType, '- Re-checking session...');
                     await checkUserSession();
                     
+                    document.getElementById('all-market-content').style.display = 'none';
+                    document.getElementById('my-listings-content').style.display = 'none';
+                    document.getElementById('vouchers-content').style.display = 'none';
+                    document.getElementById('lifelens-content').style.display = 'none';
+                    var monaziteEl = document.getElementById('monazite-section');
+                    if (monaziteEl) monaziteEl.style.display = 'none';
+                    var filtersEl = document.querySelector('.filters');
+                    
                     if (tabType === 'my-listings') {
-                        document.getElementById('vouchers-content').style.display = 'none';
+                        document.getElementById('my-listings-content').style.display = 'block';
+                        if (filtersEl) filtersEl.style.display = '';
                         showMyListings();
                     } else if (tabType === 'upload') {
                         window.location.href = '/creator-upload.html';
                     } else if (tabType === 'vouchers') {
                         document.getElementById('vouchers-content').style.display = 'block';
-                        document.getElementById('monazite-section').style.display = 'none';
-                        document.getElementById('artifacts-grid').style.display = 'none';
-                        document.querySelector('.filters').style.display = 'none';
+                        if (filtersEl) filtersEl.style.display = 'none';
                         loadVoucherListings();
+                    } else if (tabType === 'lifelens') {
+                        document.getElementById('lifelens-content').style.display = 'block';
+                        if (filtersEl) filtersEl.style.display = 'none';
                     } else {
-                        document.getElementById('vouchers-content').style.display = 'none';
+                        document.getElementById('all-market-content').style.display = 'block';
+                        if (filtersEl) filtersEl.style.display = '';
                         showAllMarket();
                     }
                 });
@@ -3772,7 +4164,7 @@
             }
 
             const bundle = monaziteCollection.bundles[0];
-            const confirmed = confirm(`🎁 Purchase Monazite Complete Collection?\n\n• 20 tracks included\n• Price: ${bundle.priceSolar} Solar\n• You'll save ${(monaziteCollection.totals.totalValue - bundle.priceSolar).toFixed(4)} Solar vs individual purchases\n\nProceed with purchase?`);
+            const confirmed = confirm(`🎁 Purchase Monazite Complete Collection?\n\n• 20 tracks included\n• Price: ${bundle.priceSolar} Solar\n• Energy Value: ~${(parseFloat(bundle.priceSolar) * 4913).toFixed(2)} kWh\n• You'll save ${(monaziteCollection.totals.totalValue - bundle.priceSolar).toFixed(4)} Solar vs individual purchases\n\nProceed with purchase?`);
             
             if (!confirmed) return;
 
@@ -3821,7 +4213,7 @@
                 return;
             }
 
-            const confirmed = confirm(`🎵 Purchase "${track.title}"?\n\nPrice: ${track.priceSolar} Solar\nDuration: ${formatDuration(track.durationSec)}\nGenre: ${track.genre}\n\nProceed with purchase?`);
+            const confirmed = confirm(`🎵 Purchase "${track.title}"?\n\nPrice: ${track.priceSolar} Solar\nEnergy Value: ~${(parseFloat(track.priceSolar) * 4913).toFixed(2)} kWh\nDuration: ${formatDuration(track.durationSec)}\nGenre: ${track.genre}\n\nProceed with purchase?`);
             
             if (!confirmed) return;
 
@@ -3875,7 +4267,7 @@
                 deliveryUrl: '/media/batrhyme-break-on-the-bright-side.mp3'
             };
 
-            const confirmed = confirm(`☀️ Purchase "${batrhymeTrack.title}"?\n\nArtist: ${batrhymeTrack.artist}\nPrice: ${batrhymeTrack.priceSolar} Solar (or ${batrhymeTrack.priceRays} Ray)\nGenre: ${batrhymeTrack.genre}\nDuration: ${batrhymeTrack.duration}\n\nProceed with purchase?`);
+            const confirmed = confirm(`☀️ Purchase "${batrhymeTrack.title}"?\n\nArtist: ${batrhymeTrack.artist}\nPrice: ${batrhymeTrack.priceSolar} Solar (or ${batrhymeTrack.priceRays} Ray)\nEnergy Value: ~${(parseFloat(batrhymeTrack.priceSolar) * 4913).toFixed(2)} kWh\nGenre: ${batrhymeTrack.genre}\nDuration: ${batrhymeTrack.duration}\n\nProceed with purchase?`);
             
             if (!confirmed) return;
 
@@ -3934,7 +4326,7 @@
                 deliveryUrl: '/media/batrhyme-psychedelic-solar-punk-party.mp3'
             };
 
-            const confirmed = confirm(`🌀 Purchase "${batrhyme2Track.title}"?\n\nArtist: ${batrhyme2Track.artist}\nPrice: ${batrhyme2Track.priceSolar} Solar (or ${batrhyme2Track.priceRays} Ray)\nGenre: ${batrhyme2Track.genre}\nDuration: ${batrhyme2Track.duration}\n\nProceed with purchase?`);
+            const confirmed = confirm(`🌀 Purchase "${batrhyme2Track.title}"?\n\nArtist: ${batrhyme2Track.artist}\nPrice: ${batrhyme2Track.priceSolar} Solar (or ${batrhyme2Track.priceRays} Ray)\nEnergy Value: ~${(parseFloat(batrhyme2Track.priceSolar) * 4913).toFixed(2)} kWh\nGenre: ${batrhyme2Track.genre}\nDuration: ${batrhyme2Track.duration}\n\nProceed with purchase?`);
             
             if (!confirmed) return;
 
@@ -3992,7 +4384,7 @@
                 deliveryUrl: '/media/omen-on-the-hudson.mp3'
             };
 
-            const confirmed = confirm(`🌅 Purchase "${batrhymeOmenTrack.title}"?\n\nArtist: ${batrhymeOmenTrack.artist}\nPrice: ${batrhymeOmenTrack.priceSolar} Solar (or ${batrhymeOmenTrack.priceRays} Ray)\nGenre: ${batrhymeOmenTrack.genre}\nDuration: ${batrhymeOmenTrack.duration}\n\nProceed with purchase?`);
+            const confirmed = confirm(`🌅 Purchase "${batrhymeOmenTrack.title}"?\n\nArtist: ${batrhymeOmenTrack.artist}\nPrice: ${batrhymeOmenTrack.priceSolar} Solar (or ${batrhymeOmenTrack.priceRays} Ray)\nEnergy Value: ~${(parseFloat(batrhymeOmenTrack.priceSolar) * 4913).toFixed(2)} kWh\nGenre: ${batrhymeOmenTrack.genre}\nDuration: ${batrhymeOmenTrack.duration}\n\nProceed with purchase?`);
             
             if (!confirmed) return;
 
@@ -4050,7 +4442,7 @@
                 deliveryUrl: '/media/gidget-bardot-no-one-left-v3.mp3'
             };
 
-            const confirmed = confirm(`✨ Purchase "${gidgetTrack.title}"?\n\nArtist: ${gidgetTrack.artist}\nPrice: ${gidgetTrack.priceSolar} Solar (or ${gidgetTrack.priceRays} Ray)\nGenre: ${gidgetTrack.genre}\nDuration: ${gidgetTrack.duration}\n\nProceed with purchase?`);
+            const confirmed = confirm(`✨ Purchase "${gidgetTrack.title}"?\n\nArtist: ${gidgetTrack.artist}\nPrice: ${gidgetTrack.priceSolar} Solar (or ${gidgetTrack.priceRays} Ray)\nEnergy Value: ~${(parseFloat(gidgetTrack.priceSolar) * 4913).toFixed(2)} kWh\nGenre: ${gidgetTrack.genre}\nDuration: ${gidgetTrack.duration}\n\nProceed with purchase?`);
             
             if (!confirmed) return;
 
@@ -4173,6 +4565,7 @@
                     <div class="artifact-title">${artifact.title}</div>
                     <div class="artifact-kwh">${artifact.kwhFootprint} kWh footprint</div>
                     <div class="artifact-price">${artifact.formattedPrice}</div>
+                    <div style="font-size:10px;color:#ffd700;margin-top:2px;">⚡ ~${(parseFloat(artifact.priceSolar || 0) * 4913).toFixed(2)} kWh energy value</div>
                     ${artifact.previewType === 'audio' && artifact.streamingUrl ? 
                         `<a href="${artifact.streamingUrl}" target="_blank" class="preview-btn music-link" onclick="event.stopPropagation();">
                             🎵 Listen on Music Now
@@ -4364,6 +4757,7 @@
                     <div class="artifact-category">${typeIcon} ${typeLabel} • ${artifact.category}</div>
                     <div class="artifact-title">${artifact.title}</div>
                     <div class="artifact-price">${artifact.formattedPrice}</div>
+                    <div style="font-size:10px;color:#ffd700;margin-top:2px;">⚡ ~${(parseFloat(artifact.priceSolar || 0) * 4913).toFixed(2)} kWh energy value</div>
                     <div class="artifact-kwh">${artifact.kwhFootprint.toFixed(1)} kWh equivalent</div>
                     ${artifact.isBonus ? '<div class="artifact-bonus">BONUS</div>' : ''}
                     <div style="margin-top: 15px;">
@@ -5188,7 +5582,7 @@
             // Update modal content
             document.getElementById('video-preview-title').textContent = artifact.title;
             document.getElementById('video-preview-category').textContent = artifact.category.toUpperCase();
-            document.getElementById('video-preview-price').textContent = artifact.formattedPrice;
+            document.getElementById('video-preview-price').textContent = artifact.formattedPrice + ' (⚡ ~' + (parseFloat(artifact.priceSolar || 0) * 4913).toFixed(2) + ' kWh)';
 
             // Show modal with loading state
             document.getElementById('video-preview-modal').classList.add('visible');
@@ -5279,7 +5673,7 @@
             // Update modal content
             document.getElementById('music-preview-title').textContent = artifact.title;
             document.getElementById('music-preview-category').textContent = artifact.category.toUpperCase();
-            document.getElementById('music-preview-price').textContent = artifact.formattedPrice;
+            document.getElementById('music-preview-price').textContent = artifact.formattedPrice + ' (⚡ ~' + (parseFloat(artifact.priceSolar || 0) * 4913).toFixed(2) + ' kWh)';
 
             // Show modal with loading state
             document.getElementById('music-preview-modal').classList.add('visible');
@@ -5382,7 +5776,7 @@
             // Update modal content
             document.getElementById('video-preview-title').textContent = artifact.title;
             document.getElementById('video-preview-category').textContent = artifact.category.toUpperCase();
-            document.getElementById('video-preview-price').textContent = artifact.formattedPrice;
+            document.getElementById('video-preview-price').textContent = artifact.formattedPrice + ' (⚡ ~' + (parseFloat(artifact.priceSolar || 0) * 4913).toFixed(2) + ' kWh)';
             
             // Show modal
             const modal = document.getElementById('video-preview-modal');
@@ -5645,7 +6039,7 @@
                 <div class="artifact-category">${item.category || 'General'}</div>
                 <div class="artifact-title">${escapeHtml(item.title || 'Untitled')}</div>
                 <div class="artifact-price">${price} ${priceUnit}</div>
-                ${item.kwhEstimate ? `<div class="artifact-kwh">${item.kwhEstimate} kWh energy value</div>` : ''}
+                <div style="font-size:10px;color:#ffd700;margin-top:2px;">⚡ ~${(parseFloat(item.priceSolar || 0) * 4913).toFixed(2)} kWh energy value</div>
                 ${item.description ? `<p style="color: #888; font-size: 14px; margin-bottom: 15px; line-height: 1.4;">${escapeHtml(item.description.substring(0, 120))}${item.description.length > 120 ? '...' : ''}</p>` : ''}
                 <button class="purchase-btn" onclick="viewArtifactDetails('${item.id}')">View Details</button>
             `;

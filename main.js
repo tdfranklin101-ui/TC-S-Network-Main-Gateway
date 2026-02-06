@@ -9839,6 +9839,104 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // ================== LIFELENS AI IDENTIFICATION ==================
+  if (pathname === '/api/lifelens/identify' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', async () => {
+      try {
+        const parsed = JSON.parse(body);
+        const { image, robLow } = parsed;
+        if (!image) {
+          res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+          res.end(JSON.stringify({ error: 'No image provided' }));
+          return;
+        }
+
+        const openaiKey = process.env.OPENAI_API_KEY || process.env.NEW_OPENAI_API_KEY;
+        if (!openaiKey) {
+          res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+          res.end(JSON.stringify({ error: 'AI service unavailable' }));
+          return;
+        }
+
+        const OpenAI = require('openai');
+        const openai = new OpenAI({ apiKey: openaiKey });
+
+        let robLowPrompt = '';
+        let robLowFields = '';
+        if (robLow) {
+          const intentLabels = {
+            'curious': 'Just curious / informational',
+            'considering': 'Considering purchase / decision help',
+            'ready': 'Ready to buy (sanity check)',
+            'collecting': 'Collecting / multiples (anti-hoarding check)',
+            'gift': 'Gift for someone else'
+          };
+          robLowPrompt = `\n\nROB LOW LENS ENABLED. User intent: "${intentLabels[robLow.intent] || robLow.intent}".`;
+          if (robLow.context) robLowPrompt += ` Context: "${robLow.context}".`;
+          if (robLow.goal) robLowPrompt += ` Goal: "${robLow.goal}".`;
+          robLowPrompt += `\nApply the Rob Low Decision Lens combining Maslow's Hierarchy (Physiological, Safety, Love/Belonging, Esteem, Self-Actualization, Transcendence) and Tony Robbins' Core Needs (Certainty, Variety, Significance, Love/Connection, Growth, Contribution). Show which needs this item serves, the user's decision pattern, and provide spectrum-based guidance (not a verdict). The user is integral — the item is one variable.`;
+          robLowFields = `,
+  "robLowNeeds": "Map this item to Maslow's levels and Robbins' needs it serves. Be specific: which needs does it fulfill and at what intensity (low/medium/high). Example: 'Safety (high) - provides stability. Significance (medium) - signals status. Growth (low) - minimal learning value.'",
+  "robLowDecisionLens": "Based on the user's intent mode, provide spectrum-based decision guidance. Include: fit score (1-10), risk level, confidence assessment, tradeoffs to consider, and a pattern-aware recommendation. This is guidance, not a verdict — the user self-locates."`;
+        }
+
+        const response = await openai.chat.completions.create({
+          model: 'gpt-4o',
+          messages: [
+            {
+              role: 'system',
+              content: `You are LifeLens, a hybrid intelligence identification and analysis agent for the TC-S Network marketplace. Perform a comprehensive multi-layer analysis of the image and return a JSON response with these fields:
+
+{
+  "name": "product/object name",
+  "physicalDescription": "Describe exactly what AI sees: shape, color, size estimate, materials visible, text/labels/branding, distinguishing features",
+  "rawAnalysis": "Deep analysis: what this object is, its purpose, typical use cases, manufacturer/brand if identifiable, model/version if visible, key specifications or features, materials composition",
+  "condition": "Assessment of visible condition: New/Like New/Excellent/Good/Fair/Poor/Unknown. Note any visible wear, damage, scratches, discoloration, missing parts",
+  "conditionNotes": "Specific observations about condition - scratches, wear patterns, packaging state, cleanliness",
+  "pricingAnalysis": "Market price range in USD. Include: new retail price, typical used price, current market demand level (high/medium/low)",
+  "kwhFootprint": "Estimated total energy footprint in kWh covering: manufacturing energy, raw material extraction, transportation, and typical lifetime usage energy. Be specific with numbers. Example: 'Manufacturing: ~15 kWh, Materials: ~8 kWh, Transport: ~2 kWh, Lifetime use: ~50 kWh, Total: ~75 kWh'",
+  "solarPricing": "Convert the USD price to Solar currency. Formula: 1 Solar = 4,913 kWh of energy value. Calculate: take the estimated kWh footprint, divide by 4913 to get Solar price. Show the Solar price (e.g. 0.015 Solar) and explain this represents the true energy cost of the item. Most everyday items range 0.001-0.1 Solar.",
+  "category": "best matching category from: Computronium Missions, Culture, Basic Needs, Rent Anything, Energy Trading, AI Tools, AI Creativity, AI Analysis, AI Assistants, Music, Video, Art, Photography, Writing, Software, Code Tools, Data Science, Documents, Productivity, Utilities, Games",
+  "searchQuery": "optimized 3-5 word search query for finding this item online",
+  "provisionNotes": "Suggest best way to obtain: buy online, find from network member, 3D print, commission service, rent, or DIY"` + robLowFields + `
+}` + robLowPrompt + `
+
+Always respond with valid JSON only. Be specific and detailed in observations.`
+            },
+            {
+              role: 'user',
+              content: [
+                { type: 'text', text: 'Perform full LifeLens identification and analysis.' + (robLow ? ' Include Rob Low Decision Lens.' : '') + ' Return JSON only.' },
+                { type: 'image_url', image_url: { url: image, detail: 'auto' } }
+              ]
+            }
+          ],
+          max_tokens: robLow ? 1200 : 1000,
+          temperature: 0.3
+        });
+
+        let result;
+        const raw = response.choices[0].message.content.trim();
+        try {
+          const jsonMatch = raw.match(/\{[\s\S]*\}/);
+          result = jsonMatch ? JSON.parse(jsonMatch[0]) : { name: raw, searchQuery: raw, category: 'General', description: raw };
+        } catch (e) {
+          result = { name: raw, searchQuery: raw, category: 'General', description: raw };
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ success: true, identification: result }));
+      } catch (error) {
+        console.error('LifeLens identification error:', error.message);
+        res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ error: 'Identification failed: ' + error.message }));
+      }
+    });
+    return;
+  }
+
   // Power Twin Status endpoint  
   if (pathname === '/api/power-twin/status' && req.method === 'GET') {
     const SOLAR_KWH = 4913.0;
