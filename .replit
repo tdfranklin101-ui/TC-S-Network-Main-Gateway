@@ -31,7 +31,6 @@ NEXT_PUBLIC_REPLIT_SITE_URL = "https://current-see-website-tdfranklin101.replit.
 NEXT_PUBLIC_VERCEL_SITE_URL = "https://tc-s-network-main-gatewayv1.vercel.app"
 TESTING_VITE_STRIPE_PUBLIC_KEY = "pk_test_51R82FbIiiOxB2ouydaiG0lZMqqxJPsnEqlPWqLajtSnhWHBAsp9VNQVz8b7A4oF5x3qy28hzYhGeFwfsPw1JHnXP00NmR1Ue2n"
 TESTING_STRIPE_SECRET_KEY = "sk_test_51R82FbIiiOxB2ouyXUeTbzoTWFZ3UtG0NoWspXmxsOt1Xa5EHpl68n9Q80EqB5cPnYv16QUVRRzZNFtDyU9B3us600kQUMCGxQ"
-PORT = "5000"
 
 [userenv.production]
 NODE_ENV = "production"
