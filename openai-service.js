@@ -10,9 +10,13 @@ const path = require('path');
 
 // Try to load OpenAI API key from separate .env file or environment variables
 function loadOpenAIKey() {
-  // First check if NEW_OPENAI_API_KEY is available in environment (highest priority)
+  if (process.env.OPENAI_API_KEY) {
+    console.log('Using OPENAI_API_KEY from environment');
+    return process.env.OPENAI_API_KEY;
+  }
+  
   if (process.env.NEW_OPENAI_API_KEY) {
-    console.log('Using NEW_OPENAI_API_KEY from environment (highest priority)');
+    console.log('Using NEW_OPENAI_API_KEY from environment (fallback)');
     return process.env.NEW_OPENAI_API_KEY;
   }
   
@@ -106,10 +110,10 @@ function isApiWorking() {
  * @returns {string} - Description of where the API key came from
  */
 function getKeySource() {
-  if (process.env.NEW_OPENAI_API_KEY) {
-    return 'NEW_OPENAI_API_KEY environment variable';
-  } else if (process.env.OPENAI_API_KEY) {
+  if (process.env.OPENAI_API_KEY) {
     return 'OPENAI_API_KEY environment variable';
+  } else if (process.env.NEW_OPENAI_API_KEY) {
+    return 'NEW_OPENAI_API_KEY environment variable';
   } else {
     const envPath = path.join(process.cwd(), '.env.openai');
     if (fs.existsSync(envPath)) {
