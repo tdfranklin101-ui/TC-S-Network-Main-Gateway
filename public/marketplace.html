@@ -2255,6 +2255,143 @@
                 <div class="request-id" id="request-id-display"></div>
             </div>
         </div>
+
+        <!-- Marketplace Scout Section -->
+        <div id="marketplace-scout-section" style="margin: 30px 0; padding: 30px; background: linear-gradient(135deg, rgba(0,0,0,0.9) 0%, rgba(0,191,255,0.1) 100%); border: 2px solid #00bfff; border-radius: 16px; box-shadow: 0 0 25px rgba(0,191,255,0.3), inset 0 0 25px rgba(0,191,255,0.05);">
+            <style>
+                .scout-header { text-align: center; margin-bottom: 25px; }
+                .scout-header h2 { font-size: 28px; color: #00bfff; margin-bottom: 8px; text-shadow: 0 0 10px rgba(0,191,255,0.5); }
+                .scout-header p { color: #8ecae6; font-size: 15px; }
+                .scout-categories { margin-bottom: 25px; }
+                .scout-cat-group { margin-bottom: 18px; }
+                .scout-cat-group-header { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; padding-left: 4px; }
+                .scout-cat-group-header.green { color: #00ff88; }
+                .scout-cat-group-header.purple { color: #8a2be2; }
+                .scout-cat-group-header.orange { color: #ffa500; }
+                .scout-cat-group-header.cyan { color: #00bfff; }
+                .scout-cat-group-header.silver { color: #c0c0c0; }
+                .scout-btn-row { display: flex; flex-wrap: wrap; gap: 8px; }
+                .scout-cat-btn {
+                    background: rgba(10,10,10,0.8);
+                    border: 1px solid rgba(0,191,255,0.4);
+                    color: #e0e0e0;
+                    padding: 8px 14px;
+                    border-radius: 20px;
+                    font-size: 13px;
+                    cursor: pointer;
+                    transition: all 0.25s ease;
+                    white-space: nowrap;
+                }
+                .scout-cat-btn:hover { transform: translateY(-1px); }
+                .scout-cat-btn.green { border-color: rgba(0,255,136,0.5); }
+                .scout-cat-btn.green:hover, .scout-cat-btn.green.active { background: rgba(0,255,136,0.15); border-color: #00ff88; color: #00ff88; box-shadow: 0 0 12px rgba(0,255,136,0.3); }
+                .scout-cat-btn.purple { border-color: rgba(138,43,226,0.5); }
+                .scout-cat-btn.purple:hover, .scout-cat-btn.purple.active { background: rgba(138,43,226,0.15); border-color: #8a2be2; color: #8a2be2; box-shadow: 0 0 12px rgba(138,43,226,0.3); }
+                .scout-cat-btn.orange { border-color: rgba(255,165,0,0.5); }
+                .scout-cat-btn.orange:hover, .scout-cat-btn.orange.active { background: rgba(255,165,0,0.15); border-color: #ffa500; color: #ffa500; box-shadow: 0 0 12px rgba(255,165,0,0.3); }
+                .scout-cat-btn.cyan { border-color: rgba(0,191,255,0.5); }
+                .scout-cat-btn.cyan:hover, .scout-cat-btn.cyan.active { background: rgba(0,191,255,0.15); border-color: #00bfff; color: #00bfff; box-shadow: 0 0 12px rgba(0,191,255,0.3); }
+                .scout-cat-btn.silver { border-color: rgba(192,192,192,0.5); }
+                .scout-cat-btn.silver:hover, .scout-cat-btn.silver.active { background: rgba(192,192,192,0.15); border-color: #c0c0c0; color: #ffffff; box-shadow: 0 0 12px rgba(192,192,192,0.3); }
+                .scout-cat-btn.all-btn { border-color: rgba(0,191,255,0.6); color: #00bfff; font-weight: 700; }
+                .scout-cat-btn.all-btn:hover, .scout-cat-btn.all-btn.active { background: rgba(0,191,255,0.2); border-color: #00bfff; color: #00bfff; box-shadow: 0 0 15px rgba(0,191,255,0.4); }
+                .scout-iframe-wrapper { border-radius: 10px; overflow: hidden; border: 1px solid rgba(0,191,255,0.3); margin-bottom: 15px; }
+                .scout-iframe-wrapper iframe { width: 100%; height: 700px; border: none; background: #000; }
+                .scout-footer { text-align: center; }
+                .scout-footer a { color: #00bfff; text-decoration: none; font-size: 15px; font-weight: 600; transition: all 0.3s; }
+                .scout-footer a:hover { color: #ffffff; text-shadow: 0 0 10px rgba(0,191,255,0.5); }
+                @media (max-width: 768px) {
+                    .scout-iframe-wrapper iframe { height: 500px; }
+                    #marketplace-scout-section { padding: 20px 15px; }
+                    .scout-header h2 { font-size: 22px; }
+                    .scout-cat-btn { font-size: 12px; padding: 6px 10px; }
+                }
+            </style>
+
+            <div class="scout-header">
+                <h2>🔍 Marketplace Scout - Search the Web</h2>
+                <p>Find products across the internet - powered by AI</p>
+            </div>
+
+            <div class="scout-categories">
+                <div class="scout-btn-row" style="margin-bottom: 15px;">
+                    <button class="scout-cat-btn all-btn active" onclick="scoutFilter(this, '')">🌐 All Categories</button>
+                </div>
+
+                <div class="scout-cat-group">
+                    <div class="scout-cat-group-header green">TC-S Computronium Market</div>
+                    <div class="scout-btn-row">
+                        <button class="scout-cat-btn green" onclick="scoutFilter(this, 'Computronium Missions')">🚀 Computronium Missions</button>
+                        <button class="scout-cat-btn green" onclick="scoutFilter(this, 'Culture')">🎭 Culture</button>
+                        <button class="scout-cat-btn green" onclick="scoutFilter(this, 'Basic Needs')">🏠 Basic Needs</button>
+                        <button class="scout-cat-btn green" onclick="scoutFilter(this, 'Rent Anything')">🔑 Rent Anything</button>
+                        <button class="scout-cat-btn green" onclick="scoutFilter(this, 'Energy Trading')">⚡ Energy Trading</button>
+                    </div>
+                </div>
+
+                <div class="scout-cat-group">
+                    <div class="scout-cat-group-header purple">AI-Enhanced</div>
+                    <div class="scout-btn-row">
+                        <button class="scout-cat-btn purple" onclick="scoutFilter(this, 'AI Tools')">🤖 AI Tools</button>
+                        <button class="scout-cat-btn purple" onclick="scoutFilter(this, 'AI Creativity')">🎨 AI Creativity</button>
+                        <button class="scout-cat-btn purple" onclick="scoutFilter(this, 'AI Analysis')">📊 AI Analysis</button>
+                        <button class="scout-cat-btn purple" onclick="scoutFilter(this, 'AI Assistants')">💬 AI Assistants</button>
+                    </div>
+                </div>
+
+                <div class="scout-cat-group">
+                    <div class="scout-cat-group-header orange">Creative & Media</div>
+                    <div class="scout-btn-row">
+                        <button class="scout-cat-btn orange" onclick="scoutFilter(this, 'Music')">🎵 Music</button>
+                        <button class="scout-cat-btn orange" onclick="scoutFilter(this, 'Video')">🎬 Video</button>
+                        <button class="scout-cat-btn orange" onclick="scoutFilter(this, 'Art')">🖼️ Art</button>
+                        <button class="scout-cat-btn orange" onclick="scoutFilter(this, 'Photography')">📸 Photography</button>
+                        <button class="scout-cat-btn orange" onclick="scoutFilter(this, 'Writing')">✍️ Writing</button>
+                    </div>
+                </div>
+
+                <div class="scout-cat-group">
+                    <div class="scout-cat-group-header cyan">Technical</div>
+                    <div class="scout-btn-row">
+                        <button class="scout-cat-btn cyan" onclick="scoutFilter(this, 'Software')">💻 Software</button>
+                        <button class="scout-cat-btn cyan" onclick="scoutFilter(this, 'Code Tools')">🔧 Code Tools</button>
+                        <button class="scout-cat-btn cyan" onclick="scoutFilter(this, 'Data Science')">📊 Data Science</button>
+                    </div>
+                </div>
+
+                <div class="scout-cat-group">
+                    <div class="scout-cat-group-header silver">Other</div>
+                    <div class="scout-btn-row">
+                        <button class="scout-cat-btn silver" onclick="scoutFilter(this, 'Documents')">📄 Documents</button>
+                        <button class="scout-cat-btn silver" onclick="scoutFilter(this, 'Productivity')">✅ Productivity</button>
+                        <button class="scout-cat-btn silver" onclick="scoutFilter(this, 'Utilities')">🔧 Utilities</button>
+                        <button class="scout-cat-btn silver" onclick="scoutFilter(this, 'Games')">🎮 Games</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="scout-iframe-wrapper">
+                <iframe id="marketplace-scout-iframe" src="https://marketplace-scout.replit.app" allow="clipboard-read; clipboard-write" loading="lazy" title="Marketplace Scout Search Engine"></iframe>
+            </div>
+
+            <div class="scout-footer">
+                <a href="https://marketplace-scout.replit.app" target="_blank" rel="noopener noreferrer">🚀 Open Full Scout in New Tab →</a>
+            </div>
+
+            <script>
+                function scoutFilter(btn, category) {
+                    var iframe = document.getElementById('marketplace-scout-iframe');
+                    var allBtns = document.querySelectorAll('#marketplace-scout-section .scout-cat-btn');
+                    allBtns.forEach(function(b) { b.classList.remove('active'); });
+                    btn.classList.add('active');
+                    if (category) {
+                        iframe.src = 'https://marketplace-scout.replit.app/?q=' + encodeURIComponent(category);
+                    } else {
+                        iframe.src = 'https://marketplace-scout.replit.app';
+                    }
+                }
+            </script>
+        </div>
         
         <!-- Members Directory Link -->
         <div style="text-align: center; margin: 20px 0;">
