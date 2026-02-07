@@ -41,17 +41,19 @@ r.get("/api/market/search", async (req, res) => {
       .where(
         and(
           eq(marketItems.status, "ACTIVE"),
-          sql`${marketItems.searchText} ILIKE ${"%" + q + "%"}`
+          q ? sql`${marketItems.searchText} ILIKE ${"%" + q + "%"}` : sql`TRUE`
         )
       )
       .orderBy(desc(marketItems.createdAt))
       .limit(limit);
 
+    console.log(`Search for "${q}" returned ${items.length} items`);
+
     return res.json({
       items,
       total: items.length,
       notFound: items.length === 0,
-      requestHint: items.length === 0 ? { query: qRaw } : null,
+      requestHint: items.length === 0 ? { query: qRaw } : null
     });
   } catch (error) {
     console.error("Marketplace search error:", error);
