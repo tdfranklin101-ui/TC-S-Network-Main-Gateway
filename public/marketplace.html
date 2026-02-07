@@ -5688,7 +5688,7 @@
             searchBtn.disabled = true;
             searchBtn.innerHTML = '<span style="display:inline-block;width:16px;height:16px;border:2px solid #333;border-top-color:#000;border-radius:50%;animation:spin 1s linear infinite;"></span> Searching...';
             resultsContainer.classList.add('visible');
-            resultsGrid.innerHTML = tierStatusHtml('Tier 1', 'Searching member marketplace...', 'searching');
+            resultsGrid.innerHTML = tierStatusHtml('Tier 1', 'Searching TC-S Network member listings (Solar currency)...', 'searching');
 
             try {
                 var response = await fetch('/api/market/search?q=' + encodeURIComponent(query) + '&limit=20');
@@ -5697,13 +5697,13 @@
 
                 if (!data.notFound && data.items.length > 0) {
                     document.getElementById('search-results-count').textContent = data.items.length + ' result' + (data.items.length !== 1 ? 's' : '');
-                    resultsGrid.innerHTML = tierStatusHtml('Tier 1', 'Found in member marketplace', 'found');
+                    resultsGrid.innerHTML = tierStatusHtml('Tier 1', 'Available from TC-S Network members — purchase with Solar', 'found');
                     data.items.forEach(function(item) {
                         resultsGrid.appendChild(createSearchResultCard(item));
                     });
                 } else {
-                    resultsGrid.innerHTML = tierStatusHtml('Tier 1', 'Not found in member marketplace', 'notfound') +
-                        tierStatusHtml('Tier 2', 'Searching the web...', 'searching');
+                    resultsGrid.innerHTML = tierStatusHtml('Tier 1', 'Not available from TC-S Network members', 'notfound') +
+                        tierStatusHtml('Tier 2', 'Searching external web sources (fiat currency)...', 'searching');
                     document.getElementById('search-results-count').textContent = 'Searching web...';
 
                     await performWebSearch(query, resultsGrid);
@@ -5725,8 +5725,8 @@
 
                 if (data.success && data.webResults && data.webResults.length > 0) {
                     lastWebResults = data.webResults;
-                    resultsGrid.innerHTML = tierStatusHtml('Tier 1', 'Not found in member marketplace', 'notfound') +
-                        tierStatusHtml('Tier 2', 'Found ' + data.webResults.length + ' result' + (data.webResults.length !== 1 ? 's' : '') + ' on the web', 'found');
+                    resultsGrid.innerHTML = tierStatusHtml('Tier 1', 'Not available from TC-S Network members', 'notfound') +
+                        tierStatusHtml('Tier 2', 'Found ' + data.webResults.length + ' external source' + (data.webResults.length !== 1 ? 's' : '') + ' (fiat pricing — Solar equivalent shown for reference)', 'found');
                     document.getElementById('search-results-count').textContent = data.webResults.length + ' web result' + (data.webResults.length !== 1 ? 's' : '');
 
                     data.webResults.forEach(function(item) {
@@ -5735,18 +5735,18 @@
 
                     resultsGrid.appendChild(createVoucherPrompt(query));
                 } else {
-                    resultsGrid.innerHTML = tierStatusHtml('Tier 1', 'Not found in member marketplace', 'notfound') +
-                        tierStatusHtml('Tier 2', 'No web results found', 'notfound') +
-                        tierStatusHtml('Tier 3', 'Create a fulfillment voucher', 'action');
+                    resultsGrid.innerHTML = tierStatusHtml('Tier 1', 'Not available from TC-S Network members', 'notfound') +
+                        tierStatusHtml('Tier 2', 'No external web sources found', 'notfound') +
+                        tierStatusHtml('Tier 3', 'Request fulfillment from a TC-S Network participant (Solar)', 'action');
                     document.getElementById('search-results-count').textContent = '0 results';
 
                     resultsGrid.appendChild(createVoucherForm(query));
                 }
             } catch (err) {
                 console.error('Web search error:', err);
-                resultsGrid.innerHTML = tierStatusHtml('Tier 1', 'Not found in member marketplace', 'notfound') +
+                resultsGrid.innerHTML = tierStatusHtml('Tier 1', 'Not available from TC-S Network members', 'notfound') +
                     tierStatusHtml('Tier 2', 'Web search unavailable', 'notfound') +
-                    tierStatusHtml('Tier 3', 'Create a fulfillment voucher', 'action');
+                    tierStatusHtml('Tier 3', 'Request fulfillment from a TC-S Network participant (Solar)', 'action');
                 resultsGrid.appendChild(createVoucherForm(query));
             }
         }
@@ -5770,13 +5770,19 @@
             card.setAttribute('data-testid', 'card-item-' + item.id);
             var price = item.priceSolar || item.priceRay || '0';
             var priceUnit = item.priceSolar ? 'Solar' : 'Ray';
+            var kwhVal = (parseFloat(item.priceSolar || 0) * 4913).toFixed(2);
             card.innerHTML =
-                '<div class="artifact-category">' + (item.category || 'General') + '</div>' +
+                '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
+                    '<span class="artifact-category" style="background:rgba(57,255,20,0.15);color:#39FF14;">☀️ Member Listing</span>' +
+                    '<span style="font-size:10px;color:#39FF14;">Pay with Solar</span>' +
+                '</div>' +
                 '<div class="artifact-title">' + escapeHtml(item.title || 'Untitled') + '</div>' +
-                '<div class="artifact-price">' + price + ' ' + priceUnit + '</div>' +
-                '<div style="font-size:10px;color:#ffd700;margin-top:2px;">⚡ ~' + (parseFloat(item.priceSolar || 0) * 4913).toFixed(2) + ' kWh energy footprint</div>' +
-                '<div style="font-size:9px;color:#666;margin-top:1px;font-style:italic;">1 Solar = 4,913 kWh · Solar is the medium of exchange within the TC-S Network · No fiat-to-Solar exchange outside the network</div>' +
-                (item.description ? '<p style="color:#888;font-size:14px;margin-bottom:15px;line-height:1.4;">' + escapeHtml(item.description.substring(0, 120)) + (item.description.length > 120 ? '...' : '') + '</p>' : '') +
+                '<div style="margin:10px 0;padding:8px 12px;background:rgba(57,255,20,0.06);border-left:3px solid #39FF14;border-radius:0 6px 6px 0;">' +
+                    '<div style="color:#39FF14;font-size:15px;font-weight:700;">' + price + ' ' + priceUnit + '</div>' +
+                    '<div style="font-size:11px;color:#ffd700;margin-top:3px;">⚡ ' + kwhVal + ' kWh energy footprint</div>' +
+                    '<div style="font-size:9px;color:#777;margin-top:3px;">1 Solar = 4,913 kWh · Transacts in Solar within TC-S Network</div>' +
+                '</div>' +
+                (item.description ? '<p style="color:#999;font-size:13px;margin-bottom:12px;line-height:1.5;">' + escapeHtml(item.description.substring(0, 120)) + (item.description.length > 120 ? '...' : '') + '</p>' : '') +
                 '<button class="purchase-btn" onclick="viewArtifactDetails(\'' + item.id + '\')">View Details</button>';
             return card;
         }
@@ -5785,22 +5791,28 @@
             var card = document.createElement('div');
             card.className = 'artifact-card';
             card.style.borderColor = '#00bfff';
+            var solarVal = parseFloat(item.estimatedPriceSolar || 0);
+            var kwhVal = parseFloat(item.kwhEquivalent || 0);
             card.innerHTML =
                 '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
                     '<span class="artifact-category" style="background:rgba(0,191,255,0.2);color:#00bfff;">🌐 Web Result</span>' +
-                    '<span style="font-size:10px;color:#888;">via ' + escapeHtml(item.source || 'Web') + '</span>' +
+                    '<span style="font-size:10px;color:#888;">Found via ' + escapeHtml(item.source || 'Web') + '</span>' +
                 '</div>' +
                 '<div class="artifact-title">' + escapeHtml(item.title || 'Untitled') + '</div>' +
-                '<div style="display:flex;gap:15px;margin:8px 0;">' +
-                    '<div style="color:#ffd700;font-size:14px;">~$' + (item.estimatedPriceUSD || '0') + ' USD (Fiat)</div>' +
+                (item.description ? '<p style="color:#999;font-size:13px;margin:8px 0;line-height:1.5;">' + escapeHtml(item.description.substring(0, 150)) + '</p>' : '') +
+                '<div style="display:flex;gap:12px;margin:10px 0;">' +
+                    '<div style="flex:1;padding:8px 12px;background:rgba(255,215,0,0.06);border-left:3px solid #ffd700;border-radius:0 6px 6px 0;">' +
+                        '<div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.5px;">Fiat Price (External)</div>' +
+                        '<div style="color:#ffd700;font-size:16px;font-weight:700;margin-top:2px;">$' + (item.estimatedPriceUSD || '0') + ' USD</div>' +
+                    '</div>' +
+                    '<div style="flex:1;padding:8px 12px;background:rgba(57,255,20,0.06);border-left:3px solid #39FF14;border-radius:0 6px 6px 0;">' +
+                        '<div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.5px;">Solar Equivalent (Educational)</div>' +
+                        '<div style="color:#39FF14;font-size:16px;font-weight:700;margin-top:2px;">' + solarVal.toFixed(6) + ' Solar</div>' +
+                        '<div style="font-size:10px;color:#ffd700;margin-top:2px;">⚡ ' + kwhVal.toFixed(2) + ' kWh</div>' +
+                    '</div>' +
                 '</div>' +
-                '<div style="padding:6px 10px;background:rgba(57,255,20,0.06);border:1px solid rgba(57,255,20,0.15);border-radius:6px;margin-bottom:8px;">' +
-                    '<div style="color:#39FF14;font-size:13px;">Solar equivalent: ~' + (item.estimatedPriceSolar || '0') + ' Solar</div>' +
-                    '<div style="font-size:10px;color:#ffd700;margin-top:2px;">⚡ ~' + (item.kwhEquivalent || '0') + ' kWh energy footprint</div>' +
-                    '<div style="font-size:9px;color:#888;margin-top:3px;font-style:italic;">1 Solar = 4,913 kWh · Solar is the currency of the TC-S Network · Fiat price shown for reference only — no fiat-to-Solar exchange outside the network</div>' +
-                '</div>' +
-                (item.description ? '<p style="color:#888;font-size:13px;margin-bottom:12px;line-height:1.4;">' + escapeHtml(item.description.substring(0, 150)) + '</p>' : '') +
-                (item.url ? '<a href="' + escapeHtml(item.url) + '" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:6px 14px;background:rgba(0,191,255,0.15);border:1px solid #00bfff;color:#00bfff;border-radius:6px;text-decoration:none;font-size:12px;margin-right:8px;">View Source ↗</a>' : '');
+                '<div style="font-size:9px;color:#777;padding:4px 0;margin-bottom:10px;">Solar shown for energy context only — this is an external listing, not a TC-S Network transaction. No fiat-to-Solar exchange outside the network.</div>' +
+                (item.url ? '<a href="' + escapeHtml(item.url) + '" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:8px 16px;background:rgba(0,191,255,0.12);border:1px solid #00bfff;color:#00bfff;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600;">View Source ↗</a>' : '');
             return card;
         }
 
@@ -5808,8 +5820,8 @@
             var div = document.createElement('div');
             div.style.cssText = 'grid-column:1/-1;text-align:center;padding:25px;background:linear-gradient(135deg,rgba(255,165,0,0.08),rgba(138,43,226,0.08));border:1px solid rgba(255,165,0,0.3);border-radius:12px;margin-top:15px;';
             div.innerHTML =
-                '<p style="color:#ffa500;font-size:16px;font-weight:600;margin-bottom:8px;">📋 Tier 3: Not what you need?</p>' +
-                '<p style="color:#aaa;font-size:13px;margin-bottom:15px;">Create a fulfillment voucher and a network participant will source it for you.</p>' +
+                '<p style="color:#ffa500;font-size:16px;font-weight:600;margin-bottom:8px;">📋 Not what you need?</p>' +
+                '<p style="color:#aaa;font-size:13px;margin-bottom:15px;">Create a fulfillment voucher and a TC-S Network participant will source it for you — payable in Solar.</p>' +
                 '<button onclick="this.parentElement.innerHTML=\'\';this.parentElement.appendChild(createVoucherForm(\'' + escapeHtml(query).replace(/'/g, "\\'") + '\'))" style="padding:10px 24px;background:linear-gradient(135deg,#ffa500,#ff6b35);color:#000;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:14px;">Create Fulfillment Voucher</button>';
             return div;
         }
