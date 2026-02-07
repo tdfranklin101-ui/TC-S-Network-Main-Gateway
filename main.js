@@ -7950,6 +7950,139 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Web Search API - uses OpenAI to find products on the web when not found locally
+  if (pathname === '/api/market/web-search' && req.method === 'GET') {
+    try {
+      const wsUrl = new URL(req.url, `http://${req.headers.host}`);
+      const qRaw = (wsUrl.searchParams.get('q') || '').trim();
+      if (!qRaw) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Missing search query parameter: q' }));
+        return;
+      }
+
+      const openaiKey = process.env.OPENAI_API_KEY || process.env.NEW_OPENAI_API_KEY;
+      if (!openaiKey) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Web search not available' }));
+        return;
+      }
+
+      const OpenAI = require('openai');
+      const openai = new OpenAI({ apiKey: openaiKey });
+
+      const response = await openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'system',
+            content: `You are a product research assistant for the TC-S Network marketplace. When given a search query, find 3-5 real products or items that match. For each product provide:
+- title: product name
+- description: brief description (1-2 sentences)
+- estimatedPriceUSD: estimated price in US dollars (number only)
+- source: where to buy it (store or platform name)
+- url: a plausible purchase URL
+
+Respond ONLY with valid JSON in this exact format:
+{"products": [{"title": "...", "description": "...", "estimatedPriceUSD": 29.99, "source": "Amazon", "url": "https://..."}]}`
+          },
+          {
+            role: 'user',
+            content: `Find real products matching: "${qRaw.trim()}"`
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 1500
+      });
+
+      const raw = response.choices[0]?.message?.content || '{}';
+      let parsed;
+      try {
+        const jsonMatch = raw.match(/\{[\s\S]*\}/);
+        parsed = JSON.parse(jsonMatch ? jsonMatch[0] : raw);
+      } catch (parseErr) {
+        parsed = { products: [] };
+      }
+
+      const SOLAR_USD_RATE = 491;
+      const KWH_PER_SOLAR = 4913;
+
+      const webResults = (parsed.products || []).map(p => {
+        const priceUSD = parseFloat(p.estimatedPriceUSD) || 0;
+        const priceSolar = priceUSD / SOLAR_USD_RATE;
+        const kwhEquivalent = priceSolar * KWH_PER_SOLAR;
+        return {
+          title: p.title || 'Unknown Product',
+          description: p.description || '',
+          estimatedPriceUSD: priceUSD,
+          estimatedPriceSolar: parseFloat(priceSolar.toFixed(6)),
+          kwhEquivalent: parseFloat(kwhEquivalent.toFixed(4)),
+          source: p.source || 'Unknown',
+          url: p.url || ''
+        };
+      });
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        query: qRaw.trim(),
+        webResults,
+        message: `Found ${webResults.length} product(s) via web search for "${qRaw.trim()}"`
+      }));
+    } catch (error) {
+      console.error('Web search error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Web search failed' }));
+    }
+    return;
+  }
+
+  // Voucher Request API - creates a fulfillment voucher request for web-searched items
+  if (pathname === '/api/market/voucher-request' && req.method === 'POST') {
+    try {
+      const body = await parseBody(req);
+      const query = (body.query || '').trim();
+      const webSearchContext = body.webSearchContext || {};
+      const requestedBy = body.requestedBy || 'anonymous';
+      const notes = body.notes || '';
+
+      if (!query) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Missing query field' }));
+        return;
+      }
+
+      const constraints = {
+        type: 'VOUCHER',
+        webSearchContext,
+        notes,
+        createdAt: new Date().toISOString()
+      };
+
+      const result = await pool.query(
+        `INSERT INTO market_requests (query, constraints, requested_by_user_id, status, result_count_at_request_time)
+         VALUES ($1, $2, $3, 'VOUCHER_REQUESTED', 0)
+         RETURNING id`,
+        [query, JSON.stringify(constraints), requestedBy]
+      );
+
+      const voucherId = result.rows[0].id;
+      console.log(`🎫 Voucher request created: "${query}" by ${requestedBy} (ID: ${voucherId})`);
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        voucherId,
+        message: 'Fulfillment voucher created. A network participant will fulfill your request.'
+      }));
+    } catch (error) {
+      console.error('Voucher request error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Voucher request failed' }));
+    }
+    return;
+  }
+
   // Marketplace Item Request API - allows users to request items not found
   if (pathname === '/api/market/requests' && req.method === 'POST') {
     try {

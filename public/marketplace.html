@@ -5668,6 +5668,8 @@
             }
         }
 
+        let lastWebResults = null;
+
         async function performSearch() {
             const searchInput = document.getElementById('search-input');
             const query = searchInput.value.trim();
@@ -5675,6 +5677,7 @@
             if (isSearching) return;
             isSearching = true;
             lastSearchQuery = query;
+            lastWebResults = null;
 
             const searchBtn = document.getElementById('search-btn');
             const resultsContainer = document.getElementById('search-results-container');
@@ -5683,21 +5686,25 @@
             searchBtn.disabled = true;
             searchBtn.innerHTML = '<span style="display:inline-block;width:16px;height:16px;border:2px solid #333;border-top-color:#000;border-radius:50%;animation:spin 1s linear infinite;"></span> Searching...';
             resultsContainer.classList.add('visible');
-            resultsGrid.innerHTML = '<div style="text-align:center;padding:30px;color:#00ffff;"><span style="display:inline-block;width:24px;height:24px;border:3px solid #333;border-top-color:#00ffff;border-radius:50%;animation:spin 1s linear infinite;margin-right:10px;vertical-align:middle;"></span>Searching marketplace...</div>';
+            resultsGrid.innerHTML = tierStatusHtml('Tier 1', 'Searching member marketplace...', 'searching');
 
             try {
-                const response = await fetch(`/api/market/search?q=${encodeURIComponent(query)}&limit=20`);
-                const data = await response.json();
+                var response = await fetch('/api/market/search?q=' + encodeURIComponent(query) + '&limit=20');
+                var data = await response.json();
                 resultsGrid.innerHTML = '';
 
-                if (data.notFound || data.items.length === 0) {
-                    document.getElementById('search-results-count').textContent = '0 results';
-                    resultsGrid.innerHTML = '<div style="text-align:center;padding:30px;color:#888;"><p style="font-size:18px;margin-bottom:10px;">No items found for "<span style="color:#00ffff;">' + escapeHtml(query) + '</span>"</p><p style="font-size:14px;">Try a different search or browse categories below.</p></div>';
-                } else {
-                    document.getElementById('search-results-count').textContent = `${data.items.length} result${data.items.length !== 1 ? 's' : ''}`;
-                    data.items.forEach(item => {
+                if (!data.notFound && data.items.length > 0) {
+                    document.getElementById('search-results-count').textContent = data.items.length + ' result' + (data.items.length !== 1 ? 's' : '');
+                    resultsGrid.innerHTML = tierStatusHtml('Tier 1', 'Found in member marketplace', 'found');
+                    data.items.forEach(function(item) {
                         resultsGrid.appendChild(createSearchResultCard(item));
                     });
+                } else {
+                    resultsGrid.innerHTML = tierStatusHtml('Tier 1', 'Not found in member marketplace', 'notfound') +
+                        tierStatusHtml('Tier 2', 'Searching the web...', 'searching');
+                    document.getElementById('search-results-count').textContent = 'Searching web...';
+
+                    await performWebSearch(query, resultsGrid);
                 }
             } catch (error) {
                 console.error('Search error:', error);
@@ -5709,25 +5716,171 @@
             }
         }
 
+        async function performWebSearch(query, resultsGrid) {
+            try {
+                var response = await fetch('/api/market/web-search?q=' + encodeURIComponent(query));
+                var data = await response.json();
+
+                if (data.success && data.webResults && data.webResults.length > 0) {
+                    lastWebResults = data.webResults;
+                    resultsGrid.innerHTML = tierStatusHtml('Tier 1', 'Not found in member marketplace', 'notfound') +
+                        tierStatusHtml('Tier 2', 'Found ' + data.webResults.length + ' result' + (data.webResults.length !== 1 ? 's' : '') + ' on the web', 'found');
+                    document.getElementById('search-results-count').textContent = data.webResults.length + ' web result' + (data.webResults.length !== 1 ? 's' : '');
+
+                    data.webResults.forEach(function(item) {
+                        resultsGrid.appendChild(createWebResultCard(item));
+                    });
+
+                    resultsGrid.appendChild(createVoucherPrompt(query));
+                } else {
+                    resultsGrid.innerHTML = tierStatusHtml('Tier 1', 'Not found in member marketplace', 'notfound') +
+                        tierStatusHtml('Tier 2', 'No web results found', 'notfound') +
+                        tierStatusHtml('Tier 3', 'Create a fulfillment voucher', 'action');
+                    document.getElementById('search-results-count').textContent = '0 results';
+
+                    resultsGrid.appendChild(createVoucherForm(query));
+                }
+            } catch (err) {
+                console.error('Web search error:', err);
+                resultsGrid.innerHTML = tierStatusHtml('Tier 1', 'Not found in member marketplace', 'notfound') +
+                    tierStatusHtml('Tier 2', 'Web search unavailable', 'notfound') +
+                    tierStatusHtml('Tier 3', 'Create a fulfillment voucher', 'action');
+                resultsGrid.appendChild(createVoucherForm(query));
+            }
+        }
+
+        function tierStatusHtml(tier, message, status) {
+            var colors = { searching: '#00ffff', found: '#39FF14', notfound: '#888', action: '#ffa500' };
+            var icons = { searching: '⏳', found: '✅', notfound: '—', action: '📋' };
+            var color = colors[status] || '#888';
+            var icon = icons[status] || '';
+            var spinner = status === 'searching' ? '<span style="display:inline-block;width:14px;height:14px;border:2px solid #333;border-top-color:' + color + ';border-radius:50%;animation:spin 1s linear infinite;margin-right:6px;vertical-align:middle;"></span>' : '';
+            return '<div style="display:flex;align-items:center;gap:10px;padding:8px 15px;margin-bottom:4px;border-left:3px solid ' + color + ';background:rgba(0,0,0,0.3);border-radius:0 8px 8px 0;">' +
+                '<span style="color:' + color + ';font-weight:700;font-size:11px;text-transform:uppercase;min-width:45px;">' + tier + '</span>' +
+                spinner +
+                '<span style="color:' + color + ';font-size:13px;">' + icon + ' ' + message + '</span>' +
+                '</div>';
+        }
+
         function createSearchResultCard(item) {
-            const card = document.createElement('div');
+            var card = document.createElement('div');
             card.className = 'artifact-card';
-            card.setAttribute('data-testid', `card-item-${item.id}`);
-            const price = item.priceSolar || item.priceRay || '0';
-            const priceUnit = item.priceSolar ? 'Solar' : 'Ray';
-            card.innerHTML = `
-                <div class="artifact-category">${item.category || 'General'}</div>
-                <div class="artifact-title">${escapeHtml(item.title || 'Untitled')}</div>
-                <div class="artifact-price">${price} ${priceUnit}</div>
-                <div style="font-size:10px;color:#ffd700;margin-top:2px;">⚡ ~${(parseFloat(item.priceSolar || 0) * 4913).toFixed(2)} kWh energy value</div>
-                ${item.description ? `<p style="color:#888;font-size:14px;margin-bottom:15px;line-height:1.4;">${escapeHtml(item.description.substring(0, 120))}${item.description.length > 120 ? '...' : ''}</p>` : ''}
-                <button class="purchase-btn" onclick="viewArtifactDetails('${item.id}')">View Details</button>
-            `;
+            card.setAttribute('data-testid', 'card-item-' + item.id);
+            var price = item.priceSolar || item.priceRay || '0';
+            var priceUnit = item.priceSolar ? 'Solar' : 'Ray';
+            card.innerHTML =
+                '<div class="artifact-category">' + (item.category || 'General') + '</div>' +
+                '<div class="artifact-title">' + escapeHtml(item.title || 'Untitled') + '</div>' +
+                '<div class="artifact-price">' + price + ' ' + priceUnit + '</div>' +
+                '<div style="font-size:10px;color:#ffd700;margin-top:2px;">⚡ ~' + (parseFloat(item.priceSolar || 0) * 4913).toFixed(2) + ' kWh energy value</div>' +
+                (item.description ? '<p style="color:#888;font-size:14px;margin-bottom:15px;line-height:1.4;">' + escapeHtml(item.description.substring(0, 120)) + (item.description.length > 120 ? '...' : '') + '</p>' : '') +
+                '<button class="purchase-btn" onclick="viewArtifactDetails(\'' + item.id + '\')">View Details</button>';
             return card;
         }
 
+        function createWebResultCard(item) {
+            var card = document.createElement('div');
+            card.className = 'artifact-card';
+            card.style.borderColor = '#00bfff';
+            card.innerHTML =
+                '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
+                    '<span class="artifact-category" style="background:rgba(0,191,255,0.2);color:#00bfff;">🌐 Web Result</span>' +
+                    '<span style="font-size:10px;color:#888;">via ' + escapeHtml(item.source || 'Web') + '</span>' +
+                '</div>' +
+                '<div class="artifact-title">' + escapeHtml(item.title || 'Untitled') + '</div>' +
+                '<div style="display:flex;gap:15px;margin:8px 0;">' +
+                    '<div class="artifact-price" style="color:#39FF14;">~' + (item.estimatedPriceSolar || '0') + ' Solar</div>' +
+                    '<div style="color:#ffd700;font-size:14px;">~$' + (item.estimatedPriceUSD || '0') + ' USD</div>' +
+                '</div>' +
+                '<div style="font-size:10px;color:#ffd700;margin-bottom:8px;">⚡ ~' + (item.kwhEquivalent || '0') + ' kWh energy value</div>' +
+                (item.description ? '<p style="color:#888;font-size:13px;margin-bottom:12px;line-height:1.4;">' + escapeHtml(item.description.substring(0, 150)) + '</p>' : '') +
+                (item.url ? '<a href="' + escapeHtml(item.url) + '" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:6px 14px;background:rgba(0,191,255,0.15);border:1px solid #00bfff;color:#00bfff;border-radius:6px;text-decoration:none;font-size:12px;margin-right:8px;">View Source ↗</a>' : '');
+            return card;
+        }
+
+        function createVoucherPrompt(query) {
+            var div = document.createElement('div');
+            div.style.cssText = 'grid-column:1/-1;text-align:center;padding:25px;background:linear-gradient(135deg,rgba(255,165,0,0.08),rgba(138,43,226,0.08));border:1px solid rgba(255,165,0,0.3);border-radius:12px;margin-top:15px;';
+            div.innerHTML =
+                '<p style="color:#ffa500;font-size:16px;font-weight:600;margin-bottom:8px;">📋 Tier 3: Not what you need?</p>' +
+                '<p style="color:#aaa;font-size:13px;margin-bottom:15px;">Create a fulfillment voucher and a network participant will source it for you.</p>' +
+                '<button onclick="this.parentElement.innerHTML=\'\';this.parentElement.appendChild(createVoucherForm(\'' + escapeHtml(query).replace(/'/g, "\\'") + '\'))" style="padding:10px 24px;background:linear-gradient(135deg,#ffa500,#ff6b35);color:#000;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:14px;">Create Fulfillment Voucher</button>';
+            return div;
+        }
+
+        function createVoucherForm(query) {
+            var form = document.createElement('div');
+            form.style.cssText = 'grid-column:1/-1;padding:25px;background:linear-gradient(135deg,rgba(255,165,0,0.08),rgba(138,43,226,0.08));border:1px solid rgba(255,165,0,0.3);border-radius:12px;margin-top:10px;';
+            form.innerHTML =
+                '<p style="color:#ffa500;font-size:16px;font-weight:700;margin-bottom:15px;">📋 Create Fulfillment Voucher</p>' +
+                '<p style="color:#aaa;font-size:13px;margin-bottom:15px;">A network participant (3D printer, repair service, sourcer) will fulfill your request.</p>' +
+                '<div style="margin-bottom:12px;">' +
+                    '<label style="color:#ccc;font-size:12px;display:block;margin-bottom:4px;">What do you need?</label>' +
+                    '<input id="voucher-query" type="text" value="' + escapeHtml(query) + '" style="width:100%;padding:10px;background:#1a1a2e;border:1px solid #333;color:#fff;border-radius:6px;font-size:14px;box-sizing:border-box;" />' +
+                '</div>' +
+                '<div style="margin-bottom:12px;">' +
+                    '<label style="color:#ccc;font-size:12px;display:block;margin-bottom:4px;">Additional notes (optional)</label>' +
+                    '<textarea id="voucher-notes" rows="2" placeholder="Size, color, condition, urgency..." style="width:100%;padding:10px;background:#1a1a2e;border:1px solid #333;color:#fff;border-radius:6px;font-size:14px;resize:vertical;box-sizing:border-box;"></textarea>' +
+                '</div>' +
+                '<button onclick="submitVoucherRequest()" id="voucher-submit-btn" style="padding:12px 28px;background:linear-gradient(135deg,#ffa500,#ff6b35);color:#000;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:14px;width:100%;">Submit Voucher Request</button>' +
+                '<div id="voucher-status" style="margin-top:10px;text-align:center;"></div>';
+            return form;
+        }
+
+        async function submitVoucherRequest() {
+            var queryEl = document.getElementById('voucher-query');
+            var notesEl = document.getElementById('voucher-notes');
+            var btn = document.getElementById('voucher-submit-btn');
+            var statusEl = document.getElementById('voucher-status');
+            var query = queryEl ? queryEl.value.trim() : '';
+            var notes = notesEl ? notesEl.value.trim() : '';
+
+            if (!query) { statusEl.innerHTML = '<span style="color:#ff6b35;">Please enter what you need.</span>'; return; }
+
+            btn.disabled = true;
+            btn.textContent = 'Submitting...';
+            statusEl.innerHTML = '';
+
+            var requestedBy = 'anonymous';
+            if (typeof currentUser !== 'undefined' && currentUser && currentUser.userId) {
+                requestedBy = currentUser.userId;
+            }
+
+            try {
+                var response = await fetch('/api/market/voucher-request', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: query,
+                        webSearchContext: lastWebResults,
+                        requestedBy: requestedBy,
+                        notes: notes
+                    })
+                });
+                var data = await response.json();
+
+                if (data.success) {
+                    statusEl.innerHTML = '<div style="padding:15px;background:rgba(57,255,20,0.1);border:1px solid #39FF14;border-radius:8px;margin-top:10px;">' +
+                        '<p style="color:#39FF14;font-weight:700;font-size:15px;">✅ Voucher Created</p>' +
+                        '<p style="color:#aaa;font-size:13px;margin-top:5px;">Request ID: ' + (data.voucherId || 'N/A') + '</p>' +
+                        '<p style="color:#aaa;font-size:12px;margin-top:3px;">A network participant will fulfill your request.</p>' +
+                        '</div>';
+                    btn.style.display = 'none';
+                } else {
+                    statusEl.innerHTML = '<span style="color:#ff6b35;">' + (data.error || 'Failed to create voucher. Try again.') + '</span>';
+                    btn.disabled = false;
+                    btn.textContent = 'Submit Voucher Request';
+                }
+            } catch (err) {
+                console.error('Voucher request error:', err);
+                statusEl.innerHTML = '<span style="color:#ff6b35;">Network error. Please try again.</span>';
+                btn.disabled = false;
+                btn.textContent = 'Submit Voucher Request';
+            }
+        }
+
         function escapeHtml(text) {
-            const div = document.createElement('div');
+            var div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
         }
@@ -5735,11 +5888,12 @@
         function clearSearch() {
             document.getElementById('search-input').value = '';
             lastSearchQuery = '';
+            lastWebResults = null;
             document.getElementById('search-results-container').classList.remove('visible');
         }
 
         function viewArtifactDetails(artifactId) {
-            const mainCard = document.querySelector(`.artifact-card[data-id="${artifactId}"]`);
+            var mainCard = document.querySelector('.artifact-card[data-id="' + artifactId + '"]');
             if (mainCard) {
                 mainCard.click();
             } else {
