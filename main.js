@@ -7864,6 +7864,135 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Marketplace Search API - searches market_items table in PostgreSQL
+  if (pathname === '/api/market/search' && req.method === 'GET') {
+    try {
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      const qRaw = (url.searchParams.get('q') || '').trim();
+      const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 50);
+
+      if (!qRaw) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ items: [], total: 0, notFound: false }));
+        return;
+      }
+
+      const q = qRaw.toLowerCase().replace(/[^a-z0-9\s]+/g, ' ').replace(/\s+/g, ' ').trim();
+
+      // Search market_items by search_text, title, or category
+      const result = await pool.query(
+        `SELECT * FROM market_items 
+         WHERE status = 'ACTIVE' 
+         AND (search_text ILIKE $1 OR title ILIKE $1 OR category ILIKE $1)
+         ORDER BY created_at DESC 
+         LIMIT $2`,
+        ['%' + q + '%', limit]
+      );
+
+      const items = result.rows.map(row => ({
+        id: row.id,
+        title: row.title,
+        description: row.description,
+        tags: row.tags,
+        category: row.category,
+        priceSolar: row.price_solar,
+        priceFiatOptional: row.price_fiat_optional,
+        kwhEstimate: row.kwh_estimate,
+        sourceType: row.source_type,
+        sourceUrl: row.source_url,
+        vendorName: row.vendor_name,
+        status: row.status,
+        imageUrl: row.image_url,
+        createdAt: row.created_at
+      }));
+
+      // Also search artifacts table for uploaded marketplace items
+      let artifactItems = [];
+      try {
+        const artifactResult = await pool.query(
+          `SELECT * FROM artifacts 
+           WHERE active = true 
+           AND (title ILIKE $1 OR description ILIKE $1 OR category ILIKE $1)
+           ORDER BY created_at DESC 
+           LIMIT $2`,
+          ['%' + q + '%', limit]
+        );
+        artifactItems = artifactResult.rows.map(row => ({
+          id: row.id,
+          title: row.title,
+          description: row.description,
+          tags: row.tags || [],
+          category: row.category,
+          priceSolar: row.price_solar ? String(row.price_solar) : '0.001',
+          kwhEstimate: row.kwh_estimate ? String(row.kwh_estimate) : '0',
+          sourceType: 'ARTIFACT',
+          imageUrl: row.preview_url || row.file_url,
+          createdAt: row.created_at
+        }));
+      } catch (artErr) {
+        // Artifacts table might not exist, that's okay
+      }
+
+      const allItems = [...items, ...artifactItems];
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        items: allItems,
+        total: allItems.length,
+        notFound: allItems.length === 0,
+        requestHint: allItems.length === 0 ? { query: qRaw } : null
+      }));
+    } catch (error) {
+      console.error('Marketplace search error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Search failed', items: [], total: 0 }));
+    }
+    return;
+  }
+
+  // Marketplace Item Request API - allows users to request items not found
+  if (pathname === '/api/market/requests' && req.method === 'POST') {
+    try {
+      const body = await parseBody(req);
+      const query = (body.query || '').trim();
+      const constraints = body.constraints || {};
+      const requestedByUserId = body.requestedByUserId || 'anonymous';
+
+      if (!query) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Missing query' }));
+        return;
+      }
+
+      const q = query.toLowerCase().replace(/[^a-z0-9\s]+/g, ' ').replace(/\s+/g, ' ').trim();
+
+      // Check if any existing matches
+      const matches = await pool.query(
+        `SELECT id FROM market_items WHERE status = 'ACTIVE' AND search_text ILIKE $1 LIMIT 1`,
+        ['%' + q + '%']
+      );
+
+      // Insert the request
+      const result = await pool.query(
+        `INSERT INTO market_requests (query, constraints, requested_by_user_id, status, result_count_at_request_time)
+         VALUES ($1, $2, $3, 'NEW', $4)
+         RETURNING id, status`,
+        [query, JSON.stringify(constraints), requestedByUserId, matches.rows.length]
+      );
+
+      const created = result.rows[0];
+      console.log(`📦 New marketplace request: "${query}" by ${requestedByUserId}`);
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ requestId: created.id, status: created.status }));
+    } catch (error) {
+      console.error('Marketplace request error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Request submission failed' }));
+    }
+    return;
+  }
+
   // NEW: Monazite Collection API - Serve seeded marketplace artifacts
   if (pathname === '/api/marketplace/monazite' && req.method === 'GET') {
     try {
