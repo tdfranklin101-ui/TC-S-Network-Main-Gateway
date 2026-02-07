@@ -5691,23 +5691,61 @@
             resultsGrid.innerHTML = tierStatusHtml('Tier 1', 'Searching TC-S Network member listings (Solar currency)...', 'searching');
 
             try {
+                var memberCount = 0;
+                var webCount = 0;
+
                 var response = await fetch('/api/market/search?q=' + encodeURIComponent(query) + '&limit=20');
                 var data = await response.json();
                 resultsGrid.innerHTML = '';
 
                 if (!data.notFound && data.items.length > 0) {
-                    document.getElementById('search-results-count').textContent = data.items.length + ' result' + (data.items.length !== 1 ? 's' : '');
-                    resultsGrid.innerHTML = tierStatusHtml('Tier 1', 'Available from TC-S Network members — purchase with Solar', 'found');
+                    memberCount = data.items.length;
+                    resultsGrid.innerHTML = tierStatusHtml('Tier 1', 'Available from TC-S Network members — purchase with Solar (' + memberCount + ' listing' + (memberCount !== 1 ? 's' : '') + ')', 'found');
                     data.items.forEach(function(item) {
                         resultsGrid.appendChild(createSearchResultCard(item));
                     });
                 } else {
-                    resultsGrid.innerHTML = tierStatusHtml('Tier 1', 'Not available from TC-S Network members', 'notfound') +
-                        tierStatusHtml('Tier 2', 'Searching external web sources (fiat currency)...', 'searching');
-                    document.getElementById('search-results-count').textContent = 'Searching web...';
-
-                    await performWebSearch(query, resultsGrid);
+                    resultsGrid.innerHTML = tierStatusHtml('Tier 1', 'Not available from TC-S Network members', 'notfound');
                 }
+
+                var tier2Status = document.createElement('div');
+                tier2Status.id = 'tier2-status';
+                tier2Status.style.cssText = 'grid-column:1/-1;';
+                tier2Status.innerHTML = tierStatusHtml('Tier 2', 'Searching external web sources (fiat currency)...', 'searching');
+                resultsGrid.appendChild(tier2Status);
+
+                try {
+                    var wsResponse = await fetch('/api/market/web-search?q=' + encodeURIComponent(query));
+                    var wsData = await wsResponse.json();
+
+                    if (wsData.success && wsData.webResults && wsData.webResults.length > 0) {
+                        lastWebResults = wsData.webResults;
+                        webCount = wsData.webResults.length;
+                        tier2Status.innerHTML = tierStatusHtml('Tier 2', 'Found ' + webCount + ' external source' + (webCount !== 1 ? 's' : '') + ' (fiat pricing — Solar equivalent shown for reference)', 'found');
+
+                        wsData.webResults.forEach(function(item) {
+                            resultsGrid.appendChild(createWebResultCard(item));
+                        });
+                    } else {
+                        tier2Status.innerHTML = tierStatusHtml('Tier 2', 'No external web sources found', 'notfound');
+                    }
+                } catch (wsErr) {
+                    console.error('Web search error:', wsErr);
+                    tier2Status.innerHTML = tierStatusHtml('Tier 2', 'Web search unavailable', 'notfound');
+                }
+
+                var tier3Status = document.createElement('div');
+                tier3Status.style.cssText = 'grid-column:1/-1;';
+                tier3Status.innerHTML = tierStatusHtml('Tier 3', 'Request fulfillment from a TC-S Network participant (Solar)', 'action');
+                resultsGrid.appendChild(tier3Status);
+                resultsGrid.appendChild(createOpenVoucherSlot(query));
+
+                var parts = [];
+                if (memberCount > 0) parts.push(memberCount + ' member listing' + (memberCount !== 1 ? 's' : ''));
+                if (webCount > 0) parts.push(webCount + ' web source' + (webCount !== 1 ? 's' : ''));
+                parts.push('1 open request');
+                document.getElementById('search-results-count').textContent = parts.join(' + ');
+
             } catch (error) {
                 console.error('Search error:', error);
                 resultsGrid.innerHTML = '<div style="text-align:center;color:#ff6b35;padding:20px;">Error searching. Please try again.</div>';
@@ -5718,36 +5756,77 @@
             }
         }
 
-        async function performWebSearch(query, resultsGrid) {
+        function createOpenVoucherSlot(category) {
+            var slot = document.createElement('div');
+            slot.className = 'open-voucher-slot';
+            slot.style.cssText = 'grid-column:1/-1;padding:22px;background:linear-gradient(135deg,rgba(20,12,28,0.9),rgba(28,18,10,0.9));border:2px solid transparent;border-image:linear-gradient(135deg,#ffa500,#8a2be2) 1;border-radius:0;margin-top:18px;position:relative;overflow:hidden;';
+            var slotId = 'ovs-' + Date.now();
+            slot.innerHTML =
+                '<div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#ffa500,#8a2be2,#ffa500);"></div>' +
+                '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">' +
+                    '<span style="font-size:20px;">📢</span>' +
+                    '<span style="color:#ffa500;font-size:16px;font-weight:700;">Open Fulfillment Request</span>' +
+                '</div>' +
+                '<p style="color:#aaa;font-size:13px;margin-bottom:14px;line-height:1.5;">Need something in <span style="color:#ffd700;font-weight:600;">' + escapeHtml(category) + '</span>? Post a request and network participants will respond.</p>' +
+                '<div style="display:flex;gap:10px;align-items:stretch;">' +
+                    '<input id="' + slotId + '-input" type="text" value="' + escapeHtml(category) + '" placeholder="What do you need?" style="flex:1;padding:10px 14px;background:#1a1a2e;border:1px solid rgba(255,165,0,0.3);color:#fff;border-radius:8px;font-size:14px;outline:none;" onfocus="this.style.borderColor=\'#ffa500\'" onblur="this.style.borderColor=\'rgba(255,165,0,0.3)\'" />' +
+                    '<button id="' + slotId + '-btn" onclick="submitOpenVoucherSlot(\'' + slotId + '\')" style="padding:10px 20px;background:linear-gradient(135deg,#ffa500,#ff6b35);color:#000;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:14px;white-space:nowrap;transition:all 0.2s;" onmouseover="this.style.transform=\'translateY(-1px)\'" onmouseout="this.style.transform=\'none\'">Post Request</button>' +
+                '</div>' +
+                '<div id="' + slotId + '-status" style="margin-top:10px;"></div>';
+            return slot;
+        }
+
+        async function submitOpenVoucherSlot(slotId) {
+            var inputEl = document.getElementById(slotId + '-input');
+            var btn = document.getElementById(slotId + '-btn');
+            var statusEl = document.getElementById(slotId + '-status');
+            var query = inputEl ? inputEl.value.trim() : '';
+
+            if (!query) { statusEl.innerHTML = '<span style="color:#ff6b35;font-size:13px;">Please enter what you need.</span>'; return; }
+
+            btn.disabled = true;
+            btn.textContent = 'Posting...';
+            btn.style.opacity = '0.7';
+
+            var requestedBy = 'anonymous';
+            if (typeof currentUser !== 'undefined' && currentUser && currentUser.userId) {
+                requestedBy = currentUser.userId;
+            }
+
             try {
-                var response = await fetch('/api/market/web-search?q=' + encodeURIComponent(query));
+                var response = await fetch('/api/market/voucher-request', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: query,
+                        webSearchContext: lastWebResults,
+                        requestedBy: requestedBy,
+                        notes: 'Open fulfillment request from marketplace search'
+                    })
+                });
                 var data = await response.json();
 
-                if (data.success && data.webResults && data.webResults.length > 0) {
-                    lastWebResults = data.webResults;
-                    resultsGrid.innerHTML = tierStatusHtml('Tier 1', 'Not available from TC-S Network members', 'notfound') +
-                        tierStatusHtml('Tier 2', 'Found ' + data.webResults.length + ' external source' + (data.webResults.length !== 1 ? 's' : '') + ' (fiat pricing — Solar equivalent shown for reference)', 'found');
-                    document.getElementById('search-results-count').textContent = data.webResults.length + ' web result' + (data.webResults.length !== 1 ? 's' : '');
-
-                    data.webResults.forEach(function(item) {
-                        resultsGrid.appendChild(createWebResultCard(item));
-                    });
-
-                    resultsGrid.appendChild(createVoucherPrompt(query));
+                if (data.success) {
+                    statusEl.innerHTML = '<div style="padding:12px;background:rgba(57,255,20,0.08);border:1px solid rgba(57,255,20,0.3);border-radius:8px;">' +
+                        '<p style="color:#39FF14;font-weight:700;font-size:14px;">✅ Request Posted</p>' +
+                        '<p style="color:#aaa;font-size:12px;margin-top:4px;">Your request is now visible to fulfillment agents</p>' +
+                        (data.voucherId ? '<p style="color:#777;font-size:11px;margin-top:3px;">ID: ' + data.voucherId + '</p>' : '') +
+                        '</div>';
+                    btn.style.display = 'none';
+                    inputEl.disabled = true;
+                    inputEl.style.opacity = '0.5';
                 } else {
-                    resultsGrid.innerHTML = tierStatusHtml('Tier 1', 'Not available from TC-S Network members', 'notfound') +
-                        tierStatusHtml('Tier 2', 'No external web sources found', 'notfound') +
-                        tierStatusHtml('Tier 3', 'Request fulfillment from a TC-S Network participant (Solar)', 'action');
-                    document.getElementById('search-results-count').textContent = '0 results';
-
-                    resultsGrid.appendChild(createVoucherForm(query));
+                    statusEl.innerHTML = '<span style="color:#ff6b35;font-size:13px;">' + (data.error || 'Failed to post. Try again.') + '</span>';
+                    btn.disabled = false;
+                    btn.textContent = 'Post Request';
+                    btn.style.opacity = '1';
                 }
             } catch (err) {
-                console.error('Web search error:', err);
-                resultsGrid.innerHTML = tierStatusHtml('Tier 1', 'Not available from TC-S Network members', 'notfound') +
-                    tierStatusHtml('Tier 2', 'Web search unavailable', 'notfound') +
-                    tierStatusHtml('Tier 3', 'Request fulfillment from a TC-S Network participant (Solar)', 'action');
-                resultsGrid.appendChild(createVoucherForm(query));
+                console.error('Open voucher slot error:', err);
+                statusEl.innerHTML = '<span style="color:#ff6b35;font-size:13px;">Network error. Please try again.</span>';
+                btn.disabled = false;
+                btn.textContent = 'Post Request';
+                btn.style.opacity = '1';
             }
         }
 
