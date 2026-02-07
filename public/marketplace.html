@@ -2469,8 +2469,19 @@
                     var allBtns = document.querySelectorAll('#marketplace-scout-section .scout-cat-btn');
                     allBtns.forEach(function(b) { b.classList.remove('active'); });
                     btn.classList.add('active');
+                    
                     if (category) {
+                        // Update iframe
                         iframe.src = 'https://marketplace-scout.replit.app/?q=' + encodeURIComponent(category);
+                        
+                        // Also trigger internal marketplace search
+                        const searchInput = document.getElementById('search-input');
+                        if (searchInput) {
+                            searchInput.value = category;
+                            if (typeof performSearch === 'function') {
+                                performSearch();
+                            }
+                        }
                     } else {
                         iframe.src = 'https://marketplace-scout.replit.app';
                     }
