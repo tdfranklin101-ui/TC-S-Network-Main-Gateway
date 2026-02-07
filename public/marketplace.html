@@ -1958,6 +1958,8 @@
             border: 1px solid rgba(255, 193, 7, 0.3);
             border-radius: 12px;
             margin-top: 20px;
+            position: relative;
+            z-index: 1;
         }
 
         .not-found-panel h3 {
@@ -1981,6 +1983,31 @@
             max-width: 500px;
             margin-left: auto;
             margin-right: auto;
+            position: relative;
+            z-index: 1001;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+
+        .request-item-panel .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: #fff;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+        }
+
+        .request-item-panel .close-btn:hover {
+            background: rgba(255,255,255,0.2);
         }
 
         .request-item-panel h4 {
@@ -2188,6 +2215,7 @@
 
             <!-- Request Item Panel -->
             <div id="request-item-panel" class="request-item-panel" style="display: none;" data-testid="panel-request-item">
+                <button type="button" class="close-btn" onclick="closeRequestPanel()" title="Close">&times;</button>
                 <h4>📦 Request This Item</h4>
                 <p style="font-size: 0.9em; color: #888; margin-bottom: 15px;">
                     All requests require human approval. Our team reviews each request to ensure quality and fair pricing.
@@ -6003,6 +6031,13 @@
     
     <!-- Search and Request Functionality -->
     <script>
+        function closeRequestPanel() {
+            const requestPanel = document.getElementById('request-item-panel');
+            if (requestPanel) requestPanel.style.display = 'none';
+            const notFoundPanel = document.getElementById('not-found-panel');
+            if (notFoundPanel) notFoundPanel.style.display = 'none';
+        }
+
         // Search state
         let lastSearchQuery = '';
         let isSearching = false;
@@ -6017,6 +6052,8 @@
 
         // Perform search
         async function performSearch() {
+            // Close request panel if open to avoid blocking results
+            closeRequestPanel();
             const searchInput = document.getElementById('search-input');
             const query = searchInput.value.trim();
             
