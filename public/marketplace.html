@@ -1950,187 +1950,30 @@
             background: rgba(255, 107, 53, 0.2);
         }
 
-        /* Not Found Panel */
-        .not-found-panel {
-            text-align: center;
-            padding: 40px 20px;
-            background: rgba(255, 193, 7, 0.05);
-            border: 1px solid rgba(255, 193, 7, 0.3);
-            border-radius: 12px;
-            margin-top: 20px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .not-found-panel h3 {
-            font-size: 24px;
-            color: #ffc107;
-            margin-bottom: 10px;
-        }
-
-        .not-found-panel p {
-            color: #888;
-            margin-bottom: 20px;
-        }
-
-        /* Request Item Panel */
-        .request-item-panel {
-            background: linear-gradient(135deg, #1a1a1a, #2a1a2a);
-            border: 2px solid #00ffff;
-            border-radius: 12px;
-            padding: 30px;
-            margin-top: 20px;
-            max-width: 500px;
-            margin-left: auto;
-            margin-right: auto;
-            position: relative;
-            z-index: 1001;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-        }
-
-        .request-item-panel .close-btn {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: rgba(255,255,255,0.1);
-            border: none;
-            color: #fff;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
+        .scout-cat-btn {
+            background: rgba(10,10,10,0.8);
+            border: 1px solid rgba(0,191,255,0.4);
+            color: #e0e0e0;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 13px;
             cursor: pointer;
-            font-size: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.3s;
+            transition: all 0.25s ease;
+            white-space: nowrap;
         }
-
-        .request-item-panel .close-btn:hover {
-            background: rgba(255,255,255,0.2);
-        }
-
-        .request-item-panel h4 {
-            font-size: 20px;
-            color: #00ffff;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .request-form-group {
-            margin-bottom: 20px;
-        }
-
-        .request-form-group label {
-            display: block;
-            color: #ccc;
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-
-        .request-form-group input,
-        .request-form-group select {
-            width: 100%;
-            background: #0a0a0a;
-            border: 1px solid #333;
-            color: #ffffff;
-            padding: 12px 16px;
-            border-radius: 8px;
-            font-size: 14px;
-        }
-
-        .request-form-group input:focus,
-        .request-form-group select:focus {
-            outline: none;
-            border-color: #00ffff;
-        }
-
-        .request-form-group .hint {
-            font-size: 12px;
-            color: #666;
-            margin-top: 4px;
-        }
-
-        .submit-request-btn {
-            width: 100%;
-            background: linear-gradient(135deg, #00ffff, #00bfff);
-            color: #000;
-            border: none;
-            padding: 14px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-top: 10px;
-        }
-
-        .submit-request-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0, 255, 255, 0.4);
-        }
-
-        .submit-request-btn:disabled {
-            background: #333;
-            color: #666;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        /* Request Confirmation */
-        .request-confirmation {
-            text-align: center;
-            padding: 30px;
-            background: rgba(40, 167, 69, 0.1);
-            border: 1px solid #28a745;
-            border-radius: 12px;
-            margin-top: 20px;
-            display: none;
-        }
-
-        .request-confirmation.visible {
-            display: block;
-        }
-
-        .request-confirmation h4 {
-            font-size: 22px;
-            color: #28a745;
-            margin-bottom: 10px;
-        }
-
-        .request-confirmation p {
-            color: #888;
-            line-height: 1.5;
-        }
-
-        .request-confirmation .request-id {
-            font-family: monospace;
-            background: #1a1a1a;
-            padding: 8px 16px;
-            border-radius: 6px;
-            color: #00ffff;
-            display: inline-block;
-            margin-top: 15px;
-        }
-
-        .search-loading {
-            text-align: center;
-            padding: 30px;
-            color: #00ffff;
-        }
-
-        .search-loading .spinner {
-            display: inline-block;
-            width: 24px;
-            height: 24px;
-            border: 3px solid #333;
-            border-top-color: #00ffff;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-right: 10px;
-            vertical-align: middle;
-        }
+        .scout-cat-btn:hover { transform: translateY(-1px); }
+        .scout-cat-btn.green { border-color: rgba(0,255,136,0.5); }
+        .scout-cat-btn.green:hover, .scout-cat-btn.green.active { background: rgba(0,255,136,0.15); border-color: #00ff88; color: #00ff88; box-shadow: 0 0 12px rgba(0,255,136,0.3); }
+        .scout-cat-btn.purple { border-color: rgba(138,43,226,0.5); }
+        .scout-cat-btn.purple:hover, .scout-cat-btn.purple.active { background: rgba(138,43,226,0.15); border-color: #8a2be2; color: #8a2be2; box-shadow: 0 0 12px rgba(138,43,226,0.3); }
+        .scout-cat-btn.orange { border-color: rgba(255,165,0,0.5); }
+        .scout-cat-btn.orange:hover, .scout-cat-btn.orange.active { background: rgba(255,165,0,0.15); border-color: #ffa500; color: #ffa500; box-shadow: 0 0 12px rgba(255,165,0,0.3); }
+        .scout-cat-btn.cyan { border-color: rgba(0,191,255,0.5); }
+        .scout-cat-btn.cyan:hover, .scout-cat-btn.cyan.active { background: rgba(0,191,255,0.15); border-color: #00bfff; color: #00bfff; box-shadow: 0 0 12px rgba(0,191,255,0.3); }
+        .scout-cat-btn.silver { border-color: rgba(192,192,192,0.5); }
+        .scout-cat-btn.silver:hover, .scout-cat-btn.silver.active { background: rgba(192,192,192,0.15); border-color: #c0c0c0; color: #ffffff; box-shadow: 0 0 12px rgba(192,192,192,0.3); }
+        .scout-cat-btn.all-btn { border-color: rgba(0,191,255,0.6); color: #00bfff; font-weight: 700; }
+        .scout-cat-btn.all-btn:hover, .scout-cat-btn.all-btn.active { background: rgba(0,191,255,0.2); border-color: #00bfff; color: #00bfff; box-shadow: 0 0 15px rgba(0,191,255,0.4); }
 
         @keyframes spin {
             to { transform: rotate(360deg); }
@@ -2203,290 +2046,53 @@
                 <div id="search-results-grid" class="search-results-grid"></div>
             </div>
 
-            <!-- Not Found Panel -->
-            <div id="not-found-panel" class="not-found-panel" style="display: none;" data-testid="div-not-found">
-                <h3>🔍 No Items Found</h3>
-                <p>We couldn't find what you're looking for in the marketplace.</p>
-                <p style="margin-top: 10px; font-size: 0.95em; color: #aaa;">
-                    <strong style="color: #00f5d4;">Want this item?</strong> Submit a request below and our AI Scout will search approved vendors. 
-                    A Foundation administrator will review recommendations before any listing is created.
-                </p>
-            </div>
-
-            <!-- Request Item Panel -->
-            <div id="request-item-panel" class="request-item-panel" style="display: none;" data-testid="panel-request-item">
-                <button type="button" class="close-btn" onclick="closeRequestPanel()" title="Close">&times;</button>
-                <h4>📦 Request This Item</h4>
-                <p style="font-size: 0.9em; color: #888; margin-bottom: 15px;">
-                    All requests require human approval. Our team reviews each request to ensure quality and fair pricing.
-                </p>
-                <form id="request-form" onsubmit="submitItemRequest(event)">
-                    <div class="request-form-group">
-                        <label for="request-query">What are you looking for?</label>
-                        <input 
-                            type="text" 
-                            id="request-query" 
-                            readonly
-                            style="background: #1a1a1a; color: #00ffff;"
-                        />
-                    </div>
-                    <div class="request-form-group">
-                        <label for="request-budget">Budget (Optional)</label>
-                        <input 
-                            type="text" 
-                            id="request-budget" 
-                            placeholder="e.g., 0.01 Solar, $50, or any amount"
-                            data-testid="input-budget"
-                        />
-                        <div class="hint">Your preferred price range</div>
-                    </div>
-                    <div class="request-form-group">
-                        <label for="request-condition">Condition Preference</label>
-                        <select id="request-condition" data-testid="select-condition">
-                            <option value="">Any condition</option>
-                            <option value="new">New only</option>
-                            <option value="used">Used acceptable</option>
-                            <option value="refurbished">Refurbished acceptable</option>
-                        </select>
-                    </div>
-                    <div class="request-form-group">
-                        <label for="request-urgency">Urgency</label>
-                        <select id="request-urgency" data-testid="select-urgency">
-                            <option value="normal">Normal - within a few days</option>
-                            <option value="low">Low - whenever available</option>
-                            <option value="high">High - as soon as possible</option>
-                            <option value="urgent">Urgent - need it today</option>
-                        </select>
-                    </div>
-                    <button 
-                        type="submit" 
-                        class="submit-request-btn" 
-                        id="submit-request-btn"
-                        data-testid="button-submit-request"
-                    >
-                        Submit Request
-                    </button>
-                </form>
-            </div>
-
-            <!-- Request Confirmation -->
-            <div id="request-confirmation" class="request-confirmation" data-testid="div-request-confirmation">
-                <h4>✅ Request Submitted Successfully!</h4>
-                <p>Our AI Scout is now searching approved vendors (Amazon, Walmart, eBay) for your item.</p>
-                <p style="margin-top: 8px;"><strong style="color: #00f5d4;">What happens next:</strong></p>
-                <ul style="text-align: left; margin: 10px 20px; color: #aaa; font-size: 0.9em;">
-                    <li>AI Scout generates vendor recommendations</li>
-                    <li>Foundation admin reviews and approves (required)</li>
-                    <li>Item becomes available in marketplace</li>
-                </ul>
-                <p style="font-size: 0.85em; color: #888;">Requests are not instantly fulfilled - human review ensures quality.</p>
-                <div class="request-id" id="request-id-display"></div>
-            </div>
         </div>
 
-        <!-- Marketplace Scout Section -->
-        <div id="marketplace-scout-section" style="margin: 30px 0; padding: 30px; background: linear-gradient(135deg, rgba(0,0,0,0.9) 0%, rgba(0,191,255,0.1) 100%); border: 2px solid #00bfff; border-radius: 16px; box-shadow: 0 0 25px rgba(0,191,255,0.3), inset 0 0 25px rgba(0,191,255,0.05);">
-            <style>
-                .scout-header { text-align: center; margin-bottom: 25px; }
-                .scout-header h2 { font-size: 28px; color: #00bfff; margin-bottom: 8px; text-shadow: 0 0 10px rgba(0,191,255,0.5); }
-                .scout-header p { color: #8ecae6; font-size: 15px; }
-                .scout-categories { margin-bottom: 25px; }
-                .scout-cat-group { margin-bottom: 18px; }
-                .scout-cat-group-header { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; padding-left: 4px; }
-                .scout-cat-group-header.green { color: #00ff88; }
-                .scout-cat-group-header.purple { color: #8a2be2; }
-                .scout-cat-group-header.orange { color: #ffa500; }
-                .scout-cat-group-header.cyan { color: #00bfff; }
-                .scout-cat-group-header.silver { color: #c0c0c0; }
-                .scout-btn-row { display: flex; flex-wrap: wrap; gap: 8px; }
-                .scout-cat-btn {
-                    background: rgba(10,10,10,0.8);
-                    border: 1px solid rgba(0,191,255,0.4);
-                    color: #e0e0e0;
-                    padding: 8px 14px;
-                    border-radius: 20px;
-                    font-size: 13px;
-                    cursor: pointer;
-                    transition: all 0.25s ease;
-                    white-space: nowrap;
-                }
-                .scout-cat-btn:hover { transform: translateY(-1px); }
-                .scout-cat-btn.green { border-color: rgba(0,255,136,0.5); }
-                .scout-cat-btn.green:hover, .scout-cat-btn.green.active { background: rgba(0,255,136,0.15); border-color: #00ff88; color: #00ff88; box-shadow: 0 0 12px rgba(0,255,136,0.3); }
-                .scout-cat-btn.purple { border-color: rgba(138,43,226,0.5); }
-                .scout-cat-btn.purple:hover, .scout-cat-btn.purple.active { background: rgba(138,43,226,0.15); border-color: #8a2be2; color: #8a2be2; box-shadow: 0 0 12px rgba(138,43,226,0.3); }
-                .scout-cat-btn.orange { border-color: rgba(255,165,0,0.5); }
-                .scout-cat-btn.orange:hover, .scout-cat-btn.orange.active { background: rgba(255,165,0,0.15); border-color: #ffa500; color: #ffa500; box-shadow: 0 0 12px rgba(255,165,0,0.3); }
-                .scout-cat-btn.cyan { border-color: rgba(0,191,255,0.5); }
-                .scout-cat-btn.cyan:hover, .scout-cat-btn.cyan.active { background: rgba(0,191,255,0.15); border-color: #00bfff; color: #00bfff; box-shadow: 0 0 12px rgba(0,191,255,0.3); }
-                .scout-cat-btn.silver { border-color: rgba(192,192,192,0.5); }
-                .scout-cat-btn.silver:hover, .scout-cat-btn.silver.active { background: rgba(192,192,192,0.15); border-color: #c0c0c0; color: #ffffff; box-shadow: 0 0 12px rgba(192,192,192,0.3); }
-                .scout-cat-btn.all-btn { border-color: rgba(0,191,255,0.6); color: #00bfff; font-weight: 700; }
-                .scout-cat-btn.all-btn:hover, .scout-cat-btn.all-btn.active { background: rgba(0,191,255,0.2); border-color: #00bfff; color: #00bfff; box-shadow: 0 0 15px rgba(0,191,255,0.4); }
-                .scout-iframe-wrapper { border-radius: 10px; overflow: hidden; border: 1px solid rgba(0,191,255,0.3); margin-bottom: 15px; }
-                .scout-iframe-wrapper iframe { width: 100%; height: 700px; border: none; background: #000; }
-                .scout-footer { text-align: center; }
-                .scout-footer a { color: #00bfff; text-decoration: none; font-size: 15px; font-weight: 600; transition: all 0.3s; }
-                .scout-footer a:hover { color: #ffffff; text-shadow: 0 0 10px rgba(0,191,255,0.5); }
-                @media (max-width: 768px) {
-                    .scout-iframe-wrapper iframe { height: 500px; }
-                    #marketplace-scout-section { padding: 20px 15px; }
-                    .scout-header h2 { font-size: 22px; }
-                    .scout-cat-btn { font-size: 12px; padding: 6px 10px; }
-                }
-            </style>
-
-            <div class="scout-header">
-                <h2>🔍 Marketplace Scout - Search the Web</h2>
-                <p>Find products across the internet - powered by AI</p>
-                <div class="provisioning-guide">
-                    <button class="guide-toggle" onclick="toggleGuide()">📖 Instructions & Provisioning Guide ▼</button>
-                    <div id="guide-content" class="guide-content">
-                        <p><strong>How to find and provision items:</strong></p>
-                        <ul>
-                            <li><strong>Find & Buy:</strong> Use the category buttons below to scout for items on the web. Prices are shown in fiat/retail.</li>
-                            <li><strong>Provision Tracks:</strong> Once found, you can request a <strong>Service Voucher</strong> for 3D printing, repair, or custom fabrication.</li>
-                            <li><strong>Solar Standard:</strong> Most items can be provisioned via <strong>Member Listings</strong> using Solar currency (1 Solar = 4,913 kWh).</li>
-                            <li><strong>Admin Review:</strong> All scouted requests go to the Admin Review queue for quality check before being listed.</li>
-                        </ul>
-                    </div>
+        <!-- Category Filters -->
+        <div style="margin: 20px 0; padding: 20px; background: linear-gradient(135deg, rgba(0,0,0,0.8), rgba(0,191,255,0.05)); border: 1px solid #333; border-radius: 12px;">
+            <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
+                <button class="scout-cat-btn all-btn active" onclick="filterCategory(this, '')">🌐 All</button>
+            </div>
+            <div style="margin-bottom: 10px;">
+                <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; color: #00ff88;">TC-S Market</div>
+                <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                    <button class="scout-cat-btn green" onclick="filterCategory(this, 'Computronium Missions')">🚀 Computronium</button>
+                    <button class="scout-cat-btn green" onclick="filterCategory(this, 'Culture')">🎭 Culture</button>
+                    <button class="scout-cat-btn green" onclick="filterCategory(this, 'Basic Needs')">🏠 Basic Needs</button>
+                    <button class="scout-cat-btn green" onclick="filterCategory(this, 'Rent Anything')">🔑 Rent</button>
+                    <button class="scout-cat-btn green" onclick="filterCategory(this, 'Energy Trading')">⚡ Energy</button>
                 </div>
             </div>
-
-            <style>
-                .provisioning-guide { margin: 15px auto; max-width: 600px; text-align: left; }
-                .guide-toggle { 
-                    background: rgba(0, 191, 255, 0.1); 
-                    border: 1px solid #00bfff; 
-                    color: #00bfff; 
-                    padding: 8px 16px; 
-                    border-radius: 20px; 
-                    cursor: pointer; 
-                    font-size: 14px; 
-                    width: 100%;
-                    transition: all 0.3s ease;
-                }
-                .guide-toggle:hover { background: rgba(0, 191, 255, 0.2); }
-                .guide-content { 
-                    display: none; 
-                    background: rgba(10, 10, 10, 0.9); 
-                    border: 1px solid rgba(0, 191, 255, 0.3); 
-                    padding: 15px; 
-                    border-radius: 12px; 
-                    margin-top: 10px;
-                    font-size: 14px;
-                    line-height: 1.5;
-                    color: #8ecae6;
-                }
-                .guide-content ul { padding-left: 20px; margin-top: 8px; }
-                .guide-content li { margin-bottom: 8px; }
-            </style>
-
-            <script>
-                function toggleGuide() {
-                    const content = document.getElementById('guide-content');
-                    const btn = document.querySelector('.guide-toggle');
-                    if (content.style.display === 'block') {
-                        content.style.display = 'none';
-                        btn.innerHTML = '📖 Instructions & Provisioning Guide ▼';
-                    } else {
-                        content.style.display = 'block';
-                        btn.innerHTML = '📖 Instructions & Provisioning Guide ▲';
-                    }
-                }
-            </script>
-
-            <!-- LifeLens panel moved to its own tab -->
-
-            <div class="scout-categories">
-                <div class="scout-btn-row" style="margin-bottom: 15px;">
-                    <button class="scout-cat-btn all-btn active" onclick="scoutFilter(this, '')">🌐 All Categories</button>
-                </div>
-
-                <div class="scout-cat-group">
-                    <div class="scout-cat-group-header green">TC-S Computronium Market</div>
-                    <div class="scout-btn-row">
-                        <button class="scout-cat-btn green" onclick="scoutFilter(this, 'Computronium Missions')">🚀 Computronium Missions</button>
-                        <button class="scout-cat-btn green" onclick="scoutFilter(this, 'Culture')">🎭 Culture</button>
-                        <button class="scout-cat-btn green" onclick="scoutFilter(this, 'Basic Needs')">🏠 Basic Needs</button>
-                        <button class="scout-cat-btn green" onclick="scoutFilter(this, 'Rent Anything')">🔑 Rent Anything</button>
-                        <button class="scout-cat-btn green" onclick="scoutFilter(this, 'Energy Trading')">⚡ Energy Trading</button>
-                    </div>
-                </div>
-
-                <div class="scout-cat-group">
-                    <div class="scout-cat-group-header purple">AI-Enhanced</div>
-                    <div class="scout-btn-row">
-                        <button class="scout-cat-btn purple" onclick="scoutFilter(this, 'AI Tools')">🤖 AI Tools</button>
-                        <button class="scout-cat-btn purple" onclick="scoutFilter(this, 'AI Creativity')">🎨 AI Creativity</button>
-                        <button class="scout-cat-btn purple" onclick="scoutFilter(this, 'AI Analysis')">📊 AI Analysis</button>
-                        <button class="scout-cat-btn purple" onclick="scoutFilter(this, 'AI Assistants')">💬 AI Assistants</button>
-                    </div>
-                </div>
-
-                <div class="scout-cat-group">
-                    <div class="scout-cat-group-header orange">Creative & Media</div>
-                    <div class="scout-btn-row">
-                        <button class="scout-cat-btn orange" onclick="scoutFilter(this, 'Music')">🎵 Music</button>
-                        <button class="scout-cat-btn orange" onclick="scoutFilter(this, 'Video')">🎬 Video</button>
-                        <button class="scout-cat-btn orange" onclick="scoutFilter(this, 'Art')">🖼️ Art</button>
-                        <button class="scout-cat-btn orange" onclick="scoutFilter(this, 'Photography')">📸 Photography</button>
-                        <button class="scout-cat-btn orange" onclick="scoutFilter(this, 'Writing')">✍️ Writing</button>
-                    </div>
-                </div>
-
-                <div class="scout-cat-group">
-                    <div class="scout-cat-group-header cyan">Technical</div>
-                    <div class="scout-btn-row">
-                        <button class="scout-cat-btn cyan" onclick="scoutFilter(this, 'Software')">💻 Software</button>
-                        <button class="scout-cat-btn cyan" onclick="scoutFilter(this, 'Code Tools')">🔧 Code Tools</button>
-                        <button class="scout-cat-btn cyan" onclick="scoutFilter(this, 'Data Science')">📊 Data Science</button>
-                    </div>
-                </div>
-
-                <div class="scout-cat-group">
-                    <div class="scout-cat-group-header silver">Other</div>
-                    <div class="scout-btn-row">
-                        <button class="scout-cat-btn silver" onclick="scoutFilter(this, 'Documents')">📄 Documents</button>
-                        <button class="scout-cat-btn silver" onclick="scoutFilter(this, 'Productivity')">✅ Productivity</button>
-                        <button class="scout-cat-btn silver" onclick="scoutFilter(this, 'Utilities')">🔧 Utilities</button>
-                        <button class="scout-cat-btn silver" onclick="scoutFilter(this, 'Games')">🎮 Games</button>
-                    </div>
+            <div style="margin-bottom: 10px;">
+                <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; color: #ffa500;">Creative & Media</div>
+                <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                    <button class="scout-cat-btn orange" onclick="filterCategory(this, 'Music')">🎵 Music</button>
+                    <button class="scout-cat-btn orange" onclick="filterCategory(this, 'Video')">🎬 Video</button>
+                    <button class="scout-cat-btn orange" onclick="filterCategory(this, 'Art')">🖼️ Art</button>
+                    <button class="scout-cat-btn orange" onclick="filterCategory(this, 'Photography')">📸 Photo</button>
+                    <button class="scout-cat-btn orange" onclick="filterCategory(this, 'Writing')">✍️ Writing</button>
                 </div>
             </div>
-
-            <div class="scout-iframe-wrapper">
-                <iframe id="marketplace-scout-iframe" src="https://marketplace-scout.replit.app" allow="clipboard-read; clipboard-write" loading="lazy" title="Marketplace Scout Search Engine"></iframe>
+            <div style="margin-bottom: 10px;">
+                <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; color: #8a2be2;">AI-Enhanced</div>
+                <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                    <button class="scout-cat-btn purple" onclick="filterCategory(this, 'AI Tools')">🤖 AI Tools</button>
+                    <button class="scout-cat-btn purple" onclick="filterCategory(this, 'AI Creativity')">🎨 AI Create</button>
+                </div>
             </div>
-
-            <div class="scout-footer">
-                <a href="https://marketplace-scout.replit.app" target="_blank" rel="noopener noreferrer">🚀 Open Full Scout in New Tab →</a>
+            <div style="margin-bottom: 10px;">
+                <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; color: #00bfff;">Technical & Other</div>
+                <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                    <button class="scout-cat-btn cyan" onclick="filterCategory(this, 'Software')">💻 Software</button>
+                    <button class="scout-cat-btn silver" onclick="filterCategory(this, 'Documents')">📄 Docs</button>
+                    <button class="scout-cat-btn silver" onclick="filterCategory(this, 'Games')">🎮 Games</button>
+                    <button class="scout-cat-btn silver" onclick="filterCategory(this, 'Utilities')">🔧 Utilities</button>
+                </div>
             </div>
-
-            <script>
-                function scoutFilter(btn, category) {
-                    var iframe = document.getElementById('marketplace-scout-iframe');
-                    var allBtns = document.querySelectorAll('#marketplace-scout-section .scout-cat-btn');
-                    allBtns.forEach(function(b) { b.classList.remove('active'); });
-                    btn.classList.add('active');
-                    
-                    if (category) {
-                        // Update iframe
-                        iframe.src = 'https://marketplace-scout.replit.app/?q=' + encodeURIComponent(category);
-                        
-                        // Also trigger internal marketplace search
-                        const searchInput = document.getElementById('search-input');
-                        if (searchInput) {
-                            searchInput.value = category;
-                            if (typeof performSearch === 'function') {
-                                performSearch();
-                            }
-                        }
-                    } else {
-                        iframe.src = 'https://marketplace-scout.replit.app';
-                    }
-                }
-            </script>
+            <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 15px; padding-top: 15px; border-top: 1px solid #333;">
+                <a href="https://lens.google.com/" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, rgba(0,255,255,0.1), rgba(138,43,226,0.1)); border: 1px solid #00ffff; color: #00ffff; padding: 10px 18px; border-radius: 20px; text-decoration: none; font-size: 14px; font-weight: 600; transition: all 0.3s;">📷 ID Anything</a>
+                <a href="https://marketplace-scout.replit.app" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 8px; background: rgba(0,191,255,0.05); border: 1px solid rgba(0,191,255,0.3); color: #00bfff; padding: 10px 18px; border-radius: 20px; text-decoration: none; font-size: 14px; transition: all 0.3s;">🔍 Web Scout</a>
+            </div>
         </div>
         
         <!-- Members Directory Link -->
@@ -3185,10 +2791,7 @@
                         var query = lifeLensResult.searchQuery || lifeLensResult.name;
 
                         if (track === 'scout') {
-                            var iframe = document.getElementById('marketplace-scout-iframe');
-                            iframe.src = 'https://marketplace-scout.replit.app/?q=' + encodeURIComponent(query);
-                            document.querySelectorAll('#marketplace-scout-section .scout-cat-btn').forEach(function(b) { b.classList.remove('active'); });
-                            iframe.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            window.open('https://marketplace-scout.replit.app/?q=' + encodeURIComponent(query), '_blank');
                         } else if (track === 'member') {
                             var searchInput = document.getElementById('search-input');
                             if (searchInput) {
@@ -6040,20 +5643,11 @@
         });
     </script>
     
-    <!-- Search and Request Functionality -->
+    <!-- Search Functionality -->
     <script>
-        function closeRequestPanel() {
-            const requestPanel = document.getElementById('request-item-panel');
-            if (requestPanel) requestPanel.style.display = 'none';
-            const notFoundPanel = document.getElementById('not-found-panel');
-            if (notFoundPanel) notFoundPanel.style.display = 'none';
-        }
-
-        // Search state
         let lastSearchQuery = '';
         let isSearching = false;
 
-        // Handle Enter key in search input
         function handleSearchKeydown(event) {
             if (event.key === 'Enter') {
                 event.preventDefault();
@@ -6061,18 +5655,23 @@
             }
         }
 
-        // Perform search
+        function filterCategory(btn, category) {
+            var allBtns = document.querySelectorAll('.scout-cat-btn');
+            allBtns.forEach(function(b) { b.classList.remove('active'); });
+            btn.classList.add('active');
+            var searchInput = document.getElementById('search-input');
+            if (category) {
+                searchInput.value = category;
+                performSearch();
+            } else {
+                clearSearch();
+            }
+        }
+
         async function performSearch() {
-            // Close request panel if open to avoid blocking results
-            closeRequestPanel();
             const searchInput = document.getElementById('search-input');
             const query = searchInput.value.trim();
-            
-            if (!query) {
-                clearSearch();
-                return;
-            }
-
+            if (!query) { clearSearch(); return; }
             if (isSearching) return;
             isSearching = true;
             lastSearchQuery = query;
@@ -6080,48 +5679,29 @@
             const searchBtn = document.getElementById('search-btn');
             const resultsContainer = document.getElementById('search-results-container');
             const resultsGrid = document.getElementById('search-results-grid');
-            const notFoundPanel = document.getElementById('not-found-panel');
-            const requestPanel = document.getElementById('request-item-panel');
-            const confirmationPanel = document.getElementById('request-confirmation');
 
-            // Reset panels
-            notFoundPanel.style.display = 'none';
-            requestPanel.style.display = 'none';
-            confirmationPanel.classList.remove('visible');
-
-            // Show loading state
             searchBtn.disabled = true;
-            searchBtn.innerHTML = '<span class="spinner" style="display: inline-block; width: 16px; height: 16px; border: 2px solid #333; border-top-color: #000; border-radius: 50%; animation: spin 1s linear infinite;"></span> Searching...';
+            searchBtn.innerHTML = '<span style="display:inline-block;width:16px;height:16px;border:2px solid #333;border-top-color:#000;border-radius:50%;animation:spin 1s linear infinite;"></span> Searching...';
             resultsContainer.classList.add('visible');
-            resultsGrid.innerHTML = '<div class="search-loading"><span class="spinner"></span>Searching marketplace...</div>';
+            resultsGrid.innerHTML = '<div style="text-align:center;padding:30px;color:#00ffff;"><span style="display:inline-block;width:24px;height:24px;border:3px solid #333;border-top-color:#00ffff;border-radius:50%;animation:spin 1s linear infinite;margin-right:10px;vertical-align:middle;"></span>Searching marketplace...</div>';
 
             try {
                 const response = await fetch(`/api/market/search?q=${encodeURIComponent(query)}&limit=20`);
                 const data = await response.json();
-
                 resultsGrid.innerHTML = '';
 
                 if (data.notFound || data.items.length === 0) {
-                    // Show not found and request panels
-                    resultsContainer.classList.remove('visible');
-                    notFoundPanel.style.display = 'block';
-                    requestPanel.style.display = 'block';
-                    
-                    // Pre-fill the request query
-                    document.getElementById('request-query').value = query;
                     document.getElementById('search-results-count').textContent = '0 results';
+                    resultsGrid.innerHTML = '<div style="text-align:center;padding:30px;color:#888;"><p style="font-size:18px;margin-bottom:10px;">No items found for "<span style="color:#00ffff;">' + escapeHtml(query) + '</span>"</p><p style="font-size:14px;">Try a different search or browse categories below.</p></div>';
                 } else {
-                    // Show search results
                     document.getElementById('search-results-count').textContent = `${data.items.length} result${data.items.length !== 1 ? 's' : ''}`;
-                    
                     data.items.forEach(item => {
-                        const card = createSearchResultCard(item);
-                        resultsGrid.appendChild(card);
+                        resultsGrid.appendChild(createSearchResultCard(item));
                     });
                 }
             } catch (error) {
                 console.error('Search error:', error);
-                resultsGrid.innerHTML = '<div style="text-align: center; color: #ff6b35; padding: 20px;">Error searching. Please try again.</div>';
+                resultsGrid.innerHTML = '<div style="text-align:center;color:#ff6b35;padding:20px;">Error searching. Please try again.</div>';
             } finally {
                 isSearching = false;
                 searchBtn.disabled = false;
@@ -6129,135 +5709,41 @@
             }
         }
 
-        // Create search result card
         function createSearchResultCard(item) {
             const card = document.createElement('div');
             card.className = 'artifact-card';
             card.setAttribute('data-testid', `card-item-${item.id}`);
-
             const price = item.priceSolar || item.priceRay || '0';
             const priceUnit = item.priceSolar ? 'Solar' : 'Ray';
-            
             card.innerHTML = `
                 <div class="artifact-category">${item.category || 'General'}</div>
                 <div class="artifact-title">${escapeHtml(item.title || 'Untitled')}</div>
                 <div class="artifact-price">${price} ${priceUnit}</div>
                 <div style="font-size:10px;color:#ffd700;margin-top:2px;">⚡ ~${(parseFloat(item.priceSolar || 0) * 4913).toFixed(2)} kWh energy value</div>
-                ${item.description ? `<p style="color: #888; font-size: 14px; margin-bottom: 15px; line-height: 1.4;">${escapeHtml(item.description.substring(0, 120))}${item.description.length > 120 ? '...' : ''}</p>` : ''}
+                ${item.description ? `<p style="color:#888;font-size:14px;margin-bottom:15px;line-height:1.4;">${escapeHtml(item.description.substring(0, 120))}${item.description.length > 120 ? '...' : ''}</p>` : ''}
                 <button class="purchase-btn" onclick="viewArtifactDetails('${item.id}')">View Details</button>
             `;
-            
             return card;
         }
 
-        // Helper to escape HTML
         function escapeHtml(text) {
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
         }
 
-        // Clear search
         function clearSearch() {
-            const searchInput = document.getElementById('search-input');
-            const resultsContainer = document.getElementById('search-results-container');
-            const notFoundPanel = document.getElementById('not-found-panel');
-            const requestPanel = document.getElementById('request-item-panel');
-            const confirmationPanel = document.getElementById('request-confirmation');
-
-            searchInput.value = '';
+            document.getElementById('search-input').value = '';
             lastSearchQuery = '';
-            resultsContainer.classList.remove('visible');
-            notFoundPanel.style.display = 'none';
-            requestPanel.style.display = 'none';
-            confirmationPanel.classList.remove('visible');
-            
-            // Reset request form
-            document.getElementById('request-query').value = '';
-            document.getElementById('request-budget').value = '';
-            document.getElementById('request-condition').value = '';
-            document.getElementById('request-urgency').value = 'normal';
+            document.getElementById('search-results-container').classList.remove('visible');
         }
 
-        // View artifact details (placeholder - integrates with existing marketplace)
         function viewArtifactDetails(artifactId) {
-            // Try to find and click on the artifact in the main grid
             const mainCard = document.querySelector(`.artifact-card[data-id="${artifactId}"]`);
             if (mainCard) {
                 mainCard.click();
             } else {
                 console.log('View artifact:', artifactId);
-                alert('Opening artifact details...');
-            }
-        }
-
-        // Submit item request
-        async function submitItemRequest(event) {
-            event.preventDefault();
-
-            const submitBtn = document.getElementById('submit-request-btn');
-            const query = document.getElementById('request-query').value.trim();
-            const budget = document.getElementById('request-budget').value.trim();
-            const condition = document.getElementById('request-condition').value;
-            const urgency = document.getElementById('request-urgency').value;
-
-            if (!query) {
-                alert('Please enter what you are looking for');
-                return;
-            }
-
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Submitting...';
-
-            // Get user ID if logged in
-            let requestedByUserId = 'anonymous';
-            if (typeof currentUser !== 'undefined' && currentUser && currentUser.userId) {
-                requestedByUserId = currentUser.userId;
-            }
-
-            const constraints = {};
-            if (budget) constraints.budget = budget;
-            if (condition) constraints.condition = condition;
-            if (urgency) constraints.urgency = urgency;
-
-            try {
-                const response = await fetch('/api/market/requests', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        query,
-                        constraints,
-                        requestedByUserId
-                    })
-                });
-
-                const data = await response.json();
-
-                if (response.ok && data.requestId) {
-                    // Show confirmation
-                    const requestPanel = document.getElementById('request-item-panel');
-                    const confirmationPanel = document.getElementById('request-confirmation');
-                    const requestIdDisplay = document.getElementById('request-id-display');
-
-                    requestPanel.style.display = 'none';
-                    confirmationPanel.classList.add('visible');
-                    requestIdDisplay.textContent = `Request ID: ${data.requestId}`;
-
-                    // Reset form
-                    document.getElementById('request-budget').value = '';
-                    document.getElementById('request-condition').value = '';
-                    document.getElementById('request-urgency').value = 'normal';
-                } else {
-                    throw new Error(data.error || 'Failed to submit request');
-                }
-            } catch (error) {
-                console.error('Request submission error:', error);
-                alert('Failed to submit request. Please try again.');
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Submit Request';
             }
         }
     </script>
