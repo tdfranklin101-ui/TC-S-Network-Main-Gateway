@@ -4263,7 +4263,7 @@
                     <div class="artifact-kwh">${artifact.kwhFootprint} kWh footprint</div>
                     <div class="artifact-price">${artifact.formattedPrice}</div>
                     <div style="font-size:10px;color:#ffd700;margin-top:2px;">⚡ ~${(parseFloat(artifact.priceSolar || 0) * 4913).toFixed(2)} kWh energy footprint</div>
-                    <div style="font-size:9px;color:#666;margin-top:1px;font-style:italic;">Solar = energy equivalence (1 Solar = 4,913 kWh) · Not a fiat exchange rate</div>
+                    <div style="font-size:9px;color:#666;margin-top:1px;font-style:italic;">1 Solar = 4,913 kWh · Solar is the medium of exchange within the TC-S Network · No fiat-to-Solar exchange outside the network</div>
                     ${artifact.previewType === 'audio' && artifact.streamingUrl ? 
                         `<a href="${artifact.streamingUrl}" target="_blank" class="preview-btn music-link" onclick="event.stopPropagation();">
                             🎵 Listen on Music Now
@@ -4456,7 +4456,7 @@
                     <div class="artifact-title">${artifact.title}</div>
                     <div class="artifact-price">${artifact.formattedPrice}</div>
                     <div style="font-size:10px;color:#ffd700;margin-top:2px;">⚡ ~${(parseFloat(artifact.priceSolar || 0) * 4913).toFixed(2)} kWh energy footprint</div>
-                    <div style="font-size:9px;color:#666;margin-top:1px;font-style:italic;">Solar = energy equivalence (1 Solar = 4,913 kWh) · Not a fiat exchange rate</div>
+                    <div style="font-size:9px;color:#666;margin-top:1px;font-style:italic;">1 Solar = 4,913 kWh · Solar is the medium of exchange within the TC-S Network · No fiat-to-Solar exchange outside the network</div>
                     <div class="artifact-kwh">${artifact.kwhFootprint.toFixed(1)} kWh equivalent</div>
                     ${artifact.isBonus ? '<div class="artifact-bonus">BONUS</div>' : ''}
                     <div style="margin-top: 15px;">
@@ -5775,7 +5775,7 @@
                 '<div class="artifact-title">' + escapeHtml(item.title || 'Untitled') + '</div>' +
                 '<div class="artifact-price">' + price + ' ' + priceUnit + '</div>' +
                 '<div style="font-size:10px;color:#ffd700;margin-top:2px;">⚡ ~' + (parseFloat(item.priceSolar || 0) * 4913).toFixed(2) + ' kWh energy footprint</div>' +
-                '<div style="font-size:9px;color:#666;margin-top:1px;font-style:italic;">Solar = energy equivalence (1 Solar = 4,913 kWh) · Not a fiat exchange rate</div>' +
+                '<div style="font-size:9px;color:#666;margin-top:1px;font-style:italic;">1 Solar = 4,913 kWh · Solar is the medium of exchange within the TC-S Network · No fiat-to-Solar exchange outside the network</div>' +
                 (item.description ? '<p style="color:#888;font-size:14px;margin-bottom:15px;line-height:1.4;">' + escapeHtml(item.description.substring(0, 120)) + (item.description.length > 120 ? '...' : '') + '</p>' : '') +
                 '<button class="purchase-btn" onclick="viewArtifactDetails(\'' + item.id + '\')">View Details</button>';
             return card;
@@ -5797,7 +5797,7 @@
                 '<div style="padding:6px 10px;background:rgba(57,255,20,0.06);border:1px solid rgba(57,255,20,0.15);border-radius:6px;margin-bottom:8px;">' +
                     '<div style="color:#39FF14;font-size:13px;">Solar equivalent: ~' + (item.estimatedPriceSolar || '0') + ' Solar</div>' +
                     '<div style="font-size:10px;color:#ffd700;margin-top:2px;">⚡ ~' + (item.kwhEquivalent || '0') + ' kWh energy footprint</div>' +
-                    '<div style="font-size:9px;color:#888;margin-top:3px;font-style:italic;">Educational: 1 Solar = 4,913 kWh. No fiat-to-Solar exchange exists. Solar pricing reflects energy equivalence only.</div>' +
+                    '<div style="font-size:9px;color:#888;margin-top:3px;font-style:italic;">1 Solar = 4,913 kWh · Solar is the currency of the TC-S Network · Fiat price shown for reference only — no fiat-to-Solar exchange outside the network</div>' +
                 '</div>' +
                 (item.description ? '<p style="color:#888;font-size:13px;margin-bottom:12px;line-height:1.4;">' + escapeHtml(item.description.substring(0, 150)) + '</p>' : '') +
                 (item.url ? '<a href="' + escapeHtml(item.url) + '" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:6px 14px;background:rgba(0,191,255,0.15);border:1px solid #00bfff;color:#00bfff;border-radius:6px;text-decoration:none;font-size:12px;margin-right:8px;">View Source ↗</a>' : '');
