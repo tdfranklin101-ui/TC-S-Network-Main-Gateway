@@ -6558,7 +6558,47 @@ const server = http.createServer(async (req, res) => {
         }
       }
 
+      // Load ecosystem test items from market_items table
+      if (pool) {
+        try {
+          const marketItemsResult = await pool.query(
+            `SELECT id, title, description, category, price_solar, kwh_estimate, source_type, metadata, created_by_user_id
+             FROM market_items WHERE status = 'ACTIVE' ORDER BY id DESC LIMIT 200`
+          );
+          const marketItems = marketItemsResult.rows.map(row => {
+            const meta = typeof row.metadata === 'string' ? JSON.parse(row.metadata) : (row.metadata || {});
+            return {
+              id: row.id,
+              title: row.title,
+              description: row.description || '',
+              category: row.category || 'Software',
+              file_type: 'digital',
+              kwhFootprint: parseFloat(row.kwh_estimate || 0),
+              solarPrice: parseFloat(row.price_solar || 0),
+              formattedPrice: `${formatSolar(row.price_solar)} Solar`,
+              isBonus: false,
+              coverArt: null,
+              deliveryMode: 'digital',
+              creatorId: row.created_by_user_id,
+              creatorAgent: meta.agent || null,
+              streamingUrl: null,
+              previewType: null,
+              previewSlug: null,
+              source: 'market_items',
+              ecosystemTest: meta.ecosystemTest || false
+            };
+          });
+          artifacts = artifacts.concat(marketItems);
+          if (marketItems.length > 0) {
+            console.log(`✅ Loaded ${marketItems.length} market items into artifacts listing`);
+          }
+        } catch (miErr) {
+          console.warn('⚠️ Could not load market_items:', miErr.message);
+        }
+      }
+
       // Calculate price range
+      const allCategories = [...new Set(artifacts.map(a => a.category))];
       const priceRange = artifacts.length > 0 ? {
         min: Math.min(...artifacts.map(a => a.solarPrice)),
         max: Math.max(...artifacts.map(a => a.solarPrice))
@@ -6569,7 +6609,7 @@ const server = http.createServer(async (req, res) => {
         success: true,
         totalArtifacts: artifacts.length,
         artifacts: artifacts,
-        categories: ['music', 'video', 'art', 'document'],
+        categories: allCategories,
         priceRange: priceRange
       }));
     } catch (error) {

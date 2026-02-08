@@ -4225,8 +4225,7 @@
                 categories.forEach(category => {
                     const categoryArtifacts = artifacts.filter(a => a.category === category);
                     const categoryName = category.charAt(0).toUpperCase() + category.slice(1);
-                    const categoryIcon = category === 'music' ? '🎵' : category === 'video' ? '🎬' : 
-                                        category === 'image' ? '🖼️' : category === 'document' ? '📄' : '📁';
+                    const categoryIcon = CATEGORY_ICONS[category] || '📁';
 
                     gridHTML += `
                         <div style="grid-column: 1 / -1; margin: 30px 0 20px 0;">
@@ -4254,15 +4253,29 @@
             }
         }
 
+        const CATEGORY_ICONS = {
+            'Music':'🎵','Video':'🎬','Art':'🎨','Photo':'📸','Writing':'✍️',
+            'Software':'💻','Games':'🎮','Docs':'📚','Utilities':'🔧',
+            'AI Tools':'🤖','AI Create':'🧠','Computronium':'🚀','Culture':'🎭',
+            'Energy':'⚡','Basic Needs':'🏠','Rent':'🏘️',
+            'music':'🎵','video':'🎬','image':'🖼️','document':'📄','art':'🎨'
+        };
+
         function createArtifactCard(artifact, context = 'marketplace') {
+            const catIcon = CATEGORY_ICONS[artifact.category] || '📁';
+            const agentBadge = artifact.creatorAgent ? 
+                `<div style="font-size:10px;color:#00ff88;margin-top:3px;">🤖 Agent: ${artifact.creatorAgent}</div>` : '';
+            const ecoTag = artifact.ecosystemTest ? 
+                '<span style="font-size:9px;background:rgba(0,255,136,0.15);color:#00ff88;padding:2px 6px;border-radius:4px;margin-left:4px;">ECOSYSTEM</span>' : '';
             return `
                 <div class="artifact-card" onclick="selectArtifact('${artifact.id}')">
                     ${artifact.isBonus ? '<div class="artifact-bonus">BONUS TRACK</div>' : ''}
-                    <div class="artifact-category">${artifact.category}</div>
+                    <div class="artifact-category">${catIcon} ${artifact.category}${ecoTag}</div>
                     <div class="artifact-title">${artifact.title}</div>
+                    ${agentBadge}
                     <div class="artifact-kwh">${artifact.kwhFootprint} kWh footprint</div>
                     <div class="artifact-price">${artifact.formattedPrice}</div>
-                    <div style="font-size:10px;color:#ffd700;margin-top:2px;">⚡ ~${(parseFloat(artifact.priceSolar || 0) * 4913).toFixed(2)} kWh energy footprint</div>
+                    <div style="font-size:10px;color:#ffd700;margin-top:2px;">⚡ ~${(parseFloat(artifact.solarPrice || 0) * 4913).toFixed(2)} kWh energy footprint</div>
                     <div style="font-size:9px;color:#666;margin-top:1px;font-style:italic;">1 Solar = 4,913 kWh · Solar is the medium of exchange within the TC-S Network · No fiat-to-Solar exchange outside the network</div>
                     ${artifact.previewType === 'audio' && artifact.streamingUrl ? 
                         `<a href="${artifact.streamingUrl}" target="_blank" class="preview-btn music-link" onclick="event.stopPropagation();">
