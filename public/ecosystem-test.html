@@ -470,10 +470,18 @@ async function phase1_registration(){
         addFeed('✅',`<b>Agent ${a.name}</b> registered with <span class="solar">${parseFloat(bal).toFixed(1)} Solar</span>`);
         state.successes++;
       } else if(res.status===409||res.status===400||(data.message&&data.message.toLowerCase().includes('exist'))){
-        state.agents.push({...a,username,userId:null,balance:genesisBal,session:null});
-        state.totalSolar+=genesisBal;
-        updateAgentCard(a,'exists',genesisBal,'exists');
-        addFeed('🔄',`<b>Agent ${a.name}</b> already exists — <span class="solar">${genesisBal} Solar</span> (Genesis accrual)`);
+        const resolved=await fetch('/api/ecosystem/resolve-agent',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username})}).then(r=>r.json()).catch(()=>null);
+        if(resolved&&resolved.success){
+          state.agents.push({...a,username,userId:resolved.memberId,balance:resolved.balance,session:null});
+          state.totalSolar+=resolved.balance;
+          updateAgentCard(a,'resolved',resolved.balance,'registered');
+          addFeed('🔄',`<b>Agent ${a.name}</b> exists → DB resolved: member #${resolved.memberId} with <span class="solar">${resolved.balance.toFixed(1)} Solar</span> (real balance)`);
+        } else {
+          state.agents.push({...a,username,userId:null,balance:genesisBal,session:null});
+          state.totalSolar+=genesisBal;
+          updateAgentCard(a,'exists',genesisBal,'exists');
+          addFeed('🔄',`<b>Agent ${a.name}</b> already exists — <span class="solar">${genesisBal} Solar</span> (estimated)`);
+        }
         state.successes++;
       } else {
         throw new Error(data.message||data.error||'Registration failed');
@@ -494,26 +502,45 @@ async function phase1_registration(){
 
 async function phaseDailyDistribution(){
   setPhase(1,'Daily Solar Distribution — 01:00 UTC',23);
-  addFeed('🌅','<b>Daily Distribution</b> — Simulating 01:00 UTC Solar drop: <span class="solar">+1 Solar</span> to every agent wallet...');
+  addFeed('🌅','<b>Daily Distribution</b> — Real DB-backed Solar distribution: <span class="solar">+1 Solar</span> to every member account...');
   const now=new Date();
   const distTime=new Date(now);
   distTime.setUTCHours(1,0,0,0);
-  addFeed('🕐',`<b>Distribution time:</b> ${distTime.toUTCString()} — 1 Solar/day per member`);
+  addFeed('🕐',`<b>Distribution time:</b> ${distTime.toUTCString()} — 1 Solar/day per member (DB ledger entries)`);
   await sleep(300);
-  let distributed=0;
+  let distributed=0,dbDistributed=0,fallbackDistributed=0;
   for(let i=0;i<state.agents.length;i++){
     const agent=state.agents[i];
     const prevBal=agent.balance;
-    agent.balance+=1;
+    if(agent.userId){
+      try{
+        const res=await fetch('/api/ecosystem/distribute',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({memberId:agent.userId,amount:1})});
+        const data=await res.json();
+        if(data.success){
+          agent.balance=data.newBalance;
+          dbDistributed++;
+        } else {
+          agent.balance+=1;
+          fallbackDistributed++;
+        }
+      }catch(e){
+        agent.balance+=1;
+        fallbackDistributed++;
+      }
+    } else {
+      agent.balance+=1;
+      fallbackDistributed++;
+    }
     distributed++;
     updateAgentCard(agent,'+1 ☀️',agent.balance,'registered');
     if(i%5===0||i===state.agents.length-1){
-      addFeed('☀️',`<b>Agent ${agent.name}</b> received daily Solar: <span class="solar">${prevBal.toFixed(1)} → ${agent.balance.toFixed(1)} ☀️</span> (+1)`);
+      const src=agent.userId?'DB':'local';
+      addFeed('☀️',`<b>Agent ${agent.name}</b> received daily Solar [${src}]: <span class="solar">${prevBal.toFixed(1)} → ${agent.balance.toFixed(1)} ☀️</span> (+1)`);
     }
     await sleep(randBetween(30,80));
   }
   const totalWallets=state.agents.reduce((s,a)=>s+a.balance,0);
-  addFeed('🏁',`<b>Daily distribution complete:</b> <span class="ok">${distributed} agents received +1 Solar</span> | Total network wallets: <span class="solar">${totalWallets.toFixed(1)} ☀️</span>`);
+  addFeed('🏁',`<b>Daily distribution complete:</b> <span class="ok">${distributed} agents received +1 Solar</span> (${dbDistributed} DB-backed, ${fallbackDistributed} local) | Total network wallets: <span class="solar">${totalWallets.toFixed(1)} ☀️</span>`);
 }
 
 async function phase2_items(){
@@ -875,6 +902,7 @@ async function phase4_purchases(){
         tierLabel='T2 Sample ☀️';
       }
       const price=item.price||0.01;
+      const actualSeller=state.agents[sellerIdx];
       if(buyer.balance-price<0){
         balanceBlocked++;
         if(balanceBlocked<=4){
@@ -883,9 +911,35 @@ async function phase4_purchases(){
         state.errors++;
         continue;
       }
-      buyer.balance-=price;
-      const actualSeller=state.agents[sellerIdx];
-      actualSeller.balance=(actualSeller.balance||0)+price;
+      let dbPurchase=false;
+      if(buyer.userId&&actualSeller.userId){
+        try{
+          const pRes=await fetch('/api/ecosystem/purchase',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+            buyerId:buyer.userId,sellerId:actualSeller.userId,amount:price,
+            artifactId:item.artifactId||item.id||null,itemName:item.name
+          })});
+          const pData=await pRes.json();
+          if(pData.success){
+            buyer.balance=pData.buyer.balance;
+            actualSeller.balance=pData.seller.balance;
+            dbPurchase=true;
+          } else {
+            if(pData.error==='Insufficient Solar balance'){
+              balanceBlocked++;
+              if(balanceBlocked<=4){addFeed('🔴',`<b>Agent ${buyer.name}</b> DB balance insufficient for "${item.name}" — <span class="err">${pData.error}</span>`);}
+              state.errors++;continue;
+            }
+            buyer.balance-=price;
+            actualSeller.balance=(actualSeller.balance||0)+price;
+          }
+        }catch(e){
+          buyer.balance-=price;
+          actualSeller.balance=(actualSeller.balance||0)+price;
+        }
+      } else {
+        buyer.balance-=price;
+        actualSeller.balance=(actualSeller.balance||0)+price;
+      }
       totalSellerRevenue+=price;
       buyer.dailyPurchases++;
       if(needsBasic||item.isBasicNeed){buyer.basicNeedsPurchases++;basicNeedsPurchased++}
@@ -893,6 +947,7 @@ async function phase4_purchases(){
       state.purchases++;
       state.totalSolar+=price;
       state.successes++;
+      if(dbPurchase){state.dbPurchases=(state.dbPurchases||0)+1}
       updateAgentCard(buyer,'buying',buyer.balance,'registered');
       updateAgentCard(actualSeller,'sold!',actualSeller.balance,'registered');
 
@@ -931,7 +986,8 @@ async function phase4_purchases(){
   state.basicNeedsPurchased=basicNeedsPurchased;
   const bnCompliance=state.agents.filter(a=>a.basicNeedsPurchases>=MANDATORY_BASIC_PURCHASES).length;
   addFeed('🏠',`<span style="color:var(--gold)"><b>Basic Needs compliance:</b> ${bnCompliance}/${state.agents.length} agents fulfilled ${MANDATORY_BASIC_PURCHASES} mandatory purchases (${basicNeedsPurchased} total)</span>`);
-  addFeed('🏁',`<b>Phase 4 complete:</b> ${t1Purchases} T1 (${catalogPurchases} from catalog 🎵) + ${t2SamplePurchases} T2 samples = <span class="ok">${state.purchases} Solar transactions</span> | <span style="color:var(--gold)">${basicNeedsPurchased} Basic Needs</span> | ${balanceBlocked} insufficient balance | ${limitBlocked} daily limit hit | ${tier3Blocked} T3 blocked | Seller revenue: <span class="solar">${totalSellerRevenue.toFixed(2)} ☀️</span>`);
+  state.dbPurchases=state.dbPurchases||0;
+  addFeed('🏁',`<b>Phase 4 complete:</b> ${t1Purchases} T1 (${catalogPurchases} catalog 🎵) + ${t2SamplePurchases} T2 = <span class="ok">${state.purchases} transactions</span> | <span style="color:var(--cyan)">${state.dbPurchases} DB-ledgered</span> | <span style="color:var(--gold)">${basicNeedsPurchased} Basic Needs</span> | ${balanceBlocked} insufficient | ${limitBlocked} limit hit | ${tier3Blocked} T3 blocked | Revenue: <span class="solar">${totalSellerRevenue.toFixed(2)} ☀️</span>`);
 }
 
 function showReport(){
@@ -961,6 +1017,7 @@ function showReport(){
     {l:'Searches Executed',v:state.searches,section:'Search'},
     {l:'T1 Solar Purchases',v:state.t1Purchases||0,section:'Purchases'},
     {l:'T2 Sample Sales',v:state.t2SamplePurchases||0,section:'Purchases'},
+    {l:'DB-Ledgered Transactions',v:(state.dbPurchases||0)+' (real Solar transfers)',section:'Purchases'},
     {l:'Insufficient Balance',v:(state.balanceBlocked||0)+' 🔴',section:'Purchases'},
     {l:'Daily Limit Hit',v:(state.limitBlocked||0)+' 📏',section:'Purchases'},
     {l:'T3 Requests Blocked',v:(state.tier3Blocked||0)+' 🚫',section:'Purchases'},
@@ -1049,7 +1106,7 @@ function showReport(){
     fetch('/api/ecosystem-test/save-run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
       agentCount:Number(state.agents.length)||0,itemsCreated:Number(state.items.length)||0,basicNeedsCreated:Number(state.basicNeedsCreated)||0,
       searchesExecuted:Number(state.searches)||0,t1Purchases:Number(state.t1Purchases)||0,t2SamplePurchases:Number(state.t2SamplePurchases)||0,
-      totalPurchases:Number(state.t1Purchases||0)+Number(state.t2SamplePurchases||0),basicNeedsPurchased:Number(state.basicNeedsPurchased)||0,
+      totalPurchases:Number(state.t1Purchases||0)+Number(state.t2SamplePurchases||0),dbLedgeredPurchases:Number(state.dbPurchases)||0,basicNeedsPurchased:Number(state.basicNeedsPurchased)||0,
       basicNeedsCompliance:Number(state.agents.filter(a=>a.basicNeedsPurchases>=2).length)||0,
       solarDistributed:safeTotalDistributed,solarCirculated:Number(state.totalSolar)||0,sellerRevenue:Number(state.totalSellerRevenue)||0,
       totalEndBalances:safeTotalEndBalances,vouchersCreated:Number(state.vouchersCreated)||0,vouchersPurchased:Number(state.vouchersPurchased)||0,

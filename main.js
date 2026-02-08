@@ -8926,6 +8926,200 @@ Respond ONLY with valid JSON in this exact format:
     }
     return;
   }
+
+  // ECOSYSTEM TEST APIs - Database-backed Solar transactions for ecosystem testing
+  if (pathname === '/api/ecosystem/resolve-agent' && req.method === 'POST') {
+    try {
+      const body = await parseBody(req);
+      const { username } = body;
+      if (!username || !pool) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Username required' }));
+        return;
+      }
+      const result = await pool.query(
+        'SELECT id, username, total_solar FROM members WHERE username = $1',
+        [username]
+      );
+      if (result.rows.length === 0) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Member not found' }));
+        return;
+      }
+      const member = result.rows[0];
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        memberId: member.id,
+        username: member.username,
+        balance: parseFloat(member.total_solar) || 0
+      }));
+    } catch (error) {
+      console.error('Resolve agent error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to resolve agent' }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/ecosystem/distribute' && req.method === 'POST') {
+    try {
+      const body = await parseBody(req);
+      const { memberId, amount } = body;
+      const distAmount = parseFloat(amount) || 1;
+      if (!memberId || !pool) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'memberId required' }));
+        return;
+      }
+      const memberResult = await pool.query(
+        'SELECT id, username, total_solar FROM members WHERE id = $1',
+        [memberId]
+      );
+      if (memberResult.rows.length === 0) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Member not found' }));
+        return;
+      }
+      const member = memberResult.rows[0];
+      const currentBalance = parseFloat(member.total_solar) || 0;
+      const newBalance = currentBalance + distAmount;
+      const transactionId = `dist_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      await pool.query('BEGIN');
+      try {
+        await pool.query(
+          'UPDATE members SET total_solar = $1 WHERE id = $2',
+          [String(newBalance), memberId]
+        );
+        await pool.query(
+          `INSERT INTO marketplace_ledger (id, transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
+           VALUES (gen_random_uuid(), $1, 'credit', $2, 'user', $3, $4, 'distribution', 'daily_solar', $5)`,
+          [transactionId, String(memberId), String(distAmount), String(newBalance), `Daily Solar distribution +${distAmount} to ${member.username}`]
+        );
+        await pool.query('COMMIT');
+      } catch (txErr) {
+        await pool.query('ROLLBACK');
+        throw txErr;
+      }
+      
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        memberId: member.id,
+        username: member.username,
+        previousBalance: currentBalance,
+        newBalance: newBalance,
+        distributed: distAmount,
+        transactionId
+      }));
+    } catch (error) {
+      console.error('Distribution error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Distribution failed' }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/ecosystem/purchase' && req.method === 'POST') {
+    try {
+      const body = await parseBody(req);
+      const { buyerId, sellerId, artifactId, amount, itemName } = body;
+      const price = parseFloat(amount) || 0;
+      
+      if (!buyerId || !sellerId || price <= 0 || !pool) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'buyerId, sellerId, and positive amount required' }));
+        return;
+      }
+      
+      const membersResult = await pool.query(
+        'SELECT id, username, total_solar FROM members WHERE id = ANY($1)',
+        [[buyerId, sellerId]]
+      );
+      const buyerRow = membersResult.rows.find(r => r.id === buyerId);
+      const sellerRow = membersResult.rows.find(r => r.id === sellerId);
+      
+      if (!buyerRow) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Buyer account not found' }));
+        return;
+      }
+      if (!sellerRow) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Seller account not found' }));
+        return;
+      }
+      
+      const buyerBalance = parseFloat(buyerRow.total_solar) || 0;
+      const sellerBalance = parseFloat(sellerRow.total_solar) || 0;
+      
+      if (buyerBalance < price) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ 
+          success: false, 
+          error: 'Insufficient Solar balance',
+          buyerBalance,
+          required: price
+        }));
+        return;
+      }
+      
+      const transactionId = `eco_purchase_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const newBuyerBalance = buyerBalance - price;
+      const newSellerBalance = sellerBalance + price;
+      const description = itemName || (artifactId ? `Artifact ${artifactId}` : 'Marketplace item');
+      
+      await pool.query('BEGIN');
+      try {
+        await pool.query(
+          'UPDATE members SET total_solar = $1 WHERE id = $2',
+          [String(newBuyerBalance), buyerId]
+        );
+        await pool.query(
+          'UPDATE members SET total_solar = $1 WHERE id = $2',
+          [String(newSellerBalance), sellerId]
+        );
+        await pool.query(
+          `INSERT INTO marketplace_ledger (id, transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
+           VALUES (gen_random_uuid(), $1, 'debit', $2, 'user', $3, $4, 'purchase', $5, $6)`,
+          [transactionId, String(buyerId), String(price), String(newBuyerBalance), artifactId || 'ecosystem_item', `Purchase: ${description}`]
+        );
+        await pool.query(
+          `INSERT INTO marketplace_ledger (id, transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
+           VALUES (gen_random_uuid(), $1, 'credit', $2, 'user', $3, $4, 'purchase', $5, $6)`,
+          [transactionId, String(sellerId), String(price), String(newSellerBalance), artifactId || 'ecosystem_item', `Sale: ${description}`]
+        );
+        if (artifactId) {
+          await pool.query(
+            `INSERT INTO artifact_copies (artifact_id, owner_id, purchase_transaction_id, acquired_method, solar_paid)
+             VALUES ($1, $2, $3, 'purchase', $4)
+             ON CONFLICT DO NOTHING`,
+            [artifactId, buyerId, transactionId, String(price)]
+          );
+        }
+        await pool.query('COMMIT');
+      } catch (txErr) {
+        await pool.query('ROLLBACK');
+        throw txErr;
+      }
+      
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        transactionId,
+        buyer: { id: buyerId, username: buyerRow.username, balance: newBuyerBalance },
+        seller: { id: sellerId, username: sellerRow.username, balance: newSellerBalance },
+        amount: price,
+        artifactId: artifactId || null
+      }));
+    } catch (error) {
+      console.error('Ecosystem purchase error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Purchase transaction failed' }));
+    }
+    return;
+  }
   
   // MY ARTIFACTS API - Get user's purchased/owned artifact copies
   if (pathname === '/api/my-artifacts' && req.method === 'GET') {
