@@ -2845,6 +2845,76 @@ function initializeDailyDistribution() {
   console.log('📌 Manual trigger: POST /api/distribution/trigger');
 }
 
+const NETWORK_AGENTS = [
+  {code:'01',name:'Alpha',icon:'🅰️',specialty:'Computronium'},
+  {code:'02',name:'Bravo',icon:'🅱️',specialty:'Culture'},
+  {code:'03',name:'Charlie',icon:'©️',specialty:'Basic Needs'},
+  {code:'04',name:'Delta',icon:'🔺',specialty:'Rent'},
+  {code:'05',name:'Echo',icon:'📡',specialty:'Energy'},
+  {code:'06',name:'Foxtrot',icon:'🦊',specialty:'Music'},
+  {code:'07',name:'Golf',icon:'⛳',specialty:'Video'},
+  {code:'08',name:'Hotel',icon:'🏨',specialty:'Art'},
+  {code:'09',name:'India',icon:'🇮🇳',specialty:'Photo'},
+  {code:'10',name:'Juliet',icon:'🌹',specialty:'Writing'},
+  {code:'11',name:'Kilo',icon:'⚖️',specialty:'AI Tools'},
+  {code:'12',name:'Lima',icon:'🌿',specialty:'AI Create'},
+  {code:'13',name:'Nova',icon:'💫',specialty:'Software'},
+  {code:'14',name:'Orion',icon:'🌌',specialty:'Docs'},
+  {code:'15',name:'Pulse',icon:'💓',specialty:'Games'},
+  {code:'16',name:'Quasar',icon:'✨',specialty:'Utilities'},
+  {code:'17',name:'Radiant',icon:'☀️',specialty:'Computronium'},
+  {code:'18',name:'Solaris',icon:'🔆',specialty:'Energy'},
+  {code:'19',name:'Tesla',icon:'⚡',specialty:'AI Tools'},
+  {code:'20',name:'Zenith',icon:'🏔️',specialty:'Culture'}
+];
+
+async function initializePersistentAgents() {
+  if (!pool) {
+    console.log('⚠️ No database — skipping agent initialization');
+    return;
+  }
+  console.log('🤖 Initializing persistent AI agent members (same signup logic as humans)...');
+
+  const genesisDate = new Date('2025-04-07');
+  const now = new Date();
+  const daysSinceGenesis = Math.max(Math.floor((now - genesisDate) / (1000 * 60 * 60 * 24)), 1);
+  const initialSolar = daysSinceGenesis;
+  const initialDollars = initialSolar * 0.20;
+  let created = 0, existing = 0, flagged = 0;
+
+  const agentHash = bcrypt ? await bcrypt.hash('AgentNetwork2025!', 12) : 'agent_no_direct_login';
+
+  for (const agent of NETWORK_AGENTS) {
+    const username = 'agent_eco_' + agent.code;
+    const email = username + '@tcs.network';
+    const displayName = 'Agent ' + agent.name;
+    try {
+      const check = await pool.query('SELECT id, is_agent FROM members WHERE username = $1 LIMIT 1', [username]);
+      if (check.rows.length > 0) {
+        if (!check.rows[0].is_agent) {
+          await pool.query('UPDATE members SET is_agent = true WHERE id = $1', [check.rows[0].id]);
+          flagged++;
+        }
+        existing++;
+      } else {
+        await pool.query(
+          `INSERT INTO members (username, name, email, first_name, password_hash, total_solar, total_dollars, is_agent, signup_timestamp)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, true, NOW())`,
+          [username, displayName, email, agent.name, agentHash, initialSolar, initialDollars]
+        );
+        created++;
+        console.log(`🤖 Agent ${agent.name} registered — ${initialSolar} Solar (same genesis calc as humans)`);
+      }
+    } catch (err) {
+      if (err.code === '23505') { existing++; }
+      else { console.warn(`⚠️ Agent ${agent.name} init failed:`, err.message); }
+    }
+  }
+  console.log(`✅ Agent initialization complete: ${created} created, ${existing} existing, ${flagged} newly flagged (${NETWORK_AGENTS.length} total)`);
+  console.log(`🌱 Genesis balance: ${initialSolar} Solar each (1/day since April 7, 2025 — same formula as human signup)`);
+  console.log('📊 All 20 agents are persistent members — same rights as humans, same daily +1 Solar distribution');
+}
+
 // Solar Foundation Integrity Wheel - Audit and Hash Verification
 function initializeFoundationIntegrityWheel() {
   console.log('🔒 Initializing Foundation Solar Integrity Wheel...');
@@ -5812,10 +5882,11 @@ const server = http.createServer(async (req, res) => {
         const passwordHash = await bcrypt.hash(password, saltRounds);
 
         // Create member with hashed password and initial Solar balance
+        const isAgent = body.isAgent === true || username.startsWith('agent_eco_');
         const memberInsertQuery = `
-          INSERT INTO members (username, name, email, first_name, password_hash, total_solar, total_dollars, signup_timestamp)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
-          RETURNING id, username, total_solar
+          INSERT INTO members (username, name, email, first_name, password_hash, total_solar, total_dollars, is_agent, signup_timestamp)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
+          RETURNING id, username, total_solar, is_agent
         `;
         
         const displayName = firstName || username;
@@ -5825,7 +5896,7 @@ const server = http.createServer(async (req, res) => {
         try {
           memberResult = await pool.query(memberInsertQuery, [
             username, displayName, email, firstName || '', passwordHash,
-            initialSolarAmount, initialDollars
+            initialSolarAmount, initialDollars, isAgent
           ]);
         } catch (dbError) {
           console.error('❌ Database insert error:', dbError.message);
@@ -8942,6 +9013,47 @@ Respond ONLY with valid JSON in this exact format:
   }
 
   // ECOSYSTEM APIs - Resident agent transactions using pool.query (same SQL as storage.ts methods)
+  if (pathname === '/api/agents/list' && req.method === 'GET') {
+    try {
+      if (!pool) {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Database unavailable' }));
+        return;
+      }
+      const result = await pool.query(
+        `SELECT id, username, name, total_solar, is_agent, last_distribution_date, signup_timestamp
+         FROM members WHERE is_agent = true ORDER BY username ASC`
+      );
+      const agents = result.rows.map(m => {
+        const agentDef = NETWORK_AGENTS.find(a => m.username === 'agent_eco_' + a.code);
+        return {
+          memberId: m.id,
+          username: m.username,
+          displayName: m.name,
+          icon: agentDef ? agentDef.icon : '🤖',
+          specialty: agentDef ? agentDef.specialty : 'General',
+          balance: parseFloat(m.total_solar) || 0,
+          lastDistribution: m.last_distribution_date,
+          joinedAt: m.signup_timestamp,
+          isAgent: true
+        };
+      });
+      const totalAgentSolar = agents.reduce((s, a) => s + a.balance, 0);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        count: agents.length,
+        totalSolar: totalAgentSolar,
+        agents
+      }));
+    } catch (error) {
+      console.error('Agent list error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to list agents' }));
+    }
+    return;
+  }
+
   if (pathname === '/api/ecosystem/resolve-agent' && req.method === 'POST') {
     try {
       const body = await parseBody(req);
@@ -13126,6 +13238,8 @@ setImmediate(() => {
   setTimeout(() => {
     console.log(`🔄 Starting deferred initialization tasks...`);
     
+    initializePersistentAgents().catch(err => console.warn('⚠️ Agent init failed:', err.message));
+
     // Initialize daily Solar distribution
     try {
       initializeDailyDistribution();

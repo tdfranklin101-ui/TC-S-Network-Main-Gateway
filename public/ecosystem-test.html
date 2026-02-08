@@ -449,10 +449,48 @@ function initAgentCards(){
     const el=document.createElement('div');
     el.className='agent-card';
     el.id='agent-'+a.code;
-    el.innerHTML=`<div class="agent-icon">${a.icon}</div><div class="agent-name">Agent ${a.name}</div><div class="agent-balance">— ☀️</div><div class="agent-status pending">waiting</div>`;
+    el.innerHTML=`<div class="agent-icon">${a.icon}</div><div class="agent-name">Agent ${a.name}</div><div class="agent-balance">— ☀️</div><div class="agent-status pending">loading...</div>`;
     el.addEventListener('click',()=>openAgentPanel(a.code));
     grid.appendChild(el);
   });
+  loadPersistentAgentStatus();
+}
+
+async function loadPersistentAgentStatus(){
+  try{
+    const res=await fetch('/api/agents/list');
+    const data=await res.json();
+    if(data.success&&data.agents){
+      const agentMap={};
+      data.agents.forEach(a=>{ agentMap[a.username]=a; });
+      AGENTS.forEach(a=>{
+        const username='agent_eco_'+a.code;
+        const dbAgent=agentMap[username];
+        const el=$('agent-'+a.code);
+        if(!el)return;
+        if(dbAgent){
+          el.querySelector('.agent-balance').textContent=dbAgent.balance.toFixed(1)+' ☀️';
+          const s=el.querySelector('.agent-status');
+          s.textContent='persistent member';
+          s.className='agent-status ok';
+          el.className='agent-card registered';
+          a._dbMemberId=dbAgent.memberId;
+          a._dbBalance=dbAgent.balance;
+        } else {
+          const s=el.querySelector('.agent-status');
+          s.textContent='not registered';
+          s.className='agent-status pending';
+        }
+      });
+      const totalSolar=data.agents.reduce((s,a)=>s+a.balance,0);
+      addFeed('🤖',`<b>${data.count} persistent agent members</b> loaded from database — Total: <span class="solar">${totalSolar.toFixed(1)} ☀️</span>`);
+      addFeed('📊',`Agents receive daily <span class="solar">+1 Solar</span> alongside human members — same rights, same distribution`);
+    } else {
+      addFeed('⚠️','Agent data unavailable — agents will register during test run');
+    }
+  }catch(e){
+    addFeed('⚠️','Could not load persistent agent data: '+e.message);
+  }
 }
 
 function updateAgentCard(agent,status,balance,cssClass){
