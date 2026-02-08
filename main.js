@@ -8188,6 +8188,161 @@ Respond ONLY with valid JSON in this exact format:
     return;
   }
 
+  // Ecosystem Test - Save Run Results
+  if (pathname === '/api/ecosystem-test/save-run' && req.method === 'POST') {
+    try {
+      const body = await parseBody(req);
+      const runId = `run_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
+      
+      await pool.query(
+        `INSERT INTO ecosystem_test_runs (
+          run_id, run_timestamp, agent_count, items_created, basic_needs_created,
+          searches_executed, t1_purchases, t2_sample_purchases, total_purchases,
+          basic_needs_purchased, basic_needs_compliance, solar_distributed,
+          solar_circulated, seller_revenue, total_end_balances,
+          vouchers_created, vouchers_purchased, vouchers_redeemed,
+          tier1_hits, tier2_hits, tier2_sample_posts, tier3_hits,
+          balance_blocked, limit_blocked, tier3_blocked,
+          successful_ops, failed_ops, health_score,
+          agent_ledger, mcp_engine_usage, category_breakdown, voucher_details, metadata
+        ) VALUES (
+          $1, NOW(), $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
+          $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27,
+          $28, $29, $30, $31, $32
+        )`,
+        [
+          runId,
+          body.agentCount || 20,
+          body.itemsCreated || 0,
+          body.basicNeedsCreated || 0,
+          body.searchesExecuted || 0,
+          body.t1Purchases || 0,
+          body.t2SamplePurchases || 0,
+          body.totalPurchases || 0,
+          body.basicNeedsPurchased || 0,
+          body.basicNeedsCompliance || 0,
+          body.solarDistributed || 0,
+          body.solarCirculated || 0,
+          body.sellerRevenue || 0,
+          body.totalEndBalances || 0,
+          body.vouchersCreated || 0,
+          body.vouchersPurchased || 0,
+          body.vouchersRedeemed || 0,
+          body.tier1Hits || 0,
+          body.tier2Hits || 0,
+          body.tier2SamplePosts || 0,
+          body.tier3Hits || 0,
+          body.balanceBlocked || 0,
+          body.limitBlocked || 0,
+          body.tier3Blocked || 0,
+          body.successfulOps || 0,
+          body.failedOps || 0,
+          body.healthScore || 0,
+          JSON.stringify(body.agentLedger || []),
+          JSON.stringify(body.mcpEngineUsage || {}),
+          JSON.stringify(body.categoryBreakdown || {}),
+          JSON.stringify(body.voucherDetails || []),
+          JSON.stringify(body.metadata || {})
+        ]
+      );
+
+      console.log(`📊 Ecosystem test run saved: ${runId} (Health: ${body.healthScore}%)`);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, runId }));
+    } catch (error) {
+      console.error('Save ecosystem test run error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to save test run' }));
+    }
+    return;
+  }
+
+  // Ecosystem Test - Get Historical Runs
+  if (pathname === '/api/ecosystem-test/runs' && req.method === 'GET') {
+    try {
+      const limit = parseInt(url.searchParams.get('limit') || '50');
+      const result = await pool.query(
+        `SELECT * FROM ecosystem_test_runs ORDER BY run_timestamp DESC LIMIT $1`,
+        [Math.min(limit, 200)]
+      );
+      
+      const runs = result.rows.map(row => ({
+        id: row.id,
+        runId: row.run_id,
+        timestamp: row.run_timestamp,
+        agentCount: row.agent_count,
+        itemsCreated: row.items_created,
+        basicNeedsCreated: row.basic_needs_created,
+        searchesExecuted: row.searches_executed,
+        t1Purchases: row.t1_purchases,
+        t2SamplePurchases: row.t2_sample_purchases,
+        totalPurchases: row.total_purchases,
+        basicNeedsPurchased: row.basic_needs_purchased,
+        basicNeedsCompliance: row.basic_needs_compliance,
+        solarDistributed: parseFloat(row.solar_distributed),
+        solarCirculated: parseFloat(row.solar_circulated),
+        sellerRevenue: parseFloat(row.seller_revenue),
+        totalEndBalances: parseFloat(row.total_end_balances),
+        vouchersCreated: row.vouchers_created,
+        vouchersPurchased: row.vouchers_purchased,
+        vouchersRedeemed: row.vouchers_redeemed,
+        tier1Hits: row.tier1_hits,
+        tier2Hits: row.tier2_hits,
+        tier2SamplePosts: row.tier2_sample_posts,
+        tier3Hits: row.tier3_hits,
+        balanceBlocked: row.balance_blocked,
+        limitBlocked: row.limit_blocked,
+        tier3Blocked: row.tier3_blocked,
+        successfulOps: row.successful_ops,
+        failedOps: row.failed_ops,
+        healthScore: row.health_score,
+        agentLedger: row.agent_ledger,
+        mcpEngineUsage: row.mcp_engine_usage,
+        categoryBreakdown: row.category_breakdown,
+        voucherDetails: row.voucher_details,
+        metadata: row.metadata
+      }));
+
+      // Also get cumulative stats
+      const statsResult = await pool.query(
+        `SELECT 
+          COUNT(*) as total_runs,
+          SUM(items_created) as total_items_ever,
+          SUM(total_purchases) as total_purchases_ever,
+          SUM(solar_circulated) as total_solar_ever,
+          SUM(vouchers_created) as total_vouchers_ever,
+          AVG(health_score) as avg_health_score,
+          MAX(health_score) as best_health_score,
+          MIN(run_timestamp) as first_run,
+          MAX(run_timestamp) as last_run
+         FROM ecosystem_test_runs`
+      );
+      const cumulative = statsResult.rows[0] || {};
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        runs,
+        cumulative: {
+          totalRuns: parseInt(cumulative.total_runs || 0),
+          totalItemsEver: parseInt(cumulative.total_items_ever || 0),
+          totalPurchasesEver: parseInt(cumulative.total_purchases_ever || 0),
+          totalSolarEver: parseFloat(cumulative.total_solar_ever || 0),
+          totalVouchersEver: parseInt(cumulative.total_vouchers_ever || 0),
+          avgHealthScore: parseFloat(cumulative.avg_health_score || 0).toFixed(1),
+          bestHealthScore: parseInt(cumulative.best_health_score || 0),
+          firstRun: cumulative.first_run,
+          lastRun: cumulative.last_run
+        }
+      }));
+    } catch (error) {
+      console.error('Get ecosystem test runs error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to get test runs' }));
+    }
+    return;
+  }
+
   // Marketplace Item Request API - allows users to request items not found
   if (pathname === '/api/market/requests' && req.method === 'POST') {
     try {
