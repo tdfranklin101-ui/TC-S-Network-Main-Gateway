@@ -475,8 +475,20 @@ async function runStockGeneration() {
 
     if (!res.ok || !data.success) {
       stockLog('ERROR: ' + (data.error || 'Request failed'), '#f44');
-      $('stockStatus').textContent = 'Error';
-      $('stockStatus').style.color = '#f44';
+      $('stockGoBtn').textContent = '▶ GO';
+      $('stockGoBtn').disabled = false;
+      $('stockGoBtn').style.opacity = '1';
+      stockRunning = false;
+      return;
+    }
+
+    if (data.processed === 0 || (data.results && data.results.length === 0)) {
+      stockLog(data.message || 'No eligible items found to convert', '#ff6600');
+      $('stockRemaining').textContent = '0';
+      $('stockGoBtn').textContent = '▶ GO';
+      $('stockGoBtn').disabled = false;
+      $('stockGoBtn').style.opacity = '1';
+      stockRunning = false;
       return;
     }
 

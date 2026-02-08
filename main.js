@@ -8535,12 +8535,23 @@ Respond ONLY with valid JSON in this exact format:
       params.push(batchSize);
       query += ` ORDER BY category, created_at LIMIT $${params.length}`;
 
+      // Debug: count total ecosystem items first
+      const debugCount = await pool.query(`SELECT COUNT(*) as cnt FROM market_items WHERE metadata::text LIKE '%ecosystemTest%'`);
+      const debugActiveCount = await pool.query(`SELECT COUNT(*) as cnt FROM market_items WHERE metadata::text LIKE '%ecosystemTest%' AND status = 'ACTIVE'`);
+      const debugNullImg = await pool.query(`SELECT COUNT(*) as cnt FROM market_items WHERE metadata::text LIKE '%ecosystemTest%' AND status = 'ACTIVE' AND (image_url IS NULL OR image_url = '')`);
+      console.log(`🔍 [INITIAL-STOCK DEBUG] Total ecosystem items: ${debugCount.rows[0].cnt}, Active: ${debugActiveCount.rows[0].cnt}, Null/empty image_url: ${debugNullImg.rows[0].cnt}`);
+      console.log(`🔍 [INITIAL-STOCK DEBUG] Query: ${query}, Params: ${JSON.stringify(params)}`);
+
       const itemsResult = await pool.query(query, params);
       const items = itemsResult.rows;
 
+      console.log(`🔍 [INITIAL-STOCK DEBUG] Found ${items.length} eligible items`);
+
       if (items.length === 0) {
+        const debugMsg = `No eligible items. DB has ${debugCount.rows[0].cnt} ecosystem items total, ${debugActiveCount.rows[0].cnt} active, ${debugNullImg.rows[0].cnt} with null image_url`;
+        console.log(`🔍 [INITIAL-STOCK DEBUG] ${debugMsg}`);
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: true, message: 'No items need backfill — all items already have files or none found', processed: 0, results: [] }));
+        res.end(JSON.stringify({ success: true, message: debugMsg, processed: 0, results: [] }));
         return;
       }
 
