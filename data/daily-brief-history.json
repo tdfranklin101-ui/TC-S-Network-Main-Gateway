@@ -1,65 +1,5 @@
 [
   {
-    "date": "2026-01-28",
-    "indices": [
-      {
-        "id": "si",
-        "value": 71
-      },
-      {
-        "id": "srh",
-        "value": 78.1
-      },
-      {
-        "id": "gbi",
-        "value": 41.8
-      },
-      {
-        "id": "cai",
-        "value": 88.9
-      },
-      {
-        "id": "mli",
-        "value": 23.7
-      },
-      {
-        "id": "eai",
-        "value": 91.8
-      }
-    ],
-    "timestamp": "2026-01-28T04:44:55.668Z"
-  },
-  {
-    "date": "2026-01-31",
-    "indices": [
-      {
-        "id": "si",
-        "value": 70.3
-      },
-      {
-        "id": "srh",
-        "value": 79.5
-      },
-      {
-        "id": "gbi",
-        "value": 40.7
-      },
-      {
-        "id": "cai",
-        "value": 88.2
-      },
-      {
-        "id": "mli",
-        "value": 23.6
-      },
-      {
-        "id": "eai",
-        "value": 92.2
-      }
-    ],
-    "timestamp": "2026-01-31T18:41:47.318Z"
-  },
-  {
     "date": "2026-01-31",
     "indices": [
       {
@@ -898,5 +838,65 @@
       }
     ],
     "timestamp": "2026-02-07T19:05:28.006Z"
+  },
+  {
+    "date": "2026-02-08",
+    "indices": [
+      {
+        "id": "si",
+        "value": 71.9
+      },
+      {
+        "id": "srh",
+        "value": 78.1
+      },
+      {
+        "id": "gbi",
+        "value": 42
+      },
+      {
+        "id": "cai",
+        "value": 88.4
+      },
+      {
+        "id": "mli",
+        "value": 24.6
+      },
+      {
+        "id": "eai",
+        "value": 91.9
+      }
+    ],
+    "timestamp": "2026-02-08T01:37:13.558Z"
+  },
+  {
+    "date": "2026-02-08",
+    "indices": [
+      {
+        "id": "si",
+        "value": 71.8
+      },
+      {
+        "id": "srh",
+        "value": 79.3
+      },
+      {
+        "id": "gbi",
+        "value": 41.5
+      },
+      {
+        "id": "cai",
+        "value": 89.8
+      },
+      {
+        "id": "mli",
+        "value": 23.1
+      },
+      {
+        "id": "eai",
+        "value": 91.7
+      }
+    ],
+    "timestamp": "2026-02-08T02:37:33.153Z"
   }
 ]
