@@ -1,62 +1,62 @@
 {
   "date": "2026-02-08",
-  "generatedAt": "2026-02-08T17:09:05.472Z",
+  "generatedAt": "2026-02-08T19:49:57.460Z",
   "currentIndices": [
     {
       "id": "si",
       "name": "Solar Index",
       "unit": "%",
-      "value": 70.1,
+      "value": 69.5,
       "description": "Global Energy & Ethics Balance — 7-Day Rolling Indicator.",
-      "asOf": "2026-02-08T17:09:04.179Z"
+      "asOf": "2026-02-08T19:49:55.855Z"
     },
     {
       "id": "srh",
       "name": "Solar Reserve Health",
       "unit": "%",
-      "value": 79.5,
+      "value": 78.5,
       "description": "Reserve stability and fulfillment factor across all regions.",
-      "asOf": "2026-02-08T17:09:04.179Z"
+      "asOf": "2026-02-08T19:49:55.855Z"
     },
     {
       "id": "gbi",
       "name": "Global Basic Income",
       "unit": "%",
-      "value": 42.2,
+      "value": 41.9,
       "description": "Percentage of humans enrolled and actively claiming GBI.",
-      "asOf": "2026-02-08T17:09:04.179Z"
+      "asOf": "2026-02-08T19:49:55.855Z"
     },
     {
       "id": "cai",
       "name": "Compute Alignment",
       "unit": "%",
-      "value": 89.1,
+      "value": 88.1,
       "description": "Ethically aligned compute flow — safe superintelligence readiness.",
-      "asOf": "2026-02-08T17:09:04.179Z"
+      "asOf": "2026-02-08T19:49:55.855Z"
     },
     {
       "id": "mli",
       "name": "Market Liquidity",
       "unit": "%",
-      "value": 23.8,
+      "value": 24.3,
       "description": "Health of the TC-S digital marketplace and token velocity.",
-      "asOf": "2026-02-08T17:09:04.179Z"
+      "asOf": "2026-02-08T19:49:55.855Z"
     },
     {
       "id": "eai",
       "name": "Ethical Alignment",
       "unit": "%",
-      "value": 91.3,
+      "value": 92.1,
       "description": "Acceptance ratio of tasks from the Ethics Engine.",
-      "asOf": "2026-02-08T17:09:04.179Z"
+      "asOf": "2026-02-08T19:49:55.855Z"
     }
   ],
   "trends": {
     "analysisStatus": "success",
-    "direction": "neutral",
-    "analysis": "The market indices show mixed trends, with the sentiment index (si) slightly declining and the general business index (gbi) experiencing a modest increase. Despite the drop in the sentiment index, the customer acquisition index (cai) remains strong, indicating stable customer engagement. Overall, the indices reflect a balanced market sentiment without significant bullish or bearish momentum.",
-    "insight": "Monitor the sentiment index closely; if it continues to decline, consider strategies to enhance customer engagement and address potential underlying issues affecting market confidence.",
-    "generatedAt": "2026-02-08T17:09:05.472Z"
+    "direction": "bearish",
+    "analysis": "The overall market is trending bearish, as evidenced by a decline in the sentiment index (si) from a high of 71.8 to the current 69.5, while other indices like the growth-based index (gbi) and market liquidity index (mli) have also shown slight decreases. Although the consumer activity index (cai) remains strong at 88.1, the downward trend in the sentiment and liquidity suggests caution among investors.",
+    "insight": "Focus on identifying investment opportunities in sectors with improving consumer activity, while being cautious of overall market sentiment.",
+    "generatedAt": "2026-02-08T19:49:57.460Z"
   },
   "historyDays": 30
 }
