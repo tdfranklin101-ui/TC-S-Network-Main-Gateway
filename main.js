@@ -6499,7 +6499,8 @@ const server = http.createServer(async (req, res) => {
         const artifactsQuery = `
           SELECT id, title, description, category, file_type, kwh_footprint, solar_amount_s, 
                  is_bonus, cover_art_url, delivery_mode, creator_id, 
-                 streaming_url, preview_type, preview_slug
+                 streaming_url, preview_type, preview_slug, search_tags, preview_file_url, 
+                 master_file_url, trade_file_url
           FROM artifacts 
           WHERE active = true 
           ORDER BY is_bonus ASC, solar_amount_s ASC, title ASC
@@ -6522,7 +6523,12 @@ const server = http.createServer(async (req, res) => {
           creatorId: artifact.creator_id,
           streamingUrl: artifact.streaming_url,
           previewType: artifact.preview_type,
-          previewSlug: artifact.preview_slug
+          previewSlug: artifact.preview_slug,
+          searchTags: artifact.search_tags || [],
+          previewFileUrl: artifact.preview_file_url || null,
+          masterFileUrl: artifact.master_file_url || null,
+          tradeFileUrl: artifact.trade_file_url || null,
+          coverArtUrl: artifact.cover_art_url || null
         }));
       }
 
@@ -6657,11 +6663,6 @@ const server = http.createServer(async (req, res) => {
       }
 
       const artifact = artifactResult.rows[0];
-      if (artifact.category !== 'video' && artifact.category !== 'music') {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Preview only available for videos and music' }));
-        return;
-      }
 
       // Generate secure HMAC-signed preview token (expires in 10 minutes)
       const crypto = require('crypto');

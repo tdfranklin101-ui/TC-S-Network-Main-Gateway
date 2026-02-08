@@ -190,13 +190,17 @@ class MarketplaceApp {
               kwh_footprint: parseFloat(artifact.kwh_footprint || artifact.kwhFootprint) || 0,
               solar_amount_s: parseFloat(artifact.solar_amount_s || artifact.solarPrice) || 0,
               is_bonus: Boolean(artifact.is_bonus || artifact.isBonus),
-              cover_art_url: String(artifact.cover_art_url || artifact.coverArt || '').trim(),
               delivery_mode: String(artifact.delivery_mode || artifact.deliveryMode || 'download').toLowerCase(),
               creator_id: String(artifact.creator_id || artifact.creatorId || 'unknown'),
               created_at: artifact.created_at || artifact.dateAdded || new Date().toISOString(),
               file_type: String(artifact.file_type || artifact.fileType || 'application/octet-stream').toLowerCase(),
               active: Boolean(artifact.active !== false), // Default to true unless explicitly false
-              status: String(artifact.status || 'approved').toLowerCase()
+              status: String(artifact.status || 'approved').toLowerCase(),
+              search_tags: Array.isArray(artifact.search_tags || artifact.searchTags) ? (artifact.search_tags || artifact.searchTags) : [],
+              preview_file_url: String(artifact.preview_file_url || artifact.previewFileUrl || '').trim(),
+              cover_art_url: String(artifact.cover_art_url || artifact.coverArt || artifact.coverArtUrl || '').trim(),
+              preview_type: String(artifact.preview_type || artifact.previewType || '').trim(),
+              streamingUrl: String(artifact.streaming_url || artifact.streamingUrl || '').trim()
             };
           } catch (normalizationError) {
             console.warn(`Error normalizing artifact at index ${index}:`, normalizationError);
@@ -845,7 +849,23 @@ class MarketplaceApp {
     const categoryDisplay = this.formatCategory(artifact.category);
     const hasAICategory = categoryDisplay.includes('🤖') || categoryDisplay.includes('AI');
 
+    const categoryIcons = {
+      'art': '🎨', 'music': '🎵', 'video': '🎬', 'photo': '📸', 'writing': '✍️',
+      'software': '💻', 'ai tools': '🤖', 'ai create': '🧠', 'docs': '📄',
+      'games': '🎮', 'utilities': '🔧', 'energy': '⚡', 'computronium': '🔮',
+      'culture': '🌍', 'rent': '🏠', 'basic needs': '🛒'
+    };
+    const thumbIcon = categoryIcons[artifact.category] || '📦';
+    const imageUrl = artifact.cover_art_url || artifact.preview_file_url || '';
+    const isImageType = artifact.file_type && artifact.file_type.startsWith('image/');
+    const showImage = imageUrl && (isImageType || artifact.cover_art_url);
+
     card.innerHTML = `
+      <div class="artifact-thumbnail">
+        ${showImage
+          ? `<img src="${this.escapeHtml(imageUrl)}" alt="${this.escapeHtml(artifact.title)}" onerror="this.parentElement.innerHTML='<span class=\\'thumb-icon\\'>${thumbIcon}</span>'">`
+          : `<span class="thumb-icon">${thumbIcon}</span>`}
+      </div>
       <div class="artifact-category ${isAICurated ? 'ai-enhanced' : ''}">${aiIcon}${categoryDisplay}</div>
       <h3 class="artifact-title">${this.escapeHtml(artifact.title)}</h3>
       <div class="artifact-price">${this.formatPrice(artifact.solar_amount_s)} Solar</div>
@@ -1003,7 +1023,30 @@ class MarketplaceApp {
   }
 
   showInfoModal(artifact) {
-    // Create and show info modal for non-video artifacts
+    const categoryIcons = {
+      'art': '🎨', 'music': '🎵', 'video': '🎬', 'photo': '📸', 'writing': '✍️',
+      'software': '💻', 'ai tools': '🤖', 'ai create': '🧠', 'docs': '📄',
+      'games': '🎮', 'utilities': '🔧', 'energy': '⚡', 'computronium': '🔮',
+      'culture': '🌍', 'rent': '🏠', 'basic needs': '🛒'
+    };
+    const catIcon = categoryIcons[artifact.category] || '📦';
+    const fileType = artifact.file_type || '';
+    const imageUrl = artifact.cover_art_url || artifact.preview_file_url || '';
+    const audioUrl = artifact.streamingUrl || artifact.preview_file_url || '';
+
+    let previewHtml = '';
+    if (fileType.startsWith('image/') && imageUrl) {
+      previewHtml = `<div style="text-align:center;margin-bottom:15px;"><img src="${this.escapeHtml(imageUrl)}" alt="${this.escapeHtml(artifact.title)}" style="max-width:100%;max-height:300px;border-radius:8px;object-fit:contain;"></div>`;
+    } else if (fileType.startsWith('audio/')) {
+      previewHtml = `<div style="margin-bottom:15px;"><audio controls style="width:100%;" preload="none"><source src="${this.escapeHtml(audioUrl)}" type="${fileType}">Your browser does not support audio.</audio></div>`;
+    } else if (fileType === 'application/javascript') {
+      previewHtml = `<div style="background:#111;border-radius:8px;padding:15px;margin-bottom:15px;font-family:'Courier New',monospace;font-size:13px;color:#0f0;overflow-x:auto;max-height:200px;overflow-y:auto;"><pre style="margin:0;">// ${this.escapeHtml(artifact.title)}\n// JavaScript artifact</pre></div>`;
+    } else if (fileType === 'text/plain' || fileType === 'text/html') {
+      previewHtml = `<div style="background:#111;border-radius:8px;padding:15px;margin-bottom:15px;font-family:monospace;font-size:13px;color:#ccc;overflow-x:auto;max-height:200px;overflow-y:auto;"><pre style="margin:0;">${this.escapeHtml(artifact.description || 'Text content preview')}</pre></div>`;
+    } else {
+      previewHtml = `<div style="text-align:center;padding:30px 0;margin-bottom:15px;"><span style="font-size:64px;">${catIcon}</span></div>`;
+    }
+
     const modal = document.createElement('div');
     modal.className = 'video-preview-modal visible';
     modal.innerHTML = `
@@ -1013,7 +1056,9 @@ class MarketplaceApp {
           <span class="video-close-btn">&times;</span>
         </div>
         <div style="padding: 20px;">
-          <div class="video-category">${this.formatCategory(artifact.category)}</div>
+          ${previewHtml}
+          <div class="video-category">${catIcon} ${this.formatCategory(artifact.category)}</div>
+          <span class="artifact-file-badge">${fileType || 'unknown'}</span>
           <p style="margin: 15px 0; line-height: 1.5;">
             ${this.escapeHtml(artifact.description || 'No description available')}
           </p>
@@ -1023,7 +1068,6 @@ class MarketplaceApp {
             </div>
           ` : ''}
           <div style="margin: 15px 0;">
-            <strong>File Type:</strong> ${artifact.file_type}<br>
             <strong>Energy Footprint:</strong> ${artifact.kwh_footprint || '0'} kWh
           </div>
         </div>
@@ -1038,7 +1082,6 @@ class MarketplaceApp {
       </div>
     `;
 
-    // Add close functionality
     modal.querySelector('.video-close-btn').addEventListener('click', () => {
       document.body.removeChild(modal);
     });
