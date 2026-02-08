@@ -8203,6 +8203,308 @@ Respond ONLY with valid JSON in this exact format:
     return;
   }
 
+  // Phase 2 — AI-powered artifact creation with full 3-copy mastering (same as human upload)
+  if (pathname === '/api/ecosystem-test/create-artifact' && req.method === 'POST') {
+    try {
+      const sessionId = getCookie(req, 'tc_s_session');
+      if (!sessionId) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Authentication required' }));
+        return;
+      }
+      const session = await getSession(sessionId);
+      if (!session || !session.userId) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Valid session required' }));
+        return;
+      }
+
+      const body = await parseBody(req);
+      const { title, description, category, priceSolar, creatorUsername, creatorId } = body;
+
+      if (!title || !category || !priceSolar || !creatorUsername) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Missing required fields' }));
+        return;
+      }
+
+      const ALLOWED_CATEGORIES = ['Computronium','Culture','Basic Needs','Rent','Energy','Music','Video','Art','Photo','Writing','AI Tools','AI Create','Software','Docs','Games','Utilities'];
+      if (!ALLOWED_CATEGORIES.includes(category)) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Invalid category' }));
+        return;
+      }
+
+      const price = parseFloat(priceSolar);
+      if (isNaN(price) || price <= 0 || price > 100) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Price must be between 0 and 100 Solar' }));
+        return;
+      }
+
+      const safeTitle = String(title).substring(0, 200).replace(/[<>]/g, '');
+      const safeDesc = String(description || '').substring(0, 500).replace(/[<>]/g, '');
+
+      // === MCP CREATION ENGINE: AI self-creates first, then web fallback ===
+      let creationResult = { success: false };
+      let creationSource = 'none';
+
+      // Step 1: AI Self-Creation (primary)
+      try {
+        const aiEngine = require('./ai-creation-engine');
+        creationResult = await aiEngine.generateArtifactContent(category, safeTitle, safeDesc, creatorUsername);
+        if (creationResult.success) {
+          creationSource = 'ai-self-creation';
+          console.log(`🤖 AI self-created: "${safeTitle}" [${category}] via ${creationResult.creationMethod} by ${creatorUsername}`);
+        }
+      } catch (aiErr) {
+        console.warn(`⚠️ AI creation engine error for "${safeTitle}":`, aiErr.message);
+      }
+
+      // Step 2: Web source fallback (only if AI cannot)
+      if (!creationResult.success) {
+        try {
+          const webDiscovery = require('./web-source-discovery');
+          creationResult = await webDiscovery.findFreeContent(category, safeTitle, safeDesc, creatorUsername);
+          if (creationResult.success) {
+            creationSource = 'web-discovery';
+            console.log(`🌐 Web source found: "${safeTitle}" [${category}] via ${creationResult.creationMethod} by ${creatorUsername}`);
+          }
+        } catch (webErr) {
+          console.warn(`⚠️ Web discovery error for "${safeTitle}":`, webErr.message);
+        }
+      }
+
+      // === 3-COPY MASTERING WORKFLOW (identical to human Upload tab) ===
+      if (creationResult.success && creationResult.fileBuffer) {
+        const fileBuffer = creationResult.fileBuffer;
+        const actualMime = creationResult.fileType || 'application/octet-stream';
+        const originalFilename = creationResult.filename || `agent-artifact${creationResult.ext || '.bin'}`;
+
+        // Step 3A: Process through three-copy workflow (Master → Preview → Trade)
+        let fileProcessingResult;
+        try {
+          console.log(`🔄 [AGENT-MCP] Processing through three-copy workflow: "${safeTitle}" by ${creatorUsername}`);
+          fileProcessingResult = await fileManager.processUpload(
+            fileBuffer,
+            { originalname: originalFilename, mimetype: actualMime, size: fileBuffer.length },
+            { title: safeTitle, description: safeDesc, category, creatorId: String(creatorId || session.userId) }
+          );
+        } catch (processingError) {
+          console.error(`❌ [AGENT-MCP] Three-copy processing error:`, processingError.message);
+          fileProcessingResult = null;
+        }
+
+        if (fileProcessingResult && fileProcessingResult.success) {
+          const artifactId = fileProcessingResult.artifactId;
+          console.log(`✅ [AGENT-MCP] Three-copy mastering complete: ${artifactId}`);
+
+          // Step 3B: AI content analysis for pricing (same as human upload)
+          let analysis;
+          try {
+            analysis = await analyzeContentForPricing(fileBuffer, actualMime, {
+              title: safeTitle, description: safeDesc, category, fileSize: fileBuffer.length, filename: originalFilename
+            });
+          } catch (analysisErr) {
+            const fileSizeMB = fileBuffer.length / (1024 * 1024);
+            const baseKwh = fileSizeMB * 0.01;
+            analysis = { estimatedKwh: baseKwh, solarAmount: baseKwh / 4913, reasoning: 'Fallback pricing' };
+          }
+
+          // Step 3C: AI curation for smart descriptions (same as human upload)
+          let aiCurationResult = null;
+          if (!actualMime.startsWith('video/')) {
+            try {
+              aiCurationResult = await aiCurator.generateSmartDescription(
+                fileBuffer, actualMime, { title: safeTitle, description: safeDesc, category }
+              );
+              if (aiCurationResult && aiCurationResult.success && aiCurationResult.description && (!safeDesc || safeDesc.length < 50)) {
+                // Use AI-enhanced description
+              }
+            } catch (curErr) { /* continue without curation */ }
+          }
+
+          // Step 3D: Generate unique slug
+          const baseSlug = generateSlug(safeTitle, originalFilename);
+          let finalSlug = baseSlug;
+          let slugCounter = 1;
+          while (true) {
+            const slugCheck = await pool.query('SELECT id FROM artifacts WHERE slug = $1', [finalSlug]);
+            if (slugCheck.rows.length === 0) break;
+            finalSlug = `${baseSlug}-${slugCounter++}`;
+          }
+
+          // Prepare search tags
+          let searchTags = null;
+          if (aiCurationResult && aiCurationResult.success && Array.isArray(aiCurationResult.tags)) {
+            searchTags = aiCurationResult.tags.filter(tag => typeof tag === 'string');
+            if (searchTags.length === 0) searchTags = null;
+          }
+
+          // Use AI pricing or agent-set price
+          let finalSolarAmount = price;
+          if (aiCurationResult && aiCurationResult.success && aiCurationResult.suggestedPrice) {
+            const aiSuggested = parseFloat(aiCurationResult.suggestedPrice);
+            if (aiSuggested > 0 && aiSuggested <= 100) finalSolarAmount = aiSuggested;
+          }
+
+          // Step 3E: Insert into artifacts table (same as human upload)
+          const insertQuery = `
+            INSERT INTO artifacts (
+              id, slug, title, description, category, file_type,
+              kwh_footprint, solar_amount_s, rays_amount, delivery_mode, delivery_url,
+              creator_id, cover_art_url, active,
+              master_file_url, preview_file_url, trade_file_url,
+              master_file_size, preview_file_size, trade_file_size,
+              file_duration, preview_duration, preview_type, preview_slug,
+              processing_status, search_tags, created_at
+            ) VALUES (
+              $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
+              $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, NOW()
+            ) RETURNING id, slug, solar_amount_s
+          `;
+
+          const artifactResult = await pool.query(insertQuery, [
+            artifactId, finalSlug, safeTitle,
+            (aiCurationResult && aiCurationResult.success && aiCurationResult.description) || safeDesc || '',
+            (aiCurationResult && aiCurationResult.success && aiCurationResult.category) || category,
+            actualMime, analysis.estimatedKwh, finalSolarAmount,
+            0, 'download', fileProcessingResult.tradeFile.url,
+            String(creatorId || session.userId),
+            fileProcessingResult.previewFile.thumbnailUrl || null,
+            true,
+            fileProcessingResult.masterFile.url,
+            fileProcessingResult.previewFile.previewUrl || null,
+            fileProcessingResult.tradeFile.url,
+            fileProcessingResult.masterFile.size,
+            fileProcessingResult.previewFile.previewSize || 0,
+            fileProcessingResult.tradeFile.size,
+            fileProcessingResult.metadata.fileDuration || null,
+            fileProcessingResult.previewFile.previewDuration || null,
+            fileProcessingResult.previewFile.previewType || null,
+            `${finalSlug}-preview`,
+            fileProcessingResult.processingStatus || 'completed',
+            searchTags
+          ]);
+
+          const dbArtifactId = artifactResult.rows[0].id;
+          const artifactSlug = artifactResult.rows[0].slug;
+
+          // Step 3F: Also create market_items entry (same as human upload)
+          try {
+            const marketItemId = String(dbArtifactId);
+            const normalizedSearch = `${safeTitle} ${safeDesc} ${category} ${(searchTags || []).join(' ')}`.toLowerCase().replace(/[^a-z0-9\s]+/g, ' ').replace(/\s+/g, ' ').trim();
+            await pool.query(`
+              INSERT INTO market_items (
+                id, title, description, tags, category, price_solar, kwh_estimate,
+                source_type, status, search_text, image_url, created_by_user_id, metadata
+              ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'INTERNAL_STOCK', 'ACTIVE', $8, $9, $10, $11)
+              ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, status = 'ACTIVE', updated_at = NOW()
+            `, [
+              marketItemId, safeTitle, safeDesc || '',
+              searchTags || [], category, finalSolarAmount, analysis.estimatedKwh,
+              normalizedSearch,
+              fileProcessingResult.previewFile.thumbnailUrl || null,
+              String(creatorId || session.userId),
+              JSON.stringify({
+                artifactId: marketItemId, artifactSlug, ecosystemTest: true, phase: 2,
+                agent: creatorUsername, creationSource, creationMethod: creationResult.creationMethod,
+                uploadType: 'agent_mcp_three_copy'
+              })
+            ]);
+          } catch (marketErr) {
+            console.error('⚠️ Market item creation failed (artifact still saved):', marketErr.message);
+          }
+
+          console.log(`🚀 [AGENT-MCP] Upload Complete: "${safeTitle}" (${artifactSlug}) by ${creatorUsername} via ${creationResult.creationMethod}`);
+          console.log(`📁 Files: Master (${fileProcessingResult.masterFile.size}B), Preview (${fileProcessingResult.previewFile.previewSize || 0}B), Trade (${fileProcessingResult.tradeFile.size}B)`);
+
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({
+            success: true,
+            itemId: dbArtifactId,
+            artifactSlug,
+            title: safeTitle,
+            priceSolar: finalSolarAmount,
+            category,
+            hasRealFile: true,
+            creationSource,
+            creationMethod: creationResult.creationMethod,
+            fileUrl: fileProcessingResult.previewFile.thumbnailUrl || fileProcessingResult.previewFile.previewUrl || null,
+            fileType: actualMime,
+            fileSize: fileBuffer.length,
+            previewType: fileProcessingResult.previewFile.previewType || creationResult.previewType || null,
+            masterFileUrl: fileProcessingResult.masterFile.url,
+            tradeFileUrl: fileProcessingResult.tradeFile.url,
+            searchable: true,
+            threeCopyMastered: true
+          }));
+          return;
+        }
+      }
+
+      // Fallback: No file generated — metadata-only record (like Phase 1)
+      const itemId = `eco_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
+      const searchText = `${safeTitle} ${safeDesc} ${category}`.toLowerCase().replace(/[^a-z0-9\s]+/g, ' ').replace(/\s+/g, ' ').trim();
+      const kwhEstimate = (price * 4913).toFixed(2);
+
+      await pool.query(
+        `INSERT INTO market_items (id, title, description, tags, category, price_solar, kwh_estimate, source_type, status, search_text, created_by_user_id, metadata)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, 'INTERNAL_STOCK', 'ACTIVE', $8, $9, $10)
+         ON CONFLICT (id) DO NOTHING`,
+        [itemId, safeTitle, safeDesc, `{${category.toLowerCase().replace(/\s+/g, '_')}}`, category, price, kwhEstimate, searchText, String(creatorId || session.userId),
+         JSON.stringify({ ecosystemTest: true, phase: 2, agent: creatorUsername, creationSource, creationMethod: creationResult.creationMethod || 'none', hasRealFile: false })]
+      );
+
+      console.log(`📦 [AGENT-MCP] Metadata-only: "${safeTitle}" by ${creatorUsername} (no file generated)`);
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true, itemId, title: safeTitle, priceSolar: price, category,
+        hasRealFile: false, creationSource, creationMethod: creationResult.creationMethod || 'none',
+        fileUrl: null, fileType: null, fileSize: 0, previewType: null,
+        searchable: true, threeCopyMastered: false
+      }));
+    } catch (error) {
+      console.error('Phase 2 create-artifact error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to create artifact' }));
+    }
+    return;
+  }
+
+  // Phase 2 — Get creation engine status (budget, discovery ledger)
+  if (pathname === '/api/ecosystem-test/creation-status' && req.method === 'GET') {
+    try {
+      const aiEngine = require('./ai-creation-engine');
+      const webDiscovery = require('./web-source-discovery');
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        budget: aiEngine.getBudgetStatus(),
+        discoveryLedger: webDiscovery.getDiscoveryLedger(),
+        sourceStats: webDiscovery.getSourceStats()
+      }));
+    } catch (err) {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ budget: null, discoveryLedger: null, error: err.message }));
+    }
+    return;
+  }
+
+  // Phase 2 — Reset creation budget for new test run
+  if (pathname === '/api/ecosystem-test/reset-budget' && req.method === 'POST') {
+    try {
+      const aiEngine = require('./ai-creation-engine');
+      aiEngine.resetBudget();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, budget: aiEngine.getBudgetStatus() }));
+    } catch (err) {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: err.message }));
+    }
+    return;
+  }
+
   // Ecosystem Test - Save Run Results
   if (pathname === '/api/ecosystem-test/save-run' && req.method === 'POST') {
     try {

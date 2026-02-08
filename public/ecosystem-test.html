@@ -155,6 +155,12 @@ header p{color:#888;font-size:14px}
     <div class="stat-card"><div class="stat-val orange" id="statPurchases">0</div><div class="stat-label">Purchases</div></div>
     <div class="stat-card"><div class="stat-val gold" id="statSolar">0</div><div class="stat-label">Solar Circulated</div></div>
   </div>
+  <div class="stats-row" id="phase2StatsRow" style="display:none">
+    <div class="stat-card" style="border-color:var(--green)"><div class="stat-val" id="statAiCreated">0</div><div class="stat-label">🤖 AI Self-Created</div></div>
+    <div class="stat-card" style="border-color:var(--cyan)"><div class="stat-val cyan" id="statWebSourced">0</div><div class="stat-label">🌐 Web Sourced</div></div>
+    <div class="stat-card" style="border-color:var(--purple)"><div class="stat-val purple" id="statRealFiles">0</div><div class="stat-label">📁 Real Files</div></div>
+    <div class="stat-card" style="border-color:var(--orange)"><div class="stat-val orange" id="statDiscoveries">0</div><div class="stat-label">📡 Discoveries</div></div>
+  </div>
 
   <div class="panels">
     <div class="panel">
@@ -427,6 +433,13 @@ function updateStats(){
   $('statSearches').textContent=state.searches;
   $('statPurchases').textContent=state.purchases;
   $('statSolar').textContent=state.totalSolar.toFixed(1);
+  if(state.phase2){
+    $('phase2StatsRow').style.display='';
+    $('statAiCreated').textContent=state.phase2.aiCreated;
+    $('statWebSourced').textContent=state.phase2.webSourced;
+    $('statRealFiles').textContent=state.phase2.aiCreated+state.phase2.webSourced;
+    $('statDiscoveries').textContent=(state.phase2.discoveries||[]).length;
+  }
 }
 
 function calcGenesisSolar(){
@@ -505,15 +518,25 @@ async function phaseDailyDistribution(){
 
 async function phase2_items(){
   const DAILY_CREATE_LIMIT=5;
-  setPhase(2,'Phase 2 — Creative Item Creation & Marketplace Posting',25);
-  addFeed('🚀','<b>Phase 2</b> starting: Agents using <b>MCP Creation Engines</b> to produce 5 artifacts/day (1 Basic Needs public good + specialty items)...');
+  setPhase(2,'Phase 2 — AI Self-Creation & Marketplace Posting',25);
+  addFeed('🚀','<b>Phase 2</b> starting: Agents using <b>AI Self-Creation</b> to produce 5 real artifacts/day (1 Basic Needs public good + specialty items)...');
   addFeed('📏',`<b>Daily rules:</b> 5 artifacts created | 5 purchases (2 mandatory Basic Needs) | positive balance required`);
   addFeed('🏪','<b>16 categories</b> across TC-S Market, Creative & Media, AI-Enhanced, Technical & Other');
-  addFeed('🔧','<b>Creation Engines:</b> Suno/Udio/AiSongMaker (Music) | Vimeo/Runway/Sora (Video) | Replit/Codex/Bolt/v0 (Code) | DALL-E/Midjourney (Art)');
+  addFeed('🤖','<b>AI Engines:</b> DALL-E 3 (Art/Photo/Culture) | GPT-4o (Writing/Docs/Code) | TTS-1 (Music/Audio) | Web Discovery (Fallback)');
+  addFeed('🔄','<b>Priority:</b> AI self-creates first → if impossible, agent searches free web sources → discoveries shared with all 20 agents');
+
+  // Reset creation budget for this run
+  try { await fetch('/api/ecosystem-test/reset-budget',{method:'POST',credentials:'include'}); } catch(e){}
+
   $('itemsPanel').style.display='block';
   const grid=$('itemsGrid');
   let posted=0,failed=0,basicNeedsCreated=0;
+  let aiCreated=0,webSourced=0,metadataOnly=0;
   const usedNames=[];
+
+  // Phase 2 creation tracking
+  if(!state.phase2) state.phase2={aiCreated:0,webSourced:0,metadataOnly:0,discoveries:[],budgetStatus:null,fileTypes:{}};
+
   for(let i=0;i<state.agents.length;i++){
     const agent=state.agents[i];
     agent.dailyCreates=0;
@@ -538,9 +561,10 @@ async function phase2_items(){
       usedNames.push(itemName);
       const price=gen.price;
       const kwhEq=(price*4913).toFixed(1);
-      const item={name:itemName,category:cat,price,creator:agent.name,creatorCode:agent.code,agentIdx:i,itemId:null,isBasicNeed:isBasic};
+      const item={name:itemName,category:cat,price,creator:agent.name,creatorCode:agent.code,agentIdx:i,itemId:null,isBasicNeed:isBasic,hasRealFile:false,creationSource:'none',creationMethod:'none',fileUrl:null,fileType:null,previewType:null,threeCopyMastered:false};
+
       try{
-        const res=await fetch('/api/ecosystem-test/create-item',{
+        const res=await fetch('/api/ecosystem-test/create-artifact',{
           method:'POST',
           headers:{'Content-Type':'application/json'},
           body:JSON.stringify({title:itemName,description:gen.desc,category:cat,priceSolar:price,creatorUsername:agent.username,creatorId:agent.userId}),
@@ -549,43 +573,94 @@ async function phase2_items(){
         const data=await res.json().catch(()=>({}));
         if(res.ok&&data.success){
           item.itemId=data.itemId;
+          item.hasRealFile=data.hasRealFile||false;
+          item.creationSource=data.creationSource||'none';
+          item.creationMethod=data.creationMethod||'none';
+          item.fileUrl=data.fileUrl||null;
+          item.fileType=data.fileType||null;
+          item.previewType=data.previewType||null;
+          item.threeCopyMastered=data.threeCopyMastered||false;
           posted++;
           agent.dailyCreates++;
           if(isBasic) basicNeedsCreated++;
           state.successes++;
+          if(data.hasRealFile){
+            if(data.creationSource==='ai-self-creation'){aiCreated++;state.phase2.aiCreated++;}
+            else if(data.creationSource==='web-discovery'){webSourced++;state.phase2.webSourced++;}
+            if(data.fileType) state.phase2.fileTypes[data.fileType]=(state.phase2.fileTypes[data.fileType]||0)+1;
+          } else {
+            metadataOnly++;state.phase2.metadataOnly++;
+          }
         } else {
           failed++;
           state.errors++;
         }
       }catch(e){failed++;state.errors++}
       state.items.push(item);
+
       const basicTag=isBasic?'<span style="color:var(--gold);font-size:8px"> 🏠 PUBLIC GOOD</span>':'';
       const specTag=cat===specialty&&!isBasic?'<span style="font-size:8px;color:var(--cyan)"> ★ specialty</span>':'';
+      const masteredTag=item.threeCopyMastered?'<span style="font-size:8px;color:#ff0"> ⚡ 3-COPY</span>':'';
+      const fileTag=item.hasRealFile?`<span style="font-size:8px;color:var(--green)"> 📁 ${item.creationMethod}</span>`:'';
       const card=document.createElement('div');
       card.className='item-card';
-      card.style.borderColor=isBasic?'var(--gold)':item.itemId?'var(--green)':'var(--border)';
+      card.style.borderColor=isBasic?'var(--gold)':item.threeCopyMastered?'#ff0':item.hasRealFile?'var(--green)':item.itemId?'var(--cyan)':'var(--border)';
       if(isBasic) card.style.background='rgba(255,215,0,0.05)';
-      const engLbl=CREATION_ENGINES[cat]?CREATION_ENGINES[cat].engines[Math.floor(Math.random()*CREATION_ENGINES[cat].engines.length)]:'Direct';
-      card.innerHTML=`<div class="item-cat">${cat}${basicTag}${specTag}</div><div class="item-name">${itemName}</div><div class="item-price">${price.toFixed(4)} ☀️ <span style="font-size:9px;color:#666">(${kwhEq} kWh)</span></div><div class="item-creator">by ${agent.name} via <span style="color:var(--cyan)">${engLbl}</span> ${item.itemId?'<span style="color:var(--green)">✓</span>':'<span style="color:#ff4444">✗</span>'} [${agent.dailyCreates}/5]</div>`;
+      if(item.hasRealFile) card.style.background='rgba(57,255,20,0.04)';
+
+      let previewHtml='';
+      if(item.hasRealFile&&item.fileUrl){
+        if(item.previewType==='image') previewHtml=`<div style="margin:6px 0"><img src="${item.fileUrl}" alt="${itemName}" style="width:100%;max-height:100px;object-fit:cover;border-radius:4px;border:1px solid var(--border)"></div>`;
+        else if(item.previewType==='audio') previewHtml=`<div style="margin:6px 0"><audio controls style="width:100%;height:28px" preload="none"><source src="${item.fileUrl}" type="audio/mpeg"></audio></div>`;
+        else if(item.previewType==='text'||item.previewType==='code') previewHtml=`<div style="margin:4px 0;font-size:9px;color:var(--cyan)">📄 ${item.fileType||'text'} file ready</div>`;
+      }
+
+      const sourceIcon=item.creationSource==='ai-self-creation'?'🤖':item.creationSource==='web-discovery'?'🌐':'📦';
+      const engLbl=item.creationMethod!=='none'?item.creationMethod:(CREATION_ENGINES[cat]?CREATION_ENGINES[cat].engines[Math.floor(Math.random()*CREATION_ENGINES[cat].engines.length)]:'Direct');
+
+      card.innerHTML=`<div class="item-cat">${cat}${basicTag}${specTag}${masteredTag}${fileTag}</div><div class="item-name">${itemName}</div>${previewHtml}<div class="item-price">${price.toFixed(4)} ☀️ <span style="font-size:9px;color:#666">(${kwhEq} kWh)</span></div><div class="item-creator">by ${agent.name} ${sourceIcon} <span style="color:var(--cyan)">${engLbl}</span> ${item.itemId?'<span style="color:var(--green)">✓</span>':'<span style="color:#ff4444">✗</span>'} [${agent.dailyCreates}/5]</div>`;
       grid.appendChild(card);
+
       const engine=CREATION_ENGINES[cat];
-      const engineName=engine?engine.engines[Math.floor(Math.random()*engine.engines.length)]:'Direct';
       const engineIcon=engine?engine.icon:'📦';
-      item.creationEngine=engineName;
+      item.creationEngine=engLbl;
       item.mcpFlow=engine?engine.flow:'Create → List';
+
       if(j===0){
-        addFeed('🏠',`<b>${agent.name}</b> created Basic Needs: "<span class="solar">${itemName}</span>" → <span class="solar">${price.toFixed(4)} ☀️</span> <span style="color:var(--gold)">[PUBLIC GOOD]</span> via <span style="color:var(--cyan)">${engineName}</span>`);
-      } else if(j===1){
-        addFeed(engineIcon,`<b>${agent.name}</b> used <span style="color:var(--cyan)">${engineName}</span> → "<span class="ok">${itemName}</span>" [${cat}] → <span class="solar">${price.toFixed(4)} ☀️</span> <span style="color:#666;font-size:10px">${item.mcpFlow}</span>`);
+        const methodNote=item.hasRealFile?` <span style="color:var(--green)">[REAL FILE via ${item.creationMethod}]</span>`:'';
+        addFeed('🏠',`<b>${agent.name}</b> created Basic Needs: "<span class="solar">${itemName}</span>" → <span class="solar">${price.toFixed(4)} ☀️</span> <span style="color:var(--gold)">[PUBLIC GOOD]</span>${methodNote}`);
+      } else if(j<=2){
+        if(item.hasRealFile){
+          const srcEmoji=item.creationSource==='ai-self-creation'?'🤖':'🌐';
+          addFeed(srcEmoji,`<b>${agent.name}</b> AI-created "<span class="ok">${itemName}</span>" [${cat}] via <span style="color:var(--cyan)">${item.creationMethod}</span> → <span class="solar">${price.toFixed(4)} ☀️</span> <span style="color:var(--green)">📁 real file</span>`);
+        } else {
+          addFeed(engineIcon,`<b>${agent.name}</b> listed "<span class="ok">${itemName}</span>" [${cat}] → <span class="solar">${price.toFixed(4)} ☀️</span>`);
+        }
       }
       updateStats();
     }
     const pct=25+((i+1)/state.agents.length)*25;
-    setPhase(2,'Phase 2 — Creative Item Creation',pct);
-    await sleep(randBetween(80,200));
+    setPhase(2,`Phase 2 — AI Self-Creation (${aiCreated} AI / ${webSourced} web / ${metadataOnly} metadata)`,pct);
+    await sleep(randBetween(100,300));
   }
   state.basicNeedsCreated=basicNeedsCreated;
-  addFeed('🏁',`<b>Phase 2 complete:</b> <span class="ok">${posted} items posted</span> (${failed} failed) | <span style="color:var(--gold)">${basicNeedsCreated} Basic Needs public goods</span> | ${CATEGORIES.length} categories | 5/agent/day`);
+
+  // Fetch final budget & discovery status
+  try{
+    const statusRes=await fetch('/api/ecosystem-test/creation-status',{credentials:'include'});
+    const statusData=await statusRes.json().catch(()=>({}));
+    state.phase2.budgetStatus=statusData.budget;
+    if(statusData.discoveryLedger){
+      state.phase2.discoveries=statusData.discoveryLedger.sources||[];
+      if(state.phase2.discoveries.length>0){
+        addFeed('📡',`<b>Discovery Ledger:</b> ${state.phase2.discoveries.length} free sources discovered and shared across all agents`);
+      }
+    }
+  }catch(e){}
+
+  const fileTypeList=Object.entries(state.phase2.fileTypes).map(([t,c])=>`${t}:${c}`).join(', ')||'none';
+  addFeed('🏁',`<b>Phase 2 complete:</b> <span class="ok">${posted} items posted</span> (${failed} failed) | <span style="color:var(--green)">🤖 ${aiCreated} AI self-created</span> | <span style="color:var(--cyan)">🌐 ${webSourced} web-sourced</span> | <span style="color:#888">📦 ${metadataOnly} metadata-only</span>`);
+  addFeed('📊',`<b>Files generated:</b> ${fileTypeList} | <span style="color:var(--gold)">${basicNeedsCreated} Basic Needs public goods</span>`);
 }
 
 async function phase3_search(){
@@ -825,6 +900,12 @@ function showReport(){
     {l:'T1 Search Hits',v:state.tier1Hits||0,section:'Search'},
     {l:'T2 Web → Samples Posted',v:(state.tier2SamplePosts||0)+' / '+(state.tier2Hits||0)+' found',section:'Search'},
     {l:'T3 Open Slots',v:state.tier3Hits||0,section:'Search'},
+    {l:'🤖 AI Self-Created Files',v:(state.phase2?state.phase2.aiCreated:0),section:'Phase 2 AI Creation'},
+    {l:'🌐 Web-Sourced Files',v:(state.phase2?state.phase2.webSourced:0),section:'Phase 2 AI Creation'},
+    {l:'📁 Total Real Files',v:(state.phase2?(state.phase2.aiCreated+state.phase2.webSourced):0),section:'Phase 2 AI Creation'},
+    {l:'📦 Metadata Only',v:(state.phase2?state.phase2.metadataOnly:0),section:'Phase 2 AI Creation'},
+    {l:'📡 Discoveries Shared',v:(state.phase2&&state.phase2.discoveries?state.phase2.discoveries.length:0),section:'Phase 2 AI Creation'},
+    {l:'File Types',v:(state.phase2&&state.phase2.fileTypes?Object.entries(state.phase2.fileTypes).map(([t,c])=>t.split('/')[1]+':'+c).join(', '):'N/A'),section:'Phase 2 AI Creation'},
     {l:'Vouchers Created',v:(state.vouchersCreated||0)+' 🎟️',section:'Vouchers'},
     {l:'Vouchers Purchased',v:(state.vouchersPurchased||0)+' 💳',section:'Vouchers'},
     {l:'Vouchers Redeemed',v:(state.vouchersRedeemed||0)+' ✅',section:'Vouchers'},
@@ -905,7 +986,16 @@ function showReport(){
       tier2SamplePosts:Number(state.tier2SamplePosts)||0,tier3Hits:Number(state.tier3Hits)||0,balanceBlocked:Number(state.balanceBlocked)||0,
       limitBlocked:Number(state.limitBlocked)||0,tier3Blocked:Number(state.tier3Blocked)||0,successfulOps:Number(state.successes)||0,failedOps:Number(state.errors)||0,
       healthScore:Number(healthPct)||0,agentLedger,mcpEngineUsage:engineUsage||{},categoryBreakdown:catBreakdown,voucherDetails:voucherSummary,
-      metadata:{runDate:new Date().toISOString(),version:'1.0'}
+      phase2:{
+        aiCreated:state.phase2?state.phase2.aiCreated:0,
+        webSourced:state.phase2?state.phase2.webSourced:0,
+        metadataOnly:state.phase2?state.phase2.metadataOnly:0,
+        totalRealFiles:state.phase2?(state.phase2.aiCreated+state.phase2.webSourced):0,
+        discoveries:state.phase2&&state.phase2.discoveries?state.phase2.discoveries.length:0,
+        fileTypes:state.phase2?state.phase2.fileTypes:{},
+        budgetStatus:state.phase2?state.phase2.budgetStatus:null
+      },
+      metadata:{runDate:new Date().toISOString(),version:'2.0-phase2'}
     })}).then(r=>r.json()).then(d=>{
       if(d.success) addFeed('💾',`<b>RUN SAVED</b> — ID: ${d.runId} — <a href="/ecosystem-analysis.html" style="color:var(--cyan)">View Analysis Dashboard →</a>`);
       else addFeed('⚠️','Run save failed: '+(d.error||'unknown'));
