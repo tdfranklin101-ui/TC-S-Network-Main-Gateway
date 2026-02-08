@@ -320,6 +320,30 @@ async function phase1_registration(){
   addFeed('🏁',`<b>Phase 1 complete:</b> ${state.agents.length} agents processed — each wallet: <span class="solar">${genesisBal} Solar</span> (1/day since Genesis April 7, 2025)`);
 }
 
+async function phaseDailyDistribution(){
+  setPhase(1,'Daily Solar Distribution — 01:00 UTC',23);
+  addFeed('🌅','<b>Daily Distribution</b> — Simulating 01:00 UTC Solar drop: <span class="solar">+1 Solar</span> to every agent wallet...');
+  const now=new Date();
+  const distTime=new Date(now);
+  distTime.setUTCHours(1,0,0,0);
+  addFeed('🕐',`<b>Distribution time:</b> ${distTime.toUTCString()} — 1 Solar/day per member`);
+  await sleep(300);
+  let distributed=0;
+  for(let i=0;i<state.agents.length;i++){
+    const agent=state.agents[i];
+    const prevBal=agent.balance;
+    agent.balance+=1;
+    distributed++;
+    updateAgentCard(agent,'+1 ☀️',agent.balance,'registered');
+    if(i%5===0||i===state.agents.length-1){
+      addFeed('☀️',`<b>Agent ${agent.name}</b> received daily Solar: <span class="solar">${prevBal.toFixed(1)} → ${agent.balance.toFixed(1)} ☀️</span> (+1)`);
+    }
+    await sleep(randBetween(30,80));
+  }
+  const totalWallets=state.agents.reduce((s,a)=>s+a.balance,0);
+  addFeed('🏁',`<b>Daily distribution complete:</b> <span class="ok">${distributed} agents received +1 Solar</span> | Total network wallets: <span class="solar">${totalWallets.toFixed(1)} ☀️</span>`);
+}
+
 async function phase2_items(){
   const DAILY_CREATE_LIMIT=5;
   setPhase(2,'Phase 2 — Tier 1 Item Creation & Marketplace Posting',25);
@@ -623,6 +647,8 @@ async function runEcosystemTest(){
   try{
     await phase1_registration();
     await sleep(600);
+    await phaseDailyDistribution();
+    await sleep(400);
     await phase2_items();
     await sleep(600);
     await phase3_search();
