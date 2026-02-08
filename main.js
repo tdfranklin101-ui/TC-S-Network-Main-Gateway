@@ -8927,7 +8927,7 @@ Respond ONLY with valid JSON in this exact format:
     return;
   }
 
-  // ECOSYSTEM APIs - Resident agent transactions using platform storage (same code path as human members)
+  // ECOSYSTEM APIs - Resident agent transactions using pool.query (same SQL as storage.ts methods)
   if (pathname === '/api/ecosystem/resolve-agent' && req.method === 'POST') {
     try {
       const body = await parseBody(req);
@@ -8937,24 +8937,24 @@ Respond ONLY with valid JSON in this exact format:
         res.end(JSON.stringify({ success: false, error: 'Username required' }));
         return;
       }
-      let ecoStorage;
-      try { ecoStorage = require('./server/storage').storage; } catch (e) {
+      if (!pool) {
         res.writeHead(503, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: false, error: 'Storage service unavailable' }));
+        res.end(JSON.stringify({ success: false, error: 'Database unavailable' }));
         return;
       }
-      const member = await ecoStorage.getMemberByUsername(username);
-      if (!member) {
+      const result = await pool.query('SELECT id, username, total_solar FROM members WHERE username = $1 LIMIT 1', [username]);
+      if (result.rows.length === 0) {
         res.writeHead(404, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: false, error: 'Member not found' }));
         return;
       }
+      const member = result.rows[0];
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
         success: true,
         memberId: member.id,
         username: member.username,
-        balance: parseFloat(member.totalSolar) || 0
+        balance: parseFloat(member.total_solar) || 0
       }));
     } catch (error) {
       console.error('Resolve agent error:', error);
@@ -8974,34 +8974,28 @@ Respond ONLY with valid JSON in this exact format:
         res.end(JSON.stringify({ success: false, error: 'memberId required' }));
         return;
       }
-      let ecoStorage;
-      try { ecoStorage = require('./server/storage').storage; } catch (e) {
+      if (!pool) {
         res.writeHead(503, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: false, error: 'Storage service unavailable' }));
+        res.end(JSON.stringify({ success: false, error: 'Database unavailable' }));
         return;
       }
-      const member = await ecoStorage.getMember(memberId);
-      if (!member) {
+      const memberResult = await pool.query('SELECT id, username, total_solar FROM members WHERE id = $1 LIMIT 1', [memberId]);
+      if (memberResult.rows.length === 0) {
         res.writeHead(404, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: false, error: 'Member not found' }));
         return;
       }
-      const currentBalance = await ecoStorage.getMemberSolarBalance(memberId);
+      const member = memberResult.rows[0];
+      const currentBalance = parseFloat(member.total_solar) || 0;
       const newBalance = currentBalance + distAmount;
       const transactionId = `dist_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-      await ecoStorage.updateMemberSolarBalance(memberId, newBalance);
-      await ecoStorage.createLedgerEntry({
-        transactionId,
-        entryType: 'credit',
-        accountId: String(memberId),
-        accountType: 'user',
-        amount: String(distAmount),
-        balanceAfter: String(newBalance),
-        referenceType: 'distribution',
-        referenceId: 'daily_solar',
-        description: `Daily Solar distribution +${distAmount} to ${member.username}`
-      });
+      await pool.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(newBalance), memberId]);
+      await pool.query(
+        `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+        [transactionId, 'credit', String(memberId), 'user', String(distAmount), String(newBalance), 'distribution', 'daily_solar', `Daily Solar distribution +${distAmount} to ${member.username}`]
+      );
 
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
@@ -9032,60 +9026,136 @@ Respond ONLY with valid JSON in this exact format:
         res.end(JSON.stringify({ success: false, error: 'buyerId, sellerId, and positive amount required' }));
         return;
       }
-
-      let ecoStorage;
-      try { ecoStorage = require('./server/storage').storage; } catch (e) {
+      if (!pool) {
         res.writeHead(503, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: false, error: 'Storage service unavailable' }));
+        res.end(JSON.stringify({ success: false, error: 'Database unavailable' }));
         return;
       }
 
       if (artifactId) {
-        const artifact = await ecoStorage.getArtifact(artifactId);
-        if (!artifact) {
+        const artResult = await pool.query('SELECT * FROM artifacts WHERE id = $1 LIMIT 1', [artifactId]);
+        if (artResult.rows.length === 0) {
           res.writeHead(404, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ success: false, error: 'Artifact not found' }));
           return;
         }
-
-        const result = await ecoStorage.purchaseArtifact(buyerId, artifactId);
-        if (!result.success) {
+        const artifact = artResult.rows[0];
+        if (!artifact.active) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ success: false, error: result.error || 'Purchase failed' }));
+          res.end(JSON.stringify({ success: false, error: 'Artifact is not available for purchase' }));
           return;
         }
 
-        const buyerBal = await ecoStorage.getMemberSolarBalance(buyerId);
-        const buyerMember = await ecoStorage.getMember(buyerId);
-
-        const creatorId = artifact.creatorId;
-        let actualSellerId = sellerId;
-        let sellerBal, sellerMember;
-        const creatorMember = creatorId ? await ecoStorage.getMemberByUsername(creatorId).catch(() => null) || await ecoStorage.getMember(parseInt(creatorId) || 0).catch(() => null) : null;
-        if (creatorMember) {
-          actualSellerId = creatorMember.id;
-          sellerBal = await ecoStorage.getMemberSolarBalance(creatorMember.id);
-          sellerMember = creatorMember;
-        } else {
-          sellerBal = await ecoStorage.getMemberSolarBalance(sellerId);
-          sellerMember = await ecoStorage.getMember(sellerId);
+        const existingCopy = await pool.query('SELECT id FROM artifact_copies WHERE owner_id = $1 AND artifact_id = $2 LIMIT 1', [buyerId, artifactId]);
+        if (existingCopy.rows.length > 0) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'You already own this artifact' }));
+          return;
         }
 
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({
-          success: true,
-          transactionId: result.copy ? result.copy.purchaseTransactionId : null,
-          buyer: { id: buyerId, username: buyerMember ? buyerMember.username : null, balance: buyerBal },
-          seller: { id: actualSellerId, username: sellerMember ? sellerMember.username : null, balance: sellerBal },
-          amount: price,
-          artifactId: artifactId,
-          creatorId: creatorId,
-          usedPlatformPurchase: true
-        }));
+        const buyerRow = await pool.query('SELECT id, username, total_solar FROM members WHERE id = $1 LIMIT 1', [buyerId]);
+        if (buyerRow.rows.length === 0) {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Buyer account not found' }));
+          return;
+        }
+        const artPrice = parseFloat(artifact.solar_amount_s || '0');
+        const buyerBalance = parseFloat(buyerRow.rows[0].total_solar) || 0;
+        if (buyerBalance < artPrice) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Insufficient Solar balance' }));
+          return;
+        }
+
+        const creatorId = artifact.creator_id;
+        const txId = `purchase_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+        const client = await pool.connect();
+        try {
+          await client.query('BEGIN');
+
+          await client.query(
+            `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
+             VALUES ($1, 'debit', $2, 'user', $3, $4, 'purchase', $5, $6)`,
+            [txId, String(buyerId), String(artPrice), String(buyerBalance - artPrice), artifactId, `Purchase: ${artifact.title}`]
+          );
+          const creatorRowPreTx = await client.query('SELECT total_solar FROM members WHERE id = $1 OR username = $2 LIMIT 1', [parseInt(creatorId) || 0, creatorId]);
+          const creatorBalBefore = creatorRowPreTx.rows.length > 0 ? parseFloat(creatorRowPreTx.rows[0].total_solar) || 0 : 0;
+          await client.query(
+            `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
+             VALUES ($1, 'credit', $2, 'creator', $3, $4, 'purchase', $5, $6)`,
+            [txId, creatorId, String(artPrice), String(creatorBalBefore + artPrice), artifactId, `Sale: ${artifact.title}`]
+          );
+
+          await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(buyerBalance - artPrice), buyerId]);
+
+          const creatorRow = await client.query('SELECT id, username, total_solar FROM members WHERE id = $1 OR username = $2 LIMIT 1', [parseInt(creatorId) || 0, creatorId]);
+          let actualSellerId = sellerId;
+          let sellerBal = 0, sellerUsername = null;
+          if (creatorRow.rows.length > 0) {
+            const cm = creatorRow.rows[0];
+            const creatorBal = parseFloat(cm.total_solar) || 0;
+            await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(creatorBal + artPrice), cm.id]);
+            actualSellerId = cm.id;
+            sellerBal = creatorBal + artPrice;
+            sellerUsername = cm.username;
+          } else {
+            const sellerRow = await client.query('SELECT id, username, total_solar FROM members WHERE id = $1 LIMIT 1', [sellerId]);
+            if (sellerRow.rows.length > 0) {
+              sellerBal = parseFloat(sellerRow.rows[0].total_solar) || 0;
+              sellerUsername = sellerRow.rows[0].username;
+            }
+          }
+
+          const tokenValue = `dl_${Date.now()}_${Math.random().toString(36).substr(2, 16)}`;
+          const expiresAt = new Date();
+          expiresAt.setDate(expiresAt.getDate() + 30);
+
+          await client.query(
+            `INSERT INTO artifact_copies (artifact_id, owner_id, purchase_transaction_id, acquired_method, solar_paid) VALUES ($1, $2, $3, 'purchase', $4)`,
+            [artifactId, buyerId, txId, String(artPrice)]
+          );
+          await client.query(
+            `INSERT INTO download_tokens (token, artifact_id, user_id, expires_at, access_type, max_downloads) VALUES ($1, $2, $3, $4, 'trade_file', 10)`,
+            [tokenValue, artifactId, buyerId, expiresAt]
+          );
+
+          await client.query('COMMIT');
+
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({
+            success: true,
+            transactionId: txId,
+            buyer: { id: buyerId, username: buyerRow.rows[0].username, balance: buyerBalance - artPrice },
+            seller: { id: actualSellerId, username: sellerUsername, balance: sellerBal },
+            amount: artPrice,
+            artifactId: artifactId,
+            creatorId: creatorId,
+            usedPlatformPurchase: true
+          }));
+        } catch (txErr) {
+          await client.query('ROLLBACK');
+          throw txErr;
+        } finally {
+          client.release();
+        }
         return;
       }
 
-      const buyerBal = await ecoStorage.getMemberSolarBalance(buyerId);
+      const buyerRow = await pool.query('SELECT id, username, total_solar FROM members WHERE id = $1 LIMIT 1', [buyerId]);
+      const sellerRow = await pool.query('SELECT id, username, total_solar FROM members WHERE id = $1 LIMIT 1', [sellerId]);
+      if (buyerRow.rows.length === 0) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Buyer account not found' }));
+        return;
+      }
+      if (sellerRow.rows.length === 0) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Seller account not found' }));
+        return;
+      }
+      const buyerBal = parseFloat(buyerRow.rows[0].total_solar) || 0;
+      const sellerBal = parseFloat(sellerRow.rows[0].total_solar) || 0;
       if (buyerBal < price) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
@@ -9096,56 +9166,30 @@ Respond ONLY with valid JSON in this exact format:
         }));
         return;
       }
-      const sellerBal = await ecoStorage.getMemberSolarBalance(sellerId);
-
-      const buyerMember = await ecoStorage.getMember(buyerId);
-      const sellerMember = await ecoStorage.getMember(sellerId);
-      if (!buyerMember) {
-        res.writeHead(404, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: false, error: 'Buyer account not found' }));
-        return;
-      }
-      if (!sellerMember) {
-        res.writeHead(404, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: false, error: 'Seller account not found' }));
-        return;
-      }
 
       const transactionId = `eco_purchase_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       const newBuyerBal = buyerBal - price;
       const newSellerBal = sellerBal + price;
 
-      await ecoStorage.updateMemberSolarBalance(buyerId, newBuyerBal);
-      await ecoStorage.updateMemberSolarBalance(sellerId, newSellerBal);
-      await ecoStorage.createLedgerEntry({
-        transactionId,
-        entryType: 'debit',
-        accountId: String(buyerId),
-        accountType: 'user',
-        amount: String(price),
-        balanceAfter: String(newBuyerBal),
-        referenceType: 'purchase',
-        referenceId: 'ecosystem_item',
-        description: `Purchase: ${itemName || 'Marketplace item'}`
-      });
-      await ecoStorage.createLedgerEntry({
-        transactionId,
-        entryType: 'credit',
-        accountId: String(sellerId),
-        accountType: 'user',
-        amount: String(price),
-        balanceAfter: String(newSellerBal),
-        referenceType: 'purchase',
-        referenceId: 'ecosystem_item',
-        description: `Sale: ${itemName || 'Marketplace item'}`
-      });
+      await pool.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(newBuyerBal), buyerId]);
+      await pool.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(newSellerBal), sellerId]);
+      await pool.query(
+        `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
+         VALUES ($1, 'debit', $2, 'user', $3, $4, 'purchase', 'ecosystem_item', $5)`,
+        [transactionId, String(buyerId), String(price), String(newBuyerBal), `Purchase: ${itemName || 'Marketplace item'}`]
+      );
+      await pool.query(
+        `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
+         VALUES ($1, 'credit', $2, 'user', $3, $4, 'purchase', 'ecosystem_item', $5)`,
+        [transactionId, String(sellerId), String(price), String(newSellerBal), `Sale: ${itemName || 'Marketplace item'}`]
+      );
 
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
         success: true,
         transactionId,
-        buyer: { id: buyerId, username: buyerMember.username, balance: newBuyerBal },
-        seller: { id: sellerId, username: sellerMember.username, balance: newSellerBal },
+        buyer: { id: buyerId, username: buyerRow.rows[0].username, balance: newBuyerBal },
+        seller: { id: sellerId, username: sellerRow.rows[0].username, balance: newSellerBal },
         amount: price,
         artifactId: null,
         usedPlatformPurchase: false
