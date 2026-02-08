@@ -8083,6 +8083,71 @@ Respond ONLY with valid JSON in this exact format:
     return;
   }
 
+  // Ecosystem Test API - create market items for agent testing (authenticated)
+  if (pathname === '/api/ecosystem-test/create-item' && req.method === 'POST') {
+    try {
+      const sessionId = getCookie(req, 'tc_s_session');
+      if (!sessionId) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Authentication required' }));
+        return;
+      }
+      const session = await getSession(sessionId);
+      if (!session || !session.userId) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Valid session required' }));
+        return;
+      }
+
+      const body = await parseBody(req);
+      const { title, description, category, priceSolar, creatorUsername, creatorId } = body;
+      
+      if (!title || !category || !priceSolar || !creatorUsername) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Missing required fields: title, category, priceSolar, creatorUsername' }));
+        return;
+      }
+
+      const ALLOWED_CATEGORIES = ['Digital Art', 'Music', 'Software', 'Education', 'Energy Tools'];
+      if (!ALLOWED_CATEGORIES.includes(category)) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Invalid category' }));
+        return;
+      }
+
+      const price = parseFloat(priceSolar);
+      if (isNaN(price) || price <= 0 || price > 100) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Price must be between 0 and 100 Solar' }));
+        return;
+      }
+
+      const safeTitle = String(title).substring(0, 200).replace(/[<>]/g, '');
+      const safeDesc = String(description || '').substring(0, 500).replace(/[<>]/g, '');
+
+      const itemId = `eco_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
+      const searchText = `${safeTitle} ${safeDesc} ${category}`.toLowerCase().replace(/[^a-z0-9\s]+/g, ' ').replace(/\s+/g, ' ').trim();
+      const kwhEstimate = (price * 4913).toFixed(2);
+
+      await pool.query(
+        `INSERT INTO market_items (id, title, description, tags, category, price_solar, kwh_estimate, source_type, status, search_text, created_by_user_id, metadata)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, 'INTERNAL_STOCK', 'ACTIVE', $8, $9, $10)
+         ON CONFLICT (id) DO NOTHING`,
+        [itemId, safeTitle, safeDesc, `{${category.toLowerCase().replace(/\s+/g, '_')}}`, category, price, kwhEstimate, searchText, String(creatorId || session.userId), JSON.stringify({ ecosystemTest: true, agent: creatorUsername })]
+      );
+
+      console.log(`🧪 Ecosystem test item created: "${safeTitle}" by ${creatorUsername} (${price} Solar)`);
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, itemId, title: safeTitle, priceSolar: price, category, searchable: true }));
+    } catch (error) {
+      console.error('Ecosystem test create-item error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to create test item' }));
+    }
+    return;
+  }
+
   // Marketplace Item Request API - allows users to request items not found
   if (pathname === '/api/market/requests' && req.method === 'POST') {
     try {

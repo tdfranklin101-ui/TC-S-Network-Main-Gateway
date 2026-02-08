@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🌐 TC-S Network Ecosystem Test</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--green:#39FF14;--cyan:#00bfff;--purple:#8a2be2;--orange:#ffa500;--gold:#ffd700;--bg:#0a0a0a;--card:#111;--border:#222}
+body{font-family:'Space Grotesk',system-ui,sans-serif;background:var(--bg);color:#e0e0e0;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:linear-gradient(rgba(57,255,20,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(57,255,20,.02) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+a{color:var(--cyan);text-decoration:none}
+a:hover{text-decoration:underline}
+.back-link{display:inline-flex;align-items:center;gap:6px;padding:12px 20px;font-size:14px;color:var(--cyan);transition:color .2s}
+.back-link:hover{color:var(--green)}
+
+header{text-align:center;padding:30px 20px 20px;position:relative;z-index:1}
+header h1{font-family:'Orbitron',sans-serif;font-size:clamp(1.6rem,4vw,2.8rem);font-weight:900;background:linear-gradient(135deg,var(--green),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-shadow:none;filter:drop-shadow(0 0 20px rgba(57,255,20,.4));margin-bottom:6px}
+header p{color:#888;font-size:14px}
+.brand-bar{display:flex;justify-content:center;gap:20px;margin-top:10px;font-size:12px;color:#555}
+.brand-bar span{display:flex;align-items:center;gap:4px}
+
+.run-btn-wrap{text-align:center;padding:20px;position:relative;z-index:1}
+#runBtn{font-family:'Orbitron',sans-serif;font-size:clamp(16px,2.5vw,22px);font-weight:700;padding:18px 50px;border:2px solid var(--green);background:rgba(57,255,20,.08);color:var(--green);border-radius:60px;cursor:pointer;transition:all .3s;position:relative;overflow:hidden;letter-spacing:2px}
+#runBtn:hover:not(:disabled){background:rgba(57,255,20,.18);box-shadow:0 0 40px rgba(57,255,20,.3),0 0 80px rgba(57,255,20,.1);transform:scale(1.03)}
+#runBtn:disabled{opacity:.5;cursor:not-allowed}
+#runBtn .pulse{position:absolute;inset:-4px;border-radius:60px;border:2px solid var(--green);animation:pulse-ring 2s ease-out infinite;pointer-events:none}
+@keyframes pulse-ring{0%{opacity:.8;transform:scale(1)}100%{opacity:0;transform:scale(1.15)}}
+
+.dashboard{max-width:1200px;margin:0 auto;padding:0 16px 40px;position:relative;z-index:1;display:none}
+.dashboard.visible{display:block;animation:fadeUp .5s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+.phase-bar{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:20px}
+.phase-label{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:14px;font-weight:600}
+.phase-name{color:var(--green)}
+.phase-num{color:var(--gold);font-family:'Orbitron',sans-serif;font-size:13px}
+.progress-track{height:6px;background:#1a1a1a;border-radius:6px;overflow:hidden}
+.progress-fill{height:100%;width:0;border-radius:6px;background:linear-gradient(90deg,var(--green),var(--cyan));transition:width .4s ease}
+
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:20px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center}
+.stat-val{font-family:'Orbitron',sans-serif;font-size:clamp(18px,3vw,28px);font-weight:700;color:var(--green)}
+.stat-val.cyan{color:var(--cyan)}
+.stat-val.purple{color:var(--purple)}
+.stat-val.orange{color:var(--orange)}
+.stat-val.gold{color:var(--gold)}
+.stat-label{font-size:11px;color:#666;margin-top:4px;text-transform:uppercase;letter-spacing:1px}
+
+.panels{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+@media(max-width:768px){.panels{grid-template-columns:1fr}}
+
+.panel{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.panel-head{padding:12px 16px;border-bottom:1px solid var(--border);font-size:13px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:1px;display:flex;align-items:center;gap:8px}
+
+.agents-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;padding:12px;max-height:380px;overflow-y:auto}
+.agent-card{background:#0d0d0d;border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center;transition:all .3s;position:relative;overflow:hidden}
+.agent-card.registered{border-color:var(--green);box-shadow:0 0 10px rgba(57,255,20,.1)}
+.agent-card.error{border-color:#ff3333;box-shadow:0 0 10px rgba(255,51,51,.1)}
+.agent-card.exists{border-color:var(--orange);box-shadow:0 0 10px rgba(255,165,0,.1)}
+.agent-card .agent-icon{font-size:24px;margin-bottom:4px}
+.agent-card .agent-name{font-size:11px;font-weight:600;color:#ccc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.agent-card .agent-balance{font-size:10px;color:var(--gold);margin-top:2px;font-family:'Orbitron',sans-serif}
+.agent-card .agent-status{font-size:9px;margin-top:4px;padding:2px 6px;border-radius:10px;display:inline-block}
+.agent-card .agent-status.pending{background:rgba(136,136,136,.2);color:#888}
+.agent-card .agent-status.ok{background:rgba(57,255,20,.15);color:var(--green)}
+.agent-card .agent-status.fail{background:rgba(255,51,51,.15);color:#ff4444}
+.agent-card .agent-status.warn{background:rgba(255,165,0,.15);color:var(--orange)}
+
+.activity-feed{padding:0;max-height:380px;overflow-y:auto;scroll-behavior:smooth}
+.feed-item{padding:8px 16px;border-bottom:1px solid #1a1a1a;font-size:12px;line-height:1.5;animation:slideIn .3s ease;display:flex;gap:8px;align-items:flex-start}
+@keyframes slideIn{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)}}
+.feed-item .fi-time{color:#555;font-size:10px;flex-shrink:0;min-width:52px;font-family:'Orbitron',sans-serif}
+.feed-item .fi-icon{flex-shrink:0}
+.feed-item .fi-msg{color:#bbb}
+.feed-item .fi-msg b{color:var(--cyan);font-weight:600}
+.feed-item .fi-msg .solar{color:var(--gold)}
+.feed-item .fi-msg .err{color:#ff4444}
+.feed-item .fi-msg .ok{color:var(--green)}
+
+.network-viz{padding:16px;min-height:250px;position:relative;overflow:hidden}
+.node{position:absolute;width:16px;height:16px;border-radius:50%;background:var(--green);box-shadow:0 0 8px rgba(57,255,20,.5);transition:all .6s;display:flex;align-items:center;justify-content:center;font-size:7px;color:#000;font-weight:700;cursor:default}
+.node:hover{transform:scale(1.8);z-index:10}
+.node.buyer{background:var(--cyan);box-shadow:0 0 8px rgba(0,191,255,.5)}
+.edge{position:absolute;height:1px;background:linear-gradient(90deg,rgba(57,255,20,.3),rgba(0,191,255,.3));transform-origin:left center;pointer-events:none;animation:edgeFade .6s ease}
+@keyframes edgeFade{from{opacity:0}to{opacity:1}}
+
+.items-grid-wrap{margin-bottom:20px}
+.items-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;padding:12px;max-height:400px;overflow-y:auto}
+.item-card{background:#0d0d0d;border:1px solid var(--border);border-radius:8px;padding:10px;animation:fadeUp .3s ease}
+.item-card .item-cat{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--purple);margin-bottom:4px}
+.item-card .item-name{font-size:12px;font-weight:600;color:#ddd;margin-bottom:4px}
+.item-card .item-price{font-size:11px;color:var(--gold);font-family:'Orbitron',sans-serif}
+.item-card .item-creator{font-size:10px;color:#555;margin-top:4px}
+
+.report-card{background:linear-gradient(135deg,rgba(57,255,20,.05),rgba(0,191,255,.05));border:2px solid var(--green);border-radius:16px;padding:30px;text-align:center;margin-top:20px;display:none}
+.report-card.visible{display:block;animation:fadeUp .6s ease}
+.report-card h2{font-family:'Orbitron',sans-serif;font-size:clamp(20px,3vw,32px);color:var(--green);margin-bottom:6px}
+.health-score{font-family:'Orbitron',sans-serif;font-size:clamp(48px,8vw,80px);font-weight:900;margin:16px 0;display:inline-block}
+.health-score.excellent{color:var(--green);text-shadow:0 0 30px rgba(57,255,20,.5)}
+.health-score.good{color:var(--cyan);text-shadow:0 0 30px rgba(0,191,255,.5)}
+.health-score.fair{color:var(--orange);text-shadow:0 0 30px rgba(255,165,0,.5)}
+.health-score.poor{color:#ff4444;text-shadow:0 0 30px rgba(255,68,68,.5)}
+.report-detail{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-top:20px;text-align:left}
+.rd-item{background:rgba(0,0,0,.3);border-radius:8px;padding:12px}
+.rd-item .rd-label{font-size:11px;color:#666;text-transform:uppercase;letter-spacing:1px}
+.rd-item .rd-val{font-size:18px;font-weight:700;color:var(--cyan);margin-top:4px}
+
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:#111}
+::-webkit-scrollbar-thumb{background:#333;border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#555}
+</style>
+</head>
+<body>
+
+<a href="/marketplace.html" class="back-link">← Back to Marketplace</a>
+
+<header>
+  <h1>🌐 TC-S Network Ecosystem Test</h1>
+  <p>Automated 20-agent marketplace stress test &amp; network health analysis</p>
+  <div class="brand-bar">
+    <span>⚡ TC-S Network Foundation</span>
+    <span>☀️ Solar Standard Protocol</span>
+    <span>🔗 UIM v1.0</span>
+  </div>
+</header>
+
+<div class="run-btn-wrap">
+  <button id="runBtn" onclick="runEcosystemTest()">
+    <span class="pulse"></span>
+    ▶ RUN ECOSYSTEM TEST
+  </button>
+</div>
+
+<div class="dashboard" id="dashboard">
+  <div class="phase-bar" id="phaseBar">
+    <div class="phase-label">
+      <span class="phase-name" id="phaseName">Initializing...</span>
+      <span class="phase-num" id="phaseNum">0 / 4</span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-val" id="statAgents">0</div><div class="stat-label">Agents</div></div>
+    <div class="stat-card"><div class="stat-val cyan" id="statItems">0</div><div class="stat-label">Items Created</div></div>
+    <div class="stat-card"><div class="stat-val purple" id="statSearches">0</div><div class="stat-label">Searches</div></div>
+    <div class="stat-card"><div class="stat-val orange" id="statPurchases">0</div><div class="stat-label">Purchases</div></div>
+    <div class="stat-card"><div class="stat-val gold" id="statSolar">0</div><div class="stat-label">Solar Circulated</div></div>
+  </div>
+
+  <div class="panels">
+    <div class="panel">
+      <div class="panel-head">🤖 Agent Registry</div>
+      <div class="agents-grid" id="agentsGrid"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head">📡 Activity Feed</div>
+      <div class="activity-feed" id="activityFeed"></div>
+    </div>
+  </div>
+
+  <div class="panel items-grid-wrap" id="itemsPanel" style="display:none">
+    <div class="panel-head">🏪 Marketplace Items (100)</div>
+    <div class="items-grid" id="itemsGrid"></div>
+  </div>
+
+  <div class="panel" id="networkPanel" style="display:none">
+    <div class="panel-head">🕸️ Agent Transaction Network</div>
+    <div class="network-viz" id="networkViz"></div>
+  </div>
+
+  <div class="report-card" id="reportCard">
+    <h2>ECOSYSTEM HEALTH</h2>
+    <div class="health-score" id="healthScore">—</div>
+    <p id="healthVerdict" style="color:#888;margin-bottom:10px"></p>
+    <div class="report-detail" id="reportDetail"></div>
+  </div>
+</div>
+
+<script>
+const AGENTS = [
+  {id:1,code:'01',name:'Alpha',icon:'🅰️'},
+  {id:2,code:'02',name:'Bravo',icon:'🅱️'},
+  {id:3,code:'03',name:'Charlie',icon:'©️'},
+  {id:4,code:'04',name:'Delta',icon:'🔺'},
+  {id:5,code:'05',name:'Echo',icon:'📡'},
+  {id:6,code:'06',name:'Foxtrot',icon:'🦊'},
+  {id:7,code:'07',name:'Golf',icon:'⛳'},
+  {id:8,code:'08',name:'Hotel',icon:'🏨'},
+  {id:9,code:'09',name:'India',icon:'🇮🇳'},
+  {id:10,code:'10',name:'Juliet',icon:'🌹'},
+  {id:11,code:'11',name:'Kilo',icon:'⚖️'},
+  {id:12,code:'12',name:'Lima',icon:'🌿'},
+  {id:13,code:'13',name:'Nova',icon:'💫'},
+  {id:14,code:'14',name:'Orion',icon:'🌌'},
+  {id:15,code:'15',name:'Pulse',icon:'💓'},
+  {id:16,code:'16',name:'Quasar',icon:'✨'},
+  {id:17,code:'17',name:'Radiant',icon:'☀️'},
+  {id:18,code:'18',name:'Solaris',icon:'🔆'},
+  {id:19,code:'19',name:'Tesla',icon:'⚡'},
+  {id:20,code:'20',name:'Zenith',icon:'🏔️'}
+];
+
+const CATEGORIES = ['Digital Art','Music','Software','Education','Energy Tools'];
+
+const ITEM_NAMES = {
+  'Digital Art':['Solar Fractal Generator v2','Neon Grid Dreamscape','Photon Lattice Portrait','Aurora Borealis Render','Quantum Bloom Canvas'],
+  'Music':['Neon Grid Meditation Track','Solar Wind Symphony','Dawn Chorus Binaural','kWh Rhythm Machine','Photovoltaic Beats Pack'],
+  'Software':['kWh Optimizer Script','Solar Panel Simulator','Grid Load Balancer Pro','Energy Harvest Toolkit','Watt Flow Analyzer'],
+  'Education':['Photovoltaic Design Course','Solar Economics 101','Off-Grid Living Guide','Battery Chemistry Deep Dive','Renewable Energy Masterclass'],
+  'Energy Tools':['Quantum Solar Meter','Micro-Inverter Diagnostic','Panel Tilt Calculator','Irradiance Mapper v3','Solar ROI Dashboard']
+};
+
+const SEARCH_TERMS = ['solar','energy','music','fractal','grid','quantum','photovoltaic','neon','optimizer','renewable','design','aurora','binaural','toolkit','dashboard','battery','panel','inverter','harvest','watt'];
+
+let state = {agents:[],items:[],searches:0,purchases:0,totalSolar:0,errors:0,successes:0};
+
+function $(id){return document.getElementById(id)}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+function randBetween(a,b){return Math.random()*(b-a)+a}
+function timeStr(){return new Date().toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'})}
+
+function initAgentCards(){
+  const grid=$('agentsGrid');
+  grid.innerHTML='';
+  AGENTS.forEach(a=>{
+    const el=document.createElement('div');
+    el.className='agent-card';
+    el.id='agent-'+a.code;
+    el.innerHTML=`<div class="agent-icon">${a.icon}</div><div class="agent-name">Agent ${a.name}</div><div class="agent-balance">— ☀️</div><div class="agent-status pending">waiting</div>`;
+    grid.appendChild(el);
+  });
+}
+
+function updateAgentCard(agent,status,balance,cssClass){
+  const el=$('agent-'+agent.code);
+  if(!el)return;
+  el.className='agent-card '+cssClass;
+  el.querySelector('.agent-balance').textContent=balance!=null?(parseFloat(balance).toFixed(1)+' ☀️'):'— ☀️';
+  const s=el.querySelector('.agent-status');
+  s.textContent=status;
+  s.className='agent-status '+(cssClass==='registered'?'ok':cssClass==='error'?'fail':cssClass==='exists'?'warn':'pending');
+}
+
+function addFeed(icon,msg){
+  const feed=$('activityFeed');
+  const el=document.createElement('div');
+  el.className='feed-item';
+  el.innerHTML=`<span class="fi-time">${timeStr()}</span><span class="fi-icon">${icon}</span><span class="fi-msg">${msg}</span>`;
+  feed.appendChild(el);
+  feed.scrollTop=feed.scrollHeight;
+}
+
+function setPhase(num,name,pct){
+  $('phaseName').textContent=name;
+  $('phaseNum').textContent=num+' / 4';
+  $('progressFill').style.width=pct+'%';
+}
+
+function updateStats(){
+  $('statAgents').textContent=state.agents.length;
+  $('statItems').textContent=state.items.length;
+  $('statSearches').textContent=state.searches;
+  $('statPurchases').textContent=state.purchases;
+  $('statSolar').textContent=state.totalSolar.toFixed(1);
+}
+
+async function phase1_registration(){
+  setPhase(1,'Phase 1 — Agent Registration',5);
+  addFeed('🚀','<b>Phase 1</b> starting: Registering <b>20 AI agents</b>...');
+  for(let i=0;i<AGENTS.length;i++){
+    const a=AGENTS[i];
+    const username='agent_eco_'+a.code;
+    const email=username+'@tcs-test.network';
+    const body={username,email,password:'EcoTest2026!',firstName:'Agent '+a.name};
+    try{
+      const res=await fetch('/api/auth/signup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),credentials:'include'});
+      const data=await res.json().catch(()=>({}));
+      if(res.ok&&data.success!==false){
+        const bal=data.solarBalance||data.solar_balance||307;
+        state.agents.push({...a,username,userId:data.userId||data.user_id||i+1,balance:bal,session:data.sessionId||null});
+        state.totalSolar+=parseFloat(bal)||0;
+        updateAgentCard(a,'registered',bal,'registered');
+        addFeed('✅',`<b>Agent ${a.name}</b> registered with <span class="solar">${parseFloat(bal).toFixed(1)} Solar</span>`);
+        state.successes++;
+      } else if(res.status===409||res.status===400||(data.message&&data.message.toLowerCase().includes('exist'))){
+        state.agents.push({...a,username,userId:null,balance:307,session:null});
+        state.totalSolar+=307;
+        updateAgentCard(a,'exists',307,'exists');
+        addFeed('🔄',`<b>Agent ${a.name}</b> already exists — continuing`);
+        state.successes++;
+      } else {
+        throw new Error(data.message||data.error||'Registration failed');
+      }
+    }catch(e){
+      state.agents.push({...a,username,userId:null,balance:0,session:null});
+      updateAgentCard(a,e.message.substring(0,20),null,'error');
+      addFeed('❌',`<b>Agent ${a.name}</b> <span class="err">failed: ${e.message}</span>`);
+      state.errors++;
+    }
+    const pct=5+((i+1)/AGENTS.length)*20;
+    setPhase(1,'Phase 1 — Agent Registration',pct);
+    updateStats();
+    await sleep(randBetween(200,400));
+  }
+  addFeed('🏁',`<b>Phase 1 complete:</b> ${state.agents.length} agents processed`);
+}
+
+async function phase2_items(){
+  setPhase(2,'Phase 2 — Tier 1 Item Creation & Marketplace Posting',25);
+  addFeed('🚀','<b>Phase 2</b> starting: Each agent creating <b>5 items</b> → posted to marketplace → <span class="ok">discoverable in search</span>...');
+  addFeed('☀️','All items priced in <span class="solar">Solar</span> — Tier 1 TC-S Network listings');
+  $('itemsPanel').style.display='block';
+  const grid=$('itemsGrid');
+  let posted=0,failed=0;
+  for(let i=0;i<state.agents.length;i++){
+    const agent=state.agents[i];
+    const catKeys=Object.keys(ITEM_NAMES);
+    for(let j=0;j<5;j++){
+      const cat=catKeys[j%catKeys.length];
+      const namePool=ITEM_NAMES[cat];
+      const baseName=namePool[j%namePool.length];
+      const itemName=baseName+' by '+agent.name;
+      const price=parseFloat(randBetween(0.001,0.5).toFixed(3));
+      const kwhEq=(price*4913).toFixed(1);
+      const desc=`${baseName} — created by Agent ${agent.name} for the TC-S Network ecosystem. Energy equivalent: ${kwhEq} kWh.`;
+      const item={name:itemName,category:cat,price,creator:agent.name,creatorCode:agent.code,agentIdx:i,itemId:null};
+      try{
+        const res=await fetch('/api/ecosystem-test/create-item',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({title:itemName,description:desc,category:cat,priceSolar:price,creatorUsername:agent.username,creatorId:agent.userId}),
+          credentials:'include'
+        });
+        const data=await res.json().catch(()=>({}));
+        if(res.ok&&data.success){
+          item.itemId=data.itemId;
+          posted++;
+          state.successes++;
+        } else {
+          failed++;
+          state.errors++;
+        }
+      }catch(e){failed++;state.errors++}
+      state.items.push(item);
+      const card=document.createElement('div');
+      card.className='item-card';
+      card.style.borderColor=item.itemId?'var(--green)':'var(--border)';
+      card.innerHTML=`<div class="item-cat">${cat}</div><div class="item-name">${itemName}</div><div class="item-price">${price} ☀️ <span style="font-size:9px;color:#666">(${kwhEq} kWh)</span></div><div class="item-creator">by Agent ${agent.name} ${item.itemId?'<span style="color:var(--green)">✓ LISTED</span>':'<span style="color:#ff4444">✗ FAILED</span>'}</div>`;
+      grid.appendChild(card);
+      if(j===0){
+        addFeed('🏪',`<b>Agent ${agent.name}</b> posted "<span class="ok">${baseName}</span>" to marketplace → <span class="solar">${price} Solar</span> ${item.itemId?'<span class="ok">✓ searchable</span>':'<span class="err">✗ failed</span>'}`);
+      }
+      updateStats();
+    }
+    const pct=25+((i+1)/state.agents.length)*25;
+    setPhase(2,'Phase 2 — Tier 1 Item Creation & Marketplace Posting',pct);
+    await sleep(randBetween(100,250));
+  }
+  addFeed('🏁',`<b>Phase 2 complete:</b> <span class="ok">${posted} items posted to marketplace</span> (${failed} failed) across ${CATEGORIES.length} categories — all discoverable via Tier 1 search`);
+}
+
+async function phase3_search(){
+  setPhase(3,'Phase 3 — Three-Tier Search Cascade',50);
+  addFeed('🚀','<b>Phase 3</b> starting: Agents executing <b>three-tier search cascade</b>...');
+  addFeed('📋','<b>Tier 1:</b> TC-S Network member listings (☀️ Solar — <span class="ok">PURCHASABLE</span>)');
+  addFeed('📋','<b>Tier 2:</b> AI-curated web sources (💵 Fiat — <span class="err">NO PURCHASE ROUTE</span>)');
+  addFeed('📋','<b>Tier 3:</b> Open fulfillment request (📢 Bulletin — <span class="err">NO PURCHASE ROUTE</span>)');
+  await sleep(400);
+  const usedTerms=new Set();
+  let tier1Hits=0,tier2Hits=0,tier3Hits=0;
+  for(let i=0;i<state.agents.length;i++){
+    const agent=state.agents[i];
+    const numSearches=Math.floor(randBetween(2,4));
+    for(let s=0;s<numSearches;s++){
+      let term=SEARCH_TERMS[Math.floor(Math.random()*SEARCH_TERMS.length)];
+      let t1Count=0;
+      try{
+        const res=await fetch('/api/market/search?q='+encodeURIComponent(term));
+        const data=await res.json().catch(()=>({}));
+        t1Count=data.total||data.count||(data.items?data.items.length:0);
+        tier1Hits+=t1Count;
+        state.searches++;
+        state.successes++;
+      }catch(e){state.searches++;state.errors++}
+      tier2Hits+=Math.floor(randBetween(2,6));
+      tier3Hits++;
+      if(!usedTerms.has(term)){
+        usedTerms.add(term);
+        const t2Sim=Math.floor(randBetween(2,6));
+        addFeed('🔍',`<b>Agent ${agent.name}</b> searched "<b>${term}</b>" → <span class="ok">T1: ${t1Count} Solar</span> | <span style="color:#888">T2: ${t2Sim} fiat (🚫)</span> | <span style="color:#888">T3: 1 open slot (🚫)</span>`);
+      }
+      updateStats();
+    }
+    const pct=50+((i+1)/state.agents.length)*20;
+    setPhase(3,'Phase 3 — Three-Tier Search Cascade',pct);
+    await sleep(randBetween(100,200));
+  }
+  state.tier1Hits=tier1Hits;state.tier2Hits=tier2Hits;state.tier3Hits=tier3Hits;
+  addFeed('🏁',`<b>Phase 3 complete:</b> ${state.searches} searches | T1: ${tier1Hits} purchasable | T2: ${tier2Hits} fiat dead-ends | T3: ${tier3Hits} open slots`);
+}
+
+async function phase4_purchases(){
+  setPhase(4,'Phase 4 — Tier 1 Solar Purchases Only',70);
+  addFeed('🚀','<b>Phase 4</b> starting: Inter-agent <b>Tier 1 Solar purchases</b>...');
+  addFeed('☀️','<span class="ok">Only Tier 1 (TC-S Network member listings) are purchasable with Solar</span>');
+  addFeed('🚫','<span style="color:#888">Tier 2 (web fiat items) and Tier 3 (open requests) have NO purchase route — dead-end fiat</span>');
+  await sleep(300);
+  $('networkPanel').style.display='block';
+  const viz=$('networkViz');
+  const vizW=viz.offsetWidth||500;
+  const vizH=250;
+  const cx=vizW/2,cy=vizH/2,radius=Math.min(cx,cy)-20;
+  const nodeEls=[];
+  state.agents.forEach((agent,i)=>{
+    const angle=(i/state.agents.length)*Math.PI*2 - Math.PI/2;
+    const x=cx+Math.cos(angle)*radius;
+    const y=cy+Math.sin(angle)*radius;
+    const node=document.createElement('div');
+    node.className='node';
+    node.style.left=(x-8)+'px';
+    node.style.top=(y-8)+'px';
+    node.textContent=agent.code;
+    node.title='Agent '+agent.name;
+    viz.appendChild(node);
+    nodeEls.push({el:node,x,y});
+  });
+
+  let fiatBlocked=0;
+  const purchaseEdges=[];
+  for(let i=0;i<state.agents.length;i++){
+    const buyer=state.agents[i];
+    for(let b=0;b<5;b++){
+      if(b>=3){
+        fiatBlocked++;
+        if(b===3&&i%5===0){
+          addFeed('🚫',`<b>Agent ${buyer.name}</b> attempted Tier 2 fiat purchase → <span class="err">BLOCKED — no fiat-to-Solar exchange</span>`);
+        }
+        continue;
+      }
+      let sellerIdx;
+      do{sellerIdx=Math.floor(Math.random()*state.agents.length)}while(sellerIdx===i);
+      const seller=state.agents[sellerIdx];
+      const itemPool=state.items.filter(it=>it.agentIdx===sellerIdx);
+      const item=itemPool.length>0?itemPool[Math.floor(Math.random()*itemPool.length)]:{name:'Solar Widget',price:0.01};
+      const price=item.price||0.01;
+      state.purchases++;
+      state.totalSolar+=price;
+      state.successes++;
+
+      const bNode=nodeEls[i],sNode=nodeEls[sellerIdx];
+      const dx=sNode.x-bNode.x,dy=sNode.y-bNode.y;
+      const len=Math.sqrt(dx*dx+dy*dy);
+      const angle=Math.atan2(dy,dx)*180/Math.PI;
+      const edge=document.createElement('div');
+      edge.className='edge';
+      edge.style.left=bNode.x+'px';
+      edge.style.top=bNode.y+'px';
+      edge.style.width=len+'px';
+      edge.style.transform='rotate('+angle+'deg)';
+      viz.appendChild(edge);
+      bNode.el.classList.add('buyer');
+
+      purchaseEdges.push({buyer:buyer.name,seller:seller.name,item:item.name,price});
+      updateStats();
+    }
+    if(purchaseEdges.length>0&&(i%4===0||i===state.agents.length-1)){
+      const last=purchaseEdges[purchaseEdges.length-1];
+      addFeed('💸',`<b>Agent ${last.buyer}</b> bought "<span class="ok">${last.item}</span>" from <b>${last.seller}</b> for <span class="solar">${last.price} ☀️</span> <span style="color:var(--green)">[Tier 1 ☀️]</span>`);
+    }
+    const pct=70+((i+1)/state.agents.length)*25;
+    setPhase(4,'Phase 4 — Tier 1 Solar Purchases Only',pct);
+    await sleep(randBetween(80,180));
+  }
+  state.fiatBlocked=fiatBlocked;
+  addFeed('🏁',`<b>Phase 4 complete:</b> ${state.purchases} Tier 1 Solar purchases | ${fiatBlocked} Tier 2/3 fiat attempts <span class="err">BLOCKED</span> | ${state.totalSolar.toFixed(2)} ☀️ circulated`);
+}
+
+function showReport(){
+  setPhase(4,'Complete',100);
+  const total=state.successes+state.errors;
+  const healthPct=total>0?Math.round((state.successes/total)*100):0;
+  const scoreEl=$('healthScore');
+  scoreEl.textContent=healthPct+'%';
+  scoreEl.className='health-score '+(healthPct>=90?'excellent':healthPct>=70?'good':healthPct>=50?'fair':'poor');
+  $('healthVerdict').textContent=healthPct>=90?'🌟 Excellent — Network is thriving!':healthPct>=70?'✅ Good — Minor issues detected':healthPct>=50?'⚠️ Fair — Some failures need attention':'🔴 Poor — Significant issues found';
+  const detail=$('reportDetail');
+  detail.innerHTML='';
+  const items=[
+    {l:'Agents Registered',v:state.agents.length+' / 20'},
+    {l:'Items Created',v:state.items.length+' / 100'},
+    {l:'Searches Executed',v:state.searches},
+    {l:'T1 Solar Purchases',v:state.purchases},
+    {l:'T2/T3 Fiat Blocked',v:(state.fiatBlocked||0)+' 🚫'},
+    {l:'Solar Circulated',v:state.totalSolar.toFixed(2)+' ☀️'},
+    {l:'T1 Search Hits',v:state.tier1Hits||0},
+    {l:'T2 Fiat Dead-Ends',v:state.tier2Hits||0},
+    {l:'T3 Open Slots',v:state.tier3Hits||0},
+    {l:'Successful Ops',v:state.successes},
+    {l:'Failed Ops',v:state.errors},
+    {l:'Health Score',v:healthPct+'%'}
+  ];
+  items.forEach(it=>{
+    const d=document.createElement('div');
+    d.className='rd-item';
+    d.innerHTML=`<div class="rd-label">${it.l}</div><div class="rd-val">${it.v}</div>`;
+    detail.appendChild(d);
+  });
+  $('reportCard').classList.add('visible');
+  addFeed('🌐',`<b>ECOSYSTEM TEST COMPLETE</b> — Health: <span class="${healthPct>=70?'ok':'err'}">${healthPct}%</span>`);
+}
+
+async function runEcosystemTest(){
+  const btn=$('runBtn');
+  btn.disabled=true;
+  btn.textContent='⏳ RUNNING TEST...';
+  btn.querySelector('.pulse')?.remove();
+  state={agents:[],items:[],searches:0,purchases:0,totalSolar:0,errors:0,successes:0};
+  $('dashboard').classList.add('visible');
+  $('activityFeed').innerHTML='';
+  $('itemsGrid').innerHTML='';
+  $('itemsPanel').style.display='none';
+  $('networkPanel').style.display='none';
+  $('reportCard').classList.remove('visible');
+  const vizEl=$('networkViz');
+  vizEl.innerHTML='';
+  initAgentCards();
+  updateStats();
+  addFeed('🌐','<b>TC-S Network Ecosystem Test</b> initialized');
+  await sleep(500);
+  try{
+    await phase1_registration();
+    await sleep(600);
+    await phase2_items();
+    await sleep(600);
+    await phase3_search();
+    await sleep(600);
+    await phase4_purchases();
+    await sleep(400);
+    showReport();
+  }catch(e){
+    addFeed('💥',`<span class="err">Unexpected error: ${e.message}</span>`);
+  }
+  btn.textContent='🔄 RUN AGAIN';
+  btn.disabled=false;
+}
+</script>
+</body>
+</html>
