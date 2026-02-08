@@ -270,9 +270,18 @@ function updateStats(){
   $('statSolar').textContent=state.totalSolar.toFixed(1);
 }
 
+function calcGenesisSolar(){
+  const GENESIS=new Date('2025-04-07T00:00:00Z');
+  const now=new Date();
+  const daysSinceGenesis=Math.floor((now-GENESIS)/(1000*60*60*24));
+  return Math.max(daysSinceGenesis,1);
+}
+
 async function phase1_registration(){
+  const genesisBal=calcGenesisSolar();
   setPhase(1,'Phase 1 — Agent Registration',5);
   addFeed('🚀','<b>Phase 1</b> starting: Registering <b>20 AI agents</b>...');
+  addFeed('☀️',`<b>Genesis:</b> April 7, 2025 → <span class="solar">${genesisBal} days = ${genesisBal} Solar</span> per member (1 Solar/day since Genesis)`);
   for(let i=0;i<AGENTS.length;i++){
     const a=AGENTS[i];
     const username='agent_eco_'+a.code;
@@ -282,17 +291,17 @@ async function phase1_registration(){
       const res=await fetch('/api/auth/signup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),credentials:'include'});
       const data=await res.json().catch(()=>({}));
       if(res.ok&&data.success!==false){
-        const bal=data.solarBalance||data.solar_balance||307;
-        state.agents.push({...a,username,userId:data.userId||data.user_id||i+1,balance:bal,session:data.sessionId||null});
+        const bal=data.solarBalance||data.solar_balance||genesisBal;
+        state.agents.push({...a,username,userId:data.userId||data.user_id||i+1,balance:parseFloat(bal),session:data.sessionId||null});
         state.totalSolar+=parseFloat(bal)||0;
         updateAgentCard(a,'registered',bal,'registered');
         addFeed('✅',`<b>Agent ${a.name}</b> registered with <span class="solar">${parseFloat(bal).toFixed(1)} Solar</span>`);
         state.successes++;
       } else if(res.status===409||res.status===400||(data.message&&data.message.toLowerCase().includes('exist'))){
-        state.agents.push({...a,username,userId:null,balance:307,session:null});
-        state.totalSolar+=307;
-        updateAgentCard(a,'exists',307,'exists');
-        addFeed('🔄',`<b>Agent ${a.name}</b> already exists — continuing`);
+        state.agents.push({...a,username,userId:null,balance:genesisBal,session:null});
+        state.totalSolar+=genesisBal;
+        updateAgentCard(a,'exists',genesisBal,'exists');
+        addFeed('🔄',`<b>Agent ${a.name}</b> already exists — <span class="solar">${genesisBal} Solar</span> (Genesis accrual)`);
         state.successes++;
       } else {
         throw new Error(data.message||data.error||'Registration failed');
@@ -308,7 +317,7 @@ async function phase1_registration(){
     updateStats();
     await sleep(randBetween(200,400));
   }
-  addFeed('🏁',`<b>Phase 1 complete:</b> ${state.agents.length} agents processed`);
+  addFeed('🏁',`<b>Phase 1 complete:</b> ${state.agents.length} agents processed — each wallet: <span class="solar">${genesisBal} Solar</span> (1/day since Genesis April 7, 2025)`);
 }
 
 async function phase2_items(){
