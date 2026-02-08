@@ -41,7 +41,11 @@ class ObjectStorageService {
   async downloadFile(key) {
     if (!client) throw new Error('Object storage is not available');
     const result = await client.downloadAsBytes(key);
-    return result;
+    if (!result.ok) throw new Error(`Download failed for key: ${key}`);
+    const value = result.value;
+    if (Array.isArray(value) && value.length > 0) return value[0];
+    if (Buffer.isBuffer(value)) return value;
+    return Buffer.from(value);
   }
 
   async fileExists(key) {

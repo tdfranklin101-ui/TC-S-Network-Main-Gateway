@@ -3741,9 +3741,9 @@ const server = http.createServer(async (req, res) => {
             String(creatorId), // $12 - Convert to string (artifacts.creator_id is TEXT)
             fileProcessingResult.previewFile.thumbnailUrl || null, // $13
             true, // $14 - active - immediately available in marketplace
-            fileProcessingResult.masterFile.url, // $15
-            fileProcessingResult.previewFile.previewUrl || null, // $16
-            fileProcessingResult.tradeFile.url, // $17
+            fileProcessingResult.masterFile.cloudKey ? `cloud://${fileProcessingResult.masterFile.cloudKey}` : fileProcessingResult.masterFile.url, // $15
+            fileProcessingResult.previewFile.cloudKey ? `cloud://${fileProcessingResult.previewFile.cloudKey}` : (fileProcessingResult.previewFile.previewUrl || null), // $16
+            fileProcessingResult.tradeFile.cloudKey ? `cloud://${fileProcessingResult.tradeFile.cloudKey}` : fileProcessingResult.tradeFile.url, // $17
             fileProcessingResult.masterFile.size, // $18
             fileProcessingResult.previewFile.previewSize || 0, // $19
             fileProcessingResult.tradeFile.size, // $20
@@ -8374,9 +8374,9 @@ Respond ONLY with valid JSON in this exact format:
             String(creatorId || session.userId),
             fileProcessingResult.previewFile.thumbnailUrl || null,
             true,
-            fileProcessingResult.masterFile.url,
-            fileProcessingResult.previewFile.previewUrl || null,
-            fileProcessingResult.tradeFile.url,
+            fileProcessingResult.masterFile.cloudKey ? `cloud://${fileProcessingResult.masterFile.cloudKey}` : fileProcessingResult.masterFile.url,
+            fileProcessingResult.previewFile.cloudKey ? `cloud://${fileProcessingResult.previewFile.cloudKey}` : (fileProcessingResult.previewFile.previewUrl || null),
+            fileProcessingResult.tradeFile.cloudKey ? `cloud://${fileProcessingResult.tradeFile.cloudKey}` : fileProcessingResult.tradeFile.url,
             fileProcessingResult.masterFile.size,
             fileProcessingResult.previewFile.previewSize || 0,
             fileProcessingResult.tradeFile.size,
@@ -10861,7 +10861,23 @@ Respond ONLY with valid JSON in this exact format:
         return;
       }
 
-      const cloudResult = await fileManager.getCloudFile(fileType, artifactId);
+      let cloudResult = null;
+      try {
+        const urlCol = fileType === 'master' ? 'master_file_url' : fileType === 'trade' ? 'trade_file_url' : 'preview_file_url';
+        const dbRow = await pool.query(`SELECT ${urlCol} FROM artifacts WHERE id = $1`, [artifactId]);
+        const storedUrl = dbRow.rows[0]?.[urlCol];
+        if (storedUrl && storedUrl.startsWith('cloud://')) {
+          const cloudKey = storedUrl.replace('cloud://', '');
+          const cloudStorage = require('./server/cloud-storage');
+          const buffer = await cloudStorage.downloadFile(cloudKey);
+          if (buffer) cloudResult = { buffer, key: cloudKey };
+        }
+      } catch (dbErr) {
+        // DB lookup failed, try filename guessing
+      }
+      if (!cloudResult) {
+        cloudResult = await fileManager.getCloudFile(fileType, artifactId);
+      }
       if (cloudResult) {
         const buf = Buffer.isBuffer(cloudResult.buffer) ? cloudResult.buffer : Buffer.from(cloudResult.buffer);
         res.writeHead(200, {
