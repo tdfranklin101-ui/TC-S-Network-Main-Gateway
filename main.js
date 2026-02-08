@@ -10861,7 +10861,21 @@ Respond ONLY with valid JSON in this exact format:
         return;
       }
 
-      // Serve the requested file
+      const cloudResult = await fileManager.getCloudFile(fileType, artifactId);
+      if (cloudResult) {
+        const buf = Buffer.isBuffer(cloudResult.buffer) ? cloudResult.buffer : Buffer.from(cloudResult.buffer);
+        res.writeHead(200, {
+          'Content-Type': 'application/octet-stream',
+          'Content-Length': buf.length,
+          'Cache-Control': 'no-cache, must-revalidate',
+          'X-Secure-Access': 'true',
+          'X-Storage-Provider': 'cloud'
+        });
+        res.end(buf);
+        console.log(`🔒 Secure file access (cloud): ${fileType}/${artifactId}`);
+        return;
+      }
+
       const filePath = fileManager.getFilePath(fileType, artifactId);
       if (!fs.existsSync(filePath)) {
         res.writeHead(404, { 'Content-Type': 'text/plain' });
@@ -10869,7 +10883,6 @@ Respond ONLY with valid JSON in this exact format:
         return;
       }
 
-      // Stream the file with appropriate headers
       const stat = fs.statSync(filePath);
       const fileStream = fs.createReadStream(filePath);
       
@@ -10877,11 +10890,12 @@ Respond ONLY with valid JSON in this exact format:
         'Content-Type': 'application/octet-stream',
         'Content-Length': stat.size,
         'Cache-Control': 'no-cache, must-revalidate',
-        'X-Secure-Access': 'true'
+        'X-Secure-Access': 'true',
+        'X-Storage-Provider': 'local'
       });
       
       fileStream.pipe(res);
-      console.log(`🔒 Secure file access: ${fileType}/${artifactId}`);
+      console.log(`🔒 Secure file access (local): ${fileType}/${artifactId}`);
       
     } catch (error) {
       console.error('Secure file access error:', error);

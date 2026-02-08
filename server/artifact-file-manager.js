@@ -2,11 +2,8 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const PreviewGenerator = require('./preview-generator');
+const cloudStorage = require('./cloud-storage');
 
-/**
- * Enhanced Three-Copy File Management System
- * Handles Master → Preview → Trade file workflow
- */
 class ArtifactFileManager {
   constructor(options = {}) {
     this.masterStoragePath = options.masterStoragePath || path.join(__dirname, '../storage/master');
@@ -30,13 +27,6 @@ class ArtifactFileManager {
     });
   }
 
-  /**
-   * Process uploaded file through three-copy workflow
-   * @param {Buffer} fileBuffer - Original file buffer
-   * @param {Object} fileInfo - File information (name, mime, size)
-   * @param {Object} metadata - Additional metadata (title, description, category)
-   * @returns {Object} Processing result with all three file copies
-   */
   async processUpload(fileBuffer, fileInfo, metadata = {}) {
     const artifactId = crypto.randomUUID();
     const fileExtension = path.extname(fileInfo.originalname) || '.bin';
@@ -44,16 +34,9 @@ class ArtifactFileManager {
     try {
       console.log(`🔄 Processing upload: ${metadata.title || fileInfo.originalname} (${artifactId})`);
       
-      // Step 1: Store Master File (original, secure)
       const masterResult = await this.storeMasterFile(fileBuffer, artifactId, fileExtension, fileInfo);
-      
-      // Step 2: Generate Preview File (optimized for viewing)
       const previewResult = await this.generatePreviewFile(fileBuffer, artifactId, fileInfo, metadata);
-      
-      // Step 3: Prepare Trade File (deliverable to purchasers)
       const tradeResult = await this.prepareTradeFile(fileBuffer, artifactId, fileExtension, fileInfo, metadata);
-      
-      // Step 4: Calculate file metadata
       const fileMetadata = this.calculateFileMetadata(fileBuffer, fileInfo, previewResult);
       
       const result = {
@@ -72,8 +55,6 @@ class ArtifactFileManager {
       
     } catch (error) {
       console.error(`❌ Upload processing failed for ${artifactId}:`, error);
-      
-      // Cleanup any partial files
       await this.cleanup(artifactId);
       
       return {
@@ -85,32 +66,42 @@ class ArtifactFileManager {
     }
   }
 
-  /**
-   * Store master file in secure private storage
-   */
   async storeMasterFile(fileBuffer, artifactId, fileExtension, fileInfo) {
+    if (cloudStorage.isAvailable()) {
+      try {
+        const result = await cloudStorage.uploadMasterFile(artifactId, fileExtension, fileBuffer);
+        return {
+          url: result.url,
+          cloudKey: result.key,
+          size: result.size,
+          storageProvider: 'cloud',
+          originalName: fileInfo.originalname,
+          mimeType: fileInfo.mimetype,
+          secureAccess: true
+        };
+      } catch (err) {
+        console.warn(`[ArtifactFileManager] Cloud upload failed for master ${artifactId}, falling back to local:`, err.message);
+      }
+    }
+
     const masterFileName = `${artifactId}_master${fileExtension}`;
     const masterFilePath = path.join(this.masterStoragePath, masterFileName);
     
     fs.writeFileSync(masterFilePath, fileBuffer);
     
-    // SECURITY: Never expose direct storage paths!
-    // Always use secure URL generation
-    const secureUrl = this.generateSecureUrl('master', artifactId, 86400); // 24 hour expiry for master files
+    const secureUrl = this.generateSecureUrl('master', artifactId, 86400);
     
     return {
-      url: secureUrl.url, // Secure tokenized URL
-      internalPath: masterFilePath, // Internal use only - never expose!
+      url: secureUrl.url,
+      internalPath: masterFilePath,
       size: fileBuffer.length,
+      storageProvider: 'local',
       originalName: fileInfo.originalname,
       mimeType: fileInfo.mimetype,
       secureAccess: true
     };
   }
 
-  /**
-   * Generate preview file using PreviewGenerator
-   */
   async generatePreviewFile(fileBuffer, artifactId, fileInfo, metadata) {
     const previewResult = await this.previewGenerator.generatePreview(
       fileBuffer, 
@@ -125,53 +116,74 @@ class ArtifactFileManager {
     if (!previewResult.success) {
       throw new Error(`Preview generation failed: ${previewResult.error}`);
     }
+
+    if (cloudStorage.isAvailable() && previewResult.previewPath) {
+      try {
+        const previewFilePath = path.isAbsolute(previewResult.previewPath)
+          ? previewResult.previewPath
+          : path.join(this.previewStoragePath, previewResult.previewPath);
+        
+        if (fs.existsSync(previewFilePath)) {
+          const previewBuffer = fs.readFileSync(previewFilePath);
+          const previewFilename = path.basename(previewFilePath);
+          const cloudResult = await cloudStorage.uploadPreviewFile(artifactId, previewFilename, previewBuffer);
+          previewResult.cloudKey = cloudResult.key;
+          previewResult.storageProvider = 'cloud';
+        }
+      } catch (err) {
+        console.warn(`[ArtifactFileManager] Cloud upload failed for preview ${artifactId}:`, err.message);
+      }
+    }
     
     return previewResult;
   }
 
-  /**
-   * Prepare trade file (deliverable copy)
-   * For most files, this is the same as master, but could be optimized
-   */
   async prepareTradeFile(fileBuffer, artifactId, fileExtension, fileInfo, metadata) {
+    let tradeBuffer = fileBuffer;
+    
+    if (fileInfo.mimetype.startsWith('image/') && fileInfo.mimetype !== 'image/svg+xml') {
+      tradeBuffer = fileBuffer;
+    } else if (fileInfo.mimetype.startsWith('audio/')) {
+      tradeBuffer = fileBuffer;
+    } else if (fileInfo.mimetype.startsWith('video/')) {
+      tradeBuffer = fileBuffer;
+    }
+
+    if (cloudStorage.isAvailable()) {
+      try {
+        const result = await cloudStorage.uploadTradeFile(artifactId, fileExtension, tradeBuffer);
+        return {
+          url: result.url,
+          cloudKey: result.key,
+          size: result.size,
+          storageProvider: 'cloud',
+          mimeType: fileInfo.mimetype,
+          originalName: fileInfo.originalname,
+          secureAccess: true
+        };
+      } catch (err) {
+        console.warn(`[ArtifactFileManager] Cloud upload failed for trade ${artifactId}, falling back to local:`, err.message);
+      }
+    }
+
     const tradeFileName = `${artifactId}_trade${fileExtension}`;
     const tradeFilePath = path.join(this.tradeStoragePath, tradeFileName);
     
-    // For now, trade file is same as master
-    // In advanced implementation, could apply compression, watermarking, etc.
-    let tradeBuffer = fileBuffer;
-    
-    // Apply trade-specific processing based on file type
-    if (fileInfo.mimetype.startsWith('image/') && fileInfo.mimetype !== 'image/svg+xml') {
-      // Could add watermarking or compression for images
-      tradeBuffer = fileBuffer; // For now, keep original
-    } else if (fileInfo.mimetype.startsWith('audio/')) {
-      // Could apply audio processing (normalization, compression)
-      tradeBuffer = fileBuffer; // For now, keep original
-    } else if (fileInfo.mimetype.startsWith('video/')) {
-      // Could apply video processing (compression, format optimization)
-      tradeBuffer = fileBuffer; // For now, keep original
-    }
-    
     fs.writeFileSync(tradeFilePath, tradeBuffer);
     
-    // SECURITY: Never expose direct storage paths!
-    // Trade files get longer expiry since they're purchased content
-    const secureUrl = this.generateSecureUrl('trade', artifactId, 7 * 86400); // 7 days for purchased content
+    const secureUrl = this.generateSecureUrl('trade', artifactId, 7 * 86400);
     
     return {
-      url: secureUrl.url, // Secure tokenized URL  
-      internalPath: tradeFilePath, // Internal use only - never expose!
+      url: secureUrl.url,
+      internalPath: tradeFilePath,
       size: tradeBuffer.length,
+      storageProvider: 'local',
       mimeType: fileInfo.mimetype,
       originalName: fileInfo.originalname,
       secureAccess: true
     };
   }
 
-  /**
-   * Calculate comprehensive file metadata
-   */
   calculateFileMetadata(fileBuffer, fileInfo, previewResult) {
     return {
       originalSize: fileBuffer.length,
@@ -185,17 +197,10 @@ class ArtifactFileManager {
     };
   }
 
-  /**
-   * Generate secure temporary URL for file access
-   * @param {string} fileType - 'master', 'preview', or 'trade'
-   * @param {string} artifactId - Artifact identifier
-   * @param {number} expiresIn - Expiration in seconds (default 1 hour)
-   */
   generateSecureUrl(fileType, artifactId, expiresIn = 3600) {
     const timestamp = Math.floor(Date.now() / 1000);
     const expires = timestamp + expiresIn;
     
-    // Create secure token
     const payload = `${fileType}:${artifactId}:${expires}`;
     const secret = process.env.FILE_ACCESS_SECRET || 'default-secret-change-in-production';
     const token = crypto.createHmac('sha256', secret).update(payload).digest('hex');
@@ -207,9 +212,6 @@ class ArtifactFileManager {
     };
   }
 
-  /**
-   * Verify secure URL token
-   */
   verifySecureUrl(fileType, artifactId, token, expires) {
     const currentTime = Math.floor(Date.now() / 1000);
     
@@ -228,19 +230,13 @@ class ArtifactFileManager {
     return { valid: true };
   }
 
-  /**
-   * Get internal file path for secure access (INTERNAL USE ONLY)
-   * WARNING: These paths must NEVER be exposed to clients!
-   */
   getFilePath(fileType, artifactId, fileExtension = '') {
-    // Try to find file with any extension if none provided
     if (!fileExtension) {
       const baseDir = this.getBaseDirectory(fileType);
       const files = fs.readdirSync(baseDir).filter(f => f.startsWith(`${artifactId}_${fileType}`));
       if (files.length > 0) {
         return path.join(baseDir, files[0]);
       }
-      // Fallback to generic extension
       fileExtension = '.bin';
     }
     
@@ -249,9 +245,6 @@ class ArtifactFileManager {
     return path.join(baseDir, fileName);
   }
   
-  /**
-   * Get base directory for file type
-   */
   getBaseDirectory(fileType) {
     switch (fileType) {
       case 'master':
@@ -265,9 +258,6 @@ class ArtifactFileManager {
     }
   }
 
-  /**
-   * Check if file exists
-   */
   fileExists(fileType, artifactId, fileExtension = '') {
     try {
       const filePath = this.getFilePath(fileType, artifactId, fileExtension);
@@ -277,9 +267,21 @@ class ArtifactFileManager {
     }
   }
 
-  /**
-   * Clean up all files for an artifact
-   */
+  async getCloudFile(fileType, artifactId) {
+    if (!cloudStorage.isAvailable()) return null;
+    const extensions = ['.png', '.jpg', '.jpeg', '.mp3', '.wav', '.mp4', '.txt', '.json', '.bin'];
+    for (const ext of extensions) {
+      const key = fileType === 'preview' 
+        ? `public/previews/${artifactId}_preview${ext}`
+        : `${process.env.PRIVATE_OBJECT_DIR || '.private'}/${fileType}/${artifactId}_${fileType}${ext}`;
+      try {
+        const buffer = await cloudStorage.downloadFile(key);
+        if (buffer) return { buffer, key };
+      } catch { continue; }
+    }
+    return null;
+  }
+
   async cleanup(artifactId) {
     const directories = [this.masterStoragePath, this.previewStoragePath, this.tradeStoragePath];
     
@@ -293,14 +295,28 @@ class ArtifactFileManager {
         console.warn(`Cleanup warning for ${dir}:`, error.message);
       }
     }
+
+    if (cloudStorage.isAvailable()) {
+      const cloudKeys = [
+        `${process.env.PRIVATE_OBJECT_DIR || '.private'}/master/${artifactId}_master`,
+        `${process.env.PRIVATE_OBJECT_DIR || '.private'}/trade/${artifactId}_trade`,
+        `public/previews/${artifactId}_preview`
+      ];
+      const extensions = ['.png', '.jpg', '.jpeg', '.mp3', '.wav', '.mp4', '.txt', '.json', '.bin'];
+      for (const baseKey of cloudKeys) {
+        for (const ext of extensions) {
+          try {
+            await cloudStorage.deleteFile(baseKey + ext);
+          } catch {
+            // ignore missing cloud files
+          }
+        }
+      }
+    }
     
-    // Also cleanup preview generator files
     this.previewGenerator.cleanup(artifactId);
   }
 
-  /**
-   * Get storage statistics
-   */
   getStorageStats() {
     const getDirectorySize = (dirPath) => {
       if (!fs.existsSync(dirPath)) return { files: 0, size: 0 };
@@ -324,6 +340,7 @@ class ArtifactFileManager {
       master: getDirectorySize(this.masterStoragePath),
       preview: getDirectorySize(this.previewStoragePath),
       trade: getDirectorySize(this.tradeStoragePath),
+      cloudAvailable: cloudStorage.isAvailable(),
       timestamp: new Date().toISOString()
     };
   }
