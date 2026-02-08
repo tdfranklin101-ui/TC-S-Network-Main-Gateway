@@ -8191,7 +8191,62 @@ Respond ONLY with valid JSON in this exact format:
   // Ecosystem Test - Save Run Results
   if (pathname === '/api/ecosystem-test/save-run' && req.method === 'POST') {
     try {
+      const saveRunIp = req.headers['x-forwarded-for']?.split(',')[0].trim()
+        || req.headers['x-real-ip']
+        || req.socket.remoteAddress
+        || 'unknown';
+      const now = Date.now();
+      if (!global._ecoSaveRateMap) global._ecoSaveRateMap = new Map();
+      const ipTimestamps = (global._ecoSaveRateMap.get(saveRunIp) || []).filter(ts => now - ts < 60000);
+      if (ipTimestamps.length >= 10) {
+        res.writeHead(429, { 'Content-Type': 'application/json', 'Retry-After': '60' });
+        res.end(JSON.stringify({ success: false, error: 'Rate limit exceeded — max 10 saves per minute' }));
+        return;
+      }
+      ipTimestamps.push(now);
+      global._ecoSaveRateMap.set(saveRunIp, ipTimestamps);
+
       const body = await parseBody(req);
+
+      const agentCount = parseInt(body.agentCount, 10) || 0;
+      if (agentCount <= 0 || !Number.isInteger(agentCount)) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'agentCount must be a positive integer' }));
+        return;
+      }
+      const healthScore = Math.min(100, Math.max(0, parseInt(body.healthScore, 10) || 0));
+
+      const itemsCreated        = parseInt(body.itemsCreated, 10) || 0;
+      const basicNeedsCreated   = parseInt(body.basicNeedsCreated, 10) || 0;
+      const searchesExecuted    = parseInt(body.searchesExecuted, 10) || 0;
+      const t1Purchases         = parseInt(body.t1Purchases, 10) || 0;
+      const t2SamplePurchases   = parseInt(body.t2SamplePurchases, 10) || 0;
+      const totalPurchases      = parseInt(body.totalPurchases, 10) || 0;
+      const basicNeedsPurchased = parseInt(body.basicNeedsPurchased, 10) || 0;
+      const basicNeedsCompliance= parseInt(body.basicNeedsCompliance, 10) || 0;
+      const solarDistributed    = parseFloat(body.solarDistributed) || 0;
+      const solarCirculated     = parseFloat(body.solarCirculated) || 0;
+      const sellerRevenue       = parseFloat(body.sellerRevenue) || 0;
+      const totalEndBalances    = parseFloat(body.totalEndBalances) || 0;
+      const vouchersCreated     = parseInt(body.vouchersCreated, 10) || 0;
+      const vouchersPurchased   = parseInt(body.vouchersPurchased, 10) || 0;
+      const vouchersRedeemed    = parseInt(body.vouchersRedeemed, 10) || 0;
+      const tier1Hits           = parseInt(body.tier1Hits, 10) || 0;
+      const tier2Hits           = parseInt(body.tier2Hits, 10) || 0;
+      const tier2SamplePosts    = parseInt(body.tier2SamplePosts, 10) || 0;
+      const tier3Hits           = parseInt(body.tier3Hits, 10) || 0;
+      const balanceBlocked      = parseInt(body.balanceBlocked, 10) || 0;
+      const limitBlocked        = parseInt(body.limitBlocked, 10) || 0;
+      const tier3Blocked        = parseInt(body.tier3Blocked, 10) || 0;
+      const successfulOps       = parseInt(body.successfulOps, 10) || 0;
+      const failedOps           = parseInt(body.failedOps, 10) || 0;
+
+      const agentLedger       = Array.isArray(body.agentLedger) ? body.agentLedger : [];
+      const mcpEngineUsage    = (body.mcpEngineUsage && typeof body.mcpEngineUsage === 'object' && !Array.isArray(body.mcpEngineUsage)) ? body.mcpEngineUsage : {};
+      const categoryBreakdown = (body.categoryBreakdown && typeof body.categoryBreakdown === 'object' && !Array.isArray(body.categoryBreakdown)) ? body.categoryBreakdown : {};
+      const voucherDetails    = Array.isArray(body.voucherDetails) ? body.voucherDetails : [];
+      const metadata          = (body.metadata && typeof body.metadata === 'object' && !Array.isArray(body.metadata)) ? body.metadata : {};
+
       const runId = `run_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
       
       await pool.query(
@@ -8212,41 +8267,41 @@ Respond ONLY with valid JSON in this exact format:
         )`,
         [
           runId,
-          body.agentCount || 20,
-          body.itemsCreated || 0,
-          body.basicNeedsCreated || 0,
-          body.searchesExecuted || 0,
-          body.t1Purchases || 0,
-          body.t2SamplePurchases || 0,
-          body.totalPurchases || 0,
-          body.basicNeedsPurchased || 0,
-          body.basicNeedsCompliance || 0,
-          body.solarDistributed || 0,
-          body.solarCirculated || 0,
-          body.sellerRevenue || 0,
-          body.totalEndBalances || 0,
-          body.vouchersCreated || 0,
-          body.vouchersPurchased || 0,
-          body.vouchersRedeemed || 0,
-          body.tier1Hits || 0,
-          body.tier2Hits || 0,
-          body.tier2SamplePosts || 0,
-          body.tier3Hits || 0,
-          body.balanceBlocked || 0,
-          body.limitBlocked || 0,
-          body.tier3Blocked || 0,
-          body.successfulOps || 0,
-          body.failedOps || 0,
-          body.healthScore || 0,
-          JSON.stringify(body.agentLedger || []),
-          JSON.stringify(body.mcpEngineUsage || {}),
-          JSON.stringify(body.categoryBreakdown || {}),
-          JSON.stringify(body.voucherDetails || []),
-          JSON.stringify(body.metadata || {})
+          agentCount,
+          itemsCreated,
+          basicNeedsCreated,
+          searchesExecuted,
+          t1Purchases,
+          t2SamplePurchases,
+          totalPurchases,
+          basicNeedsPurchased,
+          basicNeedsCompliance,
+          solarDistributed,
+          solarCirculated,
+          sellerRevenue,
+          totalEndBalances,
+          vouchersCreated,
+          vouchersPurchased,
+          vouchersRedeemed,
+          tier1Hits,
+          tier2Hits,
+          tier2SamplePosts,
+          tier3Hits,
+          balanceBlocked,
+          limitBlocked,
+          tier3Blocked,
+          successfulOps,
+          failedOps,
+          healthScore,
+          JSON.stringify(agentLedger),
+          JSON.stringify(mcpEngineUsage),
+          JSON.stringify(categoryBreakdown),
+          JSON.stringify(voucherDetails),
+          JSON.stringify(metadata)
         ]
       );
 
-      console.log(`📊 Ecosystem test run saved: ${runId} (Health: ${body.healthScore}%)`);
+      console.log(`📊 Ecosystem test run saved: ${runId} (Health: ${healthScore}%)`);
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ success: true, runId }));
     } catch (error) {
@@ -8260,7 +8315,8 @@ Respond ONLY with valid JSON in this exact format:
   // Ecosystem Test - Get Historical Runs
   if (pathname === '/api/ecosystem-test/runs' && req.method === 'GET') {
     try {
-      const limit = parseInt(url.searchParams.get('limit') || '50');
+      const parsedUrl = new URL(req.url, `http://${req.headers.host}`);
+      const limit = parseInt(parsedUrl.searchParams.get('limit') || '50');
       const result = await pool.query(
         `SELECT * FROM ecosystem_test_runs ORDER BY run_timestamp DESC LIMIT $1`,
         [Math.min(limit, 200)]

@@ -117,7 +117,10 @@ header p{color:#888;font-size:14px}
 </head>
 <body>
 
-<a href="/marketplace.html" class="back-link">← Back to Marketplace</a>
+<div style="display:flex;justify-content:space-between;align-items:center;padding:0 20px">
+  <a href="/marketplace.html" class="back-link">← Back to Marketplace</a>
+  <a href="/ecosystem-analysis.html" style="color:var(--cyan);font-size:13px;text-decoration:none">📊 Analysis Dashboard →</a>
+</div>
 
 <header>
   <h1>🌐 TC-S Network Ecosystem Test</h1>
@@ -875,6 +878,42 @@ function showReport(){
 
   $('reportCard').classList.add('visible');
   addFeed('🌐',`<b>ECOSYSTEM TEST COMPLETE</b> — Health: <span class="${healthPct>=70?'ok':'err'}">${healthPct}%</span> | MCP Engines active | Basic Needs enforced`);
+
+  try {
+    const safeTotalDistributed = Number(totalDistributed) || 0;
+    const safeTotalEndBalances = Number(totalEndBalances) || 0;
+
+    const catBreakdown={};
+    state.items.forEach(it=>{if(it.category){catBreakdown[it.category]=(catBreakdown[it.category]||0)+1}});
+    const agentLedger=state.agents.map((a,idx)=>{
+      const created=state.items.filter(it=>it.agentIdx===idx).length;
+      const vCreated=(state.vouchers||[]).filter(v=>v.creator===a.name).length;
+      const vBought=(state.vouchers||[]).filter(v=>v.buyer===a.name).length;
+      return {name:a.name,code:a.code,genesis:Number(a.genesisBalance)||0,created:Number(created)||0,purchases:Number(a.dailyPurchases)||0,
+        basicNeeds:Number(a.basicNeedsPurchases)||0,vouchersCreated:Number(vCreated)||0,vouchersBought:Number(vBought)||0,endBalance:Number(a.balance)||0};
+    });
+    const voucherSummary=(state.vouchers||[]).map(v=>({title:v.title,type:v.type,creator:v.creator,buyer:v.buyer||null,redeemed:v.redeemed||false}));
+
+    fetch('/api/ecosystem-test/save-run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      agentCount:Number(state.agents.length)||0,itemsCreated:Number(state.items.length)||0,basicNeedsCreated:Number(state.basicNeedsCreated)||0,
+      searchesExecuted:Number(state.searches)||0,t1Purchases:Number(state.t1Purchases)||0,t2SamplePurchases:Number(state.t2SamplePurchases)||0,
+      totalPurchases:Number(state.t1Purchases||0)+Number(state.t2SamplePurchases||0),basicNeedsPurchased:Number(state.basicNeedsPurchased)||0,
+      basicNeedsCompliance:Number(state.agents.filter(a=>a.basicNeedsPurchases>=2).length)||0,
+      solarDistributed:safeTotalDistributed,solarCirculated:Number(state.totalSolar)||0,sellerRevenue:Number(state.totalSellerRevenue)||0,
+      totalEndBalances:safeTotalEndBalances,vouchersCreated:Number(state.vouchersCreated)||0,vouchersPurchased:Number(state.vouchersPurchased)||0,
+      vouchersRedeemed:Number(state.vouchersRedeemed)||0,tier1Hits:Number(state.tier1Hits)||0,tier2Hits:Number(state.tier2Hits)||0,
+      tier2SamplePosts:Number(state.tier2SamplePosts)||0,tier3Hits:Number(state.tier3Hits)||0,balanceBlocked:Number(state.balanceBlocked)||0,
+      limitBlocked:Number(state.limitBlocked)||0,tier3Blocked:Number(state.tier3Blocked)||0,successfulOps:Number(state.successes)||0,failedOps:Number(state.errors)||0,
+      healthScore:Number(healthPct)||0,agentLedger,mcpEngineUsage:engineUsage||{},categoryBreakdown:catBreakdown,voucherDetails:voucherSummary,
+      metadata:{runDate:new Date().toISOString(),version:'1.0'}
+    })}).then(r=>r.json()).then(d=>{
+      if(d.success) addFeed('💾',`<b>RUN SAVED</b> — ID: ${d.runId} — <a href="/ecosystem-analysis.html" style="color:var(--cyan)">View Analysis Dashboard →</a>`);
+      else addFeed('⚠️','Run save failed: '+(d.error||'unknown'));
+    }).catch(e=>addFeed('⚠️','Run save error: '+e.message));
+  } catch(saveErr) {
+    console.error('Auto-save error:', saveErr);
+    addFeed('⚠️','Run auto-save failed (report still valid): '+saveErr.message);
+  }
 }
 
 const VOUCHER_TEMPLATES = [

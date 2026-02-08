@@ -1,125 +1,5 @@
 [
   {
-    "date": "2026-02-02",
-    "indices": [
-      {
-        "id": "si",
-        "value": 70
-      },
-      {
-        "id": "srh",
-        "value": 77
-      },
-      {
-        "id": "gbi",
-        "value": 40.9
-      },
-      {
-        "id": "cai",
-        "value": 88
-      },
-      {
-        "id": "mli",
-        "value": 24.1
-      },
-      {
-        "id": "eai",
-        "value": 93
-      }
-    ],
-    "timestamp": "2026-02-02T02:28:43.087Z"
-  },
-  {
-    "date": "2026-02-02",
-    "indices": [
-      {
-        "id": "si",
-        "value": 70.9
-      },
-      {
-        "id": "srh",
-        "value": 78.5
-      },
-      {
-        "id": "gbi",
-        "value": 41.1
-      },
-      {
-        "id": "cai",
-        "value": 88.7
-      },
-      {
-        "id": "mli",
-        "value": 23.3
-      },
-      {
-        "id": "eai",
-        "value": 91.4
-      }
-    ],
-    "timestamp": "2026-02-02T03:00:00.026Z"
-  },
-  {
-    "date": "2026-02-02",
-    "indices": [
-      {
-        "id": "si",
-        "value": 70.6
-      },
-      {
-        "id": "srh",
-        "value": 76.6
-      },
-      {
-        "id": "gbi",
-        "value": 40.8
-      },
-      {
-        "id": "cai",
-        "value": 89.7
-      },
-      {
-        "id": "mli",
-        "value": 23.5
-      },
-      {
-        "id": "eai",
-        "value": 91.3
-      }
-    ],
-    "timestamp": "2026-02-02T06:06:05.146Z"
-  },
-  {
-    "date": "2026-02-02",
-    "indices": [
-      {
-        "id": "si",
-        "value": 72.6
-      },
-      {
-        "id": "srh",
-        "value": 76.7
-      },
-      {
-        "id": "gbi",
-        "value": 42.2
-      },
-      {
-        "id": "cai",
-        "value": 88.2
-      },
-      {
-        "id": "mli",
-        "value": 23.4
-      },
-      {
-        "id": "eai",
-        "value": 91.7
-      }
-    ],
-    "timestamp": "2026-02-02T17:26:23.002Z"
-  },
-  {
     "date": "2026-02-03",
     "indices": [
       {
@@ -898,5 +778,125 @@
       }
     ],
     "timestamp": "2026-02-08T06:34:33.182Z"
+  },
+  {
+    "date": "2026-02-08",
+    "indices": [
+      {
+        "id": "si",
+        "value": 70.9
+      },
+      {
+        "id": "srh",
+        "value": 78.7
+      },
+      {
+        "id": "gbi",
+        "value": 41.7
+      },
+      {
+        "id": "cai",
+        "value": 89.3
+      },
+      {
+        "id": "mli",
+        "value": 23.8
+      },
+      {
+        "id": "eai",
+        "value": 91.4
+      }
+    ],
+    "timestamp": "2026-02-08T06:47:02.407Z"
+  },
+  {
+    "date": "2026-02-08",
+    "indices": [
+      {
+        "id": "si",
+        "value": 72.1
+      },
+      {
+        "id": "srh",
+        "value": 76.7
+      },
+      {
+        "id": "gbi",
+        "value": 41.8
+      },
+      {
+        "id": "cai",
+        "value": 89.1
+      },
+      {
+        "id": "mli",
+        "value": 22.8
+      },
+      {
+        "id": "eai",
+        "value": 91.4
+      }
+    ],
+    "timestamp": "2026-02-08T06:47:25.899Z"
+  },
+  {
+    "date": "2026-02-08",
+    "indices": [
+      {
+        "id": "si",
+        "value": 70.7
+      },
+      {
+        "id": "srh",
+        "value": 76.6
+      },
+      {
+        "id": "gbi",
+        "value": 41.2
+      },
+      {
+        "id": "cai",
+        "value": 88.1
+      },
+      {
+        "id": "mli",
+        "value": 23.6
+      },
+      {
+        "id": "eai",
+        "value": 92.9
+      }
+    ],
+    "timestamp": "2026-02-08T06:48:09.439Z"
+  },
+  {
+    "date": "2026-02-08",
+    "indices": [
+      {
+        "id": "si",
+        "value": 72
+      },
+      {
+        "id": "srh",
+        "value": 78.9
+      },
+      {
+        "id": "gbi",
+        "value": 40.8
+      },
+      {
+        "id": "cai",
+        "value": 88.1
+      },
+      {
+        "id": "mli",
+        "value": 24.3
+      },
+      {
+        "id": "eai",
+        "value": 93
+      }
+    ],
+    "timestamp": "2026-02-08T06:49:23.508Z"
   }
 ]
