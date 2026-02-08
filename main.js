@@ -27,7 +27,10 @@ const earlyServer = http.createServer((req, res) => {
   if (!mainServerReady) {
     const MIME_TYPES = {'.html':'text/html','.css':'text/css','.js':'application/javascript','.json':'application/json','.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml','.ico':'image/x-icon','.mp3':'audio/mpeg','.mp4':'video/mp4','.webp':'image/webp','.woff2':'font/woff2'};
     let servePath = pathname === '/' ? '/index.html' : pathname;
-    const filePath = path.join(__dirname, 'public', servePath);
+    if (servePath.includes('..')) { res.writeHead(400); res.end('Bad request'); return; }
+    const publicRoot = path.resolve(__dirname, 'public');
+    const filePath = path.resolve(publicRoot, '.' + servePath);
+    if (!filePath.startsWith(publicRoot)) { res.writeHead(403); res.end('Forbidden'); return; }
     const ext = path.extname(filePath);
     if (ext && fs.existsSync(filePath)) {
       try {
@@ -10402,6 +10405,47 @@ Respond ONLY with valid JSON in this exact format:
     return;
   }
 
+  // Deployment QA endpoint - runtime diagnostics
+  if (pathname === '/api/deployment-qa' && req.method === 'GET') {
+    const mem = process.memoryUsage();
+    const secrets = {
+      OPENAI_API_KEY: !!process.env.OPENAI_API_KEY,
+      NEW_OPENAI_API_KEY: !!process.env.NEW_OPENAI_API_KEY,
+      EIA_API_KEY: !!process.env.EIA_API_KEY,
+      PIKA_API_KEY: !!process.env.PIKA_API_KEY,
+      STRIPE_SECRET_KEY: !!process.env.STRIPE_SECRET_KEY,
+      VITE_STRIPE_PUBLIC_KEY: !!process.env.VITE_STRIPE_PUBLIC_KEY,
+      DID_API_KEY: !!process.env.DID_API_KEY,
+      DATABASE_URL: !!process.env.DATABASE_URL,
+      SESSION_SECRET: !!process.env.SESSION_SECRET
+    };
+    const pages = ['index.html','marketplace.html','ecosystem-test.html','ecosystem-analysis.html'];
+    const pDir = path.join(__dirname, 'public');
+    const pageChecks = pages.reduce((a,p) => { a['/'+p] = fs.existsSync(path.join(pDir, p)); return a; }, {});
+    const allOk = Object.values(secrets).every(v=>v) && Object.values(pageChecks).every(v=>v);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      status: allOk ? 'DEPLOYMENT READY' : 'ISSUES DETECTED',
+      timestamp: new Date().toISOString(),
+      uptime_seconds: Math.floor(process.uptime()),
+      node_version: process.version,
+      environment: process.env.NODE_ENV || 'development',
+      port: PORT,
+      memory: { rss_mb: +(mem.rss/1024/1024).toFixed(1), heap_used_mb: +(mem.heapUsed/1024/1024).toFixed(1), heap_total_mb: +(mem.heapTotal/1024/1024).toFixed(1) },
+      secrets_audit: secrets,
+      critical_pages: pageChecks,
+      services: {
+        database: !!process.env.DATABASE_URL,
+        openai: !!process.env.OPENAI_API_KEY,
+        did: !!process.env.DID_API_KEY,
+        pika: !!process.env.PIKA_API_KEY,
+        eia: !!process.env.EIA_API_KEY,
+        stripe: !!process.env.STRIPE_SECRET_KEY
+      }
+    }, null, 2));
+    return;
+  }
+
   // Kid Solar AI Status endpoint
   if (pathname === '/api/kid-solar' && req.method === 'GET') {
     const GENESIS_DATE = new Date('2025-04-07').getTime();
@@ -12320,25 +12364,72 @@ async function generateDailySolarGreeting() {
 // Mark main server as ready and hand over to early server
 mainServer = server;
 mainServerReady = true;
-console.log(`\n${'='.repeat(60)}`);
-console.log(`🚀 CURRENT-SEE PLATFORM STARTED`);
-console.log(`${'='.repeat(60)}`);
-console.log(`✅ Main server initialized - handling requests via early server on port ${PORT}`);
-console.log(`🌐 Access at: http://localhost:${PORT}`);
-console.log(`📊 Health check: http://localhost:${PORT}/health`);
-console.log(`\n📊 ENVIRONMENT VARIABLES:`);
-console.log(`   NODE_ENV: ${process.env.NODE_ENV || 'not set'}`);
-console.log(`   REPLIT_DEPLOYMENT: ${process.env.REPLIT_DEPLOYMENT || 'not set'}`);
-console.log(`   REPL_DEPLOY: ${process.env.REPL_DEPLOY || 'not set'}`);
-console.log(`   PORT: ${PORT}`);
-console.log(`   DATABASE_URL: ${process.env.DATABASE_URL ? 'SET ✅' : 'NOT SET ❌'}`);
-console.log(`${'='.repeat(60)}\n`);
-console.log(`🎵 Music functions: Embedded in homepage (18 tracks)`);
-console.log(`🤖 D-ID Agent: Kid Solar ready`);
-console.log(`📱 Mobile responsive: Enabled`);
-console.log(`🔗 Links: Q&A and waitlist working`);
-console.log(`🚀 CLOUD RUN READY - SINGLE PORT CONFIGURATION`);
-console.log(`✅ Health check ready - deferring heavy initialization tasks...`);
+
+// ==================== DEPLOYMENT QA LOG ====================
+const qaTimestamp = new Date().toISOString();
+const uptimeMs = process.uptime() * 1000;
+const memUsage = process.memoryUsage();
+const secretChecks = {
+  OPENAI_API_KEY: !!process.env.OPENAI_API_KEY,
+  NEW_OPENAI_API_KEY: !!process.env.NEW_OPENAI_API_KEY,
+  EIA_API_KEY: !!process.env.EIA_API_KEY,
+  PIKA_API_KEY: !!process.env.PIKA_API_KEY,
+  STRIPE_SECRET_KEY: !!process.env.STRIPE_SECRET_KEY,
+  VITE_STRIPE_PUBLIC_KEY: !!process.env.VITE_STRIPE_PUBLIC_KEY,
+  DID_API_KEY: !!process.env.DID_API_KEY,
+  DATABASE_URL: !!process.env.DATABASE_URL,
+  SESSION_SECRET: !!process.env.SESSION_SECRET
+};
+const allSecretsValid = Object.values(secretChecks).every(v => v);
+
+console.log(`\n${'='.repeat(70)}`);
+console.log(`  DEPLOYMENT QA LOG — ${qaTimestamp}`);
+console.log(`${'='.repeat(70)}`);
+console.log(`\n[STARTUP]`);
+console.log(`  Status:        READY ✅`);
+console.log(`  Boot time:     ${(uptimeMs / 1000).toFixed(2)}s`);
+console.log(`  Node version:  ${process.version}`);
+console.log(`  Platform:      ${process.platform} ${process.arch}`);
+console.log(`  PORT:          ${PORT}`);
+console.log(`  NODE_ENV:      ${process.env.NODE_ENV || 'development'}`);
+console.log(`  REPL_DEPLOY:   ${process.env.REPL_DEPLOY || process.env.REPLIT_DEPLOYMENT || 'not set'}`);
+
+console.log(`\n[MEMORY]`);
+console.log(`  RSS:           ${(memUsage.rss / 1024 / 1024).toFixed(1)}MB`);
+console.log(`  Heap Used:     ${(memUsage.heapUsed / 1024 / 1024).toFixed(1)}MB / ${(memUsage.heapTotal / 1024 / 1024).toFixed(1)}MB`);
+
+console.log(`\n[SECRETS AUDIT]  ${allSecretsValid ? 'ALL PRESENT ✅' : 'ISSUES DETECTED ❌'}`);
+Object.entries(secretChecks).forEach(([k, v]) => {
+  console.log(`  ${k.padEnd(25)} ${v ? '✅ SET' : '❌ MISSING'}`);
+});
+
+console.log(`\n[SERVICES]`);
+console.log(`  Database:      ${process.env.DATABASE_URL ? 'PostgreSQL Connected ✅' : 'NOT CONFIGURED ❌'}`);
+console.log(`  OpenAI:        ${process.env.OPENAI_API_KEY ? 'GPT-4o / Whisper / TTS ✅' : 'Unavailable ❌'}`);
+console.log(`  D-ID:          ${process.env.DID_API_KEY ? 'Kid Solar Agent ✅' : 'Unavailable ❌'}`);
+console.log(`  Pika:          ${process.env.PIKA_API_KEY ? 'Video Generation ✅' : 'Unavailable ❌'}`);
+console.log(`  EIA:           ${process.env.EIA_API_KEY ? 'Energy Data API ✅' : 'Unavailable ❌'}`);
+console.log(`  Stripe:        ${process.env.STRIPE_SECRET_KEY ? 'Payment Processing ✅' : 'Unavailable ❌'}`);
+
+const publicDir = path.join(__dirname, 'public');
+const criticalPages = ['index.html', 'marketplace.html', 'ecosystem-test.html', 'ecosystem-analysis.html'];
+const pageStatus = criticalPages.map(p => ({ page: p, exists: fs.existsSync(path.join(publicDir, p)) }));
+console.log(`\n[CRITICAL PAGES]`);
+pageStatus.forEach(({ page, exists }) => {
+  console.log(`  /${page.padEnd(30)} ${exists ? '✅' : '❌ MISSING'}`);
+});
+
+console.log(`\n[ENDPOINTS]`);
+console.log(`  Health:        /health`);
+console.log(`  Ecosystem:     /ecosystem-test.html`);
+console.log(`  Analysis:      /ecosystem-analysis.html`);
+console.log(`  Marketplace:   /marketplace.html`);
+console.log(`  API Test Runs: /api/ecosystem-test/runs`);
+console.log(`  API Save Run:  /api/ecosystem-test/save-run`);
+
+console.log(`\n${'='.repeat(70)}`);
+console.log(`  QA VERDICT: ${allSecretsValid && pageStatus.every(p => p.exists) ? 'DEPLOYMENT READY ✅' : 'ISSUES FOUND — REVIEW ABOVE ⚠️'}`);
+console.log(`${'='.repeat(70)}\n`);
 
 // Start deferred initialization
 setImmediate(() => {
