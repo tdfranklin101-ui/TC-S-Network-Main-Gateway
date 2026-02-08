@@ -524,6 +524,7 @@ async function phase2_items(){
   addFeed('🏪','<b>16 categories</b> across TC-S Market, Creative & Media, AI-Enhanced, Technical & Other');
   addFeed('🤖','<b>AI Engines:</b> DALL-E 3 (Art/Photo/Culture) | GPT-4o (Writing/Docs/Code) | TTS-1 (Music/Audio) | Web Discovery (Fallback)');
   addFeed('🔄','<b>Priority:</b> AI self-creates first → if impossible, agent searches free web sources → discoveries shared with all 20 agents');
+  addFeed('📋', `<b>Queue Protocol:</b> Max 3 agents create simultaneously | others wait in queue | trading blocked until ALL agents finish`);
 
   // Reset creation budget for this run
   try { await fetch('/api/ecosystem-test/reset-budget',{method:'POST',credentials:'include'}); } catch(e){}
@@ -537,119 +538,141 @@ async function phase2_items(){
   // Phase 2 creation tracking
   if(!state.phase2) state.phase2={aiCreated:0,webSourced:0,metadataOnly:0,discoveries:[],budgetStatus:null,fileTypes:{}};
 
-  for(let i=0;i<state.agents.length;i++){
-    const agent=state.agents[i];
-    agent.dailyCreates=0;
-    agent.dailyPurchases=0;
-    agent.basicNeedsPurchases=0;
-    // Staggered deployment: delay between agents to avoid API rate-limit logjams
-    if(i > 0){
-      const agentDelay = 2000; // 2 seconds between agents
-      addFeed('⏱️', `<b>Staggered deploy:</b> Agent ${agent.name} deploying in ${agentDelay/1000}s to avoid rate limits...`);
-      await new Promise(r=>setTimeout(r,agentDelay));
-    }
-    const specialty=AGENT_SPECIALTIES[agent.name]||CATEGORIES[i%CATEGORIES.length];
-    for(let j=0;j<DAILY_CREATE_LIMIT;j++){
-      let gen,cat,isBasic=false;
-      if(j===0){
-        gen=generateBasicNeedsItem(agent.name,usedNames);
-        cat='Basic Needs';
-        isBasic=true;
-      } else if(j<=2){
-        cat=specialty;
-        gen=generateCreativeItem(agent.name,cat,usedNames);
-      } else {
-        const otherCats=CATEGORIES.filter(c=>c!=='Basic Needs'&&c!==specialty);
-        cat=otherCats[Math.floor(Math.random()*otherCats.length)];
-        gen=generateCreativeItem(agent.name,cat,usedNames);
-      }
-      const itemName=gen.name;
-      usedNames.push(itemName);
-      const price=gen.price;
-      const kwhEq=(price*4913).toFixed(1);
-      const item={name:itemName,category:cat,price,creator:agent.name,creatorCode:agent.code,agentIdx:i,itemId:null,isBasicNeed:isBasic,hasRealFile:false,creationSource:'none',creationMethod:'none',fileUrl:null,fileType:null,previewType:null,threeCopyMastered:false};
+  const MAX_CONCURRENT_CREATORS = 3;
+  const totalAgents = state.agents.length;
+  let completedAgents = 0;
 
-      try{
-        const res=await fetch('/api/ecosystem-test/create-artifact',{
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({title:itemName,description:gen.desc,category:cat,priceSolar:price,creatorUsername:agent.username,creatorId:agent.userId}),
-          credentials:'include'
-        });
-        const data=await res.json().catch(()=>({}));
-        if(res.ok&&data.success){
-          item.itemId=data.itemId;
-          item.hasRealFile=data.hasRealFile||false;
-          item.creationSource=data.creationSource||'none';
-          item.creationMethod=data.creationMethod||'none';
-          item.fileUrl=data.fileUrl||null;
-          item.fileType=data.fileType||null;
-          item.previewType=data.previewType||null;
-          item.threeCopyMastered=data.threeCopyMastered||false;
-          posted++;
-          agent.dailyCreates++;
-          if(isBasic) basicNeedsCreated++;
-          state.successes++;
-          if(data.hasRealFile){
-            if(data.creationSource==='ai-self-creation'){aiCreated++;state.phase2.aiCreated++;}
-            else if(data.creationSource==='web-discovery'){webSourced++;state.phase2.webSourced++;}
-            if(data.fileType) state.phase2.fileTypes[data.fileType]=(state.phase2.fileTypes[data.fileType]||0)+1;
+  addFeed('📋', `<b>Agent Queue Protocol:</b> ${MAX_CONCURRENT_CREATORS} agents create at a time | ${totalAgents} agents total | Queue active`);
+
+  for(let batchStart = 0; batchStart < totalAgents; batchStart += MAX_CONCURRENT_CREATORS) {
+    const batchEnd = Math.min(batchStart + MAX_CONCURRENT_CREATORS, totalAgents);
+    const batchAgents = state.agents.slice(batchStart, batchEnd);
+    const queueRemaining = totalAgents - batchEnd;
+    
+    addFeed('🔄', `<b>Creating batch ${Math.floor(batchStart/MAX_CONCURRENT_CREATORS)+1}:</b> ${batchAgents.map(a=>a.name).join(', ')} | <span style="color:#888">${queueRemaining} agents queued</span>`);
+
+    const batchPromises = batchAgents.map(async (agent, batchIdx) => {
+      const i = batchStart + batchIdx;
+      agent.dailyCreates = 0;
+      agent.dailyPurchases = 0;
+      agent.basicNeedsPurchases = 0;
+      const specialty = AGENT_SPECIALTIES[agent.name] || CATEGORIES[i % CATEGORIES.length];
+      
+      updateAgentCard(agent, 'creating...', agent.balance, 'registered');
+
+      for(let j = 0; j < DAILY_CREATE_LIMIT; j++) {
+        let gen, cat, isBasic = false;
+        if(j === 0) {
+          gen = generateBasicNeedsItem(agent.name, usedNames);
+          cat = 'Basic Needs';
+          isBasic = true;
+        } else if(j <= 2) {
+          cat = specialty;
+          gen = generateCreativeItem(agent.name, cat, usedNames);
+        } else {
+          const otherCats = CATEGORIES.filter(c => c !== 'Basic Needs' && c !== specialty);
+          cat = otherCats[Math.floor(Math.random() * otherCats.length)];
+          gen = generateCreativeItem(agent.name, cat, usedNames);
+        }
+        const itemName = gen.name;
+        usedNames.push(itemName);
+        const price = gen.price;
+        const kwhEq = (price * 4913).toFixed(1);
+        const item = {name:itemName, category:cat, price, creator:agent.name, creatorCode:agent.code, agentIdx:i, itemId:null, isBasicNeed:isBasic, hasRealFile:false, creationSource:'none', creationMethod:'none', fileUrl:null, fileType:null, previewType:null, threeCopyMastered:false};
+
+        try {
+          const res = await fetch('/api/ecosystem-test/create-artifact', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({title:itemName, description:gen.desc, category:cat, priceSolar:price, creatorUsername:agent.username, creatorId:agent.userId}),
+            credentials: 'include'
+          });
+          const data = await res.json().catch(() => ({}));
+          if(res.ok && data.success) {
+            item.itemId = data.itemId;
+            item.hasRealFile = data.hasRealFile || false;
+            item.creationSource = data.creationSource || 'none';
+            item.creationMethod = data.creationMethod || 'none';
+            item.fileUrl = data.fileUrl || null;
+            item.fileType = data.fileType || null;
+            item.previewType = data.previewType || null;
+            item.threeCopyMastered = data.threeCopyMastered || false;
+            posted++;
+            agent.dailyCreates++;
+            if(isBasic) basicNeedsCreated++;
+            state.successes++;
+            if(data.hasRealFile) {
+              if(data.creationSource === 'ai-self-creation') { aiCreated++; state.phase2.aiCreated++; }
+              else if(data.creationSource === 'web-discovery') { webSourced++; state.phase2.webSourced++; }
+              if(data.fileType) state.phase2.fileTypes[data.fileType] = (state.phase2.fileTypes[data.fileType] || 0) + 1;
+            } else {
+              metadataOnly++; state.phase2.metadataOnly++;
+            }
           } else {
-            metadataOnly++;state.phase2.metadataOnly++;
+            failed++;
+            state.errors++;
           }
-        } else {
-          failed++;
-          state.errors++;
+        } catch(e) { failed++; state.errors++; }
+        state.items.push(item);
+        
+        if(j < DAILY_CREATE_LIMIT - 1) await new Promise(r => setTimeout(r, 800));
+
+        const basicTag = isBasic ? '<span style="color:var(--gold);font-size:8px"> 🏠 PUBLIC GOOD</span>' : '';
+        const specTag = cat === specialty && !isBasic ? '<span style="font-size:8px;color:var(--cyan)"> ★ specialty</span>' : '';
+        const masteredTag = item.threeCopyMastered ? '<span style="font-size:8px;color:#ff0"> ⚡ 3-COPY</span>' : '';
+        const fileTag = item.hasRealFile ? `<span style="font-size:8px;color:var(--green)"> 📁 ${item.creationMethod}</span>` : '';
+        const card = document.createElement('div');
+        card.className = 'item-card';
+        card.style.borderColor = isBasic ? 'var(--gold)' : item.threeCopyMastered ? '#ff0' : item.hasRealFile ? 'var(--green)' : item.itemId ? 'var(--cyan)' : 'var(--border)';
+        if(isBasic) card.style.background = 'rgba(255,215,0,0.05)';
+        if(item.hasRealFile) card.style.background = 'rgba(57,255,20,0.04)';
+
+        let previewHtml = '';
+        if(item.hasRealFile && item.fileUrl) {
+          if(item.previewType === 'image') previewHtml = `<div style="margin:6px 0"><img src="${item.fileUrl}" alt="${itemName}" style="width:100%;max-height:100px;object-fit:cover;border-radius:4px;border:1px solid var(--border)"></div>`;
+          else if(item.previewType === 'audio') previewHtml = `<div style="margin:6px 0"><audio controls style="width:100%;height:28px" preload="none"><source src="${item.fileUrl}" type="audio/mpeg"></audio></div>`;
+          else if(item.previewType === 'text' || item.previewType === 'code') previewHtml = `<div style="margin:4px 0;font-size:9px;color:var(--cyan)">📄 ${item.fileType || 'text'} file ready</div>`;
         }
-      }catch(e){failed++;state.errors++}
-      state.items.push(item);
-      // Small delay between items to prevent API bursts
-      if(j < DAILY_CREATE_LIMIT - 1) await new Promise(r=>setTimeout(r,800));
 
-      const basicTag=isBasic?'<span style="color:var(--gold);font-size:8px"> 🏠 PUBLIC GOOD</span>':'';
-      const specTag=cat===specialty&&!isBasic?'<span style="font-size:8px;color:var(--cyan)"> ★ specialty</span>':'';
-      const masteredTag=item.threeCopyMastered?'<span style="font-size:8px;color:#ff0"> ⚡ 3-COPY</span>':'';
-      const fileTag=item.hasRealFile?`<span style="font-size:8px;color:var(--green)"> 📁 ${item.creationMethod}</span>`:'';
-      const card=document.createElement('div');
-      card.className='item-card';
-      card.style.borderColor=isBasic?'var(--gold)':item.threeCopyMastered?'#ff0':item.hasRealFile?'var(--green)':item.itemId?'var(--cyan)':'var(--border)';
-      if(isBasic) card.style.background='rgba(255,215,0,0.05)';
-      if(item.hasRealFile) card.style.background='rgba(57,255,20,0.04)';
+        const sourceIcon = item.creationSource === 'ai-self-creation' ? '🤖' : item.creationSource === 'web-discovery' ? '🌐' : '📦';
+        const engLbl = item.creationMethod !== 'none' ? item.creationMethod : (CREATION_ENGINES[cat] ? CREATION_ENGINES[cat].engines[Math.floor(Math.random() * CREATION_ENGINES[cat].engines.length)] : 'Direct');
 
-      let previewHtml='';
-      if(item.hasRealFile&&item.fileUrl){
-        if(item.previewType==='image') previewHtml=`<div style="margin:6px 0"><img src="${item.fileUrl}" alt="${itemName}" style="width:100%;max-height:100px;object-fit:cover;border-radius:4px;border:1px solid var(--border)"></div>`;
-        else if(item.previewType==='audio') previewHtml=`<div style="margin:6px 0"><audio controls style="width:100%;height:28px" preload="none"><source src="${item.fileUrl}" type="audio/mpeg"></audio></div>`;
-        else if(item.previewType==='text'||item.previewType==='code') previewHtml=`<div style="margin:4px 0;font-size:9px;color:var(--cyan)">📄 ${item.fileType||'text'} file ready</div>`;
+        card.innerHTML = `<div class="item-cat">${cat}${basicTag}${specTag}${masteredTag}${fileTag}</div><div class="item-name">${itemName}</div>${previewHtml}<div class="item-price">${price.toFixed(4)} ☀️ <span style="font-size:9px;color:#666">(${kwhEq} kWh)</span></div><div class="item-creator">by ${agent.name} ${sourceIcon} <span style="color:var(--cyan)">${engLbl}</span> ${item.itemId ? '<span style="color:var(--green)">✓</span>' : '<span style="color:#ff4444">✗</span>'} [${agent.dailyCreates}/5]</div>`;
+        grid.appendChild(card);
+
+        const engine = CREATION_ENGINES[cat];
+        const engineIcon = engine ? engine.icon : '📦';
+        item.creationEngine = engLbl;
+        item.mcpFlow = engine ? engine.flow : 'Create → List';
+
+        if(j === 0) {
+          const methodNote = item.hasRealFile ? ` <span style="color:var(--green)">[REAL FILE via ${item.creationMethod}]</span>` : '';
+          addFeed('🏠', `<b>${agent.name}</b> created Basic Needs: "<span class="solar">${itemName}</span>" → <span class="solar">${price.toFixed(4)} ☀️</span> <span style="color:var(--gold)">[PUBLIC GOOD]</span>${methodNote}`);
+        } else if(j <= 2) {
+          if(item.hasRealFile) {
+            const srcEmoji = item.creationSource === 'ai-self-creation' ? '🤖' : '🌐';
+            addFeed(srcEmoji, `<b>${agent.name}</b> AI-created "<span class="ok">${itemName}</span>" [${cat}] via <span style="color:var(--cyan)">${item.creationMethod}</span> → <span class="solar">${price.toFixed(4)} ☀️</span> <span style="color:var(--green)">📁 real file</span>`);
+          } else {
+            addFeed(engineIcon, `<b>${agent.name}</b> listed "<span class="ok">${itemName}</span>" [${cat}] → <span class="solar">${price.toFixed(4)} ☀️</span>`);
+          }
+        }
+        updateStats();
       }
 
-      const sourceIcon=item.creationSource==='ai-self-creation'?'🤖':item.creationSource==='web-discovery'?'🌐':'📦';
-      const engLbl=item.creationMethod!=='none'?item.creationMethod:(CREATION_ENGINES[cat]?CREATION_ENGINES[cat].engines[Math.floor(Math.random()*CREATION_ENGINES[cat].engines.length)]:'Direct');
+      completedAgents++;
+      updateAgentCard(agent, 'items ready', agent.balance, 'registered');
+      addFeed('✅', `<b>${agent.name}</b> completed daily creation (${agent.dailyCreates}/5 items) | <span style="color:#888">${completedAgents}/${totalAgents} agents done</span>`);
+    });
 
-      card.innerHTML=`<div class="item-cat">${cat}${basicTag}${specTag}${masteredTag}${fileTag}</div><div class="item-name">${itemName}</div>${previewHtml}<div class="item-price">${price.toFixed(4)} ☀️ <span style="font-size:9px;color:#666">(${kwhEq} kWh)</span></div><div class="item-creator">by ${agent.name} ${sourceIcon} <span style="color:var(--cyan)">${engLbl}</span> ${item.itemId?'<span style="color:var(--green)">✓</span>':'<span style="color:#ff4444">✗</span>'} [${agent.dailyCreates}/5]</div>`;
-      grid.appendChild(card);
-
-      const engine=CREATION_ENGINES[cat];
-      const engineIcon=engine?engine.icon:'📦';
-      item.creationEngine=engLbl;
-      item.mcpFlow=engine?engine.flow:'Create → List';
-
-      if(j===0){
-        const methodNote=item.hasRealFile?` <span style="color:var(--green)">[REAL FILE via ${item.creationMethod}]</span>`:'';
-        addFeed('🏠',`<b>${agent.name}</b> created Basic Needs: "<span class="solar">${itemName}</span>" → <span class="solar">${price.toFixed(4)} ☀️</span> <span style="color:var(--gold)">[PUBLIC GOOD]</span>${methodNote}`);
-      } else if(j<=2){
-        if(item.hasRealFile){
-          const srcEmoji=item.creationSource==='ai-self-creation'?'🤖':'🌐';
-          addFeed(srcEmoji,`<b>${agent.name}</b> AI-created "<span class="ok">${itemName}</span>" [${cat}] via <span style="color:var(--cyan)">${item.creationMethod}</span> → <span class="solar">${price.toFixed(4)} ☀️</span> <span style="color:var(--green)">📁 real file</span>`);
-        } else {
-          addFeed(engineIcon,`<b>${agent.name}</b> listed "<span class="ok">${itemName}</span>" [${cat}] → <span class="solar">${price.toFixed(4)} ☀️</span>`);
-        }
-      }
-      updateStats();
+    await Promise.all(batchPromises);
+    
+    const pct = 25 + (batchEnd / totalAgents) * 25;
+    setPhase(2, `Phase 2 — AI Self-Creation (${aiCreated} AI / ${webSourced} web / ${metadataOnly} metadata) [${completedAgents}/${totalAgents} agents]`, pct);
+    
+    if(batchEnd < totalAgents) {
+      addFeed('⏱️', `<b>Queue:</b> Batch complete. Next ${Math.min(MAX_CONCURRENT_CREATORS, totalAgents - batchEnd)} agents deploying...`);
+      await new Promise(r => setTimeout(r, 1500));
     }
-    const pct=25+((i+1)/state.agents.length)*25;
-    setPhase(2,`Phase 2 — AI Self-Creation (${aiCreated} AI / ${webSourced} web / ${metadataOnly} metadata)`,pct);
-    await sleep(randBetween(100,300));
   }
   state.basicNeedsCreated=basicNeedsCreated;
 
@@ -1183,7 +1206,10 @@ async function runEcosystemTest(){
     await phaseDailyDistribution();
     await sleep(400);
     await phase2_items();
-    await sleep(600);
+    addFeed('🚪', '<b style="color:var(--green)">══════ CREATION COMPLETE ══════</b>');
+    addFeed('🏪', `<b>Trading Gate OPEN:</b> All ${state.agents.length} agents have completed daily generation. <span style="color:var(--green)">${state.items.length} items now available in /marketplace for everyone.</span>`);
+    addFeed('🔔', '<b>All items are now visible and available for purchase by all agents.</b>');
+    await sleep(1000);
     await phase3_search();
     await sleep(600);
     await phase4_purchases();
