@@ -916,19 +916,27 @@ async function phase4_purchases(){
         try{
           const pRes=await fetch('/api/ecosystem/purchase',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
             buyerId:buyer.userId,sellerId:actualSeller.userId,amount:price,
-            artifactId:item.artifactId||item.id||null,itemName:item.name
+            artifactId:item.itemId||item.artifactId||item.id||null,itemName:item.name
           })});
           const pData=await pRes.json();
           if(pData.success){
             buyer.balance=pData.buyer.balance;
-            actualSeller.balance=pData.seller.balance;
+            if(pData.usedPlatformPurchase&&pData.seller&&pData.seller.id){
+              const realSeller=state.agents.find(ag=>ag.userId===pData.seller.id);
+              if(realSeller){realSeller.balance=pData.seller.balance;updateAgentCard(realSeller,'sold!',realSeller.balance,'registered')}
+              else{actualSeller.balance=pData.seller.balance}
+            } else {
+              actualSeller.balance=pData.seller.balance;
+            }
             dbPurchase=true;
+            if(pData.usedPlatformPurchase){state.platformPurchases=(state.platformPurchases||0)+1}
           } else {
             if(pData.error==='Insufficient Solar balance'){
               balanceBlocked++;
               if(balanceBlocked<=4){addFeed('🔴',`<b>Agent ${buyer.name}</b> DB balance insufficient for "${item.name}" — <span class="err">${pData.error}</span>`);}
               state.errors++;continue;
             }
+            if(pData.error&&pData.error.includes('already own')){continue}
             buyer.balance-=price;
             actualSeller.balance=(actualSeller.balance||0)+price;
           }
@@ -987,7 +995,8 @@ async function phase4_purchases(){
   const bnCompliance=state.agents.filter(a=>a.basicNeedsPurchases>=MANDATORY_BASIC_PURCHASES).length;
   addFeed('🏠',`<span style="color:var(--gold)"><b>Basic Needs compliance:</b> ${bnCompliance}/${state.agents.length} agents fulfilled ${MANDATORY_BASIC_PURCHASES} mandatory purchases (${basicNeedsPurchased} total)</span>`);
   state.dbPurchases=state.dbPurchases||0;
-  addFeed('🏁',`<b>Phase 4 complete:</b> ${t1Purchases} T1 (${catalogPurchases} catalog 🎵) + ${t2SamplePurchases} T2 = <span class="ok">${state.purchases} transactions</span> | <span style="color:var(--cyan)">${state.dbPurchases} DB-ledgered</span> | <span style="color:var(--gold)">${basicNeedsPurchased} Basic Needs</span> | ${balanceBlocked} insufficient | ${limitBlocked} limit hit | ${tier3Blocked} T3 blocked | Revenue: <span class="solar">${totalSellerRevenue.toFixed(2)} ☀️</span>`);
+  state.platformPurchases=state.platformPurchases||0;
+  addFeed('🏁',`<b>Phase 4 complete:</b> ${t1Purchases} T1 (${catalogPurchases} catalog 🎵) + ${t2SamplePurchases} T2 = <span class="ok">${state.purchases} transactions</span> | <span style="color:var(--cyan)">${state.dbPurchases} DB-ledgered (${state.platformPurchases} via platform purchaseArtifact)</span> | <span style="color:var(--gold)">${basicNeedsPurchased} Basic Needs</span> | ${balanceBlocked} insufficient | ${limitBlocked} limit | ${tier3Blocked} T3 blocked | Revenue: <span class="solar">${totalSellerRevenue.toFixed(2)} ☀️</span>`);
 }
 
 function showReport(){
@@ -1017,7 +1026,7 @@ function showReport(){
     {l:'Searches Executed',v:state.searches,section:'Search'},
     {l:'T1 Solar Purchases',v:state.t1Purchases||0,section:'Purchases'},
     {l:'T2 Sample Sales',v:state.t2SamplePurchases||0,section:'Purchases'},
-    {l:'DB-Ledgered Transactions',v:(state.dbPurchases||0)+' (real Solar transfers)',section:'Purchases'},
+    {l:'DB-Ledgered Transactions',v:(state.dbPurchases||0)+' total ('+(state.platformPurchases||0)+' via platform purchaseArtifact)',section:'Purchases'},
     {l:'Insufficient Balance',v:(state.balanceBlocked||0)+' 🔴',section:'Purchases'},
     {l:'Daily Limit Hit',v:(state.limitBlocked||0)+' 📏',section:'Purchases'},
     {l:'T3 Requests Blocked',v:(state.tier3Blocked||0)+' 🚫',section:'Purchases'},
@@ -1106,7 +1115,7 @@ function showReport(){
     fetch('/api/ecosystem-test/save-run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
       agentCount:Number(state.agents.length)||0,itemsCreated:Number(state.items.length)||0,basicNeedsCreated:Number(state.basicNeedsCreated)||0,
       searchesExecuted:Number(state.searches)||0,t1Purchases:Number(state.t1Purchases)||0,t2SamplePurchases:Number(state.t2SamplePurchases)||0,
-      totalPurchases:Number(state.t1Purchases||0)+Number(state.t2SamplePurchases||0),dbLedgeredPurchases:Number(state.dbPurchases)||0,basicNeedsPurchased:Number(state.basicNeedsPurchased)||0,
+      totalPurchases:Number(state.t1Purchases||0)+Number(state.t2SamplePurchases||0),dbLedgeredPurchases:Number(state.dbPurchases)||0,platformPurchases:Number(state.platformPurchases)||0,basicNeedsPurchased:Number(state.basicNeedsPurchased)||0,
       basicNeedsCompliance:Number(state.agents.filter(a=>a.basicNeedsPurchases>=2).length)||0,
       solarDistributed:safeTotalDistributed,solarCirculated:Number(state.totalSolar)||0,sellerRevenue:Number(state.totalSellerRevenue)||0,
       totalEndBalances:safeTotalEndBalances,vouchersCreated:Number(state.vouchersCreated)||0,vouchersPurchased:Number(state.vouchersPurchased)||0,
