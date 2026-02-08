@@ -542,17 +542,25 @@ function renderAgentTable(runs) {
     tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#555;padding:30px">No agent ledger data for latest run</td></tr>';
     return;
   }
-  tbody.innerHTML = latest.agentLedger.map(a => `
-    <tr>
-      <td class="td-name">${a.name || a.agentName || a.agent || '—'}</td>
-      <td class="td-gold">${(a.genesisBalance ?? a.genesis ?? a.startBalance ?? '—')}</td>
-      <td class="td-num">${a.itemsCreated ?? a.items ?? '—'}</td>
-      <td class="td-num">${a.purchases ?? a.totalPurchases ?? '—'}</td>
-      <td class="td-num">${a.basicNeeds ?? a.basicNeedsPurchased ?? '—'}</td>
-      <td class="td-num">${a.vouchers ?? a.vouchersUsed ?? '—'}</td>
-      <td class="td-gold">${a.endBalance ?? a.balance ?? '—'}</td>
-    </tr>
-  `).join('');
+  tbody.innerHTML = latest.agentLedger.map(a => {
+    const genesis = Number(a.genesis ?? a.genesisBalance ?? a.startBalance ?? 0);
+    const created = Number(a.created ?? a.itemsCreated ?? a.items ?? 0);
+    const purchases = Number(a.purchases ?? a.totalPurchases ?? 0);
+    const bn = Number(a.basicNeeds ?? a.basicNeedsPurchased ?? 0);
+    const vC = Number(a.vouchersCreated ?? 0);
+    const vB = Number(a.vouchersBought ?? 0);
+    const vLabel = vC > 0 || vB > 0 ? `${vC}C / ${vB}B` : '0';
+    const endBal = Number(a.endBalance ?? a.balance ?? 0);
+    return `<tr>
+      <td class="td-name">${a.code ? a.code + ' ' : ''}${a.name || '—'}</td>
+      <td class="td-gold">${genesis.toFixed(1)}</td>
+      <td class="td-num">${created}</td>
+      <td class="td-num">${purchases}</td>
+      <td class="td-num">${bn}</td>
+      <td class="td-num">${vLabel}</td>
+      <td class="td-gold">${endBal.toFixed(2)}</td>
+    </tr>`;
+  }).join('');
 }
 
 loadData();
