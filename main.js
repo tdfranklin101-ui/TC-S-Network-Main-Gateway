@@ -12878,6 +12878,26 @@ async function generateDailySolarGreeting() {
     console.warn('⚠️ base-frame.jpg not found - skipping greeting video generation');
     return;
   }
+
+  // Memory guard - skip if heap is over 300MB to prevent OOM
+  const heapUsed = process.memoryUsage().heapUsed;
+  if (heapUsed > 300 * 1024 * 1024) {
+    console.warn(`⚠️ Heap usage ${(heapUsed / 1024 / 1024).toFixed(0)}MB - skipping greeting video to prevent OOM`);
+    return;
+  }
+  
+  // Skip if today's greeting already exists
+  if (fs.existsSync(outputPath)) {
+    try {
+      const stat = fs.statSync(outputPath);
+      const fileDate = new Date(stat.mtime).toISOString().slice(0, 10);
+      const today = new Date().toISOString().slice(0, 10);
+      if (fileDate === today && stat.size > 10000) {
+        console.log(`✅ Today's greeting video already exists (${(stat.size / 1024).toFixed(0)}KB) - skipping regeneration`);
+        return;
+      }
+    } catch (e) {}
+  }
   
   const now = new Date();
   const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' };
@@ -12906,11 +12926,15 @@ async function generateDailySolarGreeting() {
     
     // Step 2: Convert files to data URLs for FAL.ai
     console.log("🎬 Generating lip-synced video with SadTalker...");
-    const imageB64 = fs.readFileSync(imagePath).toString('base64');
-    const audioB64 = audioBuffer.toString('base64');
+    let imageB64 = fs.readFileSync(imagePath).toString('base64');
+    let audioB64 = audioBuffer.toString('base64');
     
     const imageDataUrl = 'data:image/jpeg;base64,' + imageB64;
     const audioDataUrl = 'data:audio/mpeg;base64,' + audioB64;
+    
+    // Free base64 strings to reduce memory pressure
+    imageB64 = null;
+    audioB64 = null;
     
     // Step 3: Generate lip-synced video via SadTalker (with 30s timeout to prevent deployment hangs)
     const controller = new AbortController();
@@ -13106,13 +13130,16 @@ setImmediate(() => {
     
     // Initialize Daily Solar Greeting Video (async, non-blocking)
     // Regenerates at UTC midnight to always serve fresh date
-    try {
-      generateDailySolarGreeting();
-      cron.schedule('0 0 * * *', generateDailySolarGreeting); // UTC midnight (no timezone = UTC)
-      console.log('🌅 Daily Solar Greeting: Scheduled for 00:00 UTC midnight');
-    } catch (error) {
-      console.warn('⚠️ Daily greeting video scheduling failed:', error.message);
-    }
+    // Delayed 60s to avoid memory pressure during startup
+    setTimeout(() => {
+      try {
+        generateDailySolarGreeting();
+        cron.schedule('0 0 * * *', generateDailySolarGreeting);
+        console.log('🌅 Daily Solar Greeting: Scheduled for 00:00 UTC midnight');
+      } catch (error) {
+        console.warn('⚠️ Daily greeting video scheduling failed:', error.message);
+      }
+    }, 60000);
     
     // Initialize Solar Audit Layer (SAi-Audit)
     try {
@@ -13125,8 +13152,8 @@ setImmediate(() => {
       console.log('📌 Dashboard still available but data fetch requires manual trigger');
     }
 
-    // Initialize TC-S Daily Indices Brief with 24-hour scheduler
-    setImmediate(async () => {
+    // Initialize TC-S Daily Indices Brief with 24-hour scheduler (delayed 30s)
+    setTimeout(async () => {
       try {
         const generator = require('./scripts/generateDailyBrief');
         
@@ -13164,10 +13191,10 @@ setImmediate(() => {
         console.warn('⚠️ Daily Indices Brief initialization failed:', error.message);
         console.log('📌 API still available but briefing may not be current');
       }
-    });
+    }, 30000);
     
     console.log(`✅ All deferred initialization tasks started`);
-  }, 2000); // Wait 2 seconds after server starts to begin heavy tasks
+  }, 5000); // Wait 5 seconds after server starts to begin heavy tasks
 });
 
 // Graceful shutdown

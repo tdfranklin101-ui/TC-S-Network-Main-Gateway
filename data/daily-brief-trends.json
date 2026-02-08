@@ -1,22 +1,22 @@
 {
   "date": "2026-02-08",
-  "generatedAt": "2026-02-08T21:20:01.602Z",
+  "generatedAt": "2026-02-08T22:19:16.306Z",
   "currentIndices": [
     {
       "id": "si",
       "name": "Solar Index",
       "unit": "%",
-      "value": 70.5,
+      "value": 71.2,
       "description": "Global Energy & Ethics Balance — 7-Day Rolling Indicator.",
-      "asOf": "2026-02-08T21:20:00.202Z"
+      "asOf": "2026-02-08T22:19:14.996Z"
     },
     {
       "id": "srh",
       "name": "Solar Reserve Health",
       "unit": "%",
-      "value": 76.9,
+      "value": 77.8,
       "description": "Reserve stability and fulfillment factor across all regions.",
-      "asOf": "2026-02-08T21:20:00.202Z"
+      "asOf": "2026-02-08T22:19:14.996Z"
     },
     {
       "id": "gbi",
@@ -24,39 +24,39 @@
       "unit": "%",
       "value": 41.2,
       "description": "Percentage of humans enrolled and actively claiming GBI.",
-      "asOf": "2026-02-08T21:20:00.202Z"
+      "asOf": "2026-02-08T22:19:14.996Z"
     },
     {
       "id": "cai",
       "name": "Compute Alignment",
       "unit": "%",
-      "value": 89.1,
+      "value": 88.7,
       "description": "Ethically aligned compute flow — safe superintelligence readiness.",
-      "asOf": "2026-02-08T21:20:00.202Z"
+      "asOf": "2026-02-08T22:19:14.996Z"
     },
     {
       "id": "mli",
       "name": "Market Liquidity",
       "unit": "%",
-      "value": 23.7,
+      "value": 23.1,
       "description": "Health of the TC-S digital marketplace and token velocity.",
-      "asOf": "2026-02-08T21:20:00.202Z"
+      "asOf": "2026-02-08T22:19:14.996Z"
     },
     {
       "id": "eai",
       "name": "Ethical Alignment",
       "unit": "%",
-      "value": 93.3,
+      "value": 93.1,
       "description": "Acceptance ratio of tasks from the Ethics Engine.",
-      "asOf": "2026-02-08T21:20:00.202Z"
+      "asOf": "2026-02-08T22:19:14.997Z"
     }
   ],
   "trends": {
     "analysisStatus": "success",
     "direction": "neutral",
-    "analysis": "The market health indices show relatively stable values with slight fluctuations over the past seven days. Notably, the Consumer Activity Index (cai) and Economic Activity Index (eai) remain strong, indicating resilience, while the Growth Barometer Index (gbi) shows a slight decline, hinting at potential caution. Overall, the indices hover around their historical averages without significant upward or downward momentum.",
-    "insight": "Monitor the Growth Barometer Index closely; if it continues to decline, consider adjusting investment strategies to mitigate potential risks.",
-    "generatedAt": "2026-02-08T21:20:01.602Z"
+    "analysis": "The market indices show relatively stable values over the past week, with slight fluctuations but no significant upward or downward trends. The stability in the consumer activity index (cai) at 88.7 and the economic activity index (eai) at a high of 93.1 suggest that consumer confidence remains strong, while the market liquidity index (mli) has decreased, indicating potential caution among investors.",
+    "insight": "Monitor the liquidity index closely; if it continues to decline, consider reassessing investment positions to mitigate risk.",
+    "generatedAt": "2026-02-08T22:19:16.306Z"
   },
   "historyDays": 30
 }
