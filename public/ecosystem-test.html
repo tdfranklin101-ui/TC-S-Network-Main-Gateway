@@ -137,43 +137,6 @@ header p{color:#888;font-size:14px}
     <span class="pulse"></span>
     ▶ RUN ECOSYSTEM TEST
   </button>
-  <button id="stockBtn" onclick="generateInitialStock()" style="background:linear-gradient(135deg,#ff6600,#cc4400);margin-left:12px;padding:10px 20px;border:none;color:#fff;border-radius:8px;font-weight:bold;cursor:pointer;font-size:14px">
-    🏭 GENERATE INITIAL STOCK FILES
-  </button>
-</div>
-
-<div id="stockPanel" style="display:none;margin:12px 20px;padding:16px;background:rgba(255,102,0,0.08);border:1px solid #ff6600;border-radius:8px">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-    <h3 style="color:#ff6600;margin:0;font-size:15px">🏭 Initial Stock File Generation</h3>
-    <button id="stockGoBtn" onclick="runStockGeneration()" style="background:linear-gradient(135deg,#0f0,#0a0);color:#000;border:none;border-radius:8px;padding:10px 24px;cursor:pointer;font-weight:bold;font-size:14px;letter-spacing:1px">▶ GO</button>
-  </div>
-  <div style="font-size:12px;color:#888;margin-bottom:10px">Generates real AI files for existing agent marketplace items (one-time backfill). Processes in batches through the full 3-copy mastering pipeline.</div>
-  <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:10px">
-    <label style="color:#ccc;font-size:12px">Batch size:</label>
-    <select id="stockBatchSize" style="background:#111;color:#fff;border:1px solid #444;border-radius:4px;padding:4px 8px;font-size:12px">
-      <option value="5">5 items</option>
-      <option value="10" selected>10 items</option>
-      <option value="15">15 items</option>
-      <option value="20">20 items</option>
-      <option value="25">25 items (max)</option>
-    </select>
-    <label style="color:#ccc;font-size:12px">Category:</label>
-    <select id="stockCategory" style="background:#111;color:#fff;border:1px solid #444;border-radius:4px;padding:4px 8px;font-size:12px">
-      <option value="">All categories</option>
-      <option>Art</option><option>Music</option><option>Video</option><option>Photo</option>
-      <option>Writing</option><option>Software</option><option>AI Tools</option><option>AI Create</option>
-      <option>Docs</option><option>Games</option><option>Utilities</option><option>Energy</option>
-      <option>Computronium</option><option>Culture</option><option>Rent</option><option>Basic Needs</option>
-    </select>
-  </div>
-  <span id="stockStatus" style="display:none"></span>
-  <div style="display:flex;gap:16px;margin-bottom:8px">
-    <span style="color:#0f0;font-size:13px">Success: <b id="stockSuccess">0</b></span>
-    <span style="color:#f44;font-size:13px">Failed: <b id="stockFailed">0</b></span>
-    <span style="color:#888;font-size:13px">Skipped: <b id="stockSkipped">0</b></span>
-    <span style="color:#ff6600;font-size:13px">Remaining: <b id="stockRemaining">?</b></span>
-  </div>
-  <div id="stockLog" style="max-height:300px;overflow-y:auto;font-size:11px;font-family:monospace;color:#ccc;background:#0a0a0a;border:1px solid #333;border-radius:4px;padding:8px"></div>
 </div>
 
 <div class="dashboard" id="dashboard">
@@ -427,112 +390,6 @@ function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
 function randBetween(a,b){return Math.random()*(b-a)+a}
 function timeStr(){return new Date().toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'})}
 
-let stockRunning = false;
-let stockTotals = { success: 0, failed: 0, skipped: 0 };
-
-function generateInitialStock() {
-  const panel = $('stockPanel');
-  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-}
-
-function stockLog(msg, color) {
-  const log = $('stockLog');
-  const line = document.createElement('div');
-  line.style.color = color || '#ccc';
-  line.textContent = `[${timeStr()}] ${msg}`;
-  log.appendChild(line);
-  log.scrollTop = log.scrollHeight;
-}
-
-async function runStockGeneration() {
-  if (stockRunning) return;
-  stockRunning = true;
-  const btn = $('stockGoBtn');
-  btn.disabled = true;
-  btn.textContent = 'Generating...';
-  btn.style.opacity = '0.5';
-  $('stockStatus').textContent = 'Running...';
-  $('stockStatus').style.color = '#ff6600';
-
-  const batchSize = parseInt($('stockBatchSize').value) || 10;
-  const category = $('stockCategory').value || null;
-
-  stockLog(`Starting batch: ${batchSize} items${category ? ' [' + category + ']' : ' [all categories]'}`, '#ff6600');
-
-  try {
-    const isFirstBatch = stockTotals.success === 0 && stockTotals.failed === 0 && stockTotals.skipped === 0;
-    const body = { batchSize, resetBudget: isFirstBatch };
-    if (category) body.category = category;
-
-    const res = await fetch('/api/ecosystem-test/generate-initial-stock', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-      credentials: 'include'
-    });
-
-    const data = await res.json();
-
-    if (!res.ok || !data.success) {
-      stockLog('ERROR: ' + (data.error || 'Request failed'), '#f44');
-      $('stockGoBtn').textContent = '▶ GO';
-      $('stockGoBtn').disabled = false;
-      $('stockGoBtn').style.opacity = '1';
-      stockRunning = false;
-      return;
-    }
-
-    if (data.processed === 0 || (data.results && data.results.length === 0)) {
-      stockLog(data.message || 'No eligible items found to convert', '#ff6600');
-      $('stockRemaining').textContent = '0';
-      $('stockGoBtn').textContent = '▶ GO';
-      $('stockGoBtn').disabled = false;
-      $('stockGoBtn').style.opacity = '1';
-      stockRunning = false;
-      return;
-    }
-
-    stockTotals.success += data.successCount || 0;
-    stockTotals.failed += data.failCount || 0;
-    stockTotals.skipped += data.skippedCount || 0;
-    $('stockSuccess').textContent = stockTotals.success;
-    $('stockFailed').textContent = stockTotals.failed;
-    $('stockSkipped').textContent = stockTotals.skipped;
-    $('stockRemaining').textContent = data.remaining || 0;
-
-    if (data.results) {
-      data.results.forEach(r => {
-        if (r.status === 'success') {
-          stockLog(`✅ ${r.title} [${r.category}] → ${r.creationMethod} (${(r.fileSize/1024).toFixed(1)}KB) → artifact: ${r.artifactSlug}`, '#0f0');
-        } else if (r.status === 'skipped') {
-          stockLog(`⏭️ ${r.title} [${r.category}] — ${r.reason}`, '#888');
-        } else {
-          stockLog(`❌ ${r.title} [${r.category}] — ${r.reason}`, '#f44');
-        }
-      });
-    }
-
-    if (data.budget) {
-      stockLog(`Budget: DALL-E ${data.budget.dalleUsed}/${data.budget.maxDalleImages}, GPT-4o ${data.budget.gpt4oUsed}/${data.budget.maxGpt4oTexts}, TTS ${data.budget.ttsUsed}/${data.budget.maxTtsAudio}`, '#ff6600');
-    }
-
-    const statusMsg = data.remaining > 0 ? `Done batch — ${data.remaining} items still need files` : 'All items have files!';
-    stockLog(statusMsg, data.remaining > 0 ? '#ff6600' : '#0f0');
-    $('stockStatus').textContent = statusMsg;
-    $('stockStatus').style.color = data.remaining > 0 ? '#ff6600' : '#0f0';
-
-  } catch (err) {
-    stockLog('Network error: ' + err.message, '#f44');
-    $('stockStatus').textContent = 'Error';
-    $('stockStatus').style.color = '#f44';
-  } finally {
-    stockRunning = false;
-    btn.disabled = false;
-    btn.textContent = '▶ GO';
-    btn.style.opacity = '1';
-  }
-}
-
 function initAgentCards(){
   const grid=$('agentsGrid');
   grid.innerHTML='';
@@ -685,6 +542,12 @@ async function phase2_items(){
     agent.dailyCreates=0;
     agent.dailyPurchases=0;
     agent.basicNeedsPurchases=0;
+    // Staggered deployment: delay between agents to avoid API rate-limit logjams
+    if(i > 0){
+      const agentDelay = 2000; // 2 seconds between agents
+      addFeed('⏱️', `<b>Staggered deploy:</b> Agent ${agent.name} deploying in ${agentDelay/1000}s to avoid rate limits...`);
+      await new Promise(r=>setTimeout(r,agentDelay));
+    }
     const specialty=AGENT_SPECIALTIES[agent.name]||CATEGORIES[i%CATEGORIES.length];
     for(let j=0;j<DAILY_CREATE_LIMIT;j++){
       let gen,cat,isBasic=false;
@@ -740,6 +603,8 @@ async function phase2_items(){
         }
       }catch(e){failed++;state.errors++}
       state.items.push(item);
+      // Small delay between items to prevent API bursts
+      if(j < DAILY_CREATE_LIMIT - 1) await new Promise(r=>setTimeout(r,800));
 
       const basicTag=isBasic?'<span style="color:var(--gold);font-size:8px"> 🏠 PUBLIC GOOD</span>':'';
       const specTag=cat===specialty&&!isBasic?'<span style="font-size:8px;color:var(--cyan)"> ★ specialty</span>':'';

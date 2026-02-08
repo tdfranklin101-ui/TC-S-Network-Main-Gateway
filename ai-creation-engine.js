@@ -288,12 +288,30 @@ async function generateArtifactContent(category, title, description, agentName) 
   switch (config.method) {
     case 'dalle':
       result = await generateWithDalle(title, description, config, agentName);
+      // Alternative route: if DALL-E budget exhausted, generate a text description instead
+      if (!result.success && result.creationMethod === 'budget_exceeded') {
+        console.log(`[AI-Creation-Engine] 🔄 DALL-E budget exhausted, routing ${agentName} to GPT-4o text alternative`);
+        const altConfig = getCategoryConfig('writing');
+        altConfig.systemPrompt = `You are a creative writer. Write a vivid, detailed description of the visual artwork "${title}". Describe colors, composition, style, and mood as if you are writing for an art catalog.`;
+        altConfig.userPromptPrefix = 'Write a rich visual description and art analysis for';
+        result = await generateWithGpt4o(title, description, altConfig, agentName);
+        if (result.success) result.creationMethod = 'gpt4o-art-description';
+      }
       break;
     case 'gpt4o':
       result = await generateWithGpt4o(title, description, config, agentName);
       break;
     case 'tts':
       result = await generateWithTts(title, description, config, agentName);
+      // Alternative route: if TTS budget exhausted, generate lyrics/text instead
+      if (!result.success && result.creationMethod === 'budget_exceeded') {
+        console.log(`[AI-Creation-Engine] 🔄 TTS budget exhausted, routing ${agentName} to GPT-4o lyrics alternative`);
+        const altConfig = getCategoryConfig('writing');
+        altConfig.systemPrompt = `You are a songwriter and music creator. Write original song lyrics and composition notes for "${title}". Include verse, chorus, and bridge structure with chord progressions.`;
+        altConfig.userPromptPrefix = 'Write original song lyrics and composition notes for';
+        result = await generateWithGpt4o(title, description, altConfig, agentName);
+        if (result.success) result.creationMethod = 'gpt4o-lyrics-alt';
+      }
       break;
     case 'video':
       result = await generateVideo(title, description, config, agentName);
