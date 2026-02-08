@@ -43,16 +43,20 @@ class ObjectStorageService {
     const result = await client.downloadAsBytes(key);
     if (!result.ok) throw new Error(`Download failed for key: ${key}`);
     const value = result.value;
-    if (Array.isArray(value) && value.length > 0) return value[0];
-    if (Buffer.isBuffer(value)) return value;
-    return Buffer.from(value);
+    if (Array.isArray(value) && value.length > 0 && value[0].length > 0) return value[0];
+    if (Buffer.isBuffer(value) && value.length > 0) return value;
+    throw new Error(`Empty or missing file for key: ${key}`);
   }
 
   async fileExists(key) {
     if (!client) return false;
     try {
-      await client.downloadAsBytes(key);
-      return true;
+      const result = await client.downloadAsBytes(key);
+      if (!result.ok) return false;
+      const value = result.value;
+      if (Array.isArray(value) && value.length > 0 && value[0].length > 0) return true;
+      if (Buffer.isBuffer(value) && value.length > 0) return true;
+      return false;
     } catch {
       return false;
     }
