@@ -23,17 +23,29 @@ const earlyServer = http.createServer((req, res) => {
     return;
   }
   
-  // Serve basic index during initialization
+  // Serve static files during initialization so pages are accessible immediately
   if (!mainServerReady) {
-    const indexPath = path.join(__dirname, 'public', 'index.html');
-    if (fs.existsSync(indexPath)) {
+    const MIME_TYPES = {'.html':'text/html','.css':'text/css','.js':'application/javascript','.json':'application/json','.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml','.ico':'image/x-icon','.mp3':'audio/mpeg','.mp4':'video/mp4','.webp':'image/webp','.woff2':'font/woff2'};
+    let servePath = pathname === '/' ? '/index.html' : pathname;
+    const filePath = path.join(__dirname, 'public', servePath);
+    const ext = path.extname(filePath);
+    if (ext && fs.existsSync(filePath)) {
       try {
-        const content = fs.readFileSync(indexPath, 'utf8');
-        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        const content = fs.readFileSync(filePath);
+        res.writeHead(200, { 'Content-Type': (MIME_TYPES[ext] || 'application/octet-stream') + (ext === '.html' ? '; charset=utf-8' : '') });
         res.end(content);
         return;
-      } catch (e) {
-        // Fall through to loading message
+      } catch (e) {}
+    }
+    if (!ext || ext === '.html') {
+      const indexPath = path.join(__dirname, 'public', 'index.html');
+      if (fs.existsSync(indexPath)) {
+        try {
+          const content = fs.readFileSync(indexPath, 'utf8');
+          res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+          res.end(content);
+          return;
+        } catch (e) {}
       }
     }
     res.writeHead(200, { 'Content-Type': 'text/html' });
@@ -12248,18 +12260,26 @@ async function generateDailySolarGreeting() {
     const imageDataUrl = 'data:image/jpeg;base64,' + imageB64;
     const audioDataUrl = 'data:audio/mpeg;base64,' + audioB64;
     
-    // Step 3: Generate lip-synced video via SadTalker
-    const response = await fetch('https://fal.run/fal-ai/sadtalker', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Key ${falKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        source_image_url: imageDataUrl,
-        driven_audio_url: audioDataUrl
-      })
-    });
+    // Step 3: Generate lip-synced video via SadTalker (with 30s timeout to prevent deployment hangs)
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
+    let response;
+    try {
+      response = await fetch('https://fal.run/fal-ai/sadtalker', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Key ${falKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          source_image_url: imageDataUrl,
+          driven_audio_url: audioDataUrl
+        }),
+        signal: controller.signal
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
     
     if (!response.ok) {
       const errText = await response.text();
