@@ -369,11 +369,23 @@ async function phase3_search(){
   setPhase(3,'Phase 3 — Three-Tier Search Cascade',50);
   addFeed('🚀','<b>Phase 3</b> starting: Agents executing <b>three-tier search cascade</b>...');
   addFeed('📋','<b>Tier 1:</b> TC-S Network member listings (☀️ Solar — <span class="ok">PURCHASABLE</span>)');
-  addFeed('📋','<b>Tier 2:</b> AI-curated web sources (💵 Fiat — <span class="err">NO PURCHASE ROUTE</span>)');
+  addFeed('📋','<b>Tier 2:</b> AI-curated web sources → <span class="ok">Posted as Solar sample listings</span> (simulated — not buying to place online)');
   addFeed('📋','<b>Tier 3:</b> Open fulfillment request (📢 Bulletin — <span class="err">NO PURCHASE ROUTE</span>)');
   await sleep(400);
   const usedTerms=new Set();
-  let tier1Hits=0,tier2Hits=0,tier3Hits=0;
+  let tier1Hits=0,tier2Hits=0,tier2SamplePosts=0,tier3Hits=0;
+  const WEB_SAMPLE_ITEMS=[
+    {name:'Solar Inverter Pro 5000W',fiat:899,cat:'Energy Tools'},
+    {name:'Photovoltaic Efficiency Guide',fiat:45,cat:'Education'},
+    {name:'Ambient Solar Soundscapes Album',fiat:15,cat:'Music'},
+    {name:'Smart Grid Controller Board',fiat:250,cat:'Software'},
+    {name:'Generative Solar Art Collection',fiat:120,cat:'Digital Art'},
+    {name:'Portable Solar Panel Kit 200W',fiat:349,cat:'Energy Tools'},
+    {name:'Renewable Energy Engineering Course',fiat:199,cat:'Education'},
+    {name:'Solar Punk Lo-Fi Beats',fiat:12,cat:'Music'},
+    {name:'Energy Dashboard Pro License',fiat:79,cat:'Software'},
+    {name:'AI-Generated Sunrise Series NFT',fiat:65,cat:'Digital Art'}
+  ];
   for(let i=0;i<state.agents.length;i++){
     const agent=state.agents[i];
     const numSearches=Math.floor(randBetween(2,4));
@@ -388,12 +400,21 @@ async function phase3_search(){
         state.searches++;
         state.successes++;
       }catch(e){state.searches++;state.errors++}
-      tier2Hits+=Math.floor(randBetween(2,6));
+      const t2Found=Math.floor(randBetween(2,6));
+      tier2Hits+=t2Found;
+      for(let w=0;w<Math.min(t2Found,2);w++){
+        const webItem=WEB_SAMPLE_ITEMS[Math.floor(Math.random()*WEB_SAMPLE_ITEMS.length)];
+        const solarPrice=(webItem.fiat/491).toFixed(4);
+        tier2SamplePosts++;
+        state.items.push({name:webItem.name,price:parseFloat(solarPrice),agentIdx:i,tier:'T2_SAMPLE',fiatOrigin:webItem.fiat});
+      }
       tier3Hits++;
       if(!usedTerms.has(term)){
         usedTerms.add(term);
-        const t2Sim=Math.floor(randBetween(2,6));
-        addFeed('🔍',`<b>Agent ${agent.name}</b> searched "<b>${term}</b>" → <span class="ok">T1: ${t1Count} Solar</span> | <span style="color:#888">T2: ${t2Sim} fiat (🚫)</span> | <span style="color:#888">T3: 1 open slot (🚫)</span>`);
+        const webSample=WEB_SAMPLE_ITEMS[Math.floor(Math.random()*WEB_SAMPLE_ITEMS.length)];
+        const sampleSolar=(webSample.fiat/491).toFixed(4);
+        addFeed('🔍',`<b>Agent ${agent.name}</b> searched "<b>${term}</b>" → <span class="ok">T1: ${t1Count} Solar</span> | <span class="ok">T2: ${t2Found} web → sample listed</span> | <span style="color:#888">T3: 1 open slot (🚫)</span>`);
+        addFeed('🌐',`<span style="color:var(--purple)">T2 Sample:</span> "<b>${webSample.name}</b>" ($${webSample.fiat} fiat → <span class="solar">${sampleSolar} ☀️ Solar equivalent</span>) — <span class="ok">posted as sample sale</span>`);
       }
       updateStats();
     }
@@ -401,15 +422,15 @@ async function phase3_search(){
     setPhase(3,'Phase 3 — Three-Tier Search Cascade',pct);
     await sleep(randBetween(100,200));
   }
-  state.tier1Hits=tier1Hits;state.tier2Hits=tier2Hits;state.tier3Hits=tier3Hits;
-  addFeed('🏁',`<b>Phase 3 complete:</b> ${state.searches} searches | T1: ${tier1Hits} purchasable | T2: ${tier2Hits} fiat dead-ends | T3: ${tier3Hits} open slots`);
+  state.tier1Hits=tier1Hits;state.tier2Hits=tier2Hits;state.tier2SamplePosts=tier2SamplePosts;state.tier3Hits=tier3Hits;
+  addFeed('🏁',`<b>Phase 3 complete:</b> ${state.searches} searches | T1: ${tier1Hits} purchasable | T2: ${tier2Hits} web items → <span class="ok">${tier2SamplePosts} posted as Solar samples</span> | T3: ${tier3Hits} open slots (no route)`);
 }
 
 async function phase4_purchases(){
   setPhase(4,'Phase 4 — Tier 1 Solar Purchases Only',70);
-  addFeed('🚀','<b>Phase 4</b> starting: Inter-agent <b>Tier 1 Solar purchases</b>...');
-  addFeed('☀️','<span class="ok">Only Tier 1 (TC-S Network member listings) are purchasable with Solar</span>');
-  addFeed('🚫','<span style="color:#888">Tier 2 (web fiat items) and Tier 3 (open requests) have NO purchase route — dead-end fiat</span>');
+  addFeed('🚀','<b>Phase 4</b> starting: Inter-agent <b>Solar purchases</b> (Tier 1 + Tier 2 sample sales)...');
+  addFeed('☀️','<span class="ok">Tier 1 (member listings) + Tier 2 (web sample sales) are purchasable with Solar</span>');
+  addFeed('🚫','<span style="color:#888">Tier 3 (open fulfillment requests) has NO purchase route — bulletin board only</span>');
   await sleep(300);
   $('networkPanel').style.display='block';
   const viz=$('networkViz');
@@ -431,23 +452,36 @@ async function phase4_purchases(){
     nodeEls.push({el:node,x,y});
   });
 
-  let fiatBlocked=0;
+  let tier3Blocked=0;
+  let t1Purchases=0,t2SamplePurchases=0;
   const purchaseEdges=[];
+  const t1Items=state.items.filter(it=>!it.tier||it.tier!=='T2_SAMPLE');
+  const t2Items=state.items.filter(it=>it.tier==='T2_SAMPLE');
   for(let i=0;i<state.agents.length;i++){
     const buyer=state.agents[i];
     for(let b=0;b<5;b++){
-      if(b>=3){
-        fiatBlocked++;
-        if(b===3&&i%5===0){
-          addFeed('🚫',`<b>Agent ${buyer.name}</b> attempted Tier 2 fiat purchase → <span class="err">BLOCKED — no fiat-to-Solar exchange</span>`);
+      if(b===4){
+        tier3Blocked++;
+        if(i%5===0){
+          addFeed('🚫',`<b>Agent ${buyer.name}</b> attempted Tier 3 fulfillment purchase → <span class="err">BLOCKED — bulletin board only, no purchase route</span>`);
         }
         continue;
       }
       let sellerIdx;
       do{sellerIdx=Math.floor(Math.random()*state.agents.length)}while(sellerIdx===i);
       const seller=state.agents[sellerIdx];
-      const itemPool=state.items.filter(it=>it.agentIdx===sellerIdx);
-      const item=itemPool.length>0?itemPool[Math.floor(Math.random()*itemPool.length)]:{name:'Solar Widget',price:0.01};
+      let item,tierLabel;
+      if(b<3){
+        const itemPool=t1Items.filter(it=>it.agentIdx===sellerIdx);
+        item=itemPool.length>0?itemPool[Math.floor(Math.random()*itemPool.length)]:{name:'Solar Widget',price:0.01};
+        tierLabel='T1 ☀️';
+        t1Purchases++;
+      }else{
+        const samplePool=t2Items.filter(it=>it.agentIdx===sellerIdx);
+        item=samplePool.length>0?samplePool[Math.floor(Math.random()*samplePool.length)]:{name:'Web Sample Item',price:0.05,fiatOrigin:24.55};
+        tierLabel='T2 Sample ☀️';
+        t2SamplePurchases++;
+      }
       const price=item.price||0.01;
       state.purchases++;
       state.totalSolar+=price;
@@ -466,19 +500,22 @@ async function phase4_purchases(){
       viz.appendChild(edge);
       bNode.el.classList.add('buyer');
 
-      purchaseEdges.push({buyer:buyer.name,seller:seller.name,item:item.name,price});
+      purchaseEdges.push({buyer:buyer.name,seller:seller.name,item:item.name,price,tierLabel,fiatOrigin:item.fiatOrigin});
       updateStats();
     }
-    if(purchaseEdges.length>0&&(i%4===0||i===state.agents.length-1)){
+    if(purchaseEdges.length>0&&(i%3===0||i===state.agents.length-1)){
       const last=purchaseEdges[purchaseEdges.length-1];
-      addFeed('💸',`<b>Agent ${last.buyer}</b> bought "<span class="ok">${last.item}</span>" from <b>${last.seller}</b> for <span class="solar">${last.price} ☀️</span> <span style="color:var(--green)">[Tier 1 ☀️]</span>`);
+      const fiatNote=last.fiatOrigin?` <span style="color:#888">(web $${last.fiatOrigin} → Solar sample)</span>`:'';
+      addFeed('💸',`<b>Agent ${last.buyer}</b> bought "<span class="ok">${last.item}</span>" from <b>${last.seller}</b> for <span class="solar">${last.price.toFixed(4)} ☀️</span> <span style="color:var(--green)">[${last.tierLabel}]</span>${fiatNote}`);
     }
     const pct=70+((i+1)/state.agents.length)*25;
-    setPhase(4,'Phase 4 — Tier 1 Solar Purchases Only',pct);
+    setPhase(4,'Phase 4 — Solar Purchases (T1 + T2 Samples)',pct);
     await sleep(randBetween(80,180));
   }
-  state.fiatBlocked=fiatBlocked;
-  addFeed('🏁',`<b>Phase 4 complete:</b> ${state.purchases} Tier 1 Solar purchases | ${fiatBlocked} Tier 2/3 fiat attempts <span class="err">BLOCKED</span> | ${state.totalSolar.toFixed(2)} ☀️ circulated`);
+  state.tier3Blocked=tier3Blocked;
+  state.t1Purchases=t1Purchases;
+  state.t2SamplePurchases=t2SamplePurchases;
+  addFeed('🏁',`<b>Phase 4 complete:</b> ${t1Purchases} Tier 1 purchases + ${t2SamplePurchases} Tier 2 sample sales = ${state.purchases} total Solar transactions | ${tier3Blocked} Tier 3 attempts <span class="err">BLOCKED</span> | ${state.totalSolar.toFixed(2)} ☀️ circulated`);
 }
 
 function showReport(){
@@ -495,11 +532,12 @@ function showReport(){
     {l:'Agents Registered',v:state.agents.length+' / 20'},
     {l:'Items Created',v:state.items.length+' / 100'},
     {l:'Searches Executed',v:state.searches},
-    {l:'T1 Solar Purchases',v:state.purchases},
-    {l:'T2/T3 Fiat Blocked',v:(state.fiatBlocked||0)+' 🚫'},
+    {l:'T1 Solar Purchases',v:state.t1Purchases||0},
+    {l:'T2 Sample Sales',v:state.t2SamplePurchases||0},
+    {l:'T3 Requests Blocked',v:(state.tier3Blocked||0)+' 🚫'},
     {l:'Solar Circulated',v:state.totalSolar.toFixed(2)+' ☀️'},
     {l:'T1 Search Hits',v:state.tier1Hits||0},
-    {l:'T2 Fiat Dead-Ends',v:state.tier2Hits||0},
+    {l:'T2 Web → Samples Posted',v:(state.tier2SamplePosts||0)+' / '+(state.tier2Hits||0)+' found'},
     {l:'T3 Open Slots',v:state.tier3Hits||0},
     {l:'Successful Ops',v:state.successes},
     {l:'Failed Ops',v:state.errors},
