@@ -381,7 +381,7 @@ function generateCreativeItem(agentName,cat,existingNames){
   return {name,desc,price:profitPrice,isBasicNeed:false,category:cat};
 }
 
-const SEARCH_TERMS = ['solar','energy','music','fractal','grid','quantum','photovoltaic','neon','optimizer','renewable','design','aurora','binaural','toolkit','dashboard','battery','panel','inverter','harvest','watt'];
+const SEARCH_TERMS = ['solar','energy','music','fractal','grid','quantum','photovoltaic','neon','optimizer','renewable','design','aurora','binaural','toolkit','dashboard','battery','panel','inverter','harvest','watt','symphony','mix tape','meditation','video','clip','soundscape','art','texture','stock','beats','lo-fi','ambient','song','album','wellness','film','photography','digital'];
 
 let state = {agents:[],items:[],searches:0,purchases:0,totalSolar:0,errors:0,successes:0};
 
@@ -765,6 +765,35 @@ async function phase4_purchases(){
   addFeed('📏',`<b>Rules:</b> Max ${DAILY_PURCHASE_LIMIT} purchases/day | ${MANDATORY_BASIC_PURCHASES} Basic Needs required | positive balance | sellers receive Solar`);
   addFeed('🚫','<span style="color:#888">Tier 3 (open fulfillment requests) has NO purchase route — bulletin board only</span>');
   await sleep(300);
+  // Fetch full marketplace catalog so agents can buy existing songs, videos & other content
+  let catalogItems = [];
+  try {
+    const catalogRes = await fetch('/api/artifacts/available', { credentials: 'include' });
+    const catalogData = await catalogRes.json().catch(() => ({}));
+    const allArtifacts = catalogData.artifacts || catalogData.items || [];
+    catalogItems = allArtifacts
+      .filter(a => a.active !== false)
+      .map(a => ({
+        name: a.title || a.name || 'Untitled',
+        price: parseFloat(a.solar_amount_s || a.solarPrice || a.price_solar) || 0.01,
+        category: a.category || 'other',
+        agentIdx: -1,
+        tier: 'T1_CATALOG',
+        isBasicNeed: false,
+        artifactId: a.id,
+        fileType: a.file_type || a.fileType || ''
+      }));
+    
+    const musicVideoCount = catalogItems.filter(it => 
+      it.fileType.startsWith('audio/') || it.fileType.startsWith('video/') || 
+      it.category.toLowerCase().includes('music') || it.category.toLowerCase().includes('video') ||
+      it.category.toLowerCase().includes('audio')
+    ).length;
+    
+    addFeed('🎵', `<b>Marketplace catalog loaded:</b> ${catalogItems.length} total items available | <span style="color:var(--cyan)">${musicVideoCount} songs & videos</span> ready for purchase`);
+  } catch (e) {
+    addFeed('⚠️', `<b>Catalog fetch warning:</b> ${e.message} — agents will trade from locally tracked items only`);
+  }
   $('networkPanel').style.display='block';
   const viz=$('networkViz');
   const vizW=viz.offsetWidth||500;
@@ -786,10 +815,10 @@ async function phase4_purchases(){
   });
 
   let tier3Blocked=0,balanceBlocked=0,limitBlocked=0;
-  let t1Purchases=0,t2SamplePurchases=0,basicNeedsPurchased=0;
+  let t1Purchases=0,t2SamplePurchases=0,basicNeedsPurchased=0,catalogPurchases=0;
   let totalSellerRevenue=0;
   const purchaseEdges=[];
-  const t1Items=state.items.filter(it=>!it.tier||it.tier!=='T2_SAMPLE');
+  const t1Items=[...state.items.filter(it=>!it.tier||it.tier!=='T2_SAMPLE'), ...catalogItems];
   const t2Items=state.items.filter(it=>it.tier==='T2_SAMPLE');
   const basicNeedsPool=t1Items.filter(it=>it.isBasicNeed);
   for(let i=0;i<state.agents.length;i++){
@@ -826,9 +855,20 @@ async function phase4_purchases(){
         }
         sellerIdx=item.agentIdx!==undefined?item.agentIdx:sellerIdx;
       } else if(b<3||t2Items.length===0){
-        const itemPool=t1Items.filter(it=>it.agentIdx===sellerIdx&&!it.isBasicNeed);
-        item=itemPool.length>0?itemPool[Math.floor(Math.random()*itemPool.length)]:{name:'Solar Widget',price:0.01};
-        tierLabel='T1 ☀️';
+        let itemPool=t1Items.filter(it=>it.agentIdx===sellerIdx&&!it.isBasicNeed);
+        if(itemPool.length===0||Math.random()<0.35){
+          const catPool=t1Items.filter(it=>it.agentIdx===-1);
+          if(catPool.length>0){
+            item=catPool[Math.floor(Math.random()*catPool.length)];
+            tierLabel='T1 🎵 CATALOG';
+          } else {
+            item=itemPool.length>0?itemPool[Math.floor(Math.random()*itemPool.length)]:{name:'Solar Widget',price:0.01};
+            tierLabel='T1 ☀️';
+          }
+        } else {
+          item=itemPool[Math.floor(Math.random()*itemPool.length)];
+          tierLabel='T1 ☀️';
+        }
       }else{
         const samplePool=t2Items.filter(it=>it.agentIdx===sellerIdx);
         item=samplePool.length>0?samplePool[Math.floor(Math.random()*samplePool.length)]:{name:'Web Sample Item',price:0.05,fiatOrigin:24.55};
@@ -849,7 +889,7 @@ async function phase4_purchases(){
       totalSellerRevenue+=price;
       buyer.dailyPurchases++;
       if(needsBasic||item.isBasicNeed){buyer.basicNeedsPurchases++;basicNeedsPurchased++}
-      if(tierLabel.startsWith('T1')){t1Purchases++}else{t2SamplePurchases++}
+      if(tierLabel.includes('CATALOG')){catalogPurchases++;t1Purchases++}else if(tierLabel.startsWith('T1')){t1Purchases++}else{t2SamplePurchases++}
       state.purchases++;
       state.totalSolar+=price;
       state.successes++;
@@ -891,7 +931,7 @@ async function phase4_purchases(){
   state.basicNeedsPurchased=basicNeedsPurchased;
   const bnCompliance=state.agents.filter(a=>a.basicNeedsPurchases>=MANDATORY_BASIC_PURCHASES).length;
   addFeed('🏠',`<span style="color:var(--gold)"><b>Basic Needs compliance:</b> ${bnCompliance}/${state.agents.length} agents fulfilled ${MANDATORY_BASIC_PURCHASES} mandatory purchases (${basicNeedsPurchased} total)</span>`);
-  addFeed('🏁',`<b>Phase 4 complete:</b> ${t1Purchases} T1 + ${t2SamplePurchases} T2 samples = <span class="ok">${state.purchases} Solar transactions</span> | <span style="color:var(--gold)">${basicNeedsPurchased} Basic Needs</span> | ${balanceBlocked} insufficient balance | ${limitBlocked} daily limit hit | ${tier3Blocked} T3 blocked | Seller revenue: <span class="solar">${totalSellerRevenue.toFixed(2)} ☀️</span>`);
+  addFeed('🏁',`<b>Phase 4 complete:</b> ${t1Purchases} T1 (${catalogPurchases} from catalog 🎵) + ${t2SamplePurchases} T2 samples = <span class="ok">${state.purchases} Solar transactions</span> | <span style="color:var(--gold)">${basicNeedsPurchased} Basic Needs</span> | ${balanceBlocked} insufficient balance | ${limitBlocked} daily limit hit | ${tier3Blocked} T3 blocked | Seller revenue: <span class="solar">${totalSellerRevenue.toFixed(2)} ☀️</span>`);
 }
 
 function showReport(){
