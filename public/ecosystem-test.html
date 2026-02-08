@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🌐 TC-S Network Ecosystem Test</title>
+<title>🌐 TC-S Network Agent Control Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
@@ -113,6 +113,54 @@ header p{color:#888;font-size:14px}
 ::-webkit-scrollbar-track{background:#111}
 ::-webkit-scrollbar-thumb{background:#333;border-radius:3px}
 ::-webkit-scrollbar-thumb:hover{background:#555}
+
+.agent-card{cursor:pointer}
+.agent-card:hover{transform:scale(1.05);border-color:var(--cyan)}
+.agent-panel-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;display:none;align-items:flex-end;justify-content:center}
+.agent-panel-overlay.open{display:flex}
+.agent-panel{width:100%;max-width:600px;max-height:80vh;background:#111;border:1px solid var(--green);border-radius:16px 16px 0 0;padding:20px;overflow-y:auto;animation:slideUp 0.3s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.ap-header{display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.ap-header .ap-icon{font-size:36px}
+.ap-header .ap-info{flex:1}
+.ap-header .ap-name{font-family:'Orbitron',sans-serif;font-size:18px;font-weight:700;color:var(--green)}
+.ap-header .ap-bal{font-size:13px;color:var(--gold);margin-top:2px}
+.ap-header .ap-status{font-size:11px;color:#888;margin-top:2px}
+.ap-close{background:none;border:1px solid #444;color:#888;font-size:18px;width:32px;height:32px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.ap-close:hover{border-color:var(--green);color:var(--green)}
+.ap-tabs{display:flex;gap:0;margin-bottom:16px;border-bottom:1px solid var(--border)}
+.ap-tab{flex:1;padding:10px;text-align:center;font-size:12px;font-weight:600;color:#666;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;text-transform:uppercase;letter-spacing:1px}
+.ap-tab.active{color:var(--green);border-bottom-color:var(--green)}
+.ap-tab:hover:not(.active){color:var(--cyan)}
+.ap-tab-content{display:none}
+.ap-tab-content.active{display:block}
+.ap-section{margin-bottom:14px}
+.ap-section-title{font-size:11px;color:var(--cyan);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;font-weight:600}
+.ap-tx{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.04);font-size:11px;gap:8px}
+.ap-tx:last-child{border-bottom:none}
+.ap-tx .tx-label{color:#aaa;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ap-tx .tx-amount{color:var(--gold);font-family:'Orbitron',sans-serif;font-size:10px;flex-shrink:0}
+.ap-tx .tx-time{color:#555;font-size:9px;flex-shrink:0;min-width:50px;text-align:right}
+.ap-tx .tx-cat{font-size:9px;color:var(--purple);flex-shrink:0}
+.ap-empty{color:#555;font-size:11px;padding:8px;text-align:center;font-style:italic}
+.ap-ctrl{margin-bottom:14px}
+.ap-ctrl label{display:block;font-size:11px;color:var(--cyan);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:600}
+.ap-radio-group{display:flex;gap:8px;flex-wrap:wrap}
+.ap-radio-group label{display:flex;align-items:center;gap:4px;font-size:11px;color:#bbb;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:400}
+.ap-radio-group input[type=radio]{appearance:none;-webkit-appearance:none;width:14px;height:14px;border:2px solid #444;border-radius:50%;cursor:pointer;position:relative}
+.ap-radio-group input[type=radio]:checked{border-color:var(--green)}
+.ap-radio-group input[type=radio]:checked::after{content:'';position:absolute;inset:2px;background:var(--green);border-radius:50%}
+.ap-cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:4px}
+.ap-cat-grid label{display:flex;align-items:center;gap:4px;font-size:10px;color:#bbb;cursor:pointer;padding:3px 0}
+.ap-cat-grid input[type=checkbox]{appearance:none;-webkit-appearance:none;width:13px;height:13px;border:2px solid #444;border-radius:3px;cursor:pointer;position:relative;flex-shrink:0}
+.ap-cat-grid input[type=checkbox]:checked{border-color:var(--green);background:var(--green)}
+.ap-cat-grid input[type=checkbox]:checked::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:9px;color:#000;font-weight:700}
+.ap-range-wrap{display:flex;align-items:center;gap:10px}
+.ap-range-wrap input[type=range]{flex:1;-webkit-appearance:none;height:4px;background:#333;border-radius:2px;outline:none}
+.ap-range-wrap input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;background:var(--green);border-radius:50%;cursor:pointer;box-shadow:0 0 6px rgba(57,255,20,.4)}
+.ap-range-val{font-family:'Orbitron',sans-serif;font-size:12px;color:var(--gold);min-width:50px;text-align:right}
+.ap-select{width:100%;background:#0d0d0d;border:1px solid #333;color:#ccc;padding:8px;border-radius:6px;font-size:12px;font-family:'Space Grotesk',sans-serif;outline:none}
+.ap-select:focus{border-color:var(--green);color:var(--green)}
 </style>
 </head>
 <body>
@@ -123,8 +171,8 @@ header p{color:#888;font-size:14px}
 </div>
 
 <header>
-  <h1>🌐 TC-S Network Ecosystem Test</h1>
-  <p>Automated 20-agent marketplace stress test &amp; network health analysis</p>
+  <h1>🌐 TC-S Network Agent Control Dashboard</h1>
+  <p>Automated 20-agent marketplace control center &amp; network health analysis</p>
   <div class="brand-bar">
     <span>⚡ TC-S Network Foundation</span>
     <span>☀️ Solar Standard Protocol</span>
@@ -135,7 +183,7 @@ header p{color:#888;font-size:14px}
 <div class="run-btn-wrap">
   <button id="runBtn" onclick="runEcosystemTest()">
     <span class="pulse"></span>
-    ▶ RUN ECOSYSTEM TEST
+    ▶ RUN AGENT TEST
   </button>
 </div>
 
@@ -189,6 +237,10 @@ header p{color:#888;font-size:14px}
     <p id="healthVerdict" style="color:#888;margin-bottom:10px"></p>
     <div class="report-detail" id="reportDetail"></div>
   </div>
+</div>
+
+<div class="agent-panel-overlay" id="agentPanelOverlay" onclick="if(event.target===this)closeAgentPanel()">
+  <div class="agent-panel" id="agentPanel"></div>
 </div>
 
 <script>
@@ -383,7 +435,7 @@ function generateCreativeItem(agentName,cat,existingNames){
 
 const SEARCH_TERMS = ['solar','energy','music','fractal','grid','quantum','photovoltaic','neon','optimizer','renewable','design','aurora','binaural','toolkit','dashboard','battery','panel','inverter','harvest','watt','symphony','mix tape','meditation','video','clip','soundscape','art','texture','stock','beats','lo-fi','ambient','song','album','wellness','film','photography','digital'];
 
-let state = {agents:[],items:[],searches:0,purchases:0,totalSolar:0,errors:0,successes:0};
+let state = {agents:[],items:[],searches:0,purchases:0,totalSolar:0,errors:0,successes:0,transactions:[]};
 
 function $(id){return document.getElementById(id)}
 function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
@@ -398,6 +450,7 @@ function initAgentCards(){
     el.className='agent-card';
     el.id='agent-'+a.code;
     el.innerHTML=`<div class="agent-icon">${a.icon}</div><div class="agent-name">Agent ${a.name}</div><div class="agent-balance">— ☀️</div><div class="agent-status pending">waiting</div>`;
+    el.addEventListener('click',()=>openAgentPanel(a.code));
     grid.appendChild(el);
   });
 }
@@ -532,6 +585,7 @@ async function phaseDailyDistribution(){
       fallbackDistributed++;
     }
     distributed++;
+    state.transactions.push({type:'distribute',agent:agent.code,amount:1,prevBalance:prevBal,newBalance:agent.balance,time:Date.now()});
     updateAgentCard(agent,'+1 ☀️',agent.balance,'registered');
     if(i%5===0||i===state.agents.length-1){
       const src=agent.userId?'DB':'local';
@@ -641,6 +695,7 @@ async function phase2_items(){
           }
         } catch(e) { failed++; state.errors++; }
         state.items.push(item);
+        if(item.itemId){state.transactions.push({type:'create',agent:agent.code,title:item.name,category:cat,price:item.price,method:item.creationMethod||'unknown',time:Date.now()})}
         
         if(j < DAILY_CREATE_LIMIT - 1) await new Promise(r => setTimeout(r, 800));
 
@@ -972,6 +1027,7 @@ async function phase4_purchases(){
       viz.appendChild(edge);
       bNode.el.classList.add('buyer');
 
+      state.transactions.push({type:'purchase',buyer:buyer.code,seller:actualSeller.code,title:item.name,price:price,tier:tierLabel,dbBacked:dbPurchase,time:Date.now()});
       purchaseEdges.push({buyer:buyer.name,seller:actualSeller.name,item:item.name,price,tierLabel,fiatOrigin:item.fiatOrigin,buyerBal:buyer.balance,sellerBal:actualSeller.balance,isBasicNeed:needsBasic||item.isBasicNeed});
       updateStats();
     }
@@ -1095,7 +1151,7 @@ function showReport(){
   detail.appendChild(ledgerEl);
 
   $('reportCard').classList.add('visible');
-  addFeed('🌐',`<b>ECOSYSTEM TEST COMPLETE</b> — Health: <span class="${healthPct>=70?'ok':'err'}">${healthPct}%</span> | MCP Engines active | Basic Needs enforced`);
+  addFeed('🌐',`<b>AGENT CONTROL DASHBOARD COMPLETE</b> — Health: <span class="${healthPct>=70?'ok':'err'}">${healthPct}%</span> | MCP Engines active | Basic Needs enforced`);
 
   try {
     const safeTotalDistributed = Number(totalDistributed) || 0;
@@ -1201,6 +1257,7 @@ async function phase5_vouchers(){
         vouchersCreated++;
         state.successes++;
         state.vouchers.push({creator:agent.name,title:template.title,type:template.type,cat:template.cat,priceRays:template.priceRays,solarPrice,listingId:data.listingId||data.id,status:'listed'});
+        state.transactions.push({type:'voucher_create',agent:agent.code,title:template.title,price:parseFloat(solarPrice),time:Date.now()});
         addFeed('🎟️',`<b>${agent.name}</b> created voucher: "<span style="color:var(--gold)">${template.title}</span>" [${template.type}/${template.cat}] → <span class="solar">${solarPrice} ☀️</span> (${template.priceRays} Rays)`);
       }else{
         voucherErrors++;
@@ -1236,6 +1293,7 @@ async function phase5_vouchers(){
         voucher.status='purchased';
         voucher.buyer=buyer.name;
         voucher.voucherCode=data.voucher_code||data.code||'TCS-'+Math.random().toString(36).substr(2,8).toUpperCase();
+        state.transactions.push({type:'voucher_purchase',agent:buyer.code,title:voucher.title,price:parseFloat(voucher.solarPrice||0),time:Date.now()});
         addFeed('💳',`<b>${buyer.name}</b> purchased voucher: "<span style="color:var(--gold)">${voucher.title}</span>" from <b>${voucher.creator}</b> → code: <span style="color:var(--green);font-family:monospace">${voucher.voucherCode}</span>`);
       }else{
         voucherErrors++;
@@ -1288,12 +1346,136 @@ async function phase5_vouchers(){
   addFeed('🏁',`<b>Phase 5 complete:</b> <span style="color:var(--gold)">${vouchersCreated} vouchers listed</span> | ${vouchersPurchased} purchased | <span style="color:var(--green)">${vouchersRedeemed} redeemed (fulfilled)</span> | ${voucherErrors} errors`);
 }
 
+function openAgentPanel(agentCode){
+  const agentDef=AGENTS.find(a=>a.code===agentCode);
+  if(!agentDef)return;
+  const agentIdx=state.agents.findIndex(a=>a.code===agentCode);
+  const agent=agentIdx>=0?state.agents[agentIdx]:null;
+  const balance=agent?agent.balance.toFixed(2):'—';
+  const statusText=agent?'Active':'Waiting';
+  const specialty=AGENT_SPECIALTIES[agentDef.name]||CATEGORIES[0];
+
+  const txs=(state.transactions||[]).filter(t=>t.agent===agentCode||t.buyer===agentCode||t.seller===agentCode);
+  const createdItems=state.items.filter(it=>it.agentIdx===agentIdx&&(!it.tier||it.tier!=='T2_SAMPLE'));
+  const purchases=txs.filter(t=>t.type==='purchase'&&t.buyer===agentCode);
+  const sales=txs.filter(t=>t.type==='purchase'&&t.seller===agentCode);
+  const distributions=txs.filter(t=>t.type==='distribute'&&t.agent===agentCode);
+  const voucherTxs=txs.filter(t=>(t.type==='voucher_create'||t.type==='voucher_purchase')&&t.agent===agentCode);
+  const vouchers=(state.vouchers||[]).filter(v=>v.creator===agentDef.name||v.buyer===agentDef.name);
+
+  function txTime(t){return t?new Date(t).toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'}):'—'}
+  function renderTxList(arr,emptyMsg){
+    if(!arr.length)return `<div class="ap-empty">${emptyMsg}</div>`;
+    return arr.map(h=>h).join('');
+  }
+
+  let createdHtml=createdItems.map(it=>`<div class="ap-tx"><span class="tx-label">📦 ${it.name}</span><span class="tx-cat">${it.category}</span><span class="tx-amount">+${it.price.toFixed(4)} ☀️</span></div>`).join('');
+  let purchasesHtml=purchases.map(t=>{
+    const sellerAgent=AGENTS.find(a=>a.code===t.seller);
+    return `<div class="ap-tx"><span class="tx-label">🛒 ${t.title}</span><span class="tx-cat">from ${sellerAgent?sellerAgent.name:t.seller}</span><span class="tx-amount">-${t.price.toFixed(4)} ☀️</span><span class="tx-time">${txTime(t.time)}</span></div>`;
+  }).join('');
+  let salesHtml=sales.map(t=>{
+    const buyerAgent=AGENTS.find(a=>a.code===t.buyer);
+    return `<div class="ap-tx"><span class="tx-label">💰 ${t.title}</span><span class="tx-cat">to ${buyerAgent?buyerAgent.name:t.buyer}</span><span class="tx-amount">+${t.price.toFixed(4)} ☀️</span><span class="tx-time">${txTime(t.time)}</span></div>`;
+  }).join('');
+  let distHtml=distributions.map(t=>`<div class="ap-tx"><span class="tx-label">☀️ Daily Solar Distribution</span><span class="tx-cat">${t.prevBalance.toFixed(1)}→${t.newBalance.toFixed(1)}</span><span class="tx-amount">+1 ☀️</span><span class="tx-time">${txTime(t.time)}</span></div>`).join('');
+  let voucherHtml=vouchers.map(v=>{
+    const isCreator=v.creator===agentDef.name;
+    return `<div class="ap-tx"><span class="tx-label">${isCreator?'🎟️ Created':'💳 Purchased'}: ${v.title}</span><span class="tx-cat">${v.type||''}</span><span class="tx-amount">${v.solarPrice||'—'} ☀️</span></div>`;
+  }).join('');
+
+  const saved=JSON.parse(localStorage.getItem('agentConfig_'+agentCode)||'null');
+  const cfg=saved||{spendingStyle:'balanced',categories:CATEGORIES.slice(),maxSpend:0.5,creationFocus:specialty};
+
+  const catCheckboxes=CATEGORIES.map(c=>{
+    const checked=cfg.categories.includes(c)?'checked':'';
+    return `<label><input type="checkbox" value="${c}" ${checked} onchange="saveAgentConfig('${agentCode}')">${c}</label>`;
+  }).join('');
+
+  const panel=$('agentPanel');
+  panel.innerHTML=`
+    <div class="ap-header">
+      <div class="ap-icon">${agentDef.icon}</div>
+      <div class="ap-info">
+        <div class="ap-name">Agent ${agentDef.name}</div>
+        <div class="ap-bal">${balance} ☀️</div>
+        <div class="ap-status">${statusText} · Specialty: ${specialty}</div>
+      </div>
+      <button class="ap-close" onclick="closeAgentPanel()">✕</button>
+    </div>
+    <div class="ap-tabs">
+      <div class="ap-tab active" onclick="switchApTab(this,0)">Transaction History</div>
+      <div class="ap-tab" onclick="switchApTab(this,1)">Programming</div>
+    </div>
+    <div class="ap-tab-content active" id="apTabHistory">
+      <div class="ap-section"><div class="ap-section-title">📦 Items Created (${createdItems.length})</div>${createdHtml||'<div class="ap-empty">No items created yet</div>'}</div>
+      <div class="ap-section"><div class="ap-section-title">🛒 Purchases Made (${purchases.length})</div>${purchasesHtml||'<div class="ap-empty">No purchases yet</div>'}</div>
+      <div class="ap-section"><div class="ap-section-title">💰 Sales Made (${sales.length})</div>${salesHtml||'<div class="ap-empty">No sales yet</div>'}</div>
+      <div class="ap-section"><div class="ap-section-title">☀️ Distributions (${distributions.length})</div>${distHtml||'<div class="ap-empty">No distributions yet</div>'}</div>
+      <div class="ap-section"><div class="ap-section-title">🎟️ Vouchers (${vouchers.length})</div>${voucherHtml||'<div class="ap-empty">No voucher activity</div>'}</div>
+    </div>
+    <div class="ap-tab-content" id="apTabProgramming">
+      <div class="ap-ctrl">
+        <label>Spending Style</label>
+        <div class="ap-radio-group">
+          <label><input type="radio" name="apSpend" value="conservative" ${cfg.spendingStyle==='conservative'?'checked':''} onchange="saveAgentConfig('${agentCode}')">Conservative</label>
+          <label><input type="radio" name="apSpend" value="balanced" ${cfg.spendingStyle==='balanced'?'checked':''} onchange="saveAgentConfig('${agentCode}')">Balanced</label>
+          <label><input type="radio" name="apSpend" value="aggressive" ${cfg.spendingStyle==='aggressive'?'checked':''} onchange="saveAgentConfig('${agentCode}')">Aggressive</label>
+        </div>
+      </div>
+      <div class="ap-ctrl">
+        <label>Preferred Categories</label>
+        <div class="ap-cat-grid" id="apCatGrid">${catCheckboxes}</div>
+      </div>
+      <div class="ap-ctrl">
+        <label>Max Spend Per Transaction</label>
+        <div class="ap-range-wrap">
+          <input type="range" id="apMaxSpend" min="0.01" max="1.0" step="0.01" value="${cfg.maxSpend}" oninput="$('apMaxSpendVal').textContent=this.value+' ☀️';saveAgentConfig('${agentCode}')">
+          <span class="ap-range-val" id="apMaxSpendVal">${cfg.maxSpend} ☀️</span>
+        </div>
+      </div>
+      <div class="ap-ctrl">
+        <label>Creation Focus</label>
+        <select class="ap-select" id="apCreationFocus" onchange="saveAgentConfig('${agentCode}')">
+          ${CATEGORIES.map(c=>`<option value="${c}" ${cfg.creationFocus===c?'selected':''}>${c}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+  `;
+  $('agentPanelOverlay').classList.add('open');
+}
+
+function closeAgentPanel(){
+  $('agentPanelOverlay').classList.remove('open');
+}
+
+function switchApTab(el,idx){
+  const tabs=el.parentElement.querySelectorAll('.ap-tab');
+  const contents=el.parentElement.parentElement.querySelectorAll('.ap-tab-content');
+  tabs.forEach((t,i)=>{t.classList.toggle('active',i===idx)});
+  contents.forEach((c,i)=>{c.classList.toggle('active',i===idx)});
+}
+
+function saveAgentConfig(agentCode){
+  const spendEl=document.querySelector('input[name="apSpend"]:checked');
+  const catEls=document.querySelectorAll('#apCatGrid input[type=checkbox]:checked');
+  const maxSpendEl=$('apMaxSpend');
+  const focusEl=$('apCreationFocus');
+  const cfg={
+    spendingStyle:spendEl?spendEl.value:'balanced',
+    categories:Array.from(catEls).map(c=>c.value),
+    maxSpend:maxSpendEl?parseFloat(maxSpendEl.value):0.5,
+    creationFocus:focusEl?focusEl.value:CATEGORIES[0]
+  };
+  localStorage.setItem('agentConfig_'+agentCode,JSON.stringify(cfg));
+}
+
 async function runEcosystemTest(){
   const btn=$('runBtn');
   btn.disabled=true;
   btn.textContent='⏳ RUNNING TEST...';
   btn.querySelector('.pulse')?.remove();
-  state={agents:[],items:[],searches:0,purchases:0,totalSolar:0,errors:0,successes:0};
+  state={agents:[],items:[],searches:0,purchases:0,totalSolar:0,errors:0,successes:0,transactions:[]};
   $('dashboard').classList.add('visible');
   $('activityFeed').innerHTML='';
   $('itemsGrid').innerHTML='';
@@ -1304,7 +1486,7 @@ async function runEcosystemTest(){
   vizEl.innerHTML='';
   initAgentCards();
   updateStats();
-  addFeed('🌐','<b>TC-S Network Ecosystem Test</b> initialized');
+  addFeed('🌐','<b>TC-S Network Agent Control Dashboard</b> initialized');
   await sleep(500);
   try{
     await phase1_registration();

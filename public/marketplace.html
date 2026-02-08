@@ -2190,7 +2190,7 @@
                 </div>
             </div>
             <div style="margin-top:12px;display:flex;align-items:center;gap:8px;">
-                <span style="background:linear-gradient(135deg,#00ff88,#00bfff);color:#000;padding:6px 16px;border-radius:20px;font-size:13px;font-weight:700;">Run Ecosystem Test →</span>
+                <span style="background:linear-gradient(135deg,#00ff88,#00bfff);color:#000;padding:6px 16px;border-radius:20px;font-size:13px;font-weight:700;">Run Agent Control Dashboard →</span>
                 <span style="font-size:11px;color:#666;">See 20 agents create, trade & fulfill vouchers in real-time</span>
             </div>
         </a>
@@ -2657,6 +2657,74 @@
                         .ll-input-btn .ll-emoji { font-size: 24px; }
                         .ll-header h3 { font-size: 18px; }
                     }
+
+                    .lifelens-toggle {
+                        display: block;
+                        width: 100%;
+                        margin-top: 8px;
+                        padding: 6px 12px;
+                        background: rgba(16, 185, 129, 0.1);
+                        border: 1px solid rgba(16, 185, 129, 0.3);
+                        border-radius: 8px;
+                        color: #10b981;
+                        font-size: 11px;
+                        cursor: pointer;
+                        transition: all 0.2s;
+                        text-align: center;
+                    }
+                    .lifelens-toggle:hover {
+                        background: rgba(16, 185, 129, 0.2);
+                        border-color: rgba(16, 185, 129, 0.5);
+                    }
+                    .lifelens-report {
+                        display: none;
+                        margin-top: 10px;
+                        padding: 12px;
+                        background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(59, 130, 246, 0.05));
+                        border: 1px solid rgba(16, 185, 129, 0.2);
+                        border-radius: 10px;
+                        font-size: 11px;
+                        line-height: 1.5;
+                    }
+                    .lifelens-report.open { display: block; }
+                    .lifelens-section {
+                        margin-bottom: 10px;
+                        padding-bottom: 8px;
+                        border-bottom: 1px solid rgba(255,255,255,0.06);
+                    }
+                    .lifelens-section:last-child { border-bottom: none; margin-bottom: 0; }
+                    .lifelens-label {
+                        font-size: 9px;
+                        text-transform: uppercase;
+                        letter-spacing: 1px;
+                        color: #10b981;
+                        font-weight: 700;
+                        margin-bottom: 3px;
+                    }
+                    .lifelens-val { color: #ccc; font-size: 11px; }
+                    .lifelens-formula {
+                        font-family: 'Courier New', monospace;
+                        font-size: 10px;
+                        color: #00bfff;
+                        background: rgba(0,0,0,0.3);
+                        padding: 4px 8px;
+                        border-radius: 4px;
+                        margin-top: 3px;
+                        display: inline-block;
+                    }
+                    .lifelens-web-alt {
+                        margin-top: 8px;
+                        padding: 8px;
+                        background: rgba(59, 130, 246, 0.08);
+                        border: 1px solid rgba(59, 130, 246, 0.2);
+                        border-radius: 6px;
+                    }
+                    .lifelens-web-alt a {
+                        color: #3b82f6;
+                        text-decoration: none;
+                        font-size: 11px;
+                    }
+                    .lifelens-web-alt a:hover { text-decoration: underline; }
                 </style>
 
                 <div class="ll-header">
@@ -4450,6 +4518,42 @@
                 `<div style="font-size:10px;color:#00ff88;margin-top:3px;">🤖 Agent: ${artifact.creatorAgent}</div>` : '';
             const ecoTag = artifact.ecosystemTest ? 
                 '<span style="font-size:9px;background:rgba(0,255,136,0.15);color:#00ff88;padding:2px 6px;border-radius:4px;margin-left:4px;">ECOSYSTEM</span>' : '';
+            const lifeLensId = 'lifelens-' + artifact.id;
+            const kwhVal = parseFloat(artifact.kwhFootprint) || 0;
+            const solarVal = parseFloat(artifact.solarPrice) || 0;
+            const rawSize = artifact.masterFileSize || artifact.tradeFileSize || 0;
+            const fileSizeKB = (rawSize / 1024).toFixed(1);
+            const fileSizeMB = (rawSize / (1024*1024)).toFixed(3);
+            const methodMap = {
+                'dalle-3': 'DALL-E 3 (AI Image Generation)',
+                'gpt-4o': 'GPT-4o (AI Text Generation)',
+                'gpt4o-art-description': 'GPT-4o (Art Description Fallback)',
+                'gpt4o-lyrics-alt': 'GPT-4o (Lyrics Alternative)',
+                'tts-1': 'TTS-1 (AI Audio Synthesis)',
+                'budget_exceeded': 'Budget Exceeded \u2192 Text Fallback',
+                'web-discovery': 'Web Source Discovery',
+                'human-upload': 'Human Upload',
+                'none': 'Metadata Only'
+            };
+            const methodDisplay = methodMap[artifact.creationMethod] || artifact.creationMethod || 'Direct Upload';
+            const sourceDisplay = artifact.creationSource === 'ai-self-creation' ? '\ud83e\udd16 AI Self-Creation' : 
+                                  artifact.creationSource === 'web-discovery' ? '\ud83c\udf10 Web Discovery' : 
+                                  '\ud83d\udc64 Human Creator';
+            const contentKwh = (kwhVal * 0.7).toFixed(4);
+            const processingKwh = (kwhVal * 0.15).toFixed(4);
+            const storageKwh = (kwhVal * 0.05).toFixed(4);
+            const deliveryKwh = (kwhVal * 0.1).toFixed(4);
+            const sq = encodeURIComponent(artifact.title + ' ' + artifact.category);
+            const catLower = (artifact.category || '').toLowerCase();
+            const isAudio = catLower === 'music' || (artifact.file_type || '').startsWith('audio');
+            const isVisual = catLower === 'art' || catLower === 'photo' || catLower === 'photography' || (artifact.file_type || '').startsWith('image');
+            const isSoftware = catLower === 'software' || catLower === 'ai tools' || catLower === 'code tools';
+            let extraLinks = '';
+            if (isAudio) extraLinks = `<span style="color:#444;margin:0 6px;">|</span><a href="https://freemusicarchive.org/search?quicksearch=${sq}" target="_blank" rel="noopener">\ud83c\udfb5 Free Music Archive</a>`;
+            if (isVisual) extraLinks = `<span style="color:#444;margin:0 6px;">|</span><a href="https://unsplash.com/s/photos/${sq}" target="_blank" rel="noopener">\ud83d\udcf7 Unsplash</a>`;
+            if (isSoftware) extraLinks = `<span style="color:#444;margin:0 6px;">|</span><a href="https://github.com/search?q=${sq}" target="_blank" rel="noopener">\ud83d\udcbb GitHub</a>`;
+            const descSnippet = artifact.description ? (artifact.description.length > 150 ? artifact.description.substring(0,150) + '...' : artifact.description) : '';
+            const tagsHtml = artifact.searchTags && artifact.searchTags.length > 0 ? 'Tags: ' + artifact.searchTags.join(', ') + '<br>' : '';
             return `
                 <div class="artifact-card" onclick="selectArtifact('${artifact.id}')">
                     ${artifact.isBonus ? '<div class="artifact-bonus">BONUS TRACK</div>' : ''}
@@ -4458,8 +4562,58 @@
                     ${agentBadge}
                     <div class="artifact-kwh">${artifact.kwhFootprint} kWh footprint</div>
                     <div class="artifact-price">${artifact.formattedPrice}</div>
-                    <div style="font-size:10px;color:#ffd700;margin-top:2px;">⚡ ~${(parseFloat(artifact.solarPrice || 0) * 4913).toFixed(2)} kWh energy footprint</div>
-                    <div style="font-size:9px;color:#666;margin-top:1px;font-style:italic;">1 Solar = 4,913 kWh · Solar is the medium of exchange within the TC-S Network · No fiat-to-Solar exchange outside the network</div>
+                    <div style="font-size:10px;color:#ffd700;margin-top:2px;">\u26a1 ~${(solarVal * 4913).toFixed(2)} kWh energy footprint</div>
+                    <div style="font-size:9px;color:#666;margin-top:1px;font-style:italic;">1 Solar = 4,913 kWh \u00b7 Solar is the medium of exchange within the TC-S Network \u00b7 No fiat-to-Solar exchange outside the network</div>
+                    <button class="lifelens-toggle" onclick="event.stopPropagation(); toggleLifeLensReport('${lifeLensId}')">
+                        \ud83e\uddff LifeLens Report \u2014 Show Pricing Analysis
+                    </button>
+                    <div class="lifelens-report" id="${lifeLensId}">
+                        <div class="lifelens-section">
+                            <div class="lifelens-label">\u26a1 Energy Footprint Breakdown</div>
+                            <div class="lifelens-val">
+                                Content creation: ${contentKwh} kWh<br>
+                                Processing: ${processingKwh} kWh<br>
+                                Storage: ${storageKwh} kWh<br>
+                                Delivery: ${deliveryKwh} kWh<br>
+                                <b>Total: ${kwhVal.toFixed(4)} kWh</b>
+                            </div>
+                        </div>
+                        <div class="lifelens-section">
+                            <div class="lifelens-label">\u2600\ufe0f Solar Pricing Formula</div>
+                            <div class="lifelens-val">
+                                <div class="lifelens-formula">${kwhVal.toFixed(4)} kWh \u00f7 4,913 kWh/Solar = ${solarVal.toFixed(4)} Solar</div>
+                                <div style="margin-top:4px;color:#888;font-size:10px;">1 Solar = 4,913 kWh renewable energy equivalent</div>
+                            </div>
+                        </div>
+                        <div class="lifelens-section">
+                            <div class="lifelens-label">\ud83d\udd2c Creation Method</div>
+                            <div class="lifelens-val">
+                                ${sourceDisplay}<br>
+                                Engine: <span style="color:#00bfff">${methodDisplay}</span><br>
+                                File type: ${artifact.file_type || 'unknown'} ${rawSize > 0 ? '(' + (parseFloat(fileSizeMB) > 1 ? fileSizeMB + ' MB' : fileSizeKB + ' KB') + ')' : ''}
+                            </div>
+                        </div>
+                        <div class="lifelens-section">
+                            <div class="lifelens-label">\ud83c\udff7\ufe0f AI Curation Notes</div>
+                            <div class="lifelens-val">
+                                Category: ${artifact.category}<br>
+                                ${tagsHtml}
+                                ${descSnippet ? '<span style="color:#aaa;font-style:italic;">"' + descSnippet + '"</span>' : ''}
+                            </div>
+                        </div>
+                        <div class="lifelens-web-alt">
+                            <div class="lifelens-label">\ud83c\udf10 Web Sourcing Alternatives</div>
+                            <div style="margin-top:4px;">
+                                <a href="https://www.google.com/search?q=${sq}" target="_blank" rel="noopener">\ud83d\udd0d Google Search</a>
+                                <span style="color:#444;margin:0 6px;">|</span>
+                                <a href="https://commons.wikimedia.org/w/index.php?search=${sq}" target="_blank" rel="noopener">\ud83d\udcda Wikimedia</a>
+                                <span style="color:#444;margin:0 6px;">|</span>
+                                <a href="https://archive.org/search?query=${sq}" target="_blank" rel="noopener">\ud83c\udfdb\ufe0f Archive.org</a>
+                                ${extraLinks}
+                            </div>
+                            <div style="color:#666;font-size:9px;margin-top:4px;">Compare open-source alternatives before purchasing</div>
+                        </div>
+                    </div>
                     ${artifact.previewType === 'audio' && artifact.streamingUrl ? 
                         `<a href="${artifact.streamingUrl}" target="_blank" class="preview-btn music-link" onclick="event.stopPropagation();">
                             🎵 Listen on Music Now

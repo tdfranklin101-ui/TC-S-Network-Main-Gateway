@@ -6497,39 +6497,53 @@ const server = http.createServer(async (req, res) => {
       
       if (pool) {
         const artifactsQuery = `
-          SELECT id, title, description, category, file_type, kwh_footprint, solar_amount_s, 
-                 is_bonus, cover_art_url, delivery_mode, creator_id, 
-                 streaming_url, preview_type, preview_slug, search_tags, preview_file_url, 
-                 master_file_url, trade_file_url
-          FROM artifacts 
-          WHERE active = true 
-          ORDER BY is_bonus ASC, solar_amount_s ASC, title ASC
+          SELECT a.id, a.title, a.description, a.category, a.file_type, a.kwh_footprint, a.solar_amount_s, 
+                 a.is_bonus, a.cover_art_url, a.delivery_mode, a.creator_id, 
+                 a.streaming_url, a.preview_type, a.preview_slug, a.search_tags, a.preview_file_url, 
+                 a.master_file_url, a.trade_file_url,
+                 a.master_file_size, a.trade_file_size, a.preview_file_size,
+                 m.metadata as market_metadata, m.source_type as market_source_type
+          FROM artifacts a
+          LEFT JOIN market_items m ON m.id = a.id::text
+          WHERE a.active = true 
+          ORDER BY a.is_bonus ASC, a.solar_amount_s ASC, a.title ASC
         `;
         
         const artifactsResult = await pool.query(artifactsQuery);
         
-        artifacts = artifactsResult.rows.map(artifact => ({
-          id: artifact.id,
-          title: artifact.title,
-          description: artifact.description,
-          category: artifact.category,
-          file_type: artifact.file_type,
-          kwhFootprint: parseFloat(artifact.kwh_footprint),
-          solarPrice: parseFloat(artifact.solar_amount_s),
-          formattedPrice: `${formatSolar(artifact.solar_amount_s)} Solar`,
-          isBonus: artifact.is_bonus,
-          coverArt: artifact.cover_art_url,
-          deliveryMode: artifact.delivery_mode || 'download',
-          creatorId: artifact.creator_id,
-          streamingUrl: artifact.streaming_url,
-          previewType: artifact.preview_type,
-          previewSlug: artifact.preview_slug,
-          searchTags: artifact.search_tags || [],
-          previewFileUrl: artifact.preview_file_url || null,
-          masterFileUrl: artifact.master_file_url || null,
-          tradeFileUrl: artifact.trade_file_url || null,
-          coverArtUrl: artifact.cover_art_url || null
-        }));
+        artifacts = artifactsResult.rows.map(artifact => {
+          const meta = artifact.market_metadata || {};
+          return {
+            id: artifact.id,
+            title: artifact.title,
+            description: artifact.description,
+            category: artifact.category,
+            file_type: artifact.file_type,
+            kwhFootprint: parseFloat(artifact.kwh_footprint),
+            solarPrice: parseFloat(artifact.solar_amount_s),
+            formattedPrice: `${formatSolar(artifact.solar_amount_s)} Solar`,
+            isBonus: artifact.is_bonus,
+            coverArt: artifact.cover_art_url,
+            deliveryMode: artifact.delivery_mode || 'download',
+            creatorId: artifact.creator_id,
+            streamingUrl: artifact.streaming_url,
+            previewType: artifact.preview_type,
+            previewSlug: artifact.preview_slug,
+            searchTags: artifact.search_tags || [],
+            previewFileUrl: artifact.preview_file_url || null,
+            masterFileUrl: artifact.master_file_url || null,
+            tradeFileUrl: artifact.trade_file_url || null,
+            coverArtUrl: artifact.cover_art_url || null,
+            masterFileSize: artifact.master_file_size || 0,
+            tradeFileSize: artifact.trade_file_size || 0,
+            previewFileSize: artifact.preview_file_size || 0,
+            creationMethod: meta.creationMethod || null,
+            creationSource: meta.creationSource || null,
+            creatorAgent: meta.agent || null,
+            ecosystemTest: meta.ecosystemTest || false,
+            uploadType: meta.uploadType || null
+          };
+        });
       }
 
       // Load and merge JSON collection files
@@ -13053,7 +13067,7 @@ pageStatus.forEach(({ page, exists }) => {
 
 console.log(`\n[ENDPOINTS]`);
 console.log(`  Health:        /health`);
-console.log(`  Ecosystem:     /ecosystem-test.html`);
+console.log(`  Agent Dashboard: /ecosystem-test.html`);
 console.log(`  Analysis:      /ecosystem-analysis.html`);
 console.log(`  Marketplace:   /marketplace.html`);
 console.log(`  API Test Runs: /api/ecosystem-test/runs`);
