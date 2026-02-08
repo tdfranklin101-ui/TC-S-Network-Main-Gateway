@@ -206,15 +206,171 @@ const AGENTS = [
   {id:20,code:'20',name:'Zenith',icon:'🏔️'}
 ];
 
-const CATEGORIES = ['Digital Art','Music','Software','Education','Energy Tools'];
-
-const ITEM_NAMES = {
-  'Digital Art':['Solar Fractal Generator v2','Neon Grid Dreamscape','Photon Lattice Portrait','Aurora Borealis Render','Quantum Bloom Canvas'],
-  'Music':['Neon Grid Meditation Track','Solar Wind Symphony','Dawn Chorus Binaural','kWh Rhythm Machine','Photovoltaic Beats Pack'],
-  'Software':['kWh Optimizer Script','Solar Panel Simulator','Grid Load Balancer Pro','Energy Harvest Toolkit','Watt Flow Analyzer'],
-  'Education':['Photovoltaic Design Course','Solar Economics 101','Off-Grid Living Guide','Battery Chemistry Deep Dive','Renewable Energy Masterclass'],
-  'Energy Tools':['Quantum Solar Meter','Micro-Inverter Diagnostic','Panel Tilt Calculator','Irradiance Mapper v3','Solar ROI Dashboard']
+const CAT_GROUPS = {
+  'TC-S Market':['Computronium','Culture','Basic Needs','Rent','Energy'],
+  'Creative & Media':['Music','Video','Art','Photo','Writing'],
+  'AI-Enhanced':['AI Tools','AI Create'],
+  'Technical & Other':['Software','Docs','Games','Utilities']
 };
+const CATEGORIES = Object.values(CAT_GROUPS).flat();
+const MANDATORY_BASIC_PURCHASES = 2;
+
+const ITEM_PARTS = {
+  'Computronium':{
+    adj:['Quantum','Neural','Photonic','Lattice','Cryo','Nano','Hyper','Exascale','Coherent','Flux'],
+    noun:['Compute Shard','Processing Unit','Logic Crystal','Inference Chip','Hash Engine','Tensor Core','Bit Forge','Data Loom','Cycle Pack','Throughput Token'],
+    suffix:['v4','XL','Genesis','Prime','Ultra','Turbo','Certified','Standard','Pro','Entangled']
+  },
+  'Culture':{
+    adj:['Solar Punk','Afrofuturist','Indigenous','Global South','Diaspora','Ancestral','Neo-Folk','Visionary','Mythopoetic','Communal'],
+    noun:['Story Archive','Heritage Map','Festival Pass','Language Kit','Oral History','Art Zine','Cultural Exchange','Folklore Bundle','Tradition Seed','Memory Capsule'],
+    suffix:['Edition','Collective','Archive','Vol. I','Curated','Open','Living','Sacred','Shared','Roots']
+  },
+  'Basic Needs':{
+    adj:['Essential','Daily','Community','Shared','Universal','Cooperative','Local','Fresh','Sustainable','Open-Access'],
+    noun:['Energy Credit','Water Purification Kit','Food Co-op Share','Shelter Maintenance Pack','Health Scan Token','Transport Pass','Communication Bundle','Clothing Voucher','Nutrition Pack','Safety Kit'],
+    suffix:['Daily','Weekly','Family','Individual','Starter','Standard','Plus','Community','Mutual Aid','Basic']
+  },
+  'Rent':{
+    adj:['Shared','Cooperative','Micro','Community','Modular','Solar-Powered','Off-Grid','Resilient','Portable','Sustainable'],
+    noun:['Housing Credit','Workspace Pass','Land Share','Co-Living Token','Studio Rental','Garden Plot','Workshop Bay','Storage Unit','Shelter Voucher','Facility Access'],
+    suffix:['Monthly','Seasonal','Flex','Standard','Equity','Rotating','Trial','Founding','Anchored','Open']
+  },
+  'Energy':{
+    adj:['Precision','Portable','Industrial','Wireless','AI-Powered','Multi-Spectrum','Ruggedized','Modular','Open-Source','Calibrated'],
+    noun:['Solar Meter','Inverter Diag','Panel Mapper','Irradiance Sensor','ROI Calculator','Load Tester','Efficiency Gauge','Grid Probe','Watt Tracker','Harvest Monitor'],
+    suffix:['v4','Pro','Field Kit','IoT','USB-C','Bluetooth','HD','IP67','with Case','Starter']
+  },
+  'Music':{
+    adj:['Binaural','Ambient','Solar Wind','Dawn Chorus','Photovoltaic','Deep Field','Resonant','Harmonic','Celestial','Crystalline'],
+    noun:['Beats Pack','Symphony','Meditation','Soundscape','Frequency Kit','Mix Tape','Rhythm Loop','Sonic Wave','Tone Garden','Pulse Set'],
+    suffix:['432Hz','528Hz','Full Spectrum','Studio Mix','Live','Extended','Remastered','Deluxe','Pro','Spatial']
+  },
+  'Video':{
+    adj:['Cinematic','Drone','Time-Lapse','Volumetric','Holographic','Immersive','Documentary','Generative','Solar-Lit','RAW'],
+    noun:['Film Reel','Tutorial Series','Music Video','Short Film','B-Roll Pack','VFX Template','Motion Study','Scene Kit','Footage Archive','Visual Essay'],
+    suffix:['4K','8K','HDR','Director\'s Cut','Extended','Uncut','Remastered','Season 1','Premiere','Open License']
+  },
+  'Art':{
+    adj:['Fractal','Neon','Holographic','Prismatic','Quantum','Solar','Cosmic','Bioluminescent','Kinetic','Ethereal'],
+    noun:['Dreamscape','Canvas','Portrait','Mandala','Mosaic','Tapestry','Sculpture','Lattice','Aurora','Bloom'],
+    suffix:['v2','HD','XR Edition','Collector\'s','Limited Run','Genesis','Infinite','Luminous','Remastered','Ultra']
+  },
+  'Photo':{
+    adj:['Aerial','Macro','Infrared','Long-Exposure','Street','Astro','Solar','Golden Hour','Deep Field','Polaroid'],
+    noun:['Photo Set','Print Collection','Lightroom Preset','Portfolio','Stock Pack','Documentary Series','Panorama','Composite','Archive','Gallery'],
+    suffix:['Hi-Res','RAW','Licensed','Open','Curated','Limited','Signed','Volume 1','Platinum','Exhibition']
+  },
+  'Writing':{
+    adj:['Speculative','Technical','Lyrical','Investigative','Collaborative','Serialized','Epistolary','Mythic','Solar Punk','Manifesto'],
+    noun:['Novel Chapter','Essay Collection','Poetry Zine','Whitepaper','Field Notes','Script Draft','Research Paper','Blog Series','Anthology','Protocol Doc'],
+    suffix:['First Edition','Draft','Annotated','Illustrated','Abridged','Extended','Open Access','Peer-Reviewed','Serialized','Deluxe']
+  },
+  'AI Tools':{
+    adj:['Adaptive','Predictive','Autonomous','Federated','Explainable','Real-Time','Multi-Modal','Zero-Shot','Fine-Tuned','On-Device'],
+    noun:['Model Weights','Prompt Library','Agent Framework','Training Pipeline','Inference Engine','Eval Suite','Dataset Curator','Embedding Index','RAG Module','Safety Filter'],
+    suffix:['Pro','v3','Open','Certified','Enterprise','Lite','SDK','API','Beta','Community']
+  },
+  'AI Create':{
+    adj:['Generative','Neural','Diffusion','Transformer','Dreaming','Hallucinated','Procedural','Stochastic','Emergent','Synthetic'],
+    noun:['Image Generator','Voice Clone','Music Composer','Story Writer','Video Synthesizer','Style Transfer','Avatar Builder','World Builder','Texture Forge','Concept Engine'],
+    suffix:['HD','XL','Turbo','Creative','Unlimited','Standard','Plus','Studio','Personal','Open']
+  },
+  'Software':{
+    adj:['Smart','Adaptive','Real-Time','Predictive','Autonomous','Distributed','Neural','Edge','Quantum','Zero-Loss'],
+    noun:['Optimizer','Simulator','Balancer','Analyzer','Dashboard','Controller','Monitor','Scheduler','Forecaster','Compiler'],
+    suffix:['Pro','v3','Enterprise','Lite','Cloud','CLI','API','SDK','Toolkit','Suite']
+  },
+  'Docs':{
+    adj:['Complete','Illustrated','Interactive','Certified','Hands-On','Immersive','Self-Paced','Expert','Step-by-Step','Annotated'],
+    noun:['Course','Masterclass','Workshop','Guide','Bootcamp','Blueprint','Playbook','Deep Dive','Lab Manual','Seminar Notes'],
+    suffix:['2026','Cohort','Intensive','w/ Sim','& Cert','w/ Projects','Bundle','Starter','Pro Track','Unlimited']
+  },
+  'Games':{
+    adj:['Solar','Quantum','Neon','Retro','Procedural','Cooperative','Infinite','Pixel','Voxel','Emergent'],
+    noun:['Puzzle','Strategy Game','Sim','RPG Module','Card Deck','Board Game','Arcade','Sandbox','World Map','Quest Pack'],
+    suffix:['Alpha','Beta','Full','Deluxe','Expansion','Season Pass','Community','Open Source','Remastered','Definitive']
+  },
+  'Utilities':{
+    adj:['Portable','Lightweight','Cross-Platform','Secure','Encrypted','Offline','Automated','Batch','CLI','Open-Source'],
+    noun:['File Converter','Backup Tool','Password Vault','Network Scanner','System Monitor','Batch Processor','Data Cleaner','Log Analyzer','Config Manager','Deploy Script'],
+    suffix:['Pro','Lite','v2','Free','Standard','Plus','Enterprise','Portable','CLI','GUI']
+  }
+};
+
+const CREATION_ENGINES = {
+  'Music':{engines:['Suno AI','Udio','AiSongMaker.io'],icon:'🎵',flow:'Prompt → Generate → Download → Upload'},
+  'Video':{engines:['Vimeo Create','Runway AI','Sora','Meta Movie Gen'],icon:'🎬',flow:'Script → Generate → Host → Link'},
+  'Software':{engines:['Replit','OpenAI Codex','Bolt.new','v0.dev'],icon:'💻',flow:'Spec → Build → Deploy → List'},
+  'AI Tools':{engines:['Replit','OpenAI Codex','v0.dev'],icon:'🤖',flow:'Design → Code → Test → Ship'},
+  'AI Create':{engines:['Sora','Runway AI','Suno AI','DALL-E'],icon:'🧠',flow:'Concept → AI Generate → Curate → Publish'},
+  'Art':{engines:['DALL-E','Midjourney','Stable Diffusion'],icon:'🎨',flow:'Prompt → Generate → Refine → Mint'},
+  'Photo':{engines:['Adobe Lightroom AI','Topaz AI'],icon:'📸',flow:'Capture → Enhance → Export → List'},
+  'Writing':{engines:['GPT-4o','Claude','Jasper'],icon:'✍️',flow:'Draft → AI Assist → Edit → Publish'},
+  'Games':{engines:['Replit','Unity','Godot','Bolt.new'],icon:'🎮',flow:'Design → Build → Test → Deploy'},
+  'Docs':{engines:['GPT-4o','Notion AI','Claude'],icon:'📚',flow:'Research → Draft → Format → Publish'},
+  'Computronium':{engines:['Replit','Custom Forge'],icon:'🚀',flow:'Design → Compute → Validate → Mint'},
+  'Culture':{engines:['GPT-4o','DALL-E','Suno AI'],icon:'🎭',flow:'Research → Create → Curate → Share'},
+  'Energy':{engines:['Replit','Custom IoT'],icon:'⚡',flow:'Measure → Build Tool → Calibrate → List'},
+  'Rent':{engines:['Smart Contracts','Replit'],icon:'🏠',flow:'Define → Deploy → Verify → List'},
+  'Basic Needs':{engines:['Community Tools','Replit'],icon:'🏠',flow:'Identify Need → Package → Price → List'},
+  'Utilities':{engines:['Replit','Bolt.new','v0.dev'],icon:'🔧',flow:'Spec → Code → Test → Ship'}
+};
+
+const AGENT_SPECIALTIES = {
+  'Aurora':'Art','Blaze':'Energy','Cipher':'Software','Dawn':'Docs','Ember':'Music',
+  'Flux':'AI Tools','Glow':'Photo','Helix':'Computronium','Ion':'Energy','Jade':'Music',
+  'Karma':'Culture','Luna':'Art','Mantis':'Software','Nova':'AI Create','Orion':'Video',
+  'Pulse':'Games','Quasar':'Writing','Radiant':'Energy','Solaris':'Docs','Tesla':'Utilities',
+  'Zenith':'Computronium'
+};
+
+const MARKET_DEMAND = ['Basic Needs','Energy','Computronium','Software','AI Tools','Music','Art','Rent','Culture','Video','Photo','Writing','AI Create','Docs','Games','Utilities'];
+
+function generateBasicNeedsItem(agentName,existingNames){
+  const p=ITEM_PARTS['Basic Needs'];
+  const a=p.adj[Math.floor(Math.random()*p.adj.length)];
+  const n=p.noun[Math.floor(Math.random()*p.noun.length)];
+  const s=p.suffix[Math.floor(Math.random()*p.suffix.length)];
+  let name=`${a} ${n} — ${s}`;
+  let attempt=0;
+  while(existingNames.some(t=>t===name)&&attempt<5){
+    const a2=p.adj[Math.floor(Math.random()*p.adj.length)];
+    name=`${a2} ${n} — ${s}`;
+    attempt++;
+  }
+  const price=parseFloat(randBetween(0.002,0.08).toFixed(4));
+  const desc=`${name} — a Basic Needs item created by Agent ${agentName} as a public good. Every member must purchase ${MANDATORY_BASIC_PURCHASES} basic needs items per day. Affordable, essential, community-sustaining.`;
+  return {name,desc,price,isBasicNeed:true,category:'Basic Needs'};
+}
+
+function generateCreativeItem(agentName,cat,existingNames){
+  const parts=ITEM_PARTS[cat];
+  if(!parts) return {name:agentName+'\'s Creation',desc:'A unique artifact',price:0.01,isBasicNeed:false,category:cat};
+  const a=parts.adj[Math.floor(Math.random()*parts.adj.length)];
+  const n=parts.noun[Math.floor(Math.random()*parts.noun.length)];
+  const s=parts.suffix[Math.floor(Math.random()*parts.suffix.length)];
+  const combos=[[`${a} ${n} ${s}`],[`${a} ${n}`],[`${n} — ${s}`]];
+  const pick=combos[Math.floor(Math.random()*combos.length)];
+  let name=pick[0];
+  const tries=existingNames||[];
+  let attempt=0;
+  while(tries.some(t=>t===name)&&attempt<5){
+    const a2=parts.adj[Math.floor(Math.random()*parts.adj.length)];
+    const n2=parts.noun[Math.floor(Math.random()*parts.noun.length)];
+    name=`${a2} ${n2} ${s}`;
+    attempt++;
+  }
+  const demandIdx=MARKET_DEMAND.indexOf(cat);
+  const demandMultiplier=demandIdx>=0?(1+Math.max(0,(8-demandIdx))*0.08):1;
+  const basePrice=parseFloat(randBetween(0.005,0.4).toFixed(4));
+  const profitPrice=parseFloat((basePrice*demandMultiplier).toFixed(4));
+  const groupName=Object.entries(CAT_GROUPS).find(([g,cats])=>cats.includes(cat))?.[0]||'';
+  const flavorMap={'Computronium':'Powers the network.','Culture':'Preserves heritage.','Rent':'Sustains shelter.','Energy':'Solar infrastructure.','Music':'Sonic energy.','Video':'Visual storytelling.','Art':'Creative expression.','Photo':'Captured light.','Writing':'Words with power.','AI Tools':'Intelligence augmented.','AI Create':'Machine creativity.','Software':'Code that works.','Docs':'Knowledge shared.','Games':'Play with purpose.','Utilities':'Tools that serve.'};
+  const flavor=flavorMap[cat]||'High demand = profitable.';
+  const desc=`${name} — crafted by Agent ${agentName}. ${flavor} [${groupName}]`;
+  return {name,desc,price:profitPrice,isBasicNeed:false,category:cat};
+}
 
 const SEARCH_TERMS = ['solar','energy','music','fractal','grid','quantum','photovoltaic','neon','optimizer','renewable','design','aurora','binaural','toolkit','dashboard','battery','panel','inverter','harvest','watt'];
 
@@ -346,36 +502,45 @@ async function phaseDailyDistribution(){
 
 async function phase2_items(){
   const DAILY_CREATE_LIMIT=5;
-  setPhase(2,'Phase 2 — Tier 1 Item Creation & Marketplace Posting',25);
-  addFeed('🚀','<b>Phase 2</b> starting: Each agent creating up to <b>${DAILY_CREATE_LIMIT} artifacts/day</b> → posted to marketplace...');
-  addFeed('📏',`<b>Daily limit:</b> ${DAILY_CREATE_LIMIT} artifacts created + ${DAILY_CREATE_LIMIT} purchases per agent per day`);
-  addFeed('☀️','All items priced in <span class="solar">Solar</span> — Tier 1 TC-S Network listings');
+  setPhase(2,'Phase 2 — Creative Item Creation & Marketplace Posting',25);
+  addFeed('🚀','<b>Phase 2</b> starting: Agents using <b>MCP Creation Engines</b> to produce 5 artifacts/day (1 Basic Needs public good + specialty items)...');
+  addFeed('📏',`<b>Daily rules:</b> 5 artifacts created | 5 purchases (2 mandatory Basic Needs) | positive balance required`);
+  addFeed('🏪','<b>16 categories</b> across TC-S Market, Creative & Media, AI-Enhanced, Technical & Other');
+  addFeed('🔧','<b>Creation Engines:</b> Suno/Udio/AiSongMaker (Music) | Vimeo/Runway/Sora (Video) | Replit/Codex/Bolt/v0 (Code) | DALL-E/Midjourney (Art)');
   $('itemsPanel').style.display='block';
   const grid=$('itemsGrid');
-  let posted=0,failed=0;
+  let posted=0,failed=0,basicNeedsCreated=0;
+  const usedNames=[];
   for(let i=0;i<state.agents.length;i++){
     const agent=state.agents[i];
     agent.dailyCreates=0;
     agent.dailyPurchases=0;
-    const catKeys=Object.keys(ITEM_NAMES);
+    agent.basicNeedsPurchases=0;
+    const specialty=AGENT_SPECIALTIES[agent.name]||CATEGORIES[i%CATEGORIES.length];
     for(let j=0;j<DAILY_CREATE_LIMIT;j++){
-      if(agent.dailyCreates>=DAILY_CREATE_LIMIT){
-        addFeed('📏',`<b>Agent ${agent.name}</b> hit daily create limit (${DAILY_CREATE_LIMIT}/day) — <span style="color:var(--orange)">skipping</span>`);
-        break;
+      let gen,cat,isBasic=false;
+      if(j===0){
+        gen=generateBasicNeedsItem(agent.name,usedNames);
+        cat='Basic Needs';
+        isBasic=true;
+      } else if(j<=2){
+        cat=specialty;
+        gen=generateCreativeItem(agent.name,cat,usedNames);
+      } else {
+        const otherCats=CATEGORIES.filter(c=>c!=='Basic Needs'&&c!==specialty);
+        cat=otherCats[Math.floor(Math.random()*otherCats.length)];
+        gen=generateCreativeItem(agent.name,cat,usedNames);
       }
-      const cat=catKeys[j%catKeys.length];
-      const namePool=ITEM_NAMES[cat];
-      const baseName=namePool[j%namePool.length];
-      const itemName=baseName+' by '+agent.name;
-      const price=parseFloat(randBetween(0.001,0.5).toFixed(3));
+      const itemName=gen.name;
+      usedNames.push(itemName);
+      const price=gen.price;
       const kwhEq=(price*4913).toFixed(1);
-      const desc=`${baseName} — created by Agent ${agent.name} for the TC-S Network ecosystem. Energy equivalent: ${kwhEq} kWh.`;
-      const item={name:itemName,category:cat,price,creator:agent.name,creatorCode:agent.code,agentIdx:i,itemId:null};
+      const item={name:itemName,category:cat,price,creator:agent.name,creatorCode:agent.code,agentIdx:i,itemId:null,isBasicNeed:isBasic};
       try{
         const res=await fetch('/api/ecosystem-test/create-item',{
           method:'POST',
           headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({title:itemName,description:desc,category:cat,priceSolar:price,creatorUsername:agent.username,creatorId:agent.userId}),
+          body:JSON.stringify({title:itemName,description:gen.desc,category:cat,priceSolar:price,creatorUsername:agent.username,creatorId:agent.userId}),
           credentials:'include'
         });
         const data=await res.json().catch(()=>({}));
@@ -383,6 +548,7 @@ async function phase2_items(){
           item.itemId=data.itemId;
           posted++;
           agent.dailyCreates++;
+          if(isBasic) basicNeedsCreated++;
           state.successes++;
         } else {
           failed++;
@@ -390,21 +556,33 @@ async function phase2_items(){
         }
       }catch(e){failed++;state.errors++}
       state.items.push(item);
+      const basicTag=isBasic?'<span style="color:var(--gold);font-size:8px"> 🏠 PUBLIC GOOD</span>':'';
+      const specTag=cat===specialty&&!isBasic?'<span style="font-size:8px;color:var(--cyan)"> ★ specialty</span>':'';
       const card=document.createElement('div');
       card.className='item-card';
-      card.style.borderColor=item.itemId?'var(--green)':'var(--border)';
-      card.innerHTML=`<div class="item-cat">${cat}</div><div class="item-name">${itemName}</div><div class="item-price">${price} ☀️ <span style="font-size:9px;color:#666">(${kwhEq} kWh)</span></div><div class="item-creator">by Agent ${agent.name} ${item.itemId?'<span style="color:var(--green)">✓ LISTED</span>':'<span style="color:#ff4444">✗ FAILED</span>'} <span style="font-size:8px;color:#555">[${agent.dailyCreates}/${DAILY_CREATE_LIMIT}]</span></div>`;
+      card.style.borderColor=isBasic?'var(--gold)':item.itemId?'var(--green)':'var(--border)';
+      if(isBasic) card.style.background='rgba(255,215,0,0.05)';
+      const engLbl=CREATION_ENGINES[cat]?CREATION_ENGINES[cat].engines[Math.floor(Math.random()*CREATION_ENGINES[cat].engines.length)]:'Direct';
+      card.innerHTML=`<div class="item-cat">${cat}${basicTag}${specTag}</div><div class="item-name">${itemName}</div><div class="item-price">${price.toFixed(4)} ☀️ <span style="font-size:9px;color:#666">(${kwhEq} kWh)</span></div><div class="item-creator">by ${agent.name} via <span style="color:var(--cyan)">${engLbl}</span> ${item.itemId?'<span style="color:var(--green)">✓</span>':'<span style="color:#ff4444">✗</span>'} [${agent.dailyCreates}/5]</div>`;
       grid.appendChild(card);
+      const engine=CREATION_ENGINES[cat];
+      const engineName=engine?engine.engines[Math.floor(Math.random()*engine.engines.length)]:'Direct';
+      const engineIcon=engine?engine.icon:'📦';
+      item.creationEngine=engineName;
+      item.mcpFlow=engine?engine.flow:'Create → List';
       if(j===0){
-        addFeed('🏪',`<b>Agent ${agent.name}</b> posted "<span class="ok">${baseName}</span>" to marketplace → <span class="solar">${price} Solar</span> ${item.itemId?'<span class="ok">✓ searchable</span>':'<span class="err">✗ failed</span>'} [${agent.dailyCreates}/${DAILY_CREATE_LIMIT} daily]`);
+        addFeed('🏠',`<b>${agent.name}</b> created Basic Needs: "<span class="solar">${itemName}</span>" → <span class="solar">${price.toFixed(4)} ☀️</span> <span style="color:var(--gold)">[PUBLIC GOOD]</span> via <span style="color:var(--cyan)">${engineName}</span>`);
+      } else if(j===1){
+        addFeed(engineIcon,`<b>${agent.name}</b> used <span style="color:var(--cyan)">${engineName}</span> → "<span class="ok">${itemName}</span>" [${cat}] → <span class="solar">${price.toFixed(4)} ☀️</span> <span style="color:#666;font-size:10px">${item.mcpFlow}</span>`);
       }
       updateStats();
     }
     const pct=25+((i+1)/state.agents.length)*25;
-    setPhase(2,'Phase 2 — Tier 1 Item Creation & Marketplace Posting',pct);
-    await sleep(randBetween(100,250));
+    setPhase(2,'Phase 2 — Creative Item Creation',pct);
+    await sleep(randBetween(80,200));
   }
-  addFeed('🏁',`<b>Phase 2 complete:</b> <span class="ok">${posted} items posted to marketplace</span> (${failed} failed) across ${CATEGORIES.length} categories — daily limit: ${DAILY_CREATE_LIMIT} per agent`);
+  state.basicNeedsCreated=basicNeedsCreated;
+  addFeed('🏁',`<b>Phase 2 complete:</b> <span class="ok">${posted} items posted</span> (${failed} failed) | <span style="color:var(--gold)">${basicNeedsCreated} Basic Needs public goods</span> | ${CATEGORIES.length} categories | 5/agent/day`);
 }
 
 async function phase3_search(){
@@ -471,9 +649,11 @@ async function phase3_search(){
 async function phase4_purchases(){
   setPhase(4,'Phase 4 — Tier 1 Solar Purchases Only',70);
   const DAILY_PURCHASE_LIMIT=5;
+  const MANDATORY_BASIC_PURCHASES=2;
   addFeed('🚀','<b>Phase 4</b> starting: Inter-agent <b>Solar purchases</b> (Tier 1 + Tier 2 sample sales)...');
   addFeed('☀️','<span class="ok">Tier 1 (member listings) + Tier 2 (web sample sales) are purchasable with Solar</span>');
-  addFeed('📏',`<b>Rules:</b> Max ${DAILY_PURCHASE_LIMIT} purchases/day | Must maintain positive balance | Sellers receive Solar from sales`);
+  addFeed('🏠',`<span style="color:var(--gold)"><b>MANDATORY:</b> First ${MANDATORY_BASIC_PURCHASES} of 5 daily purchases must be Basic Needs items (public good)</span>`);
+  addFeed('📏',`<b>Rules:</b> Max ${DAILY_PURCHASE_LIMIT} purchases/day | ${MANDATORY_BASIC_PURCHASES} Basic Needs required | positive balance | sellers receive Solar`);
   addFeed('🚫','<span style="color:#888">Tier 3 (open fulfillment requests) has NO purchase route — bulletin board only</span>');
   await sleep(300);
   $('networkPanel').style.display='block';
@@ -497,14 +677,16 @@ async function phase4_purchases(){
   });
 
   let tier3Blocked=0,balanceBlocked=0,limitBlocked=0;
-  let t1Purchases=0,t2SamplePurchases=0;
+  let t1Purchases=0,t2SamplePurchases=0,basicNeedsPurchased=0;
   let totalSellerRevenue=0;
   const purchaseEdges=[];
   const t1Items=state.items.filter(it=>!it.tier||it.tier!=='T2_SAMPLE');
   const t2Items=state.items.filter(it=>it.tier==='T2_SAMPLE');
+  const basicNeedsPool=t1Items.filter(it=>it.isBasicNeed);
   for(let i=0;i<state.agents.length;i++){
     const buyer=state.agents[i];
     buyer.dailyPurchases=buyer.dailyPurchases||0;
+    buyer.basicNeedsPurchases=buyer.basicNeedsPurchases||0;
     const attemptCount=Math.floor(randBetween(5,7));
     for(let b=0;b<attemptCount;b++){
       if(buyer.dailyPurchases>=DAILY_PURCHASE_LIMIT){
@@ -525,8 +707,17 @@ async function phase4_purchases(){
       do{sellerIdx=Math.floor(Math.random()*state.agents.length)}while(sellerIdx===i);
       const seller=state.agents[sellerIdx];
       let item,tierLabel;
-      if(b<3||t2Items.length===0){
-        const itemPool=t1Items.filter(it=>it.agentIdx===sellerIdx);
+      const needsBasic=buyer.basicNeedsPurchases<MANDATORY_BASIC_PURCHASES;
+      if(needsBasic){
+        const bnPool=basicNeedsPool.filter(it=>it.agentIdx!==i);
+        item=bnPool.length>0?bnPool[Math.floor(Math.random()*bnPool.length)]:{name:'Community Solar Water Filter',price:0.01,isBasicNeed:true,category:'Basic Needs'};
+        tierLabel='T1 ☀️ 🏠';
+        if(buyer.basicNeedsPurchases===0){
+          addFeed('🏠',`<span style="color:var(--gold)"><b>${buyer.name}</b> fulfilling mandatory Basic Needs (${buyer.basicNeedsPurchases+1}/${MANDATORY_BASIC_PURCHASES}): "<span class="solar">${item.name}</span>"</span>`);
+        }
+        sellerIdx=item.agentIdx!==undefined?item.agentIdx:sellerIdx;
+      } else if(b<3||t2Items.length===0){
+        const itemPool=t1Items.filter(it=>it.agentIdx===sellerIdx&&!it.isBasicNeed);
         item=itemPool.length>0?itemPool[Math.floor(Math.random()*itemPool.length)]:{name:'Solar Widget',price:0.01};
         tierLabel='T1 ☀️';
       }else{
@@ -544,15 +735,17 @@ async function phase4_purchases(){
         continue;
       }
       buyer.balance-=price;
-      seller.balance=(seller.balance||0)+price;
+      const actualSeller=state.agents[sellerIdx];
+      actualSeller.balance=(actualSeller.balance||0)+price;
       totalSellerRevenue+=price;
       buyer.dailyPurchases++;
+      if(needsBasic||item.isBasicNeed){buyer.basicNeedsPurchases++;basicNeedsPurchased++}
       if(tierLabel.startsWith('T1')){t1Purchases++}else{t2SamplePurchases++}
       state.purchases++;
       state.totalSolar+=price;
       state.successes++;
       updateAgentCard(buyer,'buying',buyer.balance,'registered');
-      updateAgentCard(seller,'sold!',seller.balance,'registered');
+      updateAgentCard(actualSeller,'sold!',actualSeller.balance,'registered');
 
       const bNode=nodeEls[i],sNode=nodeEls[sellerIdx];
       const dx=sNode.x-bNode.x,dy=sNode.y-bNode.y;
@@ -567,13 +760,14 @@ async function phase4_purchases(){
       viz.appendChild(edge);
       bNode.el.classList.add('buyer');
 
-      purchaseEdges.push({buyer:buyer.name,seller:seller.name,item:item.name,price,tierLabel,fiatOrigin:item.fiatOrigin,buyerBal:buyer.balance,sellerBal:seller.balance});
+      purchaseEdges.push({buyer:buyer.name,seller:actualSeller.name,item:item.name,price,tierLabel,fiatOrigin:item.fiatOrigin,buyerBal:buyer.balance,sellerBal:actualSeller.balance,isBasicNeed:needsBasic||item.isBasicNeed});
       updateStats();
     }
     if(purchaseEdges.length>0&&(i%3===0||i===state.agents.length-1)){
       const last=purchaseEdges[purchaseEdges.length-1];
       const fiatNote=last.fiatOrigin?` <span style="color:#888">(web $${last.fiatOrigin} → Solar)</span>`:'';
-      addFeed('💸',`<b>${last.buyer}</b> → <b>${last.seller}</b>: "<span class="ok">${last.item}</span>" for <span class="solar">${last.price.toFixed(4)} ☀️</span> [${last.tierLabel}]${fiatNote} | Buyer: ${last.buyerBal.toFixed(2)} ☀️ | Seller: +${last.price.toFixed(4)} ☀️`);
+      const bnTag=last.isBasicNeed?' <span style="color:var(--gold)">[PUBLIC GOOD]</span>':'';
+      addFeed('💸',`<b>${last.buyer}</b> → <b>${last.seller}</b>: "<span class="ok">${last.item}</span>" for <span class="solar">${last.price.toFixed(4)} ☀️</span> [${last.tierLabel}]${bnTag}${fiatNote} | Buyer: ${last.buyerBal.toFixed(2)} ☀️ | Seller: +${last.price.toFixed(4)} ☀️`);
     }
     const pct=70+((i+1)/state.agents.length)*25;
     setPhase(4,'Phase 4 — Solar Economy (T1 + T2 Samples)',pct);
@@ -585,7 +779,10 @@ async function phase4_purchases(){
   state.t1Purchases=t1Purchases;
   state.t2SamplePurchases=t2SamplePurchases;
   state.totalSellerRevenue=totalSellerRevenue;
-  addFeed('🏁',`<b>Phase 4 complete:</b> ${t1Purchases} T1 + ${t2SamplePurchases} T2 samples = <span class="ok">${state.purchases} Solar transactions</span> | ${balanceBlocked} insufficient balance | ${limitBlocked} daily limit hit | ${tier3Blocked} T3 blocked | Seller revenue: <span class="solar">${totalSellerRevenue.toFixed(2)} ☀️</span>`);
+  state.basicNeedsPurchased=basicNeedsPurchased;
+  const bnCompliance=state.agents.filter(a=>a.basicNeedsPurchases>=MANDATORY_BASIC_PURCHASES).length;
+  addFeed('🏠',`<span style="color:var(--gold)"><b>Basic Needs compliance:</b> ${bnCompliance}/${state.agents.length} agents fulfilled ${MANDATORY_BASIC_PURCHASES} mandatory purchases (${basicNeedsPurchased} total)</span>`);
+  addFeed('🏁',`<b>Phase 4 complete:</b> ${t1Purchases} T1 + ${t2SamplePurchases} T2 samples = <span class="ok">${state.purchases} Solar transactions</span> | <span style="color:var(--gold)">${basicNeedsPurchased} Basic Needs</span> | ${balanceBlocked} insufficient balance | ${limitBlocked} daily limit hit | ${tier3Blocked} T3 blocked | Seller revenue: <span class="solar">${totalSellerRevenue.toFixed(2)} ☀️</span>`);
 }
 
 function showReport(){
@@ -598,32 +795,231 @@ function showReport(){
   $('healthVerdict').textContent=healthPct>=90?'🌟 Excellent — Network is thriving!':healthPct>=70?'✅ Good — Minor issues detected':healthPct>=50?'⚠️ Fair — Some failures need attention':'🔴 Poor — Significant issues found';
   const detail=$('reportDetail');
   detail.innerHTML='';
+  const engineUsage={};
+  state.items.forEach(it=>{
+    if(it.creationEngine){engineUsage[it.creationEngine]=(engineUsage[it.creationEngine]||0)+1}
+  });
+  const topEngines=Object.entries(engineUsage).sort((a,b)=>b[1]-a[1]).slice(0,5).map(e=>e[0]+' ('+e[1]+')').join(', ');
+  const totalDistributed=state.agents.reduce((s,a)=>s+(a.genesisBalance||0)+1,0);
+  const totalEndBalances=state.agents.reduce((s,a)=>s+a.balance,0);
   const items=[
-    {l:'Agents Registered',v:state.agents.length+' / 20'},
-    {l:'Items Created',v:state.items.length+' / 100'},
-    {l:'Searches Executed',v:state.searches},
-    {l:'T1 Solar Purchases',v:state.t1Purchases||0},
-    {l:'T2 Sample Sales',v:state.t2SamplePurchases||0},
-    {l:'Insufficient Balance',v:(state.balanceBlocked||0)+' 🔴'},
-    {l:'Daily Limit Hit',v:(state.limitBlocked||0)+' 📏'},
-    {l:'T3 Requests Blocked',v:(state.tier3Blocked||0)+' 🚫'},
-    {l:'Solar Circulated',v:state.totalSolar.toFixed(2)+' ☀️'},
-    {l:'Seller Revenue',v:(state.totalSellerRevenue||0).toFixed(2)+' ☀️'},
-    {l:'T1 Search Hits',v:state.tier1Hits||0},
-    {l:'T2 Web → Samples Posted',v:(state.tier2SamplePosts||0)+' / '+(state.tier2Hits||0)+' found'},
-    {l:'T3 Open Slots',v:state.tier3Hits||0},
-    {l:'Successful Ops',v:state.successes},
-    {l:'Failed Ops',v:state.errors},
-    {l:'Health Score',v:healthPct+'%'}
+    {l:'Agents Registered',v:state.agents.length+' / 20',section:'Network'},
+    {l:'Items Created',v:state.items.length+' / 100',section:'Network'},
+    {l:'Basic Needs Created',v:(state.basicNeedsCreated||0)+' 🏠',section:'Basic Needs'},
+    {l:'Basic Needs Purchased',v:(state.basicNeedsPurchased||0)+' 🏠',section:'Basic Needs'},
+    {l:'BN Purchase Compliance',v:state.agents.filter(a=>a.basicNeedsPurchases>=2).length+'/'+state.agents.length+' agents',section:'Basic Needs'},
+    {l:'Top MCP Engines',v:topEngines||'N/A',section:'MCP Engines'},
+    {l:'Searches Executed',v:state.searches,section:'Search'},
+    {l:'T1 Solar Purchases',v:state.t1Purchases||0,section:'Purchases'},
+    {l:'T2 Sample Sales',v:state.t2SamplePurchases||0,section:'Purchases'},
+    {l:'Insufficient Balance',v:(state.balanceBlocked||0)+' 🔴',section:'Purchases'},
+    {l:'Daily Limit Hit',v:(state.limitBlocked||0)+' 📏',section:'Purchases'},
+    {l:'T3 Requests Blocked',v:(state.tier3Blocked||0)+' 🚫',section:'Purchases'},
+    {l:'Solar Distributed (Genesis+Daily)',v:totalDistributed.toFixed(2)+' ☀️',section:'Ledger'},
+    {l:'Solar Circulated (Purchases)',v:state.totalSolar.toFixed(2)+' ☀️',section:'Ledger'},
+    {l:'Seller Revenue',v:(state.totalSellerRevenue||0).toFixed(2)+' ☀️',section:'Ledger'},
+    {l:'Total End Balances',v:totalEndBalances.toFixed(2)+' ☀️',section:'Ledger'},
+    {l:'T1 Search Hits',v:state.tier1Hits||0,section:'Search'},
+    {l:'T2 Web → Samples Posted',v:(state.tier2SamplePosts||0)+' / '+(state.tier2Hits||0)+' found',section:'Search'},
+    {l:'T3 Open Slots',v:state.tier3Hits||0,section:'Search'},
+    {l:'Vouchers Created',v:(state.vouchersCreated||0)+' 🎟️',section:'Vouchers'},
+    {l:'Vouchers Purchased',v:(state.vouchersPurchased||0)+' 💳',section:'Vouchers'},
+    {l:'Vouchers Redeemed',v:(state.vouchersRedeemed||0)+' ✅',section:'Vouchers'},
+    {l:'Voucher Errors',v:(state.voucherErrors||0),section:'Vouchers'},
+    {l:'Successful Ops',v:state.successes,section:'Health'},
+    {l:'Failed Ops',v:state.errors,section:'Health'},
+    {l:'Health Score',v:healthPct+'%',section:'Health'}
   ];
+  let lastSection='';
   items.forEach(it=>{
+    if(it.section!==lastSection){
+      lastSection=it.section;
+      const hdr=document.createElement('div');
+      hdr.style.cssText='grid-column:1/-1;padding:6px 0 2px;font-size:11px;color:var(--cyan);border-top:1px solid rgba(0,255,255,0.15);margin-top:4px;font-weight:bold';
+      hdr.textContent=it.section.toUpperCase();
+      detail.appendChild(hdr);
+    }
     const d=document.createElement('div');
     d.className='rd-item';
     d.innerHTML=`<div class="rd-label">${it.l}</div><div class="rd-val">${it.v}</div>`;
     detail.appendChild(d);
   });
+
+  const ledgerEl=document.createElement('div');
+  ledgerEl.style.cssText='grid-column:1/-1;margin-top:12px;padding:10px;background:rgba(0,0,0,0.3);border:1px solid var(--gold);border-radius:8px';
+  ledgerEl.innerHTML=`<div style="color:var(--gold);font-weight:bold;margin-bottom:8px;font-size:13px">📒 DAILY ACCOUNTING LEDGER</div>
+    <table style="width:100%;font-size:10px;border-collapse:collapse;color:var(--text)">
+    <thead><tr style="color:var(--cyan);border-bottom:1px solid var(--border)">
+      <th style="text-align:left;padding:3px">Agent</th><th>Genesis</th><th>+Daily</th><th>Created</th><th>Bought</th><th>BN🏠</th><th>🎟️</th><th>Revenue</th><th>End ☀️</th>
+    </tr></thead>
+    <tbody>${state.agents.map(a=>{
+      const idx=state.agents.indexOf(a);
+      const created=state.items.filter(it=>it.agentIdx===idx&&(!it.tier||it.tier!=='T2_SAMPLE')).length;
+      const vCreated=(state.vouchers||[]).filter(v=>v.creator===a.name).length;
+      const vBought=(state.vouchers||[]).filter(v=>v.buyer===a.name).length;
+      const vLabel=vCreated>0?vCreated+'C':(vBought>0?vBought+'B':'—');
+      return `<tr style="border-bottom:1px solid rgba(255,255,255,0.05)">
+        <td style="padding:2px 4px;color:var(--green)">${a.code} ${a.name}</td>
+        <td style="text-align:center">${(a.genesisBalance||0).toFixed(1)}</td>
+        <td style="text-align:center;color:var(--green)">+1.0</td>
+        <td style="text-align:center">${a.dailyCreates||0}/5</td>
+        <td style="text-align:center">${a.dailyPurchases||0}/5</td>
+        <td style="text-align:center;color:var(--gold)">${a.basicNeedsPurchases||0}/2</td>
+        <td style="text-align:center;color:var(--gold)">${vLabel}</td>
+        <td style="text-align:center;color:var(--cyan)">${(a.balance-(a.genesisBalance||0)-1+state.totalSolar/state.agents.length).toFixed(2)}</td>
+        <td style="text-align:center;font-weight:bold">${a.balance.toFixed(2)}</td>
+      </tr>`}).join('')}
+    </tbody></table>
+    <div style="margin-top:8px;font-size:9px;color:#888">Solar Standard: 1 ☀️ = 4,913 kWh ≈ $491 USD (educational only, no fiat exchange)</div>`;
+  detail.appendChild(ledgerEl);
+
   $('reportCard').classList.add('visible');
-  addFeed('🌐',`<b>ECOSYSTEM TEST COMPLETE</b> — Health: <span class="${healthPct>=70?'ok':'err'}">${healthPct}%</span>`);
+  addFeed('🌐',`<b>ECOSYSTEM TEST COMPLETE</b> — Health: <span class="${healthPct>=70?'ok':'err'}">${healthPct}%</span> | MCP Engines active | Basic Needs enforced`);
+}
+
+const VOUCHER_TEMPLATES = [
+  {title:'Community Solar Water Purifier Service',type:'service',cat:'Basic Needs',desc:'3D-printed solar water purification system — install & maintain',priceRays:500},
+  {title:'Solar-Powered Meal Prep Station Access',type:'service',cat:'Basic Needs',desc:'Weekly community kitchen access powered by rooftop solar',priceRays:200},
+  {title:'Emergency Solar Charging Station Pass',type:'access',cat:'Energy',desc:'24/7 access to community solar charging hub for devices & tools',priceRays:150},
+  {title:'Renewable Energy Audit Voucher',type:'service',cat:'Energy',desc:'Professional energy audit for home/workspace solar readiness',priceRays:800},
+  {title:'Solar Greenhouse Growing Slot',type:'access',cat:'Basic Needs',desc:'Monthly growing slot in community solar greenhouse — fresh produce',priceRays:300},
+  {title:'Community Repair Café Session',type:'service',cat:'Basic Needs',desc:'Bring any broken item — volunteer repair with solar-powered tools',priceRays:100},
+  {title:'Solar WiFi Hub Monthly Pass',type:'access',cat:'Utilities',desc:'High-speed solar-powered community internet access point',priceRays:250},
+  {title:'Clean Water Distribution Voucher',type:'product',cat:'Basic Needs',desc:'50L purified water from solar distillation system',priceRays:75},
+  {title:'Solar Cooker Community Kitchen',type:'service',cat:'Basic Needs',desc:'Solar thermal cooking session — zero-emission meal preparation',priceRays:120},
+  {title:'Tool Library Solar Workshop',type:'access',cat:'Utilities',desc:'Full-day access to community tool library & solar-powered workshop',priceRays:180},
+  {title:'Seed Bank Exchange Voucher',type:'product',cat:'Basic Needs',desc:'Heirloom seed collection for solar greenhouse growing',priceRays:60},
+  {title:'Solar Laundry Service Credit',type:'service',cat:'Basic Needs',desc:'One load wash & dry using solar-heated water system',priceRays:90},
+  {title:'Community Medicine Garden Access',type:'access',cat:'Basic Needs',desc:'Monthly access to solar-irrigated medicinal herb garden',priceRays:150},
+  {title:'Solar Bike Charging & Repair',type:'service',cat:'Energy',desc:'E-bike solar charge + basic repair check at community hub',priceRays:200},
+  {title:'Rainwater Harvesting Setup Voucher',type:'service',cat:'Basic Needs',desc:'Installation assistance for rooftop rainwater collection system',priceRays:400}
+];
+
+async function phase5_vouchers(){
+  setPhase(4,'Phase 5 — Voucher Fulfillment',95);
+  addFeed('🎟️','<b>Phase 5</b> starting: Agents fulfilling <b>provisions via Voucher Tab</b>...');
+  addFeed('📋','<b>Voucher types:</b> Service | Access | Product — primarily Basic Needs provisions');
+  addFeed('🔧','<b>Workflow:</b> Create voucher listing → Purchase voucher → Redeem for service/goods');
+  let vouchersCreated=0,vouchersPurchased=0,vouchersRedeemed=0,voucherErrors=0;
+  state.vouchers=[];
+
+  const voucherCreators=state.agents.filter(a=>{
+    const spec=AGENT_SPECIALTIES[a.name];
+    return spec==='Basic Needs'||spec==='Energy'||spec==='Utilities'||spec==='Culture'||Math.random()<0.3;
+  }).slice(0,10);
+
+  for(let i=0;i<voucherCreators.length;i++){
+    const agent=voucherCreators[i];
+    const template=VOUCHER_TEMPLATES[i%VOUCHER_TEMPLATES.length];
+    const solarPrice=(template.priceRays/1000).toFixed(4);
+    try{
+      const res=await fetch('/api/vouchers/listings/create',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Cookie':`sessionId=${agent.sessionId||''}`},
+        body:JSON.stringify({
+          title:template.title+' — by '+agent.name,
+          description:template.desc,
+          voucher_type:template.type,
+          price_rays:template.priceRays,
+          category:template.cat,
+          redemption_location:'TC-S Community Hub',
+          redemption_instructions:'Present voucher code at service point. Agent '+agent.name+' will fulfill.',
+          quantity_available:5,
+          redemption_hours:'09:00-17:00 UTC',
+          transferable:true
+        }),
+        credentials:'include'
+      });
+      const data=await res.json().catch(()=>({}));
+      if(res.ok&&data.success){
+        vouchersCreated++;
+        state.successes++;
+        state.vouchers.push({creator:agent.name,title:template.title,type:template.type,cat:template.cat,priceRays:template.priceRays,solarPrice,listingId:data.listingId||data.id,status:'listed'});
+        addFeed('🎟️',`<b>${agent.name}</b> created voucher: "<span style="color:var(--gold)">${template.title}</span>" [${template.type}/${template.cat}] → <span class="solar">${solarPrice} ☀️</span> (${template.priceRays} Rays)`);
+      }else{
+        voucherErrors++;
+        state.errors++;
+        state.vouchers.push({creator:agent.name,title:template.title,type:template.type,cat:template.cat,priceRays:template.priceRays,solarPrice,status:'failed'});
+        addFeed('⚠️',`<b>${agent.name}</b> voucher creation failed: "${template.title}" — <span class="err">${data.error||'API error'}</span>`);
+      }
+    }catch(e){
+      voucherErrors++;
+      state.errors++;
+      state.vouchers.push({creator:agent.name,title:template.title,status:'error'});
+    }
+    updateStats();
+    await sleep(randBetween(60,150));
+  }
+
+  const buyers=state.agents.filter(a=>!voucherCreators.includes(a));
+  const availableVouchers=state.vouchers.filter(v=>v.status==='listed'&&v.listingId);
+  for(let i=0;i<Math.min(buyers.length,availableVouchers.length);i++){
+    const buyer=buyers[i];
+    const voucher=availableVouchers[i];
+    try{
+      const res=await fetch('/api/vouchers/purchase',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({listing_id:voucher.listingId,buyer_name:buyer.name,buyer_contact:buyer.username+'@tcs.network'}),
+        credentials:'include'
+      });
+      const data=await res.json().catch(()=>({}));
+      if(res.ok&&data.success){
+        vouchersPurchased++;
+        state.successes++;
+        voucher.status='purchased';
+        voucher.buyer=buyer.name;
+        voucher.voucherCode=data.voucher_code||data.code||'TCS-'+Math.random().toString(36).substr(2,8).toUpperCase();
+        addFeed('💳',`<b>${buyer.name}</b> purchased voucher: "<span style="color:var(--gold)">${voucher.title}</span>" from <b>${voucher.creator}</b> → code: <span style="color:var(--green);font-family:monospace">${voucher.voucherCode}</span>`);
+      }else{
+        voucherErrors++;
+        state.errors++;
+      }
+    }catch(e){voucherErrors++;state.errors++}
+    updateStats();
+    await sleep(randBetween(40,100));
+  }
+
+  const purchasedVouchers=state.vouchers.filter(v=>v.status==='purchased'&&v.voucherCode);
+  for(let i=0;i<Math.min(purchasedVouchers.length,5);i++){
+    const v=purchasedVouchers[i];
+    try{
+      const valRes=await fetch('/api/vouchers/redeem/validate',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({voucher_code:v.voucherCode}),
+        credentials:'include'
+      });
+      const valData=await valRes.json().catch(()=>({}));
+      if(valRes.ok&&valData.success){
+        const redeemRes=await fetch('/api/vouchers/redeem/confirm',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({voucher_code:v.voucherCode}),
+          credentials:'include'
+        });
+        const redeemData=await redeemRes.json().catch(()=>({}));
+        if(redeemRes.ok&&redeemData.success){
+          vouchersRedeemed++;
+          state.successes++;
+          v.status='redeemed';
+          addFeed('✅',`<b>${v.buyer}</b> redeemed voucher: "<span style="color:var(--gold)">${v.title}</span>" from <b>${v.creator}</b> → <span style="color:var(--green)">SERVICE FULFILLED</span>`);
+        }else{voucherErrors++;state.errors++}
+      }else{
+        voucherErrors++;
+        state.errors++;
+        addFeed('🎟️',`<b>${v.buyer}</b> voucher validation: "<span style="color:var(--gold)">${v.title}</span>" — <span style="color:#888">${valData.error||'validation pending'}</span>`);
+      }
+    }catch(e){voucherErrors++;state.errors++}
+    updateStats();
+    await sleep(randBetween(50,120));
+  }
+
+  state.vouchersCreated=vouchersCreated;
+  state.vouchersPurchased=vouchersPurchased;
+  state.vouchersRedeemed=vouchersRedeemed;
+  state.voucherErrors=voucherErrors;
+  addFeed('🏁',`<b>Phase 5 complete:</b> <span style="color:var(--gold)">${vouchersCreated} vouchers listed</span> | ${vouchersPurchased} purchased | <span style="color:var(--green)">${vouchersRedeemed} redeemed (fulfilled)</span> | ${voucherErrors} errors`);
 }
 
 async function runEcosystemTest(){
@@ -654,6 +1050,8 @@ async function runEcosystemTest(){
     await phase3_search();
     await sleep(600);
     await phase4_purchases();
+    await sleep(400);
+    await phase5_vouchers();
     await sleep(400);
     showReport();
   }catch(e){

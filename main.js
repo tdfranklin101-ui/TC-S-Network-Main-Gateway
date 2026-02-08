@@ -8108,7 +8108,7 @@ Respond ONLY with valid JSON in this exact format:
         return;
       }
 
-      const ALLOWED_CATEGORIES = ['Digital Art', 'Music', 'Software', 'Education', 'Energy Tools'];
+      const ALLOWED_CATEGORIES = ['Computronium','Culture','Basic Needs','Rent','Energy','Music','Video','Art','Photo','Writing','AI Tools','AI Create','Software','Docs','Games','Utilities'];
       if (!ALLOWED_CATEGORIES.includes(category)) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: false, error: 'Invalid category' }));
