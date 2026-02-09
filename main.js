@@ -69,7 +69,7 @@ earlyServer.listen(PORT, '0.0.0.0', () => {
   // CRITICAL: Defer ALL heavy initialization to next event loop tick
   // This allows the early server to respond to health checks immediately
   // Without this, synchronous require() calls block the event loop
-  setImmediate(initializeFullPlatform);
+  setImmediate(() => initializeFullPlatform().catch(err => console.error('Platform init failed:', err)));
 });
 
 // Add process error handlers to prevent crashes from database issues
@@ -83,7 +83,7 @@ process.on('unhandledRejection', (reason, promise) => {
   console.log('🔄 Server continuing to run...');
 });
 
-function initializeFullPlatform() {
+async function initializeFullPlatform() {
 console.log('🔄 Loading platform modules...');
 const { Pool, neonConfig } = require('@neondatabase/serverless');
 
@@ -160,6 +160,8 @@ const KidSolarVoice = require('./server/kid-solar-voice');
 
 // IEA/UN Global Energy Dataset Loader
 const { loadRegionalData, loadAllRegionalData, getDataSummary, DATA_VINTAGE } = require('./server/iea-un-data-loader');
+
+await new Promise(resolve => setImmediate(resolve));
 
 // Geographic Analytics Tracker
 const AnalyticsTracker = require('./server/analytics-tracker');
@@ -8040,15 +8042,17 @@ const server = http.createServer(async (req, res) => {
       }
 
       const q = qRaw.toLowerCase().replace(/[^a-z0-9\s]+/g, ' ').replace(/\s+/g, ' ').trim();
+      const qOriginal = qRaw.toLowerCase().trim();
 
-      // Search market_items by search_text, title, or category
+      // Search market_items by search_text, title, or category (normalized + original query)
       const result = await pool.query(
         `SELECT * FROM market_items 
          WHERE status = 'ACTIVE' 
-         AND (search_text ILIKE $1 OR title ILIKE $1 OR category ILIKE $1)
+         AND (search_text ILIKE $1 OR title ILIKE $1 OR category ILIKE $1
+              OR search_text ILIKE $3 OR title ILIKE $3 OR category ILIKE $3)
          ORDER BY created_at DESC 
          LIMIT $2`,
-        ['%' + q + '%', limit]
+        ['%' + q + '%', limit, '%' + qOriginal + '%']
       );
 
       const items = result.rows.map(row => ({
@@ -8074,10 +8078,12 @@ const server = http.createServer(async (req, res) => {
         const artifactResult = await pool.query(
           `SELECT * FROM artifacts 
            WHERE active = true 
-           AND (title ILIKE $1 OR description ILIKE $1 OR category ILIKE $1)
+           AND (title ILIKE $1 OR description ILIKE $1 OR category ILIKE $1
+                OR title ILIKE $3 OR description ILIKE $3 OR category ILIKE $3
+                OR search_tags::text ILIKE $1 OR search_tags::text ILIKE $3)
            ORDER BY created_at DESC 
            LIMIT $2`,
-          ['%' + q + '%', limit]
+          ['%' + q + '%', limit, '%' + qOriginal + '%']
         );
         artifactItems = artifactResult.rows.map(row => ({
           id: row.id,

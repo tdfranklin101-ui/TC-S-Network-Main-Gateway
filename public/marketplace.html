@@ -6257,27 +6257,33 @@
                 var tier2Status = document.createElement('div');
                 tier2Status.id = 'tier2-status';
                 tier2Status.style.cssText = 'grid-column:1/-1;';
-                tier2Status.innerHTML = tierStatusHtml('Tier 2', 'Searching external web sources (fiat currency)...', 'searching');
-                resultsGrid.appendChild(tier2Status);
 
-                try {
-                    var wsResponse = await fetch('/api/market/web-search?q=' + encodeURIComponent(query));
-                    var wsData = await wsResponse.json();
+                if (memberCount < 3) {
+                    tier2Status.innerHTML = tierStatusHtml('Tier 2', 'Searching external web sources (fiat currency)...', 'searching');
+                    resultsGrid.appendChild(tier2Status);
 
-                    if (wsData.success && wsData.webResults && wsData.webResults.length > 0) {
-                        lastWebResults = wsData.webResults;
-                        webCount = wsData.webResults.length;
-                        tier2Status.innerHTML = tierStatusHtml('Tier 2', 'Found ' + webCount + ' external source' + (webCount !== 1 ? 's' : '') + ' (fiat pricing — Solar equivalent shown for reference)', 'found');
+                    try {
+                        var wsResponse = await fetch('/api/market/web-search?q=' + encodeURIComponent(query));
+                        var wsData = await wsResponse.json();
 
-                        wsData.webResults.forEach(function(item) {
-                            resultsGrid.appendChild(createWebResultCard(item));
-                        });
-                    } else {
-                        tier2Status.innerHTML = tierStatusHtml('Tier 2', 'No external web sources found', 'notfound');
+                        if (wsData.success && wsData.webResults && wsData.webResults.length > 0) {
+                            lastWebResults = wsData.webResults;
+                            webCount = wsData.webResults.length;
+                            tier2Status.innerHTML = tierStatusHtml('Tier 2', 'Found ' + webCount + ' external source' + (webCount !== 1 ? 's' : '') + ' (fiat pricing — Solar equivalent shown for reference)', 'found');
+
+                            wsData.webResults.forEach(function(item) {
+                                resultsGrid.appendChild(createWebResultCard(item));
+                            });
+                        } else {
+                            tier2Status.innerHTML = tierStatusHtml('Tier 2', 'No external web sources found', 'notfound');
+                        }
+                    } catch (wsErr) {
+                        console.error('Web search error:', wsErr);
+                        tier2Status.innerHTML = tierStatusHtml('Tier 2', 'Web search unavailable', 'notfound');
                     }
-                } catch (wsErr) {
-                    console.error('Web search error:', wsErr);
-                    tier2Status.innerHTML = tierStatusHtml('Tier 2', 'Web search unavailable', 'notfound');
+                } else {
+                    tier2Status.innerHTML = tierStatusHtml('Tier 2', 'Skipped — sufficient TC-S Network results found (' + memberCount + ' listings)', 'notfound');
+                    resultsGrid.appendChild(tier2Status);
                 }
 
                 var tier3Status = document.createElement('div');
