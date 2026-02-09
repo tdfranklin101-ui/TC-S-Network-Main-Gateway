@@ -9054,6 +9054,63 @@ Respond ONLY with valid JSON in this exact format:
     return;
   }
 
+  const agentProfileMatch = pathname.match(/^\/api\/agents\/(\d{2})$/);
+  if (agentProfileMatch && req.method === 'GET') {
+    try {
+      const code = agentProfileMatch[1];
+      if (!pool) { res.writeHead(503, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ success: false, error: 'Database unavailable' })); return; }
+      const agentDef = NETWORK_AGENTS.find(a => a.code === code);
+      if (!agentDef) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ success: false, error: 'Agent not found' })); return; }
+      const username = 'agent_eco_' + code;
+      const memberRes = await pool.query('SELECT id, username, name, total_solar, total_dollars, is_agent, last_distribution_date, signup_timestamp FROM members WHERE username = $1 LIMIT 1', [username]);
+      if (memberRes.rows.length === 0) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ success: false, error: 'Agent not registered' })); return; }
+      const m = memberRes.rows[0];
+      const createdRes = await pool.query('SELECT id, title, category, solar_amount_s, created_at, active FROM artifacts WHERE creator_id = $1 ORDER BY created_at DESC', [String(m.id)]);
+      const purchasedRes = await pool.query(
+        `SELECT ac.id as copy_id, ac.artifact_id, ac.solar_paid, ac.acquired_at, ac.acquired_method,
+                a.title, a.category, a.creator_id
+         FROM artifact_copies ac
+         LEFT JOIN artifacts a ON ac.artifact_id = a.id
+         WHERE ac.owner_id = $1 ORDER BY ac.acquired_at DESC`, [m.id]);
+      const ledgerRes = await pool.query(
+        `SELECT transaction_id, entry_type, amount, balance_after, reference_type, reference_id, description, created_at
+         FROM marketplace_ledger WHERE account_id = $1 ORDER BY created_at DESC LIMIT 100`, [String(m.id)]);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        agent: {
+          memberId: m.id, username: m.username, displayName: m.name,
+          icon: agentDef.icon, code: agentDef.code, specialty: agentDef.specialty,
+          balance: parseFloat(m.total_solar) || 0,
+          dollars: parseFloat(m.total_dollars) || 0,
+          lastDistribution: m.last_distribution_date,
+          joinedAt: m.signup_timestamp
+        },
+        created: createdRes.rows.map(r => ({
+          id: r.id, title: r.title, category: r.category,
+          price: parseFloat(r.solar_amount_s) || 0, createdAt: r.created_at, active: r.active
+        })),
+        purchased: purchasedRes.rows.map(r => ({
+          copyId: r.copy_id, artifactId: r.artifact_id, title: r.title || 'Unknown',
+          category: r.category || 'Unknown', solarPaid: parseFloat(r.solar_paid) || 0,
+          acquiredAt: r.acquired_at, method: r.acquired_method,
+          creatorId: r.creator_id
+        })),
+        transactions: ledgerRes.rows.map(r => ({
+          transactionId: r.transaction_id, type: r.entry_type,
+          amount: parseFloat(r.amount) || 0, balanceAfter: parseFloat(r.balance_after) || 0,
+          refType: r.reference_type, refId: r.reference_id,
+          description: r.description, time: r.created_at
+        }))
+      }));
+    } catch (error) {
+      console.error('Agent profile error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to load agent profile' }));
+    }
+    return;
+  }
+
   if (pathname === '/api/ecosystem/resolve-agent' && req.method === 'POST') {
     try {
       const body = await parseBody(req);

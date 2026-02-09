@@ -450,7 +450,7 @@ function initAgentCards(){
     el.className='agent-card';
     el.id='agent-'+a.code;
     el.innerHTML=`<div class="agent-icon">${a.icon}</div><div class="agent-name">Agent ${a.name}</div><div class="agent-balance">— ☀️</div><div class="agent-status pending">loading...</div>`;
-    el.addEventListener('click',()=>openAgentPanel(a.code));
+    el.addEventListener('click',()=>window.location.href='/agent-profile.html?code='+a.code);
     grid.appendChild(el);
   });
   loadPersistentAgentStatus();

@@ -65,9 +65,9 @@ module.exports = async function(req, res, pathname, body) {
       return true;
     }
 
-    // GET /api/agents/:agentId
+    // GET /api/agents/:agentId (skip 2-digit agent profile codes and 'list')
     const getAgentMatch = pathname.match(/^\/api\/agents\/([a-f0-9\-]+)$/);
-    if (getAgentMatch && req.method === 'GET') {
+    if (getAgentMatch && req.method === 'GET' && getAgentMatch[1].length > 2) {
       const agentId = getAgentMatch[1];
       const agent = await agentStorage.getAgent(agentId);
       
