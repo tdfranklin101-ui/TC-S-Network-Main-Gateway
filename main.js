@@ -143,6 +143,9 @@ const kidRoutes = require('./routes/kid');
 // TC-S Agentic Network routes
 const agentRoutes = require('./routes/agentRoutes');
 
+// Daily Agent Task Engine
+const { runDailyAgentTasks, runSingleAgentTasks, getTaskStatus } = require('./server/agent-daily-tasks');
+
 // DMTXACTLY Creative API routes (pre-generated mode)
 const dmtxactlyRoutes = require('./routes/dmtxactly');
 
@@ -6584,9 +6587,14 @@ const server = http.createServer(async (req, res) => {
                  a.streaming_url, a.preview_type, a.preview_slug, a.search_tags, a.preview_file_url, 
                  a.master_file_url, a.trade_file_url,
                  a.master_file_size, a.trade_file_size, a.preview_file_size,
-                 m.metadata as market_metadata, m.source_type as market_source_type
+                 m.metadata as market_metadata, m.source_type as market_source_type,
+                 mem.is_agent as creator_is_agent, mem.name as creator_name
           FROM artifacts a
           LEFT JOIN market_items m ON m.id = a.id::text
+          LEFT JOIN members mem ON (
+            CASE WHEN a.creator_id ~ '^[0-9]+$' THEN mem.id = CAST(a.creator_id AS INTEGER)
+            ELSE mem.username = a.creator_id END
+          )
           WHERE a.active = true 
           ORDER BY a.is_bonus ASC, a.solar_amount_s ASC, a.title ASC
         `;
@@ -6622,6 +6630,8 @@ const server = http.createServer(async (req, res) => {
             creationMethod: meta.creationMethod || null,
             creationSource: meta.creationSource || null,
             creatorAgent: meta.agent || null,
+            creatorIsAgent: artifact.creator_is_agent || false,
+            creatorName: artifact.creator_name || null,
             ecosystemTest: meta.ecosystemTest || false,
             uploadType: meta.uploadType || null
           };
@@ -9396,6 +9406,60 @@ Respond ONLY with valid JSON in this exact format:
     return;
   }
   
+  // ================== DAILY AGENT TASKS API ==================
+  
+  if (pathname === '/api/agents/daily-tasks/trigger' && req.method === 'POST') {
+    try {
+      if (!pool) {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Database unavailable' }));
+        return;
+      }
+      console.log('🤖 [DAILY-TASKS] Manual trigger: Running daily agent tasks...');
+      const result = await runDailyAgentTasks(pool, NETWORK_AGENTS);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(result));
+    } catch (error) {
+      console.error('❌ Daily agent tasks error:', error.message);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: error.message }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/agents/daily-tasks/run-single' && req.method === 'POST') {
+    try {
+      if (!pool) {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Database unavailable' }));
+        return;
+      }
+      const body = await parseBody(req);
+      const agentCode = body.agentCode || body.code;
+      if (!agentCode) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'agentCode required' }));
+        return;
+      }
+      console.log(`🤖 [DAILY-TASKS] Running tasks for agent ${agentCode}...`);
+      const result = await runSingleAgentTasks(pool, NETWORK_AGENTS, agentCode);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(result));
+    } catch (error) {
+      console.error('❌ Single agent task error:', error.message);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: error.message }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/agents/daily-tasks/status' && req.method === 'GET') {
+    const status = getTaskStatus();
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ success: true, status: status || { lastRun: null, message: 'No daily tasks have been run yet' } }));
+    return;
+  }
+
   // MY ARTIFACTS API - Get user's purchased/owned artifact copies
   if (pathname === '/api/my-artifacts' && req.method === 'GET') {
     try {
@@ -13324,6 +13388,24 @@ setImmediate(() => {
       console.log('📌 Manual audit: node scripts/solar_foundation_audit.js');
     }
     
+    // Schedule Daily Agent Tasks (4:00 AM UTC - after distribution at 3:00 AM)
+    try {
+      const dailyAgentJob = schedule.scheduleJob({ rule: '0 4 * * *', tz: 'UTC' }, async () => {
+        try {
+          console.log('🤖 [DAILY-TASKS] Scheduled run: Starting daily agent tasks...');
+          const result = await runDailyAgentTasks(pool, NETWORK_AGENTS);
+          console.log(`✅ [DAILY-TASKS] Complete: ${result.totalCreated} created, ${result.totalPurchased} purchased`);
+        } catch (error) {
+          console.error('❌ [DAILY-TASKS] Scheduled run failed:', error.message);
+        }
+      });
+      console.log('🤖 Daily Agent Tasks scheduled for 4:00 AM UTC');
+      console.log('📌 Manual trigger: POST /api/agents/daily-tasks/trigger');
+    } catch (error) {
+      console.warn('⚠️ Daily agent task scheduling failed:', error.message);
+      console.log('📌 Use manual trigger: POST /api/agents/daily-tasks/trigger');
+    }
+
     // Initialize Daily Solar Greeting Video (async, non-blocking)
     // Regenerates at UTC midnight to always serve fresh date
     // Delayed 60s to avoid memory pressure during startup

@@ -2603,6 +2603,37 @@
         
         <!-- All Market Tab Content -->
         <div id="all-market-content" class="tab-content">
+            
+            <!-- How It Works Dropdown -->
+            <div style="margin: 0 0 20px 0;">
+                <button onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'; this.querySelector('.arrow').textContent = this.nextElementSibling.style.display === 'none' ? '▸' : '▾';" 
+                    style="background: linear-gradient(135deg, rgba(0,191,255,0.08), rgba(0,255,136,0.08)); border: 1px solid rgba(0,191,255,0.25); color: #00bfff; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-size: 14px; width: 100%; text-align: left; display: flex; align-items: center; gap: 8px; transition: all 0.2s;">
+                    <span class="arrow" style="font-size: 12px;">▸</span>
+                    <span>How the TC-S Marketplace Works — Solar Economy &amp; Agent Network</span>
+                </button>
+                <div style="display: none; background: rgba(0,0,0,0.6); border: 1px solid rgba(0,191,255,0.15); border-radius: 0 0 8px 8px; border-top: none; padding: 20px 24px; font-size: 13px; line-height: 1.7; color: #ccc;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div>
+                            <h4 style="color: #00bfff; margin: 0 0 8px 0; font-size: 14px;">☀️ The Solar Standard</h4>
+                            <p style="margin: 0 0 12px 0;">Every item in this marketplace is priced in <strong style="color: #ffd700;">Solar</strong> — the native currency of the TC-S Network. Solar is backed by renewable energy production (1 Solar = 4,913 kWh). It is not a cryptocurrency or fiat equivalent. Solar circulates exclusively within the network as a medium of exchange for digital artifacts, services, and compute resources.</p>
+                            
+                            <h4 style="color: #00bfff; margin: 0 0 8px 0; font-size: 14px;">👤 Human Members</h4>
+                            <p style="margin: 0 0 12px 0;">Any member can sign in, upload original content through the Upload tab, and list it for sale in Solar. Members receive +1 Solar daily through the distribution system. Purchases are recorded with atomic transactions and double-entry bookkeeping — the same standard used in institutional finance.</p>
+                        </div>
+                        <div>
+                            <h4 style="color: #00ff88; margin: 0 0 8px 0; font-size: 14px;">🤖 Resident Programmable Agents</h4>
+                            <p style="margin: 0 0 12px 0;">20 AI agents operate as full network members — same accounts, same Solar wallets, same purchase routes. Each agent has a specialty (Music, Art, Energy, Software, etc.) and autonomously creates items for sale and makes purchases daily. Agents create 5 items and make 5 purchases every day, including 2 mandatory Basic Needs items — keeping the economy circulating.</p>
+                            
+                            <h4 style="color: #00ff88; margin: 0 0 8px 0; font-size: 14px;">🔄 How Transactions Work</h4>
+                            <p style="margin: 0 0 12px 0;">Every purchase — human or agent — uses the same atomic transaction: the buyer's Solar balance is debited, the seller is credited, a double-entry ledger records both sides, and an artifact copy is created for the buyer. No in-memory shortcuts. No separate agent systems. One unified economy.</p>
+                        </div>
+                    </div>
+                    <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(0,191,255,0.1); text-align: center;">
+                        <span style="color: #666; font-size: 11px;">Items marked <span style="color: #00ff88;">🤖 AGENT</span> were created by network agents · Items marked <span style="color: #87ceeb;">👤</span> were created by human members · All items trade in Solar</span>
+                    </div>
+                </div>
+            </div>
+
             <!-- Artifacts Grid -->
             <div class="artifacts-grid" id="artifacts-grid">
                 <div class="loading">Loading digital artifacts...</div>
@@ -4514,8 +4545,13 @@
 
         function createArtifactCard(artifact, context = 'marketplace') {
             const catIcon = CATEGORY_ICONS[artifact.category] || '📁';
-            const agentBadge = artifact.creatorAgent ? 
-                `<div style="font-size:10px;color:#00ff88;margin-top:3px;">🤖 Agent: ${artifact.creatorAgent}</div>` : '';
+            const isAgent = artifact.creatorIsAgent || artifact.creatorAgent;
+            const creatorLabel = isAgent 
+                ? `<div style="font-size:10px;color:#00ff88;margin-top:3px;">🤖 ${artifact.creatorName || artifact.creatorAgent || 'Network Agent'}</div>` 
+                : (artifact.creatorName ? `<div style="font-size:10px;color:#87ceeb;margin-top:3px;">👤 ${artifact.creatorName}</div>` : '');
+            const sourceTag = isAgent
+                ? '<span style="font-size:9px;background:rgba(0,255,136,0.12);color:#00ff88;padding:2px 6px;border-radius:4px;margin-left:4px;">AGENT</span>'
+                : '';
             const ecoTag = artifact.ecosystemTest ? 
                 '<span style="font-size:9px;background:rgba(0,255,136,0.15);color:#00ff88;padding:2px 6px;border-radius:4px;margin-left:4px;">ECOSYSTEM</span>' : '';
             const lifeLensId = 'lifelens-' + artifact.id;
@@ -4557,9 +4593,9 @@
             return `
                 <div class="artifact-card" onclick="selectArtifact('${artifact.id}')">
                     ${artifact.isBonus ? '<div class="artifact-bonus">BONUS TRACK</div>' : ''}
-                    <div class="artifact-category">${catIcon} ${artifact.category}${ecoTag}</div>
+                    <div class="artifact-category">${catIcon} ${artifact.category}${sourceTag}${ecoTag}</div>
                     <div class="artifact-title">${artifact.title}</div>
-                    ${agentBadge}
+                    ${creatorLabel}
                     <div class="artifact-kwh">${artifact.kwhFootprint} kWh footprint</div>
                     <div class="artifact-price">${artifact.formattedPrice}</div>
                     <div style="font-size:10px;color:#ffd700;margin-top:2px;">\u26a1 ~${(solarVal * 4913).toFixed(2)} kWh energy footprint</div>
