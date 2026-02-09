@@ -320,13 +320,12 @@ async function createIntentLogTable(pool) {
       error TEXT,
       duration_ms INTEGER,
       metadata JSONB DEFAULT '{}'
-    );
-    
-    CREATE INDEX IF NOT EXISTS idx_intent_log_timestamp ON intent_log(timestamp);
-    CREATE INDEX IF NOT EXISTS idx_intent_log_who ON intent_log(who);
-    CREATE INDEX IF NOT EXISTS idx_intent_log_action_type ON intent_log(action_type);
-    CREATE INDEX IF NOT EXISTS idx_intent_log_req_id ON intent_log(req_id);
+    )
   `);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_intent_log_timestamp ON intent_log(timestamp)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_intent_log_who ON intent_log(who)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_intent_log_action_type ON intent_log(action_type)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_intent_log_req_id ON intent_log(req_id)`);
   console.log('✅ Intent log table ready');
 }
 

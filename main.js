@@ -13372,6 +13372,10 @@ setImmediate(() => {
     
     initializePersistentAgents().catch(err => console.warn('⚠️ Agent init failed:', err.message));
 
+    if (pool) {
+      initializeAgenticFramework(pool).catch(err => console.warn('⚠️ Agentic Framework init failed:', err.message));
+    }
+
     // Initialize daily Solar distribution
     try {
       initializeDailyDistribution();

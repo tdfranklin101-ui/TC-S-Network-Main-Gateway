@@ -24,27 +24,41 @@ const { Scheduler, JOB_TYPES } = require('./scheduler');
 let executorInstance = null;
 let commissioningAgentInstance = null;
 let schedulerInstance = null;
+let initializingPromise = null;
 
 const ADMIN_ROLES = ['admin', 'foundation', 'operator', 'tcs_admin', 'commissioner_admin'];
 const APPROVER_ROLES = ['admin', 'foundation', 'approver', 'tcs_admin', 'commissioner_admin'];
 
 async function initializeAgenticFramework(pool) {
-  executorInstance = new ActionExecutor(pool);
-  commissioningAgentInstance = new CommissioningAgent(pool);
-  await commissioningAgentInstance.initialize();
+  if (executorInstance) return { executor: executorInstance, commissioningAgent: commissioningAgentInstance, scheduler: schedulerInstance };
+  if (initializingPromise) return initializingPromise;
   
-  await createIntentLogTable(pool);
-  initializeIntentLogger(pool);
+  initializingPromise = (async () => {
+    try {
+      executorInstance = new ActionExecutor(pool);
+      commissioningAgentInstance = new CommissioningAgent(pool);
+      await commissioningAgentInstance.initialize();
+      
+      await createIntentLogTable(pool);
+      initializeIntentLogger(pool);
+      
+      schedulerInstance = new Scheduler(pool, executorInstance);
+      await schedulerInstance.initialize();
+      
+      if (process.env.ENABLE_SCHEDULER !== 'false') {
+        schedulerInstance.start(60000);
+      }
+      
+      console.log('✅ Agentic Framework initialized with security module and scheduler');
+      return { executor: executorInstance, commissioningAgent: commissioningAgentInstance, scheduler: schedulerInstance };
+    } catch (error) {
+      executorInstance = null;
+      initializingPromise = null;
+      throw error;
+    }
+  })();
   
-  schedulerInstance = new Scheduler(pool, executorInstance);
-  await schedulerInstance.initialize();
-  
-  if (process.env.ENABLE_SCHEDULER !== 'false') {
-    schedulerInstance.start(60000);
-  }
-  
-  console.log('✅ Agentic Framework initialized with security module and scheduler');
-  return { executor: executorInstance, commissioningAgent: commissioningAgentInstance, scheduler: schedulerInstance };
+  return initializingPromise;
 }
 
 function getScheduler() {
@@ -256,7 +270,14 @@ async function validateWithRBAC(req, pool, requiredAction) {
 
 async function handleAgenticRoutes(req, res, pathname, body, pool) {
   if (!executorInstance) {
-    await initializeAgenticFramework(pool);
+    try {
+      await initializeAgenticFramework(pool);
+    } catch (error) {
+      console.error('❌ Agentic Framework initialization failed:', error.message);
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Agentic framework initializing, please retry' }));
+      return true;
+    }
   }
   
   const replayCheck = checkReplayProtection(req.headers['x-req-id']);
