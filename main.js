@@ -65,6 +65,11 @@ const earlyServer = http.createServer((req, res) => {
 earlyServer.listen(PORT, '0.0.0.0', () => {
   console.log(`\n🚀 Early health check server started on port ${PORT}`);
   console.log(`✅ Health check ready - initializing full platform...`);
+  
+  // CRITICAL: Defer ALL heavy initialization to next event loop tick
+  // This allows the early server to respond to health checks immediately
+  // Without this, synchronous require() calls block the event loop
+  setImmediate(initializeFullPlatform);
 });
 
 // Add process error handlers to prevent crashes from database issues
@@ -77,6 +82,9 @@ process.on('unhandledRejection', (reason, promise) => {
   console.error('🚨 Unhandled Rejection at:', promise, 'reason:', reason);
   console.log('🔄 Server continuing to run...');
 });
+
+function initializeFullPlatform() {
+console.log('🔄 Loading platform modules...');
 const { Pool, neonConfig } = require('@neondatabase/serverless');
 
 // Configure WebSocket for Node.js environment to fix distribution connectivity
@@ -13384,6 +13392,9 @@ setImmediate(() => {
     console.log(`✅ All deferred initialization tasks started`);
   }, 5000); // Wait 5 seconds after server starts to begin heavy tasks
 });
+
+console.log('✅ Platform initialization complete - main server ready');
+} // end initializeFullPlatform
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
