@@ -6012,11 +6012,11 @@ const server = http.createServer(async (req, res) => {
   }
 
   // New Purchase API with artifactId in URL path (for session-based auth)
-  if (pathname.startsWith('/api/artifacts/') && pathname.endsWith('/purchase') && req.method === 'POST') {
+  if (pathname.startsWith('/api/artifacts/') && pathname.endsWith('/purchase') && pathname !== '/api/artifacts/purchase' && pathname.split('/').length === 5 && req.method === 'POST') {
     try {
       const artifactId = pathname.split('/')[3]; // Extract ID from /api/artifacts/{id}/purchase
       
-      if (!artifactId) {
+      if (!artifactId || artifactId === 'purchase') {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Artifact ID required' }));
         return;
@@ -6094,13 +6094,32 @@ const server = http.createServer(async (req, res) => {
         walletId = await ensureMemberWallet(userId);
       }
 
-      // Process transaction (deduct Solar from members table)
+      // Process transaction (deduct Solar from buyer)
       const newBalance = userBalance - requiredSolar;
       const updateBalanceQuery = 'UPDATE members SET total_solar = $1 WHERE id = $2';
       await pool.query(updateBalanceQuery, [newBalance, user.id]);
       
       // Log balance change for purchase
       logBalanceChange('Purchase', user.id, user.username, userBalance, newBalance, `purchase_artifact_${artifactId}`);
+
+      // Credit seller with purchase amount
+      let sellerNewBalance = null;
+      if (artifact.creator_id) {
+        try {
+          const sellerQuery = 'SELECT id, username, total_solar FROM members WHERE id = $1';
+          const sellerResult = await pool.query(sellerQuery, [artifact.creator_id]);
+          if (sellerResult.rows.length > 0) {
+            const seller = sellerResult.rows[0];
+            const sellerOldBalance = parseFloat(seller.total_solar || 0);
+            sellerNewBalance = sellerOldBalance + requiredSolar;
+            await pool.query(updateBalanceQuery, [sellerNewBalance, seller.id]);
+            logBalanceChange('Sale', seller.id, seller.username, sellerOldBalance, sellerNewBalance, `sale_artifact_${artifactId}`);
+            console.log(`💰 Seller ${seller.username} credited ${requiredSolar} Solar (${sellerOldBalance} → ${sellerNewBalance})`);
+          }
+        } catch (sellerErr) {
+          console.error('⚠️ Seller credit failed:', sellerErr.message);
+        }
+      }
 
       // Record transaction with correct wallet_id
       const transactionQuery = `
@@ -6149,7 +6168,7 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // Artifact Purchase and Download API
+  // Artifact Purchase and Download API — Atomic Transaction with Double-Entry Ledger
   if (pathname === '/api/artifacts/purchase' && req.method === 'POST') {
     try {
       const body = await parseBody(req);
@@ -6161,154 +6180,136 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      if (pool) {
-        // Get artifact details with enhanced file URLs
-        const artifactQuery = `
-          SELECT id, title, solar_amount_s, delivery_url, active,
-                 master_file_url, preview_file_url, trade_file_url,
-                 file_type, category, trade_file_size, processing_status,
-                 creator_id
-          FROM artifacts WHERE id = $1
-        `;
-        const artifactResult = await pool.query(artifactQuery, [artifactId]);
-        
-        if (artifactResult.rows.length === 0) {
-          res.writeHead(404, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Artifact not found' }));
-          return;
-        }
-        
-        const artifact = artifactResult.rows[0];
-        
-        if (!artifact.active) {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Artifact not available for purchase' }));
-          return;
-        }
+      if (!pool) {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Database unavailable for purchases' }));
+        return;
+      }
 
-        // Get or create user if needed
-        let user = null;
-        if (userId) {
-          const userQuery = 'SELECT id, username, total_solar FROM members WHERE id = $1';
-          const userResult = await pool.query(userQuery, [userId]);
-          user = userResult.rows[0];
-        } else if (userEmail) {
-          // Check if user exists by email
-          const emailQuery = 'SELECT id, username, total_solar FROM members WHERE email = $1';
-          const emailResult = await pool.query(emailQuery, [userEmail]);
-          
-          if (emailResult.rows.length > 0) {
-            user = emailResult.rows[0];
-          } else {
-            // Cannot create new user during purchase - user must register first
-            res.writeHead(400, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'Please register an account before making purchases' }));
-            return;
+      let user = null;
+      if (userId) {
+        const r = await pool.query('SELECT id, username, total_solar FROM members WHERE id = $1', [userId]);
+        user = r.rows[0];
+      } else if (userEmail) {
+        const r = await pool.query('SELECT id, username, total_solar FROM members WHERE email = $1', [userEmail]);
+        user = r.rows[0];
+      }
+      if (!user) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'User identification required' }));
+        return;
+      }
+
+      const artifactResult = await pool.query(
+        `SELECT id, title, solar_amount_s, delivery_url, active,
+                master_file_url, preview_file_url, trade_file_url,
+                file_type, category, trade_file_size, processing_status, creator_id
+         FROM artifacts WHERE id = $1`, [artifactId]
+      );
+      if (artifactResult.rows.length === 0) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Artifact not found' }));
+        return;
+      }
+      const artifact = artifactResult.rows[0];
+      if (!artifact.active) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Artifact not available for purchase' }));
+        return;
+      }
+
+      if (artifact.creator_id && String(artifact.creator_id) === String(user.id)) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'You cannot purchase your own artifact', isOwner: true }));
+        return;
+      }
+
+      const existingCopy = await pool.query('SELECT id FROM artifact_copies WHERE owner_id = $1 AND artifact_id = $2 LIMIT 1', [user.id, artifactId]);
+      if (existingCopy.rows.length > 0) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'You already own this artifact' }));
+        return;
+      }
+
+      const requiredSolar = parseFloat(artifact.solar_amount_s);
+      const buyerBalance = parseFloat(user.total_solar || 0);
+      if (buyerBalance < requiredSolar) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Insufficient Solar balance', required: requiredSolar, available: buyerBalance, shortfall: requiredSolar - buyerBalance }));
+        return;
+      }
+
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+
+        const txId = `purchase_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const newBuyerBalance = buyerBalance - requiredSolar;
+
+        await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(newBuyerBalance), user.id]);
+
+        await client.query(
+          `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
+           VALUES ($1, 'debit', $2, 'user', $3, $4, 'purchase', $5, $6)`,
+          [txId, String(user.id), String(requiredSolar), String(newBuyerBalance), artifactId, `Purchase: ${artifact.title}`]
+        );
+
+        let sellerInfo = null;
+        if (artifact.creator_id) {
+          const creatorId = artifact.creator_id;
+          const creatorIdNum = /^\d+$/.test(String(creatorId)) ? parseInt(creatorId) : 0;
+          const sellerRow = await client.query('SELECT id, username, total_solar FROM members WHERE id = $1 OR username = $2 LIMIT 1', [creatorIdNum, String(creatorId)]);
+          if (sellerRow.rows.length > 0) {
+            const seller = sellerRow.rows[0];
+            const sellerOldBal = parseFloat(seller.total_solar || 0);
+            const sellerNewBal = sellerOldBal + requiredSolar;
+            await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(sellerNewBal), seller.id]);
+            
+            await client.query(
+              `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
+               VALUES ($1, 'credit', $2, 'creator', $3, $4, 'purchase', $5, $6)`,
+              [txId, String(seller.id), String(requiredSolar), String(sellerNewBal), artifactId, `Sale: ${artifact.title}`]
+            );
+            
+            sellerInfo = { id: seller.id, username: seller.username, balance: sellerNewBal };
+            console.log(`💰 Seller ${seller.username} credited ${requiredSolar} Solar (${sellerOldBal} → ${sellerNewBal})`);
           }
         }
 
-        if (!user) {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'User identification required' }));
-          return;
+        await client.query(
+          `INSERT INTO artifact_copies (artifact_id, owner_id, purchase_transaction_id, acquired_method, solar_paid) VALUES ($1, $2, $3, 'purchase', $4)`,
+          [artifactId, user.id, txId, String(requiredSolar)]
+        );
+
+        const tokenValue = crypto.randomBytes(32).toString('hex');
+        const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+        try {
+          await client.query(
+            `INSERT INTO download_tokens (token, artifact_id, user_id, expires_at, access_type, max_downloads) VALUES ($1, $2, $3, $4, 'trade_file', 10)`,
+            [tokenValue, artifactId, user.id, expiresAt]
+          );
+        } catch(dtErr) {
+          console.log('Download token table issue:', dtErr.message);
         }
 
-        // Check if user is trying to purchase their own artifact
-        if (artifact.creator_id && artifact.creator_id === user.id) {
-          console.log(`🚫 Self-purchase prevented: User ${user.username} (ID: ${user.id}) tried to purchase their own artifact "${artifact.title}" (ID: ${artifactId})`);
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ 
-            error: 'You cannot purchase your own artifact',
-            isOwner: true,
-            message: 'This is your listing. You already own this artifact as the creator.'
-          }));
-          return;
-        }
-
-        // Check if user has sufficient Solar balance
-        const requiredSolar = parseFloat(artifact.solar_amount_s);
-        const userBalance = parseFloat(user.total_solar || 0);
-        
-        if (userBalance < requiredSolar) {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ 
-            error: 'Insufficient Solar balance', 
-            required: requiredSolar,
-            available: userBalance,
-            shortfall: requiredSolar - userBalance
-          }));
-          return;
-        }
-
-        // Process transaction (deduct Solar from members table)
-        const newBalance = userBalance - requiredSolar;
-        const updateBalanceQuery = 'UPDATE members SET total_solar = $1 WHERE id = $2';
-        await pool.query(updateBalanceQuery, [newBalance, user.id]);
-        
-        // Log balance change for purchase
-        logBalanceChange('Purchase', user.id, user.username, userBalance, newBalance, `purchase_artifact_${artifactId}`);
-
-        // Record transaction
-        const transactionQuery = `
-          INSERT INTO transactions (id, type, wallet_id, artifact_id, amount_s, note, created_at)
-          VALUES (gen_random_uuid(), 'purchase', $1, $2, $3, $4, NOW())
-          RETURNING id
-        `;
-        
-        const transactionResult = await pool.query(transactionQuery, [
-          user.id, 
-          artifactId, 
-          requiredSolar,
-          `Purchase of "${artifact.title}" for ${requiredSolar} Solar`
-        ]);
+        await client.query('COMMIT');
 
         console.log(`💰 Purchase completed: ${user.username} bought "${artifact.title}" for ${requiredSolar} Solar`);
+        logBalanceChange('Purchase', user.id, user.username, buyerBalance, newBuyerBalance, `purchase_artifact_${artifactId}`);
 
-        // Generate secure trade file access (valid for 7 days for purchased content)
-        const secureTradeAccess = fileManager.generateSecureUrl('trade', artifactId, 7 * 24 * 3600); // 7 days
-        
-        // Create enhanced download record in database
-        const downloadToken = crypto.randomBytes(32).toString('hex');
-        const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
-        
-        // Check if download_tokens table exists and enhance if needed
-        try {
-          const enhancedTokenQuery = `
-            INSERT INTO download_tokens (
-              token, artifact_id, user_id, expires_at, created_at,
-              secure_url, access_type, file_size
-            ) VALUES ($1, $2, $3, $4, NOW(), $5, $6, $7)
-          `;
-          
-          await pool.query(enhancedTokenQuery, [
-            downloadToken, 
-            artifactId, 
-            user.id, 
-            expiresAt,
-            secureTradeAccess.url,
-            'trade_file',
-            artifact.trade_file_size || 0
-          ]);
-          
-          console.log(`🔐 Enhanced download access created for ${user.username}`);
-        } catch (dbError) {
-          // Fallback to simple token system if enhanced table doesn't exist
-          console.log('📁 Using fallback download system - enhanced table not available');
-        }
-
-        // Provide both secure and legacy download options
-        const downloadUrl = `/api/artifacts/download/${downloadToken}`;
-        const secureDownloadUrl = secureTradeAccess.url;
+        const downloadUrl = `/api/artifacts/download/${tokenValue}`;
+        const secureTradeAccess = fileManager.generateSecureUrl('trade', artifactId, 7 * 24 * 3600);
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
           success: true,
-          transactionId: transactionResult.rows[0].id,
+          transactionId: txId,
           artifactTitle: artifact.title,
           amountPaid: requiredSolar,
-          newBalance: newBalance,
-          downloadUrl: downloadUrl, // Legacy endpoint for compatibility
-          secureDownloadUrl: secureDownloadUrl, // Enhanced secure access
+          newBalance: newBuyerBalance,
+          seller: sellerInfo,
+          downloadUrl: downloadUrl,
+          secureDownloadUrl: secureTradeAccess.url,
           downloadExpires: expiresAt.toISOString(),
           fileInfo: {
             type: artifact.file_type,
@@ -6316,16 +6317,18 @@ const server = http.createServer(async (req, res) => {
             size: artifact.trade_file_size || 'Unknown',
             secureAccess: true
           },
-          message: `Successfully purchased "${artifact.title}" for ${formatSolar(requiredSolar)} Solar. Your new balance is ${formatSolar(newBalance)} Solar. Download access valid for 7 days.`
+          message: `Successfully purchased "${artifact.title}" for ${formatSolar(requiredSolar)} Solar. Your new balance is ${formatSolar(newBuyerBalance)} Solar.`
         }));
-      } else {
-        res.writeHead(503, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Database unavailable for purchases' }));
+      } catch (txErr) {
+        await client.query('ROLLBACK');
+        throw txErr;
+      } finally {
+        client.release();
       }
     } catch (error) {
       console.error('Purchase error:', error);
       res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Failed to process purchase' }));
+      res.end(JSON.stringify({ error: `Purchase failed: ${error.message}` }));
     }
     return;
   }
