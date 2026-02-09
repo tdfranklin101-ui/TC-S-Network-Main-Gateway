@@ -2634,6 +2634,62 @@
                 </div>
             </div>
 
+            <!-- Daily Task Engine Panel -->
+            <div id="daily-task-engine" style="margin: 0 0 20px 0; background: linear-gradient(135deg, rgba(0,255,136,0.06), rgba(0,191,255,0.06)); border: 1px solid rgba(0,255,136,0.25); border-radius: 10px; padding: 20px 24px; position: relative; overflow: hidden;">
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div id="dte-pulse" style="width: 10px; height: 10px; border-radius: 50%; background: #00ff88; box-shadow: 0 0 8px #00ff88; animation: dtePulse 2s infinite;"></div>
+                        <h3 style="margin: 0; font-size: 16px; color: #00ff88; font-weight: 700;">⏱️ Daily Task Engine</h3>
+                        <span style="font-size: 11px; color: #666; background: rgba(0,255,136,0.1); padding: 2px 8px; border-radius: 4px;">20 Agents · Automated</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <button id="dte-trigger-btn" onclick="triggerDailyTasks()" style="padding: 6px 14px; background: linear-gradient(135deg, #00ff88, #00bfff); color: #000; border: none; border-radius: 6px; cursor: pointer; font-weight: 700; font-size: 12px; transition: all 0.2s;" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'">▶ Run Now</button>
+                        <button onclick="refreshTaskStatus()" style="padding: 6px 14px; background: rgba(0,191,255,0.15); color: #00bfff; border: 1px solid rgba(0,191,255,0.3); border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 12px; transition: all 0.2s;" onmouseover="this.style.background='rgba(0,191,255,0.25)'" onmouseout="this.style.background='rgba(0,191,255,0.15)'">↻ Refresh</button>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-top: 16px;">
+                    <div style="background: rgba(0,0,0,0.4); border-radius: 8px; padding: 12px 14px; border: 1px solid rgba(0,255,136,0.1);">
+                        <div style="font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Next Run</div>
+                        <div id="dte-countdown" style="font-size: 18px; color: #ffd700; font-weight: 700; font-family: monospace;">--:--:--</div>
+                        <div style="font-size: 10px; color: #666; margin-top: 2px;">Daily at 4:00 AM UTC</div>
+                    </div>
+                    <div style="background: rgba(0,0,0,0.4); border-radius: 8px; padding: 12px 14px; border: 1px solid rgba(0,255,136,0.1);">
+                        <div style="font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Last Run Status</div>
+                        <div id="dte-status" style="font-size: 18px; font-weight: 700;">
+                            <span style="color: #888;">Awaiting</span>
+                        </div>
+                        <div id="dte-last-time" style="font-size: 10px; color: #666; margin-top: 2px;">No runs yet</div>
+                    </div>
+                    <div style="background: rgba(0,0,0,0.4); border-radius: 8px; padding: 12px 14px; border: 1px solid rgba(0,255,136,0.1);">
+                        <div style="font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Items Created</div>
+                        <div id="dte-created" style="font-size: 18px; color: #00ff88; font-weight: 700; font-family: monospace;">0</div>
+                        <div style="font-size: 10px; color: #666; margin-top: 2px;">Target: 100/day (5×20)</div>
+                    </div>
+                    <div style="background: rgba(0,0,0,0.4); border-radius: 8px; padding: 12px 14px; border: 1px solid rgba(0,255,136,0.1);">
+                        <div style="font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Purchases Made</div>
+                        <div id="dte-purchased" style="font-size: 18px; color: #00bfff; font-weight: 700; font-family: monospace;">0</div>
+                        <div style="font-size: 10px; color: #666; margin-top: 2px;">Target: 100/day (5×20)</div>
+                    </div>
+                </div>
+
+                <div id="dte-agent-activity" style="display: none; margin-top: 14px; background: rgba(0,0,0,0.3); border-radius: 8px; padding: 12px; max-height: 180px; overflow-y: auto; border: 1px solid rgba(0,255,136,0.08);">
+                    <div style="font-size: 11px; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Agent Activity Log</div>
+                    <div id="dte-agent-list" style="font-size: 12px; color: #ccc; line-height: 1.8;"></div>
+                </div>
+
+                <div id="dte-running-overlay" style="display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); border-radius: 10px; display: none; align-items: center; justify-content: center; flex-direction: column; gap: 10px;">
+                    <div style="width: 30px; height: 30px; border: 3px solid rgba(0,255,136,0.3); border-top-color: #00ff88; border-radius: 50%; animation: dteSpin 1s linear infinite;"></div>
+                    <div style="color: #00ff88; font-size: 14px; font-weight: 600;">Running agent tasks...</div>
+                </div>
+            </div>
+
+            <style>
+                @keyframes dtePulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+                @keyframes dteSpin { to { transform: rotate(360deg); } }
+                #daily-task-engine:hover { border-color: rgba(0,255,136,0.4); }
+            </style>
+
             <!-- Artifacts Grid -->
             <div class="artifacts-grid" id="artifacts-grid">
                 <div class="loading">Loading digital artifacts...</div>
@@ -3946,6 +4002,109 @@
             setupEventListeners();
             updateKidSolarButton(); // Initialize button state
         });
+
+        // ===== DAILY TASK ENGINE FUNCTIONS =====
+        function updateDTECountdown() {
+            const now = new Date();
+            const utcH = now.getUTCHours(), utcM = now.getUTCMinutes(), utcS = now.getUTCSeconds();
+            const targetH = 4;
+            let diffS = ((targetH - utcH - 1) * 3600) + ((60 - utcM - 1) * 60) + (60 - utcS);
+            if (diffS <= 0) diffS += 86400;
+            const h = Math.floor(diffS / 3600);
+            const m = Math.floor((diffS % 3600) / 60);
+            const s = diffS % 60;
+            const el = document.getElementById('dte-countdown');
+            if (el) el.textContent = String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+        }
+        setInterval(updateDTECountdown, 1000);
+        updateDTECountdown();
+
+        async function refreshTaskStatus() {
+            try {
+                const res = await fetch('/api/agents/daily-tasks/status');
+                if (!res.ok) return;
+                const data = await res.json();
+                const statusEl = document.getElementById('dte-status');
+                const timeEl = document.getElementById('dte-last-time');
+                const createdEl = document.getElementById('dte-created');
+                const purchasedEl = document.getElementById('dte-purchased');
+                const activityEl = document.getElementById('dte-agent-activity');
+                const listEl = document.getElementById('dte-agent-list');
+
+                if (data.success === null || !data.timestamp) {
+                    statusEl.innerHTML = '<span style="color: #888;">Awaiting</span>';
+                    timeEl.textContent = 'No runs yet';
+                    return;
+                }
+
+                if (data.success) {
+                    statusEl.innerHTML = '<span style="color: #00ff88;">✅ Success</span>';
+                } else {
+                    statusEl.innerHTML = '<span style="color: #ffa500;">⚠️ Partial</span>';
+                }
+
+                const ts = new Date(data.timestamp);
+                const ago = Math.floor((Date.now() - ts.getTime()) / 60000);
+                timeEl.textContent = ago < 60 ? ago + ' min ago' : ago < 1440 ? Math.floor(ago/60) + 'h ago' : ts.toLocaleDateString();
+
+                if (createdEl) createdEl.textContent = data.totalCreated || 0;
+                if (purchasedEl) purchasedEl.textContent = data.totalPurchased || 0;
+
+                if (data.agentResults && data.agentResults.length > 0 && listEl) {
+                    activityEl.style.display = 'block';
+                    listEl.innerHTML = data.agentResults.map(function(r) {
+                        const icon = r.errors && r.errors.length > 0 ? '⚠️' : '✅';
+                        return '<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.05);">' +
+                            '<span>' + icon + ' ' + (r.agentName || r.agentCode || 'Agent') + '</span>' +
+                            '<span style="color:#00ff88;">' + (r.created ? r.created.length : 0) + ' created</span>' +
+                            '<span style="color:#00bfff;">' + (r.purchased ? r.purchased.length : 0) + ' bought</span>' +
+                            '</div>';
+                    }).join('');
+                }
+
+                if (data.elapsedSeconds) {
+                    timeEl.textContent += ' · ' + data.elapsedSeconds + 's runtime';
+                }
+            } catch (e) {
+                console.log('DTE status check:', e.message);
+            }
+        }
+
+        async function triggerDailyTasks() {
+            const btn = document.getElementById('dte-trigger-btn');
+            const overlay = document.getElementById('dte-running-overlay');
+            btn.disabled = true;
+            btn.textContent = '⏳ Running...';
+            overlay.style.display = 'flex';
+
+            try {
+                const res = await fetch('/api/agents/daily-tasks/trigger', { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    btn.textContent = '✅ Complete';
+                    btn.style.background = 'linear-gradient(135deg, #00ff88, #00cc66)';
+                } else {
+                    btn.textContent = '⚠️ Partial';
+                    btn.style.background = 'linear-gradient(135deg, #ffa500, #ff6b35)';
+                }
+                await refreshTaskStatus();
+            } catch (e) {
+                btn.textContent = '❌ Error';
+                btn.style.background = '#ef4444';
+                console.error('DTE trigger error:', e);
+            } finally {
+                overlay.style.display = 'none';
+                setTimeout(function() {
+                    btn.disabled = false;
+                    btn.textContent = '▶ Run Now';
+                    btn.style.background = 'linear-gradient(135deg, #00ff88, #00bfff)';
+                }, 5000);
+            }
+        }
+
+        refreshTaskStatus();
+        setInterval(refreshTaskStatus, 60000);
+        // ===== END DAILY TASK ENGINE =====
 
         function setupEventListeners() {
             // Tab switching
