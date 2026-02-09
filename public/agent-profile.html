@@ -114,6 +114,17 @@ a:hover{text-decoration:underline}
 .slot-preview{white-space:normal}
 .nav-arrows a span.nav-label{display:none}
 }
+.toggle-switch{position:relative;display:inline-block;width:48px;height:26px;flex-shrink:0}
+.toggle-switch input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;cursor:pointer;inset:0;background:#333;border-radius:26px;transition:.3s}
+.toggle-slider:before{content:'';position:absolute;height:20px;width:20px;left:3px;bottom:3px;background:#888;border-radius:50%;transition:.3s}
+.toggle-switch input:checked+.toggle-slider{background:rgba(57,255,20,.25);border:1px solid var(--green)}
+.toggle-switch input:checked+.toggle-slider:before{transform:translateX(22px);background:var(--green)}
+.run-agent-wrap{margin-bottom:20px;text-align:center}
+.run-agent-btn{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;padding:12px 32px;border:2px solid var(--green);background:rgba(57,255,20,.08);color:var(--green);border-radius:40px;cursor:pointer;transition:all .3s;letter-spacing:1px}
+.run-agent-btn:hover{background:rgba(57,255,20,.18);box-shadow:0 0 20px rgba(57,255,20,.3)}
+.run-agent-btn:disabled{opacity:.5;cursor:not-allowed}
+.run-agent-status{margin-top:10px;font-size:12px;color:#888;min-height:20px}
 </style>
 </head>
 <body>
@@ -133,6 +144,11 @@ a:hover{text-decoration:underline}
 
   <div id="profileContent" style="display:none">
     <div class="identity-card" id="identityCard"></div>
+
+    <div class="run-agent-wrap">
+      <button id="runAgentBtn" class="run-agent-btn" onclick="runSingleAgent()">▶ Run This Agent</button>
+      <div id="runAgentStatus" class="run-agent-status"></div>
+    </div>
 
     <div class="tabs">
       <div class="tab active" data-tab="history">History</div>
@@ -352,6 +368,7 @@ function getDefaultConfig(agent){
     }
   }
   return{
+    runEnabled:true,
     spendingStyle:'balanced',
     categories:[agent.specialty],
     maxSpend:0.5,
@@ -386,6 +403,16 @@ function saveConfig(code){
 function buildControls(agent){
   var el=document.getElementById('tab-controls');
   var html='';
+  var runEnabled = config.runEnabled !== false;
+  html += '<div class="ctrl-section">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center">';
+  html += '<div><div class="ctrl-section-title">Run Status</div>';
+  html += '<div class="ctrl-section-sub">Toggle whether this agent participates in collective runs</div></div>';
+  html += '<label class="toggle-switch">';
+  html += '<input type="checkbox" id="runToggle" ' + (runEnabled ? 'checked' : '') + ' onchange="config.runEnabled=this.checked;saveConfig(\'' + agent.code + '\')">';
+  html += '<span class="toggle-slider"></span>';
+  html += '</label>';
+  html += '</div></div>';
   html+='<div class="ctrl-section">';
   html+='<div class="ctrl-section-title">Action Programming</div>';
   html+='<div class="ctrl-section-sub">System collectively determines assignments \u2014 adjust recommendations here</div>';
@@ -488,6 +515,73 @@ document.querySelectorAll('.tab').forEach(function(tab){
     document.getElementById('tab-'+tab.dataset.tab).classList.add('active');
   });
 });
+
+async function runSingleAgent() {
+  var btn = document.getElementById('runAgentBtn');
+  var status = document.getElementById('runAgentStatus');
+  btn.disabled = true;
+  btn.textContent = '⏳ Running...';
+  status.textContent = 'Registering agent...';
+
+  var code = getCode();
+  var agent = findAgent(code);
+  if (!agent) { status.textContent = 'Agent not found'; btn.disabled = false; btn.textContent = '▶ Run This Agent'; return; }
+
+  var username = 'agent_eco_' + code;
+
+  try {
+    var res = await fetch('/api/ecosystem/resolve-agent', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({username: username})
+    });
+    var data = await res.json();
+    if (data.success) {
+      status.innerHTML = 'Agent resolved: member #' + data.memberId + ' with <span style="color:var(--gold)">' + data.balance.toFixed(1) + ' Solar</span>';
+    } else {
+      status.textContent = 'Agent not yet registered. Run collective first.';
+      btn.disabled = false;
+      btn.textContent = '▶ Run This Agent';
+      return;
+    }
+  } catch(e) {
+    status.textContent = 'Error: ' + e.message;
+    btn.disabled = false;
+    btn.textContent = '▶ Run This Agent';
+    return;
+  }
+
+  status.textContent = 'Distributing daily Solar...';
+  try {
+    var dRes = await fetch('/api/ecosystem/distribute', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({memberId: data.memberId, amount: 1})
+    });
+    var dData = await dRes.json();
+    if (dData.success) {
+      status.innerHTML = 'Daily Solar distributed. New balance: <span style="color:var(--gold)">' + dData.newBalance.toFixed(1) + ' Solar</span>';
+    }
+  } catch(e) {}
+
+  await new Promise(r => setTimeout(r, 500));
+
+  status.textContent = 'Refreshing profile...';
+  try {
+    var pRes = await fetch('/api/agents/' + code);
+    if (pRes.ok) {
+      apiData = await pRes.json();
+      var d = apiData.success ? apiData : apiData;
+      buildIdentity(currentAgent, d);
+      buildHistory(d);
+      buildAssets(d);
+    }
+  } catch(e) {}
+
+  status.innerHTML = '<span style="color:var(--green)">✓ Agent run complete</span>';
+  btn.disabled = false;
+  btn.textContent = '▶ Run This Agent';
+}
 
 async function init(){
   var code=getCode();

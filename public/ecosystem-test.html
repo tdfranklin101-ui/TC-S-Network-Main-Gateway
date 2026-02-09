@@ -183,8 +183,13 @@ header p{color:#888;font-size:14px}
 <div class="run-btn-wrap">
   <button id="runBtn" onclick="runEcosystemTest()">
     <span class="pulse"></span>
-    ▶ RUN AGENT TEST
+    ▶ RUN AGENTS
   </button>
+</div>
+
+<div class="panel" style="max-width:1200px;margin:0 auto 20px;position:relative;z-index:1">
+  <div class="panel-head">🤖 Agent Registry</div>
+  <div class="agents-grid" id="agentsGrid"></div>
 </div>
 
 <div class="dashboard" id="dashboard">
@@ -210,15 +215,9 @@ header p{color:#888;font-size:14px}
     <div class="stat-card" style="border-color:var(--orange)"><div class="stat-val orange" id="statDiscoveries">0</div><div class="stat-label">📡 Discoveries</div></div>
   </div>
 
-  <div class="panels">
-    <div class="panel">
-      <div class="panel-head">🤖 Agent Registry</div>
-      <div class="agents-grid" id="agentsGrid"></div>
-    </div>
-    <div class="panel">
-      <div class="panel-head">📡 Activity Feed</div>
-      <div class="activity-feed" id="activityFeed"></div>
-    </div>
+  <div class="panel" style="margin-bottom:20px">
+    <div class="panel-head">📡 Activity Feed</div>
+    <div class="activity-feed" id="activityFeed"></div>
   </div>
 
   <div class="panel items-grid-wrap" id="itemsPanel" style="display:none">
@@ -244,6 +243,18 @@ header p{color:#888;font-size:14px}
 </div>
 
 <script>
+function isAgentRunEnabled(code) {
+  var key = 'agentConfig_' + code;
+  var saved = localStorage.getItem(key);
+  if (saved) {
+    try {
+      var parsed = JSON.parse(saved);
+      return parsed.runEnabled !== false;
+    } catch(e) {}
+  }
+  return true;
+}
+
 const AGENTS = [
   {id:1,code:'01',name:'Alpha',icon:'🅰️'},
   {id:2,code:'02',name:'Bravo',icon:'🅱️'},
@@ -547,6 +558,14 @@ async function phase1_registration(){
   addFeed('☀️',`<b>Genesis:</b> April 7, 2025 → <span class="solar">${genesisBal} days = ${genesisBal} Solar</span> per member (1 Solar/day since Genesis)`);
   for(let i=0;i<AGENTS.length;i++){
     const a=AGENTS[i];
+    if (!isAgentRunEnabled(a.code)) {
+      updateAgentCard(a, 'skipped', null, 'exists');
+      addFeed('⏭️', '<b>Agent ' + a.name + '</b> <span style="color:#888">skipped (toggled off)</span>');
+      const pct=5+((i+1)/AGENTS.length)*20;
+      setPhase(1,'Phase 1 — Agent Registration',pct);
+      updateStats();
+      continue;
+    }
     const username='agent_eco_'+a.code;
     const email=username+'@tcs-test.network';
     const body={username,email,password:'EcoTest2026!',firstName:'Agent '+a.name};
@@ -672,6 +691,12 @@ async function phase2_items(){
 
     const batchPromises = batchAgents.map(async (agent, batchIdx) => {
       const i = batchStart + batchIdx;
+      if (!isAgentRunEnabled(agent.code)) {
+        updateAgentCard(agent, 'skipped', agent.balance, 'exists');
+        addFeed('⏭️', '<b>Agent ' + agent.name + '</b> <span style="color:#888">skipped (toggled off)</span>');
+        completedAgents++;
+        return;
+      }
       agent.dailyCreates = 0;
       agent.dailyPurchases = 0;
       agent.basicNeedsPurchases = 0;
@@ -943,6 +968,10 @@ async function phase4_purchases(){
   const basicNeedsPool=t1Items.filter(it=>it.isBasicNeed);
   for(let i=0;i<state.agents.length;i++){
     const buyer=state.agents[i];
+    if (!isAgentRunEnabled(buyer.code)) {
+      updateAgentCard(buyer, 'skipped', buyer.balance, 'exists');
+      continue;
+    }
     buyer.dailyPurchases=buyer.dailyPurchases||0;
     buyer.basicNeedsPurchases=buyer.basicNeedsPurchases||0;
     const attemptCount=Math.floor(randBetween(5,7));
@@ -1522,7 +1551,7 @@ async function runEcosystemTest(){
   $('reportCard').classList.remove('visible');
   const vizEl=$('networkViz');
   vizEl.innerHTML='';
-  initAgentCards();
+  AGENTS.forEach(a => updateAgentCard(a, 'loading...', null, ''));
   updateStats();
   addFeed('🌐','<b>TC-S Network Agent Control Dashboard</b> initialized');
   await sleep(500);
@@ -1549,6 +1578,8 @@ async function runEcosystemTest(){
   btn.textContent='🔄 RUN AGAIN';
   btn.disabled=false;
 }
+
+initAgentCards();
 </script>
 </body>
 </html>
