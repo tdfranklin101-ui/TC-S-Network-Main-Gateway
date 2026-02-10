@@ -1479,7 +1479,7 @@
   <div id="solarGreetingOverlay">
     <div class="greeting-content">
       <button class="greeting-close" onclick="closeSolarGreeting()" data-testid="button-close-greeting">&times;</button>
-      <video id="solarGreetingVideo" autoplay controls data-testid="video-solar-greeting">
+      <video id="solarGreetingVideo" autoplay playsinline webkit-playsinline data-testid="video-solar-greeting">
         <source src="/greeting.mp4" type="video/mp4">
       </video>
     </div>
@@ -1497,30 +1497,57 @@
       if (localStorage.getItem(GREETING_KEY) === today) {
         overlay.classList.add('hidden');
         replayBtn.style.display = 'block';
+        return;
+      }
+      
+      function autoClose() {
+        localStorage.setItem(GREETING_KEY, today);
+        overlay.style.transition = 'opacity 0.6s ease-out';
+        overlay.style.opacity = '0';
+        setTimeout(function() {
+          overlay.classList.add('hidden');
+          overlay.style.opacity = '';
+          overlay.style.transition = '';
+          replayBtn.style.display = 'block';
+        }, 600);
+        try { video.pause(); } catch(e) {}
       }
       
       video.addEventListener('ended', function() {
-        localStorage.setItem(GREETING_KEY, today);
-        overlay.classList.add('hidden');
-        replayBtn.style.display = 'block';
+        setTimeout(autoClose, 800);
       });
       
       video.addEventListener('error', function() {
-        overlay.classList.add('hidden');
+        autoClose();
       });
+
+      overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) autoClose();
+      });
+
+      var fallbackTimer = setTimeout(autoClose, 30000);
+      video.addEventListener('ended', function() { clearTimeout(fallbackTimer); });
     })();
     
     function closeSolarGreeting() {
       const today = new Date().toISOString().slice(0, 10);
       localStorage.setItem('solarGreetingShown', today);
-      document.getElementById('solarGreetingOverlay').classList.add('hidden');
-      document.getElementById('replaySolarGreeting').style.display = 'block';
+      var overlay = document.getElementById('solarGreetingOverlay');
+      overlay.style.transition = 'opacity 0.6s ease-out';
+      overlay.style.opacity = '0';
+      setTimeout(function() {
+        overlay.classList.add('hidden');
+        overlay.style.opacity = '';
+        overlay.style.transition = '';
+        document.getElementById('replaySolarGreeting').style.display = 'block';
+      }, 600);
     }
     
     function replaySolarGreeting() {
-      const overlay = document.getElementById('solarGreetingOverlay');
-      const video = document.getElementById('solarGreetingVideo');
+      var overlay = document.getElementById('solarGreetingOverlay');
+      var video = document.getElementById('solarGreetingVideo');
       overlay.classList.remove('hidden');
+      overlay.style.opacity = '1';
       video.currentTime = 0;
       video.play();
     }
