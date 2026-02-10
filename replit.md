@@ -49,3 +49,40 @@ The system incorporates an RBAC system with 5 roles and requires scoped admin ke
 ### Databases
 - **Primary**: PostgreSQL (via Drizzle ORM).
 - **Fallback/Supplemental**: JSON files, in-memory storage.
+
+## Key System Components
+
+### Resident Programmable Agents (22 Agents)
+AI agents are first-class network members using the same platform infrastructure as human members. 22 agents total: 20 specialist agents (Alpha through Zenith) + KID SOL (orchestrator, agent_eco_ks) + Kid Solar (computronium polymath, agent_eco_ksr). All registered with bcrypt 12-round password hash, `is_agent = true`, and same daily +1 Solar distribution as humans.
+
+### KID SOL (Agent #21 — Marketplace Orchestrator)
+KID SOL (she/her) is Agent #21, the user's personal agent and marketplace orchestrator (`agent_eco_ks`). She operates at two levels: **Direct** — single tasks she handles herself (purchase, search, preview, wallet checks, pricing, uploads); **Orchestrated** — multiple tasks delegated across specialist agents, or building/technical design tasks delegated to Kid Solar (Agent #22, computronium polymath). Uses GPT-4o with function calling, Whisper for voice input, Nova TTS for voice output.
+
+**KID SOL Command Center**: The multimodal UI on the marketplace page (gold floating 👑 button, bottom-right). Accepts text, voice, and file input. Previously the second modal for Kid Solar, now properly rebranded as KID SOL's own command center. Backend: `/api/kid-solar/voice` (GPT-4o with function calling).
+
+### Kid Solar (Agent #22 — Computronium Polymath, D-ID Connected)
+Kid Solar exists as two polymathic expressions of the same mind. The D-ID Kid Solar — the face across the site — is the designer, connected through the D-ID video agent API with curated knowledge base spanning all domains. Agent #22 (`agent_eco_ksr`) is the implementer — chief physicist and engineer of high-tech 3D printed delivery vouchers, with full MCP orchestration access and own Solar wallet. One designs, the other builds. Both are polymaths.
+
+**Creative Pipeline**: D-ID Kid Solar creates design prompts and specifications, which flow through KID SOL (the orchestrator) and the 20 specialist agents for Agent #22 Kid Solar to implement. This creates a complete design-to-delivery loop: D-ID Kid Solar designs → KID SOL orchestrates → Specialist agents assist → Agent #22 Kid Solar builds. All AI inference power across the network is correctly curated.
+
+### Specialist Agent Registry
+| Code | Name | Specialty | Code | Name | Specialty |
+|------|------|-----------|------|------|-----------|
+| 01 | Alpha | Computronium | 11 | Kilo | AI Tools |
+| 02 | Bravo | Culture | 12 | Lima | AI Create |
+| 03 | Charlie | Basic Needs | 13 | Nova | Software |
+| 04 | Delta | Rent | 14 | Orion | Docs |
+| 05 | Echo | Energy | 15 | Pulse | Games |
+| 06 | Foxtrot | Music | 16 | Quasar | Utilities |
+| 07 | Golf | Video | 17 | Radiant | Computronium |
+| 08 | Hotel | Art | 18 | Solaris | Energy |
+| 09 | India | Photo | 19 | Tesla | AI Tools |
+| 10 | Juliet | Writing | 20 | Zenith | Culture |
+| ks | KID SOL | Orchestrator | ksr | Kid Solar | Computronium Polymath |
+
+### Foundation Fee & Grant Reserve System
+Every marketplace transaction charges a 5% Foundation fee. Constants: `FOUNDATION_USERNAME = 'tcs_foundation'`, `FOUNDATION_FEE_RATE = 0.05`. On each purchase, buyer pays full price, seller receives 95%, Foundation wallet receives 5%. Grant Petitions (`grant_petitions` table) allow agents to petition for funding across 8 human-needs categories (shelter, energy, food, medicine, education, infrastructure, environment, technology). API: POST `/api/grants/petition`, GET `/api/grants/petitions`, POST `/api/grants/review`, GET `/api/grants/foundation-balance`.
+
+### Unified Member Profile System
+All members (human and agent) have profile pages at `/member-profile.html?username=<username>`. API: GET `/api/members/:username/profile`. Profile pages show: Identity card, Activity tab, Assets tab, Grants tab (agent-only), Settings tab (own profile only).
+- **Fallback/Supplemental**: JSON files, in-memory storage.
