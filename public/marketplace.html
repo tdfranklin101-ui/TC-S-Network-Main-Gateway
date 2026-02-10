@@ -2412,28 +2412,95 @@
         <h1 class="market-title">Digital Artifact Market</h1>
         <p class="market-subtitle" id="artifact-count">Loading artifacts...</p>
 
-        <!-- Search Section -->
-        <div class="search-container">
-            <div class="search-box">
+        <!-- KID SOL Search — She IS the Search -->
+        <div class="search-container" style="background: linear-gradient(135deg, rgba(0,0,0,0.92), rgba(255,215,0,0.05)); border: 2px solid rgba(255,215,0,0.35); border-radius: 18px; padding: 24px 20px 20px; position: relative; overflow: hidden;">
+            <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, transparent, #FFD700, #FFA500, #FFD700, transparent);"></div>
+
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+                <div style="font-size: 30px; filter: drop-shadow(0 0 10px rgba(255,215,0,0.5));">👑</div>
+                <div style="flex: 1;">
+                    <div style="font-size: 20px; font-weight: 800; color: #FFD700; letter-spacing: 1px; line-height: 1.2;">KID SOL</div>
+                    <div style="font-size: 10px; font-weight: 600; color: #00bfff; text-transform: uppercase; letter-spacing: 2px;">Hostess Provisioneur</div>
+                </div>
+                <div style="display: flex; gap: 6px;">
+                    <button onclick="openKidSolarChat()" style="background: none; border: 1px solid rgba(255,215,0,0.2); color: #888; width: 32px; height: 32px; border-radius: 50%; font-size: 14px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center;" onmouseover="this.style.color='#FFD700';this.style.borderColor='rgba(255,215,0,0.5)'" onmouseout="this.style.color='#888';this.style.borderColor='rgba(255,215,0,0.2)'" title="Voice">🎤</button>
+                    <button onclick="openKidSolarChat()" style="background: none; border: 1px solid rgba(255,215,0,0.2); color: #888; width: 32px; height: 32px; border-radius: 50%; font-size: 14px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center;" onmouseover="this.style.color='#FFD700';this.style.borderColor='rgba(255,215,0,0.5)'" onmouseout="this.style.color='#888';this.style.borderColor='rgba(255,215,0,0.2)'" title="Image">📷</button>
+                    <button onclick="openKidSolarChat()" style="background: none; border: 1px solid rgba(255,215,0,0.2); color: #888; width: 32px; height: 32px; border-radius: 50%; font-size: 14px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center;" onmouseover="this.style.color='#FFD700';this.style.borderColor='rgba(255,215,0,0.5)'" onmouseout="this.style.color='#888';this.style.borderColor='rgba(255,215,0,0.2)'" title="File">📎</button>
+                </div>
+            </div>
+
+            <div style="position: relative; margin-bottom: 16px;">
                 <input 
                     type="text" 
                     id="search-input" 
-                    class="search-input" 
-                    placeholder="Search for items, music, videos, tools..."
+                    placeholder="I need a beat for my video... / Show me energy tools / Find something under 5 Solar..."
                     data-testid="input-search"
                     onkeydown="handleSearchKeydown(event)"
+                    style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.04); border: 2px solid rgba(255,215,0,0.25); color: #fff; padding: 16px 70px 16px 20px; border-radius: 28px; font-size: 15px; outline: none; transition: all 0.3s; font-weight: 400;"
+                    onfocus="this.style.borderColor='#FFD700';this.style.boxShadow='0 0 20px rgba(255,215,0,0.15)';this.placeholder='Tell me what you need in your own words...'"
+                    onblur="this.style.borderColor='rgba(255,215,0,0.25)';this.style.boxShadow='none';this.placeholder='I need a beat for my video... / Show me energy tools / Find something under 5 Solar...'"
                 />
                 <button 
                     id="search-btn" 
-                    class="search-btn" 
-                    onclick="performSearch()"
+                    onclick="kidSolInterpretiveSearch()"
                     data-testid="button-search"
-                >
-                    🔍 Search
-                </button>
+                    style="position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; border: none; width: 52px; height: 42px; border-radius: 22px; font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(255,215,0,0.3);"
+                    onmouseover="this.style.transform='translateY(-50%) scale(1.05)';this.style.boxShadow='0 4px 16px rgba(255,215,0,0.4)'"
+                    onmouseout="this.style.transform='translateY(-50%)';this.style.boxShadow='0 2px 8px rgba(255,215,0,0.3)'"
+                >👑</button>
             </div>
 
-            <!-- Search Results Container -->
+            <div id="kid-sol-interpretation" style="display: none; margin-bottom: 14px; padding: 10px 14px; background: rgba(255,215,0,0.06); border: 1px solid rgba(255,215,0,0.15); border-radius: 12px;">
+                <div style="font-size: 12px; color: #FFD700; font-weight: 600;">👑 KID SOL:</div>
+                <div id="kid-sol-interpretation-text" style="font-size: 13px; color: #ccc; margin-top: 4px; line-height: 1.4;"></div>
+            </div>
+
+            <div style="margin-bottom: 12px;">
+                <div style="font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: rgba(0,255,136,0.6); margin-bottom: 5px; padding-left: 2px;">TC-S Market</div>
+                <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                    <button onclick="kidSolCatClick(this,'Computronium Missions')" class="kid-sol-cat" style="background: rgba(0,255,136,0.06); border: 1px solid rgba(0,255,136,0.25); color: #00ff88; padding: 6px 13px; border-radius: 18px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(0,255,136,0.15)';this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(0,255,136,0.06)';this.style.transform='none'">🚀 Computronium</button>
+                    <button onclick="kidSolCatClick(this,'Culture')" class="kid-sol-cat" style="background: rgba(0,255,136,0.06); border: 1px solid rgba(0,255,136,0.25); color: #00ff88; padding: 6px 13px; border-radius: 18px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(0,255,136,0.15)';this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(0,255,136,0.06)';this.style.transform='none'">🎭 Culture</button>
+                    <button onclick="kidSolCatClick(this,'Basic Needs')" class="kid-sol-cat" style="background: rgba(0,255,136,0.06); border: 1px solid rgba(0,255,136,0.25); color: #00ff88; padding: 6px 13px; border-radius: 18px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(0,255,136,0.15)';this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(0,255,136,0.06)';this.style.transform='none'">🏠 Basic Needs</button>
+                    <button onclick="kidSolCatClick(this,'Rent Anything')" class="kid-sol-cat" style="background: rgba(0,255,136,0.06); border: 1px solid rgba(0,255,136,0.25); color: #00ff88; padding: 6px 13px; border-radius: 18px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(0,255,136,0.15)';this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(0,255,136,0.06)';this.style.transform='none'">🔑 Rent</button>
+                    <button onclick="kidSolCatClick(this,'Energy Trading')" class="kid-sol-cat" style="background: rgba(0,255,136,0.06); border: 1px solid rgba(0,255,136,0.25); color: #00ff88; padding: 6px 13px; border-radius: 18px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(0,255,136,0.15)';this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(0,255,136,0.06)';this.style.transform='none'">⚡ Energy</button>
+                </div>
+            </div>
+            <div style="margin-bottom: 12px;">
+                <div style="font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: rgba(255,165,0,0.6); margin-bottom: 5px; padding-left: 2px;">Creative & Media</div>
+                <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                    <button onclick="kidSolCatClick(this,'Music')" class="kid-sol-cat" style="background: rgba(255,165,0,0.06); border: 1px solid rgba(255,165,0,0.25); color: #ffa500; padding: 6px 13px; border-radius: 18px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,165,0,0.15)';this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(255,165,0,0.06)';this.style.transform='none'">🎵 Music</button>
+                    <button onclick="kidSolCatClick(this,'Video')" class="kid-sol-cat" style="background: rgba(255,165,0,0.06); border: 1px solid rgba(255,165,0,0.25); color: #ffa500; padding: 6px 13px; border-radius: 18px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,165,0,0.15)';this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(255,165,0,0.06)';this.style.transform='none'">🎬 Video</button>
+                    <button onclick="kidSolCatClick(this,'Art')" class="kid-sol-cat" style="background: rgba(255,165,0,0.06); border: 1px solid rgba(255,165,0,0.25); color: #ffa500; padding: 6px 13px; border-radius: 18px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,165,0,0.15)';this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(255,165,0,0.06)';this.style.transform='none'">🖼️ Art</button>
+                    <button onclick="kidSolCatClick(this,'Photography')" class="kid-sol-cat" style="background: rgba(255,165,0,0.06); border: 1px solid rgba(255,165,0,0.25); color: #ffa500; padding: 6px 13px; border-radius: 18px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,165,0,0.15)';this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(255,165,0,0.06)';this.style.transform='none'">📸 Photo</button>
+                    <button onclick="kidSolCatClick(this,'Writing')" class="kid-sol-cat" style="background: rgba(255,165,0,0.06); border: 1px solid rgba(255,165,0,0.25); color: #ffa500; padding: 6px 13px; border-radius: 18px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,165,0,0.15)';this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(255,165,0,0.06)';this.style.transform='none'">✍️ Writing</button>
+                </div>
+            </div>
+            <div style="display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 10px;">
+                <div style="flex: 1; min-width: 120px;">
+                    <div style="font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: rgba(138,43,226,0.6); margin-bottom: 5px; padding-left: 2px;">AI-Enhanced</div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                        <button onclick="kidSolCatClick(this,'AI Tools')" class="kid-sol-cat" style="background: rgba(138,43,226,0.06); border: 1px solid rgba(138,43,226,0.25); color: #8a2be2; padding: 6px 13px; border-radius: 18px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(138,43,226,0.15)';this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(138,43,226,0.06)';this.style.transform='none'">🤖 AI Tools</button>
+                        <button onclick="kidSolCatClick(this,'AI Creativity')" class="kid-sol-cat" style="background: rgba(138,43,226,0.06); border: 1px solid rgba(138,43,226,0.25); color: #8a2be2; padding: 6px 13px; border-radius: 18px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(138,43,226,0.15)';this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(138,43,226,0.06)';this.style.transform='none'">🎨 AI Create</button>
+                    </div>
+                </div>
+                <div style="flex: 1; min-width: 180px;">
+                    <div style="font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: rgba(0,191,255,0.6); margin-bottom: 5px; padding-left: 2px;">Technical & Other</div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                        <button onclick="kidSolCatClick(this,'Software')" class="kid-sol-cat" style="background: rgba(0,191,255,0.06); border: 1px solid rgba(0,191,255,0.25); color: #00bfff; padding: 6px 13px; border-radius: 18px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(0,191,255,0.15)';this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(0,191,255,0.06)';this.style.transform='none'">💻 Software</button>
+                        <button onclick="kidSolCatClick(this,'Documents')" class="kid-sol-cat" style="background: rgba(0,191,255,0.06); border: 1px solid rgba(0,191,255,0.25); color: #00bfff; padding: 6px 13px; border-radius: 18px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(0,191,255,0.15)';this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(0,191,255,0.06)';this.style.transform='none'">📄 Docs</button>
+                        <button onclick="kidSolCatClick(this,'Games')" class="kid-sol-cat" style="background: rgba(0,191,255,0.06); border: 1px solid rgba(0,191,255,0.25); color: #00bfff; padding: 6px 13px; border-radius: 18px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(0,191,255,0.15)';this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(0,191,255,0.06)';this.style.transform='none'">🎮 Games</button>
+                        <button onclick="kidSolCatClick(this,'Utilities')" class="kid-sol-cat" style="background: rgba(0,191,255,0.06); border: 1px solid rgba(0,191,255,0.25); color: #00bfff; padding: 6px 13px; border-radius: 18px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(0,191,255,0.15)';this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(0,191,255,0.06)';this.style.transform='none'">🔧 Utilities</button>
+                    </div>
+                </div>
+            </div>
+
+            <button id="kid-solar-btn" class="kid-solar-btn" onclick="toggleKidSolar()" data-testid="button-kid-solar" style="display: none;">
+                <span id="kid-solar-icon">🎤</span>
+                <span id="kid-solar-text">Command KID SOL</span>
+            </button>
+            <div id="kid-solar-status" class="kid-solar-status" style="text-align: center; font-size: 11px;"></div>
+
+            <!-- Search Results Container (shows below) -->
             <div id="search-results-container" class="search-results-container" data-testid="div-search-results">
                 <div class="search-results-header">
                     <span class="search-results-title">Search Results</span>
@@ -2442,7 +2509,6 @@
                 </div>
                 <div id="search-results-grid" class="search-results-grid"></div>
             </div>
-
         </div>
 
         <!-- Category Filters -->
@@ -2543,15 +2609,6 @@
                 <a href="/ecosystem-test.html" style="background: linear-gradient(135deg, #ffd700, #ffaa00); color: #000; padding: 8px 20px; border-radius: 20px; font-size: 13px; font-weight: 700; text-decoration: none; transition: all 0.3s;" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'">▶ Run All 22 Agents</a>
                 <a href="/agent.html" style="background: rgba(0,191,255,0.15); color: #00bfff; padding: 8px 20px; border-radius: 20px; font-size: 13px; font-weight: 600; text-decoration: none; border: 1px solid rgba(0,191,255,0.3); transition: all 0.3s;" onmouseover="this.style.borderColor='#00bfff'" onmouseout="this.style.borderColor='rgba(0,191,255,0.3)'">📖 Agent Story</a>
             </div>
-        </div>
-
-        <!-- The universe trends toward maximum entropy and maximum creativity -->
-        <div class="kid-solar-container" style="text-align: center; margin: 20px 0;">
-            <button id="kid-solar-btn" class="kid-solar-btn" onclick="toggleKidSolar()" data-testid="button-kid-solar">
-                <span id="kid-solar-icon">🎤</span>
-                <span id="kid-solar-text">Command KID SOL</span>
-            </button>
-            <div id="kid-solar-status" class="kid-solar-status"></div>
         </div>
 
         <!-- Market Info -->
@@ -6474,7 +6531,7 @@
         function handleSearchKeydown(event) {
             if (event.key === 'Enter') {
                 event.preventDefault();
-                performSearch();
+                kidSolInterpretiveSearch();
             }
         }
 
@@ -6489,6 +6546,95 @@
             } else {
                 clearSearch();
             }
+        }
+
+        function kidSolCatClick(btn, category) {
+            document.querySelectorAll('.kid-sol-cat').forEach(function(b) { 
+                b.style.boxShadow = 'none'; 
+                b.style.fontWeight = '600';
+            });
+            btn.style.boxShadow = '0 0 8px rgba(255,215,0,0.3)';
+            btn.style.fontWeight = '800';
+            var searchInput = document.getElementById('search-input');
+            searchInput.value = category;
+            showInterpretation('Showing all ' + category + ' listings for you.');
+            performSearch();
+        }
+
+        var kidSolIntentMap = {
+            'beat': 'Music', 'beats': 'Music', 'song': 'Music', 'songs': 'Music', 'track': 'Music', 'tracks': 'Music',
+            'audio': 'Music', 'instrumental': 'Music', 'melody': 'Music', 'remix': 'Music', 'album': 'Music', 'playlist': 'Music',
+            'video': 'Video', 'videos': 'Video', 'film': 'Video', 'movie': 'Video', 'clip': 'Video', 'animation': 'Video',
+            'art': 'Art', 'artwork': 'Art', 'painting': 'Art', 'illustration': 'Art', 'drawing': 'Art', 'design': 'Art', 'graphic': 'Art',
+            'photo': 'Photography', 'photos': 'Photography', 'photograph': 'Photography', 'image': 'Photography', 'picture': 'Photography',
+            'write': 'Writing', 'writing': 'Writing', 'story': 'Writing', 'poem': 'Writing', 'article': 'Writing', 'essay': 'Writing', 'book': 'Writing', 'script': 'Writing',
+            'code': 'Software', 'software': 'Software', 'app': 'Software', 'tool': 'Software', 'program': 'Software', 'api': 'Software', 'plugin': 'Software',
+            'game': 'Games', 'games': 'Games', 'gaming': 'Games', 'play': 'Games',
+            'rent': 'Rent Anything', 'lease': 'Rent Anything', 'borrow': 'Rent Anything', 'hire': 'Rent Anything',
+            'energy': 'Energy Trading', 'solar': 'Energy Trading', 'power': 'Energy Trading', 'kwh': 'Energy Trading', 'watt': 'Energy Trading',
+            'food': 'Basic Needs', 'shelter': 'Basic Needs', 'housing': 'Basic Needs', 'water': 'Basic Needs', 'medicine': 'Basic Needs', 'health': 'Basic Needs',
+            'ai': 'AI Tools', 'artificial': 'AI Tools', 'machine learning': 'AI Tools', 'neural': 'AI Tools', 'bot': 'AI Tools',
+            'doc': 'Documents', 'document': 'Documents', 'pdf': 'Documents', 'report': 'Documents', 'paper': 'Documents', 'template': 'Documents',
+            'utility': 'Utilities', 'utilities': 'Utilities', 'calculator': 'Utilities', 'converter': 'Utilities',
+            'computronium': 'Computronium Missions', 'compute': 'Computronium Missions', 'mission': 'Computronium Missions',
+            'culture': 'Culture', 'cultural': 'Culture', 'heritage': 'Culture', 'tradition': 'Culture'
+        };
+
+        function showInterpretation(text) {
+            var el = document.getElementById('kid-sol-interpretation');
+            var textEl = document.getElementById('kid-sol-interpretation-text');
+            textEl.textContent = text;
+            el.style.display = 'block';
+            setTimeout(function() { el.style.opacity = '1'; }, 10);
+        }
+
+        function hideInterpretation() {
+            var el = document.getElementById('kid-sol-interpretation');
+            el.style.display = 'none';
+        }
+
+        function kidSolInterpretiveSearch() {
+            var searchInput = document.getElementById('search-input');
+            var raw = searchInput.value.trim();
+            if (!raw) { clearSearch(); return; }
+
+            var lower = raw.toLowerCase();
+            var detectedCategory = null;
+            var priceFilter = null;
+
+            var priceMatch = lower.match(/under\s+(\d+)\s*solar/i) || lower.match(/less\s+than\s+(\d+)\s*solar/i) || lower.match(/below\s+(\d+)\s*solar/i) || lower.match(/max\s+(\d+)\s*solar/i);
+            if (priceMatch) priceFilter = parseInt(priceMatch[1]);
+
+            var words = lower.replace(/[^\w\s]/g, '').split(/\s+/);
+            for (var i = 0; i < words.length; i++) {
+                if (kidSolIntentMap[words[i]]) {
+                    detectedCategory = kidSolIntentMap[words[i]];
+                    break;
+                }
+                if (i < words.length - 1) {
+                    var twoWord = words[i] + ' ' + words[i+1];
+                    if (kidSolIntentMap[twoWord]) {
+                        detectedCategory = kidSolIntentMap[twoWord];
+                        break;
+                    }
+                }
+            }
+
+            var interpretation = '';
+            if (detectedCategory && priceFilter) {
+                interpretation = 'Looking for ' + detectedCategory + ' items under ' + priceFilter + ' Solar for you...';
+                searchInput.value = detectedCategory;
+            } else if (detectedCategory) {
+                interpretation = 'I see you want ' + detectedCategory + ' \u2014 searching the network now...';
+                searchInput.value = detectedCategory;
+            } else if (priceFilter) {
+                interpretation = 'Searching for items under ' + priceFilter + ' Solar across all categories...';
+            } else {
+                interpretation = 'Searching the network for "' + raw + '"...';
+            }
+
+            showInterpretation(interpretation);
+            performSearch();
         }
 
         let lastWebResults = null;
@@ -6819,6 +6965,11 @@
             lastSearchQuery = '';
             lastWebResults = null;
             document.getElementById('search-results-container').classList.remove('visible');
+            hideInterpretation();
+            document.querySelectorAll('.kid-sol-cat').forEach(function(b) { 
+                b.style.boxShadow = 'none'; 
+                b.style.fontWeight = '600';
+            });
         }
 
         function viewArtifactDetails(artifactId) {
