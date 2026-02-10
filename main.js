@@ -9580,7 +9580,442 @@ Respond ONLY with valid JSON in this exact format:
     }
     return;
   }
-  
+
+  // ================== FOUNDATION GRANT RESERVE API ==================
+
+  const GRANT_CATEGORIES = ['shelter', 'energy', 'food', 'medicine', 'education', 'infrastructure', 'environment', 'technology'];
+
+  if (pathname === '/api/grants/petition' && req.method === 'POST') {
+    try {
+      const body = await parseBody(req);
+      const { agentId, agentUsername, title, description, category, requestedAmount } = body;
+      const reqAmt = parseFloat(requestedAmount) || 0;
+
+      if (!agentId || !title || reqAmt <= 0) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'agentId, title, and positive requestedAmount required' }));
+        return;
+      }
+      if (!pool) {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Database unavailable' }));
+        return;
+      }
+
+      const memberCheck = await pool.query('SELECT id, username, is_agent FROM members WHERE id = $1 LIMIT 1', [parseInt(agentId) || 0]);
+      if (memberCheck.rows.length === 0) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Member not found' }));
+        return;
+      }
+      const member = memberCheck.rows[0];
+      const isValidAgent = member.is_agent || member.username.startsWith('agent_eco_') || member.username === 'tcs_foundation';
+      if (!isValidAgent) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Only agents or foundation members can submit grant petitions' }));
+        return;
+      }
+
+      const validCategory = GRANT_CATEGORIES.includes(category) ? category : 'technology';
+      const petitionId = `gp_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
+
+      const result = await pool.query(
+        `INSERT INTO grant_petitions (id, agent_id, agent_username, title, description, category, requested_amount, status, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', NOW()) RETURNING *`,
+        [petitionId, member.id, member.username, title, description || '', validCategory, String(reqAmt)]
+      );
+
+      res.writeHead(201, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, petition: result.rows[0] }));
+    } catch (error) {
+      console.error('Grant petition error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to submit grant petition' }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/grants/petitions' && req.method === 'GET') {
+    try {
+      if (!pool) {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Database unavailable' }));
+        return;
+      }
+
+      const urlParams = new URL(req.url, `http://${req.headers.host}`);
+      const status = urlParams.searchParams.get('status');
+      const agentId = urlParams.searchParams.get('agentId');
+      const limit = Math.min(parseInt(urlParams.searchParams.get('limit')) || 50, 200);
+
+      let where = [];
+      let params = [];
+      let paramIdx = 1;
+      if (status) { where.push(`status = $${paramIdx++}`); params.push(status); }
+      if (agentId) { where.push(`agent_id = $${paramIdx++}`); params.push(parseInt(agentId)); }
+      const whereClause = where.length > 0 ? 'WHERE ' + where.join(' AND ') : '';
+
+      const petitions = await pool.query(
+        `SELECT * FROM grant_petitions ${whereClause} ORDER BY created_at DESC LIMIT $${paramIdx}`,
+        [...params, limit]
+      );
+
+      const stats = await pool.query(
+        `SELECT
+           COUNT(*) AS total_petitions,
+           COALESCE(SUM(requested_amount), 0) AS total_requested,
+           COALESCE(SUM(CASE WHEN status = 'approved' THEN approved_amount ELSE 0 END), 0) AS total_approved,
+           COALESCE(SUM(CASE WHEN disbursed_at IS NOT NULL THEN approved_amount ELSE 0 END), 0) AS total_disbursed
+         FROM grant_petitions`
+      );
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        petitions: petitions.rows,
+        stats: {
+          totalPetitions: parseInt(stats.rows[0].total_petitions),
+          totalRequested: parseFloat(stats.rows[0].total_requested),
+          totalApproved: parseFloat(stats.rows[0].total_approved),
+          totalDisbursed: parseFloat(stats.rows[0].total_disbursed)
+        }
+      }));
+    } catch (error) {
+      console.error('List petitions error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to list petitions' }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/grants/review' && req.method === 'POST') {
+    try {
+      const body = await parseBody(req);
+      const { petitionId, action, approvedAmount, reviewNotes, reviewedBy } = body;
+
+      if (!petitionId || !action || !['approve', 'deny'].includes(action)) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'petitionId and action (approve|deny) required' }));
+        return;
+      }
+      if (!pool) {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Database unavailable' }));
+        return;
+      }
+
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+
+        const petitionResult = await client.query('SELECT * FROM grant_petitions WHERE id = $1 FOR UPDATE', [petitionId]);
+        if (petitionResult.rows.length === 0) {
+          await client.query('ROLLBACK');
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Petition not found' }));
+          return;
+        }
+        const petition = petitionResult.rows[0];
+
+        if (petition.status !== 'pending') {
+          await client.query('ROLLBACK');
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: `Petition already ${petition.status}` }));
+          return;
+        }
+
+        if (action === 'deny') {
+          await client.query(
+            `UPDATE grant_petitions SET status = 'denied', review_notes = $1, reviewed_by = $2, reviewed_at = NOW()
+             WHERE id = $3`,
+            [reviewNotes || '', reviewedBy || 'admin', petitionId]
+          );
+          await client.query('COMMIT');
+          const updated = await pool.query('SELECT * FROM grant_petitions WHERE id = $1', [petitionId]);
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: true, petition: updated.rows[0] }));
+          return;
+        }
+
+        const grantAmount = parseFloat(approvedAmount) || parseFloat(petition.requested_amount) || 0;
+        if (grantAmount <= 0) {
+          await client.query('ROLLBACK');
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Approved amount must be positive' }));
+          return;
+        }
+
+        const foundationMember = await getOrCreateFoundationMember(client);
+        if (foundationMember.totalSolar < grantAmount) {
+          await client.query('ROLLBACK');
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({
+            success: false,
+            error: 'Insufficient Foundation balance',
+            foundationBalance: foundationMember.totalSolar,
+            requestedAmount: grantAmount
+          }));
+          return;
+        }
+
+        await client.query(
+          `UPDATE grant_petitions SET status = 'approved', approved_amount = $1, review_notes = $2, reviewed_by = $3, reviewed_at = NOW()
+           WHERE id = $4`,
+          [String(grantAmount), reviewNotes || '', reviewedBy || 'admin', petitionId]
+        );
+
+        const transactionId = `grant_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
+        const foundationBalAfter = foundationMember.totalSolar - grantAmount;
+
+        await client.query(
+          `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
+           VALUES ($1, 'debit', $2, 'foundation', $3, $4, 'grant', $5, $6)`,
+          [transactionId, String(foundationMember.id), String(grantAmount), String(foundationBalAfter), petitionId, `Grant: ${petition.title}`]
+        );
+
+        const agentRow = await client.query('SELECT id, total_solar FROM members WHERE id = $1 LIMIT 1', [petition.agent_id]);
+        const agentBal = agentRow.rows.length > 0 ? parseFloat(agentRow.rows[0].total_solar) || 0 : 0;
+        const agentBalAfter = agentBal + grantAmount;
+
+        await client.query(
+          `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
+           VALUES ($1, 'credit', $2, 'user', $3, $4, 'grant', $5, $6)`,
+          [transactionId, String(petition.agent_id), String(grantAmount), String(agentBalAfter), petitionId, `Grant received: ${petition.title}`]
+        );
+
+        await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(foundationBalAfter), foundationMember.id]);
+        await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(agentBalAfter), petition.agent_id]);
+
+        await client.query(
+          `UPDATE grant_petitions SET disbursed_at = NOW(), transaction_id = $1 WHERE id = $2`,
+          [transactionId, petitionId]
+        );
+
+        await client.query('COMMIT');
+
+        const updatedPetition = await pool.query('SELECT * FROM grant_petitions WHERE id = $1', [petitionId]);
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: true,
+          petition: updatedPetition.rows[0],
+          transactionId,
+          foundationBalance: foundationBalAfter,
+          agentBalance: agentBalAfter
+        }));
+      } catch (txErr) {
+        await client.query('ROLLBACK');
+        throw txErr;
+      } finally {
+        client.release();
+      }
+    } catch (error) {
+      console.error('Grant review error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Grant review failed' }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/grants/foundation-balance' && req.method === 'GET') {
+    try {
+      if (!pool) {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Database unavailable' }));
+        return;
+      }
+
+      const foundationMember = await getOrCreateFoundationMember();
+
+      const feesResult = await pool.query(
+        `SELECT COALESCE(SUM(amount), 0) AS total_fees
+         FROM marketplace_ledger WHERE reference_type = 'foundation_fee' AND entry_type = 'credit'`
+      );
+
+      const grantsResult = await pool.query(
+        `SELECT COALESCE(SUM(approved_amount), 0) AS total_disbursed
+         FROM grant_petitions WHERE status = 'approved' AND disbursed_at IS NOT NULL`
+      );
+
+      const activeResult = await pool.query(
+        `SELECT COUNT(*) AS active_count FROM grant_petitions WHERE status = 'pending'`
+      );
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        foundation: {
+          id: foundationMember.id,
+          username: foundationMember.username,
+          balance: foundationMember.totalSolar
+        },
+        totalFeesCollected: parseFloat(feesResult.rows[0].total_fees),
+        totalGrantsDisbursed: parseFloat(grantsResult.rows[0].total_disbursed),
+        activePetitions: parseInt(activeResult.rows[0].active_count)
+      }));
+    } catch (error) {
+      console.error('Foundation balance error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to get foundation balance' }));
+    }
+    return;
+  }
+
+  // ================== MEMBER PROFILE API ==================
+
+  const profileMatch = pathname.match(/^\/api\/members\/([^/]+)\/profile$/);
+  if (profileMatch && req.method === 'GET') {
+    try {
+      if (!pool) {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Database unavailable' }));
+        return;
+      }
+
+      const profileUsername = decodeURIComponent(profileMatch[1]);
+      const memberResult = await pool.query('SELECT * FROM members WHERE username = $1 LIMIT 1', [profileUsername]);
+      if (memberResult.rows.length === 0) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Member not found' }));
+        return;
+      }
+      const member = memberResult.rows[0];
+
+      let specialty = null;
+      let icon = null;
+      if (member.is_agent || member.username.startsWith('agent_eco_')) {
+        const code = member.username.replace('agent_eco_', '');
+        const agentDef = NETWORK_AGENTS.find(a => a.code === code);
+        if (agentDef) {
+          specialty = agentDef.specialty;
+          icon = agentDef.icon;
+        }
+      }
+
+      const txResult = await pool.query(
+        `SELECT id, transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description, created_at
+         FROM marketplace_ledger WHERE account_id = $1 ORDER BY created_at DESC LIMIT 20`,
+        [String(member.id)]
+      );
+
+      const createdResult = await pool.query(
+        `SELECT id, title, category, solar_amount_s, file_type, active, created_at
+         FROM artifacts WHERE creator_id = $1 OR creator_id = $2 ORDER BY created_at DESC LIMIT 50`,
+        [String(member.id), member.username]
+      );
+
+      const purchasedResult = await pool.query(
+        `SELECT ac.id AS copy_id, ac.acquired_method, ac.solar_paid, ac.acquired_at,
+                a.id AS artifact_id, a.title, a.category, a.file_type
+         FROM artifact_copies ac JOIN artifacts a ON ac.artifact_id = a.id
+         WHERE ac.owner_id = $1 ORDER BY ac.acquired_at DESC LIMIT 50`,
+        [String(member.id)]
+      );
+
+      let isOwnProfile = false;
+      const sessionId = getCookie(req, 'tc_s_session');
+      if (sessionId) {
+        const session = await getSession(sessionId);
+        if (session && (String(session.userId) === String(member.id) || session.username === member.username)) {
+          isOwnProfile = true;
+        }
+      }
+
+      let grantPetitions = [];
+      if (member.is_agent || member.username.startsWith('agent_eco_')) {
+        const gpResult = await pool.query(
+          `SELECT * FROM grant_petitions WHERE agent_id = $1 ORDER BY created_at DESC LIMIT 20`,
+          [member.id]
+        );
+        grantPetitions = gpResult.rows;
+      }
+
+      const mappedTransactions = txResult.rows.map(row => ({
+        id: row.id,
+        transactionId: row.transaction_id,
+        type: row.entry_type,
+        description: row.description,
+        amount: row.amount,
+        balanceAfter: row.balance_after,
+        timestamp: row.created_at,
+        createdAt: row.created_at,
+        referenceType: row.reference_type,
+        referenceId: row.reference_id,
+        accountType: row.account_type
+      }));
+
+      const mappedCreated = createdResult.rows.map(row => ({
+        id: row.id,
+        title: row.title,
+        category: row.category,
+        price: row.solar_amount_s,
+        fileType: row.file_type,
+        active: row.active,
+        createdAt: row.created_at
+      }));
+
+      const mappedPurchased = purchasedResult.rows.map(row => ({
+        copyId: row.copy_id,
+        artifactId: row.artifact_id,
+        title: row.title,
+        category: row.category,
+        fileType: row.file_type,
+        acquiredMethod: row.acquired_method,
+        solarPaid: row.solar_paid,
+        price: row.solar_paid,
+        acquiredAt: row.acquired_at,
+        purchasedAt: row.acquired_at,
+        createdAt: row.acquired_at
+      }));
+
+      const mappedPetitions = grantPetitions.map(row => ({
+        id: row.id,
+        title: row.title,
+        description: row.description,
+        category: row.category,
+        amount: row.requested_amount,
+        approvedAmount: row.approved_amount,
+        status: row.status,
+        reviewNotes: row.review_notes,
+        reviewedBy: row.reviewed_by,
+        reviewedAt: row.reviewed_at,
+        createdAt: row.created_at,
+        disbursedAt: row.disbursed_at,
+        transactionId: row.transaction_id
+      }));
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        member: {
+          id: member.id,
+          username: member.username,
+          name: member.name,
+          isAgent: member.is_agent || false,
+          joinedAt: member.signup_timestamp || member.joined_date,
+          specialty,
+          icon
+        },
+        publicData: {
+          balance: parseFloat(member.total_solar) || 0,
+          totalTransactions: mappedTransactions.length,
+          totalCreated: mappedCreated.length,
+          totalPurchased: mappedPurchased.length,
+          recentTransactions: mappedTransactions,
+          createdArtifacts: mappedCreated,
+          purchasedArtifacts: mappedPurchased
+        },
+        grantPetitions: mappedPetitions,
+        isOwnProfile
+      }));
+    } catch (error) {
+      console.error('Member profile error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to load member profile' }));
+    }
+    return;
+  }
+
   // ================== BACKFILL ARTIFACT COPIES ==================
 
   if (pathname === '/api/ecosystem/backfill-copies' && req.method === 'POST') {
