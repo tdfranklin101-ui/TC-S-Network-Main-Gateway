@@ -1606,7 +1606,7 @@
             right: 30px;
             width: 65px;
             height: 65px;
-            background: linear-gradient(135deg, #39FF14, #32CD32);
+            background: linear-gradient(135deg, #FFD700, #FFA500);
             border: none;
             border-radius: 50%;
             cursor: pointer;
@@ -1614,7 +1614,7 @@
             align-items: center;
             justify-content: center;
             font-size: 32px;
-            box-shadow: 0 4px 20px rgba(57, 255, 20, 0.5);
+            box-shadow: 0 4px 20px rgba(255, 215, 0, 0.5);
             z-index: 9999;
             transition: all 0.3s ease;
             animation: float-pulse 2s ease-in-out infinite;
@@ -1622,7 +1622,7 @@
 
         .floating-kid-solar-btn:hover {
             transform: scale(1.1);
-            box-shadow: 0 6px 30px rgba(57, 255, 20, 0.7);
+            box-shadow: 0 6px 30px rgba(255, 215, 0, 0.7);
         }
 
         .floating-kid-solar-btn.hidden {
@@ -1632,15 +1632,15 @@
         @keyframes float-pulse {
             0%, 100% { 
                 transform: translateY(0);
-                box-shadow: 0 4px 20px rgba(57, 255, 20, 0.5);
+                box-shadow: 0 4px 20px rgba(255, 215, 0, 0.5);
             }
             50% { 
                 transform: translateY(-5px);
-                box-shadow: 0 8px 30px rgba(57, 255, 20, 0.7);
+                box-shadow: 0 8px 30px rgba(255, 215, 0, 0.7);
             }
         }
 
-        /* Kid Solar Command Center Chat Panel */
+        /* KID SOL Command Center Chat Panel */
         .kid-solar-chat-panel {
             position: fixed;
             bottom: -100%;
@@ -1650,9 +1650,9 @@
             height: 600px;
             max-height: 80vh;
             background: #0a0a0a;
-            border: 2px solid #39FF14;
+            border: 2px solid #FFD700;
             border-radius: 16px 16px 0 0;
-            box-shadow: 0 -5px 30px rgba(57, 255, 20, 0.3);
+            box-shadow: 0 -5px 30px rgba(255, 215, 0, 0.3);
             z-index: 10000;
             display: flex;
             flex-direction: column;
@@ -1664,7 +1664,7 @@
         }
 
         .chat-panel-header {
-            background: linear-gradient(135deg, #39FF14, #32CD32);
+            background: linear-gradient(135deg, #FFD700, #FFA500);
             color: #0a0a0a;
             padding: 15px 20px;
             font-weight: bold;
@@ -2516,7 +2516,7 @@
                     <div style="font-size: 28px; margin-bottom: 8px;">👑</div>
                     <div style="color: #ffd700; font-size: 16px; font-weight: 700; margin-bottom: 4px;">KID SOL</div>
                     <div style="color: #00bfff; font-size: 12px; margin-bottom: 6px;">Agent #21 — Marketplace Orchestrator</div>
-                    <div style="color: #888; font-size: 11px; line-height: 1.4;">Commands 20 specialist agents via MCP. Orchestrates purchases, delegates tasks, and keeps the Solar economy flowing. Your personal marketplace agent.</div>
+                    <div style="color: #888; font-size: 11px; line-height: 1.4;">Your command interface to the agent network. Prompt her with text, voice, or files — she orchestrates all 20 specialists.</div>
                 </a>
                 <a href="/member-profile.html?username=agent_eco_ksr" style="text-decoration: none; background: rgba(0,0,0,0.4); border: 1px solid rgba(57,255,20,0.3); border-radius: 12px; padding: 16px; transition: all 0.3s; display: block;" onmouseover="this.style.borderColor='#39FF14';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='rgba(57,255,20,0.3)';this.style.transform='none'">
                     <div style="font-size: 28px; margin-bottom: 8px;">🌞</div>
@@ -2549,7 +2549,7 @@
         <div class="kid-solar-container" style="text-align: center; margin: 20px 0;">
             <button id="kid-solar-btn" class="kid-solar-btn" onclick="toggleKidSolar()" data-testid="button-kid-solar">
                 <span id="kid-solar-icon">🎤</span>
-                <span id="kid-solar-text">Ask Kid Solar</span>
+                <span id="kid-solar-text">Command KID SOL</span>
             </button>
             <div id="kid-solar-status" class="kid-solar-status"></div>
         </div>
@@ -7146,17 +7146,17 @@
         }
     </script>
 
-    <!-- Floating Kid Solar Button -->
-    <button id="floating-kid-solar-btn" class="floating-kid-solar-btn" onclick="openKidSolarChat()" data-testid="button-floating-kid-solar" title="Ask Kid Solar">
-        ☀️
+    <!-- Floating KID SOL Button -->
+    <button id="floating-kid-solar-btn" class="floating-kid-solar-btn" onclick="openKidSolarChat()" data-testid="button-floating-kid-solar" title="Command KID SOL">
+        👑
     </button>
 
-    <!-- Kid Solar Command Center Chat Panel -->
+    <!-- KID SOL Command Center Chat Panel -->
     <div id="kid-solar-chat-panel" class="kid-solar-chat-panel">
         <div class="chat-panel-header">
             <h3>
-                <span>☀️</span>
-                Kid Solar
+                <span>👑</span>
+                KID SOL Command Center
             </h3>
             <button class="chat-close-btn" onclick="closeKidSolarChat()" aria-label="Close chat">×</button>
         </div>
@@ -7172,7 +7172,7 @@
                 <textarea 
                     id="chat-input-field" 
                     class="chat-input-field" 
-                    placeholder="Ask Kid Solar anything..."
+                    placeholder="Command KID SOL..."
                     rows="1"
                     onkeydown="handleChatInputKeydown(event)"
                 ></textarea>
@@ -7221,22 +7221,22 @@
                 button.style.cursor = 'wait';
                 button.title = 'Checking session...';
                 button.innerHTML = '⏳'; // Loading spinner
-                console.log('🔄 Kid Solar button: Loading state');
+                console.log('🔄 KID SOL button: Loading state');
             } else if (sessionState === 'authenticated') {
                 button.disabled = false;
                 button.style.opacity = '1';
                 button.style.cursor = 'pointer';
-                button.title = 'Ask Kid Solar';
-                button.innerHTML = '☀️'; // Back to sun icon
-                console.log('✅ Kid Solar button: Ready (authenticated)');
+                button.title = 'Command KID SOL';
+                button.innerHTML = '👑';
+                console.log('✅ KID SOL button: Ready (authenticated)');
             } else {
                 // Guest state
                 button.disabled = false;
                 button.style.opacity = '1';
                 button.style.cursor = 'pointer';
-                button.title = 'Sign in to use Kid Solar';
-                button.innerHTML = '☀️'; // Sun icon (but requires login)
-                console.log('👤 Kid Solar button: Requires sign-in');
+                button.title = 'Sign in to use KID SOL';
+                button.innerHTML = '👑';
+                console.log('👤 KID SOL button: Requires sign-in');
             }
         }
         
@@ -7251,7 +7251,7 @@
             
             // Check authentication status
             if (!currentUser || sessionState !== 'authenticated') {
-                alert('Please sign in to use Kid Solar');
+                alert('Please sign in to use KID SOL');
                 showSigninModal(); // Open sign-in modal
                 return;
             }
@@ -7260,7 +7260,7 @@
             document.getElementById('floating-kid-solar-btn').classList.add('hidden');
             // Welcome message if first time (with balance)
             if (chatConversation.length === 0) {
-                addChatMessage('assistant', `Hi ${user.username}! I'm Kid Solar, your AI assistant. You have ${(Number(user.solarBalance) || 0).toFixed(4)} Solar. I can help with voice, text, images, and files. What can I do for you today?`);
+                addChatMessage('assistant', `Hi ${user.username}! I'm KID SOL, your marketplace orchestrator. You have ${(Number(user.solarBalance) || 0).toFixed(4)} Solar. I command 20 specialist agents. Tell me what you need — purchases, creation, agent delegation, or network status.`);
             }
         }
 
@@ -7292,7 +7292,7 @@
             
             // Use currentUser variable instead of re-checking localStorage
             if (!currentUser) {
-                alert('Please sign in to use Kid Solar');
+                alert('Please sign in to use KID SOL');
                 return;
             }
 
@@ -7362,13 +7362,13 @@
             avatar.className = 'chat-message-avatar';
             // Use currentUser variable instead of re-checking localStorage
             const username = currentUser ? currentUser.username : '';
-            avatar.textContent = role === 'user' ? (username?.[0]?.toUpperCase() || '👤') : '☀️';
+            avatar.textContent = role === 'user' ? (username?.[0]?.toUpperCase() || '👤') : '👑';
             
             const content = document.createElement('div');
             content.className = 'chat-message-content';
             
             if (options.thinking) {
-                content.innerHTML = '<div class="chat-thinking">Kid Solar is thinking<span class="chat-thinking-dots"></span></div>';
+                content.innerHTML = '<div class="chat-thinking">KID SOL is orchestrating<span class="chat-thinking-dots"></span></div>';
             } else {
                 const textEl = document.createElement('p');
                 textEl.className = 'chat-message-text';
