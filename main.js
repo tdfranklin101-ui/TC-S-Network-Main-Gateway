@@ -6289,6 +6289,8 @@ const server = http.createServer(async (req, res) => {
 
         const txId = `purchase_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         const newBuyerBalance = buyerBalance - requiredSolar;
+        const foundationFee = Math.round(requiredSolar * FOUNDATION_FEE_RATE * 10000) / 10000;
+        const sellerNet = requiredSolar - foundationFee;
 
         await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(newBuyerBalance), user.id]);
 
@@ -6306,19 +6308,28 @@ const server = http.createServer(async (req, res) => {
           if (sellerRow.rows.length > 0) {
             const seller = sellerRow.rows[0];
             const sellerOldBal = parseFloat(seller.total_solar || 0);
-            const sellerNewBal = sellerOldBal + requiredSolar;
+            const sellerNewBal = sellerOldBal + sellerNet;
             await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(sellerNewBal), seller.id]);
             
             await client.query(
               `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
                VALUES ($1, 'credit', $2, 'creator', $3, $4, 'purchase', $5, $6)`,
-              [txId, String(seller.id), String(requiredSolar), String(sellerNewBal), artifactId, `Sale: ${artifact.title}`]
+              [txId, String(seller.id), String(sellerNet), String(sellerNewBal), artifactId, `Sale: ${artifact.title}`]
             );
             
             sellerInfo = { id: seller.id, username: seller.username, balance: sellerNewBal };
-            console.log(`💰 Seller ${seller.username} credited ${requiredSolar} Solar (${sellerOldBal} → ${sellerNewBal})`);
+            console.log(`💰 Seller ${seller.username} credited ${sellerNet} Solar (${sellerOldBal} → ${sellerNewBal})`);
           }
         }
+
+        const foundationMember = await getOrCreateFoundationMember(client);
+        const foundationBalAfter = foundationMember.totalSolar + foundationFee;
+        await client.query(
+          `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
+           VALUES ($1, 'credit', $2, 'foundation', $3, $4, 'foundation_fee', $5, $6)`,
+          [txId, String(foundationMember.id), String(foundationFee), String(foundationBalAfter), artifactId, `Foundation fee (5%): ${artifact.title}`]
+        );
+        await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(foundationBalAfter), foundationMember.id]);
 
         await client.query(
           `INSERT INTO artifact_copies (artifact_id, owner_id, purchase_transaction_id, acquired_method, solar_paid) VALUES ($1, $2, $3, 'purchase', $4)`,
@@ -6350,6 +6361,7 @@ const server = http.createServer(async (req, res) => {
           transactionId: txId,
           artifactTitle: artifact.title,
           amountPaid: requiredSolar,
+          foundationFee: foundationFee,
           newBalance: newBuyerBalance,
           seller: sellerInfo,
           downloadUrl: downloadUrl,
@@ -7312,6 +7324,264 @@ const server = http.createServer(async (req, res) => {
       console.error('Stats retrieval error:', error);
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Failed to get statistics' }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/my-library' && req.method === 'GET') {
+    try {
+      const queryUserId = parsedUrl.searchParams.get('userId');
+      if (!queryUserId || !pool) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'userId required' }));
+        return;
+      }
+
+      // Parse session cookie for authentication
+      const cookies = req.headers.cookie?.split(';').reduce((acc, cookie) => {
+        const [key, value] = cookie.trim().split('=');
+        acc[key] = value;
+        return acc;
+      }, {}) || {};
+      const sessionId = cookies.tc_s_session;
+      const session = await getSession(sessionId);
+
+      // Use session userId if authenticated, otherwise fall back to query param
+      // For agent-to-agent calls without sessions, the query param is allowed
+      const userId = session ? String(session.userId) : queryUserId;
+
+      // Log access for debugging/auditing
+      if (session) {
+        console.log(`📚 [LIBRARY ACCESS] User ${session.userId} accessed their library`);
+      } else {
+        console.log(`📚 [LIBRARY ACCESS] Unauthenticated access via query param for userId ${queryUserId}`);
+      }
+
+      const result = await pool.query(
+        `SELECT ac.id as copy_id, ac.acquired_at, ac.acquired_method, ac.solar_paid,
+                a.id as artifact_id, a.title, a.category, a.file_type, a.delivery_url, a.delivery_mode,
+                a.cover_art_url, a.description, a.solar_amount_s, a.creator_id,
+                a.master_file_url, a.trade_file_url, a.preview_file_url
+         FROM artifact_copies ac
+         JOIN artifacts a ON ac.artifact_id = a.id
+         WHERE ac.owner_id = $1 AND ac.is_active = true
+         ORDER BY ac.acquired_at DESC`,
+        [userId]
+      );
+      const items = result.rows.map(row => ({
+        copyId: row.copy_id,
+        artifactId: row.artifact_id,
+        title: row.title,
+        category: row.category,
+        fileType: row.file_type,
+        description: row.description,
+        coverArt: row.cover_art_url,
+        solarPaid: row.solar_paid,
+        acquiredAt: row.acquired_at,
+        acquiredMethod: row.acquired_method,
+        creatorId: row.creator_id,
+        hasFile: !!(row.delivery_url || row.trade_file_url || row.master_file_url),
+        downloadUrl: `/api/deliver/${row.artifact_id}?userId=${userId}`
+      }));
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, library: items, count: items.length }));
+    } catch (error) {
+      console.error('Library fetch error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Failed to load library' }));
+    }
+    return;
+  }
+
+  if (pathname.startsWith('/api/deliver/') && req.method === 'GET') {
+    try {
+      const artifactId = pathname.split('/api/deliver/')[1]?.split('?')[0];
+      const queryUserId = parsedUrl.searchParams.get('userId');
+      if (!artifactId || !queryUserId || !pool) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'artifactId and userId required' }));
+        return;
+      }
+
+      // Parse session cookie for authentication
+      const cookies = req.headers.cookie?.split(';').reduce((acc, cookie) => {
+        const [key, value] = cookie.trim().split('=');
+        acc[key] = value;
+        return acc;
+      }, {}) || {};
+      const sessionId = cookies.tc_s_session;
+      const session = await getSession(sessionId);
+
+      // Use session userId if authenticated, otherwise fall back to query param
+      // For agent-to-agent calls without sessions, the query param is allowed
+      const userId = session ? String(session.userId) : queryUserId;
+
+      // Log access for debugging/auditing
+      if (session) {
+        console.log(`📦 [ARTIFACT DELIVERY] User ${session.userId} accessed artifact ${artifactId}`);
+      } else {
+        console.log(`📦 [ARTIFACT DELIVERY] Unauthenticated access via query param for artifact ${artifactId} by userId ${queryUserId}`);
+      }
+
+      const ownerCheck = await pool.query(
+        'SELECT id FROM artifact_copies WHERE artifact_id = $1 AND owner_id = $2 AND is_active = true LIMIT 1',
+        [artifactId, parseInt(userId)]
+      );
+      if (ownerCheck.rows.length === 0) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'You do not own this artifact. Purchase it first.' }));
+        return;
+      }
+      const artResult = await pool.query(
+        'SELECT id, title, delivery_url, delivery_mode, file_type, category, master_file_url, trade_file_url FROM artifacts WHERE id = $1',
+        [artifactId]
+      );
+      if (artResult.rows.length === 0) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Artifact not found' }));
+        return;
+      }
+      const artifact = artResult.rows[0];
+      const deliveryUrl = artifact.trade_file_url || artifact.delivery_url || artifact.master_file_url;
+      if (!deliveryUrl) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'No file available for this artifact' }));
+        return;
+      }
+
+      const approvedRoots = [
+        path.resolve(__dirname, 'public', 'attached_assets'),
+        path.resolve(__dirname, 'storage', 'trade'),
+        path.resolve(__dirname, 'public', 'music', 'monazite'),
+        path.resolve(__dirname, 'public', 'music'),
+        path.resolve(__dirname, 'public', 'media'),
+        path.resolve(__dirname, 'public', 'previews'),
+        path.resolve(__dirname, 'public', 'videos'),
+        path.resolve(__dirname, 'public', 'artifacts'),
+        path.resolve(__dirname, 'public')
+      ];
+
+      const sanitizeFilename = (input) => {
+        return input.replace(/\.\./g, '').replace(/^\/+/, '').replace(/\\/g, '/').split('/').pop() || '';
+      };
+
+      let localFilePath = null;
+      const possiblePaths = [];
+
+      if (deliveryUrl.startsWith('@assets/')) {
+        const rawAssetName = deliveryUrl.replace('@assets/', '');
+        const assetName = sanitizeFilename(rawAssetName);
+        if (assetName) {
+          possiblePaths.push(path.join(__dirname, 'public', 'attached_assets', assetName));
+          possiblePaths.push(path.join(__dirname, 'storage', 'trade', assetName));
+          const baseName = path.basename(assetName, path.extname(assetName));
+          const musicDir = path.join(__dirname, 'public', 'music', 'monazite');
+          if (fs.existsSync(musicDir)) {
+            const musicFiles = fs.readdirSync(musicDir);
+            const matchingFile = musicFiles.find(f => {
+              const fBase = path.basename(f, path.extname(f)).toLowerCase().replace(/[_\s]+/g, '');
+              const targetBase = baseName.toLowerCase().replace(/[_\s\d]+/g, '');
+              return fBase.includes(targetBase) || targetBase.includes(fBase.substring(3));
+            });
+            if (matchingFile) possiblePaths.push(path.join(musicDir, matchingFile));
+          }
+        }
+      } else if (deliveryUrl.startsWith('/media/')) {
+        possiblePaths.push(path.join(__dirname, 'public', deliveryUrl));
+      } else if (deliveryUrl.startsWith('/music/')) {
+        possiblePaths.push(path.join(__dirname, 'public', deliveryUrl));
+      } else if (deliveryUrl.startsWith('/artifacts/')) {
+        possiblePaths.push(path.join(__dirname, 'public', deliveryUrl));
+      } else if (deliveryUrl.startsWith('/api/files/secure/')) {
+        const tradeDir = path.join(__dirname, 'storage', 'trade');
+        if (fs.existsSync(tradeDir)) {
+          const tradeFiles = fs.readdirSync(tradeDir);
+          const match = tradeFiles.find(f => f.includes(artifactId));
+          if (match) possiblePaths.push(path.join(tradeDir, match));
+        }
+      } else if (deliveryUrl.startsWith('cloud:///')) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ 
+          error: 'Cloud-stored file — streaming access available on marketplace page',
+          streamUrl: `/api/artifacts/${artifactId}/stream`
+        }));
+        return;
+      } else if (!deliveryUrl.startsWith('http')) {
+        const sanitized = sanitizeFilename(deliveryUrl);
+        if (sanitized) possiblePaths.push(path.join(__dirname, 'public', sanitized));
+      }
+
+      for (const p of possiblePaths) {
+        const resolvedPath = path.resolve(p);
+        const isWithinApprovedRoot = approvedRoots.some(root => resolvedPath.startsWith(root));
+        if (isWithinApprovedRoot && fs.existsSync(resolvedPath)) {
+          localFilePath = resolvedPath;
+          break;
+        }
+      }
+
+      if (localFilePath) {
+        const stat = fs.statSync(localFilePath);
+        const ext = path.extname(localFilePath).toLowerCase();
+        const mimeTypes = {
+          '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.ogg': 'audio/ogg',
+          '.mp4': 'video/mp4', '.webm': 'video/webm', '.mov': 'video/quicktime',
+          '.m4a': 'audio/mp4', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+          '.png': 'image/png', '.gif': 'image/gif', '.webp': 'image/webp'
+        };
+        const contentType = mimeTypes[ext] || 'application/octet-stream';
+        const safeTitle = artifact.title.replace(/[^a-zA-Z0-9\s\-_]/g, '').replace(/\s+/g, '_');
+        res.writeHead(200, {
+          'Content-Type': contentType,
+          'Content-Length': stat.size,
+          'Content-Disposition': `attachment; filename="${safeTitle}${ext}"`,
+          'Cache-Control': 'no-cache'
+        });
+        fs.createReadStream(localFilePath).pipe(res);
+        console.log(`📦 DELIVERY: "${artifact.title}" downloaded by user ${userId}`);
+        await pool.query(
+          'UPDATE artifact_copies SET metadata = jsonb_set(COALESCE(metadata, \'{}\'::jsonb), \'{last_download}\', $1::jsonb) WHERE artifact_id = $2 AND owner_id = $3',
+          [JSON.stringify(new Date().toISOString()), artifactId, parseInt(userId)]
+        ).catch(() => {});
+      } else if (deliveryUrl.startsWith('http')) {
+        res.writeHead(302, { 'Location': deliveryUrl });
+        res.end();
+      } else {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'File not found on server', checked: possiblePaths.length + ' locations' }));
+      }
+    } catch (error) {
+      console.error('Delivery error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Delivery failed' }));
+    }
+    return;
+  }
+
+  if (pathname.startsWith('/api/delivery-check/') && req.method === 'GET') {
+    try {
+      const artifactId = pathname.split('/api/delivery-check/')[1];
+      if (!artifactId || !pool) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ deliverable: false }));
+        return;
+      }
+      const artResult = await pool.query(
+        'SELECT title, delivery_url, trade_file_url, master_file_url, file_type FROM artifacts WHERE id = $1',
+        [artifactId]
+      );
+      if (artResult.rows.length === 0) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ deliverable: false, reason: 'not found' }));
+        return;
+      }
+      const a = artResult.rows[0];
+      const hasUrl = !!(a.delivery_url || a.trade_file_url || a.master_file_url);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ deliverable: hasUrl, title: a.title, fileType: a.file_type }));
+    } catch (error) {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ deliverable: false }));
     }
     return;
   }
