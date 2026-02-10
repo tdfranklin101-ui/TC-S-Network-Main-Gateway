@@ -413,12 +413,30 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            position: relative;
         }
 
         .artifact-thumbnail img {
             width: 100%;
             height: 100%;
             object-fit: cover;
+        }
+
+        .artifact-thumbnail img ~ .thumb-watermark,
+        .artifact-thumbnail:has(img)::after {
+            content: 'PREVIEW';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-25deg);
+            font-size: 14px;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.3);
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+            pointer-events: none;
+            white-space: nowrap;
+            letter-spacing: 2px;
+            z-index: 10;
         }
 
         .artifact-thumbnail .thumb-icon {
@@ -1050,6 +1068,91 @@
                 flex-direction: column;
                 gap: 15px;
             }
+        }
+
+        .watermark-container {
+            position: relative;
+            display: inline-block;
+        }
+        .watermark-container::after {
+            content: 'TC-S PREVIEW';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-30deg);
+            font-size: 28px;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.35);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            pointer-events: none;
+            white-space: nowrap;
+            letter-spacing: 4px;
+            z-index: 10;
+        }
+
+        .watermark-thumb {
+            position: relative;
+        }
+        .watermark-thumb::after {
+            content: 'PREVIEW';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-25deg);
+            font-size: 14px;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.3);
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+            pointer-events: none;
+            white-space: nowrap;
+            letter-spacing: 2px;
+            z-index: 10;
+        }
+
+        .streaming-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #00ff88, #00bfff);
+            color: #000;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        .music-preview-modal .music-modal-content {
+            background: linear-gradient(180deg, #1a0a2e 0%, #16213e 50%, #0a0a23 100%) !important;
+        }
+
+        .music-waveform {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            height: 40px;
+            margin: 15px 0;
+        }
+        .music-waveform .bar {
+            width: 3px;
+            background: linear-gradient(to top, #00ff88, #00bfff);
+            border-radius: 2px;
+            animation: waveform 1.2s ease-in-out infinite;
+        }
+        .music-waveform .bar:nth-child(1) { height: 60%; animation-delay: 0s; }
+        .music-waveform .bar:nth-child(2) { height: 80%; animation-delay: 0.1s; }
+        .music-waveform .bar:nth-child(3) { height: 100%; animation-delay: 0.2s; }
+        .music-waveform .bar:nth-child(4) { height: 70%; animation-delay: 0.3s; }
+        .music-waveform .bar:nth-child(5) { height: 90%; animation-delay: 0.15s; }
+        .music-waveform .bar:nth-child(6) { height: 50%; animation-delay: 0.25s; }
+        .music-waveform .bar:nth-child(7) { height: 85%; animation-delay: 0.05s; }
+        .music-waveform .bar:nth-child(8) { height: 65%; animation-delay: 0.35s; }
+        .music-waveform.paused .bar {
+            animation-play-state: paused;
+        }
+        @keyframes waveform {
+            0%, 100% { transform: scaleY(0.3); }
+            50% { transform: scaleY(1); }
         }
 
         .signup-modal {
@@ -2128,6 +2231,117 @@
             border-radius: 4px;
             margin-left: 6px;
             vertical-align: middle;
+        }
+
+        .detail-watermark-container {
+            position: relative;
+            display: inline-block;
+            max-width: 100%;
+        }
+        .detail-watermark-container::after {
+            content: 'TC-S PREVIEW';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-30deg);
+            font-size: 32px;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.3);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            pointer-events: none;
+            white-space: nowrap;
+            letter-spacing: 6px;
+            z-index: 10;
+        }
+        .detail-streaming-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #00ff88, #00bfff);
+            color: #000;
+            padding: 4px 14px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+        .detail-waveform {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            height: 40px;
+            margin: 12px 0;
+        }
+        .detail-waveform .bar {
+            width: 4px;
+            background: linear-gradient(to top, #00ff88, #00bfff);
+            border-radius: 2px;
+            animation: detailWaveform 1.2s ease-in-out infinite;
+        }
+        .detail-waveform .bar:nth-child(1) { height: 60%; animation-delay: 0s; }
+        .detail-waveform .bar:nth-child(2) { height: 80%; animation-delay: 0.1s; }
+        .detail-waveform .bar:nth-child(3) { height: 100%; animation-delay: 0.2s; }
+        .detail-waveform .bar:nth-child(4) { height: 70%; animation-delay: 0.3s; }
+        .detail-waveform .bar:nth-child(5) { height: 90%; animation-delay: 0.15s; }
+        .detail-waveform .bar:nth-child(6) { height: 50%; animation-delay: 0.25s; }
+        .detail-waveform .bar:nth-child(7) { height: 85%; animation-delay: 0.05s; }
+        .detail-waveform .bar:nth-child(8) { height: 65%; animation-delay: 0.35s; }
+        @keyframes detailWaveform {
+            0%, 100% { transform: scaleY(0.3); }
+            50% { transform: scaleY(1); }
+        }
+        .detail-section {
+            margin: 16px 0;
+            padding: 14px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .detail-section-label {
+            font-size: 12px;
+            font-weight: 700;
+            color: #00FFFF;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+        .detail-section-val {
+            font-size: 13px;
+            color: #ccc;
+            line-height: 1.6;
+        }
+        .detail-web-alt a {
+            color: #00bfff;
+            text-decoration: none;
+            font-size: 12px;
+        }
+        .detail-web-alt a:hover {
+            text-decoration: underline;
+        }
+        .detail-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+        }
+        .detail-tag {
+            background: rgba(0, 255, 255, 0.1);
+            color: #00FFFF;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+        }
+        .detail-code-preview {
+            background: #0d1117;
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: #00ff88;
+            max-height: 150px;
+            overflow-y: auto;
         }
     </style>
     <meta name="description" content="Upload, price, and sell digital content with AI-powered Solar currency. Join the creator economy within the $16T digital marketplace. Each Solar token backed by 4913 kWh renewable energy. Daily distribution since April 7, 2025.">
@@ -3671,6 +3885,11 @@
                 <span class="music-close-btn" id="music-close-btn">&times;</span>
             </div>
             <div class="music-container" style="padding: 20px; text-align: center;">
+                <div class="streaming-badge">STREAMING PREVIEW</div>
+                <div class="music-waveform paused" id="music-waveform">
+                    <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+                    <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+                </div>
                 <audio id="music-player" controls style="width: 100%;" preload="metadata">
                     <source id="music-source" src="" type="audio/mpeg">
                     Your browser does not support audio playback.
@@ -5082,7 +5301,8 @@
                     
                     content.innerHTML = `
                         <h3 style="color: #fff; margin-bottom: 20px;">🖼️ Image Preview</h3>
-                        <div style="margin-bottom: 20px; text-align: center;"></div>
+                        <div class="watermark-container" style="margin-bottom: 20px; text-align: center;"></div>
+                        <p style="color: #888; font-size: 12px; text-align: center; margin-bottom: 15px;">Purchase to download full quality without watermark</p>
                         <div style="text-align: center; margin-top: 20px;">
                             <button onclick="copyImageToClipboard('${fileUrl}')" 
                                     style="background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; margin-right: 10px;">
@@ -5094,7 +5314,7 @@
                             </button>
                         </div>
                     `;
-                    content.children[1].appendChild(img);
+                    content.querySelector('.watermark-container').appendChild(img);
                     
                 } else if (type === 'text') {
                     // Fetch text content
@@ -5976,6 +6196,21 @@
             musicPlayer.oncanplay = function() {
                 console.log('🎵 Audio ready to play!');
             };
+
+            musicPlayer.onplay = function() {
+                const wf = document.getElementById('music-waveform');
+                if (wf) wf.classList.remove('paused');
+            };
+
+            musicPlayer.onpause = function() {
+                const wf = document.getElementById('music-waveform');
+                if (wf) wf.classList.add('paused');
+            };
+
+            musicPlayer.onended = function() {
+                const wf = document.getElementById('music-waveform');
+                if (wf) wf.classList.add('paused');
+            };
         }
 
         // Enhanced unified preview function using in-page modals
@@ -6105,6 +6340,10 @@
             // Stop and reset audio
             musicPlayer.pause();
             musicPlayer.currentTime = 0;
+            
+            // Reset waveform to paused state
+            const wf = document.getElementById('music-waveform');
+            if (wf) wf.classList.add('paused');
             
             // Hide modal
             modal.classList.remove('visible');
@@ -6575,35 +6814,212 @@
             var catIcon = (typeof CATEGORY_ICONS !== 'undefined' && CATEGORY_ICONS[category]) ? CATEGORY_ICONS[category] : '📁';
             var priceSolar = parseFloat(item.solarPrice || item.priceSolar || 0);
             var formattedPrice = item.formattedPrice || (priceSolar.toFixed(6) + ' Solar');
-            var kwhVal = item.kwhFootprint || (priceSolar * 4913).toFixed(2);
+            var kwhVal = parseFloat(item.kwhFootprint) || (priceSolar * 4913);
+            var kwhDisplay = (typeof kwhVal === 'number') ? kwhVal.toFixed(4) : kwhVal;
             var creatorAgent = item.creatorAgent || '';
+            var creatorName = item.creatorName || '';
+            var creatorIsAgent = item.creatorIsAgent || item.creatorAgent;
             var previewType = item.previewType || '';
             var streamingUrl = item.streamingUrl || '';
             var ecosystemTest = item.ecosystemTest || false;
+            var fileType = item.file_type || '';
+            var searchTags = item.searchTags || [];
+            var coverArtUrl = item.coverArtUrl || item.cover_art_url || '';
+            var previewFileUrl = item.previewFileUrl || item.preview_file_url || '';
+            var rawSize = item.masterFileSize || item.tradeFileSize || 0;
+            var fileSizeKB = (rawSize / 1024).toFixed(1);
+            var fileSizeMB = (rawSize / (1024 * 1024)).toFixed(3);
+            var creationMethod = item.creationMethod || '';
+            var creationSource = item.creationSource || '';
+
+            var catLower = (category || '').toLowerCase();
+            var isAudio = catLower === 'music' || (fileType || '').startsWith('audio');
+            var isVideo = catLower === 'video' || (fileType || '').startsWith('video');
+            var isVisual = catLower === 'art' || catLower === 'photo' || catLower === 'photography' || catLower === 'image' || (fileType || '').startsWith('image');
+            var isSoftware = catLower === 'software' || catLower === 'ai tools' || catLower === 'code tools';
+            var isDocument = catLower === 'writing' || catLower === 'docs' || catLower === 'document' || (fileType || '').startsWith('text') || (fileType || '').indexOf('pdf') !== -1;
+
+            var methodMap = {
+                'dalle-3': 'DALL-E 3 (AI Image Generation)',
+                'gpt-4o': 'GPT-4o (AI Text Generation)',
+                'gpt4o-art-description': 'GPT-4o (Art Description Fallback)',
+                'gpt4o-lyrics-alt': 'GPT-4o (Lyrics Alternative)',
+                'tts-1': 'TTS-1 (AI Audio Synthesis)',
+                'budget_exceeded': 'Budget Exceeded \u2192 Text Fallback',
+                'web-discovery': 'Web Source Discovery',
+                'human-upload': 'Human Upload',
+                'none': 'Metadata Only'
+            };
+            var methodDisplay = methodMap[creationMethod] || creationMethod || 'Direct Upload';
+            var sourceDisplay = creationSource === 'ai-self-creation' ? '\ud83e\udd16 AI Self-Creation' :
+                                creationSource === 'web-discovery' ? '\ud83c\udf10 Web Discovery' :
+                                '\ud83d\udc64 Human Creator';
+
+            var contentKwh = (kwhVal * 0.7).toFixed(4);
+            var processingKwh = (kwhVal * 0.15).toFixed(4);
+            var storageKwh = (kwhVal * 0.05).toFixed(4);
+            var deliveryKwh = (kwhVal * 0.1).toFixed(4);
+
+            var sq = encodeURIComponent(title + ' ' + category);
+
+            var sourceTag = creatorIsAgent
+                ? '<span style="font-size:9px;background:rgba(0,255,136,0.12);color:#00ff88;padding:2px 6px;border-radius:4px;margin-left:4px;">AGENT</span>'
+                : '';
+            var ecoTag = ecosystemTest
+                ? '<span style="font-size:9px;background:rgba(0,255,136,0.15);color:#00ff88;padding:2px 6px;border-radius:4px;margin-left:4px;">ECOSYSTEM</span>'
+                : '';
 
             var html = '';
-            html += '<div class="item-detail-category">' + catIcon + ' ' + escapeHtml(category);
-            if (ecosystemTest) html += '<span class="item-detail-eco-tag">ECOSYSTEM</span>';
-            html += '</div>';
+
+            html += '<div class="item-detail-category">' + catIcon + ' ' + escapeHtml(category) + sourceTag + ecoTag + '</div>';
             html += '<div class="item-detail-title">' + escapeHtml(title) + '</div>';
+
+            if (creatorIsAgent) {
+                html += '<div style="font-size:12px;color:#00ff88;margin-bottom:10px;">\ud83e\udd16 ' + escapeHtml(creatorName || creatorAgent || 'Network Agent') + '</div>';
+            } else if (creatorName) {
+                html += '<div style="font-size:12px;color:#87ceeb;margin-bottom:10px;">\ud83d\udc64 ' + escapeHtml(creatorName) + '</div>';
+            }
+
+            html += '<div class="detail-section">';
+            html += '<div class="detail-section-label">\ud83d\udd0e Content Preview</div>';
+            if (isAudio && streamingUrl) {
+                html += '<div class="detail-streaming-badge">STREAMING PREVIEW</div>';
+                html += '<audio controls style="width:100%;margin:8px 0;" preload="none"><source src="' + escapeHtml(streamingUrl) + '"></audio>';
+                html += '<div class="detail-waveform">';
+                for (var wi = 0; wi < 8; wi++) html += '<div class="bar"></div>';
+                html += '</div>';
+                html += '<div style="font-size:11px;color:#888;font-style:italic;">Purchase for full quality download</div>';
+            } else if (isVideo) {
+                if (coverArtUrl) {
+                    html += '<div style="text-align:center;margin-bottom:10px;"><img src="' + escapeHtml(coverArtUrl) + '" style="max-width:100%;max-height:200px;border-radius:8px;opacity:0.85;" alt="Video thumbnail"></div>';
+                }
+                html += '<button class="preview-btn" onclick="closeItemDetailModal();openPreview(\'' + id + '\')" style="margin-bottom:6px;">\ud83c\udfac Preview Video</button>';
+            } else if (isVisual) {
+                var imgUrl = coverArtUrl || previewFileUrl;
+                if (imgUrl) {
+                    html += '<div class="detail-watermark-container" style="text-align:center;display:block;">';
+                    html += '<img src="' + escapeHtml(imgUrl) + '" style="max-width:100%;max-height:250px;border-radius:8px;" alt="' + escapeHtml(title) + '">';
+                    html += '</div>';
+                    html += '<div style="font-size:11px;color:#888;font-style:italic;margin-top:6px;">Purchase to download full quality without watermark</div>';
+                } else {
+                    html += '<div style="text-align:center;font-size:64px;opacity:0.5;margin:20px 0;">' + catIcon + '</div>';
+                }
+            } else if (isSoftware) {
+                html += '<div class="detail-code-preview">';
+                html += '\ud83d\udcbb Software / Application<br><br>';
+                html += 'Type: ' + escapeHtml(category) + '<br>';
+                html += 'Format: ' + escapeHtml(fileType || 'executable') + '<br>';
+                if (description) html += '<br>' + escapeHtml(description.substring(0, 200));
+                html += '</div>';
+                html += '<div style="font-size:11px;color:#888;font-style:italic;margin-top:6px;">Purchase to download executable</div>';
+            } else if (isDocument) {
+                html += '<div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:14px;font-size:13px;color:#ccc;line-height:1.6;max-height:150px;overflow-y:auto;">';
+                html += escapeHtml(description ? description.substring(0, 300) : 'No preview available');
+                if (description && description.length > 300) html += '<span style="color:#888;">...</span>';
+                html += '</div>';
+                html += '<div style="font-size:11px;color:#888;margin-top:6px;">Format: ' + escapeHtml(fileType || 'document') + '</div>';
+            } else {
+                html += '<div style="text-align:center;font-size:64px;opacity:0.5;margin:20px 0;">' + catIcon + '</div>';
+                if (description) html += '<div style="font-size:13px;color:#ccc;">' + escapeHtml(description.substring(0, 200)) + '</div>';
+            }
+            html += '</div>';
+
             if (description) {
-                html += '<div class="item-detail-desc">' + escapeHtml(description) + '</div>';
+                html += '<div class="detail-section">';
+                html += '<div class="detail-section-label">\ud83d\udcdd Full Description</div>';
+                html += '<div class="detail-section-val">' + escapeHtml(description) + '</div>';
+                html += '</div>';
             }
-            if (creatorAgent) {
-                html += '<div class="item-detail-agent">🤖 Agent: ' + escapeHtml(creatorAgent) + '</div>';
-            }
+
             html += '<div class="item-detail-price-box">';
             html += '<div class="item-detail-price">' + escapeHtml(formattedPrice) + '</div>';
-            html += '<div class="item-detail-kwh">⚡ ' + kwhVal + ' kWh energy footprint</div>';
-            html += '<div class="item-detail-exchange">1 Solar = 4,913 kWh · Solar is the medium of exchange within the TC-S Network</div>';
+            html += '<div class="item-detail-kwh">\u26a1 ' + kwhDisplay + ' kWh energy footprint</div>';
+            html += '<div class="item-detail-exchange">1 Solar = 4,913 kWh \u00b7 Solar is the medium of exchange within the TC-S Network</div>';
             html += '</div>';
+
+            html += '<div class="detail-section">';
+            html += '<div class="detail-section-label">\ud83e\uddff LifeLens Report</div>';
+
+            html += '<div style="margin-bottom:10px;">';
+            html += '<div style="font-size:11px;font-weight:700;color:#00FFFF;margin-bottom:4px;">\u26a1 Energy Footprint Breakdown</div>';
+            html += '<div class="detail-section-val">';
+            html += 'Content creation: ' + contentKwh + ' kWh<br>';
+            html += 'Processing: ' + processingKwh + ' kWh<br>';
+            html += 'Storage: ' + storageKwh + ' kWh<br>';
+            html += 'Delivery: ' + deliveryKwh + ' kWh<br>';
+            html += '<b>Total: ' + kwhDisplay + ' kWh</b>';
+            html += '</div>';
+            html += '</div>';
+
+            html += '<div style="margin-bottom:10px;">';
+            html += '<div style="font-size:11px;font-weight:700;color:#00FFFF;margin-bottom:4px;">\u2600\ufe0f Solar Pricing Formula</div>';
+            html += '<div class="detail-section-val">';
+            html += '<div style="background:rgba(255,170,0,0.1);padding:6px 10px;border-radius:6px;font-family:monospace;color:#ffd700;">' + kwhDisplay + ' kWh \u00f7 4,913 kWh/Solar = ' + priceSolar.toFixed(4) + ' Solar</div>';
+            html += '<div style="margin-top:4px;color:#888;font-size:10px;">1 Solar = 4,913 kWh renewable energy equivalent</div>';
+            html += '</div>';
+            html += '</div>';
+
+            html += '<div style="margin-bottom:10px;">';
+            html += '<div style="font-size:11px;font-weight:700;color:#00FFFF;margin-bottom:4px;">\ud83d\udd2c Creation Method</div>';
+            html += '<div class="detail-section-val">';
+            html += sourceDisplay + '<br>';
+            html += 'Engine: <span style="color:#00bfff">' + escapeHtml(methodDisplay) + '</span><br>';
+            html += 'File type: ' + escapeHtml(fileType || 'unknown');
+            if (rawSize > 0) html += ' (' + (parseFloat(fileSizeMB) > 1 ? fileSizeMB + ' MB' : fileSizeKB + ' KB') + ')';
+            html += '</div>';
+            html += '</div>';
+
+            html += '<div style="margin-bottom:10px;">';
+            html += '<div style="font-size:11px;font-weight:700;color:#00FFFF;margin-bottom:4px;">\ud83c\udff7\ufe0f AI Curation Notes</div>';
+            html += '<div class="detail-section-val">';
+            html += 'Category: ' + escapeHtml(category) + '<br>';
+            if (searchTags.length > 0) html += 'Tags: ' + escapeHtml(searchTags.join(', ')) + '<br>';
+            if (description) html += '<span style="color:#aaa;font-style:italic;">"' + escapeHtml(description.length > 150 ? description.substring(0, 150) + '...' : description) + '"</span>';
+            html += '</div>';
+            html += '</div>';
+
+            html += '<div style="text-align:center;margin-top:8px;">';
+            html += '<a href="https://ia-rl-v-1--tdfranklin101.replit.app/" target="_blank" rel="noopener" style="color:#00bfff;font-size:11px;text-decoration:none;">\ud83e\uddff Open LifeLens App \u2192</a>';
+            html += '</div>';
+
+            html += '</div>';
+
+            var extraLinks = '';
+            if (isAudio) extraLinks = '<span style="color:#444;margin:0 6px;">|</span><a href="https://freemusicarchive.org/search?quicksearch=' + sq + '" target="_blank" rel="noopener">\ud83c\udfb5 Free Music Archive</a>';
+            if (isVisual) extraLinks = '<span style="color:#444;margin:0 6px;">|</span><a href="https://unsplash.com/s/photos/' + sq + '" target="_blank" rel="noopener">\ud83d\udcf7 Unsplash</a>';
+            if (isSoftware) extraLinks = '<span style="color:#444;margin:0 6px;">|</span><a href="https://github.com/search?q=' + sq + '" target="_blank" rel="noopener">\ud83d\udcbb GitHub</a>';
+
+            html += '<div class="detail-section detail-web-alt">';
+            html += '<div class="detail-section-label">\ud83c\udf10 Web Sourcing Alternatives</div>';
+            html += '<div style="margin-top:4px;">';
+            html += '<a href="https://www.google.com/search?q=' + sq + '" target="_blank" rel="noopener">\ud83d\udd0d Google Search</a>';
+            html += '<span style="color:#444;margin:0 6px;">|</span>';
+            html += '<a href="https://commons.wikimedia.org/w/index.php?search=' + sq + '" target="_blank" rel="noopener">\ud83d\udcda Wikimedia</a>';
+            html += '<span style="color:#444;margin:0 6px;">|</span>';
+            html += '<a href="https://archive.org/search?query=' + sq + '" target="_blank" rel="noopener">\ud83c\udfdb\ufe0f Archive.org</a>';
+            html += extraLinks;
+            html += '</div>';
+            html += '<div style="color:#666;font-size:9px;margin-top:4px;">Compare open-source alternatives before purchasing</div>';
+            html += '</div>';
+
+            if (searchTags.length > 0) {
+                html += '<div class="detail-section">';
+                html += '<div class="detail-section-label">\ud83c\udff7\ufe0f Search Tags</div>';
+                html += '<div class="detail-tags">';
+                for (var ti = 0; ti < searchTags.length; ti++) {
+                    html += '<span class="detail-tag">' + escapeHtml(searchTags[ti]) + '</span>';
+                }
+                html += '</div>';
+                html += '</div>';
+            }
+
             html += '<div class="item-detail-actions">';
             if (previewType === 'audio' && streamingUrl) {
-                html += '<a href="' + escapeHtml(streamingUrl) + '" target="_blank" class="preview-btn music-link" style="text-align:center;">🎵 Listen on Music Now</a>';
+                html += '<a href="' + escapeHtml(streamingUrl) + '" target="_blank" class="preview-btn music-link" style="text-align:center;">\ud83c\udfb5 Listen on Music Now</a>';
             } else if (previewType === 'video') {
-                html += '<button class="preview-btn" onclick="closeItemDetailModal();openPreview(\'' + id + '\')">🎬 Preview Video</button>';
+                html += '<button class="preview-btn" onclick="closeItemDetailModal();openPreview(\'' + id + '\')">\ud83c\udfac Preview Video</button>';
             } else if (previewType) {
-                html += '<button class="preview-btn" onclick="closeItemDetailModal();openPreview(\'' + id + '\')">👁️ Preview File</button>';
+                html += '<button class="preview-btn" onclick="closeItemDetailModal();openPreview(\'' + id + '\')">\ud83d\udc41\ufe0f Preview File</button>';
             }
             html += '<button class="purchase-btn" onclick="closeItemDetailModal();purchaseArtifact(\'' + id + '\')">Purchase & Download</button>';
             html += '</div>';
