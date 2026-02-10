@@ -146,6 +146,9 @@ const agentRoutes = require('./routes/agentRoutes');
 // Daily Agent Task Engine
 const { runDailyAgentTasks, runSingleAgentTasks, getTaskStatus } = require('./server/agent-daily-tasks');
 
+// Agent Artifact File Generator (real file creation for marketplace)
+const { generateArtifactFile, getAgentFileType } = require('./server/agentArtifactGenerator');
+
 // DMTXACTLY Creative API routes (pre-generated mode)
 const dmtxactlyRoutes = require('./routes/dmtxactly');
 
@@ -8659,33 +8662,48 @@ Respond ONLY with valid JSON in this exact format:
       const safeTitle = String(title).substring(0, 200).replace(/[<>]/g, '');
       const safeDesc = String(description || '').substring(0, 500).replace(/[<>]/g, '');
 
-      // === MCP CREATION ENGINE: AI self-creates first, then web fallback ===
+      // === AGENT ARTIFACT GENERATOR: Creates real digital files per specialty ===
       let creationResult = { success: false };
       let creationSource = 'none';
 
-      // Step 1: AI Self-Creation (primary)
-      try {
-        const aiEngine = require('./ai-creation-engine');
-        creationResult = await aiEngine.generateArtifactContent(category, safeTitle, safeDesc, creatorUsername);
-        if (creationResult.success) {
-          creationSource = 'ai-self-creation';
-          console.log(`🤖 AI self-created: "${safeTitle}" [${category}] via ${creationResult.creationMethod} by ${creatorUsername}`);
+      // Extract agent code from username (e.g., agent_eco_08 → 08, agent_eco_ks → ks)
+      const agentCodeMatch = String(creatorUsername).match(/agent_eco_(.+)$/);
+      const agentCode = agentCodeMatch ? agentCodeMatch[1] : null;
+
+      // Step 1: Generate real file using AgentArtifactGenerator
+      if (agentCode) {
+        try {
+          const genResult = await generateArtifactFile(agentCode, safeTitle, category, safeDesc);
+          if (genResult && genResult.buffer && genResult.buffer.length > 0) {
+            creationResult = {
+              success: true,
+              fileBuffer: genResult.buffer,
+              filename: genResult.filename,
+              fileType: genResult.mimeType,
+              ext: '.' + genResult.filename.split('.').pop(),
+              creationMethod: `agent-gen-${genResult.filename.split('.').pop()}`,
+              previewText: genResult.previewText,
+              previewType: genResult.mimeType.startsWith('image/') ? 'image' : 'text'
+            };
+            creationSource = 'ai-self-creation';
+            console.log(`🤖 Agent ${agentCode} generated real file: "${safeTitle}" (${genResult.fileSize} bytes, ${genResult.mimeType})`);
+          }
+        } catch (genErr) {
+          console.warn(`⚠️ Agent artifact generator error for "${safeTitle}":`, genErr.message);
         }
-      } catch (aiErr) {
-        console.warn(`⚠️ AI creation engine error for "${safeTitle}":`, aiErr.message);
       }
 
-      // Step 2: Web source fallback (only if AI cannot)
+      // Step 2: Fallback — try legacy creation engines if agent generator unavailable
       if (!creationResult.success) {
         try {
-          const webDiscovery = require('./web-source-discovery');
-          creationResult = await webDiscovery.findFreeContent(category, safeTitle, safeDesc, creatorUsername);
+          const aiEngine = require('./ai-creation-engine');
+          creationResult = await aiEngine.generateArtifactContent(category, safeTitle, safeDesc, creatorUsername);
           if (creationResult.success) {
-            creationSource = 'web-discovery';
-            console.log(`🌐 Web source found: "${safeTitle}" [${category}] via ${creationResult.creationMethod} by ${creatorUsername}`);
+            creationSource = 'ai-self-creation';
+            console.log(`🤖 Legacy AI created: "${safeTitle}" [${category}] by ${creatorUsername}`);
           }
-        } catch (webErr) {
-          console.warn(`⚠️ Web discovery error for "${safeTitle}":`, webErr.message);
+        } catch (aiErr) {
+          console.warn(`⚠️ Legacy AI engine error for "${safeTitle}":`, aiErr.message);
         }
       }
 
@@ -9790,13 +9808,53 @@ Respond ONLY with valid JSON in this exact format:
           for (const [kw, c] of Object.entries(catMap)) {
             if (itemName.includes(kw)) { cat = c; break; }
           }
+
+          // Look up seller's agent code for file generation
+          const sellerMember = await pool.query('SELECT username FROM members WHERE id = $1 LIMIT 1', [sellerId]);
+          const sellerUsername = sellerMember.rows.length > 0 ? sellerMember.rows[0].username : '';
+          const ecoAgentMatch = String(sellerUsername).match(/agent_eco_(.+)$/);
+          const ecoAgentCode = ecoAgentMatch ? ecoAgentMatch[1] : null;
+
+          // Generate a REAL file for this artifact
+          let masterUrl = null, tradeUrl = null, previewUrl = null;
+          let masterSize = 0, tradeSize = 0, previewSize = 0;
+          let processingStatus = 'completed';
+          let fileType = null;
+
+          if (ecoAgentCode) {
+            try {
+              const genResult = await generateArtifactFile(ecoAgentCode, itemName, cat);
+              if (genResult && genResult.buffer && genResult.buffer.length > 0) {
+                const cloudStorage = require('./server/cloud-storage');
+                if (cloudStorage.isAvailable()) {
+                  const artifactUuid = require('crypto').randomUUID();
+                  const ext = '.' + genResult.filename.split('.').pop();
+                  const masterResult = await cloudStorage.uploadMasterFile(artifactUuid, ext, genResult.buffer);
+                  const tradeResult = await cloudStorage.uploadTradeFile(artifactUuid, ext, genResult.buffer);
+                  masterUrl = `cloud://${masterResult.key}`;
+                  tradeUrl = `cloud://${tradeResult.key}`;
+                  masterSize = genResult.fileSize;
+                  tradeSize = genResult.fileSize;
+                  fileType = genResult.mimeType;
+                  processingStatus = 'completed';
+                  console.log(`📁 Uploaded real file for "${itemName}": ${genResult.fileSize} bytes to Object Storage`);
+                }
+              }
+            } catch (genErr) {
+              console.warn(`⚠️ File generation failed for "${itemName}":`, genErr.message);
+            }
+          }
+
           const newArt = await pool.query(
-            `INSERT INTO artifacts (title, description, category, solar_amount_s, creator_id, delivery_mode, active)
-             VALUES ($1, $2, $3, $4, $5, 'download', true) RETURNING id`,
-            [itemName, `Ecosystem-generated ${cat.toLowerCase()} artifact`, cat, String(price), String(sellerId)]
+            `INSERT INTO artifacts (title, description, category, solar_amount_s, creator_id, delivery_mode, active,
+             master_file_url, trade_file_url, preview_file_url, master_file_size, trade_file_size, preview_file_size,
+             file_type, processing_status)
+             VALUES ($1, $2, $3, $4, $5, 'download', true, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id`,
+            [itemName, `Ecosystem-generated ${cat.toLowerCase()} artifact`, cat, String(price), String(sellerId),
+             masterUrl, tradeUrl, previewUrl, masterSize, tradeSize, previewSize, fileType, processingStatus]
           );
           foundArtifactId = newArt.rows[0].id;
-          console.log(`📦 Auto-created artifact "${itemName}" (${foundArtifactId}) for ecosystem purchase`);
+          console.log(`📦 Auto-created artifact "${itemName}" (${foundArtifactId}) with ${masterUrl ? 'REAL FILE' : 'metadata only'}`);
         }
       }
 
@@ -10451,6 +10509,110 @@ Respond ONLY with valid JSON in this exact format:
       console.error('Backfill error:', error);
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ success: false, error: 'Backfill failed: ' + error.message }));
+    }
+    return;
+  }
+
+  // ================== BACKFILL FILES FOR EXISTING ARTIFACTS ==================
+
+  if (pathname === '/api/ecosystem/backfill-files' && req.method === 'POST') {
+    try {
+      if (!pool) {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Database unavailable' }));
+        return;
+      }
+      const body = await parseBody(req);
+      const batchSize = parseInt(body.batchSize) || 10;
+      const maxBatch = Math.min(batchSize, 25);
+
+      const missing = await pool.query(
+        `SELECT a.id, a.title, a.category, a.creator_id, a.description
+         FROM artifacts a
+         WHERE (a.master_file_url IS NULL OR a.master_file_url = '')
+           AND (a.trade_file_url IS NULL OR a.trade_file_url = '')
+         ORDER BY a.created_at ASC
+         LIMIT $1`,
+        [maxBatch]
+      );
+
+      if (missing.rows.length === 0) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, message: 'All artifacts already have files', generated: 0, remaining: 0 }));
+        return;
+      }
+
+      const totalMissing = await pool.query(
+        `SELECT count(*) as cnt FROM artifacts WHERE (master_file_url IS NULL OR master_file_url = '') AND (trade_file_url IS NULL OR trade_file_url = '')`
+      );
+
+      let generated = 0, failed = 0;
+      const results = [];
+      const cloudStorage = require('./server/cloud-storage');
+
+      for (const row of missing.rows) {
+        try {
+          const creatorMatch = String(row.creator_id || '').match(/^(\d+)$/);
+          let agentCode = null;
+          if (creatorMatch) {
+            const memberRow = await pool.query('SELECT username FROM members WHERE id = $1 LIMIT 1', [parseInt(creatorMatch[1])]);
+            if (memberRow.rows.length > 0) {
+              const acm = String(memberRow.rows[0].username).match(/agent_eco_(.+)$/);
+              if (acm) agentCode = acm[1];
+            }
+          }
+          if (!agentCode) {
+            const codeFromCat = { 'Computronium': '01', 'Culture': '02', 'Basic Needs': '03', 'Rent': '04',
+              'Energy': '05', 'Music': '06', 'Video': '07', 'Art': '08', 'Photo': '09', 'Writing': '10',
+              'AI Tools': '11', 'AI Create': '12', 'Software': '13', 'Docs': '14', 'Games': '15', 'Utilities': '16' };
+            agentCode = codeFromCat[row.category] || '01';
+          }
+
+          const genResult = await generateArtifactFile(agentCode, row.title, row.category, row.description || '');
+          if (!genResult || !genResult.buffer || genResult.buffer.length === 0) {
+            failed++;
+            results.push({ id: row.id, title: row.title, status: 'gen_failed' });
+            continue;
+          }
+
+          if (cloudStorage.isAvailable()) {
+            const ext = '.' + genResult.filename.split('.').pop();
+            const masterResult = await cloudStorage.uploadMasterFile(row.id, ext, genResult.buffer);
+            const tradeResult = await cloudStorage.uploadTradeFile(row.id, ext, genResult.buffer);
+
+            await pool.query(
+              `UPDATE artifacts SET
+                master_file_url = $1, trade_file_url = $2,
+                master_file_size = $3, trade_file_size = $4,
+                file_type = $5, processing_status = 'completed'
+              WHERE id = $6`,
+              [`cloud://${masterResult.key}`, `cloud://${tradeResult.key}`,
+               genResult.fileSize, genResult.fileSize, genResult.mimeType, row.id]
+            );
+            generated++;
+            results.push({ id: row.id, title: row.title, status: 'uploaded', fileSize: genResult.fileSize, mimeType: genResult.mimeType });
+          } else {
+            failed++;
+            results.push({ id: row.id, title: row.title, status: 'storage_unavailable' });
+          }
+        } catch (itemErr) {
+          failed++;
+          results.push({ id: row.id, title: row.title, status: 'error', error: itemErr.message });
+        }
+      }
+
+      const remaining = parseInt(totalMissing.rows[0].cnt) - generated;
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        summary: { processed: missing.rows.length, generated, failed, remaining: Math.max(0, remaining) },
+        results
+      }));
+    } catch (error) {
+      console.error('File backfill error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'File backfill failed: ' + error.message }));
     }
     return;
   }
