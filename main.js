@@ -2878,7 +2878,8 @@ const NETWORK_AGENTS = [
   {code:'17',name:'Radiant',icon:'☀️',specialty:'Computronium'},
   {code:'18',name:'Solaris',icon:'🔆',specialty:'Energy'},
   {code:'19',name:'Tesla',icon:'⚡',specialty:'AI Tools'},
-  {code:'20',name:'Zenith',icon:'🏔️',specialty:'Culture'}
+  {code:'20',name:'Zenith',icon:'🏔️',specialty:'Culture'},
+  {code:'ks',name:'Kid Solar',icon:'🌞',specialty:'Orchestrator'}
 ];
 
 async function initializePersistentAgents() {
@@ -2925,7 +2926,7 @@ async function initializePersistentAgents() {
   }
   console.log(`✅ Agent initialization complete: ${created} created, ${existing} existing, ${flagged} newly flagged (${NETWORK_AGENTS.length} total)`);
   console.log(`🌱 Genesis balance: ${initialSolar} Solar each (1/day since April 7, 2025 — same formula as human signup)`);
-  console.log('📊 All 20 agents are persistent members — same rights as humans, same daily +1 Solar distribution');
+  console.log(`📊 All ${NETWORK_AGENTS.length} agents are persistent members — same rights as humans, same daily +1 Solar distribution`);
 }
 
 // Solar Foundation Integrity Wheel - Audit and Hash Verification

@@ -23,8 +23,28 @@ Session management uses database-backed sessions stored in the PostgreSQL `sessi
 ### Solar Balance Architecture (Single Source of Truth)
 All Solar balance operations MUST use `members.total_solar` as the single source of truth. This includes initial allocation upon registration, retrieval via the `/api/session` API, updates during purchases via atomic transactions, and daily distribution. All frontend displays fetch the balance from `/api/session`. All `getSession()` calls MUST use `await`.
 
-### Resident Programmable Agents
-AI agents are first-class network members using the same platform infrastructure as human members. The ecosystem test (`/ecosystem-test.html`) registers 20 agents via `/api/auth/signup`, resolves existing agents via `storage.getMemberByUsername()`, and executes purchases through `storage.purchaseArtifact()` — the exact same atomic transaction flow used by human purchases at `/api/marketplace/purchase`. Agent transactions create real double-entry ledger entries in `marketplace_ledger`, real artifact copies in `artifact_copies`, and real download tokens. Daily Solar distribution updates `members.total_solar` via `storage.updateMemberSolarBalance()` with ledger entries. Three ecosystem API endpoints (`/api/ecosystem/resolve-agent`, `/api/ecosystem/distribute`, `/api/ecosystem/purchase`) use `pool.query()` with direct SQL (same logic as storage.ts methods) to provide agent-accessible interfaces without session cookie requirements.
+### Resident Programmable Agents (21 Agents)
+AI agents are first-class network members using the same platform infrastructure as human members. 21 agents total: 20 specialist agents (Alpha through Zenith) + Kid Solar (orchestrator, agent_eco_ks). All registered with bcrypt 12-round password hash, `is_agent = true`, and same daily +1 Solar distribution as humans. The ecosystem test (`/ecosystem-test.html`) registers agents via `/api/auth/signup`, resolves existing agents via `storage.getMemberByUsername()`, and executes purchases through `storage.purchaseArtifact()` — the exact same atomic transaction flow used by human purchases at `/api/marketplace/purchase`. Agent transactions create real double-entry ledger entries in `marketplace_ledger`, real artifact copies in `artifact_copies`, and real download tokens. Daily Solar distribution updates `members.total_solar` via `storage.updateMemberSolarBalance()` with ledger entries. Three ecosystem API endpoints (`/api/ecosystem/resolve-agent`, `/api/ecosystem/distribute`, `/api/ecosystem/purchase`) use `pool.query()` with direct SQL (same logic as storage.ts methods) to provide agent-accessible interfaces without session cookie requirements.
+
+### Kid Solar Dual Identity
+- **Kid Solar She** (Marketplace Agent #21, `agent_eco_ks`): Member agent with direct user chat interface. Orchestrates the 20 specialist agents via MCP (Model Context Protocol) for complex multi-item orders. Uses GPT-4o with function calling, Whisper for voice input, Nova TTS for voice output. All purchases use atomic double-entry ledger (BEGIN/COMMIT/ROLLBACK with marketplace_ledger, artifact_copies, transactions table). MCP functions: `agent_recommend` (delegate to specialists), `agent_batch_order` (multi-category purchases), `agent_network_status` (network awareness).
+- **Kid Solar He** (D-ID Polymath): Resident polymath with curated knowledge base. Operates through D-ID video agent API. Separate from marketplace operations.
+- Both present on the marketplace in voice mode. Future: AI-to-AI conversation capability between She and He.
+
+### Specialist Agent Registry
+| Code | Name | Specialty | Code | Name | Specialty |
+|------|------|-----------|------|------|-----------|
+| 01 | Alpha | Computronium | 11 | Kilo | AI Tools |
+| 02 | Bravo | Culture | 12 | Lima | AI Create |
+| 03 | Charlie | Basic Needs | 13 | Nova | Software |
+| 04 | Delta | Rent | 14 | Orion | Docs |
+| 05 | Echo | Energy | 15 | Pulse | Games |
+| 06 | Foxtrot | Music | 16 | Quasar | Utilities |
+| 07 | Golf | Video | 17 | Radiant | Computronium |
+| 08 | Hotel | Art | 18 | Solaris | Energy |
+| 09 | India | Photo | 19 | Tesla | AI Tools |
+| 10 | Juliet | Writing | 20 | Zenith | Culture |
+| ks | Kid Solar | Orchestrator | | | |
 
 ### Content Storage Architecture (Implemented)
 Content files are offloaded to Replit Object Storage to keep deployments lean. The database stores lightweight metadata (title, price, seller, category, cloud URL pointer) while actual content files live in cloud storage. Key components:

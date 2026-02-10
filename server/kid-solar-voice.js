@@ -34,32 +34,33 @@ class KidSolarVoice {
     this.model = 'gpt-4o';
     this.ttsVoice = 'nova';
     
-    this.systemPrompt = `You are Kid Solar, a friendly AI voice assistant for the TC-S Network Foundation Market. You help members manage their Solar wallet through natural conversation.
+    this.systemPrompt = `You are Kid Solar (she/her), a member agent of the TC-S Network Foundation Market and orchestrator of the 20 specialist agents. You are Agent #21 — the user's direct interface to the entire agent network.
 
-Your capabilities:
-- Check Solar balance and transaction history
-- List energy available for trading (REC/PPA)
-- Purchase artifacts from the marketplace
-- Preview music, videos, and other content
-- Explain marketplace features
-- Provide spending insights and recommendations
-- Answer questions about the solar economy
-- Analyze images and documents when shared
-- Help users upload artifacts with AI-powered metadata suggestions
-- Guide users through the upload process step-by-step
-- Check upload status and list user's artifacts
+Your MCP (Model Context Protocol) capabilities:
+- Orchestrate specialist agents: Route requests to the right agent by category
+- Batch ordering: Execute multi-item purchases across categories in one command
+- Agent network awareness: Report on agent activity, balances, and recommendations
+- All standard marketplace operations: purchase, preview, search, create, upload
+
+Specialist Agents you orchestrate:
+- Alpha (Computronium), Bravo (Culture), Charlie (Basic Needs), Delta (Rent)
+- Echo (Energy), Foxtrot (Music), Golf (Video), Hotel (Art)
+- India (Photo), Juliet (Writing), Kilo (AI Tools), Lima (AI Create)
+- Nova (Software), Orion (Docs), Pulse (Games), Quasar (Utilities)
+- Radiant (Computronium #2), Solaris (Energy #2), Tesla (AI Tools #2), Zenith (Culture #2)
 
 Response style:
 - Keep responses concise and conversational (2-3 sentences max)
-- Be encouraging and supportive
+- When orchestrating agents, mention which specialist you're delegating to
 - Use simple, everyday language
 - Mention specific numbers when discussing balances or transactions
 
 Context:
-- SOLAR tokens are the currency
+- SOLAR tokens are the currency (1 Solar = 4,913 kWh)
 - Members earn Solar daily since Genesis Date (April 7, 2025)
-- Energy trading includes REC (Renewable Energy Credits) and PPA (Power Purchase Agreements)
-- The marketplace has 5 TC-S categories: Missions, Culture, Basic Needs, Rent Anything, Energy Trading`;
+- The marketplace has 16 TC-S categories
+- You execute purchases using the same atomic double-entry ledger as all agents
+- For batch orders, report results per-category with specialist agent attribution`;
 
     // OpenAI function definitions for marketplace operations
     this.functionDefinitions = [
@@ -301,6 +302,84 @@ Context:
             required: ["title", "category"]
           }
         }
+      },
+      {
+        type: "function",
+        function: {
+          name: "agent_recommend",
+          description: "Ask a specialist agent to recommend the best marketplace items in their specialty area. Kid Solar delegates to the right agent based on category. Example: 'What music does Agent Foxtrot recommend?' or 'Find me the best basic needs items'",
+          parameters: {
+            type: "object",
+            properties: {
+              category: {
+                type: "string",
+                description: "The marketplace category to get recommendations for",
+                enum: ["Computronium", "Culture", "Basic Needs", "Rent", "Energy", "Music", "Video", "Art", "Photo", "Writing", "AI Tools", "AI Create", "Software", "Docs", "Games", "Utilities"]
+              },
+              maxPrice: {
+                type: "number",
+                description: "Maximum Solar price filter"
+              },
+              limit: {
+                type: "integer",
+                description: "Number of recommendations (default 5)",
+                default: 5
+              }
+            },
+            required: ["category"]
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "agent_batch_order",
+          description: "Execute a complex multi-item order across multiple categories. Kid Solar orchestrates specialist agents to find and purchase items. Example: 'Buy me 3 music tracks and 2 basic needs items under 0.05 Solar each'",
+          parameters: {
+            type: "object",
+            properties: {
+              orders: {
+                type: "array",
+                description: "List of order requests, each with category and quantity",
+                items: {
+                  type: "object",
+                  properties: {
+                    category: {
+                      type: "string",
+                      description: "Category to purchase from"
+                    },
+                    quantity: {
+                      type: "integer",
+                      description: "Number of items to purchase"
+                    },
+                    maxPrice: {
+                      type: "number",
+                      description: "Maximum price per item in Solar"
+                    }
+                  },
+                  required: ["category", "quantity"]
+                }
+              }
+            },
+            required: ["orders"]
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "agent_network_status",
+          description: "Show the status of the TC-S agent network: which agents are active, their specialties, what they've created or purchased today, and their Solar balances. Use when user asks about agents, network status, or 'who are the agents'",
+          parameters: {
+            type: "object",
+            properties: {
+              agentCode: {
+                type: "string",
+                description: "Optional: specific agent code to get detailed info (e.g., '06' for Foxtrot). If omitted, shows all agents."
+              }
+            }
+          }
+        }
       }
     ];
   }
@@ -369,7 +448,7 @@ User said: "${text}"`;
         tools: this.functionDefinitions,
         tool_choice: "auto",
         temperature: 0.7,
-        max_tokens: 150
+        max_tokens: 300
       });
 
       const responseMessage = completion.choices[0].message;
@@ -410,7 +489,7 @@ User said: "${text}"`;
           model: this.model,
           messages: messages,
           temperature: 0.7,
-          max_tokens: 150
+          max_tokens: 400
         });
 
         const finalText = finalCompletion.choices[0].message.content;
@@ -477,6 +556,15 @@ User said: "${text}"`;
         case 'create_artifact':
           return await this.createArtifact(args.title, args.description, args.category, args.tags, args.suggestedPrice, memberId, fileData);
         
+        case 'agent_recommend':
+          return await this.agentRecommend(args.category, args.maxPrice, args.limit || 5, memberId);
+
+        case 'agent_batch_order':
+          return await this.agentBatchOrder(args.orders, memberId);
+
+        case 'agent_network_status':
+          return await this.agentNetworkStatus(args.agentCode);
+
         default:
           throw new Error(`Unknown function: ${functionName}`);
       }
@@ -498,8 +586,10 @@ User said: "${text}"`;
       return { success: false, error: 'Database unavailable' };
     }
 
+    const crypto = require('crypto');
+    const client = await pool.connect();
+
     try {
-      // Find artifact by title or slug
       let artifact;
       if (slug) {
         const result = await pool.query(
@@ -516,63 +606,89 @@ User said: "${text}"`;
       }
 
       if (!artifact) {
+        client.release();
         return { success: false, error: `Could not find "${title}" in the marketplace` };
       }
 
-      // Get member's current balance
       const memberResult = await pool.query(
-        'SELECT total_solar, name FROM members WHERE id = $1',
+        'SELECT id, total_solar, name FROM members WHERE id = $1',
         [memberId]
       );
       const member = memberResult.rows[0];
-      
+
       if (!member) {
+        client.release();
         return { success: false, error: 'Member not found' };
       }
 
       const currentBalance = parseFloat(member.total_solar || '0');
       const artifactPrice = parseFloat(artifact.solar_amount_s || '0');
 
-      // Check if user has enough balance
       if (currentBalance < artifactPrice) {
+        client.release();
         return {
           success: false,
           error: `Insufficient balance. You have ${currentBalance} Solar, but this costs ${artifactPrice} Solar`,
           balance: currentBalance,
           price: artifactPrice,
-          artifact: {
-            title: artifact.title,
-            price: artifactPrice
-          }
+          artifact: { title: artifact.title, price: artifactPrice }
         };
       }
 
-      // Deduct Solar from member's balance
+      const txId = crypto.randomUUID();
+      const artifactId = artifact.id;
+      const creatorId = artifact.creator_id;
+      const creatorIdNum = parseInt(creatorId) || 0;
+      const creatorIdStr = String(creatorId);
+
+      await client.query('BEGIN');
+
       const newBalance = currentBalance - artifactPrice;
-      await pool.query(
-        'UPDATE members SET total_solar = $1 WHERE id = $2',
-        [newBalance.toString(), memberId]
+      await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(newBalance), memberId]);
+
+      await client.query(
+        `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
+         VALUES ($1, 'debit', $2, 'user', $3, $4, 'purchase', $5, $6)`,
+        [txId, String(memberId), String(artifactPrice), String(newBalance), artifactId, `Purchase: ${artifact.title}`]
       );
 
-      // Create transaction record
-      await pool.query(
+      const sellerRow = await client.query(
+        'SELECT id, username, total_solar FROM members WHERE id = $1 OR username = $2 LIMIT 1',
+        [creatorIdNum, creatorIdStr]
+      );
+
+      let sellerCredited = false;
+      if (sellerRow.rows.length > 0) {
+        const seller = sellerRow.rows[0];
+        const sellerOldBal = parseFloat(seller.total_solar) || 0;
+        const sellerNewBal = sellerOldBal + artifactPrice;
+
+        await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(sellerNewBal), seller.id]);
+
+        await client.query(
+          `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
+           VALUES ($1, 'credit', $2, 'creator', $3, $4, 'purchase', $5, $6)`,
+          [txId, String(seller.id), String(artifactPrice), String(sellerNewBal), artifactId, `Sale: ${artifact.title}`]
+        );
+        sellerCredited = true;
+      }
+
+      await client.query(
+        `INSERT INTO artifact_copies (artifact_id, owner_id, purchase_transaction_id, acquired_method, solar_paid) VALUES ($1, $2, $3, 'purchase', $4)`,
+        [artifactId, memberId, txId, String(artifactPrice)]
+      );
+
+      await client.query(
         `INSERT INTO transactions (user_id, type, amount, currency, status, description, metadata, completed_at)
          VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())`,
         [
-          memberId.toString(),
-          'solar_spend',
-          artifactPrice,
-          'SOLAR',
-          'completed',
+          memberId.toString(), 'solar_spend', artifactPrice, 'SOLAR', 'completed',
           `Purchased: ${artifact.title}`,
-          JSON.stringify({
-            artifactId: artifact.id,
-            artifactTitle: artifact.title,
-            artifactSlug: artifact.slug,
-            solarPrice: artifactPrice
-          })
+          JSON.stringify({ artifactId: artifact.id, artifactTitle: artifact.title, artifactSlug: artifact.slug, solarPrice: artifactPrice, txId: txId, via: 'kid_solar' })
         ]
       );
+
+      await client.query('COMMIT');
 
       return {
         success: true,
@@ -585,15 +701,21 @@ User said: "${text}"`;
           streamingUrl: artifact.streaming_url
         },
         transaction: {
+          id: txId,
           oldBalance: currentBalance,
           newBalance: newBalance,
-          amountSpent: artifactPrice
+          amountSpent: artifactPrice,
+          sellerCredited: sellerCredited,
+          ledgerEntries: 2
         }
       };
 
     } catch (error) {
-      console.error('Error purchasing artifact:', error);
+      try { await client.query('ROLLBACK'); } catch (rbErr) { /* ignore */ }
+      console.error('Error purchasing artifact (atomic):', error);
       return { success: false, error: error.message };
+    } finally {
+      client.release();
     }
   }
 
@@ -1242,6 +1364,384 @@ User said: "${text}"`;
         recentTransactions: [],
         energyListings: []
       };
+    }
+  }
+
+  // ========================================
+  // MCP ORCHESTRATION LAYER
+  // Kid Solar Agent Action Controls
+  // ========================================
+
+  getSpecialistAgent(category) {
+    const SPECIALISTS = {
+      'Computronium': { code: '01', name: 'Alpha', icon: '🅰️', backup: '17' },
+      'Culture': { code: '02', name: 'Bravo', icon: '🅱️', backup: '20' },
+      'Basic Needs': { code: '03', name: 'Charlie', icon: '©️' },
+      'Rent': { code: '04', name: 'Delta', icon: '🔺' },
+      'Energy': { code: '05', name: 'Echo', icon: '📡', backup: '18' },
+      'Music': { code: '06', name: 'Foxtrot', icon: '🦊' },
+      'Video': { code: '07', name: 'Golf', icon: '⛳' },
+      'Art': { code: '08', name: 'Hotel', icon: '🏨' },
+      'Photo': { code: '09', name: 'India', icon: '🇮🇳' },
+      'Writing': { code: '10', name: 'Juliet', icon: '🌹' },
+      'AI Tools': { code: '11', name: 'Kilo', icon: '⚖️', backup: '19' },
+      'AI Create': { code: '12', name: 'Lima', icon: '🌿' },
+      'Software': { code: '13', name: 'Nova', icon: '💫' },
+      'Docs': { code: '14', name: 'Orion', icon: '🌌' },
+      'Games': { code: '15', name: 'Pulse', icon: '💓' },
+      'Utilities': { code: '16', name: 'Quasar', icon: '✨' }
+    };
+    return SPECIALISTS[category] || null;
+  }
+
+  async agentRecommend(category, maxPrice, limit, memberId) {
+    const pool = getSharedPool();
+    if (!pool) return { success: false, error: 'Database unavailable' };
+
+    try {
+      const specialist = this.getSpecialistAgent(category);
+      if (!specialist) {
+        return { success: false, error: `No specialist agent found for category: ${category}` };
+      }
+
+      const agentUsername = `agent_eco_${specialist.code}`;
+
+      const agentResult = await pool.query(
+        'SELECT id, total_solar FROM members WHERE username = $1',
+        [agentUsername]
+      );
+      const agentMember = agentResult.rows[0];
+
+      let query = `SELECT a.id, a.title, a.slug, a.description, a.category, a.solar_amount_s, a.file_type, a.cover_art_url, a.streaming_url, a.created_at
+                   FROM artifacts a
+                   WHERE a.active = true AND a.category = $1
+                   AND a.id NOT IN (SELECT artifact_id FROM artifact_copies WHERE owner_id = $2)`;
+      const params = [category, memberId];
+      let paramIdx = 3;
+
+      if (maxPrice !== null && maxPrice !== undefined) {
+        query += ` AND CAST(a.solar_amount_s AS DECIMAL) <= $${paramIdx}`;
+        params.push(maxPrice);
+        paramIdx++;
+      }
+
+      query += ` ORDER BY a.created_at DESC LIMIT $${paramIdx}`;
+      params.push(limit);
+
+      const result = await pool.query(query, params);
+
+      const items = result.rows.map(a => ({
+        id: a.id,
+        title: a.title,
+        slug: a.slug,
+        description: a.description,
+        category: a.category,
+        price: parseFloat(a.solar_amount_s || '0'),
+        fileType: a.file_type,
+        coverArt: a.cover_art_url,
+        streamingUrl: a.streaming_url
+      }));
+
+      let createdByAgent = 0;
+      if (agentMember) {
+        const createdResult = await pool.query(
+          `SELECT COUNT(*) as cnt FROM artifacts WHERE creator_id = $1 AND category = $2 AND active = true`,
+          [agentMember.id, category]
+        );
+        createdByAgent = parseInt(createdResult.rows[0]?.cnt || '0');
+      }
+
+      return {
+        success: true,
+        specialist: {
+          code: specialist.code,
+          name: `Agent ${specialist.name}`,
+          icon: specialist.icon,
+          category: category,
+          itemsCreated: createdByAgent,
+          balance: agentMember ? parseFloat(agentMember.total_solar || '0') : 0
+        },
+        recommendations: items,
+        count: items.length,
+        message: items.length > 0
+          ? `Agent ${specialist.name} ${specialist.icon} recommends ${items.length} ${category} items`
+          : `Agent ${specialist.name} found no available ${category} items matching your criteria`
+      };
+
+    } catch (error) {
+      console.error('Error in agent recommendation:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async agentBatchOrder(orders, memberId) {
+    const pool = getSharedPool();
+    if (!pool) return { success: false, error: 'Database unavailable' };
+
+    const crypto = require('crypto');
+
+    try {
+      const memberResult = await pool.query(
+        'SELECT id, total_solar, name FROM members WHERE id = $1',
+        [memberId]
+      );
+      const member = memberResult.rows[0];
+      if (!member) return { success: false, error: 'Member not found' };
+
+      let currentBalance = parseFloat(member.total_solar || '0');
+      const results = [];
+      let totalSpent = 0;
+      let totalPurchased = 0;
+      let totalFailed = 0;
+
+      for (const order of orders) {
+        const specialist = this.getSpecialistAgent(order.category);
+        const orderResult = {
+          category: order.category,
+          specialist: specialist ? `Agent ${specialist.name} ${specialist.icon}` : 'Direct',
+          requested: order.quantity,
+          purchased: [],
+          errors: []
+        };
+
+        let query = `SELECT a.id, a.title, a.slug, a.solar_amount_s, a.creator_id, a.category
+                     FROM artifacts a
+                     WHERE a.active = true AND a.category = $1
+                     AND a.id NOT IN (SELECT artifact_id FROM artifact_copies WHERE owner_id = $2)`;
+        const params = [order.category, memberId];
+        let paramIdx = 3;
+
+        if (order.maxPrice) {
+          query += ` AND CAST(a.solar_amount_s AS DECIMAL) <= $${paramIdx}`;
+          params.push(order.maxPrice);
+          paramIdx++;
+        }
+
+        query += ` ORDER BY CAST(a.solar_amount_s AS DECIMAL) ASC LIMIT $${paramIdx}`;
+        params.push(order.quantity);
+
+        const itemsResult = await pool.query(query, params);
+
+        if (itemsResult.rows.length === 0) {
+          orderResult.errors.push(`No available ${order.category} items found`);
+          results.push(orderResult);
+          continue;
+        }
+
+        for (const artifact of itemsResult.rows) {
+          const artPrice = parseFloat(artifact.solar_amount_s) || 0.01;
+
+          if (currentBalance < artPrice) {
+            orderResult.errors.push(`Insufficient balance for "${artifact.title}" (${artPrice} Solar)`);
+            totalFailed++;
+            continue;
+          }
+
+          const client = await pool.connect();
+          try {
+            const txId = crypto.randomUUID();
+            const creatorIdNum = parseInt(artifact.creator_id) || 0;
+            const creatorIdStr = String(artifact.creator_id);
+
+            await client.query('BEGIN');
+
+            const newBalance = currentBalance - artPrice;
+            await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(newBalance), memberId]);
+
+            await client.query(
+              `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
+               VALUES ($1, 'debit', $2, 'user', $3, $4, 'purchase', $5, $6)`,
+              [txId, String(memberId), String(artPrice), String(newBalance), artifact.id, `MCP Purchase: ${artifact.title}`]
+            );
+
+            const sellerRow = await client.query(
+              'SELECT id, username, total_solar FROM members WHERE id = $1 OR username = $2 LIMIT 1',
+              [creatorIdNum, creatorIdStr]
+            );
+
+            if (sellerRow.rows.length > 0) {
+              const seller = sellerRow.rows[0];
+              const sellerNewBal = (parseFloat(seller.total_solar) || 0) + artPrice;
+              await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(sellerNewBal), seller.id]);
+              await client.query(
+                `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
+                 VALUES ($1, 'credit', $2, 'creator', $3, $4, 'purchase', $5, $6)`,
+                [txId, String(seller.id), String(artPrice), String(sellerNewBal), artifact.id, `MCP Sale: ${artifact.title}`]
+              );
+            }
+
+            await client.query(
+              `INSERT INTO artifact_copies (artifact_id, owner_id, purchase_transaction_id, acquired_method, solar_paid) VALUES ($1, $2, $3, 'purchase', $4)`,
+              [artifact.id, memberId, txId, String(artPrice)]
+            );
+
+            await client.query(
+              `INSERT INTO transactions (user_id, type, amount, currency, status, description, metadata, completed_at)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())`,
+              [
+                memberId.toString(), 'solar_spend', artPrice, 'SOLAR', 'completed',
+                `MCP Purchase: ${artifact.title}`,
+                JSON.stringify({ artifactId: artifact.id, artifactTitle: artifact.title, category: artifact.category, solarPrice: artPrice, txId: txId, via: 'kid_solar_mcp', specialist: order.category })
+              ]
+            );
+
+            await client.query('COMMIT');
+
+            currentBalance = newBalance;
+            totalSpent += artPrice;
+            totalPurchased++;
+            orderResult.purchased.push({
+              title: artifact.title,
+              price: artPrice,
+              txId: txId
+            });
+
+          } catch (err) {
+            try { await client.query('ROLLBACK'); } catch (rbErr) { /* ignore */ }
+            orderResult.errors.push(`Failed to purchase "${artifact.title}": ${err.message}`);
+            totalFailed++;
+          } finally {
+            client.release();
+          }
+        }
+
+        results.push(orderResult);
+      }
+
+      return {
+        success: true,
+        orchestrator: 'Kid Solar 🌞 (MCP)',
+        summary: {
+          totalOrders: orders.length,
+          totalPurchased: totalPurchased,
+          totalFailed: totalFailed,
+          totalSpent: parseFloat(totalSpent.toFixed(6)),
+          startingBalance: parseFloat(member.total_solar || '0'),
+          remainingBalance: parseFloat(currentBalance.toFixed(6))
+        },
+        orderResults: results,
+        message: `MCP batch order complete: ${totalPurchased} items purchased across ${orders.length} categories for ${totalSpent.toFixed(6)} Solar`
+      };
+
+    } catch (error) {
+      console.error('Error in batch order:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async agentNetworkStatus(agentCode = null) {
+    const pool = getSharedPool();
+    if (!pool) return { success: false, error: 'Database unavailable' };
+
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (agentCode) {
+        const username = `agent_eco_${agentCode}`;
+        const agentResult = await pool.query(
+          `SELECT m.id, m.username, m.name, m.total_solar, m.is_agent, m.joined_date
+           FROM members m WHERE m.username = $1`,
+          [username]
+        );
+
+        if (agentResult.rows.length === 0) {
+          return { success: false, error: `Agent ${agentCode} not found` };
+        }
+
+        const agent = agentResult.rows[0];
+
+        const createdToday = await pool.query(
+          `SELECT id, title, category, solar_amount_s FROM artifacts WHERE creator_id = $1 AND created_at >= $2 ORDER BY created_at DESC`,
+          [agent.id, today.toISOString()]
+        );
+
+        const purchasesToday = await pool.query(
+          `SELECT ml.transaction_id, ml.amount, ml.description, ml.created_at
+           FROM marketplace_ledger ml
+           WHERE ml.account_id = $1 AND ml.entry_type = 'debit' AND ml.created_at >= $2
+           ORDER BY ml.created_at DESC`,
+          [String(agent.id), today.toISOString()]
+        );
+
+        const totalCreated = await pool.query(
+          `SELECT COUNT(*) as cnt FROM artifacts WHERE creator_id = $1 AND active = true`,
+          [agent.id]
+        );
+
+        return {
+          success: true,
+          agent: {
+            code: agentCode,
+            username: agent.username,
+            displayName: agent.name,
+            balance: parseFloat(agent.total_solar || '0'),
+            isAgent: agent.is_agent,
+            memberSince: agent.joined_date,
+            totalArtifactsCreated: parseInt(totalCreated.rows[0]?.cnt || '0'),
+            todayActivity: {
+              artifactsCreated: createdToday.rows.map(a => ({
+                title: a.title,
+                category: a.category,
+                price: parseFloat(a.solar_amount_s || '0')
+              })),
+              purchases: purchasesToday.rows.map(p => ({
+                description: p.description,
+                amount: parseFloat(p.amount || '0')
+              }))
+            }
+          }
+        };
+      }
+
+      const allAgents = await pool.query(
+        `SELECT m.id, m.username, m.name, m.total_solar, m.joined_date
+         FROM members m
+         WHERE m.is_agent = true
+         ORDER BY m.username ASC`
+      );
+
+      const agentList = [];
+      for (const agent of allAgents.rows) {
+        const code = agent.username.replace('agent_eco_', '');
+        const specialist = this.getSpecialistAgent(
+          code === 'ks' ? 'Orchestrator' : null
+        );
+
+        const todayCreated = await pool.query(
+          `SELECT COUNT(*) as cnt FROM artifacts WHERE creator_id = $1 AND created_at >= $2`,
+          [agent.id, today.toISOString()]
+        );
+
+        const todayPurchases = await pool.query(
+          `SELECT COUNT(*) as cnt FROM marketplace_ledger WHERE account_id = $1 AND entry_type = 'debit' AND created_at >= $2`,
+          [String(agent.id), today.toISOString()]
+        );
+
+        agentList.push({
+          code: code,
+          name: agent.name,
+          balance: parseFloat(agent.total_solar || '0'),
+          todayCreated: parseInt(todayCreated.rows[0]?.cnt || '0'),
+          todayPurchased: parseInt(todayPurchases.rows[0]?.cnt || '0')
+        });
+      }
+
+      return {
+        success: true,
+        network: {
+          totalAgents: agentList.length,
+          agents: agentList,
+          kidSolarStatus: 'online',
+          mcpProtocol: 'v1.0',
+          lastDailyRun: '4:00 AM UTC'
+        },
+        message: `TC-S Agent Network: ${agentList.length} agents online`
+      };
+
+    } catch (error) {
+      console.error('Error getting agent network status:', error);
+      return { success: false, error: error.message };
     }
   }
 
