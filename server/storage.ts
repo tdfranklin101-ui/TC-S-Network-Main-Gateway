@@ -26,6 +26,9 @@ import path from 'path';
 import session from 'express-session';
 import connectPgSimple from 'connect-pg-simple';
 
+const FOUNDATION_USERNAME = 'tcs_foundation';
+const FOUNDATION_FEE_RATE = 0.05;
+
 // Storage interface for member data and timer-gated progression
 export interface IStorage {
   // Member operations
@@ -1247,6 +1250,8 @@ export class DatabaseStorage implements IStorage {
       }
 
       const price = parseFloat(artifact.solarAmountS || '0');
+      const foundationFee = Math.round(price * FOUNDATION_FEE_RATE * 10000) / 10000;
+      const sellerNet = price - foundationFee;
 
       if (buyerBalance < price) {
         return { success: false, error: `Insufficient Solar balance. Need ${price} Solar, have ${buyerBalance.toFixed(5)} Solar` };
@@ -1259,7 +1264,7 @@ export class DatabaseStorage implements IStorage {
       const result = await db.transaction(async (tx) => {
         const ledgerEntries: MarketplaceLedgerEntry[] = [];
 
-        // 1. Create debit ledger entry (buyer pays)
+        // 1. Create debit ledger entry (buyer pays full price)
         const [debitEntry] = await tx.insert(marketplaceLedger).values({
           transactionId,
           entryType: 'debit',
@@ -1273,13 +1278,13 @@ export class DatabaseStorage implements IStorage {
         }).returning();
         ledgerEntries.push(debitEntry);
 
-        // 2. Create credit ledger entry (creator receives)
+        // 2. Create credit ledger entry (creator receives sellerNet after foundation fee)
         const [creditEntry] = await tx.insert(marketplaceLedger).values({
           transactionId,
           entryType: 'credit',
           accountId: creatorId,
           accountType: 'creator',
-          amount: String(price),
+          amount: String(sellerNet),
           referenceType: 'purchase',
           referenceId: artifactId,
           description: `Sale: ${artifact.title}`
@@ -1302,8 +1307,32 @@ export class DatabaseStorage implements IStorage {
         if (creatorMember.length > 0) {
           const creatorBalance = parseFloat(creatorMember[0].totalSolar || '0');
           await tx.update(members)
-            .set({ totalSolar: String(creatorBalance + price) })
+            .set({ totalSolar: String(creatorBalance + sellerNet) })
             .where(eq(members.id, creatorMember[0].id));
+        }
+
+        // 4b. Foundation fee collection
+        const foundationMember = await tx.select().from(members).where(eq(members.username, FOUNDATION_USERNAME)).limit(1);
+        if (foundationMember.length > 0) {
+          const foundationBalance = parseFloat(foundationMember[0].totalSolar || '0');
+          const foundationBalAfter = foundationBalance + foundationFee;
+          const [foundationEntry] = await tx.insert(marketplaceLedger).values({
+            transactionId,
+            entryType: 'credit',
+            accountId: String(foundationMember[0].id),
+            accountType: 'foundation',
+            amount: String(foundationFee),
+            balanceAfter: String(foundationBalAfter),
+            referenceType: 'foundation_fee',
+            referenceId: artifactId,
+            description: `Foundation fee (5%): ${artifact.title}`
+          }).returning();
+          ledgerEntries.push(foundationEntry);
+          await tx.update(members)
+            .set({ totalSolar: String(foundationBalAfter) })
+            .where(eq(members.id, foundationMember[0].id));
+        } else {
+          console.warn('⚠️ Foundation member (tcs_foundation) not found - foundation fee not collected for transaction:', transactionId);
         }
 
         // 5. Create artifact copy for buyer

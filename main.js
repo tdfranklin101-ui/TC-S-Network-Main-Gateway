@@ -2858,6 +2858,25 @@ function initializeDailyDistribution() {
   console.log('📌 Manual trigger: POST /api/distribution/trigger');
 }
 
+const FOUNDATION_USERNAME = 'tcs_foundation';
+const FOUNDATION_FEE_RATE = 0.05; // 5% Foundation fee on all transactions
+
+async function getOrCreateFoundationMember(client) {
+  const queryFn = client ? client.query.bind(client) : pool.query.bind(pool);
+  const existing = await queryFn('SELECT id, username, total_solar FROM members WHERE username = $1 LIMIT 1', [FOUNDATION_USERNAME]);
+  if (existing.rows.length > 0) {
+    const row = existing.rows[0];
+    return { id: row.id, username: row.username, totalSolar: parseFloat(row.total_solar) || 0 };
+  }
+  const inserted = await queryFn(
+    `INSERT INTO members (username, name, email, total_solar, is_agent, password_hash)
+     VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, username, total_solar`,
+    [FOUNDATION_USERNAME, 'TC-S Foundation Reserve', 'foundation@thecurrentsee.org', '0.0000', false, '$2b$12$foundationreservewallet000000000000000000000000000']
+  );
+  const row = inserted.rows[0];
+  return { id: row.id, username: row.username, totalSolar: parseFloat(row.total_solar) || 0 };
+}
+
 const NETWORK_AGENTS = [
   {code:'01',name:'Alpha',icon:'🅰️',specialty:'Computronium'},
   {code:'02',name:'Bravo',icon:'🅱️',specialty:'Culture'},
@@ -9347,6 +9366,8 @@ Respond ONLY with valid JSON in this exact format:
 
         const creatorId = artifact.creator_id;
         const txId = `purchase_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const foundationFee = Math.round(artPrice * FOUNDATION_FEE_RATE * 10000) / 10000;
+        const sellerNet = artPrice - foundationFee;
 
         const client = await pool.connect();
         try {
@@ -9362,7 +9383,7 @@ Respond ONLY with valid JSON in this exact format:
           await client.query(
             `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
              VALUES ($1, 'credit', $2, 'creator', $3, $4, 'purchase', $5, $6)`,
-            [txId, creatorId, String(artPrice), String(creatorBalBefore + artPrice), artifactId, `Sale: ${artifact.title}`]
+            [txId, creatorId, String(sellerNet), String(creatorBalBefore + sellerNet), artifactId, `Sale: ${artifact.title}`]
           );
 
           await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(buyerBalance - artPrice), buyerId]);
@@ -9373,9 +9394,9 @@ Respond ONLY with valid JSON in this exact format:
           if (creatorRow.rows.length > 0) {
             const cm = creatorRow.rows[0];
             const creatorBal = parseFloat(cm.total_solar) || 0;
-            await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(creatorBal + artPrice), cm.id]);
+            await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(creatorBal + sellerNet), cm.id]);
             actualSellerId = cm.id;
-            sellerBal = creatorBal + artPrice;
+            sellerBal = creatorBal + sellerNet;
             sellerUsername = cm.username;
           } else {
             const sellerRow = await client.query('SELECT id, username, total_solar FROM members WHERE id = $1 LIMIT 1', [sellerId]);
@@ -9384,6 +9405,15 @@ Respond ONLY with valid JSON in this exact format:
               sellerUsername = sellerRow.rows[0].username;
             }
           }
+
+          const foundationMember = await getOrCreateFoundationMember(client);
+          const foundationBalAfter = foundationMember.totalSolar + foundationFee;
+          await client.query(
+            `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
+             VALUES ($1, 'credit', $2, 'foundation', $3, $4, 'foundation_fee', $5, $6)`,
+            [txId, String(foundationMember.id), String(foundationFee), String(foundationBalAfter), artifactId, `Foundation fee (5%): ${artifact.title}`]
+          );
+          await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(foundationBalAfter), foundationMember.id]);
 
           const tokenValue = `dl_${Date.now()}_${Math.random().toString(36).substr(2, 16)}`;
           const expiresAt = new Date();
@@ -9407,6 +9437,7 @@ Respond ONLY with valid JSON in this exact format:
             buyer: { id: buyerId, username: buyerRow.rows[0].username, balance: buyerBalance - artPrice },
             seller: { id: actualSellerId, username: sellerUsername, balance: sellerBal },
             amount: artPrice,
+            foundationFee: foundationFee,
             artifactId: artifactId,
             creatorId: creatorId,
             usedPlatformPurchase: true
@@ -9446,8 +9477,10 @@ Respond ONLY with valid JSON in this exact format:
       }
 
       const transactionId = `eco_purchase_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const foundationFee = Math.round(price * FOUNDATION_FEE_RATE * 10000) / 10000;
+      const sellerNet = price - foundationFee;
       const newBuyerBal = buyerBal - price;
-      const newSellerBal = sellerBal + price;
+      const newSellerBal = sellerBal + sellerNet;
 
       let foundArtifactId = null;
       let copyId = null;
@@ -9486,8 +9519,17 @@ Respond ONLY with valid JSON in this exact format:
         await client.query(
           `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
            VALUES ($1, 'credit', $2, 'user', $3, $4, 'purchase', $5, $6)`,
-          [transactionId, String(sellerId), String(price), String(newSellerBal), ledgerRefId, `Sale: ${itemName || 'Marketplace item'}`]
+          [transactionId, String(sellerId), String(sellerNet), String(newSellerBal), ledgerRefId, `Sale: ${itemName || 'Marketplace item'}`]
         );
+
+        const foundationMember = await getOrCreateFoundationMember(client);
+        const foundationBalAfter = foundationMember.totalSolar + foundationFee;
+        await client.query(
+          `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
+           VALUES ($1, 'credit', $2, 'foundation', $3, $4, 'foundation_fee', $5, $6)`,
+          [transactionId, String(foundationMember.id), String(foundationFee), String(foundationBalAfter), ledgerRefId, `Foundation fee (5%): ${itemName || 'Marketplace item'}`]
+        );
+        await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(foundationBalAfter), foundationMember.id]);
 
         if (foundArtifactId) {
           const existingCopy = await client.query(
@@ -9526,6 +9568,7 @@ Respond ONLY with valid JSON in this exact format:
         buyer: { id: buyerId, username: buyerRow.rows[0].username, balance: newBuyerBal },
         seller: { id: sellerId, username: sellerRow.rows[0].username, balance: newSellerBal },
         amount: price,
+        foundationFee: foundationFee,
         artifactId: foundArtifactId,
         copyId: copyId,
         usedPlatformPurchase: false
