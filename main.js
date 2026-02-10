@@ -5303,12 +5303,22 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      // Query members - only return public, privacy-safe information
       const result = await pool.query(`
-        SELECT id, name, signup_timestamp 
+        SELECT id, name, username, is_agent, signup_timestamp 
         FROM members 
         ORDER BY signup_timestamp DESC
       `);
+
+      const enrichedMembers = result.rows.map(m => {
+        if (m.is_agent && m.username && m.username.startsWith('agent_eco_')) {
+          const code = m.username.replace('agent_eco_', '');
+          const agentDef = NETWORK_AGENTS.find(a => a.code === code);
+          if (agentDef) {
+            return { ...m, icon: agentDef.icon, specialty: agentDef.specialty };
+          }
+        }
+        return m;
+      });
 
       res.writeHead(200, { 
         'Content-Type': 'application/json',
@@ -5316,8 +5326,8 @@ const server = http.createServer(async (req, res) => {
       });
       res.end(JSON.stringify({
         success: true,
-        totalMembers: result.rows.length,
-        members: result.rows
+        totalMembers: enrichedMembers.length,
+        members: enrichedMembers
       }));
     } catch (error) {
       console.error('Members list error:', error);

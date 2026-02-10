@@ -107,6 +107,50 @@
             margin-top: 5px;
         }
 
+        .foundation-card {
+            background: #1a1a1a;
+            border: 1px solid #FFD700;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .foundation-card:hover {
+            border-color: #FFA500;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.2);
+        }
+
+        .foundation-info {
+            font-size: 15px;
+            color: #FFA500;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .foundation-badge {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: #000;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: bold;
+            display: inline-block;
+            margin-top: 10px;
+        }
+
+        .section-heading {
+            font-size: 20px;
+            font-weight: bold;
+            color: #ccc;
+            margin-top: 30px;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #2a2a2a;
+        }
+
         .members-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -136,13 +180,6 @@
             margin-bottom: 8px;
         }
 
-        .member-id {
-            font-size: 12px;
-            color: #666;
-            font-family: monospace;
-            margin-bottom: 8px;
-        }
-
         .member-date {
             font-size: 14px;
             color: #888;
@@ -160,6 +197,44 @@
             font-weight: bold;
             display: inline-block;
             margin-top: 10px;
+        }
+
+        .agent-badge {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: #fff;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: bold;
+            display: inline-block;
+            margin-top: 10px;
+        }
+
+        .member-info-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 6px;
+            font-style: italic;
+        }
+
+        .agent-identity {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .agent-icon {
+            font-size: 28px;
+            line-height: 1;
+        }
+
+        .agent-specialty {
+            font-size: 12px;
+            color: #00ffff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
         }
 
         .loading {
@@ -196,6 +271,28 @@
             box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
         }
 
+        .disclaimer-section {
+            background: #111;
+            border: 2px solid #b8860b;
+            border-radius: 12px;
+            padding: 24px;
+            margin-top: 40px;
+            margin-bottom: 20px;
+        }
+
+        .disclaimer-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #FFD700;
+            margin-bottom: 12px;
+        }
+
+        .disclaimer-text {
+            font-size: 14px;
+            color: #ccc;
+            line-height: 1.7;
+        }
+
         @media (max-width: 768px) {
             .members-grid {
                 grid-template-columns: 1fr;
@@ -207,6 +304,14 @@
 
             .page-title {
                 font-size: 24px;
+            }
+
+            .foundation-card .member-name {
+                font-size: 20px;
+            }
+
+            .foundation-info {
+                font-size: 14px;
             }
         }
     </style>
@@ -258,25 +363,53 @@
             <p id="error-message"></p>
         </div>
 
-        <!-- Members Grid -->
+        <!-- Foundation Card (full width, above grid) -->
+        <div id="foundation-container" style="display: none;"></div>
+
+        <!-- All Members Grid (unified - humans, agents, all info boxes) -->
         <div class="members-grid" id="members-grid" data-testid="members-grid"></div>
+
+        <!-- Educational Disclaimer -->
+        <div class="disclaimer-section" id="disclaimer" style="display: none;">
+            <div class="disclaimer-title">⚠️ EDUCATIONAL DISCLAIMER</div>
+            <div class="disclaimer-text">
+                All TC-S Network activities are for demonstration, research and educational purposes only. There is no fiat exchange mechanism except through network commissioning. Solar is not valid currency outside of the TC-S Network and its licensed affiliates. While outside of Network use is UN sanctioned, protocol adoption will not be protested by TC-S Network.
+            </div>
+        </div>
     </div>
 
     <script>
         let membersData = [];
 
+        function getMemberType(member) {
+            if (member.username === 'tcs_foundation') return 'foundation';
+            if (member.is_agent) return 'agent';
+            return 'human';
+        }
+
+        function getMemberBadge(type) {
+            if (type === 'foundation') return '<div class="foundation-badge">☀️ Foundation Reserve</div>';
+            if (type === 'agent') return '<div class="agent-badge">🤖 AI Agent</div>';
+            return '<div class="member-badge">Member</div>';
+        }
+
         async function loadMembers() {
             const loading = document.getElementById('loading');
             const error = document.getElementById('error');
             const grid = document.getElementById('members-grid');
+            const foundationContainer = document.getElementById('foundation-container');
             const statsBar = document.getElementById('stats-bar');
             const subtitle = document.getElementById('subtitle');
             const refreshBtn = document.getElementById('refresh-btn');
+            const disclaimer = document.getElementById('disclaimer');
 
             loading.style.display = 'block';
             error.style.display = 'none';
             grid.innerHTML = '';
+            foundationContainer.innerHTML = '';
+            foundationContainer.style.display = 'none';
             statsBar.style.display = 'none';
+            disclaimer.style.display = 'none';
 
             try {
                 const response = await fetch('/api/members');
@@ -294,16 +427,18 @@
                     return;
                 }
 
-                // Update subtitle and stats
                 subtitle.textContent = `${data.totalMembers} member${data.totalMembers !== 1 ? 's' : ''} in the TC-S Network`;
                 statsBar.style.display = 'flex';
                 refreshBtn.style.display = 'inline-block';
+                disclaimer.style.display = 'block';
 
-                // Calculate stats
+                const foundation = membersData.find(m => m.username === 'tcs_foundation');
+                const others = membersData.filter(m => m.username !== 'tcs_foundation')
+                    .sort((a, b) => new Date(b.signup_timestamp) - new Date(a.signup_timestamp));
+
                 const totalMembers = data.totalMembers;
-                const newestMember = membersData[0].name;
-                
-                // Calculate this month's growth
+                const newestMember = others.length > 0 ? others[0].name : (foundation ? foundation.name : '-');
+
                 const now = new Date();
                 const thisMonth = membersData.filter(m => {
                     const signupDate = new Date(m.signup_timestamp);
@@ -315,27 +450,49 @@
                 document.getElementById('newest-member').textContent = newestMember;
                 document.getElementById('growth-rate').textContent = `+${thisMonth}`;
 
-                // Render members
-                membersData.forEach((member, index) => {
+                if (foundation) {
+                    foundationContainer.style.display = 'block';
+                    const fDate = new Date(foundation.signup_timestamp).toLocaleDateString('en-US', {
+                        year: 'numeric', month: 'long', day: 'numeric'
+                    });
+                    foundationContainer.innerHTML = `
+                        <div class="foundation-card" data-testid="member-card-${foundation.id}">
+                            <div class="member-name" data-testid="member-name-${foundation.id}">${escapeHtml(foundation.name)}</div>
+                            <div class="foundation-info">☀️ S100,000.0000 Foundation Reserve Member Account</div>
+                            <div class="member-date" data-testid="member-date-${foundation.id}">📅 Joined ${fDate}</div>
+                            <div class="foundation-badge">☀️ Foundation Reserve</div>
+                            <div class="member-info-label">Information Account</div>
+                        </div>
+                    `;
+                }
+
+                others.forEach(member => {
                     const card = document.createElement('div');
                     card.className = 'member-card';
-                    
+                    const type = getMemberType(member);
+
                     const signupDate = new Date(member.signup_timestamp);
                     const formattedDate = signupDate.toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
+                        year: 'numeric', month: 'long', day: 'numeric'
                     });
 
-                    const isNew = index === 0;
-                    const badge = isNew ? '<div class="member-badge" data-testid="badge-newest">✨ Newest</div>' : '';
+                    let identityHtml = '';
+                    if (type === 'agent' && member.icon && member.specialty) {
+                        identityHtml = `
+                            <div class="agent-identity">
+                                <span class="agent-icon">${member.icon}</span>
+                                <span class="agent-specialty">${escapeHtml(member.specialty)}</span>
+                            </div>
+                        `;
+                    }
 
                     card.setAttribute('data-testid', `member-card-${member.id}`);
                     card.innerHTML = `
+                        ${identityHtml}
                         <div class="member-name" data-testid="member-name-${member.id}">${escapeHtml(member.name)}</div>
-                        <div class="member-id" data-testid="member-id-${member.id}">ID: ${member.id}</div>
                         <div class="member-date" data-testid="member-date-${member.id}">📅 Joined ${formattedDate}</div>
-                        ${badge}
+                        ${getMemberBadge(type)}
+                        <div class="member-info-label">Information Account</div>
                     `;
 
                     grid.appendChild(card);
@@ -355,7 +512,6 @@
             return div.innerHTML;
         }
 
-        // Load members on page load
         loadMembers();
     </script>
 </body>
