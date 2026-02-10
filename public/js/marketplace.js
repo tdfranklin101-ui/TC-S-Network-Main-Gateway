@@ -200,7 +200,17 @@ class MarketplaceApp {
               preview_file_url: String(artifact.preview_file_url || artifact.previewFileUrl || '').trim(),
               cover_art_url: String(artifact.cover_art_url || artifact.coverArt || artifact.coverArtUrl || '').trim(),
               preview_type: String(artifact.preview_type || artifact.previewType || '').trim(),
-              streamingUrl: String(artifact.streaming_url || artifact.streamingUrl || '').trim()
+              streamingUrl: String(artifact.streaming_url || artifact.streamingUrl || '').trim(),
+              contentFormat: String(artifact.content_format || artifact.contentFormat || '').trim(),
+              sourceType: String(artifact.source_type || artifact.sourceType || 'human').trim(),
+              hasFile: Boolean(artifact.has_file || artifact.hasFile),
+              processingStatus: String(artifact.processing_status || artifact.processingStatus || 'pending').trim(),
+              creatorIsAgent: Boolean(artifact.creator_is_agent || artifact.creatorIsAgent),
+              creatorName: String(artifact.creator_name || artifact.creatorName || '').trim(),
+              creatorUsername: String(artifact.creator_username || artifact.creatorUsername || '').trim(),
+              masterFileSize: parseInt(artifact.master_file_size || artifact.masterFileSize) || 0,
+              tradeFileSize: parseInt(artifact.trade_file_size || artifact.tradeFileSize) || 0,
+              previewFileSize: parseInt(artifact.preview_file_size || artifact.previewFileSize) || 0
             };
           } catch (normalizationError) {
             console.warn(`Error normalizing artifact at index ${index}:`, normalizationError);
@@ -877,6 +887,12 @@ class MarketplaceApp {
           <span class="ai-text">AI-Curated & Analyzed</span>
         </div>
       ` : ''}
+      ${artifact.sourceType === 'agent' || artifact.creatorIsAgent ? `
+        <div style="display:inline-block;background:linear-gradient(135deg,#00ffff22,#0066ff22);border:1px solid #00ffff44;padding:2px 8px;border-radius:4px;font-size:10px;color:#00ffff;margin-bottom:8px;">🤖 Agent Created</div>
+      ` : ''}
+      ${artifact.hasFile ? `
+        <div style="display:inline-block;background:rgba(40,167,69,0.1);border:1px solid rgba(40,167,69,0.3);padding:2px 8px;border-radius:4px;font-size:10px;color:#28a745;margin-bottom:8px;margin-left:4px;">📦 File Delivery</div>
+      ` : ''}
       
       <div class="artifact-description">
         ${this.escapeHtml(artifact.description || 'No description available').substring(0, 120)}...
@@ -942,9 +958,9 @@ class MarketplaceApp {
         <button class="purchase-btn" onclick="event.stopPropagation(); marketplace.purchaseArtifact('${artifact.id}')">
           💎 Purchase for ${this.formatPrice(artifact.solar_amount_s)} Solar
         </button>
-        ${artifact.file_type.startsWith('video/') ? `
+        ${artifact.file_type && (artifact.file_type.startsWith('video/') || artifact.file_type.startsWith('audio/')) ? `
           <button class="preview-btn" onclick="event.stopPropagation(); marketplace.showVideoPreview('${artifact.id}')">
-            ▶️ Preview Video
+            ${artifact.file_type.startsWith('video/') ? '▶️ Preview Video' : '🎵 Preview Audio'}
           </button>
         ` : ''}
       `;
@@ -958,140 +974,159 @@ class MarketplaceApp {
   }
 
   async showArtifactPreview(artifact) {
-    console.log(`👁️ Showing preview for: ${artifact.title}`);
-    
-    // For video files, show video preview modal
-    if (artifact.file_type.startsWith('video/')) {
-      this.showVideoPreview(artifact.id);
-      return;
+    console.log('Opening detail view for:', artifact.title);
+    try {
+      const response = await fetch('/api/artifacts/' + artifact.id + '/detail');
+      let detail = artifact;
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.artifact) {
+          detail = { ...artifact, ...data.artifact };
+        }
+      }
+      this.showUniversalDetailModal(detail);
+    } catch (error) {
+      console.error('Detail fetch failed:', error);
+      this.showUniversalDetailModal(artifact);
     }
-
-    // For non-video files, show AI-curated description or info modal
-    this.showInfoModal(artifact);
   }
 
   async showVideoPreview(artifactId) {
-    try {
-      const artifact = this.artifacts.find(a => a.id === artifactId);
-      if (!artifact) return;
-
-      // Get secure preview URL
-      const response = await fetch(`/api/artifacts/${artifactId}/preview`);
-      if (!response.ok) {
-        throw new Error('Preview not available');
-      }
-
-      const data = await response.json();
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to load preview');
-      }
-
-      // Update modal content
-      const modalTitle = this.videoModal.querySelector('.video-modal-header h3');
-      const videoContainer = this.videoModal.querySelector('.video-container');
-      const categoryEl = this.videoModal.querySelector('.video-category');
-      const priceEl = this.videoModal.querySelector('.video-price');
-      const purchaseBtn = this.videoModal.querySelector('.preview-purchase-btn');
-
-      if (modalTitle) modalTitle.textContent = artifact.title;
-      if (categoryEl) categoryEl.textContent = this.formatCategory(artifact.category);
-      if (priceEl) priceEl.textContent = `${this.formatPrice(artifact.solar_amount_s)} Solar`;
-
-      // Set up video element
-      videoContainer.innerHTML = `
-        <video controls style="width: 100%; max-height: 400px;">
-          <source src="${data.previewUrl}" type="${artifact.file_type}">
-          Your browser does not support video playback.
-        </video>
-      `;
-
-      // Set up purchase button
-      if (purchaseBtn) {
-        purchaseBtn.onclick = () => {
-          this.closeVideoModal();
-          this.purchaseArtifact(artifactId);
-        };
-      }
-
-      // Show modal
-      this.videoModal.classList.add('visible');
-
-    } catch (error) {
-      console.error('Video preview failed:', error);
-      this.showError(`Preview failed: ${error.message}`);
-    }
+    const artifact = this.artifacts.find(a => a.id === artifactId);
+    if (!artifact) return;
+    await this.showArtifactPreview(artifact);
   }
 
-  showInfoModal(artifact) {
+  showUniversalDetailModal(artifact) {
     const categoryIcons = {
-      'art': '🎨', 'music': '🎵', 'video': '🎬', 'photo': '📸', 'writing': '✍️',
-      'software': '💻', 'ai tools': '🤖', 'ai create': '🧠', 'docs': '📄',
+      'art': '🎨', 'music': '🎵', 'video': '🎬', 'photo': '📸', 'photography': '📸',
+      'writing': '✍️', 'software': '💻', 'ai tools': '🤖', 'ai create': '🧠', 'docs': '📄',
       'games': '🎮', 'utilities': '🔧', 'energy': '⚡', 'computronium': '🔮',
       'culture': '🌍', 'rent': '🏠', 'basic needs': '🛒'
     };
     const catIcon = categoryIcons[artifact.category] || '📦';
-    const fileType = artifact.file_type || '';
-    const imageUrl = artifact.cover_art_url || artifact.preview_file_url || '';
-    const audioUrl = artifact.streamingUrl || artifact.preview_file_url || '';
+    const fileType = artifact.fileType || artifact.file_type || '';
+    const contentFormat = artifact.contentFormat || artifact.content_format || '';
+    const hasFile = artifact.hasFile || !!(artifact.masterFileUrl || artifact.tradeFileUrl || artifact.master_file_url || artifact.trade_file_url);
+    const sourceType = artifact.sourceType || artifact.source_type || 'human';
+    const isAgent = artifact.creatorIsAgent || sourceType === 'agent';
+    const creatorDisplay = artifact.creatorName || artifact.creatorUsername || artifact.creator_id || 'Unknown';
 
     let previewHtml = '';
-    if (fileType.startsWith('image/') && imageUrl) {
-      previewHtml = `<div style="text-align:center;margin-bottom:15px;"><img src="${this.escapeHtml(imageUrl)}" alt="${this.escapeHtml(artifact.title)}" style="max-width:100%;max-height:300px;border-radius:8px;object-fit:contain;"></div>`;
-    } else if (fileType.startsWith('audio/')) {
-      previewHtml = `<div style="margin-bottom:15px;"><audio controls style="width:100%;" preload="none"><source src="${this.escapeHtml(audioUrl)}" type="${fileType}">Your browser does not support audio.</audio></div>`;
-    } else if (fileType === 'application/javascript') {
-      previewHtml = `<div style="background:#111;border-radius:8px;padding:15px;margin-bottom:15px;font-family:'Courier New',monospace;font-size:13px;color:#0f0;overflow-x:auto;max-height:200px;overflow-y:auto;"><pre style="margin:0;">// ${this.escapeHtml(artifact.title)}\n// JavaScript artifact</pre></div>`;
-    } else if (fileType === 'text/plain' || fileType === 'text/html') {
-      previewHtml = `<div style="background:#111;border-radius:8px;padding:15px;margin-bottom:15px;font-family:monospace;font-size:13px;color:#ccc;overflow-x:auto;max-height:200px;overflow-y:auto;"><pre style="margin:0;">${this.escapeHtml(artifact.description || 'Text content preview')}</pre></div>`;
+    const streamUrl = '/api/artifacts/' + artifact.id + '/stream-preview';
+
+    if (fileType.startsWith('audio/') || artifact.category === 'music') {
+      previewHtml = '<div style="margin-bottom:15px; background: rgba(0,255,255,0.05); border-radius: 12px; padding: 20px; text-align: center;">' +
+        '<div style="font-size:48px; margin-bottom:10px;">🎵</div>' +
+        '<audio controls preload="none" style="width:100%;"><source src="' + this.escapeHtml(streamUrl) + '" type="audio/mpeg">Your browser does not support audio.</audio>' +
+        '<div style="color:#888; font-size:11px; margin-top:8px;">30-second preview clip</div></div>';
+    } else if (fileType.startsWith('video/')) {
+      previewHtml = '<div style="margin-bottom:15px;"><video controls preload="none" style="width:100%; max-height:350px; border-radius:8px;"><source src="' + this.escapeHtml(streamUrl) + '" type="' + fileType + '">Your browser does not support video.</video></div>';
+    } else if (fileType.startsWith('image/') || contentFormat === 'svg') {
+      const imgSrc = artifact.coverArtUrl || artifact.cover_art_url || streamUrl;
+      previewHtml = '<div style="text-align:center;margin-bottom:15px;"><img src="' + this.escapeHtml(imgSrc) + '" alt="' + this.escapeHtml(artifact.title) + '" style="max-width:100%;max-height:300px;border-radius:8px;object-fit:contain;" onerror="this.parentElement.innerHTML=\'<span style=font-size:64px>' + catIcon + '</span>\'"></div>';
+    } else if (contentFormat === 'js' || fileType === 'application/javascript') {
+      const preview = artifact.contentPreview || '// ' + artifact.title + '\\n// JavaScript program artifact';
+      previewHtml = '<div style="background:#0a0a0a;border:1px solid #333;border-radius:8px;padding:15px;margin-bottom:15px;font-family:\'Courier New\',monospace;font-size:12px;color:#0f0;overflow-x:auto;max-height:200px;overflow-y:auto;white-space:pre-wrap;">' + this.escapeHtml(preview) + '</div>';
+    } else if (contentFormat === 'json') {
+      const preview = artifact.contentPreview || '{}';
+      previewHtml = '<div style="background:#0a0a0a;border:1px solid #333;border-radius:8px;padding:15px;margin-bottom:15px;font-family:\'Courier New\',monospace;font-size:12px;color:#61dafb;overflow-x:auto;max-height:200px;overflow-y:auto;white-space:pre-wrap;">' + this.escapeHtml(preview) + '</div>';
+    } else if (contentFormat === 'md') {
+      const preview = artifact.contentPreview || artifact.description || '';
+      previewHtml = '<div style="background:#0a0a0a;border:1px solid #333;border-radius:8px;padding:15px;margin-bottom:15px;font-size:13px;color:#ccc;overflow-y:auto;max-height:200px;white-space:pre-wrap;line-height:1.6;">' + this.escapeHtml(preview) + '</div>';
+    } else if (contentFormat === 'csv') {
+      const preview = artifact.contentPreview || '';
+      const lines = preview.split('\\n').slice(0, 8);
+      let tableHtml = '<div style="overflow-x:auto;margin-bottom:15px;"><table style="width:100%;border-collapse:collapse;font-size:11px;background:#0a0a0a;border-radius:8px;">';
+      lines.forEach(function(line, i) {
+        const cells = line.split(',').slice(0, 6);
+        const tag = i === 0 ? 'th' : 'td';
+        const style = i === 0 ? 'background:#1a1a2e;color:#00ffff;padding:8px;border:1px solid #333;' : 'padding:6px 8px;border:1px solid #222;color:#ccc;';
+        tableHtml += '<tr>' + cells.map(function(c) { return '<' + tag + ' style="' + style + '">' + c.trim() + '</' + tag + '>'; }).join('') + '</tr>';
+      });
+      tableHtml += '</table></div>';
+      if (lines.length < preview.split('\\n').length) tableHtml += '<div style="color:#888;font-size:11px;margin-bottom:10px;">Showing first 8 rows of ' + preview.split('\\n').length + '</div>';
+      previewHtml = tableHtml;
     } else {
-      previewHtml = `<div style="text-align:center;padding:30px 0;margin-bottom:15px;"><span style="font-size:64px;">${catIcon}</span></div>`;
+      previewHtml = '<div style="text-align:center;padding:30px 0;margin-bottom:15px;"><span style="font-size:64px;">' + catIcon + '</span></div>';
+    }
+
+    const totalSize = (artifact.masterFileSize || artifact.master_file_size || 0) + (artifact.tradeFileSize || artifact.trade_file_size || 0);
+    let fileInfoHtml = '';
+    if (hasFile || contentFormat) {
+      fileInfoHtml = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px;background:rgba(0,255,255,0.03);border:1px solid #1a1a2e;border-radius:8px;margin-bottom:15px;font-size:12px;">' +
+        '<div style="color:#888;">Type</div><div style="color:#fff;">' + (fileType || contentFormat || 'unknown') + '</div>' +
+        (totalSize > 0 ? '<div style="color:#888;">File Size</div><div style="color:#fff;">' + this.formatFileSize(totalSize) + '</div>' : '') +
+        (artifact.fileDuration ? '<div style="color:#888;">Duration</div><div style="color:#fff;">' + Math.floor(artifact.fileDuration / 60) + ':' + String(artifact.fileDuration % 60).padStart(2, '0') + '</div>' : '') +
+        '<div style="color:#888;">Delivery</div><div style="color:#fff;">' + (hasFile ? '📦 File Download' : '📄 Inline Content') + '</div>' +
+        '</div>';
+    }
+
+    const creatorBadge = isAgent ? 
+      '<span style="background:linear-gradient(135deg,#00ffff,#0066ff);color:#000;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:bold;">🤖 AI Agent</span>' :
+      '<span style="background:linear-gradient(135deg,#28a745,#20c997);color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:bold;">👤 Human</span>';
+
+    const isOwner = this.currentUser && (artifact.creator_id === this.currentUser.id || artifact.creator_id === String(this.currentUser.userId));
+    let actionButtonHtml = '';
+    if (isOwner) {
+      actionButtonHtml = '<button style="background:#28a745;color:#fff;border:none;padding:12px 24px;border-radius:8px;font-weight:bold;cursor:pointer;font-size:14px;width:100%;" onclick="marketplace.downloadOwnArtifact(\'' + artifact.id + '\'); document.body.removeChild(this.closest(\'.video-preview-modal\'));">📥 Download Your Artifact</button>';
+    } else if (this.currentUser) {
+      actionButtonHtml = '<button style="background:linear-gradient(135deg,#FFD700,#FFA500);color:#000;border:none;padding:12px 24px;border-radius:8px;font-weight:bold;cursor:pointer;font-size:14px;width:100%;" onclick="marketplace.purchaseArtifact(\'' + artifact.id + '\'); document.body.removeChild(this.closest(\'.video-preview-modal\'));">💎 Purchase for ' + this.formatPrice(artifact.solarPrice || artifact.solar_amount_s) + ' Solar</button>';
+    } else {
+      actionButtonHtml = '<button style="background:linear-gradient(135deg,#00ffff,#0066ff);color:#000;border:none;padding:12px 24px;border-radius:8px;font-weight:bold;cursor:pointer;font-size:14px;width:100%;" onclick="showSignupModal(); document.body.removeChild(this.closest(\'.video-preview-modal\'));">🚀 Join to Purchase</button>';
     }
 
     const modal = document.createElement('div');
     modal.className = 'video-preview-modal visible';
-    modal.innerHTML = `
-      <div class="video-modal-content">
-        <div class="video-modal-header">
-          <h3>${this.escapeHtml(artifact.title)}</h3>
-          <span class="video-close-btn">&times;</span>
-        </div>
-        <div style="padding: 20px;">
-          ${previewHtml}
-          <div class="video-category">${catIcon} ${this.formatCategory(artifact.category)}</div>
-          <span class="artifact-file-badge">${fileType || 'unknown'}</span>
-          <p style="margin: 15px 0; line-height: 1.5;">
-            ${this.escapeHtml(artifact.description || 'No description available')}
-          </p>
-          ${artifact.search_tags && artifact.search_tags.length > 0 ? `
-            <div style="margin: 15px 0;">
-              <strong>Tags:</strong> ${artifact.search_tags.map(tag => `<span class="tag">${this.escapeHtml(tag)}</span>`).join(' ')}
-            </div>
-          ` : ''}
-          <div style="margin: 15px 0;">
-            <strong>Energy Footprint:</strong> ${artifact.kwh_footprint || '0'} kWh
-          </div>
-        </div>
-        <div class="video-modal-footer">
-          <div class="video-info">
-            <div class="video-price">${this.formatPrice(artifact.solar_amount_s)} Solar</div>
-          </div>
-          <button class="preview-purchase-btn" onclick="marketplace.purchaseArtifact('${artifact.id}'); document.body.removeChild(this.closest('.video-preview-modal'));">
-            💎 Purchase Now
-          </button>
-        </div>
-      </div>
-    `;
+    modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px;';
+    modal.innerHTML = 
+      '<div style="background:#111;border:1px solid #333;border-radius:12px;max-width:650px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.8);">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid #222;">' +
+          '<h3 style="margin:0;color:#fff;font-size:18px;">' + this.escapeHtml(artifact.title) + '</h3>' +
+          '<span class="video-close-btn" style="cursor:pointer;font-size:24px;color:#888;padding:4px 8px;">&times;</span>' +
+        '</div>' +
+        '<div style="padding:20px;">' +
+          previewHtml +
+          '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">' +
+            '<span style="font-size:16px;">' + catIcon + ' ' + this.formatCategory(artifact.category) + '</span>' +
+            creatorBadge +
+          '</div>' +
+          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:13px;color:#aaa;">' +
+            '<span>By: <strong style="color:#fff;">' + this.escapeHtml(creatorDisplay) + '</strong></span>' +
+            (artifact.createdAt ? ' <span>• ' + new Date(artifact.createdAt).toLocaleDateString() + '</span>' : '') +
+          '</div>' +
+          fileInfoHtml +
+          '<div style="margin-bottom:15px;">' +
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px;background:rgba(255,215,0,0.03);border:1px solid #2a2a1e;border-radius:8px;font-size:12px;">' +
+              '<div style="color:#888;">Energy Footprint</div><div style="color:#FFD700;">⚡ ' + (artifact.kwhFootprint || artifact.kwh_footprint || 0) + ' kWh</div>' +
+              '<div style="color:#888;">Solar Price</div><div style="color:#FFD700;">☀️ ' + this.formatPrice(artifact.solarPrice || artifact.solar_amount_s) + ' Solar</div>' +
+            '</div>' +
+          '</div>' +
+          '<p style="margin:0 0 15px;line-height:1.6;color:#ccc;font-size:13px;">' + this.escapeHtml(artifact.description || 'No description available') + '</p>' +
+          (artifact.searchTags && artifact.searchTags.length > 0 ? 
+            '<div style="margin-bottom:15px;">' + artifact.searchTags.map(function(tag) { return '<span style="display:inline-block;background:#1a1a2e;color:#00ffff;padding:3px 10px;border-radius:12px;font-size:11px;margin:2px 4px 2px 0;">' + tag + '</span>'; }).join('') + '</div>' : '') +
+        '</div>' +
+        '<div style="padding:16px 20px;border-top:1px solid #222;">' +
+          actionButtonHtml +
+        '</div>' +
+      '</div>';
 
-    modal.querySelector('.video-close-btn').addEventListener('click', () => {
+    modal.querySelector('.video-close-btn').addEventListener('click', function() {
+      const audio = modal.querySelector('audio');
+      const video = modal.querySelector('video');
+      if (audio) audio.pause();
+      if (video) video.pause();
       document.body.removeChild(modal);
     });
-
-    modal.addEventListener('click', (e) => {
+    modal.addEventListener('click', function(e) {
       if (e.target === modal) {
+        const audio = modal.querySelector('audio');
+        const video = modal.querySelector('video');
+        if (audio) audio.pause();
+        if (video) video.pause();
         document.body.removeChild(modal);
       }
     });
-
     document.body.appendChild(modal);
   }
 
@@ -1166,33 +1201,57 @@ class MarketplaceApp {
       const data = await response.json();
 
       if (data.success) {
-        console.log('✅ Purchase successful');
+        console.log('Purchase successful');
         
-        // Show success message and download link
+        let deliveryHtml = '';
+        if (data.downloadUrl) {
+          deliveryHtml = `
+            <p style="margin: 15px 0; color: #ccc;">Your file is ready for download:</p>
+            <a href="${data.downloadUrl}" download="${artifact.title}" 
+               style="display: inline-block; background: linear-gradient(135deg, #28a745, #20c997); color: white; padding: 15px 30px; border-radius: 8px; text-decoration: none; font-weight: bold; margin: 10px; font-size: 16px;">
+              📥 Download Now
+            </a>
+            <p style="margin-top: 12px; font-size: 12px; color: #888;">
+              Download link expires in ${data.expiresIn || '7 days'} (up to 10 downloads)
+            </p>`;
+        } else if (data.isTextOnly) {
+          deliveryHtml = `
+            <p style="margin: 15px 0; color: #ccc;">This is a text-based artifact — the content is now in your collection.</p>
+            <div style="background: rgba(0,255,255,0.05); border: 1px solid #333; border-radius: 8px; padding: 12px; margin: 10px; text-align: left; font-size: 12px; color: #aaa;">
+              Format: <strong style="color:#fff;">${data.contentFormat || 'text'}</strong>
+            </div>`;
+        } else {
+          deliveryHtml = `<p style="margin: 15px 0; color: #ccc;">Artifact added to your collection.</p>`;
+        }
+
         const modal = document.createElement('div');
         modal.className = 'video-preview-modal visible';
+        modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px;';
         modal.innerHTML = `
-          <div class="video-modal-content">
-            <div class="video-modal-header">
-              <h3>🎉 Purchase Successful!</h3>
-              <span class="video-close-btn">&times;</span>
+          <div style="background:#111;border:1px solid #333;border-radius:12px;max-width:500px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.8);">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid #222;">
+              <h3 style="margin:0;color:#FFD700;font-size:18px;">Purchase Successful!</h3>
+              <span class="video-close-btn" style="cursor:pointer;font-size:24px;color:#888;">&times;</span>
             </div>
             <div style="padding: 20px; text-align: center;">
-              <p>You've successfully purchased "${artifact.title}"!</p>
-              <p style="margin: 15px 0;">Your download is ready:</p>
-              <a href="${data.downloadUrl}" download="${artifact.title}" 
-                 style="display: inline-block; background: #28a745; color: white; padding: 15px 25px; border-radius: 8px; text-decoration: none; font-weight: bold; margin: 10px;">
-                📥 Download Now
-              </a>
-              <p style="margin-top: 15px; font-size: 14px; color: #888;">
-                Download link expires in ${data.expiresIn || '7 days'}
-              </p>
+              <div style="font-size:48px;margin-bottom:10px;">🎉</div>
+              <p style="color:#fff;font-size:16px;margin-bottom:5px;">"${this.escapeHtml(artifact.title)}"</p>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:15px 0;padding:12px;background:rgba(255,215,0,0.03);border:1px solid #2a2a1e;border-radius:8px;font-size:11px;">
+                <div><div style="color:#888;">Paid</div><div style="color:#FFD700;">${this.formatPrice(data.amountPaid)} S</div></div>
+                <div><div style="color:#888;">Foundation</div><div style="color:#00ffff;">${this.formatPrice(data.foundationFee)} S</div></div>
+                <div><div style="color:#888;">Balance</div><div style="color:#28a745;">${this.formatPrice(data.newBalance)} S</div></div>
+              </div>
+              ${deliveryHtml}
+              ${data.warnings && data.warnings.length > 0 ? `<div style="margin-top:10px;padding:8px;background:rgba(255,107,53,0.1);border:1px solid #ff6b35;border-radius:6px;font-size:11px;color:#ff6b35;">${data.warnings.join('<br>')}</div>` : ''}
             </div>
           </div>
         `;
 
         modal.querySelector('.video-close-btn').addEventListener('click', () => {
           document.body.removeChild(modal);
+        });
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) document.body.removeChild(modal);
         });
 
         document.body.appendChild(modal);

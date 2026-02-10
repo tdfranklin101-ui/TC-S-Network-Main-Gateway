@@ -6091,7 +6091,8 @@ const server = http.createServer(async (req, res) => {
       const artifactQuery = `
         SELECT id, title, solar_amount_s, delivery_url, active,
                master_file_url, preview_file_url, trade_file_url,
-               file_type, category, trade_file_size, processing_status, creator_id
+               file_type, category, trade_file_size, processing_status, creator_id,
+               content_body, content_format
         FROM artifacts WHERE id = $1
       `;
       const artifactResult = await pool.query(artifactQuery, [artifactId]);
@@ -6243,7 +6244,9 @@ const server = http.createServer(async (req, res) => {
       console.log(`💰 Purchase completed: ${user.username} bought "${artifact.title}" for ${requiredSolar} Solar`);
 
       // Generate download URL via token (only if token was created successfully)
-      const downloadUrl = tokenCreated && tokenValue ? `/api/artifact-download/${tokenValue}` : null;
+      const hasFile = !!(artifact.master_file_url || artifact.trade_file_url);
+      const downloadUrl = (tokenCreated && tokenValue && hasFile) ? `/api/artifact-download/${tokenValue}` : null;
+      const isTextOnly = !hasFile && artifact.content_body;
 
       const response = {
         success: true,
@@ -6254,6 +6257,9 @@ const server = http.createServer(async (req, res) => {
         newBalance: newBalance,
         seller: sellerInfo,
         downloadUrl: downloadUrl,
+        hasFile: hasFile,
+        isTextOnly: isTextOnly,
+        contentFormat: artifact.content_format || null,
         downloadExpires: expiresAt ? expiresAt.toISOString() : null,
         expiresIn: '7 days',
         message: `Successfully purchased "${artifact.title}" for ${formatSolar(requiredSolar)} Solar. Your new balance is ${formatSolar(newBalance)} Solar.`
@@ -6700,8 +6706,9 @@ const server = http.createServer(async (req, res) => {
                  a.streaming_url, a.preview_type, a.preview_slug, a.search_tags, a.preview_file_url, 
                  a.master_file_url, a.trade_file_url,
                  a.master_file_size, a.trade_file_size, a.preview_file_size,
+                 a.content_format, a.source_type, a.processing_status, a.created_at,
                  m.metadata as market_metadata, m.source_type as market_source_type,
-                 mem.is_agent as creator_is_agent, mem.name as creator_name
+                 mem.is_agent as creator_is_agent, mem.name as creator_name, mem.username as creator_username
           FROM artifacts a
           LEFT JOIN market_items m ON m.id = a.id::text
           LEFT JOIN members mem ON (
@@ -6745,6 +6752,12 @@ const server = http.createServer(async (req, res) => {
             creatorAgent: meta.agent || null,
             creatorIsAgent: artifact.creator_is_agent || false,
             creatorName: artifact.creator_name || null,
+            creatorUsername: artifact.creator_username || null,
+            contentFormat: artifact.content_format || null,
+            sourceType: artifact.source_type || (artifact.creator_is_agent ? 'agent' : 'human'),
+            processingStatus: artifact.processing_status || 'pending',
+            hasFile: !!(artifact.master_file_url || artifact.trade_file_url),
+            createdAt: artifact.created_at,
             ecosystemTest: meta.ecosystemTest || false,
             uploadType: meta.uploadType || null
           };
@@ -6860,6 +6873,142 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // GET /api/artifacts/{id}/detail - Full artifact info for detail page
+  if (pathname.startsWith('/api/artifacts/') && pathname.endsWith('/detail') && req.method === 'GET') {
+    try {
+      const artifactId = pathname.split('/')[3];
+      if (!artifactId || !pool) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Artifact ID required' }));
+        return;
+      }
+      const result = await pool.query(`
+        SELECT a.*, 
+               mem.name as creator_name, mem.username as creator_username, mem.is_agent as creator_is_agent,
+               m.metadata as market_metadata
+        FROM artifacts a
+        LEFT JOIN members mem ON (
+          CASE WHEN a.creator_id ~ '^[0-9]+$' THEN mem.id = CAST(a.creator_id AS INTEGER)
+          ELSE mem.username = a.creator_id END
+        )
+        LEFT JOIN market_items m ON m.id = a.id::text
+        WHERE a.id = $1
+      `, [artifactId]);
+      if (result.rows.length === 0) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Artifact not found' }));
+        return;
+      }
+      const a = result.rows[0];
+      const meta = a.market_metadata || {};
+      const hasFile = !!(a.master_file_url || a.trade_file_url);
+      const contentPreview = a.content_body ? a.content_body.substring(0, 2000) : null;
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        artifact: {
+          id: a.id, title: a.title, description: a.description, category: a.category,
+          fileType: a.file_type, kwhFootprint: parseFloat(a.kwh_footprint),
+          solarPrice: parseFloat(a.solar_amount_s), isBonus: a.is_bonus,
+          deliveryMode: a.delivery_mode, coverArtUrl: a.cover_art_url,
+          streamingUrl: a.streaming_url, previewType: a.preview_type,
+          searchTags: a.search_tags || [], contentFormat: a.content_format,
+          sourceType: a.source_type || (a.creator_is_agent ? 'agent' : 'human'),
+          hasFile, contentPreview,
+          masterFileSize: a.master_file_size || 0, tradeFileSize: a.trade_file_size || 0,
+          previewFileSize: a.preview_file_size || 0,
+          fileDuration: a.file_duration, previewDuration: a.preview_duration,
+          processingStatus: a.processing_status || 'pending',
+          createdAt: a.created_at,
+          creatorName: a.creator_name || null,
+          creatorUsername: a.creator_username || null,
+          creatorIsAgent: a.creator_is_agent || false,
+          creationMethod: meta.creationMethod || null,
+          previewUrl: (a.preview_file_url || a.trade_file_url) ? `/api/artifacts/${a.id}/stream-preview` : null,
+          streamPreviewUrl: (a.preview_file_url || a.streaming_url) ? `/api/artifacts/${a.id}/stream-preview` : null
+        }
+      }));
+    } catch (error) {
+      console.error('Artifact detail error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Failed to get artifact details' }));
+    }
+    return;
+  }
+
+  // GET /api/artifacts/{id}/stream-preview - Stream the actual preview binary
+  if (pathname.startsWith('/api/artifacts/') && pathname.endsWith('/stream-preview') && req.method === 'GET') {
+    try {
+      const artifactId = pathname.split('/')[3];
+      if (!artifactId || !pool) {
+        res.writeHead(400); res.end('Bad request'); return;
+      }
+      const artResult = await pool.query(
+        'SELECT preview_file_url, trade_file_url, file_type FROM artifacts WHERE id = $1',
+        [artifactId]
+      );
+      if (artResult.rows.length === 0) {
+        res.writeHead(404); res.end('Not found'); return;
+      }
+      const art = artResult.rows[0];
+      const previewUrl = art.preview_file_url || art.trade_file_url;
+      if (!previewUrl) {
+        res.writeHead(404); res.end('No preview file'); return;
+      }
+      if (!previewUrl.startsWith('cloud://')) {
+        if (previewUrl.startsWith('http://') || previewUrl.startsWith('https://')) {
+          res.writeHead(302, { 'Location': previewUrl }); res.end(); return;
+        }
+        if (previewUrl.startsWith('/')) {
+          const localPath = path.join(__dirname, 'public', previewUrl);
+          if (fs.existsSync(localPath)) {
+            const localBuffer = fs.readFileSync(localPath);
+            const ext = path.extname(localPath).toLowerCase();
+            const mimeTypes = { '.mp3': 'audio/mpeg', '.mp4': 'video/mp4', '.jpg': 'image/jpeg', '.png': 'image/png', '.svg': 'image/svg+xml', '.json': 'application/json', '.js': 'application/javascript' };
+            res.writeHead(200, { 'Content-Type': mimeTypes[ext] || 'application/octet-stream', 'Content-Length': localBuffer.length });
+            res.end(localBuffer); return;
+          }
+        }
+        res.writeHead(404); res.end('Preview not in cloud storage'); return;
+      }
+      const cloudKey = previewUrl.replace('cloud://', '');
+      const cloudStorage = require('./server/cloud-storage');
+      const buffer = await cloudStorage.downloadFile(cloudKey);
+      const ext = path.extname(cloudKey).toLowerCase();
+      const mimeTypes = { '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.ogg': 'audio/ogg', '.mp4': 'video/mp4', '.webm': 'video/webm', '.svg': 'image/svg+xml', '.json': 'application/json', '.js': 'application/javascript', '.md': 'text/markdown', '.csv': 'text/csv' };
+      const contentType = mimeTypes[ext] || art.file_type || 'application/octet-stream';
+      
+      const range = req.headers.range;
+      if (range) {
+        const parts = range.replace(/bytes=/, '').split('-');
+        const start = parseInt(parts[0], 10);
+        const end = parts[1] ? parseInt(parts[1], 10) : buffer.length - 1;
+        const chunkSize = end - start + 1;
+        res.writeHead(206, {
+          'Content-Range': `bytes ${start}-${end}/${buffer.length}`,
+          'Accept-Ranges': 'bytes',
+          'Content-Length': chunkSize,
+          'Content-Type': contentType,
+          'Cache-Control': 'public, max-age=3600'
+        });
+        res.end(buffer.slice(start, end + 1));
+        return;
+      }
+      
+      res.writeHead(200, {
+        'Content-Type': contentType,
+        'Content-Length': buffer.length,
+        'Accept-Ranges': 'bytes',
+        'Cache-Control': 'public, max-age=3600'
+      });
+      res.end(buffer);
+    } catch (error) {
+      console.error('Stream preview error:', error);
+      res.writeHead(500); res.end('Stream failed');
+    }
+    return;
+  }
+
   // GET /api/artifacts/{id}/preview - Stream preview file (audio/video)
   if (pathname.startsWith('/api/artifacts/') && pathname.endsWith('/preview') && req.method === 'GET') {
     try {
@@ -6881,37 +7030,12 @@ const server = http.createServer(async (req, res) => {
       const art = artResult.rows[0];
       const previewUrl = art.preview_file_url;
       if (previewUrl && previewUrl.startsWith('cloud://')) {
-        const cloudKey = previewUrl.replace('cloud://', '');
-        const cloudStorage = require('./server/cloud-storage');
-        const buffer = await cloudStorage.downloadFile(cloudKey);
-        const ext = path.extname(cloudKey).toLowerCase();
-        const mimeTypes = { '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.ogg': 'audio/ogg', '.mp4': 'video/mp4', '.webm': 'video/webm' };
+        const streamUrl = `/api/artifacts/${artifactId}/stream-preview`;
+        const ext = path.extname(previewUrl).toLowerCase();
+        const mimeTypes = { '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.ogg': 'audio/ogg', '.mp4': 'video/mp4', '.webm': 'video/webm', '.svg': 'image/svg+xml' };
         const contentType = mimeTypes[ext] || art.file_type || 'application/octet-stream';
-        
-        // HTTP Range request support for audio/video streaming
-        const range = req.headers.range;
-        if (range) {
-          const parts = range.replace(/bytes=/, '').split('-');
-          const start = parseInt(parts[0], 10);
-          const end = parts[1] ? parseInt(parts[1], 10) : buffer.length - 1;
-          const chunkSize = end - start + 1;
-          res.writeHead(206, {
-            'Content-Range': `bytes ${start}-${end}/${buffer.length}`,
-            'Accept-Ranges': 'bytes',
-            'Content-Length': chunkSize,
-            'Content-Type': contentType,
-          });
-          res.end(buffer.slice(start, end + 1));
-          return;
-        }
-        
-        res.writeHead(200, {
-          'Content-Type': contentType,
-          'Content-Length': buffer.length,
-          'Accept-Ranges': 'bytes',
-          'Cache-Control': 'public, max-age=3600'
-        });
-        res.end(buffer);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, previewUrl: streamUrl, previewType: contentType }));
         return;
       }
       if (art.streaming_url) {
@@ -8936,6 +9060,10 @@ Respond ONLY with valid JSON in this exact format:
             if (aiSuggested > 0 && aiSuggested <= 100) finalSolarAmount = aiSuggested;
           }
 
+          // Derive content_format from actualMime
+          const contentFormatMap = { 'application/json': 'json', 'text/markdown': 'md', 'text/csv': 'csv', 'image/svg+xml': 'svg', 'application/javascript': 'js' };
+          const contentFormat = contentFormatMap[actualMime] || null;
+
           // Step 3E: Insert into artifacts table (same as human upload)
           const insertQuery = `
             INSERT INTO artifacts (
@@ -8945,10 +9073,10 @@ Respond ONLY with valid JSON in this exact format:
               master_file_url, preview_file_url, trade_file_url,
               master_file_size, preview_file_size, trade_file_size,
               file_duration, preview_duration, preview_type, preview_slug,
-              processing_status, search_tags, created_at
+              processing_status, search_tags, content_body, content_format, source_type, created_at
             ) VALUES (
               $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
-              $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, NOW()
+              $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, NOW()
             ) RETURNING id, slug, solar_amount_s
           `;
 
@@ -8972,7 +9100,10 @@ Respond ONLY with valid JSON in this exact format:
             fileProcessingResult.previewFile.previewType || null,
             `${finalSlug}-preview`,
             fileProcessingResult.processingStatus || 'completed',
-            searchTags
+            searchTags,
+            creationResult.previewText || null,
+            contentFormat,
+            'agent'
           ]);
 
           const dbArtifactId = artifactResult.rows[0].id;
@@ -10001,13 +10132,18 @@ Respond ONLY with valid JSON in this exact format:
             }
           }
 
+          // Derive content_format from fileType
+          const contentFormatMap2 = { 'application/json': 'json', 'text/markdown': 'md', 'text/csv': 'csv', 'image/svg+xml': 'svg', 'application/javascript': 'js' };
+          const contentFormat2 = contentFormatMap2[fileType] || null;
+
           const newArt = await pool.query(
             `INSERT INTO artifacts (title, description, category, solar_amount_s, creator_id, delivery_mode, active,
              master_file_url, trade_file_url, preview_file_url, master_file_size, trade_file_size, preview_file_size,
-             file_type, processing_status)
-             VALUES ($1, $2, $3, $4, $5, 'download', true, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id`,
+             file_type, processing_status, content_body, content_format, source_type)
+             VALUES ($1, $2, $3, $4, $5, 'download', true, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING id`,
             [itemName, `Ecosystem-generated ${cat.toLowerCase()} artifact`, cat, String(price), String(sellerId),
-             masterUrl, tradeUrl, previewUrl, masterSize, tradeSize, previewSize, fileType, processingStatus]
+             masterUrl, tradeUrl, previewUrl, masterSize, tradeSize, previewSize, fileType, processingStatus,
+             null, contentFormat2, 'agent']
           );
           foundArtifactId = newArt.rows[0].id;
           console.log(`📦 Auto-created artifact "${itemName}" (${foundArtifactId}) with ${masterUrl ? 'REAL FILE' : 'metadata only'}`);
