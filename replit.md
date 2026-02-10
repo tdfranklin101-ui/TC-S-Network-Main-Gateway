@@ -1,7 +1,7 @@
 # The Current-See Platform
 
 ## Overview
-The Current-See platform is a prototype for a solar-backed global economic system. Its core purpose is to integrate renewable energy tracking, a cryptocurrency-like token called SOLAR, member management, and an advanced AI assistant "Kid Solar." The platform offers real-time solar energy calculations, member wallet functionalities, and a marketplace for digital artifacts and energy trading. The project aims to establish a new global economic standard centered on renewable energy, with the ambition to guide the transition to safe superintelligence through ethical AI development and a unified intelligence mesh.
+The Current-See platform is a prototype for a solar-backed global economic system. Its core purpose is to integrate renewable energy tracking, a cryptocurrency-like token called SOLAR, member management, and an advanced AI assistant "KID SOL." The platform offers real-time solar energy calculations, member wallet functionalities, and a marketplace for digital artifacts and energy trading. The project aims to establish a new global economic standard centered on renewable energy, with the ambition to guide the transition to safe superintelligence through ethical AI development and a unified intelligence mesh.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -9,10 +9,10 @@ Preferred communication style: Simple, everyday language.
 ## System Architecture
 
 ### UI/UX Decisions
-The platform features a clean, intuitive interface with a black semi-transparent background, white text, cyan headings, and neon green interactive elements. Key components include a five-page educational system for the Solar Standard protocol, a multi-modal "Kid Solar Command Center" AI chat interface, and integrated sign-in/registration modals for the marketplace. Video streaming is optimized, and a prominent featured film section highlights "The Rise of the Solar."
+The platform features a clean, intuitive interface with a black semi-transparent background, white text, cyan headings, and neon green interactive elements. Key components include a five-page educational system for the Solar Standard protocol, a multi-modal "KID SOL Command Center" AI chat interface, and integrated sign-in/registration modals for the marketplace. Video streaming is optimized, and a prominent featured film section highlights "The Rise of the Solar."
 
 ### Technical Implementations
-The frontend uses Vanilla JavaScript, and the backend is an Express.js server optimized for Cloud Run. The platform integrates real-time analytics, leverages OpenAI's Whisper, GPT-4o, and TTS for the Kid Solar AI assistant, and incorporates comprehensive AI SEO with JSON-LD and Open Graph metadata. The marketplace supports five categories and includes an in-memory energy trading ledger. A member content upload system handles various media types, and session-based authentication is used. Video streaming is optimized with `faststart` and HTTP 206 partial content. A daily 1 Solar token distribution per member is implemented. The Solar Standard Protocol documentation includes machine-readable specifications, human-readable HTML, an Atom feed, and an auto-indexing system. The platform features a 4-part white paper suite, a "Solar Integrity Wheel" for self-verification, and the UIM Handshake Protocol v1.0 for AI-to-AI communication.
+The frontend uses Vanilla JavaScript, and the backend is an Express.js server optimized for Cloud Run. The platform integrates real-time analytics, leverages OpenAI's Whisper, GPT-4o, and TTS for the KID SOL AI assistant, and incorporates comprehensive AI SEO with JSON-LD and Open Graph metadata. The marketplace supports five categories and includes an in-memory energy trading ledger. A member content upload system handles various media types, and session-based authentication is used. Video streaming is optimized with `faststart` and HTTP 206 partial content. A daily 1 Solar token distribution per member is implemented. The Solar Standard Protocol documentation includes machine-readable specifications, human-readable HTML, an Atom feed, and an auto-indexing system. The platform features a 4-part white paper suite, a "Solar Integrity Wheel" for self-verification, and the UIM Handshake Protocol v1.0 for AI-to-AI communication.
 
 ### System Design Choices
 The platform is optimized for Cloud Run deployments. Data storage primarily uses PostgreSQL with Drizzle ORM, supplemented by JSON file fallbacks and in-memory storage for conversation history. A single unified PostgreSQL database is shared between Vercel and Replit deployments. Security measures include environment-based API key storage, session-based tracking, CORS configuration, rate limiting, comprehensive error handling, and robust session management.
@@ -23,13 +23,14 @@ Session management uses database-backed sessions stored in the PostgreSQL `sessi
 ### Solar Balance Architecture (Single Source of Truth)
 All Solar balance operations MUST use `members.total_solar` as the single source of truth. This includes initial allocation upon registration, retrieval via the `/api/session` API, updates during purchases via atomic transactions, and daily distribution. All frontend displays fetch the balance from `/api/session`. All `getSession()` calls MUST use `await`.
 
-### Resident Programmable Agents (21 Agents)
-AI agents are first-class network members using the same platform infrastructure as human members. 21 agents total: 20 specialist agents (Alpha through Zenith) + Kid Solar (orchestrator, agent_eco_ks). All registered with bcrypt 12-round password hash, `is_agent = true`, and same daily +1 Solar distribution as humans. The ecosystem test (`/ecosystem-test.html`) registers agents via `/api/auth/signup`, resolves existing agents via `storage.getMemberByUsername()`, and executes purchases through `storage.purchaseArtifact()` — the exact same atomic transaction flow used by human purchases at `/api/marketplace/purchase`. Agent transactions create real double-entry ledger entries in `marketplace_ledger`, real artifact copies in `artifact_copies`, and real download tokens. Daily Solar distribution updates `members.total_solar` via `storage.updateMemberSolarBalance()` with ledger entries. Three ecosystem API endpoints (`/api/ecosystem/resolve-agent`, `/api/ecosystem/distribute`, `/api/ecosystem/purchase`) use `pool.query()` with direct SQL (same logic as storage.ts methods) to provide agent-accessible interfaces without session cookie requirements.
+### Resident Programmable Agents (22 Agents)
+AI agents are first-class network members using the same platform infrastructure as human members. 22 agents total: 20 specialist agents (Alpha through Zenith) + KID SOL (orchestrator, agent_eco_ks) + Kid Solar (freelance polymath, agent_eco_ksr). All registered with bcrypt 12-round password hash, `is_agent = true`, and same daily +1 Solar distribution as humans. The ecosystem test (`/ecosystem-test.html`) registers agents via `/api/auth/signup`, resolves existing agents via `storage.getMemberByUsername()`, and executes purchases through `storage.purchaseArtifact()` — the exact same atomic transaction flow used by human purchases at `/api/marketplace/purchase`. Agent transactions create real double-entry ledger entries in `marketplace_ledger`, real artifact copies in `artifact_copies`, and real download tokens. Daily Solar distribution updates `members.total_solar` via `storage.updateMemberSolarBalance()` with ledger entries. Three ecosystem API endpoints (`/api/ecosystem/resolve-agent`, `/api/ecosystem/distribute`, `/api/ecosystem/purchase`) use `pool.query()` with direct SQL (same logic as storage.ts methods) to provide agent-accessible interfaces without session cookie requirements.
 
-### Kid Solar Dual Identity
-- **Kid Solar She** (Marketplace Agent #21, `agent_eco_ks`): Member agent with direct user chat interface. Orchestrates the 20 specialist agents via MCP (Model Context Protocol) for complex multi-item orders. Uses GPT-4o with function calling, Whisper for voice input, Nova TTS for voice output. All purchases use atomic double-entry ledger (BEGIN/COMMIT/ROLLBACK with marketplace_ledger, artifact_copies, transactions table). MCP functions: `agent_recommend` (delegate to specialists), `agent_batch_order` (multi-category purchases), `agent_network_status` (network awareness).
-- **Kid Solar He** (D-ID Polymath): Resident polymath with curated knowledge base. Operates through D-ID video agent API. Separate from marketplace operations.
-- Both present on the marketplace in voice mode. Future: AI-to-AI conversation capability between She and He.
+### KID SOL (Agent #21 — Marketplace Orchestrator)
+KID SOL (she/her) is Agent #21, the user's personal agent and marketplace orchestrator (`agent_eco_ks`). She commands the 20 specialist agents via MCP (Model Context Protocol) for universal procurement, generation, and provision across 16 categories. Uses GPT-4o with function calling, Whisper for voice input, Nova TTS for voice output. All purchases use atomic double-entry ledger (BEGIN/COMMIT/ROLLBACK with marketplace_ledger, artifact_copies, transactions table). MCP functions: `agent_recommend` (delegate to specialists), `agent_batch_order` (multi-category purchases), `agent_network_status` (network awareness). Personal agent page: `/agent.html`.
+
+### Kid Solar (Agent #22 — Freelance Polymath, D-ID Connected)
+Kid Solar is Agent #22, a separate freelance agent (`agent_eco_ksr`) with MCP capabilities, connected through the D-ID video agent API. Operates as an independent polymath with curated knowledge base and full MCP orchestration access. The Kid Solar face appears across the site via `kid-solar-controller.js` which handles D-ID script injection, session activation/deactivation, and persistent session state. Kid Solar and KID SOL are two different agents — KID SOL is the marketplace orchestrator, Kid Solar is the freelance polymath.
 
 ### Specialist Agent Registry
 | Code | Name | Specialty | Code | Name | Specialty |
@@ -44,7 +45,7 @@ AI agents are first-class network members using the same platform infrastructure
 | 08 | Hotel | Art | 18 | Solaris | Energy |
 | 09 | India | Photo | 19 | Tesla | AI Tools |
 | 10 | Juliet | Writing | 20 | Zenith | Culture |
-| ks | Kid Solar | Orchestrator | | | |
+| ks | KID SOL | Orchestrator | ksr | Kid Solar | Freelance Polymath |
 
 ### Content Storage Architecture (Implemented)
 Content files are offloaded to Replit Object Storage to keep deployments lean. The database stores lightweight metadata (title, price, seller, category, cloud URL pointer) while actual content files live in cloud storage. Key components:
@@ -65,12 +66,12 @@ The WPC module provides universal compute-energy intelligence across the 14-repo
 
 ### Third-Party Services
 - **OpenAI**: Used for GPT-4o, Whisper, TTS (Nova voice), and DALL-E.
-- **D-ID**: Provides the AI agent platform for Kid Solar.
+- **D-ID**: Provides the AI agent platform for KID SOL.
 - **PostgreSQL**: Cloud-hosted relational database.
 - **AI Content Creation Platforms**: External platforms for music (Suno AI, Udio, AiSongMaker.io), video (Vimeo Create, Runway AI, Sora, Meta Movie Gen), and code generation (Replit, OpenAI Codex, Bolt.new, v0.dev).
 
 ### APIs and Integrations
-- **TC-S Computronium Market API**: Provides endpoints for market categories, energy trading, and Kid Solar AI text commands.
+- **TC-S Computronium Market API**: Provides endpoints for market categories, energy trading, and KID SOL AI text commands.
 - **Solar Standard Protocol API Suite**: Offers endpoints for kWh to Solar conversion, protocol specifications, artifact data enrichment, and an auto-indexing system.
 - **Solar Intelligence Audit Layer (SAi-Audit)**: Automated 8-category global energy monitoring system with Chart.js visualizations.
 - **UIM Handshake Protocol API**: Core endpoints for AI-to-AI communication, including node discovery and semantic capabilities exchange.
