@@ -9197,7 +9197,7 @@ Respond ONLY with valid JSON in this exact format:
          LEFT JOIN artifacts a ON ac.artifact_id = a.id
          WHERE ac.owner_id = $1 ORDER BY ac.acquired_at DESC`, [m.id]);
       const ledgerRes = await pool.query(
-        `SELECT transaction_id, entry_type, amount, balance_after, reference_type, reference_id, description, created_at
+        `SELECT transaction_id, entry_type, amount, reference_type, reference_id, description, created_at
          FROM marketplace_ledger WHERE account_id = $1 ORDER BY created_at DESC LIMIT 100`, [String(m.id)]);
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
@@ -9206,7 +9206,6 @@ Respond ONLY with valid JSON in this exact format:
           memberId: m.id, username: m.username, displayName: m.name,
           icon: agentDef.icon, code: agentDef.code, specialty: agentDef.specialty,
           balance: parseFloat(m.total_solar) || 0,
-          dollars: parseFloat(m.total_dollars) || 0,
           lastDistribution: m.last_distribution_date,
           joinedAt: m.signup_timestamp
         },
@@ -9222,7 +9221,7 @@ Respond ONLY with valid JSON in this exact format:
         })),
         transactions: ledgerRes.rows.map(r => ({
           transactionId: r.transaction_id, type: r.entry_type,
-          amount: parseFloat(r.amount) || 0, balanceAfter: parseFloat(r.balance_after) || 0,
+          amount: parseFloat(r.amount) || 0,
           refType: r.reference_type, refId: r.reference_id,
           description: r.description, time: r.created_at
         }))
@@ -9903,7 +9902,7 @@ Respond ONLY with valid JSON in this exact format:
       }
 
       const txResult = await pool.query(
-        `SELECT id, transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description, created_at
+        `SELECT id, transaction_id, entry_type, account_id, account_type, amount, reference_type, reference_id, description, created_at
          FROM marketplace_ledger WHERE account_id = $1 ORDER BY created_at DESC LIMIT 20`,
         [String(member.id)]
       );
@@ -9946,7 +9945,6 @@ Respond ONLY with valid JSON in this exact format:
         type: row.entry_type,
         description: row.description,
         amount: row.amount,
-        balanceAfter: row.balance_after,
         timestamp: row.created_at,
         createdAt: row.created_at,
         referenceType: row.reference_type,
@@ -10006,15 +10004,14 @@ Respond ONLY with valid JSON in this exact format:
           specialty,
           icon
         },
-        publicData: {
-          balance: parseFloat(member.total_solar) || 0,
+        publicData: Object.assign({
           totalTransactions: mappedTransactions.length,
           totalCreated: mappedCreated.length,
           totalPurchased: mappedPurchased.length,
           recentTransactions: mappedTransactions,
           createdArtifacts: mappedCreated,
           purchasedArtifacts: mappedPurchased
-        },
+        }, (member.is_agent || member.username === 'tcs_foundation') ? { balance: parseFloat(member.total_solar) || 0 } : {}),
         grantPetitions: mappedPetitions,
         isOwnProfile
       }));

@@ -239,10 +239,14 @@ function buildIdentity(member,publicData,isAgent,agentInfo,isFoundationProfile){
     if(member.specialty) specialtyLine='<div class="id-specialty">'+member.specialty+' Division</div>';
   }
 
-  var balance=publicData.balance!=null?parseFloat(publicData.balance).toFixed(4):'—';
   var memberId=member.id?'MBR-'+member.id:(agentInfo?'AGT-'+agentInfo.code:'—');
   var jd=member.joinedAt||member.joinDate;
   var joinDate=jd?new Date(jd).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'}):'Genesis Member';
+
+  var balanceLine='';
+  if((isAgent||member.username==='tcs_foundation')&&publicData.balance!=null){
+    balanceLine='<span><span class="lbl">Balance:</span> <span class="val gold">'+parseFloat(publicData.balance).toFixed(4)+' Solar</span></span>';
+  }
 
   document.getElementById('identityCard').innerHTML=
     '<div class="id-icon">'+icon+'</div>'+
@@ -252,7 +256,7 @@ function buildIdentity(member,publicData,isAgent,agentInfo,isFoundationProfile){
       specialtyLine+
       '<div class="id-meta">'+
         '<span><span class="lbl">Member ID:</span> <span class="val">'+memberId+'</span></span>'+
-        '<span><span class="lbl">Balance:</span> <span class="val gold">'+balance+' Solar</span></span>'+
+        balanceLine+
         '<span><span class="lbl">Joined:</span> <span class="val">'+joinDate+'</span></span>'+
       '</div>'+
     '</div>'+
@@ -300,9 +304,9 @@ function buildActivity(txs){
     if(!grouped[d])grouped[d]=[];
     grouped[d].push(tx);
   });
-  var html='<div class="section-title">Transaction History</div><table class="tx-table"><thead><tr><th></th><th>Description</th><th>Type</th><th>Amount</th><th>Balance</th><th>Time</th></tr></thead><tbody>';
+  var html='<div class="section-title">Transaction History</div><table class="tx-table"><thead><tr><th></th><th>Description</th><th>Type</th><th>Amount</th><th>Time</th></tr></thead><tbody>';
   Object.keys(grouped).forEach(function(date){
-    html+='<tr><td colspan="6" class="tx-date-group">'+date+'</td></tr>';
+    html+='<tr><td colspan="5" class="tx-date-group">'+date+'</td></tr>';
     grouped[date].forEach(function(tx){
       var isCredit=tx.type==='credit'||(tx.description&&(tx.description.indexOf('Sale:')===0||tx.description.indexOf('Daily Solar')===0));
       var isDebitTx=tx.type==='debit'||(tx.description&&tx.description.indexOf('Purchase:')===0);
@@ -312,7 +316,6 @@ function buildActivity(txs){
       var sign=positive?'+':'-';
       var amt=typeof tx.amount==='number'?tx.amount:parseFloat(tx.amount||0);
       var displayAmt=Math.abs(amt);
-      var bal=typeof tx.balanceAfter==='number'?tx.balanceAfter:(typeof tx.balance==='number'?tx.balance:null);
       var ts=tx.time||tx.timestamp||tx.createdAt;
       var time=ts?new Date(ts).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}):'';
       var typeLabel=positive?'Credit':'Debit';
@@ -322,7 +325,6 @@ function buildActivity(txs){
         '<td class="tx-desc">'+(tx.description||tx.item||'Transaction')+'</td>'+
         '<td style="color:'+typeColor+';font-size:11px">'+typeLabel+'</td>'+
         '<td class="'+cls+'">'+sign+displayAmt.toFixed(4)+'</td>'+
-        '<td class="tx-bal">'+(bal!=null?parseFloat(bal).toFixed(4):'—')+'</td>'+
         '<td class="tx-time">'+time+'</td>'+
         '</tr>';
     });
