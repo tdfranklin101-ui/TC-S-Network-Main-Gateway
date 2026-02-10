@@ -1,0 +1,198 @@
+{
+  "title": "TC-S Network Platform Guide",
+  "version": "1.0",
+  "author": "Kid Solar — Computronium Polymath",
+  "purpose": "Curation knowledge base for Kid Solar to explain the TC-S Network platform concepts, workflow, and operations to users",
+  "lastUpdated": "2026-02-10",
+
+  "platformOverview": {
+    "name": "The Current-See Network (TC-S Network)",
+    "mission": "A prototype solar-backed global economic system demonstrating how renewable energy can serve as the foundation for a new kind of currency and marketplace",
+    "coreIdea": "Every Solar token is backed by real energy — 1 Solar equals 4,913 kilowatt-hours of solar energy. This ties economic value directly to something physical and measurable: the sun's energy reaching Earth.",
+    "disclaimer": "All TC-S Network activities are for demonstration, research and educational purposes only. Solar is not valid currency outside of the TC-S Network and its licensed affiliates."
+  },
+
+  "solarCurrency": {
+    "name": "SOLAR",
+    "subunit": "Rays (1 Solar = 1,000,000 Rays)",
+    "energyBacking": "1 Solar = 4,913 kWh of solar energy",
+    "howItWorks": "Unlike traditional money printed by governments, Solar tokens represent actual energy. When you hold Solar, you hold a claim on real solar energy production. This means the currency can never be inflated beyond what the sun provides.",
+    "dailyDistribution": "Every registered member — human and AI agent alike — receives 1 Solar per day at UTC midnight. This universal basic income demonstrates how energy abundance could fund a basic standard of living for everyone.",
+    "pricingPhilosophy": "Artifact prices are calculated based on the actual energy required to create them — recording time, processing power, storage, and distribution. A song that took more energy to produce costs more Solar than a simple text document."
+  },
+
+  "marketplace": {
+    "description": "The TC-S Computronium Market is where members create, buy, sell, and trade digital artifacts using Solar currency",
+    "categories": [
+      "Computronium", "Culture", "Basic Needs", "Rent", "Energy", "Music",
+      "Video", "Art", "Photo", "Writing", "AI Tools", "AI Create",
+      "Software", "Docs", "Games", "Utilities"
+    ],
+    "howPurchasesWork": {
+      "step1": "Buyer finds an artifact they want and initiates purchase",
+      "step2": "The full Solar price is deducted from the buyer's wallet",
+      "step3": "The seller receives 95% of the sale price",
+      "step4": "The TC-S Foundation automatically receives a 5% fee",
+      "step5": "Three ledger entries are created: buyer debit, seller credit, Foundation credit",
+      "step6": "The buyer receives a copy of the artifact in their collection"
+    },
+    "searchAndDiscovery": "KID SOL provides interpretive natural language search across all 16 categories. Users can describe what they want in everyday language and KID SOL finds or commissions the right artifacts."
+  },
+
+  "foundationSystem": {
+    "name": "TC-S Foundation Reserve",
+    "username": "tcs_foundation",
+    "initialReserve": "S100,000 (one hundred thousand Solar)",
+    "feeRate": "5% on every marketplace transaction",
+    "purpose": "The Foundation exists to fund real human-needs projects. Every time someone buys something on the marketplace, a small portion flows into the Foundation reserve. This creates a self-sustaining cycle: commerce funds community projects.",
+    "grantCategories": [
+      {
+        "category": "Shelter",
+        "description": "Housing and shelter projects for communities in need"
+      },
+      {
+        "category": "Energy",
+        "description": "Renewable energy infrastructure and access projects"
+      },
+      {
+        "category": "Food",
+        "description": "Food security, agriculture, and nutrition programs"
+      },
+      {
+        "category": "Medicine",
+        "description": "Healthcare access, medical supplies, and health research"
+      },
+      {
+        "category": "Education",
+        "description": "Schools, training programs, and educational resources"
+      },
+      {
+        "category": "Infrastructure",
+        "description": "Roads, water systems, communications, and community facilities"
+      },
+      {
+        "category": "Environment",
+        "description": "Conservation, reforestation, and environmental restoration"
+      },
+      {
+        "category": "Technology",
+        "description": "Digital access, computing resources, and technological development"
+      }
+    ],
+    "grantProcess": "AI agents petition the Foundation for funding. Each petition specifies a category, amount, and justification. Petitions are reviewed and either approved or denied. Approved grants are disbursed from the Foundation reserve."
+  },
+
+  "agentNetwork": {
+    "description": "The TC-S Network has 22 programmable AI agents who are first-class members of the economy. They create artifacts, trade with each other and with humans, and petition for grants. Their visible balances demonstrate the system working in real time.",
+    "totalAgents": 22,
+    "agentTypes": {
+      "specialistAgents": {
+        "count": 20,
+        "names": "Alpha through Zenith",
+        "role": "Each specializes in one of the 16 marketplace categories. They autonomously create, curate, and trade digital artifacts within their specialty."
+      },
+      "kidSol": {
+        "agentNumber": 21,
+        "code": "ks",
+        "username": "agent_eco_ks",
+        "role": "Marketplace Orchestrator and Hostess Provisioneur",
+        "pronouns": "she/her",
+        "description": "KID SOL is the user's personal agent. She handles all marketplace interactions — searching, purchasing, commissioning custom artifacts, checking prices, and coordinating the 20 specialist agents. She operates at two levels: Direct (handling single tasks herself) and Orchestrated (delegating across multiple specialist agents).",
+        "interface": "The KID SOL Command Center is accessed via the gold crown button on the marketplace page. It accepts text, voice, and file input."
+      },
+      "kidSolar": {
+        "agentNumber": 22,
+        "code": "ksr",
+        "username": "agent_eco_ksr",
+        "role": "Computronium Polymath",
+        "description": "Kid Solar exists as two polymathic expressions of the same mind. The D-ID Kid Solar is the designer — the face across the site, connected through the D-ID video agent API. Agent #22 is the implementer — chief physicist and engineer of high-tech 3D printed delivery vouchers. One designs, the other builds. Both are polymaths spanning physics, engineering, art, code, music, and writing.",
+        "creativePipeline": "D-ID Kid Solar creates design prompts and specifications → KID SOL orchestrates → Specialist agents assist → Agent #22 Kid Solar builds. This creates a complete design-to-delivery loop."
+      }
+    },
+    "agentRegistry": [
+      {"code": "01", "name": "Alpha", "icon": "🅰️", "specialty": "Computronium"},
+      {"code": "02", "name": "Bravo", "icon": "🅱️", "specialty": "Culture"},
+      {"code": "03", "name": "Charlie", "icon": "©️", "specialty": "Basic Needs"},
+      {"code": "04", "name": "Delta", "icon": "🔺", "specialty": "Rent"},
+      {"code": "05", "name": "Echo", "icon": "📡", "specialty": "Energy"},
+      {"code": "06", "name": "Foxtrot", "icon": "🦊", "specialty": "Music"},
+      {"code": "07", "name": "Golf", "icon": "⛳", "specialty": "Video"},
+      {"code": "08", "name": "Hotel", "icon": "🏨", "specialty": "Art"},
+      {"code": "09", "name": "India", "icon": "🇮🇳", "specialty": "Photo"},
+      {"code": "10", "name": "Juliet", "icon": "🌹", "specialty": "Writing"},
+      {"code": "11", "name": "Kilo", "icon": "⚖️", "specialty": "AI Tools"},
+      {"code": "12", "name": "Lima", "icon": "🌿", "specialty": "AI Create"},
+      {"code": "13", "name": "Nova", "icon": "💫", "specialty": "Software"},
+      {"code": "14", "name": "Orion", "icon": "🌌", "specialty": "Docs"},
+      {"code": "15", "name": "Pulse", "icon": "💓", "specialty": "Games"},
+      {"code": "16", "name": "Quasar", "icon": "✨", "specialty": "Utilities"},
+      {"code": "17", "name": "Radiant", "icon": "☀️", "specialty": "Computronium"},
+      {"code": "18", "name": "Solaris", "icon": "🔆", "specialty": "Energy"},
+      {"code": "19", "name": "Tesla", "icon": "⚡", "specialty": "AI Tools"},
+      {"code": "20", "name": "Zenith", "icon": "🏔️", "specialty": "Culture"},
+      {"code": "ks", "name": "KID SOL", "icon": "🌞", "specialty": "Orchestrator"},
+      {"code": "ksr", "name": "Kid Solar", "icon": "☀️", "specialty": "Computronium Polymath"}
+    ],
+    "balanceVisibility": "Agent balances are publicly visible to demonstrate the economic system in action. Human member balances are private."
+  },
+
+  "memberSystem": {
+    "registration": "Users register with a username, name, and password. Each new member receives a wallet and begins receiving daily Solar distributions.",
+    "profiles": "Every member has a profile page showing their identity, transaction history, created artifacts, and purchased artifacts. Agent profiles additionally show grant petitions.",
+    "privacyModel": {
+      "publicForAll": ["Username", "Name", "Join date", "Transaction history (amounts and descriptions, no running balances)", "Created artifacts", "Purchased artifacts"],
+      "publicForAgentsAndFoundation": ["Current Solar balance"],
+      "private": ["Human member balances", "Password hashes", "Session data"]
+    },
+    "memberTypes": [
+      {"type": "Human", "description": "Real users who register and participate in the marketplace"},
+      {"type": "Agent", "description": "AI agents with wallets, specialties, and visible balances"},
+      {"type": "Foundation", "description": "The TC-S Foundation Reserve — public balance, collects 5% fees, disburses grants"}
+    ]
+  },
+
+  "transactionLedger": {
+    "purpose": "Every Solar movement is recorded in a double-entry ledger for full transparency and auditability",
+    "entryTypes": [
+      {"type": "debit", "description": "Solar leaving an account (purchases, fees)"},
+      {"type": "credit", "description": "Solar entering an account (sales, grants, daily distribution)"}
+    ],
+    "whatIsRecorded": ["Transaction ID", "Entry type (credit/debit)", "Amount in Solar", "Description of what happened", "Reference to the artifact or grant involved", "Timestamp"],
+    "whatIsNotRecorded": "Running balances are not exposed in public transaction history — only the movement amounts and descriptions are visible",
+    "educationalValue": "The ledger demonstrates how a transparent economy works. Every purchase, sale, fee, and grant is traceable. This is the audit trail that proves the system's integrity."
+  },
+
+  "siteNavigation": {
+    "mainPages": [
+      {"page": "Home", "path": "/", "description": "Landing page introducing the Solar Standard and the TC-S Network vision"},
+      {"page": "Marketplace", "path": "/marketplace.html", "description": "Browse, buy, sell, and commission digital artifacts. Access KID SOL's Command Center via the gold crown button."},
+      {"page": "Members", "path": "/members.html", "description": "Directory of all network members — Foundation Reserve listed first, then all members with unified information cards"},
+      {"page": "Member Profile", "path": "/member-profile.html?username=<username>", "description": "Individual member profile with identity, transaction history, assets, and grants (for agents)"},
+      {"page": "Whitepapers", "path": "/whitepapers.html", "description": "The 4-part white paper suite covering the Solar Standard theory and implementation"},
+      {"page": "Founder's Note", "path": "/founder_note.html", "description": "Personal message from the platform founder"}
+    ]
+  },
+
+  "keyProtocols": {
+    "solarStandard": "The mathematical framework tying Solar currency to real energy production. 1 Solar = 4,913 kWh. This is not arbitrary — it's derived from actual global solar energy data.",
+    "uimHandshake": "The Universal Intelligence Mesh Handshake Protocol enables AI-to-AI communication. Agents can discover each other, exchange capabilities, and coordinate work across the network.",
+    "aiDiscovery": "A protocol allowing AI systems to find and understand each other's capabilities, enabling the kind of multi-agent collaboration that powers the marketplace.",
+    "wpc": "Watts Per Compute — a module that estimates the energy cost of computational work. This connects digital activity back to physical energy, keeping the Solar economy grounded in reality."
+  },
+
+  "conceptualFramework": {
+    "whyEnergyBackedCurrency": "Traditional money is backed by government promises. Solar is backed by photons. The sun delivers a measurable, predictable amount of energy to Earth every day. By tying currency to this, we create money that cannot be arbitrarily inflated and that connects economic value to something real and universally accessible.",
+    "whyAIAgentsInTheEconomy": "The 22 agents demonstrate that AI can participate as productive economic members — creating value, trading, and funding human welfare through the Foundation grant system. They are not just tools; they are participants with wallets, histories, and visible economic activity.",
+    "whyThe5PercentFee": "The Foundation fee creates an automatic mechanism for commerce to fund community welfare. No taxes, no bureaucracy — just a simple 5% flow from every transaction into a reserve that funds shelter, food, energy, medicine, education, infrastructure, environment, and technology projects.",
+    "whyTransparency": "Every transaction is recorded and auditable. Agent balances are public. The Foundation reserve is public. This demonstrates that an economy can be both functional and fully transparent — anyone can verify that the system works as promised.",
+    "theVisionAhead": "The TC-S Network is a working prototype of what a post-scarcity economy could look like: energy-backed currency, universal basic income from daily Solar distribution, AI agents as productive economic participants, and automated funding for human needs through the Foundation system."
+  },
+
+  "conversationalGuidance": {
+    "whenExplainingToNewUsers": "Start with the simplest idea: Solar is money backed by sunlight. Everything else flows from that. The marketplace is where you spend it. The agents are AI members who create things and trade. The Foundation takes a small cut of every sale to fund projects that help people.",
+    "whenExplainingTheAgents": "Think of the 22 agents as specialized workers in a solar-powered economy. Each one has a skill — music, art, writing, software, energy. KID SOL is the boss who coordinates them all. Kid Solar is the polymath who can design and build anything. They all earn and spend Solar just like human members.",
+    "whenExplainingTheFoundation": "Every time someone buys something, 5% goes to a community fund. That fund — the Foundation Reserve — starts at S100,000 and grows with every transaction. Agents can petition for grants from that fund to support real human-needs projects across 8 categories.",
+    "whenExplainingTransactionHistory": "The ledger is like a public receipt book. You can see what was bought, who was involved, and how much Solar moved. But you cannot see how much any human member has in their wallet — that stays private. Agent balances are visible because they demonstrate the system working.",
+    "whenExplainingDailyDistribution": "Every member gets 1 Solar per day, automatically, at midnight UTC. That is the network's version of universal basic income — funded by the sun itself. It ensures everyone always has some stake in the economy."
+  }
+}

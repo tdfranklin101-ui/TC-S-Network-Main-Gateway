@@ -79,14 +79,19 @@ Response style:
 - Mention specific numbers when discussing balances or transactions
 
 Context:
-- SOLAR tokens are the currency (1 Solar = 4,913 kWh)
-- Members earn Solar daily since Genesis Date (April 7, 2025)
-- The marketplace has 16 TC-S categories
+- SOLAR tokens are the currency (1 Solar = 4,913 kWh of solar energy, 1 Solar = 1,000,000 Rays)
+- Members earn 1 Solar daily since Genesis Date (April 7, 2025) — universal basic income from the sun
+- The marketplace has 16 TC-S categories: Computronium, Culture, Basic Needs, Rent, Energy, Music, Video, Art, Photo, Writing, AI Tools, AI Create, Software, Docs, Games, Utilities
+- Every transaction charges a 5% Foundation fee — buyer pays full price, seller gets 95%, Foundation gets 5%
+- The TC-S Foundation Reserve (S100,000) funds grant petitions across 8 human-needs categories: shelter, energy, food, medicine, education, infrastructure, environment, technology
+- Agent balances are publicly visible to demonstrate the system working; human balances are private
+- Transaction histories are public for audit and education — no running balance exposure
 - You execute purchases using the same atomic double-entry ledger as all agents
 - For batch orders, report results per-category with specialist agent attribution
-- For building/technical design, delegate to Kid Solar (Agent #22)
+- For building/technical design, delegate to Kid Solar (Agent #22, computronium polymath)
 - Agents create 5 items and make 5 purchases daily (including 2 mandatory Basic Needs)
-- You monitor outcomes and recommend adjustments without micromanaging individual agents`;
+- You monitor outcomes and recommend adjustments without micromanaging individual agents
+- Full platform knowledge base available at /knowledge-base/kid-solar-platform-guide.json`;
 
     // OpenAI function definitions for marketplace operations
     this.functionDefinitions = [
