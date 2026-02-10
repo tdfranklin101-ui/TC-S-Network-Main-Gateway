@@ -9383,18 +9383,75 @@ Respond ONLY with valid JSON in this exact format:
       const newBuyerBal = buyerBal - price;
       const newSellerBal = sellerBal + price;
 
-      await pool.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(newBuyerBal), buyerId]);
-      await pool.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(newSellerBal), sellerId]);
-      await pool.query(
-        `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
-         VALUES ($1, 'debit', $2, 'user', $3, $4, 'purchase', 'ecosystem_item', $5)`,
-        [transactionId, String(buyerId), String(price), String(newBuyerBal), `Purchase: ${itemName || 'Marketplace item'}`]
-      );
-      await pool.query(
-        `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
-         VALUES ($1, 'credit', $2, 'user', $3, $4, 'purchase', 'ecosystem_item', $5)`,
-        [transactionId, String(sellerId), String(price), String(newSellerBal), `Sale: ${itemName || 'Marketplace item'}`]
-      );
+      let foundArtifactId = null;
+      let copyId = null;
+
+      let artLookup = null;
+      if (itemName) {
+        artLookup = await pool.query(
+          'SELECT id, title FROM artifacts WHERE title = $1 AND creator_id = $2 LIMIT 1',
+          [itemName, String(sellerId)]
+        );
+        if (artLookup.rows.length === 0) {
+          artLookup = await pool.query(
+            'SELECT id, title FROM artifacts WHERE title = $1 LIMIT 1',
+            [itemName]
+          );
+        }
+      }
+
+      if (artLookup && artLookup.rows.length > 0) {
+        foundArtifactId = artLookup.rows[0].id;
+      }
+
+      const ledgerRefId = foundArtifactId || 'ecosystem_item';
+
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+
+        await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(newBuyerBal), buyerId]);
+        await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(newSellerBal), sellerId]);
+        await client.query(
+          `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
+           VALUES ($1, 'debit', $2, 'user', $3, $4, 'purchase', $5, $6)`,
+          [transactionId, String(buyerId), String(price), String(newBuyerBal), ledgerRefId, `Purchase: ${itemName || 'Marketplace item'}`]
+        );
+        await client.query(
+          `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
+           VALUES ($1, 'credit', $2, 'user', $3, $4, 'purchase', $5, $6)`,
+          [transactionId, String(sellerId), String(price), String(newSellerBal), ledgerRefId, `Sale: ${itemName || 'Marketplace item'}`]
+        );
+
+        if (foundArtifactId) {
+          const existingCopy = await client.query(
+            'SELECT id FROM artifact_copies WHERE owner_id = $1 AND artifact_id = $2 LIMIT 1',
+            [buyerId, foundArtifactId]
+          );
+          if (existingCopy.rows.length === 0) {
+            const copyResult = await client.query(
+              `INSERT INTO artifact_copies (artifact_id, owner_id, purchase_transaction_id, acquired_method, solar_paid) VALUES ($1, $2, $3, 'purchase', $4) RETURNING id`,
+              [foundArtifactId, buyerId, transactionId, String(price)]
+            );
+            copyId = copyResult.rows[0].id;
+
+            const tokenValue = `dl_${Date.now()}_${Math.random().toString(36).substr(2, 16)}`;
+            const expiresAt = new Date();
+            expiresAt.setDate(expiresAt.getDate() + 30);
+            await client.query(
+              `INSERT INTO download_tokens (token, artifact_id, user_id, expires_at, access_type, max_downloads) VALUES ($1, $2, $3, $4, 'trade_file', 10)`,
+              [tokenValue, foundArtifactId, buyerId, expiresAt]
+            );
+          }
+        }
+
+        await client.query('COMMIT');
+      } catch (txErr) {
+        await client.query('ROLLBACK');
+        throw txErr;
+      } finally {
+        client.release();
+      }
 
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
@@ -9403,7 +9460,8 @@ Respond ONLY with valid JSON in this exact format:
         buyer: { id: buyerId, username: buyerRow.rows[0].username, balance: newBuyerBal },
         seller: { id: sellerId, username: sellerRow.rows[0].username, balance: newSellerBal },
         amount: price,
-        artifactId: null,
+        artifactId: foundArtifactId,
+        copyId: copyId,
         usedPlatformPurchase: false
       }));
     } catch (error) {
@@ -9414,6 +9472,136 @@ Respond ONLY with valid JSON in this exact format:
     return;
   }
   
+  // ================== BACKFILL ARTIFACT COPIES ==================
+
+  if (pathname === '/api/ecosystem/backfill-copies' && req.method === 'POST') {
+    try {
+      if (!pool) {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Database unavailable' }));
+        return;
+      }
+
+      const ledgerRows = await pool.query(
+        `SELECT id, transaction_id, account_id, amount, description
+         FROM marketplace_ledger
+         WHERE reference_id = 'ecosystem_item' AND entry_type = 'debit' AND reference_type = 'purchase'`
+      );
+
+      let backfilled = 0;
+      let skipped = 0;
+      let noMatch = 0;
+      const details = [];
+
+      for (const row of ledgerRows.rows) {
+        const titleMatch = (row.description || '').match(/^Purchase:\s*(.+)$/);
+        if (!titleMatch) {
+          skipped++;
+          details.push({ txId: row.transaction_id, status: 'skipped', reason: 'No title in description' });
+          continue;
+        }
+        const title = titleMatch[1].trim();
+        const buyerId = parseInt(row.account_id);
+
+        let artResult = await pool.query('SELECT id FROM artifacts WHERE title = $1 LIMIT 1', [title]);
+        if (artResult.rows.length === 0) {
+          const categoryMap = {
+            'Solar Inverter': 'Energy', 'Solar Panel': 'Energy', 'Energy Dashboard': 'Software',
+            'Photovoltaic': 'Documents', 'Smart Grid': 'Energy', 'Renewable Energy': 'Documents',
+            'Solar Punk': 'Music', 'Generative Solar': 'Art', 'AI-Generated': 'Art',
+            'Ambient Solar': 'Music', 'Portable Solar': 'Energy', 'Soundscapes': 'Music'
+          };
+          let cat = 'Energy';
+          for (const [keyword, c] of Object.entries(categoryMap)) {
+            if (title.includes(keyword)) { cat = c; break; }
+          }
+          const sellerEntry = await pool.query(
+            `SELECT account_id FROM marketplace_ledger WHERE transaction_id = $1 AND entry_type = 'credit' LIMIT 1`,
+            [row.transaction_id]
+          );
+          const creatorId = sellerEntry.rows.length > 0 ? sellerEntry.rows[0].account_id : 'system';
+          const insertArt = await pool.query(
+            `INSERT INTO artifacts (title, description, category, solar_amount_s, creator_id, active)
+             VALUES ($1, $2, $3, $4, $5, true) RETURNING id`,
+            [title, `Ecosystem-generated ${cat.toLowerCase()} artifact`, cat, String(row.amount), creatorId]
+          );
+          artResult = { rows: [{ id: insertArt.rows[0].id }] };
+        }
+        const foundArtifactId = artResult.rows[0].id;
+
+        const existingCopy = await pool.query(
+          'SELECT id FROM artifact_copies WHERE owner_id = $1 AND artifact_id = $2 LIMIT 1',
+          [buyerId, foundArtifactId]
+        );
+        if (existingCopy.rows.length > 0) {
+          await pool.query(
+            'UPDATE marketplace_ledger SET reference_id = $1 WHERE id = $2',
+            [foundArtifactId, row.id]
+          );
+          const creditRow = await pool.query(
+            `SELECT id FROM marketplace_ledger WHERE transaction_id = $1 AND entry_type = 'credit' AND reference_id = 'ecosystem_item' LIMIT 1`,
+            [row.transaction_id]
+          );
+          if (creditRow.rows.length > 0) {
+            await pool.query('UPDATE marketplace_ledger SET reference_id = $1 WHERE id = $2', [foundArtifactId, creditRow.rows[0].id]);
+          }
+          skipped++;
+          details.push({ txId: row.transaction_id, status: 'already_owned', title, artifactId: foundArtifactId });
+          continue;
+        }
+
+        const client = await pool.connect();
+        try {
+          await client.query('BEGIN');
+
+          const copyResult = await client.query(
+            `INSERT INTO artifact_copies (artifact_id, owner_id, purchase_transaction_id, acquired_method, solar_paid) VALUES ($1, $2, $3, 'purchase', $4) RETURNING id`,
+            [foundArtifactId, buyerId, row.transaction_id, String(row.amount)]
+          );
+
+          const tokenValue = `dl_${Date.now()}_${Math.random().toString(36).substr(2, 16)}`;
+          const expiresAt = new Date();
+          expiresAt.setDate(expiresAt.getDate() + 30);
+          await client.query(
+            `INSERT INTO download_tokens (token, artifact_id, user_id, expires_at, access_type, max_downloads) VALUES ($1, $2, $3, $4, 'trade_file', 10)`,
+            [tokenValue, foundArtifactId, buyerId, expiresAt]
+          );
+
+          await client.query('UPDATE marketplace_ledger SET reference_id = $1 WHERE id = $2', [foundArtifactId, row.id]);
+          const creditRow = await client.query(
+            `SELECT id FROM marketplace_ledger WHERE transaction_id = $1 AND entry_type = 'credit' AND reference_id = 'ecosystem_item' LIMIT 1`,
+            [row.transaction_id]
+          );
+          if (creditRow.rows.length > 0) {
+            await client.query('UPDATE marketplace_ledger SET reference_id = $1 WHERE id = $2', [foundArtifactId, creditRow.rows[0].id]);
+          }
+
+          await client.query('COMMIT');
+          backfilled++;
+          details.push({ txId: row.transaction_id, status: 'backfilled', title, artifactId: foundArtifactId, copyId: copyResult.rows[0].id });
+        } catch (txErr) {
+          await client.query('ROLLBACK');
+          skipped++;
+          details.push({ txId: row.transaction_id, status: 'error', title, error: txErr.message });
+        } finally {
+          client.release();
+        }
+      }
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        summary: { total: ledgerRows.rows.length, backfilled, skipped, noMatch },
+        details
+      }));
+    } catch (error) {
+      console.error('Backfill error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Backfill failed: ' + error.message }));
+    }
+    return;
+  }
+
   // ================== DAILY AGENT TASKS API ==================
   
   if (pathname === '/api/agents/daily-tasks/trigger' && req.method === 'POST') {
