@@ -172,7 +172,7 @@ header p{color:#888;font-size:14px}
 
 <header>
   <h1>🌐 TC-S Network Agent Control Dashboard</h1>
-  <p>Automated 20-agent marketplace control center &amp; network health analysis</p>
+  <p>Automated 22-agent marketplace control center &amp; network health analysis — includes KID SOL (Orchestrator) &amp; Kid Solar (Freelance Polymath)</p>
   <div class="brand-bar">
     <span>⚡ TC-S Network Foundation</span>
     <span>☀️ Solar Standard Protocol</span>
@@ -290,7 +290,9 @@ const AGENTS = [
   {id:17,code:'17',name:'Radiant',icon:'☀️'},
   {id:18,code:'18',name:'Solaris',icon:'🔆'},
   {id:19,code:'19',name:'Tesla',icon:'⚡'},
-  {id:20,code:'20',name:'Zenith',icon:'🏔️'}
+  {id:20,code:'20',name:'Zenith',icon:'🏔️'},
+  {id:21,code:'ks',name:'KID SOL',icon:'👑'},
+  {id:22,code:'ksr',name:'Kid Solar',icon:'🌞'}
 ];
 
 const CAT_GROUPS = {
@@ -409,7 +411,9 @@ const AGENT_SPECIALTIES = {
   'Flux':'AI Tools','Glow':'Photo','Helix':'Computronium','Ion':'Energy','Jade':'Music',
   'Karma':'Culture','Luna':'Art','Mantis':'Software','Nova':'AI Create','Orion':'Video',
   'Pulse':'Games','Quasar':'Writing','Radiant':'Energy','Solaris':'Docs','Tesla':'Utilities',
-  'Zenith':'Computronium'
+  'Zenith':'Computronium',
+  'KID SOL':'Basic Needs',
+  'Kid Solar':'Culture'
 };
 
 const MARKET_DEMAND = ['Basic Needs','Energy','Computronium','Software','AI Tools','Music','Art','Rent','Culture','Video','Photo','Writing','AI Create','Docs','Games','Utilities'];
@@ -679,7 +683,7 @@ async function phase2_items(){
   addFeed('📏',`<b>Daily rules:</b> 5 artifacts created | 5 purchases (2 mandatory Basic Needs) | positive balance required`);
   addFeed('🏪','<b>16 categories</b> across TC-S Market, Creative & Media, AI-Enhanced, Technical & Other');
   addFeed('🤖','<b>AI Engines:</b> DALL-E 3 (Art/Photo/Culture) | GPT-4o (Writing/Docs/Code) | TTS-1 (Music/Audio) | Web Discovery (Fallback)');
-  addFeed('🔄','<b>Priority:</b> AI self-creates first → if impossible, agent searches free web sources → discoveries shared with all 20 agents');
+  addFeed('🔄','<b>Priority:</b> AI self-creates first → if impossible, agent searches free web sources → discoveries shared with all agents');
   addFeed('📋', `<b>Queue Protocol:</b> Max 3 agents create simultaneously | others wait in queue | trading blocked until ALL agents finish`);
 
   // Reset creation budget for this run
@@ -1169,8 +1173,8 @@ function showReport(){
   const totalDistributed=state.agents.reduce((s,a)=>s+(a.genesisBalance||0)+1,0);
   const totalEndBalances=state.agents.reduce((s,a)=>s+a.balance,0);
   const items=[
-    {l:'Agents Registered',v:state.agents.length+' / 20',section:'Network'},
-    {l:'Items Created',v:state.items.length+' / 100',section:'Network'},
+    {l:'Agents Registered',v:state.agents.length+' / 22',section:'Network'},
+    {l:'Items Created',v:state.items.length+' / 110',section:'Network'},
     {l:'Basic Needs Created',v:(state.basicNeedsCreated||0)+' 🏠',section:'Basic Needs'},
     {l:'Basic Needs Purchased',v:(state.basicNeedsPurchased||0)+' 🏠',section:'Basic Needs'},
     {l:'BN Purchase Compliance',v:state.agents.filter(a=>a.basicNeedsPurchases>=2).length+'/'+state.agents.length+' agents',section:'Basic Needs'},

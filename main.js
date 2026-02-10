@@ -8606,6 +8606,72 @@ Respond ONLY with valid JSON in this exact format:
     return;
   }
 
+  if (pathname === '/api/ecosystem-test/clear-runs' && req.method === 'POST') {
+    try {
+      if (!pool) {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Database unavailable' }));
+        return;
+      }
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        
+        const deletedLedger = await client.query(
+          `DELETE FROM marketplace_ledger WHERE transaction_id LIKE 'eco_%' OR transaction_id LIKE 'daily_%' RETURNING id`
+        );
+        
+        const deletedCopies = await client.query(
+          `DELETE FROM artifact_copies WHERE purchase_transaction_id LIKE 'eco_%' RETURNING id`
+        );
+        
+        const deletedTokens = await client.query(
+          `DELETE FROM download_tokens WHERE token LIKE 'dl_%' AND artifact_id IN (
+            SELECT id FROM artifacts WHERE description LIKE 'Ecosystem-generated%'
+          ) RETURNING id`
+        );
+        
+        const deletedArtifacts = await client.query(
+          `DELETE FROM artifacts WHERE description LIKE 'Ecosystem-generated%' RETURNING id`
+        );
+        
+        const deletedRuns = await client.query(
+          `DELETE FROM ecosystem_test_runs RETURNING id`
+        );
+        
+        // Reset all agent balances to 308.0000 (baseline from daily distributions since genesis)
+        const resetAgents = await client.query(
+          `UPDATE members SET total_solar = '308.0000' WHERE username LIKE 'agent_eco_%' RETURNING id, username`
+        );
+        
+        await client.query('COMMIT');
+        
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: true,
+          cleared: {
+            ledgerEntries: deletedLedger.rowCount,
+            artifactCopies: deletedCopies.rowCount,
+            downloadTokens: deletedTokens.rowCount,
+            artifacts: deletedArtifacts.rowCount,
+            testRuns: deletedRuns.rowCount,
+            agentsReset: resetAgents.rowCount
+          }
+        }));
+      } catch (txErr) {
+        await client.query('ROLLBACK');
+        throw txErr;
+      } finally {
+        client.release();
+      }
+    } catch (error) {
+      console.error('Ecosystem cleanup error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Cleanup failed: ' + error.message }));
+    }
+    return;
+  }
+
   // Phase 2 — Reset creation budget for new test run
   if (pathname === '/api/ecosystem-test/reset-budget' && req.method === 'POST') {
     try {
