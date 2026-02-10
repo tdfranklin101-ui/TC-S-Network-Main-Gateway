@@ -893,10 +893,10 @@ class MarketplaceApp {
       ` : ''}
       ${artifact.artifactClass === 'B' ? `
         <div style="display:inline-block;background:linear-gradient(135deg,rgba(0,255,170,0.15),rgba(0,200,255,0.1));border:1px solid rgba(0,255,170,0.4);padding:2px 8px;border-radius:4px;font-size:10px;color:#00ffaa;margin-bottom:8px;margin-left:4px;">
-          ${artifact.hasFile ? '📦 Class B • File Delivery' : '📄 Class B • Data Product'}
+          📦 File Delivery • ${(artifact.file_type || '').replace('digital-artifact','data').split('/').pop().toUpperCase() || 'FILE'} ${(artifact.tradeFileSize || artifact.masterFileSize) > 0 ? '• ' + marketplace.formatFileSize(artifact.tradeFileSize || artifact.masterFileSize) : ''}
         </div>
       ` : `
-        <div style="display:inline-block;background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.25);padding:2px 8px;border-radius:4px;font-size:10px;color:#FFD700;margin-bottom:8px;margin-left:4px;">⚡ Class A • Market Item</div>
+        <div style="display:inline-block;background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.25);padding:2px 8px;border-radius:4px;font-size:10px;color:#FFD700;margin-bottom:8px;margin-left:4px;">⚡ Market Item</div>
       `}
       
       <div class="artifact-description">
@@ -959,11 +959,12 @@ class MarketplaceApp {
         `;
       }
     } else if (this.currentUser) {
+      const isClassB = artifact.artifactClass === 'B';
       return `
         <button class="purchase-btn" onclick="event.stopPropagation(); marketplace.purchaseArtifact('${artifact.id}')">
-          💎 Purchase for ${this.formatPrice(artifact.solar_amount_s)} Solar
+          ${isClassB ? '💎 Purchase & Download' : '☀️ Acquire'} for ${this.formatPrice(artifact.solar_amount_s)} Solar
         </button>
-        ${artifact.file_type && (artifact.file_type.startsWith('video/') || artifact.file_type.startsWith('audio/')) ? `
+        ${isClassB && artifact.file_type && (artifact.file_type.startsWith('video/') || artifact.file_type.startsWith('audio/')) ? `
           <button class="preview-btn" onclick="event.stopPropagation(); marketplace.showVideoPreview('${artifact.id}')">
             ${artifact.file_type.startsWith('video/') ? '▶️ Preview Video' : '🎵 Preview Audio'}
           </button>
@@ -972,7 +973,7 @@ class MarketplaceApp {
     } else {
       return `
         <button class="purchase-btn" onclick="event.stopPropagation(); marketplace.showSignupModal()">
-          🚀 Join to Purchase & Download
+          🚀 Join to Purchase
         </button>
       `;
     }
@@ -1058,7 +1059,7 @@ class MarketplaceApp {
 
     const totalSize = (artifact.masterFileSize || artifact.master_file_size || 0) + (artifact.tradeFileSize || artifact.trade_file_size || 0);
     let fileInfoHtml = '';
-    if (hasFile || contentFormat) {
+    if ((artifact.artifactClass || 'A') === 'B' && (hasFile || contentFormat)) {
       fileInfoHtml = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px;background:rgba(0,255,255,0.03);border:1px solid #1a1a2e;border-radius:8px;margin-bottom:15px;font-size:12px;">' +
         '<div style="color:#888;">Type</div><div style="color:#fff;">' + (fileType || contentFormat || 'unknown') + '</div>' +
         (totalSize > 0 ? '<div style="color:#888;">File Size</div><div style="color:#fff;">' + this.formatFileSize(totalSize) + '</div>' : '') +
@@ -1072,15 +1073,20 @@ class MarketplaceApp {
       '<span style="background:linear-gradient(135deg,#28a745,#20c997);color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:bold;">👤 Human</span>';
 
     const classBadge = (artifact.artifactClass || 'A') === 'B' ?
-      '<span style="background:linear-gradient(135deg,#00ffaa,#00ccff);color:#000;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:bold;margin-left:6px;">' + (hasFile ? '📦 Class B' : '📄 Class B') + '</span>' :
-      '<span style="background:rgba(255,215,0,0.2);border:1px solid rgba(255,215,0,0.4);color:#FFD700;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:bold;margin-left:6px;">⚡ Class A</span>';
+      '<span style="background:linear-gradient(135deg,#00ffaa,#00ccff);color:#000;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:bold;margin-left:6px;">📦 File Delivery</span>' :
+      '<span style="background:rgba(255,215,0,0.2);border:1px solid rgba(255,215,0,0.4);color:#FFD700;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:bold;margin-left:6px;">⚡ Market Item</span>';
 
     const isOwner = this.currentUser && (artifact.creator_id === this.currentUser.id || artifact.creator_id === String(this.currentUser.userId));
     let actionButtonHtml = '';
+    const artClass = artifact.artifactClass || 'A';
     if (isOwner) {
       actionButtonHtml = '<button style="background:#28a745;color:#fff;border:none;padding:12px 24px;border-radius:8px;font-weight:bold;cursor:pointer;font-size:14px;width:100%;" onclick="marketplace.downloadOwnArtifact(\'' + artifact.id + '\'); document.body.removeChild(this.closest(\'.video-preview-modal\'));">📥 Download Your Artifact</button>';
     } else if (this.currentUser) {
-      actionButtonHtml = '<button style="background:linear-gradient(135deg,#FFD700,#FFA500);color:#000;border:none;padding:12px 24px;border-radius:8px;font-weight:bold;cursor:pointer;font-size:14px;width:100%;" onclick="marketplace.purchaseArtifact(\'' + artifact.id + '\'); document.body.removeChild(this.closest(\'.video-preview-modal\'));">💎 Purchase for ' + this.formatPrice(artifact.solarPrice || artifact.solar_amount_s) + ' Solar</button>';
+      if (artClass === 'B') {
+        actionButtonHtml = '<button style="background:linear-gradient(135deg,#FFD700,#FFA500);color:#000;border:none;padding:12px 24px;border-radius:8px;font-weight:bold;cursor:pointer;font-size:14px;width:100%;" onclick="marketplace.purchaseArtifact(\'' + artifact.id + '\'); document.body.removeChild(this.closest(\'.video-preview-modal\'));">💎 Purchase & Download for ' + this.formatPrice(artifact.solarPrice || artifact.solar_amount_s) + ' Solar</button>';
+      } else {
+        actionButtonHtml = '<button style="background:linear-gradient(135deg,#FFD700,#B8860B);color:#000;border:none;padding:12px 24px;border-radius:8px;font-weight:bold;cursor:pointer;font-size:14px;width:100%;" onclick="marketplace.purchaseArtifact(\'' + artifact.id + '\'); document.body.removeChild(this.closest(\'.video-preview-modal\'));">☀️ Acquire for ' + this.formatPrice(artifact.solarPrice || artifact.solar_amount_s) + ' Solar</button>';
+      }
     } else {
       actionButtonHtml = '<button style="background:linear-gradient(135deg,#00ffff,#0066ff);color:#000;border:none;padding:12px 24px;border-radius:8px;font-weight:bold;cursor:pointer;font-size:14px;width:100%;" onclick="showSignupModal(); document.body.removeChild(this.closest(\'.video-preview-modal\'));">🚀 Join to Purchase</button>';
     }
@@ -1194,9 +1200,11 @@ class MarketplaceApp {
       const artifact = this.artifacts.find(a => a.id === artifactId);
       if (!artifact) return;
 
-      // Confirm purchase
+      const isClassB = artifact.artifactClass === 'B';
       const confirmed = confirm(
-        `Purchase "${artifact.title}" for ${this.formatPrice(artifact.solar_amount_s)} Solar?`
+        isClassB 
+          ? `Purchase & Download "${artifact.title}" for ${this.formatPrice(artifact.solar_amount_s)} Solar?\n\nThis includes file delivery.`
+          : `Acquire "${artifact.title}" for ${this.formatPrice(artifact.solar_amount_s)} Solar?\n\nThis is a market item (no file delivery).`
       );
       
       if (!confirmed) return;
@@ -1213,8 +1221,11 @@ class MarketplaceApp {
       if (data.success) {
         console.log('Purchase successful');
         
+        const purchasedArtifact = this.artifacts.find(a => a.id === artifactId);
+        const purchasedClass = purchasedArtifact ? purchasedArtifact.artifactClass : 'A';
+
         let deliveryHtml = '';
-        if (data.downloadUrl) {
+        if (purchasedClass === 'B' && data.downloadUrl) {
           deliveryHtml = `
             <p style="margin: 15px 0; color: #ccc;">Your file is ready for download:</p>
             <a href="${data.downloadUrl}" download="${artifact.title}" 
@@ -1224,11 +1235,17 @@ class MarketplaceApp {
             <p style="margin-top: 12px; font-size: 12px; color: #888;">
               Download link expires in ${data.expiresIn || '7 days'} (up to 10 downloads)
             </p>`;
-        } else if (data.isTextOnly) {
+        } else if (purchasedClass === 'B' && data.isTextOnly) {
           deliveryHtml = `
             <p style="margin: 15px 0; color: #ccc;">This is a text-based artifact — the content is now in your collection.</p>
             <div style="background: rgba(0,255,255,0.05); border: 1px solid #333; border-radius: 8px; padding: 12px; margin: 10px; text-align: left; font-size: 12px; color: #aaa;">
               Format: <strong style="color:#fff;">${data.contentFormat || 'text'}</strong>
+            </div>`;
+        } else if (purchasedClass === 'A') {
+          deliveryHtml = `
+            <p style="margin: 15px 0; color: #ccc;">This market item has been added to your collection.</p>
+            <div style="background: rgba(255,215,0,0.05); border: 1px solid rgba(255,215,0,0.2); border-radius: 8px; padding: 12px; margin: 10px; text-align: center; font-size: 13px; color: #FFD700;">
+              ⚡ Market Item — No file delivery
             </div>`;
         } else {
           deliveryHtml = `<p style="margin: 15px 0; color: #ccc;">Artifact added to your collection.</p>`;
