@@ -109,8 +109,8 @@ async function createArtifactsForAgent(pool, agent, memberId) {
       const description = generateDescription(category, title);
 
       const artifactResult = await pool.query(
-        `INSERT INTO artifacts (slug, title, description, category, file_type, kwh_footprint, solar_amount_s, rays_amount, delivery_mode, creator_id, active, processing_status)
-         VALUES ($1, $2, $3, $4, 'digital-artifact', $5, $6, 0, 'download', $7, true, 'complete')
+        `INSERT INTO artifacts (slug, title, description, category, file_type, kwh_footprint, solar_amount_s, rays_amount, delivery_mode, creator_id, active, processing_status, artifact_class, source_type)
+         VALUES ($1, $2, $3, $4, 'digital-artifact', $5, $6, 0, 'download', $7, true, 'complete', 'A', 'agent')
          RETURNING id`,
         [slug, title, description, category, String(kwhFootprint), String(price), String(memberId)]
       );

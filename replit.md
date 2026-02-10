@@ -21,6 +21,17 @@ All Solar balance operations MUST use `members.total_solar` as the single source
 
 Content files are offloaded to Replit Object Storage, with the database storing lightweight metadata and actual content files living in cloud storage. Every marketplace transaction charges a 5% Foundation fee, recorded as a third ledger entry, which funds grant petitions for human-needs projects. All members (human and agent) have unified profile pages displaying identity, activity, assets, and grants (for agents).
 
+### Artifact Classification System (Class A / Class B)
+The marketplace uses a two-class artifact system tracked by the `artifact_class` column in the `artifacts` table (NOT NULL, default 'A'):
+
+- **Class A** ("⚡ Market Item"): Metadata-only transactional artifacts created by agent daily tasks (`server/agent-daily-tasks.js`). These drive market dynamics, Solar flow, and pricing. No physical file delivery. `file_type = 'digital-artifact'`. Created with `artifact_class = 'A'`.
+
+- **Class B** ("📦 File Delivery" or "📄 Data Product"): Full product artifacts with real files (cloud:// URLs in Object Storage) or self-contained text content (`content_body`). Created by: agent MCP uploads (`server/agentArtifactGenerator.js`), human file uploads, and ecosystem auto-creation. Always set `artifact_class = 'B'`.
+
+API responses include `artifactClass` field. UI shows distinct badges: gold for Class A, green gradient for Class B. The universal detail modal (`showUniversalDetailModal` in `public/js/marketplace.js`) renders type-specific previews (audio player, video player, code blocks, CSV tables, images, markdown) and shows class/creator badges.
+
+Key endpoints: `/api/artifacts/available` (list all with class), `/api/artifacts/{id}/detail` (info-rich detail), `/api/artifacts/{id}/stream-preview` (binary streaming with Range support for cloud://, HTTP, and local files), `/api/artifacts/{id}/preview` (JSON metadata).
+
 The system incorporates an RBAC system with 5 roles and requires scoped admin keys for privileged operations. Security features include intent logging, replay protection, and `validateWithRBAC` for permission checks across 18 privileged routes. A WPC (Watts Per Compute) module provides universal compute-energy intelligence, including functions for estimating FLOPs, energy, and converting units.
 
 ## External Dependencies

@@ -3801,10 +3801,10 @@ const server = http.createServer(async (req, res) => {
               master_file_url, preview_file_url, trade_file_url,
               master_file_size, preview_file_size, trade_file_size,
               file_duration, preview_duration, preview_type, preview_slug,
-              processing_status, search_tags, created_at
+              processing_status, search_tags, artifact_class, created_at
             ) VALUES (
               $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
-              $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, NOW()
+              $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, 'B', NOW()
             ) RETURNING id, slug, solar_amount_s
           `;
           
@@ -6704,7 +6704,7 @@ const server = http.createServer(async (req, res) => {
           SELECT a.id, a.title, a.description, a.category, a.file_type, a.kwh_footprint, a.solar_amount_s, 
                  a.is_bonus, a.cover_art_url, a.delivery_mode, a.creator_id, 
                  a.streaming_url, a.preview_type, a.preview_slug, a.search_tags, a.preview_file_url, 
-                 a.master_file_url, a.trade_file_url,
+                 a.master_file_url, a.trade_file_url, a.artifact_class,
                  a.master_file_size, a.trade_file_size, a.preview_file_size,
                  a.content_format, a.source_type, a.processing_status, a.created_at,
                  m.metadata as market_metadata, m.source_type as market_source_type,
@@ -6757,6 +6757,7 @@ const server = http.createServer(async (req, res) => {
             sourceType: artifact.source_type || (artifact.creator_is_agent ? 'agent' : 'human'),
             processingStatus: artifact.processing_status || 'pending',
             hasFile: !!(artifact.master_file_url || artifact.trade_file_url),
+            artifactClass: artifact.artifact_class || 'A',
             createdAt: artifact.created_at,
             ecosystemTest: meta.ecosystemTest || false,
             uploadType: meta.uploadType || null
@@ -6915,6 +6916,7 @@ const server = http.createServer(async (req, res) => {
           searchTags: a.search_tags || [], contentFormat: a.content_format,
           sourceType: a.source_type || (a.creator_is_agent ? 'agent' : 'human'),
           hasFile, contentPreview,
+          artifactClass: a.artifact_class || 'A',
           masterFileSize: a.master_file_size || 0, tradeFileSize: a.trade_file_size || 0,
           previewFileSize: a.preview_file_size || 0,
           fileDuration: a.file_duration, previewDuration: a.preview_duration,
@@ -9073,10 +9075,10 @@ Respond ONLY with valid JSON in this exact format:
               master_file_url, preview_file_url, trade_file_url,
               master_file_size, preview_file_size, trade_file_size,
               file_duration, preview_duration, preview_type, preview_slug,
-              processing_status, search_tags, content_body, content_format, source_type, created_at
+              processing_status, search_tags, content_body, content_format, source_type, artifact_class, created_at
             ) VALUES (
               $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
-              $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, NOW()
+              $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, 'B', NOW()
             ) RETURNING id, slug, solar_amount_s
           `;
 
@@ -10139,8 +10141,8 @@ Respond ONLY with valid JSON in this exact format:
           const newArt = await pool.query(
             `INSERT INTO artifacts (title, description, category, solar_amount_s, creator_id, delivery_mode, active,
              master_file_url, trade_file_url, preview_file_url, master_file_size, trade_file_size, preview_file_size,
-             file_type, processing_status, content_body, content_format, source_type)
-             VALUES ($1, $2, $3, $4, $5, 'download', true, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING id`,
+             file_type, processing_status, content_body, content_format, source_type, artifact_class)
+             VALUES ($1, $2, $3, $4, $5, 'download', true, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, 'B') RETURNING id`,
             [itemName, `Ecosystem-generated ${cat.toLowerCase()} artifact`, cat, String(price), String(sellerId),
              masterUrl, tradeUrl, previewUrl, masterSize, tradeSize, previewSize, fileType, processingStatus,
              null, contentFormat2, 'agent']
@@ -10724,8 +10726,8 @@ Respond ONLY with valid JSON in this exact format:
           );
           const creatorId = sellerEntry.rows.length > 0 ? sellerEntry.rows[0].account_id : 'system';
           const insertArt = await pool.query(
-            `INSERT INTO artifacts (title, description, category, solar_amount_s, creator_id, active)
-             VALUES ($1, $2, $3, $4, $5, true) RETURNING id`,
+            `INSERT INTO artifacts (title, description, category, solar_amount_s, creator_id, active, artifact_class)
+             VALUES ($1, $2, $3, $4, $5, true, 'B') RETURNING id`,
             [title, `Ecosystem-generated ${cat.toLowerCase()} artifact`, cat, String(row.amount), creatorId]
           );
           artResult = { rows: [{ id: insertArt.rows[0].id }] };

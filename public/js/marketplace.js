@@ -210,7 +210,8 @@ class MarketplaceApp {
               creatorUsername: String(artifact.creator_username || artifact.creatorUsername || '').trim(),
               masterFileSize: parseInt(artifact.master_file_size || artifact.masterFileSize) || 0,
               tradeFileSize: parseInt(artifact.trade_file_size || artifact.tradeFileSize) || 0,
-              previewFileSize: parseInt(artifact.preview_file_size || artifact.previewFileSize) || 0
+              previewFileSize: parseInt(artifact.preview_file_size || artifact.previewFileSize) || 0,
+              artifactClass: String(artifact.artifact_class || artifact.artifactClass || 'A').trim()
             };
           } catch (normalizationError) {
             console.warn(`Error normalizing artifact at index ${index}:`, normalizationError);
@@ -890,9 +891,13 @@ class MarketplaceApp {
       ${artifact.sourceType === 'agent' || artifact.creatorIsAgent ? `
         <div style="display:inline-block;background:linear-gradient(135deg,#00ffff22,#0066ff22);border:1px solid #00ffff44;padding:2px 8px;border-radius:4px;font-size:10px;color:#00ffff;margin-bottom:8px;">🤖 Agent Created</div>
       ` : ''}
-      ${artifact.hasFile ? `
-        <div style="display:inline-block;background:rgba(40,167,69,0.1);border:1px solid rgba(40,167,69,0.3);padding:2px 8px;border-radius:4px;font-size:10px;color:#28a745;margin-bottom:8px;margin-left:4px;">📦 File Delivery</div>
-      ` : ''}
+      ${artifact.artifactClass === 'B' ? `
+        <div style="display:inline-block;background:linear-gradient(135deg,rgba(0,255,170,0.15),rgba(0,200,255,0.1));border:1px solid rgba(0,255,170,0.4);padding:2px 8px;border-radius:4px;font-size:10px;color:#00ffaa;margin-bottom:8px;margin-left:4px;">
+          ${artifact.hasFile ? '📦 Class B • File Delivery' : '📄 Class B • Data Product'}
+        </div>
+      ` : `
+        <div style="display:inline-block;background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.25);padding:2px 8px;border-radius:4px;font-size:10px;color:#FFD700;margin-bottom:8px;margin-left:4px;">⚡ Class A • Market Item</div>
+      `}
       
       <div class="artifact-description">
         ${this.escapeHtml(artifact.description || 'No description available').substring(0, 120)}...
@@ -1066,6 +1071,10 @@ class MarketplaceApp {
       '<span style="background:linear-gradient(135deg,#00ffff,#0066ff);color:#000;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:bold;">🤖 AI Agent</span>' :
       '<span style="background:linear-gradient(135deg,#28a745,#20c997);color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:bold;">👤 Human</span>';
 
+    const classBadge = (artifact.artifactClass || 'A') === 'B' ?
+      '<span style="background:linear-gradient(135deg,#00ffaa,#00ccff);color:#000;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:bold;margin-left:6px;">' + (hasFile ? '📦 Class B' : '📄 Class B') + '</span>' :
+      '<span style="background:rgba(255,215,0,0.2);border:1px solid rgba(255,215,0,0.4);color:#FFD700;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:bold;margin-left:6px;">⚡ Class A</span>';
+
     const isOwner = this.currentUser && (artifact.creator_id === this.currentUser.id || artifact.creator_id === String(this.currentUser.userId));
     let actionButtonHtml = '';
     if (isOwner) {
@@ -1090,6 +1099,7 @@ class MarketplaceApp {
           '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">' +
             '<span style="font-size:16px;">' + catIcon + ' ' + this.formatCategory(artifact.category) + '</span>' +
             creatorBadge +
+            classBadge +
           '</div>' +
           '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:13px;color:#aaa;">' +
             '<span>By: <strong style="color:#fff;">' + this.escapeHtml(creatorDisplay) + '</strong></span>' +
