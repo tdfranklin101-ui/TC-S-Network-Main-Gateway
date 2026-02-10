@@ -2872,8 +2872,8 @@ async function getOrCreateFoundationMember(client) {
     return { id: row.id, username: row.username, totalSolar: parseFloat(row.total_solar) || 0 };
   }
   const inserted = await queryFn(
-    `INSERT INTO members (username, name, email, total_solar, is_agent, password_hash)
-     VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, username, total_solar`,
+    `INSERT INTO members (username, name, email, total_solar, total_dollars, is_agent, password_hash)
+     VALUES ($1, $2, $3, $4, 0, $5, $6) RETURNING id, username, total_solar`,
     [FOUNDATION_USERNAME, 'TC-S Foundation Reserve', 'foundation@thecurrentsee.org', '0.0000', false, '$2b$12$foundationreservewallet000000000000000000000000000']
   );
   const row = inserted.rows[0];
