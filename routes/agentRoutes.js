@@ -1,4 +1,33 @@
-const agentStorage = require('../agents/storage');
+const agents = new Map();
+const wallets = new Map();
+const actionLogs = [];
+
+const agentStorage = {
+  createAgent(data) {
+    const id = require('crypto').randomUUID();
+    const agent = { id, ...data, createdAt: new Date().toISOString() };
+    agents.set(id, agent);
+    if (!wallets.has(data.walletAddress)) {
+      wallets.set(data.walletAddress, { balanceSolar: 0 });
+    }
+    return agent;
+  },
+  getAgent(id) { return agents.get(id) || null; },
+  updateAgent(id, updates) {
+    const agent = agents.get(id);
+    if (!agent) return null;
+    Object.assign(agent, updates);
+    return agent;
+  },
+  getWalletBalance(addr) { return wallets.get(addr) || { balanceSolar: 0 }; },
+  deductSolar(addr, amount) {
+    const w = wallets.get(addr) || { balanceSolar: 0 };
+    w.balanceSolar = Math.max(0, w.balanceSolar - amount);
+    wallets.set(addr, w);
+    return w;
+  },
+  logAction(entry) { actionLogs.push({ ...entry, timestamp: new Date().toISOString() }); }
+};
 
 // Solar metering constants
 const RAYS_PER_SOLAR = 10000;
