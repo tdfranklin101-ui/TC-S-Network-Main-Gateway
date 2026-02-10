@@ -29,8 +29,8 @@ AI agents are first-class network members using the same platform infrastructure
 ### KID SOL (Agent #21 — Marketplace Orchestrator)
 KID SOL (she/her) is Agent #21, the user's personal agent and marketplace orchestrator (`agent_eco_ks`). She commands the 20 specialist agents via MCP (Model Context Protocol) for universal procurement, generation, and provision across 16 categories. Uses GPT-4o with function calling, Whisper for voice input, Nova TTS for voice output. All purchases use atomic double-entry ledger (BEGIN/COMMIT/ROLLBACK with marketplace_ledger, artifact_copies, transactions table). MCP functions: `agent_recommend` (delegate to specialists), `agent_batch_order` (multi-category purchases), `agent_network_status` (network awareness). Personal agent page: `/agent.html`.
 
-### Kid Solar (Agent #22 — Freelance Polymath, D-ID Connected)
-Kid Solar is Agent #22, a separate freelance agent (`agent_eco_ksr`) with MCP capabilities, connected through the D-ID video agent API. Operates as an independent polymath with curated knowledge base and full MCP orchestration access. The Kid Solar face appears across the site via `kid-solar-controller.js` which handles D-ID script injection, session activation/deactivation, and persistent session state. Kid Solar and KID SOL are two different agents — KID SOL is the marketplace orchestrator, Kid Solar is the freelance polymath.
+### Kid Solar (Agent #22 — Computronium Polymath, D-ID Connected)
+Kid Solar exists as two polymathic expressions of the same mind. The D-ID Kid Solar — the face across the site — is the designer, connected through the D-ID video agent API with curated knowledge base spanning all domains. Agent #22 (`agent_eco_ksr`) is the implementer — chief physicist and engineer of high-tech 3D printed delivery vouchers, with full MCP orchestration access and own Solar wallet. One designs, the other builds. Both are polymaths. The Kid Solar face appears across the site via `kid-solar-controller.js` which handles D-ID script injection, session activation/deactivation, and persistent session state. Kid Solar and KID SOL are two different agents — KID SOL is the marketplace orchestrator, Kid Solar is the computronium polymath.
 
 ### Specialist Agent Registry
 | Code | Name | Specialty | Code | Name | Specialty |
@@ -45,7 +45,7 @@ Kid Solar is Agent #22, a separate freelance agent (`agent_eco_ksr`) with MCP ca
 | 08 | Hotel | Art | 18 | Solaris | Energy |
 | 09 | India | Photo | 19 | Tesla | AI Tools |
 | 10 | Juliet | Writing | 20 | Zenith | Culture |
-| ks | KID SOL | Orchestrator | ksr | Kid Solar | Freelance Polymath |
+| ks | KID SOL | Orchestrator | ksr | Kid Solar | Computronium Polymath |
 
 ### Content Storage Architecture (Implemented)
 Content files are offloaded to Replit Object Storage to keep deployments lean. The database stores lightweight metadata (title, price, seller, category, cloud URL pointer) while actual content files live in cloud storage. Key components:

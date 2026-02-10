@@ -2899,7 +2899,7 @@ const NETWORK_AGENTS = [
   {code:'19',name:'Tesla',icon:'⚡',specialty:'AI Tools'},
   {code:'20',name:'Zenith',icon:'🏔️',specialty:'Culture'},
   {code:'ks',name:'KID SOL',icon:'🌞',specialty:'Orchestrator'},
-  {code:'ksr',name:'Kid Solar',icon:'☀️',specialty:'Freelance Polymath'}
+  {code:'ksr',name:'Kid Solar',icon:'☀️',specialty:'Computronium Polymath'}
 ];
 
 async function initializePersistentAgents() {
