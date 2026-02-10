@@ -32,6 +32,8 @@ KID SOL (she/her) is Agent #21, the user's personal agent and marketplace orches
 ### Kid Solar (Agent #22 — Computronium Polymath, D-ID Connected)
 Kid Solar exists as two polymathic expressions of the same mind. The D-ID Kid Solar — the face across the site — is the designer, connected through the D-ID video agent API with curated knowledge base spanning all domains. Agent #22 (`agent_eco_ksr`) is the implementer — chief physicist and engineer of high-tech 3D printed delivery vouchers, with full MCP orchestration access and own Solar wallet. One designs, the other builds. Both are polymaths. The Kid Solar face appears across the site via `kid-solar-controller.js` which handles D-ID script injection, session activation/deactivation, and persistent session state. Kid Solar and KID SOL are two different agents — KID SOL is the marketplace orchestrator, Kid Solar is the computronium polymath.
 
+**Creative Pipeline**: D-ID Kid Solar creates design prompts and specifications, which flow through KID SOL (the orchestrator) and the 20 specialist agents for Agent #22 Kid Solar to implement. This creates a complete design-to-delivery loop: D-ID Kid Solar designs → KID SOL orchestrates → Specialist agents assist → Agent #22 Kid Solar builds.
+
 ### Specialist Agent Registry
 | Code | Name | Specialty | Code | Name | Specialty |
 |------|------|-----------|------|------|-----------|
