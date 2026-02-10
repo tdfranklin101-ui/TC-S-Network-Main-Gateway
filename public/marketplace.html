@@ -6984,6 +6984,77 @@
 
             html += '</div>';
 
+            var maslowMap = {
+                'music':         { primary: 'Self-Actualization', secondary: 'Love/Belonging', tertiary: 'Esteem', desc: 'Music fulfills creative expression and emotional connection. It elevates mood (physiological well-being), creates shared experience (belonging), and channels artistic identity (self-actualization).' },
+                'video':         { primary: 'Self-Actualization', secondary: 'Esteem', tertiary: 'Love/Belonging', desc: 'Video content serves learning, storytelling, and cultural participation. It builds knowledge (growth), offers entertainment (variety), and connects communities through shared narratives.' },
+                'art':           { primary: 'Self-Actualization', secondary: 'Transcendence', tertiary: 'Esteem', desc: 'Visual art addresses the highest human drives — creative expression, beauty, and meaning-making. It inspires awe (transcendence) while affirming the creator\'s and collector\'s identity.' },
+                'image':         { primary: 'Esteem', secondary: 'Self-Actualization', tertiary: 'Love/Belonging', desc: 'Images serve documentation, identity expression, and communication. They preserve memories (safety/stability), signal identity (esteem), and share experiences (connection).' },
+                'photo':         { primary: 'Esteem', secondary: 'Self-Actualization', tertiary: 'Love/Belonging', desc: 'Photography captures moments and perspectives. It preserves memories (safety), expresses vision (self-actualization), and shares human experience (belonging).' },
+                'photography':   { primary: 'Esteem', secondary: 'Self-Actualization', tertiary: 'Love/Belonging', desc: 'Photography captures moments and perspectives. It preserves memories (safety), expresses vision (self-actualization), and shares human experience (belonging).' },
+                'software':      { primary: 'Safety', secondary: 'Esteem', tertiary: 'Self-Actualization', desc: 'Software tools provide stability and capability (safety), enable productivity and competence (esteem), and unlock creative potential (self-actualization). They reduce friction in daily life.' },
+                'ai tools':      { primary: 'Self-Actualization', secondary: 'Esteem', tertiary: 'Safety', desc: 'AI tools amplify human capability, enabling growth beyond current limits. They provide competitive advantage (esteem), creative leverage (self-actualization), and operational security (safety).' },
+                'code tools':    { primary: 'Esteem', secondary: 'Self-Actualization', tertiary: 'Safety', desc: 'Code tools serve builders — enabling competence (esteem), creative engineering (self-actualization), and reliable infrastructure (safety).' },
+                'writing':       { primary: 'Self-Actualization', secondary: 'Love/Belonging', tertiary: 'Esteem', desc: 'Written works serve knowledge transfer, emotional expression, and intellectual growth. They connect minds across time (transcendence) and build understanding (belonging).' },
+                'docs':          { primary: 'Safety', secondary: 'Esteem', tertiary: 'Self-Actualization', desc: 'Documents provide structure, reference, and institutional memory. They create stability (safety), demonstrate expertise (esteem), and organize knowledge (growth).' },
+                'basic needs':   { primary: 'Physiological', secondary: 'Safety', tertiary: 'Love/Belonging', desc: 'Basic needs items directly serve survival and stability — food, shelter, health, and security. These are foundational; without them, higher needs cannot be pursued.' },
+                'energy':        { primary: 'Safety', secondary: 'Physiological', tertiary: 'Transcendence', desc: 'Energy is foundational infrastructure. It enables survival (physiological), provides stability (safety), and through renewable sources, serves planetary stewardship (transcendence).' },
+                'default':       { primary: 'Esteem', secondary: 'Self-Actualization', tertiary: 'Love/Belonging', desc: 'This artifact serves multiple needs across the hierarchy — from practical utility to personal expression and community participation in the Solar economy.' }
+            };
+            var robbinsMap = {
+                'music':         { top: 'Variety', second: 'Connection', third: 'Significance', desc: 'Music delivers novelty and emotional range (variety), bonds listeners (connection), and distinguishes taste and identity (significance).' },
+                'video':         { top: 'Variety', second: 'Growth', third: 'Connection', desc: 'Video offers new perspectives (variety), teaches and informs (growth), and creates shared cultural moments (connection).' },
+                'art':           { top: 'Significance', second: 'Growth', third: 'Contribution', desc: 'Art creates uniqueness and meaning (significance), expands perception (growth), and when shared, enriches culture (contribution).' },
+                'image':         { top: 'Connection', second: 'Significance', third: 'Certainty', desc: 'Images create shared understanding (connection), express identity (significance), and document reality (certainty).' },
+                'photo':         { top: 'Connection', second: 'Significance', third: 'Certainty', desc: 'Photos bridge distance and time (connection), capture meaningful moments (significance), and preserve memories (certainty).' },
+                'photography':   { top: 'Connection', second: 'Significance', third: 'Certainty', desc: 'Photos bridge distance and time (connection), capture meaningful moments (significance), and preserve memories (certainty).' },
+                'software':      { top: 'Certainty', second: 'Growth', third: 'Significance', desc: 'Software provides reliable tools (certainty), enables skill development (growth), and creates competitive advantage (significance).' },
+                'ai tools':      { top: 'Growth', second: 'Certainty', third: 'Significance', desc: 'AI tools accelerate learning (growth), automate routine work (certainty), and amplify individual capability (significance).' },
+                'code tools':    { top: 'Certainty', second: 'Growth', third: 'Contribution', desc: 'Code tools provide reliable development environments (certainty), enable continuous improvement (growth), and support building for others (contribution).' },
+                'writing':       { top: 'Growth', second: 'Connection', third: 'Contribution', desc: 'Writing expands understanding (growth), connects minds (connection), and leaves knowledge for others (contribution).' },
+                'docs':          { top: 'Certainty', second: 'Growth', third: 'Contribution', desc: 'Documents reduce ambiguity (certainty), organize learning (growth), and create institutional knowledge (contribution).' },
+                'basic needs':   { top: 'Certainty', second: 'Connection', third: 'Growth', desc: 'Basic needs items provide comfort and predictability (certainty), sustain family and community bonds (connection), and free energy for higher pursuits (growth).' },
+                'energy':        { top: 'Certainty', second: 'Contribution', third: 'Growth', desc: 'Energy provides reliable power (certainty), renewable sources serve planetary health (contribution), and new energy tech drives innovation (growth).' },
+                'default':       { top: 'Variety', second: 'Growth', third: 'Connection', desc: 'This artifact brings novelty to the network (variety), supports learning or creative expansion (growth), and participates in community exchange (connection).' }
+            };
+
+            var mKey = catLower;
+            var maslow = maslowMap[mKey] || maslowMap['default'];
+            var robbins = robbinsMap[mKey] || robbinsMap['default'];
+
+            html += '<div class="detail-section" style="background:rgba(255,140,0,0.05);border-color:rgba(255,140,0,0.25);">';
+            html += '<div class="detail-section-label" style="color:#ff8c00;">\ud83d\udcd6 Rob Low Analysis</div>';
+
+            html += '<div style="font-size:12px;color:#bbb;line-height:1.6;margin-bottom:14px;padding:10px 12px;background:rgba(255,140,0,0.04);border-radius:8px;border-left:3px solid rgba(255,140,0,0.4);">';
+            html += '<b style="color:#ffa500;">What is Rob Low?</b> Rob Low (Robbins + Maslow) is a LifeLens output that maps every artifact against two foundational human needs frameworks: <b style="color:#00bfff;">Maslow\'s Hierarchy</b> (Physiological \u2192 Safety \u2192 Belonging \u2192 Esteem \u2192 Self-Actualization \u2192 Transcendence) and <b style="color:#8a2be2;">Robbins\' 6 Core Needs</b> (Certainty, Variety, Significance, Connection, Growth, Contribution). ';
+            html += 'It helps you understand <em>why</em> this item matters to you \u2014 not just what it costs. You are integral: the item is one variable, your goals and context complete the meaning.';
+            html += '</div>';
+
+            html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">';
+
+            html += '<div style="padding:12px;background:rgba(0,191,255,0.08);border:1px solid rgba(0,191,255,0.2);border-radius:8px;">';
+            html += '<div style="font-size:10px;color:#00bfff;text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:8px;">Maslow\u2019s Hierarchy</div>';
+            html += '<div style="font-size:12px;color:#ccc;line-height:1.5;">';
+            html += '<div style="margin-bottom:6px;"><span style="color:#00ff88;font-weight:700;">\u25b2 Primary:</span> <span style="color:#fff;">' + escapeHtml(maslow.primary) + '</span></div>';
+            html += '<div style="margin-bottom:6px;"><span style="color:#00bfff;font-weight:600;">\u25b3 Secondary:</span> ' + escapeHtml(maslow.secondary) + '</div>';
+            html += '<div style="margin-bottom:8px;"><span style="color:#888;">\u25b3 Tertiary:</span> ' + escapeHtml(maslow.tertiary) + '</div>';
+            html += '<div style="font-size:11px;color:#aaa;font-style:italic;line-height:1.5;">' + escapeHtml(maslow.desc) + '</div>';
+            html += '</div></div>';
+
+            html += '<div style="padding:12px;background:rgba(138,43,226,0.08);border:1px solid rgba(138,43,226,0.2);border-radius:8px;">';
+            html += '<div style="font-size:10px;color:#8a2be2;text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:8px;">Robbins\u2019 Core Needs</div>';
+            html += '<div style="font-size:12px;color:#ccc;line-height:1.5;">';
+            html += '<div style="margin-bottom:6px;"><span style="color:#00ff88;font-weight:700;">\u25b2 Primary:</span> <span style="color:#fff;">' + escapeHtml(robbins.top) + '</span></div>';
+            html += '<div style="margin-bottom:6px;"><span style="color:#8a2be2;font-weight:600;">\u25b3 Secondary:</span> ' + escapeHtml(robbins.second) + '</div>';
+            html += '<div style="margin-bottom:8px;"><span style="color:#888;">\u25b3 Tertiary:</span> ' + escapeHtml(robbins.third) + '</div>';
+            html += '<div style="font-size:11px;color:#aaa;font-style:italic;line-height:1.5;">' + escapeHtml(robbins.desc) + '</div>';
+            html += '</div></div>';
+
+            html += '</div>';
+
+            html += '<div style="font-size:10px;color:#666;font-style:italic;text-align:center;">Pattern-aware guidance \u2014 you are integral, the item is one variable. <a href="https://ia-rl-v-1--tdfranklin101.replit.app/" target="_blank" rel="noopener" style="color:#ff8c00;text-decoration:none;">Open full LifeLens \u2192</a></div>';
+
+            html += '</div>';
+
             var extraLinks = '';
             if (isAudio) extraLinks = '<span style="color:#444;margin:0 6px;">|</span><a href="https://freemusicarchive.org/search?quicksearch=' + sq + '" target="_blank" rel="noopener">\ud83c\udfb5 Free Music Archive</a>';
             if (isVisual) extraLinks = '<span style="color:#444;margin:0 6px;">|</span><a href="https://unsplash.com/s/photos/' + sq + '" target="_blank" rel="noopener">\ud83d\udcf7 Unsplash</a>';
