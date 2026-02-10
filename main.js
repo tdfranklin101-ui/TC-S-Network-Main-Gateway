@@ -14157,18 +14157,16 @@ setImmediate(() => {
       console.log('📌 Use manual trigger: POST /api/agents/daily-tasks/trigger');
     }
 
-    // Initialize Daily Solar Greeting Video (async, non-blocking)
+    // Initialize Daily Solar Greeting Video (cron only, no startup generation)
     // Regenerates at UTC midnight to always serve fresh date
-    // Delayed 60s to avoid memory pressure during startup
-    setTimeout(() => {
-      try {
-        generateDailySolarGreeting();
-        cron.schedule('0 0 * * *', generateDailySolarGreeting);
-        console.log('🌅 Daily Solar Greeting: Scheduled for 00:00 UTC midnight');
-      } catch (error) {
-        console.warn('⚠️ Daily greeting video scheduling failed:', error.message);
-      }
-    }, 60000);
+    // Manual trigger available: POST /api/solar-greeting/regenerate
+    try {
+      cron.schedule('0 0 * * *', generateDailySolarGreeting);
+      console.log('🌅 Daily Solar Greeting: Scheduled for 00:00 UTC midnight');
+      console.log('📌 Manual trigger: POST /api/solar-greeting/regenerate');
+    } catch (error) {
+      console.warn('⚠️ Daily greeting video scheduling failed:', error.message);
+    }
     
     // Initialize Solar Audit Layer (SAi-Audit)
     try {
