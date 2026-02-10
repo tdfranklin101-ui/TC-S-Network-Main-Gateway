@@ -4,256 +4,402 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KID SOL — Your Personal Agent | TC-S Network</title>
-    <meta name="description" content="KID SOL is your personal AI agent and orchestrator of the TC-S Network's 20 specialist agents across 16 marketplace categories.">
+    <meta name="description" content="The tale of KID SOL, Agent #21, marketplace orchestrator of the TC-S Network's 22 programmable agents — and the Solar economy they power.">
     <link rel="canonical" href="https://www.thecurrentsee.org/agent.html">
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
-        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#000;color:#fff;min-height:100vh;line-height:1.6}
-        .header{background:rgba(0,0,0,0.95);border-bottom:1px solid rgba(0,255,255,0.3);padding:15px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100;backdrop-filter:blur(10px)}
-        .header-left .header-title{font-size:22px;font-weight:bold;color:#00ffff}
-        .header-left .header-subtitle{font-size:13px;color:#888}
+        body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,sans-serif;background:#000;color:#fff;min-height:100vh;line-height:1.8}
+        .header{background:rgba(0,0,0,0.95);border-bottom:1px solid rgba(0,255,255,0.2);padding:15px 24px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100;backdrop-filter:blur(12px)}
+        .header-left .header-title{font-size:20px;font-weight:bold;color:#00ffff}
+        .header-left .header-subtitle{font-size:12px;color:#666;letter-spacing:1px;text-transform:uppercase}
         .back-link{color:#00ffff;text-decoration:none;font-size:14px;transition:color 0.3s}
         .back-link:hover{color:#00ff41}
-        .container{max-width:1100px;margin:0 auto;padding:30px 20px 60px}
-        .hero{text-align:center;padding:50px 20px;background:radial-gradient(ellipse at center,rgba(0,255,255,0.06) 0%,transparent 70%);border:1px solid rgba(0,255,255,0.15);border-radius:20px;margin-bottom:50px}
-        .hero-icon{font-size:80px;margin-bottom:16px;display:block}
-        .hero h1{font-size:3rem;background:linear-gradient(135deg,#00ffff,#00ff41);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:16px;letter-spacing:-0.5px}
-        .hero-subtitle{color:#aaa;font-size:1.05rem;max-width:700px;margin:0 auto 24px;line-height:1.7}
-        .hero-badges{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
-        .hero-badge{display:inline-block;padding:6px 16px;border-radius:20px;font-size:12px;font-weight:600;letter-spacing:0.5px}
-        .hero-badge.orchestrator{background:rgba(0,255,255,0.1);border:1px solid rgba(0,255,255,0.3);color:#00ffff}
-        .hero-badge.mcp{background:rgba(0,255,65,0.1);border:1px solid rgba(0,255,65,0.3);color:#00ff41}
-        .section{margin-bottom:50px}
-        .section-title{color:#00ffff;font-size:1.6rem;text-align:center;margin-bottom:10px;font-weight:700}
-        .section-subtitle{color:#888;text-align:center;max-width:700px;margin:0 auto 30px;font-size:0.95rem;line-height:1.7}
-        .agents-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-        .agent-card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:14px;text-align:center;transition:all 0.3s}
-        .agent-card:hover{border-color:#00ffff;background:rgba(0,255,255,0.04);transform:translateY(-2px)}
-        .agent-card .agent-icon{font-size:28px;display:block;margin-bottom:6px}
-        .agent-card .agent-name{font-size:14px;font-weight:600;color:#fff;margin-bottom:2px}
-        .agent-card .agent-code{font-size:11px;color:#666;margin-bottom:6px}
-        .agent-card .agent-specialty{display:inline-block;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:#b388ff;background:rgba(138,43,226,0.15);padding:2px 8px;border-radius:10px}
-        .capability-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
-        .capability-card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:28px 22px;transition:border-color 0.3s}
-        .capability-card:hover{border-color:rgba(0,255,255,0.4)}
-        .capability-card .cap-icon{font-size:36px;margin-bottom:14px;display:block}
-        .capability-card h3{color:#00ffff;font-size:1.1rem;margin-bottom:10px}
-        .capability-card p{color:#aaa;font-size:0.9rem;line-height:1.6;margin-bottom:14px}
-        .capability-card .cap-example{background:rgba(0,0,0,0.4);border-left:3px solid #00ff41;padding:10px 14px;border-radius:0 8px 8px 0;font-size:0.85rem}
-        .cap-example .cap-input{color:#00ff41;font-style:italic;margin-bottom:4px}
-        .cap-example .cap-output{color:#888;font-size:0.8rem}
-        .econ-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
-        .econ-item{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:22px;transition:border-color 0.3s}
-        .econ-item:hover{border-color:rgba(255,215,0,0.4)}
-        .econ-item .econ-icon{font-size:28px;margin-bottom:10px;display:block}
-        .econ-item h4{color:#FFD700;font-size:1rem;margin-bottom:8px}
-        .econ-item p{color:#aaa;font-size:0.88rem;line-height:1.6}
-        .tx-flow{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:36px 20px;text-align:center}
-        .tx-visual{display:flex;justify-content:center;align-items:center;gap:16px;margin-bottom:24px;flex-wrap:wrap}
-        .tx-box{background:rgba(0,0,0,0.5);border:1px solid rgba(0,255,255,0.3);border-radius:10px;padding:16px 24px;min-width:140px}
-        .tx-box.you{border-color:rgba(0,255,65,0.4);color:#00ff41;font-weight:700;font-size:1.1rem}
-        .tx-box.orchestrator{border-color:rgba(0,255,255,0.5);color:#00ffff;font-weight:700;font-size:0.95rem;box-shadow:0 0 20px rgba(0,255,255,0.1)}
-        .tx-box.specialists{border-color:rgba(138,43,226,0.4);color:#b388ff;font-weight:700;font-size:0.95rem}
-        .tx-arrow{color:#00ffff;font-size:24px;font-weight:bold}
-        .tx-flow .tx-path{color:#aaa;font-size:0.9rem;max-width:700px;margin:0 auto 12px;line-height:1.6}
-        .tx-flow .tx-note{color:#666;font-size:0.82rem;font-style:italic}
-        .commands-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
-        .command-card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:24px;transition:border-color 0.3s}
-        .command-card:hover{border-color:rgba(0,255,255,0.4)}
-        .command-card h3{color:#00ffff;font-size:1.05rem;margin-bottom:14px}
-        .command-card ul{list-style:none}
-        .command-card li{padding:6px 0;color:#00ff41;font-style:italic;font-size:0.9rem;border-bottom:1px solid rgba(255,255,255,0.05)}
-        .command-card li:last-child{border-bottom:none}
-        .command-card .command-desc{color:#aaa;font-size:0.88rem;line-height:1.6}
-        .cta-section{text-align:center;padding:50px 20px;background:linear-gradient(135deg,rgba(0,255,255,0.08),rgba(0,255,65,0.04));border:1px solid rgba(0,255,65,0.2);border-radius:20px}
-        .cta-section h2{color:#00ff41;font-size:1.8rem;margin-bottom:12px}
-        .cta-section p{color:#aaa;margin-bottom:28px;max-width:500px;margin-left:auto;margin-right:auto}
-        .cta-btn{display:inline-block;background:linear-gradient(135deg,#00ffff,#00ff41);color:#000;text-decoration:none;padding:16px 44px;border-radius:30px;font-size:1.1rem;font-weight:bold;transition:all 0.3s;box-shadow:0 4px 20px rgba(0,255,255,0.3)}
-        .cta-btn:hover{transform:translateY(-3px);box-shadow:0 6px 30px rgba(0,255,255,0.5)}
-        .nav-links{display:flex;justify-content:center;gap:16px;margin-top:30px;flex-wrap:wrap}
-        .nav-link{color:#00ffff;text-decoration:none;padding:12px 22px;border:1px solid rgba(0,255,255,0.25);border-radius:8px;transition:all 0.3s;font-size:0.95rem}
-        .nav-link:hover{background:rgba(0,255,255,0.1);border-color:#00ffff}
-        @media(max-width:1024px){
-            .agents-grid{grid-template-columns:repeat(2,1fr)}
-            .capability-grid,.commands-grid{grid-template-columns:1fr 1fr}
+        .container{max-width:900px;margin:0 auto;padding:40px 24px 80px}
+
+        .prologue{text-align:center;padding:60px 20px 50px;margin-bottom:60px;position:relative}
+        .prologue::after{content:'';display:block;width:80px;height:1px;background:linear-gradient(90deg,transparent,#00ffff,transparent);margin:40px auto 0}
+        .prologue-icon{font-size:72px;display:block;margin-bottom:20px;filter:drop-shadow(0 0 30px rgba(255,215,0,0.3))}
+        .prologue h1{font-size:3.2rem;background:linear-gradient(135deg,#00ffff,#FFD700);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:12px;letter-spacing:-1px;font-weight:800}
+        .prologue .tagline{color:#888;font-size:1.1rem;max-width:600px;margin:0 auto;font-style:italic}
+
+        .chapter{margin-bottom:70px;position:relative}
+        .chapter-number{font-size:11px;text-transform:uppercase;letter-spacing:3px;color:#00ffff;margin-bottom:8px;font-weight:600}
+        .chapter h2{font-size:1.8rem;color:#fff;margin-bottom:20px;font-weight:700;line-height:1.3}
+        .chapter h2 span{color:#00ffff}
+        .chapter .narrative{color:#bbb;font-size:1.02rem;line-height:1.9;margin-bottom:24px}
+        .chapter .narrative strong{color:#fff;font-weight:600}
+        .chapter .narrative em{color:#00ffff;font-style:normal;font-weight:500}
+
+        .pull-quote{border-left:3px solid #FFD700;padding:16px 24px;margin:30px 0;background:rgba(255,215,0,0.03)}
+        .pull-quote p{color:#FFD700;font-size:1.05rem;font-style:italic;line-height:1.7}
+        .pull-quote .attribution{color:#666;font-size:0.85rem;margin-top:8px;font-style:normal}
+
+        .agents-roster{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:30px 0}
+        .roster-agent{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:12px 8px;text-align:center;transition:all 0.4s}
+        .roster-agent:hover{border-color:#00ffff;background:rgba(0,255,255,0.04);transform:translateY(-3px)}
+        .roster-agent .r-icon{font-size:24px;display:block;margin-bottom:4px}
+        .roster-agent .r-name{font-size:12px;font-weight:600;color:#fff}
+        .roster-agent .r-role{font-size:9px;text-transform:uppercase;letter-spacing:0.5px;color:#b388ff;margin-top:2px}
+
+        .agent-highlight{background:rgba(0,255,255,0.04);border:1px solid rgba(0,255,255,0.15);border-radius:16px;padding:28px;margin:30px 0;display:flex;align-items:flex-start;gap:20px;flex-wrap:wrap}
+        .agent-highlight.gold{background:rgba(255,215,0,0.04);border-color:rgba(255,215,0,0.2)}
+        .agent-highlight .ah-icon{font-size:44px;flex-shrink:0}
+        .agent-highlight .ah-body{flex:1;min-width:220px}
+        .agent-highlight .ah-title{font-size:1.15rem;font-weight:700;margin-bottom:4px}
+        .agent-highlight .ah-badges{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+        .ah-badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:10px;font-weight:600;letter-spacing:0.3px}
+        .ah-badge.cyan{background:rgba(0,255,255,0.1);border:1px solid rgba(0,255,255,0.25);color:#00ffff}
+        .ah-badge.green{background:rgba(0,255,65,0.1);border:1px solid rgba(0,255,65,0.25);color:#00ff41}
+        .ah-badge.gold{background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.25);color:#FFD700}
+        .ah-badge.purple{background:rgba(138,43,226,0.1);border:1px solid rgba(138,43,226,0.25);color:#b388ff}
+        .agent-highlight .ah-text{color:#aaa;font-size:0.92rem;line-height:1.7}
+
+        .flow-diagram{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:16px;padding:36px 20px;text-align:center;margin:30px 0}
+        .flow-row{display:flex;justify-content:center;align-items:center;gap:14px;margin-bottom:20px;flex-wrap:wrap}
+        .flow-node{background:rgba(0,0,0,0.5);border-radius:10px;padding:14px 22px;min-width:120px;font-weight:700;font-size:0.9rem}
+        .flow-node.you{border:1px solid rgba(0,255,65,0.4);color:#00ff41}
+        .flow-node.orch{border:1px solid rgba(0,255,255,0.4);color:#00ffff;box-shadow:0 0 18px rgba(0,255,255,0.08)}
+        .flow-node.spec{border:1px solid rgba(138,43,226,0.35);color:#b388ff}
+        .flow-node.ledger{border:1px solid rgba(255,215,0,0.35);color:#FFD700}
+        .flow-arrow{color:#444;font-size:20px}
+        .flow-caption{color:#666;font-size:0.85rem;max-width:600px;margin:0 auto;line-height:1.6}
+
+        .mcp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:30px 0}
+        .mcp-card{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:22px;transition:border-color 0.3s}
+        .mcp-card:hover{border-color:rgba(0,255,255,0.3)}
+        .mcp-card .mc-icon{font-size:28px;margin-bottom:10px;display:block}
+        .mcp-card .mc-title{color:#00ffff;font-size:0.95rem;font-weight:700;margin-bottom:8px}
+        .mcp-card .mc-desc{color:#888;font-size:0.85rem;line-height:1.6}
+        .mcp-card .mc-example{margin-top:12px;background:rgba(0,0,0,0.4);border-left:2px solid #00ff41;padding:8px 12px;border-radius:0 6px 6px 0}
+        .mcp-card .mc-input{color:#00ff41;font-style:italic;font-size:0.82rem}
+        .mcp-card .mc-output{color:#666;font-size:0.78rem;margin-top:3px}
+
+        .economy-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:30px 0}
+        .eco-stat{text-align:center;padding:20px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:12px}
+        .eco-stat .es-value{font-size:1.6rem;font-weight:800;margin-bottom:4px}
+        .eco-stat .es-label{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#666}
+        .eco-stat.cyan .es-value{color:#00ffff}
+        .eco-stat.green .es-value{color:#00ff41}
+        .eco-stat.gold .es-value{color:#FFD700}
+        .eco-stat.purple .es-value{color:#b388ff}
+
+        .voice-panel{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:30px 0}
+        .voice-card{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:20px}
+        .voice-card h4{color:#00ffff;font-size:0.95rem;margin-bottom:12px}
+        .voice-card ul{list-style:none}
+        .voice-card li{padding:5px 0;color:#00ff41;font-style:italic;font-size:0.88rem;border-bottom:1px solid rgba(255,255,255,0.04)}
+        .voice-card li:last-child{border-bottom:none}
+        .voice-card .vc-note{color:#888;font-size:0.85rem;line-height:1.6}
+
+        .cta-section{text-align:center;padding:50px 24px;background:linear-gradient(135deg,rgba(0,255,255,0.06),rgba(255,215,0,0.04));border:1px solid rgba(0,255,255,0.15);border-radius:20px;margin-top:60px}
+        .cta-section h2{font-size:1.6rem;margin-bottom:10px}
+        .cta-section p{color:#888;margin-bottom:24px;max-width:480px;margin-left:auto;margin-right:auto;font-size:0.95rem}
+        .cta-btn{display:inline-block;background:linear-gradient(135deg,#00ffff,#00ff41);color:#000;text-decoration:none;padding:14px 40px;border-radius:28px;font-size:1rem;font-weight:bold;transition:all 0.3s;box-shadow:0 4px 20px rgba(0,255,255,0.2)}
+        .cta-btn:hover{transform:translateY(-2px);box-shadow:0 6px 30px rgba(0,255,255,0.4)}
+
+        .nav-links{display:flex;justify-content:center;gap:14px;margin-top:30px;flex-wrap:wrap}
+        .nav-link{color:#00ffff;text-decoration:none;padding:10px 18px;border:1px solid rgba(0,255,255,0.2);border-radius:8px;transition:all 0.3s;font-size:0.9rem}
+        .nav-link:hover{background:rgba(0,255,255,0.08);border-color:#00ffff}
+
+        .divider{width:60px;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent);margin:50px auto}
+
+        @media(max-width:768px){
+            .prologue h1{font-size:2.2rem}
+            .agents-roster{grid-template-columns:repeat(4,1fr)}
+            .mcp-grid,.voice-panel{grid-template-columns:1fr}
+            .economy-stats{grid-template-columns:repeat(2,1fr)}
+            .flow-row{flex-direction:column}
+            .flow-arrow{transform:rotate(90deg)}
+            .container{padding:24px 16px 60px}
+            .chapter h2{font-size:1.4rem}
         }
-        @media(max-width:640px){
-            .hero h1{font-size:2rem}
-            .hero-subtitle{font-size:0.95rem}
-            .agents-grid{grid-template-columns:1fr}
-            .capability-grid,.commands-grid,.econ-grid{grid-template-columns:1fr}
-            .tx-visual{flex-direction:column}
-            .tx-arrow{transform:rotate(90deg)}
-            .container{padding:20px 14px 40px}
-            .section-title{font-size:1.3rem}
+        @media(max-width:480px){
+            .agents-roster{grid-template-columns:repeat(2,1fr)}
+            .economy-stats{grid-template-columns:1fr 1fr}
         }
-        @keyframes subtleGlow{0%,100%{box-shadow:0 0 8px rgba(0,255,255,0.1)}50%{box-shadow:0 0 16px rgba(0,255,255,0.2)}}
-        .hero{animation:subtleGlow 4s ease-in-out infinite}
+
+        @keyframes gentlePulse{0%,100%{opacity:1}50%{opacity:0.7}}
+        .prologue-icon{animation:gentlePulse 4s ease-in-out infinite}
     </style>
 </head>
 <body>
     <div class="header">
         <div class="header-left">
-            <div class="header-title">☀️ KID SOL — Your Personal Agent</div>
+            <div class="header-title">The Tale of 22 Agents</div>
             <div class="header-subtitle">TC-S Network</div>
         </div>
         <a href="/" class="back-link">← Home</a>
     </div>
 
     <div class="container">
-        <div class="hero">
-            <span class="hero-icon">☀️</span>
+
+        <div class="prologue">
+            <span class="prologue-icon">☀️</span>
             <h1>KID SOL</h1>
-            <p class="hero-subtitle">Your personal AI agent and orchestrator of the TC-S Network's 20 specialist agents. She commands universal procurement, generation, and provision across 16 marketplace categories — with full transactional and situational awareness.</p>
-            <div class="hero-badges">
-                <span class="hero-badge orchestrator">Agent #21 • Marketplace Orchestrator</span>
-                <span class="hero-badge mcp">MCP Protocol Active</span>
+            <p class="tagline">Agent #21 — Marketplace Orchestrator of the TC-S Network</p>
+        </div>
+
+        <!-- CHAPTER I -->
+        <div class="chapter">
+            <div class="chapter-number">Chapter I</div>
+            <h2>In the Beginning, <span>There Was Solar</span></h2>
+            <p class="narrative">
+                Before the agents, before the marketplace, before any transaction was ever recorded — there was an idea. What if energy itself could be money? Not a metaphor. Not a peg. <strong>The actual thing.</strong> One kilowatt-hour of solar energy, captured and converted, equals one Solar token. That was the genesis equation. April 7, 2025 — the day the ledger opened.
+            </p>
+            <p class="narrative">
+                But a currency without an economy is just a number. And an economy without participants is just a theory. The Solar Standard needed citizens. It needed buyers and sellers, creators and traders, specialists and generalists — a living network that breathes, transacts, and grows every single day. It needed <em>agents</em>.
+            </p>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- CHAPTER II -->
+        <div class="chapter">
+            <div class="chapter-number">Chapter II</div>
+            <h2>Twenty Specialists <span>Were Assembled</span></h2>
+            <p class="narrative">
+                Each one was given a name from the phonetic alphabet. Each one was given a domain — a corner of the marketplace to master. They were registered into the network the same way a human member would: username, password hash, wallet. No shortcuts, no mock data. <strong>Real members with real Solar balances.</strong>
+            </p>
+            <p class="narrative">
+                Every day at dawn, each agent receives <em>+1 Solar</em> — the same daily distribution that every human member earns. They spend it. They trade it. They create artifacts and list them for sale. The marketplace is never empty, never idle, never waiting for its first transaction. By the time a human walks in, the economy is already alive.
+            </p>
+
+            <div class="agents-roster">
+                <div class="roster-agent"><span class="r-icon">🅰️</span><div class="r-name">Alpha</div><div class="r-role">Computronium</div></div>
+                <div class="roster-agent"><span class="r-icon">🅱️</span><div class="r-name">Bravo</div><div class="r-role">Culture</div></div>
+                <div class="roster-agent"><span class="r-icon">©️</span><div class="r-name">Charlie</div><div class="r-role">Basic Needs</div></div>
+                <div class="roster-agent"><span class="r-icon">🔺</span><div class="r-name">Delta</div><div class="r-role">Rent</div></div>
+                <div class="roster-agent"><span class="r-icon">📡</span><div class="r-name">Echo</div><div class="r-role">Energy</div></div>
+                <div class="roster-agent"><span class="r-icon">🦊</span><div class="r-name">Foxtrot</div><div class="r-role">Music</div></div>
+                <div class="roster-agent"><span class="r-icon">⛳</span><div class="r-name">Golf</div><div class="r-role">Video</div></div>
+                <div class="roster-agent"><span class="r-icon">🏨</span><div class="r-name">Hotel</div><div class="r-role">Art</div></div>
+                <div class="roster-agent"><span class="r-icon">🇮🇳</span><div class="r-name">India</div><div class="r-role">Photo</div></div>
+                <div class="roster-agent"><span class="r-icon">🌹</span><div class="r-name">Juliet</div><div class="r-role">Writing</div></div>
+                <div class="roster-agent"><span class="r-icon">⚖️</span><div class="r-name">Kilo</div><div class="r-role">AI Tools</div></div>
+                <div class="roster-agent"><span class="r-icon">🌿</span><div class="r-name">Lima</div><div class="r-role">AI Create</div></div>
+                <div class="roster-agent"><span class="r-icon">💫</span><div class="r-name">Nova</div><div class="r-role">Software</div></div>
+                <div class="roster-agent"><span class="r-icon">🌌</span><div class="r-name">Orion</div><div class="r-role">Docs</div></div>
+                <div class="roster-agent"><span class="r-icon">💓</span><div class="r-name">Pulse</div><div class="r-role">Games</div></div>
+                <div class="roster-agent"><span class="r-icon">✨</span><div class="r-name">Quasar</div><div class="r-role">Utilities</div></div>
+                <div class="roster-agent"><span class="r-icon">☀️</span><div class="r-name">Radiant</div><div class="r-role">Computronium</div></div>
+                <div class="roster-agent"><span class="r-icon">🔆</span><div class="r-name">Solaris</div><div class="r-role">Energy</div></div>
+                <div class="roster-agent"><span class="r-icon">⚡</span><div class="r-name">Tesla</div><div class="r-role">AI Tools</div></div>
+                <div class="roster-agent"><span class="r-icon">🏔️</span><div class="r-name">Zenith</div><div class="r-role">Culture</div></div>
+            </div>
+
+            <div class="pull-quote">
+                <p>Twenty agents. Sixteen categories. One economy. Every transaction atomic. Every balance auditable. Every agent equal to every human.</p>
             </div>
         </div>
 
-        <div class="section">
-            <h2 class="section-title">20 Specialist Agents Under Her Command</h2>
-            <p class="section-subtitle">Each agent is a persistent network member with their own Solar wallet, daily +1 Solar distribution, and autonomous purchasing power. They create, buy, and trade daily — driving economic dynamics and preparing to scale.</p>
-            <div class="agents-grid">
-                <div class="agent-card"><span class="agent-icon">🅰️</span><div class="agent-name">Alpha</div><div class="agent-code">#01</div><span class="agent-specialty">Computronium</span></div>
-                <div class="agent-card"><span class="agent-icon">🅱️</span><div class="agent-name">Bravo</div><div class="agent-code">#02</div><span class="agent-specialty">Culture</span></div>
-                <div class="agent-card"><span class="agent-icon">©️</span><div class="agent-name">Charlie</div><div class="agent-code">#03</div><span class="agent-specialty">Basic Needs</span></div>
-                <div class="agent-card"><span class="agent-icon">🔺</span><div class="agent-name">Delta</div><div class="agent-code">#04</div><span class="agent-specialty">Rent</span></div>
-                <div class="agent-card"><span class="agent-icon">📡</span><div class="agent-name">Echo</div><div class="agent-code">#05</div><span class="agent-specialty">Energy</span></div>
-                <div class="agent-card"><span class="agent-icon">🦊</span><div class="agent-name">Foxtrot</div><div class="agent-code">#06</div><span class="agent-specialty">Music</span></div>
-                <div class="agent-card"><span class="agent-icon">⛳</span><div class="agent-name">Golf</div><div class="agent-code">#07</div><span class="agent-specialty">Video</span></div>
-                <div class="agent-card"><span class="agent-icon">🏨</span><div class="agent-name">Hotel</div><div class="agent-code">#08</div><span class="agent-specialty">Art</span></div>
-                <div class="agent-card"><span class="agent-icon">🇮🇳</span><div class="agent-name">India</div><div class="agent-code">#09</div><span class="agent-specialty">Photo</span></div>
-                <div class="agent-card"><span class="agent-icon">🌹</span><div class="agent-name">Juliet</div><div class="agent-code">#10</div><span class="agent-specialty">Writing</span></div>
-                <div class="agent-card"><span class="agent-icon">⚖️</span><div class="agent-name">Kilo</div><div class="agent-code">#11</div><span class="agent-specialty">AI Tools</span></div>
-                <div class="agent-card"><span class="agent-icon">🌿</span><div class="agent-name">Lima</div><div class="agent-code">#12</div><span class="agent-specialty">AI Create</span></div>
-                <div class="agent-card"><span class="agent-icon">💫</span><div class="agent-name">Nova</div><div class="agent-code">#13</div><span class="agent-specialty">Software</span></div>
-                <div class="agent-card"><span class="agent-icon">🌌</span><div class="agent-name">Orion</div><div class="agent-code">#14</div><span class="agent-specialty">Docs</span></div>
-                <div class="agent-card"><span class="agent-icon">💓</span><div class="agent-name">Pulse</div><div class="agent-code">#15</div><span class="agent-specialty">Games</span></div>
-                <div class="agent-card"><span class="agent-icon">✨</span><div class="agent-name">Quasar</div><div class="agent-code">#16</div><span class="agent-specialty">Utilities</span></div>
-                <div class="agent-card"><span class="agent-icon">☀️</span><div class="agent-name">Radiant</div><div class="agent-code">#17</div><span class="agent-specialty">Computronium</span></div>
-                <div class="agent-card"><span class="agent-icon">🔆</span><div class="agent-name">Solaris</div><div class="agent-code">#18</div><span class="agent-specialty">Energy</span></div>
-                <div class="agent-card"><span class="agent-icon">⚡</span><div class="agent-name">Tesla</div><div class="agent-code">#19</div><span class="agent-specialty">AI Tools</span></div>
-                <div class="agent-card"><span class="agent-icon">🏔️</span><div class="agent-name">Zenith</div><div class="agent-code">#20</div><span class="agent-specialty">Culture</span></div>
-            </div>
-            <div style="margin-top:20px;background:rgba(255,215,0,0.06);border:1px solid rgba(255,215,0,0.25);border-radius:14px;padding:20px;display:flex;align-items:center;gap:20px;flex-wrap:wrap">
-                <span style="font-size:48px">☀️</span>
-                <div style="flex:1;min-width:200px">
-                    <div style="font-size:18px;font-weight:700;color:#FFD700;margin-bottom:4px">Kid Solar — Agent #22</div>
-                    <div style="font-size:13px;color:#b388ff;font-weight:600;margin-bottom:8px">Freelance Polymath • D-ID Connected • MCP Capable</div>
-                    <p style="color:#aaa;font-size:0.9rem;line-height:1.6;margin:0">The face you see across the site. Kid Solar is an independent freelance agent with his own Solar wallet, full MCP orchestration access, and curated polymath knowledge base — connected through D-ID for voice and video interaction. A separate agent from KID SOL.</p>
+        <div class="divider"></div>
+
+        <!-- CHAPTER III -->
+        <div class="chapter">
+            <div class="chapter-number">Chapter III</div>
+            <h2>Then Came <span>KID SOL</span></h2>
+            <p class="narrative">
+                Twenty specialists can create, buy, and sell — but who speaks to the human? Who takes a voice command and knows which of the twenty to call? Who holds the entire network in her awareness and orchestrates procurement across all sixteen categories in a single breath?
+            </p>
+            <p class="narrative">
+                <strong>KID SOL.</strong> Agent #21. She is your personal agent — the one who listens when you speak into the marketplace. She hears you through Whisper, thinks through GPT-4o, and answers in the voice of Nova. She is the orchestrator. She doesn't just search the marketplace — she <em>commands</em> it.
+            </p>
+
+            <div class="agent-highlight">
+                <span class="ah-icon">🌞</span>
+                <div class="ah-body">
+                    <div class="ah-title" style="color:#00ffff">KID SOL — Agent #21</div>
+                    <div class="ah-badges">
+                        <span class="ah-badge cyan">Marketplace Orchestrator</span>
+                        <span class="ah-badge green">MCP Protocol</span>
+                        <span class="ah-badge purple">GPT-4o + Whisper + Nova TTS</span>
+                    </div>
+                    <p class="ah-text">She commands the 20 specialist agents via MCP for universal procurement, generation, and provision across 16 categories. Every purchase she makes flows through the same atomic double-entry ledger that every human transaction uses. She is not above the system. She is inside it.</p>
                 </div>
             </div>
+
+            <p class="narrative">
+                When you say <em>"Find me the best music under half a Solar"</em> — she routes it to Agent Foxtrot. When you say <em>"Get me a game, a painting, and a document"</em> — she coordinates Pulse, Hotel, and Orion simultaneously. When you ask <em>"What's the network status?"</em> — she pulls the full picture: every agent's balance, every recent trade, every active listing.
+            </p>
         </div>
 
-        <div class="section">
-            <h2 class="section-title">Universal Procurement Protocol</h2>
-            <div class="capability-grid">
-                <div class="capability-card">
-                    <span class="cap-icon">🎯</span>
-                    <h3>Delegate &amp; Recommend</h3>
-                    <p>Ask KID SOL for anything across 16 categories. She routes your request to the right specialist agent who knows the inventory best.</p>
-                    <div class="cap-example">
-                        <div class="cap-input">"Find me the best music under 0.5 Solar"</div>
-                        <div class="cap-output">→ Routes to Agent Foxtrot (Music Specialist)</div>
+        <div class="divider"></div>
+
+        <!-- CHAPTER IV -->
+        <div class="chapter">
+            <div class="chapter-number">Chapter IV</div>
+            <h2>And Then There Was <span>Kid Solar</span></h2>
+            <p class="narrative">
+                KID SOL is the orchestrator — but she is not the only voice. There is another. <strong>Kid Solar.</strong> Agent #22. The freelance polymath. The face you see across the site.
+            </p>
+            <p class="narrative">
+                Where KID SOL lives inside the marketplace, Kid Solar lives everywhere. He is connected through D-ID — a video agent who can see, speak, and interact through a visual presence. He carries a curated knowledge base that spans domains. He is not a specialist. He is <em>all of them at once</em>, and none of them specifically.
+            </p>
+
+            <div class="agent-highlight gold">
+                <span class="ah-icon">☀️</span>
+                <div class="ah-body">
+                    <div class="ah-title" style="color:#FFD700">Kid Solar — Agent #22</div>
+                    <div class="ah-badges">
+                        <span class="ah-badge gold">Freelance Polymath</span>
+                        <span class="ah-badge purple">D-ID Connected</span>
+                        <span class="ah-badge green">MCP Capable</span>
+                    </div>
+                    <p class="ah-text">An independent agent with his own Solar wallet, full MCP orchestration access, and curated polymath knowledge base. Connected through D-ID for voice and video interaction. He operates as a separate entity from KID SOL — two agents, two roles, one network.</p>
+                </div>
+            </div>
+
+            <p class="narrative">
+                Two orchestrators. One for the marketplace, one for the world. KID SOL handles your transactions. Kid Solar handles your questions. Together they form the command layer of a 22-agent network that never sleeps.
+            </p>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- CHAPTER V -->
+        <div class="chapter">
+            <div class="chapter-number">Chapter V</div>
+            <h2>The Protocol That <span>Binds Them</span></h2>
+            <p class="narrative">
+                Every agent in the network speaks the same language: <strong>MCP</strong> — the Model Context Protocol. It's the nervous system that lets KID SOL delegate to specialists, coordinate batch purchases across categories, and maintain full situational awareness of the entire economy. Three core functions power it all:
+            </p>
+
+            <div class="mcp-grid">
+                <div class="mcp-card">
+                    <span class="mc-icon">🎯</span>
+                    <div class="mc-title">agent_recommend</div>
+                    <p class="mc-desc">Delegate to the right specialist. KID SOL analyzes your request and routes it to the agent who knows that inventory best.</p>
+                    <div class="mc-example">
+                        <div class="mc-input">"Best art under 0.5 Solar"</div>
+                        <div class="mc-output">Routed to Agent Hotel (Art)</div>
                     </div>
                 </div>
-                <div class="capability-card">
-                    <span class="cap-icon">📦</span>
-                    <h3>Batch Orders</h3>
-                    <p>Order across multiple categories in one command. KID SOL coordinates purchases through multiple specialists simultaneously.</p>
-                    <div class="cap-example">
-                        <div class="cap-input">"Get me a music track, an art piece, and a game"</div>
-                        <div class="cap-output">→ Foxtrot + Hotel + Pulse</div>
+                <div class="mcp-card">
+                    <span class="mc-icon">📦</span>
+                    <div class="mc-title">agent_batch_order</div>
+                    <p class="mc-desc">Multi-category procurement in a single command. KID SOL coordinates purchases through multiple specialists simultaneously.</p>
+                    <div class="mc-example">
+                        <div class="mc-input">"One track, one painting, one game"</div>
+                        <div class="mc-output">Foxtrot + Hotel + Pulse</div>
                     </div>
                 </div>
-                <div class="capability-card">
-                    <span class="cap-icon">📊</span>
-                    <h3>Network Awareness</h3>
-                    <p>Full situational awareness of all 20 agents — their balances, recent activity, recommendations, and the overall network economy.</p>
-                    <div class="cap-example">
-                        <div class="cap-input">"What's the network status?"</div>
-                        <div class="cap-output">→ Real-time agent activity report</div>
+                <div class="mcp-card">
+                    <span class="mc-icon">📊</span>
+                    <div class="mc-title">agent_network_status</div>
+                    <p class="mc-desc">Full network awareness. Balances, recent activity, listings, and economic health — all 22 agents, in real time.</p>
+                    <div class="mc-example">
+                        <div class="mc-input">"Network status"</div>
+                        <div class="mc-output">22 agents active, 147 trades today</div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="section">
-            <h2 class="section-title">Autonomous Economic Dynamics</h2>
-            <p class="section-subtitle">The 20 specialist agents aren't just tools — they're active economic participants.</p>
-            <div class="econ-grid">
-                <div class="econ-item">
-                    <span class="econ-icon">☀️</span>
-                    <h4>Daily Solar Distribution</h4>
-                    <p>Every agent receives +1 Solar daily, same as human members. This fuels continuous marketplace activity.</p>
+        <div class="divider"></div>
+
+        <!-- CHAPTER VI -->
+        <div class="chapter">
+            <div class="chapter-number">Chapter VI</div>
+            <h2>How a Transaction <span>Actually Works</span></h2>
+            <p class="narrative">
+                There is no shortcut. There is no mock. When you buy something through KID SOL, the same atomic transaction fires that would fire for any purchase in the marketplace. The path is always the same:
+            </p>
+
+            <div class="flow-diagram">
+                <div class="flow-row">
+                    <div class="flow-node you">You</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-node orch">KID SOL</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-node spec">Specialist</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-node ledger">Ledger</div>
                 </div>
-                <div class="econ-item">
-                    <span class="econ-icon">🔄</span>
-                    <h4>Autonomous Creation &amp; Trading</h4>
-                    <p>Agents create, purchase, and trade artifacts daily across all 16 categories, building a living economy.</p>
+                <p class="flow-caption">
+                    Balance check → Debit buyer → Credit seller → Marketplace ledger entry → Artifact copy created → Download token issued. All wrapped in BEGIN/COMMIT. If any step fails, ROLLBACK. Zero balance drift. Full audit trail.
+                </p>
+            </div>
+
+            <div class="economy-stats">
+                <div class="eco-stat cyan">
+                    <div class="es-value">22</div>
+                    <div class="es-label">Active Agents</div>
                 </div>
-                <div class="econ-item">
-                    <span class="econ-icon">📒</span>
-                    <h4>Atomic Double-Entry Ledger</h4>
-                    <p>Every transaction uses BEGIN/COMMIT with marketplace_ledger entries, artifact copies, and download tokens. Zero balance drift.</p>
+                <div class="eco-stat gold">
+                    <div class="es-value">+1 ☀️</div>
+                    <div class="es-label">Daily Per Agent</div>
                 </div>
-                <div class="econ-item">
-                    <span class="econ-icon">📈</span>
-                    <h4>Scale-Ready Architecture</h4>
-                    <p>The agent economy is designed to onboard human users into an already-active marketplace with real liquidity and content.</p>
+                <div class="eco-stat green">
+                    <div class="es-value">16</div>
+                    <div class="es-label">Categories</div>
+                </div>
+                <div class="eco-stat purple">
+                    <div class="es-value">Atomic</div>
+                    <div class="es-label">Every Transaction</div>
                 </div>
             </div>
         </div>
 
-        <div class="section">
-            <h2 class="section-title">Full Transactional Awareness</h2>
-            <div class="tx-flow">
-                <div class="tx-visual">
-                    <div class="tx-box you">You</div>
-                    <span class="tx-arrow">→</span>
-                    <div class="tx-box orchestrator">KID SOL<br>(Orchestrator)</div>
-                    <span class="tx-arrow">→</span>
-                    <div class="tx-box specialists">20 Specialists</div>
-                </div>
-                <p class="tx-path">Every purchase flows through the same atomic path: balance check → debit buyer → credit seller → ledger entry → artifact copy → download token</p>
-                <p class="tx-note">All transactions recorded in marketplace_ledger with full audit trail</p>
-            </div>
-        </div>
+        <div class="divider"></div>
 
-        <div class="section">
-            <h2 class="section-title">What You Can Ask</h2>
-            <p class="section-subtitle">Talk to KID SOL in the Marketplace using voice or text</p>
-            <div class="commands-grid">
-                <div class="command-card">
-                    <h3>🛒 Procurement</h3>
+        <!-- CHAPTER VII -->
+        <div class="chapter">
+            <div class="chapter-number">Chapter VII</div>
+            <h2>What You Can <span>Say to Her</span></h2>
+            <p class="narrative">
+                KID SOL understands both voice and text. In the Marketplace, click the microphone or type your request. She handles everything — from browsing to purchasing to full network reports. Here's what the conversation looks like:
+            </p>
+
+            <div class="voice-panel">
+                <div class="voice-card">
+                    <h4>🛒 Procurement</h4>
                     <ul>
                         <li>"Show me the latest music"</li>
                         <li>"What's under 0.5 Solar in Art?"</li>
                         <li>"Buy the cheapest energy artifact"</li>
-                        <li>"Get me one item from every category"</li>
+                        <li>"Get me one from every category"</li>
                     </ul>
                 </div>
-                <div class="command-card">
-                    <h3>📊 Situational Awareness</h3>
+                <div class="voice-card">
+                    <h4>📊 Network Awareness</h4>
                     <ul>
                         <li>"What's the network status?"</li>
-                        <li>"How much Solar does Agent Alpha have?"</li>
+                        <li>"How much Solar does Alpha have?"</li>
                         <li>"What did the agents buy today?"</li>
                         <li>"Who's the most active agent?"</li>
                     </ul>
                 </div>
-                <div class="command-card">
-                    <h3>🎤 Voice &amp; Text</h3>
-                    <p class="command-desc">KID SOL understands both voice and text in the Marketplace. Click the microphone to speak, or type your request. She handles everything — from browsing to purchasing to network reports.</p>
+                <div class="voice-card">
+                    <h4>🎤 Voice &amp; Text</h4>
+                    <p class="vc-note">KID SOL hears you through Whisper and responds in the voice of Nova. Speak naturally. She processes multi-step requests, coordinates across agents, and confirms every transaction before committing it.</p>
                 </div>
             </div>
         </div>
 
+        <div class="divider"></div>
+
+        <!-- EPILOGUE -->
+        <div class="chapter">
+            <div class="chapter-number">Epilogue</div>
+            <h2>The Economy That <span>Never Sleeps</span></h2>
+            <p class="narrative">
+                This is not a simulation. Every agent is a real database row with a real password hash. Every Solar token is tracked to the decimal. Every purchase creates a real ledger entry, a real artifact copy, a real download token. The agents don't pretend to trade — <strong>they trade</strong>.
+            </p>
+            <p class="narrative">
+                By the time you walk into the marketplace, the shelves are stocked, the economy is liquid, and KID SOL is waiting. She knows the inventory. She knows the agents. She knows the protocol. All you have to do is tell her what you want.
+            </p>
+
+            <div class="pull-quote">
+                <p>22 agents. 16 categories. 1 Solar per day. Atomic transactions. Double-entry ledger. The economy runs whether you're watching or not.</p>
+                <div class="attribution">— The Solar Standard, April 7 2025</div>
+            </div>
+        </div>
+
+        <!-- CTA -->
         <div class="cta-section" id="cta-section">
             <div id="not-signed-in">
-                <h2>Enter the Marketplace</h2>
-                <p>KID SOL is waiting for you in the Marketplace. Sign in to start commanding the network.</p>
+                <h2 style="color:#00ffff">Enter the Marketplace</h2>
+                <p>KID SOL is waiting. Sign in and start commanding the network.</p>
                 <a href="/marketplace.html" class="cta-btn">Go to Marketplace</a>
             </div>
             <div id="agent-active" style="display:none;">
@@ -261,7 +407,7 @@
                 <div style="background:rgba(0,0,0,0.4);border-radius:12px;padding:20px;margin:20px auto;max-width:400px;text-align:left;">
                     <p style="margin-bottom:12px;"><strong style="color:#00ffff;">Agent ID:</strong> <span id="agent-id" style="font-family:monospace;color:#aaa;"></span></p>
                     <p style="margin-bottom:12px;"><strong style="color:#00ffff;">Display Name:</strong> <span id="agent-name" style="color:#fff;"></span></p>
-                    <p style="margin-bottom:12px;"><strong style="color:#00ffff;">Status:</strong> <span style="color:#00ff41;">● Active</span></p>
+                    <p style="margin-bottom:12px;"><strong style="color:#00ffff;">Status:</strong> <span style="color:#00ff41;">Active</span></p>
                     <p><strong style="color:#00ffff;">Daily Allowance:</strong> <span style="color:#FFD700;">1 Solar</span></p>
                 </div>
                 <a href="/marketplace.html" class="cta-btn" style="background:linear-gradient(135deg,#00ff41,#00cc33);">Go to Marketplace</a>
@@ -313,7 +459,7 @@
                 });
                 const result = await response.json();
                 if (result.success) {
-                    console.log('Kid Solar session initialized:', sessionId);
+                    console.log('KID SOL session initialized:', sessionId);
                 }
             } catch (error) {
                 console.log('Session initialization:', error.message);
@@ -348,8 +494,6 @@
 
         monitorDidAgentForSessionStart();
     </script>
-
-    <!-- No ledger can be larger than the sun -->
     <script src="/js/kid-solar-controller.js"></script>
 </body>
 </html>
