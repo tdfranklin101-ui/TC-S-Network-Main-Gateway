@@ -14582,7 +14582,7 @@ Always respond with valid JSON only. Be specific and detailed in observations.`
       return;
     }
     
-    // Regular static files - with streaming for better reliability
+    // Regular static files - with buffer read for reliability (avoids EIO stream errors)
     const contentTypes = {
       '.html': 'text/html; charset=utf-8',
       '.css': 'text/css',
@@ -14600,21 +14600,14 @@ Always respond with valid JSON only. Be specific and detailed in observations.`
     };
     
     try {
-      const fileStats = fs.statSync(filePath);
+      const fileBuffer = fs.readFileSync(filePath);
       res.writeHead(200, { 
         'Content-Type': contentTypes[ext] || 'application/octet-stream',
-        'Content-Length': fileStats.size
+        'Content-Length': fileBuffer.length,
+        'Cache-Control': ext === '.html' ? 'no-cache' : 'public, max-age=3600'
       });
-      const stream = fs.createReadStream(filePath);
-      stream.on('error', (err) => {
-        console.error(`❌ Stream error for ${pathname}:`, err.message);
-        if (!res.headersSent) {
-          res.writeHead(500, { 'Content-Type': 'text/plain' });
-        }
-        res.end('Server error reading file');
-      });
-      stream.pipe(res);
-      console.log(`✅ Served static file: ${pathname} (${fileStats.size} bytes)`);
+      res.end(fileBuffer);
+      console.log(`✅ Served static file: ${pathname} (${fileBuffer.length} bytes)`);
     } catch (err) {
       console.error(`❌ Error serving ${pathname}:`, err.message);
       res.writeHead(500, { 'Content-Type': 'text/plain' });
@@ -14625,21 +14618,14 @@ Always respond with valid JSON only. Be specific and detailed in observations.`
     const htmlFilePath = path.join(__dirname, 'public', pathname + '.html');
     if (fs.existsSync(htmlFilePath) && fs.statSync(htmlFilePath).isFile()) {
       try {
-        const fileStats = fs.statSync(htmlFilePath);
+        const htmlBuffer = fs.readFileSync(htmlFilePath);
         res.writeHead(200, { 
           'Content-Type': 'text/html; charset=utf-8',
-          'Content-Length': fileStats.size
+          'Content-Length': htmlBuffer.length,
+          'Cache-Control': 'no-cache'
         });
-        const stream = fs.createReadStream(htmlFilePath);
-        stream.on('error', (err) => {
-          console.error(`❌ Stream error for ${pathname}.html:`, err.message);
-          if (!res.headersSent) {
-            res.writeHead(500, { 'Content-Type': 'text/plain' });
-          }
-          res.end('Server error reading file');
-        });
-        stream.pipe(res);
-        console.log(`✅ Served HTML file: ${pathname}.html (${fileStats.size} bytes)`);
+        res.end(htmlBuffer);
+        console.log(`✅ Served HTML file: ${pathname}.html (${htmlBuffer.length} bytes)`);
       } catch (err) {
         console.error(`❌ Error serving ${pathname}.html:`, err.message);
         res.writeHead(500, { 'Content-Type': 'text/plain' });
