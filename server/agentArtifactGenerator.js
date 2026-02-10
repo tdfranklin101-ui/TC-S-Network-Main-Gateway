@@ -1,5 +1,6 @@
 const OpenAI = require('openai');
 const crypto = require('crypto');
+const cloudStorage = require('./cloud-storage');
 
 const AGENT_MAP = {
   '01': { name: 'Alpha', specialty: 'Computronium', ext: '.json', mime: 'application/json', strategy: 'openai-json' },
@@ -825,15 +826,38 @@ async function generateArtifactFile(agentCode, title, category, description, opt
     else if (extension === '.svg') content = generateSVG(agentCode, title);
   }
 
-  const buffer = Buffer.from(content, 'utf-8');
+  const contentBuffer = Buffer.from(content, 'utf-8');
   const previewText = content.substring(0, 500) + (content.length > 500 ? '...' : '');
+  const slug = baseFilename;
+  const contentFormat = extension.replace('.', '');
+
+  let cloudUrl = null;
+  const cloudKey = `artifacts/agent/${agentCode}/${slug}${extension}`;
+  try {
+    if (cloudStorage.isAvailable()) {
+      await cloudStorage.uploadFromBuffer(cloudKey, contentBuffer);
+      cloudUrl = `cloud://${cloudKey}`;
+    }
+  } catch (uploadErr) {
+    console.warn(`[AgentArtifactGen] Cloud upload failed for ${agentCode}:`, uploadErr.message);
+  }
 
   return {
-    buffer,
+    buffer: contentBuffer,
     filename,
     mimeType,
-    fileSize: buffer.length,
-    previewText
+    fileSize: contentBuffer.length,
+    previewText,
+    cloudUrl,
+    cloudKey,
+    master_file_url: cloudUrl,
+    trade_file_url: cloudUrl,
+    master_file_size: contentBuffer.length,
+    trade_file_size: contentBuffer.length,
+    processing_status: 'completed',
+    content_body: content,
+    content_format: contentFormat,
+    source_type: 'agent'
   };
 }
 
