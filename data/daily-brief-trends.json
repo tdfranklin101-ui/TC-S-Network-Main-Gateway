@@ -1,62 +1,62 @@
 {
   "date": "2026-02-10",
-  "generatedAt": "2026-02-10T02:23:48.006Z",
+  "generatedAt": "2026-02-10T03:00:09.796Z",
   "currentIndices": [
     {
       "id": "si",
       "name": "Solar Index",
       "unit": "%",
-      "value": 71.6,
+      "value": 70.9,
       "description": "Global Energy & Ethics Balance — 7-Day Rolling Indicator.",
-      "asOf": "2026-02-10T02:23:45.380Z"
+      "asOf": "2026-02-10T03:00:00.009Z"
     },
     {
       "id": "srh",
       "name": "Solar Reserve Health",
       "unit": "%",
-      "value": 78.9,
+      "value": 78,
       "description": "Reserve stability and fulfillment factor across all regions.",
-      "asOf": "2026-02-10T02:23:45.380Z"
+      "asOf": "2026-02-10T03:00:00.009Z"
     },
     {
       "id": "gbi",
       "name": "Global Basic Income",
       "unit": "%",
-      "value": 41.1,
+      "value": 40.8,
       "description": "Percentage of humans enrolled and actively claiming GBI.",
-      "asOf": "2026-02-10T02:23:45.380Z"
+      "asOf": "2026-02-10T03:00:00.009Z"
     },
     {
       "id": "cai",
       "name": "Compute Alignment",
       "unit": "%",
-      "value": 89.3,
+      "value": 89.8,
       "description": "Ethically aligned compute flow — safe superintelligence readiness.",
-      "asOf": "2026-02-10T02:23:45.380Z"
+      "asOf": "2026-02-10T03:00:00.009Z"
     },
     {
       "id": "mli",
       "name": "Market Liquidity",
       "unit": "%",
-      "value": 23.9,
+      "value": 24.4,
       "description": "Health of the TC-S digital marketplace and token velocity.",
-      "asOf": "2026-02-10T02:23:45.380Z"
+      "asOf": "2026-02-10T03:00:00.009Z"
     },
     {
       "id": "eai",
       "name": "Ethical Alignment",
       "unit": "%",
-      "value": 92.9,
+      "value": 91.6,
       "description": "Acceptance ratio of tasks from the Ethics Engine.",
-      "asOf": "2026-02-10T02:23:45.380Z"
+      "asOf": "2026-02-10T03:00:00.009Z"
     }
   ],
   "trends": {
     "analysisStatus": "success",
-    "direction": "bullish",
-    "analysis": "The overall market health indices show a positive trend, particularly with increases in the sentiment index (si) and the social media reputation health (srh), indicating rising investor confidence. However, the growth benchmark index (gbi) remains relatively low, suggesting some underlying concerns despite the bullish sentiment. ",
-    "insight": "Focus on enhancing communication strategies to further improve the growth benchmark index, as it is a key area that could bolster overall market confidence.",
-    "generatedAt": "2026-02-10T02:23:48.006Z"
+    "direction": "neutral",
+    "analysis": "The TC-S market health indices show stability with slight fluctuations across most indicators. Notable increases in the 'si' and 'srh' values suggest some positive sentiment, while the 'gbi' and 'mli' have decreased, indicating mixed market conditions. Overall, current values are close to historical averages, reflecting a balance between bullish and bearish signals.",
+    "insight": "Monitor the 'gbi' and 'mli' closely for potential declines, as improvements in these areas could shift the market sentiment towards a more bullish outlook.",
+    "generatedAt": "2026-02-10T03:00:09.796Z"
   },
   "historyDays": 30
 }

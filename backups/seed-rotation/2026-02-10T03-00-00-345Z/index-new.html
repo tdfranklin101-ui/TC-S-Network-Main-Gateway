@@ -1,0 +1,171 @@
+<section class="hero">
+    <div class="container">
+        <h1 style="color: var(--accent-blue);">Welcome to The Current-See</h1>
+        <p style="color: var(--primary-blue);">Empowering a Planet of Billionaires with Solar Currency</p>
+        <div class="cta-buttons">
+            <a href="/wallet.html" class="btn-primary">My Solar</a>
+            <a href="/declaration.html" class="btn-secondary">Solar Declaration</a>
+            <a href="/founder_note.html" class="btn-secondary">Founder's Note</a>
+            <a href="/whitepapers.html" class="btn-secondary">White Papers</a>
+        </div>
+        
+        <!-- Prominent Join Button -->
+        <div class="join-button-container" style="margin-top: 30px; text-align: center;">
+            <a href="/signup.html" class="btn-join">
+                Join the 1,000 member prototype, start getting Solars today
+            </a>
+        </div>
+    </div>
+</section>
+
+<section class="solar-counter-section">
+    <div class="container">
+        <div class="solar-counter-container">
+            <h2 class="counter-title">Solar Generator</h2>
+            <div id="solar-counter" class="solar-counter-display">
+                <div class="counter-row">
+                    <div class="counter-label">Energy Generated:</div>
+                    <div class="counter-value"><span id="energy-display">Loading...</span> MkWh</div>
+                </div>
+                <!-- Value Created row removed as requested -->
+            </div>
+            <p class="mt-4" style="color: var(--primary-blue);">One Solar = 4,913 kWh (based on 1% of Earth's solar input divided among 8.5B people)</p>
+            <p><a href="/solar-generator" class="btn-primary mt-3">View Full Solar Generator</a></p>
+        </div>
+    </div>
+</section>
+
+<section class="member-counter-section">
+    <div class="container">
+        <div class="member-counter-container">
+            <h2 class="counter-title">Members Worldwide</h2>
+            <div id="member-counter" class="counter-value">Loading...</div>
+            <p style="color: var(--primary-blue);">Join the growing community of solar-powered individuals</p>
+        </div>
+    </div>
+</section>
+
+<section class="main-sections">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="section-card">
+                    <img src="/solar_coin.png" alt="Prototype" style="max-width: 100px; height: auto;">
+                    <div class="section-content">
+                        <h3>Prototype</h3>
+                        <p>Experience our working prototype and see the future of solar-backed currency in action.</p>
+                        <a href="/prototype.html" class="btn-primary">Try Demo</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="section-card">
+                    <img src="/solar_tshirt.png" alt="Merchandise" style="max-width: 100px; height: auto;">
+                    <div class="section-content">
+                        <h3>Merchandise</h3>
+                        <p>Support our mission by purchasing exclusive Current-See branded merchandise.</p>
+                        <a href="/merch.html" class="btn-primary">Shop Now</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="section-card">
+                    <img src="/solar_background.png" alt="My Solar" style="max-width: 100px; height: auto;">
+                    <div class="section-content">
+                        <h3>My Solar</h3>
+                        <p>Sign up to receive daily solar distributions and track your growing solar balance.</p>
+                        <a href="/wallet.html" class="btn-primary">Join Today</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="public-members-section">
+    <div class="container">
+        <div class="members-log-container">
+            <h2 class="members-log-title">Public Members Log</h2>
+            <div id="public-members-log"></div>
+        </div>
+    </div>
+</section>
+
+<section class="site-index-section">
+    <div class="container">
+        <div class="site-index-container">
+            <h2 class="site-index-title">Complete Site Index</h2>
+            <div class="site-index-grid">
+                <div class="site-index-column">
+                    <h3>Core Sections</h3>
+                    <ul>
+                        <li><a href="/">Home Page</a></li>
+                        <li><a href="/prototype.html">Prototype Demo</a></li>
+                        <li><a href="/solar-generator">Solar Generator</a></li>
+                        <li><a href="/merch.html">Current-See Merchandise</a></li>
+                        <li><a href="/wallet.html">My Solar Account</a></li>
+                    </ul>
+                </div>
+                <div class="site-index-column">
+                    <h3>Documentation</h3>
+                    <ul>
+                        <li><a href="/declaration.html">Solar Declaration</a></li>
+                        <li><a href="/whitepapers.html">White Papers</a></li>
+                        <li><a href="/founder_note.html">Founder's Note</a></li>
+                    </ul>
+                </div>
+                <div class="site-index-column">
+                    <h3>Coming Soon</h3>
+                    <ul>
+                        <li><span style="color: var(--primary-blue);">Solar Wallet Prototype</span></li>
+                        <li><span style="color: var(--primary-blue);">Interactive Visualization</span></li>
+                        <li><span style="color: var(--primary-blue);">Global Impact Dashboard</span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Hidden elements for solar_counter.js -->
+<div class="hidden-counters">
+    <div id="energy-counter"></div>
+    <div id="money-counter"></div>
+</div>
+
+<script>
+    // Fetch member count from API
+    document.addEventListener('DOMContentLoaded', function() {
+        fetchMemberCount();
+    });
+    
+    async function fetchMemberCount() {
+        try {
+            const response = await fetch('/api/member-count');
+            const data = await response.json();
+            
+            // Update member counter with actual count
+            const memberCountElement = document.getElementById('member-counter');
+            if (memberCountElement) {
+                memberCountElement.textContent = data.count.toLocaleString();
+                
+                // Add animation effect
+                memberCountElement.classList.add('counter-highlight');
+                setTimeout(() => {
+                    memberCountElement.classList.remove('counter-highlight');
+                }, 1500);
+            }
+        } catch (error) {
+            console.error('Error fetching member count:', error);
+            // Fallback if there's an error
+            const memberCountElement = document.getElementById('member-counter');
+            if (memberCountElement) {
+                memberCountElement.textContent = 'Join Today!';
+            }
+        }
+    }
+</script>
+
+<!-- Page-specific scripts -->
+<script src="/solar_counter.js"></script>
+<script src="/js/public-members-log.js"></script>

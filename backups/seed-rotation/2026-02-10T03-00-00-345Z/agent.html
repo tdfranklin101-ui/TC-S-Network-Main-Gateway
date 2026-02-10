@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Personal Agent - TC-S Network</title>
+    <meta name="description" content="Your Solar-powered personal AI agent. Perform tasks across the TC-S Network with 1 Solar = 10,000 Rays daily allowance.">
+    <link rel="canonical" href="https://www.thecurrentsee.org/agent.html">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(to bottom, #000000, #0a0a0a, #000000);
+            color: #ffffff;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: rgba(0, 0, 0, 0.9);
+            border-bottom: 1px solid rgba(0, 255, 255, 0.3);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00ffff;
+        }
+
+        .header-subtitle {
+            font-size: 14px;
+            color: #888;
+        }
+
+        .back-link {
+            color: #00ffff;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            transition: color 0.3s;
+        }
+
+        .back-link:hover {
+            color: #00ff41;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 40px 20px;
+            background: rgba(0, 255, 255, 0.05);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            border-radius: 16px;
+            margin-bottom: 30px;
+        }
+
+        .hero-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .hero h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #00ffff, #00ff41);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+        }
+
+        .hero p {
+            color: #aaa;
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .info-card {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        .info-card h3 {
+            color: #00ffff;
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .info-card ul {
+            list-style: none;
+            color: #ccc;
+        }
+
+        .info-card li {
+            padding: 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .info-card li:last-child {
+            border-bottom: none;
+        }
+
+        .solar-box {
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .solar-box h2 {
+            color: #FFD700;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+        }
+
+        .solar-conversion {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .solar-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #FFD700;
+        }
+
+        .rays-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #00ff41;
+        }
+
+        .equals {
+            font-size: 1.5rem;
+            color: #888;
+        }
+
+        .cost-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .cost-item {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .cost-rays {
+            color: #00ffff;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .cost-label {
+            color: #888;
+            font-size: 0.85rem;
+            margin-top: 4px;
+        }
+
+        .cta-section {
+            text-align: center;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.1), rgba(0, 255, 65, 0.05));
+            border: 1px solid rgba(0, 255, 65, 0.3);
+            border-radius: 16px;
+        }
+
+        .cta-section h2 {
+            color: #00ff41;
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+        }
+
+        .cta-section p {
+            color: #aaa;
+            margin-bottom: 25px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cta-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #00ffff, #00ff41);
+            color: #000;
+            text-decoration: none;
+            padding: 16px 40px;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            transition: all 0.3s;
+            box-shadow: 0 4px 20px rgba(0, 255, 255, 0.3);
+        }
+
+        .cta-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 30px rgba(0, 255, 255, 0.5);
+        }
+
+        .nav-links {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .nav-link {
+            color: #00ffff;
+            text-decoration: none;
+            padding: 12px 24px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .nav-link:hover {
+            background: rgba(0, 255, 255, 0.1);
+            border-color: #00ffff;
+        }
+
+        @media (max-width: 600px) {
+            .hero h1 {
+                font-size: 1.8rem;
+            }
+
+            .solar-value {
+                font-size: 2rem;
+            }
+
+            .rays-value {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <div class="header-title">🤖 Personal Agent</div>
+            <div class="header-subtitle">TC-S Network</div>
+        </div>
+        <a href="/" class="back-link">← Back to Home</a>
+    </div>
+
+    <div class="container">
+        <div class="hero">
+            <div class="hero-icon">🤖</div>
+            <h1>Your Personal Agent</h1>
+            <p>A Solar-powered autonomous AI assistant that performs tasks on your behalf across the entire TC-S Network.</p>
+        </div>
+
+        <div class="info-grid">
+            <div class="info-card">
+                <h3>⚡ What Your Agent Can Do</h3>
+                <ul>
+                    <li>🔍 Identify anything using AI vision</li>
+                    <li>🛰️ Read satellite data streams</li>
+                    <li>🌍 Analyze seismic activity</li>
+                    <li>📊 Help govern compute resources</li>
+                    <li>💼 Interact with the marketplace</li>
+                    <li>✨ Create AI artifacts and reports</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <h3>🛡️ Your Agent Protects You</h3>
+                <ul>
+                    <li>🔒 Autonomy level controls</li>
+                    <li>📊 Daily Solar spending limits</li>
+                    <li>⚖️ UDHR-aligned ethics profile</li>
+                    <li>📜 Full action history log</li>
+                    <li>🎯 Per-action Ray limits</li>
+                    <li>🔔 Transaction notifications</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="commands-section" style="margin-bottom: 30px;">
+            <h2 style="color: #00ffff; text-align: center; margin-bottom: 25px; font-size: 1.6rem;">💬 What to Ask Kid Solar</h2>
+            <p style="text-align: center; color: #aaa; margin-bottom: 30px;">Talk to Kid Solar in the Marketplace using natural language. Here are example commands:</p>
+            
+            <div class="info-grid">
+                <div class="info-card">
+                    <h3>🛒 Buying & Browsing</h3>
+                    <ul style="font-size: 0.95rem;">
+                        <li style="color: #00ff41; font-style: italic;">"Show me the latest music"</li>
+                        <li style="color: #00ff41; font-style: italic;">"What videos are under 0.5 Solar?"</li>
+                        <li style="color: #00ff41; font-style: italic;">"I want to buy The Rise of the Solar"</li>
+                        <li style="color: #00ff41; font-style: italic;">"What's the cheapest art available?"</li>
+                        <li style="color: #00ff41; font-style: italic;">"Preview the album Solar Journey"</li>
+                        <li style="color: #00ff41; font-style: italic;">"What can I buy with 0.1 Solar?"</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h3>📤 Creating & Uploading</h3>
+                    <ul style="font-size: 0.95rem;">
+                        <li style="color: #00ff41; font-style: italic;">"Create a new music artifact called My Song"</li>
+                        <li style="color: #00ff41; font-style: italic;">"I want to upload my digital art"</li>
+                        <li style="color: #00ff41; font-style: italic;">"How do I add a video to the marketplace?"</li>
+                        <li style="color: #00ff41; font-style: italic;">"What format should my music file be?"</li>
+                        <li style="color: #00ff41; font-style: italic;">"Help me list my document for sale"</li>
+                        <li style="color: #00ff41; font-style: italic;">"Check my uploads"</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h3>💰 Pricing & Wallet</h3>
+                    <ul style="font-size: 0.95rem;">
+                        <li style="color: #00ff41; font-style: italic;">"What's my wallet balance?"</li>
+                        <li style="color: #00ff41; font-style: italic;">"How much should I price my 5-minute song?"</li>
+                        <li style="color: #00ff41; font-style: italic;">"Show my transaction history"</li>
+                        <li style="color: #00ff41; font-style: italic;">"Price a 10MB video file"</li>
+                        <li style="color: #00ff41; font-style: italic;">"List my artifact at 0.001 Solar"</li>
+                        <li style="color: #00ff41; font-style: italic;">"What's 1 Solar in kWh?"</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h3>🔍 Identify Anything</h3>
+                    <ul style="font-size: 0.95rem;">
+                        <li style="color: #00ff41; font-style: italic;">"What's in this image?" (upload photo)</li>
+                        <li style="color: #00ff41; font-style: italic;">"Identify this object" (with image)</li>
+                        <li style="color: #00ff41; font-style: italic;">"Analyze this cover art"</li>
+                        <li style="color: #00ff41; font-style: italic;">"What type of file is this?"</li>
+                        <li style="color: #00ff41; font-style: italic;">"Describe this photo for me"</li>
+                        <li style="color: #00ff41; font-style: italic;">"Is this image good for a thumbnail?"</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div style="background: rgba(0, 255, 65, 0.1); border: 1px solid rgba(0, 255, 65, 0.3); border-radius: 12px; padding: 24px; margin-top: 25px;">
+                <h3 style="color: #00ff41; margin-bottom: 15px;">🎤 Voice or Text</h3>
+                <p style="color: #ccc; line-height: 1.6;">
+                    Kid Solar understands both <strong style="color: #fff;">voice</strong> and <strong style="color: #fff;">text</strong>. 
+                    Click the microphone button in the Marketplace to speak, or just type your request. 
+                    Kid Solar uses AI to understand what you want and takes action automatically - 
+                    buying artifacts, checking prices, creating listings, or analyzing images.
+                </p>
+                <p style="color: #888; margin-top: 12px; font-size: 0.9rem;">
+                    All transactions are recorded in your ledger. Your agent confirms every action and deducts the appropriate Rays from your daily Solar allowance.
+                </p>
+            </div>
+        </div>
+
+        <div class="solar-box">
+            <h2>☀️ How Solar Metering Works</h2>
+            <div class="solar-conversion">
+                <div class="solar-value">1 Solar</div>
+                <div class="equals">=</div>
+                <div class="rays-value">10,000 Rays</div>
+            </div>
+            <p style="color: #aaa; margin-bottom: 20px;">Every person receives 1 Solar per day. Your agent uses this energy to perform actions across the network.</p>
+            
+            <div class="cost-grid">
+                <div class="cost-item">
+                    <div class="cost-rays">100 Rays</div>
+                    <div class="cost-label">Basic query</div>
+                </div>
+                <div class="cost-item">
+                    <div class="cost-rays">200 Rays</div>
+                    <div class="cost-label">Create artifact</div>
+                </div>
+                <div class="cost-item">
+                    <div class="cost-rays">500 Rays</div>
+                    <div class="cost-label">Price artifact</div>
+                </div>
+                <div class="cost-item">
+                    <div class="cost-rays">800 Rays</div>
+                    <div class="cost-label">Analyze risk</div>
+                </div>
+                <div class="cost-item">
+                    <div class="cost-rays">1,000 Rays</div>
+                    <div class="cost-label">Compute access</div>
+                </div>
+                <div class="cost-item">
+                    <div class="cost-rays">10,000 Rays</div>
+                    <div class="cost-label">Full project</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="cta-section" id="cta-section">
+            <div id="not-signed-in">
+                <h2>Ready to Activate Your Agent?</h2>
+                <p>Sign in to the TC-S Network to activate your personal agent and start using your daily Solar allowance.</p>
+                <a href="/marketplace.html" class="cta-btn" data-testid="button-go-to-marketplace">Go to Marketplace to Sign In</a>
+            </div>
+            <div id="agent-active" style="display: none;">
+                <h2 style="color: #00ff41;">🎉 Your Agent is Active!</h2>
+                <div style="background: rgba(0,0,0,0.4); border-radius: 12px; padding: 20px; margin: 20px auto; max-width: 400px; text-align: left;">
+                    <p style="margin-bottom: 12px;"><strong style="color: #00ffff;">Agent ID:</strong> <span id="agent-id" style="font-family: monospace; color: #aaa;"></span></p>
+                    <p style="margin-bottom: 12px;"><strong style="color: #00ffff;">Display Name:</strong> <span id="agent-name" style="color: #fff;"></span></p>
+                    <p style="margin-bottom: 12px;"><strong style="color: #00ffff;">Status:</strong> <span style="color: #00ff41;">● Active</span></p>
+                    <p><strong style="color: #00ffff;">Daily Allowance:</strong> <span style="color: #FFD700;">1 Solar (10,000 Rays)</span></p>
+                </div>
+                <a href="/marketplace.html" class="cta-btn" style="background: linear-gradient(135deg, #00ff41, #00cc33);" data-testid="button-go-to-marketplace">Go to Marketplace</a>
+            </div>
+        </div>
+
+        <div class="nav-links">
+            <a href="/" class="nav-link" data-testid="link-home">🏠 Home</a>
+            <a href="/marketplace.html" class="nav-link" data-testid="link-marketplace">🏪 Marketplace</a>
+            <a href="/solar-dashboard.html" class="nav-link" data-testid="link-solar-dashboard">📊 Solar Dashboard</a>
+            <a href="/members.html" class="nav-link" data-testid="link-members">👥 Members</a>
+        </div>
+    </div>
+
+    <script>
+        // Check if user has an active agent
+        document.addEventListener('DOMContentLoaded', function() {
+            const agentId = localStorage.getItem('tcs_agent_id');
+            const userName = localStorage.getItem('tcs_user_name');
+            
+            if (agentId && userName) {
+                // User has an active agent
+                document.getElementById('not-signed-in').style.display = 'none';
+                document.getElementById('agent-active').style.display = 'block';
+                document.getElementById('agent-id').textContent = agentId.substring(0, 20) + '...';
+                document.getElementById('agent-name').textContent = userName;
+            }
+        });
+
+        // Kid Solar Session Management
+        function generateSessionId() {
+            return 'ks_' + Date.now() + '_' + Math.random().toString(36).substring(2, 15);
+        }
+
+        async function initializeKidSolarSession() {
+            let sessionId = sessionStorage.getItem('kid_solar_session_id');
+            if (!sessionId) {
+                sessionId = generateSessionId();
+                sessionStorage.setItem('kid_solar_session_id', sessionId);
+            }
+
+            try {
+                const response = await fetch('/api/kid-solar/session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sessionId,
+                        action: 'start',
+                        context: {
+                            page: 'agent',
+                            timestamp: new Date().toISOString()
+                        }
+                    })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    console.log('Kid Solar session initialized:', sessionId);
+                }
+            } catch (error) {
+                console.log('Session initialization:', error.message);
+            }
+        }
+
+        // Monitor for D-ID agent activity
+        function monitorDidAgentForSessionStart() {
+            let sessionStarted = false;
+            let checkCount = 0;
+            const maxChecks = 30;
+
+            const checkForAgent = setInterval(() => {
+                checkCount++;
+                const agentElements = document.querySelectorAll('[data-agent-id], iframe, div[role="dialog"]');
+                const hasVisibleElements = Array.from(agentElements).some(el => {
+                    const rect = el.getBoundingClientRect();
+                    return rect.width > 0 && rect.height > 0;
+                });
+
+                if (hasVisibleElements && !sessionStarted) {
+                    sessionStarted = true;
+                    console.log('D-ID agent detected - starting session');
+                    initializeKidSolarSession();
+                    clearInterval(checkForAgent);
+                }
+
+                if (checkCount >= maxChecks) {
+                    if (!sessionStarted) {
+                        initializeKidSolarSession();
+                    }
+                    clearInterval(checkForAgent);
+                }
+            }, 1000);
+        }
+
+        // Start monitoring when page loads
+        monitorDidAgentForSessionStart();
+    </script>
+
+    <!-- Kid Solar Controller - Persistent across pages -->
+    <script src="/js/kid-solar-controller.js"></script>
+</body>
+</html>

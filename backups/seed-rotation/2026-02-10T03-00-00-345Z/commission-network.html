@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Commission Network — TC-S Networks Foundation</title>
+  <meta name="description" content="Commission your private solar-backed network with TC-S Networks Foundation. Create wallets, marketplaces, and energy-based economies.">
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "TC-S Network Commissioning",
+    "description": "Commission private solar-backed currency networks with the TC-S Foundation",
+    "applicationCategory": "FinanceApplication",
+    "operatingSystem": "Web"
+  }
+  </script>
+  
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    :root {
+      --solar-green: #39ff14;
+      --solar-gold: #fbbf24;
+      --dark-bg: #0a0a0a;
+      --card-bg: rgba(20, 20, 20, 0.95);
+      --border-color: rgba(57, 255, 20, 0.3);
+      --text-primary: #ffffff;
+      --text-secondary: #a0aec0;
+    }
+    
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--dark-bg);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+    
+    .header {
+      background: linear-gradient(180deg, rgba(57, 255, 20, 0.1) 0%, transparent 100%);
+      border-bottom: 1px solid var(--border-color);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: var(--solar-green);
+    }
+    
+    .logo-badge {
+      width: 32px;
+      height: 32px;
+      background: var(--solar-green);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 10px var(--solar-green); }
+      50% { opacity: 0.7; box-shadow: 0 0 20px var(--solar-green); }
+    }
+    
+    .nav-link {
+      color: var(--text-secondary);
+      text-decoration: none;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      transition: all 0.3s;
+    }
+    
+    .nav-link:hover {
+      color: var(--solar-green);
+      background: rgba(57, 255, 20, 0.1);
+    }
+    
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    
+    .page-title {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+    
+    .page-title h1 {
+      font-size: 2.5rem;
+      color: var(--solar-green);
+      margin-bottom: 0.5rem;
+      text-shadow: 0 0 20px rgba(57, 255, 20, 0.4);
+    }
+    
+    .page-title p {
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+    }
+    
+    .steps-indicator {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      margin-bottom: 3rem;
+    }
+    
+    .step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      opacity: 0.4;
+      transition: all 0.3s;
+    }
+    
+    .step.active {
+      opacity: 1;
+    }
+    
+    .step.completed {
+      opacity: 1;
+    }
+    
+    .step-number {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(57, 255, 20, 0.2);
+      border: 2px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+    
+    .step.active .step-number {
+      background: var(--solar-green);
+      color: var(--dark-bg);
+      border-color: var(--solar-green);
+    }
+    
+    .step.completed .step-number {
+      background: var(--solar-gold);
+      color: var(--dark-bg);
+      border-color: var(--solar-gold);
+    }
+    
+    .step-label {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+    
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+    
+    .card-title {
+      font-size: 1.3rem;
+      color: var(--solar-green);
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+    }
+    
+    .form-input, .form-select {
+      width: 100%;
+      padding: 0.8rem 1rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-size: 1rem;
+      transition: all 0.3s;
+    }
+    
+    .form-input:focus, .form-select:focus {
+      outline: none;
+      border-color: var(--solar-green);
+      box-shadow: 0 0 10px rgba(57, 255, 20, 0.2);
+    }
+    
+    .form-select option {
+      background: var(--dark-bg);
+      color: var(--text-primary);
+    }
+    
+    .capability-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 10px;
+      margin-top: 0.5rem;
+    }
+    
+    .capability-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0.6rem 0.8rem;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .capability-item:hover {
+      border-color: var(--solar-green);
+      background: rgba(57, 255, 20, 0.1);
+    }
+    
+    .capability-item.selected {
+      border-color: var(--solar-green);
+      background: rgba(57, 255, 20, 0.2);
+    }
+    
+    .capability-item input {
+      display: none;
+    }
+    
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0.8rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .btn-primary {
+      background: var(--solar-green);
+      color: var(--dark-bg);
+    }
+    
+    .btn-primary:hover {
+      box-shadow: 0 0 20px rgba(57, 255, 20, 0.5);
+      transform: translateY(-2px);
+    }
+    
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .btn-secondary {
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+    }
+    
+    .btn-secondary:hover {
+      color: var(--solar-green);
+      border-color: var(--solar-green);
+    }
+    
+    .actions {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 2rem;
+    }
+    
+    .review-section {
+      display: none;
+    }
+    
+    .review-section.active {
+      display: block;
+    }
+    
+    .review-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.8rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .review-label {
+      color: var(--text-secondary);
+    }
+    
+    .review-value {
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+    
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0.4rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+    
+    .status-pending {
+      background: rgba(251, 191, 36, 0.2);
+      color: var(--solar-gold);
+    }
+    
+    .status-approved {
+      background: rgba(57, 255, 20, 0.2);
+      color: var(--solar-green);
+    }
+    
+    .result-section {
+      display: none;
+      text-align: center;
+      padding: 3rem;
+    }
+    
+    .result-section.active {
+      display: block;
+    }
+    
+    .result-icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+    }
+    
+    .hidden { display: none !important; }
+    
+    @media (max-width: 768px) {
+      .container { padding: 1rem; }
+      .page-title h1 { font-size: 1.8rem; }
+      .steps-indicator { gap: 1rem; }
+      .step-label { font-size: 0.75rem; }
+      .capability-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="logo">
+      <div class="logo-badge"></div>
+      TC-S Networks Foundation
+    </div>
+    <nav>
+      <a href="/" class="nav-link">Home</a>
+      <a href="/marketplace.html" class="nav-link">Marketplace</a>
+      <a href="/wallet.html" class="nav-link">Wallet</a>
+    </nav>
+  </header>
+
+  <div class="container">
+    <div class="page-title">
+      <h1>Commission Your Network</h1>
+      <p>Create a private solar-backed network with wallets, marketplace, and energy tracking</p>
+    </div>
+
+    <div class="steps-indicator">
+      <div class="step active" data-step="1">
+        <div class="step-number">1</div>
+        <span class="step-label">Network Type</span>
+      </div>
+      <div class="step" data-step="2">
+        <div class="step-number">2</div>
+        <span class="step-label">Configuration</span>
+      </div>
+      <div class="step" data-step="3">
+        <div class="step-number">3</div>
+        <span class="step-label">Review</span>
+      </div>
+      <div class="step" data-step="4">
+        <div class="step-number">4</div>
+        <span class="step-label">Submit</span>
+      </div>
+    </div>
+
+    <div id="step1" class="card">
+      <h2 class="card-title">Select Network Type</h2>
+      
+      <div class="form-group">
+        <label class="form-label">Network Name</label>
+        <input type="text" id="networkName" class="form-input" placeholder="e.g., Smith Family Solar Network" required>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">Network Type</label>
+        <select id="networkType" class="form-select">
+          <option value="">Select a network type...</option>
+          <option value="satellite">Satellite Network - Remote sensing and data collection</option>
+          <option value="gateway">Gateway Network - Entry point for external systems</option>
+          <option value="relay">Relay Network - Message and data relay node</option>
+          <option value="compute">Compute Network - Processing and AI inference</option>
+          <option value="storage">Storage Network - Data persistence and archival</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">Region</label>
+        <select id="region" class="form-select">
+          <option value="global">Global</option>
+          <option value="north_america">North America</option>
+          <option value="europe">Europe</option>
+          <option value="asia_pacific">Asia Pacific</option>
+          <option value="africa">Africa</option>
+          <option value="south_america">South America</option>
+        </select>
+      </div>
+      
+      <div class="actions">
+        <a href="/" class="btn btn-secondary">Cancel</a>
+        <button class="btn btn-primary" onclick="nextStep(2)">Continue</button>
+      </div>
+    </div>
+
+    <div id="step2" class="card hidden">
+      <h2 class="card-title">Configure Capabilities</h2>
+      
+      <div class="form-group">
+        <label class="form-label">Energy Source</label>
+        <select id="energySource" class="form-select">
+          <option value="solar">Solar</option>
+          <option value="wind">Wind</option>
+          <option value="hydro">Hydro</option>
+          <option value="mixed">Mixed Renewable</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">Initial Solar Allocation</label>
+        <input type="number" id="initialSolar" class="form-input" value="100" min="1" max="10000">
+        <small style="color: var(--text-secondary); display: block; margin-top: 5px;">
+          1 Solar = 4,913 kWh of renewable energy
+        </small>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">Network Capabilities (select up to 10)</label>
+        <div class="capability-grid" id="capabilitiesGrid">
+          <label class="capability-item">
+            <input type="checkbox" value="energy_tracking">
+            <span>Energy Tracking</span>
+          </label>
+          <label class="capability-item">
+            <input type="checkbox" value="solar_calculation">
+            <span>Solar Calculation</span>
+          </label>
+          <label class="capability-item">
+            <input type="checkbox" value="data_collection">
+            <span>Data Collection</span>
+          </label>
+          <label class="capability-item">
+            <input type="checkbox" value="marketplace_integration">
+            <span>Marketplace</span>
+          </label>
+          <label class="capability-item">
+            <input type="checkbox" value="wallet_management">
+            <span>Wallet Management</span>
+          </label>
+          <label class="capability-item">
+            <input type="checkbox" value="ai_inference">
+            <span>AI Inference</span>
+          </label>
+          <label class="capability-item">
+            <input type="checkbox" value="ethics_monitoring">
+            <span>Ethics Monitoring</span>
+          </label>
+          <label class="capability-item">
+            <input type="checkbox" value="audit_logging">
+            <span>Audit Logging</span>
+          </label>
+          <label class="capability-item">
+            <input type="checkbox" value="authentication">
+            <span>Authentication</span>
+          </label>
+          <label class="capability-item">
+            <input type="checkbox" value="data_storage">
+            <span>Data Storage</span>
+          </label>
+        </div>
+      </div>
+      
+      <div class="actions">
+        <button class="btn btn-secondary" onclick="prevStep(1)">Back</button>
+        <button class="btn btn-primary" onclick="nextStep(3)">Review</button>
+      </div>
+    </div>
+
+    <div id="step3" class="card hidden">
+      <h2 class="card-title">Review Your Network</h2>
+      
+      <div class="review-section active">
+        <div class="review-item">
+          <span class="review-label">Network Name</span>
+          <span class="review-value" id="reviewName">-</span>
+        </div>
+        <div class="review-item">
+          <span class="review-label">Network Type</span>
+          <span class="review-value" id="reviewType">-</span>
+        </div>
+        <div class="review-item">
+          <span class="review-label">Region</span>
+          <span class="review-value" id="reviewRegion">-</span>
+        </div>
+        <div class="review-item">
+          <span class="review-label">Energy Source</span>
+          <span class="review-value" id="reviewEnergy">-</span>
+        </div>
+        <div class="review-item">
+          <span class="review-label">Initial Solar</span>
+          <span class="review-value" id="reviewSolar">-</span>
+        </div>
+        <div class="review-item">
+          <span class="review-label">Capabilities</span>
+          <span class="review-value" id="reviewCapabilities">-</span>
+        </div>
+      </div>
+      
+      <div class="actions">
+        <button class="btn btn-secondary" onclick="prevStep(2)">Back</button>
+        <button class="btn btn-primary" id="submitBtn" onclick="submitNetwork()">
+          Submit for Approval
+        </button>
+      </div>
+    </div>
+
+    <div id="step4" class="card hidden">
+      <div class="result-section active">
+        <div class="result-icon" id="resultIcon"></div>
+        <h2 id="resultTitle" style="margin-bottom: 1rem;"></h2>
+        <p id="resultMessage" style="color: var(--text-secondary); margin-bottom: 1.5rem;"></p>
+        <div id="requestDetails" style="text-align: left; background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+        </div>
+        <div class="actions" style="justify-content: center;">
+          <a href="/" class="btn btn-secondary">Return Home</a>
+          <button class="btn btn-primary" onclick="checkStatus()">Check Status</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentStep = 1;
+    let submittedRequestId = null;
+    
+    document.querySelectorAll('.capability-item').forEach(item => {
+      item.addEventListener('click', function() {
+        const checkbox = this.querySelector('input[type="checkbox"]');
+        const selected = document.querySelectorAll('.capability-item.selected').length;
+        
+        if (!checkbox.checked && selected >= 10) {
+          alert('Maximum 10 capabilities allowed');
+          return;
+        }
+        
+        checkbox.checked = !checkbox.checked;
+        this.classList.toggle('selected', checkbox.checked);
+      });
+    });
+    
+    function updateSteps() {
+      document.querySelectorAll('.step').forEach(step => {
+        const stepNum = parseInt(step.dataset.step);
+        step.classList.remove('active', 'completed');
+        if (stepNum === currentStep) {
+          step.classList.add('active');
+        } else if (stepNum < currentStep) {
+          step.classList.add('completed');
+        }
+      });
+    }
+    
+    function nextStep(step) {
+      if (step === 2) {
+        const name = document.getElementById('networkName').value.trim();
+        const type = document.getElementById('networkType').value;
+        if (!name) {
+          alert('Please enter a network name');
+          return;
+        }
+        if (!type) {
+          alert('Please select a network type');
+          return;
+        }
+      }
+      
+      if (step === 3) {
+        updateReview();
+      }
+      
+      document.getElementById(`step${currentStep}`).classList.add('hidden');
+      document.getElementById(`step${step}`).classList.remove('hidden');
+      currentStep = step;
+      updateSteps();
+    }
+    
+    function prevStep(step) {
+      document.getElementById(`step${currentStep}`).classList.add('hidden');
+      document.getElementById(`step${step}`).classList.remove('hidden');
+      currentStep = step;
+      updateSteps();
+    }
+    
+    function updateReview() {
+      document.getElementById('reviewName').textContent = document.getElementById('networkName').value;
+      document.getElementById('reviewType').textContent = document.getElementById('networkType').selectedOptions[0].text;
+      document.getElementById('reviewRegion').textContent = document.getElementById('region').selectedOptions[0].text;
+      document.getElementById('reviewEnergy').textContent = document.getElementById('energySource').selectedOptions[0].text;
+      document.getElementById('reviewSolar').textContent = document.getElementById('initialSolar').value + ' Solar';
+      
+      const caps = [];
+      document.querySelectorAll('.capability-item.selected span').forEach(span => {
+        caps.push(span.textContent);
+      });
+      document.getElementById('reviewCapabilities').textContent = caps.length > 0 ? caps.join(', ') : 'None selected';
+    }
+    
+    function getSelectedCapabilities() {
+      const caps = [];
+      document.querySelectorAll('.capability-item input:checked').forEach(input => {
+        caps.push(input.value);
+      });
+      return caps;
+    }
+    
+    async function submitNetwork() {
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Submitting...';
+      
+      const networkSpec = {
+        name: document.getElementById('networkName').value.trim(),
+        networkType: document.getElementById('networkType').value,
+        region: document.getElementById('region').value,
+        energySource: document.getElementById('energySource').value,
+        initialSolarAllocation: parseInt(document.getElementById('initialSolar').value),
+        capabilities: getSelectedCapabilities()
+      };
+      
+      try {
+        const response = await fetch('/api/agentic/commissioning/create-direct', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ networkSpec })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          submittedRequestId = result.actionRequestId;
+          showResult(true, result);
+          startPolling();
+        } else {
+          showResult(false, result);
+        }
+      } catch (error) {
+        showResult(false, { error: error.message });
+      }
+      
+      btn.disabled = false;
+      btn.textContent = 'Submit for Approval';
+    }
+    
+    function showResult(success, result) {
+      document.getElementById(`step${currentStep}`).classList.add('hidden');
+      document.getElementById('step4').classList.remove('hidden');
+      currentStep = 4;
+      updateSteps();
+      
+      updateResultDisplay(result);
+    }
+    
+    function updateResultDisplay(result) {
+      const icon = document.getElementById('resultIcon');
+      const title = document.getElementById('resultTitle');
+      const message = document.getElementById('resultMessage');
+      const details = document.getElementById('requestDetails');
+      const status = result.status;
+      
+      const statusConfig = {
+        pending: {
+          icon: '⏳',
+          title: 'Pending Approval',
+          color: 'var(--solar-gold)',
+          message: 'Your network creation request is waiting for admin approval.',
+          badge: '<span class="status-badge status-pending">Pending</span>'
+        },
+        approved: {
+          icon: '✓',
+          title: 'Approved - Ready to Execute',
+          color: '#3b82f6',
+          message: 'Your request has been approved. An admin will execute it shortly.',
+          badge: '<span class="status-badge status-approved">Approved</span>'
+        },
+        running: {
+          icon: '⚡',
+          title: 'Executing...',
+          color: '#8b5cf6',
+          message: 'Your network is being created. Please wait.',
+          badge: '<span style="background: rgba(139, 92, 246, 0.2); color: #8b5cf6; padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.85rem;">Running</span>'
+        },
+        succeeded: {
+          icon: '✅',
+          title: 'Network Created Successfully',
+          color: 'var(--solar-green)',
+          message: 'Your network is now active and ready to use!',
+          badge: '<span style="background: rgba(57, 255, 20, 0.2); color: var(--solar-green); padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.85rem;">Active</span>'
+        },
+        failed: {
+          icon: '❌',
+          title: 'Execution Failed',
+          color: '#ef4444',
+          message: result.error_message || 'The network creation failed. Please try again.',
+          badge: '<span style="background: rgba(239, 68, 68, 0.2); color: #ef4444; padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.85rem;">Failed</span>'
+        },
+        rejected: {
+          icon: '🚫',
+          title: 'Request Rejected',
+          color: '#6b7280',
+          message: result.error_message || 'Your request was rejected by an admin.',
+          badge: '<span style="background: rgba(107, 114, 128, 0.2); color: #6b7280; padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.85rem;">Rejected</span>'
+        }
+      };
+      
+      const config = statusConfig[status] || statusConfig.pending;
+      
+      icon.textContent = config.icon;
+      title.textContent = config.title;
+      title.style.color = config.color;
+      message.textContent = config.message;
+      
+      let detailsHtml = `
+        <div class="review-item">
+          <span class="review-label">Request ID</span>
+          <span class="review-value" style="font-family: monospace; font-size: 0.85rem;">${result.actionRequestId || result.id || submittedRequestId}</span>
+        </div>
+        <div class="review-item">
+          <span class="review-label">Status</span>
+          ${config.badge}
+        </div>
+      `;
+      
+      if (result.result?.checks) {
+        const passedChecks = result.result.checks.filter(c => c.passed).length;
+        detailsHtml += `
+          <div class="review-item">
+            <span class="review-label">Policy Checks</span>
+            <span class="review-value">${passedChecks} / ${result.result.checks.length} passed</span>
+          </div>
+        `;
+      }
+      
+      if (status === 'succeeded' && result.result) {
+        const networkResult = result.result;
+        if (networkResult.networkId) {
+          detailsHtml += `
+            <div class="review-item">
+              <span class="review-label">Network ID</span>
+              <span class="review-value" style="font-family: monospace;">${networkResult.networkId}</span>
+            </div>
+          `;
+        }
+        if (networkResult.name) {
+          detailsHtml += `
+            <div class="review-item">
+              <span class="review-label">Network Name</span>
+              <span class="review-value">${networkResult.name}</span>
+            </div>
+          `;
+        }
+      }
+      
+      details.innerHTML = detailsHtml;
+    }
+    
+    async function checkStatus() {
+      if (!submittedRequestId) {
+        alert('No request ID available');
+        return;
+      }
+      
+      try {
+        const response = await fetch(`/api/agentic/actions/${submittedRequestId}`);
+        const result = await response.json();
+        
+        if (result.success) {
+          updateResultDisplay(result);
+        } else {
+          alert('Could not retrieve status');
+        }
+      } catch (error) {
+        alert('Error checking status: ' + error.message);
+      }
+    }
+    
+    let statusPollInterval = null;
+    
+    function startPolling() {
+      if (statusPollInterval) clearInterval(statusPollInterval);
+      statusPollInterval = setInterval(async () => {
+        if (submittedRequestId) {
+          try {
+            const response = await fetch(`/api/agentic/actions/${submittedRequestId}`);
+            const result = await response.json();
+            if (result.success) {
+              updateResultDisplay(result);
+              if (result.status === 'succeeded' || result.status === 'failed' || result.status === 'rejected') {
+                clearInterval(statusPollInterval);
+              }
+            }
+          } catch (e) {}
+        }
+      }, 5000);
+    }
+  </script>
+  <!-- Kid Solar Controller - Persistent across pages -->
+  <script src="/js/kid-solar-controller.js"></script>
+</body>
+</html>
