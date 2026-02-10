@@ -1557,4 +1557,33 @@ export type VendorVoucherSettings = typeof vendorVoucherSettings.$inferSelect;
 export type InsertVoucherListing = z.infer<typeof insertVoucherListingSchema>;
 export type InsertVoucher = z.infer<typeof insertVoucherSchema>;
 export type InsertVoucherRedemption = z.infer<typeof insertVoucherRedemptionSchema>;
+
+// ============================================================
+// FOUNDATION AGENT GRANT RESERVE
+// Agents petition the Foundation for funding to advance human-needs projects
+// ============================================================
+export const grantPetitions = pgTable("grant_petitions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  agentId: integer("agent_id").references(() => members.id).notNull(),
+  agentUsername: varchar("agent_username").notNull(),
+  title: varchar("title", { length: 200 }).notNull(),
+  description: text("description").notNull(),
+  category: varchar("category", { length: 50 }).notNull(),
+  requestedAmount: numeric("requested_amount").notNull(),
+  approvedAmount: numeric("approved_amount"),
+  status: varchar("status", { length: 20 }).notNull().default("pending"),
+  reviewNotes: text("review_notes"),
+  reviewedBy: varchar("reviewed_by"),
+  reviewedAt: timestamp("reviewed_at"),
+  disbursedAt: timestamp("disbursed_at"),
+  transactionId: varchar("transaction_id"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertGrantPetitionSchema = createInsertSchema(grantPetitions).omit({
+  id: true, createdAt: true, approvedAmount: true, status: true,
+  reviewNotes: true, reviewedBy: true, reviewedAt: true, disbursedAt: true, transactionId: true
+});
+export type GrantPetition = typeof grantPetitions.$inferSelect;
+export type InsertGrantPetition = z.infer<typeof insertGrantPetitionSchema>;
 export type InsertVendorVoucherSettings = z.infer<typeof insertVendorVoucherSettingsSchema>;
