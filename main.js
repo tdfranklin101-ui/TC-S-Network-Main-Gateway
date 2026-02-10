@@ -9764,9 +9764,8 @@ Respond ONLY with valid JSON in this exact format:
       let foundArtifactId = null;
       let copyId = null;
 
-      let artLookup = null;
       if (itemName) {
-        artLookup = await pool.query(
+        let artLookup = await pool.query(
           'SELECT id, title FROM artifacts WHERE title = $1 AND creator_id = $2 LIMIT 1',
           [itemName, String(sellerId)]
         );
@@ -9776,10 +9775,29 @@ Respond ONLY with valid JSON in this exact format:
             [itemName]
           );
         }
-      }
-
-      if (artLookup && artLookup.rows.length > 0) {
-        foundArtifactId = artLookup.rows[0].id;
+        if (artLookup.rows.length > 0) {
+          foundArtifactId = artLookup.rows[0].id;
+        } else {
+          const catMap = {
+            'Solar Inverter': 'Energy', 'Solar Panel': 'Energy', 'Energy Dashboard': 'Software',
+            'Photovoltaic': 'Documents', 'Smart Grid': 'Energy', 'Renewable Energy': 'Documents',
+            'Solar Punk': 'Music', 'Generative Solar': 'Art', 'AI-Generated': 'Art',
+            'Ambient Solar': 'Music', 'Portable Solar': 'Energy', 'Soundscapes': 'Music',
+            'Controller': 'Energy', 'Lo-Fi': 'Music', 'NFT': 'Art', 'Course': 'Documents',
+            'Guide': 'Documents', 'Album': 'Music', 'Kit': 'Energy', 'License': 'Software'
+          };
+          let cat = 'Energy';
+          for (const [kw, c] of Object.entries(catMap)) {
+            if (itemName.includes(kw)) { cat = c; break; }
+          }
+          const newArt = await pool.query(
+            `INSERT INTO artifacts (title, description, category, solar_amount_s, creator_id, delivery_mode, active)
+             VALUES ($1, $2, $3, $4, $5, 'download', true) RETURNING id`,
+            [itemName, `Ecosystem-generated ${cat.toLowerCase()} artifact`, cat, String(price), String(sellerId)]
+          );
+          foundArtifactId = newArt.rows[0].id;
+          console.log(`📦 Auto-created artifact "${itemName}" (${foundArtifactId}) for ecosystem purchase`);
+        }
       }
 
       const ledgerRefId = foundArtifactId || 'ecosystem_item';
@@ -10301,6 +10319,20 @@ Respond ONLY with valid JSON in this exact format:
         res.writeHead(503, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: false, error: 'Database unavailable' }));
         return;
+      }
+
+      const fkCheck = await pool.query(`
+        SELECT confrelid::regclass AS referenced_table
+        FROM pg_constraint
+        WHERE conrelid = 'artifact_copies'::regclass
+          AND contype = 'f'
+          AND conname = 'artifact_copies_owner_id_fkey'
+      `);
+      if (fkCheck.rows.length > 0 && String(fkCheck.rows[0].referenced_table) === 'users') {
+        console.log('🔧 Migrating artifact_copies.owner_id FK from users → members');
+        await pool.query('ALTER TABLE artifact_copies DROP CONSTRAINT artifact_copies_owner_id_fkey');
+        await pool.query('ALTER TABLE artifact_copies ADD CONSTRAINT artifact_copies_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES members(id)');
+        console.log('✅ FK constraint updated: artifact_copies.owner_id now references members(id)');
       }
 
       const ledgerRows = await pool.query(
