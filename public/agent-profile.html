@@ -288,19 +288,24 @@ function buildHistory(data){
   Object.keys(grouped).forEach(function(date){
     html+='<tr><td colspan="6" class="tx-date-group">'+date+'</td></tr>';
     grouped[date].forEach(function(tx){
-      const isCredit=tx.type==='credit'||(tx.amount&&tx.amount>0);
-      const icon=isCredit?'📈':'📉';
-      const cls=isCredit?'tx-credit':'tx-debit';
-      const sign=isCredit?'+':'';
+      const isSale=tx.type==='credit'||(tx.description&&(tx.description.startsWith('Sale:')||tx.description.startsWith('Daily Solar')));
+      const isPurchase=tx.type==='debit'||(tx.description&&tx.description.startsWith('Purchase:'));
+      const isDebit=isSale||(!isPurchase&&tx.amount&&tx.amount>0);
+      const icon=isDebit?'📈':'📉';
+      const cls=isDebit?'tx-credit':'tx-debit';
+      const sign=isDebit?'+':'-';
       const amt=typeof tx.amount==='number'?tx.amount:parseFloat(tx.amount||0);
+      const displayAmt=Math.abs(amt);
       const bal=typeof tx.balanceAfter==='number'?tx.balanceAfter:(typeof tx.balance==='number'?tx.balance:null);
       const ts=tx.time||tx.timestamp;
       const time=ts?new Date(ts).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}):'';
+      const typeLabel=isDebit?'Debit':'Credit';
+      const typeColor=isDebit?'var(--green)':'var(--orange)';
       html+='<tr>'+
         '<td class="tx-icon">'+icon+'</td>'+
         '<td class="tx-desc">'+(tx.description||tx.item||'Transaction')+'</td>'+
-        '<td style="color:'+(isCredit?'var(--green)':'var(--orange)')+';font-size:11px">'+(isCredit?'Credit':'Debit')+'</td>'+
-        '<td class="'+cls+'">'+sign+amt.toFixed(4)+'</td>'+
+        '<td style="color:'+typeColor+';font-size:11px">'+typeLabel+'</td>'+
+        '<td class="'+cls+'">'+sign+displayAmt.toFixed(4)+'</td>'+
         '<td class="tx-bal">'+(bal!=null?bal.toFixed(4):'—')+'</td>'+
         '<td class="tx-time">'+time+'</td>'+
         '</tr>';
