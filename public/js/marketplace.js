@@ -1327,6 +1327,23 @@ class MarketplaceApp {
         document.body.removeChild(link);
         
         console.log(`📥 Downloaded: ${artifact.title}`);
+      } else if (artifact.contentBody || artifact.content_body) {
+        const content = artifact.contentBody || artifact.content_body;
+        const format = artifact.contentFormat || artifact.content_format || 'text';
+        const extMap = { 'md': '.md', 'json': '.json', 'js': '.js', 'text': '.txt', 'csv': '.csv' };
+        const ext = extMap[format] || '.txt';
+        const mimeMap = { 'md': 'text/markdown', 'json': 'application/json', 'js': 'application/javascript', 'text': 'text/plain', 'csv': 'text/csv' };
+        const mime = mimeMap[format] || 'text/plain';
+        const blob = new Blob([content], { type: mime });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = (artifact.title || 'download').replace(/[^a-zA-Z0-9\s\-_]/g, '').replace(/\s+/g, '_') + ext;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        console.log(`📥 Content download: ${artifact.title} (${format})`);
       } else {
         alert(`📂 No downloadable file available for "${artifact.title}"\n\nThis artifact may be streaming-only or the file has not been uploaded yet.`);
       }

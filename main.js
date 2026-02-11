@@ -6228,7 +6228,7 @@ const server = http.createServer(async (req, res) => {
       }
       client.release();
 
-      const hasFile = !!(artifact.master_file_url || artifact.trade_file_url || artifact.delivery_url);
+      const hasFile = !!(artifact.master_file_url || artifact.trade_file_url || artifact.delivery_url || artifact.content_body);
       const downloadUrl = (tokenCreated && tokenValue && hasFile) ? `/api/artifact-download/${tokenValue}` : null;
       const isTextOnly = !hasFile && artifact.content_body;
 
@@ -9826,7 +9826,7 @@ Respond ONLY with valid JSON in this exact format:
           console.error('Copy creation error:', cpErr.message);
         }
 
-        const hasFile = !!(artifact.trade_file_url || artifact.master_file_url || artifact.delivery_url);
+        const hasFile = !!(artifact.trade_file_url || artifact.master_file_url || artifact.delivery_url || artifact.content_body);
         if (copyCreated && hasFile) {
           dlToken = crypto.randomBytes(32).toString('hex');
           dlExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
@@ -9854,7 +9854,7 @@ Respond ONLY with valid JSON in this exact format:
       }
       client.release();
 
-      const hasFile = !!(artifact.trade_file_url || artifact.master_file_url || artifact.delivery_url);
+      const hasFile = !!(artifact.trade_file_url || artifact.master_file_url || artifact.delivery_url || artifact.content_body);
       const downloadUrl = (tokenCreated && dlToken && hasFile) ? `/api/artifact-download/${dlToken}` : null;
 
       const response = {
@@ -10015,8 +10015,8 @@ Respond ONLY with valid JSON in this exact format:
         // Generate download token
         const downloadToken = randomUUID();
         await pool.query(
-          `INSERT INTO download_tokens (token, artifact_id, user_id, expires_at, access_type) 
-           VALUES ($1, $2, $3, NOW() + INTERVAL '24 hours', 'agent-purchase')`,
+          `INSERT INTO download_tokens (token, artifact_id, user_id, expires_at, access_type, max_downloads) 
+           VALUES ($1, $2, $3, NOW() + INTERVAL '7 days', 'trade_file', 10)`,
           [downloadToken, artifactId, agent.id]
         );
         
@@ -10031,7 +10031,7 @@ Respond ONLY with valid JSON in this exact format:
           priceSolar: requiredSolar,
           foundationFee: foundationFee,
           sellerCredit: sellerAmount,
-          downloadUrl: `/api/download/${downloadToken}`,
+          downloadUrl: `/api/artifact-download/${downloadToken}`,
           agentUsername,
           transactionId
         }));
@@ -11410,7 +11410,7 @@ Respond ONLY with valid JSON in this exact format:
       }
       
       const artResult = await pool.query(
-        'SELECT id, title, trade_file_url, master_file_url, delivery_url, file_type FROM artifacts WHERE id = $1',
+        'SELECT id, title, trade_file_url, master_file_url, delivery_url, file_type, content_body, content_format FROM artifacts WHERE id = $1',
         [dlToken.artifact_id]
       );
       
@@ -11422,6 +11422,27 @@ Respond ONLY with valid JSON in this exact format:
       
       const artifact = artResult.rows[0];
       const fileUrl = artifact.trade_file_url || artifact.master_file_url || artifact.delivery_url;
+      const safeTitle = (artifact.title || 'download').replace(/[^a-zA-Z0-9\s\-_]/g, '').replace(/\s+/g, '_');
+      if (!fileUrl && artifact.content_body) {
+        await pool.query(
+          'UPDATE download_tokens SET download_count = download_count + 1, last_accessed_at = NOW() WHERE id = $1',
+          [dlToken.id]
+        );
+        const contentExtMap = { 'md': '.md', 'json': '.json', 'js': '.js', 'text': '.txt', 'csv': '.csv', 'pdf': '.txt', 'binary': '.bin' };
+        const ext = contentExtMap[artifact.content_format] || '.txt';
+        const contentMimeMap = { 'md': 'text/markdown', 'json': 'application/json', 'js': 'application/javascript', 'text': 'text/plain', 'csv': 'text/csv' };
+        const contentType = contentMimeMap[artifact.content_format] || 'text/plain';
+        const bodyBuffer = Buffer.from(artifact.content_body, 'utf-8');
+        res.writeHead(200, {
+          'Content-Type': contentType,
+          'Content-Length': bodyBuffer.length,
+          'Content-Disposition': `attachment; filename="${safeTitle}${ext}"`,
+          'Cache-Control': 'no-cache'
+        });
+        res.end(bodyBuffer);
+        console.log(`📦 CONTENT DOWNLOAD: "${artifact.title}" (${artifact.content_format || 'text'}, ${bodyBuffer.length} bytes)`);
+        return;
+      }
       if (!fileUrl) {
         res.writeHead(404, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: false, error: 'Artifact file not found' }));
@@ -11440,7 +11461,6 @@ Respond ONLY with valid JSON in this exact format:
         '.png': 'image/png', '.gif': 'image/gif', '.webp': 'image/webp',
         '.pdf': 'application/pdf', '.zip': 'application/zip'
       };
-      const safeTitle = (artifact.title || 'download').replace(/[^a-zA-Z0-9\s\-_]/g, '').replace(/\s+/g, '_');
       
       if (fileUrl.startsWith('cloud://')) {
         try {
