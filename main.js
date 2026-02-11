@@ -9669,53 +9669,106 @@ Respond ONLY with valid JSON in this exact format:
         return;
       }
 
-      // Use storage method for atomic purchase flow
-      const { storage } = require('./server/storage');
-      const result = await storage.purchaseArtifact(session.userId, artifactId);
+      // Direct DB purchase flow
+      const artQ = await pool.query('SELECT id, title, solar_amount_s, trade_file_url, master_file_url, delivery_url, file_type, category, creator_id, content_body, content_format FROM artifacts WHERE id = $1 AND active = true', [artifactId]);
+      if (artQ.rows.length === 0) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Artifact not found or unavailable' }));
+        return;
+      }
+      const artifact = artQ.rows[0];
+      const requiredSolar = parseFloat(artifact.solar_amount_s);
       
-      if (!result.success) {
-        console.log(`❌ Purchase failed for ${session.username}: ${result.error}`);
+      if (String(artifact.creator_id) === String(session.userId)) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: false, error: result.error }));
+        res.end(JSON.stringify({ success: false, error: 'You cannot purchase your own artifact' }));
         return;
       }
       
-      // Update session with new balance
-      if (result.ledgerEntries && result.ledgerEntries.length > 0) {
-        const buyerEntry = result.ledgerEntries.find(e => e.entryType === 'debit');
-        if (buyerEntry) {
-          session.solarBalance = parseFloat(buyerEntry.balanceAfter || '0');
+      const buyerQ = await pool.query('SELECT id, username, total_solar, wallet_id FROM members WHERE id = $1', [session.userId]);
+      if (buyerQ.rows.length === 0) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'User not found' }));
+        return;
+      }
+      const buyer = buyerQ.rows[0];
+      const buyerBalance = parseFloat(buyer.total_solar || 0);
+      
+      if (buyerBalance < requiredSolar) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Insufficient Solar balance', required: requiredSolar, available: buyerBalance }));
+        return;
+      }
+      
+      let walletId = buyer.wallet_id;
+      if (!walletId) walletId = await ensureMemberWallet(session.userId);
+      
+      const newBalance = buyerBalance - requiredSolar;
+      await pool.query('UPDATE members SET total_solar = $1 WHERE id = $2', [newBalance, buyer.id]);
+      logBalanceChange('Purchase', buyer.id, buyer.username, buyerBalance, newBalance, `purchase_artifact_${artifactId}`);
+      
+      const foundationFee = Math.round(requiredSolar * FOUNDATION_FEE_RATE * 10000) / 10000;
+      const sellerNet = requiredSolar - foundationFee;
+      
+      if (artifact.creator_id) {
+        try {
+          const cid = parseInt(artifact.creator_id);
+          const sellerQ = await pool.query('SELECT id, username, total_solar FROM members WHERE id = $1 OR username = $2', [isNaN(cid) ? -1 : cid, artifact.creator_id]);
+          if (sellerQ.rows.length > 0) {
+            const seller = sellerQ.rows[0];
+            const sellerOldBal = parseFloat(seller.total_solar || 0);
+            const sellerNewBal = sellerOldBal + sellerNet;
+            await pool.query('UPDATE members SET total_solar = $1 WHERE id = $2', [sellerNewBal, seller.id]);
+            logBalanceChange('Sale', seller.id, seller.username, sellerOldBal, sellerNewBal, `sale_artifact_${artifactId}`);
+          }
+        } catch (sellerErr) { console.error('Seller credit error:', sellerErr.message); }
+      }
+      
+      try {
+        const fQ = await pool.query('SELECT id, total_solar FROM members WHERE username = $1', ['tcs_foundation']);
+        if (fQ.rows.length > 0) {
+          const fOld = parseFloat(fQ.rows[0].total_solar || 0);
+          await pool.query('UPDATE members SET total_solar = $1 WHERE id = $2', [fOld + foundationFee, fQ.rows[0].id]);
         }
+      } catch (fErr) { console.error('Foundation fee error:', fErr.message); }
+      
+      const txResult = await pool.query(
+        `INSERT INTO transactions (id, type, wallet_id, artifact_id, amount_s, note, created_at) VALUES (gen_random_uuid(), 'purchase', $1, $2, $3, $4, NOW()) RETURNING id`,
+        [walletId, artifactId, requiredSolar, `Purchase of "${artifact.title}"`]
+      );
+      const txId = txResult.rows[0].id;
+      
+      let copyCreated = true;
+      try {
+        await pool.query('INSERT INTO artifact_copies (artifact_id, owner_id, purchase_transaction_id, acquired_method, solar_paid) VALUES ($1, $2, $3, \'purchase\', $4)', [artifactId, session.userId, txId, String(requiredSolar)]);
+      } catch (cpErr) { copyCreated = false; console.error('Copy creation error:', cpErr.message); }
+      
+      let dlToken = null;
+      const hasFile = !!(artifact.trade_file_url || artifact.master_file_url || artifact.delivery_url);
+      if (copyCreated && hasFile) {
+        dlToken = crypto.randomBytes(32).toString('hex');
+        const dlExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+        try {
+          await pool.query('INSERT INTO download_tokens (token, artifact_id, user_id, expires_at, access_type, max_downloads) VALUES ($1, $2, $3, $4, \'trade_file\', 10)', [dlToken, artifactId, session.userId, dlExpiry]);
+        } catch (dtErr) { dlToken = null; console.error('Token creation error:', dtErr.message); }
       }
 
-      console.log(`💰 SOLAR PURCHASE: ${session.username} bought artifact ${artifactId}`);
-      console.log(`📋 Transaction ID: ${result.copy?.purchaseTransactionId}`);
-      console.log(`🔐 Download token: ${result.downloadToken?.token}`);
+      console.log(`💰 SOLAR PURCHASE: ${session.username} bought "${artifact.title}" for ${requiredSolar} Solar`);
 
-      const artifact = await storage.getArtifact(artifactId);
-      
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
         success: true,
-        purchase: {
-          id: result.copy?.id,
-          transactionId: result.copy?.purchaseTransactionId,
-          item: {
-            id: artifactId,
-            title: artifact?.title || 'Unknown',
-            type: artifact?.category || 'digital'
-          },
-          payment: {
-            amount: result.copy?.solarPaid,
-            currency: 'Solar'
-          },
-          download: {
-            token: result.downloadToken?.token,
-            expires: result.downloadToken?.expiresAt,
-            url: `/api/artifact-download/${result.downloadToken?.token}`
-          }
-        },
-        message: `Successfully purchased ${artifact?.title || 'item'}! Download available.`
+        transactionId: txId,
+        artifactTitle: artifact.title,
+        amountPaid: requiredSolar,
+        foundationFee: foundationFee,
+        newBalance: newBalance,
+        downloadUrl: dlToken ? `/api/artifact-download/${dlToken}` : null,
+        hasFile: hasFile,
+        isTextOnly: !hasFile && !!artifact.content_body,
+        contentFormat: artifact.content_format || null,
+        expiresIn: '7 days',
+        message: `Successfully purchased "${artifact.title}" for ${formatSolar(requiredSolar)} Solar. Your new balance is ${formatSolar(newBalance)} Solar.`
       }));
     } catch (error) {
       console.error('Purchase error:', error);
@@ -10999,29 +11052,37 @@ Respond ONLY with valid JSON in this exact format:
         return;
       }
 
-      const { storage } = require('./server/storage');
-      const copies = await storage.getUserArtifactCopies(session.userId);
+      const copiesResult = await pool.query(
+        `SELECT ac.id as copy_id, ac.artifact_id, ac.acquired_at, ac.acquired_method, ac.solar_paid,
+                a.id, a.slug, a.title, a.description, a.category, a.file_type, a.cover_art_url,
+                a.creator_id, a.kwh_footprint, a.solar_amount_s, a.trade_file_url, a.preview_file_url, a.delivery_url
+         FROM artifact_copies ac
+         JOIN artifacts a ON ac.artifact_id = a.id
+         WHERE ac.owner_id = $1 AND ac.is_active = true
+         ORDER BY ac.acquired_at DESC`,
+        [session.userId]
+      );
       
-      // Format response with artifact details
-      const artifacts = copies.map(copy => ({
-        copyId: copy.id,
-        artifactId: copy.artifactId,
-        acquiredAt: copy.acquiredAt,
-        acquiredMethod: copy.acquiredMethod,
-        solarPaid: copy.solarPaid,
+      const artifacts = copiesResult.rows.map(row => ({
+        copyId: row.copy_id,
+        artifactId: row.artifact_id,
+        acquiredAt: row.acquired_at,
+        acquiredMethod: row.acquired_method,
+        solarPaid: row.solar_paid,
         artifact: {
-          id: copy.artifact.id,
-          slug: copy.artifact.slug,
-          title: copy.artifact.title,
-          description: copy.artifact.description,
-          category: copy.artifact.category,
-          fileType: copy.artifact.fileType,
-          coverArtUrl: copy.artifact.coverArtUrl,
-          creatorId: copy.artifact.creatorId,
-          kwhFootprint: copy.artifact.kwhFootprint,
-          solarAmountS: copy.artifact.solarAmountS,
-          tradeFileUrl: copy.artifact.tradeFileUrl,
-          previewFileUrl: copy.artifact.previewFileUrl
+          id: row.id,
+          slug: row.slug,
+          title: row.title,
+          description: row.description,
+          category: row.category,
+          fileType: row.file_type,
+          coverArtUrl: row.cover_art_url,
+          creatorId: row.creator_id,
+          kwhFootprint: row.kwh_footprint,
+          solarAmountS: row.solar_amount_s,
+          tradeFileUrl: row.trade_file_url,
+          previewFileUrl: row.preview_file_url,
+          deliveryUrl: row.delivery_url
         }
       }));
 
@@ -11050,46 +11111,69 @@ Respond ONLY with valid JSON in this exact format:
     try {
       const token = pathname.split('/api/artifact-download/')[1];
       
-      if (!token) {
+      if (!token || !pool) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: false, error: 'Download token required' }));
         return;
       }
 
-      const { storage } = require('./server/storage');
-      const downloadToken = await storage.getDownloadToken(token);
+      const tokenResult = await pool.query(
+        'SELECT id, token, artifact_id, user_id, expires_at, download_count, max_downloads, is_revoked FROM download_tokens WHERE token = $1 AND is_revoked = false',
+        [token]
+      );
       
-      if (!downloadToken) {
+      if (tokenResult.rows.length === 0) {
         res.writeHead(404, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: false, error: 'Invalid or expired download token' }));
         return;
       }
       
-      // Check expiry
-      if (new Date() > new Date(downloadToken.expiresAt)) {
+      const dlToken = tokenResult.rows[0];
+      
+      if (new Date() > new Date(dlToken.expires_at)) {
         res.writeHead(410, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: false, error: 'Download token has expired' }));
         return;
       }
       
-      // Check download count
-      if (downloadToken.downloadCount >= (downloadToken.maxDownloads || 10)) {
+      if (dlToken.download_count >= (dlToken.max_downloads || 10)) {
         res.writeHead(429, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: false, error: 'Download limit exceeded' }));
         return;
       }
       
-      // Get artifact details
-      const artifact = await storage.getArtifact(downloadToken.artifactId);
-      const fileUrl = artifact ? (artifact.tradeFileUrl || artifact.masterFileUrl || artifact.deliveryUrl) : null;
-      if (!artifact || !fileUrl) {
+      const artResult = await pool.query(
+        'SELECT id, title, trade_file_url, master_file_url, delivery_url, file_type FROM artifacts WHERE id = $1',
+        [dlToken.artifact_id]
+      );
+      
+      if (artResult.rows.length === 0) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Artifact not found' }));
+        return;
+      }
+      
+      const artifact = artResult.rows[0];
+      const fileUrl = artifact.trade_file_url || artifact.master_file_url || artifact.delivery_url;
+      if (!fileUrl) {
         res.writeHead(404, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: false, error: 'Artifact file not found' }));
         return;
       }
       
-      // Increment download count
-      await storage.incrementDownloadCount(downloadToken.id);
+      await pool.query(
+        'UPDATE download_tokens SET download_count = download_count + 1, last_accessed_at = NOW() WHERE id = $1',
+        [dlToken.id]
+      );
+      
+      const dlMimeTypes = {
+        '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.ogg': 'audio/ogg',
+        '.mp4': 'video/mp4', '.webm': 'video/webm', '.mov': 'video/quicktime',
+        '.m4a': 'audio/mp4', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+        '.png': 'image/png', '.gif': 'image/gif', '.webp': 'image/webp',
+        '.pdf': 'application/pdf', '.zip': 'application/zip'
+      };
+      const safeTitle = (artifact.title || 'download').replace(/[^a-zA-Z0-9\s\-_]/g, '').replace(/\s+/g, '_');
       
       if (fileUrl.startsWith('cloud://')) {
         try {
@@ -11097,15 +11181,7 @@ Respond ONLY with valid JSON in this exact format:
           const cloudKey = fileUrl.replace('cloud://', '');
           const buffer = await cloudStorage.downloadFile(cloudKey);
           const ext = path.extname(cloudKey).toLowerCase();
-          const dlMimeTypes = {
-            '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.ogg': 'audio/ogg',
-            '.mp4': 'video/mp4', '.webm': 'video/webm', '.mov': 'video/quicktime',
-            '.m4a': 'audio/mp4', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
-            '.png': 'image/png', '.gif': 'image/gif', '.webp': 'image/webp',
-            '.pdf': 'application/pdf', '.zip': 'application/zip'
-          };
-          const contentType = dlMimeTypes[ext] || 'application/octet-stream';
-          const safeTitle = (artifact.title || 'download').replace(/[^a-zA-Z0-9\s\-_]/g, '').replace(/\s+/g, '_');
+          const contentType = dlMimeTypes[ext] || artifact.file_type || 'application/octet-stream';
           res.writeHead(200, {
             'Content-Type': contentType,
             'Content-Length': buffer.length,
@@ -11113,17 +11189,49 @@ Respond ONLY with valid JSON in this exact format:
             'Cache-Control': 'no-cache'
           });
           res.end(buffer);
-          console.log(`📦 CLOUD DOWNLOAD: "${artifact.title}" via token`);
+          console.log(`📦 CLOUD DOWNLOAD: "${artifact.title}" via token (${(buffer.length/1048576).toFixed(1)}MB)`);
         } catch (cloudErr) {
           console.error('Cloud download error:', cloudErr.message);
+          if (artifact.delivery_url && artifact.delivery_url.startsWith('/')) {
+            const localPath = path.join(__dirname, 'public', artifact.delivery_url);
+            if (fs.existsSync(localPath)) {
+              const localBuf = fs.readFileSync(localPath);
+              const ext = path.extname(localPath).toLowerCase();
+              const contentType = dlMimeTypes[ext] || artifact.file_type || 'application/octet-stream';
+              res.writeHead(200, {
+                'Content-Type': contentType,
+                'Content-Length': localBuf.length,
+                'Content-Disposition': `attachment; filename="${safeTitle}${ext}"`,
+                'Cache-Control': 'no-cache'
+              });
+              res.end(localBuf);
+              console.log(`📦 LOCAL FALLBACK DOWNLOAD: "${artifact.title}" (${(localBuf.length/1048576).toFixed(1)}MB)`);
+              return;
+            }
+          }
           res.writeHead(500, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ success: false, error: 'Cloud file download failed' }));
         }
-      } else if (fileUrl.startsWith('/') || fileUrl.startsWith('http')) {
-        res.writeHead(302, { 
-          'Location': fileUrl,
-          'Cache-Control': 'no-cache'
-        });
+      } else if (fileUrl.startsWith('/')) {
+        const localPath = path.join(__dirname, 'public', fileUrl);
+        if (fs.existsSync(localPath)) {
+          const localBuf = fs.readFileSync(localPath);
+          const ext = path.extname(localPath).toLowerCase();
+          const contentType = dlMimeTypes[ext] || artifact.file_type || 'application/octet-stream';
+          res.writeHead(200, {
+            'Content-Type': contentType,
+            'Content-Length': localBuf.length,
+            'Content-Disposition': `attachment; filename="${safeTitle}${ext}"`,
+            'Cache-Control': 'no-cache'
+          });
+          res.end(localBuf);
+          console.log(`📦 LOCAL DOWNLOAD: "${artifact.title}" (${(localBuf.length/1048576).toFixed(1)}MB)`);
+        } else {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Local file not found' }));
+        }
+      } else if (fileUrl.startsWith('http')) {
+        res.writeHead(302, { 'Location': fileUrl, 'Cache-Control': 'no-cache' });
         res.end();
       } else {
         res.writeHead(404, { 'Content-Type': 'application/json' });
