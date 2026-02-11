@@ -173,6 +173,33 @@ Context:
       {
         type: "function",
         function: {
+          name: "search_marketplace",
+          description: "Search the marketplace for artifacts by keyword, title, description, or tags. Use this FIRST when a user asks to find, search for, or look up items in the marketplace before falling back to any other search.",
+          parameters: {
+            type: "object",
+            properties: {
+              query: {
+                type: "string",
+                description: "Search query - keywords, title, or description to search for"
+              },
+              category: {
+                type: "string",
+                description: "Optional category filter",
+                enum: ["music", "video", "art", "text", "computronium", "culture", "basic needs", "rent", "energy", "photo", "writing", "ai tools", "ai create", "software", "docs", "games", "utilities", "all"]
+              },
+              limit: {
+                type: "integer",
+                description: "Maximum number of results (default 10)",
+                default: 10
+              }
+            },
+            required: ["query"]
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
           name: "analyze_artifact_for_upload",
           description: "Analyze an uploaded image, audio, video, or document file using AI to suggest metadata for marketplace upload (title, description, category, tags, pricing)",
           parameters: {
@@ -566,6 +593,9 @@ User said: "${text}"`;
         case 'list_marketplace_items':
           return await this.listMarketplaceItems(args.category, args.maxPrice, args.limit || 10);
         
+        case 'search_marketplace':
+          return await this.searchMarketplace(args.query, args.category, args.limit || 10);
+        
         case 'analyze_artifact_for_upload':
           return await this.analyzeArtifactForUpload(fileData, args.fileName, args.fileType);
         
@@ -888,6 +918,65 @@ User said: "${text}"`;
 
     } catch (error) {
       console.error('Error listing marketplace items:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Search marketplace artifacts by keyword, title, description, or tags
+   */
+  async searchMarketplace(query, category = 'all', limit = 10) {
+    const pool = getSharedPool();
+    if (!pool) {
+      return { success: false, error: 'Database unavailable' };
+    }
+
+    try {
+      const searchTerm = `%${query}%`;
+      let sqlQuery = `SELECT id, title, slug, description, category, solar_amount_s, file_type, 
+                              cover_art_url, streaming_url, search_tags, creator_name, creator_username
+                       FROM artifacts WHERE active = true 
+                       AND (LOWER(title) LIKE LOWER($1) 
+                            OR LOWER(description) LIKE LOWER($1) 
+                            OR LOWER(COALESCE(array_to_string(search_tags, ' '), '')) LIKE LOWER($1))`;
+      const params = [searchTerm];
+      let paramIndex = 2;
+
+      if (category && category !== 'all') {
+        sqlQuery += ` AND LOWER(category) = LOWER($${paramIndex})`;
+        params.push(category);
+        paramIndex++;
+      }
+
+      sqlQuery += ` ORDER BY CASE WHEN LOWER(title) LIKE LOWER($1) THEN 0 ELSE 1 END, created_at DESC LIMIT $${paramIndex}`;
+      params.push(limit);
+
+      const result = await pool.query(sqlQuery, params);
+
+      const items = result.rows.map(artifact => ({
+        id: artifact.id,
+        title: artifact.title,
+        slug: artifact.slug,
+        description: (artifact.description || '').substring(0, 200),
+        category: artifact.category,
+        price: parseFloat(artifact.solar_amount_s || '0'),
+        fileType: artifact.file_type,
+        coverArt: artifact.cover_art_url,
+        streamingUrl: artifact.streaming_url,
+        tags: artifact.search_tags || [],
+        creatorName: artifact.creator_name || artifact.creator_username || null
+      }));
+
+      return {
+        success: true,
+        query: query,
+        items: items,
+        count: items.length,
+        message: items.length > 0 ? `Found ${items.length} results for "${query}"` : `No results found for "${query}" in the marketplace`
+      };
+
+    } catch (error) {
+      console.error('Error searching marketplace:', error);
       return { success: false, error: error.message };
     }
   }

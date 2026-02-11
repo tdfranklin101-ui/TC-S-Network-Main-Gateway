@@ -6160,8 +6160,10 @@ const server = http.createServer(async (req, res) => {
       let sellerInfo = null;
       if (artifact.creator_id) {
         try {
-          const sellerQuery = 'SELECT id, username, total_solar FROM members WHERE id = $1';
-          const sellerResult = await pool.query(sellerQuery, [artifact.creator_id]);
+          const creatorId = artifact.creator_id;
+          const creatorIdNum = /^\d+$/.test(String(creatorId)) ? parseInt(creatorId) : 0;
+          const sellerQuery = 'SELECT id, username, total_solar FROM members WHERE id = $1 OR username = $2 LIMIT 1';
+          const sellerResult = await pool.query(sellerQuery, [creatorIdNum, String(creatorId)]);
           if (sellerResult.rows.length > 0) {
             const seller = sellerResult.rows[0];
             const sellerOldBalance = parseFloat(seller.total_solar || 0);
@@ -6245,7 +6247,7 @@ const server = http.createServer(async (req, res) => {
       console.log(`💰 Purchase completed: ${user.username} bought "${artifact.title}" for ${requiredSolar} Solar`);
 
       // Generate download URL via token (only if token was created successfully)
-      const hasFile = !!(artifact.master_file_url || artifact.trade_file_url);
+      const hasFile = !!(artifact.master_file_url || artifact.trade_file_url || artifact.delivery_url);
       const downloadUrl = (tokenCreated && tokenValue && hasFile) ? `/api/artifact-download/${tokenValue}` : null;
       const isTextOnly = !hasFile && artifact.content_body;
 
@@ -6757,7 +6759,7 @@ const server = http.createServer(async (req, res) => {
             contentFormat: artifact.content_format || null,
             sourceType: artifact.source_type || (artifact.creator_is_agent ? 'agent' : 'human'),
             processingStatus: artifact.processing_status || 'pending',
-            hasFile: !!(artifact.master_file_url || artifact.trade_file_url),
+            hasFile: !!(artifact.master_file_url || artifact.trade_file_url || artifact.delivery_url),
             artifactClass: artifact.artifact_class || 'A',
             createdAt: artifact.created_at,
             ecosystemTest: meta.ecosystemTest || false,
@@ -6903,7 +6905,7 @@ const server = http.createServer(async (req, res) => {
       }
       const a = result.rows[0];
       const meta = a.market_metadata || {};
-      const hasFile = !!(a.master_file_url || a.trade_file_url);
+      const hasFile = !!(a.master_file_url || a.trade_file_url || a.delivery_url);
       const contentPreview = a.content_body ? a.content_body.substring(0, 2000) : null;
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({

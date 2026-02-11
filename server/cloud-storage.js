@@ -40,12 +40,22 @@ class ObjectStorageService {
 
   async downloadFile(key) {
     if (!client) throw new Error('Object storage is not available');
-    const result = await client.downloadAsBytes(key);
-    if (!result.ok) throw new Error(`Download failed for key: ${key}`);
+    let normalizedKey = key;
+    if (normalizedKey.startsWith('/')) normalizedKey = normalizedKey.substring(1);
+    const bucketPrefix = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
+    if (bucketPrefix && normalizedKey.startsWith(bucketPrefix + '/')) {
+      normalizedKey = normalizedKey.substring(bucketPrefix.length + 1);
+    }
+    if (normalizedKey.startsWith('replit-objstore-')) {
+      const slashIdx = normalizedKey.indexOf('/');
+      if (slashIdx > 0) normalizedKey = normalizedKey.substring(slashIdx + 1);
+    }
+    const result = await client.downloadAsBytes(normalizedKey);
+    if (!result.ok) throw new Error(`Download failed for key: ${normalizedKey}`);
     const value = result.value;
     if (Array.isArray(value) && value.length > 0 && value[0].length > 0) return value[0];
     if (Buffer.isBuffer(value) && value.length > 0) return value;
-    throw new Error(`Empty or missing file for key: ${key}`);
+    throw new Error(`Empty or missing file for key: ${normalizedKey}`);
   }
 
   async fileExists(key) {
