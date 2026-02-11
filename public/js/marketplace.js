@@ -964,9 +964,9 @@ class MarketplaceApp {
         <button class="purchase-btn" onclick="event.stopPropagation(); marketplace.purchaseArtifact('${artifact.id}')">
           ${isClassB ? '💎 Purchase & Download' : '☀️ Acquire'} for ${this.formatPrice(artifact.solar_amount_s)} Solar
         </button>
-        ${isClassB && artifact.file_type && (artifact.file_type.startsWith('video/') || artifact.file_type.startsWith('audio/')) ? `
+        ${(isClassB && artifact.file_type && (artifact.file_type.startsWith('video/') || artifact.file_type.startsWith('audio/'))) || artifact.category === 'music' ? `
           <button class="preview-btn" onclick="event.stopPropagation(); marketplace.showVideoPreview('${artifact.id}')">
-            ${artifact.file_type.startsWith('video/') ? '▶️ Preview Video' : '🎵 Preview Audio'}
+            ${artifact.file_type && artifact.file_type.startsWith('video/') ? '▶️ Preview Video' : '🎧 Stream Free'}
           </button>
         ` : ''}
       `;
@@ -975,6 +975,11 @@ class MarketplaceApp {
         <button class="purchase-btn" onclick="event.stopPropagation(); marketplace.showSignupModal()">
           🚀 Join to Purchase
         </button>
+        ${artifact.category === 'music' ? `
+          <button class="preview-btn" onclick="event.stopPropagation(); marketplace.showVideoPreview('${artifact.id}')">
+            🎧 Stream Free
+          </button>
+        ` : ''}
       `;
     }
   }
@@ -1013,7 +1018,7 @@ class MarketplaceApp {
     const catIcon = categoryIcons[artifact.category] || '📦';
     const fileType = artifact.fileType || artifact.file_type || '';
     const contentFormat = artifact.contentFormat || artifact.content_format || '';
-    const hasFile = artifact.hasFile || !!(artifact.masterFileUrl || artifact.tradeFileUrl || artifact.master_file_url || artifact.trade_file_url);
+    const hasFile = artifact.hasFile || !!(artifact.masterFileUrl || artifact.tradeFileUrl || artifact.deliveryUrl || artifact.master_file_url || artifact.trade_file_url || artifact.delivery_url);
     const sourceType = artifact.sourceType || artifact.source_type || 'human';
     const isAgent = artifact.creatorIsAgent || sourceType === 'agent';
     const creatorDisplay = artifact.creatorName || artifact.creatorUsername || artifact.creator_id || 'Unknown';
@@ -1025,7 +1030,7 @@ class MarketplaceApp {
       previewHtml = '<div style="margin-bottom:15px; background: rgba(0,255,255,0.05); border-radius: 12px; padding: 20px; text-align: center;">' +
         '<div style="font-size:48px; margin-bottom:10px;">🎵</div>' +
         '<audio controls preload="none" style="width:100%;"><source src="' + this.escapeHtml(streamUrl) + '" type="audio/mpeg">Your browser does not support audio.</audio>' +
-        '<div style="color:#888; font-size:11px; margin-top:8px;">30-second preview clip</div></div>';
+        '<div style="color:#888; font-size:11px; margin-top:8px;">🎧 Free streaming — Purchase to download</div></div>';
     } else if (fileType.startsWith('video/')) {
       previewHtml = '<div style="margin-bottom:15px;"><video controls preload="none" style="width:100%; max-height:350px; border-radius:8px;"><source src="' + this.escapeHtml(streamUrl) + '" type="' + fileType + '">Your browser does not support video.</video></div>';
     } else if (fileType.startsWith('image/') || contentFormat === 'svg') {
@@ -1309,8 +1314,8 @@ class MarketplaceApp {
       }
 
       // Check if artifact has a downloadable file
-      if (artifact.trade_file_url || artifact.master_file_url || artifact.delivery_url) {
-        const downloadUrl = artifact.trade_file_url || artifact.master_file_url || artifact.delivery_url;
+      if (artifact.tradeFileUrl || artifact.masterFileUrl || artifact.deliveryUrl || artifact.trade_file_url || artifact.master_file_url || artifact.delivery_url) {
+        const downloadUrl = artifact.tradeFileUrl || artifact.masterFileUrl || artifact.deliveryUrl || artifact.trade_file_url || artifact.master_file_url || artifact.delivery_url;
         
         // Create a temporary link and trigger download
         const link = document.createElement('a');

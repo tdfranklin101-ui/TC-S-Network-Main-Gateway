@@ -6705,7 +6705,7 @@ const server = http.createServer(async (req, res) => {
       if (pool) {
         const artifactsQuery = `
           SELECT a.id, a.title, a.description, a.category, a.file_type, a.kwh_footprint, a.solar_amount_s, 
-                 a.is_bonus, a.cover_art_url, a.delivery_mode, a.creator_id, 
+                 a.is_bonus, a.cover_art_url, a.delivery_mode, a.creator_id, a.delivery_url,
                  a.streaming_url, a.preview_type, a.preview_slug, a.search_tags, a.preview_file_url, 
                  a.master_file_url, a.trade_file_url, a.artifact_class,
                  a.master_file_size, a.trade_file_size, a.preview_file_size,
@@ -6746,6 +6746,7 @@ const server = http.createServer(async (req, res) => {
             previewFileUrl: artifact.preview_file_url || null,
             masterFileUrl: artifact.master_file_url || null,
             tradeFileUrl: artifact.trade_file_url || null,
+            deliveryUrl: artifact.delivery_url || null,
             coverArtUrl: artifact.cover_art_url || null,
             masterFileSize: artifact.master_file_size || 0,
             tradeFileSize: artifact.trade_file_size || 0,
@@ -6929,8 +6930,8 @@ const server = http.createServer(async (req, res) => {
           creatorUsername: a.creator_username || null,
           creatorIsAgent: a.creator_is_agent || false,
           creationMethod: meta.creationMethod || null,
-          previewUrl: (a.preview_file_url || a.trade_file_url) ? `/api/artifacts/${a.id}/stream-preview` : null,
-          streamPreviewUrl: (a.preview_file_url || a.streaming_url) ? `/api/artifacts/${a.id}/stream-preview` : null
+          previewUrl: (a.preview_file_url || a.trade_file_url || a.delivery_url) ? `/api/artifacts/${a.id}/stream-preview` : null,
+          streamPreviewUrl: (a.preview_file_url || a.streaming_url || a.delivery_url) ? `/api/artifacts/${a.id}/stream-preview` : null
         }
       }));
     } catch (error) {
@@ -6949,14 +6950,14 @@ const server = http.createServer(async (req, res) => {
         res.writeHead(400); res.end('Bad request'); return;
       }
       const artResult = await pool.query(
-        'SELECT preview_file_url, trade_file_url, file_type FROM artifacts WHERE id = $1',
+        'SELECT preview_file_url, trade_file_url, delivery_url, file_type FROM artifacts WHERE id = $1',
         [artifactId]
       );
       if (artResult.rows.length === 0) {
         res.writeHead(404); res.end('Not found'); return;
       }
       const art = artResult.rows[0];
-      const previewUrl = art.preview_file_url || art.trade_file_url;
+      const previewUrl = art.preview_file_url || art.trade_file_url || art.delivery_url;
       if (!previewUrl) {
         res.writeHead(404); res.end('No preview file'); return;
       }
@@ -6967,11 +6968,28 @@ const server = http.createServer(async (req, res) => {
         if (previewUrl.startsWith('/')) {
           const localPath = path.join(__dirname, 'public', previewUrl);
           if (fs.existsSync(localPath)) {
-            const localBuffer = fs.readFileSync(localPath);
+            const stat = fs.statSync(localPath);
             const ext = path.extname(localPath).toLowerCase();
-            const mimeTypes = { '.mp3': 'audio/mpeg', '.mp4': 'video/mp4', '.jpg': 'image/jpeg', '.png': 'image/png', '.svg': 'image/svg+xml', '.json': 'application/json', '.js': 'application/javascript' };
-            res.writeHead(200, { 'Content-Type': mimeTypes[ext] || 'application/octet-stream', 'Content-Length': localBuffer.length });
-            res.end(localBuffer); return;
+            const mimeTypes = { '.mp3': 'audio/mpeg', '.mp4': 'video/mp4', '.jpg': 'image/jpeg', '.png': 'image/png', '.svg': 'image/svg+xml', '.json': 'application/json', '.js': 'application/javascript', '.wav': 'audio/wav', '.ogg': 'audio/ogg', '.webm': 'video/webm' };
+            const contentType = mimeTypes[ext] || 'application/octet-stream';
+            const range = req.headers.range;
+            if (range) {
+              const parts = range.replace(/bytes=/, '').split('-');
+              const start = parseInt(parts[0], 10);
+              const end = parts[1] ? parseInt(parts[1], 10) : stat.size - 1;
+              const chunkSize = end - start + 1;
+              const stream = fs.createReadStream(localPath, { start, end });
+              res.writeHead(206, {
+                'Content-Range': `bytes ${start}-${end}/${stat.size}`,
+                'Accept-Ranges': 'bytes',
+                'Content-Length': chunkSize,
+                'Content-Type': contentType,
+                'Cache-Control': 'public, max-age=3600'
+              });
+              stream.pipe(res); return;
+            }
+            res.writeHead(200, { 'Content-Type': contentType, 'Content-Length': stat.size, 'Accept-Ranges': 'bytes', 'Cache-Control': 'public, max-age=3600' });
+            fs.createReadStream(localPath).pipe(res); return;
           }
         }
         res.writeHead(404); res.end('Preview not in cloud storage'); return;
@@ -15092,8 +15110,8 @@ setImmediate(() => {
         }
       } catch (e) {}
       if (needsGreeting) {
-        console.log('🌅 Today\'s greeting video not found — generating on startup (15s delay)');
-        setTimeout(() => generateDailySolarGreeting(), 15000);
+        console.log('🌅 Today\'s greeting video not found — available via manual trigger');
+        console.log('📌 Manual trigger: POST /api/solar-greeting/regenerate');
       }
     } catch (error) {
       console.warn('⚠️ Daily greeting video scheduling failed:', error.message);
@@ -15110,46 +15128,23 @@ setImmediate(() => {
       console.log('📌 Dashboard still available but data fetch requires manual trigger');
     }
 
-    // Initialize TC-S Daily Indices Brief with 24-hour scheduler (delayed 30s)
-    setTimeout(async () => {
-      try {
-        const generator = require('./scripts/generateDailyBrief');
-        
-        // Initial generation
-        await generator.generateBrief();
-        console.log('✅ TC-S Daily Indices Brief initialized');
-        console.log(`📊 API: http://localhost:${PORT}/api/daily-brief`);
-        console.log(`📊 JSON-LD: http://localhost:${PORT}/api/daily-brief/jsonld`);
-        console.log(`📈 Trends: http://localhost:${PORT}/api/daily-brief/trends`);
-        console.log(`🔧 Manual trigger: POST http://localhost:${PORT}/api/daily-brief/generate`);
-        
-        // Schedule 24-hour updates with AI trend analysis
-        const dailyJob = schedule.scheduleJob('0 3 * * *', async () => {
-          try {
-            console.log('⏰ [SCHEDULER] Running 24-hour Daily Indices Brief update...');
-            const result = await generator.generateBrief();
-            console.log(`✅ [SCHEDULER] Daily Brief updated with ${result.brief.indices.length} indices`);
-            console.log(`📈 [SCHEDULER] AI Trends Analysis: ${result.trends.analysisStatus}`);
-            
-            if (result.trends.analysisStatus === 'success') {
-              console.log(`🤖 [SCHEDULER] Trend Direction: ${result.trends.direction}`);
-              if (result.trends.insight) {
-                console.log(`💡 [SCHEDULER] Insight: ${result.trends.insight}`);
-              }
-            }
-          } catch (error) {
-            console.error('❌ [SCHEDULER] Daily Brief update failed:', error.message);
-          }
-        });
-        
-        console.log('📅 [SCHEDULER] 24-hour Daily Brief schedule: Daily at 03:00 UTC');
-        console.log('🤖 [SCHEDULER] AI Trend Analysis: Enabled');
-        
-      } catch (error) {
-        console.warn('⚠️ Daily Indices Brief initialization failed:', error.message);
-        console.log('📌 API still available but briefing may not be current');
-      }
-    }, 30000);
+    // TC-S Daily Indices Brief - schedule only (skip startup generation to prevent OOM)
+    try {
+      const generator = require('./scripts/generateDailyBrief');
+      const dailyJob = schedule.scheduleJob('0 3 * * *', async () => {
+        try {
+          console.log('⏰ [SCHEDULER] Running 24-hour Daily Indices Brief update...');
+          const result = await generator.generateBrief();
+          console.log(`✅ [SCHEDULER] Daily Brief updated with ${result.brief.indices.length} indices`);
+        } catch (error) {
+          console.error('❌ [SCHEDULER] Daily Brief update failed:', error.message);
+        }
+      });
+      console.log('📅 Daily Brief scheduled for 03:00 UTC daily');
+      console.log(`📌 Manual trigger: POST http://localhost:${PORT}/api/daily-brief/generate`);
+    } catch (error) {
+      console.warn('⚠️ Daily Indices Brief scheduling failed:', error.message);
+    }
     
     console.log(`✅ All deferred initialization tasks started`);
   }, 5000); // Wait 5 seconds after server starts to begin heavy tasks
