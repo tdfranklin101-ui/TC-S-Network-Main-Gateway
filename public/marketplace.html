@@ -6564,6 +6564,24 @@
 
         // Set up preview modal event listeners when page loads
         document.addEventListener('DOMContentLoaded', function() {
+            // Auto-search if ?search= parameter is present (e.g., from upload redirect)
+            var urlParams = new URLSearchParams(window.location.search);
+            var autoSearchQuery = urlParams.get('search');
+            if (autoSearchQuery) {
+                setTimeout(function() {
+                    var searchInput = document.getElementById('search-input');
+                    if (searchInput) {
+                        searchInput.value = autoSearchQuery;
+                        searchInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        if (typeof kidSolInterpretiveSearch === 'function') {
+                            kidSolInterpretiveSearch();
+                        } else if (typeof performSearch === 'function') {
+                            performSearch();
+                        }
+                    }
+                }, 1500);
+            }
+
             // Video modal events
             document.getElementById('video-close-btn').addEventListener('click', closeVideoPreview);
             document.getElementById('video-preview-modal').addEventListener('click', function(e) {
@@ -6700,11 +6718,9 @@
 
             var interpretation = '';
             if (detectedCategory && priceFilter) {
-                interpretation = 'Looking for ' + detectedCategory + ' items under ' + priceFilter + ' Solar for you...';
-                searchInput.value = detectedCategory;
+                interpretation = 'Looking for ' + detectedCategory + ' items under ' + priceFilter + ' Solar matching "' + raw + '"...';
             } else if (detectedCategory) {
-                interpretation = 'I see you want ' + detectedCategory + ' \u2014 searching the network now...';
-                searchInput.value = detectedCategory;
+                interpretation = '👑 Searching ' + detectedCategory + ' and all listings for "' + raw + '"...';
             } else if (priceFilter) {
                 interpretation = 'Searching for items under ' + priceFilter + ' Solar across all categories...';
             } else {

@@ -3865,9 +3865,17 @@ const server = http.createServer(async (req, res) => {
             searchTags // $26 - AI-generated tags (guaranteed array)
           ]);
 
+          if (!result.rows || result.rows.length === 0) {
+            console.error('❌ [UPLOAD] INSERT returned no rows — artifact may not have been saved');
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Upload processing failed — please try again' }));
+            return;
+          }
+
           const dbArtifactId = result.rows[0].id;
           const artifactSlug = result.rows[0].slug;
           const solarPrice = result.rows[0].solar_amount_s;
+          console.log(`✅ [UPLOAD] Artifact confirmed in DB: id=${dbArtifactId}, slug=${artifactSlug}, price=${solarPrice}`);
 
           // Also create market_items entry so upload appears in marketplace search
           try {
