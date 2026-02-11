@@ -6246,6 +6246,7 @@ const server = http.createServer(async (req, res) => {
         hasFile: hasFile,
         isTextOnly: isTextOnly,
         contentFormat: artifact.content_format || null,
+        fileType: artifact.file_type || null,
         downloadExpires: expiresAt ? expiresAt.toISOString() : null,
         expiresIn: '7 days',
         message: `Successfully purchased "${artifact.title}" for ${formatSolar(requiredSolar)} Solar. Your new balance is ${formatSolar(newBalance)} Solar.`
@@ -11442,8 +11443,78 @@ Respond ONLY with valid JSON in this exact format:
       }
       
       const artifact = artResult.rows[0];
+      const safeTitle = (artifact.title || 'Unknown').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      
+      const musicFallbackUrls = {
+        "'Ternal Flame": "https://storage.aisongmaker.io/audio/4a839c86-40d9-4272-989b-7a512184ddb6.mp3",
+        "David Boyeez Hair": "https://storage.aisongmaker.io/audio/9b2b12e4-8626-41e4-b9e4-c7a563e40f97.mp3",
+        "Starlight Forever": "https://storage.aisongmaker.io/audio/c51b1f15-eff7-41fb-b778-b1b9d914ce3a.mp3",
+        "Snowmancer One": "/music/snowmancer-one.mp3",
+        "No One Left (to care)": "/media/gidget-bardot-no-one-left-v3.mp3",
+        "In The Seam (Quanta Masque)": "/media/in-the-seam-quanta-masque.mp3",
+        "Omen on the Hudson (Quanta Masque)": "/media/omen-on-the-hudson.mp3",
+        "Break on the Bright Side - Batrhyme": "/media/batrhyme-break-on-the-bright-side.mp3",
+        "Psychedelic Solar Punk Party Party Party": "/media/batrhyme-psychedelic-solar-punk-party.mp3"
+      };
+      
       const fileUrl = artifact.trade_file_url || artifact.master_file_url || artifact.delivery_url;
-      const safeTitle = (artifact.title || 'download').replace(/[^a-zA-Z0-9\s\-_]/g, '').replace(/\s+/g, '_');
+      
+      function tryServeLocalFile(localUrl, res, artifact, safeTitle, dlMimeTypes) {
+        const candidates = [
+          path.join(__dirname, 'public', localUrl),
+          path.join(__dirname, localUrl)
+        ];
+        for (const filePath of candidates) {
+          if (fs.existsSync(filePath)) {
+            const localBuf = fs.readFileSync(filePath);
+            const ext = path.extname(filePath).toLowerCase();
+            const contentType = dlMimeTypes[ext] || artifact.file_type || 'application/octet-stream';
+            res.writeHead(200, {
+              'Content-Type': contentType,
+              'Content-Length': localBuf.length,
+              'Content-Disposition': `attachment; filename="${safeTitle}${ext}"`,
+              'Cache-Control': 'no-cache'
+            });
+            res.end(localBuf);
+            console.log(`📦 LOCAL DOWNLOAD: "${artifact.title}" from ${filePath} (${(localBuf.length/1048576).toFixed(1)}MB)`);
+            return true;
+          }
+        }
+        return false;
+      }
+      
+      function tryFallbackChain(res, artifact, safeTitle, dlMimeTypes, musicFallbackUrls) {
+        if (artifact.delivery_url) {
+          if (artifact.delivery_url.startsWith('http')) {
+            res.writeHead(302, { 'Location': artifact.delivery_url, 'Cache-Control': 'no-cache' });
+            res.end();
+            console.log(`📦 DELIVERY URL REDIRECT: "${artifact.title}" → ${artifact.delivery_url}`);
+            return true;
+          }
+          if (artifact.delivery_url.startsWith('/')) {
+            if (tryServeLocalFile(artifact.delivery_url, res, artifact, safeTitle, dlMimeTypes)) return true;
+          }
+        }
+        
+        const fallbackUrl = musicFallbackUrls[artifact.title];
+        if (fallbackUrl) {
+          if (fallbackUrl.startsWith('http')) {
+            res.writeHead(302, { 'Location': fallbackUrl, 'Cache-Control': 'no-cache' });
+            res.end();
+            console.log(`📦 FALLBACK MAP REDIRECT: "${artifact.title}" → ${fallbackUrl}`);
+            return true;
+          }
+          if (fallbackUrl.startsWith('/')) {
+            if (tryServeLocalFile(fallbackUrl, res, artifact, safeTitle, dlMimeTypes)) {
+              console.log(`📦 FALLBACK MAP LOCAL: "${artifact.title}" → ${fallbackUrl}`);
+              return true;
+            }
+          }
+        }
+        
+        return false;
+      }
+      
       if (!fileUrl && artifact.content_body) {
         await pool.query(
           'UPDATE download_tokens SET download_count = download_count + 1, last_accessed_at = NOW() WHERE id = $1',
@@ -11499,56 +11570,36 @@ Respond ONLY with valid JSON in this exact format:
           res.end(buffer);
           console.log(`📦 CLOUD DOWNLOAD: "${artifact.title}" via token (${(buffer.length/1048576).toFixed(1)}MB)`);
         } catch (cloudErr) {
-          console.error('Cloud download error:', cloudErr.message);
-          if (artifact.delivery_url && artifact.delivery_url.startsWith('/')) {
-            const localPath = path.join(__dirname, 'public', artifact.delivery_url);
-            if (fs.existsSync(localPath)) {
-              const localBuf = fs.readFileSync(localPath);
-              const ext = path.extname(localPath).toLowerCase();
-              const contentType = dlMimeTypes[ext] || artifact.file_type || 'application/octet-stream';
-              res.writeHead(200, {
-                'Content-Type': contentType,
-                'Content-Length': localBuf.length,
-                'Content-Disposition': `attachment; filename="${safeTitle}${ext}"`,
-                'Cache-Control': 'no-cache'
-              });
-              res.end(localBuf);
-              console.log(`📦 LOCAL FALLBACK DOWNLOAD: "${artifact.title}" (${(localBuf.length/1048576).toFixed(1)}MB)`);
-              return;
-            }
+          console.error(`Cloud download error for "${artifact.title}":`, cloudErr.message, '| trade_file_url:', artifact.trade_file_url, '| delivery_url:', artifact.delivery_url);
+          if (tryFallbackChain(res, artifact, safeTitle, dlMimeTypes, musicFallbackUrls)) {
+            return;
           }
-          res.writeHead(500, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ success: false, error: 'Cloud file download failed' }));
+          console.error(`All fallbacks failed for "${artifact.title}"`);
+          res.writeHead(500, { 'Content-Type': 'text/html; charset=utf-8' });
+          res.end(`<html><body style="background:#0a0a0a;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0"><div style="text-align:center;max-width:500px;padding:20px;"><h1 style="color:#ff6b6b;">Download Unavailable</h1><p style="color:#ccc;margin:20px 0;">The file for "<strong>${safeTitle}</strong>" could not be retrieved from cloud storage.</p><p style="color:#888;font-size:14px;">Please try again later or contact support.</p><a href="/marketplace.html" style="display:inline-block;margin-top:20px;padding:12px 24px;background:#007bff;color:#fff;border-radius:8px;text-decoration:none;">Return to Marketplace</a></div></body></html>`);
         }
       } else if (fileUrl.startsWith('/')) {
-        const localPath = path.join(__dirname, 'public', fileUrl);
-        if (fs.existsSync(localPath)) {
-          const localBuf = fs.readFileSync(localPath);
-          const ext = path.extname(localPath).toLowerCase();
-          const contentType = dlMimeTypes[ext] || artifact.file_type || 'application/octet-stream';
-          res.writeHead(200, {
-            'Content-Type': contentType,
-            'Content-Length': localBuf.length,
-            'Content-Disposition': `attachment; filename="${safeTitle}${ext}"`,
-            'Cache-Control': 'no-cache'
-          });
-          res.end(localBuf);
-          console.log(`📦 LOCAL DOWNLOAD: "${artifact.title}" (${(localBuf.length/1048576).toFixed(1)}MB)`);
+        if (tryServeLocalFile(fileUrl, res, artifact, safeTitle, dlMimeTypes)) {
+        } else if (tryFallbackChain(res, artifact, safeTitle, dlMimeTypes, musicFallbackUrls)) {
         } else {
-          res.writeHead(404, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ success: false, error: 'Local file not found' }));
+          res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
+          res.end(`<html><body style="background:#0a0a0a;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0"><div style="text-align:center;max-width:500px;padding:20px;"><h1 style="color:#ff6b6b;">File Not Found</h1><p style="color:#ccc;margin:20px 0;">The file for "<strong>${safeTitle}</strong>" was not found on the server.</p><a href="/marketplace.html" style="display:inline-block;margin-top:20px;padding:12px 24px;background:#007bff;color:#fff;border-radius:8px;text-decoration:none;">Return to Marketplace</a></div></body></html>`);
         }
       } else if (fileUrl.startsWith('http')) {
         res.writeHead(302, { 'Location': fileUrl, 'Cache-Control': 'no-cache' });
         res.end();
       } else {
-        res.writeHead(404, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: false, error: 'Unknown file URL format' }));
+        if (tryFallbackChain(res, artifact, safeTitle, dlMimeTypes, musicFallbackUrls)) {
+        } else {
+          res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
+          res.end(`<html><body style="background:#0a0a0a;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0"><div style="text-align:center;max-width:500px;padding:20px;"><h1 style="color:#ff6b6b;">Download Unavailable</h1><p style="color:#ccc;margin:20px 0;">The file for "<strong>${safeTitle}</strong>" could not be located.</p><a href="/marketplace.html" style="display:inline-block;margin-top:20px;padding:12px 24px;background:#007bff;color:#fff;border-radius:8px;text-decoration:none;">Return to Marketplace</a></div></body></html>`);
+        }
       }
     } catch (error) {
       console.error('Artifact download error:', error);
-      res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ success: false, error: 'Download failed' }));
+      const safeErrorTitle = error.artifact ? (error.artifact.title || 'Unknown').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;') : '';
+      res.writeHead(500, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(`<html><body style="background:#0a0a0a;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0"><div style="text-align:center;max-width:500px;padding:20px;"><h1 style="color:#ff6b6b;">Download Error</h1><p style="color:#ccc;margin:20px 0;">An unexpected error occurred while processing your download.</p><p style="color:#888;font-size:14px;">Please try again or contact support.</p><a href="/marketplace.html" style="display:inline-block;margin-top:20px;padding:12px 24px;background:#007bff;color:#fff;border-radius:8px;text-decoration:none;">Return to Marketplace</a></div></body></html>`);
     }
     return;
   }
@@ -15543,6 +15594,30 @@ setImmediate(() => {
       console.warn('⚠️ Daily greeting video scheduling failed:', error.message);
     }
     
+    // Auto-sync artifacts → market_items (ensures legacy items appear in search)
+    if (pool) {
+      pool.query(`
+        INSERT INTO market_items (id, title, description, tags, category, price_solar, kwh_estimate, source_type, source_url, vendor_name, status, search_text, created_by_user_id)
+        SELECT a.id::varchar, a.title, a.description, a.search_tags, a.category,
+               a.solar_amount_s, a.kwh_footprint, 'INTERNAL_STOCK',
+               COALESCE(a.trade_file_url, a.delivery_url),
+               COALESCE((SELECT m.username FROM members m WHERE m.id::text = a.creator_id::text LIMIT 1), 'TC-S Network'),
+               'ACTIVE',
+               LOWER(a.title || ' ' || COALESCE(a.description, '') || ' ' || COALESCE(a.category, '')),
+               a.creator_id::varchar
+        FROM artifacts a
+        LEFT JOIN market_items mi ON mi.id::varchar = a.id::varchar
+        WHERE a.active = true AND mi.id IS NULL
+        ON CONFLICT (id) DO NOTHING
+      `).then(function(syncResult) {
+        if (syncResult.rowCount > 0) {
+          console.log('🔄 Auto-synced ' + syncResult.rowCount + ' artifacts → market_items');
+        }
+      }).catch(function(syncErr) {
+        console.warn('⚠️ Artifact-to-market sync note:', syncErr.message);
+      });
+    }
+
     // Initialize Solar Audit Layer (SAi-Audit)
     try {
       initializeSolarAudit();

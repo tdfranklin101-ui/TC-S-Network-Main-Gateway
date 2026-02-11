@@ -4083,14 +4083,83 @@
         });
         window.sessionLoaded = false; // Flag to indicate session has been loaded
         
+        function handleArtifactDownload(event, linkEl, title, ext) {
+            event.preventDefault();
+            var url = linkEl.href;
+            linkEl.textContent = '\u23F3 Preparing download...';
+            linkEl.style.pointerEvents = 'none';
+            
+            fetch(url)
+                .then(function(response) {
+                    if (response.redirected) {
+                        window.open(response.url, '_blank');
+                        linkEl.textContent = '\uD83D\uDCE5 Download Now';
+                        linkEl.style.pointerEvents = 'auto';
+                        return null;
+                    }
+                    var contentType = response.headers.get('content-type') || '';
+                    if (!response.ok || contentType.includes('text/html') || contentType.includes('application/json')) {
+                        return response.text().then(function(text) {
+                            var errorMsg = 'Download unavailable';
+                            try { var parsed = JSON.parse(text); errorMsg = parsed.error || errorMsg; } catch(e) {}
+                            linkEl.textContent = '\u274C ' + errorMsg;
+                            linkEl.style.background = '#dc3545';
+                            linkEl.style.pointerEvents = 'auto';
+                            setTimeout(function() {
+                                linkEl.textContent = '\uD83D\uDCE5 Try Again';
+                                linkEl.style.background = 'linear-gradient(135deg,#28a745,#20c997)';
+                                linkEl.style.pointerEvents = 'auto';
+                            }, 3000);
+                            return null;
+                        });
+                    }
+                    return response.blob();
+                })
+                .then(function(blob) {
+                    if (!blob) return;
+                    var safeTitle = title.replace(/[^a-zA-Z0-9\s\-_]/g, '').trim();
+                    var blobUrl = URL.createObjectURL(blob);
+                    var a = document.createElement('a');
+                    a.href = blobUrl;
+                    a.download = safeTitle + ext;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(blobUrl);
+                    linkEl.textContent = '\u2705 Downloaded!';
+                    linkEl.style.pointerEvents = 'auto';
+                })
+                .catch(function(err) {
+                    console.error('Download error:', err);
+                    linkEl.textContent = '\u274C Download failed';
+                    linkEl.style.background = '#dc3545';
+                    linkEl.style.pointerEvents = 'auto';
+                });
+            return false;
+        }
+        
         function showPurchaseSuccessModal(result, artTitle) {
             var deliveryHtml = '';
             if (result.downloadUrl) {
+                var fileExt = '.mp3';
+                if (result.contentFormat === 'md') fileExt = '.md';
+                else if (result.contentFormat === 'json') fileExt = '.json';
+                else if (result.contentFormat === 'text') fileExt = '.txt';
+                else if (result.fileType === 'audio/mpeg' || result.fileType === 'audio/mp3') fileExt = '.mp3';
+                else if (result.fileType === 'video/mp4') fileExt = '.mp4';
+                else if (result.fileType === 'image/png') fileExt = '.png';
+                else if (result.fileType === 'image/jpeg') fileExt = '.jpg';
+                
+                var safeFilename = escapeHtml(artTitle).replace(/[^a-zA-Z0-9\s\-_]/g, '').trim() + fileExt;
+                var escapedTitle = escapeHtml(artTitle).replace(/'/g, "\\'");
+                
                 deliveryHtml =
                     '<p style="margin:15px 0;color:#ccc;">Your file is ready for download:</p>' +
-                    '<a href="' + result.downloadUrl + '" download="' + escapeHtml(artTitle) + '" ' +
+                    '<a href="' + result.downloadUrl + '" ' +
+                       'download="' + safeFilename + '" ' +
+                       'onclick="return handleArtifactDownload(event, this, \'' + escapedTitle + '\', \'' + fileExt + '\')" ' +
                        'style="display:inline-block;background:linear-gradient(135deg,#28a745,#20c997);color:white;padding:15px 30px;border-radius:8px;text-decoration:none;font-weight:bold;margin:10px;font-size:16px;">' +
-                      '📥 Download Now' +
+                      '\uD83D\uDCE5 Download Now' +
                     '</a>' +
                     '<p style="margin-top:12px;font-size:12px;color:#888;">' +
                       'Download link expires in ' + (result.expiresIn || '7 days') + ' (up to 10 downloads)' +
