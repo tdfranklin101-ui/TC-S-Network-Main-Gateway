@@ -8306,6 +8306,75 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // GET /api/music/catalog - Unified DB-driven music catalog (all music for marketplace + streaming)
+  if (pathname === '/api/music/catalog' && req.method === 'GET') {
+    try {
+      const queryParams = new URLSearchParams(parsedUrl.search || '');
+      const search = queryParams.get('search') || '';
+      const sortBy = queryParams.get('sort') || 'featured';
+      
+      let query = `SELECT id, slug, title, description, category, file_type, artifact_class, 
+                    solar_amount_s, rays_amount, kwh_footprint, streaming_url, delivery_url,
+                    cover_art_url, creator_id, source_type, created_at
+                   FROM artifacts WHERE LOWER(category) = 'music' AND active = true`;
+      const params = [];
+      
+      if (search) {
+        params.push('%' + search.toLowerCase() + '%');
+        query += ` AND LOWER(title) LIKE $${params.length}`;
+      }
+      
+      if (sortBy === 'featured') {
+        query += ` ORDER BY solar_amount_s DESC, title ASC`;
+      } else if (sortBy === 'newest') {
+        query += ` ORDER BY created_at DESC`;
+      } else if (sortBy === 'price_low') {
+        query += ` ORDER BY solar_amount_s ASC`;
+      } else {
+        query += ` ORDER BY title ASC`;
+      }
+      
+      const result = await pool.query(query, params);
+      
+      const tracks = result.rows.map(row => ({
+        id: row.id,
+        slug: row.slug,
+        title: row.title,
+        description: row.description,
+        category: row.category,
+        fileType: row.file_type,
+        artifactClass: row.artifact_class,
+        solarPrice: parseFloat(row.solar_amount_s),
+        raysPrice: row.rays_amount,
+        kwhFootprint: parseFloat(row.kwh_footprint),
+        streamingUrl: row.streaming_url,
+        deliveryUrl: row.delivery_url,
+        coverArtUrl: row.cover_art_url,
+        creatorId: row.creator_id,
+        sourceType: row.source_type || 'human',
+        createdAt: row.created_at,
+        isFeatured: parseFloat(row.solar_amount_s) >= 0.001,
+        freeStreaming: true,
+        downloadRequiresPurchase: true,
+        purchaseUrl: `/api/artifacts/${row.id}/purchase`,
+        streamPreviewUrl: row.delivery_url || row.streaming_url || null
+      }));
+      
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        totalTracks: tracks.length,
+        protocol: { streaming: 'free', download: 'solar-purchase', foundationFee: '5%' },
+        tracks
+      }));
+    } catch (error) {
+      console.error('Music catalog API error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to load music catalog' }));
+    }
+    return;
+  }
+
   // Music Now Streaming API - Get all music tracks (Monazite + Member Uploads)
   if (pathname === '/api/music/all-tracks' && req.method === 'GET') {
     try {
@@ -9822,6 +9891,160 @@ Respond ONLY with valid JSON in this exact format:
         error: 'Purchase failed',
         message: error.message 
       }));
+    }
+    return;
+  }
+
+  // POST /api/agents/purchase - Agent marketplace purchase (any artifact)
+  if (pathname === '/api/agents/purchase' && req.method === 'POST') {
+    try {
+      const body = await parseBody(req);
+      const { agentUsername, artifactId } = body;
+      
+      if (!agentUsername || !artifactId) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Missing required fields: agentUsername, artifactId' }));
+        return;
+      }
+      
+      // Look up agent
+      const agentQ = await pool.query(
+        'SELECT id, username, total_solar, wallet_id, is_agent FROM members WHERE username = $1 LIMIT 1',
+        [agentUsername]
+      );
+      if (agentQ.rows.length === 0 || !agentQ.rows[0].is_agent) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Agent not found' }));
+        return;
+      }
+      const agent = agentQ.rows[0];
+      
+      // Look up artifact
+      const artQ = await pool.query(
+        'SELECT id, title, solar_amount_s, rays_amount, trade_file_url, master_file_url, delivery_url, file_type, category, creator_id, content_body, artifact_class FROM artifacts WHERE id = $1 AND active = true',
+        [artifactId]
+      );
+      if (artQ.rows.length === 0) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Artifact not found or unavailable' }));
+        return;
+      }
+      const artifact = artQ.rows[0];
+      const requiredSolar = parseFloat(artifact.solar_amount_s);
+      
+      // Check not own artifact
+      if (String(artifact.creator_id) === String(agent.id) || artifact.creator_id === agentUsername) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Cannot purchase own artifact' }));
+        return;
+      }
+      
+      // Check balance
+      const agentBalance = parseFloat(agent.total_solar);
+      if (agentBalance < requiredSolar) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: `Insufficient Solar balance. Need ${requiredSolar}, have ${agentBalance.toFixed(4)}` }));
+        return;
+      }
+      
+      // Ensure agent has wallet
+      let walletId = agent.wallet_id;
+      if (!walletId) {
+        const wResult = await pool.query(
+          `WITH new_wallet AS (
+            INSERT INTO wallets (id, user_id, email, created_at)
+            VALUES (gen_random_uuid(), $1, $2 || '@agent.tcs', NOW())
+            RETURNING id
+          )
+          UPDATE members SET wallet_id = (SELECT id FROM new_wallet) WHERE id = $1 RETURNING wallet_id`,
+          [String(agent.id), agentUsername]
+        );
+        walletId = wResult.rows[0]?.wallet_id;
+      }
+      
+      // Atomic transaction
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        
+        const foundationFee = requiredSolar * 0.05;
+        const sellerAmount = requiredSolar * 0.95;
+        const solarRays = Math.round(requiredSolar * 1000000);
+        
+        // Debit buyer
+        await client.query('UPDATE members SET total_solar = total_solar - $1 WHERE id = $2', [requiredSolar, agent.id]);
+        
+        // Credit seller
+        const sellerQ = await client.query(
+          'SELECT id, username FROM members WHERE id = $1 OR username = $1 LIMIT 1',
+          [artifact.creator_id]
+        );
+        if (sellerQ.rows.length > 0) {
+          await client.query('UPDATE members SET total_solar = total_solar + $1 WHERE id = $2', [sellerAmount, sellerQ.rows[0].id]);
+        } else {
+          console.warn(`⚠️ Agent purchase: seller ${artifact.creator_id} not found for credit`);
+        }
+        
+        // Credit Foundation
+        const foundQ = await client.query("UPDATE members SET total_solar = total_solar + $1 WHERE username = 'tcs_foundation' RETURNING id", [foundationFee]);
+        if (foundQ.rows.length === 0) {
+          console.warn('⚠️ Agent purchase: tcs_foundation not found for fee credit');
+        }
+        
+        // Record transaction
+        const txResult = await client.query(
+          `INSERT INTO transactions (id, type, wallet_id, artifact_id, amount_s, amount_rays, note, created_at)
+           VALUES (gen_random_uuid(), 'purchase', $1, $2, $3, $4, $5, NOW()) RETURNING id`,
+          [walletId, artifactId, requiredSolar, solarRays, `Agent ${agentUsername} purchased "${artifact.title}" for ${requiredSolar} Solar`]
+        );
+        const transactionId = txResult.rows[0].id;
+        
+        // Create artifact copy
+        try {
+          await client.query(
+            `INSERT INTO artifact_copies (artifact_id, owner_id, purchase_transaction_id, acquired_method, solar_paid)
+             VALUES ($1, $2, $3, 'purchase', $4)`,
+            [artifactId, agent.id, transactionId, String(requiredSolar)]
+          );
+        } catch (copyErr) {
+          console.warn('⚠️ Agent artifact copy note:', copyErr.message);
+        }
+        
+        await client.query('COMMIT');
+        
+        // Generate download token
+        const downloadToken = randomUUID();
+        await pool.query(
+          `INSERT INTO download_tokens (token, artifact_id, user_id, expires_at, access_type) 
+           VALUES ($1, $2, $3, NOW() + INTERVAL '24 hours', 'agent-purchase')`,
+          [downloadToken, artifactId, agent.id]
+        );
+        
+        console.log(`🤖 Agent purchase: ${agentUsername} bought "${artifact.title}" for ${requiredSolar} Solar (fee: ${foundationFee.toFixed(6)})`);
+        
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: true,
+          artifactId,
+          title: artifact.title,
+          category: artifact.category,
+          priceSolar: requiredSolar,
+          foundationFee: foundationFee,
+          sellerCredit: sellerAmount,
+          downloadUrl: `/api/download/${downloadToken}`,
+          agentUsername,
+          transactionId
+        }));
+      } catch (txErr) {
+        await client.query('ROLLBACK');
+        throw txErr;
+      } finally {
+        client.release();
+      }
+    } catch (error) {
+      console.error('Agent purchase error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Agent purchase failed: ' + error.message }));
     }
     return;
   }

@@ -117,6 +117,21 @@ async function createArtifactsForAgent(pool, agent, memberId) {
 
       const artifactId = artifactResult.rows[0].id;
 
+      // Auto-add Music/Video agent content to Music Now for free streaming
+      if (category === 'Music' || category === 'Video') {
+        const mediaFileType = category === 'Music' ? 'audio/mpeg' : 'video/mp4';
+        const streamSlug = slug.replace(/[^a-z0-9-]/g, '');
+        await pool.query(
+          `UPDATE artifacts SET 
+            streaming_url = $1, 
+            artifact_class = 'B', 
+            file_type = $2
+           WHERE id = $3`,
+          [`/music-now.html#agent-${streamSlug}`, mediaFileType, artifactId]
+        );
+        console.log(`🎵 [Agent ${agent.code}] Auto-added ${category} "${title}" to Music Now streaming`);
+      }
+
       await pool.query(
         `INSERT INTO market_items (title, description, category, price_solar, kwh_estimate, source_type, status, created_by_user_id, metadata)
          VALUES ($1, $2, $3, $4, $5, 'INTERNAL_STOCK', 'ACTIVE', $6, $7)`,
