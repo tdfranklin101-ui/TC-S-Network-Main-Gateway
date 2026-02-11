@@ -6230,7 +6230,7 @@ const server = http.createServer(async (req, res) => {
 
       const hasFile = !!(artifact.master_file_url || artifact.trade_file_url || artifact.delivery_url || artifact.content_body);
       const downloadUrl = (tokenCreated && tokenValue && hasFile) ? `/api/artifact-download/${tokenValue}` : null;
-      const isTextOnly = !hasFile && artifact.content_body;
+      const isTextOnly = !!artifact.content_body && !artifact.master_file_url && !artifact.trade_file_url && !artifact.delivery_url;
 
       const response = {
         success: true,
@@ -9866,7 +9866,7 @@ Respond ONLY with valid JSON in this exact format:
         newBalance: newBalance,
         downloadUrl: downloadUrl,
         hasFile: hasFile,
-        isTextOnly: !hasFile && !!artifact.content_body,
+        isTextOnly: !!artifact.content_body && !artifact.trade_file_url && !artifact.master_file_url && !artifact.delivery_url,
         contentFormat: artifact.content_format || null,
         expiresIn: '7 days',
         message: `Successfully purchased "${artifact.title}" for ${formatSolar(requiredSolar)} Solar. Your new balance is ${formatSolar(newBalance)} Solar.`,

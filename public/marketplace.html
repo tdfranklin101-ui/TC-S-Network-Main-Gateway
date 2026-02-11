@@ -4065,6 +4065,61 @@
         });
         window.sessionLoaded = false; // Flag to indicate session has been loaded
         
+        function showPurchaseSuccessModal(result, artTitle) {
+            var deliveryHtml = '';
+            if (result.downloadUrl) {
+                deliveryHtml =
+                    '<p style="margin:15px 0;color:#ccc;">Your file is ready for download:</p>' +
+                    '<a href="' + result.downloadUrl + '" download="' + escapeHtml(artTitle) + '" ' +
+                       'style="display:inline-block;background:linear-gradient(135deg,#28a745,#20c997);color:white;padding:15px 30px;border-radius:8px;text-decoration:none;font-weight:bold;margin:10px;font-size:16px;">' +
+                      '📥 Download Now' +
+                    '</a>' +
+                    '<p style="margin-top:12px;font-size:12px;color:#888;">' +
+                      'Download link expires in ' + (result.expiresIn || '7 days') + ' (up to 10 downloads)' +
+                    '</p>';
+            } else if (result.isTextOnly) {
+                deliveryHtml =
+                    '<p style="margin:15px 0;color:#ccc;">Text-based artifact added to your collection.</p>' +
+                    '<div style="background:rgba(0,255,255,0.05);border:1px solid #333;border-radius:8px;padding:12px;margin:10px;font-size:12px;color:#aaa;">' +
+                      'Format: <strong style="color:#fff;">' + (result.contentFormat || 'text') + '</strong>' +
+                    '</div>';
+            } else {
+                deliveryHtml = '<p style="margin:15px 0;color:#ccc;">Item added to your collection.</p>';
+            }
+
+            var paidDisplay = result.amountPaid ? parseFloat(result.amountPaid).toFixed(6) : '0';
+            var feeDisplay = result.foundationFee ? parseFloat(result.foundationFee).toFixed(6) : '0';
+            var balDisplay = result.newBalance !== undefined ? parseFloat(result.newBalance).toFixed(4) : '—';
+
+            var modal = document.createElement('div');
+            modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px;';
+            modal.innerHTML =
+              '<div style="background:#111;border:1px solid #333;border-radius:12px;max-width:500px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.8);">' +
+                '<div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid #222;">' +
+                  '<h3 style="margin:0;color:#FFD700;font-size:18px;">Purchase Successful!</h3>' +
+                  '<span class="purchase-success-modal-close" style="cursor:pointer;font-size:24px;color:#888;">&times;</span>' +
+                '</div>' +
+                '<div style="padding:20px;text-align:center;">' +
+                  '<div style="font-size:48px;margin-bottom:10px;">🎉</div>' +
+                  '<p style="color:#fff;font-size:16px;margin-bottom:5px;">"' + escapeHtml(artTitle) + '"</p>' +
+                  '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:15px 0;padding:12px;background:rgba(255,215,0,0.03);border:1px solid #2a2a1e;border-radius:8px;font-size:11px;">' +
+                    '<div><div style="color:#888;">Paid</div><div style="color:#FFD700;">' + paidDisplay + ' S</div></div>' +
+                    '<div><div style="color:#888;">Foundation</div><div style="color:#00ffff;">' + feeDisplay + ' S</div></div>' +
+                    '<div><div style="color:#888;">Balance</div><div style="color:#28a745;">' + balDisplay + ' S</div></div>' +
+                  '</div>' +
+                  deliveryHtml +
+                '</div>' +
+              '</div>';
+            document.body.appendChild(modal);
+            var closeBtn = modal.querySelector('.purchase-success-modal-close');
+            closeBtn.addEventListener('click', function() {
+                document.body.removeChild(modal);
+            });
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) document.body.removeChild(modal);
+            });
+        }
+
         // Helper to sync currentUser to window AND persist to sessionStorage
         function syncCurrentUser() {
             window.currentUser = currentUser;
@@ -4597,11 +4652,11 @@
                 const result = await response.json();
 
                 if (response.ok) {
-                    alert(`🎉 ${result.message}`);
-                    
-                    // Initiate bundle download
-                    const downloadUrl = `${result.purchase.download.url}?bundle=true`;
-                    window.open(downloadUrl, '_blank');
+                    if (result.purchase && result.purchase.download && result.purchase.download.url) {
+                        result.downloadUrl = result.purchase.download.url + '?bundle=true';
+                    }
+                    var bundleTitle = 'Monazite Complete Collection';
+                    showPurchaseSuccessModal(result, bundleTitle);
                     
                     console.log('🎁 Bundle purchased:', result.purchase);
                 } else {
@@ -4646,10 +4701,8 @@
                 const result = await response.json();
 
                 if (response.ok && result.success) {
-                    alert(`🎵 ${result.message}`);
-                    if (result.downloadUrl) {
-                        window.open(result.downloadUrl, '_blank');
-                    }
+                    var trackTitle = track.title || 'Monazite Track';
+                    showPurchaseSuccessModal(result, trackTitle);
                 } else {
                     alert(`❌ Purchase failed: ${result.error || 'Unknown error'}`);
                 }
@@ -4697,15 +4750,7 @@
                 const result = await response.json();
 
                 if (response.ok && result.success) {
-                    alert(`☀️ ${result.message || 'Purchase successful!'}`);
-                    if (result.downloadUrl) {
-                        const link = document.createElement('a');
-                        link.href = result.downloadUrl;
-                        link.download = 'batrhyme-break-on-the-bright-side.mp3';
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                    }
+                    showPurchaseSuccessModal(result, batrhymeTrack.title);
                 } else {
                     alert(`❌ Purchase failed: ${result.error || 'Unknown error'}`);
                 }
@@ -4753,15 +4798,7 @@
                 const result = await response.json();
 
                 if (response.ok && result.success) {
-                    alert(`🌀 ${result.message || 'Purchase successful!'}`);
-                    if (result.downloadUrl) {
-                        const link = document.createElement('a');
-                        link.href = result.downloadUrl;
-                        link.download = 'batrhyme-psychedelic-solar-punk-party.mp3';
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                    }
+                    showPurchaseSuccessModal(result, batrhyme2Track.title);
                 } else {
                     alert(`❌ Purchase failed: ${result.error || 'Unknown error'}`);
                 }
@@ -4809,15 +4846,7 @@
                 const result = await response.json();
 
                 if (response.ok && result.success) {
-                    alert(`🌅 ${result.message || 'Purchase successful!'}`);
-                    if (result.downloadUrl) {
-                        const link = document.createElement('a');
-                        link.href = result.downloadUrl;
-                        link.download = 'batrhyme-omen-on-the-hudson.mp3';
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                    }
+                    showPurchaseSuccessModal(result, batrhymeOmenTrack.title);
                 } else {
                     alert(`❌ Purchase failed: ${result.error || 'Unknown error'}`);
                 }
@@ -4865,15 +4894,7 @@
                 const result = await response.json();
 
                 if (response.ok && result.success) {
-                    alert(`✨ ${result.message || 'Purchase successful!'}`);
-                    if (result.downloadUrl) {
-                        const link = document.createElement('a');
-                        link.href = result.downloadUrl;
-                        link.download = 'gidget-bardot-no-one-left.mp3';
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                    }
+                    showPurchaseSuccessModal(result, gidgetTrack.title);
                 } else {
                     alert(`❌ Purchase failed: ${result.error || 'Unknown error'}`);
                 }
@@ -5546,7 +5567,7 @@
             }
 
             try {
-                const response = await fetch('/api/artifacts/purchase', {
+                const response = await fetch('/api/marketplace/purchase', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -5560,26 +5581,24 @@
 
                 const result = await response.json();
 
-                if (response.ok) {
-                    alert(`✅ ${result.message}`);
-                    // Update user balance
+                if (response.ok && result.success) {
                     currentUser.solarBalance = result.newBalance;
                     updateUserDisplay();
-                    
-                    // Initiate download
-                    window.open(result.downloadUrl, '_blank');
+
+                    var artTitle = (artifact && artifact.title) || result.artifactTitle || 'Artifact';
+                    showPurchaseSuccessModal(result, artTitle);
                 } else {
                     if (result.error === 'Insufficient Solar balance') {
-                        alert(`❌ Insufficient Solar balance. You need ${result.required} Solar but only have ${result.available}. Shortfall: ${result.shortfall.toFixed(4)} Solar.`);
+                        alert('Insufficient Solar balance. You need ' + (result.required || '?') + ' Solar but only have ' + (result.available || '?') + ' Solar.');
                     } else if (result.isOwner) {
-                        alert(`📦 This is your listing!\n\n${result.message || 'You already own this artifact as the creator. You can download it from the "My Items" tab.'}`);
+                        alert('This is your listing! You already own this artifact.');
                     } else {
-                        alert(`❌ Purchase failed: ${result.error}`);
+                        alert('Purchase failed: ' + (result.error || 'Unknown error'));
                     }
                 }
             } catch (error) {
                 console.error('Purchase error:', error);
-                alert('❌ Purchase failed. Please try again.');
+                alert('Purchase failed. Please try again.');
             }
         }
 
