@@ -15308,6 +15308,76 @@ setImmediate(() => {
     }
   });
   
+  async function seedMediaArtifacts(dbPool) {
+    const mediaItems = [
+      {
+        title: 'In The Seam (Quanta Masque)',
+        description: 'Original music track by Quanta Masque. A sonic exploration at the intersection of digital and organic soundscapes.',
+        category: 'music',
+        price_solar: 0.001,
+        kwh_estimate: 4.913,
+        artifact_class: 'B',
+        trade_file_url: '/media/in-the-seam-quanta-masque.mp3',
+        file_type: 'audio/mpeg'
+      },
+      {
+        title: 'Global Circuit Sphere',
+        description: 'Visual exploration of global energy networks rendered as an interconnected sphere of light and data.',
+        category: 'video',
+        price_solar: 0.002,
+        kwh_estimate: 9.826,
+        artifact_class: 'B',
+        trade_file_url: '/media/global-circuit-sphere.mp4',
+        file_type: 'video/mp4'
+      },
+      {
+        title: 'Garcia Solar Rays',
+        description: 'Cinematic solar ray patterns captured and processed through the Garcia lens framework.',
+        category: 'video',
+        price_solar: 0.002,
+        kwh_estimate: 9.826,
+        artifact_class: 'B',
+        trade_file_url: '/videos/garcia-solar-rays.mp4',
+        file_type: 'video/mp4'
+      },
+      {
+        title: 'Subterranean Bunkers & Screens',
+        description: 'Documentary-style exploration of underground data centers and the screens that connect our digital world.',
+        category: 'video',
+        price_solar: 0.002,
+        kwh_estimate: 9.826,
+        artifact_class: 'B',
+        trade_file_url: '/media/subterranean-bunkers-screens.mp4',
+        file_type: 'video/mp4'
+      }
+    ];
+
+    let seeded = 0;
+    for (const item of mediaItems) {
+      try {
+        const exists = await dbPool.query('SELECT id FROM artifacts WHERE title = $1 LIMIT 1', [item.title]);
+        if (exists.rows.length === 0) {
+          const foundationResult = await dbPool.query("SELECT id FROM members WHERE username = 'tcs_foundation' LIMIT 1");
+          const creatorId = foundationResult.rows.length > 0 ? foundationResult.rows[0].id : null;
+          const slug = item.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+          await dbPool.query(
+            `INSERT INTO artifacts (id, slug, title, description, category, solar_amount_s, kwh_footprint, rays_amount, delivery_mode, artifact_class, trade_file_url, file_type, creator_id, active)
+             VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, true)`,
+            [slug, item.title, item.description, item.category, item.price_solar, item.kwh_estimate, 0, 'download', item.artifact_class, item.trade_file_url, item.file_type, creatorId]
+          );
+          seeded++;
+        }
+      } catch (err) {
+        console.warn(`⚠️ Could not seed "${item.title}":`, err.message);
+      }
+    }
+    if (seeded > 0) {
+      console.log(`🎬 Seeded ${seeded} media artifacts into database`);
+    } else {
+      console.log(`✅ All media artifacts already exist in database`);
+    }
+  }
+
   console.log(`🚀 CLOUD RUN READY - SINGLE PORT CONFIGURATION`);
   console.log(`✅ Health check ready - deferring heavy initialization tasks...`);
   
@@ -15415,6 +15485,10 @@ setImmediate(() => {
       console.warn('⚠️ Daily Indices Brief scheduling failed:', error.message);
     }
     
+    if (pool) {
+      seedMediaArtifacts(pool).catch(err => console.warn('⚠️ Media artifact seed failed:', err.message));
+    }
+
     console.log(`✅ All deferred initialization tasks started`);
   }, 5000); // Wait 5 seconds after server starts to begin heavy tasks
 });
