@@ -701,12 +701,12 @@
       }
 
       var videoUsable = false;
-      fetch('/greeting.mp4', { method: 'HEAD' }).then(function(resp) {
+      fetch('/greeting.mp4?_=' + Date.now(), { method: 'HEAD' }).then(function(resp) {
         if (!resp.ok) { showTextFallback(); return; }
         var lastMod = resp.headers.get('last-modified');
         if (!lastMod) { showTextFallback(); return; }
-        var age = Date.now() - new Date(lastMod).getTime();
-        if (age > 24 * 60 * 60 * 1000) { showTextFallback(); return; }
+        var videoDate = new Date(lastMod).toISOString().slice(0, 10);
+        if (videoDate !== today) { showTextFallback(); return; }
         videoUsable = true;
       }).catch(function() { showTextFallback(); });
 
