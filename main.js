@@ -9695,73 +9695,125 @@ Respond ONLY with valid JSON in this exact format:
       let walletId = buyer.wallet_id;
       if (!walletId) walletId = await ensureMemberWallet(session.userId);
       
-      const newBalance = buyerBalance - requiredSolar;
-      await pool.query('UPDATE members SET total_solar = $1 WHERE id = $2', [newBalance, buyer.id]);
-      logBalanceChange('Purchase', buyer.id, buyer.username, buyerBalance, newBalance, `purchase_artifact_${artifactId}`);
-      
-      const foundationFee = Math.round(requiredSolar * FOUNDATION_FEE_RATE * 10000) / 10000;
-      const sellerNet = requiredSolar - foundationFee;
-      
-      if (artifact.creator_id) {
-        try {
-          const cid = parseInt(artifact.creator_id);
-          const sellerQ = await pool.query('SELECT id, username, total_solar FROM members WHERE id = $1 OR username = $2', [isNaN(cid) ? -1 : cid, artifact.creator_id]);
-          if (sellerQ.rows.length > 0) {
-            const seller = sellerQ.rows[0];
-            const sellerOldBal = parseFloat(seller.total_solar || 0);
-            const sellerNewBal = sellerOldBal + sellerNet;
-            await pool.query('UPDATE members SET total_solar = $1 WHERE id = $2', [sellerNewBal, seller.id]);
-            logBalanceChange('Sale', seller.id, seller.username, sellerOldBal, sellerNewBal, `sale_artifact_${artifactId}`);
-          }
-        } catch (sellerErr) { console.error('Seller credit error:', sellerErr.message); }
-      }
-      
-      try {
-        const fQ = await pool.query('SELECT id, total_solar FROM members WHERE username = $1', ['tcs_foundation']);
-        if (fQ.rows.length > 0) {
-          const fOld = parseFloat(fQ.rows[0].total_solar || 0);
-          await pool.query('UPDATE members SET total_solar = $1 WHERE id = $2', [fOld + foundationFee, fQ.rows[0].id]);
-        }
-      } catch (fErr) { console.error('Foundation fee error:', fErr.message); }
-      
-      const txResult = await pool.query(
-        `INSERT INTO transactions (id, type, wallet_id, artifact_id, amount_s, note, created_at) VALUES (gen_random_uuid(), 'purchase', $1, $2, $3, $4, NOW()) RETURNING id`,
-        [walletId, artifactId, requiredSolar, `Purchase of "${artifact.title}"`]
-      );
-      const txId = txResult.rows[0].id;
-      
-      let copyCreated = true;
-      try {
-        await pool.query('INSERT INTO artifact_copies (artifact_id, owner_id, purchase_transaction_id, acquired_method, solar_paid) VALUES ($1, $2, $3, \'purchase\', $4)', [artifactId, session.userId, txId, String(requiredSolar)]);
-      } catch (cpErr) { copyCreated = false; console.error('Copy creation error:', cpErr.message); }
-      
+      const client = await pool.connect();
+      let txId = null;
+      let newBalance = null;
+      let foundationFee = 0;
       let dlToken = null;
-      const hasFile = !!(artifact.trade_file_url || artifact.master_file_url || artifact.delivery_url);
-      if (copyCreated && hasFile) {
-        dlToken = crypto.randomBytes(32).toString('hex');
-        const dlExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+      let copyCreated = true;
+      let tokenCreated = true;
+      let dlExpiry = null;
+      let warnings = [];
+
+      try {
+        await client.query('BEGIN');
+
+        newBalance = buyerBalance - requiredSolar;
+        await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [newBalance, buyer.id]);
+
+        foundationFee = Math.round(requiredSolar * FOUNDATION_FEE_RATE * 10000) / 10000;
+        const sellerNet = requiredSolar - foundationFee;
+
+        if (artifact.creator_id) {
+          try {
+            const cid = parseInt(artifact.creator_id);
+            const sellerQ = await client.query('SELECT id, username, total_solar FROM members WHERE id = $1 OR username = $2 LIMIT 1', [isNaN(cid) ? -1 : cid, artifact.creator_id]);
+            if (sellerQ.rows.length > 0) {
+              const seller = sellerQ.rows[0];
+              const sellerOldBal = parseFloat(seller.total_solar || 0);
+              const sellerNewBal = sellerOldBal + sellerNet;
+              await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [sellerNewBal, seller.id]);
+              logBalanceChange('Sale', seller.id, seller.username, sellerOldBal, sellerNewBal, `sale_artifact_${artifactId}`);
+            }
+          } catch (sellerErr) {
+            warnings.push(`Seller credit note: ${sellerErr.message}`);
+            console.error('Seller credit error:', sellerErr.message);
+          }
+        }
+
         try {
-          await pool.query('INSERT INTO download_tokens (token, artifact_id, user_id, expires_at, access_type, max_downloads) VALUES ($1, $2, $3, $4, \'trade_file\', 10)', [dlToken, artifactId, session.userId, dlExpiry]);
-        } catch (dtErr) { dlToken = null; console.error('Token creation error:', dtErr.message); }
+          const fQ = await client.query('SELECT id, total_solar FROM members WHERE username = $1', ['tcs_foundation']);
+          if (fQ.rows.length > 0) {
+            const fOld = parseFloat(fQ.rows[0].total_solar || 0);
+            await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [fOld + foundationFee, fQ.rows[0].id]);
+          }
+        } catch (fErr) {
+          warnings.push(`Foundation fee note: ${fErr.message}`);
+          console.error('Foundation fee error:', fErr.message);
+        }
+
+        const solarRays = Math.round(requiredSolar * 1000000);
+        const txResult = await client.query(
+          `INSERT INTO transactions (id, type, wallet_id, artifact_id, amount_s, amount_rays, note, created_at) VALUES (gen_random_uuid(), 'purchase', $1, $2, $3, $4, $5, NOW()) RETURNING id`,
+          [walletId, artifactId, requiredSolar, solarRays, `Purchase of "${artifact.title}"`]
+        );
+        txId = txResult.rows[0].id;
+
+        try {
+          await client.query('INSERT INTO artifact_copies (artifact_id, owner_id, purchase_transaction_id, acquired_method, solar_paid) VALUES ($1, $2, $3, \'purchase\', $4)', [artifactId, session.userId, txId, String(requiredSolar)]);
+        } catch (cpErr) {
+          copyCreated = false;
+          warnings.push(`Artifact copy note: ${cpErr.message}`);
+          console.error('Copy creation error:', cpErr.message);
+        }
+
+        const hasFile = !!(artifact.trade_file_url || artifact.master_file_url || artifact.delivery_url);
+        if (copyCreated && hasFile) {
+          dlToken = crypto.randomBytes(32).toString('hex');
+          dlExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+          try {
+            await client.query('INSERT INTO download_tokens (token, artifact_id, user_id, expires_at, access_type, max_downloads) VALUES ($1, $2, $3, $4, \'trade_file\', 10)', [dlToken, artifactId, session.userId, dlExpiry]);
+          } catch (dtErr) {
+            tokenCreated = false;
+            dlToken = null;
+            warnings.push(`Download token note: ${dtErr.message}`);
+            console.error('Token creation error:', dtErr.message);
+          }
+        }
+
+        await client.query('COMMIT');
+        logBalanceChange('Purchase', buyer.id, buyer.username, buyerBalance, newBalance, `purchase_artifact_${artifactId}`);
+        console.log(`💰 SOLAR PURCHASE: ${session.username} bought "${artifact.title}" for ${requiredSolar} Solar`);
+
+      } catch (txErr) {
+        await client.query('ROLLBACK');
+        client.release();
+        console.error('Purchase transaction rolled back:', txErr.message);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Purchase failed', message: txErr.message }));
+        return;
       }
+      client.release();
 
-      console.log(`💰 SOLAR PURCHASE: ${session.username} bought "${artifact.title}" for ${requiredSolar} Solar`);
+      const hasFile = !!(artifact.trade_file_url || artifact.master_file_url || artifact.delivery_url);
+      const downloadUrl = (tokenCreated && dlToken && hasFile) ? `/api/artifact-download/${dlToken}` : null;
 
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({
+      const response = {
         success: true,
         transactionId: txId,
         artifactTitle: artifact.title,
         amountPaid: requiredSolar,
         foundationFee: foundationFee,
         newBalance: newBalance,
-        downloadUrl: dlToken ? `/api/artifact-download/${dlToken}` : null,
+        downloadUrl: downloadUrl,
         hasFile: hasFile,
         isTextOnly: !hasFile && !!artifact.content_body,
         contentFormat: artifact.content_format || null,
         expiresIn: '7 days',
-        message: `Successfully purchased "${artifact.title}" for ${formatSolar(requiredSolar)} Solar. Your new balance is ${formatSolar(newBalance)} Solar.`
-      }));
+        message: `Successfully purchased "${artifact.title}" for ${formatSolar(requiredSolar)} Solar. Your new balance is ${formatSolar(newBalance)} Solar.`,
+        purchase: {
+          download: {
+            url: downloadUrl
+          }
+        }
+      };
+
+      if (warnings.length > 0) {
+        response.warnings = warnings;
+      }
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(response));
     } catch (error) {
       console.error('Purchase error:', error);
       res.writeHead(500, { 'Content-Type': 'application/json' });

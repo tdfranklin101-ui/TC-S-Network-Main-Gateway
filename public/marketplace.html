@@ -4645,16 +4645,13 @@
 
                 const result = await response.json();
 
-                if (response.ok) {
+                if (response.ok && result.success) {
                     alert(`🎵 ${result.message}`);
-                    
-                    // Initiate track download
-                    const downloadUrl = `${result.purchase.download.url}?item=${track.id}`;
-                    window.open(downloadUrl, '_blank');
-                    
-                    console.log('🎵 Track purchased:', result.purchase);
+                    if (result.downloadUrl) {
+                        window.open(result.downloadUrl, '_blank');
+                    }
                 } else {
-                    alert(`❌ Purchase failed: ${result.error}`);
+                    alert(`❌ Purchase failed: ${result.error || 'Unknown error'}`);
                 }
             } catch (error) {
                 console.error('Track purchase error:', error);
@@ -4669,7 +4666,7 @@
             }
 
             const batrhymeTrack = {
-                id: 'batrhyme-break-on-the-bright-side',
+                id: '92a5e30f-bcc5-40ca-9800-e1ef748246e4',
                 title: 'Break on the Bright Side',
                 artist: 'Batrhyme',
                 priceSolar: 0.001,
@@ -4699,19 +4696,16 @@
 
                 const result = await response.json();
 
-                if (response.ok) {
+                if (response.ok && result.success) {
                     alert(`☀️ ${result.message || 'Purchase successful!'}`);
-                    
-                    // Initiate track download
-                    const downloadUrl = batrhymeTrack.deliveryUrl;
-                    const link = document.createElement('a');
-                    link.href = downloadUrl;
-                    link.download = 'batrhyme-break-on-the-bright-side.mp3';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    
-                    console.log('☀️ Batrhyme track purchased:', result.purchase);
+                    if (result.downloadUrl) {
+                        const link = document.createElement('a');
+                        link.href = result.downloadUrl;
+                        link.download = 'batrhyme-break-on-the-bright-side.mp3';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    }
                 } else {
                     alert(`❌ Purchase failed: ${result.error || 'Unknown error'}`);
                 }
@@ -4728,7 +4722,7 @@
             }
 
             const batrhyme2Track = {
-                id: 'batrhyme-psychedelic-solar-punk-party',
+                id: '9be7005f-6dbf-477f-a3d7-11542bf45cb0',
                 title: 'Psychedelic Solar Punk Party Party Party',
                 artist: 'Batrhyme',
                 priceSolar: 0.001,
@@ -4758,18 +4752,16 @@
 
                 const result = await response.json();
 
-                if (response.ok) {
+                if (response.ok && result.success) {
                     alert(`🌀 ${result.message || 'Purchase successful!'}`);
-                    
-                    const downloadUrl = batrhyme2Track.deliveryUrl;
-                    const link = document.createElement('a');
-                    link.href = downloadUrl;
-                    link.download = 'batrhyme-psychedelic-solar-punk-party.mp3';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    
-                    console.log('🌀 Batrhyme 2 track purchased:', result.purchase);
+                    if (result.downloadUrl) {
+                        const link = document.createElement('a');
+                        link.href = result.downloadUrl;
+                        link.download = 'batrhyme-psychedelic-solar-punk-party.mp3';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    }
                 } else {
                     alert(`❌ Purchase failed: ${result.error || 'Unknown error'}`);
                 }
@@ -4786,7 +4778,7 @@
             }
 
             const batrhymeOmenTrack = {
-                id: 'batrhyme-omen-on-the-hudson',
+                id: 'aeb23199-8602-4d3a-b492-9bd0c1e01bd6',
                 title: 'Omen on the Hudson (Quanta Masque)',
                 artist: 'Batrhyme',
                 priceSolar: 0.001,
@@ -4816,18 +4808,16 @@
 
                 const result = await response.json();
 
-                if (response.ok) {
+                if (response.ok && result.success) {
                     alert(`🌅 ${result.message || 'Purchase successful!'}`);
-                    
-                    const downloadUrl = batrhymeOmenTrack.deliveryUrl;
-                    const link = document.createElement('a');
-                    link.href = downloadUrl;
-                    link.download = 'batrhyme-omen-on-the-hudson.mp3';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    
-                    console.log('🌅 Batrhyme Omen track purchased:', result.purchase);
+                    if (result.downloadUrl) {
+                        const link = document.createElement('a');
+                        link.href = result.downloadUrl;
+                        link.download = 'batrhyme-omen-on-the-hudson.mp3';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    }
                 } else {
                     alert(`❌ Purchase failed: ${result.error || 'Unknown error'}`);
                 }
@@ -4844,7 +4834,7 @@
             }
 
             const gidgetTrack = {
-                id: 'gidget-bardot-no-one-left',
+                id: '504632ca-8486-4fc6-8c9b-b41884b5ece9',
                 title: 'No One Left (to care)',
                 artist: 'Gidget Bardot',
                 priceSolar: 0.001,
@@ -4874,18 +4864,16 @@
 
                 const result = await response.json();
 
-                if (response.ok) {
+                if (response.ok && result.success) {
                     alert(`✨ ${result.message || 'Purchase successful!'}`);
-                    
-                    const downloadUrl = gidgetTrack.deliveryUrl;
-                    const link = document.createElement('a');
-                    link.href = downloadUrl;
-                    link.download = 'gidget-bardot-no-one-left.mp3';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    
-                    console.log('✨ Gidget Bardot track purchased:', result.purchase);
+                    if (result.downloadUrl) {
+                        const link = document.createElement('a');
+                        link.href = result.downloadUrl;
+                        link.download = 'gidget-bardot-no-one-left.mp3';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    }
                 } else {
                     alert(`❌ Purchase failed: ${result.error || 'Unknown error'}`);
                 }
