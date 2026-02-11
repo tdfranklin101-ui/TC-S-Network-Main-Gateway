@@ -9947,14 +9947,51 @@ Respond ONLY with valid JSON in this exact format:
         return;
       }
 
-      // Direct DB purchase flow
+      // Direct DB purchase flow — check artifacts table first, then market_items, then JSON collections
       const artQ = await pool.query('SELECT id, title, solar_amount_s, trade_file_url, master_file_url, delivery_url, file_type, category, creator_id, content_body, content_format FROM artifacts WHERE id = $1 AND active = true', [artifactId]);
-      if (artQ.rows.length === 0) {
-        res.writeHead(404, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: false, error: 'Artifact not found or unavailable' }));
-        return;
+      let artifact;
+      if (artQ.rows.length > 0) {
+        artifact = artQ.rows[0];
+      } else {
+        const marketItem = await findInMarketItems(artifactId);
+        if (marketItem) {
+          const meta = marketItem.metadata || {};
+          artifact = {
+            id: marketItem.id,
+            title: marketItem.title,
+            solar_amount_s: marketItem.price_solar,
+            delivery_url: marketItem.source_url || meta.deliveryUrl || null,
+            trade_file_url: null,
+            master_file_url: null,
+            file_type: 'digital',
+            category: marketItem.category,
+            creator_id: marketItem.created_by_user_id ? String(marketItem.created_by_user_id) : null,
+            content_body: marketItem.description,
+            content_format: 'text'
+          };
+        } else {
+          const jsonItem = findInJsonCollections(artifactId);
+          if (jsonItem) {
+            artifact = {
+              id: jsonItem.id,
+              title: jsonItem.title,
+              solar_amount_s: jsonItem.priceSolar,
+              delivery_url: jsonItem.filePath ? '/' + jsonItem.filePath.replace(/^public\//, '') : null,
+              trade_file_url: null,
+              master_file_url: null,
+              file_type: 'audio/mpeg',
+              category: jsonItem.category || 'music',
+              creator_id: null,
+              content_body: jsonItem.description,
+              content_format: 'text'
+            };
+          } else {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: 'Artifact not found or unavailable' }));
+            return;
+          }
+        }
       }
-      const artifact = artQ.rows[0];
       const requiredSolar = parseFloat(artifact.solar_amount_s);
       
       if (String(artifact.creator_id) === String(session.userId)) {

@@ -7149,9 +7149,10 @@
 
             html += '<div class="detail-section">';
             html += '<div class="detail-section-label">\ud83d\udd0e Content Preview</div>';
-            if (isAudio && streamingUrl) {
+            var audioStreamSrc = '/api/artifacts/' + id + '/stream-preview';
+            if (isAudio && (streamingUrl || id)) {
                 html += '<div class="detail-streaming-badge">STREAMING PREVIEW</div>';
-                html += '<audio controls style="width:100%;margin:8px 0;" preload="none"><source src="' + escapeHtml(streamingUrl) + '"></audio>';
+                html += '<audio controls style="width:100%;margin:8px 0;" preload="none"><source src="' + escapeHtml(audioStreamSrc) + '" type="audio/mpeg"></audio>';
                 html += '<div class="detail-waveform">';
                 for (var wi = 0; wi < 8; wi++) html += '<div class="bar"></div>';
                 html += '</div>';
