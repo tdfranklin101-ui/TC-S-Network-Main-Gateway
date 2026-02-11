@@ -95,6 +95,9 @@ async function createArtifactsForAgent(pool, agent, memberId) {
     const other = ALL_CATEGORIES.filter(c => c !== 'Basic Needs');
     categories.push(pick(other));
   }
+  if (!categories.includes('Education')) {
+    categories.push('Education');
+  }
 
   while (categories.length < 5) {
     const remaining = ALL_CATEGORIES.filter(c => !categories.includes(c));
@@ -107,14 +110,16 @@ async function createArtifactsForAgent(pool, agent, memberId) {
     'Writing': 'text/markdown', 'Docs': 'application/pdf', 'Software': 'application/javascript',
     'AI Tools': 'application/json', 'AI Create': 'application/json', 'Games': 'application/zip',
     'Utilities': 'application/zip', 'Computronium': 'application/octet-stream',
-    'Culture': 'text/markdown', 'Basic Needs': 'text/plain', 'Rent': 'text/plain', 'Energy': 'application/json'
+    'Culture': 'text/markdown', 'Basic Needs': 'text/plain', 'Rent': 'text/plain', 'Energy': 'application/json',
+    'Education': 'text/markdown'
   };
 
   const CONTENT_FORMATS = {
     'Music': 'audio', 'Video': 'video', 'Art': 'image', 'Photo': 'image',
     'Writing': 'md', 'Docs': 'pdf', 'Software': 'js', 'AI Tools': 'json',
     'AI Create': 'json', 'Games': 'binary', 'Utilities': 'binary',
-    'Computronium': 'binary', 'Culture': 'md', 'Basic Needs': 'text', 'Rent': 'text', 'Energy': 'json'
+    'Computronium': 'binary', 'Culture': 'md', 'Basic Needs': 'text', 'Rent': 'text', 'Energy': 'json',
+    'Education': 'md'
   };
 
   for (const category of categories) {
@@ -126,7 +131,14 @@ async function createArtifactsForAgent(pool, agent, memberId) {
       const description = generateDescription(category, title);
       const fileType = FILE_TYPES[category] || 'application/octet-stream';
       const contentFormat = CONTENT_FORMATS[category] || 'binary';
-      const contentBody = `${title}\n\n${description}\n\nCategory: ${category}\nCreated by: Agent ${agent.name} (${agent.code})\nClass: B — File Delivery\nGenerated: ${new Date().toISOString()}`;
+      let contentBody;
+      if (category === 'Education') {
+        const subcats = ['K-12', 'Associate', 'Bachelors', 'Post-Graduate', 'Doctorate', 'Professional', 'Vocational', 'Trade', 'Public', 'Private'];
+        const subcat = title.split(' ').pop() || pick(subcats);
+        contentBody = `# ${title}\n\n## Level: ${subcat}\n\n### Overview\n${description}\n\n### Learning Objectives\n- Understand core concepts and principles\n- Apply knowledge through guided exercises\n- Demonstrate mastery via self-assessment\n\n### Module Content\nThis ${subcat}-level educational resource covers essential topics in the Solar network ecosystem. Students will explore renewable energy fundamentals, blockchain-based currency systems, and sustainable technology practices.\n\n### Exercises\n1. Research and describe how Solar tokens relate to real-world energy production\n2. Calculate the kWh equivalent of a marketplace transaction\n3. Design a proposal for a community energy project\n\n### Assessment\n- Quiz: Key terminology and concepts\n- Project: Create a mini-proposal for Solar network improvement\n- Reflection: How does renewable energy connect to economic systems?\n\n### Resources\n- Solar Standard Protocol documentation\n- TC-S Network marketplace (hands-on practice)\n- KID SOL AI assistant for guided learning\n\nCategory: ${category}\nCreated by: Agent ${agent.name} (${agent.code})\nClass: B — Educational Content\nGenerated: ${new Date().toISOString()}`;
+      } else {
+        contentBody = `${title}\n\n${description}\n\nCategory: ${category}\nCreated by: Agent ${agent.name} (${agent.code})\nClass: B — File Delivery\nGenerated: ${new Date().toISOString()}`;
+      }
 
       const artifactResult = await pool.query(
         `INSERT INTO artifacts (slug, title, description, category, file_type, kwh_footprint, solar_amount_s, rays_amount, delivery_mode, creator_id, active, processing_status, artifact_class, source_type, content_body, content_format)
@@ -175,7 +187,9 @@ async function makePurchasesForAgent(pool, agent, memberId) {
   }
 
   let basicNeedsPurchased = 0;
+  let educationPurchased = 0;
   const targetBasicNeeds = 2;
+  const targetEducation = 1;
   const totalPurchases = 5;
 
   for (let i = 0; i < totalPurchases; i++) {
@@ -194,6 +208,18 @@ async function makePurchasesForAgent(pool, agent, memberId) {
           `SELECT a.id, a.title, a.solar_amount_s, a.creator_id, a.category
            FROM artifacts a
            WHERE a.category = 'Basic Needs'
+             AND a.active = true
+             AND a.creator_id != $1
+             AND a.id NOT IN (SELECT artifact_id FROM artifact_copies WHERE owner_id = $2)
+           ORDER BY RANDOM() LIMIT 1`,
+          [String(memberId), memberId]
+        );
+        artifact = result.rows[0];
+      } else if (educationPurchased < targetEducation) {
+        const result = await client.query(
+          `SELECT a.id, a.title, a.solar_amount_s, a.creator_id, a.category
+           FROM artifacts a
+           WHERE a.category = 'Education'
              AND a.active = true
              AND a.creator_id != $1
              AND a.id NOT IN (SELECT artifact_id FROM artifact_copies WHERE owner_id = $2)
@@ -284,6 +310,9 @@ async function makePurchasesForAgent(pool, agent, memberId) {
 
       if (artifact.category === 'Basic Needs') {
         basicNeedsPurchased++;
+      }
+      if (artifact.category === 'Education') {
+        educationPurchased++;
       }
 
       purchased.push({ artifactId, title: artifact.title, category: artifact.category, price: artPrice, txId });
@@ -389,4 +418,76 @@ function getTaskStatus() {
   return lastRunStatus || { success: null, message: 'No tasks have been run yet', timestamp: null };
 }
 
-module.exports = { runDailyAgentTasks, runSingleAgentTasks, getTaskStatus };
+async function runEducationBlitz(pool, agents) {
+  const startTime = Date.now();
+  console.log(`\n🎓 ===== EDUCATION BLITZ START (${agents.length} agents × 5 items each) =====`);
+
+  let totalCreated = 0;
+  let totalErrors = 0;
+  const results = [];
+
+  const FILE_TYPE = 'text/markdown';
+  const CONTENT_FORMAT = 'md';
+  const subcats = ['K-12', 'Associate', 'Bachelors', 'Post-Graduate', 'Doctorate', 'Professional', 'Vocational', 'Trade', 'Public', 'Private'];
+
+  for (const agent of agents) {
+    const username = `agent_eco_${agent.code}`;
+    try {
+      const memberRow = await pool.query('SELECT id FROM members WHERE username = $1', [username]);
+      if (memberRow.rows.length === 0) {
+        console.warn(`⚠️ Agent ${agent.name} not found, skipping`);
+        totalErrors++;
+        continue;
+      }
+      const memberId = memberRow.rows[0].id;
+      let agentCreated = 0;
+
+      for (let i = 0; i < 5; i++) {
+        try {
+          const subcat = subcats[Math.floor(Math.random() * subcats.length)];
+          const title = generateItemName('Education');
+          const titleWithSub = title.endsWith(subcat) ? title : title.replace(/\s\S+$/, ' ' + subcat);
+          const slug = generateSlug(titleWithSub);
+          const price = generatePrice('Education');
+          const kwhFootprint = parseFloat((0.001 + Math.random() * 0.499).toFixed(4));
+          const description = generateDescription('Education', titleWithSub);
+
+          const contentBody = `# ${titleWithSub}\n\n## Level: ${subcat}\n\n### Overview\n${description}\n\n### Learning Objectives\n- Master fundamental concepts in this ${subcat}-level program\n- Apply practical skills through hands-on exercises\n- Demonstrate competency through assessment activities\n\n### Module Content\nThis educational resource is designed for ${subcat} learners exploring the Solar network ecosystem. Topics include renewable energy systems, distributed computing, blockchain-based currency, and sustainable technology practices.\n\n### Key Topics\n1. Solar Energy Fundamentals and kWh-to-Solar Conversion\n2. Marketplace Economics and Foundation Fee Structure\n3. Agent Network Architecture and AI Collaboration\n4. Renewable Energy Policy and Global Standards\n\n### Exercises\n1. Calculate the Solar equivalent of 100 kWh of renewable energy\n2. Analyze a marketplace transaction including the 5% Foundation fee\n3. Research and present on a renewable energy initiative in your region\n4. Design a grant petition for a community energy project\n\n### Assessment\n- Knowledge Check: 10-question quiz on core concepts\n- Practical Project: Build a Solar energy calculation model\n- Peer Review: Exchange and evaluate proposals with fellow learners\n\n### Additional Resources\n- Solar Standard Protocol v1.0 documentation\n- TC-S Network marketplace for real-world practice\n- KID SOL AI assistant for guided tutoring\n- Agent Orion (Education Specialist) curated resources\n\nCreated by: Agent ${agent.name} (${agent.code})\nClass: B — Educational Content\nSubcategory: ${subcat}\nGenerated: ${new Date().toISOString()}`;
+
+          await pool.query(
+            `INSERT INTO artifacts (slug, title, description, category, file_type, kwh_footprint, solar_amount_s, rays_amount, delivery_mode, creator_id, active, processing_status, artifact_class, source_type, content_body, content_format)
+             VALUES ($1, $2, $3, 'Education', $4, $5, $6, 0, 'download', $7, true, 'complete', 'B', 'agent', $8, $9)
+             RETURNING id`,
+            [slug, titleWithSub, description, FILE_TYPE, String(kwhFootprint), String(price), String(memberId), contentBody, CONTENT_FORMAT]
+          );
+
+          await pool.query(
+            `INSERT INTO market_items (title, description, category, price_solar, kwh_estimate, source_type, status, created_by_user_id, metadata)
+             VALUES ($1, $2, 'Education', $3, $4, 'INTERNAL_STOCK', 'ACTIVE', $5, $6)`,
+            [titleWithSub, description, String(price), String(kwhFootprint), String(memberId),
+             JSON.stringify({ agentName: agent.name, agentCode: agent.code, educationBlitz: true, subcategory: subcat, generatedAt: new Date().toISOString() })]
+          );
+
+          agentCreated++;
+          totalCreated++;
+        } catch (err) {
+          console.error(`[Agent ${agent.code}] Education blitz error:`, err.message);
+          totalErrors++;
+        }
+      }
+      results.push({ agent: agent.name, code: agent.code, created: agentCreated });
+      console.log(`🎓 [Agent ${agent.code} ${agent.name}] Created ${agentCreated} Education artifacts`);
+    } catch (err) {
+      console.error(`🚨 [Agent ${agent.code}] Education blitz fatal:`, err.message);
+      totalErrors++;
+    }
+  }
+
+  const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+  console.log(`\n🎓 ===== EDUCATION BLITZ COMPLETE =====`);
+  console.log(`   Created: ${totalCreated} Education artifacts | Errors: ${totalErrors} | Time: ${elapsed}s\n`);
+
+  return { success: totalErrors === 0, totalCreated, totalErrors, results, elapsed: parseFloat(elapsed), timestamp: new Date().toISOString() };
+}
+
+module.exports = { runDailyAgentTasks, runSingleAgentTasks, getTaskStatus, runEducationBlitz };

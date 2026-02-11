@@ -144,7 +144,7 @@ const kidRoutes = require('./routes/kid');
 const agentRoutes = require('./routes/agentRoutes');
 
 // Daily Agent Task Engine
-const { runDailyAgentTasks, runSingleAgentTasks, getTaskStatus } = require('./server/agent-daily-tasks');
+const { runDailyAgentTasks, runSingleAgentTasks, getTaskStatus, runEducationBlitz } = require('./server/agent-daily-tasks');
 
 // Agent Artifact File Generator (real file creation for marketplace)
 const { generateArtifactFile, getAgentFileType } = require('./server/agentArtifactGenerator');
@@ -11298,6 +11298,25 @@ Respond ONLY with valid JSON in this exact format:
     const status = getTaskStatus();
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ success: true, status: status || { lastRun: null, message: 'No daily tasks have been run yet' } }));
+    return;
+  }
+
+  if (pathname === '/api/agents/education-blitz' && req.method === 'POST') {
+    try {
+      if (!pool) {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Database not available' }));
+        return;
+      }
+      console.log('🎓 [EDUCATION BLITZ] Manual trigger: Starting education artifact creation for all agents...');
+      const result = await runEducationBlitz(pool, NETWORK_AGENTS);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, ...result }));
+    } catch (error) {
+      console.error('Education blitz error:', error.message);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: error.message }));
+    }
     return;
   }
 
