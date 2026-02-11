@@ -6061,6 +6061,35 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Helper: Find item in JSON collections (monazite, gidget-bardot)
+  function findInJsonCollections(itemId) {
+    const collectionFiles = [
+      path.join(__dirname, 'public/models/monazite-collection.json'),
+      path.join(__dirname, 'public/models/gidget-bardot-collection.json')
+    ];
+    for (const filePath of collectionFiles) {
+      try {
+        if (fs.existsSync(filePath)) {
+          const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+          const found = (data.artifacts || []).find(a => a.id === itemId);
+          if (found) return found;
+          const foundBundle = (data.bundles || []).find(b => b.id === itemId);
+          if (foundBundle) return foundBundle;
+        }
+      } catch (e) { /* skip */ }
+    }
+    return null;
+  }
+
+  // Helper: Query market_items table fallback
+  async function findInMarketItems(itemId) {
+    if (!pool) return null;
+    try {
+      const result = await pool.query('SELECT * FROM market_items WHERE id = $1 AND status = $2', [String(itemId), 'ACTIVE']);
+      return result.rows.length > 0 ? result.rows[0] : null;
+    } catch (e) { return null; }
+  }
+
   // New Purchase API with artifactId in URL path (for session-based auth)
   if (pathname.startsWith('/api/artifacts/') && pathname.endsWith('/purchase') && pathname !== '/api/artifacts/purchase' && pathname.split('/').length === 5 && req.method === 'POST') {
     try {
@@ -6098,13 +6127,57 @@ const server = http.createServer(async (req, res) => {
          FROM artifacts WHERE id = $1`, [artifactId]
       );
       
-      if (artifactResult.rows.length === 0) {
-        res.writeHead(404, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Artifact not found' }));
-        return;
+      let artifact;
+      if (artifactResult.rows.length > 0) {
+        artifact = artifactResult.rows[0];
+      } else {
+        const marketItem = await findInMarketItems(artifactId);
+        if (marketItem) {
+          const meta = marketItem.metadata || {};
+          artifact = {
+            id: marketItem.id,
+            title: marketItem.title,
+            solar_amount_s: marketItem.price_solar,
+            delivery_url: marketItem.source_url || meta.deliveryUrl || null,
+            active: marketItem.status === 'ACTIVE',
+            master_file_url: null,
+            preview_file_url: meta.previewUrl || null,
+            trade_file_url: null,
+            file_type: 'digital',
+            category: marketItem.category,
+            trade_file_size: 0,
+            processing_status: 'complete',
+            creator_id: marketItem.created_by_user_id ? String(marketItem.created_by_user_id) : null,
+            content_body: marketItem.description,
+            content_format: 'text'
+          };
+        } else {
+          const jsonItem = findInJsonCollections(artifactId);
+          if (jsonItem) {
+            artifact = {
+              id: jsonItem.id,
+              title: jsonItem.title,
+              solar_amount_s: jsonItem.priceSolar,
+              delivery_url: jsonItem.filePath ? '/' + jsonItem.filePath.replace(/^public\//, '') : null,
+              active: jsonItem.isActive !== false,
+              master_file_url: null,
+              preview_file_url: null,
+              trade_file_url: null,
+              file_type: 'audio',
+              category: jsonItem.category || 'music',
+              trade_file_size: jsonItem.fileSize || 0,
+              processing_status: 'complete',
+              creator_id: null,
+              content_body: jsonItem.description,
+              content_format: 'text'
+            };
+          } else {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Artifact not found' }));
+            return;
+          }
+        }
       }
-      
-      const artifact = artifactResult.rows[0];
       
       if (!artifact.active) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -6832,6 +6905,18 @@ const server = http.createServer(async (req, res) => {
         }
       }
 
+      // Deduplicate: first occurrence wins (DB artifacts → JSON collections → market_items)
+      const seenIds = new Set();
+      const deduped = [];
+      for (const a of artifacts) {
+        const key = a.id;
+        if (!seenIds.has(key)) {
+          seenIds.add(key);
+          deduped.push(a);
+        }
+      }
+      artifacts = deduped;
+
       // Calculate price range
       const allCategories = [...new Set(artifacts.map(a => a.category))];
       const priceRange = artifacts.length > 0 ? {
@@ -6876,41 +6961,105 @@ const server = http.createServer(async (req, res) => {
         LEFT JOIN market_items m ON m.id = a.id::text
         WHERE a.id = $1
       `, [artifactId]);
-      if (result.rows.length === 0) {
-        res.writeHead(404, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Artifact not found' }));
+      if (result.rows.length > 0) {
+        const a = result.rows[0];
+        const meta = a.market_metadata || {};
+        const hasFile = !!(a.master_file_url || a.trade_file_url || a.delivery_url);
+        const contentPreview = a.content_body ? a.content_body.substring(0, 2000) : null;
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: true,
+          artifact: {
+            id: a.id, title: a.title, description: a.description, category: a.category,
+            fileType: a.file_type, kwhFootprint: parseFloat(a.kwh_footprint),
+            solarPrice: parseFloat(a.solar_amount_s), isBonus: a.is_bonus,
+            deliveryMode: a.delivery_mode, coverArtUrl: a.cover_art_url,
+            streamingUrl: a.streaming_url, previewType: a.preview_type,
+            searchTags: a.search_tags || [], contentFormat: a.content_format,
+            sourceType: a.source_type || (a.creator_is_agent ? 'agent' : 'human'),
+            hasFile, contentPreview,
+            artifactClass: a.artifact_class || 'A',
+            masterFileSize: a.master_file_size || 0, tradeFileSize: a.trade_file_size || 0,
+            previewFileSize: a.preview_file_size || 0,
+            fileDuration: a.file_duration, previewDuration: a.preview_duration,
+            processingStatus: a.processing_status || 'pending',
+            createdAt: a.created_at,
+            creatorName: a.creator_name || null,
+            creatorUsername: a.creator_username || null,
+            creatorIsAgent: a.creator_is_agent || false,
+            creationMethod: meta.creationMethod || null,
+            previewUrl: (a.preview_file_url || a.trade_file_url || a.delivery_url) ? `/api/artifacts/${a.id}/stream-preview` : null,
+            streamPreviewUrl: (a.preview_file_url || a.streaming_url || a.delivery_url) ? `/api/artifacts/${a.id}/stream-preview` : null
+          }
+        }));
         return;
       }
-      const a = result.rows[0];
-      const meta = a.market_metadata || {};
-      const hasFile = !!(a.master_file_url || a.trade_file_url || a.delivery_url);
-      const contentPreview = a.content_body ? a.content_body.substring(0, 2000) : null;
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({
-        success: true,
-        artifact: {
-          id: a.id, title: a.title, description: a.description, category: a.category,
-          fileType: a.file_type, kwhFootprint: parseFloat(a.kwh_footprint),
-          solarPrice: parseFloat(a.solar_amount_s), isBonus: a.is_bonus,
-          deliveryMode: a.delivery_mode, coverArtUrl: a.cover_art_url,
-          streamingUrl: a.streaming_url, previewType: a.preview_type,
-          searchTags: a.search_tags || [], contentFormat: a.content_format,
-          sourceType: a.source_type || (a.creator_is_agent ? 'agent' : 'human'),
-          hasFile, contentPreview,
-          artifactClass: a.artifact_class || 'A',
-          masterFileSize: a.master_file_size || 0, tradeFileSize: a.trade_file_size || 0,
-          previewFileSize: a.preview_file_size || 0,
-          fileDuration: a.file_duration, previewDuration: a.preview_duration,
-          processingStatus: a.processing_status || 'pending',
-          createdAt: a.created_at,
-          creatorName: a.creator_name || null,
-          creatorUsername: a.creator_username || null,
-          creatorIsAgent: a.creator_is_agent || false,
-          creationMethod: meta.creationMethod || null,
-          previewUrl: (a.preview_file_url || a.trade_file_url || a.delivery_url) ? `/api/artifacts/${a.id}/stream-preview` : null,
-          streamPreviewUrl: (a.preview_file_url || a.streaming_url || a.delivery_url) ? `/api/artifacts/${a.id}/stream-preview` : null
-        }
-      }));
+
+      const marketItem = await findInMarketItems(artifactId);
+      if (marketItem) {
+        const meta = marketItem.metadata || {};
+        const previewAvailable = !!(marketItem.source_url || meta.previewUrl);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: true,
+          artifact: {
+            id: marketItem.id, title: marketItem.title, description: marketItem.description,
+            category: marketItem.category, fileType: 'digital',
+            kwhFootprint: parseFloat(marketItem.kwh_estimate || 0),
+            solarPrice: parseFloat(marketItem.price_solar || 0), isBonus: false,
+            deliveryMode: 'digital', coverArtUrl: marketItem.image_url || null,
+            streamingUrl: meta.streamingUrl || null, previewType: meta.previewType || null,
+            searchTags: marketItem.tags || [], contentFormat: meta.contentFormat || 'digital',
+            sourceType: marketItem.source_type || 'market',
+            hasFile: previewAvailable, contentPreview: marketItem.description,
+            artifactClass: 'B',
+            masterFileSize: 0, tradeFileSize: 0, previewFileSize: 0,
+            fileDuration: meta.duration || null, previewDuration: meta.previewDuration || null,
+            processingStatus: 'complete',
+            createdAt: marketItem.created_at || null,
+            creatorName: marketItem.vendor_name || null,
+            creatorUsername: null, creatorIsAgent: false, creationMethod: null,
+            previewUrl: previewAvailable ? `/api/artifacts/${marketItem.id}/stream-preview` : null,
+            streamPreviewUrl: previewAvailable ? `/api/artifacts/${marketItem.id}/stream-preview` : null
+          }
+        }));
+        return;
+      }
+
+      const jsonItem = findInJsonCollections(artifactId);
+      if (jsonItem) {
+        const fileUrl = jsonItem.filePath ? '/' + jsonItem.filePath.replace(/^public\//, '') : null;
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: true,
+          artifact: {
+            id: jsonItem.id, title: jsonItem.title, description: jsonItem.description,
+            category: jsonItem.category || 'music', fileType: 'audio',
+            kwhFootprint: parseFloat(jsonItem.energyKwh || 0),
+            solarPrice: parseFloat(jsonItem.priceSolar || 0), isBonus: false,
+            deliveryMode: 'stream', coverArtUrl: null,
+            streamingUrl: fileUrl, previewType: 'audio',
+            searchTags: jsonItem.tags || [], contentFormat: 'audio',
+            sourceType: 'collection',
+            hasFile: !!fileUrl, contentPreview: jsonItem.description,
+            artifactClass: 'B',
+            masterFileSize: jsonItem.fileSize || 0, tradeFileSize: 0, previewFileSize: 0,
+            fileDuration: jsonItem.durationSec || null, previewDuration: jsonItem.durationSec || null,
+            processingStatus: 'complete',
+            createdAt: jsonItem.createdAt || null,
+            creatorName: jsonItem.artist || null,
+            creatorUsername: null, creatorIsAgent: false, creationMethod: null,
+            previewUrl: fileUrl ? `/api/artifacts/${jsonItem.id}/stream-preview` : null,
+            streamPreviewUrl: fileUrl ? `/api/artifacts/${jsonItem.id}/stream-preview` : null,
+            artist: jsonItem.artist || null, album: jsonItem.album || null, genre: jsonItem.genre || null,
+            collection: jsonItem.collection || null, trackNumber: jsonItem.trackNumber || null
+          }
+        }));
+        return;
+      }
+
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Artifact not found' }));
     } catch (error) {
       console.error('Artifact detail error:', error);
       res.writeHead(500, { 'Content-Type': 'application/json' });
@@ -6930,13 +7079,28 @@ const server = http.createServer(async (req, res) => {
         'SELECT preview_file_url, trade_file_url, delivery_url, file_type FROM artifacts WHERE id = $1',
         [artifactId]
       );
-      if (artResult.rows.length === 0) {
-        res.writeHead(404); res.end('Not found'); return;
+      let previewUrl = null;
+      let fileType = null;
+      if (artResult.rows.length > 0) {
+        const art = artResult.rows[0];
+        previewUrl = art.preview_file_url || art.trade_file_url || art.delivery_url;
+        fileType = art.file_type;
+      } else {
+        const marketItem = await findInMarketItems(artifactId);
+        if (marketItem) {
+          const meta = marketItem.metadata || {};
+          previewUrl = meta.previewUrl || meta.streamingUrl || marketItem.source_url || null;
+          fileType = 'digital';
+        } else {
+          const jsonItem = findInJsonCollections(artifactId);
+          if (jsonItem && jsonItem.filePath) {
+            previewUrl = '/' + jsonItem.filePath.replace(/^public\//, '');
+            fileType = 'audio';
+          }
+        }
       }
-      const art = artResult.rows[0];
-      const previewUrl = art.preview_file_url || art.trade_file_url || art.delivery_url;
       if (!previewUrl) {
-        res.writeHead(404); res.end('No preview file'); return;
+        res.writeHead(404); res.end('Not found'); return;
       }
       if (!previewUrl.startsWith('cloud://')) {
         if (previewUrl.startsWith('http://') || previewUrl.startsWith('https://')) {
@@ -6976,7 +7140,7 @@ const server = http.createServer(async (req, res) => {
       const buffer = await cloudStorage.downloadFile(cloudKey);
       const ext = path.extname(cloudKey).toLowerCase();
       const mimeTypes = { '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.ogg': 'audio/ogg', '.mp4': 'video/mp4', '.webm': 'video/webm', '.svg': 'image/svg+xml', '.json': 'application/json', '.js': 'application/javascript', '.md': 'text/markdown', '.csv': 'text/csv' };
-      const contentType = mimeTypes[ext] || art.file_type || 'application/octet-stream';
+      const contentType = mimeTypes[ext] || fileType || 'application/octet-stream';
       
       const range = req.headers.range;
       if (range) {
@@ -8708,6 +8872,8 @@ const server = http.createServer(async (req, res) => {
       const qOriginal = qRaw.toLowerCase().trim();
 
       // Search market_items by search_text, title, or category (normalized + original query)
+      // Use higher internal limit to capture all matches before deduplication
+      const internalLimit = Math.max(limit * 2, 50);
       const result = await pool.query(
         `SELECT * FROM market_items 
          WHERE status = 'ACTIVE' 
@@ -8715,7 +8881,7 @@ const server = http.createServer(async (req, res) => {
               OR search_text ILIKE $3 OR title ILIKE $3 OR category ILIKE $3)
          ORDER BY created_at DESC 
          LIMIT $2`,
-        ['%' + q + '%', limit, '%' + qOriginal + '%']
+        ['%' + q + '%', internalLimit, '%' + qOriginal + '%']
       );
 
       const items = result.rows.map(row => ({
@@ -8746,7 +8912,7 @@ const server = http.createServer(async (req, res) => {
                 OR search_tags::text ILIKE $1 OR search_tags::text ILIKE $3)
            ORDER BY created_at DESC 
            LIMIT $2`,
-          ['%' + q + '%', limit, '%' + qOriginal + '%']
+          ['%' + q + '%', internalLimit, '%' + qOriginal + '%']
         );
         artifactItems = artifactResult.rows.map(row => ({
           id: row.id,
@@ -8767,7 +8933,10 @@ const server = http.createServer(async (req, res) => {
         console.error('Artifact search error:', artErr.message);
       }
 
-      const allItems = [...items, ...artifactItems];
+      // Deduplicate: market_items take priority, add unique artifacts only
+      const seenIds = new Set(items.map(i => i.id));
+      const uniqueArtifacts = artifactItems.filter(a => !seenIds.has(a.id));
+      const allItems = [...items, ...uniqueArtifacts];
 
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
