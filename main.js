@@ -8877,8 +8877,10 @@ const server = http.createServer(async (req, res) => {
       const result = await pool.query(
         `SELECT * FROM market_items 
          WHERE status = 'ACTIVE' 
-         AND (search_text ILIKE $1 OR title ILIKE $1 OR category ILIKE $1
-              OR search_text ILIKE $3 OR title ILIKE $3 OR category ILIKE $3)
+         AND (search_text ILIKE $1 OR title ILIKE $1 OR category ILIKE $1 
+              OR vendor_name ILIKE $1 OR description ILIKE $1 OR tags::text ILIKE $1
+              OR search_text ILIKE $3 OR title ILIKE $3 OR category ILIKE $3
+              OR vendor_name ILIKE $3 OR description ILIKE $3 OR tags::text ILIKE $3)
          ORDER BY created_at DESC 
          LIMIT $2`,
         ['%' + q + '%', internalLimit, '%' + qOriginal + '%']
@@ -8933,10 +8935,53 @@ const server = http.createServer(async (req, res) => {
         console.error('Artifact search error:', artErr.message);
       }
 
-      // Deduplicate: market_items take priority, add unique artifacts only
+      // Search JSON music collections (monazite + gidget bardot)
+      let collectionItems = [];
+      try {
+        const collectionFiles = [
+          path.join(__dirname, 'public/models/monazite-collection.json'),
+          path.join(__dirname, 'public/models/gidget-bardot-collection.json')
+        ];
+        for (const cPath of collectionFiles) {
+          if (fs.existsSync(cPath)) {
+            const cData = JSON.parse(fs.readFileSync(cPath, 'utf8'));
+            const matched = (cData.artifacts || []).filter(a => {
+              if (!a.isActive) return false;
+              const searchable = [a.title, a.artist, a.album, a.genre, a.category, a.description, ...(a.tags || [])].join(' ').toLowerCase();
+              return searchable.includes(q) || searchable.includes(qOriginal);
+            });
+            for (const a of matched) {
+              collectionItems.push({
+                id: a.id,
+                title: a.title,
+                description: a.description || '',
+                tags: a.tags || [],
+                category: a.category || 'music',
+                priceSolar: String(a.priceSolar),
+                kwhEstimate: String(a.energyKwh),
+                sourceType: 'COLLECTION',
+                imageUrl: '',
+                deliveryUrl: a.filePath ? '/' + a.filePath.replace(/^public\//, '') : '',
+                artifactClass: 'B',
+                fileType: 'audio/mpeg',
+                artist: a.artist || null,
+                album: a.album || null,
+                collection: a.collection || null,
+                createdAt: a.createdAt
+              });
+            }
+          }
+        }
+      } catch (collErr) {
+        console.error('Collection search error:', collErr.message);
+      }
+
+      // Deduplicate: market_items take priority, then artifacts, then collections
       const seenIds = new Set(items.map(i => i.id));
       const uniqueArtifacts = artifactItems.filter(a => !seenIds.has(a.id));
-      const allItems = [...items, ...uniqueArtifacts];
+      uniqueArtifacts.forEach(a => seenIds.add(a.id));
+      const uniqueCollection = collectionItems.filter(c => !seenIds.has(c.id));
+      const allItems = [...items, ...uniqueArtifacts, ...uniqueCollection];
 
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
