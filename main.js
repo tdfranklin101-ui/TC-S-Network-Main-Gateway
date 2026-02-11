@@ -146,6 +146,8 @@ const agentRoutes = require('./routes/agentRoutes');
 // Daily Agent Task Engine
 const { runDailyAgentTasks, runSingleAgentTasks, getTaskStatus, runEducationBlitz } = require('./server/agent-daily-tasks');
 
+const { scheduleDailyGreeting } = require('./server/generate-greeting');
+
 // Agent Artifact File Generator (real file creation for marketplace)
 const { generateArtifactFile, getAgentFileType } = require('./server/agentArtifactGenerator');
 
@@ -15573,6 +15575,8 @@ setImmediate(() => {
     if (pool) {
       seedMediaArtifacts(pool).catch(err => console.warn('⚠️ Media artifact seed failed:', err.message));
     }
+
+    scheduleDailyGreeting();
 
     console.log(`✅ All deferred initialization tasks started`);
   }, 5000); // Wait 5 seconds after server starts to begin heavy tasks

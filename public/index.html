@@ -701,14 +701,9 @@
       }
 
       var videoUsable = false;
-      fetch('/greeting.mp4?_=' + Date.now(), { method: 'HEAD' }).then(function(resp) {
-        if (!resp.ok) { showTextFallback(); return; }
-        var lastMod = resp.headers.get('last-modified');
-        if (!lastMod) { showTextFallback(); return; }
-        var videoDate = new Date(lastMod).toISOString().slice(0, 10);
-        if (videoDate !== today) { showTextFallback(); return; }
-        videoUsable = true;
-      }).catch(function() { showTextFallback(); });
+      video.src = '/greeting.mp4?d=' + today;
+      video.load();
+      videoUsable = true;
 
       video.addEventListener('error', function() {
         showTextFallback();
