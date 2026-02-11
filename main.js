@@ -3049,6 +3049,7 @@ console.log('🎯 AI automatic promotion system active');
 const server = http.createServer(async (req, res) => {
   const pathname = new URL(req.url, `http://${req.headers.host}`).pathname;
   
+  try {
   // UIM Headers + Request ID + Logging
   addUIMHeaders(req, res);
   
@@ -8045,6 +8046,16 @@ const server = http.createServer(async (req, res) => {
     }
   }
   
+  if (pathname === '/homepage-full.html' || pathname === '/homepage-full') {
+    const filePath = path.join(__dirname, 'public', 'homepage-full.html');
+    if (fs.existsSync(filePath)) {
+      const content = fs.readFileSync(filePath, 'utf8');
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(content);
+      return;
+    }
+  }
+
   if (pathname === '/marketplace.html' || pathname === '/marketplace') {
     console.log('🔍 MARKETPLACE ROUTE HIT:', pathname);
     const filePath = path.join(__dirname, 'public', 'marketplace.html');
@@ -14635,6 +14646,17 @@ Always respond with valid JSON only. Be specific and detailed in observations.`
       res.writeHead(404, { 'Content-Type': 'text/plain' });
       res.end('Not found');
       console.log(`❌ File not found: ${pathname}`);
+    }
+  }
+  } catch (topLevelError) {
+    console.error(`🚨 Unhandled server error for ${req.url}:`, topLevelError);
+    try {
+      if (!res.headersSent) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Internal server error', message: topLevelError.message, path: req.url }));
+      }
+    } catch (e) {
+      console.error('Failed to send error response:', e.message);
     }
   }
 });

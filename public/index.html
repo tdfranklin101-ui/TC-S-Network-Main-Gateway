@@ -642,25 +642,45 @@
       <video id="solarGreetingVideo" autoplay playsinline webkit-playsinline>
         <source src="/greeting.mp4" type="video/mp4">
       </video>
+      <div id="solarGreetingTextFallback" style="display:none;width:100%;max-width:700px;padding:3rem 2rem;border-radius:12px;background:linear-gradient(135deg,#0a0a0a 0%,#111827 100%);border:2px solid #FF8C00;box-shadow:0 10px 40px rgba(255,165,0,0.4);text-align:center;font-family:'Inter',sans-serif;">
+        <div style="font-size:3rem;margin-bottom:1rem;">☀️</div>
+        <h2 style="color:#FFD700;font-size:1.6rem;font-weight:800;margin-bottom:0.75rem;">Good morning, have a Solar Day!</h2>
+        <p id="solarGreetingDate" style="color:#00f5d4;font-size:1.1rem;margin-bottom:1rem;"></p>
+        <p style="color:rgba(255,255,255,0.85);font-size:1rem;line-height:1.6;">Have a clear day, life is what <span style="color:#FFD700;font-weight:700;">YOU</span> make it!</p>
+        <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid rgba(255,215,0,0.3);">
+          <span style="color:rgba(255,255,255,0.5);font-size:0.8rem;">TC-S Network Foundation</span>
+        </div>
+      </div>
     </div>
   </div>
   <button id="replaySolarGreeting" onclick="replaySolarGreeting()">☀️ Solar Greeting</button>
   
   <script>
-    // Solar Greeting Logic
     (function() {
-      const overlay = document.getElementById('solarGreetingOverlay');
-      const video = document.getElementById('solarGreetingVideo');
-      const replayBtn = document.getElementById('replaySolarGreeting');
-      const GREETING_KEY = 'solarGreetingShown';
-      const today = new Date().toISOString().slice(0, 10);
-      
-      if (localStorage.getItem(GREETING_KEY) === today) {
-        overlay.classList.add('hidden');
-        replayBtn.style.display = 'block';
-        return;
+      var overlay = document.getElementById('solarGreetingOverlay');
+      var video = document.getElementById('solarGreetingVideo');
+      var replayBtn = document.getElementById('replaySolarGreeting');
+      var textFallback = document.getElementById('solarGreetingTextFallback');
+      var GREETING_KEY = 'solarGreetingShown';
+      var today = new Date().toISOString().slice(0, 10);
+      var days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+      var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+      function getGreetingDateStr() {
+        var now = new Date();
+        var utcDay = days[now.getUTCDay()];
+        var utcDate = now.getUTCDate();
+        var utcMonth = months[now.getUTCMonth()];
+        var utcYear = now.getUTCFullYear();
+        return 'Today is ' + utcDay + ', ' + utcMonth + ' ' + utcDate + ', ' + utcYear + ' UTC';
       }
-      
+
+      function showTextFallback() {
+        video.style.display = 'none';
+        textFallback.style.display = 'block';
+        document.getElementById('solarGreetingDate').textContent = getGreetingDateStr();
+      }
+
       function autoClose() {
         localStorage.setItem(GREETING_KEY, today);
         overlay.style.transition = 'opacity 0.6s ease-out';
@@ -673,13 +693,29 @@
         }, 600);
         try { video.pause(); } catch(e) {}
       }
-      
+
+      if (localStorage.getItem(GREETING_KEY) === today) {
+        overlay.classList.add('hidden');
+        replayBtn.style.display = 'block';
+        return;
+      }
+
+      var videoUsable = false;
+      fetch('/greeting.mp4', { method: 'HEAD' }).then(function(resp) {
+        if (!resp.ok) { showTextFallback(); return; }
+        var lastMod = resp.headers.get('last-modified');
+        if (!lastMod) { showTextFallback(); return; }
+        var age = Date.now() - new Date(lastMod).getTime();
+        if (age > 24 * 60 * 60 * 1000) { showTextFallback(); return; }
+        videoUsable = true;
+      }).catch(function() { showTextFallback(); });
+
+      video.addEventListener('error', function() {
+        showTextFallback();
+      });
+
       video.addEventListener('ended', function() {
         setTimeout(autoClose, 800);
-      });
-      
-      video.addEventListener('error', function() {
-        autoClose();
       });
 
       overlay.addEventListener('click', function(e) {
@@ -691,7 +727,7 @@
     })();
     
     function closeSolarGreeting() {
-      const today = new Date().toISOString().slice(0, 10);
+      var today = new Date().toISOString().slice(0, 10);
       localStorage.setItem('solarGreetingShown', today);
       var overlay = document.getElementById('solarGreetingOverlay');
       overlay.style.transition = 'opacity 0.6s ease-out';
@@ -707,10 +743,18 @@
     function replaySolarGreeting() {
       var overlay = document.getElementById('solarGreetingOverlay');
       var video = document.getElementById('solarGreetingVideo');
+      var textFallback = document.getElementById('solarGreetingTextFallback');
       overlay.classList.remove('hidden');
       overlay.style.opacity = '1';
-      video.currentTime = 0;
-      video.play();
+      if (textFallback.style.display === 'block') {
+        var days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+        var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+        var now = new Date();
+        document.getElementById('solarGreetingDate').textContent = 'Today is ' + days[now.getUTCDay()] + ', ' + months[now.getUTCMonth()] + ' ' + now.getUTCDate() + ', ' + now.getUTCFullYear() + ' UTC';
+      } else {
+        video.currentTime = 0;
+        video.play();
+      }
     }
   </script>
   
