@@ -100,6 +100,21 @@ async function createArtifactsForAgent(pool, agent, memberId) {
     categories.push(pick(remaining));
   }
 
+  const FILE_TYPES = {
+    'Music': 'audio/mpeg', 'Video': 'video/mp4', 'Art': 'image/png', 'Photo': 'image/jpeg',
+    'Writing': 'text/markdown', 'Docs': 'application/pdf', 'Software': 'application/javascript',
+    'AI Tools': 'application/json', 'AI Create': 'application/json', 'Games': 'application/zip',
+    'Utilities': 'application/zip', 'Computronium': 'application/octet-stream',
+    'Culture': 'text/markdown', 'Basic Needs': 'text/plain', 'Rent': 'text/plain', 'Energy': 'application/json'
+  };
+
+  const CONTENT_FORMATS = {
+    'Music': 'audio', 'Video': 'video', 'Art': 'image', 'Photo': 'image',
+    'Writing': 'md', 'Docs': 'pdf', 'Software': 'js', 'AI Tools': 'json',
+    'AI Create': 'json', 'Games': 'binary', 'Utilities': 'binary',
+    'Computronium': 'binary', 'Culture': 'md', 'Basic Needs': 'text', 'Rent': 'text', 'Energy': 'json'
+  };
+
   for (const category of categories) {
     try {
       const title = generateItemName(category);
@@ -107,27 +122,25 @@ async function createArtifactsForAgent(pool, agent, memberId) {
       const price = generatePrice(category);
       const kwhFootprint = parseFloat((0.001 + Math.random() * 0.499).toFixed(4));
       const description = generateDescription(category, title);
+      const fileType = FILE_TYPES[category] || 'application/octet-stream';
+      const contentFormat = CONTENT_FORMATS[category] || 'binary';
+      const contentBody = `${title}\n\n${description}\n\nCategory: ${category}\nCreated by: Agent ${agent.name} (${agent.code})\nClass: B — File Delivery\nGenerated: ${new Date().toISOString()}`;
 
       const artifactResult = await pool.query(
-        `INSERT INTO artifacts (slug, title, description, category, file_type, kwh_footprint, solar_amount_s, rays_amount, delivery_mode, creator_id, active, processing_status, artifact_class, source_type)
-         VALUES ($1, $2, $3, $4, 'digital-artifact', $5, $6, 0, 'download', $7, true, 'complete', 'A', 'agent')
+        `INSERT INTO artifacts (slug, title, description, category, file_type, kwh_footprint, solar_amount_s, rays_amount, delivery_mode, creator_id, active, processing_status, artifact_class, source_type, content_body, content_format)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, 0, 'download', $8, true, 'complete', 'B', 'agent', $9, $10)
          RETURNING id`,
-        [slug, title, description, category, String(kwhFootprint), String(price), String(memberId)]
+        [slug, title, description, category, fileType, String(kwhFootprint), String(price), String(memberId), contentBody, contentFormat]
       );
 
       const artifactId = artifactResult.rows[0].id;
 
       // Auto-add Music/Video agent content to Music Now for free streaming
       if (category === 'Music' || category === 'Video') {
-        const mediaFileType = category === 'Music' ? 'audio/mpeg' : 'video/mp4';
         const streamSlug = slug.replace(/[^a-z0-9-]/g, '');
         await pool.query(
-          `UPDATE artifacts SET 
-            streaming_url = $1, 
-            artifact_class = 'B', 
-            file_type = $2
-           WHERE id = $3`,
-          [`/music-now.html#agent-${streamSlug}`, mediaFileType, artifactId]
+          `UPDATE artifacts SET streaming_url = $1 WHERE id = $2`,
+          [`/music-now.html#agent-${streamSlug}`, artifactId]
         );
         console.log(`🎵 [Agent ${agent.code}] Auto-added ${category} "${title}" to Music Now streaming`);
       }
