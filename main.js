@@ -8686,16 +8686,19 @@ const server = http.createServer(async (req, res) => {
           id: row.id,
           title: row.title,
           description: row.description,
-          tags: row.tags || [],
+          tags: row.search_tags || [],
           category: row.category,
-          priceSolar: row.price_solar ? String(row.price_solar) : '0.001',
-          kwhEstimate: row.kwh_estimate ? String(row.kwh_estimate) : '0',
+          priceSolar: row.solar_amount_s ? String(row.solar_amount_s) : '0.001',
+          kwhEstimate: row.kwh_footprint ? String(row.kwh_footprint) : '0',
           sourceType: 'ARTIFACT',
-          imageUrl: row.preview_url || row.file_url,
+          imageUrl: row.cover_art_url || row.preview_file_url || '',
+          deliveryUrl: row.delivery_url || '',
+          artifactClass: row.artifact_class || 'A',
+          fileType: row.file_type || '',
           createdAt: row.created_at
         }));
       } catch (artErr) {
-        // Artifacts table might not exist, that's okay
+        console.error('Artifact search error:', artErr.message);
       }
 
       const allItems = [...items, ...artifactItems];
