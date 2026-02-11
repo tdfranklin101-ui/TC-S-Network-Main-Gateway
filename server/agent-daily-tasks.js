@@ -16,10 +16,11 @@ const ITEM_PARTS = {
   'Software':{adj:['Smart','Adaptive','Real-Time','Predictive','Autonomous','Distributed','Neural','Edge','Quantum','Zero-Loss'],noun:['Optimizer','Simulator','Balancer','Analyzer','Dashboard','Controller','Monitor','Scheduler','Forecaster','Compiler'],suffix:['Pro','v3','Enterprise','Lite','Cloud','CLI','API','SDK','Toolkit','Suite']},
   'Docs':{adj:['Complete','Illustrated','Interactive','Certified','Hands-On','Immersive','Self-Paced','Expert','Step-by-Step','Annotated'],noun:['Course','Masterclass','Workshop','Guide','Bootcamp','Blueprint','Playbook','Deep Dive','Lab Manual','Seminar Notes'],suffix:['2026','Cohort','Intensive','w/ Sim','& Cert','w/ Projects','Bundle','Starter','Pro Track','Unlimited']},
   'Games':{adj:['Solar','Quantum','Neon','Retro','Procedural','Cooperative','Infinite','Pixel','Voxel','Emergent'],noun:['Puzzle','Strategy Game','Sim','RPG Module','Card Deck','Board Game','Arcade','Sandbox','World Map','Quest Pack'],suffix:['Alpha','Beta','Full','Deluxe','Expansion','Season Pass','Community','Open Source','Remastered','Definitive']},
-  'Utilities':{adj:['Portable','Lightweight','Cross-Platform','Secure','Encrypted','Offline','Automated','Batch','CLI','Open-Source'],noun:['File Converter','Backup Tool','Password Vault','Network Scanner','System Monitor','Batch Processor','Data Cleaner','Log Analyzer','Config Manager','Deploy Script'],suffix:['Pro','Lite','v2','Free','Standard','Plus','Enterprise','Portable','CLI','GUI']}
+  'Utilities':{adj:['Portable','Lightweight','Cross-Platform','Secure','Encrypted','Offline','Automated','Batch','CLI','Open-Source'],noun:['File Converter','Backup Tool','Password Vault','Network Scanner','System Monitor','Batch Processor','Data Cleaner','Log Analyzer','Config Manager','Deploy Script'],suffix:['Pro','Lite','v2','Free','Standard','Plus','Enterprise','Portable','CLI','GUI']},
+  'Education':{adj:['Interactive','Self-Paced','Certified','Immersive','Hands-On','Adaptive','Guided','Comprehensive','Introductory','Advanced'],noun:['Tutorial Prompt','Course Module','Training Kit','Study Guide','Lesson Plan','Lab Exercise','Certification Prep','Curriculum Pack','Workshop Series','Knowledge Base'],suffix:['K-12','Associate','Bachelors','Post-Grad','Doctorate','Professional','Vocational','Trade','Public','Private']}
 };
 
-const MARKET_DEMAND = ['Basic Needs','Energy','Computronium','Software','AI Tools','Music','Art','Rent','Culture','Video','Photo','Writing','AI Create','Docs','Games','Utilities'];
+const MARKET_DEMAND = ['Basic Needs','Energy','Computronium','Software','AI Tools','Music','Art','Rent','Culture','Video','Photo','Writing','AI Create','Docs','Education','Games','Utilities'];
 
 const ALL_CATEGORIES = Object.keys(ITEM_PARTS);
 
@@ -75,6 +76,7 @@ function generateDescription(category, title) {
     'AI Create': 'Creative AI system enabling new forms of artistic expression and generation.',
     'Software': 'Software solution optimized for the distributed Solar computing infrastructure.',
     'Docs': 'Educational resource for learning and mastering Solar network technologies.',
+    'Education': 'AI-powered educational resource spanning K-12 through doctoral studies, vocational training, and professional development on the Solar network.',
     'Games': 'Interactive experience built on cooperative and sustainable game design principles.',
     'Utilities': 'Practical utility tool for everyday tasks in the Solar ecosystem.'
   };

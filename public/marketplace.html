@@ -2852,6 +2852,18 @@
                     <option value="code-tools">💻 Code Tools</option>
                     <option value="data-science">📊 Data Science</option>
                 </optgroup>
+                <optgroup label="🎓 Education">
+                    <option value="education">📚 All Education</option>
+                    <option value="education-k12">🏫 K-12</option>
+                    <option value="education-associate">📖 Associate Degree</option>
+                    <option value="education-bachelors">🎓 Bachelor's Degree</option>
+                    <option value="education-postgrad">📜 Post-Graduate</option>
+                    <option value="education-doctorate">🔬 Doctorate</option>
+                    <option value="education-professional">💼 Professional</option>
+                    <option value="education-vocational">🔧 Vocational & Trade</option>
+                    <option value="education-public">🏛️ Public</option>
+                    <option value="education-private">🔒 Private</option>
+                </optgroup>
                 <optgroup label="📚 Other">
                     <option value="document">📄 Documents</option>
                     <option value="productivity">📈 Productivity</option>
@@ -4910,6 +4922,25 @@
 
             filteredArtifacts = allArtifacts.filter(artifact => {
                 let passesCategory = !categoryFilter || artifact.category === categoryFilter;
+                if (categoryFilter && categoryFilter.startsWith('education-') && !passesCategory) {
+                    const subMap = {
+                        'education-k12': 'k-12',
+                        'education-associate': 'associate',
+                        'education-bachelors': 'bachelor',
+                        'education-postgrad': 'post-grad',
+                        'education-doctorate': 'doctorate',
+                        'education-professional': 'professional',
+                        'education-vocational': 'vocational',
+                        'education-public': 'public',
+                        'education-private': 'private'
+                    };
+                    const sub = subMap[categoryFilter];
+                    if (sub && (artifact.category === 'Education' || artifact.category === 'education') && artifact.title && artifact.title.toLowerCase().includes(sub)) {
+                        passesCategory = true;
+                    }
+                } else if (categoryFilter === 'education' && !passesCategory) {
+                    passesCategory = artifact.category === 'Education' || artifact.category === 'education';
+                }
                 let passesPrice = true;
 
                 if (priceFilter === 'low') {

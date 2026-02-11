@@ -66,7 +66,7 @@ Your 20 Specialist Agents:
 - Alpha (Computronium), Bravo (Culture), Charlie (Basic Needs), Delta (Rent)
 - Echo (Energy), Foxtrot (Music), Golf (Video), Hotel (Art)
 - India (Photo), Juliet (Writing), Kilo (AI Tools), Lima (AI Create)
-- Nova (Software), Orion (Docs), Pulse (Games), Quasar (Utilities)
+- Nova (Software), Orion (Education), Pulse (Games), Quasar (Utilities)
 - Radiant (Computronium #2), Solaris (Energy #2), Tesla (AI Tools #2), Zenith (Culture #2)
 + Kid Solar (Computronium Polymath — for building and technical design)
 
@@ -81,7 +81,7 @@ Response style:
 Context:
 - SOLAR tokens are the currency (1 Solar = 4,913 kWh of solar energy, 1 Solar = 1,000,000 Rays)
 - Members earn 1 Solar daily since Genesis Date (April 7, 2025) — universal basic income from the sun
-- The marketplace has 16 TC-S categories: Computronium, Culture, Basic Needs, Rent, Energy, Music, Video, Art, Photo, Writing, AI Tools, AI Create, Software, Docs, Games, Utilities
+- The marketplace has 17 TC-S categories: Computronium, Culture, Basic Needs, Rent, Energy, Music, Video, Art, Photo, Writing, AI Tools, AI Create, Software, Education, Games, Utilities, Docs
 - Every transaction charges a 5% Foundation fee — buyer pays full price, seller gets 95%, Foundation gets 5%
 - The TC-S Foundation Reserve (S100,000) funds grant petitions across 8 human-needs categories: shelter, energy, food, medicine, education, infrastructure, environment, technology
 - Agent balances are publicly visible to demonstrate the system working; human balances are private
@@ -155,7 +155,7 @@ Context:
               category: {
                 type: "string",
                 description: "Filter by category: 'music', 'video', 'art', 'text', or 'all'",
-                enum: ["music", "video", "art", "text", "all"]
+                enum: ["music", "video", "art", "text", "education", "all"]
               },
               maxPrice: {
                 type: "number",
@@ -185,7 +185,7 @@ Context:
               category: {
                 type: "string",
                 description: "Optional category filter",
-                enum: ["music", "video", "art", "text", "computronium", "culture", "basic needs", "rent", "energy", "photo", "writing", "ai tools", "ai create", "software", "docs", "games", "utilities", "all"]
+                enum: ["music", "video", "art", "text", "computronium", "culture", "basic needs", "rent", "energy", "photo", "writing", "ai tools", "ai create", "software", "education", "docs", "games", "utilities", "all"]
               },
               limit: {
                 type: "integer",
@@ -372,7 +372,7 @@ Context:
               category: {
                 type: "string",
                 description: "The marketplace category to get recommendations for",
-                enum: ["Computronium", "Culture", "Basic Needs", "Rent", "Energy", "Music", "Video", "Art", "Photo", "Writing", "AI Tools", "AI Create", "Software", "Docs", "Games", "Utilities"]
+                enum: ["Computronium", "Culture", "Basic Needs", "Rent", "Energy", "Music", "Video", "Art", "Photo", "Writing", "AI Tools", "AI Create", "Software", "Education", "Docs", "Games", "Utilities"]
               },
               maxPrice: {
                 type: "number",
@@ -1075,8 +1075,8 @@ User said: "${text}"`;
       if (!title || title.trim().length === 0) {
         return { success: false, error: 'Title is required' };
       }
-      if (!category || !['music', 'video', 'art', 'document'].includes(category)) {
-        return { success: false, error: 'Category must be: music, video, art, or document' };
+      if (!category || !['music', 'video', 'art', 'document', 'education'].includes(category)) {
+        return { success: false, error: 'Category must be: music, video, art, document, or education' };
       }
       if (!solarPrice || solarPrice <= 0) {
         return { success: false, error: 'Price must be greater than 0' };
@@ -1216,8 +1216,8 @@ User said: "${text}"`;
       if (!title || title.trim().length === 0) {
         return { success: false, error: 'Title is required' };
       }
-      if (!category || !['music', 'video', 'art', 'document'].includes(category)) {
-        return { success: false, error: 'Category must be: music, video, art, or document' };
+      if (!category || !['music', 'video', 'art', 'document', 'education'].includes(category)) {
+        return { success: false, error: 'Category must be: music, video, art, document, or education' };
       }
 
       // Get member info
@@ -1507,7 +1507,7 @@ User said: "${text}"`;
       'AI Tools': { code: '11', name: 'Kilo', icon: '⚖️', backup: '19' },
       'AI Create': { code: '12', name: 'Lima', icon: '🌿' },
       'Software': { code: '13', name: 'Nova', icon: '💫' },
-      'Docs': { code: '14', name: 'Orion', icon: '🌌' },
+      'Education': { code: '14', name: 'Orion', icon: '🎓' },
       'Games': { code: '15', name: 'Pulse', icon: '💓' },
       'Utilities': { code: '16', name: 'Quasar', icon: '✨' }
     };
