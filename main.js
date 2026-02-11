@@ -14934,13 +14934,32 @@ setImmediate(() => {
       console.log('📌 Use manual trigger: POST /api/agents/daily-tasks/trigger');
     }
 
-    // Initialize Daily Solar Greeting Video (cron only, no startup generation)
-    // Regenerates at UTC midnight to always serve fresh date
+    // Initialize Daily Solar Greeting Video
+    // Regenerates at UTC midnight AND on startup if today's greeting is missing/stale
     // Manual trigger available: POST /api/solar-greeting/regenerate
     try {
       cron.schedule('0 0 * * *', generateDailySolarGreeting);
       console.log('🌅 Daily Solar Greeting: Scheduled for 00:00 UTC midnight');
       console.log('📌 Manual trigger: POST /api/solar-greeting/regenerate');
+
+      // Check if today's greeting exists — if not, generate on startup (delayed 15s)
+      const greetingPath = path.join(__dirname, 'public', 'greeting.mp4');
+      let needsGreeting = true;
+      try {
+        if (fs.existsSync(greetingPath)) {
+          const stat = fs.statSync(greetingPath);
+          const fileDate = new Date(stat.mtime).toISOString().slice(0, 10);
+          const today = new Date().toISOString().slice(0, 10);
+          if (fileDate === today && stat.size > 10000) {
+            needsGreeting = false;
+            console.log('🌅 Today\'s greeting video already exists — skipping startup generation');
+          }
+        }
+      } catch (e) {}
+      if (needsGreeting) {
+        console.log('🌅 Today\'s greeting video not found — generating on startup (15s delay)');
+        setTimeout(() => generateDailySolarGreeting(), 15000);
+      }
     } catch (error) {
       console.warn('⚠️ Daily greeting video scheduling failed:', error.message);
     }
