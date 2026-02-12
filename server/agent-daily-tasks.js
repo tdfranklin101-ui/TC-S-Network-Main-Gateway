@@ -7,7 +7,9 @@ const ITEM_PARTS = {
   'Rent':{adj:['Shared','Cooperative','Micro','Community','Modular','Solar-Powered','Off-Grid','Resilient','Portable','Sustainable'],noun:['Housing Credit','Workspace Pass','Land Share','Co-Living Token','Studio Rental','Garden Plot','Workshop Bay','Storage Unit','Shelter Voucher','Facility Access'],suffix:['Monthly','Seasonal','Flex','Standard','Equity','Rotating','Trial','Founding','Anchored','Open']},
   'Energy':{adj:['Precision','Portable','Industrial','Wireless','AI-Powered','Multi-Spectrum','Ruggedized','Modular','Open-Source','Calibrated'],noun:['Solar Meter','Inverter Diag','Panel Mapper','Irradiance Sensor','ROI Calculator','Load Tester','Efficiency Gauge','Grid Probe','Watt Tracker','Harvest Monitor'],suffix:['v4','Pro','Field Kit','IoT','USB-C','Bluetooth','HD','IP67','with Case','Starter']},
   'Music':{adj:['Binaural','Ambient','Solar Wind','Dawn Chorus','Photovoltaic','Deep Field','Resonant','Harmonic','Celestial','Crystalline'],noun:['Beats Pack','Symphony','Meditation','Soundscape','Frequency Kit','Mix Tape','Rhythm Loop','Sonic Wave','Tone Garden','Pulse Set'],suffix:['432Hz','528Hz','Full Spectrum','Studio Mix','Live','Extended','Remastered','Deluxe','Pro','Spatial']},
+  'Songs':{adj:['Acoustic','Electric','Soul','Indie','Folk','Pop','Ethereal','Cinematic','Lo-Fi','Choral'],noun:['Single','EP Track','Album Cut','Live Recording','Cover','Original','Ballad','Anthem','Demo','Master'],suffix:['HD Audio','Remastered','Acoustic','Live','Studio','Vocal','Instrumental Mix','Radio Edit','Extended','Deluxe']},
   'Video':{adj:['Cinematic','Drone','Time-Lapse','Volumetric','Holographic','Immersive','Documentary','Generative','Solar-Lit','RAW'],noun:['Film Reel','Tutorial Series','Music Video','Short Film','B-Roll Pack','VFX Template','Motion Study','Scene Kit','Footage Archive','Visual Essay'],suffix:['4K','8K','HDR',"Director's Cut",'Extended','Uncut','Remastered','Season 1','Premiere','Open License']},
+  'Videos':{adj:['Cinematic','Viral','Documentary','Concert','Live','Tutorial','Behind-the-Scenes','Animated','Vertical','Slow-Motion'],noun:['Music Video','Short Film','Vlog','Interview','Performance','Recap','Highlight Reel','Trailer','Montage','Feature'],suffix:['4K','1080p','HDR','Uncut','Final Cut','Official','Directors Cut','Premiere','Extended','Remastered']},
   'Art':{adj:['Fractal','Neon','Holographic','Prismatic','Quantum','Solar','Cosmic','Bioluminescent','Kinetic','Ethereal'],noun:['Dreamscape','Canvas','Portrait','Mandala','Mosaic','Tapestry','Sculpture','Lattice','Aurora','Bloom'],suffix:['v2','HD','XR Edition',"Collector's",'Limited Run','Genesis','Infinite','Luminous','Remastered','Ultra']},
   'Photo':{adj:['Aerial','Macro','Infrared','Long-Exposure','Street','Astro','Solar','Golden Hour','Deep Field','Polaroid'],noun:['Photo Set','Print Collection','Lightroom Preset','Portfolio','Stock Pack','Documentary Series','Panorama','Composite','Archive','Gallery'],suffix:['Hi-Res','RAW','Licensed','Open','Curated','Limited','Signed','Volume 1','Platinum','Exhibition']},
   'Writing':{adj:['Speculative','Technical','Lyrical','Investigative','Collaborative','Serialized','Epistolary','Mythic','Solar Punk','Manifesto'],noun:['Novel Chapter','Essay Collection','Poetry Zine','Whitepaper','Field Notes','Script Draft','Research Paper','Blog Series','Anthology','Protocol Doc'],suffix:['First Edition','Draft','Annotated','Illustrated','Abridged','Extended','Open Access','Peer-Reviewed','Serialized','Deluxe']},
@@ -20,7 +22,7 @@ const ITEM_PARTS = {
   'Education':{adj:['Interactive','Self-Paced','Certified','Immersive','Hands-On','Adaptive','Guided','Comprehensive','Introductory','Advanced'],noun:['Tutorial Prompt','Course Module','Training Kit','Study Guide','Lesson Plan','Lab Exercise','Certification Prep','Curriculum Pack','Workshop Series','Knowledge Base'],suffix:['K-12','Associate','Bachelors','Post-Grad','Doctorate','Professional','Vocational','Trade','Public','Private']}
 };
 
-const MARKET_DEMAND = ['Basic Needs','Energy','Computronium','Software','AI Tools','Music','Art','Rent','Culture','Video','Photo','Writing','AI Create','Docs','Education','Games','Utilities'];
+const MARKET_DEMAND = ['Basic Needs','Energy','Computronium','Software','AI Tools','Songs','Videos','Music','Art','Rent','Culture','Video','Photo','Writing','AI Create','Docs','Education','Games','Utilities'];
 
 const ALL_CATEGORIES = Object.keys(ITEM_PARTS);
 
@@ -106,7 +108,7 @@ async function createArtifactsForAgent(pool, agent, memberId) {
   }
 
   const FILE_TYPES = {
-    'Music': 'audio/mpeg', 'Video': 'video/mp4', 'Art': 'image/png', 'Photo': 'image/jpeg',
+    'Songs': 'audio/mpeg', 'Videos': 'video/mp4', 'Music': 'audio/mpeg', 'Video': 'video/mp4', 'Art': 'image/png', 'Photo': 'image/jpeg',
     'Writing': 'text/markdown', 'Docs': 'application/pdf', 'Software': 'application/javascript',
     'AI Tools': 'application/json', 'AI Create': 'application/json', 'Games': 'application/zip',
     'Utilities': 'application/zip', 'Computronium': 'application/octet-stream',
@@ -115,7 +117,7 @@ async function createArtifactsForAgent(pool, agent, memberId) {
   };
 
   const CONTENT_FORMATS = {
-    'Music': 'audio', 'Video': 'video', 'Art': 'image', 'Photo': 'image',
+    'Songs': 'audio', 'Videos': 'video', 'Music': 'audio', 'Video': 'video', 'Art': 'image', 'Photo': 'image',
     'Writing': 'md', 'Docs': 'pdf', 'Software': 'js', 'AI Tools': 'json',
     'AI Create': 'json', 'Games': 'binary', 'Utilities': 'binary',
     'Computronium': 'binary', 'Culture': 'md', 'Basic Needs': 'text', 'Rent': 'text', 'Energy': 'json',

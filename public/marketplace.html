@@ -2847,6 +2847,8 @@
                     <option value="ai-assistants">💬 AI Assistants</option>
                 </optgroup>
                 <optgroup label="🎨 Creative & Media">
+                    <option value="songs">🎶 Songs</option>
+                    <option value="videos">📹 Videos</option>
                     <option value="music">🎵 Music</option>
                     <option value="video">🎬 Video</option>
                     <option value="art">🖼️ Art</option>
@@ -3726,9 +3728,11 @@
                             <option value="ai-assistants">💬 AI Assistants</option>
                         </optgroup>
                         <optgroup label="🎨 Creative & Media">
+                            <option value="songs">🎶 Songs (MP3/WAV)</option>
+                            <option value="videos">📹 Videos (MP4)</option>
+                            <option value="music">🎵 Music Production</option>
+                            <option value="video">🎬 Video Production</option>
                             <option value="art">🎨 Digital Art</option>
-                            <option value="music">🎵 Music & Audio</option>
-                            <option value="video">🎬 Video Content</option>
                             <option value="photography">📸 Photography</option>
                             <option value="writing">✍️ Writing</option>
                         </optgroup>
@@ -4996,7 +5000,7 @@
             const priceFilter = document.getElementById('price-filter').value;
 
             filteredArtifacts = allArtifacts.filter(artifact => {
-                let passesCategory = !categoryFilter || artifact.category === categoryFilter;
+                let passesCategory = !categoryFilter || (artifact.category || '').toLowerCase() === categoryFilter.toLowerCase();
                 if (categoryFilter && categoryFilter.startsWith('education-') && !passesCategory) {
                     const subMap = {
                         'education-k12': 'k-12',
@@ -5063,8 +5067,10 @@
                                 ${categoryIcon} ${categoryName} (${categoryArtifacts.length})
                             </h3>
                             <p style="color: #888; font-size: 14px; margin-bottom: 20px;">
-                                ${category === 'music' ? 'Audio tracks and compositions' : 
-                                  category === 'video' ? 'Video content and multimedia' : 
+                                ${category === 'songs' ? 'Finished songs and recordings' :
+                                  category === 'music' ? 'Music production tools and resources' : 
+                                  category === 'videos' ? 'Finished video content' :
+                                  category === 'video' ? 'Video production tools and resources' : 
                                   category === 'image' ? 'Images and visual art' : 
                                   'Digital documents and files'}
                             </p>
@@ -5088,7 +5094,7 @@
             'Software':'💻','Games':'🎮','Docs':'📚','Utilities':'🔧',
             'AI Tools':'🤖','AI Create':'🧠','Computronium':'🚀','Culture':'🎭',
             'Energy':'⚡','Basic Needs':'🏠','Rent':'🏘️',
-            'music':'🎵','video':'🎬','image':'🖼️','document':'📄','art':'🎨'
+            'songs':'🎶','videos':'📹','music':'🎵','video':'🎬','image':'🖼️','document':'📄','art':'🎨'
         };
 
         function createArtifactCard(artifact, context = 'marketplace') {
@@ -5129,7 +5135,7 @@
             const deliveryKwh = (kwhVal * 0.1).toFixed(4);
             const sq = encodeURIComponent(artifact.title + ' ' + artifact.category);
             const catLower = (artifact.category || '').toLowerCase();
-            const isAudio = catLower === 'music' || (artifact.file_type || '').startsWith('audio');
+            const isAudio = catLower === 'songs' || catLower === 'music' || (artifact.file_type || '').startsWith('audio');
             const isVisual = catLower === 'art' || catLower === 'photo' || catLower === 'photography' || (artifact.file_type || '').startsWith('image');
             const isSoftware = catLower === 'software' || catLower === 'ai tools' || catLower === 'code tools';
             let extraLinks = '';
@@ -5203,7 +5209,7 @@
                             🎵 Listen on Music Now
                         </a>` : ''
                     }
-                    ${artifact.streamUrl && (artifact.previewType === 'audio' || artifact.category === 'music') ? 
+                    ${artifact.streamUrl && (artifact.previewType === 'audio' || artifact.category === 'music' || artifact.category === 'songs') ? 
                         `<button class="preview-btn" onclick="event.stopPropagation(); playStreamInline('${artifact.streamUrl}', '${artifact.title.replace(/'/g, "\\'")}')">
                             🔊 Play Preview
                         </button>` : ''
@@ -5388,11 +5394,11 @@
             } else {
                 // For purchased items, offer both view and download based on file type
                 const fileType = artifact.fileType || 'unknown';
-                const isMusic = artifact.category === 'music' || fileType.includes('audio');
+                const isMusic = artifact.category === 'songs' || artifact.category === 'music' || fileType.includes('audio');
                 const isImage = artifact.category === 'art' || fileType.includes('image');
                 const isText = fileType.includes('text') || fileType.includes('document');
                 
-                const isVideo = artifact.category === 'video' || fileType.includes('video');
+                const isVideo = artifact.category === 'videos' || artifact.category === 'video' || fileType.includes('video');
                 
                 actionButtons = `
                     <button class="artifact-action-btn download" onclick="downloadArtifact('${artifact.id}')">💾 Download File</button>
@@ -6671,9 +6677,12 @@
         }
 
         var kidSolIntentMap = {
-            'beat': 'Music', 'beats': 'Music', 'song': 'Music', 'songs': 'Music', 'track': 'Music', 'tracks': 'Music',
-            'audio': 'Music', 'instrumental': 'Music', 'melody': 'Music', 'remix': 'Music', 'album': 'Music', 'playlist': 'Music',
-            'video': 'Video', 'videos': 'Video', 'film': 'Video', 'movie': 'Video', 'clip': 'Video', 'animation': 'Video',
+            'song': 'Songs', 'songs': 'Songs', 'track': 'Songs', 'tracks': 'Songs', 'mp3': 'Songs', 'wav': 'Songs',
+            'album': 'Songs', 'playlist': 'Songs', 'melody': 'Songs', 'single': 'Songs', 'recording': 'Songs',
+            'beat': 'Music', 'beats': 'Music', 'instrumental': 'Music', 'remix': 'Music', 'loop': 'Music', 'loops': 'Music',
+            'audio': 'Music', 'sample': 'Music', 'samples': 'Music', 'synth': 'Music', 'plugin': 'Music', 'vst': 'Music',
+            'mp4': 'Videos', 'movie': 'Videos', 'film': 'Videos', 'clip': 'Videos', 'footage': 'Videos',
+            'video': 'Video', 'videos': 'Video', 'animation': 'Video', 'vfx': 'Video', 'template': 'Video',
             'art': 'Art', 'artwork': 'Art', 'painting': 'Art', 'illustration': 'Art', 'drawing': 'Art', 'design': 'Art', 'graphic': 'Art',
             'photo': 'Photography', 'photos': 'Photography', 'photograph': 'Photography', 'image': 'Photography', 'picture': 'Photography',
             'write': 'Writing', 'writing': 'Writing', 'story': 'Writing', 'poem': 'Writing', 'article': 'Writing', 'essay': 'Writing', 'book': 'Writing', 'script': 'Writing',
@@ -7134,8 +7143,8 @@
             var creationSource = item.creationSource || '';
 
             var catLower = (category || '').toLowerCase();
-            var isAudio = catLower === 'music' || (fileType || '').startsWith('audio');
-            var isVideo = catLower === 'video' || (fileType || '').startsWith('video');
+            var isAudio = catLower === 'songs' || catLower === 'music' || (fileType || '').startsWith('audio');
+            var isVideo = catLower === 'videos' || catLower === 'video' || (fileType || '').startsWith('video');
             var isVisual = catLower === 'art' || catLower === 'photo' || catLower === 'photography' || catLower === 'image' || (fileType || '').startsWith('image');
             var isSoftware = catLower === 'software' || catLower === 'ai tools' || catLower === 'code tools';
             var isDocument = catLower === 'writing' || catLower === 'docs' || catLower === 'document' || (fileType || '').startsWith('text') || (fileType || '').indexOf('pdf') !== -1;
@@ -7289,6 +7298,8 @@
             var maslowMap = {
                 'music':         { primary: 'Self-Actualization', secondary: 'Love/Belonging', tertiary: 'Esteem', desc: 'Music fulfills creative expression and emotional connection. It elevates mood (physiological well-being), creates shared experience (belonging), and channels artistic identity (self-actualization).' },
                 'video':         { primary: 'Self-Actualization', secondary: 'Esteem', tertiary: 'Love/Belonging', desc: 'Video content serves learning, storytelling, and cultural participation. It builds knowledge (growth), offers entertainment (variety), and connects communities through shared narratives.' },
+                'songs':         { primary: 'Self-Actualization', secondary: 'Love/Belonging', tertiary: 'Esteem', desc: 'Songs are finished creative works — recordings that express emotion, tell stories, and build cultural identity through shared listening experiences.' },
+                'videos':        { primary: 'Self-Actualization', secondary: 'Esteem', tertiary: 'Love/Belonging', desc: 'Finished video content serves entertainment, education, and cultural preservation through completed films, clips, and performances.' },
                 'art':           { primary: 'Self-Actualization', secondary: 'Transcendence', tertiary: 'Esteem', desc: 'Visual art addresses the highest human drives — creative expression, beauty, and meaning-making. It inspires awe (transcendence) while affirming the creator\'s and collector\'s identity.' },
                 'image':         { primary: 'Esteem', secondary: 'Self-Actualization', tertiary: 'Love/Belonging', desc: 'Images serve documentation, identity expression, and communication. They preserve memories (safety/stability), signal identity (esteem), and share experiences (connection).' },
                 'photo':         { primary: 'Esteem', secondary: 'Self-Actualization', tertiary: 'Love/Belonging', desc: 'Photography captures moments and perspectives. It preserves memories (safety), expresses vision (self-actualization), and shares human experience (belonging).' },
@@ -7305,6 +7316,8 @@
             var robbinsMap = {
                 'music':         { top: 'Variety', second: 'Connection', third: 'Significance', desc: 'Music delivers novelty and emotional range (variety), bonds listeners (connection), and distinguishes taste and identity (significance).' },
                 'video':         { top: 'Variety', second: 'Growth', third: 'Connection', desc: 'Video offers new perspectives (variety), teaches and informs (growth), and creates shared cultural moments (connection).' },
+                'songs':         { top: 'Variety', second: 'Connection', third: 'Significance', desc: 'Songs deliver emotional resonance and cultural connection (connection), offer novelty through new releases (variety), and represent artistic significance (significance).' },
+                'videos':        { top: 'Variety', second: 'Growth', third: 'Connection', desc: 'Videos provide new perspectives and entertainment (variety), educate and inform viewers (growth), and create shared cultural experiences (connection).' },
                 'art':           { top: 'Significance', second: 'Growth', third: 'Contribution', desc: 'Art creates uniqueness and meaning (significance), expands perception (growth), and when shared, enriches culture (contribution).' },
                 'image':         { top: 'Connection', second: 'Significance', third: 'Certainty', desc: 'Images create shared understanding (connection), express identity (significance), and document reality (certainty).' },
                 'photo':         { top: 'Connection', second: 'Significance', third: 'Certainty', desc: 'Photos bridge distance and time (connection), capture meaningful moments (significance), and preserve memories (certainty).' },

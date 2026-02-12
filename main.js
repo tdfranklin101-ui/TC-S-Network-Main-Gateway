@@ -3652,13 +3652,13 @@ const server = http.createServer(async (req, res) => {
         let maxSize, category;
         if (actualMime.startsWith('audio/')) {
           maxSize = 50 * 1024 * 1024; // 50MB
-          category = 'music';
+          category = 'songs';
         } else if (actualMime.startsWith('image/')) {
           maxSize = 25 * 1024 * 1024; // 25MB
           category = 'art';
         } else if (actualMime.startsWith('video/')) {
           maxSize = 500 * 1024 * 1024; // 500MB
-          category = 'video';
+          category = 'videos';
         } else if (actualMime.startsWith('text/') || actualMime === 'application/pdf') {
           maxSize = 5 * 1024 * 1024; // 5MB
           category = 'document';
@@ -3710,7 +3710,7 @@ const server = http.createServer(async (req, res) => {
           // Fallback pricing based on file size and type
           const fileSizeMB = file.size / (1024 * 1024);
           const baseKwh = fileSizeMB * 0.01; // 0.01 kWh per MB baseline
-          const categoryMultiplier = category === 'video' ? 2 : category === 'music' ? 1.5 : 1;
+          const categoryMultiplier = category === 'video' || category === 'videos' ? 2 : category === 'music' || category === 'songs' ? 1.5 : 1;
           analysis = {
             estimatedKwh: baseKwh * categoryMultiplier,
             solarAmount: (baseKwh * categoryMultiplier) / 4913, // Convert kWh to Solar
@@ -7378,7 +7378,7 @@ const server = http.createServer(async (req, res) => {
             '.mov': 'video/quicktime',
             '.m4a': 'audio/mp4'
           };
-          const defaultType = artifact.category === 'music' ? 'audio/mpeg' : 'video/mp4';
+          const defaultType = (artifact.category === 'music' || artifact.category === 'songs') ? 'audio/mpeg' : 'video/mp4';
           const contentType = mimeTypes[ext] || defaultType;
           
           const rangeHeader = req.headers.range;
@@ -7431,7 +7431,7 @@ const server = http.createServer(async (req, res) => {
           }
 
           const fileSize = parseInt(headResponse.headers.get('content-length') || '0', 10);
-          const defaultType = artifact.category === 'music' ? 'audio/mpeg' : 'video/mp4';
+          const defaultType = (artifact.category === 'music' || artifact.category === 'songs') ? 'audio/mpeg' : 'video/mp4';
           const contentType = headResponse.headers.get('content-type') || defaultType;
 
           const rangeHeader = req.headers.range;
@@ -8418,7 +8418,7 @@ const server = http.createServer(async (req, res) => {
       let query = `SELECT id, slug, title, description, category, file_type, artifact_class, 
                     solar_amount_s, rays_amount, kwh_footprint, streaming_url, delivery_url,
                     cover_art_url, creator_id, source_type, created_at
-                   FROM artifacts WHERE LOWER(category) = 'music' AND active = true`;
+                   FROM artifacts WHERE (LOWER(category) = 'music' OR LOWER(category) = 'songs') AND active = true`;
       const params = [];
       
       if (search) {
@@ -9091,7 +9091,7 @@ Respond ONLY with valid JSON in this exact format:
         return;
       }
 
-      const ALLOWED_CATEGORIES = ['Computronium','Culture','Basic Needs','Rent','Energy','Music','Video','Art','Photo','Writing','AI Tools','AI Create','Software','Docs','Games','Utilities'];
+      const ALLOWED_CATEGORIES = ['Computronium','Culture','Basic Needs','Rent','Energy','Songs','Videos','Music','Video','Art','Photo','Writing','AI Tools','AI Create','Software','Docs','Games','Utilities'];
       if (!ALLOWED_CATEGORIES.includes(category)) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: false, error: 'Invalid category' }));
@@ -9156,7 +9156,7 @@ Respond ONLY with valid JSON in this exact format:
         return;
       }
 
-      const ALLOWED_CATEGORIES = ['Computronium','Culture','Basic Needs','Rent','Energy','Music','Video','Art','Photo','Writing','AI Tools','AI Create','Software','Docs','Games','Utilities'];
+      const ALLOWED_CATEGORIES = ['Computronium','Culture','Basic Needs','Rent','Energy','Songs','Videos','Music','Video','Art','Photo','Writing','AI Tools','AI Create','Software','Docs','Games','Utilities'];
       if (!ALLOWED_CATEGORIES.includes(category)) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: false, error: 'Invalid category' }));
