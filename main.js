@@ -8383,6 +8383,16 @@ const server = http.createServer(async (req, res) => {
     console.log('❌ File not found!');
   }
 
+  if (pathname === '/music-now.html' || pathname === '/music-now') {
+    const mnFilePath = path.join(__dirname, 'public', 'music-now.html');
+    if (fs.existsSync(mnFilePath)) {
+      const content = fs.readFileSync(mnFilePath, 'utf8');
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(content);
+      return;
+    }
+  }
+
   if (pathname === '/my-solar') {
     // Redirect to main platform solar tracking section
     res.writeHead(302, { 'Location': '/main-platform#solar-tracking' });
@@ -9070,11 +9080,17 @@ const server = http.createServer(async (req, res) => {
       }));
 
       // Also search artifacts table for uploaded marketplace items
+      // Exclude agent-created Class A digital-artifacts from curated category searches (Songs, Videos)
+      // so only real human-uploaded content appears for those categories
+      const isCuratedCategorySearch = ['songs', 'videos', 'music', 'video'].includes(qOriginal);
       let artifactItems = [];
       try {
         let artQuery = `SELECT * FROM artifacts 
-           WHERE active = true 
-           AND (title ILIKE $1 OR description ILIKE $1 OR category ILIKE $1
+           WHERE active = true `;
+        if (isCuratedCategorySearch) {
+          artQuery += `AND NOT (file_type = 'digital-artifact' AND source_type = 'agent') `;
+        }
+        artQuery += `AND (title ILIKE $1 OR description ILIKE $1 OR category ILIKE $1
                 OR title ILIKE $3 OR description ILIKE $3 OR category ILIKE $3
                 OR search_tags::text ILIKE $1 OR search_tags::text ILIKE $3`;
         const artParams = ['%' + q + '%', internalLimit, '%' + qOriginal + '%'];
@@ -14277,9 +14293,12 @@ Respond with valid JSON only. Be insightful and specific.`;
   if (pathname === '/api/solar-greeting/regenerate' && req.method === 'POST') {
     try {
       console.log('🌅 Manual greeting regeneration triggered');
-      generateDailySolarGreeting();
+      const greetingPath = path.join(__dirname, 'public', 'greeting.mp4');
+      try { fs.unlinkSync(greetingPath); } catch (e) {}
+      const { generateDailyGreeting: regenGreeting } = require('./server/generate-greeting');
+      const result = regenGreeting();
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ success: true, message: 'Daily Solar greeting regeneration started', date: new Date().toISOString() }));
+      res.end(JSON.stringify({ success: true, message: 'Daily Solar greeting regenerated', date: new Date().toISOString(), result }));
     } catch (error) {
       console.error('Greeting regeneration error:', error);
       res.writeHead(500, { 'Content-Type': 'application/json' });
@@ -15966,35 +15985,11 @@ setImmediate(() => {
       console.log('📌 Use manual trigger: POST /api/agents/daily-tasks/trigger');
     }
 
-    // Initialize Daily Solar Greeting Video
-    // Regenerates at UTC midnight AND on startup if today's greeting is missing/stale
-    // Manual trigger available: POST /api/solar-greeting/regenerate
-    try {
-      cron.schedule('0 0 * * *', generateDailySolarGreeting);
-      console.log('🌅 Daily Solar Greeting: Scheduled for 00:00 UTC midnight');
-      console.log('📌 Manual trigger: POST /api/solar-greeting/regenerate');
-
-      // Check if today's greeting exists — if not, generate on startup (delayed 15s)
-      const greetingPath = path.join(__dirname, 'public', 'greeting.mp4');
-      let needsGreeting = true;
-      try {
-        if (fs.existsSync(greetingPath)) {
-          const stat = fs.statSync(greetingPath);
-          const fileDate = new Date(stat.mtime).toISOString().slice(0, 10);
-          const today = new Date().toISOString().slice(0, 10);
-          if (fileDate === today && stat.size > 10000) {
-            needsGreeting = false;
-            console.log('🌅 Today\'s greeting video already exists — skipping startup generation');
-          }
-        }
-      } catch (e) {}
-      if (needsGreeting) {
-        console.log('🌅 Today\'s greeting video not found — available via manual trigger');
-        console.log('📌 Manual trigger: POST /api/solar-greeting/regenerate');
-      }
-    } catch (error) {
-      console.warn('⚠️ Daily greeting video scheduling failed:', error.message);
-    }
+    // Daily Solar Greeting Video (ffmpeg-based, reliable)
+    // The scheduleDailyGreeting() from generate-greeting.js handles startup + midnight UTC scheduling
+    // Manual trigger: POST /api/solar-greeting/regenerate
+    console.log('🌅 Daily Solar Greeting: Managed by generate-greeting.js (startup + midnight UTC)');
+    console.log('📌 Manual trigger: POST /api/solar-greeting/regenerate');
     
     // Auto-sync artifacts → market_items (ensures legacy items appear in search)
     if (pool) {
