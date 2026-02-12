@@ -9021,20 +9021,36 @@ const server = http.createServer(async (req, res) => {
       const q = qRaw.toLowerCase().replace(/[^a-z0-9\s]+/g, ' ').replace(/\s+/g, ' ').trim();
       const qOriginal = qRaw.toLowerCase().trim();
 
+      const categoryAliases = {
+        'songs': ['music', 'song', 'audio', 'mp3', 'wav'],
+        'videos': ['video', 'mp4', 'film', 'clip'],
+        'music': ['songs', 'song', 'audio', 'mp3'],
+        'video': ['videos', 'film', 'clip', 'mp4'],
+        'art': ['artwork', 'illustration', 'painting', 'drawing'],
+        'photography': ['photo', 'photos', 'photograph', 'image']
+      };
+      const aliases = categoryAliases[qOriginal] || [];
+
       // Search market_items by search_text, title, or category (normalized + original query)
       // Use higher internal limit to capture all matches before deduplication
       const internalLimit = Math.max(limit * 2, 50);
-      const result = await pool.query(
-        `SELECT * FROM market_items 
+      
+      let marketQuery = `SELECT * FROM market_items 
          WHERE status = 'ACTIVE' 
          AND (search_text ILIKE $1 OR title ILIKE $1 OR category ILIKE $1 
               OR vendor_name ILIKE $1 OR description ILIKE $1 OR tags::text ILIKE $1
               OR search_text ILIKE $3 OR title ILIKE $3 OR category ILIKE $3
-              OR vendor_name ILIKE $3 OR description ILIKE $3 OR tags::text ILIKE $3)
-         ORDER BY created_at DESC 
-         LIMIT $2`,
-        ['%' + q + '%', internalLimit, '%' + qOriginal + '%']
-      );
+              OR vendor_name ILIKE $3 OR description ILIKE $3 OR tags::text ILIKE $3`;
+      const marketParams = ['%' + q + '%', internalLimit, '%' + qOriginal + '%'];
+      
+      aliases.forEach((alias, idx) => {
+        const paramIdx = idx + 4;
+        marketQuery += ` OR category ILIKE $${paramIdx}`;
+        marketParams.push('%' + alias + '%');
+      });
+      marketQuery += `) ORDER BY created_at DESC LIMIT $2`;
+      
+      const result = await pool.query(marketQuery, marketParams);
 
       const items = result.rows.map(row => ({
         id: row.id,
@@ -9056,16 +9072,21 @@ const server = http.createServer(async (req, res) => {
       // Also search artifacts table for uploaded marketplace items
       let artifactItems = [];
       try {
-        const artifactResult = await pool.query(
-          `SELECT * FROM artifacts 
+        let artQuery = `SELECT * FROM artifacts 
            WHERE active = true 
            AND (title ILIKE $1 OR description ILIKE $1 OR category ILIKE $1
                 OR title ILIKE $3 OR description ILIKE $3 OR category ILIKE $3
-                OR search_tags::text ILIKE $1 OR search_tags::text ILIKE $3)
-           ORDER BY created_at DESC 
-           LIMIT $2`,
-          ['%' + q + '%', internalLimit, '%' + qOriginal + '%']
-        );
+                OR search_tags::text ILIKE $1 OR search_tags::text ILIKE $3`;
+        const artParams = ['%' + q + '%', internalLimit, '%' + qOriginal + '%'];
+        
+        aliases.forEach((alias, idx) => {
+          const paramIdx = idx + 4;
+          artQuery += ` OR category ILIKE $${paramIdx}`;
+          artParams.push('%' + alias + '%');
+        });
+        artQuery += `) ORDER BY created_at DESC LIMIT $2`;
+        
+        const artifactResult = await pool.query(artQuery, artParams);
         artifactItems = artifactResult.rows.map(row => ({
           id: row.id,
           title: row.title,
@@ -9098,7 +9119,12 @@ const server = http.createServer(async (req, res) => {
             const matched = (cData.artifacts || []).filter(a => {
               if (!a.isActive) return false;
               const searchable = [a.title, a.artist, a.album, a.genre, a.category, a.description, ...(a.tags || [])].join(' ').toLowerCase();
-              return searchable.includes(q) || searchable.includes(qOriginal);
+              if (searchable.includes(q) || searchable.includes(qOriginal)) return true;
+              const catLower = (a.category || '').toLowerCase();
+              for (const alias of aliases) {
+                if (catLower.includes(alias)) return true;
+              }
+              return false;
             });
             for (const a of matched) {
               collectionItems.push({
