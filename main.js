@@ -13469,39 +13469,16 @@ Always respond with valid JSON only. Be specific and detailed in observations.`
     return;
   }
 
-  // ================== LIFELENS ARTIFACT ANALYSIS (TEXT-BASED) ==================
-  if (pathname === '/api/lifelens/analyze-artifact' && req.method === 'POST') {
-    let body = '';
-    req.on('data', chunk => { body += chunk; });
-    req.on('end', async () => {
-      try {
-        const parsed = JSON.parse(body);
-        const { artifactId, title, description, category, priceSolar, kwhFootprint } = parsed;
-        if (!artifactId) {
-          res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-          res.end(JSON.stringify({ error: 'No artifactId provided' }));
-          return;
-        }
-
-        global.lifeLensCache = global.lifeLensCache || {};
-        const cached = global.lifeLensCache[artifactId];
-        if (cached && (Date.now() - cached.timestamp < 24 * 60 * 60 * 1000)) {
-          res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-          res.end(JSON.stringify({ success: true, analysis: cached.result, cached: true }));
-          return;
-        }
-
-        const openaiKey = process.env.OPENAI_API_KEY || process.env.NEW_OPENAI_API_KEY;
-        if (!openaiKey) {
-          res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-          res.end(JSON.stringify({ error: 'AI service unavailable' }));
-          return;
-        }
-
-        const OpenAI = require('openai');
-        const openai = new OpenAI({ apiKey: openaiKey });
-
-        const prompt = `You are LifeLens with Rob Low Decision Lens, the TC-S Network's hybrid intelligence analysis system. Analyze this marketplace artifact and return a comprehensive JSON evaluation.
+  // ================== REUSABLE LIFELENS ANALYSIS GENERATOR ==================
+  async function generateLifeLensAnalysis({ title, description, category, priceSolar, kwhFootprint }) {
+    const openaiKey = process.env.OPENAI_API_KEY || process.env.NEW_OPENAI_API_KEY;
+    if (!openaiKey) return null;
+    
+    try {
+      const OpenAI = require('openai');
+      const openai = new OpenAI({ apiKey: openaiKey });
+      
+      const prompt = `You are LifeLens with Rob Low Decision Lens, the TC-S Network's hybrid intelligence analysis system. Analyze this marketplace artifact and return a comprehensive JSON evaluation.
 
 ARTIFACT:
 - Title: ${title || 'Untitled'}
@@ -13540,51 +13517,105 @@ Return a JSON object with these fields:
 
 Respond with valid JSON only. Be insightful and specific.`;
 
-        const response = await openai.chat.completions.create({
-          model: 'gpt-4o',
-          messages: [
-            { role: 'system', content: prompt }
-          ],
-          max_tokens: 1200,
-          temperature: 0.3
-        });
+      const response = await openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [{ role: 'system', content: prompt }],
+        max_tokens: 1200,
+        temperature: 0.3
+      });
 
-        let result;
-        const raw = response.choices[0].message.content.trim();
+      let result;
+      const raw = response.choices[0].message.content.trim();
+      try {
+        const jsonMatch = raw.match(/\{[\s\S]*\}/);
+        result = jsonMatch ? JSON.parse(jsonMatch[0]) : { needsSummary: raw, fitScore: 5 };
+      } catch (e) {
+        result = { needsSummary: raw, fitScore: 5 };
+      }
+
+      if (result.fitScore !== undefined) {
+        result.fitScore = Math.max(0, Math.min(10, parseInt(result.fitScore) || 0));
+      }
+      const validIntensities = ['none', 'low', 'medium', 'high'];
+      if (result.humanNeedsMapping) {
+        for (const framework of ['maslow', 'robbins']) {
+          if (result.humanNeedsMapping[framework]) {
+            for (const [key, val] of Object.entries(result.humanNeedsMapping[framework])) {
+              if (val && val.intensity && !validIntensities.includes(val.intensity)) {
+                val.intensity = 'none';
+              }
+              if (val && typeof val.explanation === 'string') {
+                val.explanation = val.explanation.substring(0, 500);
+              }
+            }
+          }
+        }
+      }
+      ['needsSummary', 'energyInsight', 'provisionNotes', 'fitExplanation'].forEach(function(field) {
+        if (result[field] && typeof result[field] === 'string') {
+          result[field] = result[field].substring(0, 1000);
+        }
+      });
+
+      return result;
+    } catch (error) {
+      console.error('LifeLens generation error:', error.message);
+      return null;
+    }
+  }
+
+  // ================== LIFELENS ARTIFACT ANALYSIS (TEXT-BASED) ==================
+  if (pathname === '/api/lifelens/analyze-artifact' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', async () => {
+      try {
+        const parsed = JSON.parse(body);
+        const { artifactId, title, description, category, priceSolar, kwhFootprint } = parsed;
+        if (!artifactId) {
+          res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+          res.end(JSON.stringify({ error: 'No artifactId provided' }));
+          return;
+        }
+
+        global.lifeLensCache = global.lifeLensCache || {};
+
+        // Check DB-stored analysis first
         try {
-          const jsonMatch = raw.match(/\{[\s\S]*\}/);
-          result = jsonMatch ? JSON.parse(jsonMatch[0]) : { needsSummary: raw, fitScore: 5 };
-        } catch (e) {
-          result = { needsSummary: raw, fitScore: 5 };
+          const dbResult = await pool.query('SELECT lifelens_analysis FROM artifacts WHERE id = $1 AND lifelens_analysis IS NOT NULL', [artifactId]);
+          if (dbResult.rows.length > 0 && dbResult.rows[0].lifelens_analysis) {
+            const stored = typeof dbResult.rows[0].lifelens_analysis === 'string' ? JSON.parse(dbResult.rows[0].lifelens_analysis) : dbResult.rows[0].lifelens_analysis;
+            global.lifeLensCache[artifactId] = { result: stored, timestamp: Date.now() };
+            res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+            res.end(JSON.stringify({ success: true, analysis: stored, cached: true }));
+            return;
+          }
+        } catch (dbErr) {
+          console.error('LifeLens DB lookup error:', dbErr.message);
         }
 
-        // Validate/sanitize model output
-        if (result.fitScore !== undefined) {
-            result.fitScore = Math.max(0, Math.min(10, parseInt(result.fitScore) || 0));
+        const cached = global.lifeLensCache[artifactId];
+        if (cached && (Date.now() - cached.timestamp < 24 * 60 * 60 * 1000)) {
+          res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+          res.end(JSON.stringify({ success: true, analysis: cached.result, cached: true }));
+          return;
         }
-        const validIntensities = ['none', 'low', 'medium', 'high'];
-        if (result.humanNeedsMapping) {
-            for (const framework of ['maslow', 'robbins']) {
-                if (result.humanNeedsMapping[framework]) {
-                    for (const [key, val] of Object.entries(result.humanNeedsMapping[framework])) {
-                        if (val && val.intensity && !validIntensities.includes(val.intensity)) {
-                            val.intensity = 'none';
-                        }
-                        if (val && typeof val.explanation === 'string') {
-                            val.explanation = val.explanation.substring(0, 500);
-                        }
-                    }
-                }
-            }
+
+        const result = await generateLifeLensAnalysis({ title, description, category, priceSolar, kwhFootprint });
+        if (!result) {
+          res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+          res.end(JSON.stringify({ error: 'AI service unavailable' }));
+          return;
         }
-        // Truncate text fields
-        ['needsSummary', 'energyInsight', 'provisionNotes', 'fitExplanation'].forEach(field => {
-            if (result[field] && typeof result[field] === 'string') {
-                result[field] = result[field].substring(0, 1000);
-            }
-        });
 
         global.lifeLensCache[artifactId] = { result, timestamp: Date.now() };
+
+        // Also persist to DB if not already stored
+        try {
+          await pool.query('UPDATE artifacts SET lifelens_analysis = $1 WHERE id = $2 AND lifelens_analysis IS NULL', [JSON.stringify(result), artifactId]);
+        } catch (dbErr) {
+          console.error('LifeLens DB persist error:', dbErr.message);
+        }
 
         res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         res.end(JSON.stringify({ success: true, analysis: result, cached: false }));

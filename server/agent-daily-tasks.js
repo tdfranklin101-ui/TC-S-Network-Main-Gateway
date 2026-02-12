@@ -168,6 +168,27 @@ async function createArtifactsForAgent(pool, agent, memberId) {
          JSON.stringify({ agentName: agent.name, agentCode: agent.code, artifactId, generatedAt: new Date().toISOString() })]
       );
 
+      // Fire-and-forget: generate LifeLens analysis for the new artifact
+      const http = require('http');
+      const lifeLensPayload = JSON.stringify({
+        artifactId,
+        title,
+        description,
+        category,
+        priceSolar: String(price),
+        kwhFootprint: String(kwhFootprint)
+      });
+      const lifeLensReq = http.request({
+        hostname: 'localhost',
+        port: process.env.PORT || 3000,
+        path: '/api/lifelens/analyze-artifact',
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(lifeLensPayload) }
+      }, () => {});
+      lifeLensReq.on('error', () => {});
+      lifeLensReq.write(lifeLensPayload);
+      lifeLensReq.end();
+
       created.push({ artifactId, title, category, price, slug });
     } catch (err) {
       console.error(`[Agent ${agent.code}] Error creating artifact in ${category}:`, err.message);
