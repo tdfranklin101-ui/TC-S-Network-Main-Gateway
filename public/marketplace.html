@@ -5380,46 +5380,51 @@
         }
 
         function createMyItemCard(artifact, type) {
-            const typeIcon = type === 'uploaded' ? '📋' : '💾';
-            const typeLabel = type === 'uploaded' ? 'Uploaded' : 'Purchased';
+            var typeIcon = type === 'uploaded' ? '📋' : '💾';
+            var typeLabel = type === 'uploaded' ? 'Uploaded' : 'Purchased';
             
-            let actionButtons = '';
+            var actionButtons = '';
             if (type === 'uploaded') {
-                actionButtons = `<button class="artifact-action-btn edit" onclick="editArtifact('${artifact.id}')">📝 Edit Listing</button>`;
+                actionButtons = '<button class="artifact-action-btn edit" onclick="editArtifact(\'' + artifact.id + '\')">📝 Edit Listing</button>';
             } else {
-                // For purchased items, offer both view and download based on file type
-                const fileType = artifact.fileType || 'unknown';
-                const isMusic = artifact.category === 'songs' || artifact.category === 'music' || fileType.includes('audio');
-                const isImage = artifact.category === 'art' || fileType.includes('image');
-                const isText = fileType.includes('text') || fileType.includes('document');
+                var fileType = artifact.fileType || 'unknown';
+                var isMusic = artifact.category === 'songs' || artifact.category === 'music' || fileType.includes('audio');
+                var isImage = artifact.category === 'art' || fileType.includes('image');
+                var isText = fileType.includes('text') || fileType.includes('document');
+                var isVideo = artifact.category === 'videos' || artifact.category === 'video' || fileType.includes('video');
                 
-                const isVideo = artifact.category === 'videos' || artifact.category === 'video' || fileType.includes('video');
-                
-                actionButtons = `
-                    <button class="artifact-action-btn download" onclick="downloadArtifact('${artifact.id}')">💾 Download File</button>
-                    ${isMusic ? `<button class="artifact-action-btn" onclick="openPreview('${artifact.id}')">🎵 Listen on Music Now</button>` : ''}
-                    ${isVideo ? `<button class="artifact-action-btn" onclick="openPreview('${artifact.id}')">🎬 Preview Video</button>` : ''}
-                    ${isImage ? `<button class="artifact-action-btn" onclick="previewArtifact('${artifact.id}', 'image')">🖼️ View Image</button>` : ''}
-                    ${isText ? `<button class="artifact-action-btn" onclick="previewArtifact('${artifact.id}', 'text')">📄 View Text</button>` : ''}
-                    <button class="artifact-action-btn" onclick="copyArtifactContent('${artifact.id}')">📋 Copy Content</button>
-                `;
+                actionButtons = '<button class="artifact-action-btn download" onclick="downloadArtifact(\'' + artifact.id + '\')">💾 Download File</button>' +
+                    (isMusic ? '<button class="artifact-action-btn" onclick="openPreview(\'' + artifact.id + '\')">🎵 Listen on Music Now</button>' : '') +
+                    (isVideo ? '<button class="artifact-action-btn" onclick="openPreview(\'' + artifact.id + '\')">🎬 Preview Video</button>' : '') +
+                    (isImage ? '<button class="artifact-action-btn" onclick="previewArtifact(\'' + artifact.id + '\', \'image\')">🖼️ View Image</button>' : '') +
+                    (isText ? '<button class="artifact-action-btn" onclick="previewArtifact(\'' + artifact.id + '\', \'text\')">📄 View Text</button>' : '') +
+                    '<button class="artifact-action-btn" onclick="copyArtifactContent(\'' + artifact.id + '\')">📋 Copy Content</button>';
             }
             
-            return `
-                <div class="artifact-card" style="border-left: 3px solid ${type === 'uploaded' ? '#ffaa00' : '#28a745'};">
-                    <div class="artifact-category">${typeIcon} ${typeLabel} • ${artifact.category}</div>
-                    <div class="artifact-title">${artifact.title}</div>
-                    <div class="artifact-price">${artifact.formattedPrice}</div>
-                    <div style="font-size:10px;color:#ffd700;margin-top:2px;">⚡ ~${(parseFloat(artifact.priceSolar || 0) * 4913).toFixed(2)} kWh energy footprint</div>
-                    <div style="font-size:9px;color:#666;margin-top:1px;font-style:italic;">1 Solar = 4,913 kWh · Solar is the medium of exchange within the TC-S Network · No fiat-to-Solar exchange outside the network</div>
-                    <div class="artifact-kwh">${artifact.kwhFootprint.toFixed(1)} kWh equivalent</div>
-                    ${artifact.isBonus ? '<div class="artifact-bonus">BONUS</div>' : ''}
-                    <div style="margin-top: 15px;">
-                        ${actionButtons}
-                    </div>
-                    ${type === 'purchased' ? `<div style="color: #666; font-size: 12px; margin-top: 8px;">Purchased: ${new Date(artifact.dateAdded).toLocaleDateString()}</div>` : ''}
-                </div>
-            `;
+            var tagsHtml = '';
+            var tags = Array.isArray(artifact.tags) ? artifact.tags : (Array.isArray(artifact.searchTags) ? artifact.searchTags : []);
+            if (tags && tags.length > 0) {
+                tagsHtml = '<div style="margin-top:6px;">' + tags.slice(0, 5).map(function(t) {
+                    return '<span style="display:inline-block;background:rgba(0,255,255,0.1);color:#0ff;border:1px solid rgba(0,255,255,0.3);border-radius:10px;padding:1px 8px;font-size:10px;margin:2px 3px 2px 0;">' + escapeHtml(t) + '</span>';
+                }).join('') + '</div>';
+            }
+            
+            return '<div class="artifact-card" style="border-left: 3px solid ' + (type === 'uploaded' ? '#ffaa00' : '#28a745') + ';">' +
+                    '<div class="artifact-category">' + typeIcon + ' ' + typeLabel + ' • ' + escapeHtml(artifact.category) + '</div>' +
+                    '<div class="artifact-title" style="cursor:pointer;" onclick="showOwnedArtifactDetail(\'' + artifact.id + '\')">' + escapeHtml(artifact.title) + '</div>' +
+                    '<div class="artifact-price">' + artifact.formattedPrice + '</div>' +
+                    '<div style="font-size:10px;color:#ffd700;margin-top:2px;">⚡ ~' + (parseFloat(artifact.priceSolar || 0) * 4913).toFixed(2) + ' kWh energy footprint</div>' +
+                    '<div style="font-size:9px;color:#666;margin-top:1px;font-style:italic;">1 Solar = 4,913 kWh · Solar is the medium of exchange within the TC-S Network · No fiat-to-Solar exchange outside the network</div>' +
+                    '<div class="artifact-kwh">' + artifact.kwhFootprint.toFixed(1) + ' kWh equivalent</div>' +
+                    '<div style="color:#aaa;font-size:12px;margin-top:8px;max-height:60px;overflow:hidden;line-height:1.4;">' + escapeHtml(artifact.description || '') + '</div>' +
+                    tagsHtml +
+                    (artifact.isBonus ? '<div class="artifact-bonus">BONUS</div>' : '') +
+                    '<div style="margin-top: 15px;">' +
+                        actionButtons +
+                        '<button class="artifact-action-btn" onclick="showOwnedArtifactDetail(\'' + artifact.id + '\')" style="background:rgba(0,255,255,0.1);color:#0ff;border:1px solid rgba(0,255,255,0.3);">📄 View Full Details</button>' +
+                    '</div>' +
+                    (type === 'purchased' ? '<div style="color: #666; font-size: 12px; margin-top: 8px;">Purchased: ' + new Date(artifact.dateAdded).toLocaleDateString() + '</div>' : '') +
+                '</div>';
         }
 
         async function downloadArtifact(artifactId) {
@@ -5429,18 +5434,114 @@
             }
 
             try {
-                // Generate download token and redirect
-                const downloadToken = btoa(`${currentUser.userId}:${artifactId}:${Date.now()}`);
-                const downloadUrl = `/api/artifacts/download/${downloadToken}`;
+                var artifact = currentMyItemsData?.purchased?.artifacts?.find(a => a.id === artifactId) ||
+                             currentMyItemsData?.uploaded?.artifacts?.find(a => a.id === artifactId);
+                var title = artifact ? artifact.title : 'download';
+                var safeTitle = title.replace(/[^a-zA-Z0-9\s\-_]/g, '').trim();
                 
-                // Open download in new window/tab
-                window.open(downloadUrl, '_blank');
+                var ext = '.bin';
+                if (artifact) {
+                    var ft = artifact.fileType || '';
+                    var cat = (artifact.category || '').toLowerCase();
+                    if (ft.includes('audio') || cat === 'songs' || cat === 'music') ext = '.mp3';
+                    else if (ft.includes('video') || cat === 'videos' || cat === 'video') ext = '.mp4';
+                    else if (ft.includes('image/png')) ext = '.png';
+                    else if (ft.includes('image/jpeg') || ft.includes('image/jpg')) ext = '.jpg';
+                    else if (ft.includes('image/svg')) ext = '.svg';
+                    else if (ft === 'text/markdown' || ft === 'markdown') ext = '.md';
+                    else if (ft === 'application/json' || ft === 'json') ext = '.json';
+                    else if (ft === 'application/pdf') ext = '.pdf';
+                    else if (ft === 'text/csv') ext = '.csv';
+                    else if (ft.includes('text') || ft === 'digital-artifact') ext = '.txt';
+                }
                 
-                alert('✅ Download started! The file should begin downloading shortly.');
+                var filename = safeTitle + ext;
+                var downloadToken = btoa(currentUser.userId + ':' + artifactId + ':' + Date.now());
+                var downloadUrl = '/api/artifacts/download/' + downloadToken + '?dl=1&filename=' + encodeURIComponent(filename);
+                
+                var dlFrame = document.getElementById('native-download-frame');
+                if (!dlFrame) {
+                    dlFrame = document.createElement('iframe');
+                    dlFrame.id = 'native-download-frame';
+                    dlFrame.style.cssText = 'display:none;width:0;height:0;border:none;';
+                    document.body.appendChild(dlFrame);
+                }
+                dlFrame.src = downloadUrl;
             } catch (error) {
                 console.error('Download error:', error);
-                alert('❌ Download failed. Please try again.');
+                alert('Download failed. Please try again.');
             }
+        }
+
+        function showOwnedArtifactDetail(artifactId) {
+            var artifact = currentMyItemsData?.purchased?.artifacts?.find(a => a.id === artifactId) ||
+                           currentMyItemsData?.uploaded?.artifacts?.find(a => a.id === artifactId);
+            if (!artifact) { alert('Artifact not found in your collection.'); return; }
+            
+            var safeTitle = escapeHtml(artifact.title || '');
+            var safeDesc = escapeHtml(artifact.description || 'No description available');
+            var category = (artifact.category || 'Unknown').charAt(0).toUpperCase() + (artifact.category || 'unknown').slice(1);
+            var shareUrl = window.location.origin + '/marketplace.html?artifact=' + artifactId;
+            
+            var tagsHtml = '';
+            var tags = Array.isArray(artifact.tags) ? artifact.tags : (Array.isArray(artifact.searchTags) ? artifact.searchTags : []);
+            if (tags.length > 0) {
+                tagsHtml = '<div style="margin-top:12px;">' + tags.map(function(t) {
+                    return '<span style="display:inline-block;background:rgba(0,255,255,0.1);color:#0ff;border:1px solid rgba(0,255,255,0.3);border-radius:12px;padding:2px 10px;font-size:11px;margin:2px 4px 2px 0;">' + escapeHtml(t) + '</span>';
+                }).join('') + '</div>';
+            }
+
+            var contentPreview = '';
+            if (artifact.contentBody) {
+                var preview = artifact.contentBody.length > 500 ? artifact.contentBody.substring(0, 500) + '...' : artifact.contentBody;
+                contentPreview = '<div style="margin-top:16px;"><h4 style="color:#0ff;margin-bottom:8px;">Content</h4><pre style="background:rgba(255,255,255,0.05);border:1px solid #333;border-radius:8px;padding:12px;color:#ccc;font-size:12px;white-space:pre-wrap;max-height:200px;overflow-y:auto;">' + escapeHtml(preview) + '</pre></div>';
+            }
+
+            var fileType = artifact.fileType || 'Unknown';
+            var cat = (artifact.category || '').toLowerCase();
+            var isAudio = fileType.includes('audio') || cat === 'songs' || cat === 'music';
+            var isVideo = fileType.includes('video') || cat === 'videos' || cat === 'video';
+
+            var mediaPreview = '';
+            if (isAudio) {
+                mediaPreview = '<div style="margin-top:16px;"><h4 style="color:#0ff;margin-bottom:8px;">Listen</h4><audio controls style="width:100%;" src="/api/stream/' + artifactId + '"></audio></div>';
+            } else if (isVideo) {
+                mediaPreview = '<div style="margin-top:16px;"><h4 style="color:#0ff;margin-bottom:8px;">Watch</h4><video controls style="width:100%;max-height:300px;border-radius:8px;" src="/api/stream/' + artifactId + '"></video></div>';
+            }
+
+            var modal = document.createElement('div');
+            modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto;';
+            modal.onclick = function(e) { if (e.target === modal) modal.remove(); };
+            
+            modal.innerHTML = 
+                '<div style="background:#111;border:1px solid #333;border-radius:12px;max-width:650px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.8);">' +
+                    '<div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid #222;">' +
+                        '<h3 style="color:#fff;margin:0;font-size:18px;">Your Asset Details</h3>' +
+                        '<button onclick="this.closest(\'[style*=fixed]\').remove()" style="background:none;border:none;color:#888;font-size:24px;cursor:pointer;">&times;</button>' +
+                    '</div>' +
+                    '<div style="padding:20px;">' +
+                        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;"><span style="color:#888;font-size:12px;">' + category + '</span>' +
+                            '<span style="color:#444;">|</span><span style="color:' + (artifact.ownership === 'creator' ? '#ffaa00' : '#28a745') + ';font-size:12px;">' + (artifact.ownership === 'creator' ? 'Created by you' : 'Purchased') + '</span>' +
+                        '</div>' +
+                        '<h2 style="color:#fff;margin:8px 0 12px 0;font-size:22px;">' + safeTitle + '</h2>' +
+                        '<p style="color:#aaa;font-size:14px;line-height:1.6;margin-bottom:16px;">' + safeDesc + '</p>' +
+                        tagsHtml +
+                        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px;padding:16px;background:rgba(255,255,255,0.03);border-radius:8px;border:1px solid #222;">' +
+                            '<div><div style="color:#888;font-size:11px;">Price</div><div style="color:#39FF14;font-size:16px;font-weight:bold;">' + (artifact.formattedPrice || artifact.solarPrice + ' Solar') + '</div></div>' +
+                            '<div><div style="color:#888;font-size:11px;">Energy Footprint</div><div style="color:#ffd700;font-size:16px;font-weight:bold;">' + (artifact.kwhFootprint || 0).toFixed(2) + ' kWh</div></div>' +
+                            '<div><div style="color:#888;font-size:11px;">File Type</div><div style="color:#fff;font-size:14px;">' + fileType + '</div></div>' +
+                            '<div><div style="color:#888;font-size:11px;">Date</div><div style="color:#fff;font-size:14px;">' + new Date(artifact.purchasedAt || artifact.uploadedAt || artifact.dateAdded).toLocaleDateString() + '</div></div>' +
+                        '</div>' +
+                        mediaPreview +
+                        contentPreview +
+                        '<div style="margin-top:20px;display:flex;flex-wrap:wrap;gap:8px;">' +
+                            '<button onclick="downloadArtifact(\'' + artifactId + '\')" style="background:linear-gradient(135deg,#28a745,#20c997);color:#fff;border:none;padding:12px 20px;border-radius:8px;cursor:pointer;font-weight:bold;">💾 Download File</button>' +
+                            '<button onclick="navigator.clipboard.writeText(\'' + shareUrl + '\').then(function(){alert(\'Link copied!\');})" style="background:rgba(0,255,255,0.1);color:#0ff;border:1px solid rgba(0,255,255,0.3);padding:12px 20px;border-radius:8px;cursor:pointer;font-weight:bold;">🔗 Copy Share Link</button>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>';
+            
+            document.body.appendChild(modal);
         }
 
         async function previewArtifact(artifactId, type) {
