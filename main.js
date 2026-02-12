@@ -6780,7 +6780,7 @@ const server = http.createServer(async (req, res) => {
                  a.streaming_url, a.preview_type, a.preview_slug, a.search_tags, a.preview_file_url, 
                  a.master_file_url, a.trade_file_url, a.artifact_class,
                  a.master_file_size, a.trade_file_size, a.preview_file_size,
-                 a.content_format, a.source_type, a.processing_status, a.created_at,
+                 a.content_format, a.source_type, a.processing_status, a.created_at, a.lifelens_analysis,
                  m.metadata as market_metadata, m.source_type as market_source_type,
                  mem.is_agent as creator_is_agent, mem.name as creator_name, mem.username as creator_username
           FROM artifacts a
@@ -6835,7 +6835,8 @@ const server = http.createServer(async (req, res) => {
             artifactClass: artifact.artifact_class || 'A',
             createdAt: artifact.created_at,
             ecosystemTest: meta.ecosystemTest || false,
-            uploadType: meta.uploadType || null
+            uploadType: meta.uploadType || null,
+            lifelens_analysis: artifact.lifelens_analysis || null
           };
         });
       }
@@ -7012,7 +7013,8 @@ const server = http.createServer(async (req, res) => {
             previewUrl: (a.preview_file_url || a.trade_file_url || a.delivery_url) ? `/api/artifacts/${a.id}/stream-preview` : null,
             streamPreviewUrl: (a.preview_file_url || a.streaming_url || a.delivery_url) ? `/api/artifacts/${a.id}/stream-preview` : null,
             streamUrl: `/api/stream/${a.id}`,
-            deliveryUrl: `/api/delivery/`
+            deliveryUrl: `/api/delivery/`,
+            lifelens_analysis: a.lifelens_analysis || null
           }
         }));
         return;
