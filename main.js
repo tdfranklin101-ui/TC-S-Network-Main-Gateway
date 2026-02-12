@@ -6631,7 +6631,7 @@ const server = http.createServer(async (req, res) => {
         SELECT id, title, description, category, file_type, kwh_footprint, solar_amount_s,
                cover_art_url, delivery_mode, creator_id, streaming_url, preview_type, 
                preview_slug, created_at, master_file_url, preview_file_url, trade_file_url,
-               content_body, search_tags, artifact_class
+               content_body, search_tags, artifact_class, lifelens_analysis
         FROM artifacts
         WHERE creator_id = $1 AND active = true
         ORDER BY created_at DESC
@@ -6654,7 +6654,7 @@ const server = http.createServer(async (req, res) => {
                a.kwh_footprint, a.solar_amount_s, a.cover_art_url, 
                a.delivery_mode, a.creator_id, a.streaming_url, 
                a.preview_type, a.preview_slug, a.master_file_url, a.preview_file_url, a.trade_file_url,
-               a.content_body, a.search_tags, a.artifact_class
+               a.content_body, a.search_tags, a.artifact_class, a.lifelens_analysis
         FROM artifact_copies ac
         JOIN artifacts a ON ac.artifact_id = a.id
         WHERE ac.owner_id = $1 AND ac.is_active = true AND a.active = true
@@ -6671,7 +6671,7 @@ const server = http.createServer(async (req, res) => {
                  a.kwh_footprint, a.solar_amount_s, a.cover_art_url, 
                  a.delivery_mode, a.creator_id, a.streaming_url, 
                  a.preview_type, a.preview_slug, a.master_file_url, a.preview_file_url, a.trade_file_url,
-                 a.content_body, a.search_tags, a.artifact_class
+                 a.content_body, a.search_tags, a.artifact_class, a.lifelens_analysis
           FROM transactions t
           JOIN artifacts a ON t.artifact_id = a.id
           WHERE t.wallet_id = $1 AND t.type = 'purchase' AND a.active = true
