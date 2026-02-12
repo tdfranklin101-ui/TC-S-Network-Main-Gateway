@@ -6335,19 +6335,25 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      const artifactResult = await pool.query(
-        `SELECT id, title, solar_amount_s, delivery_url, active,
-                master_file_url, preview_file_url, trade_file_url,
-                file_type, category, trade_file_size, processing_status, creator_id,
-                content_body, content_format
-         FROM artifacts WHERE id = $1`, [artifactId]
-      );
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const isValidUUID = uuidRegex.test(artifactId);
+      
+      let artifactResult = { rows: [] };
+      if (isValidUUID) {
+        artifactResult = await pool.query(
+          `SELECT id, title, solar_amount_s, delivery_url, active,
+                  master_file_url, preview_file_url, trade_file_url,
+                  file_type, category, trade_file_size, processing_status, creator_id,
+                  content_body, content_format
+           FROM artifacts WHERE id = $1`, [artifactId]
+        );
+      }
       
       let artifact;
       if (artifactResult.rows.length > 0) {
         artifact = artifactResult.rows[0];
       } else {
-        const marketItem = await findInMarketItems(artifactId);
+        const marketItem = isValidUUID ? await findInMarketItems(artifactId) : null;
         if (marketItem) {
           const meta = marketItem.metadata || {};
           artifact = {
@@ -6370,23 +6376,38 @@ const server = http.createServer(async (req, res) => {
         } else {
           const jsonItem = findInJsonCollections(artifactId);
           if (jsonItem) {
-            artifact = {
-              id: jsonItem.id,
-              title: jsonItem.title,
-              solar_amount_s: jsonItem.priceSolar,
-              delivery_url: jsonItem.filePath ? '/' + jsonItem.filePath.replace(/^public\//, '') : null,
-              active: jsonItem.isActive !== false,
-              master_file_url: null,
-              preview_file_url: null,
-              trade_file_url: null,
-              file_type: 'audio',
-              category: jsonItem.category || 'music',
-              trade_file_size: jsonItem.fileSize || 0,
-              processing_status: 'complete',
-              creator_id: null,
-              content_body: jsonItem.description,
-              content_format: 'text'
-            };
+            const deliveryPath = jsonItem.filePath ? '/' + jsonItem.filePath.replace(/^public\//, '') : null;
+            const dbMatch = await pool.query('SELECT id, title, solar_amount_s, trade_file_url, master_file_url, delivery_url, file_type, category, creator_id, content_body, content_format FROM artifacts WHERE title = $1 AND active = true LIMIT 1', [jsonItem.title]);
+            if (dbMatch.rows.length > 0) {
+              artifact = dbMatch.rows[0];
+              artifact.active = true;
+              artifact.processing_status = 'complete';
+              if (!artifact.delivery_url && deliveryPath) artifact.delivery_url = deliveryPath;
+              console.log(`📦 Resolved JSON collection "${jsonItem.title}" → DB artifact ${artifact.id}`);
+            } else {
+              const newId = require('crypto').randomUUID();
+              await pool.query(
+                `INSERT INTO artifacts (id, title, description, category, file_type, solar_amount_s, kwh_footprint, delivery_url, trade_file_url, active, created_at)
+                 VALUES ($1, $2, $3, $4, 'audio/mpeg', $5, $6, $7, $7, true, NOW())`,
+                [newId, jsonItem.title, jsonItem.description || '', jsonItem.category || 'music', jsonItem.priceSolar || 0.001, jsonItem.energyKwh || 4.913, deliveryPath]
+              );
+              artifact = {
+                id: newId,
+                title: jsonItem.title,
+                solar_amount_s: jsonItem.priceSolar,
+                delivery_url: deliveryPath,
+                trade_file_url: deliveryPath,
+                master_file_url: null,
+                file_type: 'audio/mpeg',
+                category: jsonItem.category || 'music',
+                creator_id: null,
+                content_body: jsonItem.description,
+                content_format: 'text',
+                active: true,
+                processing_status: 'complete'
+              };
+              console.log(`📦 Created DB artifact ${newId} for JSON collection "${jsonItem.title}"`);
+            }
           } else {
             res.writeHead(404, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ error: 'Artifact not found' }));
@@ -10140,12 +10161,19 @@ Respond ONLY with valid JSON in this exact format:
       }
 
       // Direct DB purchase flow — check artifacts table first, then market_items, then JSON collections
-      const artQ = await pool.query('SELECT id, title, solar_amount_s, trade_file_url, master_file_url, delivery_url, file_type, category, creator_id, content_body, content_format FROM artifacts WHERE id = $1 AND active = true', [artifactId]);
+      // Validate UUID format before querying uuid-typed columns to avoid PostgreSQL errors
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const isValidUUID = uuidRegex.test(artifactId);
+      
+      let artQ = { rows: [] };
+      if (isValidUUID) {
+        artQ = await pool.query('SELECT id, title, solar_amount_s, trade_file_url, master_file_url, delivery_url, file_type, category, creator_id, content_body, content_format FROM artifacts WHERE id = $1 AND active = true', [artifactId]);
+      }
       let artifact;
       if (artQ.rows.length > 0) {
         artifact = artQ.rows[0];
       } else {
-        const marketItem = await findInMarketItems(artifactId);
+        const marketItem = isValidUUID ? await findInMarketItems(artifactId) : null;
         if (marketItem) {
           const meta = marketItem.metadata || {};
           artifact = {
@@ -10164,19 +10192,34 @@ Respond ONLY with valid JSON in this exact format:
         } else {
           const jsonItem = findInJsonCollections(artifactId);
           if (jsonItem) {
-            artifact = {
-              id: jsonItem.id,
-              title: jsonItem.title,
-              solar_amount_s: jsonItem.priceSolar,
-              delivery_url: jsonItem.filePath ? '/' + jsonItem.filePath.replace(/^public\//, '') : null,
-              trade_file_url: null,
-              master_file_url: null,
-              file_type: 'audio/mpeg',
-              category: jsonItem.category || 'music',
-              creator_id: null,
-              content_body: jsonItem.description,
-              content_format: 'text'
-            };
+            const deliveryPath = jsonItem.filePath ? '/' + jsonItem.filePath.replace(/^public\//, '') : null;
+            const dbMatch = await pool.query('SELECT id, title, solar_amount_s, trade_file_url, master_file_url, delivery_url, file_type, category, creator_id, content_body, content_format FROM artifacts WHERE title = $1 AND active = true LIMIT 1', [jsonItem.title]);
+            if (dbMatch.rows.length > 0) {
+              artifact = dbMatch.rows[0];
+              if (!artifact.delivery_url && deliveryPath) artifact.delivery_url = deliveryPath;
+              console.log(`📦 Resolved JSON collection "${jsonItem.title}" → DB artifact ${artifact.id}`);
+            } else {
+              const newId = require('crypto').randomUUID();
+              await pool.query(
+                `INSERT INTO artifacts (id, title, description, category, file_type, solar_amount_s, kwh_footprint, delivery_url, trade_file_url, active, created_at)
+                 VALUES ($1, $2, $3, $4, 'audio/mpeg', $5, $6, $7, $7, true, NOW())`,
+                [newId, jsonItem.title, jsonItem.description || '', jsonItem.category || 'music', jsonItem.priceSolar || 0.001, jsonItem.energyKwh || 4.913, deliveryPath]
+              );
+              artifact = {
+                id: newId,
+                title: jsonItem.title,
+                solar_amount_s: jsonItem.priceSolar,
+                delivery_url: deliveryPath,
+                trade_file_url: deliveryPath,
+                master_file_url: null,
+                file_type: 'audio/mpeg',
+                category: jsonItem.category || 'music',
+                creator_id: null,
+                content_body: jsonItem.description,
+                content_format: 'text'
+              };
+              console.log(`📦 Created DB artifact ${newId} for JSON collection "${jsonItem.title}"`);
+            }
           } else {
             res.writeHead(404, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ success: false, error: 'Artifact not found or unavailable' }));
