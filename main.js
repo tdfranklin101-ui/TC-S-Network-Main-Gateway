@@ -11581,9 +11581,9 @@ Respond ONLY with valid JSON in this exact format:
     return;
   }
   
-  // GET /api/artifact-download/{token} OR /api/delivery/{token} - File delivery service
-  if ((pathname.startsWith('/api/artifact-download/') && req.method === 'GET') ||
-      (pathname.startsWith('/api/delivery/') && req.method === 'GET')) {
+  // GET|HEAD /api/artifact-download/{token} OR /api/delivery/{token} - File delivery service
+  if ((pathname.startsWith('/api/artifact-download/') && (req.method === 'GET' || req.method === 'HEAD')) ||
+      (pathname.startsWith('/api/delivery/') && (req.method === 'GET' || req.method === 'HEAD'))) {
     try {
       let token;
       if (pathname.startsWith('/api/delivery/')) {

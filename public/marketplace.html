@@ -4090,54 +4090,49 @@
         function handleArtifactDownload(event, linkEl, title, ext) {
             event.preventDefault();
             var url = linkEl.href;
+            var safeTitle = title.replace(/[^a-zA-Z0-9\s\-_]/g, '').trim();
+            var filename = safeTitle + ext;
             linkEl.textContent = '\u23F3 Preparing download...';
             linkEl.style.pointerEvents = 'none';
-            
-            fetch(url)
+
+            var separator = url.indexOf('?') >= 0 ? '&' : '?';
+            var downloadUrl = url + separator + 'dl=1&filename=' + encodeURIComponent(filename);
+
+            fetch(downloadUrl, { method: 'HEAD' })
                 .then(function(response) {
-                    if (response.redirected) {
-                        window.open(response.url, '_blank');
-                        linkEl.textContent = '\uD83D\uDCE5 Download Now';
-                        linkEl.style.pointerEvents = 'auto';
-                        return null;
-                    }
-                    var contentType = response.headers.get('content-type') || '';
-                    if (!response.ok || contentType.includes('text/html') || contentType.includes('application/json')) {
+                    if (!response.ok) {
                         return response.text().then(function(text) {
                             var errorMsg = 'Download unavailable';
                             try { var parsed = JSON.parse(text); errorMsg = parsed.error || errorMsg; } catch(e) {}
-                            linkEl.textContent = '\u274C ' + errorMsg;
-                            linkEl.style.background = '#dc3545';
-                            linkEl.style.pointerEvents = 'auto';
-                            setTimeout(function() {
-                                linkEl.textContent = '\uD83D\uDCE5 Try Again';
-                                linkEl.style.background = 'linear-gradient(135deg,#28a745,#20c997)';
-                                linkEl.style.pointerEvents = 'auto';
-                            }, 3000);
-                            return null;
+                            throw new Error(errorMsg);
                         });
                     }
-                    return response.blob();
-                })
-                .then(function(blob) {
-                    if (!blob) return;
-                    var safeTitle = title.replace(/[^a-zA-Z0-9\s\-_]/g, '').trim();
-                    var blobUrl = URL.createObjectURL(blob);
-                    var a = document.createElement('a');
-                    a.href = blobUrl;
-                    a.download = safeTitle + ext;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(blobUrl);
-                    linkEl.textContent = '\u2705 Downloaded!';
+                    var dlFrame = document.getElementById('native-download-frame');
+                    if (!dlFrame) {
+                        dlFrame = document.createElement('iframe');
+                        dlFrame.id = 'native-download-frame';
+                        dlFrame.style.cssText = 'display:none;width:0;height:0;border:none;';
+                        document.body.appendChild(dlFrame);
+                    }
+                    dlFrame.src = downloadUrl;
+
+                    linkEl.textContent = '\u2705 Download Started!';
                     linkEl.style.pointerEvents = 'auto';
+                    setTimeout(function() {
+                        linkEl.textContent = '\uD83D\uDCE5 Download Again';
+                        linkEl.style.pointerEvents = 'auto';
+                    }, 3000);
                 })
                 .catch(function(err) {
                     console.error('Download error:', err);
-                    linkEl.textContent = '\u274C Download failed';
+                    linkEl.textContent = '\u274C ' + (err.message || 'Download failed');
                     linkEl.style.background = '#dc3545';
                     linkEl.style.pointerEvents = 'auto';
+                    setTimeout(function() {
+                        linkEl.textContent = '\uD83D\uDCE5 Try Again';
+                        linkEl.style.background = 'linear-gradient(135deg,#28a745,#20c997)';
+                        linkEl.style.pointerEvents = 'auto';
+                    }, 3000);
                 });
             return false;
         }

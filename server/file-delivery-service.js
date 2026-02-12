@@ -150,11 +150,14 @@ class FileDeliveryService {
     if (item.contentBody && !item.tradeFileUrl && !item.masterFileUrl && !item.deliveryUrl && !item.previewFileUrl) {
       const contentType = item.contentFormat === 'markdown' ? 'text/markdown' : 'text/plain';
       const ext = item.contentFormat === 'markdown' ? 'md' : 'txt';
+      const body = Buffer.from(item.contentBody, 'utf8');
       res.writeHead(200, {
         'Content-Type': contentType,
+        'Content-Length': body.length,
         'Content-Disposition': `attachment; filename="${safeTitle}.${ext}"`,
       });
-      res.end(item.contentBody);
+      if (req.method === 'HEAD') { res.end(); return true; }
+      res.end(body);
       return true;
     }
 
@@ -176,18 +179,43 @@ class FileDeliveryService {
     return false;
   }
 
+  _getFilenameFromRequest(req, safeTitle, source) {
+    try {
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      const qFilename = url.searchParams.get('filename');
+      if (qFilename) return qFilename;
+    } catch (e) {}
+    if (source && source.filename) return source.filename;
+    const ext = source && source.mimeType ? this._extFromMime(source.mimeType) : '';
+    return safeTitle + ext;
+  }
+
+  _extFromMime(mime) {
+    const map = {
+      'audio/mpeg': '.mp3', 'audio/wav': '.wav', 'audio/ogg': '.ogg',
+      'video/mp4': '.mp4', 'video/webm': '.webm',
+      'image/jpeg': '.jpg', 'image/png': '.png',
+      'application/pdf': '.pdf', 'text/markdown': '.md',
+      'text/csv': '.csv', 'application/json': '.json'
+    };
+    return map[mime] || '';
+  }
+
   async _serveFromSource(req, res, source, safeTitle, item) {
     try {
+      const filename = this._getFilenameFromRequest(req, safeTitle, source);
+      const isHead = req.method === 'HEAD';
+
       if (source.type === 'cloud') {
         const cloudKey = source.path.replace(/^cloud:\/\/\/?/, '');
         const buffer = await cloudStorage.downloadFile(cloudKey);
         const mimeType = source.mimeType || 'application/octet-stream';
-        const filename = source.filename || safeTitle;
         res.writeHead(200, {
           'Content-Type': mimeType,
           'Content-Length': buffer.length,
           'Content-Disposition': `attachment; filename="${filename}"`,
         });
+        if (isHead) { res.end(); return true; }
         res.end(buffer);
         return true;
       }
@@ -197,12 +225,12 @@ class FileDeliveryService {
         if (localPath) {
           const stat = fs.statSync(localPath);
           const mimeType = source.mimeType || this._getMimeType(localPath);
-          const filename = source.filename || safeTitle;
           res.writeHead(200, {
             'Content-Type': mimeType,
             'Content-Length': stat.size,
             'Content-Disposition': `attachment; filename="${filename}"`,
           });
+          if (isHead) { res.end(); return true; }
           const stream = fs.createReadStream(localPath);
           stream.pipe(res);
           return true;
@@ -211,7 +239,10 @@ class FileDeliveryService {
       }
 
       if (source.type === 'http') {
-        res.writeHead(302, { 'Location': source.path });
+        res.writeHead(302, {
+          'Location': source.path,
+          'Content-Disposition': `attachment; filename="${filename}"`,
+        });
         res.end();
         return true;
       }
@@ -225,8 +256,14 @@ class FileDeliveryService {
 
   async _serveFallback(req, res, fallbackUrl, safeTitle) {
     try {
+      const isHead = req.method === 'HEAD';
+
       if (fallbackUrl.startsWith('http://') || fallbackUrl.startsWith('https://')) {
-        res.writeHead(302, { 'Location': fallbackUrl });
+        const filename = safeTitle + '.mp3';
+        res.writeHead(302, {
+          'Location': fallbackUrl,
+          'Content-Disposition': `attachment; filename="${filename}"`,
+        });
         res.end();
         return true;
       }
@@ -242,6 +279,7 @@ class FileDeliveryService {
           'Content-Length': stat.size,
           'Content-Disposition': `attachment; filename="${filename}"`,
         });
+        if (isHead) { res.end(); return true; }
         const stream = fs.createReadStream(localPath);
         stream.pipe(res);
         return true;
