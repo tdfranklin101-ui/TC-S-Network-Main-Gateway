@@ -13469,6 +13469,134 @@ Always respond with valid JSON only. Be specific and detailed in observations.`
     return;
   }
 
+  // ================== LIFELENS ARTIFACT ANALYSIS (TEXT-BASED) ==================
+  if (pathname === '/api/lifelens/analyze-artifact' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', async () => {
+      try {
+        const parsed = JSON.parse(body);
+        const { artifactId, title, description, category, priceSolar, kwhFootprint } = parsed;
+        if (!artifactId) {
+          res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+          res.end(JSON.stringify({ error: 'No artifactId provided' }));
+          return;
+        }
+
+        global.lifeLensCache = global.lifeLensCache || {};
+        const cached = global.lifeLensCache[artifactId];
+        if (cached && (Date.now() - cached.timestamp < 24 * 60 * 60 * 1000)) {
+          res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+          res.end(JSON.stringify({ success: true, analysis: cached.result, cached: true }));
+          return;
+        }
+
+        const openaiKey = process.env.OPENAI_API_KEY || process.env.NEW_OPENAI_API_KEY;
+        if (!openaiKey) {
+          res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+          res.end(JSON.stringify({ error: 'AI service unavailable' }));
+          return;
+        }
+
+        const OpenAI = require('openai');
+        const openai = new OpenAI({ apiKey: openaiKey });
+
+        const prompt = `You are LifeLens with Rob Low Decision Lens, the TC-S Network's hybrid intelligence analysis system. Analyze this marketplace artifact and return a comprehensive JSON evaluation.
+
+ARTIFACT:
+- Title: ${title || 'Untitled'}
+- Description: ${description || 'No description'}
+- Category: ${category || 'Unknown'}
+- Price: ${priceSolar || '0'} Solar (1 Solar = 4,913 kWh)
+- Energy Footprint: ${kwhFootprint || '0'} kWh
+
+Return a JSON object with these fields:
+
+{
+  "humanNeedsMapping": {
+    "maslow": {
+      "physiological": { "intensity": "none|low|medium|high", "explanation": "how this item serves basic survival needs" },
+      "safety": { "intensity": "none|low|medium|high", "explanation": "how this serves security/stability needs" },
+      "loveBelonging": { "intensity": "none|low|medium|high", "explanation": "how this serves social connection needs" },
+      "esteem": { "intensity": "none|low|medium|high", "explanation": "how this serves recognition/achievement needs" },
+      "selfActualization": { "intensity": "none|low|medium|high", "explanation": "how this serves personal growth/creativity needs" },
+      "transcendence": { "intensity": "none|low|medium|high", "explanation": "how this serves higher purpose/contribution needs" }
+    },
+    "robbins": {
+      "certainty": { "intensity": "none|low|medium|high", "explanation": "comfort, security, predictability" },
+      "variety": { "intensity": "none|low|medium|high", "explanation": "novelty, adventure, change" },
+      "significance": { "intensity": "none|low|medium|high", "explanation": "importance, uniqueness, recognition" },
+      "loveConnection": { "intensity": "none|low|medium|high", "explanation": "bonding, warmth, closeness" },
+      "growth": { "intensity": "none|low|medium|high", "explanation": "learning, development, expansion" },
+      "contribution": { "intensity": "none|low|medium|high", "explanation": "giving, service, impact beyond self" }
+    }
+  },
+  "needsSummary": "2-3 sentence summary of which human needs this item primarily serves and why",
+  "energyInsight": "Analysis of the energy footprint - is it efficient? How does it compare to similar items? What does the kWh cost represent in real-world terms?",
+  "provisionNotes": "How to best obtain or use this artifact - network member creation, download, stream, etc.",
+  "fitScore": 7,
+  "fitExplanation": "Why this score - what makes this a good or limited value proposition for the network"
+}
+
+Respond with valid JSON only. Be insightful and specific.`;
+
+        const response = await openai.chat.completions.create({
+          model: 'gpt-4o',
+          messages: [
+            { role: 'system', content: prompt }
+          ],
+          max_tokens: 1200,
+          temperature: 0.3
+        });
+
+        let result;
+        const raw = response.choices[0].message.content.trim();
+        try {
+          const jsonMatch = raw.match(/\{[\s\S]*\}/);
+          result = jsonMatch ? JSON.parse(jsonMatch[0]) : { needsSummary: raw, fitScore: 5 };
+        } catch (e) {
+          result = { needsSummary: raw, fitScore: 5 };
+        }
+
+        // Validate/sanitize model output
+        if (result.fitScore !== undefined) {
+            result.fitScore = Math.max(0, Math.min(10, parseInt(result.fitScore) || 0));
+        }
+        const validIntensities = ['none', 'low', 'medium', 'high'];
+        if (result.humanNeedsMapping) {
+            for (const framework of ['maslow', 'robbins']) {
+                if (result.humanNeedsMapping[framework]) {
+                    for (const [key, val] of Object.entries(result.humanNeedsMapping[framework])) {
+                        if (val && val.intensity && !validIntensities.includes(val.intensity)) {
+                            val.intensity = 'none';
+                        }
+                        if (val && typeof val.explanation === 'string') {
+                            val.explanation = val.explanation.substring(0, 500);
+                        }
+                    }
+                }
+            }
+        }
+        // Truncate text fields
+        ['needsSummary', 'energyInsight', 'provisionNotes', 'fitExplanation'].forEach(field => {
+            if (result[field] && typeof result[field] === 'string') {
+                result[field] = result[field].substring(0, 1000);
+            }
+        });
+
+        global.lifeLensCache[artifactId] = { result, timestamp: Date.now() };
+
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ success: true, analysis: result, cached: false }));
+      } catch (error) {
+        console.error('LifeLens artifact analysis error:', error.message);
+        res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ error: 'Analysis failed: ' + error.message }));
+      }
+    });
+    return;
+  }
+
   // Power Twin Status endpoint  
   if (pathname === '/api/power-twin/status' && req.method === 'GET') {
     const SOLAR_KWH = 4913.0;

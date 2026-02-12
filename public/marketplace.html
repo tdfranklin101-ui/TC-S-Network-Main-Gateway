@@ -5538,10 +5538,113 @@
                             '<button onclick="downloadArtifact(\'' + artifactId + '\')" style="background:linear-gradient(135deg,#28a745,#20c997);color:#fff;border:none;padding:12px 20px;border-radius:8px;cursor:pointer;font-weight:bold;">💾 Download File</button>' +
                             '<button onclick="navigator.clipboard.writeText(\'' + shareUrl + '\').then(function(){alert(\'Link copied!\');})" style="background:rgba(0,255,255,0.1);color:#0ff;border:1px solid rgba(0,255,255,0.3);padding:12px 20px;border-radius:8px;cursor:pointer;font-weight:bold;">🔗 Copy Share Link</button>' +
                         '</div>' +
+                        '<div id="lifelens-analysis-' + artifactId + '" style="margin-top:20px;border-top:1px solid #222;padding-top:20px;">' +
+                            '<h4 style="color:#0ff;margin-bottom:12px;">🔬 LifeLens Analysis</h4>' +
+                            '<div style="text-align:center;padding:20px;color:#888;">' +
+                                '<div style="display:inline-block;width:20px;height:20px;border:2px solid #0ff;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;"></div>' +
+                                '<p style="margin-top:8px;">Generating human needs analysis...</p>' +
+                            '</div>' +
+                        '</div>' +
                     '</div>' +
                 '</div>';
             
             document.body.appendChild(modal);
+
+            fetch('/api/lifelens/analyze-artifact', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    artifactId: artifactId,
+                    title: artifact.title || '',
+                    description: artifact.description || '',
+                    category: artifact.category || '',
+                    priceSolar: String(artifact.solarPrice || 0),
+                    kwhFootprint: String(artifact.kwhFootprint || 0)
+                })
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var container = document.getElementById('lifelens-analysis-' + artifactId);
+                if (!container || !data.success) {
+                    if (container) container.innerHTML = '<h4 style="color:#0ff;">🔬 LifeLens Analysis</h4><p style="color:#666;">Analysis unavailable</p>';
+                    return;
+                }
+                var a = data.analysis;
+
+                function needBar(label, intensity) {
+                    var validIntensities = ['none', 'low', 'medium', 'high'];
+                    intensity = validIntensities.indexOf(intensity) >= 0 ? intensity : 'none';
+                    var colors = { none: '#333', low: '#4a6', medium: '#fb0', high: '#f44' };
+                    var widths = { none: '5%', low: '33%', medium: '66%', high: '100%' };
+                    var color = colors[intensity] || '#333';
+                    var width = widths[intensity] || '5%';
+                    return '<div style="display:flex;align-items:center;gap:8px;margin:4px 0;">' +
+                        '<span style="color:#aaa;font-size:11px;width:110px;text-align:right;">' + escapeHtml(label) + '</span>' +
+                        '<div style="flex:1;height:8px;background:#1a1a1a;border-radius:4px;overflow:hidden;">' +
+                            '<div style="height:100%;width:' + width + ';background:' + color + ';border-radius:4px;transition:width 0.5s;"></div>' +
+                        '</div>' +
+                        '<span style="color:' + color + ';font-size:10px;width:50px;">' + escapeHtml(intensity) + '</span>' +
+                    '</div>';
+                }
+
+                var maslowHtml = '';
+                var robbinsHtml = '';
+                if (a.humanNeedsMapping) {
+                    var m = a.humanNeedsMapping.maslow || {};
+                    maslowHtml = '<div style="margin-bottom:16px;">' +
+                        '<h5 style="color:#ffd700;font-size:13px;margin-bottom:8px;">Maslow\'s Hierarchy</h5>' +
+                        needBar('Physiological', (m.physiological || {}).intensity) +
+                        needBar('Safety', (m.safety || {}).intensity) +
+                        needBar('Love/Belonging', (m.loveBelonging || {}).intensity) +
+                        needBar('Esteem', (m.esteem || {}).intensity) +
+                        needBar('Self-Actualization', (m.selfActualization || {}).intensity) +
+                        needBar('Transcendence', (m.transcendence || {}).intensity) +
+                    '</div>';
+
+                    var r2 = a.humanNeedsMapping.robbins || {};
+                    robbinsHtml = '<div style="margin-bottom:16px;">' +
+                        '<h5 style="color:#ffd700;font-size:13px;margin-bottom:8px;">Robbins\' Core Needs</h5>' +
+                        needBar('Certainty', (r2.certainty || {}).intensity) +
+                        needBar('Variety', (r2.variety || {}).intensity) +
+                        needBar('Significance', (r2.significance || {}).intensity) +
+                        needBar('Love/Connection', (r2.loveConnection || {}).intensity) +
+                        needBar('Growth', (r2.growth || {}).intensity) +
+                        needBar('Contribution', (r2.contribution || {}).intensity) +
+                    '</div>';
+                }
+
+                var safeScore = parseInt(a.fitScore) || 0;
+                if (safeScore < 0) safeScore = 0;
+                if (safeScore > 10) safeScore = 10;
+
+                var fitColor = safeScore >= 7 ? '#28a745' : (safeScore >= 4 ? '#ffc107' : '#dc3545');
+
+                container.innerHTML =
+                    '<h4 style="color:#0ff;margin-bottom:12px;">🔬 LifeLens × Rob Low Analysis</h4>' +
+                    (data.cached ? '<span style="color:#666;font-size:10px;">cached</span>' : '') +
+                    '<div style="background:rgba(0,255,255,0.03);border:1px solid #222;border-radius:8px;padding:16px;margin-bottom:12px;">' +
+                        '<p style="color:#ccc;font-size:13px;line-height:1.6;margin:0;">' + escapeHtml(a.needsSummary || '') + '</p>' +
+                    '</div>' +
+                    '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">' +
+                        '<div style="width:50px;height:50px;border-radius:50%;border:3px solid ' + fitColor + ';display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:bold;color:' + fitColor + ';">' + safeScore + '</div>' +
+                        '<div style="flex:1;"><div style="color:#fff;font-size:13px;font-weight:bold;">Fit Score</div><div style="color:#aaa;font-size:12px;">' + escapeHtml(a.fitExplanation || '') + '</div></div>' +
+                    '</div>' +
+                    maslowHtml +
+                    robbinsHtml +
+                    '<div style="margin-top:12px;padding:12px;background:rgba(255,215,0,0.05);border:1px solid #333;border-radius:8px;">' +
+                        '<h5 style="color:#ffd700;font-size:13px;margin-bottom:6px;">⚡ Energy Insight</h5>' +
+                        '<p style="color:#aaa;font-size:12px;line-height:1.5;margin:0;">' + escapeHtml(a.energyInsight || '') + '</p>' +
+                    '</div>' +
+                    '<div style="margin-top:12px;padding:12px;background:rgba(57,255,20,0.05);border:1px solid #333;border-radius:8px;">' +
+                        '<h5 style="color:#39FF14;font-size:13px;margin-bottom:6px;">📦 Provision Notes</h5>' +
+                        '<p style="color:#aaa;font-size:12px;line-height:1.5;margin:0;">' + escapeHtml(a.provisionNotes || '') + '</p>' +
+                    '</div>';
+            })
+            .catch(function(err) {
+                console.error('LifeLens analysis error:', err);
+                var container = document.getElementById('lifelens-analysis-' + artifactId);
+                if (container) container.innerHTML = '<h4 style="color:#0ff;">🔬 LifeLens Analysis</h4><p style="color:#666;font-size:12px;">Analysis currently unavailable</p>';
+            });
         }
 
         async function previewArtifact(artifactId, type) {
