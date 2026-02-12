@@ -30,7 +30,18 @@ The marketplace uses a two-class artifact system tracked by the `artifact_class`
 
 API responses include `artifactClass` field. UI shows distinct badges: gold for Class A, green gradient for Class B. The universal detail modal (`showUniversalDetailModal` in `public/js/marketplace.js`) renders type-specific previews (audio player, video player, code blocks, CSV tables, images, markdown) and shows class/creator badges.
 
-Key endpoints: `/api/artifacts/available` (list all with class), `/api/artifacts/{id}/detail` (info-rich detail), `/api/artifacts/{id}/stream-preview` (binary streaming with Range support for cloud://, HTTP, and local files), `/api/artifacts/{id}/preview` (JSON metadata).
+Key endpoints: `/api/artifacts/available` (list all with class), `/api/artifacts/{id}/detail` (info-rich detail with `streamUrl` and `previewUrl` fields), `/api/artifacts/{id}/preview` (JSON metadata).
+
+### Streaming & File Delivery Architecture (Split Services)
+Media handling is split into two dedicated modules with a shared resolver:
+
+- **`server/media-resolver.js`** (MediaResolver): Shared module that resolves artifact IDs across all 3 data sources (artifacts DB, market_items DB, JSON collections). Returns normalized metadata with `streamSource` and `deliverySource` objects indicating the best source type (cloud/local/http) and path.
+
+- **`server/streaming-service.js`** (StreamingService): Handles real-time audio/video playback with full Range request (206 Partial Content) support. Used by Music Now and marketplace preview players. Routes: `/api/stream/{id}` (new), `/api/artifacts/{id}/stream-preview` (backward compat).
+
+- **`server/file-delivery-service.js`** (FileDeliveryService): Handles marketplace file downloads after purchase. Validates download tokens, checks expiry/limits, serves files with `Content-Disposition: attachment`. Routes: `/api/delivery/{token}` (new), `/api/artifact-download/{token}` (backward compat). Includes `createDownloadToken()` for generating secure time-limited download tokens.
+
+Streaming is for playback in the browser. File delivery is for downloading purchased files to a device. Both share the same MediaResolver for artifact lookup but serve content differently.
 
 The system incorporates an RBAC system with 5 roles and requires scoped admin keys for privileged operations. Security features include intent logging, replay protection, and `validateWithRBAC` for permission checks across 18 privileged routes. A WPC (Watts Per Compute) module provides universal compute-energy intelligence, including functions for estimating FLOPs, energy, and converting units.
 

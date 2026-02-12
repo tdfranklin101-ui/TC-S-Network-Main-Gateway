@@ -133,6 +133,8 @@ const SEOGenerator = require('./server/seo-generator');
 const AISEOOptimizer = require('./server/ai-seo-optimizer');
 const MemberContentService = require('./server/member-content-service');
 const AIPromotionService = require('./server/ai-promotion-service');
+const StreamingService = require('./server/streaming-service');
+const FileDeliveryService = require('./server/file-delivery-service');
 const MemberTemplateService = require('./server/member-template-service');
 
 // TC-S Computronium Market routes
@@ -958,6 +960,8 @@ async function analyzeContentForPricing(fileBuffer, mimeType, metadata) {
 // Enhanced database setup with robust error handling
 // Handles both DATABASE_URL (workspace) and PG* variables (deployed site)
 let pool = null;
+let streamingService = null;
+let fileDeliveryService = null;
 try {
   // Determine SSL configuration - supports all PGSSLMODE options
   let sslConfig;
@@ -6312,7 +6316,7 @@ const server = http.createServer(async (req, res) => {
       client.release();
 
       const hasFile = !!(artifact.master_file_url || artifact.trade_file_url || artifact.delivery_url || artifact.content_body);
-      const downloadUrl = (tokenCreated && tokenValue && hasFile) ? `/api/artifact-download/${tokenValue}` : null;
+      const downloadUrl = (tokenCreated && tokenValue && hasFile) ? `/api/delivery/${tokenValue}` : null;
       const isTextOnly = !!artifact.content_body && !artifact.master_file_url && !artifact.trade_file_url && !artifact.delivery_url;
 
       const response = {
@@ -6997,7 +7001,9 @@ const server = http.createServer(async (req, res) => {
             creatorIsAgent: a.creator_is_agent || false,
             creationMethod: meta.creationMethod || null,
             previewUrl: (a.preview_file_url || a.trade_file_url || a.delivery_url) ? `/api/artifacts/${a.id}/stream-preview` : null,
-            streamPreviewUrl: (a.preview_file_url || a.streaming_url || a.delivery_url) ? `/api/artifacts/${a.id}/stream-preview` : null
+            streamPreviewUrl: (a.preview_file_url || a.streaming_url || a.delivery_url) ? `/api/artifacts/${a.id}/stream-preview` : null,
+            streamUrl: `/api/stream/${a.id}`,
+            deliveryUrl: `/api/delivery/`
           }
         }));
         return;
@@ -7028,7 +7034,9 @@ const server = http.createServer(async (req, res) => {
             creatorName: marketItem.vendor_name || null,
             creatorUsername: null, creatorIsAgent: false, creationMethod: null,
             previewUrl: previewAvailable ? `/api/artifacts/${marketItem.id}/stream-preview` : null,
-            streamPreviewUrl: previewAvailable ? `/api/artifacts/${marketItem.id}/stream-preview` : null
+            streamPreviewUrl: previewAvailable ? `/api/artifacts/${marketItem.id}/stream-preview` : null,
+            streamUrl: `/api/stream/${marketItem.id}`,
+            deliveryUrl: `/api/delivery/`
           }
         }));
         return;
@@ -7059,6 +7067,8 @@ const server = http.createServer(async (req, res) => {
             creatorUsername: null, creatorIsAgent: false, creationMethod: null,
             previewUrl: fileUrl ? `/api/artifacts/${jsonItem.id}/stream-preview` : null,
             streamPreviewUrl: fileUrl ? `/api/artifacts/${jsonItem.id}/stream-preview` : null,
+            streamUrl: `/api/stream/${jsonItem.id}`,
+            deliveryUrl: `/api/delivery/`,
             artist: jsonItem.artist || null, album: jsonItem.album || null, genre: jsonItem.genre || null,
             collection: jsonItem.collection || null, trackNumber: jsonItem.trackNumber || null
           }
@@ -7076,106 +7086,23 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // GET /api/artifacts/{id}/stream-preview - Stream the actual preview binary
-  if (pathname.startsWith('/api/artifacts/') && pathname.endsWith('/stream-preview') && req.method === 'GET') {
+  // GET /api/artifacts/{id}/stream-preview OR /api/stream/{id} - Streaming service
+  if ((pathname.startsWith('/api/artifacts/') && pathname.endsWith('/stream-preview') && req.method === 'GET') ||
+      (pathname.startsWith('/api/stream/') && req.method === 'GET')) {
     try {
-      const artifactId = pathname.split('/')[3];
-      if (!artifactId || !pool) {
+      let artifactId;
+      if (pathname.startsWith('/api/stream/')) {
+        artifactId = pathname.split('/api/stream/')[1];
+      } else {
+        artifactId = pathname.split('/')[3];
+      }
+      if (!artifactId) {
         res.writeHead(400); res.end('Bad request'); return;
       }
-      const artResult = await pool.query(
-        'SELECT preview_file_url, trade_file_url, delivery_url, file_type FROM artifacts WHERE id = $1',
-        [artifactId]
-      );
-      let previewUrl = null;
-      let fileType = null;
-      if (artResult.rows.length > 0) {
-        const art = artResult.rows[0];
-        previewUrl = art.preview_file_url || art.trade_file_url || art.delivery_url;
-        fileType = art.file_type;
-      } else {
-        const marketItem = await findInMarketItems(artifactId);
-        if (marketItem) {
-          const meta = marketItem.metadata || {};
-          previewUrl = meta.previewUrl || meta.streamingUrl || marketItem.source_url || null;
-          fileType = 'digital';
-        } else {
-          const jsonItem = findInJsonCollections(artifactId);
-          if (jsonItem && jsonItem.filePath) {
-            previewUrl = '/' + jsonItem.filePath.replace(/^public\//, '');
-            fileType = 'audio';
-          }
-        }
-      }
-      if (!previewUrl) {
-        res.writeHead(404); res.end('Not found'); return;
-      }
-      if (!previewUrl.startsWith('cloud://')) {
-        if (previewUrl.startsWith('http://') || previewUrl.startsWith('https://')) {
-          res.writeHead(302, { 'Location': previewUrl }); res.end(); return;
-        }
-        if (previewUrl.startsWith('/')) {
-          const localPath = path.join(__dirname, 'public', previewUrl);
-          if (fs.existsSync(localPath)) {
-            const stat = fs.statSync(localPath);
-            const ext = path.extname(localPath).toLowerCase();
-            const mimeTypes = { '.mp3': 'audio/mpeg', '.mp4': 'video/mp4', '.jpg': 'image/jpeg', '.png': 'image/png', '.svg': 'image/svg+xml', '.json': 'application/json', '.js': 'application/javascript', '.wav': 'audio/wav', '.ogg': 'audio/ogg', '.webm': 'video/webm' };
-            const contentType = mimeTypes[ext] || 'application/octet-stream';
-            const range = req.headers.range;
-            if (range) {
-              const parts = range.replace(/bytes=/, '').split('-');
-              const start = parseInt(parts[0], 10);
-              const end = parts[1] ? parseInt(parts[1], 10) : stat.size - 1;
-              const chunkSize = end - start + 1;
-              const stream = fs.createReadStream(localPath, { start, end });
-              res.writeHead(206, {
-                'Content-Range': `bytes ${start}-${end}/${stat.size}`,
-                'Accept-Ranges': 'bytes',
-                'Content-Length': chunkSize,
-                'Content-Type': contentType,
-                'Cache-Control': 'public, max-age=3600'
-              });
-              stream.pipe(res); return;
-            }
-            res.writeHead(200, { 'Content-Type': contentType, 'Content-Length': stat.size, 'Accept-Ranges': 'bytes', 'Cache-Control': 'public, max-age=3600' });
-            fs.createReadStream(localPath).pipe(res); return;
-          }
-        }
-        res.writeHead(404); res.end('Preview not in cloud storage'); return;
-      }
-      const cloudKey = previewUrl.replace('cloud://', '');
-      const cloudStorage = require('./server/cloud-storage');
-      const buffer = await cloudStorage.downloadFile(cloudKey);
-      const ext = path.extname(cloudKey).toLowerCase();
-      const mimeTypes = { '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.ogg': 'audio/ogg', '.mp4': 'video/mp4', '.webm': 'video/webm', '.svg': 'image/svg+xml', '.json': 'application/json', '.js': 'application/javascript', '.md': 'text/markdown', '.csv': 'text/csv' };
-      const contentType = mimeTypes[ext] || fileType || 'application/octet-stream';
-      
-      const range = req.headers.range;
-      if (range) {
-        const parts = range.replace(/bytes=/, '').split('-');
-        const start = parseInt(parts[0], 10);
-        const end = parts[1] ? parseInt(parts[1], 10) : buffer.length - 1;
-        const chunkSize = end - start + 1;
-        res.writeHead(206, {
-          'Content-Range': `bytes ${start}-${end}/${buffer.length}`,
-          'Accept-Ranges': 'bytes',
-          'Content-Length': chunkSize,
-          'Content-Type': contentType,
-          'Cache-Control': 'public, max-age=3600'
-        });
-        res.end(buffer.slice(start, end + 1));
-        return;
-      }
-      
-      res.writeHead(200, {
-        'Content-Type': contentType,
-        'Content-Length': buffer.length,
-        'Accept-Ranges': 'bytes',
-        'Cache-Control': 'public, max-age=3600'
-      });
-      res.end(buffer);
+      if (!streamingService) streamingService = new StreamingService(pool);
+      await streamingService.handleStreamRequest(req, res, artifactId);
     } catch (error) {
-      console.error('Stream preview error:', error);
+      console.error('Streaming service error:', error);
       res.writeHead(500); res.end('Stream failed');
     }
     return;
@@ -7207,12 +7134,12 @@ const server = http.createServer(async (req, res) => {
         const mimeTypes = { '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.ogg': 'audio/ogg', '.mp4': 'video/mp4', '.webm': 'video/webm', '.svg': 'image/svg+xml' };
         const contentType = mimeTypes[ext] || art.file_type || 'application/octet-stream';
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: true, previewUrl: streamUrl, previewType: contentType }));
+        res.end(JSON.stringify({ success: true, previewUrl: streamUrl, streamUrl: streamUrl, previewType: contentType }));
         return;
       }
       if (art.streaming_url) {
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: true, streamingUrl: art.streaming_url, previewType: 'streaming' }));
+        res.end(JSON.stringify({ success: true, streamingUrl: art.streaming_url, streamUrl: `/api/stream/${artifactId}`, previewType: 'streaming' }));
         return;
       }
       res.writeHead(404, { 'Content-Type': 'application/json' });
@@ -10117,7 +10044,7 @@ Respond ONLY with valid JSON in this exact format:
       client.release();
 
       const hasFile = !!(artifact.trade_file_url || artifact.master_file_url || artifact.delivery_url || artifact.content_body);
-      const downloadUrl = (tokenCreated && dlToken && hasFile) ? `/api/artifact-download/${dlToken}` : null;
+      const downloadUrl = (tokenCreated && dlToken && hasFile) ? `/api/delivery/${dlToken}` : null;
 
       const response = {
         success: true,
@@ -10293,7 +10220,7 @@ Respond ONLY with valid JSON in this exact format:
           priceSolar: requiredSolar,
           foundationFee: foundationFee,
           sellerCredit: sellerAmount,
-          downloadUrl: `/api/artifact-download/${downloadToken}`,
+          downloadUrl: `/api/delivery/${downloadToken}`,
           agentUsername,
           transactionId
         }));
@@ -11654,211 +11581,27 @@ Respond ONLY with valid JSON in this exact format:
     return;
   }
   
-  // ARTIFACT DOWNLOAD API - Secure download with token validation
-  if (pathname.startsWith('/api/artifact-download/') && req.method === 'GET') {
+  // GET /api/artifact-download/{token} OR /api/delivery/{token} - File delivery service
+  if ((pathname.startsWith('/api/artifact-download/') && req.method === 'GET') ||
+      (pathname.startsWith('/api/delivery/') && req.method === 'GET')) {
     try {
-      const token = pathname.split('/api/artifact-download/')[1];
-      
-      if (!token || !pool) {
+      let token;
+      if (pathname.startsWith('/api/delivery/')) {
+        token = pathname.split('/api/delivery/')[1];
+      } else {
+        token = pathname.split('/api/artifact-download/')[1];
+      }
+      if (!token) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: false, error: 'Download token required' }));
         return;
       }
-
-      const tokenResult = await pool.query(
-        'SELECT id, token, artifact_id, user_id, expires_at, download_count, max_downloads, is_revoked FROM download_tokens WHERE token = $1 AND is_revoked = false',
-        [token]
-      );
-      
-      if (tokenResult.rows.length === 0) {
-        res.writeHead(404, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: false, error: 'Invalid or expired download token' }));
-        return;
-      }
-      
-      const dlToken = tokenResult.rows[0];
-      
-      if (new Date() > new Date(dlToken.expires_at)) {
-        res.writeHead(410, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: false, error: 'Download token has expired' }));
-        return;
-      }
-      
-      if (dlToken.download_count >= (dlToken.max_downloads || 10)) {
-        res.writeHead(429, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: false, error: 'Download limit exceeded' }));
-        return;
-      }
-      
-      const artResult = await pool.query(
-        'SELECT id, title, trade_file_url, master_file_url, delivery_url, file_type, content_body, content_format FROM artifacts WHERE id = $1',
-        [dlToken.artifact_id]
-      );
-      
-      if (artResult.rows.length === 0) {
-        res.writeHead(404, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: false, error: 'Artifact not found' }));
-        return;
-      }
-      
-      const artifact = artResult.rows[0];
-      const safeTitle = (artifact.title || 'Unknown').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-      
-      const musicFallbackUrls = {
-        "'Ternal Flame": "https://storage.aisongmaker.io/audio/4a839c86-40d9-4272-989b-7a512184ddb6.mp3",
-        "David Boyeez Hair": "https://storage.aisongmaker.io/audio/9b2b12e4-8626-41e4-b9e4-c7a563e40f97.mp3",
-        "Starlight Forever": "https://storage.aisongmaker.io/audio/c51b1f15-eff7-41fb-b778-b1b9d914ce3a.mp3",
-        "Snowmancer One": "/music/snowmancer-one.mp3",
-        "No One Left (to care)": "/media/gidget-bardot-no-one-left-v3.mp3",
-        "In The Seam (Quanta Masque)": "/media/in-the-seam-quanta-masque.mp3",
-        "Omen on the Hudson (Quanta Masque)": "/media/omen-on-the-hudson.mp3",
-        "Break on the Bright Side - Batrhyme": "/media/batrhyme-break-on-the-bright-side.mp3",
-        "Psychedelic Solar Punk Party Party Party": "/media/batrhyme-psychedelic-solar-punk-party.mp3"
-      };
-      
-      const fileUrl = artifact.trade_file_url || artifact.master_file_url || artifact.delivery_url;
-      
-      function tryServeLocalFile(localUrl, res, artifact, safeTitle, dlMimeTypes) {
-        const candidates = [
-          path.join(__dirname, 'public', localUrl),
-          path.join(__dirname, localUrl)
-        ];
-        for (const filePath of candidates) {
-          if (fs.existsSync(filePath)) {
-            const localBuf = fs.readFileSync(filePath);
-            const ext = path.extname(filePath).toLowerCase();
-            const contentType = dlMimeTypes[ext] || artifact.file_type || 'application/octet-stream';
-            res.writeHead(200, {
-              'Content-Type': contentType,
-              'Content-Length': localBuf.length,
-              'Content-Disposition': `attachment; filename="${safeTitle}${ext}"`,
-              'Cache-Control': 'no-cache'
-            });
-            res.end(localBuf);
-            console.log(`📦 LOCAL DOWNLOAD: "${artifact.title}" from ${filePath} (${(localBuf.length/1048576).toFixed(1)}MB)`);
-            return true;
-          }
-        }
-        return false;
-      }
-      
-      function tryFallbackChain(res, artifact, safeTitle, dlMimeTypes, musicFallbackUrls) {
-        if (artifact.delivery_url) {
-          if (artifact.delivery_url.startsWith('http')) {
-            res.writeHead(302, { 'Location': artifact.delivery_url, 'Cache-Control': 'no-cache' });
-            res.end();
-            console.log(`📦 DELIVERY URL REDIRECT: "${artifact.title}" → ${artifact.delivery_url}`);
-            return true;
-          }
-          if (artifact.delivery_url.startsWith('/')) {
-            if (tryServeLocalFile(artifact.delivery_url, res, artifact, safeTitle, dlMimeTypes)) return true;
-          }
-        }
-        
-        const fallbackUrl = musicFallbackUrls[artifact.title];
-        if (fallbackUrl) {
-          if (fallbackUrl.startsWith('http')) {
-            res.writeHead(302, { 'Location': fallbackUrl, 'Cache-Control': 'no-cache' });
-            res.end();
-            console.log(`📦 FALLBACK MAP REDIRECT: "${artifact.title}" → ${fallbackUrl}`);
-            return true;
-          }
-          if (fallbackUrl.startsWith('/')) {
-            if (tryServeLocalFile(fallbackUrl, res, artifact, safeTitle, dlMimeTypes)) {
-              console.log(`📦 FALLBACK MAP LOCAL: "${artifact.title}" → ${fallbackUrl}`);
-              return true;
-            }
-          }
-        }
-        
-        return false;
-      }
-      
-      if (!fileUrl && artifact.content_body) {
-        await pool.query(
-          'UPDATE download_tokens SET download_count = download_count + 1, last_accessed_at = NOW() WHERE id = $1',
-          [dlToken.id]
-        );
-        const contentExtMap = { 'md': '.md', 'json': '.json', 'js': '.js', 'text': '.txt', 'csv': '.csv', 'pdf': '.txt', 'binary': '.bin' };
-        const ext = contentExtMap[artifact.content_format] || '.txt';
-        const contentMimeMap = { 'md': 'text/markdown', 'json': 'application/json', 'js': 'application/javascript', 'text': 'text/plain', 'csv': 'text/csv' };
-        const contentType = contentMimeMap[artifact.content_format] || 'text/plain';
-        const bodyBuffer = Buffer.from(artifact.content_body, 'utf-8');
-        res.writeHead(200, {
-          'Content-Type': contentType,
-          'Content-Length': bodyBuffer.length,
-          'Content-Disposition': `attachment; filename="${safeTitle}${ext}"`,
-          'Cache-Control': 'no-cache'
-        });
-        res.end(bodyBuffer);
-        console.log(`📦 CONTENT DOWNLOAD: "${artifact.title}" (${artifact.content_format || 'text'}, ${bodyBuffer.length} bytes)`);
-        return;
-      }
-      if (!fileUrl) {
-        res.writeHead(404, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: false, error: 'Artifact file not found' }));
-        return;
-      }
-      
-      await pool.query(
-        'UPDATE download_tokens SET download_count = download_count + 1, last_accessed_at = NOW() WHERE id = $1',
-        [dlToken.id]
-      );
-      
-      const dlMimeTypes = {
-        '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.ogg': 'audio/ogg',
-        '.mp4': 'video/mp4', '.webm': 'video/webm', '.mov': 'video/quicktime',
-        '.m4a': 'audio/mp4', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
-        '.png': 'image/png', '.gif': 'image/gif', '.webp': 'image/webp',
-        '.pdf': 'application/pdf', '.zip': 'application/zip'
-      };
-      
-      if (fileUrl.startsWith('cloud://')) {
-        try {
-          const cloudStorage = require('./server/cloud-storage');
-          const cloudKey = fileUrl.replace('cloud://', '');
-          const buffer = await cloudStorage.downloadFile(cloudKey);
-          const ext = path.extname(cloudKey).toLowerCase();
-          const contentType = dlMimeTypes[ext] || artifact.file_type || 'application/octet-stream';
-          res.writeHead(200, {
-            'Content-Type': contentType,
-            'Content-Length': buffer.length,
-            'Content-Disposition': `attachment; filename="${safeTitle}${ext}"`,
-            'Cache-Control': 'no-cache'
-          });
-          res.end(buffer);
-          console.log(`📦 CLOUD DOWNLOAD: "${artifact.title}" via token (${(buffer.length/1048576).toFixed(1)}MB)`);
-        } catch (cloudErr) {
-          console.error(`Cloud download error for "${artifact.title}":`, cloudErr.message, '| trade_file_url:', artifact.trade_file_url, '| delivery_url:', artifact.delivery_url);
-          if (tryFallbackChain(res, artifact, safeTitle, dlMimeTypes, musicFallbackUrls)) {
-            return;
-          }
-          console.error(`All fallbacks failed for "${artifact.title}"`);
-          res.writeHead(500, { 'Content-Type': 'text/html; charset=utf-8' });
-          res.end(`<html><body style="background:#0a0a0a;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0"><div style="text-align:center;max-width:500px;padding:20px;"><h1 style="color:#ff6b6b;">Download Unavailable</h1><p style="color:#ccc;margin:20px 0;">The file for "<strong>${safeTitle}</strong>" could not be retrieved from cloud storage.</p><p style="color:#888;font-size:14px;">Please try again later or contact support.</p><a href="/marketplace.html" style="display:inline-block;margin-top:20px;padding:12px 24px;background:#007bff;color:#fff;border-radius:8px;text-decoration:none;">Return to Marketplace</a></div></body></html>`);
-        }
-      } else if (fileUrl.startsWith('/')) {
-        if (tryServeLocalFile(fileUrl, res, artifact, safeTitle, dlMimeTypes)) {
-        } else if (tryFallbackChain(res, artifact, safeTitle, dlMimeTypes, musicFallbackUrls)) {
-        } else {
-          res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
-          res.end(`<html><body style="background:#0a0a0a;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0"><div style="text-align:center;max-width:500px;padding:20px;"><h1 style="color:#ff6b6b;">File Not Found</h1><p style="color:#ccc;margin:20px 0;">The file for "<strong>${safeTitle}</strong>" was not found on the server.</p><a href="/marketplace.html" style="display:inline-block;margin-top:20px;padding:12px 24px;background:#007bff;color:#fff;border-radius:8px;text-decoration:none;">Return to Marketplace</a></div></body></html>`);
-        }
-      } else if (fileUrl.startsWith('http')) {
-        res.writeHead(302, { 'Location': fileUrl, 'Cache-Control': 'no-cache' });
-        res.end();
-      } else {
-        if (tryFallbackChain(res, artifact, safeTitle, dlMimeTypes, musicFallbackUrls)) {
-        } else {
-          res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
-          res.end(`<html><body style="background:#0a0a0a;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0"><div style="text-align:center;max-width:500px;padding:20px;"><h1 style="color:#ff6b6b;">Download Unavailable</h1><p style="color:#ccc;margin:20px 0;">The file for "<strong>${safeTitle}</strong>" could not be located.</p><a href="/marketplace.html" style="display:inline-block;margin-top:20px;padding:12px 24px;background:#007bff;color:#fff;border-radius:8px;text-decoration:none;">Return to Marketplace</a></div></body></html>`);
-        }
-      }
+      if (!fileDeliveryService) fileDeliveryService = new FileDeliveryService(pool);
+      await fileDeliveryService.handleTokenDownload(req, res, token);
     } catch (error) {
-      console.error('Artifact download error:', error);
-      const safeErrorTitle = error.artifact ? (error.artifact.title || 'Unknown').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;') : '';
-      res.writeHead(500, { 'Content-Type': 'text/html; charset=utf-8' });
-      res.end(`<html><body style="background:#0a0a0a;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0"><div style="text-align:center;max-width:500px;padding:20px;"><h1 style="color:#ff6b6b;">Download Error</h1><p style="color:#ccc;margin:20px 0;">An unexpected error occurred while processing your download.</p><p style="color:#888;font-size:14px;">Please try again or contact support.</p><a href="/marketplace.html" style="display:inline-block;margin-top:20px;padding:12px 24px;background:#007bff;color:#fff;border-radius:8px;text-decoration:none;">Return to Marketplace</a></div></body></html>`);
+      console.error('File delivery service error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Download failed' }));
     }
     return;
   }

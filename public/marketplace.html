@@ -5203,6 +5203,11 @@
                             🎵 Listen on Music Now
                         </a>` : ''
                     }
+                    ${artifact.streamUrl && (artifact.previewType === 'audio' || artifact.category === 'music') ? 
+                        `<button class="preview-btn" onclick="event.stopPropagation(); playStreamInline('${artifact.streamUrl}', '${artifact.title.replace(/'/g, "\\'")}')">
+                            🔊 Play Preview
+                        </button>` : ''
+                    }
                     ${artifact.previewType === 'video' ? 
                         `<button class="preview-btn" onclick="event.stopPropagation(); openPreview('${artifact.id}')">
                             🎬 Preview Video
@@ -5228,6 +5233,21 @@
 
         function showAllMarket() {
             applyFilters();
+        }
+
+        function playStreamInline(streamUrl, title) {
+            let player = document.getElementById('inline-stream-player');
+            if (!player) {
+                player = document.createElement('div');
+                player.id = 'inline-stream-player';
+                player.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1a1a1a;border:1px solid #333;border-radius:12px;padding:12px 20px;z-index:9999;display:flex;align-items:center;gap:12px;box-shadow:0 4px 20px rgba(0,0,0,0.5);';
+                player.innerHTML = '<span id="inline-stream-title" style="color:#ffd700;font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span><audio id="inline-stream-audio" controls style="height:32px;"></audio><button onclick="document.getElementById(\'inline-stream-player\').remove();" style="background:none;border:none;color:#888;font-size:18px;cursor:pointer;">&times;</button>';
+                document.body.appendChild(player);
+            }
+            document.getElementById('inline-stream-title').textContent = title;
+            const audio = document.getElementById('inline-stream-audio');
+            audio.src = streamUrl;
+            audio.play().catch(e => console.warn('Autoplay blocked:', e));
         }
 
         async function showMyListings() {
@@ -6240,9 +6260,8 @@
 
                 const result = await response.json();
                 
-                if (result.success && result.previewUrl) {
-                    // Set video source with secure URL
-                    videoSource.src = result.previewUrl;
+                if (result.success && (result.streamUrl || result.previewUrl)) {
+                    videoSource.src = result.streamUrl || result.previewUrl;
                     videoPlayer.load();
                     videoPlayer.poster = ''; // Remove loading poster
                     
@@ -6330,9 +6349,8 @@
 
                 const result = await response.json();
                 
-                if (result.success && result.previewUrl) {
-                    // Set audio source with secure URL
-                    musicSource.src = result.previewUrl;
+                if (result.success && (result.streamUrl || result.previewUrl)) {
+                    musicSource.src = result.streamUrl || result.previewUrl;
                     musicPlayer.load();
                     
                     console.log(`🎵 Preview ready for: ${result.artifactTitle}`);
@@ -6451,8 +6469,8 @@
                     
                     if (fallbackResponse.ok) {
                         const fallbackData = await fallbackResponse.json();
-                        if (fallbackData.success && fallbackData.previewUrl) {
-                            videoSource.src = fallbackData.previewUrl;
+                        if (fallbackData.success && (fallbackData.streamUrl || fallbackData.previewUrl)) {
+                            videoSource.src = fallbackData.streamUrl || fallbackData.previewUrl;
                             videoPlayer.load();
                             videoPlayer.poster = '';
                             console.log(`🎬 Legacy preview ready: ${artifact.title}`);
@@ -6464,8 +6482,8 @@
                 
                 const previewData = await previewResponse.json();
                 
-                if (previewData.success && previewData.previewUrl) {
-                    videoSource.src = previewData.previewUrl;
+                if (previewData.success && (previewData.streamUrl || previewData.previewUrl)) {
+                    videoSource.src = previewData.streamUrl || previewData.previewUrl;
                     videoPlayer.load();
                     videoPlayer.poster = '';
                     console.log(`🎬 Enhanced preview ready: ${artifact.title}`);
