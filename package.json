@@ -51,6 +51,7 @@
     "openid-client": "^6.7.1",
     "pg": "^8.14.1",
     "react-chartjs-2": "^5.3.1",
+    "resend": "^4.0.0",
     "serve-static": "^2.2.0",
     "sharp": "^0.34.4",
     "tailwindcss": "^4.1.3",

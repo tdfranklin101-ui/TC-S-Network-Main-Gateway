@@ -119,6 +119,27 @@ const cron = require('node-cron');
 const { exec } = require('child_process');
 // const { ObjectStorageService } = require('./server/objectStorage'); // Disabled for stable Music Now service
 
+// Resend email integration for password reset
+async function getResendClient() {
+  const { Resend } = await import('resend');
+  const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
+  const xReplitToken = process.env.REPL_IDENTITY 
+    ? 'repl ' + process.env.REPL_IDENTITY 
+    : process.env.WEB_REPL_RENEWAL 
+    ? 'depl ' + process.env.WEB_REPL_RENEWAL 
+    : null;
+
+  if (!xReplitToken) throw new Error('Replit token not found');
+
+  const connData = await fetch(
+    'https://' + hostname + '/api/v2/connection?include_secrets=true&connector_names=resend',
+    { headers: { 'Accept': 'application/json', 'X_REPLIT_TOKEN': xReplitToken } }
+  ).then(r => r.json()).then(d => d.items?.[0]);
+
+  if (!connData?.settings?.api_key) throw new Error('Resend not connected');
+  return { client: new Resend(connData.settings.api_key), fromEmail: connData.settings.from_email };
+}
+
 // Import seed rotation system
 const { initializeSeedRotation, getSeedRotator } = require('./server/seed-rotation-api');
 
@@ -5723,6 +5744,189 @@ const server = http.createServer(async (req, res) => {
       console.error('Logout error:', error);
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ success: false, error: 'Logout failed' }));
+    }
+    return;
+  }
+
+  // Forgot Password - request password reset email
+  if (pathname === '/api/forgot-password' && req.method === 'POST') {
+    try {
+      const body = await parseBody(req);
+      const { email } = body;
+      
+      if (!email) {
+        res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ success: false, error: 'Email is required' }));
+        return;
+      }
+      
+      const memberResult = await pool.query('SELECT id, email, username FROM members WHERE LOWER(email) = LOWER($1)', [email]);
+      
+      if (memberResult.rows.length > 0) {
+        const member = memberResult.rows[0];
+        const token = crypto.randomUUID();
+        const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+        
+        await pool.query(
+          'INSERT INTO password_reset_tokens (member_id, token, expires_at) VALUES ($1, $2, $3)',
+          [member.id, token, expiresAt]
+        );
+        
+        const resetLink = `https://${req.headers.host}/reset-password.html?token=${token}`;
+        
+        try {
+          const { client: resend, fromEmail } = await getResendClient();
+          await resend.emails.send({
+            from: fromEmail || 'TC-S Network <noreply@thecurrentsee.org>',
+            to: member.email,
+            subject: 'TC-S Network - Password Reset',
+            html: `
+              <div style="background: #0a0a0a; padding: 40px 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                <div style="max-width: 500px; margin: 0 auto; background: #1a1a1a; border: 1px solid #333; border-radius: 12px; padding: 30px;">
+                  <h1 style="color: #FFD700; font-size: 24px; margin-bottom: 10px;">TC-S Network</h1>
+                  <h2 style="color: #ffffff; font-size: 18px; margin-bottom: 20px;">Password Reset Request</h2>
+                  <p style="color: #cccccc; font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
+                    Hello <strong style="color: #FFD700;">${member.username}</strong>,<br><br>
+                    We received a request to reset your password. Click the button below to set a new password. This link expires in 1 hour.
+                  </p>
+                  <div style="text-align: center; margin: 30px 0;">
+                    <a href="${resetLink}" style="background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: bold; font-size: 16px; display: inline-block;">Reset Password</a>
+                  </div>
+                  <p style="color: #888; font-size: 12px; line-height: 1.5;">
+                    If you didn't request this, you can safely ignore this email. Your password will remain unchanged.<br><br>
+                    <span style="color: #666;">Link: ${resetLink}</span>
+                  </p>
+                  <hr style="border: none; border-top: 1px solid #333; margin: 20px 0;">
+                  <p style="color: #555; font-size: 11px; text-align: center;">TC-S Network Foundation, Inc. | Solar Standard Protocol</p>
+                </div>
+              </div>
+            `
+          });
+          console.log(`📧 Password reset email sent to ${member.email}`);
+        } catch (emailErr) {
+          console.error('Failed to send password reset email:', emailErr.message);
+        }
+      }
+      
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify({ success: true, message: 'If an account with that email exists, a reset link has been sent.' }));
+    } catch (error) {
+      console.error('Forgot password error:', error);
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify({ success: true, message: 'If an account with that email exists, a reset link has been sent.' }));
+    }
+    return;
+  }
+
+  // Reset Password - set new password using token
+  if (pathname === '/api/reset-password' && req.method === 'POST') {
+    try {
+      const body = await parseBody(req);
+      const { token, newPassword } = body;
+      
+      if (!token || !newPassword) {
+        res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ success: false, error: 'Token and new password are required' }));
+        return;
+      }
+      
+      if (newPassword.length < 6) {
+        res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ success: false, error: 'Password must be at least 6 characters' }));
+        return;
+      }
+      
+      const tokenResult = await pool.query(
+        'SELECT * FROM password_reset_tokens WHERE token = $1 AND used = false AND expires_at > NOW()',
+        [token]
+      );
+      
+      if (tokenResult.rows.length === 0) {
+        res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ success: false, error: 'Invalid or expired reset link. Please request a new one.' }));
+        return;
+      }
+      
+      const resetToken = tokenResult.rows[0];
+      const hashedPassword = await bcrypt.hash(newPassword, 12);
+      
+      await pool.query('UPDATE members SET password_hash = $1 WHERE id = $2', [hashedPassword, resetToken.member_id]);
+      await pool.query('UPDATE password_reset_tokens SET used = true WHERE id = $1', [resetToken.id]);
+      
+      console.log(`🔑 Password reset completed for member ID: ${resetToken.member_id}`);
+      
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify({ success: true, message: 'Password has been reset successfully. You can now sign in.' }));
+    } catch (error) {
+      console.error('Reset password error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to reset password. Please try again.' }));
+    }
+    return;
+  }
+
+  // Change Password - authenticated password change
+  if (pathname === '/api/change-password' && req.method === 'POST') {
+    try {
+      const cookies = req.headers.cookie?.split(';').reduce((acc, cookie) => {
+        const [key, value] = cookie.trim().split('=');
+        acc[key] = value;
+        return acc;
+      }, {}) || {};
+      
+      const sessionId = cookies.tc_s_session;
+      const session = await getSession(sessionId);
+      
+      if (!session) {
+        res.writeHead(401, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ success: false, error: 'Please sign in first' }));
+        return;
+      }
+      
+      const body = await parseBody(req);
+      const { currentPassword, newPassword } = body;
+      
+      if (!currentPassword || !newPassword) {
+        res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ success: false, error: 'Current and new passwords are required' }));
+        return;
+      }
+      
+      if (newPassword.length < 6) {
+        res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ success: false, error: 'New password must be at least 6 characters' }));
+        return;
+      }
+      
+      const memberId = session.userId || session.memberId;
+      const memberResult = await pool.query('SELECT id, password_hash FROM members WHERE id = $1', [memberId]);
+      
+      if (memberResult.rows.length === 0) {
+        res.writeHead(404, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ success: false, error: 'Member not found' }));
+        return;
+      }
+      
+      const member = memberResult.rows[0];
+      const passwordValid = await bcrypt.compare(currentPassword, member.password_hash);
+      
+      if (!passwordValid) {
+        res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ success: false, error: 'Current password is incorrect' }));
+        return;
+      }
+      
+      const hashedPassword = await bcrypt.hash(newPassword, 12);
+      await pool.query('UPDATE members SET password_hash = $1 WHERE id = $2', [hashedPassword, member.id]);
+      
+      console.log(`🔑 Password changed for member ID: ${member.id}`);
+      
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify({ success: true, message: 'Password changed successfully' }));
+    } catch (error) {
+      console.error('Change password error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to change password. Please try again.' }));
     }
     return;
   }

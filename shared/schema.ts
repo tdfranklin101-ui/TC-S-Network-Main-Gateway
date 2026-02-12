@@ -1588,3 +1588,12 @@ export const insertGrantPetitionSchema = createInsertSchema(grantPetitions).omit
 export type GrantPetition = typeof grantPetitions.$inferSelect;
 export type InsertGrantPetition = z.infer<typeof insertGrantPetitionSchema>;
 export type InsertVendorVoucherSettings = z.infer<typeof insertVendorVoucherSettingsSchema>;
+
+export const passwordResetTokens = pgTable("password_reset_tokens", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  memberId: integer("member_id").references(() => members.id).notNull(),
+  token: varchar("token").notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  used: boolean("used").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});

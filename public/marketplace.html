@@ -2366,6 +2366,7 @@
                 </div>
                 <a href="/my-library.html" class="register-btn" style="display: inline-block; text-decoration: none; margin-right: 10px; background: linear-gradient(135deg, #00ff88, #00cc66);">📦 My Library</a>
                 <a href="/agent.html" class="register-btn" style="display: inline-block; text-decoration: none; margin-right: 10px; background: linear-gradient(135deg, #00ffff, #00bfff);">🤖 Agent</a>
+                <button class="logout-btn" onclick="showChangePasswordModal()" style="background: #FFD700; color: #000; margin-right: 5px;">🔑 Password</button>
                 <button class="logout-btn" onclick="logoutUser()">Logout</button>
             </div>
         </div>
@@ -4058,9 +4059,66 @@
                     </button>
                 </div>
             </div>
+            <div style="text-align: right; margin-bottom: 10px;">
+                <a href="#" onclick="showForgotPasswordModal(); return false;" style="color: #FFD700; font-size: 12px; text-decoration: none;">Forgot Password?</a>
+            </div>
             <div class="form-buttons">
                 <button class="btn btn-secondary" onclick="closeSigninModal()">Cancel</button>
                 <button class="btn btn-primary" onclick="signinUser()">Sign In</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Forgot Password Modal -->
+    <div class="signup-modal" id="forgot-password-modal">
+        <div class="signup-form">
+            <h3>Reset Your Password</h3>
+            <p style="color: #888; margin-bottom: 20px; font-size: 14px;">
+                Enter your email address and we'll send you a link to reset your password.
+            </p>
+            <div id="reset-email-form">
+                <div class="form-group">
+                    <label for="reset-email">Email Address</label>
+                    <input type="email" id="reset-email" placeholder="Enter your email" required>
+                </div>
+                <div class="form-buttons">
+                    <button class="btn btn-secondary" onclick="closeForgotPasswordModal()">Cancel</button>
+                    <button class="btn btn-primary" onclick="requestPasswordReset()">Send Reset Link</button>
+                </div>
+            </div>
+            <div id="reset-email-success" style="display: none; text-align: center; padding: 20px 0;">
+                <div style="font-size: 48px; margin-bottom: 15px;">📧</div>
+                <h4 style="color: #FFD700; margin-bottom: 10px;">Check Your Email</h4>
+                <p style="color: #888; font-size: 14px; line-height: 1.5; margin-bottom: 20px;">
+                    If an account exists with that email, you'll receive a password reset link shortly. The link expires in 1 hour.
+                </p>
+                <button class="btn btn-secondary" onclick="closeForgotPasswordModal(); document.getElementById('reset-email-form').style.display='block'; document.getElementById('reset-email-success').style.display='none';">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div class="signup-modal" id="change-password-modal">
+        <div class="signup-form">
+            <h3>Change Password</h3>
+            <p style="color: #888; margin-bottom: 20px; font-size: 14px;">
+                Enter your current password and choose a new one.
+            </p>
+            <div class="form-group">
+                <label for="current-password">Current Password</label>
+                <input type="password" id="current-password" required>
+            </div>
+            <div class="form-group">
+                <label for="new-password">New Password</label>
+                <input type="password" id="new-password" placeholder="At least 6 characters" required>
+            </div>
+            <div class="form-group">
+                <label for="confirm-new-password">Confirm New Password</label>
+                <input type="password" id="confirm-new-password" required>
+            </div>
+            <div class="form-buttons">
+                <button class="btn btn-secondary" onclick="closeChangePasswordModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="changePassword()">Change Password</button>
             </div>
         </div>
     </div>
@@ -4322,6 +4380,81 @@
 
         function closeSignupModal() {
             document.getElementById('signup-modal').classList.remove('visible');
+        }
+
+        function showForgotPasswordModal() {
+            closeSigninModal();
+            document.getElementById('forgot-password-modal').classList.add('visible');
+        }
+
+        function closeForgotPasswordModal() {
+            document.getElementById('forgot-password-modal').classList.remove('visible');
+        }
+
+        async function requestPasswordReset() {
+            const email = document.getElementById('reset-email').value;
+            if (!email) { alert('Please enter your email address'); return; }
+            
+            try {
+                const response = await fetch('/api/forgot-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                const result = await response.json();
+                document.getElementById('reset-email-form').style.display = 'none';
+                document.getElementById('reset-email-success').style.display = 'block';
+            } catch (error) {
+                alert('Something went wrong. Please try again.');
+            }
+        }
+
+        function showChangePasswordModal() {
+            document.getElementById('change-password-modal').classList.add('visible');
+        }
+
+        function closeChangePasswordModal() {
+            document.getElementById('change-password-modal').classList.remove('visible');
+            document.getElementById('current-password').value = '';
+            document.getElementById('new-password').value = '';
+            document.getElementById('confirm-new-password').value = '';
+        }
+
+        async function changePassword() {
+            const currentPassword = document.getElementById('current-password').value;
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-new-password').value;
+            
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                alert('All fields are required');
+                return;
+            }
+            if (newPassword.length < 6) {
+                alert('New password must be at least 6 characters');
+                return;
+            }
+            if (newPassword !== confirmPassword) {
+                alert('New passwords do not match');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/change-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ currentPassword, newPassword })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    alert('Password changed successfully!');
+                    closeChangePasswordModal();
+                } else {
+                    alert(result.error || 'Failed to change password');
+                }
+            } catch (error) {
+                alert('Something went wrong. Please try again.');
+            }
         }
 
         // Password visibility toggle function
