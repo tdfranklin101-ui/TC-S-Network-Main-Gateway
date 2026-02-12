@@ -3004,6 +3004,10 @@
             <div class="my-artifacts-grid" id="my-artifacts-grid">
                 <!-- User's artifacts will be loaded here -->
             </div>
+            <div id="my-items-empty" class="empty-state" style="display: none;">
+                <h3>No Items Yet</h3>
+                <p>You haven't uploaded any artifacts or made any purchases yet.</p>
+            </div>
         </div>
 
         <div id="lifelens-content" class="tab-content" style="display: none;">
@@ -5389,10 +5393,10 @@
         async function showMyListings() {
             if (!currentUser) {
                 // Show sign-in prompt if not logged in
-                document.getElementById('artifacts-grid').style.display = 'none';
-                document.getElementById('empty-state').style.display = 'block';
-                document.querySelector('#empty-state h3').textContent = 'Sign In Required';
-                document.querySelector('#empty-state p').textContent = 'Please sign in to view your items.';
+                document.getElementById('my-artifacts-grid').style.display = 'none';
+                document.getElementById('my-items-empty').style.display = 'block';
+                document.querySelector('#my-items-empty h3').textContent = 'Sign In Required';
+                document.querySelector('#my-items-empty p').textContent = 'Please sign in to view your items.';
                 return;
             }
 
@@ -5406,10 +5410,10 @@
                     displayMyItems(data);
                 } else if (response.status === 401) {
                     // Authentication error - show sign in prompt
-                    document.getElementById('artifacts-grid').style.display = 'none';
-                    document.getElementById('empty-state').style.display = 'block';
-                    document.querySelector('#empty-state h3').textContent = 'Sign In Required';
-                    document.querySelector('#empty-state p').textContent = 'Please sign in to view your items.';
+                    document.getElementById('my-artifacts-grid').style.display = 'none';
+                    document.getElementById('my-items-empty').style.display = 'block';
+                    document.querySelector('#my-items-empty h3').textContent = 'Sign In Required';
+                    document.querySelector('#my-items-empty p').textContent = 'Please sign in to view your items.';
                 } else {
                     throw new Error('Failed to fetch user items');
                 }
@@ -5419,13 +5423,21 @@
                 const myArtifacts = allArtifacts.filter(artifact => 
                     artifact.creatorId && artifact.creatorId.toString() === currentUser.userId.toString()
                 );
+                const fallbackGrid = document.getElementById('my-artifacts-grid');
+                const fallbackEmpty = document.getElementById('my-items-empty');
                 if (myArtifacts.length === 0) {
-                    document.getElementById('artifacts-grid').style.display = 'none';
-                    document.getElementById('empty-state').style.display = 'block';
-                    document.querySelector('#empty-state h3').textContent = 'No Items Yet';
-                    document.querySelector('#empty-state p').textContent = 'You haven\'t uploaded any artifacts or made any purchases yet.';
+                    fallbackGrid.style.display = 'none';
+                    fallbackEmpty.style.display = 'block';
+                    document.querySelector('#my-items-empty h3').textContent = 'No Items Yet';
+                    document.querySelector('#my-items-empty p').textContent = 'You haven\'t uploaded any artifacts or made any purchases yet.';
                 } else {
-                    displayArtifacts(myArtifacts);
+                    fallbackGrid.style.display = 'grid';
+                    fallbackEmpty.style.display = 'none';
+                    let fallbackHTML = '';
+                    myArtifacts.forEach(artifact => {
+                        fallbackHTML += createMyItemCard(artifact, 'uploaded');
+                    });
+                    fallbackGrid.innerHTML = fallbackHTML;
                 }
             }
         }
@@ -5447,8 +5459,8 @@
                 data.purchased.artifacts.filter(artifact => artifact.category === categoryFilter) :
                 data.purchased.artifacts;
             
-            const grid = document.getElementById('artifacts-grid');
-            const emptyState = document.getElementById('empty-state');
+            const grid = document.getElementById('my-artifacts-grid');
+            const emptyState = document.getElementById('my-items-empty');
             
             const filteredUploadedCount = filteredUploaded.length;
             const filteredPurchasedCount = filteredPurchased.length;
@@ -5459,11 +5471,11 @@
                 emptyState.style.display = 'block';
                 if (categoryFilter) {
                     const categoryName = categoryFilter.charAt(0).toUpperCase() + categoryFilter.slice(1);
-                    document.querySelector('#empty-state h3').textContent = `No ${categoryName} Items Found`;
-                    document.querySelector('#empty-state p').textContent = `You don't have any ${categoryName.toLowerCase()} artifacts in this category yet.`;
+                    document.querySelector('#my-items-empty h3').textContent = `No ${categoryName} Items Found`;
+                    document.querySelector('#my-items-empty p').textContent = `You don't have any ${categoryName.toLowerCase()} artifacts in this category yet.`;
                 } else {
-                    document.querySelector('#empty-state h3').textContent = 'No Items Yet';
-                    document.querySelector('#empty-state p').textContent = 'You haven\'t uploaded any artifacts or made any purchases yet.';
+                    document.querySelector('#my-items-empty h3').textContent = 'No Items Yet';
+                    document.querySelector('#my-items-empty p').textContent = 'You haven\'t uploaded any artifacts or made any purchases yet.';
                 }
                 return;
             }
@@ -5472,6 +5484,28 @@
             emptyState.style.display = 'none';
             
             let gridHTML = '';
+            
+            gridHTML += `
+<div style="grid-column: 1 / -1; margin-bottom: 24px;">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; padding: 16px; background: linear-gradient(135deg, rgba(0,255,255,0.05), rgba(57,255,20,0.05)); border: 1px solid rgba(0,255,255,0.2); border-radius: 12px;">
+        <div style="text-align:center;padding:12px;background:rgba(0,0,0,0.3);border-radius:8px;border:1px solid rgba(255,170,0,0.2);">
+            <div style="font-size:24px;font-weight:bold;color:#ffaa00;">${data.uploaded.totalItems}</div>
+            <div style="font-size:11px;color:#888;margin-top:4px;">Created</div>
+        </div>
+        <div style="text-align:center;padding:12px;background:rgba(0,0,0,0.3);border-radius:8px;border:1px solid rgba(40,167,69,0.2);">
+            <div style="font-size:24px;font-weight:bold;color:#28a745;">${data.purchased.totalItems}</div>
+            <div style="font-size:11px;color:#888;margin-top:4px;">Purchased</div>
+        </div>
+        <div style="text-align:center;padding:12px;background:rgba(0,0,0,0.3);border-radius:8px;border:1px solid rgba(57,255,20,0.2);">
+            <div style="font-size:24px;font-weight:bold;color:#39FF14;">${data.uploaded.totalValue.toFixed(4)}</div>
+            <div style="font-size:11px;color:#888;margin-top:4px;">Listed Value (S)</div>
+        </div>
+        <div style="text-align:center;padding:12px;background:rgba(0,0,0,0.3);border-radius:8px;border:1px solid rgba(0,255,255,0.2);">
+            <div style="font-size:24px;font-weight:bold;color:#0ff;">${data.purchased.totalSpent.toFixed(4)}</div>
+            <div style="font-size:11px;color:#888;margin-top:4px;">Total Spent (S)</div>
+        </div>
+    </div>
+</div>`;
             
             // Add uploaded items section (only if filtered results exist)
             if (filteredUploadedCount > 0) {
