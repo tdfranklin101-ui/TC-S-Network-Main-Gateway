@@ -13996,6 +13996,435 @@ Respond with valid JSON only. Be insightful and specific.`;
     return;
   }
 
+  // ================== 3D ARTIFACT & FACTORY ENDPOINTS ==================
+  const artifact3dService = (() => { try { return require('./server/artifact3d-service.js'); } catch(e) { return null; } })();
+
+  // 1. GET /api/artifact3d/templates — List all parametric templates
+  if (pathname === '/api/artifact3d/templates' && req.method === 'GET') {
+    if (!artifact3dService) {
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: '3D artifact service unavailable' }));
+      return;
+    }
+    const templates = artifact3dService.getTemplates();
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ success: true, templates, count: templates.length }));
+    return;
+  }
+
+  // 2. GET /api/artifact3d/templates/:id — Single template detail
+  if (pathname.startsWith('/api/artifact3d/templates/') && req.method === 'GET') {
+    if (!artifact3dService) {
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: '3D artifact service unavailable' }));
+      return;
+    }
+    const templateId = pathname.split('/api/artifact3d/templates/')[1];
+    const template = artifact3dService.getTemplate(templateId);
+    if (!template) {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Template not found', templateId }));
+      return;
+    }
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ success: true, template }));
+    return;
+  }
+
+  // 3. POST /api/artifact3d/generate — Generate 3D artifact with cloud storage
+  if (pathname === '/api/artifact3d/generate' && req.method === 'POST') {
+    if (!artifact3dService) {
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: '3D artifact service unavailable' }));
+      return;
+    }
+    try {
+      const body = await parseBody(req);
+      const { templateId, params, artifactId } = body;
+      if (!templateId) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'templateId is required' }));
+        return;
+      }
+      const result = artifact3dService.generateArtifact3d(templateId, params || {});
+      const artifact3dId = artifactId || randomUUID();
+      const cloudStorage = require('./server/cloud-storage');
+      const stlKey = `.private/3d-models/${artifact3dId}_model.stl`;
+      const guideKey = `.private/3d-models/${artifact3dId}_guide.md`;
+      const stlResult = await cloudStorage.uploadFromBuffer(stlKey, result.stlBuffer);
+      const guideResult = await cloudStorage.uploadFromBuffer(guideKey, Buffer.from(result.printGuideText, 'utf-8'));
+      console.log(`🔧 3D Artifact generated: ${artifact3dId} template=${templateId} triangles=${result.triangleCount}`);
+      await pool.query(
+        `INSERT INTO artifact_3d_files (id, artifact_id, template_id, template_params, stl_url, print_guide_url, stl_hash, print_guide_hash, file_size, bounding_box, validation_status, validation_errors, generation_status, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW())`,
+        [
+          artifact3dId,
+          artifact3dId,
+          templateId,
+          JSON.stringify(result.params),
+          `cloud://${stlResult.key}`,
+          `cloud://${guideResult.key}`,
+          result.stlHash,
+          result.printGuideHash,
+          stlResult.size,
+          JSON.stringify(result.boundingBox),
+          result.validation.valid ? 'valid' : 'invalid',
+          JSON.stringify(result.validation.errors),
+          'completed'
+        ]
+      );
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        artifact3dId,
+        templateId,
+        stlUrl: `cloud://${stlResult.key}`,
+        printGuideUrl: `cloud://${guideResult.key}`,
+        stlHash: result.stlHash,
+        printGuideHash: result.printGuideHash,
+        triangleCount: result.triangleCount,
+        boundingBox: result.boundingBox,
+        validation: result.validation,
+        priceSolar: result.priceSolar,
+        kwhFootprint: result.kwhFootprint,
+        warnings: result.warnings
+      }));
+    } catch (error) {
+      console.error('🔧 3D Artifact generation error:', error.message);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Generation failed: ' + error.message }));
+    }
+    return;
+  }
+
+  // 4. POST /api/artifact3d/mint — Generate + create marketplace artifact entry
+  if (pathname === '/api/artifact3d/mint' && req.method === 'POST') {
+    if (!artifact3dService) {
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: '3D artifact service unavailable' }));
+      return;
+    }
+    try {
+      const body = await parseBody(req);
+      const { templateId, params, title, description, creatorId } = body;
+      if (!templateId) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'templateId is required' }));
+        return;
+      }
+      const result = artifact3dService.generateArtifact3d(templateId, params || {});
+      const artifact3dId = randomUUID();
+      const cloudStorage = require('./server/cloud-storage');
+      const stlKey = `.private/3d-models/${artifact3dId}_model.stl`;
+      const guideKey = `.private/3d-models/${artifact3dId}_guide.md`;
+      const stlResult = await cloudStorage.uploadFromBuffer(stlKey, result.stlBuffer);
+      const guideResult = await cloudStorage.uploadFromBuffer(guideKey, Buffer.from(result.printGuideText, 'utf-8'));
+      console.log(`🔧 3D Artifact minted: ${artifact3dId} template=${templateId}`);
+      await pool.query(
+        `INSERT INTO artifact_3d_files (id, artifact_id, template_id, template_params, stl_url, print_guide_url, stl_hash, print_guide_hash, file_size, bounding_box, validation_status, validation_errors, generation_status, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW())`,
+        [
+          artifact3dId,
+          artifact3dId,
+          templateId,
+          JSON.stringify(result.params),
+          `cloud://${stlResult.key}`,
+          `cloud://${guideResult.key}`,
+          result.stlHash,
+          result.printGuideHash,
+          stlResult.size,
+          JSON.stringify(result.boundingBox),
+          result.validation.valid ? 'valid' : 'invalid',
+          JSON.stringify(result.validation.errors),
+          'completed'
+        ]
+      );
+      const artifactTitle = title || result.template.name;
+      const slug = artifactTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + artifact3dId.substring(0, 8);
+      await pool.query(
+        `INSERT INTO artifacts (id, slug, title, description, category, file_type, kwh_footprint, solar_amount_s, delivery_mode, creator_id, master_file_url, active, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, true, NOW())`,
+        [
+          artifact3dId,
+          slug,
+          artifactTitle,
+          description || result.template.description,
+          '3D Printing',
+          '3d-model',
+          String(result.kwhFootprint),
+          String(result.priceSolar),
+          'download',
+          creatorId || 'system',
+          `cloud://${stlResult.key}`
+        ]
+      );
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        artifact3dId,
+        slug,
+        title: artifactTitle,
+        stlUrl: `cloud://${stlResult.key}`,
+        printGuideUrl: `cloud://${guideResult.key}`,
+        priceSolar: result.priceSolar,
+        kwhFootprint: result.kwhFootprint,
+        boundingBox: result.boundingBox,
+        validation: result.validation,
+        warnings: result.warnings
+      }));
+    } catch (error) {
+      console.error('🔧 3D Artifact mint error:', error.message);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Mint failed: ' + error.message }));
+    }
+    return;
+  }
+
+  // 5. POST /api/artifact3d/one-liner — Parse one-line transaction string
+  if (pathname === '/api/artifact3d/one-liner' && req.method === 'POST') {
+    if (!artifact3dService) {
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: '3D artifact service unavailable' }));
+      return;
+    }
+    try {
+      const body = await parseBody(req);
+      const { line } = body;
+      if (!line) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'line is required' }));
+        return;
+      }
+      const parsed = artifact3dService.parseOneLiner(line);
+      if (!parsed) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Could not parse one-liner', line }));
+        return;
+      }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, parsed }));
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Parse failed: ' + error.message }));
+    }
+    return;
+  }
+
+  // 6. POST /api/factory/printers/register — Register a printer
+  if (pathname === '/api/factory/printers/register' && req.method === 'POST') {
+    try {
+      const body = await parseBody(req);
+      const { name, ownerId, eventId, location, printerModel, capabilities, buildVolume, materials } = body;
+      if (!name) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'name is required' }));
+        return;
+      }
+      const printerId = randomUUID();
+      await pool.query(
+        `INSERT INTO factory_printers (id, name, owner_id, event_id, location, printer_model, capabilities, build_volume, materials, status, is_active, total_jobs_completed, last_heartbeat, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'idle', true, 0, NOW(), NOW())`,
+        [
+          printerId,
+          name,
+          ownerId || null,
+          eventId || null,
+          location || null,
+          printerModel || null,
+          JSON.stringify(capabilities || {}),
+          JSON.stringify(buildVolume || {}),
+          materials || ['PLA']
+        ]
+      );
+      console.log(`🖨️ Printer registered: ${printerId} name=${name}`);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, printerId, name }));
+    } catch (error) {
+      console.error('🖨️ Printer registration error:', error.message);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Registration failed: ' + error.message }));
+    }
+    return;
+  }
+
+  // 7. GET /api/factory/printers — List printers (optional ?eventId filter)
+  if (pathname === '/api/factory/printers' && req.method === 'GET') {
+    try {
+      const parsedUrl = require('url').parse(req.url, true);
+      const eventId = parsedUrl.query.eventId;
+      let result;
+      if (eventId) {
+        result = await pool.query('SELECT * FROM factory_printers WHERE event_id = $1 AND is_active = true ORDER BY created_at DESC', [eventId]);
+      } else {
+        result = await pool.query('SELECT * FROM factory_printers WHERE is_active = true ORDER BY created_at DESC');
+      }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, printers: result.rows, count: result.rows.length }));
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Failed to list printers: ' + error.message }));
+    }
+    return;
+  }
+
+  // 8. POST /api/factory/printers/:id/heartbeat — Printer heartbeat
+  if (pathname.startsWith('/api/factory/printers/') && pathname.endsWith('/heartbeat') && req.method === 'POST') {
+    try {
+      const parts = pathname.split('/');
+      const printerId = parts[4];
+      const body = await parseBody(req);
+      const status = body.status || 'idle';
+      await pool.query(
+        'UPDATE factory_printers SET last_heartbeat = NOW(), status = $1 WHERE id = $2',
+        [status, printerId]
+      );
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, printerId, status, timestamp: new Date().toISOString() }));
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Heartbeat failed: ' + error.message }));
+    }
+    return;
+  }
+
+  // 9. POST /api/factory/print — Submit print job, auto-assign printer, generate pickup code
+  if (pathname === '/api/factory/print' && req.method === 'POST') {
+    try {
+      const body = await parseBody(req);
+      const { artifact3dId, buyerId, orderId, eventId, printSettings, notes } = body;
+      if (!artifact3dId) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'artifact3dId is required' }));
+        return;
+      }
+      const printerResult = await pool.query(
+        "SELECT id FROM factory_printers WHERE status = 'idle' AND is_active = true" + (eventId ? " AND event_id = $1" : "") + " ORDER BY total_jobs_completed ASC LIMIT 1",
+        eventId ? [eventId] : []
+      );
+      const printerId = printerResult.rows.length > 0 ? printerResult.rows[0].id : null;
+      const pickupCode = artifact3dService ? artifact3dService.generatePickupCode() : randomUUID().substring(0, 6).toUpperCase();
+      const pickupQrData = artifact3dService ? artifact3dService.generatePickupQR(pickupCode, eventId || '', 'Artifact') : pickupCode;
+      let estimatedMinutes = 60;
+      if (artifact3dService) {
+        const fileResult = await pool.query('SELECT template_id, template_params FROM artifact_3d_files WHERE id = $1', [artifact3dId]);
+        if (fileResult.rows.length > 0) {
+          const row = fileResult.rows[0];
+          estimatedMinutes = artifact3dService.estimatePrintTime(row.template_id, typeof row.template_params === 'string' ? JSON.parse(row.template_params) : row.template_params) || 60;
+        }
+      }
+      const jobId = randomUUID();
+      await pool.query(
+        `INSERT INTO print_queue (id, artifact_3d_id, printer_id, buyer_id, order_id, event_id, status, pickup_code, pickup_qr_data, estimated_minutes, print_settings, notes, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW())`,
+        [
+          jobId,
+          artifact3dId,
+          printerId,
+          buyerId || null,
+          orderId || null,
+          eventId || null,
+          printerId ? 'queued' : 'waiting_printer',
+          pickupCode,
+          pickupQrData,
+          estimatedMinutes,
+          JSON.stringify(printSettings || {}),
+          notes || null
+        ]
+      );
+      if (printerId) {
+        await pool.query("UPDATE factory_printers SET status = 'printing', current_job_id = $1 WHERE id = $2", [jobId, printerId]);
+      }
+      console.log(`🖨️ Print job submitted: ${jobId} pickup=${pickupCode} printer=${printerId || 'unassigned'}`);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        jobId,
+        pickupCode,
+        pickupQrData,
+        printerId,
+        estimatedMinutes,
+        status: printerId ? 'queued' : 'waiting_printer'
+      }));
+    } catch (error) {
+      console.error('🖨️ Print job error:', error.message);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Print job failed: ' + error.message }));
+    }
+    return;
+  }
+
+  // 10. GET /api/factory/queue — View print queue (optional ?eventId, ?printerId filters)
+  if (pathname === '/api/factory/queue' && req.method === 'GET') {
+    try {
+      const parsedUrl = require('url').parse(req.url, true);
+      const { eventId, printerId } = parsedUrl.query;
+      let query = 'SELECT * FROM print_queue WHERE 1=1';
+      const params = [];
+      if (eventId) { params.push(eventId); query += ` AND event_id = $${params.length}`; }
+      if (printerId) { params.push(printerId); query += ` AND printer_id = $${params.length}`; }
+      query += ' ORDER BY created_at DESC';
+      const result = await pool.query(query, params);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, queue: result.rows, count: result.rows.length }));
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Failed to list queue: ' + error.message }));
+    }
+    return;
+  }
+
+  // 11. GET /api/factory/pickup/:code — Check pickup status
+  if (pathname.startsWith('/api/factory/pickup/') && !pathname.endsWith('/complete') && req.method === 'GET') {
+    try {
+      const code = pathname.split('/api/factory/pickup/')[1];
+      const result = await pool.query('SELECT * FROM print_queue WHERE pickup_code = $1', [code]);
+      if (result.rows.length === 0) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Pickup code not found', code }));
+        return;
+      }
+      const job = result.rows[0];
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, job }));
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Pickup lookup failed: ' + error.message }));
+    }
+    return;
+  }
+
+  // 12. POST /api/factory/pickup/:code/complete — Mark pickup complete, free printer
+  if (pathname.startsWith('/api/factory/pickup/') && pathname.endsWith('/complete') && req.method === 'POST') {
+    try {
+      const code = pathname.replace('/api/factory/pickup/', '').replace('/complete', '');
+      const result = await pool.query('SELECT * FROM print_queue WHERE pickup_code = $1', [code]);
+      if (result.rows.length === 0) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Pickup code not found', code }));
+        return;
+      }
+      const job = result.rows[0];
+      await pool.query(
+        "UPDATE print_queue SET status = 'picked_up', picked_up_at = NOW() WHERE id = $1",
+        [job.id]
+      );
+      if (job.printer_id) {
+        await pool.query(
+          "UPDATE factory_printers SET status = 'idle', current_job_id = NULL, total_jobs_completed = total_jobs_completed + 1 WHERE id = $1",
+          [job.printer_id]
+        );
+      }
+      console.log(`📦 Pickup completed: code=${code} job=${job.id}`);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, code, jobId: job.id, status: 'picked_up' }));
+    } catch (error) {
+      console.error('📦 Pickup complete error:', error.message);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Pickup completion failed: ' + error.message }));
+    }
+    return;
+  }
+
   // Power Twin Status endpoint  
   if (pathname === '/api/power-twin/status' && req.method === 'GET') {
     const SOLAR_KWH = 4913.0;

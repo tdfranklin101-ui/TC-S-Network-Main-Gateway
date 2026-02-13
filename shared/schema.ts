@@ -1597,3 +1597,122 @@ export const passwordResetTokens = pgTable("password_reset_tokens", {
   used: boolean("used").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+// 3D Artifact Module Tables
+
+export const artifact3dFiles = pgTable("artifact_3d_files", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  artifactId: varchar("artifact_id"),
+  templateId: varchar("template_id").notNull(),
+  templateParams: jsonb("template_params"),
+  stlUrl: text("stl_url"),
+  previewUrl: text("preview_url"),
+  printGuideUrl: text("print_guide_url"),
+  stlHash: varchar("stl_hash"),
+  previewHash: varchar("preview_hash"),
+  printGuideHash: varchar("print_guide_hash"),
+  packageHash: varchar("package_hash"),
+  fileSize: integer("file_size"),
+  boundingBox: jsonb("bounding_box"),
+  validationStatus: varchar("validation_status").default("pending"),
+  validationErrors: jsonb("validation_errors"),
+  generationStatus: varchar("generation_status").default("pending"),
+  generationError: text("generation_error"),
+  printSettings: jsonb("print_settings"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  artifactIdx: index("artifact_3d_artifact_idx").on(table.artifactId),
+  templateIdx: index("artifact_3d_template_idx").on(table.templateId),
+  statusIdx: index("artifact_3d_status_idx").on(table.generationStatus),
+}));
+
+export const factoryPrinters = pgTable("factory_printers", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  ownerId: varchar("owner_id").notNull(),
+  eventId: varchar("event_id"),
+  location: varchar("location"),
+  printerModel: varchar("printer_model"),
+  capabilities: jsonb("capabilities"),
+  buildVolume: jsonb("build_volume"),
+  materials: text("materials").array(),
+  status: varchar("status").default("offline"),
+  currentJobId: varchar("current_job_id"),
+  totalJobsCompleted: integer("total_jobs_completed").default(0),
+  isActive: boolean("is_active").default(true),
+  lastHeartbeat: timestamp("last_heartbeat"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  ownerIdx: index("factory_printers_owner_idx").on(table.ownerId),
+  eventIdx: index("factory_printers_event_idx").on(table.eventId),
+  statusIdx: index("factory_printers_status_idx").on(table.status),
+}));
+
+export const printQueue = pgTable("print_queue", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  artifact3dId: varchar("artifact_3d_id").references(() => artifact3dFiles.id),
+  printerId: varchar("printer_id").references(() => factoryPrinters.id),
+  buyerId: varchar("buyer_id").notNull(),
+  orderId: varchar("order_id"),
+  eventId: varchar("event_id"),
+  status: varchar("status").default("queued"),
+  pickupCode: varchar("pickup_code"),
+  pickupQrData: text("pickup_qr_data"),
+  estimatedMinutes: integer("estimated_minutes"),
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+  pickedUpAt: timestamp("picked_up_at"),
+  printSettings: jsonb("print_settings"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  printerIdx: index("print_queue_printer_idx").on(table.printerId),
+  buyerIdx: index("print_queue_buyer_idx").on(table.buyerId),
+  statusIdx: index("print_queue_status_idx").on(table.status),
+  eventIdx: index("print_queue_event_idx").on(table.eventId),
+  pickupIdx: index("print_queue_pickup_idx").on(table.pickupCode),
+}));
+
+// Insert schemas for 3D Artifact module
+export const insertArtifact3dFileSchema = createInsertSchema(artifact3dFiles).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertFactoryPrinterSchema = createInsertSchema(factoryPrinters).omit({ id: true, createdAt: true });
+export const insertPrintQueueSchema = createInsertSchema(printQueue).omit({ id: true, createdAt: true });
+
+// Select types for 3D Artifact module
+export type Artifact3dFile = typeof artifact3dFiles.$inferSelect;
+export type FactoryPrinter = typeof factoryPrinters.$inferSelect;
+export type PrintQueueJob = typeof printQueue.$inferSelect;
+
+// Insert types for 3D Artifact module
+export type InsertArtifact3dFile = z.infer<typeof insertArtifact3dFileSchema>;
+export type InsertFactoryPrinter = z.infer<typeof insertFactoryPrinterSchema>;
+export type InsertPrintQueueJob = z.infer<typeof insertPrintQueueSchema>;
+
+// 3D Artifact constants
+export const ARTIFACT_3D_STATUS = {
+  PENDING: 'pending',
+  GENERATING: 'generating',
+  VALIDATING: 'validating', 
+  COMPLETED: 'completed',
+  FAILED: 'failed'
+} as const;
+
+export const PRINT_JOB_STATUS = {
+  QUEUED: 'queued',
+  ASSIGNED: 'assigned',
+  PRINTING: 'printing',
+  COMPLETED: 'completed',
+  READY_FOR_PICKUP: 'ready_for_pickup',
+  PICKED_UP: 'picked_up',
+  CANCELLED: 'cancelled',
+  FAILED: 'failed'
+} as const;
+
+export const PRINTER_STATUS = {
+  OFFLINE: 'offline',
+  IDLE: 'idle',
+  PRINTING: 'printing',
+  MAINTENANCE: 'maintenance',
+  ERROR: 'error'
+} as const;

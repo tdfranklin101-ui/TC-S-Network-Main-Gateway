@@ -19,10 +19,11 @@ const ITEM_PARTS = {
   'Docs':{adj:['Complete','Illustrated','Interactive','Certified','Hands-On','Immersive','Self-Paced','Expert','Step-by-Step','Annotated'],noun:['Course','Masterclass','Workshop','Guide','Bootcamp','Blueprint','Playbook','Deep Dive','Lab Manual','Seminar Notes'],suffix:['2026','Cohort','Intensive','w/ Sim','& Cert','w/ Projects','Bundle','Starter','Pro Track','Unlimited']},
   'Games':{adj:['Solar','Quantum','Neon','Retro','Procedural','Cooperative','Infinite','Pixel','Voxel','Emergent'],noun:['Puzzle','Strategy Game','Sim','RPG Module','Card Deck','Board Game','Arcade','Sandbox','World Map','Quest Pack'],suffix:['Alpha','Beta','Full','Deluxe','Expansion','Season Pass','Community','Open Source','Remastered','Definitive']},
   'Utilities':{adj:['Portable','Lightweight','Cross-Platform','Secure','Encrypted','Offline','Automated','Batch','CLI','Open-Source'],noun:['File Converter','Backup Tool','Password Vault','Network Scanner','System Monitor','Batch Processor','Data Cleaner','Log Analyzer','Config Manager','Deploy Script'],suffix:['Pro','Lite','v2','Free','Standard','Plus','Enterprise','Portable','CLI','GUI']},
-  'Education':{adj:['Interactive','Self-Paced','Certified','Immersive','Hands-On','Adaptive','Guided','Comprehensive','Introductory','Advanced'],noun:['Tutorial Prompt','Course Module','Training Kit','Study Guide','Lesson Plan','Lab Exercise','Certification Prep','Curriculum Pack','Workshop Series','Knowledge Base'],suffix:['K-12','Associate','Bachelors','Post-Grad','Doctorate','Professional','Vocational','Trade','Public','Private']}
+  'Education':{adj:['Interactive','Self-Paced','Certified','Immersive','Hands-On','Adaptive','Guided','Comprehensive','Introductory','Advanced'],noun:['Tutorial Prompt','Course Module','Training Kit','Study Guide','Lesson Plan','Lab Exercise','Certification Prep','Curriculum Pack','Workshop Series','Knowledge Base'],suffix:['K-12','Associate','Bachelors','Post-Grad','Doctorate','Professional','Vocational','Trade','Public','Private']},
+  '3D Printing':{adj:['Parametric','Modular','Stackable','Ergonomic','Lattice','Honeycomb','Snap-Fit','Articulated','Precision','Functional'],noun:['Desk Caddy','Phone Stand','Cable Organizer','Shelf Bracket','Wall Hook','Planter Box','Gear Set','Tool Holder','Card Stand','Tile Set'],suffix:['v1','Pro','Mini','XL','Slim','Eco','Custom','Deluxe','Starter','Field Kit']}
 };
 
-const MARKET_DEMAND = ['Basic Needs','Energy','Computronium','Software','AI Tools','Songs','Videos','Music','Art','Rent','Culture','Video','Photo','Writing','AI Create','Docs','Education','Games','Utilities'];
+const MARKET_DEMAND = ['Basic Needs','Energy','Computronium','Software','AI Tools','Songs','Videos','Music','Art','Rent','Culture','Video','Photo','Writing','AI Create','Docs','Education','Games','Utilities','3D Printing'];
 
 const ALL_CATEGORIES = Object.keys(ITEM_PARTS);
 
@@ -113,7 +114,7 @@ async function createArtifactsForAgent(pool, agent, memberId) {
     'AI Tools': 'application/json', 'AI Create': 'application/json', 'Games': 'application/zip',
     'Utilities': 'application/zip', 'Computronium': 'application/octet-stream',
     'Culture': 'text/markdown', 'Basic Needs': 'text/plain', 'Rent': 'text/plain', 'Energy': 'application/json',
-    'Education': 'text/markdown'
+    'Education': 'text/markdown', '3D Printing': '3d-model'
   };
 
   const CONTENT_FORMATS = {
@@ -121,7 +122,7 @@ async function createArtifactsForAgent(pool, agent, memberId) {
     'Writing': 'md', 'Docs': 'pdf', 'Software': 'js', 'AI Tools': 'json',
     'AI Create': 'json', 'Games': 'binary', 'Utilities': 'binary',
     'Computronium': 'binary', 'Culture': 'md', 'Basic Needs': 'text', 'Rent': 'text', 'Energy': 'json',
-    'Education': 'md'
+    'Education': 'md', '3D Printing': 'stl'
   };
 
   for (const category of categories) {
@@ -138,6 +139,44 @@ async function createArtifactsForAgent(pool, agent, memberId) {
         const subcats = ['K-12', 'Associate', 'Bachelors', 'Post-Graduate', 'Doctorate', 'Professional', 'Vocational', 'Trade', 'Public', 'Private'];
         const subcat = title.split(' ').pop() || pick(subcats);
         contentBody = `# ${title}\n\n## Level: ${subcat}\n\n### Overview\n${description}\n\n### Learning Objectives\n- Understand core concepts and principles\n- Apply knowledge through guided exercises\n- Demonstrate mastery via self-assessment\n\n### Module Content\nThis ${subcat}-level educational resource covers essential topics in the Solar network ecosystem. Students will explore renewable energy fundamentals, blockchain-based currency systems, and sustainable technology practices.\n\n### Exercises\n1. Research and describe how Solar tokens relate to real-world energy production\n2. Calculate the kWh equivalent of a marketplace transaction\n3. Design a proposal for a community energy project\n\n### Assessment\n- Quiz: Key terminology and concepts\n- Project: Create a mini-proposal for Solar network improvement\n- Reflection: How does renewable energy connect to economic systems?\n\n### Resources\n- Solar Standard Protocol documentation\n- TC-S Network marketplace (hands-on practice)\n- KID SOL AI assistant for guided learning\n\nCategory: ${category}\nCreated by: Agent ${agent.name} (${agent.code})\nClass: B — Educational Content\nGenerated: ${new Date().toISOString()}`;
+      } else if (category === '3D Printing') {
+        try {
+          const artifact3dService = require('./artifact3d-service.js');
+          const templates = artifact3dService.getTemplates();
+          const template = pick(templates);
+          const result = artifact3dService.generateArtifact3d(template.id, {});
+          if (result.validation.valid) {
+            contentBody = result.printGuideText + '\n\n---\n\n**STL Hash:** `' + result.stlHash + '`\n**File Size:** ' + result.stlBuffer.length + ' bytes\n**Triangles:** ' + result.triangleCount;
+
+            const dbResult = await pool.query(
+              `INSERT INTO artifact_3d_files (template_id, template_params, stl_hash, print_guide_hash, file_size, bounding_box, validation_status, generation_status, print_settings)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
+              [template.id, JSON.stringify(result.params), result.stlHash, result.printGuideHash || '',
+               result.stlBuffer.length, JSON.stringify(result.boundingBox), 'passed', 'completed', JSON.stringify(result.params)]
+            );
+            const artifact3dId = dbResult.rows[0].id;
+
+            try {
+              const cloudStorage = require('./cloud-storage');
+              if (cloudStorage.isAvailable()) {
+                const stlResult = await cloudStorage.uploadFromBuffer(`.private/3d-models/${artifact3dId}_model.stl`, result.stlBuffer);
+                const guideResult = await cloudStorage.uploadFromBuffer(`.private/3d-models/${artifact3dId}_guide.md`, Buffer.from(result.printGuideText, 'utf-8'));
+                await pool.query('UPDATE artifact_3d_files SET stl_url = $1, print_guide_url = $2 WHERE id = $3',
+                  [`cloud://${stlResult.key}`, `cloud://${guideResult.key}`, artifact3dId]);
+                console.log(`🔧 [Agent ${agent.code}] 3D artifact cloud upload: ${artifact3dId} (${template.id})`);
+              }
+            } catch (uploadErr) {
+              console.warn(`[Agent ${agent.code}] Cloud upload failed for 3D artifact:`, uploadErr.message);
+            }
+
+            console.log(`🏭 [Agent ${agent.code}] Generated 3D artifact: "${title}" (${template.id}) — ${result.stlBuffer.length} bytes, hash: ${result.stlHash.substring(0, 12)}...`);
+          } else {
+            contentBody = `${title}\n\n${description}\n\nCategory: ${category}\nCreated by: Agent ${agent.name} (${agent.code})\nClass: A — Market Item\nGenerated: ${new Date().toISOString()}`;
+          }
+        } catch (e3d) {
+          console.warn(`[Agent ${agent.code}] 3D generation failed, using metadata-only:`, e3d.message);
+          contentBody = `${title}\n\n${description}\n\nCategory: ${category}\nCreated by: Agent ${agent.name} (${agent.code})\nClass: A — Market Item\nGenerated: ${new Date().toISOString()}`;
+        }
       } else {
         contentBody = `${title}\n\n${description}\n\nCategory: ${category}\nCreated by: Agent ${agent.name} (${agent.code})\nClass: B — File Delivery\nGenerated: ${new Date().toISOString()}`;
       }
