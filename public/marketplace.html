@@ -2425,9 +2425,9 @@
                     <div style="font-size: 10px; font-weight: 600; color: #00bfff; text-transform: uppercase; letter-spacing: 2px;">Hostess Provisioneur</div>
                 </div>
                 <div style="display: flex; gap: 6px;">
-                    <button onclick="openKidSolarChat()" style="background: none; border: 1px solid rgba(255,215,0,0.2); color: #888; width: 32px; height: 32px; border-radius: 50%; font-size: 14px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center;" onmouseover="this.style.color='#FFD700';this.style.borderColor='rgba(255,215,0,0.5)'" onmouseout="this.style.color='#888';this.style.borderColor='rgba(255,215,0,0.2)'" title="Voice">🎤</button>
-                    <button onclick="openKidSolarChat()" style="background: none; border: 1px solid rgba(255,215,0,0.2); color: #888; width: 32px; height: 32px; border-radius: 50%; font-size: 14px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center;" onmouseover="this.style.color='#FFD700';this.style.borderColor='rgba(255,215,0,0.5)'" onmouseout="this.style.color='#888';this.style.borderColor='rgba(255,215,0,0.2)'" title="Image">📷</button>
-                    <button onclick="openKidSolarChat()" style="background: none; border: 1px solid rgba(255,215,0,0.2); color: #888; width: 32px; height: 32px; border-radius: 50%; font-size: 14px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center;" onmouseover="this.style.color='#FFD700';this.style.borderColor='rgba(255,215,0,0.5)'" onmouseout="this.style.color='#888';this.style.borderColor='rgba(255,215,0,0.2)'" title="File">📎</button>
+                    <button onclick="toggleSearchVoice(this)" style="background: none; border: 1px solid rgba(255,215,0,0.2); color: #888; width: 32px; height: 32px; border-radius: 50%; font-size: 14px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center;" onmouseover="if(!searchVoiceRecording){this.style.color='#FFD700';this.style.borderColor='rgba(255,215,0,0.5)'}" onmouseout="if(!searchVoiceRecording){this.style.color='#888';this.style.borderColor='rgba(255,215,0,0.2)'}" title="Voice">🎤</button>
+                    <button onclick="triggerSearchImage()" style="background: none; border: 1px solid rgba(255,215,0,0.2); color: #888; width: 32px; height: 32px; border-radius: 50%; font-size: 14px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center;" onmouseover="this.style.color='#FFD700';this.style.borderColor='rgba(255,215,0,0.5)'" onmouseout="this.style.color='#888';this.style.borderColor='rgba(255,215,0,0.2)'" title="Image">📷</button>
+                    <button onclick="triggerSearchFile()" style="background: none; border: 1px solid rgba(255,215,0,0.2); color: #888; width: 32px; height: 32px; border-radius: 50%; font-size: 14px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center;" onmouseover="this.style.color='#FFD700';this.style.borderColor='rgba(255,215,0,0.5)'" onmouseout="this.style.color='#888';this.style.borderColor='rgba(255,215,0,0.2)'" title="File">📎</button>
                 </div>
             </div>
 
@@ -2452,8 +2452,14 @@
                 >👑</button>
             </div>
 
+            <div id="search-attachments-preview" style="display:none; margin-bottom:10px; padding:8px 12px; background:rgba(255,215,0,0.06); border:1px solid rgba(255,215,0,0.2); border-radius:12px;"></div>
+
             <!-- REPLICATOR Panel -->
             <style>
+                @keyframes voicePulse {
+                    0%, 100% { box-shadow: 0 0 0 0 rgba(255,68,68,0.4); }
+                    50% { box-shadow: 0 0 12px 4px rgba(255,68,68,0.3); }
+                }
                 @keyframes replicatorPulse {
                     0%, 100% { border-color: rgba(0,191,255,0.2); box-shadow: 0 0 8px rgba(0,191,255,0.05); }
                     50% { border-color: rgba(0,191,255,0.45); box-shadow: 0 0 16px rgba(0,191,255,0.12); }
@@ -2504,6 +2510,9 @@
                     </div>
                 </div>
             </div>
+
+            <input type="file" id="search-image-input" accept="image/*" capture="environment" style="display:none;" onchange="handleSearchImage(event)" />
+            <input type="file" id="search-file-input" accept=".pdf,.txt,.doc,.docx,.csv,.json,.stl,.obj,.svg,.png,.jpg" style="display:none;" onchange="handleSearchFile(event)" />
 
             <div id="kid-sol-interpretation" style="display: none; margin-bottom: 14px; padding: 10px 14px; background: rgba(255,215,0,0.06); border: 1px solid rgba(255,215,0,0.15); border-radius: 12px;">
                 <div style="font-size: 12px; color: #FFD700; font-weight: 600;">👑 KID SOL:</div>
@@ -7274,7 +7283,7 @@
                 var inferRes = await fetch('/api/artifact/infer', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ query: query, forceprint: forcePrintActive })
+                    body: JSON.stringify({ query: query, forceprint: forcePrintActive, attachments: (typeof searchAttachments !== 'undefined' && searchAttachments.length > 0) ? searchAttachments.map(a => ({ type: a.type, name: a.name, data: a.data })) : undefined })
                 });
                 var inferData = await inferRes.json();
 
@@ -7329,6 +7338,11 @@
             } finally {
                 searchBtn.innerHTML = origContent;
                 searchBtn.disabled = false;
+                if (typeof searchAttachments !== 'undefined') {
+                    searchAttachments = [];
+                    showSearchAttachmentPreview();
+                    hideSearchStatus();
+                }
             }
         }
 
@@ -7546,7 +7560,8 @@
         function kidSolInterpretiveSearch() {
             var searchInput = document.getElementById('search-input');
             var raw = searchInput.value.trim();
-            if (!raw) { clearSearch(); return; }
+            if (!raw && (!searchAttachments || searchAttachments.length === 0)) { clearSearch(); return; }
+            if (!raw && searchAttachments && searchAttachments.length > 0) { raw = 'Analyze attached file'; searchInput.value = raw; }
 
             inferAndRoute(raw);
             return;
@@ -8315,6 +8330,236 @@
             <input type="file" id="chat-file-input" accept=".pdf,.txt,.doc,.docx" style="display: none;" onchange="handleFileUpload(event)" />
         </div>
     </div>
+
+    <script>
+        // ===== MULTI-MODAL SEARCH INPUT (Native APIs) =====
+        let searchVoiceRecording = false;
+        let searchMediaRecorder = null;
+        let searchAudioChunks = [];
+        let searchAttachments = [];
+
+        async function toggleSearchVoice(btn) {
+            if (searchVoiceRecording) {
+                stopSearchVoice(btn);
+            } else {
+                await startSearchVoice(btn);
+            }
+        }
+
+        async function startSearchVoice(btn) {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                searchMediaRecorder = new MediaRecorder(stream);
+                searchAudioChunks = [];
+
+                searchMediaRecorder.ondataavailable = (event) => {
+                    searchAudioChunks.push(event.data);
+                };
+
+                searchMediaRecorder.onstop = async () => {
+                    const audioBlob = new Blob(searchAudioChunks, { type: 'audio/webm' });
+                    stream.getTracks().forEach(track => track.stop());
+                    await transcribeSearchAudio(audioBlob);
+                };
+
+                searchMediaRecorder.start();
+                searchVoiceRecording = true;
+
+                btn.textContent = '⏹️';
+                btn.style.borderColor = '#ff4444';
+                btn.style.color = '#ff4444';
+                btn.style.animation = 'voicePulse 1s ease-in-out infinite';
+
+                showSearchStatus('🎤 Recording... tap ⏹️ to stop', '#ff4444');
+            } catch (error) {
+                console.error('Microphone access error:', error);
+                alert('Microphone access needed for voice input. Please allow microphone permissions.');
+            }
+        }
+
+        function stopSearchVoice(btn) {
+            if (searchMediaRecorder && searchVoiceRecording) {
+                searchMediaRecorder.stop();
+                searchVoiceRecording = false;
+                btn.textContent = '🎤';
+                btn.style.borderColor = 'rgba(255,215,0,0.2)';
+                btn.style.color = '#888';
+                btn.style.animation = 'none';
+                showSearchStatus('✨ Transcribing your voice...', '#FFD700');
+            }
+        }
+
+        async function transcribeSearchAudio(audioBlob) {
+            try {
+                const formData = new FormData();
+                formData.append('audio', audioBlob, 'voice.webm');
+                formData.append('conversationId', 'search_' + Date.now());
+                if (typeof currentUser !== 'undefined' && currentUser) {
+                    formData.append('memberId', currentUser.userId || 'anonymous');
+                    formData.append('memberUsername', currentUser.username || 'Member');
+                    formData.append('memberBalance', String(Number(currentUser.solarBalance) || 0));
+                }
+
+                const response = await fetch('/api/kid-solar/voice', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.transcript) {
+                    const searchInput = document.getElementById('search-input');
+                    searchInput.value = data.transcript;
+                    searchInput.style.borderColor = '#FFD700';
+                    searchInput.style.boxShadow = '0 0 20px rgba(255,215,0,0.15)';
+                    showSearchStatus('🎤 Voice: "' + data.transcript + '"', '#39FF14');
+
+                    setTimeout(() => {
+                        kidSolInterpretiveSearch();
+                    }, 800);
+                } else {
+                    showSearchStatus('Could not transcribe. Try again or type your request.', '#ff6b6b');
+                }
+            } catch (error) {
+                console.error('Transcription error:', error);
+                showSearchStatus('Voice processing error. Please try again.', '#ff6b6b');
+            }
+        }
+
+        function triggerSearchImage() {
+            document.getElementById('search-image-input').click();
+        }
+
+        function handleSearchImage(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (file.size > 10 * 1024 * 1024) {
+                alert('Image must be under 10MB');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                searchAttachments = [{
+                    type: 'image',
+                    name: file.name,
+                    data: e.target.result,
+                    preview: e.target.result
+                }];
+                showSearchAttachmentPreview();
+                showSearchStatus('📷 Image attached — add a description or hit 👑 to analyze', '#FFD700');
+
+                const searchInput = document.getElementById('search-input');
+                if (!searchInput.value.trim()) {
+                    searchInput.value = 'Identify this item';
+                    searchInput.focus();
+                }
+            };
+            reader.readAsDataURL(file);
+            event.target.value = '';
+        }
+
+        function triggerSearchFile() {
+            document.getElementById('search-file-input').click();
+        }
+
+        function handleSearchFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (file.size > 10 * 1024 * 1024) {
+                alert('File must be under 10MB');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                searchAttachments = [{
+                    type: 'file',
+                    name: file.name,
+                    data: e.target.result
+                }];
+                showSearchAttachmentPreview();
+
+                const ext = file.name.split('.').pop().toLowerCase();
+                let hint = '📎 File attached';
+                if (['stl', 'obj'].includes(ext)) hint = '🖨️ 3D model attached — ready for Replicator';
+                else if (['svg', 'png', 'jpg', 'jpeg'].includes(ext)) hint = '🖼️ Design file attached';
+                else if (['pdf', 'doc', 'docx', 'txt'].includes(ext)) hint = '📄 Document attached';
+                showSearchStatus(hint + ' — describe what you need or hit 👑', '#FFD700');
+
+                const searchInput = document.getElementById('search-input');
+                if (!searchInput.value.trim()) {
+                    if (['stl', 'obj'].includes(ext)) searchInput.value = '3D print this model';
+                    else if (['svg'].includes(ext)) searchInput.value = 'Print this design';
+                    else searchInput.value = 'Analyze this file';
+                    searchInput.focus();
+                }
+            };
+            reader.readAsDataURL(file);
+            event.target.value = '';
+        }
+
+        function showSearchAttachmentPreview() {
+            const preview = document.getElementById('search-attachments-preview');
+            if (!preview) return;
+
+            if (searchAttachments.length === 0) {
+                preview.style.display = 'none';
+                preview.innerHTML = '';
+                return;
+            }
+
+            let html = '';
+            searchAttachments.forEach((att, i) => {
+                if (att.type === 'image' && att.preview) {
+                    html += '<div style="display:inline-flex;align-items:center;gap:8px;background:rgba(0,0,0,0.3);padding:6px 10px;border-radius:10px;">';
+                    html += '<img src="' + att.preview + '" style="width:40px;height:40px;border-radius:6px;object-fit:cover;border:1px solid rgba(255,215,0,0.3);" />';
+                    html += '<span style="font-size:11px;color:#ccc;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + att.name + '</span>';
+                    html += '<button onclick="removeSearchAttachment(' + i + ')" style="background:none;border:none;color:#ff6b6b;font-size:14px;cursor:pointer;padding:2px;">✕</button>';
+                    html += '</div>';
+                } else {
+                    const icon = att.name.match(/\.(stl|obj)$/i) ? '🖨️' : att.name.match(/\.(pdf)$/i) ? '📄' : '📎';
+                    html += '<div style="display:inline-flex;align-items:center;gap:8px;background:rgba(0,0,0,0.3);padding:6px 10px;border-radius:10px;">';
+                    html += '<span style="font-size:18px;">' + icon + '</span>';
+                    html += '<span style="font-size:11px;color:#ccc;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + att.name + '</span>';
+                    html += '<button onclick="removeSearchAttachment(' + i + ')" style="background:none;border:none;color:#ff6b6b;font-size:14px;cursor:pointer;padding:2px;">✕</button>';
+                    html += '</div>';
+                }
+            });
+
+            preview.innerHTML = html;
+            preview.style.display = 'flex';
+        }
+
+        function removeSearchAttachment(index) {
+            searchAttachments.splice(index, 1);
+            showSearchAttachmentPreview();
+            if (searchAttachments.length === 0) {
+                hideSearchStatus();
+            }
+        }
+
+        function showSearchStatus(message, color) {
+            let status = document.getElementById('search-multimodal-status');
+            if (!status) {
+                status = document.createElement('div');
+                status.id = 'search-multimodal-status';
+                status.style.cssText = 'font-size:11px;font-weight:600;padding:6px 0 2px;line-height:1.3;transition:all 0.3s;';
+                const searchInput = document.getElementById('search-input');
+                searchInput.parentElement.after(status);
+            }
+            status.textContent = message;
+            status.style.color = color || '#FFD700';
+            status.style.display = 'block';
+        }
+
+        function hideSearchStatus() {
+            const status = document.getElementById('search-multimodal-status');
+            if (status) status.style.display = 'none';
+        }
+    </script>
 
     <script>
         // Kid Solar Chat State
