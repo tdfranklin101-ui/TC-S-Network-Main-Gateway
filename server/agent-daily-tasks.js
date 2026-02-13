@@ -428,9 +428,68 @@ async function runAgentTasks(pool, agent) {
   return result;
 }
 
+async function ensureAgentMembers(pool, agents) {
+  const genesisDate = new Date('2025-04-07');
+  const now = new Date();
+  const daysSinceGenesis = Math.max(Math.floor((now - genesisDate) / (1000 * 60 * 60 * 24)), 1);
+  const initialSolar = daysSinceGenesis;
+  let provisioned = 0, existing = 0, failed = 0;
+
+  for (const agent of agents) {
+    const username = `agent_eco_${agent.code}`;
+    try {
+      const check = await pool.query('SELECT id, is_agent FROM members WHERE username = $1 LIMIT 1', [username]);
+      if (check.rows.length > 0) {
+        if (!check.rows[0].is_agent) {
+          await pool.query('UPDATE members SET is_agent = true WHERE id = $1', [check.rows[0].id]);
+        }
+        existing++;
+      } else {
+        await pool.query(
+          `INSERT INTO members (username, name, email, first_name, password_hash, total_solar, total_dollars, is_agent, signup_timestamp)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, true, NOW())`,
+          [username, `Agent ${agent.name}`, `${username}@tcs.network`, agent.name, 'agent_no_direct_login', initialSolar, initialSolar * 0.20]
+        );
+        provisioned++;
+        console.log(`🌞 [PROVISIONAIRE] KID SOL provisioned Agent ${agent.name} — ${initialSolar} Solar`);
+      }
+    } catch (err) {
+      if (err.code === '23505') { existing++; }
+      else { failed++; console.warn(`⚠️ [PROVISIONAIRE] Failed to provision ${agent.name}:`, err.message); }
+    }
+  }
+  return { provisioned, existing, failed, totalAgents: agents.length };
+}
+
 async function runDailyAgentTasks(pool, agents) {
   const startTime = Date.now();
-  console.log(`\n🌅 ===== DAILY AGENT TASKS START (${agents.length} agents) =====`);
+  const kidSol = agents.find(a => a.code === 'ks');
+  const runId = crypto.randomUUID().substring(0, 8);
+
+  console.log(`\n🌞 ===== KID SOL PROVISIONAIRE — DAILY OPERATIONS (Run ${runId}) =====`);
+  console.log(`🌞 [KID SOL] Orchestrating ${agents.length} agents...`);
+
+  const provision = await ensureAgentMembers(pool, agents);
+  console.log(`🌞 [KID SOL] Provision check: ${provision.existing} ready, ${provision.provisioned} newly created, ${provision.failed} failed`);
+
+  const deployedAgents = [];
+  for (const agent of agents) {
+    const username = `agent_eco_${agent.code}`;
+    const row = await pool.query('SELECT id, total_solar FROM members WHERE username = $1', [username]);
+    if (row.rows.length > 0) {
+      deployedAgents.push({ ...agent, memberId: row.rows[0].id, balance: parseFloat(row.rows[0].total_solar) || 0 });
+    }
+  }
+  console.log(`🌞 [KID SOL] ${deployedAgents.length}/${agents.length} agents deployed and ready`);
+
+  const manifest = {
+    runId,
+    orchestrator: 'KID SOL',
+    startTime: new Date().toISOString(),
+    agentsDeployed: deployedAgents.length,
+    agentsTotal: agents.length,
+    provision
+  };
 
   const agentResults = [];
   let totalCreated = 0;
@@ -445,13 +504,22 @@ async function runDailyAgentTasks(pool, agents) {
 
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
   const totalErrors = agentResults.reduce((sum, r) => sum + r.errors.length, 0);
+  const successfulAgents = agentResults.filter(r => r.errors.length === 0).length;
+  const healthPct = agents.length > 0 ? Math.round((successfulAgents / agents.length) * 100) : 0;
 
-  console.log(`\n🌅 ===== DAILY AGENT TASKS COMPLETE =====`);
-  console.log(`   Created: ${totalCreated} artifacts | Purchased: ${totalPurchased} items | Errors: ${totalErrors} | Time: ${elapsed}s\n`);
+  console.log(`\n🌞 ===== KID SOL PROVISIONAIRE — RUN COMPLETE (${runId}) =====`);
+  console.log(`   Deployed: ${deployedAgents.length}/${agents.length} | Health: ${healthPct}%`);
+  console.log(`   Created: ${totalCreated} artifacts | Purchased: ${totalPurchased} items`);
+  console.log(`   Errors: ${totalErrors} | Time: ${elapsed}s\n`);
 
   lastRunStatus = {
     success: totalErrors === 0,
+    runId,
+    provisionaire: 'KID SOL',
+    manifest,
     agentResults,
+    deployed: deployedAgents.length,
+    healthPercent: healthPct,
     totalCreated,
     totalPurchased,
     totalErrors,
@@ -468,14 +536,20 @@ async function runSingleAgentTasks(pool, agents, agentCode) {
     return { success: false, error: `Agent with code ${agentCode} not found`, timestamp: new Date().toISOString() };
   }
 
-  console.log(`\n🤖 ===== SINGLE AGENT TASK: ${agent.name} (${agentCode}) =====`);
+  console.log(`\n🌞 [KID SOL] Dispatching single agent: ${agent.name} (${agentCode})`);
+
+  await ensureAgentMembers(pool, [agent]);
+
   const result = await runAgentTasks(pool, agent);
 
   const status = {
     success: result.errors.length === 0,
+    provisionaire: 'KID SOL',
     agentResults: [result],
     totalCreated: result.created.length,
     totalPurchased: result.purchased.length,
+    deployed: result.errors.some(e => e.phase === 'lookup') ? 0 : 1,
+    healthPercent: result.errors.length === 0 ? 100 : 0,
     timestamp: new Date().toISOString()
   };
 
@@ -559,4 +633,4 @@ async function runEducationBlitz(pool, agents) {
   return { success: totalErrors === 0, totalCreated, totalErrors, results, elapsed: parseFloat(elapsed), timestamp: new Date().toISOString() };
 }
 
-module.exports = { runDailyAgentTasks, runSingleAgentTasks, getTaskStatus, runEducationBlitz };
+module.exports = { runDailyAgentTasks, runSingleAgentTasks, getTaskStatus, runEducationBlitz, ensureAgentMembers };

@@ -11843,7 +11843,7 @@ Only include products where you have found a real URL. Do not make up URLs.`
         res.end(JSON.stringify({ success: false, error: 'Database unavailable' }));
         return;
       }
-      console.log('🤖 [DAILY-TASKS] Manual trigger: Running daily agent tasks...');
+      console.log('🌞 [KID SOL PROVISIONAIRE] Manual trigger: Orchestrating daily agent operations...');
       const result = await runDailyAgentTasks(pool, NETWORK_AGENTS);
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(result));
@@ -16754,9 +16754,9 @@ setImmediate(() => {
     try {
       const dailyAgentJob = schedule.scheduleJob({ rule: '0 4 * * *', tz: 'UTC' }, async () => {
         try {
-          console.log('🤖 [DAILY-TASKS] Scheduled run: Starting daily agent tasks...');
+          console.log('🌞 [KID SOL PROVISIONAIRE] Scheduled run: Orchestrating daily agent operations...');
           const result = await runDailyAgentTasks(pool, NETWORK_AGENTS);
-          console.log(`✅ [DAILY-TASKS] Complete: ${result.totalCreated} created, ${result.totalPurchased} purchased`);
+          console.log(`✅ [KID SOL] Complete: ${result.deployed}/${NETWORK_AGENTS.length} deployed, ${result.healthPercent}% health, ${result.totalCreated} created, ${result.totalPurchased} purchased`);
         } catch (error) {
           console.error('❌ [DAILY-TASKS] Scheduled run failed:', error.message);
         }
