@@ -16730,16 +16730,12 @@ setImmediate(() => {
   
   // CRITICAL: Defer ALL heavy initialization to allow health checks to respond immediately
   // This prevents deployment timeouts due to slow startup
+  // LIGHTWEIGHT STARTUP: Only schedule cron timers — no heavy DB operations
+  // Heavy tasks (agent init, solar audit, media seed, artifact sync) run via daily crons or manual triggers
   setTimeout(() => {
-    console.log(`🔄 Starting deferred initialization tasks...`);
+    console.log(`🔄 Starting lightweight deferred initialization (schedulers only)...`);
     
-    initializePersistentAgents().catch(err => console.warn('⚠️ Agent init failed:', err.message));
-
-    if (pool) {
-      initializeAgenticFramework(pool).catch(err => console.warn('⚠️ Agentic Framework init failed:', err.message));
-    }
-
-    // Initialize daily Solar distribution
+    // Initialize daily Solar distribution (cron scheduler only)
     try {
       initializeDailyDistribution();
     } catch (error) {
@@ -16747,15 +16743,14 @@ setImmediate(() => {
       console.log('📌 Use external cron or manual trigger: POST /api/distribution/trigger');
     }
     
-    // Initialize Foundation Solar Integrity Wheel
+    // Initialize Foundation Solar Integrity Wheel (cron scheduler only)
     try {
       initializeFoundationIntegrityWheel();
     } catch (error) {
       console.warn('⚠️ Foundation audit scheduling failed:', error.message);
-      console.log('📌 Manual audit: node scripts/solar_foundation_audit.js');
     }
     
-    // Schedule Daily Agent Tasks (4:00 AM UTC - after distribution at 3:00 AM)
+    // Schedule Daily Agent Tasks (4:00 AM UTC)
     try {
       const dailyAgentJob = schedule.scheduleJob({ rule: '0 4 * * *', tz: 'UTC' }, async () => {
         try {
@@ -16770,54 +16765,12 @@ setImmediate(() => {
       console.log('📌 Manual trigger: POST /api/agents/daily-tasks/trigger');
     } catch (error) {
       console.warn('⚠️ Daily agent task scheduling failed:', error.message);
-      console.log('📌 Use manual trigger: POST /api/agents/daily-tasks/trigger');
     }
 
-    // Daily Solar Greeting Video (ffmpeg-based, reliable)
-    // The scheduleDailyGreeting() from generate-greeting.js handles startup + midnight UTC scheduling
-    // Manual trigger: POST /api/solar-greeting/regenerate
-    console.log('🌅 Daily Solar Greeting: Managed by generate-greeting.js (startup + midnight UTC)');
-    console.log('📌 Manual trigger: POST /api/solar-greeting/regenerate');
-    
-    // Auto-sync artifacts → market_items (ensures legacy items appear in search)
-    if (pool) {
-      pool.query(`
-        INSERT INTO market_items (id, title, description, tags, category, price_solar, kwh_estimate, source_type, source_url, vendor_name, status, search_text, created_by_user_id)
-        SELECT a.id::varchar, a.title, a.description, a.search_tags, a.category,
-               a.solar_amount_s, a.kwh_footprint, 'INTERNAL_STOCK',
-               COALESCE(a.trade_file_url, a.delivery_url),
-               COALESCE((SELECT m.username FROM members m WHERE m.id::text = a.creator_id::text LIMIT 1), 'TC-S Network'),
-               'ACTIVE',
-               LOWER(a.title || ' ' || COALESCE(a.description, '') || ' ' || COALESCE(a.category, '')),
-               a.creator_id::varchar
-        FROM artifacts a
-        LEFT JOIN market_items mi ON mi.id::varchar = a.id::varchar
-        WHERE a.active = true AND mi.id IS NULL
-        ON CONFLICT (id) DO NOTHING
-      `).then(function(syncResult) {
-        if (syncResult.rowCount > 0) {
-          console.log('🔄 Auto-synced ' + syncResult.rowCount + ' artifacts → market_items');
-        }
-      }).catch(function(syncErr) {
-        console.warn('⚠️ Artifact-to-market sync note:', syncErr.message);
-      });
-    }
-
-    // Initialize Solar Audit Layer (SAi-Audit)
-    try {
-      initializeSolarAudit();
-      console.log('✅ Solar Audit Layer initialized');
-      console.log(`📊 Dashboard: http://localhost:${PORT}/solar-audit.html`);
-      console.log(`🔄 Manual update: POST http://localhost:${PORT}/api/solar-audit/update`);
-    } catch (error) {
-      console.warn('⚠️ Solar Audit initialization failed:', error.message);
-      console.log('📌 Dashboard still available but data fetch requires manual trigger');
-    }
-
-    // TC-S Daily Indices Brief - schedule only (skip startup generation to prevent OOM)
+    // Schedule Daily Brief (3:00 AM UTC)
     try {
       const generator = require('./scripts/generateDailyBrief');
-      const dailyJob = schedule.scheduleJob('0 3 * * *', async () => {
+      schedule.scheduleJob('0 3 * * *', async () => {
         try {
           console.log('⏰ [SCHEDULER] Running 24-hour Daily Indices Brief update...');
           const result = await generator.generateBrief();
@@ -16831,15 +16784,23 @@ setImmediate(() => {
     } catch (error) {
       console.warn('⚠️ Daily Indices Brief scheduling failed:', error.message);
     }
-    
-    if (pool) {
-      seedMediaArtifacts(pool).catch(err => console.warn('⚠️ Media artifact seed failed:', err.message));
-    }
 
+    // Schedule daily greeting (lightweight scheduler)
     scheduleDailyGreeting();
 
-    console.log(`✅ All deferred initialization tasks started`);
-  }, 5000); // Wait 5 seconds after server starts to begin heavy tasks
+    // SKIPPED ON STARTUP (run manually or via daily cron):
+    // - initializePersistentAgents() → POST /api/agents/daily-tasks/trigger
+    // - initializeAgenticFramework() → auto-runs on first agentic request
+    // - initializeSolarAudit() → POST /api/solar-audit/update
+    // - seedMediaArtifacts() → already seeded, daily tasks create new ones
+    // - artifact→market_items sync → POST /api/agents/daily-tasks/trigger
+    console.log('📌 Heavy init skipped for fast startup. Manual triggers:');
+    console.log('   POST /api/agents/daily-tasks/trigger  (agent tasks + artifact sync)');
+    console.log('   POST /api/solar-audit/update           (solar audit data)');
+    console.log('   POST /api/distribution/trigger          (solar distribution)');
+
+    console.log(`✅ All schedulers initialized — server ready`);
+  }, 2000); // 2 seconds is enough for lightweight schedulers
 });
 
 console.log('✅ Platform initialization complete - main server ready');
