@@ -2459,6 +2459,10 @@
                 <span onclick="document.getElementById('search-input').value='phone stand';kidSolInterpretiveSearch();" style="font-size:10px;color:rgba(0,255,136,0.45);cursor:pointer;border-bottom:1px dotted rgba(0,255,136,0.2);">"phone stand" → 3D Print</span>
                 <span onclick="document.getElementById('search-input').value='AI tools under 5 Solar';kidSolInterpretiveSearch();" style="font-size:10px;color:rgba(138,43,226,0.45);cursor:pointer;border-bottom:1px dotted rgba(138,43,226,0.2);">"AI tools under 5 Solar"</span>
             </div>
+            <div style="display:flex;gap:8px;margin-bottom:8px;padding:0 4px;">
+                <button id="mode-find" onclick="setSearchMode('find')" style="padding:5px 12px;border-radius:16px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid #FFD700;background:rgba(255,215,0,0.15);color:#FFD700;transition:all 0.2s;">🔍 Find</button>
+                <button id="mode-list" onclick="setSearchMode('list')" style="padding:5px 12px;border-radius:16px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.04);color:#888;transition:all 0.2s;">📤 List</button>
+            </div>
             <div style="display:flex;gap:16px;margin-bottom:12px;padding:0 4px;">
                 <div style="font-size:9px;color:#555;line-height:1.4;">🎤 Speak &nbsp; 📷 Snap &nbsp; 📎 Attach — or type. KID SOL finds, creates, or prints it.</div>
             </div>
@@ -5351,7 +5355,7 @@
 
                     gridHTML += `
                         <div style="grid-column: 1 / -1; margin: 30px 0 20px 0;">
-                            <h3 style="color: #ffaa00; margin-bottom: 15px; font-size: 20px;">
+                            <h3 style="color: #ffaa00; margin-bottom: 15px; font-size: 20px; cursor:pointer;" onclick="document.getElementById('search-input').value='${categoryName}';kidSolInterpretiveSearch();">
                                 ${categoryIcon} ${categoryName} (${categoryArtifacts.length})
                             </h3>
                             <p style="color: #888; font-size: 14px; margin-bottom: 20px;">
@@ -5435,8 +5439,8 @@
             return `
                 <div class="artifact-card" onclick="selectArtifact('${artifact.id}')">
                     ${artifact.isBonus ? '<div class="artifact-bonus">BONUS TRACK</div>' : ''}
-                    <div class="artifact-category">${catIcon} ${artifact.category}${sourceTag}${ecoTag}</div>
-                    <div class="artifact-title">${artifact.title}</div>
+                    <div class="artifact-category" style="cursor:pointer;" onclick="event.stopPropagation();document.getElementById('search-input').value='${artifact.category}';kidSolInterpretiveSearch();">${catIcon} ${artifact.category}${sourceTag}${ecoTag}</div>
+                    <div class="artifact-title">${artifact.title} <span onclick="event.stopPropagation();document.getElementById('search-input').value='${artifact.title.replace(/'/g, "\\'")}';kidSolInterpretiveSearch();this.textContent='✓';setTimeout(function(){this.textContent='🔍'}.bind(this),800);" style="cursor:pointer;font-size:12px;opacity:0.5;margin-left:4px;" title="Search for this title">🔍</span></div>
                     ${creatorLabel}
                     <div class="artifact-kwh">${artifact.kwhFootprint} kWh footprint</div>
                     <div class="artifact-price">${artifact.formattedPrice}</div>
@@ -7193,7 +7197,32 @@
         let lastSearchQuery = '';
         let isSearching = false;
 
+        var searchMode = 'find';
         var forcePrintActive = false;
+
+        function setSearchMode(mode) {
+            searchMode = mode;
+            var findBtn = document.getElementById('mode-find');
+            var listBtn = document.getElementById('mode-list');
+            var searchInput = document.getElementById('search-input');
+            if (mode === 'find') {
+                findBtn.style.background = 'rgba(255,215,0,0.15)';
+                findBtn.style.borderColor = '#FFD700';
+                findBtn.style.color = '#FFD700';
+                listBtn.style.background = 'rgba(255,255,255,0.04)';
+                listBtn.style.borderColor = 'rgba(255,255,255,0.15)';
+                listBtn.style.color = '#888';
+                searchInput.placeholder = 'Search, create, or print any digital artifact...';
+            } else {
+                listBtn.style.background = 'rgba(0,255,136,0.15)';
+                listBtn.style.borderColor = '#00ff88';
+                listBtn.style.color = '#00ff88';
+                findBtn.style.background = 'rgba(255,255,255,0.04)';
+                findBtn.style.borderColor = 'rgba(255,255,255,0.15)';
+                findBtn.style.color = '#888';
+                searchInput.placeholder = 'Describe what you want to list on the market...';
+            }
+        }
 
         function toggleForcePrint() {
             forcePrintActive = !forcePrintActive;
@@ -7394,7 +7423,7 @@
                     html += '</div>';
                     html += '<div style="display: flex; gap: 8px;">';
                     html += '<button onclick="purchaseArtifact(\'' + a.id + '\')" style="flex:1;background:linear-gradient(135deg,#39FF14,#00cc44);color:#000;border:none;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">⚡ Buy Now</button>';
-                    html += '<button onclick="window.print()" style="background:rgba(255,165,0,0.15);border:1px solid rgba(255,165,0,0.3);color:#ffa500;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;">🖨️ Print</button>';
+                    html += '<button onclick="printArtifactDetail(\'' + a.id + '\')" style="background:rgba(255,165,0,0.15);border:1px solid rgba(255,165,0,0.3);color:#ffa500;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;">🖨️ Print</button>';
                     html += '</div></div>';
                 });
             } else {
@@ -7574,6 +7603,11 @@
             var raw = searchInput.value.trim();
             if (!raw && (!searchAttachments || searchAttachments.length === 0)) { clearSearch(); return; }
             if (!raw && searchAttachments && searchAttachments.length > 0) { raw = 'Analyze attached file'; searchInput.value = raw; }
+
+            if (searchMode === 'list') {
+                window.location.href = '/creator-upload.html?prefill=' + encodeURIComponent(raw);
+                return;
+            }
 
             inferAndRoute(raw);
             return;
@@ -7950,6 +7984,10 @@
             });
         }
 
+        function purchaseAndDownload(artifactId) {
+            purchaseArtifact(artifactId);
+        }
+
         function viewArtifactDetails(artifactId) {
             var item = allArtifacts.find(function(a) { return a.id === artifactId; });
             if (!item && typeof searchResultsCache !== 'undefined') {
@@ -8057,11 +8095,13 @@
                 for (var wi = 0; wi < 8; wi++) html += '<div class="bar"></div>';
                 html += '</div>';
                 html += '<div style="font-size:11px;color:#888;font-style:italic;">Purchase for full quality download</div>';
+                html += '<button onclick="purchaseAndDownload(\'' + id + '\')" class="preview-btn" style="margin-top:8px;background:linear-gradient(135deg,#00bfff,#0077cc);color:#fff;">📥 Buy & Download Full Track</button>';
             } else if (isVideo) {
                 if (coverArtUrl) {
                     html += '<div style="text-align:center;margin-bottom:10px;"><img src="' + escapeHtml(coverArtUrl) + '" style="max-width:100%;max-height:200px;border-radius:8px;opacity:0.85;" alt="Video thumbnail"></div>';
                 }
                 html += '<button class="preview-btn" onclick="closeItemDetailModal();openPreview(\'' + id + '\')" style="margin-bottom:6px;">\ud83c\udfac Preview Video</button>';
+                html += '<button onclick="purchaseAndDownload(\'' + id + '\')" class="preview-btn" style="margin-top:8px;background:linear-gradient(135deg,#00bfff,#0077cc);color:#fff;">📥 Buy & Download Video File</button>';
             } else if (isVisual) {
                 var imgUrl = coverArtUrl || previewFileUrl;
                 if (imgUrl) {
@@ -8274,6 +8314,7 @@
                 html += '<button class="preview-btn" onclick="closeItemDetailModal();openPreview(\'' + id + '\')">\ud83d\udc41\ufe0f Preview File</button>';
             }
             html += '<button class="purchase-btn" onclick="closeItemDetailModal();purchaseArtifact(\'' + id + '\')">Purchase & Download</button>';
+            html += '<button onclick="printArtifactDetail(\'' + id + '\')" style="width:100%;background:rgba(255,165,0,0.1);border:1px solid rgba(255,165,0,0.3);color:#ffa500;padding:12px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;margin-top:8px;">🖨️ Print Artifact Info</button>';
             html += '</div>';
 
             document.getElementById('item-detail-body').innerHTML = html;
@@ -9302,6 +9343,79 @@
             return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         }
     </script>
+  <style>
+    @media print {
+        body * { visibility: hidden !important; }
+        #print-artifact-sheet, #print-artifact-sheet * { visibility: visible !important; }
+        #print-artifact-sheet {
+            position: fixed !important;
+            left: 0; top: 0; width: 100%; height: auto;
+            background: #fff !important;
+            color: #000 !important;
+            padding: 40px !important;
+            font-family: 'Georgia', serif !important;
+            z-index: 99999;
+        }
+        #print-artifact-sheet h1 { font-size: 24px; margin-bottom: 4px; }
+        #print-artifact-sheet .print-section { margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #ddd; }
+        #print-artifact-sheet .print-label { font-weight: bold; font-size: 11px; text-transform: uppercase; color: #555; margin-bottom: 4px; }
+        #print-artifact-sheet .print-val { font-size: 14px; color: #222; }
+    }
+  </style>
+
+  <script>
+    function printArtifactDetail(artifactId) {
+        var item = allArtifacts.find(function(a) { return a.id == artifactId; });
+        if (!item && typeof searchResultsCache !== 'undefined') item = searchResultsCache[artifactId];
+        if (!item) { alert('Artifact not found'); return; }
+
+        var existing = document.getElementById('print-artifact-sheet');
+        if (existing) existing.remove();
+
+        var sheet = document.createElement('div');
+        sheet.id = 'print-artifact-sheet';
+
+        var priceSolar = parseFloat(item.solarPrice || item.priceSolar || 0);
+        var kwhVal = parseFloat(item.kwhFootprint) || (priceSolar * 4913);
+        var category = item.category || 'General';
+        var catIcon = (typeof CATEGORY_ICONS !== 'undefined' && CATEGORY_ICONS[category]) ? CATEGORY_ICONS[category] : '';
+
+        sheet.innerHTML = '<div style="text-align:center;margin-bottom:20px;border-bottom:3px double #000;padding-bottom:16px;">' +
+            '<div style="font-size:10px;letter-spacing:3px;color:#888;text-transform:uppercase;">TC-S Computronium Network</div>' +
+            '<h1 style="margin:8px 0 4px;font-size:24px;">' + escapeHtml(item.title || 'Untitled') + '</h1>' +
+            '<div style="font-size:12px;color:#666;">' + catIcon + ' ' + escapeHtml(category) + '</div>' +
+            '</div>' +
+            '<div class="print-section">' +
+            '<div class="print-label">Description</div>' +
+            '<div class="print-val">' + escapeHtml(item.description || 'No description available') + '</div>' +
+            '</div>' +
+            '<div class="print-section">' +
+            '<div class="print-label">Creator</div>' +
+            '<div class="print-val">' + escapeHtml(item.creatorName || item.creatorAgent || 'Unknown') + (item.creatorIsAgent ? ' (AI Agent)' : ' (Human)') + '</div>' +
+            '</div>' +
+            '<div class="print-section" style="display:flex;gap:40px;">' +
+            '<div><div class="print-label">Price</div><div class="print-val" style="font-size:18px;font-weight:bold;">' + priceSolar.toFixed(6) + ' Solar</div></div>' +
+            '<div><div class="print-label">Energy Footprint</div><div class="print-val">' + kwhVal.toFixed(4) + ' kWh</div></div>' +
+            '<div><div class="print-label">File Type</div><div class="print-val">' + escapeHtml(item.file_type || 'digital-artifact') + '</div></div>' +
+            '</div>' +
+            '<div class="print-section">' +
+            '<div class="print-label">Energy Breakdown</div>' +
+            '<div class="print-val">Content: ' + (kwhVal * 0.7).toFixed(4) + ' kWh \u00b7 Processing: ' + (kwhVal * 0.15).toFixed(4) + ' kWh \u00b7 Storage: ' + (kwhVal * 0.05).toFixed(4) + ' kWh \u00b7 Delivery: ' + (kwhVal * 0.1).toFixed(4) + ' kWh</div>' +
+            '</div>' +
+            '<div class="print-section">' +
+            '<div class="print-label">Solar Formula</div>' +
+            '<div class="print-val">' + kwhVal.toFixed(4) + ' kWh \u00f7 4,913 kWh/Solar = ' + priceSolar.toFixed(6) + ' Solar</div>' +
+            '</div>' +
+            (item.searchTags && item.searchTags.length > 0 ? '<div class="print-section"><div class="print-label">Tags</div><div class="print-val">' + escapeHtml(item.searchTags.join(', ')) + '</div></div>' : '') +
+            '<div style="text-align:center;margin-top:24px;font-size:10px;color:#aaa;border-top:1px solid #ddd;padding-top:12px;">' +
+            'TC-S Network Artifact Certificate \u00b7 Artifact ID: ' + escapeHtml(item.id || '') + ' \u00b7 1 Solar = 4,913 kWh \u00b7 Printed ' + new Date().toLocaleDateString() +
+            '</div>';
+
+        document.body.appendChild(sheet);
+        setTimeout(function() { window.print(); setTimeout(function() { sheet.remove(); }, 1000); }, 300);
+    }
+  </script>
+
   <!-- Kid Solar Controller - Persistent across pages -->
   <script src="/js/kid-solar-controller.js"></script>
 </body>
