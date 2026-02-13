@@ -9237,19 +9237,23 @@ const server = http.createServer(async (req, res) => {
         messages: [
           {
             role: 'system',
-            content: `You are a product research assistant for the TC-S Network marketplace. When given a search query, find 3-5 real products or items that match. For each product provide:
-- title: product name
+            content: `You are a product research assistant. When given a search query, find exactly 4 real products from different major retailers that match. Provide the most accurate current retail prices you know. Each product from a DIFFERENT retailer (e.g., Amazon, Best Buy, Walmart, Target, Home Depot, B&H Photo, Costco, Newegg).
+
+For each product provide:
+- title: exact product name with model number if applicable
 - description: brief description (1-2 sentences)
-- estimatedPriceUSD: estimated price in US dollars (number only)
-- source: where to buy it (store or platform name)
-- url: a plausible purchase URL
+- price: exact current retail price in USD (a single number, NOT a range)
+- source: retailer/store name
+- url: direct product page URL on the retailer's website (use real retailer URL patterns like https://www.amazon.com/dp/, https://www.bestbuy.com/site/, https://www.walmart.com/ip/, etc.)
+- condition: "New", "Used", "Refurbished", or "Pre-owned"
+- availability: "In Stock", "Limited Stock", "Out of Stock", or "Check Store"
 
 Respond ONLY with valid JSON in this exact format:
-{"products": [{"title": "...", "description": "...", "estimatedPriceUSD": 29.99, "source": "Amazon", "url": "https://..."}]}`
+{"products": [{"title": "...", "description": "...", "price": 29.99, "source": "Amazon", "url": "https://...", "condition": "New", "availability": "In Stock"}]}`
           },
           {
             role: 'user',
-            content: `Find real products matching: "${qRaw.trim()}"`
+            content: `Find 4 real products from different retailers matching: "${qRaw.trim()}"`
           }
         ],
         temperature: 0.7,
@@ -9269,7 +9273,7 @@ Respond ONLY with valid JSON in this exact format:
       const KWH_PER_SOLAR = 4913;
 
       const webResults = (parsed.products || []).map(p => {
-        const priceUSD = parseFloat(p.estimatedPriceUSD) || 0;
+        const priceUSD = parseFloat(p.price) || parseFloat(p.estimatedPriceUSD) || 0;
         const priceSolar = priceUSD / SOLAR_USD_RATE;
         const kwhEquivalent = priceSolar * KWH_PER_SOLAR;
         return {
@@ -9279,7 +9283,9 @@ Respond ONLY with valid JSON in this exact format:
           estimatedPriceSolar: parseFloat(priceSolar.toFixed(6)),
           kwhEquivalent: parseFloat(kwhEquivalent.toFixed(4)),
           source: p.source || 'Unknown',
-          url: p.url || ''
+          url: p.url || '',
+          condition: p.condition || 'New',
+          availability: p.availability || 'Check Store'
         };
       });
 

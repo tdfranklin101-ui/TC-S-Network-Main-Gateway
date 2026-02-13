@@ -3394,39 +3394,55 @@
                             html += '</div>';
                         }
 
-                        html += '<div style="border-top:1px solid rgba(255,255,255,0.1);margin-top:16px;padding-top:14px;">';
-                        html += '<div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1.2px;font-weight:700;margin-bottom:10px;">⚡ Provision Tracks</div>';
-
                         if (lifeLensMode === 'buy') {
+                            html += '<div style="border-top:1px solid rgba(255,255,255,0.1);margin-top:16px;padding-top:14px;">';
+                            html += '<div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1.2px;font-weight:700;margin-bottom:10px;">🛒 Where to Buy</div>';
+                            html += '<div id="lifelens-where-to-buy" style="margin-bottom:14px;">';
+                            html += '<div style="display:flex;align-items:center;gap:8px;padding:16px;background:rgba(0,0,0,0.4);border:1px solid #333;border-radius:8px;">';
+                            html += '<div style="width:18px;height:18px;border:2px solid #00ff88;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;"></div>';
+                            html += '<span style="color:#aaa;font-size:13px;">Finding products from retailers...</span>';
+                            html += '</div>';
+                            html += '</div>';
+                            html += '<style>@keyframes spin{to{transform:rotate(360deg)}}</style>';
+                            html += '<div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1.2px;font-weight:700;margin-bottom:10px;">⚡ More Options</div>';
                             html += '<div style="display:flex;flex-direction:column;gap:8px;">';
-                            html += '<button onclick="lifeLensTrack(\'scout\')" style="width:100%;padding:10px 14px;background:linear-gradient(135deg,#8a2be2,#00bfff);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:bold;cursor:pointer;text-align:left;transition:all 0.3s;">🌐 Search Online — Find via web (fiat pricing)</button>';
                             html += '<button onclick="lifeLensTrack(\'member\')" style="width:100%;padding:10px 14px;background:linear-gradient(135deg,#00ff88,#00cc66);color:#000;border:none;border-radius:8px;font-size:14px;font-weight:bold;cursor:pointer;text-align:left;transition:all 0.3s;">👥 Member Listings — Buy from network (Solar ☀️)</button>';
                             html += '<button onclick="lifeLensTrack(\'service\')" style="width:100%;padding:10px 14px;background:linear-gradient(135deg,#ffa500,#ff6b35);color:#000;border:none;border-radius:8px;font-size:14px;font-weight:bold;cursor:pointer;text-align:left;transition:all 0.3s;">🎟️ Service Voucher — 3D printing, repairs & more</button>';
                             html += '</div>';
+                            html += '</div>';
                         } else if (lifeLensMode === 'sell') {
+                            html += '<div style="border-top:1px solid rgba(255,255,255,0.1);margin-top:16px;padding-top:14px;">';
+                            html += '<div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1.2px;font-weight:700;margin-bottom:10px;">⚡ Provision Tracks</div>';
                             html += '<div style="display:flex;flex-direction:column;gap:8px;">';
                             html += '<button onclick="lifeLensTrack(\'list\')" style="width:100%;padding:12px;background:linear-gradient(135deg,#ffa500,#ff6b35);color:#000;border:none;border-radius:8px;font-size:15px;font-weight:bold;cursor:pointer;transition:all 0.3s;">📤 List This Item on Marketplace (Solar ☀️)</button>';
                             html += '<div style="font-size:12px;color:#888;text-align:center;">Every member is a buyer AND a creator/seller</div>';
                             html += '</div>';
+                            html += '</div>';
                         } else {
+                            html += '<div style="border-top:1px solid rgba(255,255,255,0.1);margin-top:16px;padding-top:14px;">';
+                            html += '<div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1.2px;font-weight:700;margin-bottom:10px;">⚡ Provision Tracks</div>';
                             html += '<div style="display:flex;flex-direction:column;gap:8px;">';
                             html += '<button onclick="lifeLensTrack(\'voucher\')" style="width:100%;padding:12px;background:linear-gradient(135deg,#ffa500,#ff8c42);color:#000;border:none;border-radius:8px;font-size:15px;font-weight:bold;cursor:pointer;transition:all 0.3s;">🎟️ Issue Service Voucher for This Item</button>';
                             html += '<div style="font-size:12px;color:#888;text-align:center;">3D printing, repairs, custom fabrication & professional services</div>';
                             html += '</div>';
+                            html += '</div>';
                         }
 
-                        html += '</div></div>';
+                        html += '</div>';
                         resultsDiv.innerHTML = html;
                         resultsDiv.style.display = 'block';
+
+                        if (lifeLensMode === 'buy') {
+                            var searchQ = lifeLensResult.searchQuery || lifeLensResult.name;
+                            if (searchQ) loadWhereToBuy(searchQ);
+                        }
                     }
 
                     function lifeLensTrack(track) {
                         if (!lifeLensResult) return;
                         var query = lifeLensResult.searchQuery || lifeLensResult.name;
 
-                        if (track === 'scout') {
-                            window.open('https://marketplace-scout.replit.app/?q=' + encodeURIComponent(query), '_blank');
-                        } else if (track === 'member') {
+                        if (track === 'member') {
                             var searchInput = document.getElementById('search-input');
                             if (searchInput) {
                                 searchInput.value = query;
@@ -3447,6 +3463,62 @@
                                 voucherTab.scrollIntoView({ behavior: 'smooth', block: 'start' });
                             }
                         }
+                    }
+
+                    function loadWhereToBuy(query) {
+                        var container = document.getElementById('lifelens-where-to-buy');
+                        if (!container) return;
+
+                        function esc(str) {
+                            var d = document.createElement('div');
+                            d.textContent = str || '';
+                            return d.innerHTML;
+                        }
+
+                        fetch('/api/market/web-search?q=' + encodeURIComponent(query))
+                            .then(function(r) { return r.json(); })
+                            .then(function(data) {
+                                if (!data.success || !data.webResults || data.webResults.length === 0) {
+                                    container.innerHTML = '<div style="padding:12px;background:rgba(0,0,0,0.4);border:1px solid #333;border-radius:8px;color:#888;font-size:13px;text-align:center;">No retailer results found. Try Member Listings or Service Voucher below.</div>';
+                                    return;
+                                }
+
+                                var cards = '';
+                                var results = data.webResults.slice(0, 4);
+                                for (var i = 0; i < results.length; i++) {
+                                    var p = results[i];
+                                    var priceStr = '$' + (p.estimatedPriceUSD || 0).toFixed(2);
+                                    var solarStr = p.estimatedPriceSolar ? (p.estimatedPriceSolar < 0.01 ? p.estimatedPriceSolar.toFixed(6) : p.estimatedPriceSolar.toFixed(4)) + ' Solar' : '';
+                                    var availColor = p.availability === 'In Stock' ? '#00ff88' : p.availability === 'Out of Stock' ? '#ff4444' : '#ffa500';
+
+                                    cards += '<div style="background:rgba(0,0,0,0.6);border:1px solid #333;border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:6px;">';
+                                    cards += '<div style="display:flex;justify-content:space-between;align-items:flex-start;">';
+                                    cards += '<div style="flex:1;min-width:0;">';
+                                    cards += '<div style="font-size:14px;font-weight:700;color:#fff;">' + esc(p.source) + '</div>';
+                                    cards += '<div style="font-size:12px;color:#aaa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;" title="' + esc(p.title) + '">' + esc(p.title) + '</div>';
+                                    cards += '</div>';
+                                    cards += '<div style="background:#00ff88;color:#000;font-weight:800;font-size:15px;padding:4px 10px;border-radius:6px;white-space:nowrap;">' + esc(priceStr) + '</div>';
+                                    cards += '</div>';
+                                    cards += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">';
+                                    cards += '<span style="font-size:11px;color:#aaa;background:rgba(255,255,255,0.05);padding:2px 6px;border-radius:4px;">' + esc(p.condition || 'New') + '</span>';
+                                    cards += '<span style="font-size:11px;color:' + availColor + ';font-weight:600;">' + esc(p.availability || 'Check Store') + '</span>';
+                                    if (solarStr) {
+                                        cards += '<span style="font-size:10px;color:#ffaa00;margin-left:auto;">☀️ ' + esc(solarStr) + '</span>';
+                                    }
+                                    cards += '</div>';
+                                    if (p.url) {
+                                        cards += '<a href="' + esc(p.url) + '" target="_blank" rel="noopener noreferrer" style="display:block;width:100%;padding:8px;background:linear-gradient(135deg,#8a2be2,#00bfff);color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;text-align:center;text-decoration:none;transition:all 0.3s;margin-top:2px;">View Product →</a>';
+                                    }
+                                    cards += '</div>';
+                                }
+
+                                cards += '<a href="https://www.google.com/search?tbm=shop&q=' + encodeURIComponent(query) + '" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;color:#00bfff;font-size:12px;margin-top:6px;text-decoration:none;opacity:0.7;">Search Google Shopping for more options →</a>';
+                                container.innerHTML = '<div style="display:flex;flex-direction:column;gap:8px;">' + cards + '</div>';
+                            })
+                            .catch(function(err) {
+                                console.error('Where to Buy fetch error:', err);
+                                container.innerHTML = '<div style="padding:12px;background:rgba(0,0,0,0.4);border:1px solid #333;border-radius:8px;color:#888;font-size:13px;text-align:center;">Could not load retailer results. Try again later.</div>';
+                            });
                     }
                 </script>
             </div>
