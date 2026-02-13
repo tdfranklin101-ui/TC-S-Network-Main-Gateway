@@ -2452,13 +2452,55 @@
                 >👑</button>
             </div>
 
-            <!-- Deliverable Inference Bar -->
-            <div id="inference-bar" style="display: none; margin-bottom: 14px; padding: 8px 14px; background: rgba(0,191,255,0.04); border: 1px solid rgba(0,191,255,0.12); border-radius: 12px;">
-                <div style="display: flex; align-items: center; justify-content: space-between;">
-                    <div id="inference-label" style="font-size: 12px; color: #00bfff; font-weight: 600;"></div>
-                    <div style="display: flex; gap: 6px;">
-                        <div id="inference-badges" style="display: flex; gap: 4px; flex-wrap: wrap;"></div>
-                        <button id="force-print-btn" onclick="toggleForcePrint()" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #888; padding: 3px 10px; border-radius: 10px; font-size: 10px; font-weight: 600; cursor: pointer; transition: all 0.2s;" title="Human override: force print this item">🖨️ Print This</button>
+            <!-- REPLICATOR Panel -->
+            <style>
+                @keyframes replicatorPulse {
+                    0%, 100% { border-color: rgba(0,191,255,0.2); box-shadow: 0 0 8px rgba(0,191,255,0.05); }
+                    50% { border-color: rgba(0,191,255,0.45); box-shadow: 0 0 16px rgba(0,191,255,0.12); }
+                }
+                @keyframes replicatorReveal {
+                    from { opacity: 0; max-height: 0; padding-top: 0; padding-bottom: 0; }
+                    to { opacity: 1; max-height: 300px; padding-top: 10px; padding-bottom: 10px; }
+                }
+                .replicator-dot { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; border: 2px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.03); opacity: 0.35; transition: all 0.4s ease; }
+                .replicator-dot.active { opacity: 1; transform: scale(1.12); }
+                .replicator-toggle-track { width: 38px; height: 20px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; position: relative; cursor: pointer; transition: all 0.3s; flex-shrink: 0; }
+                .replicator-toggle-track.on { background: rgba(0,191,255,0.25); border-color: #00bfff; }
+                .replicator-toggle-thumb { width: 16px; height: 16px; background: #555; border-radius: 50%; position: absolute; top: 1px; left: 1px; transition: all 0.3s; }
+                .replicator-toggle-track.on .replicator-toggle-thumb { left: 19px; background: #00bfff; }
+                .replicator-pod-indicator { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; padding: 3px 8px; border-radius: 10px; transition: all 0.4s; }
+            </style>
+            <div id="inference-bar" style="margin-bottom: 14px; padding: 10px 14px; background: rgba(0,191,255,0.03); border: 1.5px solid rgba(0,191,255,0.15); border-radius: 14px; animation: replicatorPulse 4s ease-in-out infinite;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                    <div style="font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: rgba(0,191,255,0.6);">Replicator</div>
+                    <div id="replicator-pod-status" class="replicator-pod-indicator" style="background: rgba(255,255,255,0.04); color: #444; border: 1px solid rgba(255,255,255,0.06);">Standby</div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                    <div id="rep-dot-context" class="replicator-dot" title="Context" style="border-color: rgba(255,255,255,0.1);">📋</div>
+                    <div id="rep-dot-file" class="replicator-dot" title="Digital File" style="border-color: rgba(0,191,255,0.15);">📁</div>
+                    <div id="rep-dot-3d" class="replicator-dot" title="3D Print" style="border-color: rgba(0,255,136,0.15);">🖨️</div>
+                    <div id="rep-dot-2d" class="replicator-dot" title="2D Print" style="border-color: rgba(255,165,0,0.15);">📄</div>
+                    <div style="flex: 1;"></div>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span style="font-size: 9px; color: #666; font-weight: 600;">Print Override</span>
+                        <div id="force-print-btn" class="replicator-toggle-track" onclick="toggleForcePrint()" title="Human override: force print this item">
+                            <div class="replicator-toggle-thumb"></div>
+                        </div>
+                    </div>
+                    <div id="rep-pod-print" class="replicator-pod-indicator" style="background: rgba(255,255,255,0.03); color: #333; border: 1px solid rgba(255,255,255,0.06); display: none;">🖨️ Print on Demand</div>
+                </div>
+                <div id="replicator-results" style="display: none; overflow: hidden;">
+                    <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.06);">
+                        <div id="inference-label" style="font-size: 12px; color: #00bfff; font-weight: 600; margin-bottom: 6px;"></div>
+                        <div id="inference-badges" style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 6px;"></div>
+                        <div id="replicator-reasoning" style="font-size: 11px; color: #777; line-height: 1.4; margin-bottom: 6px;"></div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span style="font-size: 9px; color: #555; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Confidence</span>
+                            <div style="flex: 1; height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden;">
+                                <div id="replicator-confidence" style="height: 100%; width: 0%; background: linear-gradient(90deg, #00bfff, #39FF14); border-radius: 2px; transition: width 0.8s ease;"></div>
+                            </div>
+                            <span id="replicator-confidence-pct" style="font-size: 9px; color: #555; font-weight: 700;">0%</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -2488,6 +2530,13 @@
                     <button onclick="kidSolCatClick(this,'Art')" class="kid-sol-cat" style="background: rgba(255,165,0,0.06); border: 1px solid rgba(255,165,0,0.25); color: #ffa500; padding: 6px 13px; border-radius: 18px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,165,0,0.15)';this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(255,165,0,0.06)';this.style.transform='none'">🖼️ Art</button>
                     <button onclick="kidSolCatClick(this,'Photography')" class="kid-sol-cat" style="background: rgba(255,165,0,0.06); border: 1px solid rgba(255,165,0,0.25); color: #ffa500; padding: 6px 13px; border-radius: 18px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,165,0,0.15)';this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(255,165,0,0.06)';this.style.transform='none'">📸 Photo</button>
                     <button onclick="kidSolCatClick(this,'Writing')" class="kid-sol-cat" style="background: rgba(255,165,0,0.06); border: 1px solid rgba(255,165,0,0.25); color: #ffa500; padding: 6px 13px; border-radius: 18px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,165,0,0.15)';this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(255,165,0,0.06)';this.style.transform='none'">✍️ Writing</button>
+                </div>
+            </div>
+            <div style="margin-bottom: 12px;">
+                <div style="font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: rgba(0,191,255,0.6); margin-bottom: 5px; padding-left: 2px;">Fabrication & Print</div>
+                <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                    <button onclick="kidSolCatClick(this,'3D Printing');if(typeof inferAndRoute==='function')inferAndRoute('3D Printing');" class="kid-sol-cat" style="background: rgba(0,191,255,0.06); border: 1px solid rgba(0,191,255,0.25); color: #00bfff; padding: 6px 13px; border-radius: 18px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(0,191,255,0.15)';this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(0,191,255,0.06)';this.style.transform='none'">🖨️ 3D Print</button>
+                    <button onclick="kidSolCatClick(this,'Print on Demand');if(typeof inferAndRoute==='function')inferAndRoute('Print on Demand');" class="kid-sol-cat" style="background: rgba(255,165,0,0.06); border: 1px solid rgba(255,165,0,0.25); color: #ffa500; padding: 6px 13px; border-radius: 18px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,165,0,0.15)';this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(255,165,0,0.06)';this.style.transform='none'">📄 Print on Demand</button>
                 </div>
             </div>
             <div style="display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 10px;">
@@ -7128,26 +7177,58 @@
 
         function toggleForcePrint() {
             forcePrintActive = !forcePrintActive;
-            var btn = document.getElementById('force-print-btn');
+            var toggle = document.getElementById('force-print-btn');
+            var podPrint = document.getElementById('rep-pod-print');
             if (forcePrintActive) {
-                btn.style.background = 'rgba(0,191,255,0.2)';
-                btn.style.borderColor = '#00bfff';
-                btn.style.color = '#00bfff';
-                btn.textContent = '🖨️ Print This ✓';
+                toggle.classList.add('on');
+                podPrint.style.display = 'inline-block';
+                podPrint.style.background = 'rgba(0,191,255,0.12)';
+                podPrint.style.color = '#00bfff';
+                podPrint.style.borderColor = 'rgba(0,191,255,0.3)';
                 showInterpretation('🖨️ Human override active — your next search will force a print option.');
             } else {
-                btn.style.background = 'rgba(255,255,255,0.06)';
-                btn.style.borderColor = 'rgba(255,255,255,0.15)';
-                btn.style.color = '#888';
-                btn.textContent = '🖨️ Print This';
+                toggle.classList.remove('on');
+                podPrint.style.display = 'none';
             }
         }
 
         function showInferenceBar(matrix, label) {
-            var bar = document.getElementById('inference-bar');
             var labelEl = document.getElementById('inference-label');
             var badgesEl = document.getElementById('inference-badges');
-            bar.style.display = 'block';
+            var resultsArea = document.getElementById('replicator-results');
+            var statusEl = document.getElementById('replicator-pod-status');
+            var reasoningEl = document.getElementById('replicator-reasoning');
+            var confBar = document.getElementById('replicator-confidence');
+            var confPct = document.getElementById('replicator-confidence-pct');
+            var podPrint = document.getElementById('rep-pod-print');
+
+            var dotCtx = document.getElementById('rep-dot-context');
+            var dotFile = document.getElementById('rep-dot-file');
+            var dot3d = document.getElementById('rep-dot-3d');
+            var dot2d = document.getElementById('rep-dot-2d');
+
+            dotCtx.classList.toggle('active', !!matrix.context);
+            if (matrix.context) { dotCtx.style.borderColor = 'rgba(255,255,255,0.5)'; dotCtx.style.background = 'rgba(255,255,255,0.08)'; }
+            dotFile.classList.toggle('active', !!(matrix.file && matrix.file.present));
+            if (matrix.file && matrix.file.present) { dotFile.style.borderColor = '#00bfff'; dotFile.style.background = 'rgba(0,191,255,0.12)'; }
+            dot3d.classList.toggle('active', !!matrix.print3d);
+            if (matrix.print3d) { dot3d.style.borderColor = '#00ff88'; dot3d.style.background = 'rgba(0,255,136,0.12)'; }
+            dot2d.classList.toggle('active', !!matrix.print2d);
+            if (matrix.print2d) { dot2d.style.borderColor = '#ffa500'; dot2d.style.background = 'rgba(255,165,0,0.12)'; }
+
+            var hasPrint = matrix.print3d || matrix.print2d || matrix.humanOverride;
+            if (hasPrint) {
+                podPrint.style.display = 'inline-block';
+                podPrint.style.background = 'rgba(57,255,20,0.1)';
+                podPrint.style.color = '#39FF14';
+                podPrint.style.borderColor = 'rgba(57,255,20,0.3)';
+            }
+
+            statusEl.textContent = 'Active';
+            statusEl.style.background = 'rgba(57,255,20,0.1)';
+            statusEl.style.color = '#39FF14';
+            statusEl.style.borderColor = 'rgba(57,255,20,0.3)';
+
             labelEl.textContent = label;
             var badges = '';
             if (matrix.context) badges += '<span style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#aaa;padding:2px 8px;border-radius:8px;font-size:9px;">📋 Context</span>';
@@ -7156,11 +7237,29 @@
             if (matrix.print2d) badges += '<span style="background:rgba(255,165,0,0.08);border:1px solid rgba(255,165,0,0.2);color:#ffa500;padding:2px 8px;border-radius:8px;font-size:9px;">📄 2D Print</span>';
             if (matrix.humanOverride) badges += '<span style="background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.2);color:#FFD700;padding:2px 8px;border-radius:8px;font-size:9px;">👤 Override</span>';
             badgesEl.innerHTML = badges;
+
+            var reasoning = matrix.reasoning || '';
+            reasoningEl.textContent = reasoning;
+
+            var confidence = matrix.confidence || (matrix.print3d ? 85 : matrix.print2d ? 75 : 60);
+            confBar.style.width = confidence + '%';
+            confPct.textContent = confidence + '%';
+
+            resultsArea.style.display = 'block';
+            resultsArea.style.animation = 'replicatorReveal 0.5s ease forwards';
         }
 
         function hideInferenceBar() {
-            var bar = document.getElementById('inference-bar');
-            if (bar) bar.style.display = 'none';
+            var resultsArea = document.getElementById('replicator-results');
+            var statusEl = document.getElementById('replicator-pod-status');
+            var podPrint = document.getElementById('rep-pod-print');
+            if (resultsArea) resultsArea.style.display = 'none';
+            if (statusEl) { statusEl.textContent = 'Standby'; statusEl.style.background = 'rgba(255,255,255,0.04)'; statusEl.style.color = '#444'; statusEl.style.borderColor = 'rgba(255,255,255,0.06)'; }
+            ['rep-dot-context','rep-dot-file','rep-dot-3d','rep-dot-2d'].forEach(function(id) {
+                var d = document.getElementById(id);
+                if (d) { d.classList.remove('active'); d.style.background = 'rgba(255,255,255,0.03)'; d.style.borderColor = 'rgba(255,255,255,0.08)'; }
+            });
+            if (!forcePrintActive && podPrint) podPrint.style.display = 'none';
         }
 
         async function inferAndRoute(query) {
