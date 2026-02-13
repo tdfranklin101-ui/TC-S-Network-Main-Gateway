@@ -14107,7 +14107,7 @@ Respond with valid JSON only. Be insightful and specific.`;
   if (pathname.startsWith('/api/artifact3d/download/') && req.method === 'GET') {
     try {
       const dlId = pathname.split('/api/artifact3d/download/')[1];
-      const row = await pool.query('SELECT stl_url, template_id FROM artifact_3d_files WHERE id = $1', [dlId]);
+      const row = await pool.query('SELECT stl_url, template_id FROM artifact_3d_files WHERE id = $1 OR artifact_id = $1 ORDER BY created_at DESC LIMIT 1', [dlId]);
       if (row.rows.length === 0) {
         res.writeHead(404, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Artifact not found' }));
