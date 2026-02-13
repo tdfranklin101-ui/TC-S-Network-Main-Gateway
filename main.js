@@ -14073,26 +14073,66 @@ Respond with valid JSON only. Be insightful and specific.`;
           'completed'
         ]
       );
+      const artifactTitle = body.title || result.template.name + ' v1';
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
         success: true,
         artifact3dId,
+        title: artifactTitle,
         templateId,
         stlUrl: `cloud://${stlResult.key}`,
         printGuideUrl: `cloud://${guideResult.key}`,
+        downloadUrl: `/api/artifact3d/download/${artifact3dId}`,
         stlHash: result.stlHash,
         printGuideHash: result.printGuideHash,
+        fileSize: stlResult.size,
         triangleCount: result.triangleCount,
         boundingBox: result.boundingBox,
         validation: result.validation,
         priceSolar: result.priceSolar,
         kwhFootprint: result.kwhFootprint,
+        printGuide: result.printGuideText,
+        oneLiner: `Mint '${artifactTitle}' — ${result.priceSolar} Solar — includes STL + print guide — publish to Market`,
         warnings: result.warnings
       }));
     } catch (error) {
       console.error('🔧 3D Artifact generation error:', error.message);
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Generation failed: ' + error.message }));
+    }
+    return;
+  }
+
+  // 3b. GET /api/artifact3d/download/:id — Download STL file from cloud storage
+  if (pathname.startsWith('/api/artifact3d/download/') && req.method === 'GET') {
+    try {
+      const dlId = pathname.split('/api/artifact3d/download/')[1];
+      const row = await pool.query('SELECT stl_url, template_id FROM artifact_3d_files WHERE id = $1', [dlId]);
+      if (row.rows.length === 0) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Artifact not found' }));
+        return;
+      }
+      const stlUrl = row.rows[0].stl_url;
+      if (!stlUrl || !stlUrl.startsWith('cloud://')) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'STL file not available' }));
+        return;
+      }
+      const cloudStorage = require('./server/cloud-storage');
+      const cloudKey = stlUrl.replace('cloud://', '');
+      const buffer = await cloudStorage.downloadFile(cloudKey);
+      const filename = (row.rows[0].template_id || 'artifact') + '_' + dlId.substring(0, 8) + '.stl';
+      res.writeHead(200, {
+        'Content-Type': 'application/octet-stream',
+        'Content-Disposition': `attachment; filename="${filename}"`,
+        'Content-Length': buffer.length
+      });
+      res.end(buffer);
+    } catch (error) {
+      console.error('3D download error:', error.message);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Download failed: ' + error.message }));
     }
     return;
   }
