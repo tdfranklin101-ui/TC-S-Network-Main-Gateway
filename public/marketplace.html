@@ -2435,12 +2435,12 @@
                 <input 
                     type="text" 
                     id="search-input" 
-                    placeholder="I need a beat for my video... / Show me energy tools / Find something under 5 Solar..."
+                    placeholder="Search, create, or print any digital artifact..."
                     data-testid="input-search"
                     onkeydown="handleSearchKeydown(event)"
                     style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.04); border: 2px solid rgba(255,215,0,0.25); color: #fff; padding: 16px 70px 16px 20px; border-radius: 28px; font-size: 15px; outline: none; transition: all 0.3s; font-weight: 400;"
-                    onfocus="this.style.borderColor='#FFD700';this.style.boxShadow='0 0 20px rgba(255,215,0,0.15)';this.placeholder='Tell me what you need in your own words...'"
-                    onblur="this.style.borderColor='rgba(255,215,0,0.25)';this.style.boxShadow='none';this.placeholder='I need a beat for my video... / Show me energy tools / Find something under 5 Solar...'"
+                    onfocus="this.style.borderColor='#FFD700';this.style.boxShadow='0 0 20px rgba(255,215,0,0.15)';this.placeholder='Describe what you need...'"
+                    onblur="this.style.borderColor='rgba(255,215,0,0.25)';this.style.boxShadow='none';this.placeholder='Search, create, or print any digital artifact...'"
                 />
                 <button 
                     id="search-btn" 
@@ -2450,6 +2450,17 @@
                     onmouseover="this.style.transform='translateY(-50%) scale(1.05)';this.style.boxShadow='0 4px 16px rgba(255,215,0,0.4)'"
                     onmouseout="this.style.transform='translateY(-50%)';this.style.boxShadow='0 2px 8px rgba(255,215,0,0.3)'"
                 >👑</button>
+            </div>
+
+            <div style="display:flex;flex-wrap:wrap;gap:6px 12px;margin-bottom:12px;padding:0 4px;">
+                <span style="font-size:10px;color:rgba(255,215,0,0.5);font-weight:600;">Try:</span>
+                <span onclick="document.getElementById('search-input').value='jazz beat for my video';kidSolInterpretiveSearch();" style="font-size:10px;color:rgba(255,215,0,0.45);cursor:pointer;border-bottom:1px dotted rgba(255,215,0,0.2);">"a jazz beat for my video"</span>
+                <span onclick="document.getElementById('search-input').value='business card design';kidSolInterpretiveSearch();" style="font-size:10px;color:rgba(0,191,255,0.45);cursor:pointer;border-bottom:1px dotted rgba(0,191,255,0.2);">"business card design" → 2D Print</span>
+                <span onclick="document.getElementById('search-input').value='phone stand';kidSolInterpretiveSearch();" style="font-size:10px;color:rgba(0,255,136,0.45);cursor:pointer;border-bottom:1px dotted rgba(0,255,136,0.2);">"phone stand" → 3D Print</span>
+                <span onclick="document.getElementById('search-input').value='AI tools under 5 Solar';kidSolInterpretiveSearch();" style="font-size:10px;color:rgba(138,43,226,0.45);cursor:pointer;border-bottom:1px dotted rgba(138,43,226,0.2);">"AI tools under 5 Solar"</span>
+            </div>
+            <div style="display:flex;gap:16px;margin-bottom:12px;padding:0 4px;">
+                <div style="font-size:9px;color:#555;line-height:1.4;">🎤 Speak &nbsp; 📷 Snap &nbsp; 📎 Attach — or type. KID SOL finds, creates, or prints it.</div>
             </div>
 
             <div id="search-attachments-preview" style="display:none; margin-bottom:10px; padding:8px 12px; background:rgba(255,215,0,0.06); border:1px solid rgba(255,215,0,0.2); border-radius:12px;"></div>
@@ -7198,6 +7209,7 @@
             } else {
                 toggle.classList.remove('on');
                 podPrint.style.display = 'none';
+                hideInterpretation();
             }
         }
 
