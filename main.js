@@ -9424,6 +9424,24 @@ Only include products where you have found a real URL. Do not make up URLs.`
     return;
   }
 
+  if (pathname === '/api/ecosystem/config' && req.method === 'GET') {
+    try {
+      const configPath = path.join(__dirname, 'public', 'data', 'ecosystem-config.json');
+      const configData = fs.readFileSync(configPath, 'utf8');
+      res.writeHead(200, {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'public, max-age=300',
+        'ETag': '"eco-config-v1"'
+      });
+      res.end(configData);
+    } catch (err) {
+      console.error('Ecosystem config error:', err.message);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Config unavailable' }));
+    }
+    return;
+  }
+
   // Ecosystem Test API - create market items for agent testing (authenticated)
   if (pathname === '/api/ecosystem-test/create-item' && req.method === 'POST') {
     try {

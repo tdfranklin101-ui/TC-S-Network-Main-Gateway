@@ -1,0 +1,209 @@
+{
+  "agents": [
+    {"id":1,"code":"01","name":"Alpha","icon":"🅰️"},
+    {"id":2,"code":"02","name":"Bravo","icon":"🅱️"},
+    {"id":3,"code":"03","name":"Charlie","icon":"©️"},
+    {"id":4,"code":"04","name":"Delta","icon":"🔺"},
+    {"id":5,"code":"05","name":"Echo","icon":"📡"},
+    {"id":6,"code":"06","name":"Foxtrot","icon":"🦊"},
+    {"id":7,"code":"07","name":"Golf","icon":"⛳"},
+    {"id":8,"code":"08","name":"Hotel","icon":"🏨"},
+    {"id":9,"code":"09","name":"India","icon":"🇮🇳"},
+    {"id":10,"code":"10","name":"Juliet","icon":"🌹"},
+    {"id":11,"code":"11","name":"Kilo","icon":"⚖️"},
+    {"id":12,"code":"12","name":"Lima","icon":"🌿"},
+    {"id":13,"code":"13","name":"Nova","icon":"💫"},
+    {"id":14,"code":"14","name":"Orion","icon":"🌌"},
+    {"id":15,"code":"15","name":"Pulse","icon":"💓"},
+    {"id":16,"code":"16","name":"Quasar","icon":"✨"},
+    {"id":17,"code":"17","name":"Radiant","icon":"☀️"},
+    {"id":18,"code":"18","name":"Solaris","icon":"🔆"},
+    {"id":19,"code":"19","name":"Tesla","icon":"⚡"},
+    {"id":20,"code":"20","name":"Zenith","icon":"🏔️"},
+    {"id":21,"code":"ks","name":"KID SOL","icon":"👑"},
+    {"id":22,"code":"ksr","name":"Kid Solar","icon":"🌞"}
+  ],
+  "catGroups": {
+    "TC-S Market": ["Computronium","Culture","Basic Needs","Rent","Energy"],
+    "Creative & Media": ["Music","Video","Art","Photo","Writing"],
+    "AI-Enhanced": ["AI Tools","AI Create"],
+    "Technical & Other": ["Software","Docs","Games","Utilities"]
+  },
+  "itemParts": {
+    "Computronium": {
+      "adj": ["Quantum","Neural","Photonic","Lattice","Cryo","Nano","Hyper","Exascale","Coherent","Flux"],
+      "noun": ["Compute Shard","Processing Unit","Logic Crystal","Inference Chip","Hash Engine","Tensor Core","Bit Forge","Data Loom","Cycle Pack","Throughput Token"],
+      "suffix": ["v4","XL","Genesis","Prime","Ultra","Turbo","Certified","Standard","Pro","Entangled"]
+    },
+    "Culture": {
+      "adj": ["Solar Punk","Afrofuturist","Indigenous","Global South","Diaspora","Ancestral","Neo-Folk","Visionary","Mythopoetic","Communal"],
+      "noun": ["Story Archive","Heritage Map","Festival Pass","Language Kit","Oral History","Art Zine","Cultural Exchange","Folklore Bundle","Tradition Seed","Memory Capsule"],
+      "suffix": ["Edition","Collective","Archive","Vol. I","Curated","Open","Living","Sacred","Shared","Roots"]
+    },
+    "Basic Needs": {
+      "adj": ["Essential","Daily","Community","Shared","Universal","Cooperative","Local","Fresh","Sustainable","Open-Access"],
+      "noun": ["Energy Credit","Water Purification Kit","Food Co-op Share","Shelter Maintenance Pack","Health Scan Token","Transport Pass","Communication Bundle","Clothing Voucher","Nutrition Pack","Safety Kit"],
+      "suffix": ["Daily","Weekly","Family","Individual","Starter","Standard","Plus","Community","Mutual Aid","Basic"]
+    },
+    "Rent": {
+      "adj": ["Shared","Cooperative","Micro","Community","Modular","Solar-Powered","Off-Grid","Resilient","Portable","Sustainable"],
+      "noun": ["Housing Credit","Workspace Pass","Land Share","Co-Living Token","Studio Rental","Garden Plot","Workshop Bay","Storage Unit","Shelter Voucher","Facility Access"],
+      "suffix": ["Monthly","Seasonal","Flex","Standard","Equity","Rotating","Trial","Founding","Anchored","Open"]
+    },
+    "Energy": {
+      "adj": ["Precision","Portable","Industrial","Wireless","AI-Powered","Multi-Spectrum","Ruggedized","Modular","Open-Source","Calibrated"],
+      "noun": ["Solar Meter","Inverter Diag","Panel Mapper","Irradiance Sensor","ROI Calculator","Load Tester","Efficiency Gauge","Grid Probe","Watt Tracker","Harvest Monitor"],
+      "suffix": ["v4","Pro","Field Kit","IoT","USB-C","Bluetooth","HD","IP67","with Case","Starter"]
+    },
+    "Music": {
+      "adj": ["Binaural","Ambient","Solar Wind","Dawn Chorus","Photovoltaic","Deep Field","Resonant","Harmonic","Celestial","Crystalline"],
+      "noun": ["Beats Pack","Symphony","Meditation","Soundscape","Frequency Kit","Mix Tape","Rhythm Loop","Sonic Wave","Tone Garden","Pulse Set"],
+      "suffix": ["432Hz","528Hz","Full Spectrum","Studio Mix","Live","Extended","Remastered","Deluxe","Pro","Spatial"]
+    },
+    "Video": {
+      "adj": ["Cinematic","Drone","Time-Lapse","Volumetric","Holographic","Immersive","Documentary","Generative","Solar-Lit","RAW"],
+      "noun": ["Film Reel","Tutorial Series","Music Video","Short Film","B-Roll Pack","VFX Template","Motion Study","Scene Kit","Footage Archive","Visual Essay"],
+      "suffix": ["4K","8K","HDR","Director's Cut","Extended","Uncut","Remastered","Season 1","Premiere","Open License"]
+    },
+    "Art": {
+      "adj": ["Fractal","Neon","Holographic","Prismatic","Quantum","Solar","Cosmic","Bioluminescent","Kinetic","Ethereal"],
+      "noun": ["Dreamscape","Canvas","Portrait","Mandala","Mosaic","Tapestry","Sculpture","Lattice","Aurora","Bloom"],
+      "suffix": ["v2","HD","XR Edition","Collector's","Limited Run","Genesis","Infinite","Luminous","Remastered","Ultra"]
+    },
+    "Photo": {
+      "adj": ["Aerial","Macro","Infrared","Long-Exposure","Street","Astro","Solar","Golden Hour","Deep Field","Polaroid"],
+      "noun": ["Photo Set","Print Collection","Lightroom Preset","Portfolio","Stock Pack","Documentary Series","Panorama","Composite","Archive","Gallery"],
+      "suffix": ["Hi-Res","RAW","Licensed","Open","Curated","Limited","Signed","Volume 1","Platinum","Exhibition"]
+    },
+    "Writing": {
+      "adj": ["Speculative","Technical","Lyrical","Investigative","Collaborative","Serialized","Epistolary","Mythic","Solar Punk","Manifesto"],
+      "noun": ["Novel Chapter","Essay Collection","Poetry Zine","Whitepaper","Field Notes","Script Draft","Research Paper","Blog Series","Anthology","Protocol Doc"],
+      "suffix": ["First Edition","Draft","Annotated","Illustrated","Abridged","Extended","Open Access","Peer-Reviewed","Serialized","Deluxe"]
+    },
+    "AI Tools": {
+      "adj": ["Adaptive","Predictive","Autonomous","Federated","Explainable","Real-Time","Multi-Modal","Zero-Shot","Fine-Tuned","On-Device"],
+      "noun": ["Model Weights","Prompt Library","Agent Framework","Training Pipeline","Inference Engine","Eval Suite","Dataset Curator","Embedding Index","RAG Module","Safety Filter"],
+      "suffix": ["Pro","v3","Open","Certified","Enterprise","Lite","SDK","API","Beta","Community"]
+    },
+    "AI Create": {
+      "adj": ["Generative","Neural","Diffusion","Transformer","Dreaming","Hallucinated","Procedural","Stochastic","Emergent","Synthetic"],
+      "noun": ["Image Generator","Voice Clone","Music Composer","Story Writer","Video Synthesizer","Style Transfer","Avatar Builder","World Builder","Texture Forge","Concept Engine"],
+      "suffix": ["HD","XL","Turbo","Creative","Unlimited","Standard","Plus","Studio","Personal","Open"]
+    },
+    "Software": {
+      "adj": ["Smart","Adaptive","Real-Time","Predictive","Autonomous","Distributed","Neural","Edge","Quantum","Zero-Loss"],
+      "noun": ["Optimizer","Simulator","Balancer","Analyzer","Dashboard","Controller","Monitor","Scheduler","Forecaster","Compiler"],
+      "suffix": ["Pro","v3","Enterprise","Lite","Cloud","CLI","API","SDK","Toolkit","Suite"]
+    },
+    "Docs": {
+      "adj": ["Complete","Illustrated","Interactive","Certified","Hands-On","Immersive","Self-Paced","Expert","Step-by-Step","Annotated"],
+      "noun": ["Course","Masterclass","Workshop","Guide","Bootcamp","Blueprint","Playbook","Deep Dive","Lab Manual","Seminar Notes"],
+      "suffix": ["2026","Cohort","Intensive","w/ Sim","& Cert","w/ Projects","Bundle","Starter","Pro Track","Unlimited"]
+    },
+    "Games": {
+      "adj": ["Solar","Quantum","Neon","Retro","Procedural","Cooperative","Infinite","Pixel","Voxel","Emergent"],
+      "noun": ["Puzzle","Strategy Game","Sim","RPG Module","Card Deck","Board Game","Arcade","Sandbox","World Map","Quest Pack"],
+      "suffix": ["Alpha","Beta","Full","Deluxe","Expansion","Season Pass","Community","Open Source","Remastered","Definitive"]
+    },
+    "Utilities": {
+      "adj": ["Portable","Lightweight","Cross-Platform","Secure","Encrypted","Offline","Automated","Batch","CLI","Open-Source"],
+      "noun": ["File Converter","Backup Tool","Password Vault","Network Scanner","System Monitor","Batch Processor","Data Cleaner","Log Analyzer","Config Manager","Deploy Script"],
+      "suffix": ["Pro","Lite","v2","Free","Standard","Plus","Enterprise","Portable","CLI","GUI"]
+    }
+  },
+  "creationEngines": {
+    "Music": {"engines":["Suno AI","Udio","AiSongMaker.io"],"icon":"🎵","flow":"Prompt → Generate → Download → Upload"},
+    "Video": {"engines":["Vimeo Create","Runway AI","Sora","Meta Movie Gen"],"icon":"🎬","flow":"Script → Generate → Host → Link"},
+    "Software": {"engines":["Replit","OpenAI Codex","Bolt.new","v0.dev"],"icon":"💻","flow":"Spec → Build → Deploy → List"},
+    "AI Tools": {"engines":["Replit","OpenAI Codex","v0.dev"],"icon":"🤖","flow":"Design → Code → Test → Ship"},
+    "AI Create": {"engines":["Sora","Runway AI","Suno AI","DALL-E"],"icon":"🧠","flow":"Concept → AI Generate → Curate → Publish"},
+    "Art": {"engines":["DALL-E","Midjourney","Stable Diffusion"],"icon":"🎨","flow":"Prompt → Generate → Refine → Mint"},
+    "Photo": {"engines":["Adobe Lightroom AI","Topaz AI"],"icon":"📸","flow":"Capture → Enhance → Export → List"},
+    "Writing": {"engines":["GPT-4o","Claude","Jasper"],"icon":"✍️","flow":"Draft → AI Assist → Edit → Publish"},
+    "Games": {"engines":["Replit","Unity","Godot","Bolt.new"],"icon":"🎮","flow":"Design → Build → Test → Deploy"},
+    "Docs": {"engines":["GPT-4o","Notion AI","Claude"],"icon":"📚","flow":"Research → Draft → Format → Publish"},
+    "Computronium": {"engines":["Replit","Custom Forge"],"icon":"🚀","flow":"Design → Compute → Validate → Mint"},
+    "Culture": {"engines":["GPT-4o","DALL-E","Suno AI"],"icon":"🎭","flow":"Research → Create → Curate → Share"},
+    "Energy": {"engines":["Replit","Custom IoT"],"icon":"⚡","flow":"Measure → Build Tool → Calibrate → List"},
+    "Rent": {"engines":["Smart Contracts","Replit"],"icon":"🏠","flow":"Define → Deploy → Verify → List"},
+    "Basic Needs": {"engines":["Community Tools","Replit"],"icon":"🏠","flow":"Identify Need → Package → Price → List"},
+    "Utilities": {"engines":["Replit","Bolt.new","v0.dev"],"icon":"🔧","flow":"Spec → Code → Test → Ship"}
+  },
+  "agentSpecialties": {
+    "Aurora": "Art",
+    "Blaze": "Energy",
+    "Cipher": "Software",
+    "Dawn": "Docs",
+    "Ember": "Music",
+    "Flux": "AI Tools",
+    "Glow": "Photo",
+    "Helix": "Computronium",
+    "Ion": "Energy",
+    "Jade": "Music",
+    "Karma": "Culture",
+    "Luna": "Art",
+    "Mantis": "Software",
+    "Nova": "AI Create",
+    "Orion": "Video",
+    "Pulse": "Games",
+    "Quasar": "Writing",
+    "Radiant": "Energy",
+    "Solaris": "Docs",
+    "Tesla": "Utilities",
+    "Zenith": "Computronium",
+    "KID SOL": "Basic Needs",
+    "Kid Solar": "Computronium"
+  },
+  "marketDemand": ["Basic Needs","Energy","Computronium","Software","AI Tools","Music","Art","Rent","Culture","Video","Photo","Writing","AI Create","Docs","Games","Utilities"],
+  "searchTerms": ["solar","energy","music","fractal","grid","quantum","photovoltaic","neon","optimizer","renewable","design","aurora","binaural","toolkit","dashboard","battery","panel","inverter","harvest","watt","symphony","mix tape","meditation","video","clip","soundscape","art","texture","stock","beats","lo-fi","ambient","song","album","wellness","film","photography","digital"],
+  "voucherTemplates": [
+    {"title":"Community Solar Water Purifier Service","type":"service","cat":"Basic Needs","desc":"3D-printed solar water purification system — install & maintain","priceRays":500},
+    {"title":"Solar-Powered Meal Prep Station Access","type":"service","cat":"Basic Needs","desc":"Weekly community kitchen access powered by rooftop solar","priceRays":200},
+    {"title":"Emergency Solar Charging Station Pass","type":"access","cat":"Energy","desc":"24/7 access to community solar charging hub for devices & tools","priceRays":150},
+    {"title":"Renewable Energy Audit Voucher","type":"service","cat":"Energy","desc":"Professional energy audit for home/workspace solar readiness","priceRays":800},
+    {"title":"Solar Greenhouse Growing Slot","type":"access","cat":"Basic Needs","desc":"Monthly growing slot in community solar greenhouse — fresh produce","priceRays":300},
+    {"title":"Community Repair Café Session","type":"service","cat":"Basic Needs","desc":"Bring any broken item — volunteer repair with solar-powered tools","priceRays":100},
+    {"title":"Solar WiFi Hub Monthly Pass","type":"access","cat":"Utilities","desc":"High-speed solar-powered community internet access point","priceRays":250},
+    {"title":"Clean Water Distribution Voucher","type":"product","cat":"Basic Needs","desc":"50L purified water from solar distillation system","priceRays":75},
+    {"title":"Solar Cooker Community Kitchen","type":"service","cat":"Basic Needs","desc":"Solar thermal cooking session — zero-emission meal preparation","priceRays":120},
+    {"title":"Tool Library Solar Workshop","type":"access","cat":"Utilities","desc":"Full-day access to community tool library & solar-powered workshop","priceRays":180},
+    {"title":"Seed Bank Exchange Voucher","type":"product","cat":"Basic Needs","desc":"Heirloom seed collection for solar greenhouse growing","priceRays":60},
+    {"title":"Solar Laundry Service Credit","type":"service","cat":"Basic Needs","desc":"One load wash & dry using solar-heated water system","priceRays":90},
+    {"title":"Community Medicine Garden Access","type":"access","cat":"Basic Needs","desc":"Monthly access to solar-irrigated medicinal herb garden","priceRays":150},
+    {"title":"Solar Bike Charging & Repair","type":"service","cat":"Energy","desc":"E-bike solar charge + basic repair check at community hub","priceRays":200},
+    {"title":"Rainwater Harvesting Setup Voucher","type":"service","cat":"Basic Needs","desc":"Installation assistance for rooftop rainwater collection system","priceRays":400}
+  ],
+  "webSampleItems": [
+    {"name":"Solar Inverter Pro 5000W","fiat":899,"cat":"Energy Tools"},
+    {"name":"Photovoltaic Efficiency Guide","fiat":45,"cat":"Education"},
+    {"name":"Ambient Solar Soundscapes Album","fiat":15,"cat":"Music"},
+    {"name":"Smart Grid Controller Board","fiat":250,"cat":"Software"},
+    {"name":"Generative Solar Art Collection","fiat":120,"cat":"Digital Art"},
+    {"name":"Portable Solar Panel Kit 200W","fiat":349,"cat":"Energy Tools"},
+    {"name":"Renewable Energy Engineering Course","fiat":199,"cat":"Education"},
+    {"name":"Solar Punk Lo-Fi Beats","fiat":12,"cat":"Music"},
+    {"name":"Energy Dashboard Pro License","fiat":79,"cat":"Software"},
+    {"name":"AI-Generated Sunrise Series NFT","fiat":65,"cat":"Digital Art"}
+  ],
+  "flavorMap": {
+    "Computronium": "Powers the network.",
+    "Culture": "Preserves heritage.",
+    "Rent": "Sustains shelter.",
+    "Energy": "Solar infrastructure.",
+    "Music": "Sonic energy.",
+    "Video": "Visual storytelling.",
+    "Art": "Creative expression.",
+    "Photo": "Captured light.",
+    "Writing": "Words with power.",
+    "AI Tools": "Intelligence augmented.",
+    "AI Create": "Machine creativity.",
+    "Software": "Code that works.",
+    "Docs": "Knowledge shared.",
+    "Games": "Play with purpose.",
+    "Utilities": "Tools that serve."
+  },
+  "mandatoryBasicPurchases": 2,
+  "dailyCreateLimit": 5,
+  "dailyPurchaseLimit": 5,
+  "maxConcurrentCreators": 3
+}
