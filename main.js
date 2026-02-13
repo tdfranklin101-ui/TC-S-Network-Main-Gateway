@@ -9211,7 +9211,7 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // Web Search API - uses OpenAI to find products on the web when not found locally
+  // Web Search API - uses Perplexity Sonar for REAL web search with actual product URLs
   if (pathname === '/api/market/web-search' && req.method === 'GET') {
     try {
       const wsUrl = new URL(req.url, `http://${req.headers.host}`);
@@ -9222,45 +9222,85 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      const openaiKey = process.env.OPENAI_API_KEY || process.env.NEW_OPENAI_API_KEY;
-      if (!openaiKey) {
+      const perplexityKey = process.env.PERPLEXITY_API_KEY;
+      if (!perplexityKey) {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: false, error: 'Web search not available' }));
         return;
       }
 
-      const OpenAI = require('openai');
-      const openai = new OpenAI({ apiKey: openaiKey });
-
-      const response = await openai.chat.completions.create({
-        model: 'gpt-4o',
+      const https = require('https');
+      const perplexityPayload = JSON.stringify({
+        model: 'llama-3.1-sonar-small-128k-online',
         messages: [
           {
             role: 'system',
-            content: `You are a product research assistant. When given a search query, find exactly 4 real products from different major retailers that match. Provide the most accurate current retail prices you know. Each product from a DIFFERENT retailer (e.g., Amazon, Best Buy, Walmart, Target, Home Depot, B&H Photo, Costco, Newegg).
+            content: `You are a product shopping assistant. Search the web for real products matching the user's query. Find 3-4 products from major retailers (Amazon, Best Buy, Walmart, Target, Home Depot, B&H Photo, Newegg, etc.).
 
-For each product provide:
-- title: exact product name with model number if applicable
-- description: brief description (1-2 sentences)
-- price: exact current retail price in USD (a single number, NOT a range)
-- source: retailer/store name
-- url: direct product page URL on the retailer's website (use real retailer URL patterns like https://www.amazon.com/dp/, https://www.bestbuy.com/site/, https://www.walmart.com/ip/, etc.)
+For each product you find, provide:
+- title: the exact product name as listed on the retailer's website
+- price: the actual current price in USD (number only, no $ sign)
+- source: the retailer name
+- url: the REAL direct URL to the product page (must be a real working link you found)
 - condition: "New", "Used", "Refurbished", or "Pre-owned"
 - availability: "In Stock", "Limited Stock", "Out of Stock", or "Check Store"
+- description: one sentence product description
 
-Respond ONLY with valid JSON in this exact format:
-{"products": [{"title": "...", "description": "...", "price": 29.99, "source": "Amazon", "url": "https://...", "condition": "New", "availability": "In Stock"}]}`
+You MUST respond with valid JSON only in this exact format:
+{"products": [{"title": "Product Name", "description": "Brief desc", "price": 29.99, "source": "Amazon", "url": "https://www.amazon.com/...", "condition": "New", "availability": "In Stock"}]}
+
+Only include products where you have found a real URL. Do not make up URLs.`
           },
           {
             role: 'user',
-            content: `Find 4 real products from different retailers matching: "${qRaw.trim()}"`
+            content: `Find where to buy: ${qRaw.trim()}`
           }
         ],
-        temperature: 0.7,
-        max_tokens: 1500
+        temperature: 0.2,
+        top_p: 0.9,
+        max_tokens: 1500,
+        return_images: false,
+        return_related_questions: false,
+        search_recency_filter: 'month',
+        stream: false,
+        frequency_penalty: 1
       });
 
-      const raw = response.choices[0]?.message?.content || '{}';
+      const perplexityResponse = await new Promise((resolve, reject) => {
+        const reqOpts = {
+          hostname: 'api.perplexity.ai',
+          path: '/chat/completions',
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${perplexityKey}`,
+            'Content-Type': 'application/json',
+            'Content-Length': Buffer.byteLength(perplexityPayload)
+          }
+        };
+
+        const apiReq = https.request(reqOpts, (apiRes) => {
+          let data = '';
+          apiRes.on('data', chunk => { data += chunk; });
+          apiRes.on('end', () => {
+            try {
+              resolve(JSON.parse(data));
+            } catch (e) {
+              reject(new Error('Failed to parse Perplexity response'));
+            }
+          });
+        });
+
+        apiReq.on('error', reject);
+        apiReq.setTimeout(30000, () => {
+          apiReq.destroy();
+          reject(new Error('Perplexity API timeout'));
+        });
+        apiReq.write(perplexityPayload);
+        apiReq.end();
+      });
+
+      const raw = perplexityResponse.choices?.[0]?.message?.content || '{}';
+      const citations = perplexityResponse.citations || [];
       let parsed;
       try {
         const jsonMatch = raw.match(/\{[\s\S]*\}/);
@@ -9272,10 +9312,14 @@ Respond ONLY with valid JSON in this exact format:
       const SOLAR_USD_RATE = 491;
       const KWH_PER_SOLAR = 4913;
 
-      const webResults = (parsed.products || []).map(p => {
+      let webResults = (parsed.products || []).map((p, idx) => {
         const priceUSD = parseFloat(p.price) || parseFloat(p.estimatedPriceUSD) || 0;
         const priceSolar = priceUSD / SOLAR_USD_RATE;
         const kwhEquivalent = priceSolar * KWH_PER_SOLAR;
+        let productUrl = p.url || '';
+        if (!productUrl && citations[idx]) {
+          productUrl = citations[idx];
+        }
         return {
           title: p.title || 'Unknown Product',
           description: p.description || '',
@@ -9283,17 +9327,44 @@ Respond ONLY with valid JSON in this exact format:
           estimatedPriceSolar: parseFloat(priceSolar.toFixed(6)),
           kwhEquivalent: parseFloat(kwhEquivalent.toFixed(4)),
           source: p.source || 'Unknown',
-          url: p.url || '',
+          url: productUrl,
           condition: p.condition || 'New',
           availability: p.availability || 'Check Store'
         };
       });
+
+      if (webResults.length === 0 && citations.length > 0) {
+        webResults = citations.slice(0, 4).map(url => {
+          let source = 'Unknown';
+          try {
+            const hostname = new URL(url).hostname.replace('www.', '');
+            const domainMap = {
+              'amazon.com': 'Amazon', 'bestbuy.com': 'Best Buy', 'walmart.com': 'Walmart',
+              'target.com': 'Target', 'homedepot.com': 'Home Depot', 'bhphotovideo.com': 'B&H Photo',
+              'newegg.com': 'Newegg', 'costco.com': 'Costco', 'ebay.com': 'eBay'
+            };
+            source = domainMap[hostname] || hostname;
+          } catch (e) {}
+          return {
+            title: qRaw.trim(),
+            description: 'Found via web search',
+            estimatedPriceUSD: 0,
+            estimatedPriceSolar: 0,
+            kwhEquivalent: 0,
+            source,
+            url,
+            condition: 'New',
+            availability: 'Check Store'
+          };
+        });
+      }
 
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
         success: true,
         query: qRaw.trim(),
         webResults,
+        citations,
         message: `Found ${webResults.length} product(s) via web search for "${qRaw.trim()}"`
       }));
     } catch (error) {

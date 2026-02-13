@@ -3487,7 +3487,8 @@
                                 var results = data.webResults.slice(0, 4);
                                 for (var i = 0; i < results.length; i++) {
                                     var p = results[i];
-                                    var priceStr = '$' + (p.estimatedPriceUSD || 0).toFixed(2);
+                                    var priceUSD = p.estimatedPriceUSD || 0;
+                                    var priceStr = priceUSD > 0 ? '$' + priceUSD.toFixed(2) : '';
                                     var solarStr = p.estimatedPriceSolar ? (p.estimatedPriceSolar < 0.01 ? p.estimatedPriceSolar.toFixed(6) : p.estimatedPriceSolar.toFixed(4)) + ' Solar' : '';
                                     var availColor = p.availability === 'In Stock' ? '#00ff88' : p.availability === 'Out of Stock' ? '#ff4444' : '#ffa500';
 
@@ -3497,7 +3498,7 @@
                                     cards += '<div style="font-size:14px;font-weight:700;color:#fff;">' + esc(p.source) + '</div>';
                                     cards += '<div style="font-size:12px;color:#aaa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;" title="' + esc(p.title) + '">' + esc(p.title) + '</div>';
                                     cards += '</div>';
-                                    cards += '<div style="background:#00ff88;color:#000;font-weight:800;font-size:15px;padding:4px 10px;border-radius:6px;white-space:nowrap;">' + esc(priceStr) + '</div>';
+                                    if (priceStr) { cards += '<div style="background:#00ff88;color:#000;font-weight:800;font-size:15px;padding:4px 10px;border-radius:6px;white-space:nowrap;">' + esc(priceStr) + '</div>'; }
                                     cards += '</div>';
                                     cards += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">';
                                     cards += '<span style="font-size:11px;color:#aaa;background:rgba(255,255,255,0.05);padding:2px 6px;border-radius:4px;">' + esc(p.condition || 'New') + '</span>';
