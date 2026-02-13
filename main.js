@@ -1,3 +1,6 @@
+process.on('uncaughtException', (err) => { console.error('UNCAUGHT EXCEPTION:', err.stack || err); });
+process.on('unhandledRejection', (err) => { console.error('UNHANDLED REJECTION:', err.stack || err); });
+
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
@@ -13996,6 +13999,29 @@ Respond with valid JSON only. Be insightful and specific.`;
     return;
   }
 
+  // ================== DELIVERABLE INFERENCE ENDPOINT ==================
+  if (pathname === '/api/artifact/infer' && req.method === 'POST') {
+    try {
+      const body = await parseBody(req);
+      const { query, category, forceprint } = body;
+      if (!query || typeof query !== 'string') {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'query is required' }));
+        return;
+      }
+      const { inferDeliverables, getDeliverableLabel } = require('./server/deliverable-inference.js');
+      const matrix = inferDeliverables(query, { category, forceprint: !!forceprint });
+      const label = getDeliverableLabel(matrix);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, query, matrix, label }));
+    } catch (error) {
+      console.error('Inference error:', error.message);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Inference failed: ' + error.message }));
+    }
+    return;
+  }
+
   // ================== 3D ARTIFACT & FACTORY ENDPOINTS ==================
   const artifact3dService = (() => { try { return require('./server/artifact3d-service.js'); } catch(e) { return null; } })();
 
@@ -14202,6 +14228,7 @@ Respond with valid JSON only. Be insightful and specific.`;
       res.end(JSON.stringify({
         success: true,
         artifact3dId,
+        artifactId: artifact3dId,
         slug,
         title: artifactTitle,
         stlUrl: `cloud://${stlResult.key}`,
@@ -14210,12 +14237,166 @@ Respond with valid JSON only. Be insightful and specific.`;
         kwhFootprint: result.kwhFootprint,
         boundingBox: result.boundingBox,
         validation: result.validation,
-        warnings: result.warnings
+        warnings: result.warnings,
+        stlHash: result.stlHash,
+        oneLiner: "Mint '" + artifactTitle + "' — " + result.priceSolar + " Solar — includes STL + print guide — listed on Market",
+        templateId: templateId
       }));
     } catch (error) {
       console.error('🔧 3D Artifact mint error:', error.message);
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Mint failed: ' + error.message }));
+    }
+    return;
+  }
+
+  // 4b. POST /api/artifact3d/chain — Deterministic search→match→create→list→buy pipeline
+  if (pathname === '/api/artifact3d/chain' && req.method === 'POST') {
+    console.log('🔗 3D Chain endpoint hit');
+    if (!artifact3dService) {
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: '3D artifact service unavailable' }));
+      return;
+    }
+    try {
+      console.log('🔗 Parsing body...');
+      const body = await parseBody(req);
+      console.log('🔗 Body parsed:', JSON.stringify(body));
+      const { inferDeliverables, getDeliverableLabel } = require('./server/deliverable-inference.js');
+      const matrix = inferDeliverables(body.query || '', { category: '3D Printing', forceprint: !!body.forceprint });
+      const inferLabel = getDeliverableLabel(matrix);
+      const { query, creatorId } = body;
+      if (!query || typeof query !== 'string' || query.trim().length === 0) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'query is required' }));
+        return;
+      }
+      const searchTerm = query.trim();
+      const searchPattern = '%' + searchTerm + '%';
+      const existing = await pool.query(
+        `SELECT id, title, description, solar_amount_s, kwh_footprint, master_file_url, creator_id
+         FROM artifacts
+         WHERE category = '3D Printing' AND active = true
+           AND (title ILIKE $1 OR description ILIKE $1)
+         ORDER BY created_at DESC LIMIT 10`,
+        [searchPattern]
+      );
+      if (existing.rows.length > 0) {
+        const artifacts = existing.rows.map(function(row) {
+          var priceSolar = parseFloat(row.solar_amount_s) || 0;
+          return {
+            id: row.id,
+            title: row.title,
+            description: row.description,
+            priceSolar: priceSolar,
+            kwhFootprint: parseFloat(row.kwh_footprint) || 0,
+            stlHash: null,
+            downloadUrl: '/api/artifact3d/download/' + row.id,
+            templateId: null,
+            oneLiner: "Mint '" + row.title + "' — " + priceSolar + " Solar — includes STL + print guide — listed on Market",
+            buyReady: true
+          };
+        });
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: true,
+          action: 'found',
+          artifacts: artifacts,
+          chain: 'search→match→create→list→buy',
+          matrix: matrix,
+          inferLabel: inferLabel
+        }));
+        return;
+      }
+      const templates = artifact3dService.getTemplates();
+      const queryLower = searchTerm.toLowerCase();
+      var matched = templates.find(function(t) {
+        return queryLower.includes(t.id) || queryLower.includes(t.name.toLowerCase()) ||
+               (t.tags && t.tags.some(function(tag) { return queryLower.includes(tag); }));
+      });
+      if (!matched) {
+        matched = templates[Math.floor(Math.random() * templates.length)];
+      }
+      const result = artifact3dService.generateArtifact3d(matched.id, {});
+      const artifact3dId = randomUUID();
+      const cloudStorage = require('./server/cloud-storage');
+      const stlKey = '.private/3d-models/' + artifact3dId + '_model.stl';
+      const guideKey = '.private/3d-models/' + artifact3dId + '_guide.md';
+      let stlUploadResult, guideUploadResult;
+      if (cloudStorage.isAvailable()) {
+        stlUploadResult = await cloudStorage.uploadFromBuffer(stlKey, result.stlBuffer);
+        guideUploadResult = await cloudStorage.uploadFromBuffer(guideKey, Buffer.from(result.printGuideText, 'utf-8'));
+      } else {
+        stlUploadResult = { key: stlKey, size: result.stlBuffer.length };
+        guideUploadResult = { key: guideKey, size: result.printGuideText.length };
+      }
+      await pool.query(
+        `INSERT INTO artifact_3d_files (id, artifact_id, template_id, template_params, stl_url, print_guide_url, stl_hash, print_guide_hash, file_size, bounding_box, validation_status, validation_errors, generation_status, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW())`,
+        [
+          artifact3dId, artifact3dId, matched.id,
+          JSON.stringify(result.params),
+          'cloud://' + stlUploadResult.key,
+          'cloud://' + guideUploadResult.key,
+          result.stlHash, result.printGuideHash || '',
+          stlUploadResult.size,
+          JSON.stringify(result.boundingBox),
+          result.validation.valid ? 'valid' : 'invalid',
+          JSON.stringify(result.validation.errors),
+          'completed'
+        ]
+      );
+      const artifactTitle = searchTerm || matched.name;
+      const artifactDesc = matched.description || '3D Printable Artifact';
+      const slug = artifactTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + artifact3dId.substring(0, 8);
+      await pool.query(
+        `INSERT INTO artifacts (id, slug, title, description, category, file_type, kwh_footprint, solar_amount_s, rays_amount, delivery_mode, creator_id, master_file_url, active, artifact_class, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, true, 'B', NOW())`,
+        [
+          artifact3dId, slug, artifactTitle, artifactDesc,
+          '3D Printing', '3d-model',
+          String(result.kwhFootprint), String(result.priceSolar),
+          1,
+          'download', creatorId || 'system',
+          'cloud://' + stlUploadResult.key
+        ]
+      );
+      await pool.query(
+        `INSERT INTO market_items (title, description, category, price_solar, kwh_estimate, source_type, status, created_by_user_id, metadata)
+         VALUES ($1, $2, $3, $4, $5, 'INTERNAL_STOCK', 'ACTIVE', $6, $7)`,
+        [
+          artifactTitle, artifactDesc, '3D Printing',
+          String(result.priceSolar), String(result.kwhFootprint),
+          String(creatorId || 'system'),
+          JSON.stringify({ artifactId: artifact3dId, templateId: matched.id, stlHash: result.stlHash, generatedAt: new Date().toISOString() })
+        ]
+      );
+      console.log('🔧 3D Chain created: ' + artifact3dId + ' template=' + matched.id + ' query="' + searchTerm + '"');
+      var oneLiner = "Mint '" + artifactTitle + "' — " + result.priceSolar + " Solar — includes STL + print guide — listed on Market";
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        action: 'created',
+        artifacts: [{
+          id: artifact3dId,
+          title: artifactTitle,
+          description: artifactDesc,
+          priceSolar: result.priceSolar,
+          kwhFootprint: result.kwhFootprint,
+          stlHash: result.stlHash,
+          downloadUrl: '/api/artifact3d/download/' + artifact3dId,
+          templateId: matched.id,
+          oneLiner: oneLiner,
+          buyReady: true
+        }],
+        chain: 'search→match→create→list→buy',
+        matrix: matrix,
+        inferLabel: inferLabel
+      }));
+    } catch (error) {
+      console.error('🔧 3D Chain error:', error.message);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Chain failed: ' + error.message }));
     }
     return;
   }

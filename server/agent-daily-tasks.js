@@ -125,6 +125,8 @@ async function createArtifactsForAgent(pool, agent, memberId) {
     'Education': 'md', '3D Printing': 'stl'
   };
 
+  let artifact3dMeta = null;
+  const { inferDeliverables, getDeliverableLabel } = require('./deliverable-inference.js');
   for (const category of categories) {
     try {
       const title = generateItemName(category);
@@ -134,6 +136,10 @@ async function createArtifactsForAgent(pool, agent, memberId) {
       const description = generateDescription(category, title);
       const fileType = FILE_TYPES[category] || 'application/octet-stream';
       const contentFormat = CONTENT_FORMATS[category] || 'binary';
+
+      const matrix = inferDeliverables(title, { category });
+      const inferLabel = getDeliverableLabel(matrix);
+      console.log(`📊 [Agent ${agent.code}] Inference for "${title}": ${inferLabel} (3D:${matrix.print3d} 2D:${matrix.print2d} File:${matrix.file.type})`);
       let contentBody;
       if (category === 'Education') {
         const subcats = ['K-12', 'Associate', 'Bachelors', 'Post-Graduate', 'Doctorate', 'Professional', 'Vocational', 'Trade', 'Public', 'Private'];
@@ -164,6 +170,7 @@ async function createArtifactsForAgent(pool, agent, memberId) {
                 await pool.query('UPDATE artifact_3d_files SET stl_url = $1, print_guide_url = $2 WHERE id = $3',
                   [`cloud://${stlResult.key}`, `cloud://${guideResult.key}`, artifact3dId]);
                 console.log(`🔧 [Agent ${agent.code}] 3D artifact cloud upload: ${artifact3dId} (${template.id})`);
+                artifact3dMeta = { templateId: template.id, stlHash: result.stlHash, artifact3dId, downloadUrl: `/api/artifact3d/download/${artifact3dId}` };
               }
             } catch (uploadErr) {
               console.warn(`[Agent ${agent.code}] Cloud upload failed for 3D artifact:`, uploadErr.message);
@@ -204,7 +211,7 @@ async function createArtifactsForAgent(pool, agent, memberId) {
         `INSERT INTO market_items (title, description, category, price_solar, kwh_estimate, source_type, status, created_by_user_id, metadata)
          VALUES ($1, $2, $3, $4, $5, 'INTERNAL_STOCK', 'ACTIVE', $6, $7)`,
         [title, description, category, String(price), String(kwhFootprint), String(memberId),
-         JSON.stringify({ agentName: agent.name, agentCode: agent.code, artifactId, generatedAt: new Date().toISOString() })]
+         JSON.stringify({ agentName: agent.name, agentCode: agent.code, artifactId, generatedAt: new Date().toISOString(), ...(artifact3dMeta || {}), inference: { label: inferLabel, print3d: matrix.print3d, print2d: matrix.print2d, fileType: matrix.file.type, deliverables: matrix.deliverables } })]
       );
 
       // Fire-and-forget: generate LifeLens analysis for the new artifact

@@ -2452,18 +2452,15 @@
                 >👑</button>
             </div>
 
-            <!-- 3D Print Toggle -->
-            <div id="print-toggle-row" style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding: 6px 12px;">
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;">
-                    <div style="position: relative; width: 42px; height: 24px;">
-                        <input type="checkbox" id="print-3d-toggle" style="opacity: 0; width: 0; height: 0; position: absolute;" onchange="toggle3DPrintMode(this)">
-                        <div id="print-3d-slider" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.1); border-radius: 12px; border: 1px solid rgba(255,255,255,0.2); transition: all 0.3s; cursor: pointer;" onclick="document.getElementById('print-3d-toggle').click()">
-                            <div id="print-3d-knob" style="position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; background: #888; border-radius: 50%; transition: all 0.3s;"></div>
-                        </div>
+            <!-- Deliverable Inference Bar -->
+            <div id="inference-bar" style="display: none; margin-bottom: 14px; padding: 8px 14px; background: rgba(0,191,255,0.04); border: 1px solid rgba(0,191,255,0.12); border-radius: 12px;">
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <div id="inference-label" style="font-size: 12px; color: #00bfff; font-weight: 600;"></div>
+                    <div style="display: flex; gap: 6px;">
+                        <div id="inference-badges" style="display: flex; gap: 4px; flex-wrap: wrap;"></div>
+                        <button id="force-print-btn" onclick="toggleForcePrint()" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #888; padding: 3px 10px; border-radius: 10px; font-size: 10px; font-weight: 600; cursor: pointer; transition: all 0.2s;" title="Human override: force print this item">🖨️ Print This</button>
                     </div>
-                    <span id="print-3d-label" style="font-size: 13px; font-weight: 600; color: #888; transition: color 0.3s;">🖨️ 3D Print</span>
-                </label>
-                <span id="print-3d-hint" style="font-size: 10px; color: rgba(255,255,255,0.3); font-style: italic;">Toggle on to generate printable STL + guide package</span>
+                </div>
             </div>
 
             <div id="kid-sol-interpretation" style="display: none; margin-bottom: 14px; padding: 10px 14px; background: rgba(255,215,0,0.06); border: 1px solid rgba(255,215,0,0.15); border-radius: 12px;">
@@ -2508,7 +2505,7 @@
                         <button onclick="kidSolCatClick(this,'Documents')" class="kid-sol-cat" style="background: rgba(0,191,255,0.06); border: 1px solid rgba(0,191,255,0.25); color: #00bfff; padding: 6px 13px; border-radius: 18px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(0,191,255,0.15)';this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(0,191,255,0.06)';this.style.transform='none'">📄 Docs</button>
                         <button onclick="kidSolCatClick(this,'Games')" class="kid-sol-cat" style="background: rgba(0,191,255,0.06); border: 1px solid rgba(0,191,255,0.25); color: #00bfff; padding: 6px 13px; border-radius: 18px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(0,191,255,0.15)';this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(0,191,255,0.06)';this.style.transform='none'">🎮 Games</button>
                         <button onclick="kidSolCatClick(this,'Utilities')" class="kid-sol-cat" style="background: rgba(0,191,255,0.06); border: 1px solid rgba(0,191,255,0.25); color: #00bfff; padding: 6px 13px; border-radius: 18px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(0,191,255,0.15)';this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(0,191,255,0.06)';this.style.transform='none'">🔧 Utilities</button>
-                        <button onclick="kidSolCatClick(this,'3D Printing');document.getElementById('print-3d-toggle').checked=true;toggle3DPrintMode(document.getElementById('print-3d-toggle'));" class="kid-sol-cat" style="background: rgba(0,191,255,0.06); border: 1px solid rgba(0,191,255,0.25); color: #00bfff; padding: 6px 13px; border-radius: 18px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(0,191,255,0.15)';this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(0,191,255,0.06)';this.style.transform='none'">🖨️ 3D Print</button>
+                        <button onclick="kidSolCatClick(this,'3D Printing');" class="kid-sol-cat" style="background: rgba(0,191,255,0.06); border: 1px solid rgba(0,191,255,0.25); color: #00bfff; padding: 6px 13px; border-radius: 18px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(0,191,255,0.15)';this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(0,191,255,0.06)';this.style.transform='none'">🖨️ 3D Print</button>
                     </div>
                 </div>
             </div>
@@ -7127,169 +7124,249 @@
         let lastSearchQuery = '';
         let isSearching = false;
 
-        function toggle3DPrintMode(el) {
-            var slider = document.getElementById('print-3d-slider');
-            var knob = document.getElementById('print-3d-knob');
-            var label = document.getElementById('print-3d-label');
-            var hint = document.getElementById('print-3d-hint');
-            if (el.checked) {
-                slider.style.background = 'rgba(0,191,255,0.3)';
-                slider.style.borderColor = '#00bfff';
-                knob.style.left = '20px';
-                knob.style.background = '#00bfff';
-                label.style.color = '#00bfff';
-                label.textContent = '🖨️ 3D Print ON';
-                hint.textContent = 'Your request will generate a printable STL + print guide package';
-                hint.style.color = 'rgba(0,191,255,0.5)';
+        var forcePrintActive = false;
+
+        function toggleForcePrint() {
+            forcePrintActive = !forcePrintActive;
+            var btn = document.getElementById('force-print-btn');
+            if (forcePrintActive) {
+                btn.style.background = 'rgba(0,191,255,0.2)';
+                btn.style.borderColor = '#00bfff';
+                btn.style.color = '#00bfff';
+                btn.textContent = '🖨️ Print This ✓';
+                showInterpretation('🖨️ Human override active — your next search will force a print option.');
             } else {
-                slider.style.background = 'rgba(255,255,255,0.1)';
-                slider.style.borderColor = 'rgba(255,255,255,0.2)';
-                knob.style.left = '2px';
-                knob.style.background = '#888';
-                label.style.color = '#888';
-                label.textContent = '🖨️ 3D Print';
-                hint.textContent = 'Toggle on to generate printable STL + guide package';
-                hint.style.color = 'rgba(255,255,255,0.3)';
+                btn.style.background = 'rgba(255,255,255,0.06)';
+                btn.style.borderColor = 'rgba(255,255,255,0.15)';
+                btn.style.color = '#888';
+                btn.textContent = '🖨️ Print This';
             }
         }
 
-        async function generate3DArtifact(query) {
+        function showInferenceBar(matrix, label) {
+            var bar = document.getElementById('inference-bar');
+            var labelEl = document.getElementById('inference-label');
+            var badgesEl = document.getElementById('inference-badges');
+            bar.style.display = 'block';
+            labelEl.textContent = label;
+            var badges = '';
+            if (matrix.context) badges += '<span style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#aaa;padding:2px 8px;border-radius:8px;font-size:9px;">📋 Context</span>';
+            if (matrix.file && matrix.file.present) badges += '<span style="background:rgba(0,191,255,0.08);border:1px solid rgba(0,191,255,0.2);color:#00bfff;padding:2px 8px;border-radius:8px;font-size:9px;">📁 ' + matrix.file.type + '</span>';
+            if (matrix.print3d) badges += '<span style="background:rgba(0,255,136,0.08);border:1px solid rgba(0,255,136,0.2);color:#00ff88;padding:2px 8px;border-radius:8px;font-size:9px;">🖨️ 3D Print</span>';
+            if (matrix.print2d) badges += '<span style="background:rgba(255,165,0,0.08);border:1px solid rgba(255,165,0,0.2);color:#ffa500;padding:2px 8px;border-radius:8px;font-size:9px;">📄 2D Print</span>';
+            if (matrix.humanOverride) badges += '<span style="background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.2);color:#FFD700;padding:2px 8px;border-radius:8px;font-size:9px;">👤 Override</span>';
+            badgesEl.innerHTML = badges;
+        }
+
+        function hideInferenceBar() {
+            var bar = document.getElementById('inference-bar');
+            if (bar) bar.style.display = 'none';
+        }
+
+        async function inferAndRoute(query) {
             var searchBtn = document.getElementById('search-btn');
             var origContent = searchBtn.innerHTML;
             searchBtn.innerHTML = '⏳';
             searchBtn.disabled = true;
 
-            showInterpretation('🖨️ Generating 3D printable artifact for "' + query + '"... This includes STL file + print guide.');
+            showInterpretation('🔍 Analyzing "' + query + '" to determine deliverable options...');
 
             try {
-                var templatesRes = await fetch('/api/artifact3d/templates');
-                var templatesData = await templatesRes.json();
-                if (!templatesData.success || !templatesData.templates.length) {
-                    showInterpretation('❌ No 3D templates available. Try again later.');
-                    return;
-                }
-
-                var templates = templatesData.templates;
-                var queryLower = query.toLowerCase();
-                var matched = templates.find(function(t) {
-                    return queryLower.includes(t.id) || queryLower.includes(t.name.toLowerCase()) || 
-                           t.tags.some(function(tag) { return queryLower.includes(tag); });
-                });
-                if (!matched) {
-                    matched = templates[Math.floor(Math.random() * templates.length)];
-                }
-
-                var genRes = await fetch('/api/artifact3d/generate', {
+                var inferRes = await fetch('/api/artifact/infer', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ templateId: matched.id, params: {}, title: query || matched.name })
+                    body: JSON.stringify({ query: query, forceprint: forcePrintActive })
                 });
-                var genData = await genRes.json();
+                var inferData = await inferRes.json();
 
-                if (!genData.success) {
-                    showInterpretation('❌ Generation failed: ' + (genData.error || 'Unknown error'));
+                if (!inferData.success || !inferData.matrix) {
+                    showInterpretation('⚠️ Could not analyze request. Falling back to standard search.');
+                    performSearch();
                     return;
                 }
 
-                show3DArtifactResult(genData, matched);
+                var matrix = inferData.matrix;
+                showInferenceBar(matrix, inferData.label);
+
+                if (forcePrintActive) {
+                    forcePrintActive = false;
+                    var btn = document.getElementById('force-print-btn');
+                    btn.style.background = 'rgba(255,255,255,0.06)';
+                    btn.style.borderColor = 'rgba(255,255,255,0.15)';
+                    btn.style.color = '#888';
+                    btn.textContent = '🖨️ Print This';
+                }
+
+                if (matrix.print3d) {
+                    showInterpretation('🖨️ Inference: 3D printable item detected — searching marketplace or creating...');
+                    var chainRes = await fetch('/api/artifact3d/chain', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ query: query, creatorId: (currentUser && currentUser.userId) || 'system', forceprint: matrix.print2d })
+                    });
+                    var chainData = await chainRes.json();
+
+                    if (chainData.success && chainData.artifacts && chainData.artifacts.length > 0) {
+                        if (chainData.action === 'found') {
+                            showInterpretation('✅ Found ' + chainData.artifacts.length + ' matching 3D artifact(s) — ready to buy!');
+                        } else {
+                            showInterpretation('✅ "' + chainData.artifacts[0].title + '" created and listed! ' + chainData.artifacts[0].priceSolar + ' Solar — Buy now.');
+                        }
+                        show3DChainResults(chainData.artifacts, query, chainData.action, matrix);
+                    } else {
+                        showInterpretation('❌ ' + (chainData.error || 'Could not find or create 3D artifact.'));
+                    }
+                } else if (matrix.print2d) {
+                    showInterpretation('📄 Inference: 2D printable item — searching marketplace...');
+                    showPrint2DResults(query, matrix);
+                } else {
+                    showInterpretation('🔍 Inference: Digital artifact — searching marketplace...');
+                    performSearch();
+                }
 
             } catch (err) {
                 showInterpretation('❌ Error: ' + err.message);
+                performSearch();
             } finally {
                 searchBtn.innerHTML = origContent;
                 searchBtn.disabled = false;
             }
         }
 
-        function show3DArtifactResult(data, template) {
+        function showPrint2DResults(query, matrix) {
+            var queryLower = query.toLowerCase();
+            var matches = allArtifacts.filter(function(a) {
+                var title = (a.title || '').toLowerCase();
+                var desc = (a.description || '').toLowerCase();
+                var words = queryLower.split(/\s+/);
+                return words.some(function(w) { return w.length > 2 && (title.includes(w) || desc.includes(w)); });
+            });
+
             var container = document.getElementById('search-results-container');
             container.classList.add('visible');
             container.style.display = 'block';
 
-            var dims = data.boundingBox || {};
             var html = '<div style="padding: 20px;">';
             html += '<div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">';
-            html += '<div style="font-size: 36px;">🖨️</div>';
-            html += '<div><div style="font-size: 20px; font-weight: 800; color: #00bfff;">3D Artifact Generated</div>';
-            html += '<div style="font-size: 11px; color: #888;">SHA-256 verified • Ready to print</div></div>';
+            html += '<div style="font-size: 36px;">📄</div>';
+            html += '<div><div style="font-size: 20px; font-weight: 800; color: #ffa500;">2D Print Ready</div>';
+            html += '<div style="font-size: 11px; color: #888;">These items can be sent to your local printer' + (matrix.humanOverride ? ' (human override active)' : '') + '</div></div>';
             html += '</div>';
 
-            html += '<div style="background: rgba(0,191,255,0.05); border: 1px solid rgba(0,191,255,0.2); border-radius: 14px; padding: 20px; margin-bottom: 16px;">';
-            html += '<div style="font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 8px;">' + (data.title || 'Untitled') + '</div>';
-            html += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">';
-            html += '<div style="font-size: 12px; color: #aaa;">Template: <span style="color: #00bfff;">' + (data.templateId || '') + '</span></div>';
-            html += '<div style="font-size: 12px; color: #aaa;">Triangles: <span style="color: #00ff88;">' + (data.triangleCount || 0).toLocaleString() + '</span></div>';
-            html += '<div style="font-size: 12px; color: #aaa;">File Size: <span style="color: #fff;">' + ((data.fileSize || 0) / 1024).toFixed(1) + ' KB</span></div>';
-            html += '<div style="font-size: 12px; color: #aaa;">Dimensions: <span style="color: #fff;">' + (dims.x || 0) + ' × ' + (dims.y || 0) + ' × ' + (dims.z || 0) + ' mm</span></div>';
+            html += '<div style="background: rgba(255,165,0,0.05); border: 1px solid rgba(255,165,0,0.15); border-radius: 8px; padding: 8px 14px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">';
+            html += '<div style="font-size: 10px; color: #ffa500; font-weight: 600;">CHAIN:</div>';
+            html += '<div style="font-size: 11px; color: #aaa; font-family: monospace;">infer → match → 2d-print-queue</div>';
             html += '</div>';
 
-            html += '<div style="font-size: 12px; color: #aaa; margin-bottom: 8px;">Price: <span style="font-weight: 700; color: #FFD700;">' + (data.priceSolar || 0) + ' Solar</span> <span style="color: #666;">(' + (data.kwhFootprint || 0) + ' kWh)</span></div>';
-
-            html += '<div style="background: linear-gradient(135deg, rgba(0,191,255,0.08), rgba(0,255,136,0.05)); border: 1px solid rgba(0,191,255,0.25); border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 12px;">';
-            html += '<div style="font-size: 28px;">📥</div>';
-            html += '<div style="flex: 1;">';
-            html += '<a href="' + (data.downloadUrl || '#') + '" download style="color: #00bfff; font-size: 14px; font-weight: 700; text-decoration: none; display: block; margin-bottom: 3px;" onmouseover="this.style.color=\'#00ff88\'" onmouseout="this.style.color=\'#00bfff\'">Download 3D Printer File (.STL)</a>';
-            html += '<div style="font-size: 10px; color: #888;">(downloadable link to 3D printer file) — ' + ((data.fileSize || 0) / 1024).toFixed(1) + ' KB — SHA-256 verified</div>';
-            html += '</div></div>';
-
-            html += '<div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 10px 12px; margin-bottom: 12px;">';
-            html += '<div style="font-size: 10px; color: #666; margin-bottom: 4px;">SHA-256 Hash</div>';
-            html += '<div style="font-size: 11px; color: #00ff88; font-family: monospace; word-break: break-all;">' + (data.stlHash || '') + '</div>';
-            html += '</div>';
-
-            if (data.validation) {
-                var v = data.validation;
-                html += '<div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;">';
-                html += '<span style="background: ' + (v.valid ? 'rgba(0,255,136,0.1)' : 'rgba(255,0,0,0.1)') + '; border: 1px solid ' + (v.valid ? 'rgba(0,255,136,0.3)' : 'rgba(255,0,0,0.3)') + '; color: ' + (v.valid ? '#00ff88' : '#ff4444') + '; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600;">' + (v.valid ? '✅ Validated' : '❌ Failed') + '</span>';
-                if (v.checks) {
-                    for (var ck in v.checks) {
-                        html += '<span style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); color: ' + (v.checks[ck] ? '#00ff88' : '#ff4444') + '; padding: 3px 10px; border-radius: 12px; font-size: 10px;">' + (v.checks[ck] ? '✓' : '✗') + ' ' + ck + '</span>';
-                    }
-                }
-                html += '</div>';
+            if (matches.length > 0) {
+                matches.slice(0, 5).forEach(function(a) {
+                    var price = a.solarPrice || a.solar_amount_s || 0;
+                    html += '<div style="background: rgba(255,165,0,0.04); border: 1px solid rgba(255,165,0,0.15); border-radius: 14px; padding: 16px; margin-bottom: 12px;">';
+                    html += '<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">';
+                    html += '<div style="flex:1;"><div style="font-size: 15px; font-weight: 700; color: #fff;">' + escapeHtml(a.title) + '</div>';
+                    html += '<div style="font-size: 11px; color: #888;">' + escapeHtml(a.description || '') + '</div></div>';
+                    html += '<div style="font-size: 14px; font-weight: 800; color: #FFD700;">' + formatSolar(price) + ' Solar</div>';
+                    html += '</div>';
+                    html += '<div style="display: flex; gap: 8px;">';
+                    html += '<button onclick="purchaseArtifact(\'' + a.id + '\')" style="flex:1;background:linear-gradient(135deg,#39FF14,#00cc44);color:#000;border:none;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">⚡ Buy Now</button>';
+                    html += '<button onclick="window.print()" style="background:rgba(255,165,0,0.15);border:1px solid rgba(255,165,0,0.3);color:#ffa500;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;">🖨️ Print</button>';
+                    html += '</div></div>';
+                });
+            } else {
+                html += '<div style="text-align:center;padding:30px;color:#888;">No matching items found for "' + escapeHtml(query) + '". Try a different search.</div>';
             }
 
-            html += '</div>';
-
-            if (data.printGuide) {
-                html += '<details style="margin-bottom: 16px;">';
-                html += '<summary style="cursor: pointer; color: #00bfff; font-size: 13px; font-weight: 600; padding: 8px 0;">📋 Print Guide (click to expand)</summary>';
-                html += '<div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 16px; margin-top: 8px; font-size: 12px; color: #ccc; line-height: 1.6; white-space: pre-wrap; font-family: monospace; max-height: 300px; overflow-y: auto;">' + data.printGuide.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</div>';
-                html += '</details>';
-            }
-
-            if (data.oneLiner) {
-                html += '<div style="background: rgba(255,215,0,0.05); border: 1px solid rgba(255,215,0,0.15); border-radius: 8px; padding: 10px 14px; margin-bottom: 16px;">';
-                html += '<div style="font-size: 10px; color: #FFD700; font-weight: 600; margin-bottom: 4px;">One-Line Transaction</div>';
-                html += '<div style="font-size: 12px; color: #fff; font-family: monospace;">' + data.oneLiner + '</div>';
-                html += '</div>';
-            }
-
-            html += '<div style="display: flex; gap: 10px; flex-wrap: wrap;">';
-            html += '<button onclick="mint3DArtifact(\'' + (data.templateId || '') + '\', \'' + (data.title || '').replace(/'/g, "\\'") + '\')" style="flex: 1; min-width: 140px; background: linear-gradient(135deg, #00bfff, #0088cc); color: #fff; border: none; padding: 12px 20px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.transform=\'translateY(-2px)\';this.style.boxShadow=\'0 4px 16px rgba(0,191,255,0.3)\'" onmouseout="this.style.transform=\'none\';this.style.boxShadow=\'none\'">🏭 Mint to Market</button>';
-            html += '<button onclick="clearSearch()" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); color: #888; padding: 12px 20px; border-radius: 10px; font-size: 14px; cursor: pointer;">Clear</button>';
-            html += '</div>';
-
+            html += '<button onclick="clearSearch();hideInferenceBar();" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);color:#888;padding:10px 20px;border-radius:10px;font-size:13px;cursor:pointer;margin-top:4px;">Clear</button>';
             html += '</div>';
             container.innerHTML = html;
         }
 
-        async function mint3DArtifact(templateId, title) {
-            showInterpretation('🏭 Minting "' + title + '" to the marketplace...');
-            try {
-                var res = await fetch('/api/artifact3d/mint', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ templateId: templateId, params: {}, title: title, creatorId: 'guest' })
-                });
-                var data = await res.json();
-                if (data.success) {
-                    showInterpretation('✅ "' + data.title + '" minted! Artifact #' + data.artifactId + ' — ' + data.priceSolar + ' Solar — Hash: ' + (data.stlHash || '').substring(0, 16) + '...');
-                } else {
-                    showInterpretation('❌ Minting failed: ' + (data.error || 'Unknown error'));
+        function show3DChainResults(artifacts, query, action, matrix) {
+            var container = document.getElementById('search-results-container');
+            container.classList.add('visible');
+            container.style.display = 'block';
+
+            var headerTitle = action === 'found' ? '3D Artifacts Found' : '3D Artifact Created & Listed';
+            var headerColor = action === 'found' ? '#00bfff' : '#00ff88';
+            var headerNote = action === 'found'
+                ? artifacts.length + ' match(es) for "' + escapeHtml(query) + '" — ready to purchase'
+                : 'Generated, minted, and listed — ready to buy now';
+
+            var html = '<div style="padding: 20px;">';
+            html += '<div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">';
+            html += '<div style="font-size: 36px;">🖨️</div>';
+            html += '<div><div style="font-size: 20px; font-weight: 800; color: ' + headerColor + ';">' + headerTitle + '</div>';
+            html += '<div style="font-size: 11px; color: #888;">' + headerNote + '</div></div>';
+            html += '</div>';
+
+            html += '<div style="background: rgba(255,215,0,0.05); border: 1px solid rgba(255,215,0,0.15); border-radius: 8px; padding: 8px 14px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">';
+            html += '<div style="font-size: 10px; color: #FFD700; font-weight: 600;">CHAIN:</div>';
+            html += '<div style="font-size: 11px; color: #aaa; font-family: monospace;">search → match → ' + (action === 'created' ? 'create → ' : '') + 'list → buy</div>';
+            html += '</div>';
+
+            if (matrix) {
+                html += '<div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;">';
+                html += '<span style="font-size: 10px; color: #666; font-weight: 600; padding: 3px 0;">Deliverables:</span>';
+                if (matrix.file && matrix.file.present) html += '<span style="background:rgba(0,191,255,0.08);border:1px solid rgba(0,191,255,0.2);color:#00bfff;padding:2px 8px;border-radius:8px;font-size:9px;">📁 ' + matrix.file.type + '</span>';
+                if (matrix.print3d) html += '<span style="background:rgba(0,255,136,0.08);border:1px solid rgba(0,255,136,0.2);color:#00ff88;padding:2px 8px;border-radius:8px;font-size:9px;">🖨️ 3D STL</span>';
+                if (matrix.print2d) html += '<span style="background:rgba(255,165,0,0.08);border:1px solid rgba(255,165,0,0.2);color:#ffa500;padding:2px 8px;border-radius:8px;font-size:9px;">📄 2D Print</span>';
+                if (matrix.humanOverride) html += '<span style="background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.2);color:#FFD700;padding:2px 8px;border-radius:8px;font-size:9px;">👤 Human Override</span>';
+                html += '</div>';
+            }
+
+            artifacts.forEach(function(a) {
+                var price = a.priceSolar || a.solarPrice || a.solar_amount_s || 0;
+                var kwh = a.kwhFootprint || a.kwh_footprint || 0;
+                html += '<div style="background: rgba(0,191,255,0.05); border: 1px solid rgba(0,191,255,0.2); border-radius: 14px; padding: 18px; margin-bottom: 14px;">';
+                html += '<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">';
+                html += '<div style="flex: 1;">';
+                html += '<div style="font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 4px;">' + escapeHtml(a.title || 'Untitled') + '</div>';
+                html += '<div style="font-size: 11px; color: #888;">' + escapeHtml(a.description || '3D Printable Artifact') + '</div>';
+                html += '</div>';
+                html += '<div style="text-align: right;">';
+                html += '<div style="font-size: 16px; font-weight: 800; color: #FFD700;">' + formatSolar(price) + ' Solar</div>';
+                html += '<div style="font-size: 10px; color: #666;">' + kwh + ' kWh</div>';
+                html += '</div></div>';
+
+                html += '<div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px;">';
+                html += '<span style="background: rgba(0,191,255,0.1); border: 1px solid rgba(0,191,255,0.2); color: #00bfff; padding: 3px 10px; border-radius: 12px; font-size: 10px; font-weight: 600;">🖨️ 3D Printable</span>';
+                html += '<span style="background: rgba(0,255,136,0.1); border: 1px solid rgba(0,255,136,0.2); color: #00ff88; padding: 3px 10px; border-radius: 12px; font-size: 10px; font-weight: 600;">📥 STL Download</span>';
+                html += '<span style="background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.2); color: #FFD700; padding: 3px 10px; border-radius: 12px; font-size: 10px; font-weight: 600;">🔒 SHA-256 Verified</span>';
+                if (a.buyReady) html += '<span style="background: rgba(57,255,20,0.1); border: 1px solid rgba(57,255,20,0.2); color: #39FF14; padding: 3px 10px; border-radius: 12px; font-size: 10px; font-weight: 600;">✅ Buy Ready</span>';
+                html += '</div>';
+
+                if (a.stlHash) {
+                    html += '<div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 8px 12px; margin-bottom: 10px;">';
+                    html += '<div style="font-size: 10px; color: #666; margin-bottom: 2px;">SHA-256</div>';
+                    html += '<div style="font-size: 10px; color: #00ff88; font-family: monospace; word-break: break-all;">' + (a.stlHash || '') + '</div>';
+                    html += '</div>';
                 }
-            } catch (err) {
-                showInterpretation('❌ Error minting: ' + err.message);
+
+                if (a.oneLiner) {
+                    html += '<div style="background: rgba(255,215,0,0.05); border: 1px solid rgba(255,215,0,0.15); border-radius: 8px; padding: 8px 14px; margin-bottom: 10px;">';
+                    html += '<div style="font-size: 10px; color: #FFD700; font-weight: 600; margin-bottom: 2px;">One-Line Transaction</div>';
+                    html += '<div style="font-size: 11px; color: #fff; font-family: monospace;">' + escapeHtml(a.oneLiner) + '</div>';
+                    html += '</div>';
+                }
+
+                html += '<div style="display: flex; gap: 10px;">';
+                html += '<button onclick="purchaseArtifact(\'' + a.id + '\')" style="flex: 1; background: linear-gradient(135deg, #39FF14, #00cc44); color: #000; border: none; padding: 12px 20px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.transform=\'translateY(-2px)\';this.style.boxShadow=\'0 4px 16px rgba(57,255,20,0.3)\'" onmouseout="this.style.transform=\'none\';this.style.boxShadow=\'none\'">⚡ Buy Now — ' + formatSolar(price) + ' Solar</button>';
+                if (a.downloadUrl) {
+                    html += '<a href="' + a.downloadUrl + '" download style="background: rgba(0,191,255,0.1); border: 1px solid rgba(0,191,255,0.3); color: #00bfff; padding: 12px 16px; border-radius: 10px; font-size: 13px; text-decoration: none; display: flex; align-items: center; cursor: pointer;">📥 STL</a>';
+                }
+                html += '</div>';
+
+                html += '</div>';
+            });
+
+            html += '<button onclick="clearSearch();hideInferenceBar();location.reload();" style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); color: #888; padding: 10px 20px; border-radius: 10px; font-size: 13px; cursor: pointer; margin-top: 4px;">Clear / Browse Market</button>';
+            html += '</div>';
+            container.innerHTML = html;
+
+            if (action === 'created') {
+                fetch('/api/artifacts/available').then(function(r) { return r.json(); }).then(function(d) {
+                    if (d.artifacts) { allArtifacts = d.artifacts; }
+                }).catch(function() {});
             }
         }
 
@@ -7372,11 +7449,8 @@
             var raw = searchInput.value.trim();
             if (!raw) { clearSearch(); return; }
 
-            var print3dToggle = document.getElementById('print-3d-toggle');
-            if (print3dToggle && print3dToggle.checked) {
-                generate3DArtifact(raw);
-                return;
-            }
+            inferAndRoute(raw);
+            return;
 
             var lower = raw.toLowerCase();
             var detectedCategory = null;
