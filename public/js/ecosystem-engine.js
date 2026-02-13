@@ -58,7 +58,7 @@ function initAgentCards(){
     const el=document.createElement('div');
     el.className='agent-card';
     el.id='agent-'+a.code;
-    el.innerHTML=`<div class="agent-icon">${a.icon}</div><div class="agent-name">Agent ${a.name}</div><div class="agent-balance">— ☀️</div><div class="agent-status pending">loading...</div>`;
+    el.innerHTML=`<div class="agent-icon">${a.icon}</div><div class="agent-name">Agent ${a.name}</div><div class="agent-balance">— ☀️</div><div class="agent-records" style="font-size:9px;color:#666;margin-top:2px"></div><div class="agent-status pending">loading...</div>`;
     el.addEventListener('click',()=>window.location.href='/agent-profile.html?code='+a.code);
     grid.appendChild(el);
   });
@@ -92,13 +92,67 @@ async function loadPersistentAgentStatus(){
         }
       });
       const totalSolar=data.agents.reduce((s,a)=>s+a.balance,0);
-      addFeed('🤖',`<b>${data.count} persistent agent members</b> loaded from database — Total: <span class="solar">${totalSolar.toFixed(1)} ☀️</span>`);
-      addFeed('📊',`Agents receive daily <span class="solar">+1 Solar</span> alongside human members — same rights, same distribution`);
+      const feedTarget=$('cloudFeed');
+      if(feedTarget){
+        feedTarget.innerHTML=`<div class="feed-item"><span class="fi-icon">🤖</span><span class="fi-msg"><b>${data.count} persistent agent members</b> loaded — Total: <span class="solar">${totalSolar.toFixed(1)} ☀️</span></span></div><div class="feed-item"><span class="fi-icon">📊</span><span class="fi-msg">Agents receive daily <span class="solar">+1 Solar</span> alongside human members</span></div>`;
+      }
+      loadAgentRecordCounts(data.agents);
     } else {
-      addFeed('⚠️','Agent data unavailable — agents will register during test run');
+      const feedTarget=$('cloudFeed');
+      if(feedTarget) feedTarget.innerHTML='<div style="color:#888;padding:8px;font-size:12px">Agent data unavailable — run agents to populate</div>';
     }
   }catch(e){
-    addFeed('⚠️','Could not load persistent agent data: '+e.message);
+    const feedTarget=$('cloudFeed');
+    if(feedTarget) feedTarget.innerHTML='<div style="color:#ff4444;padding:8px;font-size:12px">Could not load agent data: '+e.message+'</div>';
+  }
+}
+
+async function loadAgentRecordCounts(agentList){
+  const batchSize=5;
+  for(let i=0;i<AGENTS.length;i+=batchSize){
+    const batch=AGENTS.slice(i,i+batchSize);
+    await Promise.all(batch.map(async(a)=>{
+      try{
+        const res=await fetch('/api/agents/'+a.code);
+        const data=await res.json();
+        if(data.success){
+          const el=$('agent-'+a.code);
+          if(!el)return;
+          const recDiv=el.querySelector('.agent-records');
+          if(recDiv){
+            const created=(data.created||[]).length;
+            const purchased=(data.purchased||[]).length;
+            recDiv.innerHTML=`<span style="color:var(--cyan)">${created} created</span> · <span style="color:var(--purple)">${purchased} bought</span>`;
+          }
+        }
+      }catch(e){}
+    }));
+  }
+}
+
+async function loadCloudStats(){
+  try{
+    const res=await fetch('/api/ecosystem-test/runs');
+    const data=await res.json();
+    if(data.success){
+      const c=data.cumulative||{};
+      $('csRuns').textContent=c.totalRuns||0;
+      $('csItems').textContent=c.totalItemsEver||0;
+      $('csPurchases').textContent=c.totalPurchasesEver||0;
+      $('csSolar').textContent=parseFloat(c.totalSolarEver||0).toFixed(1);
+      $('csHealth').textContent=(c.avgHealthScore||'—')+'%';
+      $('csVouchers').textContent=c.totalVouchersEver||0;
+      if(c.lastRun){
+        $('csLastRun').textContent=new Date(c.lastRun).toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+      }
+    } else {
+      $('csRuns').textContent='0';
+      $('csLastRun').textContent='No runs yet';
+    }
+  }catch(e){
+    console.error('Cloud stats error:',e);
+    $('csRuns').textContent='—';
+    $('csLastRun').textContent='unavailable';
   }
 }
 
@@ -1217,6 +1271,7 @@ async function initEcosystem() {
     DAILY_PURCHASE_LIMIT = config.dailyPurchaseLimit;
     MAX_CONCURRENT_CREATORS = config.maxConcurrentCreators;
     initAgentCards();
+    loadCloudStats();
   } catch(e) {
     console.error('Failed to load ecosystem config:', e);
     document.getElementById('activityFeed').innerHTML = '<div style="color:#ff4444;padding:12px">Failed to load ecosystem configuration. Please refresh the page.</div>';
