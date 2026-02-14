@@ -172,7 +172,8 @@ const agentRoutes = require('./routes/agentRoutes');
 // Daily Agent Task Engine
 const { runDailyAgentTasks, runSingleAgentTasks, getTaskStatus, runEducationBlitz, ensureAgentMembers, submitKidSolarPrompt, runCustomAgentTask, ALL_CATEGORIES } = require('./server/agent-daily-tasks');
 
-const { scheduleDailyGreeting } = require('./server/generate-greeting');
+// Daily greeting removed — was not rendering properly
+// const { scheduleDailyGreeting } = require('./server/generate-greeting');
 
 // Agent Artifact File Generator (real file creation for marketplace)
 const { generateArtifactFile, getAgentFileType } = require('./server/agentArtifactGenerator');
@@ -15132,21 +15133,10 @@ Respond with valid JSON only. Be insightful and specific.`;
     return;
   }
 
-  // POST /api/solar-greeting/regenerate - Manually regenerate daily greeting video
+  // Daily greeting removed
   if (pathname === '/api/solar-greeting/regenerate' && req.method === 'POST') {
-    try {
-      console.log('🌅 Manual greeting regeneration triggered');
-      const greetingPath = path.join(__dirname, 'public', 'greeting.mp4');
-      try { fs.unlinkSync(greetingPath); } catch (e) {}
-      const { generateDailyGreeting: regenGreeting } = require('./server/generate-greeting');
-      const result = regenGreeting();
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ success: true, message: 'Daily Solar greeting regenerated', date: new Date().toISOString(), result }));
-    } catch (error) {
-      console.error('Greeting regeneration error:', error);
-      res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Failed to regenerate greeting', details: String(error) }));
-    }
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ success: true, message: 'Daily greeting feature has been removed' }));
     return;
   }
 
@@ -16397,141 +16387,7 @@ Respond with valid JSON only. Be insightful and specific.`;
   }
 });
 
-// ================== DAILY SOLAR GREETING VIDEO ==================
-async function generateDailySolarGreeting() {
-  const imagePath = path.join(__dirname, 'public', 'base-frame.jpg');
-  const audioPath = path.join(__dirname, 'public', 'greeting-audio.mp3');
-  const outputPath = path.join(__dirname, 'public', 'greeting.mp4');
-  
-  const falKey = process.env.PIKA_API_KEY;
-  const openaiKey = process.env.OPENAI_API_KEY || process.env.NEW_OPENAI_API_KEY;
-  
-  if (!falKey) {
-    console.warn('⚠️ PIKA_API_KEY (FAL.ai) not found - skipping greeting video generation');
-    return;
-  }
-  if (!openaiKey) {
-    console.warn('⚠️ OpenAI API key not found - skipping greeting video generation');
-    return;
-  }
-  if (!fs.existsSync(imagePath)) {
-    console.warn('⚠️ base-frame.jpg not found - skipping greeting video generation');
-    return;
-  }
-
-  // Memory guard - skip if heap is over 300MB to prevent OOM
-  const heapUsed = process.memoryUsage().heapUsed;
-  if (heapUsed > 300 * 1024 * 1024) {
-    console.warn(`⚠️ Heap usage ${(heapUsed / 1024 / 1024).toFixed(0)}MB - skipping greeting video to prevent OOM`);
-    return;
-  }
-  
-  // Skip if today's greeting already exists
-  if (fs.existsSync(outputPath)) {
-    try {
-      const stat = fs.statSync(outputPath);
-      const fileDate = new Date(stat.mtime).toISOString().slice(0, 10);
-      const today = new Date().toISOString().slice(0, 10);
-      if (fileDate === today && stat.size > 10000) {
-        console.log(`✅ Today's greeting video already exists (${(stat.size / 1024).toFixed(0)}KB) - skipping regeneration`);
-        return;
-      }
-    } catch (e) {}
-  }
-  
-  const now = new Date();
-  const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' };
-  const utcDateStr = now.toLocaleDateString('en-US', options);
-  
-  const message = `Good morning, have a Solar Day! Today is ${utcDateStr} UTC. Have a clear day, life is what YOU make it!`;
-  
-  console.log("🌅 Generating daily Solar greeting video...");
-  console.log("📅 Date:", utcDateStr, "UTC");
-  
-  try {
-    // Step 1: Generate TTS audio with OpenAI
-    console.log("🎤 Generating TTS audio...");
-    const OpenAI = require('openai');
-    const openai = new OpenAI({ apiKey: openaiKey });
-    
-    const mp3Response = await openai.audio.speech.create({
-      model: "tts-1",
-      voice: "nova",
-      input: message,
-    });
-    
-    const audioBuffer = Buffer.from(await mp3Response.arrayBuffer());
-    fs.writeFileSync(audioPath, audioBuffer);
-    console.log("✅ TTS audio generated");
-    
-    // Step 2: Convert files to data URLs for FAL.ai
-    console.log("🎬 Generating lip-synced video with SadTalker...");
-    let imageB64 = fs.readFileSync(imagePath).toString('base64');
-    let audioB64 = audioBuffer.toString('base64');
-    
-    const imageDataUrl = 'data:image/jpeg;base64,' + imageB64;
-    const audioDataUrl = 'data:audio/mpeg;base64,' + audioB64;
-    
-    // Free base64 strings to reduce memory pressure
-    imageB64 = null;
-    audioB64 = null;
-    
-    // Step 3: Generate lip-synced video via SadTalker (with 30s timeout to prevent deployment hangs)
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 30000);
-    let response;
-    try {
-      response = await fetch('https://fal.run/fal-ai/sadtalker', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Key ${falKey}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          source_image_url: imageDataUrl,
-          driven_audio_url: audioDataUrl
-        }),
-        signal: controller.signal
-      });
-    } finally {
-      clearTimeout(timeout);
-    }
-    
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`SadTalker API error: ${response.status} - ${errText}`);
-    }
-    
-    const result = await response.json();
-    
-    if (result.video && result.video.url) {
-      const videoResponse = await fetch(result.video.url);
-      if (!videoResponse.ok) {
-        throw new Error(`Failed to download video: ${videoResponse.status}`);
-      }
-      
-      const videoBuffer = Buffer.from(await videoResponse.arrayBuffer());
-      if (videoBuffer.length < 1000) {
-        throw new Error('Downloaded video is too small, likely corrupted');
-      }
-      
-      const tempPath = outputPath + '.tmp';
-      fs.writeFileSync(tempPath, videoBuffer);
-      fs.renameSync(tempPath, outputPath);
-      
-      console.log("✅ Daily Solar greeting video generated for", utcDateStr);
-      console.log("📁 Saved to:", outputPath, `(${(videoBuffer.length / 1024).toFixed(0)}KB)`);
-    } else {
-      console.error("❌ No video URL in response:", JSON.stringify(result));
-    }
-    
-    // Cleanup temp audio
-    try { fs.unlinkSync(audioPath); } catch (e) {}
-    
-  } catch (error) {
-    console.error("❌ Error generating greeting video:", error.message);
-  }
-}
+// Daily greeting video removed — was not rendering properly
 
 // Mark main server as ready and hand over to early server
 mainServer = server;
@@ -16840,8 +16696,7 @@ setImmediate(() => {
       console.warn('⚠️ Daily Indices Brief scheduling failed:', error.message);
     }
 
-    // Schedule daily greeting (lightweight scheduler)
-    scheduleDailyGreeting();
+    // Daily greeting removed — was not rendering properly
 
     // SKIPPED ON STARTUP (run manually or via daily cron):
     // - initializePersistentAgents() → POST /api/agents/daily-tasks/trigger
