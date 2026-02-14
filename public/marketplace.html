@@ -8256,6 +8256,12 @@
             }
         }
 
+        function formatSolar(solar) {
+            if (solar < 0.000001) return solar.toExponential(2);
+            if (solar < 0.001) return solar.toFixed(9);
+            return solar.toFixed(6);
+        }
+
         function escapeHtml(text) {
             var div = document.createElement('div');
             div.textContent = text;
