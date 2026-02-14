@@ -5485,10 +5485,18 @@
             if (isSoftware) extraLinks = `<span style="color:#444;margin:0 6px;">|</span><a href="https://github.com/search?q=${sq}" target="_blank" rel="noopener">\ud83d\udcbb GitHub</a>`;
             const descSnippet = artifact.description ? (artifact.description.length > 150 ? artifact.description.substring(0,150) + '...' : artifact.description) : '';
             const tagsHtml = artifact.searchTags && artifact.searchTags.length > 0 ? 'Tags: ' + artifact.searchTags.join(', ') + '<br>' : '';
+            const resaleBadge = artifact.isListedForResale ? 
+                `<div style="background:linear-gradient(135deg,rgba(57,255,20,0.15),rgba(0,255,255,0.1));border:1px solid rgba(57,255,20,0.4);border-radius:6px;padding:4px 10px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;">
+                    <span style="color:#39FF14;font-size:11px;font-weight:bold;">💰 RESALE — Gen ${artifact.generationNumber || 0}</span>
+                    <span style="color:#ffd700;font-size:12px;font-weight:bold;">${parseFloat(artifact.resalePrice || 0).toFixed(6)} S</span>
+                </div>` : '';
+            const genBadge = (artifact.generationNumber > 0 && !artifact.isListedForResale) ? 
+                `<span style="font-size:9px;background:rgba(255,215,0,0.12);color:#ffd700;padding:2px 6px;border-radius:4px;margin-left:4px;">GEN ${artifact.generationNumber}</span>` : '';
             return `
                 <div class="artifact-card" onclick="selectArtifact('${artifact.id}')">
+                    ${resaleBadge}
                     ${artifact.isBonus ? '<div class="artifact-bonus">BONUS TRACK</div>' : ''}
-                    <div class="artifact-category" style="cursor:pointer;" onclick="event.stopPropagation();document.getElementById('search-input').value='${artifact.category}';kidSolInterpretiveSearch();">${catIcon} ${artifact.category}${sourceTag}${ecoTag}</div>
+                    <div class="artifact-category" style="cursor:pointer;" onclick="event.stopPropagation();document.getElementById('search-input').value='${artifact.category}';kidSolInterpretiveSearch();">${catIcon} ${artifact.category}${sourceTag}${ecoTag}${genBadge}</div>
                     <div class="artifact-title">${artifact.title} <span onclick="event.stopPropagation();document.getElementById('search-input').value='${artifact.title.replace(/'/g, "\\'")}';kidSolInterpretiveSearch();this.textContent='✓';setTimeout(function(){this.textContent='🔍'}.bind(this),800);" style="cursor:pointer;font-size:12px;opacity:0.5;margin-left:4px;" title="Search for this title">🔍</span></div>
                     ${creatorLabel}
                     <div class="artifact-kwh">${artifact.kwhFootprint} kWh footprint</div>
@@ -5570,9 +5578,14 @@
                             📥 Download STL <span style="font-size:9px;color:#888;">(3D printer file)</span>
                         </a>` : ''
                     }
-                    <button class="purchase-btn" onclick="event.stopPropagation(); purchaseArtifact('${artifact.id}')">
-                        Purchase & Download
-                    </button>
+                    ${artifact.isListedForResale ? 
+                        `<button class="purchase-btn" style="background:linear-gradient(135deg,#ffd700,#ff8c00);" onclick="event.stopPropagation(); purchaseResaleArtifact('${artifact.id}', '${artifact.title.replace(/'/g, "\\'")}', '${artifact.resalePrice}')">
+                            💰 Buy Resale — ${parseFloat(artifact.resalePrice || 0).toFixed(6)} S
+                        </button>` :
+                        `<button class="purchase-btn" onclick="event.stopPropagation(); purchaseArtifact('${artifact.id}')">
+                            Purchase & Download
+                        </button>`
+                    }
                 </div>
             `;
         }
@@ -5774,12 +5787,22 @@
                 var isText = fileType.includes('text') || fileType.includes('document');
                 var isVideo = artifact.category === 'videos' || artifact.category === 'video' || fileType.includes('video');
                 
+                var isListedForResale = artifact.isListedForResale || false;
+                var isFullyGenerated = artifact.isFullyGenerated || false;
+                
                 actionButtons = '<button class="artifact-action-btn download" onclick="downloadArtifact(\'' + artifact.id + '\')">💾 Download File</button>' +
                     (isMusic ? '<button class="artifact-action-btn" onclick="openPreview(\'' + artifact.id + '\')">🎵 Listen on Music Now</button>' : '') +
                     (isVideo ? '<button class="artifact-action-btn" onclick="openPreview(\'' + artifact.id + '\')">🎬 Preview Video</button>' : '') +
                     (isImage ? '<button class="artifact-action-btn" onclick="previewArtifact(\'' + artifact.id + '\', \'image\')">🖼️ View Image</button>' : '') +
                     (isText ? '<button class="artifact-action-btn" onclick="previewArtifact(\'' + artifact.id + '\', \'text\')">📄 View Text</button>' : '') +
                     '<button class="artifact-action-btn" onclick="copyArtifactContent(\'' + artifact.id + '\')">📋 Copy Content</button>';
+                
+                if (isListedForResale) {
+                    actionButtons += '<button class="artifact-action-btn" style="background:rgba(255,107,53,0.15);color:#ff6b35;border:1px solid rgba(255,107,53,0.4);" onclick="cancelResale(\'' + artifact.id + '\')">🔄 Cancel Resale Listing</button>' +
+                        '<div style="margin-top:6px;padding:6px 10px;background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.3);border-radius:6px;font-size:11px;color:#ffd700;">Listed for resale at ' + (artifact.resalePrice ? parseFloat(artifact.resalePrice).toFixed(6) : '?') + ' Solar</div>';
+                } else if (isFullyGenerated) {
+                    actionButtons += '<button class="artifact-action-btn" style="background:rgba(57,255,20,0.15);color:#39FF14;border:1px solid rgba(57,255,20,0.4);font-weight:bold;" onclick="listForResale(\'' + artifact.id + '\')">💰 List for Resale (+15% profit)</button>';
+                }
             }
             
             var tagsHtml = '';
@@ -5806,6 +5829,83 @@
                     '</div>' +
                     (type === 'purchased' ? '<div style="color: #666; font-size: 12px; margin-top: 8px;">Purchased: ' + new Date(artifact.dateAdded).toLocaleDateString() + '</div>' : '') +
                 '</div>';
+        }
+
+        async function listForResale(artifactId) {
+            if (!currentUser) { alert('Please sign in first.'); return; }
+            if (!confirm('List this artifact for resale? The price will be set at 15% above what you paid. Once sold, you lose all access to the file.')) return;
+            try {
+                var resp = await fetch('/api/artifacts/' + artifactId + '/resell', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include'
+                });
+                var data = await resp.json();
+                if (data.success) {
+                    alert('Listed for resale at ' + parseFloat(data.resalePrice).toFixed(6) + ' Solar. You paid ' + parseFloat(data.sellerPaid).toFixed(6) + ' Solar — your profit upon sale will be ' + (parseFloat(data.resalePrice) - parseFloat(data.sellerPaid)).toFixed(6) + ' Solar (minus 5% foundation fee).');
+                    showMyListings();
+                } else {
+                    alert('Could not list for resale: ' + (data.error || 'Unknown error'));
+                }
+            } catch (err) {
+                console.error('Resale listing error:', err);
+                alert('Error listing for resale. Please try again.');
+            }
+        }
+
+        async function cancelResale(artifactId) {
+            if (!currentUser) { alert('Please sign in first.'); return; }
+            if (!confirm('Remove this artifact from the resale marketplace?')) return;
+            try {
+                var resp = await fetch('/api/artifacts/' + artifactId + '/cancel-resale', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include'
+                });
+                var data = await resp.json();
+                if (data.success) {
+                    alert('Resale listing cancelled. The artifact is back in your collection.');
+                    showMyListings();
+                } else {
+                    alert('Could not cancel resale: ' + (data.error || 'Unknown error'));
+                }
+            } catch (err) {
+                console.error('Cancel resale error:', err);
+                alert('Error cancelling resale. Please try again.');
+            }
+        }
+
+        async function purchaseResaleArtifact(artifactId, title, price) {
+            if (!currentUser) { alert('Please sign in to purchase.'); return; }
+            if (!confirm('Purchase "' + title + '" for ' + parseFloat(price).toFixed(6) + ' Solar? This is a fully generated artifact with immediate file delivery.')) return;
+            try {
+                var resp = await fetch('/api/artifacts/' + artifactId + '/resale-purchase', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include'
+                });
+                var data = await resp.json();
+                if (data.success) {
+                    showPurchaseSuccessModal({
+                        artifactId: artifactId,
+                        amountPaid: data.resalePrice,
+                        foundationFee: data.foundationFee,
+                        newBalance: data.buyerNewBalance,
+                        downloadUrl: data.downloadUrl,
+                        expiresIn: '7 days'
+                    }, data.title || title);
+                    if (currentUser) {
+                        currentUser.solarBalance = data.buyerNewBalance;
+                        updateBalanceDisplay();
+                    }
+                    loadArtifacts();
+                } else {
+                    alert('Purchase failed: ' + (data.error || 'Unknown error'));
+                }
+            } catch (err) {
+                console.error('Resale purchase error:', err);
+                alert('Error purchasing resale artifact. Please try again.');
+            }
         }
 
         async function downloadArtifact(artifactId) {
@@ -8362,7 +8462,16 @@
             } else if (previewType) {
                 html += '<button class="preview-btn" onclick="closeItemDetailModal();openPreview(\'' + id + '\')">\ud83d\udc41\ufe0f Preview File</button>';
             }
-            html += '<button class="purchase-btn" onclick="closeItemDetailModal();purchaseArtifact(\'' + id + '\')">Purchase & Download</button>';
+            if (item.isListedForResale) {
+                var resaleP = parseFloat(item.resalePrice || 0).toFixed(6);
+                html += '<div style="background:linear-gradient(135deg,rgba(255,215,0,0.1),rgba(255,140,0,0.08));border:1px solid rgba(255,215,0,0.3);border-radius:10px;padding:12px;margin-bottom:10px;text-align:center;">';
+                html += '<div style="font-size:11px;color:#ffd700;font-weight:700;margin-bottom:4px;">RESALE ITEM — Generation ' + (item.generationNumber || 0) + '</div>';
+                html += '<div style="font-size:10px;color:#aaa;">This is a fully generated artifact with immediate file delivery upon purchase.</div>';
+                html += '</div>';
+                html += '<button class="purchase-btn" style="background:linear-gradient(135deg,#ffd700,#ff8c00);color:#000;" onclick="closeItemDetailModal();purchaseResaleArtifact(\'' + id + '\', \'' + escapeHtml(title).replace(/'/g, "\\'") + '\', \'' + resaleP + '\')">💰 Buy Resale — ' + resaleP + ' Solar</button>';
+            } else {
+                html += '<button class="purchase-btn" onclick="closeItemDetailModal();purchaseArtifact(\'' + id + '\')">Purchase & Download</button>';
+            }
             html += '<button onclick="printArtifactDetail(\'' + id + '\')" style="width:100%;background:rgba(255,165,0,0.1);border:1px solid rgba(255,165,0,0.3);color:#ffa500;padding:12px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;margin-top:8px;">🖨️ Print Artifact Info</button>';
             html += '</div>';
 

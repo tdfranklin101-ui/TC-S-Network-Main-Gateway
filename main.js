@@ -6886,7 +6886,9 @@ const server = http.createServer(async (req, res) => {
                a.kwh_footprint, a.solar_amount_s, a.cover_art_url, 
                a.delivery_mode, a.creator_id, a.streaming_url, 
                a.preview_type, a.preview_slug, a.master_file_url, a.preview_file_url, a.trade_file_url,
-               a.content_body, a.search_tags, a.artifact_class, a.lifelens_analysis
+               a.content_body, a.search_tags, a.artifact_class, a.lifelens_analysis,
+               a.current_owner_id, a.is_listed_for_resale, a.resale_price,
+               a.is_fully_generated, a.generation_number, a.original_purchase_price
         FROM artifact_copies ac
         JOIN artifacts a ON ac.artifact_id = a.id
         WHERE ac.owner_id = $1 AND ac.is_active = true AND a.active = true
@@ -6964,6 +6966,7 @@ const server = http.createServer(async (req, res) => {
           fileType: transaction.file_type,
           kwhFootprint: parseFloat(transaction.kwh_footprint),
           solarPrice: parseFloat(transaction.solar_amount_s),
+          priceSolar: parseFloat(transaction.solar_amount_s),
           amountPaid: parseFloat(transaction.amount_s),
           formattedPrice: `${formatSolar(transaction.solar_amount_s)} Solar`,
           formattedPaid: `${formatSolar(transaction.amount_s)} Solar`,
@@ -6974,6 +6977,7 @@ const server = http.createServer(async (req, res) => {
           previewType: transaction.preview_type,
           previewSlug: transaction.preview_slug,
           purchasedAt: transaction.purchase_date,
+          dateAdded: transaction.purchase_date,
           masterFileUrl: transaction.master_file_url,
           previewFileUrl: transaction.preview_file_url,
           tradeFileUrl: transaction.trade_file_url,
@@ -6981,7 +6985,12 @@ const server = http.createServer(async (req, res) => {
           searchTags: transaction.search_tags || [],
           artifactClass: transaction.artifact_class || 'A',
           isOwned: true,
-          ownership: 'purchased'
+          ownership: 'purchased',
+          isFullyGenerated: transaction.is_fully_generated || false,
+          isListedForResale: transaction.is_listed_for_resale || false,
+          resalePrice: transaction.resale_price ? parseFloat(transaction.resale_price) : null,
+          generationNumber: transaction.generation_number || 0,
+          originalPurchasePrice: transaction.original_purchase_price ? parseFloat(transaction.original_purchase_price) : null
         }))
       };
 
@@ -7013,14 +7022,18 @@ const server = http.createServer(async (req, res) => {
                  a.master_file_url, a.trade_file_url, a.artifact_class,
                  a.master_file_size, a.trade_file_size, a.preview_file_size,
                  a.content_format, a.source_type, a.processing_status, a.created_at, a.lifelens_analysis,
+                 a.is_listed_for_resale, a.resale_price, a.generation_number, a.is_fully_generated,
+                 a.current_owner_id,
                  m.metadata as market_metadata, m.source_type as market_source_type,
-                 mem.is_agent as creator_is_agent, mem.name as creator_name, mem.username as creator_username
+                 mem.is_agent as creator_is_agent, mem.name as creator_name, mem.username as creator_username,
+                 owner.username as owner_username
           FROM artifacts a
           LEFT JOIN market_items m ON m.id = a.id::text
           LEFT JOIN members mem ON (
             CASE WHEN a.creator_id ~ '^[0-9]+$' THEN mem.id = CAST(a.creator_id AS INTEGER)
             ELSE mem.username = a.creator_id END
           )
+          LEFT JOIN members owner ON owner.id = a.current_owner_id
           WHERE a.active = true 
           ORDER BY a.is_bonus ASC, a.solar_amount_s ASC, a.title ASC
         `;
@@ -7068,7 +7081,13 @@ const server = http.createServer(async (req, res) => {
             createdAt: artifact.created_at,
             ecosystemTest: meta.ecosystemTest || false,
             uploadType: meta.uploadType || null,
-            lifelens_analysis: artifact.lifelens_analysis || null
+            lifelens_analysis: artifact.lifelens_analysis || null,
+            isListedForResale: artifact.is_listed_for_resale || false,
+            resalePrice: artifact.resale_price ? parseFloat(artifact.resale_price) : null,
+            generationNumber: artifact.generation_number || 0,
+            isFullyGenerated: artifact.is_fully_generated || false,
+            currentOwnerId: artifact.current_owner_id,
+            ownerUsername: artifact.owner_username || null
           };
         });
       }
@@ -10465,7 +10484,7 @@ Only include products where you have found a real URL. Do not make up URLs.`
 
         const solarRays = Math.round(requiredSolar * 1000000);
         const txResult = await client.query(
-          `INSERT INTO transactions (id, type, wallet_id, artifact_id, amount_s, amount_rays, note, created_at) VALUES (gen_random_uuid(), 'purchase', $1, $2, $3, $4, $5, NOW()) RETURNING id`,
+          `INSERT INTO transactions (id, type, wallet_id, artifact_id, amount_s, amount_rays, note, created_at, transaction_class, transaction_type) VALUES (gen_random_uuid(), 'purchase', $1, $2, $3, $4, $5, NOW(), 'sale', 'sale') RETURNING id`,
           [walletId, artifactId, requiredSolar, solarRays, `Purchase of "${artifact.title}"`]
         );
         txId = txResult.rows[0].id;
@@ -10628,6 +10647,473 @@ Only include products where you have found a real URL. Do not make up URLs.`
     return;
   }
 
+  // ================== RESALE & LEDGER ENDPOINTS ==================
+
+  // GET /api/artifacts/resale-listings - All artifacts currently listed for resale
+  if (pathname === '/api/artifacts/resale-listings' && req.method === 'GET') {
+    try {
+      const result = await pool.query(`
+        SELECT a.id, a.title, a.category, a.resale_price, a.generation_number,
+               a.original_purchase_price, a.solar_amount_s,
+               m.username AS owner_username
+        FROM artifacts a
+        LEFT JOIN members m ON m.id = a.current_owner_id
+        WHERE a.is_listed_for_resale = true AND a.active = true
+        ORDER BY a.resale_price ASC
+      `);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        listings: result.rows.map(r => ({
+          id: r.id,
+          title: r.title,
+          category: r.category,
+          resalePrice: parseFloat(r.resale_price),
+          generationNumber: r.generation_number,
+          currentOwner: r.owner_username,
+          originalPrice: parseFloat(r.original_purchase_price || r.solar_amount_s || 0)
+        })),
+        total: result.rows.length
+      }));
+    } catch (err) {
+      console.error('Resale listings error:', err);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: err.message }));
+    }
+    return;
+  }
+
+  // POST /api/artifacts/:id/resell - List artifact for resale
+  if (pathname.startsWith('/api/artifacts/') && pathname.endsWith('/resell') && req.method === 'POST') {
+    try {
+      const sessionId = getCookie(req, 'tc_s_session');
+      if (!sessionId) { res.writeHead(401, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ success: false, error: 'Not authenticated' })); return; }
+      const session = await getSession(sessionId);
+      if (!session || !session.userId) { res.writeHead(401, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ success: false, error: 'Invalid session' })); return; }
+
+      const artifactId = pathname.split('/')[3];
+      const artQ = await pool.query('SELECT * FROM artifacts WHERE id = $1 AND active = true', [artifactId]);
+      if (artQ.rows.length === 0) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ success: false, error: 'Artifact not found' })); return; }
+      const art = artQ.rows[0];
+
+      if (art.current_owner_id !== session.userId) { res.writeHead(403, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ success: false, error: 'You are not the owner of this artifact' })); return; }
+      if (!art.is_fully_generated) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ success: false, error: 'Artifact is not fully generated yet' })); return; }
+      if (art.is_listed_for_resale) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ success: false, error: 'Artifact is already listed for resale' })); return; }
+
+      let sellerPaid;
+      if (art.generation_number === 0) {
+        sellerPaid = parseFloat(art.original_purchase_price || art.solar_amount_s || 0);
+      } else {
+        const lastSale = await pool.query(
+          'SELECT sale_price FROM resale_history WHERE artifact_id = $1 ORDER BY created_at DESC LIMIT 1',
+          [artifactId]
+        );
+        sellerPaid = lastSale.rows.length > 0 ? parseFloat(lastSale.rows[0].sale_price) : parseFloat(art.original_purchase_price || art.solar_amount_s || 0);
+      }
+
+      const resalePrice = Math.round(sellerPaid * (1 + RESALE_MARKUP_RATE) * 10000) / 10000;
+
+      await pool.query(
+        'UPDATE artifacts SET is_listed_for_resale = true, resale_price = $1 WHERE id = $2',
+        [resalePrice, artifactId]
+      );
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        message: 'Artifact listed for resale',
+        artifactId,
+        resalePrice,
+        sellerPaid,
+        markup: RESALE_MARKUP_RATE
+      }));
+    } catch (err) {
+      console.error('Resell error:', err);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: err.message }));
+    }
+    return;
+  }
+
+  // POST /api/artifacts/:id/resale-purchase - Purchase a resale-listed artifact
+  if (pathname.startsWith('/api/artifacts/') && pathname.endsWith('/resale-purchase') && req.method === 'POST') {
+    const client = await pool.connect();
+    try {
+      const sessionId = getCookie(req, 'tc_s_session');
+      if (!sessionId) { client.release(); res.writeHead(401, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ success: false, error: 'Not authenticated' })); return; }
+      const session = await getSession(sessionId);
+      if (!session || !session.userId) { client.release(); res.writeHead(401, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ success: false, error: 'Invalid session' })); return; }
+
+      const artifactId = pathname.split('/')[3];
+      const buyerId = session.userId;
+      const buyerUsername = session.username;
+
+      await client.query('BEGIN');
+
+      const artQ = await client.query('SELECT * FROM artifacts WHERE id = $1 AND active = true FOR UPDATE', [artifactId]);
+      if (artQ.rows.length === 0) { await client.query('ROLLBACK'); client.release(); res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ success: false, error: 'Artifact not found' })); return; }
+      const art = artQ.rows[0];
+
+      if (!art.is_listed_for_resale) { await client.query('ROLLBACK'); client.release(); res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ success: false, error: 'Artifact is not listed for resale' })); return; }
+      if (art.current_owner_id === buyerId) { await client.query('ROLLBACK'); client.release(); res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ success: false, error: 'You already own this artifact' })); return; }
+
+      const resalePrice = parseFloat(art.resale_price);
+      const sellerId = art.current_owner_id;
+
+      const buyerQ = await client.query('SELECT id, username, total_solar, wallet_id FROM members WHERE id = $1 FOR UPDATE', [buyerId]);
+      const buyerSolar = parseFloat(buyerQ.rows[0].total_solar);
+      if (buyerSolar < resalePrice) { await client.query('ROLLBACK'); client.release(); res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ success: false, error: `Insufficient Solar. Need ${formatSolar(resalePrice)}, have ${formatSolar(buyerSolar)}` })); return; }
+
+      const sellerQ = await client.query('SELECT id, username, total_solar, wallet_id FROM members WHERE id = $1 FOR UPDATE', [sellerId]);
+      const seller = sellerQ.rows[0];
+
+      const foundationQ = await client.query("SELECT id, username, total_solar, wallet_id FROM members WHERE username = 'tcs_foundation' FOR UPDATE");
+      const foundation = foundationQ.rows[0];
+
+      const foundationFee = Math.round(resalePrice * FOUNDATION_FEE_RATE * 10000) / 10000;
+      const sellerNet = Math.round((resalePrice - foundationFee) * 10000) / 10000;
+
+      const buyerNewBal = Math.round((buyerSolar - resalePrice) * 10000) / 10000;
+      await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [buyerNewBal, buyerId]);
+      logBalanceChange('RESALE-PURCHASE', buyerId, buyerUsername, buyerSolar, buyerNewBal, `Bought resale artifact ${art.title}`);
+
+      const sellerOldBal = parseFloat(seller.total_solar);
+      const sellerNewBal = Math.round((sellerOldBal + sellerNet) * 10000) / 10000;
+      await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [sellerNewBal, sellerId]);
+      logBalanceChange('RESALE-SALE', sellerId, seller.username, sellerOldBal, sellerNewBal, `Sold resale artifact ${art.title}`);
+
+      const foundOldBal = parseFloat(foundation.total_solar);
+      const foundNewBal = Math.round((foundOldBal + foundationFee) * 10000) / 10000;
+      await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [foundNewBal, foundation.id]);
+      logBalanceChange('RESALE-FEE', foundation.id, 'tcs_foundation', foundOldBal, foundNewBal, `Foundation fee from resale of ${art.title}`);
+
+      await client.query(
+        "INSERT INTO transactions (type, wallet_id, artifact_id, amount_s, amount_rays, note, transaction_class, transaction_type) VALUES ('resale-purchase', $1, $2, $3, $4, $5, 'sale', 'resale')",
+        [buyerQ.rows[0].wallet_id, artifactId, resalePrice, Math.round(resalePrice * 10000), `Resale purchase: ${art.title}`]
+      );
+      await client.query(
+        "INSERT INTO transactions (type, wallet_id, artifact_id, amount_s, amount_rays, note, transaction_class, transaction_type) VALUES ('resale-sale', $1, $2, $3, $4, $5, 'sale', 'resale')",
+        [seller.wallet_id, artifactId, sellerNet, Math.round(sellerNet * 10000), `Resale sale: ${art.title}`]
+      );
+      await client.query(
+        "INSERT INTO transactions (type, wallet_id, artifact_id, amount_s, amount_rays, note, transaction_class, transaction_type) VALUES ('resale-fee', $1, $2, $3, $4, $5, 'sale', 'resale')",
+        [foundation.wallet_id, artifactId, foundationFee, Math.round(foundationFee * 10000), `Foundation fee: ${art.title} resale`]
+      );
+
+      await client.query('UPDATE download_tokens SET is_revoked = true WHERE artifact_id = $1 AND user_id = $2', [artifactId, sellerId]);
+      await client.query('UPDATE artifact_copies SET is_active = false WHERE artifact_id = $1', [artifactId]);
+
+      await client.query(
+        "INSERT INTO artifact_copies (artifact_id, owner_id, purchase_transaction_id, acquired_method, solar_paid, is_active) VALUES ($1, $2, $3, 'resale', $4, true)",
+        [artifactId, buyerId, 'resale-' + artifactId, resalePrice]
+      );
+
+      const dlToken = crypto.randomBytes(32).toString('hex');
+      const dlExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+      await client.query(
+        "INSERT INTO download_tokens (token, artifact_id, user_id, expires_at, access_type, max_downloads) VALUES ($1, $2, $3, $4, 'trade_file', 10)",
+        [dlToken, artifactId, buyerId, dlExpiry]
+      );
+
+      const newGeneration = (art.generation_number || 0) + 1;
+      await client.query(
+        'UPDATE artifacts SET current_owner_id = $1, is_listed_for_resale = false, resale_price = NULL, generation_number = $2, rights_transferred_at = NOW() WHERE id = $3',
+        [buyerId, newGeneration, artifactId]
+      );
+
+      await client.query(
+        'INSERT INTO resale_history (artifact_id, seller_id, buyer_id, sale_price, seller_profit, foundation_fee, generation_number) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+        [artifactId, sellerId, buyerId, resalePrice, sellerNet, foundationFee, art.generation_number || 0]
+      );
+
+      await client.query('COMMIT');
+      client.release();
+
+      const downloadUrl = `/api/artifacts/${artifactId}/download?token=${dlToken}`;
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        message: `Successfully purchased "${art.title}" via resale`,
+        artifactId,
+        title: art.title,
+        resalePrice,
+        foundationFee,
+        sellerNet,
+        newGeneration,
+        buyerNewBalance: buyerNewBal,
+        downloadUrl
+      }));
+    } catch (err) {
+      try { await client.query('ROLLBACK'); } catch (e) {}
+      client.release();
+      console.error('Resale purchase error:', err);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: err.message }));
+    }
+    return;
+  }
+
+  // POST /api/artifacts/:id/cancel-resale - Cancel resale listing
+  if (pathname.startsWith('/api/artifacts/') && pathname.endsWith('/cancel-resale') && req.method === 'POST') {
+    try {
+      const sessionId = getCookie(req, 'tc_s_session');
+      if (!sessionId) { res.writeHead(401, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ success: false, error: 'Not authenticated' })); return; }
+      const session = await getSession(sessionId);
+      if (!session || !session.userId) { res.writeHead(401, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ success: false, error: 'Invalid session' })); return; }
+
+      const artifactId = pathname.split('/')[3];
+      const artQ = await pool.query('SELECT * FROM artifacts WHERE id = $1 AND active = true', [artifactId]);
+      if (artQ.rows.length === 0) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ success: false, error: 'Artifact not found' })); return; }
+      const art = artQ.rows[0];
+
+      if (art.current_owner_id !== session.userId) { res.writeHead(403, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ success: false, error: 'You are not the owner of this artifact' })); return; }
+      if (!art.is_listed_for_resale) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ success: false, error: 'Artifact is not listed for resale' })); return; }
+
+      await pool.query('UPDATE artifacts SET is_listed_for_resale = false, resale_price = NULL WHERE id = $1', [artifactId]);
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, message: 'Resale listing cancelled', artifactId }));
+    } catch (err) {
+      console.error('Cancel resale error:', err);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: err.message }));
+    }
+    return;
+  }
+
+  // GET /api/ledger/artifacts - Full artifact ledger with complete creation + transfer + sale chain
+  if (pathname === '/api/ledger/artifacts' && req.method === 'GET') {
+    try {
+      const artsQ = await pool.query(`
+        SELECT a.id, a.title, a.category, a.solar_amount_s, a.creator_id, a.created_at,
+               a.original_purchase_price, a.current_owner_id, a.generation_number,
+               a.is_fully_generated, a.is_listed_for_resale, a.resale_price,
+               a.artifact_class, a.file_type, a.description,
+               mc.username AS creator_username,
+               mo.username AS owner_username
+        FROM artifacts a
+        LEFT JOIN members mc ON mc.id = CAST(a.creator_id AS INTEGER)
+        LEFT JOIN members mo ON mo.id = a.current_owner_id
+        WHERE a.active = true
+        ORDER BY a.created_at DESC
+      `);
+
+      const txQ = await pool.query(`
+        SELECT t.*, m.username AS actor_username
+        FROM transactions t
+        LEFT JOIN wallets w ON w.id = t.wallet_id
+        LEFT JOIN members m ON m.id = w.user_id
+        WHERE t.artifact_id IS NOT NULL
+        ORDER BY t.created_at ASC
+      `);
+
+      const resaleQ = await pool.query(`
+        SELECT rh.*, ms.username AS seller_username, mb.username AS buyer_username
+        FROM resale_history rh
+        LEFT JOIN members ms ON ms.id = rh.seller_id
+        LEFT JOIN members mb ON mb.id = rh.buyer_id
+        ORDER BY rh.created_at ASC
+      `);
+
+      const txMap = {};
+      for (const tx of txQ.rows) {
+        if (!txMap[tx.artifact_id]) txMap[tx.artifact_id] = [];
+        txMap[tx.artifact_id].push({
+          transactionId: tx.id,
+          type: tx.type,
+          transactionClass: tx.transaction_class || 'sale',
+          transactionType: tx.transaction_type || tx.type,
+          actor: tx.actor_username,
+          amount: parseFloat(tx.amount_s || 0),
+          note: tx.note,
+          date: tx.created_at
+        });
+      }
+
+      const resaleMap = {};
+      let totalResales = 0;
+      for (const rh of resaleQ.rows) {
+        if (!resaleMap[rh.artifact_id]) resaleMap[rh.artifact_id] = [];
+        resaleMap[rh.artifact_id].push({
+          generation: rh.generation_number,
+          seller: rh.seller_username,
+          buyer: rh.buyer_username,
+          price: parseFloat(rh.sale_price),
+          sellerProfit: parseFloat(rh.seller_profit),
+          foundationFee: parseFloat(rh.foundation_fee),
+          date: rh.created_at
+        });
+        totalResales++;
+      }
+
+      let totalTransfers = 0;
+      let totalSales = 0;
+      const ledger = artsQ.rows.map(a => {
+        const events = txMap[a.id] || [];
+        const transfers = events.filter(e => e.transactionClass === 'transfer');
+        const sales = events.filter(e => e.transactionClass === 'sale');
+        totalTransfers += transfers.length;
+        totalSales += sales.length;
+        return {
+          artifactId: a.id,
+          title: a.title,
+          description: (a.description || '').substring(0, 200),
+          category: a.category,
+          artifactClass: a.artifact_class || 'A',
+          fileType: a.file_type,
+          creator: a.creator_username || a.creator_id,
+          createdAt: a.created_at,
+          listPrice: parseFloat(a.solar_amount_s || 0),
+          originalPurchasePrice: a.original_purchase_price ? parseFloat(a.original_purchase_price) : null,
+          currentOwner: a.owner_username,
+          currentOwnerId: a.current_owner_id,
+          generationNumber: a.generation_number || 0,
+          isFullyGenerated: a.is_fully_generated || false,
+          isListedForResale: a.is_listed_for_resale || false,
+          resalePrice: a.resale_price ? parseFloat(a.resale_price) : null,
+          chain: {
+            transfers: transfers,
+            sales: sales,
+            resales: resaleMap[a.id] || []
+          },
+          totalEvents: events.length
+        };
+      });
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        ledger,
+        summary: {
+          totalArtifacts: ledger.length,
+          totalTransfers,
+          totalSales,
+          totalResales,
+          fullyGenerated: ledger.filter(l => l.isFullyGenerated).length,
+          listedForResale: ledger.filter(l => l.isListedForResale).length
+        }
+      }));
+    } catch (err) {
+      console.error('Ledger error:', err);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: err.message }));
+    }
+    return;
+  }
+
+  // GET /api/ledger/artifacts/:id - Single artifact full ledger with complete chain
+  if (pathname.startsWith('/api/ledger/artifacts/') && pathname !== '/api/ledger/artifacts' && req.method === 'GET') {
+    try {
+      const artifactId = pathname.split('/')[4];
+
+      const artQ = await pool.query(`
+        SELECT a.id, a.title, a.description, a.category, a.solar_amount_s, a.creator_id, a.created_at,
+               a.original_purchase_price, a.current_owner_id, a.generation_number,
+               a.is_fully_generated, a.is_listed_for_resale, a.resale_price,
+               a.artifact_class, a.file_type, a.rights_transferred_at,
+               mc.username AS creator_username,
+               mo.username AS owner_username
+        FROM artifacts a
+        LEFT JOIN members mc ON mc.id = CAST(a.creator_id AS INTEGER)
+        LEFT JOIN members mo ON mo.id = a.current_owner_id
+        WHERE a.id = $1 AND a.active = true
+      `, [artifactId]);
+
+      if (artQ.rows.length === 0) { res.writeHead(404, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ success: false, error: 'Artifact not found' })); return; }
+      const a = artQ.rows[0];
+
+      const txQ = await pool.query(`
+        SELECT t.*, m.username AS actor_username
+        FROM transactions t
+        LEFT JOIN wallets w ON w.id = t.wallet_id
+        LEFT JOIN members m ON m.id = w.user_id
+        WHERE t.artifact_id = $1
+        ORDER BY t.created_at ASC
+      `, [artifactId]);
+
+      const resaleQ = await pool.query(`
+        SELECT rh.*, ms.username AS seller_username, mb.username AS buyer_username
+        FROM resale_history rh
+        LEFT JOIN members ms ON ms.id = rh.seller_id
+        LEFT JOIN members mb ON mb.id = rh.buyer_id
+        WHERE rh.artifact_id = $1
+        ORDER BY rh.created_at ASC
+      `, [artifactId]);
+
+      const copiesQ = await pool.query(`
+        SELECT ac.*, m.username AS owner_username
+        FROM artifact_copies ac
+        LEFT JOIN members m ON m.id = ac.owner_id
+        WHERE ac.artifact_id = $1
+        ORDER BY ac.acquired_at ASC
+      `, [artifactId]);
+
+      const allEvents = txQ.rows.map(tx => ({
+        transactionId: tx.id,
+        type: tx.type,
+        transactionClass: tx.transaction_class || 'sale',
+        transactionType: tx.transaction_type || tx.type,
+        actor: tx.actor_username,
+        amount: parseFloat(tx.amount_s || 0),
+        note: tx.note,
+        date: tx.created_at
+      }));
+
+      const salesHistory = resaleQ.rows.map(rh => ({
+        generation: rh.generation_number,
+        seller: rh.seller_username,
+        buyer: rh.buyer_username,
+        price: parseFloat(rh.sale_price),
+        sellerProfit: parseFloat(rh.seller_profit),
+        foundationFee: parseFloat(rh.foundation_fee),
+        date: rh.created_at
+      }));
+
+      const ownershipChain = copiesQ.rows.map(c => ({
+        owner: c.owner_username,
+        method: c.acquired_method,
+        solarPaid: c.solar_paid ? parseFloat(c.solar_paid) : 0,
+        isActive: c.is_active,
+        acquiredAt: c.acquired_at
+      }));
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        ledger: {
+          artifactId: a.id,
+          title: a.title,
+          description: a.description,
+          category: a.category,
+          artifactClass: a.artifact_class || 'A',
+          fileType: a.file_type,
+          creator: a.creator_username || a.creator_id,
+          createdAt: a.created_at,
+          listPrice: parseFloat(a.solar_amount_s || 0),
+          originalPurchasePrice: a.original_purchase_price ? parseFloat(a.original_purchase_price) : null,
+          currentOwner: a.owner_username,
+          currentOwnerId: a.current_owner_id,
+          generationNumber: a.generation_number || 0,
+          isFullyGenerated: a.is_fully_generated || false,
+          isListedForResale: a.is_listed_for_resale || false,
+          resalePrice: a.resale_price ? parseFloat(a.resale_price) : null,
+          rightsTransferredAt: a.rights_transferred_at,
+          chain: {
+            allEvents,
+            resales: salesHistory,
+            ownershipChain
+          }
+        }
+      }));
+    } catch (err) {
+      console.error('Single ledger error:', err);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: err.message }));
+    }
+    return;
+  }
+
   // POST /api/agents/purchase - Agent marketplace purchase (any artifact)
   if (pathname === '/api/agents/purchase' && req.method === 'POST') {
     try {
@@ -10724,49 +11210,50 @@ Only include products where you have found a real URL. Do not make up URLs.`
           console.warn('⚠️ Agent purchase: tcs_foundation not found for fee credit');
         }
         
-        // Record transaction
+        // Record transaction — TRANSFER CLASS (agent-to-agent, DNA only, no file generated)
         const txResult = await client.query(
-          `INSERT INTO transactions (id, type, wallet_id, artifact_id, amount_s, amount_rays, note, created_at)
-           VALUES (gen_random_uuid(), 'purchase', $1, $2, $3, $4, $5, NOW()) RETURNING id`,
-          [walletId, artifactId, requiredSolar, solarRays, `Agent ${agentUsername} purchased "${artifact.title}" for ${requiredSolar} Solar`]
+          `INSERT INTO transactions (id, type, wallet_id, artifact_id, amount_s, amount_rays, note, created_at, transaction_class, transaction_type)
+           VALUES (gen_random_uuid(), 'purchase', $1, $2, $3, $4, $5, NOW(), 'transfer', 'transfer') RETURNING id`,
+          [walletId, artifactId, requiredSolar, solarRays, `Agent ${agentUsername} transfer-purchased "${artifact.title}" for ${requiredSolar} Solar`]
         );
         const transactionId = txResult.rows[0].id;
         
-        // Create artifact copy
+        // Deactivate previous copies, create new transfer copy for this agent
+        await client.query('UPDATE artifact_copies SET is_active = false WHERE artifact_id = $1', [artifactId]);
         try {
           await client.query(
             `INSERT INTO artifact_copies (artifact_id, owner_id, purchase_transaction_id, acquired_method, solar_paid)
-             VALUES ($1, $2, $3, 'purchase', $4)`,
+             VALUES ($1, $2, $3, 'transfer', $4)`,
             [artifactId, agent.id, transactionId, String(requiredSolar)]
           );
         } catch (copyErr) {
           console.warn('⚠️ Agent artifact copy note:', copyErr.message);
         }
+
+        // Update ownership — DNA transfers but NO file generation
+        await client.query(
+          `UPDATE artifacts SET current_owner_id = $1, is_listed_for_resale = false, resale_price = NULL WHERE id = $2`,
+          [agent.id, artifactId]
+        );
         
         await client.query('COMMIT');
         
-        // Generate download token
-        const downloadToken = randomUUID();
-        await pool.query(
-          `INSERT INTO download_tokens (token, artifact_id, user_id, expires_at, access_type, max_downloads) 
-           VALUES ($1, $2, $3, NOW() + INTERVAL '7 days', 'trade_file', 10)`,
-          [downloadToken, artifactId, agent.id]
-        );
-        
-        console.log(`🤖 Agent purchase: ${agentUsername} bought "${artifact.title}" for ${requiredSolar} Solar (fee: ${foundationFee.toFixed(6)})`);
+        // NO download token for transfer class — agents hold DNA, not files
+        console.log(`🔄 Agent TRANSFER: ${agentUsername} acquired "${artifact.title}" DNA for ${requiredSolar} Solar (fee: ${foundationFee.toFixed(6)})`);
         
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
           success: true,
+          transactionClass: 'transfer',
           artifactId,
           title: artifact.title,
           category: artifact.category,
           priceSolar: requiredSolar,
           foundationFee: foundationFee,
           sellerCredit: sellerAmount,
-          downloadUrl: `/api/delivery/${downloadToken}`,
           agentUsername,
-          transactionId
+          transactionId,
+          message: `Transfer complete. ${agentUsername} now holds "${artifact.title}" DNA.`
         }));
       } catch (txErr) {
         await client.query('ROLLBACK');

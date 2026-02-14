@@ -81,6 +81,15 @@ class FileDeliveryService {
         return res.end(JSON.stringify({ error: 'Maximum download limit reached' }));
       }
 
+      const ownerCheck = await this.pool.query(
+        'SELECT current_owner_id FROM artifacts WHERE id = $1',
+        [tokenRow.artifact_id]
+      );
+      if (ownerCheck.rows.length > 0 && ownerCheck.rows[0].current_owner_id && ownerCheck.rows[0].current_owner_id !== tokenRow.user_id) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ error: 'Rights have been transferred. You no longer own this artifact.' }));
+      }
+
       const item = await this.resolver.resolve(tokenRow.artifact_id);
 
       if (!item || !item.found) {
