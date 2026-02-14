@@ -170,7 +170,7 @@ const kidRoutes = require('./routes/kid');
 const agentRoutes = require('./routes/agentRoutes');
 
 // Daily Agent Task Engine
-const { runDailyAgentTasks, runSingleAgentTasks, getTaskStatus, runEducationBlitz } = require('./server/agent-daily-tasks');
+const { runDailyAgentTasks, runSingleAgentTasks, getTaskStatus, runEducationBlitz, ensureAgentMembers, submitKidSolarPrompt } = require('./server/agent-daily-tasks');
 
 const { scheduleDailyGreeting } = require('./server/generate-greeting');
 
@@ -11885,6 +11885,33 @@ Only include products where you have found a real URL. Do not make up URLs.`
     const status = getTaskStatus();
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ success: true, status: status || { lastRun: null, message: 'No daily tasks have been run yet' } }));
+    return;
+  }
+
+  if (pathname === '/api/agents/kid-solar/prompt' && req.method === 'POST') {
+    try {
+      if (!pool) {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Database unavailable' }));
+        return;
+      }
+      const body = await parseBody(req);
+      const action = body.action || body.type || 'general';
+      const details = body.details || body.payload || {};
+      console.log(`☀️ [Kid Solar → KID SOL] Action prompt: "${action}"`);
+      const result = await submitKidSolarPrompt(pool, action, details);
+      if (result) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, message: 'Kid Solar prompt submitted to KID SOL', request: result }));
+      } else {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Failed to submit prompt' }));
+      }
+    } catch (error) {
+      console.error('❌ Kid Solar prompt error:', error.message);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: error.message }));
+    }
     return;
   }
 

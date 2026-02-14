@@ -29,6 +29,174 @@ const ALL_CATEGORIES = Object.keys(ITEM_PARTS);
 
 let lastRunStatus = null;
 
+async function analyzeMarketDemand(pool) {
+  const scores = {};
+  const gaps = [];
+  let memberRequests = [];
+  let totalInventory = 0;
+
+  const supplyByCategory = {};
+  const activeSupplyByCategory = {};
+  try {
+    const invResult = await pool.query(
+      `SELECT category, COUNT(*) as supply, COUNT(CASE WHEN active = true THEN 1 END) as active_supply FROM artifacts GROUP BY category`
+    );
+    for (const row of invResult.rows) {
+      supplyByCategory[row.category] = parseInt(row.supply) || 0;
+      activeSupplyByCategory[row.category] = parseInt(row.active_supply) || 0;
+      totalInventory += parseInt(row.supply) || 0;
+    }
+  } catch (err) {
+    console.warn('🌞 [KID SOL] Inventory query failed, using empty baseline:', err.message);
+  }
+
+  const salesByCategory = {};
+  try {
+    const salesResult = await pool.query(
+      `SELECT a.category, COUNT(*) as recent_sales
+       FROM artifact_copies ac JOIN artifacts a ON ac.artifact_id = a.id
+       WHERE ac.acquired_at > NOW() - INTERVAL '7 days'
+       GROUP BY a.category`
+    );
+    for (const row of salesResult.rows) {
+      salesByCategory[row.category] = parseInt(row.recent_sales) || 0;
+    }
+  } catch (err) {
+    console.warn('🌞 [KID SOL] Sales velocity query failed, skipping:', err.message);
+  }
+
+  try {
+    const reqResult = await pool.query(
+      `SELECT query, constraints, status FROM market_requests
+       WHERE status NOT IN ('FULFILLED', 'CANCELLED')
+       ORDER BY created_at DESC LIMIT 50`
+    );
+    memberRequests = reqResult.rows;
+  } catch (err) {
+    console.warn('🌞 [KID SOL] Member requests query failed, skipping:', err.message);
+  }
+
+  for (const category of ALL_CATEGORIES) {
+    const demandIdx = MARKET_DEMAND.indexOf(category);
+    const baseWeight = demandIdx >= 0
+      ? (ALL_CATEGORIES.length - demandIdx) / ALL_CATEGORIES.length
+      : 0.3;
+
+    const supply = supplyByCategory[category] || 0;
+    let scarcityBonus = 0;
+    if (supply === 0) scarcityBonus = 10;
+    else if (supply < 5) scarcityBonus = 5;
+    else if (supply < 20) scarcityBonus = 2;
+    else if (supply < 50) scarcityBonus = 1;
+
+    const activeSupply = activeSupplyByCategory[category] || 0;
+    const recentSales = salesByCategory[category] || 0;
+    const velocityBonus = Math.min(recentSales / (activeSupply || 1) * 3, 5);
+
+    let requestBonus = 0;
+    for (const req of memberRequests) {
+      const queryText = (req.query || '').toLowerCase();
+      if (queryText.includes(category.toLowerCase())) {
+        requestBonus += 3;
+      }
+    }
+
+    scores[category] = baseWeight + scarcityBonus + velocityBonus + requestBonus;
+
+    if (supply === 0) {
+      gaps.push(category);
+    }
+  }
+
+  return { scores, gaps, memberRequests, totalInventory };
+}
+
+async function buildSupplyManifest(pool, agents, demand) {
+  const manifest = {};
+
+  const rankedCategories = ALL_CATEGORIES
+    .map(c => ({ category: c, score: demand.scores[c] || 0 }))
+    .sort((a, b) => b.score - a.score);
+
+  for (const agent of agents) {
+    const slots = [];
+
+    slots.push('Basic Needs');
+
+    const medianScore = rankedCategories[Math.floor(rankedCategories.length / 2)].score;
+    if (agent.specialty !== 'Basic Needs' && agent.specialty !== 'Orchestrator' && agent.specialty !== 'Computronium Polymath') {
+      if (demand.scores[agent.specialty] >= medianScore) {
+        slots.push(agent.specialty);
+      } else if (Math.random() < 0.5) {
+        slots.push(agent.specialty);
+      }
+    }
+
+    const gapCats = demand.gaps.filter(g => !slots.includes(g));
+    for (const gap of gapCats) {
+      if (slots.length >= 5) break;
+      slots.push(gap);
+    }
+
+    for (const rc of rankedCategories) {
+      if (slots.length >= 5) break;
+      if (!slots.includes(rc.category)) {
+        slots.push(rc.category);
+      }
+    }
+
+    manifest[agent.code] = slots;
+  }
+
+  return manifest;
+}
+
+async function processKidSolarPrompts(pool) {
+  try {
+    const result = await pool.query(
+      `SELECT id, action_type, payload, metadata, status FROM action_requests
+       WHERE status = 'pending'
+       ORDER BY created_at ASC LIMIT 10`
+    );
+
+    const prompts = result.rows;
+    const categoryHints = [];
+
+    for (const prompt of prompts) {
+      const payload = prompt.payload || {};
+      const meta = prompt.metadata || {};
+      const actionText = (prompt.action_type || '') + ' ' + JSON.stringify(payload) + ' ' + JSON.stringify(meta);
+
+      for (const category of ALL_CATEGORIES) {
+        if (actionText.toLowerCase().includes(category.toLowerCase())) {
+          categoryHints.push(category);
+        }
+      }
+    }
+
+    return { prompts, categoryHints };
+  } catch (err) {
+    console.warn('🌞 [KID SOL] Kid Solar prompts query failed, skipping:', err.message);
+    return { prompts: [], categoryHints: [] };
+  }
+}
+
+async function submitKidSolarPrompt(pool, action, details) {
+  try {
+    const id = crypto.randomUUID();
+    const result = await pool.query(
+      `INSERT INTO action_requests (id, action_type, agent_id, agent_name, requester_id, risk_level, status, payload, created_at, updated_at)
+       VALUES ($1, $2, 'kid_solar', 'Kid Solar', 'kid_solar', 'low', 'pending', $3, NOW(), NOW())
+       RETURNING *`,
+      [id, action, JSON.stringify(details || {})]
+    );
+    return result.rows[0];
+  } catch (err) {
+    console.warn('🌞 [KID SOL] Failed to submit Kid Solar prompt:', err.message);
+    return null;
+  }
+}
+
 function pick(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
@@ -86,26 +254,19 @@ function generateDescription(category, title) {
   return `${title} — ${descriptions[category] || 'Digital artifact on the Solar network.'}`;
 }
 
-async function createArtifactsForAgent(pool, agent, memberId) {
+async function createArtifactsForAgent(pool, agent, memberId, assignedCategories) {
   const created = [];
   const errors = [];
 
-  const categories = [];
-  categories.push(agent.specialty);
-  if (agent.specialty !== 'Basic Needs') {
-    categories.push('Basic Needs');
-  } else {
-    const other = ALL_CATEGORIES.filter(c => c !== 'Basic Needs');
-    categories.push(pick(other));
-  }
-  if (!categories.includes('Education')) {
-    categories.push('Education');
-  }
-
-  while (categories.length < 5) {
-    const remaining = ALL_CATEGORIES.filter(c => !categories.includes(c));
-    if (remaining.length === 0) break;
-    categories.push(pick(remaining));
+  const categories = assignedCategories && assignedCategories.length > 0 ? [...assignedCategories] : [];
+  if (categories.length === 0) {
+    categories.push(agent.specialty);
+    if (agent.specialty !== 'Basic Needs') categories.push('Basic Needs');
+    while (categories.length < 5) {
+      const remaining = ALL_CATEGORIES.filter(c => !categories.includes(c));
+      if (remaining.length === 0) break;
+      categories.push(pick(remaining));
+    }
   }
 
   const FILE_TYPES = {
@@ -397,7 +558,7 @@ async function makePurchasesForAgent(pool, agent, memberId) {
   return { purchased, errors };
 }
 
-async function runAgentTasks(pool, agent) {
+async function runAgentTasks(pool, agent, assignedCategories) {
   const username = `agent_eco_${agent.code}`;
   const result = { agentCode: agent.code, agentName: agent.name, created: [], purchased: [], errors: [] };
 
@@ -411,7 +572,7 @@ async function runAgentTasks(pool, agent) {
     const memberId = memberRow.rows[0].id;
     console.log(`🤖 [Agent ${agent.code} ${agent.name}] Starting daily tasks (member ID: ${memberId}, balance: ${memberRow.rows[0].total_solar})`);
 
-    const createResult = await createArtifactsForAgent(pool, agent, memberId);
+    const createResult = await createArtifactsForAgent(pool, agent, memberId, assignedCategories);
     result.created = createResult.created;
     result.errors.push(...createResult.errors);
 
@@ -463,14 +624,46 @@ async function ensureAgentMembers(pool, agents) {
 
 async function runDailyAgentTasks(pool, agents) {
   const startTime = Date.now();
-  const kidSol = agents.find(a => a.code === 'ks');
   const runId = crypto.randomUUID().substring(0, 8);
 
   console.log(`\n🌞 ===== KID SOL PROVISIONAIRE — DAILY OPERATIONS (Run ${runId}) =====`);
   console.log(`🌞 [KID SOL] Orchestrating ${agents.length} agents...`);
 
   const provision = await ensureAgentMembers(pool, agents);
-  console.log(`🌞 [KID SOL] Provision check: ${provision.existing} ready, ${provision.provisioned} newly created, ${provision.failed} failed`);
+  console.log(`🌞 [KID SOL] Provision: ${provision.existing} ready, ${provision.provisioned} new`);
+
+  console.log('🌞 [KID SOL] Analyzing marketplace demand...');
+  const demand = await analyzeMarketDemand(pool);
+  console.log(`🌞 [KID SOL] Inventory: ${demand.totalInventory} items | Gaps: ${demand.gaps.join(', ') || 'none'} | Requests: ${demand.memberRequests.length}`);
+
+  const kidSolarPrompts = await processKidSolarPrompts(pool);
+  if (kidSolarPrompts.prompts.length > 0) {
+    console.log(`🌞 [KID SOL] Kid Solar prompts: ${kidSolarPrompts.prompts.length} actions requested`);
+    for (const hint of kidSolarPrompts.categoryHints) {
+      if (demand.scores[hint]) demand.scores[hint] += 5;
+    }
+    try {
+      const promptIds = kidSolarPrompts.prompts.map(p => p.id).filter(Boolean);
+      if (promptIds.length > 0) {
+        await pool.query(`UPDATE action_requests SET status = 'processed', updated_at = NOW() WHERE id = ANY($1::text[])`, [promptIds]);
+        console.log(`🌞 [KID SOL] Marked ${promptIds.length} Kid Solar prompts as processed`);
+      }
+    } catch (err) {
+      console.warn('🌞 [KID SOL] Could not mark prompts processed:', err.message);
+    }
+  }
+
+  const supplyManifest = await buildSupplyManifest(pool, agents, demand);
+
+  const manifestSummary = {};
+  for (const [code, cats] of Object.entries(supplyManifest)) {
+    const agent = agents.find(a => a.code === code);
+    manifestSummary[agent?.name || code] = cats;
+  }
+  console.log('🌞 [KID SOL] Supply Manifest:');
+  for (const [name, cats] of Object.entries(manifestSummary)) {
+    console.log(`   ${name}: ${cats.join(', ')}`);
+  }
 
   const deployedAgents = [];
   for (const agent of agents) {
@@ -488,7 +681,9 @@ async function runDailyAgentTasks(pool, agents) {
     startTime: new Date().toISOString(),
     agentsDeployed: deployedAgents.length,
     agentsTotal: agents.length,
-    provision
+    provision,
+    demandAnalysis: { totalInventory: demand.totalInventory, gaps: demand.gaps, requestCount: demand.memberRequests.length },
+    supplyManifest
   };
 
   const agentResults = [];
@@ -496,7 +691,8 @@ async function runDailyAgentTasks(pool, agents) {
   let totalPurchased = 0;
 
   for (const agent of agents) {
-    const result = await runAgentTasks(pool, agent);
+    const assignedCategories = supplyManifest[agent.code] || [];
+    const result = await runAgentTasks(pool, agent, assignedCategories);
     agentResults.push(result);
     totalCreated += result.created.length;
     totalPurchased += result.purchased.length;
@@ -540,7 +736,20 @@ async function runSingleAgentTasks(pool, agents, agentCode) {
 
   await ensureAgentMembers(pool, [agent]);
 
-  const result = await runAgentTasks(pool, agent);
+  console.log('🌞 [KID SOL] Analyzing marketplace demand for single agent run...');
+  const demand = await analyzeMarketDemand(pool);
+  const kidSolarPrompts = await processKidSolarPrompts(pool);
+  if (kidSolarPrompts.prompts.length > 0) {
+    for (const hint of kidSolarPrompts.categoryHints) {
+      if (demand.scores[hint]) demand.scores[hint] += 5;
+    }
+  }
+
+  const supplyManifest = await buildSupplyManifest(pool, [agent], demand);
+  const assignedCategories = supplyManifest[agent.code] || [];
+  console.log(`🌞 [KID SOL] ${agent.name} manifest: ${assignedCategories.join(', ')}`);
+
+  const result = await runAgentTasks(pool, agent, assignedCategories);
 
   const status = {
     success: result.errors.length === 0,
@@ -550,6 +759,7 @@ async function runSingleAgentTasks(pool, agents, agentCode) {
     totalPurchased: result.purchased.length,
     deployed: result.errors.some(e => e.phase === 'lookup') ? 0 : 1,
     healthPercent: result.errors.length === 0 ? 100 : 0,
+    supplyManifest,
     timestamp: new Date().toISOString()
   };
 
@@ -633,4 +843,4 @@ async function runEducationBlitz(pool, agents) {
   return { success: totalErrors === 0, totalCreated, totalErrors, results, elapsed: parseFloat(elapsed), timestamp: new Date().toISOString() };
 }
 
-module.exports = { runDailyAgentTasks, runSingleAgentTasks, getTaskStatus, runEducationBlitz, ensureAgentMembers };
+module.exports = { runDailyAgentTasks, runSingleAgentTasks, getTaskStatus, runEducationBlitz, ensureAgentMembers, submitKidSolarPrompt };
