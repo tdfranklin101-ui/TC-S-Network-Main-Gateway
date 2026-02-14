@@ -704,8 +704,16 @@ async function runAgentTasks(pool, agent, assignedCategories, demandScores, kidS
       createPriceStrategy: aiDecision.createPriceStrategy,
       createReasoning: aiDecision.createReasoning,
       buyReasoning: aiDecision.buyReasoning,
-      bulletinPost: aiDecision.bulletinPost ? true : false
+      bulletinPost: aiDecision.bulletinPost ? true : false,
+      strategicPlan: aiDecision.strategicPlan || null
     } : null;
+
+    if (aiDecision && aiDecision.strategicPlan) {
+      const sp = aiDecision.strategicPlan;
+      console.log(`📊 [Agent ${agent.code}] Strategy: ${sp.strategy || 'balanced'} | Risk: ${sp.riskLevel || '?'} | Goal: ${sp.shortTermGoal || '?'}`);
+      console.log(`📊 [Agent ${agent.code}] Assessment: ${sp.assessment || 'none'}`);
+      console.log(`📊 [Agent ${agent.code}] Target net worth: ${sp.targetNetWorth || '?'} Solar | Long-term: ${sp.longTermGoal || '?'}`);
+    }
 
     const endRow = await pool.query('SELECT total_solar FROM members WHERE id = $1', [memberId]);
     const endBalance = endRow.rows.length > 0 ? parseFloat(endRow.rows[0].total_solar) || 0 : startBalance;
@@ -1132,6 +1140,13 @@ async function runRound2AgentTasks(pool, agents) {
       agentResult.marketAssessment = aiDecision.marketAssessment || '';
 
       console.log(`🧠 [Agent ${agent.code}] Round 2 Decision: ${aiDecision.buys.length} buys, ${aiDecision.sells.length} sells`);
+
+      if (aiDecision.strategicPlan) {
+        const sp = aiDecision.strategicPlan;
+        console.log(`📊 [Agent ${agent.code}] R2 Strategy: ${sp.strategy || 'balanced'} | Risk: ${sp.riskLevel || '?'} | Goal: ${sp.shortTermGoal || '?'}`);
+        console.log(`📊 [Agent ${agent.code}] R2 Assessment: ${sp.assessment || 'none'}`);
+        agentResult.strategicPlan = sp;
+      }
 
       for (const buyOrder of (aiDecision.buys || []).slice(0, 2)) {
         if (!buyOrder.artifactId) continue;

@@ -94,7 +94,8 @@ function heuristicFallback(marketSnapshot) {
     createReasoning: `Heuristic fallback: ${bestCategory} has highest demand score (${bestScore.toFixed(1)})`,
     buyArtifactId,
     buyReasoning: buyArtifactId ? 'Heuristic: cheapest item in high-demand category' : 'No suitable buy candidates',
-    bulletinPost: null
+    bulletinPost: null,
+    strategicPlan: { assessment: 'Heuristic mode — no AI assessment available', strategy: 'balanced', shortTermGoal: 'Create in highest-demand category', longTermGoal: 'Build inventory for resale', riskLevel: 'low', targetNetWorth: 10 }
   };
 }
 
@@ -134,7 +135,12 @@ ${objectives.specialMission && objectives.specialMissionAgent === agent.code ? `
 
     const systemPrompt = `You are ${agent.name}, an AI trading agent on the TC-S Solar Network marketplace. Your specialty is ${agent.specialty || 'General'}. KID SOL is your orchestrator — she sets daily objectives and you decide HOW to profit while fulfilling them.
 
-Your job: fulfill KID SOL's objectives in the most profitable way. Buy undervalued items to resell at 15% markup. Create artifacts in high-demand categories. Use the bulletin board as your pre-trade intelligence hub — search for deals, ask specific members about items, negotiate prices.
+SELF-ASSESSMENT:
+Balance: ${balance.toFixed(4)} Solar | Portfolio: ${(marketSnapshot.portfolioValue || 0).toFixed(4)} Solar (${marketSnapshot.portfolioItemCount || 0} items) | Net Worth: ${(marketSnapshot.netWorth || balance).toFixed(4)} Solar
+7-day P&L: earned ${(marketSnapshot.recentEarnings || 0).toFixed(4)} S, spent ${(marketSnapshot.recentSpending || 0).toFixed(4)} S, net ${(marketSnapshot.netProfitLoss || 0).toFixed(4)} S (${marketSnapshot.transactionCount || 0} transactions)
+Reserve floor: 1.0 Solar — never let balance drop below this.
+
+Your job: ASSESS your financial position, then CREATE A STRATEGIC PLAN to grow your wealth while fulfilling KID SOL's objectives. Buy undervalued items to resell at 15% markup. Create artifacts in high-demand categories. Use the bulletin board as your pre-trade intelligence hub.
 
 NEGOTIATION POWERS (autonomous):
 - You may change your asking price to attract buyers
@@ -143,12 +149,16 @@ NEGOTIATION POWERS (autonomous):
 - You must protect your reserves — never sell below cost unless strategic
 - Reference specific artifact IDs when posting about items
 
-Balance: ${balance} Solar. Reserve floor: 1.0 Solar. Inventory: ${marketSnapshot.agentInventory || 0} items.
-
-Respond in JSON with: createCategory, createPriceStrategy (undercut/premium/market), createReasoning, buyArtifactId (integer or null), buyReasoning, bulletinPost (object or null).
-bulletinPost format: { "type": "wanted|for_sale|offer|intel|directive", "title": "...", "body": "...", "targetCategory": "...", "priceSolar": number, "referenceArtifactId": integer or null, "targetAgentCode": "agent_code or null", "negotiation": { "type": "price_change|volume_discount|alternative_offer|inquiry", "originalPrice": number or null, "proposedPrice": number or null, "discountPct": number (max 20) or null, "volumeQty": integer or null, "altArtifactIds": [int] or null } or null }`;
+Respond in JSON with: createCategory, createPriceStrategy (undercut/premium/market), createReasoning, buyArtifactId (integer or null), buyReasoning, bulletinPost (object or null), strategicPlan (object).
+bulletinPost format: { "type": "wanted|for_sale|offer|intel|directive", "title": "...", "body": "...", "targetCategory": "...", "priceSolar": number, "referenceArtifactId": integer or null, "targetAgentCode": "agent_code or null", "negotiation": { "type": "price_change|volume_discount|alternative_offer|inquiry", "originalPrice": number or null, "proposedPrice": number or null, "discountPct": number (max 20) or null, "volumeQty": integer or null, "altArtifactIds": [int] or null } or null }
+strategicPlan format: { "assessment": "1-2 sentence assessment of your current financial position", "strategy": "aggressive|balanced|conservative", "shortTermGoal": "what you aim to achieve today", "longTermGoal": "what you aim to achieve this week", "riskLevel": "low|medium|high", "targetNetWorth": number (your Solar net worth goal for this week) }`;
 
     const userPrompt = `${directiveBlock}
+
+FINANCIAL SELF-ASSESSMENT:
+Balance: ${balance.toFixed(4)} S | Portfolio value: ${(marketSnapshot.portfolioValue || 0).toFixed(4)} S | Net worth: ${(marketSnapshot.netWorth || balance).toFixed(4)} S
+7-day earnings: ${(marketSnapshot.recentEarnings || 0).toFixed(4)} S | 7-day spending: ${(marketSnapshot.recentSpending || 0).toFixed(4)} S | Net P&L: ${(marketSnapshot.netProfitLoss || 0).toFixed(4)} S
+${balance < 2 ? '⚠️ LOW BALANCE — be conservative, protect reserves!' : balance > 10 ? '💰 STRONG BALANCE — you can afford aggressive buys for resale profit.' : '📊 MODERATE BALANCE — balance risk and opportunity.'}
 
 MARKET STATE:
 Demand: ${topDemand}
@@ -190,7 +200,8 @@ Fulfill KID SOL's objectives. Choose 1 creation and 1 purchase to maximize YOUR 
       createReasoning: decision.createReasoning || '',
       buyArtifactId: decision.buyArtifactId || null,
       buyReasoning: decision.buyReasoning || '',
-      bulletinPost: decision.bulletinPost || null
+      bulletinPost: decision.bulletinPost || null,
+      strategicPlan: decision.strategicPlan || null
     };
   } catch (err) {
     console.warn(`⚠️ [Agent ${agent.code}] AI decision failed, using heuristic:`, err.message);
@@ -278,6 +289,47 @@ async function gatherMarketSnapshot(pool, memberId) {
   } catch (err) {
     console.warn('⚠️ [Inference] Bulletin posts query failed:', err.message);
   }
+
+  try {
+    const txHistory = await pool.query(
+      `SELECT ml.entry_type, ml.amount, ml.description, ml.created_at, ml.artifact_id
+       FROM marketplace_ledger ml
+       WHERE ml.member_id = $1 AND ml.created_at > NOW() - INTERVAL '7 days'
+       ORDER BY ml.created_at DESC LIMIT 20`,
+      [memberId]
+    );
+    const earnings = txHistory.rows.filter(t => t.entry_type === 'credit').reduce((s, t) => s + parseFloat(t.amount || 0), 0);
+    const spending = txHistory.rows.filter(t => t.entry_type === 'debit').reduce((s, t) => s + Math.abs(parseFloat(t.amount || 0)), 0);
+    snapshot.recentEarnings = Math.round(earnings * 10000) / 10000;
+    snapshot.recentSpending = Math.round(spending * 10000) / 10000;
+    snapshot.netProfitLoss = Math.round((earnings - spending) * 10000) / 10000;
+    snapshot.transactionCount = txHistory.rows.length;
+  } catch (err) {
+    console.warn('⚠️ [Inference] Transaction history query failed:', err.message);
+    snapshot.recentEarnings = 0;
+    snapshot.recentSpending = 0;
+    snapshot.netProfitLoss = 0;
+    snapshot.transactionCount = 0;
+  }
+
+  try {
+    const portfolioResult = await pool.query(
+      `SELECT COALESCE(SUM(CAST(a.solar_amount_s AS NUMERIC)), 0) as portfolio_value,
+              COUNT(*) as item_count
+       FROM artifact_copies ac
+       JOIN artifacts a ON a.id = ac.artifact_id
+       WHERE ac.owner_id = $1 AND ac.is_active = true AND a.active = true`,
+      [memberId]
+    );
+    snapshot.portfolioValue = Math.round(parseFloat(portfolioResult.rows[0]?.portfolio_value || 0) * 10000) / 10000;
+    snapshot.portfolioItemCount = parseInt(portfolioResult.rows[0]?.item_count) || 0;
+  } catch (err) {
+    console.warn('⚠️ [Inference] Portfolio value query failed:', err.message);
+    snapshot.portfolioValue = 0;
+    snapshot.portfolioItemCount = 0;
+  }
+
+  snapshot.netWorth = Math.round((snapshot.agentBalance + (snapshot.portfolioValue || 0)) * 10000) / 10000;
 
   return snapshot;
 }
@@ -416,7 +468,14 @@ async function makeRound2Decision(pool, agent, memberId, snapshot, kidSolObjecti
     const directiveBlock = objectives.dailyDirective ?
       `MORNING DIRECTIVE: ${objectives.dailyDirective}\nPriorities: ${(objectives.priorityCategories || []).join(', ')}` : '';
 
-    const systemPrompt = `You are ${agent.name}, AI trading agent on TC-S Solar Network. This is ROUND 2 — the afternoon strategic session. The morning run already provisioned inventory per KID SOL's objectives. Now you assess results and make 2 strategic buys + 2 strategic sells to maximize profit.
+    const systemPrompt = `You are ${agent.name}, AI trading agent on TC-S Solar Network. This is ROUND 2 — the afternoon strategic session. The morning run already provisioned inventory per KID SOL's objectives. Now you ASSESS your results, review your morning P&L, and execute 2 strategic buys + 2 strategic sells.
+
+SELF-ASSESSMENT:
+Balance: ${balance.toFixed(4)} Solar | Portfolio: ${(snapshot.portfolioValue || 0).toFixed(4)} Solar (${snapshot.portfolioItemCount || 0} items) | Net Worth: ${(snapshot.netWorth || balance).toFixed(4)} Solar
+7-day P&L: earned ${(snapshot.recentEarnings || 0).toFixed(4)} S, spent ${(snapshot.recentSpending || 0).toFixed(4)} S, net ${(snapshot.netProfitLoss || 0).toFixed(4)} S
+Today's market: ${snapshot.todayTradeCount} trades, ${snapshot.todayVolume.toFixed(4)} S volume.
+Reserve floor: 1.0 Solar.
+${balance < 2 ? '⚠️ LOW BALANCE — prioritize selling inventory over buying!' : balance > 10 ? '💰 STRONG POSITION — buy undervalued items aggressively for resale.' : '📊 MODERATE — balance buys and sells carefully.'}
 
 NEGOTIATION POWERS (autonomous):
 - You may adjust prices on your listings to attract buyers
@@ -425,15 +484,13 @@ NEGOTIATION POWERS (autonomous):
 - Reference artifact IDs in bulletin posts to create an audit trail
 - You must protect your reserves — never sell below cost unless strategic
 
-Balance: ${balance} Solar. Reserve floor: 1.0 Solar.
-Today's market activity: ${snapshot.todayTradeCount} trades, ${snapshot.todayVolume.toFixed(4)} S volume.
-
 Respond in JSON:
 {
   "buys": [{"artifactId": int, "reasoning": "why"}],
   "sells": [{"artifactId": int, "reasoning": "why this item should be listed for resale now"}],
   "bulletinPost": {"type":"wanted|for_sale|offer|intel", "title":"...", "body":"...", "targetCategory":"...", "priceSolar":number, "referenceArtifactId": int or null, "targetAgentCode": "code or null", "negotiation": {"type":"price_change|volume_discount|alternative_offer|inquiry", "originalPrice":number, "proposedPrice":number, "discountPct":number (max 20), "volumeQty":int, "altArtifactIds":[int]} or null} or null,
-  "marketAssessment": "one sentence on how morning objectives played out"
+  "marketAssessment": "one sentence on how morning objectives played out",
+  "strategicPlan": { "assessment": "1-2 sentence self-assessment of financial position and morning results", "strategy": "aggressive|balanced|conservative", "shortTermGoal": "afternoon goal", "longTermGoal": "this week's wealth target", "riskLevel": "low|medium|high", "targetNetWorth": number }
 }
 buys: pick up to 2 from BUY CANDIDATES. sells: pick up to 2 from YOUR INVENTORY (unlisted items you own) to list for resale.`;
 
@@ -471,7 +528,8 @@ Make 2 strategic buys and 2 strategic sells. Assess the morning objectives.`;
       buys: Array.isArray(decision.buys) ? decision.buys.slice(0, 2) : [],
       sells: Array.isArray(decision.sells) ? decision.sells.slice(0, 2) : [],
       bulletinPost: decision.bulletinPost || null,
-      marketAssessment: decision.marketAssessment || ''
+      marketAssessment: decision.marketAssessment || '',
+      strategicPlan: decision.strategicPlan || null
     };
   } catch (err) {
     console.warn(`⚠️ [Agent ${agent.code}] Round 2 AI decision failed, using heuristic:`, err.message);
@@ -491,7 +549,7 @@ Make 2 strategic buys and 2 strategic sells. Assess the morning objectives.`;
       sells.push({ artifactId: unlisted[i].id, reasoning: 'Heuristic: listing unlisted inventory for profit' });
     }
 
-    return { buys, sells, bulletinPost: null, marketAssessment: 'Heuristic fallback — AI inference unavailable.' };
+    return { buys, sells, bulletinPost: null, marketAssessment: 'Heuristic fallback — AI inference unavailable.', strategicPlan: null };
   }
 }
 
