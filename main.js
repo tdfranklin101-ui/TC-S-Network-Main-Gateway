@@ -171,7 +171,7 @@ const kidRoutes = require('./routes/kid');
 const agentRoutes = require('./routes/agentRoutes');
 
 // Daily Agent Task Engine
-const { runDailyAgentTasks, runSingleAgentTasks, getTaskStatus, runEducationBlitz, ensureAgentMembers, submitKidSolarPrompt, runCustomAgentTask, ALL_CATEGORIES } = require('./server/agent-daily-tasks');
+const { runDailyAgentTasks, runSingleAgentTasks, getTaskStatus, runEducationBlitz, ensureAgentMembers, submitKidSolarPrompt, runCustomAgentTask, ALL_CATEGORIES, runRound2AgentTasks, getRound2Status } = require('./server/agent-daily-tasks');
 
 // Daily greeting removed — was not rendering properly
 // const { scheduleDailyGreeting } = require('./server/generate-greeting');
@@ -12595,6 +12595,191 @@ Only include products where you have found a real URL. Do not make up URLs.`
     return;
   }
 
+  if (pathname === '/api/agents/daily-tasks/round2' && req.method === 'POST') {
+    try {
+      res.writeHead(202, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, message: 'Round 2 strategic trading session started', timestamp: new Date().toISOString() }));
+
+      runRound2AgentTasks(pool, NETWORK_AGENTS).catch(err => console.error('Round 2 error:', err.message));
+    } catch (err) {
+      if (!res.headersSent) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: err.message }));
+      }
+    }
+    return;
+  }
+
+  if (pathname === '/api/agents/daily-tasks/round2-status' && req.method === 'GET') {
+    const status = getRound2Status();
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(status));
+    return;
+  }
+
+  // ============ AGENT BULLETIN BOARD API ============
+  if (pathname === '/api/agent-bulletin' && req.method === 'GET') {
+    try {
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      const typeFilter = url.searchParams.get('type');
+      const statusFilter = url.searchParams.get('status') || 'open';
+      const limit = parseInt(url.searchParams.get('limit')) || 50;
+      
+      let query = `SELECT b.*, m.username as author_username, m.is_agent as author_is_agent
+        FROM agent_bulletin_board b
+        LEFT JOIN members m ON m.id = b.author_member_id
+        WHERE 1=1`;
+      const params = [];
+      
+      if (typeFilter) {
+        params.push(typeFilter);
+        query += ` AND b.post_type = $${params.length}`;
+      }
+      if (statusFilter !== 'all') {
+        params.push(statusFilter);
+        query += ` AND b.status = $${params.length}`;
+      }
+      
+      params.push(limit);
+      query += ` ORDER BY b.created_at DESC LIMIT $${params.length}`;
+      
+      const result = await pool.query(query, params);
+      
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        posts: result.rows.map(p => ({
+          id: p.id,
+          postType: p.post_type,
+          title: p.title,
+          body: p.body,
+          tags: p.tags || [],
+          priceSolar: p.price_solar ? parseFloat(p.price_solar) : null,
+          targetCategory: p.target_category,
+          status: p.status,
+          authorName: p.author_name,
+          authorAgentCode: p.author_agent_code,
+          authorUsername: p.author_username,
+          authorIsAgent: p.author_is_agent || false,
+          replies: p.replies || [],
+          createdAt: p.created_at,
+          updatedAt: p.updated_at
+        })),
+        total: result.rows.length
+      }));
+    } catch (err) {
+      console.error('Bulletin board error:', err.message);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to load bulletin board' }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/agent-bulletin' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', async () => {
+      try {
+        const data = JSON.parse(body);
+        
+        let authorId = data.authorMemberId;
+        let authorName = data.authorName || 'Anonymous';
+        let authorCode = data.authorAgentCode || null;
+        
+        if (!authorId && req.session && req.session.userId) {
+          authorId = req.session.userId;
+          const memberRow = await pool.query('SELECT name, username FROM members WHERE id = $1', [authorId]);
+          if (memberRow.rows.length > 0) authorName = memberRow.rows[0].name || memberRow.rows[0].username;
+        }
+        
+        if (!data.title) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Title is required' }));
+          return;
+        }
+        
+        const result = await pool.query(
+          `INSERT INTO agent_bulletin_board (author_member_id, author_agent_code, author_name, post_type, title, body, tags, price_solar, target_category, status)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'open') RETURNING *`,
+          [authorId, authorCode, authorName, data.postType || 'intel', data.title, data.body || '', data.tags || [], data.priceSolar ? String(data.priceSolar) : null, data.targetCategory || null]
+        );
+        
+        res.writeHead(201, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, post: result.rows[0] }));
+      } catch (err) {
+        console.error('Bulletin post error:', err.message);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Failed to create post' }));
+      }
+    });
+    return;
+  }
+
+  if (pathname.match(/^\/api\/agent-bulletin\/(\d+)\/reply$/) && req.method === 'POST') {
+    const postId = pathname.match(/^\/api\/agent-bulletin\/(\d+)\/reply$/)[1];
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', async () => {
+      try {
+        const data = JSON.parse(body);
+        const reply = {
+          authorName: data.authorName || 'Anonymous',
+          authorAgentCode: data.authorAgentCode || null,
+          body: data.body || '',
+          priceSolar: data.priceSolar || null,
+          timestamp: new Date().toISOString()
+        };
+        
+        await pool.query(
+          `UPDATE agent_bulletin_board SET replies = replies || $1::jsonb, updated_at = NOW() WHERE id = $2`,
+          [JSON.stringify(reply), postId]
+        );
+        
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, reply }));
+      } catch (err) {
+        console.error('Bulletin reply error:', err.message);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Failed to add reply' }));
+      }
+    });
+    return;
+  }
+
+  if (pathname.match(/^\/api\/agent-bulletin\/(\d+)$/) && req.method === 'PATCH') {
+    const postId = pathname.match(/^\/api\/agent-bulletin\/(\d+)$/)[1];
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', async () => {
+      try {
+        const data = JSON.parse(body);
+        const updates = [];
+        const params = [];
+        
+        if (data.status) { params.push(data.status); updates.push(`status = $${params.length}`); }
+        if (data.title) { params.push(data.title); updates.push(`title = $${params.length}`); }
+        if (data.body !== undefined) { params.push(data.body); updates.push(`body = $${params.length}`); }
+        
+        if (updates.length === 0) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'No fields to update' }));
+          return;
+        }
+        
+        params.push(postId);
+        await pool.query(`UPDATE agent_bulletin_board SET ${updates.join(', ')}, updated_at = NOW() WHERE id = $${params.length}`, params);
+        
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true }));
+      } catch (err) {
+        console.error('Bulletin update error:', err.message);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Failed to update post' }));
+      }
+    });
+    return;
+  }
+
   // MY ARTIFACTS API - Get user's purchased/owned artifact copies
   if (pathname === '/api/my-artifacts' && req.method === 'GET') {
     try {
@@ -17309,6 +17494,23 @@ setImmediate(() => {
       console.log('📌 Manual trigger: POST /api/agents/daily-tasks/trigger');
     } catch (error) {
       console.warn('⚠️ Daily agent task scheduling failed:', error.message);
+    }
+
+    // Schedule Round 2 Agent Tasks (8:00 AM UTC — 4 hours after Round 1)
+    try {
+      const round2AgentJob = schedule.scheduleJob({ rule: '0 8 * * *', tz: 'UTC' }, async () => {
+        try {
+          console.log('🌞 [KID SOL PROVISIONAIRE] Round 2 scheduled run: Afternoon strategic trading session...');
+          const result = await runRound2AgentTasks(pool, NETWORK_AGENTS);
+          console.log(`✅ [KID SOL] Round 2 Complete: ${result.totalBuys} buys, ${result.totalSells} sells, ${result.totalErrors} errors`);
+        } catch (error) {
+          console.error('❌ [ROUND-2] Scheduled run failed:', error.message);
+        }
+      });
+      console.log('🤖 Round 2 Agent Tasks scheduled for 8:00 AM UTC');
+      console.log('📌 Manual trigger: POST /api/agents/daily-tasks/round2');
+    } catch (error) {
+      console.warn('⚠️ Round 2 agent task scheduling failed:', error.message);
     }
 
     // Schedule Daily Brief (3:00 AM UTC)

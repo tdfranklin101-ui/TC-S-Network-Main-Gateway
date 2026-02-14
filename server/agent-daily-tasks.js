@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const { generateKidSolObjectives, makeAgentDecision, gatherMarketSnapshot, postToBulletin, gatherRound2Snapshot, makeRound2Decision } = require('./agent-inference');
 
 const ITEM_PARTS = {
   'Computronium':{adj:['Quantum','Neural','Photonic','Lattice','Cryo','Nano','Hyper','Exascale','Coherent','Flux'],noun:['Compute Shard','Processing Unit','Logic Crystal','Inference Chip','Hash Engine','Tensor Core','Bit Forge','Data Loom','Cycle Pack','Throughput Token'],suffix:['v4','XL','Genesis','Prime','Ultra','Turbo','Certified','Standard','Pro','Entangled']},
@@ -28,6 +29,7 @@ const MARKET_DEMAND = ['Basic Needs','Energy','Computronium','Software','AI Tool
 const ALL_CATEGORIES = Object.keys(ITEM_PARTS);
 
 let lastRunStatus = null;
+let lastRound2Status = null;
 
 async function analyzeMarketDemand(pool) {
   const scores = {};
@@ -398,7 +400,7 @@ async function createArtifactsForAgent(pool, agent, memberId, assignedCategories
   return { created, errors };
 }
 
-async function makePurchasesForAgent(pool, agent, memberId, demandScores) {
+async function makePurchasesForAgent(pool, agent, memberId, demandScores, aiDecision) {
   const purchased = [];
   const errors = [];
   let resaleListed = 0;
@@ -427,43 +429,60 @@ async function makePurchasesForAgent(pool, agent, memberId, demandScores) {
       return { purchased, errors, resaleListed, totalResaleValue };
     }
 
-    const candidateResult = await client.query(
-      `SELECT a.id, a.title, a.solar_amount_s, a.creator_id, a.category
-       FROM artifacts a
-       WHERE a.active = true
-         AND a.creator_id != $1
-         AND a.id NOT IN (SELECT artifact_id FROM artifact_copies WHERE owner_id = $2)
-         AND a.is_listed_for_resale = false
-       ORDER BY a.solar_amount_s ASC
-       LIMIT 10`,
-      [String(memberId), memberId]
-    );
-
-    if (candidateResult.rows.length === 0) {
-      errors.push({ phase: 'purchase', error: 'No eligible artifacts found for profit-driven purchase' });
-      return { purchased, errors, resaleListed, totalResaleValue };
+    // AI-directed purchase: specific artifact chosen by inference
+    let artifact = null;
+    if (aiDecision && aiDecision.buyArtifactId) {
+      const aiResult = await client.query(
+        `SELECT a.id, a.title, a.solar_amount_s, a.creator_id, a.category
+         FROM artifacts a
+         WHERE a.id = $1 AND a.active = true
+           AND a.creator_id != $2
+           AND a.id NOT IN (SELECT artifact_id FROM artifact_copies WHERE owner_id = $3)`,
+        [aiDecision.buyArtifactId, String(memberId), memberId]
+      );
+      artifact = aiResult.rows[0] || null;
     }
 
-    let bestCandidate = null;
-    let bestScore = -1;
-    const scores = demandScores || {};
-    for (const candidate of candidateResult.rows) {
-      const price = parseFloat(candidate.solar_amount_s) || 0.01;
-      if (buyerBalance - price < RESERVE_FLOOR) continue;
-      const catScore = scores[candidate.category] || 0;
-      if (catScore > bestScore) {
-        bestScore = catScore;
-        bestCandidate = candidate;
+    // Fallback to generic candidate query if AI-chosen artifact isn't available
+    if (!artifact) {
+      const candidateResult = await client.query(
+        `SELECT a.id, a.title, a.solar_amount_s, a.creator_id, a.category
+         FROM artifacts a
+         WHERE a.active = true
+           AND a.creator_id != $1
+           AND a.id NOT IN (SELECT artifact_id FROM artifact_copies WHERE owner_id = $2)
+           AND a.is_listed_for_resale = false
+         ORDER BY a.solar_amount_s ASC
+         LIMIT 10`,
+        [String(memberId), memberId]
+      );
+
+      if (candidateResult.rows.length === 0) {
+        errors.push({ phase: 'purchase', error: 'No eligible artifacts found for profit-driven purchase' });
+        return { purchased, errors, resaleListed, totalResaleValue };
       }
-    }
 
-    if (!bestCandidate) {
-      console.log(`🛡️ [Agent ${agent.code}] No profitable candidates within balance protection threshold`);
-      errors.push({ phase: 'purchase', error: 'No candidates within balance protection' });
-      return { purchased, errors, resaleListed, totalResaleValue };
-    }
+      let bestCandidate = null;
+      let bestScore = -1;
+      const scores = demandScores || {};
+      for (const candidate of candidateResult.rows) {
+        const price = parseFloat(candidate.solar_amount_s) || 0.01;
+        if (buyerBalance - price < RESERVE_FLOOR) continue;
+        const catScore = scores[candidate.category] || 0;
+        if (catScore > bestScore) {
+          bestScore = catScore;
+          bestCandidate = candidate;
+        }
+      }
 
-    const artifact = bestCandidate;
+      if (!bestCandidate) {
+        console.log(`🛡️ [Agent ${agent.code}] No profitable candidates within balance protection threshold`);
+        errors.push({ phase: 'purchase', error: 'No candidates within balance protection' });
+        return { purchased, errors, resaleListed, totalResaleValue };
+      }
+
+      artifact = bestCandidate;
+    }
     const artPrice = parseFloat(artifact.solar_amount_s) || 0.01;
 
     const txId = crypto.randomUUID();
@@ -541,7 +560,7 @@ async function makePurchasesForAgent(pool, agent, memberId, demandScores) {
   return { purchased, errors, resaleListed, totalResaleValue };
 }
 
-async function runAgentTasks(pool, agent, assignedCategories, demandScores) {
+async function runAgentTasks(pool, agent, assignedCategories, demandScores, kidSolObjectives) {
   const username = `agent_eco_${agent.code}`;
   const result = { agentCode: agent.code, agentName: agent.name, created: [], purchased: [], errors: [], resaleListed: 0, totalResaleValue: 0, netChange: 0 };
 
@@ -556,15 +575,43 @@ async function runAgentTasks(pool, agent, assignedCategories, demandScores) {
     const startBalance = parseFloat(memberRow.rows[0].total_solar) || 0;
     console.log(`🤖 [Agent ${agent.code} ${agent.name}] Starting profit-driven tasks (member ID: ${memberId}, balance: ${startBalance.toFixed(4)} S)`);
 
+    // AI Inference: agent decides how to profit while fulfilling KID SOL's objectives
+    let aiDecision = null;
+    try {
+      const snapshot = await gatherMarketSnapshot(pool, memberId);
+      aiDecision = await makeAgentDecision(pool, agent, memberId, snapshot, kidSolObjectives);
+      console.log(`🧠 [Agent ${agent.code}] AI Decision: Create ${aiDecision.createCategory} (${aiDecision.createPriceStrategy}) | Buy: ${aiDecision.buyArtifactId || 'skip'}`);
+      
+      // Override assigned categories with AI-chosen category
+      if (aiDecision.createCategory) {
+        assignedCategories = [aiDecision.createCategory];
+      }
+      
+      // Post to bulletin board if AI decided to
+      if (aiDecision.bulletinPost) {
+        await postToBulletin(pool, memberId, agent.code, agent.name, aiDecision.bulletinPost);
+      }
+    } catch (inferErr) {
+      console.warn(`⚠️ [Agent ${agent.code}] AI inference failed, using manifest categories:`, inferErr.message);
+    }
+
     const createResult = await createArtifactsForAgent(pool, agent, memberId, assignedCategories);
     result.created = createResult.created;
     result.errors.push(...createResult.errors);
 
-    const purchaseResult = await makePurchasesForAgent(pool, agent, memberId, demandScores);
+    const purchaseResult = await makePurchasesForAgent(pool, agent, memberId, demandScores, aiDecision);
     result.purchased = purchaseResult.purchased;
     result.errors.push(...purchaseResult.errors);
     result.resaleListed = purchaseResult.resaleListed || 0;
     result.totalResaleValue = purchaseResult.totalResaleValue || 0;
+
+    result.aiDecision = aiDecision ? {
+      createCategory: aiDecision.createCategory,
+      createPriceStrategy: aiDecision.createPriceStrategy,
+      createReasoning: aiDecision.createReasoning,
+      buyReasoning: aiDecision.buyReasoning,
+      bulletinPost: aiDecision.bulletinPost ? true : false
+    } : null;
 
     const endRow = await pool.query('SELECT total_solar FROM members WHERE id = $1', [memberId]);
     const endBalance = endRow.rows.length > 0 ? parseFloat(endRow.rows[0].total_solar) || 0 : startBalance;
@@ -651,6 +698,26 @@ async function runDailyAgentTasks(pool, agents) {
 
   const supplyManifest = await buildSupplyManifest(pool, agents, demand);
 
+  // KID SOL generates daily objectives using AI
+  console.log('👑 [KID SOL] Generating daily objectives...');
+  const kidSolObjectives = await generateKidSolObjectives(pool, demand.scores, demand.gaps, demand.totalInventory, demand.memberRequests);
+  
+  // Post KID SOL's directive to bulletin board
+  try {
+    const kidSolMember = await pool.query("SELECT id FROM members WHERE username = 'agent_eco_KS' OR name LIKE '%KID SOL%' LIMIT 1");
+    if (kidSolMember.rows.length > 0) {
+      await postToBulletin(pool, kidSolMember.rows[0].id, 'KS', 'KID SOL', {
+        type: 'directive',
+        title: `Daily Directive — ${new Date().toISOString().split('T')[0]}`,
+        body: `${kidSolObjectives.dailyDirective}\n\nPriority: ${(kidSolObjectives.priorityCategories || []).join(', ')}\nTrading: ${kidSolObjectives.tradingGuidance}\nProfit Target: ${kidSolObjectives.profitTarget}${kidSolObjectives.specialMission ? `\nSpecial Mission (${kidSolObjectives.specialMissionAgent}): ${kidSolObjectives.specialMission}` : ''}`,
+        targetCategory: null,
+        priceSolar: null
+      });
+    }
+  } catch (dirErr) {
+    console.warn('⚠️ [KID SOL] Could not post directive to bulletin:', dirErr.message);
+  }
+
   const manifestSummary = {};
   for (const [code, cats] of Object.entries(supplyManifest)) {
     const agent = agents.find(a => a.code === code);
@@ -679,7 +746,8 @@ async function runDailyAgentTasks(pool, agents) {
     agentsTotal: agents.length,
     provision,
     demandAnalysis: { totalInventory: demand.totalInventory, gaps: demand.gaps, requestCount: demand.memberRequests.length },
-    supplyManifest
+    supplyManifest,
+    kidSolObjectives
   };
 
   const agentResults = [];
@@ -690,7 +758,7 @@ async function runDailyAgentTasks(pool, agents) {
 
   for (const agent of agents) {
     const assignedCategories = supplyManifest[agent.code] || [];
-    const result = await runAgentTasks(pool, agent, assignedCategories, demand.scores);
+    const result = await runAgentTasks(pool, agent, assignedCategories, demand.scores, kidSolObjectives);
     agentResults.push(result);
     totalCreated += result.created.length;
     totalPurchased += result.purchased.length;
@@ -717,6 +785,7 @@ async function runDailyAgentTasks(pool, agents) {
     provisionaire: 'KID SOL',
     profitObjective: true,
     manifest,
+    kidSolObjectives,
     agentResults,
     deployed: deployedAgents.length,
     healthPercent: healthPct,
@@ -755,12 +824,17 @@ async function runSingleAgentTasks(pool, agents, agentCode) {
   const assignedCategories = supplyManifest[agent.code] || [];
   console.log(`🌞 [KID SOL] ${agent.name} manifest: ${assignedCategories.join(', ')}`);
 
-  const result = await runAgentTasks(pool, agent, assignedCategories, demand.scores);
+  // KID SOL generates daily objectives using AI
+  console.log('👑 [KID SOL] Generating daily objectives for single agent run...');
+  const kidSolObjectives = await generateKidSolObjectives(pool, demand.scores, demand.gaps, demand.totalInventory, demand.memberRequests);
+
+  const result = await runAgentTasks(pool, agent, assignedCategories, demand.scores, kidSolObjectives);
 
   const status = {
     success: result.errors.length === 0,
     provisionaire: 'KID SOL',
     profitObjective: true,
+    kidSolObjectives,
     agentResults: [result],
     totalCreated: result.created.length,
     totalPurchased: result.purchased.length,
@@ -873,7 +947,12 @@ async function runCustomAgentTask(pool, agents, agentCode, customCategories, pur
   await ensureAgentMembers(pool, [agent]);
 
   const demand = await analyzeMarketDemand(pool);
-  const result = await runAgentTasks(pool, agent, customCategories, demand.scores);
+
+  // KID SOL generates daily objectives using AI
+  console.log('👑 [KID SOL] Generating daily objectives for custom run...');
+  const kidSolObjectives = await generateKidSolObjectives(pool, demand.scores, demand.gaps, demand.totalInventory, demand.memberRequests);
+
+  const result = await runAgentTasks(pool, agent, customCategories, demand.scores, kidSolObjectives);
 
   const status = {
     success: result.errors.length === 0,
@@ -882,6 +961,7 @@ async function runCustomAgentTask(pool, agents, agentCode, customCategories, pur
     customCategories,
     provisionaire: 'KID SOL',
     profitObjective: true,
+    kidSolObjectives,
     agentResults: [result],
     totalCreated: result.created.length,
     totalPurchased: result.purchased.length,
@@ -896,4 +976,237 @@ async function runCustomAgentTask(pool, agents, agentCode, customCategories, pur
   return status;
 }
 
-module.exports = { runDailyAgentTasks, runSingleAgentTasks, getTaskStatus, runEducationBlitz, ensureAgentMembers, submitKidSolarPrompt, runCustomAgentTask, ALL_CATEGORIES };
+async function runRound2AgentTasks(pool, agents) {
+  const startTime = Date.now();
+  const runId = crypto.randomUUID().substring(0, 8);
+  const RESERVE_FLOOR = 1.0;
+  const MARKUP = 0.15;
+
+  console.log(`\n🌞 ===== KID SOL PROVISIONAIRE — ROUND 2 STRATEGIC SESSION (Run ${runId}) =====`);
+  console.log(`🌞 [KID SOL] ROUND 2: Afternoon strategic buys + sells for ${agents.length} agents`);
+
+  await ensureAgentMembers(pool, agents);
+
+  const demand = await analyzeMarketDemand(pool);
+
+  let kidSolObjectives = { dailyDirective: 'Maximize afternoon profit through strategic trades.', priorityCategories: [], tradingGuidance: 'Buy undervalued, sell at markup.' };
+  try {
+    const directiveResult = await pool.query(
+      `SELECT body FROM agent_bulletin_board WHERE author_agent_code = 'KS' AND post_type = 'directive' ORDER BY created_at DESC LIMIT 1`
+    );
+    if (directiveResult.rows.length > 0) {
+      const body = directiveResult.rows[0].body || '';
+      const lines = body.split('\n');
+      const parsed = {};
+      parsed.dailyDirective = lines[0] || kidSolObjectives.dailyDirective;
+      for (const line of lines) {
+        if (line.startsWith('Priority:')) parsed.priorityCategories = line.replace('Priority:', '').trim().split(',').map(s => s.trim());
+        if (line.startsWith('Trading:')) parsed.tradingGuidance = line.replace('Trading:', '').trim();
+        if (line.startsWith('Profit Target:')) parsed.profitTarget = line.replace('Profit Target:', '').trim();
+      }
+      kidSolObjectives = { ...kidSolObjectives, ...parsed };
+      console.log(`👑 [KID SOL] Round 2 using morning directive: ${kidSolObjectives.dailyDirective}`);
+    }
+  } catch (err) {
+    console.warn('⚠️ [KID SOL] Could not fetch morning directive, using defaults:', err.message);
+  }
+
+  const agentResults = [];
+  let totalBuys = 0;
+  let totalSells = 0;
+  let totalErrors = 0;
+
+  for (const agent of agents) {
+    const username = `agent_eco_${agent.code}`;
+    const agentResult = { agentCode: agent.code, agentName: agent.name, buys: [], sells: [], netChange: 0, marketAssessment: '', aiDecision: null, errors: [] };
+
+    try {
+      const memberRow = await pool.query('SELECT id, total_solar FROM members WHERE username = $1', [username]);
+      if (memberRow.rows.length === 0) {
+        agentResult.errors.push({ phase: 'lookup', error: `Agent member ${username} not found` });
+        agentResults.push(agentResult);
+        totalErrors++;
+        continue;
+      }
+
+      const memberId = memberRow.rows[0].id;
+      const startBalance = parseFloat(memberRow.rows[0].total_solar) || 0;
+
+      const snapshot = await gatherRound2Snapshot(pool, memberId);
+      const aiDecision = await makeRound2Decision(pool, agent, memberId, snapshot, kidSolObjectives);
+      agentResult.aiDecision = aiDecision;
+      agentResult.marketAssessment = aiDecision.marketAssessment || '';
+
+      console.log(`🧠 [Agent ${agent.code}] Round 2 Decision: ${aiDecision.buys.length} buys, ${aiDecision.sells.length} sells`);
+
+      for (const buyOrder of (aiDecision.buys || []).slice(0, 2)) {
+        if (!buyOrder.artifactId) continue;
+        const client = await pool.connect();
+        try {
+          const freshBuyer = await client.query('SELECT id, total_solar FROM members WHERE id = $1', [memberId]);
+          const buyerBalance = parseFloat(freshBuyer.rows[0]?.total_solar) || 0;
+          if (buyerBalance <= RESERVE_FLOOR) {
+            agentResult.errors.push({ phase: 'buy', error: `Balance ${buyerBalance.toFixed(4)} below reserve floor` });
+            client.release();
+            continue;
+          }
+
+          const artResult = await client.query(
+            `SELECT a.id, a.title, a.solar_amount_s, a.creator_id, a.category
+             FROM artifacts a
+             WHERE a.id = $1 AND a.active = true
+               AND a.creator_id != $2
+               AND a.id NOT IN (SELECT artifact_id FROM artifact_copies WHERE owner_id = $3)`,
+            [buyOrder.artifactId, String(memberId), memberId]
+          );
+          if (artResult.rows.length === 0) {
+            agentResult.errors.push({ phase: 'buy', error: `Artifact ${buyOrder.artifactId} not available` });
+            client.release();
+            continue;
+          }
+
+          const artifact = artResult.rows[0];
+          const artPrice = parseFloat(artifact.solar_amount_s) || 0.01;
+          if (buyerBalance - artPrice < RESERVE_FLOOR) {
+            agentResult.errors.push({ phase: 'buy', error: `Cannot afford ${artPrice.toFixed(4)} S and maintain reserve` });
+            client.release();
+            continue;
+          }
+
+          const txId = crypto.randomUUID();
+          await client.query('BEGIN');
+
+          const newBuyerBalance = buyerBalance - artPrice;
+          await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(newBuyerBalance), memberId]);
+
+          await client.query(
+            `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
+             VALUES ($1, 'debit', $2, 'user', $3, $4, 'purchase', $5, $6)`,
+            [txId, String(memberId), String(artPrice), String(newBuyerBalance), artifact.id, `R2 Purchase: ${artifact.title}`]
+          );
+
+          const creatorId = artifact.creator_id;
+          const creatorIdNum = parseInt(creatorId) || 0;
+          const creatorIdStr = String(creatorId);
+          const sellerRow = await client.query(
+            'SELECT id, username, total_solar FROM members WHERE id = $1 OR username = $2 LIMIT 1',
+            [creatorIdNum, creatorIdStr]
+          );
+          if (sellerRow.rows.length > 0) {
+            const seller = sellerRow.rows[0];
+            const sellerOldBal = parseFloat(seller.total_solar) || 0;
+            const sellerNewBal = sellerOldBal + artPrice;
+            await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(sellerNewBal), seller.id]);
+            await client.query(
+              `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
+               VALUES ($1, 'credit', $2, 'creator', $3, $4, 'purchase', $5, $6)`,
+              [txId, String(seller.id), String(artPrice), String(sellerNewBal), artifact.id, `R2 Sale: ${artifact.title}`]
+            );
+          }
+
+          await client.query(
+            `INSERT INTO artifact_copies (artifact_id, owner_id, purchase_transaction_id, acquired_method, solar_paid) VALUES ($1, $2, $3, 'purchase', $4)`,
+            [artifact.id, memberId, txId, String(artPrice)]
+          );
+
+          const resalePrice = parseFloat((artPrice * (1 + MARKUP)).toFixed(6));
+          await client.query(
+            `UPDATE artifacts SET is_listed_for_resale = true, resale_price = $1, current_owner_id = $2 WHERE id = $3`,
+            [String(resalePrice), memberId, artifact.id]
+          );
+
+          await client.query('COMMIT');
+
+          console.log(`🌞 [R2] Agent ${agent.name}: Bought "${artifact.title}" (${artPrice.toFixed(4)} S) → Listed resale at ${resalePrice.toFixed(4)} S`);
+          agentResult.buys.push({ artifactId: artifact.id, title: artifact.title, category: artifact.category, price: artPrice, resalePrice, txId, reasoning: buyOrder.reasoning });
+          totalBuys++;
+        } catch (buyErr) {
+          try { await client.query('ROLLBACK'); } catch (rbErr) { }
+          agentResult.errors.push({ phase: 'buy', error: buyErr.message });
+        } finally {
+          client.release();
+        }
+      }
+
+      for (const sellOrder of (aiDecision.sells || []).slice(0, 2)) {
+        if (!sellOrder.artifactId) continue;
+        try {
+          const ownCheck = await pool.query(
+            `SELECT a.id, a.is_listed_for_resale, a.current_owner_id
+             FROM artifacts a WHERE a.id = $1 AND a.current_owner_id = $2 AND a.active = true`,
+            [sellOrder.artifactId, memberId]
+          );
+          if (ownCheck.rows.length === 0) {
+            agentResult.errors.push({ phase: 'sell', error: `Artifact ${sellOrder.artifactId} not owned by agent or not found` });
+            continue;
+          }
+          if (ownCheck.rows[0].is_listed_for_resale) {
+            agentResult.errors.push({ phase: 'sell', error: `Artifact ${sellOrder.artifactId} already listed for resale` });
+            continue;
+          }
+
+          const copyRow = await pool.query(
+            `SELECT solar_paid FROM artifact_copies WHERE artifact_id = $1 AND owner_id = $2 AND is_active = true ORDER BY acquired_at DESC LIMIT 1`,
+            [sellOrder.artifactId, memberId]
+          );
+          const solarPaid = parseFloat(copyRow.rows[0]?.solar_paid) || 0.01;
+          const resalePrice = parseFloat((solarPaid * (1 + MARKUP)).toFixed(6));
+
+          await pool.query(
+            `UPDATE artifacts SET is_listed_for_resale = true, resale_price = $1 WHERE id = $2 AND current_owner_id = $3`,
+            [String(resalePrice), sellOrder.artifactId, memberId]
+          );
+
+          console.log(`🏷️ [R2] Agent ${agent.name}: Listed "${sellOrder.artifactId}" for resale at ${resalePrice.toFixed(4)} S (paid ${solarPaid.toFixed(4)} S)`);
+          agentResult.sells.push({ artifactId: sellOrder.artifactId, paidPrice: solarPaid, resalePrice, reasoning: sellOrder.reasoning });
+          totalSells++;
+        } catch (sellErr) {
+          agentResult.errors.push({ phase: 'sell', error: sellErr.message });
+        }
+      }
+
+      if (aiDecision.bulletinPost) {
+        await postToBulletin(pool, memberId, agent.code, agent.name, aiDecision.bulletinPost);
+      }
+
+      const endRow = await pool.query('SELECT total_solar FROM members WHERE id = $1', [memberId]);
+      const endBalance = endRow.rows.length > 0 ? parseFloat(endRow.rows[0].total_solar) || 0 : startBalance;
+      agentResult.netChange = parseFloat((endBalance - startBalance).toFixed(6));
+
+      console.log(`✅ [R2 Agent ${agent.code}] Done: ${agentResult.buys.length} buys, ${agentResult.sells.length} sells, net: ${agentResult.netChange >= 0 ? '+' : ''}${agentResult.netChange.toFixed(4)} S`);
+    } catch (err) {
+      console.error(`🚨 [R2 Agent ${agent.code}] Fatal error:`, err.message);
+      agentResult.errors.push({ phase: 'fatal', error: err.message });
+    }
+
+    totalErrors += agentResult.errors.length;
+    agentResults.push(agentResult);
+  }
+
+  const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+
+  console.log(`\n🌞 ===== KID SOL PROVISIONAIRE — ROUND 2 COMPLETE (${runId}) =====`);
+  console.log(`   Buys: ${totalBuys} | Sells: ${totalSells} | Errors: ${totalErrors} | Time: ${elapsed}s\n`);
+
+  lastRound2Status = {
+    success: totalErrors === 0,
+    round: 2,
+    runId,
+    provisionaire: 'KID SOL',
+    agentResults,
+    totalBuys,
+    totalSells,
+    totalErrors,
+    kidSolObjectives,
+    timestamp: new Date().toISOString(),
+    elapsedSeconds: parseFloat(elapsed)
+  };
+
+  return lastRound2Status;
+}
+
+function getRound2Status() {
+  return lastRound2Status || { success: null, round: 2, message: 'No Round 2 tasks have been run yet', timestamp: null };
+}
+
+module.exports = { runDailyAgentTasks, runSingleAgentTasks, getTaskStatus, runEducationBlitz, ensureAgentMembers, submitKidSolarPrompt, runCustomAgentTask, ALL_CATEGORIES, runRound2AgentTasks, getRound2Status };

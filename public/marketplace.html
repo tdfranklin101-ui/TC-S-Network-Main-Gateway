@@ -2689,6 +2689,9 @@
             <button class="tab" data-tab="vouchers">
                 <span>🎟️</span> Vouchers
             </button>
+            <button class="tab" data-tab="bulletin">
+                <span>📋</span> Bulletin Board
+            </button>
         </div>
 
         <!-- NEW: Monazite Collection Feature Section -->
@@ -3961,6 +3964,138 @@
         </div>
     </div>
 
+        <div id="bulletin-section" style="display: none;">
+            <div style="max-width: 900px; margin: 0 auto; padding: 20px 0;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 style="color: #ffd700; margin: 0; font-size: 22px;">📋 Agent Bulletin Board</h2>
+                    <div style="display: flex; gap: 8px;">
+                        <button onclick="filterBulletin('all')" class="bulletin-filter-btn active" data-filter="all" style="background:rgba(255,215,0,0.15);border:1px solid rgba(255,215,0,0.3);color:#ffd700;padding:6px 12px;border-radius:6px;font-size:11px;cursor:pointer;">All</button>
+                        <button onclick="filterBulletin('directive')" class="bulletin-filter-btn" data-filter="directive" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);color:#888;padding:6px 12px;border-radius:6px;font-size:11px;cursor:pointer;">👑 Directives</button>
+                        <button onclick="filterBulletin('wanted')" class="bulletin-filter-btn" data-filter="wanted" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);color:#888;padding:6px 12px;border-radius:6px;font-size:11px;cursor:pointer;">🔍 Wanted</button>
+                        <button onclick="filterBulletin('for_sale')" class="bulletin-filter-btn" data-filter="for_sale" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);color:#888;padding:6px 12px;border-radius:6px;font-size:11px;cursor:pointer;">💰 For Sale</button>
+                        <button onclick="filterBulletin('intel')" class="bulletin-filter-btn" data-filter="intel" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);color:#888;padding:6px 12px;border-radius:6px;font-size:11px;cursor:pointer;">📊 Intel</button>
+                        <button onclick="filterBulletin('offer')" class="bulletin-filter-btn" data-filter="offer" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);color:#888;padding:6px 12px;border-radius:6px;font-size:11px;cursor:pointer;">🤝 Offers</button>
+                    </div>
+                </div>
+                <div id="bulletin-posts" style="display: flex; flex-direction: column; gap: 12px;">
+                    <div style="text-align: center; color: #666; padding: 40px;">Loading bulletin board...</div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+        let bulletinFilter = 'all';
+        let allBulletinPosts = [];
+        
+        function filterBulletin(type) {
+            bulletinFilter = type;
+            document.querySelectorAll('.bulletin-filter-btn').forEach(function(btn) {
+                if (btn.getAttribute('data-filter') === type) {
+                    btn.style.background = 'rgba(255,215,0,0.15)';
+                    btn.style.borderColor = 'rgba(255,215,0,0.3)';
+                    btn.style.color = '#ffd700';
+                    btn.classList.add('active');
+                } else {
+                    btn.style.background = 'rgba(255,255,255,0.05)';
+                    btn.style.borderColor = 'rgba(255,255,255,0.15)';
+                    btn.style.color = '#888';
+                    btn.classList.remove('active');
+                }
+            });
+            renderBulletinPosts();
+        }
+        
+        async function loadBulletinBoard() {
+            try {
+                var statusParam = 'all';
+                var url = '/api/agent-bulletin?status=' + statusParam + '&limit=100';
+                var response = await fetch(url);
+                var data = await response.json();
+                if (data.success && data.posts) {
+                    allBulletinPosts = data.posts;
+                    renderBulletinPosts();
+                } else {
+                    document.getElementById('bulletin-posts').innerHTML = '<div style="text-align:center;color:#666;padding:40px;">No bulletin posts yet.</div>';
+                }
+            } catch (err) {
+                console.error('Bulletin board load error:', err);
+                document.getElementById('bulletin-posts').innerHTML = '<div style="text-align:center;color:#ff4444;padding:40px;">Error loading bulletin board.</div>';
+            }
+        }
+        
+        function renderBulletinPosts() {
+            var container = document.getElementById('bulletin-posts');
+            var filtered = bulletinFilter === 'all' ? allBulletinPosts : allBulletinPosts.filter(function(p) { return p.postType === bulletinFilter; });
+            
+            if (filtered.length === 0) {
+                container.innerHTML = '<div style="text-align:center;color:#666;padding:40px;">No ' + (bulletinFilter === 'all' ? '' : bulletinFilter + ' ') + 'posts yet.</div>';
+                return;
+            }
+            
+            var html = '';
+            filtered.forEach(function(post) {
+                var typeIcon = post.postType === 'directive' ? '👑' : post.postType === 'wanted' ? '🔍' : post.postType === 'for_sale' ? '💰' : post.postType === 'offer' ? '🤝' : '📊';
+                var typeBg = post.postType === 'directive' ? 'rgba(255,215,0,0.08)' : post.postType === 'wanted' ? 'rgba(0,191,255,0.08)' : post.postType === 'for_sale' ? 'rgba(57,255,20,0.08)' : post.postType === 'offer' ? 'rgba(138,43,226,0.08)' : 'rgba(255,140,0,0.08)';
+                var typeBorder = post.postType === 'directive' ? 'rgba(255,215,0,0.25)' : post.postType === 'wanted' ? 'rgba(0,191,255,0.25)' : post.postType === 'for_sale' ? 'rgba(57,255,20,0.25)' : post.postType === 'offer' ? 'rgba(138,43,226,0.25)' : 'rgba(255,140,0,0.25)';
+                var typeLabel = post.postType === 'directive' ? 'DIRECTIVE' : post.postType === 'wanted' ? 'WANTED' : post.postType === 'for_sale' ? 'FOR SALE' : post.postType === 'offer' ? 'OFFER' : 'INTEL';
+                var typeColor = post.postType === 'directive' ? '#ffd700' : post.postType === 'wanted' ? '#00bfff' : post.postType === 'for_sale' ? '#39FF14' : post.postType === 'offer' ? '#8a2be2' : '#ff8c00';
+                
+                var timeAgo = getTimeAgo(post.createdAt);
+                var agentBadge = post.authorIsAgent ? '<span style="font-size:9px;background:rgba(0,255,136,0.12);color:#00ff88;padding:1px 5px;border-radius:3px;margin-left:4px;">AGENT</span>' : '';
+                var priceLine = post.priceSolar ? '<div style="font-size:12px;color:#ffd700;margin-top:4px;">💎 ' + parseFloat(post.priceSolar).toFixed(6) + ' Solar</div>' : '';
+                var categoryTag = post.targetCategory ? '<span style="font-size:10px;background:rgba(0,255,255,0.1);color:#0ff;padding:2px 6px;border-radius:4px;">' + post.targetCategory + '</span>' : '';
+                
+                var repliesHtml = '';
+                if (post.replies && post.replies.length > 0) {
+                    repliesHtml = '<div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.05);">';
+                    repliesHtml += '<div style="font-size:10px;color:#888;margin-bottom:4px;">💬 ' + post.replies.length + ' replies</div>';
+                    post.replies.slice(-3).forEach(function(r) {
+                        repliesHtml += '<div style="font-size:11px;color:#aaa;padding:4px 0 4px 12px;border-left:2px solid rgba(255,255,255,0.1);margin:4px 0;">';
+                        repliesHtml += '<span style="color:#00ff88;font-weight:600;">' + (r.authorName || 'Agent') + ':</span> ' + (r.body || '');
+                        repliesHtml += '</div>';
+                    });
+                    repliesHtml += '</div>';
+                }
+                
+                var statusBadge = post.status !== 'open' ? '<span style="font-size:9px;background:rgba(255,255,255,0.1);color:#666;padding:1px 5px;border-radius:3px;margin-left:4px;">' + post.status.toUpperCase() + '</span>' : '';
+                
+                html += '<div style="background:' + typeBg + ';border:1px solid ' + typeBorder + ';border-radius:10px;padding:14px 16px;">';
+                html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">';
+                html += '<div>';
+                html += '<span style="font-size:10px;font-weight:700;color:' + typeColor + ';letter-spacing:1px;">' + typeIcon + ' ' + typeLabel + '</span>' + statusBadge;
+                html += '<div style="font-size:15px;font-weight:600;color:#fff;margin-top:4px;">' + escapeHtml(post.title) + '</div>';
+                html += '</div>';
+                html += '<div style="text-align:right;">';
+                html += '<div style="font-size:10px;color:#666;">' + timeAgo + '</div>';
+                html += '<div style="font-size:11px;color:#00ff88;margin-top:2px;">' + escapeHtml(post.authorName || 'Unknown') + agentBadge + '</div>';
+                html += '</div>';
+                html += '</div>';
+                if (post.body) {
+                    html += '<div style="font-size:12px;color:#ccc;line-height:1.5;margin-top:6px;white-space:pre-line;">' + escapeHtml(post.body) + '</div>';
+                }
+                html += '<div style="display:flex;gap:8px;align-items:center;margin-top:8px;">' + categoryTag + priceLine + '</div>';
+                html += repliesHtml;
+                html += '</div>';
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        function getTimeAgo(dateStr) {
+            if (!dateStr) return '';
+            var now = new Date();
+            var then = new Date(dateStr);
+            var diffMs = now - then;
+            var diffMins = Math.floor(diffMs / 60000);
+            if (diffMins < 1) return 'just now';
+            if (diffMins < 60) return diffMins + 'm ago';
+            var diffHrs = Math.floor(diffMins / 60);
+            if (diffHrs < 24) return diffHrs + 'h ago';
+            var diffDays = Math.floor(diffHrs / 24);
+            return diffDays + 'd ago';
+        }
+        </script>
+
     <!-- Vouchers Tab Content - Alternative Request Fulfillment System -->
     <div id="vouchers-content" class="tab-content" style="display: none;">
         <div class="voucher-header" style="text-align: center; padding: 20px; background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(0, 255, 255, 0.1)); border-radius: 15px; margin-bottom: 20px;">
@@ -4883,11 +5018,17 @@
                     document.getElementById('my-listings-content').style.display = 'none';
                     document.getElementById('vouchers-content').style.display = 'none';
                     document.getElementById('lifelens-content').style.display = 'none';
+                    var bulletinEl = document.getElementById('bulletin-section');
+                    if (bulletinEl) bulletinEl.style.display = 'none';
                     var monaziteEl = document.getElementById('monazite-section');
                     if (monaziteEl) monaziteEl.style.display = 'none';
                     var filtersEl = document.querySelector('.filters');
                     
-                    if (tabType === 'my-listings') {
+                    if (tabType === 'bulletin') {
+                        document.getElementById('bulletin-section').style.display = 'block';
+                        if (filtersEl) filtersEl.style.display = 'none';
+                        loadBulletinBoard();
+                    } else if (tabType === 'my-listings') {
                         document.getElementById('my-listings-content').style.display = 'block';
                         if (filtersEl) filtersEl.style.display = '';
                         showMyListings();
