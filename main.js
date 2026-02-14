@@ -8534,6 +8534,34 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
+  if (pathname === '/data/ecosystem-config.json') {
+    const filePath = path.join(__dirname, 'public', 'data', 'ecosystem-config.json');
+    if (fs.existsSync(filePath)) {
+      try {
+        const content = fs.readFileSync(filePath, 'utf8');
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=300' });
+        res.end(content);
+        return;
+      } catch (err) {
+        console.error('Error serving ecosystem config:', err.message);
+      }
+    }
+  }
+
+  if (pathname.startsWith('/js/') && pathname.endsWith('.js')) {
+    const filePath = path.join(__dirname, 'public', pathname);
+    if (fs.existsSync(filePath)) {
+      try {
+        const content = fs.readFileSync(filePath, 'utf8');
+        res.writeHead(200, { 'Content-Type': 'application/javascript; charset=utf-8', 'Cache-Control': 'public, max-age=3600' });
+        res.end(content);
+        return;
+      } catch (err) {
+        console.error('Error serving JS file:', err.message);
+      }
+    }
+  }
+
   if (pathname === '/music-now.html' || pathname === '/music-now') {
     const mnFilePath = path.join(__dirname, 'public', 'music-now.html');
     if (fs.existsSync(mnFilePath)) {

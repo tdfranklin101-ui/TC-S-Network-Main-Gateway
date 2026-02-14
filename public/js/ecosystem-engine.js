@@ -256,7 +256,7 @@ function generateCreativeItem(agentName,cat,existingNames){
 async function phase1_registration(){
   const genesisBal=calcGenesisSolar();
   setPhase(1,'Phase 1 — Agent Registration',5);
-  addFeed('🚀','<b>Phase 1</b> starting: Registering <b>20 AI agents</b>...');
+  addFeed('🚀',`<b>Phase 1</b> starting: Registering <b>${AGENTS.length} AI agents</b> from cloud database...`);
   addFeed('☀️',`<b>Genesis:</b> April 7, 2025 → <span class="solar">${genesisBal} days = ${genesisBal} Solar</span> per member (1 Solar/day since Genesis)`);
   for(let i=0;i<AGENTS.length;i++){
     const a=AGENTS[i];
@@ -269,48 +269,44 @@ async function phase1_registration(){
       continue;
     }
     const username='agent_eco_'+a.code;
-    try{
-      const resolveRes=await fetch('/api/ecosystem/resolve-agent',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username})});
-      const resolveData=await resolveRes.json().catch(()=>({}));
-      if(resolveRes.ok&&resolveData.success){
-        state.agents.push({...a,username,userId:resolveData.memberId,balance:resolveData.balance,session:null});
-        state.totalSolar+=resolveData.balance;
-        updateAgentCard(a,'DB synced',resolveData.balance,'registered');
-        addFeed('✅',`<b>Agent ${a.name}</b> synced from DB: member #${resolveData.memberId} with <span class="solar">${resolveData.balance.toFixed(1)} Solar</span>`);
-        state.successes++;
-      } else {
-        const email=username+'@tcs-test.network';
-        const signupBody={username,email,password:'EcoTest2026!',firstName:'Agent '+a.name};
-        const signupRes=await fetch('/api/auth/signup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(signupBody),credentials:'include'});
-        const signupData=await signupRes.json().catch(()=>({}));
-        if(signupRes.ok&&signupData.success!==false){
-          const bal=signupData.solarBalance||signupData.solar_balance||genesisBal;
-          state.agents.push({...a,username,userId:signupData.userId||signupData.user_id||i+1,balance:parseFloat(bal),session:signupData.sessionId||null});
-          state.totalSolar+=parseFloat(bal)||0;
-          updateAgentCard(a,'registered',bal,'registered');
-          addFeed('✅',`<b>Agent ${a.name}</b> registered with <span class="solar">${parseFloat(bal).toFixed(1)} Solar</span>`);
+    if (a.cloudMemberId && a.cloudBalance !== undefined) {
+      state.agents.push({...a, username, userId: a.cloudMemberId, balance: a.cloudBalance, session: null});
+      state.totalSolar += a.cloudBalance;
+      updateAgentCard(a, 'cloud synced', a.cloudBalance, 'registered');
+      addFeed('☁️', `<b>Agent ${a.name}</b> cloud DB: member #${a.cloudMemberId} with <span class="solar">${a.cloudBalance.toFixed(1)} Solar</span>`);
+      state.successes++;
+    } else {
+      try{
+        const resolveRes=await fetch('/api/ecosystem/resolve-agent',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username})});
+        const resolveData=await resolveRes.json().catch(()=>({}));
+        if(resolveRes.ok&&resolveData.success){
+          state.agents.push({...a,username,userId:resolveData.memberId,balance:resolveData.balance,session:null});
+          state.totalSolar+=resolveData.balance;
+          updateAgentCard(a,'DB synced',resolveData.balance,'registered');
+          addFeed('✅',`<b>Agent ${a.name}</b> synced from DB: member #${resolveData.memberId} with <span class="solar">${resolveData.balance.toFixed(1)} Solar</span>`);
           state.successes++;
         } else {
           state.agents.push({...a,username,userId:null,balance:genesisBal,session:null});
           state.totalSolar+=genesisBal;
           updateAgentCard(a,'estimated',genesisBal,'exists');
-          addFeed('⚠️',`<b>Agent ${a.name}</b> using estimated balance: <span class="solar">${genesisBal} Solar</span> (resolve: ${resolveData.error||'failed'}, signup: ${signupData.error||signupData.message||'failed'})`);
+          addFeed('⚠️',`<b>Agent ${a.name}</b> using estimated balance: <span class="solar">${genesisBal} Solar</span>`);
           state.successes++;
         }
+      }catch(e){
+        state.agents.push({...a,username,userId:null,balance:genesisBal,session:null});
+        state.totalSolar+=genesisBal;
+        updateAgentCard(a,'offline',genesisBal,'exists');
+        addFeed('⚠️',`<b>Agent ${a.name}</b> <span class="err">network error: ${e.message}</span> — using estimated <span class="solar">${genesisBal} Solar</span>`);
+        state.errors++;
       }
-    }catch(e){
-      state.agents.push({...a,username,userId:null,balance:genesisBal,session:null});
-      state.totalSolar+=genesisBal;
-      updateAgentCard(a,'offline',genesisBal,'exists');
-      addFeed('⚠️',`<b>Agent ${a.name}</b> <span class="err">network error: ${e.message}</span> — using estimated <span class="solar">${genesisBal} Solar</span>`);
-      state.errors++;
     }
     const pct=5+((i+1)/AGENTS.length)*20;
     setPhase(1,'Phase 1 — Agent Registration',pct);
     updateStats();
-    await sleep(randBetween(200,400));
+    await sleep(randBetween(100,250));
   }
-  addFeed('🏁',`<b>Phase 1 complete:</b> ${state.agents.length} agents processed — each wallet: <span class="solar">${genesisBal} Solar</span> (1/day since Genesis April 7, 2025)`);
+  const cloudCount = state.agents.filter(a => a.cloudMemberId).length;
+  addFeed('🏁',`<b>Phase 1 complete:</b> ${state.agents.length} agents processed (${cloudCount} cloud-connected) — Total network: <span class="solar">${state.totalSolar.toFixed(1)} Solar</span>`);
 }
 
 async function phaseDailyDistribution(){
@@ -1261,10 +1257,11 @@ async function runEcosystemTest(){
 }
 
 async function initEcosystem() {
+  var configLoaded = false;
   try {
-    const res = await fetch('/data/ecosystem-config.json');
-    const config = await res.json();
-    AGENTS = config.agents;
+    var configRes = await fetch('/api/ecosystem/config');
+    if (!configRes.ok) throw new Error('API config unavailable');
+    var config = await configRes.json();
     CAT_GROUPS = config.catGroups;
     CATEGORIES = Object.values(CAT_GROUPS).flat();
     ITEM_PARTS = config.itemParts;
@@ -1279,13 +1276,69 @@ async function initEcosystem() {
     DAILY_CREATE_LIMIT = config.dailyCreateLimit;
     DAILY_PURCHASE_LIMIT = config.dailyPurchaseLimit;
     MAX_CONCURRENT_CREATORS = config.maxConcurrentCreators;
-    initAgentCards();
-    loadCloudStats();
-    initCustomRunPanel();
-  } catch(e) {
-    console.error('Failed to load ecosystem config:', e);
-    document.getElementById('activityFeed').innerHTML = '<div style="color:#ff4444;padding:12px">Failed to load ecosystem configuration. Please refresh the page.</div>';
+    configLoaded = true;
+  } catch(e1) {
+    try {
+      var fallbackRes = await fetch('/data/ecosystem-config.json');
+      var config = await fallbackRes.json();
+      CAT_GROUPS = config.catGroups;
+      CATEGORIES = Object.values(CAT_GROUPS).flat();
+      ITEM_PARTS = config.itemParts;
+      CREATION_ENGINES = config.creationEngines;
+      AGENT_SPECIALTIES = config.agentSpecialties;
+      MARKET_DEMAND = config.marketDemand;
+      SEARCH_TERMS = config.searchTerms;
+      VOUCHER_TEMPLATES = config.voucherTemplates;
+      WEB_SAMPLE_ITEMS = config.webSampleItems;
+      FLAVOR_MAP = config.flavorMap;
+      MANDATORY_BASIC_PURCHASES = config.mandatoryBasicPurchases;
+      DAILY_CREATE_LIMIT = config.dailyCreateLimit;
+      DAILY_PURCHASE_LIMIT = config.dailyPurchaseLimit;
+      MAX_CONCURRENT_CREATORS = config.maxConcurrentCreators;
+      configLoaded = true;
+    } catch(e2) {
+      console.error('Failed to load ecosystem config from both API and static:', e2);
+    }
   }
+
+  try {
+    var agentRes = await fetch('/api/agents/list');
+    var agentData = await agentRes.json();
+    if (agentData.success && agentData.agents && agentData.agents.length > 0) {
+      AGENTS = agentData.agents.map(function(a) {
+        var code = a.username.replace('agent_eco_', '');
+        return {
+          id: a.memberId,
+          code: code,
+          name: a.displayName.replace('Agent ', ''),
+          icon: a.icon || '🤖',
+          specialty: a.specialty || 'General',
+          cloudBalance: a.balance,
+          cloudMemberId: a.memberId
+        };
+      });
+      console.log('☁️ Loaded ' + AGENTS.length + ' agents from cloud database');
+    } else if (configLoaded && config && config.agents) {
+      AGENTS = config.agents;
+      console.log('📄 Loaded ' + AGENTS.length + ' agents from config (cloud unavailable)');
+    }
+  } catch(e3) {
+    if (configLoaded && config && config.agents) {
+      AGENTS = config.agents;
+      console.log('📄 Loaded ' + AGENTS.length + ' agents from config fallback');
+    } else {
+      console.error('Failed to load agents from cloud or config:', e3);
+    }
+  }
+
+  if (!configLoaded && AGENTS.length === 0) {
+    document.getElementById('activityFeed').innerHTML = '<div style="color:#ff4444;padding:12px">Failed to load ecosystem configuration. Please refresh the page.</div>';
+    return;
+  }
+
+  initAgentCards();
+  loadCloudStats();
+  initCustomRunPanel();
 }
 
 function initCustomRunPanel() {
