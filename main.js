@@ -17153,19 +17153,32 @@ Respond with valid JSON only. Be insightful and specific.`;
       '.mov': 'video/quicktime'
     };
     
-    try {
-      const fileBuffer = fs.readFileSync(filePath);
+    let fileBuffer = null;
+    let lastErr = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        fileBuffer = fs.readFileSync(filePath);
+        break;
+      } catch (err) {
+        lastErr = err;
+        if (attempt < 2) {
+          const { execSync } = require('child_process');
+          try { execSync('sleep 0.05'); } catch(e) {}
+        }
+      }
+    }
+    if (fileBuffer) {
       res.writeHead(200, { 
         'Content-Type': contentTypes[ext] || 'application/octet-stream',
         'Content-Length': fileBuffer.length,
         'Cache-Control': ext === '.html' ? 'no-cache' : 'public, max-age=3600'
       });
       res.end(fileBuffer);
-    } catch (err) {
-      console.error(`❌ Error serving ${pathname}:`, err.message, err.stack);
+    } else {
+      console.error(`❌ Error serving ${pathname} after 3 attempts:`, lastErr?.message);
       if (!res.headersSent) {
         res.writeHead(500, { 'Content-Type': 'text/html; charset=utf-8' });
-        res.end(`<html><body style="background:#0a0a0a;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh"><div style="text-align:center"><h1>TC-S Network</h1><p>Temporary error loading page. Please refresh.</p></div></body></html>`);
+        res.end(`<html><head><meta http-equiv="refresh" content="3"></head><body style="background:#0a0a0a;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh"><div style="text-align:center"><h1>TC-S Network</h1><p>Loading page... auto-refreshing in 3 seconds.</p><div style="margin-top:20px;width:200px;height:3px;background:#222;border-radius:3px;overflow:hidden;margin-left:auto;margin-right:auto"><div style="width:100%;height:100%;background:linear-gradient(90deg,#39FF14,#00bfff);animation:load 3s linear"><style>@keyframes load{from{width:0}to{width:100%}}</style></div></div></div></body></html>`);
       }
     }
   } else {
