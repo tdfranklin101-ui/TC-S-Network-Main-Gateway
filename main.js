@@ -160,6 +160,7 @@ const AIPromotionService = require('./server/ai-promotion-service');
 const StreamingService = require('./server/streaming-service');
 const FileDeliveryService = require('./server/file-delivery-service');
 const MemberTemplateService = require('./server/member-template-service');
+const ArtifactGenesisService = require('./server/audio-genesis-service');
 
 // TC-S Computronium Market routes
 const marketRoutes = require('./routes/market');
@@ -987,6 +988,7 @@ async function analyzeContentForPricing(fileBuffer, mimeType, metadata) {
 let pool = null;
 let streamingService = null;
 let fileDeliveryService = null;
+let audioGenesisService = null;
 try {
   // Determine SSL configuration - supports all PGSSLMODE options
   let sslConfig;
@@ -7392,10 +7394,10 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // Generate Video Preview Token API (secure server-side)
+  // Generate Preview Token API — generates DNA teaser if no preview exists
   if (pathname.startsWith('/api/artifacts/') && pathname.endsWith('/preview') && req.method === 'POST') {
     try {
-      const artifactId = pathname.split('/')[3]; // Extract ID from /api/artifacts/{id}/preview
+      const artifactId = pathname.split('/')[3];
       
       if (!artifactId) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -7403,26 +7405,40 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      // Check if artifact exists and is video
-      const artifactQuery = 'SELECT id, title, category, delivery_url FROM artifacts WHERE id = $1 AND active = true';
+      const artifactQuery = 'SELECT id, title, category, delivery_url, preview_file_url, streaming_url, master_file_url, trade_file_url FROM artifacts WHERE id = $1 AND active = true';
       const artifactResult = await pool.query(artifactQuery, [artifactId]);
       
       if (artifactResult.rows.length === 0) {
         res.writeHead(404, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Video not found' }));
+        res.end(JSON.stringify({ error: 'Artifact not found' }));
         return;
       }
 
       const artifact = artifactResult.rows[0];
+      const hasExistingPreview = !!(artifact.preview_file_url || artifact.delivery_url || artifact.streaming_url || artifact.master_file_url);
 
-      // Generate secure HMAC-signed preview token (expires in 10 minutes)
+      if (!hasExistingPreview) {
+        if (!audioGenesisService) audioGenesisService = new ArtifactGenesisService(pool);
+        console.log(`🧬 [Preview] Generating DNA teaser for "${artifact.title}"`);
+        const teaserResult = await audioGenesisService.generateTeaser(artifactId);
+        if (teaserResult.success) {
+          artifact.preview_file_url = `cloud://${teaserResult.previewKey}`;
+          console.log(`🧬 [Preview] Teaser ready: ${teaserResult.previewKey}`);
+        } else {
+          console.warn(`🧬 [Preview] Teaser generation failed: ${teaserResult.error}`);
+          res.writeHead(503, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Preview generation in progress', isDnaArtifact: true }));
+          return;
+        }
+      }
+
       const crypto = require('crypto');
       const secretKey = process.env.PREVIEW_TOKEN_SECRET || 'fallback-preview-secret-2025';
       
       const previewData = {
         artifactId: artifactId,
         type: 'preview',
-        expires: Date.now() + (10 * 60 * 1000), // 10 minutes
+        expires: Date.now() + (10 * 60 * 1000),
         timestamp: Date.now(),
         nonce: crypto.randomBytes(8).toString('hex')
       };
@@ -7436,8 +7452,10 @@ const server = http.createServer(async (req, res) => {
       res.end(JSON.stringify({
         success: true,
         previewUrl: previewUrl,
+        streamUrl: previewUrl,
         artifactTitle: artifact.title,
-        expiresIn: 600 // seconds
+        isDnaPreview: !hasExistingPreview,
+        expiresIn: 600
       }));
     } catch (error) {
       console.error('Preview token generation error:', error);
@@ -7502,9 +7520,8 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      // Get artifact delivery URL (supports both video and music)
-      const artifactQuery = 'SELECT delivery_url, title, category FROM artifacts WHERE id = $1 AND active = true AND category IN ($2, $3)';
-      const artifactResult = await pool.query(artifactQuery, [previewData.artifactId, 'video', 'music']);
+      const artifactQuery = 'SELECT delivery_url, preview_file_url, streaming_url, master_file_url, trade_file_url, title, category FROM artifacts WHERE id = $1 AND active = true';
+      const artifactResult = await pool.query(artifactQuery, [previewData.artifactId]);
       
       if (artifactResult.rows.length === 0) {
         res.writeHead(404, { 'Content-Type': 'text/plain' });
@@ -7512,8 +7529,54 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      const deliveryUrl = artifactResult.rows[0].delivery_url;
       const artifact = artifactResult.rows[0];
+      const deliveryUrl = artifact.preview_file_url || artifact.streaming_url || artifact.master_file_url || artifact.trade_file_url || artifact.delivery_url;
+
+      if (!deliveryUrl) {
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.end('No media file available for this artifact');
+        return;
+      }
+
+      if (deliveryUrl.startsWith('cloud://')) {
+        try {
+          const cloudStorage = require('./server/cloud-storage');
+          let cloudKey = deliveryUrl.substring(8);
+          const buffer = await cloudStorage.downloadFile(cloudKey);
+          const totalSize = buffer.length;
+          const mimeType = artifact.category?.toLowerCase().includes('video') ? 'video/mp4' : 'audio/mpeg';
+
+          const range = req.headers.range;
+          if (range) {
+            const parts = range.replace(/bytes=/, '').split('-');
+            const start = parseInt(parts[0], 10);
+            const end = parts[1] ? parseInt(parts[1], 10) : totalSize - 1;
+            const chunkSize = (end - start) + 1;
+            res.writeHead(206, {
+              'Content-Range': `bytes ${start}-${end}/${totalSize}`,
+              'Accept-Ranges': 'bytes',
+              'Content-Length': chunkSize,
+              'Content-Type': mimeType,
+              'Cache-Control': 'private, max-age=300'
+            });
+            res.end(buffer.slice(start, end + 1));
+          } else {
+            res.writeHead(200, {
+              'Content-Length': totalSize,
+              'Content-Type': mimeType,
+              'Accept-Ranges': 'bytes',
+              'Cache-Control': 'private, max-age=300'
+            });
+            res.end(buffer);
+          }
+          return;
+        } catch (cloudErr) {
+          console.error('[Preview] Cloud storage download error:', cloudErr.message);
+          res.writeHead(500, { 'Content-Type': 'text/plain' });
+          res.end('Failed to load media file');
+          return;
+        }
+      }
       
       // Stream media with Range request support
       try {
@@ -10442,22 +10505,51 @@ Only include products where you have found a real URL. Do not make up URLs.`
       }
       client.release();
 
-      const hasFile = !!(artifact.trade_file_url || artifact.master_file_url || artifact.delivery_url || artifact.content_body);
+      const hasRealFile = !!(artifact.trade_file_url || artifact.master_file_url || artifact.delivery_url);
+      const hasFile = hasRealFile || !!artifact.content_body;
       const downloadUrl = (tokenCreated && dlToken && hasFile) ? `/api/delivery/${dlToken}` : null;
+
+      const needsGenesis = !hasRealFile;
+
+      let genesisStatus = null;
+      if (needsGenesis) {
+        if (!audioGenesisService) audioGenesisService = new ArtifactGenesisService(pool);
+        genesisStatus = 'generating';
+        console.log(`🧬 [Purchase] Triggering artifact genesis for "${artifact.title}" (${artifactId})`);
+        audioGenesisService.generateFromDNA(artifactId).then(async (genResult) => {
+          if (genResult.success) {
+            console.log(`🧬 [Purchase] Audio genesis complete for "${artifact.title}" — ${genResult.fileSize} bytes`);
+            if (dlToken) {
+              try {
+                await pool.query('UPDATE download_tokens SET access_type = $1 WHERE token = $2', ['trade_file', dlToken]);
+              } catch (e) { console.warn('🧬 Token update note:', e.message); }
+            }
+          } else {
+            console.warn(`🧬 [Purchase] Audio genesis failed for "${artifact.title}":`, genResult.error);
+          }
+        }).catch(err => {
+          console.error('🧬 [Purchase] Audio genesis error:', err.message);
+        });
+      }
 
       const response = {
         success: true,
         transactionId: txId,
+        artifactId: artifactId,
         artifactTitle: artifact.title,
         amountPaid: requiredSolar,
         foundationFee: foundationFee,
         newBalance: newBalance,
         downloadUrl: downloadUrl,
         hasFile: hasFile,
-        isTextOnly: !!artifact.content_body && !artifact.trade_file_url && !artifact.master_file_url && !artifact.delivery_url,
+        isTextOnly: false,
         contentFormat: artifact.content_format || null,
         expiresIn: '7 days',
-        message: `Successfully purchased "${artifact.title}" for ${formatSolar(requiredSolar)} Solar. Your new balance is ${formatSolar(newBalance)} Solar.`,
+        genesisStatus: genesisStatus,
+        genesisMessage: needsGenesis ? 'Your artifact DNA is being materialized into a deliverable product. The file will be ready for download shortly.' : null,
+        message: needsGenesis
+          ? `Successfully purchased "${artifact.title}" for ${formatSolar(requiredSolar)} Solar. The product is being generated from artifact DNA — check back in a moment to download.`
+          : `Successfully purchased "${artifact.title}" for ${formatSolar(requiredSolar)} Solar. Your new balance is ${formatSolar(newBalance)} Solar.`,
         purchase: {
           download: {
             url: downloadUrl
@@ -10479,6 +10571,52 @@ Only include products where you have found a real URL. Do not make up URLs.`
         error: 'Purchase failed',
         message: error.message 
       }));
+    }
+    return;
+  }
+
+  // GET /api/artifacts/:id/genesis-status — check if artifact file has been generated
+  if (pathname.startsWith('/api/artifacts/') && pathname.endsWith('/genesis-status') && req.method === 'GET') {
+    try {
+      const artifactId = pathname.split('/')[3];
+      const artResult = await pool.query(
+        'SELECT id, title, master_file_url, trade_file_url, processing_status, file_type FROM artifacts WHERE id = $1',
+        [artifactId]
+      );
+      if (artResult.rows.length === 0) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Artifact not found' }));
+        return;
+      }
+      const art = artResult.rows[0];
+      const ready = !!(art.master_file_url && art.master_file_url.startsWith('cloud://'));
+      let downloadUrl = null;
+      if (ready) {
+        const sessionId = getCookie(req, 'tc_s_session');
+        if (sessionId) {
+          const session = await getSession(sessionId);
+          if (session && session.userId) {
+            const tokenResult = await pool.query(
+              'SELECT token FROM download_tokens WHERE artifact_id = $1 AND user_id = $2 AND is_revoked = false AND expires_at > NOW() ORDER BY created_at DESC LIMIT 1',
+              [artifactId, session.userId]
+            );
+            if (tokenResult.rows.length > 0) {
+              downloadUrl = `/api/delivery/${tokenResult.rows[0].token}`;
+            }
+          }
+        }
+      }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        ready: ready,
+        status: art.processing_status || (ready ? 'complete' : 'pending'),
+        fileType: art.file_type,
+        downloadUrl: downloadUrl
+      }));
+    } catch (err) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: err.message }));
     }
     return;
   }

@@ -4361,7 +4361,24 @@
         
         function showPurchaseSuccessModal(result, artTitle) {
             var deliveryHtml = '';
-            if (result.downloadUrl) {
+            var artifactId = result.artifactId || '';
+
+            if (result.genesisStatus === 'generating') {
+                deliveryHtml =
+                    '<div id="genesis-status-area" style="margin:15px 0;padding:16px;background:rgba(0,255,255,0.05);border:1px solid #00ffff33;border-radius:10px;">' +
+                      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">' +
+                        '<div class="genesis-spinner" style="width:20px;height:20px;border:2px solid #333;border-top:2px solid #00ffff;border-radius:50%;animation:spin 1s linear infinite;"></div>' +
+                        '<span style="color:#00ffff;font-weight:bold;font-size:14px;">Materializing from DNA...</span>' +
+                      '</div>' +
+                      '<p style="color:#aaa;font-size:12px;margin:0;">' + (result.genesisMessage || 'Your artifact is being generated. This usually takes 10-30 seconds.') + '</p>' +
+                      '<div id="genesis-download-area" style="display:none;margin-top:12px;"></div>' +
+                    '</div>' +
+                    '<style>@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}</style>';
+
+                if (artifactId) {
+                    setTimeout(function() { pollGenesisStatus(artifactId, artTitle); }, 3000);
+                }
+            } else if (result.downloadUrl) {
                 var fileExt = '.mp3';
                 if (result.contentFormat === 'md') fileExt = '.md';
                 else if (result.contentFormat === 'json') fileExt = '.json';
@@ -4385,12 +4402,6 @@
                     '<p style="margin-top:12px;font-size:12px;color:#888;">' +
                       'Download link expires in ' + (result.expiresIn || '7 days') + ' (up to 10 downloads)' +
                     '</p>';
-            } else if (result.isTextOnly) {
-                deliveryHtml =
-                    '<p style="margin:15px 0;color:#ccc;">Text-based artifact added to your collection.</p>' +
-                    '<div style="background:rgba(0,255,255,0.05);border:1px solid #333;border-radius:8px;padding:12px;margin:10px;font-size:12px;color:#aaa;">' +
-                      'Format: <strong style="color:#fff;">' + (result.contentFormat || 'text') + '</strong>' +
-                    '</div>';
             } else {
                 deliveryHtml = '<p style="margin:15px 0;color:#ccc;">Item added to your collection.</p>';
             }
@@ -4400,6 +4411,7 @@
             var balDisplay = result.newBalance !== undefined ? parseFloat(result.newBalance).toFixed(4) : '—';
 
             var modal = document.createElement('div');
+            modal.id = 'purchase-success-modal';
             modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px;';
             modal.innerHTML =
               '<div style="background:#111;border:1px solid #333;border-radius:12px;max-width:500px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.8);">' +
@@ -4408,7 +4420,7 @@
                   '<span class="purchase-success-modal-close" style="cursor:pointer;font-size:24px;color:#888;">&times;</span>' +
                 '</div>' +
                 '<div style="padding:20px;text-align:center;">' +
-                  '<div style="font-size:48px;margin-bottom:10px;">🎉</div>' +
+                  '<div style="font-size:48px;margin-bottom:10px;">' + (result.genesisStatus === 'generating' ? '🧬' : '🎉') + '</div>' +
                   '<p style="color:#fff;font-size:16px;margin-bottom:5px;">"' + escapeHtml(artTitle) + '"</p>' +
                   '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:15px 0;padding:12px;background:rgba(255,215,0,0.03);border:1px solid #2a2a1e;border-radius:8px;font-size:11px;">' +
                     '<div><div style="color:#888;">Paid</div><div style="color:#FFD700;">' + paidDisplay + ' S</div></div>' +
@@ -4426,6 +4438,43 @@
             modal.addEventListener('click', function(e) {
                 if (e.target === modal) document.body.removeChild(modal);
             });
+        }
+
+        function pollGenesisStatus(artifactId, artTitle) {
+            var attempts = 0;
+            var maxAttempts = 20;
+            var interval = setInterval(async function() {
+                attempts++;
+                try {
+                    var resp = await fetch('/api/artifacts/' + artifactId + '/genesis-status');
+                    var data = await resp.json();
+                    if (data.ready && data.downloadUrl) {
+                        clearInterval(interval);
+                        var statusArea = document.getElementById('genesis-status-area');
+                        if (statusArea) {
+                            statusArea.innerHTML =
+                                '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">' +
+                                  '<span style="font-size:24px;">✨</span>' +
+                                  '<span style="color:#39FF14;font-weight:bold;font-size:14px;">Product Materialized!</span>' +
+                                '</div>' +
+                                '<p style="color:#ccc;font-size:12px;margin:0 0 12px 0;">Your artifact DNA has been transformed into a deliverable product.</p>' +
+                                '<a href="' + data.downloadUrl + '" download="' + escapeHtml(artTitle).replace(/[^a-zA-Z0-9\s\-_]/g, '').trim() + '" ' +
+                                   'style="display:inline-block;background:linear-gradient(135deg,#28a745,#20c997);color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:14px;">' +
+                                  '📥 Download Now</a>' +
+                                '<p style="margin-top:8px;font-size:11px;color:#666;">Download link expires in 7 days</p>';
+                        }
+                    } else if (attempts >= maxAttempts) {
+                        clearInterval(interval);
+                        var statusArea = document.getElementById('genesis-status-area');
+                        if (statusArea) {
+                            statusArea.innerHTML =
+                                '<p style="color:#ff6b35;font-size:13px;">Generation is taking longer than expected. Check your "My Items" tab shortly for the download.</p>';
+                        }
+                    }
+                } catch (e) {
+                    if (attempts >= maxAttempts) clearInterval(interval);
+                }
+            }, 3000);
         }
 
         // Helper to sync currentUser to window AND persist to sessionStorage
