@@ -211,6 +211,29 @@ header p{color:#888;font-size:14px}
 </div>
 
 <div class="panel" style="max-width:1200px;margin:0 auto 20px;position:relative;z-index:1">
+  <div class="panel-head" style="cursor:pointer;user-select:none" onclick="document.getElementById('customRunBody').style.display=document.getElementById('customRunBody').style.display==='none'?'block':'none';this.querySelector('.cr-arrow').textContent=document.getElementById('customRunBody').style.display==='none'?'▶':'▼'">🎯 KID SOL Custom Run <span class="cr-arrow" style="float:right;color:#888;font-size:12px">▶</span></div>
+  <div id="customRunBody" style="display:none;padding:16px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:14px">
+      <div>
+        <label style="display:block;font-size:11px;color:var(--cyan);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:600">Agent</label>
+        <select id="crAgentSelect" class="ap-select"></select>
+      </div>
+      <div>
+        <label style="display:block;font-size:11px;color:var(--cyan);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:600">Purpose</label>
+        <input id="crPurpose" type="text" placeholder="Why this custom run?" style="width:100%;background:#0d0d0d;border:1px solid #333;color:#ccc;padding:8px;border-radius:6px;font-size:12px;font-family:'Space Grotesk',sans-serif;outline:none">
+      </div>
+    </div>
+    <label style="display:block;font-size:11px;color:var(--cyan);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:600">Categories (select 1–5)</label>
+    <div id="crCategoryGrid" class="ap-cat-grid" style="margin-bottom:14px"></div>
+    <div style="display:flex;align-items:center;gap:14px">
+      <button id="crRunBtn" onclick="runCustomTask()" style="font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;padding:10px 30px;border:2px solid var(--cyan);background:rgba(0,191,255,.08);color:var(--cyan);border-radius:30px;cursor:pointer;transition:all .3s;letter-spacing:1px">🎯 Run Custom</button>
+      <span id="crStatus" style="font-size:12px;color:#888"></span>
+    </div>
+    <div id="crResults" style="margin-top:14px;display:none;background:#0d0d0d;border:1px solid var(--border);border-radius:8px;padding:12px;font-size:12px;color:#bbb;max-height:300px;overflow-y:auto"></div>
+  </div>
+</div>
+
+<div class="panel" style="max-width:1200px;margin:0 auto 20px;position:relative;z-index:1">
   <div class="panel-head">🤖 Agent Registry</div>
   <div class="agents-grid" id="agentsGrid"></div>
 </div>

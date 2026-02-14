@@ -170,7 +170,7 @@ const kidRoutes = require('./routes/kid');
 const agentRoutes = require('./routes/agentRoutes');
 
 // Daily Agent Task Engine
-const { runDailyAgentTasks, runSingleAgentTasks, getTaskStatus, runEducationBlitz, ensureAgentMembers, submitKidSolarPrompt } = require('./server/agent-daily-tasks');
+const { runDailyAgentTasks, runSingleAgentTasks, getTaskStatus, runEducationBlitz, ensureAgentMembers, submitKidSolarPrompt, runCustomAgentTask, ALL_CATEGORIES } = require('./server/agent-daily-tasks');
 
 const { scheduleDailyGreeting } = require('./server/generate-greeting');
 
@@ -11875,6 +11875,34 @@ Only include products where you have found a real URL. Do not make up URLs.`
       res.end(JSON.stringify(result));
     } catch (error) {
       console.error('❌ Single agent task error:', error.message);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: error.message }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/agents/daily-tasks/custom-run' && req.method === 'POST') {
+    try {
+      if (!pool) {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Database unavailable' }));
+        return;
+      }
+      const body = await parseBody(req);
+      const agentCode = body.agentCode || body.code;
+      const categories = body.categories;
+      const purpose = body.purpose;
+      if (!agentCode || !categories || !Array.isArray(categories) || !purpose) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'agentCode, categories (array), and purpose (string) are all required' }));
+        return;
+      }
+      console.log(`🎯 [CUSTOM-RUN] Agent ${agentCode} | Categories: ${categories.join(', ')} | Purpose: ${purpose}`);
+      const result = await runCustomAgentTask(pool, NETWORK_AGENTS, agentCode, categories, purpose);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(result));
+    } catch (error) {
+      console.error('❌ Custom agent task error:', error.message);
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ success: false, error: error.message }));
     }

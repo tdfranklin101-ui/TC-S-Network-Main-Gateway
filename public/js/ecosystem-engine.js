@@ -1272,10 +1272,94 @@ async function initEcosystem() {
     MAX_CONCURRENT_CREATORS = config.maxConcurrentCreators;
     initAgentCards();
     loadCloudStats();
+    initCustomRunPanel();
   } catch(e) {
     console.error('Failed to load ecosystem config:', e);
     document.getElementById('activityFeed').innerHTML = '<div style="color:#ff4444;padding:12px">Failed to load ecosystem configuration. Please refresh the page.</div>';
   }
+}
+
+function initCustomRunPanel() {
+  var sel = document.getElementById('crAgentSelect');
+  if (!sel) return;
+  sel.innerHTML = '';
+  AGENTS.forEach(function(a) {
+    var opt = document.createElement('option');
+    opt.value = a.code;
+    opt.textContent = a.icon + ' ' + a.name + ' (' + a.code + ')';
+    sel.appendChild(opt);
+  });
+  var grid = document.getElementById('crCategoryGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  CATEGORIES.forEach(function(cat) {
+    var lbl = document.createElement('label');
+    lbl.innerHTML = '<input type="checkbox" value="' + cat + '"> ' + cat;
+    grid.appendChild(lbl);
+  });
+}
+
+async function runCustomTask() {
+  var btn = document.getElementById('crRunBtn');
+  var statusEl = document.getElementById('crStatus');
+  var resultsEl = document.getElementById('crResults');
+  var agentCode = document.getElementById('crAgentSelect').value;
+  var purpose = document.getElementById('crPurpose').value.trim();
+  var checked = Array.from(document.querySelectorAll('#crCategoryGrid input[type=checkbox]:checked')).map(function(cb) { return cb.value; });
+
+  if (!agentCode) { statusEl.textContent = '⚠️ Select an agent'; statusEl.style.color = '#ff4444'; return; }
+  if (checked.length < 1 || checked.length > 5) { statusEl.textContent = '⚠️ Select 1–5 categories'; statusEl.style.color = '#ff4444'; return; }
+  if (!purpose) { statusEl.textContent = '⚠️ Enter a purpose'; statusEl.style.color = '#ff4444'; return; }
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Running...';
+  statusEl.textContent = 'Executing custom run...';
+  statusEl.style.color = 'var(--cyan)';
+  resultsEl.style.display = 'none';
+
+  try {
+    var res = await fetch('/api/agents/daily-tasks/custom-run', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ agentCode: agentCode, categories: checked, purpose: purpose })
+    });
+    var data = await res.json();
+    resultsEl.style.display = 'block';
+    if (data.success) {
+      statusEl.textContent = '✅ Custom run complete';
+      statusEl.style.color = 'var(--green)';
+      var html = '<div style="margin-bottom:8px;font-family:Orbitron,sans-serif;color:var(--green);font-size:14px">🎯 Custom Run Results</div>';
+      html += '<div style="color:var(--cyan)">Run Type: <b>' + (data.runType || 'custom') + '</b></div>';
+      html += '<div style="color:var(--gold)">Purpose: <b>' + (data.purpose || purpose) + '</b></div>';
+      html += '<div>Categories: <b>' + (data.customCategories || checked).join(', ') + '</b></div>';
+      html += '<div>Items Created: <b style="color:var(--green)">' + (data.totalCreated || 0) + '</b></div>';
+      html += '<div>Purchases: <b style="color:var(--purple)">' + (data.totalPurchased || 0) + '</b></div>';
+      html += '<div>Health: <b style="color:var(--green)">' + (data.healthPercent || 0) + '%</b></div>';
+      if (data.agentResults && data.agentResults.length > 0) {
+        var ar = data.agentResults[0];
+        if (ar.created && ar.created.length > 0) {
+          html += '<div style="margin-top:8px;color:var(--cyan);font-weight:600">Created Items:</div>';
+          ar.created.forEach(function(item) {
+            html += '<div style="padding:4px 0;border-bottom:1px solid #1a1a1a">📦 <b>' + (item.title || item.name || 'Untitled') + '</b> <span style="color:var(--purple);font-size:10px">' + (item.category || '') + '</span> <span style="color:var(--gold);font-size:10px">' + (item.price || '') + ' ☀️</span></div>';
+          });
+        }
+      }
+      html += '<div style="margin-top:8px;font-size:10px;color:#555">Timestamp: ' + (data.timestamp || new Date().toISOString()) + '</div>';
+      resultsEl.innerHTML = html;
+    } else {
+      statusEl.textContent = '❌ Run failed';
+      statusEl.style.color = '#ff4444';
+      resultsEl.innerHTML = '<div style="color:#ff4444">Error: ' + (data.error || 'Unknown error') + '</div>';
+    }
+  } catch (e) {
+    statusEl.textContent = '❌ Network error';
+    statusEl.style.color = '#ff4444';
+    resultsEl.style.display = 'block';
+    resultsEl.innerHTML = '<div style="color:#ff4444">Error: ' + e.message + '</div>';
+  }
+
+  btn.disabled = false;
+  btn.textContent = '🎯 Run Custom';
 }
 
 initEcosystem();

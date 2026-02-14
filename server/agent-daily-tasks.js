@@ -843,4 +843,44 @@ async function runEducationBlitz(pool, agents) {
   return { success: totalErrors === 0, totalCreated, totalErrors, results, elapsed: parseFloat(elapsed), timestamp: new Date().toISOString() };
 }
 
-module.exports = { runDailyAgentTasks, runSingleAgentTasks, getTaskStatus, runEducationBlitz, ensureAgentMembers, submitKidSolarPrompt };
+async function runCustomAgentTask(pool, agents, agentCode, customCategories, purpose) {
+  const agent = agents.find(a => a.code === agentCode);
+  if (!agent) {
+    return { success: false, error: `Agent with code ${agentCode} not found`, timestamp: new Date().toISOString() };
+  }
+
+  const invalidCategories = customCategories.filter(c => !ALL_CATEGORIES.includes(c));
+  if (invalidCategories.length > 0) {
+    return { success: false, error: `Invalid categories: ${invalidCategories.join(', ')}`, validCategories: ALL_CATEGORIES, timestamp: new Date().toISOString() };
+  }
+
+  if (customCategories.length < 1 || customCategories.length > 5) {
+    return { success: false, error: 'Must select between 1 and 5 categories', timestamp: new Date().toISOString() };
+  }
+
+  console.log(`\n🎯 [KID SOL] Custom run for ${agent.name}: ${purpose}`);
+  console.log(`🎯 [KID SOL] Custom categories: ${customCategories.join(', ')}`);
+
+  await ensureAgentMembers(pool, [agent]);
+
+  const result = await runAgentTasks(pool, agent, customCategories);
+
+  const status = {
+    success: result.errors.length === 0,
+    runType: 'custom',
+    purpose,
+    customCategories,
+    provisionaire: 'KID SOL',
+    agentResults: [result],
+    totalCreated: result.created.length,
+    totalPurchased: result.purchased.length,
+    deployed: result.errors.some(e => e.phase === 'lookup') ? 0 : 1,
+    healthPercent: result.errors.length === 0 ? 100 : 0,
+    timestamp: new Date().toISOString()
+  };
+
+  lastRunStatus = status;
+  return status;
+}
+
+module.exports = { runDailyAgentTasks, runSingleAgentTasks, getTaskStatus, runEducationBlitz, ensureAgentMembers, submitKidSolarPrompt, runCustomAgentTask, ALL_CATEGORIES };
