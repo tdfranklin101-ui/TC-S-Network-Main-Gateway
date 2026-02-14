@@ -7122,7 +7122,7 @@ const server = http.createServer(async (req, res) => {
         try {
           const marketItemsResult = await pool.query(
             `SELECT id, title, description, category, price_solar, kwh_estimate, source_type, metadata, created_by_user_id
-             FROM market_items WHERE status = 'ACTIVE' ORDER BY id DESC LIMIT 200`
+             FROM market_items WHERE status = 'ACTIVE' ORDER BY id DESC`
           );
           const marketItems = marketItemsResult.rows.map(row => {
             const meta = typeof row.metadata === 'string' ? JSON.parse(row.metadata) : (row.metadata || {});
@@ -10679,7 +10679,7 @@ Only include products where you have found a real URL. Do not make up URLs.`
     return;
   }
 
-  const agentProfileMatch = pathname.match(/^\/api\/agents\/(\d{2})$/);
+  const agentProfileMatch = pathname.match(/^\/api\/agents\/([a-z0-9]{2,3})$/);
   if (agentProfileMatch && req.method === 'GET') {
     try {
       const code = agentProfileMatch[1];

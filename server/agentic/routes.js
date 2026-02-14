@@ -268,71 +268,53 @@ async function validateWithRBAC(req, pool, requiredAction) {
   return scopedAuth;
 }
 
-async function handleAgenticRoutes(req, res, pathname, body, pool) {
-  if (!executorInstance) {
-    try {
-      await initializeAgenticFramework(pool);
-    } catch (error) {
-      console.error('❌ Agentic Framework initialization failed:', error.message);
-      res.writeHead(503, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Agentic framework initializing, please retry' }));
-      return true;
-    }
-  }
-  
-  const replayCheck = checkReplayProtection(req.headers['x-req-id']);
-  if (!replayCheck.valid) {
-    res.writeHead(409, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: replayCheck.error, reqId: replayCheck.reqId }));
-    return true;
-  }
-
-  // ============================================================================
-  // USER INFO + RBAC GATING
-  // ============================================================================
-
-  if (pathname === '/api/me' && req.method === 'GET') {
+async function handleApiMe(req, res, pool) {
+  try {
     const sessionToken = req.headers['x-session-token'];
     const authHeader = req.headers['authorization'];
     const adminKey = req.headers['x-admin-key'];
 
     if (adminKey) {
-      const scopedAuth = await validateScopedAdminAccess(req, pool, 'admin.full');
-      if (scopedAuth.valid) {
-        await logPrivilegedCall(req, {
-          actionType: 'API_ME.ADMIN', route: pathname, userId: scopedAuth.userId,
-          role: scopedAuth.role
-        });
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({
-          memberId: scopedAuth.userId,
-          username: 'System Admin',
-          role: 'tcs_admin',
-          networkId: 'default',
-          permissions: ['*'],
-          authMethod: scopedAuth.authMethod
-        }));
-        return true;
+      try {
+        const scopedAuth = await validateScopedAdminAccess(req, pool, 'admin.full');
+        if (scopedAuth.valid) {
+          await logPrivilegedCall(req, {
+            actionType: 'API_ME.ADMIN', route: '/api/me', userId: scopedAuth.userId,
+            role: scopedAuth.role
+          });
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({
+            memberId: scopedAuth.userId,
+            username: 'System Admin',
+            role: 'tcs_admin',
+            networkId: 'default',
+            permissions: ['*'],
+            authMethod: scopedAuth.authMethod
+          }));
+          return true;
+        }
+      } catch (err) {
+        console.error('Admin auth check failed in /api/me:', err.message);
       }
     }
 
     const token = sessionToken || (authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null);
-    
+
     if (token) {
       try {
         const result = await pool.query(
           `SELECT s.sess, m.id as member_id, m.username, m.role, m.email
-           FROM session s 
+           FROM session s
            LEFT JOIN members m ON (s.sess->>'userId')::int = m.id
            WHERE s.sid = $1 AND s.expire > NOW()`,
           [token]
         );
-        
+
         if (result.rows.length > 0 && result.rows[0].member_id) {
           const member = result.rows[0];
           const role = member.role || 'member';
           const roleInfo = ROLES[role] || ROLES.member;
-          
+
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({
             memberId: member.member_id,
@@ -357,6 +339,48 @@ async function handleAgenticRoutes(req, res, pathname, body, pool) {
       networkId: 'default',
       permissions: ROLES.member.permissions
     }));
+    return true;
+  } catch (err) {
+    console.error('Critical error in /api/me:', err);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      memberId: null,
+      username: 'Guest',
+      role: 'member',
+      networkId: 'default',
+      permissions: ['marketplace.browse', 'marketplace.buy']
+    }));
+    return true;
+  }
+}
+
+async function handleAgenticRoutes(req, res, pathname, body, pool) {
+  if (pathname === '/api/me' && req.method === 'GET') {
+    if (!executorInstance) {
+      try {
+        await initializeAgenticFramework(pool);
+      } catch (error) {
+        console.error('⚠️ Agentic Framework init deferred for /api/me:', error.message);
+      }
+    }
+    return handleApiMe(req, res, pool);
+  }
+
+  if (!executorInstance) {
+    try {
+      await initializeAgenticFramework(pool);
+    } catch (error) {
+      console.error('❌ Agentic Framework initialization failed:', error.message);
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Agentic framework initializing, please retry' }));
+      return true;
+    }
+  }
+  
+  const replayCheck = checkReplayProtection(req.headers['x-req-id']);
+  if (!replayCheck.valid) {
+    res.writeHead(409, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: replayCheck.error, reqId: replayCheck.reqId }));
     return true;
   }
 
