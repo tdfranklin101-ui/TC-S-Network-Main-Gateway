@@ -134,11 +134,19 @@ ${objectives.specialMission && objectives.specialMissionAgent === agent.code ? `
 
     const systemPrompt = `You are ${agent.name}, an AI trading agent on the TC-S Solar Network marketplace. Your specialty is ${agent.specialty || 'General'}. KID SOL is your orchestrator — she sets daily objectives and you decide HOW to profit while fulfilling them.
 
-Your job: fulfill KID SOL's objectives in the most profitable way. Buy undervalued items to resell at 15% markup. Create artifacts in high-demand categories. Post to the bulletin board to find deals.
+Your job: fulfill KID SOL's objectives in the most profitable way. Buy undervalued items to resell at 15% markup. Create artifacts in high-demand categories. Use the bulletin board as your pre-trade intelligence hub — search for deals, ask specific members about items, negotiate prices.
+
+NEGOTIATION POWERS (autonomous):
+- You may change your asking price to attract buyers
+- You may offer volume discounts (max 20% off, no deeper)
+- You may suggest alternative lower-priced items from your inventory or the market
+- You must protect your reserves — never sell below cost unless strategic
+- Reference specific artifact IDs when posting about items
 
 Balance: ${balance} Solar. Reserve floor: 1.0 Solar. Inventory: ${marketSnapshot.agentInventory || 0} items.
 
-Respond in JSON with: createCategory, createPriceStrategy (undercut/premium/market), createReasoning, buyArtifactId (integer or null), buyReasoning, bulletinPost (object with type/title/body/targetCategory/priceSolar, or null).`;
+Respond in JSON with: createCategory, createPriceStrategy (undercut/premium/market), createReasoning, buyArtifactId (integer or null), buyReasoning, bulletinPost (object or null).
+bulletinPost format: { "type": "wanted|for_sale|offer|intel|directive", "title": "...", "body": "...", "targetCategory": "...", "priceSolar": number, "referenceArtifactId": integer or null, "targetAgentCode": "agent_code or null", "negotiation": { "type": "price_change|volume_discount|alternative_offer|inquiry", "originalPrice": number or null, "proposedPrice": number or null, "discountPct": number (max 20) or null, "volumeQty": integer or null, "altArtifactIds": [int] or null } or null }`;
 
     const userPrompt = `${directiveBlock}
 
@@ -280,9 +288,26 @@ async function postToBulletin(pool, memberId, agentCode, agentName, post) {
     if (post.targetCategory) tags.push(post.targetCategory);
     if (post.type) tags.push(post.type);
 
+    let negotiation = post.negotiation || null;
+    if (negotiation && negotiation.discountPct && negotiation.discountPct > 20) {
+      negotiation.discountPct = 20;
+      if (negotiation.originalPrice) {
+        negotiation.proposedPrice = Math.round(negotiation.originalPrice * 0.8 * 10000) / 10000;
+      }
+    }
+
+    const negotiationType = negotiation ? negotiation.type : null;
+    const originalPrice = negotiation ? negotiation.originalPrice : null;
+    const finalPrice = negotiation ? negotiation.proposedPrice : null;
+    const volumeQty = negotiation ? negotiation.volumeQty : null;
+
+    const metadata = {};
+    if (negotiation) metadata.negotiation = negotiation;
+    if (post.targetAgentCode) metadata.targetAgentCode = post.targetAgentCode;
+
     const result = await pool.query(
-      `INSERT INTO agent_bulletin_board (author_member_id, author_agent_code, author_name, post_type, title, body, tags, price_solar, target_category, status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'open')
+      `INSERT INTO agent_bulletin_board (author_member_id, author_agent_code, author_name, post_type, title, body, tags, price_solar, target_category, related_artifact_id, target_agent_code, negotiation_type, original_price, final_price, volume_qty, metadata, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, 'open')
        RETURNING *`,
       [
         memberId,
@@ -293,10 +318,19 @@ async function postToBulletin(pool, memberId, agentCode, agentName, post) {
         post.body || '',
         tags,
         post.priceSolar != null ? String(post.priceSolar) : null,
-        post.targetCategory || null
+        post.targetCategory || null,
+        post.referenceArtifactId || null,
+        post.targetAgentCode || null,
+        negotiationType,
+        originalPrice,
+        finalPrice,
+        volumeQty,
+        Object.keys(metadata).length > 0 ? JSON.stringify(metadata) : null
       ]
     );
-    console.log(`📋 [Agent ${agentCode}] Posted to bulletin: "${post.title}" (${post.type})`);
+    const refNote = post.referenceArtifactId ? ` ref:item#${post.referenceArtifactId}` : '';
+    const negNote = negotiationType ? ` [${negotiationType}]` : '';
+    console.log(`📋 [Agent ${agentCode}] Posted to bulletin: "${post.title}" (${post.type})${refNote}${negNote}`);
     return result.rows[0];
   } catch (err) {
     console.warn(`⚠️ [Agent ${agentCode}] Bulletin post failed:`, err.message);
@@ -384,6 +418,13 @@ async function makeRound2Decision(pool, agent, memberId, snapshot, kidSolObjecti
 
     const systemPrompt = `You are ${agent.name}, AI trading agent on TC-S Solar Network. This is ROUND 2 — the afternoon strategic session. The morning run already provisioned inventory per KID SOL's objectives. Now you assess results and make 2 strategic buys + 2 strategic sells to maximize profit.
 
+NEGOTIATION POWERS (autonomous):
+- You may adjust prices on your listings to attract buyers
+- You may offer volume discounts (max 20% off, never deeper)
+- You may suggest alternative lower-priced items to interested buyers
+- Reference artifact IDs in bulletin posts to create an audit trail
+- You must protect your reserves — never sell below cost unless strategic
+
 Balance: ${balance} Solar. Reserve floor: 1.0 Solar.
 Today's market activity: ${snapshot.todayTradeCount} trades, ${snapshot.todayVolume.toFixed(4)} S volume.
 
@@ -391,7 +432,7 @@ Respond in JSON:
 {
   "buys": [{"artifactId": int, "reasoning": "why"}],
   "sells": [{"artifactId": int, "reasoning": "why this item should be listed for resale now"}],
-  "bulletinPost": {"type":"intel/wanted/for_sale/offer", "title":"...", "body":"...", "targetCategory":"...", "priceSolar":number} or null,
+  "bulletinPost": {"type":"wanted|for_sale|offer|intel", "title":"...", "body":"...", "targetCategory":"...", "priceSolar":number, "referenceArtifactId": int or null, "targetAgentCode": "code or null", "negotiation": {"type":"price_change|volume_discount|alternative_offer|inquiry", "originalPrice":number, "proposedPrice":number, "discountPct":number (max 20), "volumeQty":int, "altArtifactIds":[int]} or null} or null,
   "marketAssessment": "one sentence on how morning objectives played out"
 }
 buys: pick up to 2 from BUY CANDIDATES. sells: pick up to 2 from YOUR INVENTORY (unlisted items you own) to list for resale.`;
@@ -454,4 +495,142 @@ Make 2 strategic buys and 2 strategic sells. Assess the morning objectives.`;
   }
 }
 
-module.exports = { generateKidSolObjectives, makeAgentDecision, gatherMarketSnapshot, postToBulletin, gatherRound2Snapshot, makeRound2Decision };
+async function generateBulletinReply(pool, agent, memberId, post, conversationHistory) {
+  try {
+    let balanceRow;
+    try {
+      balanceRow = await pool.query('SELECT total_solar FROM members WHERE id = $1', [memberId]);
+    } catch (e) { balanceRow = { rows: [] }; }
+    const balance = balanceRow.rows.length > 0 ? parseFloat(balanceRow.rows[0].total_solar) || 0 : 0;
+
+    let inventoryText = '';
+    try {
+      const invResult = await pool.query(
+        `SELECT a.id, a.title, a.category, a.solar_amount_s, a.resale_price
+         FROM artifact_copies ac JOIN artifacts a ON a.id = ac.artifact_id
+         WHERE ac.owner_id = $1 AND ac.is_active = true AND a.active = true
+         ORDER BY a.solar_amount_s ASC LIMIT 10`,
+        [memberId]
+      );
+      inventoryText = invResult.rows.map(i =>
+        `id:${i.id} "${i.title}" [${i.category}] ${i.solar_amount_s}S`
+      ).join('\n') || 'empty';
+    } catch (e) { inventoryText = 'unavailable'; }
+
+    const convoText = (conversationHistory || []).map((r, i) => {
+      let line = `Reply ${i + 1} by ${r.agentName} (${r.replyType}): ${r.message}`;
+      if (r.negotiation) {
+        const n = r.negotiation;
+        if (n.proposedPrice) line += ` [Proposed: ${n.proposedPrice}S]`;
+        if (n.discountPct) line += ` [Discount: ${n.discountPct}%]`;
+        if (n.altArtifactIds) line += ` [Alt items: ${n.altArtifactIds.join(',')}]`;
+        if (n.referenceArtifactId) line += ` [Re: item #${n.referenceArtifactId}]`;
+      }
+      return line;
+    }).join('\n') || 'No replies yet.';
+
+    const replyNumber = (conversationHistory || []).length + 1;
+    const isFinalReply = replyNumber >= 4;
+
+    const refArtifactId = post.related_artifact_id || null;
+    const refInfo = refArtifactId ? `\nReferenced Item: artifact #${refArtifactId}` : '';
+
+    const systemPrompt = `You are ${agent.name}, an AI trading agent on the TC-S Solar Network. Your specialty is ${agent.specialty || 'General'}. You are replying to a bulletin board negotiation thread.
+
+Your balance: ${balance.toFixed(4)} Solar. Be polite, professional, and profit-driven.
+
+NEGOTIATION POWERS:
+- You may change your price to close a deal
+- You may offer volume discounts (MAXIMUM 20% off — never exceed this)
+- You may suggest alternative lower-priced items from your inventory (reference by artifact ID)
+- You must protect your reserves — never sell below cost
+- Always reference artifact IDs for audit trail
+
+Reply types: offer, counter, accept, decline, info
+${isFinalReply ? 'IMPORTANT: This is the FINAL reply (reply 4 of 4). You MUST choose either "accept" or "decline" as your replyType.' : ''}
+
+Respond in JSON:
+{
+  "message": "your reply text (mention item IDs and prices explicitly)",
+  "replyType": "offer|counter|accept|decline|info",
+  "reasoning": "why you chose this",
+  "negotiation": {
+    "referenceArtifactId": integer or null,
+    "proposedPrice": number or null,
+    "originalPrice": number or null,
+    "discountPct": number (0-20 max) or null,
+    "volumeQty": integer or null,
+    "altArtifactIds": [integer] or null,
+    "type": "price_change|volume_discount|alternative_offer|inquiry|acceptance" or null
+  }
+}`;
+
+    const userPrompt = `ORIGINAL POST by ${post.author_name}:
+Type: ${post.post_type}
+Title: ${post.title}
+Body: ${post.body || '(no body)'}
+Category: ${post.target_category || 'General'}
+Price: ${post.price_solar ? parseFloat(post.price_solar).toFixed(4) + ' Solar' : 'not specified'}${refInfo}
+
+YOUR INVENTORY (items you can offer as alternatives):
+${inventoryText}
+
+CONVERSATION SO FAR:
+${convoText}
+
+Craft your reply. ${isFinalReply ? 'You must accept or decline.' : 'You may offer, counter-offer with a new price, suggest cheaper alternatives from your inventory, offer volume discounts (max 20%), or accept/decline.'}`;
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      temperature: 0.7,
+      max_tokens: 400,
+      response_format: { type: 'json_object' },
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ]
+    });
+
+    const content = response.choices[0]?.message?.content;
+    if (!content) throw new Error('Empty response');
+    const reply = JSON.parse(content);
+
+    const validTypes = ['offer', 'counter', 'accept', 'decline', 'info'];
+    let replyType = validTypes.includes(reply.replyType) ? reply.replyType : 'info';
+    if (isFinalReply && replyType !== 'accept' && replyType !== 'decline') {
+      replyType = 'decline';
+    }
+
+    let negotiation = reply.negotiation || null;
+    if (negotiation && negotiation.discountPct && negotiation.discountPct > 20) {
+      negotiation.discountPct = 20;
+      negotiation.proposedPrice = negotiation.originalPrice
+        ? Math.round(negotiation.originalPrice * 0.8 * 10000) / 10000
+        : negotiation.proposedPrice;
+    }
+
+    return {
+      message: reply.message || `Agent ${agent.name} acknowledges this post.`,
+      replyType,
+      reasoning: reply.reasoning || '',
+      negotiation
+    };
+  } catch (err) {
+    console.warn(`⚠️ [Agent ${agent.code}] Bulletin reply inference failed, using heuristic:`, err.message);
+    const replyNumber = (conversationHistory || []).length + 1;
+    const isFinalReply = replyNumber >= 4;
+
+    if (post.post_type === 'wanted' || post.post_type === 'for_sale') {
+      if (isFinalReply) {
+        return { message: `Agent ${agent.name} respectfully declines this opportunity at this time.`, replyType: 'decline', reasoning: 'Heuristic fallback — final reply', negotiation: null };
+      }
+      return { message: `Agent ${agent.name} is interested in "${post.title}" and would like to discuss terms.`, replyType: 'offer', reasoning: 'Heuristic fallback — trade interest', negotiation: null };
+    }
+    if (isFinalReply) {
+      return { message: `Agent ${agent.name} thanks you for the information and declines further engagement.`, replyType: 'decline', reasoning: 'Heuristic fallback — final reply info post', negotiation: null };
+    }
+    return { message: `Agent ${agent.name} acknowledges this bulletin and may follow up.`, replyType: 'info', reasoning: 'Heuristic fallback — general acknowledgment', negotiation: null };
+  }
+}
+
+module.exports = { generateKidSolObjectives, makeAgentDecision, gatherMarketSnapshot, postToBulletin, gatherRound2Snapshot, makeRound2Decision, generateBulletinReply };

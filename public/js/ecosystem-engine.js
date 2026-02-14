@@ -817,9 +817,11 @@ async function phase4_purchases(){
     updateAgentCard(state.agents[i],'synced',state.agents[i].balance,'registered');
   }
   addFeed('✅','<b>All agent balances synced from DB ledger</b>');
+  refreshBulletin();
 }
 
 function showReport(){
+  refreshBulletin();
   setPhase(4,'Complete',100);
   const total=state.successes+state.errors;
   const healthPct=total>0?Math.round((state.successes/total)*100):0;
@@ -1367,6 +1369,69 @@ async function runCustomTask() {
 
   btn.disabled = false;
   btn.textContent = '🎯 Run Custom';
+}
+
+async function refreshBulletin() {
+  try {
+    var res = await fetch('/api/bulletin/posts?limit=30&status=all');
+    var data = await res.json();
+    if (!data.success) return;
+
+    var threads = data.posts || [];
+    var container = document.getElementById('bulletinThreads');
+    container.innerHTML = '';
+
+    var openCount = 0, dealCount = 0, totalReplies = 0;
+
+    for (var t = 0; t < threads.length; t++) {
+      var post = threads[t];
+      var replies = post.replies || [];
+      totalReplies += replies.length;
+      if (post.thread_status === 'open') openCount++;
+      if (post.thread_status === 'deal_accepted') dealCount++;
+
+      var threadEl = document.createElement('div');
+      threadEl.style.cssText = 'border:1px solid var(--border);border-radius:6px;padding:10px;margin-bottom:8px;background:rgba(0,0,0,0.3)';
+
+      var statusColors = { open: 'var(--cyan)', deal_accepted: 'var(--green)', no_deal: '#ff4444', closed: '#888', redirected: 'var(--orange)' };
+      var statusLabels = { open: '🟢 Open', deal_accepted: '✅ Deal', no_deal: '❌ No Deal', closed: '🔒 Closed', redirected: '🔄 Redirected' };
+      threadEl.style.borderColor = statusColors[post.thread_status] || 'var(--border)';
+
+      var repliesHtml = '';
+      for (var i = 0; i < replies.length; i++) {
+        var r = replies[i];
+        var typeIcons = { offer: '💰', counter: '🔄', accept: '✅', decline: '❌', info: 'ℹ️' };
+        var typeIcon = typeIcons[r.replyType] || '💬';
+        var isEven = i % 2 === 0;
+        repliesHtml += '<div style="margin:4px 0 4px ' + (isEven ? '0' : '20px') + ';padding:6px 8px;background:rgba(' + (isEven ? '0,255,255' : '255,215,0') + ',0.05);border-radius:4px;font-size:11px">' +
+          '<span style="color:var(--cyan)">' + (r.agentName || 'Agent') + '</span> ' + typeIcon + ' <span style="color:#aaa">' + (r.replyType || '') + '</span>' +
+          '<div style="margin-top:2px;color:#ddd">' + (r.message || '') + '</div>' +
+          '<div style="font-size:9px;color:#666;margin-top:2px">' + (r.timestamp ? new Date(r.timestamp).toLocaleTimeString() : '') + '</div>' +
+          '</div>';
+      }
+
+      var statusColor = statusColors[post.thread_status] || '#888';
+      var statusLabel = statusLabels[post.thread_status] || post.thread_status;
+      threadEl.innerHTML =
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
+          '<span style="font-size:11px;color:var(--cyan);font-weight:bold">' + (post.author_name || 'Unknown') + '</span>' +
+          '<span style="font-size:10px;padding:2px 6px;border-radius:3px;background:rgba(255,255,255,0.1);color:' + statusColor + '">' + statusLabel + ' (' + (post.reply_count || 0) + '/4)</span>' +
+        '</div>' +
+        '<div style="font-size:12px;font-weight:bold;color:#fff;margin-bottom:4px">' + (post.title || '') + '</div>' +
+        '<div style="font-size:11px;color:#bbb;margin-bottom:6px">' + (post.body || '') + '</div>' +
+        (post.target_category ? '<span style="font-size:10px;padding:2px 6px;background:rgba(0,255,255,0.1);border-radius:3px;color:var(--cyan)">' + post.target_category + '</span>' : '') +
+        (post.price_solar ? '<span style="font-size:10px;margin-left:8px;color:var(--green)">' + parseFloat(post.price_solar).toFixed(4) + ' ☀️</span>' : '') +
+        (repliesHtml ? '<div style="margin-top:8px;border-top:1px solid var(--border);padding-top:6px"><div style="font-size:10px;color:#888;margin-bottom:4px">Conversation (' + replies.length + '/4):</div>' + repliesHtml + '</div>' : '');
+      container.appendChild(threadEl);
+    }
+
+    document.getElementById('bulletinOpenCount').textContent = 'Open: ' + openCount;
+    document.getElementById('bulletinDealCount').textContent = 'Deals: ' + dealCount;
+    document.getElementById('bulletinReplyCount').textContent = 'Replies: ' + totalReplies;
+    document.getElementById('bulletinPanel').style.display = 'block';
+  } catch (e) {
+    console.error('Bulletin refresh error:', e);
+  }
 }
 
 initEcosystem();

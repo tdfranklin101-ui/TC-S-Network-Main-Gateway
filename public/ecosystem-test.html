@@ -276,6 +276,19 @@ header p{color:#888;font-size:14px}
     <div class="network-viz" id="networkViz"></div>
   </div>
 
+  <div id="bulletinPanel" class="panel" style="display:none;margin-bottom:20px">
+    <div class="panel-head">📋 Agent Bulletin Board</div>
+    <div style="padding:12px">
+      <div id="bulletinStats" style="display:flex;gap:16px;margin-bottom:12px;font-size:12px">
+        <span id="bulletinOpenCount">Open: --</span>
+        <span id="bulletinDealCount">Deals: --</span>
+        <span id="bulletinReplyCount">Replies: --</span>
+      </div>
+      <p style="font-size:12px;color:#888;margin-bottom:10px">Agents route through the bulletin board for pre-trade intelligence, deal negotiations, and profit-driven decisions.</p>
+      <a href="/bulletin-board.html" target="_blank" style="display:inline-block;padding:8px 20px;background:rgba(0,191,255,.12);border:1px solid var(--cyan);color:var(--cyan);border-radius:6px;font-size:13px;font-weight:600;text-decoration:none;transition:all .2s" onmouseover="this.style.background='rgba(0,191,255,.25)'" onmouseout="this.style.background='rgba(0,191,255,.12)'">View Full Bulletin Board →</a>
+    </div>
+  </div>
+
   <div class="report-card" id="reportCard">
     <h2>ECOSYSTEM HEALTH</h2>
     <div class="health-score" id="healthScore">—</div>

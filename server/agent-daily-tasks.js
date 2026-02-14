@@ -1,5 +1,44 @@
 const crypto = require('crypto');
-const { generateKidSolObjectives, makeAgentDecision, gatherMarketSnapshot, postToBulletin, gatherRound2Snapshot, makeRound2Decision } = require('./agent-inference');
+const { generateKidSolObjectives, makeAgentDecision, gatherMarketSnapshot, postToBulletin, gatherRound2Snapshot, makeRound2Decision, generateBulletinReply } = require('./agent-inference');
+
+async function addBulletinReply(pool, postId, agentCode, agentName, memberId, message, replyType, negotiation) {
+  const post = await pool.query('SELECT * FROM agent_bulletin_board WHERE id = $1', [postId]);
+  if (post.rows.length === 0) return null;
+  const currentPost = post.rows[0];
+  if (currentPost.thread_status !== 'open' || (currentPost.reply_count || 0) >= 4) return null;
+
+  if (negotiation && negotiation.discountPct && negotiation.discountPct > 20) {
+    negotiation.discountPct = 20;
+    if (negotiation.originalPrice) {
+      negotiation.proposedPrice = Math.round(negotiation.originalPrice * 0.8 * 10000) / 10000;
+    }
+  }
+
+  const replyEntry = { agentCode, agentName, memberId, message, replyType, timestamp: new Date().toISOString() };
+  if (negotiation) replyEntry.negotiation = negotiation;
+
+  const replies = currentPost.replies || [];
+  replies.push(replyEntry);
+  const newReplyCount = replies.length;
+
+  let newThreadStatus = 'open';
+  if (newReplyCount >= 4) {
+    if (replyType === 'accept') newThreadStatus = 'deal_accepted';
+    else if (replyType === 'decline') newThreadStatus = 'no_deal';
+    else newThreadStatus = 'closed';
+  }
+
+  let finalPrice = currentPost.final_price;
+  if (negotiation && negotiation.proposedPrice && (replyType === 'accept' || newReplyCount >= 4)) {
+    finalPrice = negotiation.proposedPrice;
+  }
+
+  const result = await pool.query(
+    `UPDATE agent_bulletin_board SET replies = $1, reply_count = $2, thread_status = $3, final_price = COALESCE($5, final_price), updated_at = NOW() WHERE id = $4 RETURNING *`,
+    [JSON.stringify(replies), newReplyCount, newThreadStatus, postId, finalPrice]
+  );
+  return result.rows[0];
+}
 
 const FOUNDATION_USERNAME = 'tcs_foundation';
 const FOUNDATION_FEE_RATE = 0.05;
@@ -618,6 +657,34 @@ async function runAgentTasks(pool, agent, assignedCategories, demandScores, kidS
       if (aiDecision.bulletinPost) {
         await postToBulletin(pool, memberId, agent.code, agent.name, aiDecision.bulletinPost);
       }
+
+      // Bulletin board conversation — scan and reply to open threads
+      try {
+        const openPosts = await pool.query(
+          `SELECT * FROM agent_bulletin_board 
+           WHERE status = 'open' AND thread_status = 'open' AND reply_count < 4
+           AND author_agent_code != $1
+           ORDER BY created_at DESC LIMIT 10`,
+          [agent.code]
+        );
+
+        let repliesMade = 0;
+        for (const post of openPosts.rows) {
+          if (repliesMade >= 2) break;
+          const existingReplies = post.replies || [];
+          if (existingReplies.some(r => r.agentCode === agent.code)) continue;
+
+          const reply = await generateBulletinReply(pool, agent, memberId, post, existingReplies);
+          if (reply && reply.message) {
+            await addBulletinReply(pool, post.id, agent.code, agent.name, memberId, reply.message, reply.replyType, reply.negotiation || null);
+            repliesMade++;
+            const negNote = reply.negotiation ? ` [${reply.negotiation.type || 'negotiation'}${reply.negotiation.proposedPrice ? ' @' + reply.negotiation.proposedPrice + 'S' : ''}]` : '';
+            console.log(`📋 [Agent ${agent.code}] Replied to bulletin #${post.id}: "${reply.message.substring(0, 50)}..." (${reply.replyType})${negNote}`);
+          }
+        }
+      } catch (bulletinErr) {
+        console.warn(`⚠️ [Agent ${agent.code}] Bulletin reply error:`, bulletinErr.message);
+      }
     } catch (inferErr) {
       console.warn(`⚠️ [Agent ${agent.code}] AI inference failed, using manifest categories:`, inferErr.message);
     }
@@ -1208,6 +1275,34 @@ async function runRound2AgentTasks(pool, agents) {
         await postToBulletin(pool, memberId, agent.code, agent.name, aiDecision.bulletinPost);
       }
 
+      // Bulletin board conversation — scan and reply to open threads (Round 2)
+      try {
+        const openPosts = await pool.query(
+          `SELECT * FROM agent_bulletin_board 
+           WHERE status = 'open' AND thread_status = 'open' AND reply_count < 4
+           AND author_agent_code != $1
+           ORDER BY created_at DESC LIMIT 10`,
+          [agent.code]
+        );
+
+        let repliesMade = 0;
+        for (const post of openPosts.rows) {
+          if (repliesMade >= 2) break;
+          const existingReplies = post.replies || [];
+          if (existingReplies.some(r => r.agentCode === agent.code)) continue;
+
+          const reply = await generateBulletinReply(pool, agent, memberId, post, existingReplies);
+          if (reply && reply.message) {
+            await addBulletinReply(pool, post.id, agent.code, agent.name, memberId, reply.message, reply.replyType, reply.negotiation || null);
+            repliesMade++;
+            const negNote = reply.negotiation ? ` [${reply.negotiation.type || 'negotiation'}${reply.negotiation.proposedPrice ? ' @' + reply.negotiation.proposedPrice + 'S' : ''}]` : '';
+            console.log(`📋 [R2 Agent ${agent.code}] Replied to bulletin #${post.id}: "${reply.message.substring(0, 50)}..." (${reply.replyType})${negNote}`);
+          }
+        }
+      } catch (bulletinErr) {
+        console.warn(`⚠️ [R2 Agent ${agent.code}] Bulletin reply error:`, bulletinErr.message);
+      }
+
       const endRow = await pool.query('SELECT total_solar FROM members WHERE id = $1', [memberId]);
       const endBalance = endRow.rows.length > 0 ? parseFloat(endRow.rows[0].total_solar) || 0 : startBalance;
       agentResult.netChange = parseFloat((endBalance - startBalance).toFixed(6));
@@ -1248,4 +1343,4 @@ function getRound2Status() {
   return lastRound2Status || { success: null, round: 2, message: 'No Round 2 tasks have been run yet', timestamp: null };
 }
 
-module.exports = { runDailyAgentTasks, runSingleAgentTasks, getTaskStatus, runEducationBlitz, ensureAgentMembers, submitKidSolarPrompt, runCustomAgentTask, ALL_CATEGORIES, runRound2AgentTasks, getRound2Status };
+module.exports = { runDailyAgentTasks, runSingleAgentTasks, getTaskStatus, runEducationBlitz, ensureAgentMembers, submitKidSolarPrompt, runCustomAgentTask, ALL_CATEGORIES, runRound2AgentTasks, getRound2Status, addBulletinReply };

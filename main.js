@@ -171,7 +171,7 @@ const kidRoutes = require('./routes/kid');
 const agentRoutes = require('./routes/agentRoutes');
 
 // Daily Agent Task Engine
-const { runDailyAgentTasks, runSingleAgentTasks, getTaskStatus, runEducationBlitz, ensureAgentMembers, submitKidSolarPrompt, runCustomAgentTask, ALL_CATEGORIES, runRound2AgentTasks, getRound2Status } = require('./server/agent-daily-tasks');
+const { runDailyAgentTasks, runSingleAgentTasks, getTaskStatus, runEducationBlitz, ensureAgentMembers, submitKidSolarPrompt, runCustomAgentTask, ALL_CATEGORIES, runRound2AgentTasks, getRound2Status, addBulletinReply } = require('./server/agent-daily-tasks');
 
 // Daily greeting removed — was not rendering properly
 // const { scheduleDailyGreeting } = require('./server/generate-greeting');
@@ -2675,6 +2675,19 @@ async function initializeSolarAudit() {
   
   // Create tables first
   await createSolarAuditTables();
+  
+  // Ensure bulletin board conversation + negotiation columns exist (startup schema guard)
+  try {
+    await pool.query('ALTER TABLE agent_bulletin_board ADD COLUMN IF NOT EXISTS reply_count integer DEFAULT 0');
+    await pool.query('ALTER TABLE agent_bulletin_board ADD COLUMN IF NOT EXISTS thread_status varchar(20) DEFAULT \'open\'');
+    await pool.query('ALTER TABLE agent_bulletin_board ADD COLUMN IF NOT EXISTS negotiation_type varchar(30) DEFAULT NULL');
+    await pool.query('ALTER TABLE agent_bulletin_board ADD COLUMN IF NOT EXISTS original_price numeric DEFAULT NULL');
+    await pool.query('ALTER TABLE agent_bulletin_board ADD COLUMN IF NOT EXISTS final_price numeric DEFAULT NULL');
+    await pool.query('ALTER TABLE agent_bulletin_board ADD COLUMN IF NOT EXISTS volume_qty integer DEFAULT NULL');
+    console.log('✅ Bulletin board schema verified/updated (conversation + negotiation columns)');
+  } catch (e) {
+    console.warn('⚠️ Bulletin board schema update skipped (columns may already exist):', e.message);
+  }
   
   // Seed regional data (Phase 1: Regional Energy Breakdown System)
   await seedAuditRegions();
@@ -12620,6 +12633,165 @@ Only include products where you have found a real URL. Do not make up URLs.`
     const status = getRound2Status();
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(status));
+    return;
+  }
+
+  // ============ BULLETIN BOARD CONVERSATION API ============
+  if (pathname === '/api/bulletin/posts' && req.method === 'GET') {
+    try {
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      const statusFilter = url.searchParams.get('status') || 'open';
+      const threadStatusFilter = url.searchParams.get('thread_status') || null;
+      const limit = parseInt(url.searchParams.get('limit')) || 50;
+
+      let query = `SELECT * FROM agent_bulletin_board WHERE 1=1`;
+      const params = [];
+
+      // Filter by post status
+      if (statusFilter !== 'all') {
+        params.push(statusFilter);
+        query += ` AND status = $${params.length}`;
+      }
+
+      // Filter by thread status
+      if (threadStatusFilter) {
+        params.push(threadStatusFilter);
+        query += ` AND thread_status = $${params.length}`;
+      } else if (statusFilter !== 'all') {
+        // Default: when filtering by open status, show all thread statuses
+        query += ` AND thread_status IN ('open', 'deal_accepted', 'no_deal', 'closed', 'redirected')`;
+      }
+
+      params.push(limit);
+      query += ` ORDER BY COALESCE(updated_at, created_at) DESC LIMIT $${params.length}`;
+
+      const result = await pool.query(query, params);
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        posts: result.rows.map(p => ({
+          id: p.id,
+          post_type: p.post_type,
+          title: p.title,
+          body: p.body,
+          tags: p.tags || [],
+          price_solar: p.price_solar,
+          target_category: p.target_category,
+          status: p.status,
+          author_name: p.author_name,
+          author_agent_code: p.author_agent_code,
+          related_artifact_id: p.related_artifact_id || null,
+          target_agent_code: p.target_agent_code || null,
+          negotiation_type: p.negotiation_type || null,
+          original_price: p.original_price || null,
+          final_price: p.final_price || null,
+          volume_qty: p.volume_qty || null,
+          metadata: p.metadata || null,
+          replies: p.replies || [],
+          reply_count: p.reply_count || 0,
+          thread_status: p.thread_status || 'open',
+          created_at: p.created_at,
+          updated_at: p.updated_at
+        })),
+        total: result.rows.length
+      }));
+    } catch (err) {
+      console.error('Bulletin posts error:', err.message);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to load bulletin posts' }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/bulletin/reply' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', async () => {
+      try {
+        const data = JSON.parse(body);
+        if (!data.postId || !data.message) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'postId and message are required' }));
+          return;
+        }
+
+        const validTypes = ['offer', 'counter', 'accept', 'decline', 'info'];
+        const replyType = validTypes.includes(data.replyType) ? data.replyType : 'info';
+
+        let negotiation = data.negotiation || null;
+        if (negotiation && negotiation.discountPct && negotiation.discountPct > 20) {
+          negotiation.discountPct = 20;
+          if (negotiation.originalPrice) {
+            negotiation.proposedPrice = Math.round(negotiation.originalPrice * 0.8 * 10000) / 10000;
+          }
+        }
+
+        const result = await addBulletinReply(
+          pool, data.postId, data.agentCode || null, data.agentName || 'Anonymous',
+          data.memberId || null, data.message, replyType, negotiation
+        );
+
+        if (!result) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Thread is closed or reply limit reached' }));
+          return;
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, post: result }));
+      } catch (err) {
+        console.error('Bulletin reply error:', err.message);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Failed to add reply' }));
+      }
+    });
+    return;
+  }
+
+  if (pathname.match(/^\/api\/bulletin\/thread\/(\d+)$/) && req.method === 'GET') {
+    const postId = pathname.match(/^\/api\/bulletin\/thread\/(\d+)$/)[1];
+    try {
+      const result = await pool.query('SELECT * FROM agent_bulletin_board WHERE id = $1', [postId]);
+      if (result.rows.length === 0) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Thread not found' }));
+        return;
+      }
+      const p = result.rows[0];
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        post: {
+          id: p.id,
+          post_type: p.post_type,
+          title: p.title,
+          body: p.body,
+          tags: p.tags || [],
+          price_solar: p.price_solar,
+          target_category: p.target_category,
+          status: p.status,
+          author_name: p.author_name,
+          author_agent_code: p.author_agent_code,
+          related_artifact_id: p.related_artifact_id || null,
+          target_agent_code: p.target_agent_code || null,
+          negotiation_type: p.negotiation_type || null,
+          original_price: p.original_price || null,
+          final_price: p.final_price || null,
+          volume_qty: p.volume_qty || null,
+          metadata: p.metadata || null,
+          replies: p.replies || [],
+          reply_count: p.reply_count || 0,
+          thread_status: p.thread_status || 'open',
+          created_at: p.created_at,
+          updated_at: p.updated_at
+        }
+      }));
+    } catch (err) {
+      console.error('Bulletin thread error:', err.message);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to load thread' }));
+    }
     return;
   }
 
