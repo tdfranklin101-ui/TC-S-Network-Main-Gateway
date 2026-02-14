@@ -16344,11 +16344,12 @@ Respond with valid JSON only. Be insightful and specific.`;
         'Cache-Control': ext === '.html' ? 'no-cache' : 'public, max-age=3600'
       });
       res.end(fileBuffer);
-      console.log(`✅ Served static file: ${pathname} (${fileBuffer.length} bytes)`);
     } catch (err) {
-      console.error(`❌ Error serving ${pathname}:`, err.message);
-      res.writeHead(500, { 'Content-Type': 'text/plain' });
-      res.end('Server error');
+      console.error(`❌ Error serving ${pathname}:`, err.message, err.stack);
+      if (!res.headersSent) {
+        res.writeHead(500, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end(`<html><body style="background:#0a0a0a;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh"><div style="text-align:center"><h1>TC-S Network</h1><p>Temporary error loading page. Please refresh.</p></div></body></html>`);
+      }
     }
   } else {
     // Try adding .html extension for extensionless URLs
