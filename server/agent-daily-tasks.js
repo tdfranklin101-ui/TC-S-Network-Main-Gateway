@@ -1,6 +1,22 @@
 const crypto = require('crypto');
 const { generateKidSolObjectives, makeAgentDecision, gatherMarketSnapshot, postToBulletin, gatherRound2Snapshot, makeRound2Decision } = require('./agent-inference');
 
+const FOUNDATION_USERNAME = 'tcs_foundation';
+const FOUNDATION_FEE_RATE = 0.05;
+
+async function getOrCreateFoundationMember(queryFn) {
+  const existing = await queryFn('SELECT id, username, total_solar FROM members WHERE username = $1 LIMIT 1', [FOUNDATION_USERNAME]);
+  if (existing.rows.length > 0) {
+    return { id: existing.rows[0].id, totalSolar: parseFloat(existing.rows[0].total_solar) || 0 };
+  }
+  const inserted = await queryFn(
+    `INSERT INTO members (username, name, email, total_solar, total_dollars, is_agent, password_hash)
+     VALUES ($1, $2, $3, '0.0000', 0, false, '$2b$12$foundationreservewallet000000000000000000000000000') RETURNING id, total_solar`,
+    [FOUNDATION_USERNAME, 'TC-S Foundation Reserve', 'foundation@thecurrentsee.org']
+  );
+  return { id: inserted.rows[0].id, totalSolar: 0 };
+}
+
 const ITEM_PARTS = {
   'Computronium':{adj:['Quantum','Neural','Photonic','Lattice','Cryo','Nano','Hyper','Exascale','Coherent','Flux'],noun:['Compute Shard','Processing Unit','Logic Crystal','Inference Chip','Hash Engine','Tensor Core','Bit Forge','Data Loom','Cycle Pack','Throughput Token'],suffix:['v4','XL','Genesis','Prime','Ultra','Turbo','Certified','Standard','Pro','Entangled']},
   'Culture':{adj:['Solar Punk','Afrofuturist','Indigenous','Global South','Diaspora','Ancestral','Neo-Folk','Visionary','Mythopoetic','Communal'],noun:['Story Archive','Heritage Map','Festival Pass','Language Kit','Oral History','Art Zine','Cultural Exchange','Folklore Bundle','Tradition Seed','Memory Capsule'],suffix:['Edition','Collective','Archive','Vol. I','Curated','Open','Living','Sacred','Shared','Roots']},
@@ -484,6 +500,8 @@ async function makePurchasesForAgent(pool, agent, memberId, demandScores, aiDeci
       artifact = bestCandidate;
     }
     const artPrice = parseFloat(artifact.solar_amount_s) || 0.01;
+    const foundationFee = Math.round(artPrice * FOUNDATION_FEE_RATE * 10000) / 10000;
+    const sellerNet = artPrice - foundationFee;
 
     const txId = crypto.randomUUID();
     const artifactId = artifact.id;
@@ -510,16 +528,25 @@ async function makePurchasesForAgent(pool, agent, memberId, demandScores, aiDeci
     if (sellerRow.rows.length > 0) {
       const seller = sellerRow.rows[0];
       const sellerOldBal = parseFloat(seller.total_solar) || 0;
-      const sellerNewBal = sellerOldBal + artPrice;
+      const sellerNewBal = sellerOldBal + sellerNet;
 
       await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(sellerNewBal), seller.id]);
 
       await client.query(
         `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
          VALUES ($1, 'credit', $2, 'creator', $3, $4, 'purchase', $5, $6)`,
-        [txId, String(seller.id), String(artPrice), String(sellerNewBal), artifactId, `Sale: ${artifact.title}`]
+        [txId, String(seller.id), String(sellerNet), String(sellerNewBal), artifactId, `Sale: ${artifact.title}`]
       );
     }
+
+    const foundationMember = await getOrCreateFoundationMember(client.query.bind(client));
+    const foundationBalAfter = foundationMember.totalSolar + foundationFee;
+    await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(foundationBalAfter), foundationMember.id]);
+    await client.query(
+      `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
+       VALUES ($1, 'credit', $2, 'foundation', $3, $4, 'foundation_fee', $5, $6)`,
+      [txId, String(foundationMember.id), String(foundationFee), String(foundationBalAfter), artifactId, `Foundation fee (5%): ${artifact.title}`]
+    );
 
     await client.query(
       `INSERT INTO artifact_copies (artifact_id, owner_id, purchase_transaction_id, acquired_method, solar_paid) VALUES ($1, $2, $3, 'purchase', $4)`,
@@ -1073,6 +1100,9 @@ async function runRound2AgentTasks(pool, agents) {
             continue;
           }
 
+          const foundationFee = Math.round(artPrice * FOUNDATION_FEE_RATE * 10000) / 10000;
+          const sellerNet = artPrice - foundationFee;
+
           const txId = crypto.randomUUID();
           await client.query('BEGIN');
 
@@ -1095,14 +1125,23 @@ async function runRound2AgentTasks(pool, agents) {
           if (sellerRow.rows.length > 0) {
             const seller = sellerRow.rows[0];
             const sellerOldBal = parseFloat(seller.total_solar) || 0;
-            const sellerNewBal = sellerOldBal + artPrice;
+            const sellerNewBal = sellerOldBal + sellerNet;
             await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(sellerNewBal), seller.id]);
             await client.query(
               `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
                VALUES ($1, 'credit', $2, 'creator', $3, $4, 'purchase', $5, $6)`,
-              [txId, String(seller.id), String(artPrice), String(sellerNewBal), artifact.id, `R2 Sale: ${artifact.title}`]
+              [txId, String(seller.id), String(sellerNet), String(sellerNewBal), artifact.id, `R2 Sale: ${artifact.title}`]
             );
           }
+
+          const r2FoundationMember = await getOrCreateFoundationMember(client.query.bind(client));
+          const r2FoundationBalAfter = r2FoundationMember.totalSolar + foundationFee;
+          await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(r2FoundationBalAfter), r2FoundationMember.id]);
+          await client.query(
+            `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
+             VALUES ($1, 'credit', $2, 'foundation', $3, $4, 'foundation_fee', $5, $6)`,
+            [txId, String(r2FoundationMember.id), String(foundationFee), String(r2FoundationBalAfter), artifact.id, `Foundation fee (5%): ${artifact.title}`]
+          );
 
           await client.query(
             `INSERT INTO artifact_copies (artifact_id, owner_id, purchase_transaction_id, acquired_method, solar_paid) VALUES ($1, $2, $3, 'purchase', $4)`,
@@ -1117,7 +1156,7 @@ async function runRound2AgentTasks(pool, agents) {
 
           await client.query('COMMIT');
 
-          console.log(`🌞 [R2] Agent ${agent.name}: Bought "${artifact.title}" (${artPrice.toFixed(4)} S) → Listed resale at ${resalePrice.toFixed(4)} S`);
+          console.log(`🌞 [R2] Agent ${agent.name}: Bought "${artifact.title}" (${artPrice.toFixed(4)} S, fee: ${foundationFee.toFixed(4)} S) → Listed resale at ${resalePrice.toFixed(4)} S`);
           agentResult.buys.push({ artifactId: artifact.id, title: artifact.title, category: artifact.category, price: artPrice, resalePrice, txId, reasoning: buyOrder.reasoning });
           totalBuys++;
         } catch (buyErr) {
