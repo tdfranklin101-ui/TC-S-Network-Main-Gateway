@@ -2896,6 +2896,7 @@ function initializeDailyDistribution() {
 
 const FOUNDATION_USERNAME = 'tcs_foundation';
 const FOUNDATION_FEE_RATE = 0.05; // 5% Foundation fee on all transactions
+const RESALE_MARKUP_RATE = 0.15; // 15% fixed profit markup on resale price
 
 async function getOrCreateFoundationMember(client) {
   const queryFn = client ? client.query.bind(client) : pool.query.bind(pool);
@@ -10491,6 +10492,11 @@ Only include products where you have found a real URL. Do not make up URLs.`
           }
         }
 
+        await client.query(
+          `UPDATE artifacts SET current_owner_id = $1, original_purchase_price = $2, is_fully_generated = false, generation_number = COALESCE(generation_number, 0), is_listed_for_resale = false WHERE id = $3`,
+          [buyer.id, requiredSolar, artifactId]
+        );
+
         await client.query('COMMIT');
         logBalanceChange('Purchase', buyer.id, buyer.username, buyerBalance, newBalance, `purchase_artifact_${artifactId}`);
         console.log(`💰 SOLAR PURCHASE: ${session.username} bought "${artifact.title}" for ${requiredSolar} Solar`);
@@ -10518,17 +10524,18 @@ Only include products where you have found a real URL. Do not make up URLs.`
         console.log(`🧬 [Purchase] Triggering artifact genesis for "${artifact.title}" (${artifactId})`);
         audioGenesisService.generateFromDNA(artifactId).then(async (genResult) => {
           if (genResult.success) {
-            console.log(`🧬 [Purchase] Audio genesis complete for "${artifact.title}" — ${genResult.fileSize} bytes`);
+            console.log(`🧬 [Purchase] Artifact genesis complete for "${artifact.title}" — ${genResult.fileSize} bytes`);
+            await pool.query('UPDATE artifacts SET is_fully_generated = true WHERE id = $1', [artifactId]);
             if (dlToken) {
               try {
                 await pool.query('UPDATE download_tokens SET access_type = $1 WHERE token = $2', ['trade_file', dlToken]);
               } catch (e) { console.warn('🧬 Token update note:', e.message); }
             }
           } else {
-            console.warn(`🧬 [Purchase] Audio genesis failed for "${artifact.title}":`, genResult.error);
+            console.warn(`🧬 [Purchase] Artifact genesis failed for "${artifact.title}":`, genResult.error);
           }
         }).catch(err => {
-          console.error('🧬 [Purchase] Audio genesis error:', err.message);
+          console.error('🧬 [Purchase] Artifact genesis error:', err.message);
         });
       }
 
