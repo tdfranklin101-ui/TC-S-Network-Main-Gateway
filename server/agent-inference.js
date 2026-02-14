@@ -2,7 +2,9 @@ const OpenAI = require('openai');
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-const { analyzeMarketDemand } = require('./agent-daily-tasks');
+function getAnalyzeMarketDemand() {
+  return require('./agent-daily-tasks').analyzeMarketDemand;
+}
 
 async function generateKidSolObjectives(pool, demandScores, gaps, totalInventory, memberRequests) {
   try {
@@ -200,6 +202,7 @@ async function gatherMarketSnapshot(pool, memberId) {
   };
 
   try {
+    const analyzeMarketDemand = getAnalyzeMarketDemand();
     const demand = await analyzeMarketDemand(pool);
     snapshot.demandScores = demand.scores || {};
     snapshot.gaps = demand.gaps || [];
