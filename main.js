@@ -8504,6 +8504,36 @@ const server = http.createServer(async (req, res) => {
     console.log('❌ File not found!');
   }
 
+  if (pathname === '/ecosystem-test.html' || pathname === '/ecosystem-test') {
+    const filePath = path.join(__dirname, 'public', 'ecosystem-test.html');
+    if (fs.existsSync(filePath)) {
+      const content = fs.readFileSync(filePath, 'utf8');
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(content);
+      return;
+    }
+  }
+
+  if (pathname === '/ecosystem-analysis.html' || pathname === '/ecosystem-analysis') {
+    const filePath = path.join(__dirname, 'public', 'ecosystem-analysis.html');
+    if (fs.existsSync(filePath)) {
+      const content = fs.readFileSync(filePath, 'utf8');
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(content);
+      return;
+    }
+  }
+
+  if (pathname === '/bulletin-board.html' || pathname === '/bulletin-board') {
+    const filePath = path.join(__dirname, 'public', 'bulletin-board.html');
+    if (fs.existsSync(filePath)) {
+      const content = fs.readFileSync(filePath, 'utf8');
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(content);
+      return;
+    }
+  }
+
   if (pathname === '/music-now.html' || pathname === '/music-now') {
     const mnFilePath = path.join(__dirname, 'public', 'music-now.html');
     if (fs.existsSync(mnFilePath)) {
