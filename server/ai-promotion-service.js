@@ -4,15 +4,18 @@
  */
 
 class AIPromotionService {
-  constructor(memberContentService, marketDataService) {
+  constructor(memberContentService, marketDataService, pool) {
     this.memberContentService = memberContentService;
     this.marketDataService = marketDataService;
+    this.pool = pool;
     this.promotionHistory = new Map();
     this.categoryIndexes = new Map();
     this.performanceMetrics = new Map();
     this.promotionQueue = [];
+    this.totalArtifactsIndexed = 0;
+    this._dbArtifactsCache = null;
+    this._dbArtifactsCacheTime = 0;
     
-    // AI promotion algorithms
     this.promotionAlgorithms = {
       trending: this.identifyTrendingContent.bind(this),
       newMember: this.promoteNewMemberContent.bind(this),
@@ -22,8 +25,57 @@ class AIPromotionService {
       qualityScore: this.promoteHighQualityContent.bind(this)
     };
 
-    // Start automatic promotion cycle
     this.startPromotionCycle();
+  }
+
+  /**
+   * Get cached DB artifacts, re-querying only if cache is older than 5 minutes
+   */
+  async getDbArtifacts() {
+    const CACHE_TTL = 5 * 60 * 1000;
+    if (this._dbArtifactsCache && (Date.now() - this._dbArtifactsCacheTime) < CACHE_TTL) {
+      return this._dbArtifactsCache;
+    }
+
+    if (!this.pool) {
+      return null;
+    }
+
+    try {
+      const [artifactsResult, marketItemsResult] = await Promise.all([
+        this.pool.query('SELECT id, title, description, category, solar_amount_s AS price_solar, kwh_footprint, file_type, delivery_url, content_body, source_type, artifact_class, creator_id, created_at FROM artifacts WHERE active = true'),
+        this.pool.query("SELECT id, title, description, category, price_solar, kwh_estimate, source_type, status, metadata, created_by_user_id, created_at FROM market_items WHERE status = 'ACTIVE'")
+      ]);
+
+      const artifacts = artifactsResult.rows || [];
+      const marketItems = marketItemsResult.rows || [];
+
+      const seen = new Set();
+      const merged = [];
+
+      for (const a of artifacts) {
+        const key = `${(a.title || '').toLowerCase().trim()}::${(a.category || '').toLowerCase().trim()}`;
+        seen.add(key);
+        merged.push({ ...a, _source: 'artifacts' });
+      }
+
+      for (const m of marketItems) {
+        const key = `${(m.title || '').toLowerCase().trim()}::${(m.category || '').toLowerCase().trim()}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          merged.push({ ...m, _source: 'market_items' });
+        }
+      }
+
+      console.log(`📦 DB index: ${artifacts.length} artifacts + ${marketItems.length} market_items → ${merged.length} after dedup`);
+
+      this._dbArtifactsCache = merged;
+      this._dbArtifactsCacheTime = Date.now();
+      return merged;
+    } catch (error) {
+      console.error('Error fetching DB artifacts:', error);
+      return null;
+    }
   }
 
   /**
@@ -32,10 +84,8 @@ class AIPromotionService {
   startPromotionCycle() {
     console.log('🤖 AI Promotion Service started - analyzing market content every 30 minutes');
     
-    // Run initial analysis
     this.runPromotionAnalysis();
     
-    // Schedule regular analysis (every 30 minutes)
     setInterval(() => {
       this.runPromotionAnalysis();
     }, 30 * 60 * 1000);
@@ -48,17 +98,13 @@ class AIPromotionService {
     try {
       console.log('🔍 Running AI promotion analysis...');
       
-      // Index current market state
       await this.indexMarketCategories();
       await this.analyzeInventoryGaps();
       
-      // Run promotion algorithms
       const promotionRecommendations = await this.generatePromotionRecommendations();
       
-      // Execute automatic promotions
       await this.executeAutomaticPromotions(promotionRecommendations);
       
-      // Update performance metrics
       this.updatePerformanceMetrics();
       
       console.log(`✅ AI promotion analysis complete - ${promotionRecommendations.length} actions taken`);
@@ -71,12 +117,64 @@ class AIPromotionService {
    * Index market categories and analyze content distribution
    */
   async indexMarketCategories() {
+    if (this.pool) {
+      try {
+        const dbItems = await this.getDbArtifacts();
+        if (dbItems && dbItems.length > 0) {
+          this.categoryIndexes.clear();
+
+          const categoryMap = new Map();
+          const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+          for (const item of dbItems) {
+            const rawCategory = item.category || 'other';
+            const normalizedCategory = rawCategory.toLowerCase().trim();
+
+            if (!categoryMap.has(normalizedCategory)) {
+              categoryMap.set(normalizedCategory, []);
+            }
+            categoryMap.get(normalizedCategory).push(item);
+          }
+
+          for (const [category, items] of categoryMap) {
+            const prices = items
+              .map(i => parseFloat(i.price_solar) || 0)
+              .filter(p => !isNaN(p));
+            const avgPrice = prices.length > 0
+              ? prices.reduce((sum, p) => sum + p, 0) / prices.length
+              : 0;
+
+            const recentItems = items.filter(i => {
+              const createdAt = i.created_at ? new Date(i.created_at) : null;
+              return createdAt && createdAt > sevenDaysAgo;
+            }).length;
+
+            const categoryAnalysis = {
+              totalItems: items.length,
+              avgPrice,
+              recentItems,
+              priceGaps: this.identifyPriceGapsFromDb(items),
+              contentGaps: this.identifyContentGapsFromDb(items),
+              lastAnalyzed: new Date().toISOString()
+            };
+
+            this.categoryIndexes.set(category, categoryAnalysis);
+          }
+
+          this.totalArtifactsIndexed = dbItems.length;
+          const categoryCount = categoryMap.size;
+          console.log(`📊 Indexed ${dbItems.length} artifacts across ${categoryCount} categories from database`);
+          return;
+        }
+      } catch (error) {
+        console.error('DB indexing failed, falling back to memberContentService:', error);
+      }
+    }
+
     const marketContent = this.memberContentService.getMarketplaceContent();
     
-    // Reset category indexes
     this.categoryIndexes.clear();
     
-    // Analyze each category
     const categories = ['music', 'art', 'documents', 'software', 'videos', 'ebooks', 'templates', 'courses', 'other'];
     
     categories.forEach(category => {
@@ -89,7 +187,6 @@ class AIPromotionService {
         totalDownloads: categoryContent.reduce((sum, c) => sum + c.stats.downloads, 0),
         avgRating: categoryContent.reduce((sum, c) => sum + this.memberContentService.calculateContentRating(c), 0) / categoryContent.length || 0,
         
-        // Trending analysis
         recentUploads: categoryContent.filter(c => 
           new Date(c.uploadDate) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
         ).length,
@@ -97,7 +194,6 @@ class AIPromotionService {
           c.stats.views > 100 || c.stats.downloads > 10
         ),
         
-        // Opportunity analysis
         priceGaps: this.identifyPriceGaps(categoryContent),
         contentGaps: this.identifyContentGaps(categoryContent),
         
@@ -107,7 +203,68 @@ class AIPromotionService {
       this.categoryIndexes.set(category, categoryAnalysis);
     });
 
+    this.totalArtifactsIndexed = marketContent.content.length;
     console.log(`📊 Indexed ${categories.length} market categories`);
+  }
+
+  /**
+   * Identify price gaps from DB items
+   */
+  identifyPriceGapsFromDb(items) {
+    if (items.length === 0) return [];
+    
+    const prices = items
+      .map(i => parseFloat(i.price_solar) || 0)
+      .filter(p => p > 0)
+      .sort((a, b) => a - b);
+    const gaps = [];
+    
+    for (let i = 1; i < prices.length; i++) {
+      const gap = prices[i] - prices[i-1];
+      if (gap > 0.005) {
+        gaps.push({
+          lowerPrice: prices[i-1],
+          upperPrice: prices[i],
+          gapSize: gap,
+          opportunity: 'price_point_opportunity'
+        });
+      }
+    }
+    
+    return gaps;
+  }
+
+  /**
+   * Identify content gaps from DB items
+   */
+  identifyContentGapsFromDb(items) {
+    const gaps = [];
+    
+    const descriptions = items
+      .map(i => i.description || '')
+      .filter(d => d.length > 0);
+    
+    const words = {};
+    descriptions.forEach(desc => {
+      const tokens = desc.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+      const unique = new Set(tokens);
+      unique.forEach(word => {
+        words[word] = (words[word] || 0) + 1;
+      });
+    });
+
+    Object.entries(words).forEach(([word, frequency]) => {
+      if (frequency <= 2 && items.length > 10) {
+        gaps.push({
+          type: 'keyword_gap',
+          keyword: word,
+          frequency: frequency,
+          opportunity: 'underrepresented_subtopic'
+        });
+      }
+    });
+
+    return gaps;
   }
 
   /**
@@ -122,7 +279,6 @@ class AIPromotionService {
       timeBasedGaps: []
     };
 
-    // Analyze category representation
     const totalContent = Array.from(this.categoryIndexes.values())
       .reduce((sum, cat) => sum + cat.totalItems, 0);
     const avgContentPerCategory = totalContent / this.categoryIndexes.size;
@@ -144,21 +300,21 @@ class AIPromotionService {
         });
       }
 
-      // Pricing opportunity analysis
-      if (analysis.avgPrice < 0.001 && analysis.avgRating > 3) {
+      const avgRating = analysis.avgRating || 0;
+
+      if (analysis.avgPrice < 0.001 && avgRating > 3) {
         gapAnalysis.pricingOpportunities.push({
           category,
           currentAvgPrice: analysis.avgPrice,
-          avgRating: analysis.avgRating,
+          avgRating: avgRating,
           recommendation: 'price_increase_opportunity'
         });
       }
 
-      // Quality gap analysis
-      if (analysis.avgRating < 2.5) {
+      if (avgRating > 0 && avgRating < 2.5) {
         gapAnalysis.qualityGaps.push({
           category,
-          avgRating: analysis.avgRating,
+          avgRating: avgRating,
           recommendation: 'quality_improvement_needed'
         });
       }
@@ -174,7 +330,6 @@ class AIPromotionService {
   async generatePromotionRecommendations() {
     const recommendations = [];
 
-    // Run each promotion algorithm
     for (const [algorithmName, algorithm] of Object.entries(this.promotionAlgorithms)) {
       try {
         const algorithmRecommendations = await algorithm();
@@ -189,10 +344,9 @@ class AIPromotionService {
       }
     }
 
-    // Sort by confidence and priority
     recommendations.sort((a, b) => (b.confidence * b.priority) - (a.confidence * a.priority));
 
-    return recommendations.slice(0, 20); // Limit to top 20 recommendations
+    return recommendations.slice(0, 20);
   }
 
   /**
@@ -202,9 +356,8 @@ class AIPromotionService {
     const recommendations = [];
     const marketContent = this.memberContentService.getMarketplaceContent();
 
-    // Find content with high recent engagement
     marketContent.content.forEach(content => {
-      const recentViews = content.stats.views; // In a real system, this would be recent views
+      const recentViews = content.stats.views;
       const engagementRate = content.stats.downloads / Math.max(content.stats.views, 1);
       
       if (recentViews > 50 && engagementRate > 0.1) {
@@ -230,7 +383,6 @@ class AIPromotionService {
     const recommendations = [];
     const marketContent = this.memberContentService.getMarketplaceContent();
 
-    // Find content from new members (uploaded in last 48 hours)
     const newContent = marketContent.content.filter(content => {
       const uploadDate = new Date(content.uploadDate);
       const hoursAgo = (Date.now() - uploadDate) / (1000 * 60 * 60);
@@ -263,7 +415,6 @@ class AIPromotionService {
       const quality = this.memberContentService.calculateContentRating(content);
       const visibility = content.stats.views;
       
-      // High quality but low visibility
       if (quality >= 4 && visibility < 25) {
         recommendations.push({
           contentId: content.id,
@@ -291,7 +442,6 @@ class AIPromotionService {
 
     const marketContent = this.memberContentService.getMarketplaceContent();
 
-    // Promote music content during evening hours
     if (hour >= 17 && hour <= 23) {
       const musicContent = marketContent.content.filter(c => c.category === 'music');
       musicContent.slice(0, 3).forEach(content => {
@@ -307,7 +457,6 @@ class AIPromotionService {
       });
     }
 
-    // Weekend promotion for entertainment content
     if (dayOfWeek === 0 || dayOfWeek === 6) {
       const entertainmentContent = marketContent.content.filter(c => 
         c.category === 'videos' || c.category === 'music' || c.category === 'art'
@@ -335,7 +484,6 @@ class AIPromotionService {
     const recommendations = [];
     const marketContent = this.memberContentService.getMarketplaceContent();
 
-    // Group content by member
     const memberContent = new Map();
     marketContent.content.forEach(content => {
       if (!memberContent.has(content.memberId)) {
@@ -344,7 +492,6 @@ class AIPromotionService {
       memberContent.get(content.memberId).push(content);
     });
 
-    // Find members with content in multiple categories
     memberContent.forEach((contents, memberId) => {
       const categories = new Set(contents.map(c => c.category));
       if (categories.size > 1) {
@@ -374,7 +521,6 @@ class AIPromotionService {
     const recommendations = [];
     const marketContent = this.memberContentService.getMarketplaceContent();
 
-    // Find top 10% highest quality content
     const sortedByQuality = marketContent.content
       .map(content => ({
         ...content,
@@ -411,7 +557,6 @@ class AIPromotionService {
         if (success) {
           executed++;
           
-          // Record promotion in history
           this.promotionHistory.set(`${recommendation.contentId}_${Date.now()}`, {
             ...recommendation,
             executed: true,
@@ -433,7 +578,6 @@ class AIPromotionService {
     try {
       const { contentId, action, duration } = recommendation;
 
-      // Update content promotion status
       const promotionData = {
         featured: action.includes('feature') || action.includes('showcase'),
         autoPromote: true,
@@ -443,7 +587,6 @@ class AIPromotionService {
         aiGenerated: true
       };
 
-      // Get content owner info (simplified - in real system would need member lookup)
       const marketContent = this.memberContentService.getMarketplaceContent();
       const content = marketContent.content.find(c => c.id === contentId);
       
@@ -452,7 +595,6 @@ class AIPromotionService {
         return false;
       }
 
-      // Update promotion settings
       this.memberContentService.updateContentPromotion(contentId, content.memberId, promotionData);
 
       console.log(`📢 Promoted "${content.title}" with action: ${action}`);
@@ -473,7 +615,7 @@ class AIPromotionService {
       '48_hours': 48 * 60 * 60 * 1000,
       '72_hours': 72 * 60 * 60 * 1000
     };
-    return durationMap[duration] || 24 * 60 * 60 * 1000; // Default to 24 hours
+    return durationMap[duration] || 24 * 60 * 60 * 1000;
   }
 
   /**
@@ -490,7 +632,6 @@ class AIPromotionService {
       lastUpdated: new Date().toISOString()
     };
 
-    // Calculate algorithm performance
     Object.keys(this.promotionAlgorithms).forEach(algorithm => {
       const algorithmPromotions = Array.from(this.promotionHistory.values())
         .filter(p => p.algorithm === algorithm);
@@ -517,7 +658,7 @@ class AIPromotionService {
     
     for (let i = 1; i < prices.length; i++) {
       const gap = prices[i] - prices[i-1];
-      if (gap > 0.005) { // Significant gap
+      if (gap > 0.005) {
         gaps.push({
           lowerPrice: prices[i-1],
           upperPrice: prices[i],
@@ -536,14 +677,12 @@ class AIPromotionService {
   identifyContentGaps(categoryContent) {
     const gaps = [];
     
-    // Analyze tags to find missing subtopics
     const allTags = categoryContent.flatMap(c => c.tags);
     const tagFrequency = {};
     allTags.forEach(tag => {
       tagFrequency[tag] = (tagFrequency[tag] || 0) + 1;
     });
 
-    // Find underrepresented tags as content gaps
     Object.entries(tagFrequency).forEach(([tag, frequency]) => {
       if (frequency <= 2 && categoryContent.length > 10) {
         gaps.push({
@@ -566,6 +705,7 @@ class AIPromotionService {
       categoryIndexes: Object.fromEntries(this.categoryIndexes),
       inventoryGaps: this.inventoryGaps,
       performanceMetrics: this.performanceMetrics.get('current'),
+      totalArtifactsIndexed: this.totalArtifactsIndexed,
       recentPromotions: Array.from(this.promotionHistory.values())
         .filter(p => new Date(p.executedAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000))
         .sort((a, b) => new Date(b.executedAt) - new Date(a.executedAt))
@@ -587,7 +727,6 @@ class AIPromotionService {
     const categoryAnalysis = this.categoryIndexes.get(content.category);
     const recommendations = [];
 
-    // Category-based recommendations
     if (categoryAnalysis) {
       if (categoryAnalysis.totalItems < 10) {
         recommendations.push({
@@ -608,7 +747,6 @@ class AIPromotionService {
       }
     }
 
-    // Performance-based recommendations
     const quality = this.memberContentService.calculateContentRating(content);
     if (quality >= 4) {
       recommendations.push({

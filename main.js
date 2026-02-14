@@ -3033,7 +3033,7 @@ try {
   seoGenerator = new SEOGenerator();
   aiSEOOptimizer = new AISEOOptimizer();
   memberContentService = new MemberContentService();
-  aiPromotionService = new AIPromotionService(memberContentService, marketDataService);
+  aiPromotionService = new AIPromotionService(memberContentService, marketDataService, pool);
   console.log('✅ Market data and SEO services initialized');
 } catch (error) {
   console.error('⚠️ Service initialization failed:', error.message);
