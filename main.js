@@ -7,7 +7,7 @@ const path = require('path');
 
 // ================== EARLY HEALTH CHECK - START IMMEDIATELY ==================
 // This ensures deployment health checks pass while heavy initialization runs
-const PORT = process.env.PORT || 3002;
+const PORT = process.env.PORT || 5000;
 let mainServerReady = false;
 let mainServer = null;
 
