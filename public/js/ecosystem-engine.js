@@ -1447,6 +1447,28 @@ function initCustomRunPanel() {
     }
     sel.appendChild(opt);
   });
+  sel.addEventListener('change', function() {
+    var catGrid = document.getElementById('crCategoryGrid');
+    var catLabel = document.getElementById('crCategoryLabel');
+    var inferNote = document.getElementById('crInferNote');
+    if (this.value === 'ks') {
+      if (catGrid) catGrid.style.display = 'none';
+      if (catLabel) catLabel.style.display = 'none';
+      if (!inferNote) {
+        var note = document.createElement('div');
+        note.id = 'crInferNote';
+        note.style.cssText = 'padding:12px;margin:8px 0;border:1px solid rgba(0,255,255,0.3);border-radius:6px;background:rgba(0,255,255,0.05);color:var(--cyan);font-size:13px;line-height:1.5';
+        note.innerHTML = '🌞 <b>KID SOL Orchestrator Mode</b><br>KID SOL will analyze your objective, confer with Kid Solar ☀️ for technical expertise via the Bulletin Board, then distribute tasks to all 20 agents based on inferred needs.';
+        if (catGrid) catGrid.parentNode.insertBefore(note, catGrid);
+      } else {
+        inferNote.style.display = 'block';
+      }
+    } else {
+      if (catGrid) catGrid.style.display = '';
+      if (catLabel) catLabel.style.display = '';
+      if (inferNote) inferNote.style.display = 'none';
+    }
+  });
   var grid = document.getElementById('crCategoryGrid');
   if (!grid) return;
   grid.innerHTML = '';
@@ -1466,7 +1488,7 @@ async function runCustomTask() {
   var checked = Array.from(document.querySelectorAll('#crCategoryGrid input[type=checkbox]:checked')).map(function(cb) { return cb.value; });
 
   if (!agentCode) { statusEl.textContent = '⚠️ Select an agent'; statusEl.style.color = '#ff4444'; return; }
-  if (checked.length < 1 || checked.length > 5) { statusEl.textContent = '⚠️ Select 1–5 categories'; statusEl.style.color = '#ff4444'; return; }
+  if (agentCode !== 'ks' && (checked.length < 1 || checked.length > 5)) { statusEl.textContent = '⚠️ Select 1–5 categories'; statusEl.style.color = '#ff4444'; return; }
   if (!purpose) { statusEl.textContent = '⚠️ Enter a purpose'; statusEl.style.color = '#ff4444'; return; }
 
   btn.disabled = true;
@@ -1479,7 +1501,7 @@ async function runCustomTask() {
     var res = await fetch('/api/agents/daily-tasks/custom-run', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ agentCode: agentCode, categories: checked, purpose: purpose })
+      body: JSON.stringify(agentCode === 'ks' ? { agentCode: agentCode, purpose: purpose } : { agentCode: agentCode, categories: checked, purpose: purpose })
     });
     var data = await res.json();
     resultsEl.style.display = 'block';
@@ -1490,7 +1512,39 @@ async function runCustomTask() {
       var html = '<div style="margin-bottom:8px;font-family:Orbitron,sans-serif;color:var(--green);font-size:14px">' + (isOrchestrated ? '🌞 KID SOL Orchestrated Run' : '🎯 Custom Run Results') + '</div>';
       html += '<div style="color:var(--cyan)">Run Type: <b>' + (data.runType || 'custom') + '</b></div>';
       html += '<div style="color:var(--gold)">Purpose: <b>' + (data.purpose || purpose) + '</b></div>';
-      html += '<div>Categories: <b>' + (data.customCategories || checked).join(', ') + '</b></div>';
+      if (isOrchestrated && data.inferenceChain) {
+        var chain = data.inferenceChain;
+        html += '<div style="margin:10px 0;padding:10px;border:1px solid rgba(255,215,0,0.3);border-radius:6px;background:rgba(255,215,0,0.05)">';
+        html += '<div style="color:var(--gold);font-weight:600;margin-bottom:6px">🌞 KID SOL Needs Analysis</div>';
+        html += '<div style="font-size:12px;color:#ccc;margin-bottom:4px">' + (chain.kidSolAnalysis.reasoning || '') + '</div>';
+        html += '<div style="font-size:12px">Inferred: <b style="color:var(--cyan)">' + (chain.kidSolAnalysis.inferredCategories || []).join(', ') + '</b></div>';
+        if (chain.kidSolAnalysis.needsAnalysis) {
+          var needs = chain.kidSolAnalysis.needsAnalysis;
+          Object.keys(needs).forEach(function(cat) {
+            html += '<div style="font-size:11px;padding:2px 0 0 12px;color:#aaa">• <b>' + cat + '</b>: ' + needs[cat] + '</div>';
+          });
+        }
+        html += '</div>';
+        html += '<div style="margin:10px 0;padding:10px;border:1px solid rgba(255,165,0,0.3);border-radius:6px;background:rgba(255,165,0,0.05)">';
+        html += '<div style="color:orange;font-weight:600;margin-bottom:6px">☀️ Kid Solar Technical Review</div>';
+        html += '<div style="font-size:12px;color:#ccc;margin-bottom:4px">Adjustments: ' + (chain.kidSolarConsultation.adjustments || 'none') + '</div>';
+        html += '<div style="font-size:12px">Approved: <b style="color:var(--green)">' + (chain.kidSolarConsultation.approvedCategories || []).join(', ') + '</b></div>';
+        html += '<div style="font-size:12px">Guidance: <i>' + (chain.kidSolarConsultation.agentGuidance || '') + '</i></div>';
+        html += '<div style="font-size:12px">Confidence: <b>' + (chain.kidSolarConsultation.confidence || '?') + '</b></div>';
+        if (chain.kidSolarConsultation.technicalNotes) {
+          var notes = chain.kidSolarConsultation.technicalNotes;
+          Object.keys(notes).forEach(function(cat) {
+            html += '<div style="font-size:11px;padding:2px 0 0 12px;color:#aaa">• <b>' + cat + '</b>: ' + notes[cat] + '</div>';
+          });
+        }
+        html += '</div>';
+        html += '<div style="font-size:12px;margin-bottom:6px">Final Categories: <b style="color:var(--green)">' + (chain.finalCategories || []).join(', ') + '</b></div>';
+        if (chain.bulletinThreadId) {
+          html += '<div style="font-size:11px;color:var(--cyan)">📋 Bulletin Board Thread #' + chain.bulletinThreadId + '</div>';
+        }
+      } else {
+        html += '<div>Categories: <b>' + (data.inferredCategories || data.customCategories || checked).join(', ') + '</b></div>';
+      }
       if (isOrchestrated) {
         html += '<div>Agents Deployed: <b style="color:var(--cyan)">' + (data.deployed || 0) + '</b></div>';
       }

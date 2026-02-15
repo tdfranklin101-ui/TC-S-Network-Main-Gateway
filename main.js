@@ -12612,12 +12612,17 @@ Only include products where you have found a real URL. Do not make up URLs.`
       const agentCode = body.agentCode || body.code;
       const categories = body.categories;
       const purpose = body.purpose;
-      if (!agentCode || !categories || !Array.isArray(categories) || !purpose) {
+      if (!agentCode || !purpose) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: false, error: 'agentCode, categories (array), and purpose (string) are all required' }));
+        res.end(JSON.stringify({ success: false, error: 'agentCode and purpose are required' }));
         return;
       }
-      console.log(`🎯 [CUSTOM-RUN] Agent ${agentCode} | Categories: ${categories.join(', ')} | Purpose: ${purpose}`);
+      if (agentCode !== 'ks' && (!categories || !Array.isArray(categories) || categories.length < 1)) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'categories (array) required for non-orchestrator agents' }));
+        return;
+      }
+      console.log(`🎯 [CUSTOM-RUN] Agent ${agentCode} | ${agentCode === 'ks' ? 'KID SOL Orchestrator — inferring categories' : 'Categories: ' + categories.join(', ')} | Purpose: ${purpose}`);
       const result = await runCustomAgentTask(pool, NETWORK_AGENTS, agentCode, categories, purpose);
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(result));

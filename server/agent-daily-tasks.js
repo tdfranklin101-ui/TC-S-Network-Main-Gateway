@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const { generateKidSolObjectives, makeAgentDecision, gatherMarketSnapshot, postToBulletin, gatherRound2Snapshot, makeRound2Decision, generateBulletinReply } = require('./agent-inference');
+const { generateKidSolObjectives, makeAgentDecision, gatherMarketSnapshot, postToBulletin, gatherRound2Snapshot, makeRound2Decision, generateBulletinReply, inferObjectiveNeeds, consultKidSolar } = require('./agent-inference');
 
 async function addBulletinReply(pool, postId, agentCode, agentName, memberId, message, replyType, negotiation) {
   const post = await pool.query('SELECT * FROM agent_bulletin_board WHERE id = $1', [postId]);
@@ -1034,17 +1034,17 @@ async function runCustomAgentTask(pool, agents, agentCode, customCategories, pur
     return { success: false, error: `Agent with code ${agentCode} not found`, timestamp: new Date().toISOString() };
   }
 
-  const invalidCategories = customCategories.filter(c => !ALL_CATEGORIES.includes(c));
+  if (agentCode === 'ks') {
+    return await runKidSolOrchestratedCustom(pool, agents, purpose);
+  }
+
+  const invalidCategories = (customCategories || []).filter(c => !ALL_CATEGORIES.includes(c));
   if (invalidCategories.length > 0) {
     return { success: false, error: `Invalid categories: ${invalidCategories.join(', ')}`, validCategories: ALL_CATEGORIES, timestamp: new Date().toISOString() };
   }
 
-  if (customCategories.length < 1 || customCategories.length > 5) {
+  if (!customCategories || customCategories.length < 1 || customCategories.length > 5) {
     return { success: false, error: 'Must select between 1 and 5 categories', timestamp: new Date().toISOString() };
-  }
-
-  if (agentCode === 'ks') {
-    return await runKidSolOrchestratedCustom(pool, agents, customCategories, purpose);
   }
 
   console.log(`\n🎯 [KID SOL] Custom run for ${agent.name}: ${purpose}`);
@@ -1081,45 +1081,93 @@ async function runCustomAgentTask(pool, agents, agentCode, customCategories, pur
   return status;
 }
 
-async function runKidSolOrchestratedCustom(pool, agents, customCategories, purpose) {
+async function runKidSolOrchestratedCustom(pool, agents, purpose) {
   const startTime = Date.now();
   const runId = crypto.randomUUID().substring(0, 8);
   const workerAgents = agents.filter(a => a.code !== 'ks' && a.code !== 'ksr');
 
   console.log(`\n🌞 ===== KID SOL ORCHESTRATED CUSTOM RUN (${runId}) =====`);
-  console.log(`🌞 [KID SOL] Purpose: ${purpose}`);
-  console.log(`🌞 [KID SOL] Categories: ${customCategories.join(', ')}`);
-  console.log(`🌞 [KID SOL] Deploying ${workerAgents.length} worker agents...`);
+  console.log(`🌞 [KID SOL] Objective: ${purpose}`);
+  console.log(`🌞 [KID SOL] Step 1: Analyzing objective needs...`);
 
   await ensureAgentMembers(pool, agents);
 
   const demand = await analyzeMarketDemand(pool);
 
-  console.log('👑 [KID SOL] Generating orchestrated objectives...');
-  const kidSolObjectives = await generateKidSolObjectives(pool, demand.scores, demand.gaps, demand.totalInventory, demand.memberRequests);
-  kidSolObjectives.dailyDirective = `CUSTOM MISSION: ${purpose}. ${kidSolObjectives.dailyDirective || ''}`;
+  const kidSolAnalysis = await inferObjectiveNeeds(purpose, ALL_CATEGORIES, demand);
+  console.log(`🌞 [KID SOL] Inferred ${kidSolAnalysis.inferredCategories.length} categories: ${kidSolAnalysis.inferredCategories.join(', ')}`);
 
+  let bulletinThreadId = null;
+  let ksMemberId = null;
+  let ksrMemberId = null;
   try {
-    const kidSolMember = await pool.query("SELECT id FROM members WHERE username = 'agent_eco_ks' LIMIT 1");
-    if (kidSolMember.rows.length > 0) {
-      await postToBulletin(pool, kidSolMember.rows[0].id, 'ks', 'KID SOL', {
+    const ksResult = await pool.query("SELECT id FROM members WHERE username = 'agent_eco_ks' LIMIT 1");
+    const ksrResult = await pool.query("SELECT id FROM members WHERE username = 'agent_eco_ksr' LIMIT 1");
+    ksMemberId = ksResult.rows.length > 0 ? ksResult.rows[0].id : null;
+    ksrMemberId = ksrResult.rows.length > 0 ? ksrResult.rows[0].id : null;
+
+    if (ksMemberId) {
+      const needsBreakdown = Object.entries(kidSolAnalysis.needsAnalysis || {})
+        .map(([cat, why]) => `• ${cat}: ${why}`)
+        .join('\n');
+      const bulletinPost = await postToBulletin(pool, ksMemberId, 'ks', 'KID SOL', {
         type: 'directive',
-        title: `Custom Mission — ${purpose}`,
-        body: `KID SOL is orchestrating a custom mission across ${workerAgents.length} agents.\nCategories: ${customCategories.join(', ')}\nObjective: ${purpose}\n${kidSolObjectives.tradingGuidance || ''}`,
-        targetCategory: customCategories[0],
-        priceSolar: null
+        title: `Mission Analysis — ${purpose}`,
+        body: `🌞 KID SOL Objective Analysis\n\nCustomer Request: "${purpose}"\n\nInferred Categories (${kidSolAnalysis.inferredCategories.length}):\n${needsBreakdown}\n\nPriority: ${kidSolAnalysis.priorityOrder.join(' → ')}\nScope: ${kidSolAnalysis.estimatedScope}\nReasoning: ${kidSolAnalysis.reasoning}\n\n☀️ Kid Solar — requesting your technical review.`,
+        targetCategory: kidSolAnalysis.inferredCategories[0],
+        priceSolar: null,
+        targetAgentCode: 'ksr'
       });
+      bulletinThreadId = bulletinPost ? bulletinPost.id : null;
     }
-  } catch (dirErr) {
-    console.warn('⚠️ [KID SOL] Could not post custom directive to bulletin:', dirErr.message);
+  } catch (postErr) {
+    console.warn('⚠️ [KID SOL] Could not post analysis to bulletin:', postErr.message);
   }
 
-  const agentsPerCategory = Math.max(1, Math.floor(workerAgents.length / customCategories.length));
+  console.log(`☀️ [Kid Solar] Step 2: Technical consultation...`);
+  const kidSolarConsultation = await consultKidSolar(purpose, kidSolAnalysis, ALL_CATEGORIES, demand);
+
+  if (bulletinThreadId && ksrMemberId) {
+    try {
+      const techNotes = Object.entries(kidSolarConsultation.technicalNotes || {})
+        .map(([cat, note]) => `• ${cat}: ${note}`)
+        .join('\n');
+      await addBulletinReply(pool, bulletinThreadId, 'ksr', 'Kid Solar', ksrMemberId,
+        `☀️ Kid Solar Technical Review\n\nApproved Categories: ${kidSolarConsultation.approvedCategories.join(', ')}\n\n${techNotes ? 'Technical Notes:\n' + techNotes : ''}\n\nAdjustments: ${kidSolarConsultation.adjustments}\nAgent Guidance: ${kidSolarConsultation.agentGuidance}\nConfidence: ${kidSolarConsultation.confidence}`,
+        'info',
+        null
+      );
+    } catch (replyErr) {
+      console.warn('⚠️ [Kid Solar] Could not reply to bulletin thread:', replyErr.message);
+    }
+  }
+
+  const finalCategories = kidSolarConsultation.approvedCategories;
+  console.log(`🌞 [KID SOL] Step 3: Final categories (${finalCategories.length}): ${finalCategories.join(', ')}`);
+  console.log(`🌞 [KID SOL] Deploying ${workerAgents.length} worker agents...`);
+
+  console.log('👑 [KID SOL] Generating orchestrated objectives...');
+  const kidSolObjectives = await generateKidSolObjectives(pool, demand.scores, demand.gaps, demand.totalInventory, demand.memberRequests);
+  kidSolObjectives.dailyDirective = `CUSTOM MISSION: ${purpose}. Agent Guidance from Kid Solar: ${kidSolarConsultation.agentGuidance || ''}. ${kidSolObjectives.dailyDirective || ''}`;
+
+  if (bulletinThreadId && ksMemberId) {
+    try {
+      await addBulletinReply(pool, bulletinThreadId, 'ks', 'KID SOL', ksMemberId,
+        `🌞 Deployment Confirmed\n\nFinal categories: ${finalCategories.join(', ')}\nAgents deployed: ${workerAgents.length}\nMission: ${purpose}\n\nAll agents — execute with profit intent. Kid Solar's technical guidance applies.`,
+        'accept',
+        null
+      );
+    } catch (deployErr) {
+      console.warn('⚠️ [KID SOL] Could not post deployment confirmation:', deployErr.message);
+    }
+  }
+
+  const agentsPerCategory = Math.max(1, Math.floor(workerAgents.length / finalCategories.length));
   const assignments = {};
   let agentIndex = 0;
 
-  for (const category of customCategories) {
-    const count = (category === customCategories[customCategories.length - 1])
+  for (const category of finalCategories) {
+    const count = (category === finalCategories[finalCategories.length - 1])
       ? workerAgents.length - agentIndex
       : agentsPerCategory;
     for (let i = 0; i < count && agentIndex < workerAgents.length; i++, agentIndex++) {
@@ -1140,7 +1188,7 @@ async function runKidSolOrchestratedCustom(pool, agents, customCategories, purpo
   let projectedProfit = 0;
 
   for (const worker of workerAgents) {
-    const assignedCategories = assignments[worker.code] || [customCategories[0]];
+    const assignedCategories = assignments[worker.code] || [finalCategories[0]];
     const result = await runAgentTasks(pool, worker, assignedCategories, demand.scores, kidSolObjectives);
     agentResults.push(result);
     totalCreated += result.created.length;
@@ -1157,7 +1205,8 @@ async function runKidSolOrchestratedCustom(pool, agents, customCategories, purpo
   const healthPct = workerAgents.length > 0 ? Math.round((successfulAgents / workerAgents.length) * 100) : 0;
 
   console.log(`\n🌞 ===== KID SOL ORCHESTRATED CUSTOM RUN COMPLETE (${runId}) =====`);
-  console.log(`   Purpose: ${purpose}`);
+  console.log(`   Objective: ${purpose}`);
+  console.log(`   Inferred Categories: ${finalCategories.join(', ')}`);
   console.log(`   Deployed: ${workerAgents.length} workers | Health: ${healthPct}%`);
   console.log(`   Created: ${totalCreated} artifacts | Purchased: ${totalPurchased} items`);
   console.log(`   Resale Listed: ${totalResaleListed} | Projected Profit: ${projectedProfit.toFixed(4)} S`);
@@ -1168,11 +1217,29 @@ async function runKidSolOrchestratedCustom(pool, agents, customCategories, purpo
     runId,
     runType: 'orchestrated-custom',
     purpose,
-    customCategories,
+    inferredCategories: finalCategories,
     provisionaire: 'KID SOL',
     orchestrator: true,
     profitObjective: true,
     kidSolObjectives,
+    inferenceChain: {
+      kidSolAnalysis: {
+        inferredCategories: kidSolAnalysis.inferredCategories,
+        needsAnalysis: kidSolAnalysis.needsAnalysis,
+        priorityOrder: kidSolAnalysis.priorityOrder,
+        reasoning: kidSolAnalysis.reasoning,
+        estimatedScope: kidSolAnalysis.estimatedScope
+      },
+      kidSolarConsultation: {
+        approvedCategories: kidSolarConsultation.approvedCategories,
+        technicalNotes: kidSolarConsultation.technicalNotes,
+        adjustments: kidSolarConsultation.adjustments,
+        agentGuidance: kidSolarConsultation.agentGuidance,
+        confidence: kidSolarConsultation.confidence
+      },
+      finalCategories,
+      bulletinThreadId
+    },
     agentResults,
     deployed: workerAgents.length,
     healthPercent: healthPct,
@@ -1180,9 +1247,8 @@ async function runKidSolOrchestratedCustom(pool, agents, customCategories, purpo
     totalPurchased,
     totalResaleListed,
     projectedProfit: parseFloat(projectedProfit.toFixed(6)),
-    totalErrors,
-    timestamp: new Date().toISOString(),
-    elapsedSeconds: parseFloat(elapsed)
+    elapsed: `${elapsed}s`,
+    timestamp: new Date().toISOString()
   };
 
   lastRunStatus = status;

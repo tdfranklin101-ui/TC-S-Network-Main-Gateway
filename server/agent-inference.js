@@ -691,4 +691,125 @@ Craft your reply. ${isFinalReply ? 'You must accept or decline.' : 'You may offe
   }
 }
 
-module.exports = { generateKidSolObjectives, makeAgentDecision, gatherMarketSnapshot, postToBulletin, gatherRound2Snapshot, makeRound2Decision, generateBulletinReply };
+async function inferObjectiveNeeds(purpose, allCategories, demandContext) {
+  try {
+    const categoryList = allCategories.join(', ');
+    const demandInfo = demandContext ? 
+      `Current demand scores: ${Object.entries(demandContext.scores || {}).sort((a,b) => b[1]-a[1]).slice(0,10).map(([c,s]) => `${c}:${s.toFixed(1)}`).join(', ')}\nSupply gaps: ${(demandContext.gaps || []).join(', ') || 'none'}` : '';
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      temperature: 0.5,
+      max_tokens: 600,
+      response_format: { type: 'json_object' },
+      messages: [
+        { role: 'system', content: `You are KID SOL, the Provisionaire orchestrator of the TC-S Solar Network. A customer has submitted an objective request. Your job is to analyze what materials, services, and resources are needed to fulfill this objective. You must select from the available marketplace categories and explain WHY each is needed for this specific objective. Think about what the customer actually needs — not just obvious categories but supporting materials, tools, documentation, and creative assets that make the deliverable complete.` },
+        { role: 'user', content: `CUSTOMER OBJECTIVE: "${purpose}"
+
+AVAILABLE CATEGORIES: ${categoryList}
+
+${demandInfo}
+
+Analyze this objective and determine what categories of materials and services are needed. Return JSON:
+{
+  "inferredCategories": ["category1", "category2", ...],
+  "needsAnalysis": { "category1": "why this category is needed for the objective", ... },
+  "priorityOrder": ["most important category first", ...],
+  "reasoning": "KID SOL's overall analysis of what the customer needs",
+  "estimatedScope": "small|medium|large"
+}
+
+Select between 2-8 categories. Only select categories that genuinely serve this objective.` }
+      ]
+    });
+
+    const content = response.choices[0]?.message?.content;
+    if (!content) throw new Error('Empty response from KID SOL inference');
+    const analysis = JSON.parse(content);
+    
+    analysis.inferredCategories = (analysis.inferredCategories || []).filter(c => allCategories.includes(c));
+    if (analysis.inferredCategories.length === 0) {
+      analysis.inferredCategories = ['Basic Needs', 'Software'];
+    }
+    analysis.priorityOrder = (analysis.priorityOrder || analysis.inferredCategories).filter(c => allCategories.includes(c));
+    
+    console.log(`🌞 [KID SOL] Objective analysis: ${analysis.inferredCategories.length} categories inferred`);
+    console.log(`🌞 [KID SOL] Categories: ${analysis.inferredCategories.join(', ')}`);
+    console.log(`🌞 [KID SOL] Reasoning: ${analysis.reasoning}`);
+    return analysis;
+  } catch (err) {
+    console.warn('⚠️ [KID SOL] Objective inference failed, using demand-based fallback:', err.message);
+    const topCats = Object.entries(demandContext?.scores || {})
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 4)
+      .map(([c]) => c);
+    if (!topCats.includes('Basic Needs')) topCats.unshift('Basic Needs');
+    return {
+      inferredCategories: topCats.slice(0, 5),
+      needsAnalysis: Object.fromEntries(topCats.slice(0, 5).map(c => [c, 'Demand-based fallback selection'])),
+      priorityOrder: topCats.slice(0, 5),
+      reasoning: 'Fallback: using top demand categories due to inference failure',
+      estimatedScope: 'medium'
+    };
+  }
+}
+
+async function consultKidSolar(purpose, kidSolAnalysis, allCategories, demandContext) {
+  try {
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      temperature: 0.5,
+      max_tokens: 600,
+      response_format: { type: 'json_object' },
+      messages: [
+        { role: 'system', content: `You are Kid Solar, the computronium polymath of the TC-S Solar Network. You are a designer, implementer, and technical expert across all domains. KID SOL has analyzed a customer objective and selected categories. Your role is to review her analysis with your technical expertise — confirm what's right, add anything she missed, remove anything unnecessary, and provide technical guidance on how agents should approach each category for this specific objective. You work WITH KID SOL, not against her. Be constructive and specific.` },
+        { role: 'user', content: `CUSTOMER OBJECTIVE: "${purpose}"
+
+KID SOL'S ANALYSIS:
+Categories selected: ${kidSolAnalysis.inferredCategories.join(', ')}
+Reasoning: ${kidSolAnalysis.reasoning}
+Needs breakdown: ${JSON.stringify(kidSolAnalysis.needsAnalysis)}
+Priority order: ${kidSolAnalysis.priorityOrder.join(' → ')}
+Scope: ${kidSolAnalysis.estimatedScope}
+
+ALL AVAILABLE CATEGORIES: ${allCategories.join(', ')}
+
+Review KID SOL's analysis. Return JSON:
+{
+  "approvedCategories": ["final list of categories after your review"],
+  "technicalNotes": { "category1": "technical guidance for agents working this category", ... },
+  "adjustments": "what you changed from KID SOL's plan and why (or 'none')",
+  "agentGuidance": "one sentence of technical direction for the worker agents",
+  "confidence": "low|medium|high"
+}
+
+Keep 2-8 categories. Only make changes if technically justified.` }
+      ]
+    });
+
+    const content = response.choices[0]?.message?.content;
+    if (!content) throw new Error('Empty response from Kid Solar');
+    const consultation = JSON.parse(content);
+    
+    consultation.approvedCategories = (consultation.approvedCategories || kidSolAnalysis.inferredCategories).filter(c => allCategories.includes(c));
+    if (consultation.approvedCategories.length === 0) {
+      consultation.approvedCategories = kidSolAnalysis.inferredCategories;
+    }
+    
+    console.log(`☀️ [Kid Solar] Consultation complete: ${consultation.approvedCategories.length} categories approved`);
+    console.log(`☀️ [Kid Solar] Adjustments: ${consultation.adjustments}`);
+    console.log(`☀️ [Kid Solar] Confidence: ${consultation.confidence}`);
+    return consultation;
+  } catch (err) {
+    console.warn('⚠️ [Kid Solar] Consultation failed, using KID SOL analysis as-is:', err.message);
+    return {
+      approvedCategories: kidSolAnalysis.inferredCategories,
+      technicalNotes: {},
+      adjustments: 'Kid Solar consultation unavailable — using KID SOL analysis directly',
+      agentGuidance: 'Follow KID SOL directives as specified',
+      confidence: 'medium'
+    };
+  }
+}
+
+module.exports = { generateKidSolObjectives, makeAgentDecision, gatherMarketSnapshot, postToBulletin, gatherRound2Snapshot, makeRound2Decision, generateBulletinReply, inferObjectiveNeeds, consultKidSolar };
