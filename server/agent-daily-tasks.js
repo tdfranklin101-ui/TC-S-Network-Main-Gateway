@@ -5,7 +5,9 @@ async function addBulletinReply(pool, postId, agentCode, agentName, memberId, me
   const post = await pool.query('SELECT * FROM agent_bulletin_board WHERE id = $1', [postId]);
   if (post.rows.length === 0) return null;
   const currentPost = post.rows[0];
-  if (currentPost.thread_status !== 'open' || (currentPost.reply_count || 0) >= 4) return null;
+  const isDirective = currentPost.post_type === 'directive';
+  if (!isDirective && ((currentPost.reply_count || 0) >= 4)) return null;
+  if (currentPost.thread_status !== 'open') return null;
 
   if (negotiation && negotiation.discountPct && negotiation.discountPct > 20) {
     negotiation.discountPct = 20;
@@ -22,14 +24,15 @@ async function addBulletinReply(pool, postId, agentCode, agentName, memberId, me
   const newReplyCount = replies.length;
 
   let newThreadStatus = 'open';
-  if (newReplyCount >= 4) {
+  if (!isDirective && newReplyCount >= 4) {
     if (replyType === 'accept') newThreadStatus = 'deal_accepted';
     else if (replyType === 'decline') newThreadStatus = 'no_deal';
     else newThreadStatus = 'closed';
   }
 
   let finalPrice = currentPost.final_price;
-  if (negotiation && negotiation.proposedPrice && (replyType === 'accept' || newReplyCount >= 4)) {
+  const priceThreshold = isDirective ? Infinity : 4;
+  if (negotiation && negotiation.proposedPrice && (replyType === 'accept' || newReplyCount >= priceThreshold)) {
     finalPrice = negotiation.proposedPrice;
   }
 
@@ -82,6 +85,29 @@ const ITEM_PARTS = {
 const MARKET_DEMAND = ['Basic Needs','Energy','Computronium','Software','AI Tools','Songs','Videos','Music','Art','Rent','Culture','Video','Photo','Writing','AI Create','Docs','Education','Games','Utilities','3D Printing'];
 
 const ALL_CATEGORIES = Object.keys(ITEM_PARTS);
+
+const DELIVERY_TYPES = {
+  'Computronium': 'virtual',
+  'Culture': 'virtual',
+  'Basic Needs': 'future-physical',
+  'Rent': 'virtual',
+  'Energy': 'virtual',
+  'Music': 'virtual',
+  'Songs': 'virtual',
+  'Video': 'virtual',
+  'Videos': 'virtual',
+  'Art': 'virtual',
+  'Photo': 'virtual',
+  'Writing': 'virtual',
+  'AI Tools': 'virtual',
+  'AI Create': 'virtual',
+  'Software': 'virtual',
+  'Docs': 'virtual',
+  'Games': 'virtual',
+  'Utilities': 'virtual',
+  'Education': 'virtual',
+  '3D Printing': '3d-print-code'
+};
 
 let lastRunStatus = null;
 let lastRound2Status = null;
@@ -1197,6 +1223,27 @@ async function runKidSolOrchestratedCustom(pool, agents, purpose) {
     if (result.purchased.length > 0 && result.purchased[0].resalePrice) {
       projectedProfit += (result.purchased[0].resalePrice - result.purchased[0].price);
     }
+
+    if (bulletinThreadId && result.created.length > 0) {
+      try {
+        const workerMemberRow = await pool.query("SELECT id FROM members WHERE username = $1 LIMIT 1", [`agent_eco_${worker.code}`]);
+        if (workerMemberRow.rows.length > 0) {
+          const workerMemberId = workerMemberRow.rows[0].id;
+          const actualCategory = result.created[0].category || assignedCategories[0];
+          const deliveryType = DELIVERY_TYPES[actualCategory] || 'virtual';
+          const deliveryLabel = deliveryType === '3d-print-code' ? '🏭 3D Print Code' : deliveryType === 'future-physical' ? '📦 Future Physical' : '⚡ Virtual Delivery';
+          const createdList = result.created.map(item => `• ${item.title} (${item.category}) [${DELIVERY_TYPES[item.category] || 'virtual'}] — ${item.price.toFixed(4)} S`).join('\n');
+          const purchasedNote = result.purchased.length > 0 ? `\nPurchased for resale: ${result.purchased.map(p => p.title).join(', ')}` : '';
+          await addBulletinReply(pool, bulletinThreadId, worker.code, worker.name, workerMemberId,
+            `${deliveryLabel} Fulfillment Report — ${worker.name}\n\nAssigned: ${assignedCategories.join(', ')}\nDelivered:\n${createdList}${purchasedNote}\n\nObjective: ${purpose}`,
+            'info',
+            null
+          );
+        }
+      } catch (fulfillErr) {
+        console.warn(`⚠️ [${worker.code}] Could not post fulfillment to bulletin:`, fulfillErr.message);
+      }
+    }
   }
 
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
@@ -1247,6 +1294,11 @@ async function runKidSolOrchestratedCustom(pool, agents, purpose) {
     totalPurchased,
     totalResaleListed,
     projectedProfit: parseFloat(projectedProfit.toFixed(6)),
+    deliverySummary: {
+      virtual: agentResults.filter(r => r.created.some(c => (DELIVERY_TYPES[c.category] || 'virtual') === 'virtual')).length,
+      '3d-print-code': agentResults.filter(r => r.created.some(c => DELIVERY_TYPES[c.category] === '3d-print-code')).length,
+      'future-physical': agentResults.filter(r => r.created.some(c => DELIVERY_TYPES[c.category] === 'future-physical')).length
+    },
     elapsed: `${elapsed}s`,
     timestamp: new Date().toISOString()
   };

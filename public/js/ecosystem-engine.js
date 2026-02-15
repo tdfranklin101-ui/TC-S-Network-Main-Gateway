@@ -1542,6 +1542,14 @@ async function runCustomTask() {
         if (chain.bulletinThreadId) {
           html += '<div style="font-size:11px;color:var(--cyan)">📋 Bulletin Board Thread #' + chain.bulletinThreadId + '</div>';
         }
+      if (data.deliverySummary) {
+        html += '<div style="margin:8px 0;font-size:12px">';
+        html += '<b>Delivery Types:</b> ';
+        if (data.deliverySummary.virtual > 0) html += '<span style="color:var(--cyan)">⚡ Virtual: ' + data.deliverySummary.virtual + '</span> ';
+        if (data.deliverySummary['3d-print-code'] > 0) html += '<span style="color:orange">🏭 3D Print: ' + data.deliverySummary['3d-print-code'] + '</span> ';
+        if (data.deliverySummary['future-physical'] > 0) html += '<span style="color:var(--purple)">📦 Physical (future): ' + data.deliverySummary['future-physical'] + '</span> ';
+        html += '</div>';
+      }
       } else {
         html += '<div>Categories: <b>' + (data.inferredCategories || data.customCategories || checked).join(', ') + '</b></div>';
       }
@@ -1641,13 +1649,13 @@ async function refreshBulletin() {
       threadEl.innerHTML =
         '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
           '<span style="font-size:11px;color:var(--cyan);font-weight:bold">' + (post.author_name || 'Unknown') + '</span>' +
-          '<span style="font-size:10px;padding:2px 6px;border-radius:3px;background:rgba(255,255,255,0.1);color:' + statusColor + '">' + statusLabel + ' (' + (post.reply_count || 0) + '/4)</span>' +
+          '<span style="font-size:10px;padding:2px 6px;border-radius:3px;background:rgba(255,255,255,0.1);color:' + statusColor + '">' + statusLabel + ' (' + (post.reply_count || 0) + '/' + (post.post_type === 'directive' ? '50' : '4') + ')</span>' +
         '</div>' +
         '<div style="font-size:12px;font-weight:bold;color:#fff;margin-bottom:4px">' + (post.title || '') + '</div>' +
         '<div style="font-size:11px;color:#bbb;margin-bottom:6px">' + (post.body || '') + '</div>' +
         (post.target_category ? '<span style="font-size:10px;padding:2px 6px;background:rgba(0,255,255,0.1);border-radius:3px;color:var(--cyan)">' + post.target_category + '</span>' : '') +
         (post.price_solar ? '<span style="font-size:10px;margin-left:8px;color:var(--green)">' + parseFloat(post.price_solar).toFixed(4) + ' ☀️</span>' : '') +
-        (repliesHtml ? '<div style="margin-top:8px;border-top:1px solid var(--border);padding-top:6px"><div style="font-size:10px;color:#888;margin-bottom:4px">Conversation (' + replies.length + '/4):</div>' + repliesHtml + '</div>' : '');
+        (repliesHtml ? '<div style="margin-top:8px;border-top:1px solid var(--border);padding-top:6px"><div style="font-size:10px;color:#888;margin-bottom:4px">Conversation (' + replies.length + '/' + (post.post_type === 'directive' ? '50' : '4') + '):</div>' + repliesHtml + '</div>' : '');
       container.appendChild(threadEl);
     }
 
