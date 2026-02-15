@@ -12622,8 +12622,9 @@ Only include products where you have found a real URL. Do not make up URLs.`
         res.end(JSON.stringify({ success: false, error: 'categories (array) required for non-orchestrator agents' }));
         return;
       }
-      console.log(`🎯 [CUSTOM-RUN] Agent ${agentCode} | ${agentCode === 'ks' ? 'KID SOL Orchestrator — inferring categories' : 'Categories: ' + categories.join(', ')} | Purpose: ${purpose}`);
-      const result = await runCustomAgentTask(pool, NETWORK_AGENTS, agentCode, categories, purpose);
+      const requestorId = body.requestorId || null;
+      console.log(`🎯 [CUSTOM-RUN] Agent ${agentCode} | ${agentCode === 'ks' ? 'KID SOL Orchestrator — inferring categories' : 'Categories: ' + categories.join(', ')} | Purpose: ${purpose}${requestorId ? ' | Requestor: ' + requestorId : ''}`);
+      const result = await runCustomAgentTask(pool, NETWORK_AGENTS, agentCode, categories, purpose, requestorId);
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(result));
     } catch (error) {

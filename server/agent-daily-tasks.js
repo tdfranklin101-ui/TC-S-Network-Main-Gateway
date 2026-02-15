@@ -1054,14 +1054,14 @@ async function runEducationBlitz(pool, agents) {
   return { success: totalErrors === 0, totalCreated, totalErrors, results, elapsed: parseFloat(elapsed), timestamp: new Date().toISOString() };
 }
 
-async function runCustomAgentTask(pool, agents, agentCode, customCategories, purpose) {
+async function runCustomAgentTask(pool, agents, agentCode, customCategories, purpose, requestorId) {
   const agent = agents.find(a => a.code === agentCode);
   if (!agent) {
     return { success: false, error: `Agent with code ${agentCode} not found`, timestamp: new Date().toISOString() };
   }
 
   if (agentCode === 'ks') {
-    return await runKidSolOrchestratedCustom(pool, agents, purpose);
+    return await runKidSolOrchestratedCustom(pool, agents, purpose, requestorId);
   }
 
   const invalidCategories = (customCategories || []).filter(c => !ALL_CATEGORIES.includes(c));
@@ -1107,7 +1107,93 @@ async function runCustomAgentTask(pool, agents, agentCode, customCategories, pur
   return status;
 }
 
-async function runKidSolOrchestratedCustom(pool, agents, purpose) {
+const KWH_COMPENSATION_RATE = 0.15;
+
+async function executeCommissionedSale(pool, artifact, creatorMemberId, requestorId) {
+  const client = await pool.connect();
+  try {
+    const creationPrice = parseFloat(artifact.price) || 0.01;
+    const kwhCost = parseFloat(artifact.kwhFootprint || 0);
+    const kwhCompensation = parseFloat((kwhCost * KWH_COMPENSATION_RATE).toFixed(6));
+    const totalAgentPay = parseFloat((creationPrice + kwhCompensation).toFixed(6));
+    const foundationFee = parseFloat((creationPrice * FOUNDATION_FEE_RATE).toFixed(6));
+    const totalRequestorCost = parseFloat((creationPrice + foundationFee).toFixed(6));
+
+    const requestorRow = await client.query('SELECT id, total_solar FROM members WHERE id = $1', [requestorId]);
+    if (requestorRow.rows.length === 0) {
+      return { success: false, error: 'Requestor not found' };
+    }
+    const requestorBalance = parseFloat(requestorRow.rows[0].total_solar) || 0;
+    if (requestorBalance < totalRequestorCost) {
+      return { success: false, error: `Insufficient balance: need ${totalRequestorCost.toFixed(4)} S, have ${requestorBalance.toFixed(4)} S`, shortfall: totalRequestorCost - requestorBalance };
+    }
+
+    const txId = crypto.randomUUID();
+    await client.query('BEGIN');
+
+    const newRequestorBal = requestorBalance - totalRequestorCost;
+    await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(newRequestorBal), requestorId]);
+    await client.query(
+      `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
+       VALUES ($1, 'debit', $2, 'user', $3, $4, 'commission', $5, $6)`,
+      [txId, String(requestorId), String(totalRequestorCost), String(newRequestorBal), String(artifact.artifactId), `Commissioned: ${artifact.title} (price + 5% foundation fee)`]
+    );
+
+    const creatorRow = await client.query('SELECT total_solar FROM members WHERE id = $1', [creatorMemberId]);
+    const creatorOldBal = parseFloat(creatorRow.rows[0]?.total_solar) || 0;
+    const creatorNewBal = creatorOldBal + totalAgentPay;
+    await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(creatorNewBal), creatorMemberId]);
+    await client.query(
+      `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
+       VALUES ($1, 'credit', $2, 'creator', $3, $4, 'commission', $5, $6)`,
+      [txId, String(creatorMemberId), String(totalAgentPay), String(creatorNewBal), String(artifact.artifactId), `Commission fulfilled: ${artifact.title} (creation + ${Math.round(KWH_COMPENSATION_RATE * 100)}% kWh compensation)`]
+    );
+
+    const foundationMember = await getOrCreateFoundationMember(client.query.bind(client));
+    const foundationBalAfter = foundationMember.totalSolar + foundationFee;
+    await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(foundationBalAfter), foundationMember.id]);
+    await client.query(
+      `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
+       VALUES ($1, 'credit', $2, 'foundation', $3, $4, 'foundation_fee', $5, $6)`,
+      [txId, String(foundationMember.id), String(foundationFee), String(foundationBalAfter), String(artifact.artifactId), `Foundation fee (5%): ${artifact.title}`]
+    );
+
+    await client.query(
+      `INSERT INTO artifact_copies (artifact_id, owner_id, purchase_transaction_id, acquired_method, solar_paid) VALUES ($1, $2, $3, 'commission', $4)`,
+      [artifact.artifactId, requestorId, txId, String(totalRequestorCost)]
+    );
+
+    await client.query(
+      `UPDATE artifacts SET current_owner_id = $1 WHERE id = $2`,
+      [requestorId, artifact.artifactId]
+    );
+
+    await client.query('COMMIT');
+
+    return {
+      success: true,
+      txId,
+      title: artifact.title,
+      category: artifact.category,
+      creationPrice,
+      kwhCost,
+      kwhCompensation,
+      totalAgentPay,
+      foundationFee,
+      totalRequestorCost,
+      requestorNewBalance: newRequestorBal,
+      creatorNewBalance: creatorNewBal
+    };
+  } catch (err) {
+    try { await client.query('ROLLBACK'); } catch (rbErr) {}
+    console.error(`[COMMISSION] Sale error for "${artifact.title}":`, err.message);
+    return { success: false, error: err.message };
+  } finally {
+    client.release();
+  }
+}
+
+async function runKidSolOrchestratedCustom(pool, agents, purpose, requestorId) {
   const startTime = Date.now();
   const runId = crypto.randomUUID().substring(0, 8);
   const workerAgents = agents.filter(a => a.code !== 'ks' && a.code !== 'ksr');
@@ -1212,6 +1298,9 @@ async function runKidSolOrchestratedCustom(pool, agents, purpose) {
   let totalPurchased = 0;
   let totalResaleListed = 0;
   let projectedProfit = 0;
+  const commissionedSales = [];
+  let totalCommissionPaid = 0;
+  let totalRequestorSpent = 0;
 
   for (const worker of workerAgents) {
     const assignedCategories = assignments[worker.code] || [finalCategories[0]];
@@ -1224,18 +1313,44 @@ async function runKidSolOrchestratedCustom(pool, agents, purpose) {
       projectedProfit += (result.purchased[0].resalePrice - result.purchased[0].price);
     }
 
-    if (bulletinThreadId && result.created.length > 0) {
+    if (requestorId && result.created.length > 0) {
       try {
         const workerMemberRow = await pool.query("SELECT id FROM members WHERE username = $1 LIMIT 1", [`agent_eco_${worker.code}`]);
         if (workerMemberRow.rows.length > 0) {
           const workerMemberId = workerMemberRow.rows[0].id;
+          for (const item of result.created) {
+            const kwhRow = await pool.query('SELECT kwh_footprint FROM artifacts WHERE id = $1', [item.artifactId]);
+            const kwhFootprint = kwhRow.rows.length > 0 ? parseFloat(kwhRow.rows[0].kwh_footprint) || 0 : 0;
+            const sale = await executeCommissionedSale(pool, { ...item, kwhFootprint }, workerMemberId, requestorId);
+            if (sale.success) {
+              commissionedSales.push(sale);
+              totalCommissionPaid += sale.totalAgentPay;
+              totalRequestorSpent += sale.totalRequestorCost;
+              console.log(`💰 [COMMISSION] ${worker.name} → Requestor: "${item.title}" | Agent paid ${sale.totalAgentPay.toFixed(4)} S (price ${sale.creationPrice.toFixed(4)} + ${sale.kwhCompensation.toFixed(4)} kWh bonus) | Requestor charged ${sale.totalRequestorCost.toFixed(4)} S`);
+            } else {
+              console.warn(`⚠️ [COMMISSION] Failed for "${item.title}": ${sale.error}`);
+              result.errors.push({ phase: 'commission', error: sale.error, title: item.title });
+            }
+          }
+        }
+      } catch (commErr) {
+        console.warn(`⚠️ [${worker.code}] Commission sale error:`, commErr.message);
+      }
+    }
+
+    if (bulletinThreadId && result.created.length > 0) {
+      try {
+        const workerMemberRow2 = await pool.query("SELECT id FROM members WHERE username = $1 LIMIT 1", [`agent_eco_${worker.code}`]);
+        if (workerMemberRow2.rows.length > 0) {
+          const workerMemberId = workerMemberRow2.rows[0].id;
           const actualCategory = result.created[0].category || assignedCategories[0];
           const deliveryType = DELIVERY_TYPES[actualCategory] || 'virtual';
           const deliveryLabel = deliveryType === '3d-print-code' ? '🏭 3D Print Code' : deliveryType === 'future-physical' ? '📦 Future Physical' : '⚡ Virtual Delivery';
           const createdList = result.created.map(item => `• ${item.title} (${item.category}) [${DELIVERY_TYPES[item.category] || 'virtual'}] — ${item.price.toFixed(4)} S`).join('\n');
+          const saleNote = requestorId ? `\nSold directly to requestor (commissioned)` : '';
           const purchasedNote = result.purchased.length > 0 ? `\nPurchased for resale: ${result.purchased.map(p => p.title).join(', ')}` : '';
           await addBulletinReply(pool, bulletinThreadId, worker.code, worker.name, workerMemberId,
-            `${deliveryLabel} Fulfillment Report — ${worker.name}\n\nAssigned: ${assignedCategories.join(', ')}\nDelivered:\n${createdList}${purchasedNote}\n\nObjective: ${purpose}`,
+            `${deliveryLabel} Fulfillment Report — ${worker.name}\n\nAssigned: ${assignedCategories.join(', ')}\nDelivered:\n${createdList}${saleNote}${purchasedNote}\n\nObjective: ${purpose}`,
             'info',
             null
           );
@@ -1256,7 +1371,11 @@ async function runKidSolOrchestratedCustom(pool, agents, purpose) {
   console.log(`   Inferred Categories: ${finalCategories.join(', ')}`);
   console.log(`   Deployed: ${workerAgents.length} workers | Health: ${healthPct}%`);
   console.log(`   Created: ${totalCreated} artifacts | Purchased: ${totalPurchased} items`);
-  console.log(`   Resale Listed: ${totalResaleListed} | Projected Profit: ${projectedProfit.toFixed(4)} S`);
+  if (requestorId) {
+    console.log(`   Commissioned Sales: ${commissionedSales.length} | Agents Paid: ${totalCommissionPaid.toFixed(4)} S | Requestor Charged: ${totalRequestorSpent.toFixed(4)} S`);
+  } else {
+    console.log(`   Resale Listed: ${totalResaleListed} | Projected Profit: ${projectedProfit.toFixed(4)} S`);
+  }
   console.log(`   Errors: ${totalErrors} | Time: ${elapsed}s\n`);
 
   const status = {
@@ -1268,6 +1387,7 @@ async function runKidSolOrchestratedCustom(pool, agents, purpose) {
     provisionaire: 'KID SOL',
     orchestrator: true,
     profitObjective: true,
+    commissioned: !!requestorId,
     kidSolObjectives,
     inferenceChain: {
       kidSolAnalysis: {
@@ -1294,6 +1414,23 @@ async function runKidSolOrchestratedCustom(pool, agents, purpose) {
     totalPurchased,
     totalResaleListed,
     projectedProfit: parseFloat(projectedProfit.toFixed(6)),
+    commissionSummary: requestorId ? {
+      totalSales: commissionedSales.length,
+      totalAgentsPaid: parseFloat(totalCommissionPaid.toFixed(6)),
+      totalRequestorCharged: parseFloat(totalRequestorSpent.toFixed(6)),
+      kwhCompensationRate: `${Math.round(KWH_COMPENSATION_RATE * 100)}%`,
+      foundationFeeRate: `${Math.round(FOUNDATION_FEE_RATE * 100)}%`,
+      sales: commissionedSales.map(s => ({
+        title: s.title,
+        category: s.category,
+        creationPrice: s.creationPrice,
+        kwhCost: s.kwhCost,
+        kwhCompensation: s.kwhCompensation,
+        totalAgentPay: s.totalAgentPay,
+        foundationFee: s.foundationFee,
+        totalRequestorCost: s.totalRequestorCost
+      }))
+    } : null,
     deliverySummary: {
       virtual: agentResults.filter(r => r.created.some(c => (DELIVERY_TYPES[c.category] || 'virtual') === 'virtual')).length,
       '3d-print-code': agentResults.filter(r => r.created.some(c => DELIVERY_TYPES[c.category] === '3d-print-code')).length,

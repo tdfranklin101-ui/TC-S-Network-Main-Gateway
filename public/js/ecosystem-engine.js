@@ -1491,7 +1491,19 @@ async function initEcosystem() {
   initCustomRunPanel();
 }
 
-function initCustomRunPanel() {
+async function initCustomRunPanel() {
+  var sel = document.getElementById('crRequestor');
+  if (!sel) return;
+  try {
+    var res = await fetch('/api/members');
+    var members = await res.json();
+    sel.innerHTML = '<option value="">— No requestor (marketplace only) —</option>';
+    (members || []).sort(function(a, b) { return (a.name || '').localeCompare(b.name || ''); }).forEach(function(m) {
+      sel.innerHTML += '<option value="' + m.id + '">' + (m.name || m.username || 'Member #' + m.id) + ' (' + parseFloat(m.total_solar || 0).toFixed(2) + ' S)</option>';
+    });
+  } catch (e) {
+    sel.innerHTML = '<option value="">— Could not load members —</option>';
+  }
 }
 
 async function runCustomTask() {
@@ -1513,10 +1525,13 @@ async function runCustomTask() {
   resultsEl.style.display = 'none';
 
   try {
+    var requestorId = (document.getElementById('crRequestor') || {}).value || '';
+    var payload = agentCode === 'ks' ? { agentCode: agentCode, purpose: purpose } : { agentCode: agentCode, categories: checked, purpose: purpose };
+    if (requestorId) payload.requestorId = parseInt(requestorId, 10);
     var res = await fetch('/api/agents/daily-tasks/custom-run', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(agentCode === 'ks' ? { agentCode: agentCode, purpose: purpose } : { agentCode: agentCode, categories: checked, purpose: purpose })
+      body: JSON.stringify(payload)
     });
     var data = await res.json();
     resultsEl.style.display = 'block';
@@ -1601,6 +1616,26 @@ async function runCustomTask() {
             });
           }
         }
+      }
+      if (data.commissionSummary) {
+        var cs = data.commissionSummary;
+        html += '<div style="margin:10px 0;padding:10px;border:1px solid rgba(0,255,128,0.3);border-radius:6px;background:rgba(0,255,128,0.05)">';
+        html += '<div style="color:var(--green);font-weight:600;margin-bottom:6px">💰 Commission Summary</div>';
+        html += '<div style="font-size:12px">Sales Completed: <b style="color:var(--green)">' + cs.totalSales + '</b></div>';
+        html += '<div style="font-size:12px">Total Agents Paid: <b style="color:var(--gold)">' + cs.totalAgentsPaid.toFixed(4) + ' S</b> (creation + ' + cs.kwhCompensationRate + ' kWh bonus)</div>';
+        html += '<div style="font-size:12px">Total Requestor Charged: <b style="color:var(--purple)">' + cs.totalRequestorCharged.toFixed(4) + ' S</b> (price + ' + cs.foundationFeeRate + ' foundation fee)</div>';
+        if (cs.sales && cs.sales.length > 0) {
+          html += '<div style="margin-top:6px;font-size:11px;color:var(--cyan);font-weight:600">Per-Sale Breakdown:</div>';
+          cs.sales.forEach(function(s) {
+            html += '<div style="padding:3px 0 3px 12px;font-size:11px;border-bottom:1px solid #1a1a1a">';
+            html += '📦 <b>' + s.title + '</b> <span style="color:#888">(' + s.category + ')</span>';
+            html += ' — Agent: <span style="color:var(--gold)">' + s.totalAgentPay.toFixed(4) + ' S</span>';
+            html += ' | Requestor: <span style="color:var(--purple)">' + s.totalRequestorCost.toFixed(4) + ' S</span>';
+            html += ' | kWh: <span style="color:var(--cyan)">' + s.kwhCost.toFixed(4) + '</span>';
+            html += '</div>';
+          });
+        }
+        html += '</div>';
       }
       html += '<div style="margin-top:8px;font-size:10px;color:#555">Timestamp: ' + (data.timestamp || new Date().toISOString()) + '</div>';
       resultsEl.innerHTML = html;

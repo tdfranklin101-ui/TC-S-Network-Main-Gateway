@@ -217,10 +217,17 @@ header p{color:#888;font-size:14px}
     <select id="crAgentSelect" style="display:none"><option value="ks" selected>KID SOL</option></select>
     <div id="crCategoryGrid" style="display:none"></div>
     <label id="crCategoryLabel" style="display:none"></label>
-    <div style="margin-bottom:14px">
-      <label style="display:block;font-size:11px;color:var(--cyan);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:600">Objective</label>
-      <input id="crPurpose" type="text" placeholder="Describe what you want the agents to build and deliver..." style="width:100%;background:#0d0d0d;border:1px solid #333;color:#ccc;padding:10px 14px;border-radius:6px;font-size:13px;font-family:'Space Grotesk',sans-serif;outline:none">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:14px">
+      <div>
+        <label style="display:block;font-size:11px;color:var(--cyan);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:600">Objective</label>
+        <input id="crPurpose" type="text" placeholder="Describe what you want the agents to build and deliver..." style="width:100%;background:#0d0d0d;border:1px solid #333;color:#ccc;padding:10px 14px;border-radius:6px;font-size:13px;font-family:'Space Grotesk',sans-serif;outline:none">
+      </div>
+      <div>
+        <label style="display:block;font-size:11px;color:var(--cyan);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:600">Requestor (buyer)</label>
+        <select id="crRequestor" class="ap-select" style="padding:10px 14px;font-size:13px"><option value="">Loading members...</option></select>
+      </div>
     </div>
+    <p style="font-size:11px;color:#666;margin-bottom:12px">Agents create artifacts and sell them directly to the requestor. Each agent receives their creation price + 15% kWh compensation. A 5% Foundation fee applies. Items are also listed on the marketplace.</p>
     <div style="display:flex;align-items:center;gap:14px">
       <button id="crRunBtn" onclick="runCustomTask()" style="font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;padding:10px 30px;border:2px solid var(--gold);background:rgba(255,215,0,.08);color:var(--gold);border-radius:30px;cursor:pointer;transition:all .3s;letter-spacing:1px">🌞 Orchestrate</button>
       <span id="crStatus" style="font-size:12px;color:#888"></span>
