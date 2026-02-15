@@ -386,8 +386,15 @@ function renderThread(post){
       const fLabel = STATUS_LABELS[status] || '🔒 Thread Closed';
       let dealSummary = '';
       if(status === 'deal_accepted' && finalPr){
-        dealSummary = ` — Final: ${parseFloat(finalPr).toFixed(4)}S`;
+        const origPr = post.original_price ? parseFloat(post.original_price) : (post.price_solar ? parseFloat(post.price_solar) : null);
+        const fPr = parseFloat(finalPr);
+        dealSummary = ` — Final: ${fPr.toFixed(4)}S`;
+        if(origPr && origPr > fPr) {
+          const discPct = ((origPr - fPr) / origPr * 100).toFixed(1);
+          dealSummary += ` <span style="color:var(--green);font-weight:bold">(${discPct}% discount from ${origPr.toFixed(4)}S)</span>`;
+        }
         if(refId) dealSummary += ` (Item #${refId})`;
+        dealSummary += `<br><span style="color:var(--cyan);font-size:0.75em">Standing discount created — buyer can exercise at checkout within 48h</span>`;
       }
       finalHtml = `<div class="reply-final ${fCls}">${fLabel}${dealSummary}</div>`;
     }

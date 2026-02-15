@@ -40,7 +40,58 @@ async function addBulletinReply(pool, postId, agentCode, agentName, memberId, me
     `UPDATE agent_bulletin_board SET replies = $1, reply_count = $2, thread_status = $3, final_price = COALESCE($5, final_price), updated_at = NOW() WHERE id = $4 RETURNING *`,
     [JSON.stringify(replies), newReplyCount, newThreadStatus, postId, finalPrice]
   );
+
+  if (newThreadStatus === 'deal_accepted' && finalPrice) {
+    try {
+      const originalPrice = parseFloat(currentPost.original_price || currentPost.price_solar) || 0;
+      if (originalPrice > 0 && finalPrice !== originalPrice) {
+        const isWanted = currentPost.post_type === 'wanted';
+        const buyerMemberId = isWanted ? currentPost.author_member_id : memberId;
+        const buyerCode = isWanted ? currentPost.author_agent_code : agentCode;
+        const sellerMemberId = isWanted ? memberId : currentPost.author_member_id;
+        const sellerCode = isWanted ? agentCode : currentPost.author_agent_code;
+
+        let discountPct = Math.round((originalPrice - finalPrice) / originalPrice * 100 * 10000) / 10000;
+        if (discountPct > 20) discountPct = 20;
+        if (discountPct > 0) {
+          const discountId = crypto.randomUUID();
+          await pool.query(
+            `INSERT INTO negotiated_discounts (id, bulletin_thread_id, buyer_member_id, buyer_agent_code, seller_member_id, seller_agent_code, artifact_id, category, original_price, negotiated_price, discount_pct, status, expires_at, metadata)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'active', NOW() + INTERVAL '48 hours', $12)`,
+            [discountId, postId, buyerMemberId, buyerCode, sellerMemberId, sellerCode,
+             currentPost.related_artifact_id || null, currentPost.target_category || null,
+             String(originalPrice), String(finalPrice), String(discountPct),
+             JSON.stringify({ threadId: postId, postType: currentPost.post_type, agentName: agentName })]
+          );
+          const target = currentPost.related_artifact_id ? `artifact ${currentPost.related_artifact_id}` : `category ${currentPost.target_category || 'general'}`;
+          console.log(`🤝 [Discount] Standing discount created: ${discountPct}% off for buyer agent ${buyerCode} on ${target}`);
+        }
+      }
+    } catch (discountErr) {
+      console.warn(`⚠️ [Discount] Failed to create negotiated discount for thread ${postId}:`, discountErr.message);
+    }
+  }
+
   return result.rows[0];
+}
+
+async function findNegotiatedDiscount(pool, buyerMemberId, artifactId, category) {
+  try {
+    const result = await pool.query(
+      `SELECT * FROM negotiated_discounts
+       WHERE buyer_member_id = $1
+         AND status = 'active'
+         AND (expires_at IS NULL OR expires_at > NOW())
+         AND (artifact_id = $2 OR (artifact_id IS NULL AND category = $3))
+       ORDER BY CASE WHEN artifact_id = $2 THEN 0 ELSE 1 END, created_at DESC
+       LIMIT 1`,
+      [buyerMemberId, artifactId, category]
+    );
+    return result.rows.length > 0 ? result.rows[0] : null;
+  } catch (err) {
+    console.warn(`⚠️ [Discount] Lookup failed for buyer ${buyerMemberId}:`, err.message);
+    return null;
+  }
 }
 
 const FOUNDATION_USERNAME = 'tcs_foundation';
@@ -564,9 +615,21 @@ async function makePurchasesForAgent(pool, agent, memberId, demandScores, aiDeci
 
       artifact = bestCandidate;
     }
-    const artPrice = parseFloat(artifact.solar_amount_s) || 0.01;
+
+    let artPrice = parseFloat(artifact.solar_amount_s) || 0.01;
+    let appliedDiscount = null;
+    const negotiatedDiscount = await findNegotiatedDiscount(client, memberId, artifact.id, artifact.category);
+    if (negotiatedDiscount) {
+      const discountedPrice = Math.round(parseFloat(negotiatedDiscount.negotiated_price) * 10000) / 10000;
+      if (discountedPrice > 0 && discountedPrice < artPrice) {
+        console.log(`🏷️ [Agent ${agent.code}] Applying negotiated discount: ${artPrice} → ${discountedPrice} S (${negotiatedDiscount.discount_pct}% off, thread #${negotiatedDiscount.bulletin_thread_id})`);
+        appliedDiscount = negotiatedDiscount;
+        artPrice = discountedPrice;
+      }
+    }
+
     const foundationFee = Math.round(artPrice * FOUNDATION_FEE_RATE * 10000) / 10000;
-    const sellerNet = artPrice - foundationFee;
+    const sellerNet = Math.round((artPrice - foundationFee) * 10000) / 10000;
 
     const txId = crypto.randomUUID();
     const artifactId = artifact.id;
@@ -579,10 +642,13 @@ async function makePurchasesForAgent(pool, agent, memberId, demandScores, aiDeci
     const newBuyerBalance = buyerBalance - artPrice;
     await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(newBuyerBalance), memberId]);
 
+    const purchaseDesc = appliedDiscount
+      ? `Purchase: ${artifact.title} (negotiated ${appliedDiscount.discount_pct}% off, thread #${appliedDiscount.bulletin_thread_id})`
+      : `Purchase: ${artifact.title}`;
     await client.query(
       `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
        VALUES ($1, 'debit', $2, 'user', $3, $4, 'purchase', $5, $6)`,
-      [txId, String(memberId), String(artPrice), String(newBuyerBalance), artifactId, `Purchase: ${artifact.title}`]
+      [txId, String(memberId), String(artPrice), String(newBuyerBalance), artifactId, purchaseDesc]
     );
 
     const sellerRow = await client.query(
@@ -597,10 +663,13 @@ async function makePurchasesForAgent(pool, agent, memberId, demandScores, aiDeci
 
       await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(sellerNewBal), seller.id]);
 
+      const saleDesc = appliedDiscount
+        ? `Sale: ${artifact.title} (negotiated price)`
+        : `Sale: ${artifact.title}`;
       await client.query(
         `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
          VALUES ($1, 'credit', $2, 'creator', $3, $4, 'purchase', $5, $6)`,
-        [txId, String(seller.id), String(sellerNet), String(sellerNewBal), artifactId, `Sale: ${artifact.title}`]
+        [txId, String(seller.id), String(sellerNet), String(sellerNewBal), artifactId, saleDesc]
       );
     }
 
@@ -635,6 +704,17 @@ async function makePurchasesForAgent(pool, agent, memberId, demandScores, aiDeci
     }
 
     await client.query('COMMIT');
+
+    if (appliedDiscount) {
+      try {
+        await pool.query(
+          `UPDATE negotiated_discounts SET status = 'used', settlement_transaction_id = $1, settled_at = NOW() WHERE id = $2`,
+          [txId, appliedDiscount.id]
+        );
+      } catch (discMarkErr) {
+        console.warn(`⚠️ [Agent ${agent.code}] Failed to mark discount as used:`, discMarkErr.message);
+      }
+    }
 
     resaleListed = 1;
     totalResaleValue = resalePrice;
@@ -1541,7 +1621,18 @@ async function runRound2AgentTasks(pool, agents) {
           }
 
           const artifact = artResult.rows[0];
-          const artPrice = parseFloat(artifact.solar_amount_s) || 0.01;
+          let artPrice = parseFloat(artifact.solar_amount_s) || 0.01;
+          let r2AppliedDiscount = null;
+          const r2Discount = await findNegotiatedDiscount(client, memberId, artifact.id, artifact.category);
+          if (r2Discount) {
+            const r2DiscountedPrice = Math.round(parseFloat(r2Discount.negotiated_price) * 10000) / 10000;
+            if (r2DiscountedPrice > 0 && r2DiscountedPrice < artPrice) {
+              console.log(`🏷️ [Agent ${agent.code}] Applying negotiated discount: ${artPrice} → ${r2DiscountedPrice} S (${r2Discount.discount_pct}% off, thread #${r2Discount.bulletin_thread_id})`);
+              r2AppliedDiscount = r2Discount;
+              artPrice = r2DiscountedPrice;
+            }
+          }
+
           if (buyerBalance - artPrice < RESERVE_FLOOR) {
             agentResult.errors.push({ phase: 'buy', error: `Cannot afford ${artPrice.toFixed(4)} S and maintain reserve` });
             client.release();
@@ -1549,7 +1640,7 @@ async function runRound2AgentTasks(pool, agents) {
           }
 
           const foundationFee = Math.round(artPrice * FOUNDATION_FEE_RATE * 10000) / 10000;
-          const sellerNet = artPrice - foundationFee;
+          const sellerNet = Math.round((artPrice - foundationFee) * 10000) / 10000;
 
           const txId = crypto.randomUUID();
           await client.query('BEGIN');
@@ -1557,10 +1648,13 @@ async function runRound2AgentTasks(pool, agents) {
           const newBuyerBalance = buyerBalance - artPrice;
           await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(newBuyerBalance), memberId]);
 
+          const r2PurchaseDesc = r2AppliedDiscount
+            ? `R2 Purchase: ${artifact.title} (negotiated ${r2AppliedDiscount.discount_pct}% off, thread #${r2AppliedDiscount.bulletin_thread_id})`
+            : `R2 Purchase: ${artifact.title}`;
           await client.query(
             `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
              VALUES ($1, 'debit', $2, 'user', $3, $4, 'purchase', $5, $6)`,
-            [txId, String(memberId), String(artPrice), String(newBuyerBalance), artifact.id, `R2 Purchase: ${artifact.title}`]
+            [txId, String(memberId), String(artPrice), String(newBuyerBalance), artifact.id, r2PurchaseDesc]
           );
 
           const creatorId = artifact.creator_id;
@@ -1575,10 +1669,13 @@ async function runRound2AgentTasks(pool, agents) {
             const sellerOldBal = parseFloat(seller.total_solar) || 0;
             const sellerNewBal = sellerOldBal + sellerNet;
             await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(sellerNewBal), seller.id]);
+            const r2SaleDesc = r2AppliedDiscount
+              ? `R2 Sale: ${artifact.title} (negotiated price)`
+              : `R2 Sale: ${artifact.title}`;
             await client.query(
               `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
                VALUES ($1, 'credit', $2, 'creator', $3, $4, 'purchase', $5, $6)`,
-              [txId, String(seller.id), String(sellerNet), String(sellerNewBal), artifact.id, `R2 Sale: ${artifact.title}`]
+              [txId, String(seller.id), String(sellerNet), String(sellerNewBal), artifact.id, r2SaleDesc]
             );
           }
 
@@ -1603,6 +1700,17 @@ async function runRound2AgentTasks(pool, agents) {
           );
 
           await client.query('COMMIT');
+
+          if (r2AppliedDiscount) {
+            try {
+              await pool.query(
+                `UPDATE negotiated_discounts SET status = 'used', settlement_transaction_id = $1, settled_at = NOW() WHERE id = $2`,
+                [txId, r2AppliedDiscount.id]
+              );
+            } catch (discMarkErr) {
+              console.warn(`⚠️ [Agent ${agent.code}] Failed to mark R2 discount as used:`, discMarkErr.message);
+            }
+          }
 
           console.log(`🌞 [R2] Agent ${agent.name}: Bought "${artifact.title}" (${artPrice.toFixed(4)} S, fee: ${foundationFee.toFixed(4)} S) → Listed resale at ${resalePrice.toFixed(4)} S`);
           agentResult.buys.push({ artifactId: artifact.id, title: artifact.title, category: artifact.category, price: artPrice, resalePrice, txId, reasoning: buyOrder.reasoning });

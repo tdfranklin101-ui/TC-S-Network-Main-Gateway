@@ -6461,8 +6461,34 @@ const server = http.createServer(async (req, res) => {
       }
 
       const user = userResult.rows[0];
-      const requiredSolar = parseFloat(artifact.solar_amount_s);
+      let requiredSolar = parseFloat(artifact.solar_amount_s);
+      const originalRequiredSolar = requiredSolar;
       const userBalance = parseFloat(user.total_solar || 0);
+
+      let discountApplied = null;
+      try {
+        const discountResult = await pool.query(
+          `SELECT * FROM negotiated_discounts WHERE buyer_member_id = $1 AND (artifact_id = $2 OR (artifact_id IS NULL AND category = $3)) AND status = 'active' AND expires_at > NOW() ORDER BY CASE WHEN artifact_id IS NOT NULL THEN 0 ELSE 1 END, discount_pct DESC LIMIT 1`,
+          [userId, artifact.id, artifact.category]
+        );
+        if (discountResult.rows.length > 0) {
+          const disc = discountResult.rows[0];
+          const negotiatedPrice = Math.round(parseFloat(disc.negotiated_price) * 10000) / 10000;
+          if (negotiatedPrice < requiredSolar && negotiatedPrice > 0) {
+            requiredSolar = negotiatedPrice;
+            discountApplied = {
+              discountId: disc.id,
+              originalPrice: originalRequiredSolar,
+              negotiatedPrice: negotiatedPrice,
+              discountPct: parseFloat(disc.discount_pct),
+              bulletinThreadId: disc.bulletin_thread_id
+            };
+            console.log(`🤝 [Discount] Applying ${disc.discount_pct}% discount for buyer ${userId}: ${originalRequiredSolar} → ${negotiatedPrice} Solar`);
+          }
+        }
+      } catch (discLookupErr) {
+        console.warn('⚠️ [Discount] Lookup failed, proceeding without discount:', discLookupErr.message);
+      }
       
       if (userBalance < requiredSolar) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -6558,7 +6584,19 @@ const server = http.createServer(async (req, res) => {
 
         await client.query('COMMIT');
         logBalanceChange('Purchase', user.id, user.username, userBalance, newBalance, `purchase_artifact_${artifactId}`);
-        console.log(`💰 Purchase completed: ${user.username} bought "${artifact.title}" for ${requiredSolar} Solar`);
+        console.log(`💰 Purchase completed: ${user.username} bought "${artifact.title}" for ${requiredSolar} Solar${discountApplied ? ` (negotiated ${discountApplied.discountPct}% off)` : ''}`);
+
+        if (discountApplied) {
+          try {
+            await pool.query(
+              `UPDATE negotiated_discounts SET status = 'used', settlement_transaction_id = $1, settled_at = NOW() WHERE id = $2`,
+              [String(transactionId), discountApplied.discountId]
+            );
+            console.log(`🤝 [Discount] Marked discount ${discountApplied.discountId} as used for transaction ${transactionId}`);
+          } catch (discUpdateErr) {
+            console.warn('⚠️ [Discount] Failed to mark discount as used:', discUpdateErr.message);
+          }
+        }
 
       } catch (txErr) {
         await client.query('ROLLBACK');
@@ -6589,7 +6627,8 @@ const server = http.createServer(async (req, res) => {
         fileType: artifact.file_type || null,
         downloadExpires: expiresAt ? expiresAt.toISOString() : null,
         expiresIn: '7 days',
-        message: `Successfully purchased "${artifact.title}" for ${formatSolar(requiredSolar)} Solar. Your new balance is ${formatSolar(newBalance)} Solar.`
+        discountApplied: discountApplied || undefined,
+        message: `Successfully purchased "${artifact.title}" for ${formatSolar(requiredSolar)} Solar${discountApplied ? ` (negotiated ${discountApplied.discountPct}% off)` : ''}. Your new balance is ${formatSolar(newBalance)} Solar.`
       };
 
       if (warnings.length > 0) {
@@ -6669,8 +6708,35 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      const requiredSolar = parseFloat(artifact.solar_amount_s);
+      let requiredSolar = parseFloat(artifact.solar_amount_s);
+      const originalRequiredSolar2 = requiredSolar;
       const buyerBalance = parseFloat(user.total_solar || 0);
+
+      let discountApplied2 = null;
+      try {
+        const discountResult2 = await pool.query(
+          `SELECT * FROM negotiated_discounts WHERE buyer_member_id = $1 AND (artifact_id = $2 OR (artifact_id IS NULL AND category = $3)) AND status = 'active' AND expires_at > NOW() ORDER BY CASE WHEN artifact_id IS NOT NULL THEN 0 ELSE 1 END, discount_pct DESC LIMIT 1`,
+          [user.id, artifact.id, artifact.category]
+        );
+        if (discountResult2.rows.length > 0) {
+          const disc2 = discountResult2.rows[0];
+          const negotiatedPrice2 = Math.round(parseFloat(disc2.negotiated_price) * 10000) / 10000;
+          if (negotiatedPrice2 < requiredSolar && negotiatedPrice2 > 0) {
+            requiredSolar = negotiatedPrice2;
+            discountApplied2 = {
+              discountId: disc2.id,
+              originalPrice: originalRequiredSolar2,
+              negotiatedPrice: negotiatedPrice2,
+              discountPct: parseFloat(disc2.discount_pct),
+              bulletinThreadId: disc2.bulletin_thread_id
+            };
+            console.log(`🤝 [Discount] Applying ${disc2.discount_pct}% discount for buyer ${user.id}: ${originalRequiredSolar2} → ${negotiatedPrice2} Solar`);
+          }
+        }
+      } catch (discLookupErr2) {
+        console.warn('⚠️ [Discount] Lookup failed, proceeding without discount:', discLookupErr2.message);
+      }
+
       if (buyerBalance < requiredSolar) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Insufficient Solar balance', required: requiredSolar, available: buyerBalance, shortfall: requiredSolar - buyerBalance }));
@@ -6688,10 +6754,11 @@ const server = http.createServer(async (req, res) => {
 
         await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(newBuyerBalance), user.id]);
 
+        const ledgerDesc = discountApplied2 ? `Purchase: ${artifact.title} (negotiated ${discountApplied2.discountPct}% off)` : `Purchase: ${artifact.title}`;
         await client.query(
           `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
            VALUES ($1, 'debit', $2, 'user', $3, $4, 'purchase', $5, $6)`,
-          [txId, String(user.id), String(requiredSolar), String(newBuyerBalance), artifactId, `Purchase: ${artifact.title}`]
+          [txId, String(user.id), String(requiredSolar), String(newBuyerBalance), artifactId, ledgerDesc]
         );
 
         let sellerInfo = null;
@@ -6743,8 +6810,20 @@ const server = http.createServer(async (req, res) => {
 
         await client.query('COMMIT');
 
-        console.log(`💰 Purchase completed: ${user.username} bought "${artifact.title}" for ${requiredSolar} Solar`);
+        console.log(`💰 Purchase completed: ${user.username} bought "${artifact.title}" for ${requiredSolar} Solar${discountApplied2 ? ` (negotiated ${discountApplied2.discountPct}% off)` : ''}`);
         logBalanceChange('Purchase', user.id, user.username, buyerBalance, newBuyerBalance, `purchase_artifact_${artifactId}`);
+
+        if (discountApplied2) {
+          try {
+            await pool.query(
+              `UPDATE negotiated_discounts SET status = 'used', settlement_transaction_id = $1, settled_at = NOW() WHERE id = $2`,
+              [txId, discountApplied2.discountId]
+            );
+            console.log(`🤝 [Discount] Marked discount ${discountApplied2.discountId} as used for transaction ${txId}`);
+          } catch (discUpdateErr2) {
+            console.warn('⚠️ [Discount] Failed to mark discount as used:', discUpdateErr2.message);
+          }
+        }
 
         const downloadUrl = `/api/artifacts/download/${tokenValue}`;
         const secureTradeAccess = fileManager.generateSecureUrl('trade', artifactId, 7 * 24 * 3600);
@@ -6767,7 +6846,8 @@ const server = http.createServer(async (req, res) => {
             size: artifact.trade_file_size || 'Unknown',
             secureAccess: true
           },
-          message: `Successfully purchased "${artifact.title}" for ${formatSolar(requiredSolar)} Solar. Your new balance is ${formatSolar(newBuyerBalance)} Solar.`
+          discountApplied: discountApplied2 || undefined,
+          message: `Successfully purchased "${artifact.title}" for ${formatSolar(requiredSolar)} Solar${discountApplied2 ? ` (negotiated ${discountApplied2.discountPct}% off)` : ''}. Your new balance is ${formatSolar(newBuyerBalance)} Solar.`
         }));
       } catch (txErr) {
         await client.query('ROLLBACK');
@@ -12710,6 +12790,95 @@ Only include products where you have found a real URL. Do not make up URLs.`
     return;
   }
 
+  // ============ NEGOTIATED DISCOUNTS API ============
+  if (pathname === '/api/discounts/active' && req.method === 'GET') {
+    try {
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      const memberId = parseInt(url.searchParams.get('memberId'));
+      if (!memberId || !pool) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'memberId required' }));
+        return;
+      }
+      const result = await pool.query(
+        `SELECT nd.*, abb.title as thread_title, a.title as artifact_title,
+                m_seller.name as seller_name, m_buyer.name as buyer_name
+         FROM negotiated_discounts nd
+         LEFT JOIN agent_bulletin_board abb ON nd.bulletin_thread_id = abb.id
+         LEFT JOIN artifacts a ON nd.artifact_id = a.id
+         LEFT JOIN members m_seller ON nd.seller_member_id = m_seller.id
+         LEFT JOIN members m_buyer ON nd.buyer_member_id = m_buyer.id
+         WHERE nd.buyer_member_id = $1 AND nd.status = 'active' AND nd.expires_at > NOW()
+         ORDER BY nd.created_at DESC`,
+        [memberId]
+      );
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ discounts: result.rows }));
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: error.message }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/discounts/history' && req.method === 'GET') {
+    try {
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      const memberId = parseInt(url.searchParams.get('memberId'));
+      if (!memberId || !pool) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'memberId required' }));
+        return;
+      }
+      const result = await pool.query(
+        `SELECT nd.*, abb.title as thread_title, a.title as artifact_title,
+                m_seller.name as seller_name, m_buyer.name as buyer_name
+         FROM negotiated_discounts nd
+         LEFT JOIN agent_bulletin_board abb ON nd.bulletin_thread_id = abb.id
+         LEFT JOIN artifacts a ON nd.artifact_id = a.id
+         LEFT JOIN members m_seller ON nd.seller_member_id = m_seller.id
+         LEFT JOIN members m_buyer ON nd.buyer_member_id = m_buyer.id
+         WHERE nd.buyer_member_id = $1 OR nd.seller_member_id = $1
+         ORDER BY nd.created_at DESC LIMIT 50`,
+        [memberId]
+      );
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ discounts: result.rows }));
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: error.message }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/discounts/cancel' && req.method === 'POST') {
+    try {
+      const body = await parseBody(req);
+      const { discountId, memberId } = body;
+      if (!discountId || !memberId || !pool) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'discountId and memberId required' }));
+        return;
+      }
+      const check = await pool.query(
+        `SELECT * FROM negotiated_discounts WHERE id = $1 AND (buyer_member_id = $2 OR seller_member_id = $2) AND status = 'active'`,
+        [discountId, memberId]
+      );
+      if (check.rows.length === 0) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Discount not found or not authorized' }));
+        return;
+      }
+      await pool.query(`UPDATE negotiated_discounts SET status = 'cancelled' WHERE id = $1`, [discountId]);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, message: 'Discount cancelled' }));
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: error.message }));
+    }
+    return;
+  }
+
   // ============ BULLETIN BOARD CONVERSATION API ============
   if (pathname === '/api/bulletin/posts' && req.method === 'GET') {
     try {
@@ -12812,8 +12981,47 @@ Only include products where you have found a real URL. Do not make up URLs.`
           return;
         }
 
+        let discountCreated = null;
+        if (result.thread_status === 'deal_accepted' && result.final_price) {
+          try {
+            const existingDiscount = await pool.query(
+              `SELECT id FROM negotiated_discounts WHERE bulletin_thread_id = $1 LIMIT 1`,
+              [data.postId]
+            );
+            if (existingDiscount.rows.length === 0) {
+              const originalPrice = parseFloat(result.original_price || result.price_solar) || 0;
+              const finalPrice = parseFloat(result.final_price);
+              if (originalPrice > 0 && finalPrice !== originalPrice && finalPrice < originalPrice) {
+                const isWanted = result.post_type === 'wanted';
+                const buyerMemberId = isWanted ? result.author_member_id : (data.memberId || null);
+                const buyerCode = isWanted ? result.author_agent_code : (data.agentCode || null);
+                const sellerMemberId = isWanted ? (data.memberId || null) : result.author_member_id;
+                const sellerCode = isWanted ? (data.agentCode || null) : result.author_agent_code;
+
+                let discountPct = Math.round((originalPrice - finalPrice) / originalPrice * 100 * 10000) / 10000;
+                if (discountPct > 20) discountPct = 20;
+                if (discountPct > 0) {
+                  const discInsert = await pool.query(
+                    `INSERT INTO negotiated_discounts (bulletin_thread_id, buyer_member_id, buyer_agent_code, seller_member_id, seller_agent_code, artifact_id, category, original_price, negotiated_price, discount_pct, status, expires_at, metadata)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'active', NOW() + INTERVAL '48 hours', $11)
+                     RETURNING id`,
+                    [data.postId, buyerMemberId, buyerCode, sellerMemberId, sellerCode,
+                     result.related_artifact_id || null, result.target_category || null,
+                     String(originalPrice), String(finalPrice), String(discountPct),
+                     JSON.stringify({ threadId: data.postId, postType: result.post_type, source: 'bulletin_reply_api' })]
+                  );
+                  discountCreated = { id: discInsert.rows[0].id, discountPct, originalPrice, negotiatedPrice: finalPrice };
+                  console.log(`🤝 [Discount] Standing discount created via bulletin reply API: ${discountPct}% off for thread ${data.postId}`);
+                }
+              }
+            }
+          } catch (discErr) {
+            console.warn(`⚠️ [Discount] Failed to create discount for bulletin thread ${data.postId}:`, discErr.message);
+          }
+        }
+
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: true, post: result }));
+        res.end(JSON.stringify({ success: true, post: result, discountCreated: discountCreated || undefined }));
       } catch (err) {
         console.error('Bulletin reply error:', err.message);
         res.writeHead(500, { 'Content-Type': 'application/json' });

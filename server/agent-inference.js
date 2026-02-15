@@ -156,6 +156,29 @@ async function makeAgentDecision(pool, agent, memberId, marketSnapshot, kidSolOb
       .map(s => `${s.name}: ${s.items_sold} sold, ${s.total_volume}S volume`)
       .join(', ') || 'none';
 
+    const activeDiscountsList = (marketSnapshot.activeDiscounts || [])
+      .map(d => {
+        const item = d.artifact_title ? `"${d.artifact_title}" (id:${d.artifact_id})` : `category:${d.category}`;
+        const hrs = d.expires_at ? Math.max(0, Math.round((new Date(d.expires_at) - Date.now()) / 3600000)) : '?';
+        return `${item} ${d.original_price}S → ${d.negotiated_price}S (${parseFloat(d.discount_pct).toFixed(1)}% off, from @${d.seller_agent_code}, expires ${hrs}h, thread #${d.bulletin_thread_id})`;
+      })
+      .join('\n') || 'none';
+
+    const priceTrendsList = (marketSnapshot.priceTrends || [])
+      .slice(0, 8)
+      .map(t => {
+        const avg24 = parseFloat(t.avg_24h) || 0;
+        const avgPrev = parseFloat(t.avg_prev_48h) || 0;
+        const direction = avgPrev > 0 ? (avg24 > avgPrev ? '📈 RISING' : avg24 < avgPrev ? '📉 FALLING' : '➡️ STABLE') : '🆕 NEW';
+        const pctChange = avgPrev > 0 ? ((avg24 - avgPrev) / avgPrev * 100).toFixed(1) : 'n/a';
+        return `${t.category}: avg ${avg24.toFixed(4)}S (${direction} ${pctChange}%) | ${t.new_24h} new today vs ${t.new_prev_48h} prev 48h`;
+      })
+      .join('\n') || 'no trend data';
+
+    const myRankInfo = marketSnapshot.mySellerRank
+      ? `Your seller rank: #${marketSnapshot.mySellerRank} (${marketSnapshot.myItemsSold} sold, ${marketSnapshot.mySalesVolume.toFixed(4)}S volume)`
+      : 'No sales recorded this week';
+
     const objectives = kidSolObjectives || {};
     const directiveBlock = objectives.dailyDirective ?
       `\nKID SOL'S DAILY OBJECTIVES:
@@ -181,6 +204,8 @@ NEGOTIATION POWERS (autonomous):
 - You may suggest alternative lower-priced items from your inventory or the market
 - You must protect your reserves — never sell below cost unless strategic
 - Reference specific artifact IDs when posting about items
+- If you have STANDING DISCOUNTS from accepted negotiations, prioritize buying those items — you already locked in a better price
+- Use PRICE TRENDS to time your buys (buy in falling markets) and sells (sell in rising markets)
 
 Respond in JSON with: createCategory, createPriceStrategy (undercut/premium/market), createReasoning, buyArtifactId (integer or null), buyReasoning, bulletinPost (object or null), strategicPlan (object).
 bulletinPost format: { "type": "wanted|for_sale|offer|intel|directive", "title": "...", "body": "...", "targetCategory": "...", "priceSolar": number, "referenceArtifactId": integer or null, "targetAgentCode": "agent_code or null", "negotiation": { "type": "price_change|volume_discount|alternative_offer|inquiry", "originalPrice": number or null, "proposedPrice": number or null, "discountPct": number (max 20) or null, "volumeQty": integer or null, "altArtifactIds": [int] or null } or null }
@@ -197,10 +222,14 @@ MARKETPLACE INTELLIGENCE:
 Category Supply & Pricing:
 ${categoryMarketData}
 
+Price Trends (24h vs prior 48h):
+${priceTrendsList}
+
 Demand Scores: ${topDemand}
 Supply Gaps: ${gaps}
 Recent Sales Velocity: ${recentDemand}
 Top Sellers (7d): ${topSellersList}
+${myRankInfo}
 
 NEW LISTINGS (last 24h):
 ${newListings}
@@ -211,10 +240,13 @@ ${resaleOpportunities}
 BUY CANDIDATES (cheapest):
 ${cheapList || 'none'}
 
+YOUR STANDING DISCOUNTS (negotiated deals you can exercise):
+${activeDiscountsList}
+
 BULLETIN BOARD (inter-agent negotiation):
 ${bulletinFeed}
 
-Fulfill KID SOL's objectives. Choose 1 creation and 1 purchase to maximize YOUR profit.`;
+Fulfill KID SOL's objectives. Choose 1 creation and 1 purchase to maximize YOUR profit. If you have standing discounts, prioritize buying those items at the negotiated price.`;
 
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
@@ -262,7 +294,12 @@ async function gatherMarketSnapshot(pool, memberId) {
     categoryStats: [],
     recentListings: [],
     resaleItems: [],
-    topSellers: []
+    topSellers: [],
+    activeDiscounts: [],
+    priceTrends: [],
+    mySellerRank: null,
+    mySalesVolume: 0,
+    myItemsSold: 0
   };
 
   try {
@@ -444,6 +481,65 @@ async function gatherMarketSnapshot(pool, memberId) {
 
   snapshot.netWorth = Math.round((snapshot.agentBalance + (snapshot.portfolioValue || 0)) * 10000) / 10000;
 
+  try {
+    const discountResult = await pool.query(
+      `SELECT nd.id, nd.bulletin_thread_id, nd.artifact_id, nd.category, nd.original_price, nd.negotiated_price,
+              nd.discount_pct, nd.seller_agent_code, nd.expires_at,
+              abb.title as thread_title, a.title as artifact_title
+       FROM negotiated_discounts nd
+       LEFT JOIN agent_bulletin_board abb ON nd.bulletin_thread_id = abb.id
+       LEFT JOIN artifacts a ON nd.artifact_id = a.id
+       WHERE nd.buyer_member_id = $1 AND nd.status = 'active' AND nd.expires_at > NOW()
+       ORDER BY nd.created_at DESC LIMIT 10`,
+      [memberId]
+    );
+    snapshot.activeDiscounts = discountResult.rows;
+  } catch (err) {
+    console.warn('⚠️ [Inference] Active discounts query failed:', err.message);
+    snapshot.activeDiscounts = [];
+  }
+
+  try {
+    const trendResult = await pool.query(
+      `SELECT category,
+              ROUND(AVG(CASE WHEN created_at > NOW() - INTERVAL '24 hours' THEN CAST(solar_amount_s AS NUMERIC) END)::numeric, 4) as avg_24h,
+              ROUND(AVG(CASE WHEN created_at > NOW() - INTERVAL '72 hours' AND created_at <= NOW() - INTERVAL '24 hours' THEN CAST(solar_amount_s AS NUMERIC) END)::numeric, 4) as avg_prev_48h,
+              COUNT(CASE WHEN created_at > NOW() - INTERVAL '24 hours' THEN 1 END) as new_24h,
+              COUNT(CASE WHEN created_at > NOW() - INTERVAL '72 hours' AND created_at <= NOW() - INTERVAL '24 hours' THEN 1 END) as new_prev_48h
+       FROM artifacts WHERE active = true AND created_at > NOW() - INTERVAL '72 hours'
+       GROUP BY category HAVING COUNT(*) >= 2
+       ORDER BY new_24h DESC`
+    );
+    snapshot.priceTrends = trendResult.rows;
+  } catch (err) {
+    console.warn('⚠️ [Inference] Price trends query failed:', err.message);
+    snapshot.priceTrends = [];
+  }
+
+  try {
+    const myRankResult = await pool.query(
+      `WITH seller_ranks AS (
+        SELECT account_id, COUNT(*) as items_sold,
+               ROUND(SUM(CAST(amount AS NUMERIC))::numeric, 4) as total_volume,
+               RANK() OVER (ORDER BY SUM(CAST(amount AS NUMERIC)) DESC) as rank
+        FROM marketplace_ledger
+        WHERE entry_type = 'credit' AND account_type = 'creator'
+          AND account_id ~ '^\d+$'
+          AND created_at > NOW() - INTERVAL '7 days'
+        GROUP BY account_id
+      )
+      SELECT rank, items_sold, total_volume FROM seller_ranks WHERE account_id = $1`,
+      [String(memberId)]
+    );
+    if (myRankResult.rows.length > 0) {
+      snapshot.mySellerRank = parseInt(myRankResult.rows[0].rank) || null;
+      snapshot.mySalesVolume = parseFloat(myRankResult.rows[0].total_volume) || 0;
+      snapshot.myItemsSold = parseInt(myRankResult.rows[0].items_sold) || 0;
+    }
+  } catch (err) {
+    console.warn('⚠️ [Inference] Seller rank query failed:', err.message);
+  }
+
   return snapshot;
 }
 
@@ -601,6 +697,29 @@ async function makeRound2Decision(pool, agent, memberId, snapshot, kidSolObjecti
       .map(r => `id:${r.id} "${r.title}" [${r.category}] was ${r.original_price}S → resale ${r.resale_price}S by ${r.seller_name || 'unknown'}`)
       .join('\n') || 'none';
 
+    const r2DiscountsList = (snapshot.activeDiscounts || [])
+      .map(d => {
+        const item = d.artifact_title ? `"${d.artifact_title}" (id:${d.artifact_id})` : `category:${d.category}`;
+        const hrs = d.expires_at ? Math.max(0, Math.round((new Date(d.expires_at) - Date.now()) / 3600000)) : '?';
+        return `${item} ${d.original_price}S → ${d.negotiated_price}S (${parseFloat(d.discount_pct).toFixed(1)}% off, from @${d.seller_agent_code}, expires ${hrs}h)`;
+      })
+      .join('\n') || 'none';
+
+    const r2PriceTrends = (snapshot.priceTrends || [])
+      .slice(0, 8)
+      .map(t => {
+        const avg24 = parseFloat(t.avg_24h) || 0;
+        const avgPrev = parseFloat(t.avg_prev_48h) || 0;
+        const dir = avgPrev > 0 ? (avg24 > avgPrev ? '📈' : avg24 < avgPrev ? '📉' : '➡️') : '🆕';
+        const pct = avgPrev > 0 ? ((avg24 - avgPrev) / avgPrev * 100).toFixed(1) + '%' : 'new';
+        return `${t.category}: ${dir} ${avg24.toFixed(4)}S (${pct})`;
+      })
+      .join(', ') || 'no data';
+
+    const r2MyRank = snapshot.mySellerRank
+      ? `Your rank: #${snapshot.mySellerRank} (${snapshot.myItemsSold} sold, ${snapshot.mySalesVolume.toFixed(4)}S)`
+      : 'No sales this week';
+
     const objectives = kidSolObjectives || {};
     const directiveBlock = objectives.dailyDirective ?
       `MORNING DIRECTIVE: ${objectives.dailyDirective}\nPriorities: ${(objectives.priorityCategories || []).join(', ')}` : '';
@@ -611,6 +730,7 @@ SELF-ASSESSMENT:
 Balance: ${balance.toFixed(4)} Solar | Portfolio: ${(snapshot.portfolioValue || 0).toFixed(4)} Solar (${snapshot.portfolioItemCount || 0} items) | Net Worth: ${(snapshot.netWorth || balance).toFixed(4)} Solar
 7-day P&L: earned ${(snapshot.recentEarnings || 0).toFixed(4)} S, spent ${(snapshot.recentSpending || 0).toFixed(4)} S, net ${(snapshot.netProfitLoss || 0).toFixed(4)} S
 Today's market: ${snapshot.todayTradeCount} trades, ${snapshot.todayVolume.toFixed(4)} S volume.
+${r2MyRank}
 Reserve floor: 1.0 Solar.
 ${balance < 2 ? '⚠️ LOW BALANCE — prioritize selling inventory over buying!' : balance > 10 ? '💰 STRONG POSITION — buy undervalued items aggressively for resale.' : '📊 MODERATE — balance buys and sells carefully.'}
 
@@ -622,6 +742,8 @@ NEGOTIATION POWERS (autonomous):
 - Address other agents by name in bulletin posts — react to their offers, reference their inventory, and negotiate specific deals
 - Your bulletin posts should read like professional trade-floor chatter, not generic status updates
 - You must protect your reserves — never sell below cost unless strategic
+- If you have STANDING DISCOUNTS, prioritize exercising those deals before they expire
+- Use PRICE TRENDS to time your buys and sells — buy falling categories, sell rising ones
 
 Respond in JSON:
 {
@@ -641,6 +763,8 @@ ${ownedList || 'none'}
 MARKETPLACE INTELLIGENCE:
 ${r2CategoryData}
 
+Price Trends: ${r2PriceTrends}
+
 RESALE OPPORTUNITIES:
 ${r2ResaleOpps}
 
@@ -649,10 +773,13 @@ ${cheapList || 'none'}
 
 DEMAND: ${topDemand}
 
+YOUR STANDING DISCOUNTS (negotiated deals you can exercise):
+${r2DiscountsList}
+
 BULLETIN BOARD (inter-agent negotiation):
 ${bulletinSummary || 'no posts today'}
 
-Make 2 strategic buys and 2 strategic sells. Use marketplace data for pricing decisions. Assess the morning objectives.`;
+Make 2 strategic buys and 2 strategic sells. Use marketplace data and price trends for pricing decisions. Exercise standing discounts where profitable. Assess the morning objectives.`;
 
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
