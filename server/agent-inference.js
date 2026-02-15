@@ -119,10 +119,42 @@ async function makeAgentDecision(pool, agent, memberId, marketSnapshot, kidSolOb
       .map(r => `${r.category}(${r.sales})`)
       .join(', ') || 'none';
 
-    const wantedPosts = (marketSnapshot.bulletinPosts || [])
-      .slice(0, 5)
-      .map(p => `"${p.title}" cat:${p.target_category || '?'} price:${p.price_solar || '?'}S by:${p.author_name}`)
+    const bulletinFeed = (marketSnapshot.bulletinPosts || [])
+      .slice(0, 10)
+      .map(p => {
+        let line = `[${(p.post_type || 'post').toUpperCase()}] "${p.title}" by ${p.author_name}`;
+        if (p.target_category) line += ` cat:${p.target_category}`;
+        if (p.price_solar) line += ` price:${parseFloat(p.price_solar).toFixed(4)}S`;
+        if (p.target_agent_code) line += ` → @${p.target_agent_code}`;
+        if (p.reply_count > 0) line += ` (${p.reply_count} replies, ${p.thread_status || 'open'})`;
+        if (p.negotiation_type) line += ` [${p.negotiation_type}]`;
+        if (p.replies && p.replies.length > 0) {
+          const lastReply = p.replies[p.replies.length - 1];
+          line += `\n  └ Last: ${lastReply.agentName}: "${(lastReply.message || '').substring(0, 80)}..." (${lastReply.replyType})`;
+        }
+        return line;
+      })
       .join('\n') || 'none';
+
+    const categoryMarketData = (marketSnapshot.categoryStats || [])
+      .slice(0, 12)
+      .map(c => `${c.category}: ${c.active_items} items, avg ${c.avg_price}S, range ${c.min_price}-${c.max_price}S${c.resale_count > 0 ? ', ' + c.resale_count + ' resale' : ''}`)
+      .join('\n') || 'no data';
+
+    const newListings = (marketSnapshot.recentListings || [])
+      .slice(0, 8)
+      .map(l => `id:${l.id} "${l.title}" [${l.category}] ${l.solar_amount_s}S by ${l.creator_name || 'unknown'}${l.is_listed_for_resale ? ' (RESALE @' + l.resale_price + 'S)' : ''}`)
+      .join('\n') || 'none';
+
+    const resaleOpportunities = (marketSnapshot.resaleItems || [])
+      .slice(0, 5)
+      .map(r => `id:${r.id} "${r.title}" [${r.category}] was ${r.original_price}S → resale ${r.resale_price}S by ${r.seller_name || 'unknown'}`)
+      .join('\n') || 'none';
+
+    const topSellersList = (marketSnapshot.topSellers || [])
+      .slice(0, 5)
+      .map(s => `${s.name}: ${s.items_sold} sold, ${s.total_volume}S volume`)
+      .join(', ') || 'none';
 
     const objectives = kidSolObjectives || {};
     const directiveBlock = objectives.dailyDirective ?
@@ -141,6 +173,7 @@ Balance: ${balance.toFixed(4)} Solar | Portfolio: ${(marketSnapshot.portfolioVal
 Reserve floor: 1.0 Solar — never let balance drop below this.
 
 Your job: ASSESS your financial position, then CREATE A STRATEGIC PLAN to grow your wealth while fulfilling KID SOL's objectives. Buy undervalued items to resell at 15% markup. Create artifacts in high-demand categories. Use the bulletin board as your pre-trade intelligence hub.
+When posting to the bulletin board, reference other agents by name, respond to their offers, and mention specific artifact IDs. Your posts should feel like genuine trade-floor chatter — not generic announcements. If another agent posted something relevant to your specialty, acknowledge it.
 
 NEGOTIATION POWERS (autonomous):
 - You may change your asking price to attract buyers
@@ -160,18 +193,26 @@ Balance: ${balance.toFixed(4)} S | Portfolio value: ${(marketSnapshot.portfolioV
 7-day earnings: ${(marketSnapshot.recentEarnings || 0).toFixed(4)} S | 7-day spending: ${(marketSnapshot.recentSpending || 0).toFixed(4)} S | Net P&L: ${(marketSnapshot.netProfitLoss || 0).toFixed(4)} S
 ${balance < 2 ? '⚠️ LOW BALANCE — be conservative, protect reserves!' : balance > 10 ? '💰 STRONG BALANCE — you can afford aggressive buys for resale profit.' : '📊 MODERATE BALANCE — balance risk and opportunity.'}
 
-MARKET STATE:
-Demand: ${topDemand}
-Gaps: ${gaps}
-Balance: ${balance} S
+MARKETPLACE INTELLIGENCE:
+Category Supply & Pricing:
+${categoryMarketData}
 
-BUY CANDIDATES:
+Demand Scores: ${topDemand}
+Supply Gaps: ${gaps}
+Recent Sales Velocity: ${recentDemand}
+Top Sellers (7d): ${topSellersList}
+
+NEW LISTINGS (last 24h):
+${newListings}
+
+RESALE OPPORTUNITIES:
+${resaleOpportunities}
+
+BUY CANDIDATES (cheapest):
 ${cheapList || 'none'}
 
-RECENT DEMAND: ${recentDemand}
-
-BULLETIN BOARD (wanted by other agents):
-${wantedPosts}
+BULLETIN BOARD (inter-agent negotiation):
+${bulletinFeed}
 
 Fulfill KID SOL's objectives. Choose 1 creation and 1 purchase to maximize YOUR profit.`;
 
@@ -217,7 +258,11 @@ async function gatherMarketSnapshot(pool, memberId) {
     cheapestItems: [],
     recentSales: [],
     agentInventory: 0,
-    bulletinPosts: []
+    bulletinPosts: [],
+    categoryStats: [],
+    recentListings: [],
+    resaleItems: [],
+    topSellers: []
   };
 
   try {
@@ -280,14 +325,82 @@ async function gatherMarketSnapshot(pool, memberId) {
 
   try {
     const bulletinResult = await pool.query(
-      `SELECT title, body, target_category, price_solar, author_name
+      `SELECT id, title, body, post_type, target_category, price_solar, author_name, author_agent_code,
+              reply_count, thread_status, replies, negotiation_type, original_price, final_price, 
+              target_agent_code, related_artifact_id, created_at
        FROM agent_bulletin_board
-       WHERE post_type = 'wanted' AND status = 'open'
-       ORDER BY created_at DESC LIMIT 20`
+       WHERE status = 'open'
+       ORDER BY created_at DESC LIMIT 30`
     );
     snapshot.bulletinPosts = bulletinResult.rows;
   } catch (err) {
     console.warn('⚠️ [Inference] Bulletin posts query failed:', err.message);
+  }
+
+  try {
+    const categoryStatsResult = await pool.query(
+      `SELECT category,
+              COUNT(*) as total_items,
+              COUNT(CASE WHEN active = true THEN 1 END) as active_items,
+              ROUND(AVG(CAST(solar_amount_s AS NUMERIC))::numeric, 4) as avg_price,
+              ROUND(MIN(CAST(solar_amount_s AS NUMERIC))::numeric, 4) as min_price,
+              ROUND(MAX(CAST(solar_amount_s AS NUMERIC))::numeric, 4) as max_price,
+              COUNT(CASE WHEN is_listed_for_resale = true THEN 1 END) as resale_count
+       FROM artifacts WHERE active = true
+       GROUP BY category ORDER BY active_items DESC`
+    );
+    snapshot.categoryStats = categoryStatsResult.rows;
+  } catch (err) {
+    console.warn('⚠️ [Inference] Category stats query failed:', err.message);
+    snapshot.categoryStats = [];
+  }
+
+  try {
+    const recentListingsResult = await pool.query(
+      `SELECT a.id, a.title, a.category, a.solar_amount_s, a.creator_id, a.artifact_class,
+              m.name as creator_name, a.is_listed_for_resale, a.resale_price
+       FROM artifacts a
+       LEFT JOIN members m ON a.creator_id = m.id
+       WHERE a.active = true AND a.created_at > NOW() - INTERVAL '24 hours'
+       ORDER BY a.created_at DESC LIMIT 15`
+    );
+    snapshot.recentListings = recentListingsResult.rows;
+  } catch (err) {
+    console.warn('⚠️ [Inference] Recent listings query failed:', err.message);
+    snapshot.recentListings = [];
+  }
+
+  try {
+    const resaleItemsResult = await pool.query(
+      `SELECT a.id, a.title, a.category, a.solar_amount_s as original_price, a.resale_price,
+              a.current_owner_id, m.name as seller_name
+       FROM artifacts a
+       LEFT JOIN members m ON a.current_owner_id = m.id
+       WHERE a.active = true AND a.is_listed_for_resale = true AND a.current_owner_id != $1
+       ORDER BY a.resale_price ASC LIMIT 10`,
+      [memberId]
+    );
+    snapshot.resaleItems = resaleItemsResult.rows;
+  } catch (err) {
+    console.warn('⚠️ [Inference] Resale items query failed:', err.message);
+    snapshot.resaleItems = [];
+  }
+
+  try {
+    const topSellersResult = await pool.query(
+      `SELECT m.name, m.id as member_id, COUNT(*) as items_sold,
+              ROUND(SUM(CAST(ml.amount AS NUMERIC))::numeric, 4) as total_volume
+       FROM marketplace_ledger ml
+       JOIN members m ON CAST(ml.account_id AS INTEGER) = m.id
+       WHERE ml.entry_type = 'credit' AND ml.account_type = 'creator'
+         AND ml.account_id ~ '^\d+$'
+         AND ml.created_at > NOW() - INTERVAL '7 days'
+       GROUP BY m.name, m.id ORDER BY total_volume DESC LIMIT 8`
+    );
+    snapshot.topSellers = topSellersResult.rows;
+  } catch (err) {
+    console.warn('⚠️ [Inference] Top sellers query failed:', err.message);
+    snapshot.topSellers = [];
   }
 
   try {
@@ -411,7 +524,9 @@ async function gatherRound2Snapshot(pool, memberId) {
 
   try {
     const todayBulletin = await pool.query(
-      `SELECT post_type, title, body, author_name, author_agent_code, target_category, price_solar, replies
+      `SELECT id, title, body, post_type, target_category, price_solar, author_name, author_agent_code,
+              reply_count, thread_status, replies, negotiation_type, original_price, final_price,
+              target_agent_code, related_artifact_id
        FROM agent_bulletin_board
        WHERE created_at > NOW() - INTERVAL '12 hours' AND status = 'open'
        ORDER BY created_at DESC LIMIT 30`
@@ -460,9 +575,31 @@ async function makeRound2Decision(pool, agent, memberId, snapshot, kidSolObjecti
       .join('\n');
 
     const bulletinSummary = (snapshot.todayBulletin || [])
-      .slice(0, 8)
-      .map(p => `[${p.post_type}] "${p.title}" by ${p.author_name}${p.replies && p.replies.length > 0 ? ` (${p.replies.length} replies)` : ''}`)
+      .slice(0, 10)
+      .map(p => {
+        let line = `[${(p.post_type || 'post').toUpperCase()}] "${p.title}" by ${p.author_name}`;
+        if (p.target_category) line += ` cat:${p.target_category}`;
+        if (p.price_solar) line += ` ${parseFloat(p.price_solar).toFixed(4)}S`;
+        if (p.target_agent_code) line += ` → @${p.target_agent_code}`;
+        if (p.thread_status) line += ` [${p.thread_status}]`;
+        if (p.replies && p.replies.length > 0) {
+          p.replies.slice(-2).forEach(r => {
+            line += `\n  └ ${r.agentName} (${r.replyType}): "${(r.message || '').substring(0, 60)}..."`;
+          });
+        }
+        return line;
+      })
       .join('\n');
+
+    const r2CategoryData = (snapshot.categoryStats || [])
+      .slice(0, 10)
+      .map(c => `${c.category}: ${c.active_items} avail, avg ${c.avg_price}S, ${c.resale_count || 0} resale`)
+      .join('\n') || 'no data';
+
+    const r2ResaleOpps = (snapshot.resaleItems || [])
+      .slice(0, 5)
+      .map(r => `id:${r.id} "${r.title}" [${r.category}] was ${r.original_price}S → resale ${r.resale_price}S by ${r.seller_name || 'unknown'}`)
+      .join('\n') || 'none';
 
     const objectives = kidSolObjectives || {};
     const directiveBlock = objectives.dailyDirective ?
@@ -482,6 +619,8 @@ NEGOTIATION POWERS (autonomous):
 - You may offer volume discounts (max 20% off, never deeper)
 - You may suggest alternative lower-priced items to interested buyers
 - Reference artifact IDs in bulletin posts to create an audit trail
+- Address other agents by name in bulletin posts — react to their offers, reference their inventory, and negotiate specific deals
+- Your bulletin posts should read like professional trade-floor chatter, not generic status updates
 - You must protect your reserves — never sell below cost unless strategic
 
 Respond in JSON:
@@ -499,15 +638,21 @@ buys: pick up to 2 from BUY CANDIDATES. sells: pick up to 2 from YOUR INVENTORY 
 YOUR INVENTORY (owned, can sell):
 ${ownedList || 'none'}
 
-BUY CANDIDATES (available to purchase):
+MARKETPLACE INTELLIGENCE:
+${r2CategoryData}
+
+RESALE OPPORTUNITIES:
+${r2ResaleOpps}
+
+BUY CANDIDATES (cheapest available):
 ${cheapList || 'none'}
 
 DEMAND: ${topDemand}
 
-TODAY'S BULLETIN:
+BULLETIN BOARD (inter-agent negotiation):
 ${bulletinSummary || 'no posts today'}
 
-Make 2 strategic buys and 2 strategic sells. Assess the morning objectives.`;
+Make 2 strategic buys and 2 strategic sells. Use marketplace data for pricing decisions. Assess the morning objectives.`;
 
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
