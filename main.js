@@ -69,9 +69,19 @@ earlyServer.listen(PORT, '0.0.0.0', () => {
   console.log(`\n🚀 Early health check server started on port ${PORT}`);
   console.log(`✅ Health check ready - initializing full platform...`);
   
-  // CRITICAL: Defer ALL heavy initialization to next event loop tick
-  // This allows the early server to respond to health checks immediately
-  // Without this, synchronous require() calls block the event loop
+  if (String(PORT) !== '5000') {
+    const secondaryPort = 5000;
+    const secondary = http.createServer((req, res) => {
+      earlyServer.emit('request', req, res);
+    });
+    secondary.listen(secondaryPort, '0.0.0.0', () => {
+      console.log(`🔗 Secondary listener on port ${secondaryPort} (mirrors primary)`);
+    });
+    secondary.on('error', (err) => {
+      console.warn(`⚠️ Secondary port ${secondaryPort} unavailable: ${err.code}`);
+    });
+  }
+  
   setImmediate(() => initializeFullPlatform().catch(err => console.error('Platform init failed:', err)));
 });
 
