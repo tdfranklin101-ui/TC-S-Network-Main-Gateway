@@ -5025,9 +5025,7 @@
                     var filtersEl = document.querySelector('.filters');
                     
                     if (tabType === 'bulletin') {
-                        document.getElementById('bulletin-section').style.display = 'block';
-                        if (filtersEl) filtersEl.style.display = 'none';
-                        loadBulletinBoard();
+                        window.location.href = '/bulletin-board.html';
                     } else if (tabType === 'my-listings') {
                         document.getElementById('my-listings-content').style.display = 'block';
                         if (filtersEl) filtersEl.style.display = '';
