@@ -1438,7 +1438,13 @@ function initCustomRunPanel() {
   AGENTS.forEach(function(a) {
     var opt = document.createElement('option');
     opt.value = a.code;
-    opt.textContent = a.icon + ' ' + a.name + ' (' + a.code + ')';
+    if (a.code === 'ks') {
+      opt.textContent = a.icon + ' KID SOL — Orchestrate All Agents';
+    } else if (a.code === 'ksr') {
+      opt.textContent = a.icon + ' Kid Solar — Computronium Polymath';
+    } else {
+      opt.textContent = a.icon + ' ' + a.name + ' (' + a.code + ')';
+    }
     sel.appendChild(opt);
   });
   var grid = document.getElementById('crCategoryGrid');
@@ -1480,20 +1486,43 @@ async function runCustomTask() {
     if (data.success) {
       statusEl.textContent = '✅ Custom run complete';
       statusEl.style.color = 'var(--green)';
-      var html = '<div style="margin-bottom:8px;font-family:Orbitron,sans-serif;color:var(--green);font-size:14px">🎯 Custom Run Results</div>';
+      var isOrchestrated = data.runType === 'orchestrated-custom';
+      var html = '<div style="margin-bottom:8px;font-family:Orbitron,sans-serif;color:var(--green);font-size:14px">' + (isOrchestrated ? '🌞 KID SOL Orchestrated Run' : '🎯 Custom Run Results') + '</div>';
       html += '<div style="color:var(--cyan)">Run Type: <b>' + (data.runType || 'custom') + '</b></div>';
       html += '<div style="color:var(--gold)">Purpose: <b>' + (data.purpose || purpose) + '</b></div>';
       html += '<div>Categories: <b>' + (data.customCategories || checked).join(', ') + '</b></div>';
+      if (isOrchestrated) {
+        html += '<div>Agents Deployed: <b style="color:var(--cyan)">' + (data.deployed || 0) + '</b></div>';
+      }
       html += '<div>Items Created: <b style="color:var(--green)">' + (data.totalCreated || 0) + '</b></div>';
       html += '<div>Purchases: <b style="color:var(--purple)">' + (data.totalPurchased || 0) + '</b></div>';
       html += '<div>Health: <b style="color:var(--green)">' + (data.healthPercent || 0) + '%</b></div>';
       if (data.agentResults && data.agentResults.length > 0) {
-        var ar = data.agentResults[0];
-        if (ar.created && ar.created.length > 0) {
-          html += '<div style="margin-top:8px;color:var(--cyan);font-weight:600">Created Items:</div>';
-          ar.created.forEach(function(item) {
-            html += '<div style="padding:4px 0;border-bottom:1px solid #1a1a1a">📦 <b>' + (item.title || item.name || 'Untitled') + '</b> <span style="color:var(--purple);font-size:10px">' + (item.category || '') + '</span> <span style="color:var(--gold);font-size:10px">' + (item.price || '') + ' ☀️</span></div>';
+        if (isOrchestrated) {
+          html += '<div style="margin-top:8px;color:var(--cyan);font-weight:600">Agent Results (' + data.agentResults.length + ' agents):</div>';
+          data.agentResults.forEach(function(ar) {
+            var agentLabel = (ar.agentName || ar.agentCode || 'Agent');
+            var createdCount = ar.created ? ar.created.length : 0;
+            var purchasedCount = ar.purchased ? ar.purchased.length : 0;
+            html += '<div style="padding:6px 0;border-bottom:1px solid #1a1a1a">';
+            html += '<span style="color:var(--cyan);font-weight:bold">' + agentLabel + '</span>';
+            html += ' — <span style="color:var(--green)">' + createdCount + ' created</span>';
+            html += ', <span style="color:var(--purple)">' + purchasedCount + ' bought</span>';
+            if (ar.created && ar.created.length > 0) {
+              ar.created.forEach(function(item) {
+                html += '<div style="padding:2px 0 0 12px;font-size:11px">📦 ' + (item.title || item.name || 'Untitled') + ' <span style="color:var(--purple);font-size:10px">' + (item.category || '') + '</span> <span style="color:var(--gold);font-size:10px">' + (item.price || '') + ' ☀️</span></div>';
+              });
+            }
+            html += '</div>';
           });
+        } else {
+          var ar = data.agentResults[0];
+          if (ar.created && ar.created.length > 0) {
+            html += '<div style="margin-top:8px;color:var(--cyan);font-weight:600">Created Items:</div>';
+            ar.created.forEach(function(item) {
+              html += '<div style="padding:4px 0;border-bottom:1px solid #1a1a1a">📦 <b>' + (item.title || item.name || 'Untitled') + '</b> <span style="color:var(--purple);font-size:10px">' + (item.category || '') + '</span> <span style="color:var(--gold);font-size:10px">' + (item.price || '') + ' ☀️</span></div>';
+            });
+          }
         }
       }
       html += '<div style="margin-top:8px;font-size:10px;color:#555">Timestamp: ' + (data.timestamp || new Date().toISOString()) + '</div>';

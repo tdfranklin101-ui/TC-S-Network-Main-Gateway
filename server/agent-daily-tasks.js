@@ -1043,6 +1043,10 @@ async function runCustomAgentTask(pool, agents, agentCode, customCategories, pur
     return { success: false, error: 'Must select between 1 and 5 categories', timestamp: new Date().toISOString() };
   }
 
+  if (agentCode === 'ks') {
+    return await runKidSolOrchestratedCustom(pool, agents, customCategories, purpose);
+  }
+
   console.log(`\n🎯 [KID SOL] Custom run for ${agent.name}: ${purpose}`);
   console.log(`🎯 [KID SOL] Custom categories: ${customCategories.join(', ')}`);
 
@@ -1050,7 +1054,6 @@ async function runCustomAgentTask(pool, agents, agentCode, customCategories, pur
 
   const demand = await analyzeMarketDemand(pool);
 
-  // KID SOL generates daily objectives using AI
   console.log('👑 [KID SOL] Generating daily objectives for custom run...');
   const kidSolObjectives = await generateKidSolObjectives(pool, demand.scores, demand.gaps, demand.totalInventory, demand.memberRequests);
 
@@ -1072,6 +1075,114 @@ async function runCustomAgentTask(pool, agents, agentCode, customCategories, pur
     deployed: result.errors.some(e => e.phase === 'lookup') ? 0 : 1,
     healthPercent: result.errors.length === 0 ? 100 : 0,
     timestamp: new Date().toISOString()
+  };
+
+  lastRunStatus = status;
+  return status;
+}
+
+async function runKidSolOrchestratedCustom(pool, agents, customCategories, purpose) {
+  const startTime = Date.now();
+  const runId = crypto.randomUUID().substring(0, 8);
+  const workerAgents = agents.filter(a => a.code !== 'ks' && a.code !== 'ksr');
+
+  console.log(`\n🌞 ===== KID SOL ORCHESTRATED CUSTOM RUN (${runId}) =====`);
+  console.log(`🌞 [KID SOL] Purpose: ${purpose}`);
+  console.log(`🌞 [KID SOL] Categories: ${customCategories.join(', ')}`);
+  console.log(`🌞 [KID SOL] Deploying ${workerAgents.length} worker agents...`);
+
+  await ensureAgentMembers(pool, agents);
+
+  const demand = await analyzeMarketDemand(pool);
+
+  console.log('👑 [KID SOL] Generating orchestrated objectives...');
+  const kidSolObjectives = await generateKidSolObjectives(pool, demand.scores, demand.gaps, demand.totalInventory, demand.memberRequests);
+  kidSolObjectives.dailyDirective = `CUSTOM MISSION: ${purpose}. ${kidSolObjectives.dailyDirective || ''}`;
+
+  try {
+    const kidSolMember = await pool.query("SELECT id FROM members WHERE username = 'agent_eco_ks' LIMIT 1");
+    if (kidSolMember.rows.length > 0) {
+      await postToBulletin(pool, kidSolMember.rows[0].id, 'ks', 'KID SOL', {
+        type: 'directive',
+        title: `Custom Mission — ${purpose}`,
+        body: `KID SOL is orchestrating a custom mission across ${workerAgents.length} agents.\nCategories: ${customCategories.join(', ')}\nObjective: ${purpose}\n${kidSolObjectives.tradingGuidance || ''}`,
+        targetCategory: customCategories[0],
+        priceSolar: null
+      });
+    }
+  } catch (dirErr) {
+    console.warn('⚠️ [KID SOL] Could not post custom directive to bulletin:', dirErr.message);
+  }
+
+  const agentsPerCategory = Math.max(1, Math.floor(workerAgents.length / customCategories.length));
+  const assignments = {};
+  let agentIndex = 0;
+
+  for (const category of customCategories) {
+    const count = (category === customCategories[customCategories.length - 1])
+      ? workerAgents.length - agentIndex
+      : agentsPerCategory;
+    for (let i = 0; i < count && agentIndex < workerAgents.length; i++, agentIndex++) {
+      assignments[workerAgents[agentIndex].code] = [category];
+    }
+  }
+
+  console.log('🌞 [KID SOL] Orchestrated assignments:');
+  for (const [code, cats] of Object.entries(assignments)) {
+    const a = agents.find(ag => ag.code === code);
+    console.log(`   ${a?.name || code}: ${cats.join(', ')}`);
+  }
+
+  const agentResults = [];
+  let totalCreated = 0;
+  let totalPurchased = 0;
+  let totalResaleListed = 0;
+  let projectedProfit = 0;
+
+  for (const worker of workerAgents) {
+    const assignedCategories = assignments[worker.code] || [customCategories[0]];
+    const result = await runAgentTasks(pool, worker, assignedCategories, demand.scores, kidSolObjectives);
+    agentResults.push(result);
+    totalCreated += result.created.length;
+    totalPurchased += result.purchased.length;
+    totalResaleListed += result.resaleListed || 0;
+    if (result.purchased.length > 0 && result.purchased[0].resalePrice) {
+      projectedProfit += (result.purchased[0].resalePrice - result.purchased[0].price);
+    }
+  }
+
+  const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+  const totalErrors = agentResults.reduce((sum, r) => sum + r.errors.length, 0);
+  const successfulAgents = agentResults.filter(r => r.errors.length === 0).length;
+  const healthPct = workerAgents.length > 0 ? Math.round((successfulAgents / workerAgents.length) * 100) : 0;
+
+  console.log(`\n🌞 ===== KID SOL ORCHESTRATED CUSTOM RUN COMPLETE (${runId}) =====`);
+  console.log(`   Purpose: ${purpose}`);
+  console.log(`   Deployed: ${workerAgents.length} workers | Health: ${healthPct}%`);
+  console.log(`   Created: ${totalCreated} artifacts | Purchased: ${totalPurchased} items`);
+  console.log(`   Resale Listed: ${totalResaleListed} | Projected Profit: ${projectedProfit.toFixed(4)} S`);
+  console.log(`   Errors: ${totalErrors} | Time: ${elapsed}s\n`);
+
+  const status = {
+    success: totalErrors === 0,
+    runId,
+    runType: 'orchestrated-custom',
+    purpose,
+    customCategories,
+    provisionaire: 'KID SOL',
+    orchestrator: true,
+    profitObjective: true,
+    kidSolObjectives,
+    agentResults,
+    deployed: workerAgents.length,
+    healthPercent: healthPct,
+    totalCreated,
+    totalPurchased,
+    totalResaleListed,
+    projectedProfit: parseFloat(projectedProfit.toFixed(6)),
+    totalErrors,
+    timestamp: new Date().toISOString(),
+    elapsedSeconds: parseFloat(elapsed)
   };
 
   lastRunStatus = status;
