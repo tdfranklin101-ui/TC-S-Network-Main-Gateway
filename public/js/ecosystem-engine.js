@@ -1274,6 +1274,11 @@ function openAgentPanel(agentCode){
           ${CATEGORIES.map(c=>`<option value="${c}" ${cfg.creationFocus===c?'selected':''}>${c}</option>`).join('')}
         </select>
       </div>
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+        <button id="apRunAgentBtn" onclick="runSingleAgentFromPanel('${agentCode}')" style="font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;padding:10px 24px;border:2px solid var(--green);background:rgba(57,255,20,.08);color:var(--green);border-radius:30px;cursor:pointer;transition:all .3s;letter-spacing:1px;width:100%">▶ Run This Agent</button>
+        <div id="apRunAgentStatus" style="font-size:12px;color:#888;margin-top:8px;text-align:center"></div>
+        <div id="apRunAgentResults" style="display:none;margin-top:10px;background:#0d0d0d;border:1px solid var(--border);border-radius:8px;padding:10px;font-size:11px;color:#bbb;max-height:200px;overflow-y:auto"></div>
+      </div>
     </div>
   `;
   $('agentPanelOverlay').classList.add('open');
@@ -1281,6 +1286,61 @@ function openAgentPanel(agentCode){
 
 function closeAgentPanel(){
   $('agentPanelOverlay').classList.remove('open');
+}
+
+async function runSingleAgentFromPanel(agentCode) {
+  var btn = document.getElementById('apRunAgentBtn');
+  var statusEl = document.getElementById('apRunAgentStatus');
+  var resultsEl = document.getElementById('apRunAgentResults');
+  if (!btn || !statusEl) return;
+  btn.disabled = true;
+  btn.style.opacity = '0.5';
+  btn.textContent = '⏳ Running...';
+  statusEl.textContent = 'Dispatching agent task...';
+  statusEl.style.color = 'var(--cyan)';
+  resultsEl.style.display = 'none';
+  try {
+    var res = await fetch('/api/agents/daily-tasks/run-single', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ agentCode: agentCode })
+    });
+    var data = await res.json();
+    resultsEl.style.display = 'block';
+    if (data.success !== false && res.ok) {
+      statusEl.textContent = 'Agent run complete!';
+      statusEl.style.color = 'var(--green)';
+      var html = '<div style="color:var(--green);font-weight:600;margin-bottom:6px">Run Complete</div>';
+      if (data.created && data.created.length > 0) {
+        html += '<div style="margin-bottom:4px">Items Created: <b style="color:var(--cyan)">' + data.created.length + '</b></div>';
+        data.created.forEach(function(item) {
+          html += '<div style="padding:2px 0 0 8px;font-size:10px">📦 ' + (item.title || item.name || 'Untitled') + ' <span style="color:var(--purple)">' + (item.category || '') + '</span> <span style="color:var(--gold)">' + (item.price || '') + ' ☀️</span></div>';
+        });
+      }
+      if (data.purchased && data.purchased.length > 0) {
+        html += '<div style="margin-top:4px">Purchases: <b style="color:var(--orange)">' + data.purchased.length + '</b></div>';
+        data.purchased.forEach(function(item) {
+          html += '<div style="padding:2px 0 0 8px;font-size:10px">🛒 ' + (item.title || item.name || 'Untitled') + ' <span style="color:var(--gold)">' + (item.price || '') + ' ☀️</span></div>';
+        });
+      }
+      if (data.totalCreated !== undefined) html += '<div>Total Created: <b>' + data.totalCreated + '</b></div>';
+      if (data.totalPurchased !== undefined) html += '<div>Total Purchased: <b>' + data.totalPurchased + '</b></div>';
+      if (data.error) html += '<div style="color:#f44;margin-top:4px">' + data.error + '</div>';
+      resultsEl.innerHTML = html;
+    } else {
+      statusEl.textContent = 'Error running agent';
+      statusEl.style.color = '#f44';
+      resultsEl.innerHTML = '<div style="color:#f44">' + (data.error || data.message || 'Unknown error') + '</div>';
+    }
+  } catch (err) {
+    statusEl.textContent = 'Network error';
+    statusEl.style.color = '#f44';
+    resultsEl.style.display = 'block';
+    resultsEl.innerHTML = '<div style="color:#f44">' + err.message + '</div>';
+  }
+  btn.disabled = false;
+  btn.style.opacity = '1';
+  btn.textContent = '▶ Run This Agent';
 }
 
 function switchApTab(el,idx){
@@ -1432,51 +1492,6 @@ async function initEcosystem() {
 }
 
 function initCustomRunPanel() {
-  var sel = document.getElementById('crAgentSelect');
-  if (!sel) return;
-  sel.innerHTML = '';
-  AGENTS.forEach(function(a) {
-    var opt = document.createElement('option');
-    opt.value = a.code;
-    if (a.code === 'ks') {
-      opt.textContent = a.icon + ' KID SOL — Orchestrate All Agents';
-    } else if (a.code === 'ksr') {
-      opt.textContent = a.icon + ' Kid Solar — Computronium Polymath';
-    } else {
-      opt.textContent = a.icon + ' ' + a.name + ' (' + a.code + ')';
-    }
-    sel.appendChild(opt);
-  });
-  sel.addEventListener('change', function() {
-    var catGrid = document.getElementById('crCategoryGrid');
-    var catLabel = document.getElementById('crCategoryLabel');
-    var inferNote = document.getElementById('crInferNote');
-    if (this.value === 'ks') {
-      if (catGrid) catGrid.style.display = 'none';
-      if (catLabel) catLabel.style.display = 'none';
-      if (!inferNote) {
-        var note = document.createElement('div');
-        note.id = 'crInferNote';
-        note.style.cssText = 'padding:12px;margin:8px 0;border:1px solid rgba(0,255,255,0.3);border-radius:6px;background:rgba(0,255,255,0.05);color:var(--cyan);font-size:13px;line-height:1.5';
-        note.innerHTML = '🌞 <b>KID SOL Orchestrator Mode</b><br>KID SOL will analyze your objective, confer with Kid Solar ☀️ for technical expertise via the Bulletin Board, then distribute tasks to all 20 agents based on inferred needs.';
-        if (catGrid) catGrid.parentNode.insertBefore(note, catGrid);
-      } else {
-        inferNote.style.display = 'block';
-      }
-    } else {
-      if (catGrid) catGrid.style.display = '';
-      if (catLabel) catLabel.style.display = '';
-      if (inferNote) inferNote.style.display = 'none';
-    }
-  });
-  var grid = document.getElementById('crCategoryGrid');
-  if (!grid) return;
-  grid.innerHTML = '';
-  CATEGORIES.forEach(function(cat) {
-    var lbl = document.createElement('label');
-    lbl.innerHTML = '<input type="checkbox" value="' + cat + '"> ' + cat;
-    grid.appendChild(lbl);
-  });
 }
 
 async function runCustomTask() {

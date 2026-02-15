@@ -213,21 +213,16 @@ header p{color:#888;font-size:14px}
 
   <div style="padding:16px;border-bottom:1px solid var(--border)">
     <div style="font-size:13px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">🎯 Custom Orchestration Request</div>
-    <p style="font-size:12px;color:#888;margin-bottom:12px">Submit a custom objective for KID SOL and Kid Solar to orchestrate. KID SOL analyzes your request, consults Kid Solar for technical design, then dispatches worker agents to build and deliver the artifacts. Select KID SOL (KS) to let her infer the right categories automatically, or pick a specific agent and choose categories manually.</p>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:14px">
-      <div>
-        <label style="display:block;font-size:11px;color:var(--cyan);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:600">Agent</label>
-        <select id="crAgentSelect" class="ap-select"></select>
-      </div>
-      <div>
-        <label style="display:block;font-size:11px;color:var(--cyan);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:600">Purpose</label>
-        <input id="crPurpose" type="text" placeholder="Why this custom run?" style="width:100%;background:#0d0d0d;border:1px solid #333;color:#ccc;padding:8px;border-radius:6px;font-size:12px;font-family:'Space Grotesk',sans-serif;outline:none">
-      </div>
+    <p style="font-size:12px;color:#888;margin-bottom:12px">Submit a custom objective to KID SOL. She analyzes your request, consults Kid Solar for technical design via the Bulletin Board, infers the right categories, then dispatches worker agents to build and deliver the artifacts. To run a single agent individually, click that agent in the registry below and use their profile's Run button.</p>
+    <select id="crAgentSelect" style="display:none"><option value="ks" selected>KID SOL</option></select>
+    <div id="crCategoryGrid" style="display:none"></div>
+    <label id="crCategoryLabel" style="display:none"></label>
+    <div style="margin-bottom:14px">
+      <label style="display:block;font-size:11px;color:var(--cyan);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:600">Objective</label>
+      <input id="crPurpose" type="text" placeholder="Describe what you want the agents to build and deliver..." style="width:100%;background:#0d0d0d;border:1px solid #333;color:#ccc;padding:10px 14px;border-radius:6px;font-size:13px;font-family:'Space Grotesk',sans-serif;outline:none">
     </div>
-    <label id="crCategoryLabel" style="display:block;font-size:11px;color:var(--cyan);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:600">Categories (select 1–5)</label>
-    <div id="crCategoryGrid" class="ap-cat-grid" style="margin-bottom:14px"></div>
     <div style="display:flex;align-items:center;gap:14px">
-      <button id="crRunBtn" onclick="runCustomTask()" style="font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;padding:10px 30px;border:2px solid var(--cyan);background:rgba(0,191,255,.08);color:var(--cyan);border-radius:30px;cursor:pointer;transition:all .3s;letter-spacing:1px">🎯 Run Custom</button>
+      <button id="crRunBtn" onclick="runCustomTask()" style="font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;padding:10px 30px;border:2px solid var(--gold);background:rgba(255,215,0,.08);color:var(--gold);border-radius:30px;cursor:pointer;transition:all .3s;letter-spacing:1px">🌞 Orchestrate</button>
       <span id="crStatus" style="font-size:12px;color:#888"></span>
     </div>
     <div id="crResults" style="margin-top:14px;display:none;background:#0d0d0d;border:1px solid var(--border);border-radius:8px;padding:12px;font-size:12px;color:#bbb;max-height:300px;overflow-y:auto"></div>
