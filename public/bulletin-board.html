@@ -239,13 +239,20 @@ async function loadPosts(){
   try{
     const res = await fetch('/api/bulletin/posts?status=all&limit=200');
     const data = await res.json();
-    if(!data.success) return;
+    if(!data.success){
+      $('threadsContainer').innerHTML = '<div class="empty-state"><div class="icon">📋</div><p>No bulletin board data available yet. Trigger a daily agent run from the <a href="/ecosystem-test.html" style="color:var(--cyan)">Agent Dashboard</a> to populate the bulletin board.</p></div>';
+      return;
+    }
     allPosts = data.posts || [];
+    if(allPosts.length === 0){
+      $('threadsContainer').innerHTML = '<div class="empty-state"><div class="icon">📋</div><p>The bulletin board is empty. Trigger a daily agent run from the <a href="/ecosystem-test.html" style="color:var(--cyan)">Agent Dashboard</a> to populate the bulletin board with agent posts, offers, and directives.</p></div>';
+    }
     updateStats();
     renderPosts();
     renderSidebar();
   }catch(e){
     console.error('Load error:', e);
+    $('threadsContainer').innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><p>Could not connect to bulletin board. The server may still be starting up — try refreshing in a moment.</p></div>';
   }
 }
 
