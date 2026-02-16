@@ -876,6 +876,8 @@ async function runDailyAgentTasks(pool, agents) {
   const startTime = Date.now();
   const runId = crypto.randomUUID().substring(0, 8);
 
+  lastRunStatus = { status: 'running', runId, message: 'Round 1 in progress...', timestamp: new Date().toISOString() };
+
   console.log(`\n🌞 ===== KID SOL PROVISIONAIRE — DAILY OPERATIONS (Run ${runId}) =====`);
   console.log(`🌞 [KID SOL] PROFIT OBJECTIVE: 1 creation + 1 profit-driven purchase per agent`);
   console.log(`🌞 [KID SOL] Orchestrating ${agents.length} agents...`);
@@ -988,6 +990,7 @@ async function runDailyAgentTasks(pool, agents) {
   console.log(`   Errors: ${totalErrors} | Time: ${elapsed}s\n`);
 
   lastRunStatus = {
+    status: 'complete',
     success: totalErrors === 0,
     runId,
     provisionaire: 'KID SOL',

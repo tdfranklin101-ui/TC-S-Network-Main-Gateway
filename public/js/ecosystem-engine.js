@@ -40,68 +40,57 @@ async function triggerDailyRound(round) {
     if (res.ok && (data.success !== false)) {
       if (results) results.style.display = 'block';
 
-      if (round === 'round2') {
-        status.textContent = 'Round 2 started — running in background...';
-        status.style.color = '#00bfff';
-        if (results) {
-          results.innerHTML = '<div style="color:var(--cyan);font-weight:600;margin-bottom:8px">🔄 Round 2 — Running in Background</div>' +
-            '<div>' + (data.message || 'Strategic trading session started.') + '</div>' +
-            '<div style="margin-top:8px;color:#888;font-size:11px">Round 2 runs asynchronously. Check the bulletin board for results in a few minutes.</div>' +
-            '<div id="r2PollStatus" style="margin-top:8px;color:var(--gold)">Polling for results...</div>';
-        }
-        var pollCount = 0;
-        var pollTimer = setInterval(async function() {
-          pollCount++;
-          try {
-            var r2res = await fetch('/api/agents/daily-tasks/round2-status');
-            var r2data = await r2res.json().catch(function() { return {}; });
-            var pollEl = document.getElementById('r2PollStatus');
-            if (r2data.status === 'complete' || r2data.success === true) {
-              clearInterval(pollTimer);
-              status.textContent = 'Round 2 complete!';
-              status.style.color = '#39FF14';
-              if (pollEl) {
-                var html = '<div style="color:var(--green);font-weight:600;margin-bottom:4px">Round 2 Complete</div>';
-                if (r2data.deployed !== undefined) html += '<div>Agents: <b>' + r2data.deployed + '</b></div>';
-                if (r2data.totalPurchased !== undefined) html += '<div>Purchases: <b style="color:var(--orange)">' + r2data.totalPurchased + '</b></div>';
-                if (r2data.totalResaleListed !== undefined) html += '<div>Resale listed: <b style="color:var(--purple)">' + r2data.totalResaleListed + '</b></div>';
-                if (r2data.elapsedSeconds !== undefined) html += '<div style="color:#666">Completed in ' + r2data.elapsedSeconds + 's</div>';
-                pollEl.innerHTML = html;
-              }
-              btn.disabled = false;
-              btn.style.opacity = '1';
-            } else if (pollEl) {
-              pollEl.textContent = 'Still running... (' + pollCount * 10 + 's elapsed)';
-            }
-          } catch (pe) {}
-          if (pollCount >= 60) {
+      var roundLabel = round === 'round1' ? 'Round 1' : 'Round 2';
+      var roundColor = round === 'round1' ? 'var(--green)' : 'var(--cyan)';
+      var statusEndpoint = round === 'round1' ? '/api/agents/daily-tasks/round1-status' : '/api/agents/daily-tasks/round2-status';
+
+      status.textContent = roundLabel + ' started — running in background...';
+      status.style.color = '#ffa500';
+      if (results) {
+        results.innerHTML = '<div style="color:' + roundColor + ';font-weight:600;margin-bottom:8px">🔄 ' + roundLabel + ' — Running in Background</div>' +
+          '<div>' + (data.message || roundLabel + ' session started.') + '</div>' +
+          '<div style="margin-top:8px;color:#888;font-size:11px">' + roundLabel + ' runs asynchronously. Check the bulletin board for results in a few minutes.</div>' +
+          '<div id="pollStatus" style="margin-top:8px;color:var(--gold)">Polling for results...</div>';
+      }
+      var pollCount = 0;
+      var pollTimer = setInterval(async function() {
+        pollCount++;
+        try {
+          var pollRes = await fetch(statusEndpoint);
+          var pollData = await pollRes.json().catch(function() { return {}; });
+          var pollEl = document.getElementById('pollStatus');
+          if (pollData.status === 'complete' || pollData.success === true) {
             clearInterval(pollTimer);
-            status.textContent = 'Round 2 still running — check bulletin board for updates';
-            status.style.color = '#888';
+            status.textContent = roundLabel + ' complete!';
+            status.style.color = '#39FF14';
+            if (pollEl) {
+              var html = '<div style="color:var(--green);font-weight:600;margin-bottom:4px">' + roundLabel + ' Complete</div>';
+              if (pollData.deployed !== undefined) html += '<div>Agents: <b>' + pollData.deployed + '</b></div>';
+              if (pollData.totalCreated !== undefined) html += '<div>Created: <b style="color:var(--cyan)">' + pollData.totalCreated + '</b></div>';
+              if (pollData.totalPurchased !== undefined) html += '<div>Purchases: <b style="color:var(--orange)">' + pollData.totalPurchased + '</b></div>';
+              if (pollData.totalResaleListed !== undefined) html += '<div>Resale listed: <b style="color:var(--purple)">' + pollData.totalResaleListed + '</b></div>';
+              if (pollData.projectedProfit !== undefined) html += '<div>Projected profit: <b style="color:var(--gold)">' + parseFloat(pollData.projectedProfit || 0).toFixed(4) + ' S</b></div>';
+              if (pollData.healthPercent !== undefined) html += '<div>Health: <b style="color:var(--green)">' + pollData.healthPercent + '%</b></div>';
+              if (pollData.totalErrors !== undefined && pollData.totalErrors > 0) html += '<div style="color:#f44">Errors: ' + pollData.totalErrors + '</div>';
+              if (pollData.elapsedSeconds !== undefined) html += '<div style="color:#666">Completed in ' + pollData.elapsedSeconds + 's</div>';
+              if (pollData.kidSolObjectives && pollData.kidSolObjectives.dailyDirective) html += '<div style="margin-top:8px;padding:8px;background:#1a1a1a;border-radius:6px;font-style:italic;color:var(--gold)">KID SOL: "' + pollData.kidSolObjectives.dailyDirective + '"</div>';
+              pollEl.innerHTML = html;
+            }
             btn.disabled = false;
             btn.style.opacity = '1';
+          } else if (pollEl) {
+            pollEl.textContent = 'Still running... (' + pollCount * 10 + 's elapsed)';
           }
-        }, 10000);
-        return;
-      }
-
-      status.textContent = 'Round 1 triggered successfully!';
-      status.style.color = '#39FF14';
-      if (results) {
-        var d = data;
-        var html = '<div style="color:var(--green);font-weight:600;margin-bottom:8px">⚡ Round 1 Results</div>';
-        if (d.deployed !== undefined) html += '<div>Agents deployed: <b>' + d.deployed + '</b></div>';
-        if (d.totalCreated !== undefined) html += '<div>Artifacts created: <b style="color:var(--cyan)">' + d.totalCreated + '</b></div>';
-        if (d.totalPurchased !== undefined) html += '<div>Purchases made: <b style="color:var(--orange)">' + d.totalPurchased + '</b></div>';
-        if (d.totalResaleListed !== undefined) html += '<div>Resale listed: <b style="color:var(--purple)">' + d.totalResaleListed + '</b></div>';
-        if (d.projectedProfit !== undefined) html += '<div>Projected profit: <b style="color:var(--gold)">' + parseFloat(d.projectedProfit || 0).toFixed(4) + ' S</b></div>';
-        if (d.healthPercent !== undefined) html += '<div>Health: <b style="color:var(--green)">' + d.healthPercent + '%</b></div>';
-        if (d.totalErrors !== undefined && d.totalErrors > 0) html += '<div style="color:#f44">Errors: ' + d.totalErrors + '</div>';
-        if (d.elapsedSeconds !== undefined) html += '<div style="color:#666;margin-top:4px">Completed in ' + d.elapsedSeconds + 's</div>';
-        if (d.kidSolObjectives && d.kidSolObjectives.dailyDirective) html += '<div style="margin-top:8px;padding:8px;background:#1a1a1a;border-radius:6px;font-style:italic;color:var(--gold)">KID SOL: "' + d.kidSolObjectives.dailyDirective + '"</div>';
-        if (d.message) html += '<div>' + d.message + '</div>';
-        results.innerHTML = html;
-      }
+        } catch (pe) {}
+        if (pollCount >= 120) {
+          clearInterval(pollTimer);
+          status.textContent = roundLabel + ' still running — check bulletin board for updates';
+          status.style.color = '#888';
+          btn.disabled = false;
+          btn.style.opacity = '1';
+        }
+      }, 10000);
+      return;
     } else {
       status.textContent = 'Error: ' + (data.error || data.message || 'Unknown error');
       status.style.color = '#f44';

@@ -12644,14 +12644,24 @@ Only include products where you have found a real URL. Do not make up URLs.`
         return;
       }
       console.log('🌞 [KID SOL PROVISIONAIRE] Manual trigger: Orchestrating daily agent operations...');
-      const result = await runDailyAgentTasks(pool, NETWORK_AGENTS);
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(result));
+      res.writeHead(202, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, message: 'Round 1 provisioning session started', timestamp: new Date().toISOString() }));
+
+      runDailyAgentTasks(pool, NETWORK_AGENTS).catch(err => console.error('Round 1 error:', err.message));
     } catch (error) {
       console.error('❌ Daily agent tasks error:', error.message);
-      res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ success: false, error: error.message }));
+      if (!res.headersSent) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: error.message }));
+      }
     }
+    return;
+  }
+
+  if (pathname === '/api/agents/daily-tasks/round1-status' && req.method === 'GET') {
+    const status = getTaskStatus();
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(status));
     return;
   }
 
