@@ -5,6 +5,38 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
+function resilientReadFile(filePath, encoding) {
+  const maxRetries = 3;
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return encoding ? fs.readFileSync(filePath, encoding) : fs.readFileSync(filePath);
+    } catch (err) {
+      if (err.code === 'EIO' && i < maxRetries - 1) {
+        const delay = 50 * (i + 1);
+        const start = Date.now();
+        while (Date.now() - start < delay) {}
+        continue;
+      }
+      throw err;
+    }
+  }
+}
+
+function serveHtmlFile(res, filePath) {
+  if (!fs.existsSync(filePath)) return false;
+  try {
+    const content = resilientReadFile(filePath, 'utf8');
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.end(content);
+    return true;
+  } catch (err) {
+    console.error(`Error serving ${filePath}:`, err.message);
+    res.writeHead(500, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Temporary file read error. Please refresh the page.' }));
+    return true;
+  }
+}
+
 // ================== EARLY HEALTH CHECK - START IMMEDIATELY ==================
 // This ensures deployment health checks pass while heavy initialization runs
 const PORT = process.env.PORT || 5000;
@@ -37,7 +69,7 @@ const earlyServer = http.createServer((req, res) => {
     const ext = path.extname(filePath);
     if (ext && fs.existsSync(filePath)) {
       try {
-        const content = fs.readFileSync(filePath);
+        const content = resilientReadFile(filePath);
         res.writeHead(200, { 'Content-Type': (MIME_TYPES[ext] || 'application/octet-stream') + (ext === '.html' ? '; charset=utf-8' : '') });
         res.end(content);
         return;
@@ -47,7 +79,7 @@ const earlyServer = http.createServer((req, res) => {
       const indexPath = path.join(__dirname, 'public', 'index.html');
       if (fs.existsSync(indexPath)) {
         try {
-          const content = fs.readFileSync(indexPath, 'utf8');
+          const content = resilientReadFile(indexPath, 'utf8');
           res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
           res.end(content);
           return;
@@ -8511,44 +8543,19 @@ const server = http.createServer(async (req, res) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${pathname}`);
   
   if (pathname === '/page1') {
-    const filePath = path.join(__dirname, 'public', 'page1-solar-intro.html');
-    if (fs.existsSync(filePath)) {
-      const content = fs.readFileSync(filePath, 'utf8');
-      res.writeHead(200, { 'Content-Type': 'text/html' });
-      res.end(content);
-      return;
-    }
+    if (serveHtmlFile(res, path.join(__dirname, 'public', 'page1-solar-intro.html'))) return;
   }
   
   if (pathname === '/page2') {
-    const filePath = path.join(__dirname, 'public', 'page2-solar-live.html');
-    if (fs.existsSync(filePath)) {
-      const content = fs.readFileSync(filePath, 'utf8');
-      res.writeHead(200, { 'Content-Type': 'text/html' });
-      res.end(content);
-      return;
-    }
+    if (serveHtmlFile(res, path.join(__dirname, 'public', 'page2-solar-live.html'))) return;
   }
   
   if (pathname === '/page3') {
-    const filePath = path.join(__dirname, 'public', 'page3-features.html');
-    if (fs.existsSync(filePath)) {
-      const content = fs.readFileSync(filePath, 'utf8');
-      res.writeHead(200, { 'Content-Type': 'text/html' });
-      res.end(content);
-      return;
-    }
+    if (serveHtmlFile(res, path.join(__dirname, 'public', 'page3-features.html'))) return;
   }
   
   if (pathname === '/main-platform' || pathname === '/main') {
-    const filePath = path.join(__dirname, 'public', 'main-platform.html');
-    if (fs.existsSync(filePath)) {
-      const content = fs.readFileSync(filePath, 'utf8');
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-      res.end(content);
-      console.log('✅ Served main platform with Music Now functionality');
-      return;
-    }
+    if (serveHtmlFile(res, path.join(__dirname, 'public', 'main-platform.html'))) return;
   }
   
   // Permanent redirect from .html extension to clean route
@@ -8559,69 +8566,27 @@ const server = http.createServer(async (req, res) => {
   }
   
   if (pathname === '/paygate') {
-    const filePath = path.join(__dirname, 'public', 'paygate.html');
-    if (fs.existsSync(filePath)) {
-      const content = fs.readFileSync(filePath, 'utf8');
-      res.writeHead(200, { 'Content-Type': 'text/html' });
-      res.end(content);
-      return;
-    }
+    if (serveHtmlFile(res, path.join(__dirname, 'public', 'paygate.html'))) return;
   }
   
   if (pathname === '/homepage-full.html' || pathname === '/homepage-full') {
-    const filePath = path.join(__dirname, 'public', 'homepage-full.html');
-    if (fs.existsSync(filePath)) {
-      const content = fs.readFileSync(filePath, 'utf8');
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-      res.end(content);
-      return;
-    }
+    if (serveHtmlFile(res, path.join(__dirname, 'public', 'homepage-full.html'))) return;
   }
 
   if (pathname === '/marketplace.html' || pathname === '/marketplace') {
-    console.log('🔍 MARKETPLACE ROUTE HIT:', pathname);
-    const filePath = path.join(__dirname, 'public', 'marketplace.html');
-    console.log('📁 File path:', filePath);
-    console.log('📄 File exists:', fs.existsSync(filePath));
-    if (fs.existsSync(filePath)) {
-      const content = fs.readFileSync(filePath, 'utf8');
-      console.log('📏 Content length:', content.length);
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-      res.end(content);
-      console.log('✅ Served marketplace with AI platform dropdowns');
-      return;
-    }
-    console.log('❌ File not found!');
+    if (serveHtmlFile(res, path.join(__dirname, 'public', 'marketplace.html'))) return;
   }
 
   if (pathname === '/ecosystem-test.html' || pathname === '/ecosystem-test') {
-    const filePath = path.join(__dirname, 'public', 'ecosystem-test.html');
-    if (fs.existsSync(filePath)) {
-      const content = fs.readFileSync(filePath, 'utf8');
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-      res.end(content);
-      return;
-    }
+    if (serveHtmlFile(res, path.join(__dirname, 'public', 'ecosystem-test.html'))) return;
   }
 
   if (pathname === '/ecosystem-analysis.html' || pathname === '/ecosystem-analysis') {
-    const filePath = path.join(__dirname, 'public', 'ecosystem-analysis.html');
-    if (fs.existsSync(filePath)) {
-      const content = fs.readFileSync(filePath, 'utf8');
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-      res.end(content);
-      return;
-    }
+    if (serveHtmlFile(res, path.join(__dirname, 'public', 'ecosystem-analysis.html'))) return;
   }
 
   if (pathname === '/bulletin-board.html' || pathname === '/bulletin-board') {
-    const filePath = path.join(__dirname, 'public', 'bulletin-board.html');
-    if (fs.existsSync(filePath)) {
-      const content = fs.readFileSync(filePath, 'utf8');
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-      res.end(content);
-      return;
-    }
+    if (serveHtmlFile(res, path.join(__dirname, 'public', 'bulletin-board.html'))) return;
   }
 
   if (pathname === '/data/ecosystem-config.json') {
