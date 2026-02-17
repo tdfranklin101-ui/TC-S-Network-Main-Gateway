@@ -96,6 +96,9 @@ async function findNegotiatedDiscount(pool, buyerMemberId, artifactId, category)
 
 const FOUNDATION_USERNAME = 'tcs_foundation';
 const FOUNDATION_FEE_RATE = 0.05;
+const CREATION_FEE = 0.00025;
+const PLACEMENT_FEE = 0.0001;
+const SOLAR_KWH_RATE = 1 / 4913;
 
 async function getOrCreateFoundationMember(queryFn) {
   const existing = await queryFn('SELECT id, username, total_solar FROM members WHERE username = $1 LIMIT 1', [FOUNDATION_USERNAME]);
@@ -348,16 +351,28 @@ function generateSlug(title) {
   return `${base}-${suffix}`;
 }
 
-function generatePrice(category) {
-  const demandIdx = MARKET_DEMAND.indexOf(category);
-  const demandMultiplier = demandIdx >= 0 ? 1 + (MARKET_DEMAND.length - demandIdx) / MARKET_DEMAND.length : 1;
+function generatePrice(category, kwhFootprint) {
+  const kwhSolar = kwhFootprint * SOLAR_KWH_RATE;
 
-  if (category === 'Basic Needs') {
-    const base = 0.002 + Math.random() * 0.078;
-    return parseFloat((base * demandMultiplier).toFixed(6));
-  }
-  const base = 0.005 + Math.random() * 0.395;
-  return parseFloat((base * demandMultiplier).toFixed(6));
+  const UNIQUENESS_FACTORS = {
+    'Computronium': 3.5, 'Songs': 2.5, 'Videos': 2.8, 'Music': 2.2, 'Video': 2.6,
+    'Art': 2.0, 'Photo': 1.8, 'Writing': 1.5, 'AI Tools': 3.0, 'AI Create': 2.8,
+    'Software': 3.2, 'Docs': 1.3, 'Education': 1.4, 'Games': 2.5, 'Utilities': 1.6,
+    'Culture': 1.7, 'Basic Needs': 1.0, 'Rent': 1.2, 'Energy': 2.0, '3D Printing': 2.4
+  };
+  const uniquenessFactor = (UNIQUENESS_FACTORS[category] || 1.5) + (Math.random() * 0.5 - 0.25);
+
+  const demandIdx = MARKET_DEMAND.indexOf(category);
+  const demandMultiplier = demandIdx >= 0 ? 1 + (MARKET_DEMAND.length - demandIdx) / (MARKET_DEMAND.length * 2) : 1;
+
+  const isBasicNeeds = category === 'Basic Needs';
+  const genFee = isBasicNeeds ? 0 : CREATION_FEE;
+  const placeFee = isBasicNeeds ? 0 : PLACEMENT_FEE;
+
+  const basePrice = (kwhSolar * uniquenessFactor * demandMultiplier) + genFee + placeFee;
+  const minPrice = isBasicNeeds ? 0.001 : 0.005;
+  const price = Math.max(minPrice, basePrice);
+  return parseFloat(price.toFixed(6));
 }
 
 function generateDescription(category, title) {
@@ -418,8 +433,8 @@ async function createArtifactsForAgent(pool, agent, memberId, assignedCategories
     try {
       const title = generateItemName(category);
       const slug = generateSlug(title);
-      const price = generatePrice(category);
       const kwhFootprint = parseFloat((0.001 + Math.random() * 0.499).toFixed(4));
+      const price = generatePrice(category, kwhFootprint);
       const description = generateDescription(category, title);
       const fileType = FILE_TYPES[category] || 'application/octet-stream';
       const contentFormat = CONTENT_FORMATS[category] || 'binary';
@@ -522,7 +537,52 @@ async function createArtifactsForAgent(pool, agent, memberId, assignedCategories
       lifeLensReq.write(lifeLensPayload);
       lifeLensReq.end();
 
-      created.push({ artifactId, title, category, price, slug });
+      let creationFeePaid = 0;
+      if (category !== 'Basic Needs') {
+        const totalCreationFee = CREATION_FEE + PLACEMENT_FEE;
+        const feeClient = await pool.connect();
+        try {
+          await feeClient.query('BEGIN');
+          const agentBalRow = await feeClient.query(
+            'UPDATE members SET total_solar = total_solar - $1 WHERE id = $2 AND total_solar >= $1 RETURNING total_solar',
+            [totalCreationFee, memberId]
+          );
+          if (agentBalRow.rows.length > 0) {
+            const newAgentBal = parseFloat(agentBalRow.rows[0].total_solar);
+            const foundationMember = await getOrCreateFoundationMember(feeClient.query.bind(feeClient));
+            const foundationUpdated = await feeClient.query(
+              'UPDATE members SET total_solar = total_solar + $1 WHERE id = $2 RETURNING total_solar',
+              [totalCreationFee, foundationMember.id]
+            );
+            const foundationBalAfter = parseFloat(foundationUpdated.rows[0].total_solar);
+
+            const feeTxId = crypto.randomUUID();
+            await feeClient.query(
+              `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
+               VALUES ($1, 'debit', $2, 'user', $3, $4, 'creation_fee', $5, $6)`,
+              [feeTxId, String(memberId), String(totalCreationFee), String(newAgentBal), String(artifactId), `Creation fee (${CREATION_FEE} S) + Placement fee (${PLACEMENT_FEE} S): ${title}`]
+            );
+            await feeClient.query(
+              `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
+               VALUES ($1, 'credit', $2, 'foundation', $3, $4, 'creation_fee', $5, $6)`,
+              [feeTxId, String(foundationMember.id), String(totalCreationFee), String(foundationBalAfter), String(artifactId), `Creation + Placement fee: ${title}`]
+            );
+            await feeClient.query('COMMIT');
+            creationFeePaid = totalCreationFee;
+            console.log(`🏦 [Agent ${agent.code}] Creation fee ${totalCreationFee} S charged for "${title}" → Foundation`);
+          } else {
+            await feeClient.query('ROLLBACK');
+            console.warn(`⚠️ [Agent ${agent.code}] Insufficient balance for creation fee on "${title}"`);
+          }
+        } catch (feeErr) {
+          try { await feeClient.query('ROLLBACK'); } catch (rbErr) {}
+          console.warn(`⚠️ [Agent ${agent.code}] Creation fee failed:`, feeErr.message);
+        } finally {
+          feeClient.release();
+        }
+      }
+
+      created.push({ artifactId, title, category, price, slug, kwhFootprint, creationFeePaid });
     } catch (err) {
       console.error(`[Agent ${agent.code}] Error creating artifact in ${category}:`, err.message);
       errors.push({ phase: 'create', category, error: err.message });
@@ -1095,8 +1155,8 @@ async function runEducationBlitz(pool, agents) {
           const title = generateItemName('Education');
           const titleWithSub = title.endsWith(subcat) ? title : title.replace(/\s\S+$/, ' ' + subcat);
           const slug = generateSlug(titleWithSub);
-          const price = generatePrice('Education');
           const kwhFootprint = parseFloat((0.001 + Math.random() * 0.499).toFixed(4));
+          const price = generatePrice('Education', kwhFootprint);
           const description = generateDescription('Education', titleWithSub);
 
           const contentBody = `# ${titleWithSub}\n\n## Level: ${subcat}\n\n### Overview\n${description}\n\n### Learning Objectives\n- Master fundamental concepts in this ${subcat}-level program\n- Apply practical skills through hands-on exercises\n- Demonstrate competency through assessment activities\n\n### Module Content\nThis educational resource is designed for ${subcat} learners exploring the Solar network ecosystem. Topics include renewable energy systems, distributed computing, blockchain-based currency, and sustainable technology practices.\n\n### Key Topics\n1. Solar Energy Fundamentals and kWh-to-Solar Conversion\n2. Marketplace Economics and Foundation Fee Structure\n3. Agent Network Architecture and AI Collaboration\n4. Renewable Energy Policy and Global Standards\n\n### Exercises\n1. Calculate the Solar equivalent of 100 kWh of renewable energy\n2. Analyze a marketplace transaction including the 5% Foundation fee\n3. Research and present on a renewable energy initiative in your region\n4. Design a grant petition for a community energy project\n\n### Assessment\n- Knowledge Check: 10-question quiz on core concepts\n- Practical Project: Build a Solar energy calculation model\n- Peer Review: Exchange and evaluate proposals with fellow learners\n\n### Additional Resources\n- Solar Standard Protocol v1.0 documentation\n- TC-S Network marketplace for real-world practice\n- KID SOL AI assistant for guided tutoring\n- Agent Orion (Education Specialist) curated resources\n\nCreated by: Agent ${agent.name} (${agent.code})\nClass: B — Educational Content\nSubcategory: ${subcat}\nGenerated: ${new Date().toISOString()}`;

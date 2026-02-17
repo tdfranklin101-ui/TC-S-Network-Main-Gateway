@@ -2887,9 +2887,71 @@ async function processDailyDistribution() {
   }
   
   try {
-    console.log('📡 Performing atomic Solar distribution to prevent race conditions...');
+    // === CATCH-UP PASS: Credit missed days (max 7) for members who fell behind ===
+    console.log('📡 Checking for members who missed distributions...');
     
-    // Atomic UPDATE with race condition protection and duplicate prevention
+    const catchUpQuery = `
+      SELECT id, username, total_solar, last_distribution_date,
+        LEAST(
+          EXTRACT(DAY FROM (CURRENT_DATE - DATE(last_distribution_date)))::integer,
+          7
+        ) AS missed_days
+      FROM members
+      WHERE last_distribution_date IS NOT NULL
+        AND DATE(last_distribution_date) < CURRENT_DATE - INTERVAL '1 day'
+    `;
+    
+    const catchUpResult = await pool.query(catchUpQuery);
+    let totalCatchUp = 0;
+    
+    if (catchUpResult.rows.length > 0) {
+      console.log(`🔄 Found ${catchUpResult.rows.length} members needing catch-up distribution`);
+      
+      for (const member of catchUpResult.rows) {
+        const missedDays = member.missed_days;
+        if (missedDays <= 0) continue;
+        
+        try {
+          const catchUpUpdateQuery = `
+            UPDATE members 
+            SET total_solar = total_solar + $1,
+                last_distribution_date = CURRENT_DATE - INTERVAL '1 day'
+            WHERE id = $2
+            RETURNING total_solar
+          `;
+          const updated = await pool.query(catchUpUpdateQuery, [missedDays, member.id]);
+          const newBalance = updated.rows[0].total_solar;
+          
+          console.log(`🔄 ${member.username}: catch-up +${missedDays} Solar for missed days (balance: ${newBalance})`);
+          totalCatchUp += missedDays;
+          
+          const lastDistDate = new Date(member.last_distribution_date);
+          for (let d = 1; d <= missedDays; d++) {
+            const missedDate = new Date(lastDistDate);
+            missedDate.setDate(missedDate.getDate() + d);
+            const missedDateString = missedDate.toISOString().split('T')[0];
+            try {
+              await pool.query(
+                `INSERT INTO distribution_logs (member_id, distribution_date, solar_amount, dollar_value) VALUES ($1, $2, $3, $4)`,
+                [member.id, missedDateString, 1.0000, 0.00]
+              );
+            } catch (logErr) {
+              // skip duplicate log entries
+            }
+          }
+        } catch (memberErr) {
+          console.error(`⚠️ Catch-up failed for ${member.username}:`, memberErr.message);
+        }
+      }
+      
+      if (totalCatchUp > 0) {
+        console.log(`✅ Catch-up complete: ${totalCatchUp} total Solar credited to ${catchUpResult.rows.length} members`);
+      }
+    }
+    
+    // === DAILY PASS: +1 Solar for today ===
+    console.log('📡 Performing atomic Solar distribution for today...');
+    
     const atomicDistributionQuery = `
       UPDATE members 
       SET 
@@ -2911,7 +2973,6 @@ async function processDailyDistribution() {
     
     console.log(`📊 Distributed 1 Solar to ${updatedMembers.length} members atomically`);
     
-    // Log each member's distribution
     for (const member of updatedMembers) {
       console.log(`💰 ${member.username}: received 1 Solar (total: ${member.total_solar})`);
     }
@@ -2921,7 +2982,6 @@ async function processDailyDistribution() {
     
     console.log(`✅ Daily distribution complete: ${successCount} success, ${errorCount} errors`);
     
-    // Log individual member distributions to match table structure
     try {
       for (const member of updatedMembers) {
         const logQuery = `
@@ -6585,12 +6645,9 @@ const server = http.createServer(async (req, res) => {
           }
         }
 
-        const foundationResult = await client.query('SELECT id, total_solar FROM members WHERE username = $1', ['tcs_foundation']);
-        if (foundationResult.rows.length > 0) {
-          const foundation = foundationResult.rows[0];
-          const foundationNewBal = parseFloat(foundation.total_solar || 0) + foundationFee;
-          await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [foundationNewBal, foundation.id]);
-        }
+        const foundationMemberPrimary = await getOrCreateFoundationMember(client);
+        const foundationNewBal = foundationMemberPrimary.totalSolar + foundationFee;
+        await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(foundationNewBal), foundationMemberPrimary.id]);
 
         const solarRays = Math.round(requiredSolar * 1000000);
         const transactionResult = await client.query(
@@ -6599,6 +6656,25 @@ const server = http.createServer(async (req, res) => {
           [walletId, artifactId, requiredSolar, solarRays, `Purchase of "${artifact.title}" for ${requiredSolar} Solar`]
         );
         transactionId = transactionResult.rows[0].id;
+
+        const purchaseLedgerTxId = `purchase_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
+        await client.query(
+          `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
+           VALUES ($1, 'debit', $2, 'user', $3, $4, 'purchase', $5, $6)`,
+          [purchaseLedgerTxId, String(userId), String(requiredSolar), String(newBalance), String(artifactId), `Purchase: ${artifact.title}`]
+        );
+        if (sellerInfo) {
+          await client.query(
+            `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
+             VALUES ($1, 'credit', $2, 'creator', $3, $4, 'purchase', $5, $6)`,
+            [purchaseLedgerTxId, String(sellerInfo.id), String(requiredSolar - foundationFee), String(sellerInfo.balance), String(artifactId), `Sale: ${artifact.title}`]
+          );
+        }
+        await client.query(
+          `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
+           VALUES ($1, 'credit', $2, 'foundation', $3, $4, 'foundation_fee', $5, $6)`,
+          [purchaseLedgerTxId, String(foundationMemberPrimary.id), String(foundationFee), String(foundationNewBal), String(artifactId), `Foundation fee (5%): ${artifact.title}`]
+        );
 
         try {
           await client.query(
@@ -17989,6 +18065,16 @@ setImmediate(() => {
     console.log('   POST /api/distribution/trigger          (solar distribution)');
 
     console.log(`✅ All schedulers initialized — server ready`);
+
+    // Startup distribution check — catches missed distributions after restarts
+    setTimeout(async () => {
+      try {
+        console.log('🌱 Startup distribution check...');
+        await processDailyDistribution();
+      } catch (err) {
+        console.warn('Startup distribution check failed:', err.message);
+      }
+    }, 60000); // 60 second delay after startup
   }, 2000); // 2 seconds is enough for lightweight schedulers
 });
 
