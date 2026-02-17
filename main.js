@@ -5,27 +5,60 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
-function resilientReadFile(filePath, encoding) {
-  const maxRetries = 3;
-  for (let i = 0; i < maxRetries; i++) {
+const FILE_CACHE = new Map();
+const MIME_TYPES_GLOBAL = {'.html':'text/html','.css':'text/css','.js':'application/javascript','.json':'application/json','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.svg':'image/svg+xml','.ico':'image/x-icon','.mp3':'audio/mpeg','.mp4':'video/mp4','.webp':'image/webp','.woff2':'font/woff2','.gif':'image/gif','.ttf':'font/ttf','.woff':'font/woff','.pdf':'application/pdf','.txt':'text/plain','.xml':'application/xml','.webm':'video/webm'};
+
+function loadPublicFilesIntoCache() {
+  const publicRoot = path.resolve(__dirname, 'public');
+  let count = 0;
+  let totalSize = 0;
+  function walkDir(dir) {
     try {
-      return encoding ? fs.readFileSync(filePath, encoding) : fs.readFileSync(filePath);
-    } catch (err) {
-      if (err.code === 'EIO' && i < maxRetries - 1) {
-        const delay = 50 * (i + 1);
-        const start = Date.now();
-        while (Date.now() - start < delay) {}
-        continue;
+      const entries = fs.readdirSync(dir);
+      for (const entry of entries) {
+        const fullPath = path.join(dir, entry);
+        try {
+          const stat = fs.statSync(fullPath);
+          if (stat.isDirectory()) {
+            walkDir(fullPath);
+          } else if (stat.size < 5 * 1024 * 1024) {
+            const relPath = '/' + path.relative(publicRoot, fullPath);
+            FILE_CACHE.set(relPath, fs.readFileSync(fullPath));
+            count++;
+            totalSize += stat.size;
+          }
+        } catch (e) {
+          console.warn(`⚠️ Cache skip ${fullPath}: ${e.message}`);
+        }
       }
-      throw err;
+    } catch (e) {
+      console.warn(`⚠️ Cache skip dir ${dir}: ${e.message}`);
     }
   }
+  walkDir(publicRoot);
+  console.log(`📦 Cached ${count} static files (${(totalSize / 1024 / 1024).toFixed(1)} MB) in memory`);
+}
+
+loadPublicFilesIntoCache();
+
+function serveCachedFile(res, urlPath) {
+  const cached = FILE_CACHE.get(urlPath);
+  if (!cached) return false;
+  const ext = path.extname(urlPath);
+  const contentType = (MIME_TYPES_GLOBAL[ext] || 'application/octet-stream') + (ext === '.html' ? '; charset=utf-8' : '');
+  res.writeHead(200, { 'Content-Type': contentType });
+  res.end(cached);
+  return true;
 }
 
 function serveHtmlFile(res, filePath) {
+  const publicRoot = path.resolve(__dirname, 'public');
+  const relPath = '/' + path.relative(publicRoot, filePath);
+  if (serveCachedFile(res, relPath)) return true;
   if (!fs.existsSync(filePath)) return false;
   try {
-    const content = resilientReadFile(filePath, 'utf8');
+    const content = fs.readFileSync(filePath, 'utf8');
+    FILE_CACHE.set(relPath, Buffer.from(content, 'utf8'));
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
     res.end(content);
     return true;
@@ -58,33 +91,13 @@ const earlyServer = http.createServer((req, res) => {
     return;
   }
   
-  // Serve static files during initialization so pages are accessible immediately
+  // Serve static files during initialization from in-memory cache
   if (!mainServerReady) {
-    const MIME_TYPES = {'.html':'text/html','.css':'text/css','.js':'application/javascript','.json':'application/json','.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml','.ico':'image/x-icon','.mp3':'audio/mpeg','.mp4':'video/mp4','.webp':'image/webp','.woff2':'font/woff2'};
     let servePath = pathname === '/' ? '/index.html' : pathname;
     if (servePath.includes('..')) { res.writeHead(400); res.end('Bad request'); return; }
-    const publicRoot = path.resolve(__dirname, 'public');
-    const filePath = path.resolve(publicRoot, '.' + servePath);
-    if (!filePath.startsWith(publicRoot)) { res.writeHead(403); res.end('Forbidden'); return; }
-    const ext = path.extname(filePath);
-    if (ext && fs.existsSync(filePath)) {
-      try {
-        const content = resilientReadFile(filePath);
-        res.writeHead(200, { 'Content-Type': (MIME_TYPES[ext] || 'application/octet-stream') + (ext === '.html' ? '; charset=utf-8' : '') });
-        res.end(content);
-        return;
-      } catch (e) {}
-    }
-    if (!ext || ext === '.html') {
-      const indexPath = path.join(__dirname, 'public', 'index.html');
-      if (fs.existsSync(indexPath)) {
-        try {
-          const content = resilientReadFile(indexPath, 'utf8');
-          res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-          res.end(content);
-          return;
-        } catch (e) {}
-      }
+    if (serveCachedFile(res, servePath)) return;
+    if (!path.extname(servePath) || path.extname(servePath) === '.html') {
+      if (serveCachedFile(res, '/index.html')) return;
     }
     res.writeHead(200, { 'Content-Type': 'text/html' });
     res.end('<html><body style="background:#0a0a0a;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0"><div style="text-align:center"><h1>TC-S Network</h1><p>Initializing platform...</p></div></body></html>');
@@ -17571,64 +17584,48 @@ Respond with valid JSON only. Be insightful and specific.`;
       return;
     }
     
-    // Regular static files - with buffer read for reliability (avoids EIO stream errors)
-    const contentTypes = {
-      '.html': 'text/html; charset=utf-8',
-      '.css': 'text/css',
-      '.js': 'application/javascript',
-      '.json': 'application/json',
-      '.png': 'image/png',
-      '.jpg': 'image/jpeg',
-      '.jpeg': 'image/jpeg',
-      '.svg': 'image/svg+xml',
-      '.pdf': 'application/pdf',
-      '.mp3': 'audio/mpeg',
-      '.mp4': 'video/mp4',
-      '.webm': 'video/webm',
-      '.mov': 'video/quicktime'
-    };
-    
-    let fileBuffer = null;
-    let lastErr = null;
-    for (let attempt = 0; attempt < 3; attempt++) {
-      try {
-        fileBuffer = fs.readFileSync(filePath);
-        break;
-      } catch (err) {
-        lastErr = err;
-        if (attempt < 2) {
-          const { execSync } = require('child_process');
-          try { execSync('sleep 0.05'); } catch(e) {}
-        }
-      }
+    // Serve from in-memory cache first (avoids all EIO filesystem errors)
+    if (serveCachedFile(res, pathname)) {
+      return;
     }
-    if (fileBuffer) {
+    
+    // Fallback: try disk read if not in cache
+    try {
+      const fileBuffer = fs.readFileSync(filePath);
+      const publicRoot = path.resolve(__dirname, 'public');
+      FILE_CACHE.set(pathname, fileBuffer);
+      const contentType = (MIME_TYPES_GLOBAL[ext] || 'application/octet-stream') + (ext === '.html' ? '; charset=utf-8' : '');
       res.writeHead(200, { 
-        'Content-Type': contentTypes[ext] || 'application/octet-stream',
+        'Content-Type': contentType,
         'Content-Length': fileBuffer.length,
         'Cache-Control': ext === '.html' ? 'no-cache' : 'public, max-age=3600'
       });
       res.end(fileBuffer);
-    } else {
-      console.error(`❌ Error serving ${pathname} after 3 attempts:`, lastErr?.message);
+    } catch (readErr) {
+      console.error(`❌ Error serving ${pathname}:`, readErr?.message);
       if (!res.headersSent) {
         res.writeHead(500, { 'Content-Type': 'text/html; charset=utf-8' });
-        res.end(`<html><head><meta http-equiv="refresh" content="3"></head><body style="background:#0a0a0a;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh"><div style="text-align:center"><h1>TC-S Network</h1><p>Loading page... auto-refreshing in 3 seconds.</p><div style="margin-top:20px;width:200px;height:3px;background:#222;border-radius:3px;overflow:hidden;margin-left:auto;margin-right:auto"><div style="width:100%;height:100%;background:linear-gradient(90deg,#39FF14,#00bfff);animation:load 3s linear"><style>@keyframes load{from{width:0}to{width:100%}}</style></div></div></div></body></html>`);
+        res.end(`<html><head><meta http-equiv="refresh" content="3"></head><body style="background:#0a0a0a;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh"><div style="text-align:center"><h1>TC-S Network</h1><p>Loading page... auto-refreshing in 3 seconds.</p></div></body></html>`);
       }
     }
   } else {
-    // Try adding .html extension for extensionless URLs
+    // Try adding .html extension for extensionless URLs  
+    if (serveCachedFile(res, pathname + '.html')) {
+      return;
+    }
+    
+    // Fallback: try disk read for .html extension
     const htmlFilePath = path.join(__dirname, 'public', pathname + '.html');
     if (fs.existsSync(htmlFilePath) && fs.statSync(htmlFilePath).isFile()) {
       try {
         const htmlBuffer = fs.readFileSync(htmlFilePath);
+        FILE_CACHE.set(pathname + '.html', htmlBuffer);
         res.writeHead(200, { 
           'Content-Type': 'text/html; charset=utf-8',
           'Content-Length': htmlBuffer.length,
           'Cache-Control': 'no-cache'
         });
         res.end(htmlBuffer);
-        console.log(`✅ Served HTML file: ${pathname}.html (${htmlBuffer.length} bytes)`);
       } catch (err) {
         console.error(`❌ Error serving ${pathname}.html:`, err.message);
         res.writeHead(500, { 'Content-Type': 'text/plain' });
@@ -17637,7 +17634,6 @@ Respond with valid JSON only. Be insightful and specific.`;
     } else {
       res.writeHead(404, { 'Content-Type': 'text/plain' });
       res.end('Not found');
-      console.log(`❌ File not found: ${pathname}`);
     }
   }
   } catch (topLevelError) {
