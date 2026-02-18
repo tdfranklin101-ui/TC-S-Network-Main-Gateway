@@ -1,40 +1,14 @@
 const OpenAI = require('openai');
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const { normalizeCategory, getOfficialCategories } = require('./category-normalization');
 
-const OFFICIAL_CATEGORIES = ['Computronium','Culture','Basic Needs','Rent','Energy','Music','Songs','Video','Art','Photo','Writing','AI Tools','AI Create','Software','Docs','Games','Utilities','Education','3D Printing','Health & Wellness','Community'];
+const OFFICIAL_CATEGORIES = getOfficialCategories();
 
 function enforceOfficialCategory(category, fallbackCategory) {
   if (!category) return fallbackCategory || 'Basic Needs';
-  if (OFFICIAL_CATEGORIES.includes(category)) return category;
-  const lower = category.toLowerCase();
-  const match = OFFICIAL_CATEGORIES.find(c => lower.includes(c.toLowerCase()) || c.toLowerCase().includes(lower));
-  if (match) return match;
-  const keywordMap = [
-    {keywords:['health','wellness','safety','emergency','nutrition','medical','fitness'],cat:'Health & Wellness'},
-    {keywords:['community','public good','mutual aid','social','volunteer','civic','sustainab'],cat:'Community'},
-    {keywords:['music','audio','sound','beats','loop','song'],cat:'Music'},
-    {keywords:['art','design','graphic','visual','creative','illustration','drawing'],cat:'Art'},
-    {keywords:['photo','photography','image','picture'],cat:'Photo'},
-    {keywords:['video','film','footage','cinema','movie'],cat:'Video'},
-    {keywords:['game','gaming','puzzle','rpg','arcade'],cat:'Games'},
-    {keywords:['software','develop','tool','api','sdk','code','program'],cat:'Software'},
-    {keywords:['ai','machine learn','neural','model','inference'],cat:'AI Tools'},
-    {keywords:['generat','diffusion','synthe'],cat:'AI Create'},
-    {keywords:['educat','learn','course','tutorial','academ','school'],cat:'Education'},
-    {keywords:['energy','solar','renewable','power','grid','watt'],cat:'Energy'},
-    {keywords:['housing','rent','real estate','shelter','transport'],cat:'Rent'},
-    {keywords:['culture','heritage','tradition','folk'],cat:'Culture'},
-    {keywords:['3d','print','mesh','stl'],cat:'3D Printing'},
-    {keywords:['doc','guide','manual','blueprint'],cat:'Docs'},
-    {keywords:['utility','convert','backup','scan','monitor'],cat:'Utilities'},
-    {keywords:['blockchain','crypto','quantum','compute'],cat:'Computronium'},
-    {keywords:['write','essay','novel','poetry','blog','story'],cat:'Writing'},
-  ];
-  for (const {keywords, cat} of keywordMap) {
-    if (keywords.some(k => lower.includes(k))) return cat;
-  }
-  return fallbackCategory || 'Docs';
+  const result = normalizeCategory(category);
+  return result.category;
 }
 
 function getAnalyzeMarketDemand() {

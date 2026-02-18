@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const { generateKidSolObjectives, makeAgentDecision, gatherMarketSnapshot, postToBulletin, gatherRound2Snapshot, makeRound2Decision, generateBulletinReply, inferObjectiveNeeds, consultKidSolar } = require('./agent-inference');
+const { normalizeCategory, getOfficialCategories, getCategoryIcon, getCategoryWithSubcategories } = require('./category-normalization');
 
 async function addBulletinReply(pool, postId, agentCode, agentName, memberId, message, replyType, negotiation) {
   const post = await pool.query('SELECT * FROM agent_bulletin_board WHERE id = $1', [postId]);
@@ -137,9 +138,14 @@ const ITEM_PARTS = {
   'Community':{adj:['Cooperative','Grassroots','Mutual Aid','Neighborhood','Civic','Collective','Inclusive','Local','Participatory','Regenerative'],noun:['Resource Hub','Support Network','Grant Fund','Action Plan','Outreach Kit','Volunteer Board','Impact Report','Sustainability Guide','Commons Pool','Solidarity Pack'],suffix:['Local','Regional','Open','Shared','Founding','Pilot','Standard','Community','Public','Universal']}
 };
 
-const MARKET_DEMAND = ['Basic Needs','Energy','Computronium','Software','AI Tools','Songs','Music','Art','Rent','Culture','Health & Wellness','Community','Video','Photo','Writing','AI Create','Docs','Education','Games','Utilities','3D Printing'];
+const MARKET_DEMAND = getOfficialCategories();
 
 const ALL_CATEGORIES = Object.keys(ITEM_PARTS);
+const OFFICIAL_CATS = getOfficialCategories();
+const missingFromParts = OFFICIAL_CATS.filter(c => !ALL_CATEGORIES.includes(c));
+if (missingFromParts.length > 0) {
+  console.warn('[Agent Tasks] Categories missing from ITEM_PARTS:', missingFromParts.join(', '));
+}
 
 const DELIVERY_TYPES = {
   'Computronium': 'virtual',
@@ -542,8 +548,8 @@ async function createArtifactsForAgent(pool, agent, memberId, assignedCategories
       const productPrompt = generateProductPrompt(category, title, description, contentFormat);
 
       const artifactResult = await pool.query(
-        `INSERT INTO artifacts (slug, title, description, category, file_type, kwh_footprint, solar_amount_s, rays_amount, delivery_mode, creator_id, active, processing_status, artifact_class, source_type, content_body, content_format, product_prompt)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, 0, 'download', $8, true, 'complete', 'B', 'agent', $9, $10, $11)
+        `INSERT INTO artifacts (slug, title, description, category, subcategory, file_type, kwh_footprint, solar_amount_s, rays_amount, delivery_mode, creator_id, active, processing_status, artifact_class, source_type, content_body, content_format, product_prompt)
+         VALUES ($1, $2, $3, $4, NULL, $5, $6, $7, 0, 'download', $8, true, 'complete', 'B', 'agent', $9, $10, $11)
          RETURNING id`,
         [slug, title, description, category, fileType, String(kwhFootprint), String(price), String(memberId), contentBody, contentFormat, productPrompt]
       );
@@ -561,8 +567,8 @@ async function createArtifactsForAgent(pool, agent, memberId, assignedCategories
       }
 
       await pool.query(
-        `INSERT INTO market_items (title, description, category, price_solar, kwh_estimate, source_type, status, created_by_user_id, metadata)
-         VALUES ($1, $2, $3, $4, $5, 'INTERNAL_STOCK', 'ACTIVE', $6, $7)`,
+        `INSERT INTO market_items (title, description, category, subcategory, price_solar, kwh_estimate, source_type, status, created_by_user_id, metadata)
+         VALUES ($1, $2, $3, NULL, $4, $5, 'INTERNAL_STOCK', 'ACTIVE', $6, $7)`,
         [title, description, category, String(price), String(kwhFootprint), String(memberId),
          JSON.stringify({ agentName: agent.name, agentCode: agent.code, artifactId, generatedAt: new Date().toISOString(), ...(artifact3dMeta || {}), inference: { label: inferLabel, print3d: matrix.print3d, print2d: matrix.print2d, fileType: matrix.file.type, deliverables: matrix.deliverables } })]
       );
@@ -1215,16 +1221,16 @@ async function runEducationBlitz(pool, agents) {
           const productPrompt = generateProductPrompt('Education', titleWithSub, description, CONTENT_FORMAT);
 
           await pool.query(
-            `INSERT INTO artifacts (slug, title, description, category, file_type, kwh_footprint, solar_amount_s, rays_amount, delivery_mode, creator_id, active, processing_status, artifact_class, source_type, content_body, content_format, product_prompt)
-             VALUES ($1, $2, $3, 'Education', $4, $5, $6, 0, 'download', $7, true, 'complete', 'B', 'agent', $8, $9, $10)
+            `INSERT INTO artifacts (slug, title, description, category, subcategory, file_type, kwh_footprint, solar_amount_s, rays_amount, delivery_mode, creator_id, active, processing_status, artifact_class, source_type, content_body, content_format, product_prompt)
+             VALUES ($1, $2, $3, 'Education', $4, $5, $6, $7, 0, 'download', $8, true, 'complete', 'B', 'agent', $9, $10, $11)
              RETURNING id`,
-            [slug, titleWithSub, description, FILE_TYPE, String(kwhFootprint), String(price), String(memberId), contentBody, CONTENT_FORMAT, productPrompt]
+            [slug, titleWithSub, description, subcat, FILE_TYPE, String(kwhFootprint), String(price), String(memberId), contentBody, CONTENT_FORMAT, productPrompt]
           );
 
           await pool.query(
-            `INSERT INTO market_items (title, description, category, price_solar, kwh_estimate, source_type, status, created_by_user_id, metadata)
-             VALUES ($1, $2, 'Education', $3, $4, 'INTERNAL_STOCK', 'ACTIVE', $5, $6)`,
-            [titleWithSub, description, String(price), String(kwhFootprint), String(memberId),
+            `INSERT INTO market_items (title, description, category, subcategory, price_solar, kwh_estimate, source_type, status, created_by_user_id, metadata)
+             VALUES ($1, $2, 'Education', $3, $4, $5, 'INTERNAL_STOCK', 'ACTIVE', $6, $7)`,
+            [titleWithSub, description, subcat, String(price), String(kwhFootprint), String(memberId),
              JSON.stringify({ agentName: agent.name, agentCode: agent.code, educationBlitz: true, subcategory: subcat, generatedAt: new Date().toISOString() })]
           );
 

@@ -234,6 +234,9 @@ const { runDailyAgentTasks, runSingleAgentTasks, getTaskStatus, runEducationBlit
 // Agent Artifact File Generator (real file creation for marketplace)
 const { generateArtifactFile, getAgentFileType } = require('./server/agentArtifactGenerator');
 
+// Category normalization system
+const { normalizeCategory, getOfficialCategories, getCategoryWithSubcategories, getCategoryIcon } = require('./server/category-normalization');
+
 // DMTXACTLY Creative API routes (pre-generated mode)
 const dmtxactlyRoutes = require('./routes/dmtxactly');
 
@@ -5933,13 +5936,96 @@ const server = http.createServer(async (req, res) => {
 
   if (pathname === '/api/admin/normalize-categories' && req.method === 'POST') {
     try {
-      await normalizeCategoriesInDB();
-      const result = await pool.query('SELECT category, COUNT(*) as cnt FROM artifacts WHERE active = true GROUP BY category ORDER BY cnt DESC');
+      const parsedUrl = url.parse(req.url, true);
+      const dryRun = parsedUrl.query.dryRun === 'true';
+      const results = { artifacts: { updated: 0, skipped: 0, errors: 0 }, market_items: { updated: 0, skipped: 0, errors: 0 }, mappings: {} };
+
+      const artifactCats = await pool.query('SELECT DISTINCT category FROM artifacts WHERE category IS NOT NULL');
+      const marketCats = await pool.query('SELECT DISTINCT category FROM market_items WHERE category IS NOT NULL');
+
+      const allCats = new Set([...artifactCats.rows.map(r => r.category), ...marketCats.rows.map(r => r.category)]);
+      for (const cat of allCats) {
+        const norm = normalizeCategory(cat);
+        if (cat !== norm.category) {
+          results.mappings[cat] = { official: norm.category, subcategory: norm.subcategory };
+        }
+      }
+
+      if (dryRun) {
+        results.mode = 'DRY RUN - no changes made';
+        results.wouldUpdate = Object.keys(results.mappings).length + ' categories';
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, ...results }));
+        return;
+      }
+
+      for (const row of artifactCats.rows) {
+        const norm = normalizeCategory(row.category);
+        if (row.category !== norm.category) {
+          try {
+            const updateResult = await pool.query(
+              'UPDATE artifacts SET subcategory = COALESCE(subcategory, $1), category = $2 WHERE category = $3',
+              [norm.subcategory || row.category, norm.category, row.category]
+            );
+            results.artifacts.updated += updateResult.rowCount;
+          } catch(e) {
+            console.error('Error normalizing artifact category:', row.category, e.message);
+            results.artifacts.errors++;
+          }
+        } else {
+          const countResult = await pool.query('SELECT COUNT(*) FROM artifacts WHERE category = $1', [row.category]);
+          results.artifacts.skipped += parseInt(countResult.rows[0].count);
+        }
+      }
+
+      for (const row of marketCats.rows) {
+        const norm = normalizeCategory(row.category);
+        if (row.category !== norm.category) {
+          try {
+            const updateResult = await pool.query(
+              'UPDATE market_items SET subcategory = COALESCE(subcategory, $1), category = $2 WHERE category = $3',
+              [norm.subcategory || row.category, norm.category, row.category]
+            );
+            results.market_items.updated += updateResult.rowCount;
+          } catch(e) {
+            console.error('Error normalizing market_item category:', row.category, e.message);
+            results.market_items.errors++;
+          }
+        } else {
+          const countResult = await pool.query('SELECT COUNT(*) FROM market_items WHERE category = $1', [row.category]);
+          results.market_items.skipped += parseInt(countResult.rows[0].count);
+        }
+      }
+
+      const finalCheck = await pool.query('SELECT category, COUNT(*) as count FROM artifacts GROUP BY category ORDER BY count DESC');
+      results.finalCategories = finalCheck.rows;
+
+      console.log(`[Category Normalization] Artifacts: ${results.artifacts.updated} updated, ${results.artifacts.skipped} already correct. Market items: ${results.market_items.updated} updated, ${results.market_items.skipped} already correct.`);
+
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ success: true, categories: result.rows }));
-    } catch (err) {
+      res.end(JSON.stringify({ success: true, ...results }));
+    } catch(e) {
+      console.error('[Category Normalization] Error:', e);
       res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ success: false, error: err.message }));
+      res.end(JSON.stringify({ success: false, error: e.message }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/categories' && req.method === 'GET') {
+    try {
+      const categories = getOfficialCategories();
+      const subcategories = getCategoryWithSubcategories();
+      const result = categories.map(cat => ({
+        name: cat,
+        icon: getCategoryIcon(cat),
+        subcategories: subcategories[cat] || []
+      }));
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, categories: result }));
+    } catch(e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: e.message }));
     }
     return;
   }
@@ -10093,10 +10179,16 @@ Only include products where you have found a real URL. Do not make up URLs.`
           const contentFormatMap = { 'application/json': 'json', 'text/markdown': 'md', 'text/csv': 'csv', 'image/svg+xml': 'svg', 'application/javascript': 'js' };
           const contentFormat = contentFormatMap[actualMime] || null;
 
-          // Step 3E: Insert into artifacts table (same as human upload)
+          // Step 3E: Normalize category and extract subcategory
+          const rawCategory = (aiCurationResult && aiCurationResult.success && aiCurationResult.category) || category;
+          const normalizedCat = normalizeCategory(rawCategory);
+          const finalCategory = normalizedCat.category;
+          const finalSubcategory = (rawCategory !== normalizedCat.category) ? (normalizedCat.subcategory || rawCategory) : normalizedCat.subcategory;
+
+          // Insert into artifacts table (same as human upload)
           const insertQuery = `
             INSERT INTO artifacts (
-              id, slug, title, description, category, file_type,
+              id, slug, title, description, category, subcategory, file_type,
               kwh_footprint, solar_amount_s, rays_amount, delivery_mode, delivery_url,
               creator_id, cover_art_url, active,
               master_file_url, preview_file_url, trade_file_url,
@@ -10104,15 +10196,16 @@ Only include products where you have found a real URL. Do not make up URLs.`
               file_duration, preview_duration, preview_type, preview_slug,
               processing_status, search_tags, content_body, content_format, source_type, artifact_class, created_at
             ) VALUES (
-              $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
-              $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, 'B', NOW()
+              $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
+              $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, 'B', NOW()
             ) RETURNING id, slug, solar_amount_s
           `;
 
           const artifactResult = await pool.query(insertQuery, [
             artifactId, finalSlug, safeTitle,
             (aiCurationResult && aiCurationResult.success && aiCurationResult.description) || safeDesc || '',
-            (aiCurationResult && aiCurationResult.success && aiCurationResult.category) || category,
+            finalCategory,
+            finalSubcategory,
             actualMime, analysis.estimatedKwh, finalSolarAmount,
             0, 'download', fileProcessingResult.tradeFile.url,
             String(effectiveUserId),

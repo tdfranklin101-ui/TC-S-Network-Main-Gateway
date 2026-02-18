@@ -472,6 +472,7 @@ export const artifacts = pgTable("artifacts", {
   processingError: text("processing_error"), // Error message if processing fails
   lifeLensAnalysis: jsonb("lifelens_analysis"), // LifeLens × Rob Low needs analysis stored at creation
   productPrompt: text("product_prompt"), // AI prompt that can regenerate/represent what this artifact is
+  subcategory: text("subcategory"), // Original creative category name preserved as subcategory
 });
 
 // Insert types for additional tables
@@ -939,6 +940,7 @@ export const marketItems = pgTable("market_items", {
   updatedAt: timestamp("updated_at").defaultNow(),
   createdByUserId: varchar("created_by_user_id"),
   metadata: jsonb("metadata"),
+  subcategory: text("subcategory"), // Original creative category name preserved as subcategory
 }, (table) => ({
   statusIdx: index("market_items_status_idx").on(table.status),
   categoryIdx: index("market_items_category_idx").on(table.category),
