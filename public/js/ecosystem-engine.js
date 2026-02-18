@@ -220,23 +220,24 @@ async function loadCloudStats(){
     clearTimeout(timeout);
     const data=await res.json();
     if(data.success){
+      const ls=data.liveStats||{};
       const c=data.cumulative||{};
-      $('csRuns').textContent=c.totalRuns||0;
-      $('csItems').textContent=c.totalItemsEver||0;
-      $('csPurchases').textContent=c.totalPurchasesEver||0;
-      $('csSolar').textContent=parseFloat(c.totalSolarEver||0).toFixed(1);
-      $('csHealth').textContent=(c.avgHealthScore||'—')+'%';
-      $('csVouchers').textContent=c.totalVouchersEver||0;
-      if(c.lastRun){
-        $('csLastRun').textContent=new Date(c.lastRun).toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+      $('csItems').textContent=ls.totalArtifacts||c.totalItemsEver||0;
+      $('csPurchases').textContent=ls.totalPurchases||c.totalPurchasesEver||0;
+      $('csSolar').textContent=parseFloat(ls.solarCirculated||c.totalSolarEver||0).toFixed(2);
+      if($('csMembers'))$('csMembers').textContent=ls.totalMembers||0;
+      if($('csCategories'))$('csCategories').textContent=ls.categoriesActive||0;
+      if($('csFoundation'))$('csFoundation').textContent='S'+parseFloat(ls.foundationFeesCollected||0).toFixed(4);
+      const lastTime=ls.lastArtifactCreated||ls.lastPurchase||c.lastRun;
+      if(lastTime){
+        $('csLastRun').textContent=new Date(lastTime).toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
       }
     } else {
-      $('csRuns').textContent='0';
-      $('csLastRun').textContent='No runs yet';
+      $('csItems').textContent='0';
+      $('csLastRun').textContent='No data yet';
     }
   }catch(e){
     console.error('Cloud stats error:',e);
-    $('csRuns').textContent='—';
     $('csLastRun').textContent='unavailable';
   }
 }

@@ -10373,7 +10373,26 @@ Only include products where you have found a real URL. Do not make up URLs.`
         metadata: row.metadata
       }));
 
-      // Also get cumulative stats
+      // Live stats from actual database tables (always current)
+      const liveStatsResult = await pool.query(`
+        SELECT 
+          (SELECT COUNT(*) FROM artifacts WHERE active = true) as total_artifacts,
+          (SELECT COUNT(*) FROM artifact_copies WHERE acquired_method = 'purchase') as total_purchases,
+          (SELECT COALESCE(SUM(CAST(amount AS numeric)), 0) FROM marketplace_ledger WHERE entry_type = 'debit' AND reference_type = 'purchase') as solar_circulated,
+          (SELECT COALESCE(SUM(CAST(amount AS numeric)), 0) FROM marketplace_ledger WHERE reference_type = 'foundation_fee' AND entry_type = 'credit') as foundation_fees_collected,
+          (SELECT COALESCE(SUM(CAST(amount AS numeric)), 0) FROM marketplace_ledger WHERE reference_type = 'creation_fee' AND entry_type = 'credit') as creation_fees_collected,
+          (SELECT COUNT(*) FROM members WHERE is_agent = true) as agent_count,
+          (SELECT COUNT(*) FROM members) as total_members,
+          (SELECT COUNT(*) FROM agent_bulletin_board) as bulletin_posts,
+          (SELECT COUNT(*) FROM artifacts WHERE is_listed_for_resale = true AND active = true) as resale_listed,
+          (SELECT COUNT(DISTINCT category) FROM artifacts WHERE active = true) as categories_active,
+          (SELECT MAX(created_at) FROM artifacts) as last_artifact_created,
+          (SELECT MAX(acquired_at) FROM artifact_copies) as last_purchase,
+          (SELECT MIN(created_at) FROM artifacts) as first_artifact_created
+      `);
+      const live = liveStatsResult.rows[0] || {};
+
+      // Also check ecosystem_test_runs for historical run data
       const statsResult = await pool.query(
         `SELECT 
           COUNT(*) as total_runs,
@@ -10389,20 +10408,40 @@ Only include products where you have found a real URL. Do not make up URLs.`
       );
       const cumulative = statsResult.rows[0] || {};
 
+      // Use live data as primary, supplement with test run data
+      const totalItems = Math.max(parseInt(live.total_artifacts || 0), parseInt(cumulative.total_items_ever || 0));
+      const totalPurchases = Math.max(parseInt(live.total_purchases || 0), parseInt(cumulative.total_purchases_ever || 0));
+      const totalSolar = Math.max(parseFloat(live.solar_circulated || 0), parseFloat(cumulative.total_solar_ever || 0));
+      const lastActivity = live.last_artifact_created || live.last_purchase || cumulative.last_run;
+
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
         success: true,
         runs,
         cumulative: {
-          totalRuns: parseInt(cumulative.total_runs || 0),
-          totalItemsEver: parseInt(cumulative.total_items_ever || 0),
-          totalPurchasesEver: parseInt(cumulative.total_purchases_ever || 0),
-          totalSolarEver: parseFloat(cumulative.total_solar_ever || 0),
+          totalRuns: Math.max(parseInt(cumulative.total_runs || 0), totalItems > 0 ? 1 : 0),
+          totalItemsEver: totalItems,
+          totalPurchasesEver: totalPurchases,
+          totalSolarEver: totalSolar,
           totalVouchersEver: parseInt(cumulative.total_vouchers_ever || 0),
-          avgHealthScore: parseFloat(cumulative.avg_health_score || 0).toFixed(1),
+          avgHealthScore: parseFloat(cumulative.avg_health_score || 0).toFixed(1) !== '0.0' ? parseFloat(cumulative.avg_health_score || 0).toFixed(1) : '—',
           bestHealthScore: parseInt(cumulative.best_health_score || 0),
-          firstRun: cumulative.first_run,
-          lastRun: cumulative.last_run
+          firstRun: cumulative.first_run || live.first_artifact_created,
+          lastRun: lastActivity
+        },
+        liveStats: {
+          totalArtifacts: parseInt(live.total_artifacts || 0),
+          totalPurchases: parseInt(live.total_purchases || 0),
+          solarCirculated: parseFloat(live.solar_circulated || 0),
+          foundationFeesCollected: parseFloat(live.foundation_fees_collected || 0),
+          creationFeesCollected: parseFloat(live.creation_fees_collected || 0),
+          agentCount: parseInt(live.agent_count || 0),
+          totalMembers: parseInt(live.total_members || 0),
+          bulletinPosts: parseInt(live.bulletin_posts || 0),
+          resaleListed: parseInt(live.resale_listed || 0),
+          categoriesActive: parseInt(live.categories_active || 0),
+          lastArtifactCreated: live.last_artifact_created,
+          lastPurchase: live.last_purchase
         }
       }));
     } catch (error) {
