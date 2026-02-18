@@ -471,6 +471,7 @@ export const artifacts = pgTable("artifacts", {
   processingStatus: text("processing_status").default("pending"), // 'pending', 'processing', 'completed', 'failed'
   processingError: text("processing_error"), // Error message if processing fails
   lifeLensAnalysis: jsonb("lifelens_analysis"), // LifeLens × Rob Low needs analysis stored at creation
+  productPrompt: text("product_prompt"), // AI prompt that can regenerate/represent what this artifact is
 });
 
 // Insert types for additional tables

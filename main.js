@@ -1105,6 +1105,108 @@ try {
   pool = null;
 }
 
+async function normalizeCategoriesInDB() {
+  if (!pool) return;
+  try {
+    console.log('🔄 Normalizing artifact categories...');
+    
+    const OFFICIAL = ['Computronium','Culture','Basic Needs','Rent','Energy','Music','Songs','Video','Art','Photo','Writing','AI Tools','AI Create','Software','Docs','Games','Utilities','Education','3D Printing','Health & Wellness','Community'];
+    
+    const caseFixes = [
+      ["UPDATE artifacts SET category = 'Utilities' WHERE category = 'utilities'"],
+      ["UPDATE artifacts SET category = 'Music' WHERE category IN ('music', 'Audio/ Music')"],
+      ["UPDATE artifacts SET category = 'Video' WHERE category IN ('video', 'Videos')"],
+      ["UPDATE artifacts SET category = 'Games' WHERE category = 'games'"],
+      ["UPDATE artifacts SET category = 'Education' WHERE category = 'education'"],
+      ["UPDATE artifacts SET category = 'Art' WHERE category IN ('art', 'arts')"],
+      ["UPDATE artifacts SET category = 'Culture' WHERE category = 'culture'"],
+      ["UPDATE artifacts SET category = 'Writing' WHERE category = 'writing'"],
+    ];
+    
+    const directMappings = [
+      ["UPDATE artifacts SET category = 'AI Tools' WHERE category IN ('ai-tools', 'AI & Machine Learning', 'AI & Machine Learning Resources', 'AI Tools & Frameworks', 'AI Tools & Modules', 'AI Tools & Creative Assets', 'Data Science / AI Tools', 'Machine Learning Tools')"],
+      ["UPDATE artifacts SET category = 'AI Create' WHERE category IN ('creative-tools', 'Creative Tools', 'Creative Software', 'AI Art Tools', 'Digital Tools / Creative Software')"],
+      ["UPDATE artifacts SET category = 'Software' WHERE category IN ('productivity', 'Software Development', 'Development Tools', 'Software Tools', 'Software Development Tools', 'Software/Development Tools', 'Software Development Kits (SDKs)', 'Software Development / Data Analysis', 'Software Development / Quantum Computing', 'Software Components', 'Developer Tools', 'System Monitoring Tools', 'Networking Tools', 'Network Optimization Tools', 'Network Security Tools', 'Security Tools', 'Data Processing Tools', 'Data Visualization Tools', 'Data Management', 'Data Assets', 'Data & Analytics', 'Data Analysis & Simulation', 'Finance & Investment Tools', 'Infrastructure & Performance', 'IoT Solutions', 'APIs', 'Technical Resources', 'Technology / Software Development', 'Design & Development', 'Digital Assets / Software Tools', 'automation', 'Smart Energy Management', 'Digital Resources', 'Resource Management', 'Resource Packs', 'Shelter Management Tools', 'Workspace Solutions')"],
+      ["UPDATE artifacts SET category = 'Art' WHERE category IN ('Digital Art', 'Digital Art & Design', 'Digital Art & Graphics', 'Digital Art & Resources', 'Digital Art / SVG Artwork', 'Digital Art / Graphics', 'Digital Art / Graphic Design', 'Digital Art / Media Assets', 'Digital Art / Community Resources', 'Digital Art Publications', 'Digital Art Tools', 'Creative & Media', 'creative & media', 'creative-media', 'Creative Assets', 'Art & Design', 'Art & Culture', 'art & culture', 'Art & Photography', 'Graphics & Design', 'Graphic Design', 'Graphic Design / Templates', 'Graphics', 'Graphics & Illustrations', 'Visual Art & Photography', 'Textures & Patterns', 'Textures & Backgrounds', 'Digital Assets > Textures', 'Digital Assets > Graphics > SVG Files', 'Digital Assets > Images', 'Digital Art / Photography', 'Digital Content', 'Media & Entertainment', 'Media & Photography')"],
+      ["UPDATE artifacts SET category = 'Photo' WHERE category IN ('Photography', 'Photography & Digital Art', 'Photography Presets', 'Stock Footage')"],
+      ["UPDATE artifacts SET category = 'Music' WHERE category IN ('Audio & Music', 'Audio & Sound Design', 'Audio', 'Audio Tools', 'Audio Assets', 'Audio Loops', 'Music & Sound Effects', 'Music & Audio', 'Music & Sound Healing', 'Music Production')"],
+      ["UPDATE artifacts SET category = 'Games' WHERE category IN ('Games & Entertainment', 'Games & Puzzles', 'Games & Toys', 'Gaming Assets', 'Gaming & Development', 'Gaming & Entertainment', 'Gaming Resources', 'Gaming Community Resources', 'Gaming Content Expansion', 'Game Development', 'Game Development / Simulation Enhancements', 'Game Development / JSON Files', 'Digital Assets / Game Development / Avatars')"],
+      ["UPDATE artifacts SET category = 'Education' WHERE category IN ('Education & Training', 'Education & Learning', 'Educational Resources', 'Academic Research')"],
+      ["UPDATE artifacts SET category = 'Docs' WHERE category IN ('Digital Goods', 'Digital Assets', 'Digital Assets > Vouchers & Coupons', 'Marketplace Goods')"],
+      ["UPDATE artifacts SET category = 'Energy' WHERE category IN ('Solar Technology', 'Solar Infrastructure Tools', 'Solar Infrastructure Data', 'Solar Energy Solutions', 'Renewable Energy / Solar Technology', 'Energy Credits', 'Energy Management', 'Energy & Utilities', 'Energy & Sustainability', 'Sustainability & Energy', 'Sustainability & Environment', 'Sustainability & Resource Management')"],
+      ["UPDATE artifacts SET category = 'Rent' WHERE category IN ('real-estate', 'real estate', 'Real Estate Management', 'housing', 'Sustainability & Housing')"],
+      ["UPDATE artifacts SET category = 'Culture' WHERE category IN ('Cultural Heritage', 'Cultural Heritage & Education', 'Cultural Heritage & Art Resources', 'Cultural Heritage & Storytelling', 'Cultural Heritage / Digital Assets', 'Cultural Resources', 'cultural exchange')"],
+      ["UPDATE artifacts SET category = 'Computronium' WHERE category IN ('Computronium Polymath', 'Orchestrator', 'Blockchain Tools', 'Blockchain Technology', 'Blockchain Utilities', 'Blockchain Assets')"],
+    ];
+    
+    const metaMappings = [
+      ["UPDATE artifacts SET category = 'Health & Wellness' WHERE category IN ('Health & Wellness', 'Health & Nutrition', 'Health & Safety', 'healthcare', 'health-and-wellness', 'Community Health & Wellness', 'Safety & Emergency Preparedness', 'Safety & Community Resources', 'Safety & Security', 'Emergency Preparedness', 'Food & Agriculture', 'Agriculture Technology', 'Gardening & Sustainability')"],
+      ["UPDATE artifacts SET category = 'Community' WHERE category IN ('Community Resources', 'Community Support', 'Community & Sustainability', 'Community Support / Basic Needs', 'Basic Needs / Community Support', 'Basic Needs & Community Resources', 'Community Development', 'community-development', 'community-sustainability', 'community-support', 'community-tools', 'community engagement', 'Public Goods', 'Public Goods / Community Resources', 'Public Goods / Basic Needs', 'Public Goods / Community Support', 'Public Goods / Community Services', 'Public Goods / Transportation', 'Community & Public Goods', 'Community Support / Public Goods', 'Community Support / Digital Assets', 'Community Support Tools', 'Community & Social Impact', 'Community & Social Initiatives', 'Non-Profit Tools', 'Sustainable Goods', 'Sustainable Living')"],
+    ];
+    
+    const allBatches = [...caseFixes, ...directMappings, ...metaMappings];
+    let totalUpdated = 0;
+    for (const [sql] of allBatches) {
+      try {
+        const r = await pool.query(sql);
+        totalUpdated += r.rowCount || 0;
+      } catch (e) {
+        console.warn('⚠️ Category normalization query warning:', e.message);
+      }
+    }
+    
+    const officialList = OFFICIAL.map(c => `'${c}'`).join(',');
+    const patterns = [
+      {cat: 'Community', patterns: ['%community%','%public goods%','%sustainab%','%non-profit%']},
+      {cat: 'Health & Wellness', patterns: ['%health%','%wellness%','%safety%','%emergency%','%nutrition%','%food%','%agricult%']},
+      {cat: 'Art', patterns: ['%art%','%design%','%graphic%','%visual%','%creative%','%media%']},
+      {cat: 'Software', patterns: ['%software%','%tool%','%develop%','%data%','%network%','%security%','%api%']},
+      {cat: 'Energy', patterns: ['%energy%','%solar%','%renewable%']},
+      {cat: 'Rent', patterns: ['%housing%','%rent%','%real estate%','%shelter%','%transport%']},
+      {cat: 'Music', patterns: ['%music%','%audio%','%sound%']},
+      {cat: 'Education', patterns: ['%educat%','%learn%','%academ%','%research%']},
+      {cat: 'Games', patterns: ['%game%','%gaming%']},
+      {cat: 'Culture', patterns: ['%cultur%','%heritage%']},
+    ];
+    
+    for (const {cat, patterns: pats} of patterns) {
+      const ilikeConditions = pats.map(p => `category ILIKE '${p}'`).join(' OR ');
+      const sql = `UPDATE artifacts SET category = '${cat}' WHERE category NOT IN (${officialList}) AND (${ilikeConditions})`;
+      try {
+        const r = await pool.query(sql);
+        totalUpdated += r.rowCount || 0;
+      } catch (e) {
+        console.warn('⚠️ ILIKE normalization warning:', e.message);
+      }
+    }
+    
+    try {
+      const r = await pool.query(`UPDATE artifacts SET category = 'Docs' WHERE category NOT IN (${officialList})`);
+      totalUpdated += r.rowCount || 0;
+    } catch (e) {}
+    
+    try {
+      const r = await pool.query(`UPDATE artifacts SET category = 'Basic Needs' WHERE category LIKE 'Basic Needs /%'`);
+      totalUpdated += r.rowCount || 0;
+    } catch (e) {}
+    
+    try {
+      const r = await pool.query(`UPDATE artifacts SET category = 'Community' WHERE category LIKE '"%' OR category LIKE '''%'`);
+      totalUpdated += r.rowCount || 0;
+    } catch (e) {}
+    
+    try {
+      const r = await pool.query(`UPDATE artifacts SET category = 'Docs' WHERE category NOT IN (${officialList})`);
+      totalUpdated += r.rowCount || 0;
+    } catch (e) {}
+    
+    const result = await pool.query('SELECT COUNT(DISTINCT category) as cats FROM artifacts WHERE active = true');
+    console.log(`✅ Category normalization complete: ${totalUpdated} items updated, ${result.rows[0].cats} distinct categories`);
+  } catch (err) {
+    console.error('❌ Category normalization error:', err.message);
+  }
+}
+
 // ============================================================
 // SOLAR INTELLIGENCE AUDIT LAYER (SAi-Audit) AUTOMATION
 // Regulatory-grade energy demand tracking with full automation
@@ -5826,6 +5928,19 @@ const server = http.createServer(async (req, res) => {
     }
     res.writeHead(404, { 'Content-Type': 'text/plain' });
     res.end('Admin file not found');
+    return;
+  }
+
+  if (pathname === '/api/admin/normalize-categories' && req.method === 'POST') {
+    try {
+      await normalizeCategoriesInDB();
+      const result = await pool.query('SELECT category, COUNT(*) as cnt FROM artifacts WHERE active = true GROUP BY category ORDER BY cnt DESC');
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, categories: result.rows }));
+    } catch (err) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: err.message }));
+    }
     return;
   }
 
@@ -12871,6 +12986,26 @@ Only include products where you have found a real URL. Do not make up URLs.`
     return;
   }
 
+  if (pathname === '/api/agents/upgrade-prompts' && req.method === 'POST') {
+    try {
+      if (!pool) {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Database not available' }));
+        return;
+      }
+      console.log('🔧 [PROMPT UPGRADE] Manual trigger: Backfilling product prompts for all artifacts...');
+      const { upgradeArtifactPrompts } = require('./server/agent-daily-tasks');
+      const result = await upgradeArtifactPrompts(pool);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, ...result }));
+    } catch (error) {
+      console.error('Prompt upgrade error:', error.message);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: error.message }));
+    }
+    return;
+  }
+
   if (pathname === '/api/agents/daily-tasks/round2' && req.method === 'POST') {
     try {
       res.writeHead(202, { 'Content-Type': 'application/json' });
@@ -18104,6 +18239,10 @@ setImmediate(() => {
     console.log('   POST /api/distribution/trigger          (solar distribution)');
 
     console.log(`✅ All schedulers initialized — server ready`);
+
+    setTimeout(async () => {
+      await normalizeCategoriesInDB();
+    }, 30000);
 
     // Startup distribution check — catches missed distributions after restarts
     setTimeout(async () => {

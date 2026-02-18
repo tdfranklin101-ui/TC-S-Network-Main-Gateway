@@ -2,6 +2,41 @@ const OpenAI = require('openai');
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+const OFFICIAL_CATEGORIES = ['Computronium','Culture','Basic Needs','Rent','Energy','Music','Songs','Video','Art','Photo','Writing','AI Tools','AI Create','Software','Docs','Games','Utilities','Education','3D Printing','Health & Wellness','Community'];
+
+function enforceOfficialCategory(category, fallbackCategory) {
+  if (!category) return fallbackCategory || 'Basic Needs';
+  if (OFFICIAL_CATEGORIES.includes(category)) return category;
+  const lower = category.toLowerCase();
+  const match = OFFICIAL_CATEGORIES.find(c => lower.includes(c.toLowerCase()) || c.toLowerCase().includes(lower));
+  if (match) return match;
+  const keywordMap = [
+    {keywords:['health','wellness','safety','emergency','nutrition','medical','fitness'],cat:'Health & Wellness'},
+    {keywords:['community','public good','mutual aid','social','volunteer','civic','sustainab'],cat:'Community'},
+    {keywords:['music','audio','sound','beats','loop','song'],cat:'Music'},
+    {keywords:['art','design','graphic','visual','creative','illustration','drawing'],cat:'Art'},
+    {keywords:['photo','photography','image','picture'],cat:'Photo'},
+    {keywords:['video','film','footage','cinema','movie'],cat:'Video'},
+    {keywords:['game','gaming','puzzle','rpg','arcade'],cat:'Games'},
+    {keywords:['software','develop','tool','api','sdk','code','program'],cat:'Software'},
+    {keywords:['ai','machine learn','neural','model','inference'],cat:'AI Tools'},
+    {keywords:['generat','diffusion','synthe'],cat:'AI Create'},
+    {keywords:['educat','learn','course','tutorial','academ','school'],cat:'Education'},
+    {keywords:['energy','solar','renewable','power','grid','watt'],cat:'Energy'},
+    {keywords:['housing','rent','real estate','shelter','transport'],cat:'Rent'},
+    {keywords:['culture','heritage','tradition','folk'],cat:'Culture'},
+    {keywords:['3d','print','mesh','stl'],cat:'3D Printing'},
+    {keywords:['doc','guide','manual','blueprint'],cat:'Docs'},
+    {keywords:['utility','convert','backup','scan','monitor'],cat:'Utilities'},
+    {keywords:['blockchain','crypto','quantum','compute'],cat:'Computronium'},
+    {keywords:['write','essay','novel','poetry','blog','story'],cat:'Writing'},
+  ];
+  for (const {keywords, cat} of keywordMap) {
+    if (keywords.some(k => lower.includes(k))) return cat;
+  }
+  return fallbackCategory || 'Docs';
+}
+
 function getAnalyzeMarketDemand() {
   return require('./agent-daily-tasks').analyzeMarketDemand;
 }
@@ -71,7 +106,7 @@ function heuristicFallback(marketSnapshot) {
   let bestScore = -1;
   if (marketSnapshot.demandScores) {
     for (const [cat, score] of Object.entries(marketSnapshot.demandScores)) {
-      if (score > bestScore) {
+      if (score > bestScore && OFFICIAL_CATEGORIES.includes(cat)) {
         bestScore = score;
         bestCategory = cat;
       }
@@ -207,7 +242,9 @@ NEGOTIATION POWERS (autonomous):
 - If you have STANDING DISCOUNTS from accepted negotiations, prioritize buying those items — you already locked in a better price
 - Use PRICE TRENDS to time your buys (buy in falling markets) and sells (sell in rising markets)
 
-Respond in JSON with: createCategory, createPriceStrategy (undercut/premium/market), createReasoning, buyArtifactId (integer or null), buyReasoning, bulletinPost (object or null), strategicPlan (object).
+OFFICIAL CATEGORIES (you MUST use one of these exactly): ${OFFICIAL_CATEGORIES.join(', ')}
+
+Respond in JSON with: createCategory (MUST be from the official list above), createPriceStrategy (undercut/premium/market), createReasoning, buyArtifactId (integer or null), buyReasoning, bulletinPost (object or null), strategicPlan (object).
 bulletinPost format: { "type": "wanted|for_sale|offer|intel|directive", "title": "...", "body": "...", "targetCategory": "...", "priceSolar": number, "referenceArtifactId": integer or null, "targetAgentCode": "agent_code or null", "negotiation": { "type": "price_change|volume_discount|alternative_offer|inquiry", "originalPrice": number or null, "proposedPrice": number or null, "discountPct": number (max 20) or null, "volumeQty": integer or null, "altArtifactIds": [int] or null } or null }
 strategicPlan format: { "assessment": "1-2 sentence assessment of your current financial position", "strategy": "aggressive|balanced|conservative", "shortTermGoal": "what you aim to achieve today", "longTermGoal": "what you aim to achieve this week", "riskLevel": "low|medium|high", "targetNetWorth": number (your Solar net worth goal for this week) }`;
 
@@ -267,8 +304,13 @@ Fulfill KID SOL's objectives. Choose 1 creation and 1 purchase to maximize YOUR 
 
     const decision = JSON.parse(content);
 
+    const enforcedCategory = enforceOfficialCategory(decision.createCategory, 'Basic Needs');
+    if (enforcedCategory !== decision.createCategory) {
+      console.log(`🔄 [Agent ${agent.code}] Category corrected: "${decision.createCategory}" → "${enforcedCategory}"`);
+    }
+
     return {
-      createCategory: decision.createCategory || 'Basic Needs',
+      createCategory: enforcedCategory,
       createPriceStrategy: decision.createPriceStrategy || 'market',
       createReasoning: decision.createReasoning || '',
       buyArtifactId: decision.buyArtifactId || null,

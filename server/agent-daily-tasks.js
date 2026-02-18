@@ -122,7 +122,6 @@ const ITEM_PARTS = {
   'Music':{adj:['Binaural','Ambient','Solar Wind','Dawn Chorus','Photovoltaic','Deep Field','Resonant','Harmonic','Celestial','Crystalline'],noun:['Beats Pack','Symphony','Meditation','Soundscape','Frequency Kit','Mix Tape','Rhythm Loop','Sonic Wave','Tone Garden','Pulse Set'],suffix:['432Hz','528Hz','Full Spectrum','Studio Mix','Live','Extended','Remastered','Deluxe','Pro','Spatial']},
   'Songs':{adj:['Acoustic','Electric','Soul','Indie','Folk','Pop','Ethereal','Cinematic','Lo-Fi','Choral'],noun:['Single','EP Track','Album Cut','Live Recording','Cover','Original','Ballad','Anthem','Demo','Master'],suffix:['HD Audio','Remastered','Acoustic','Live','Studio','Vocal','Instrumental Mix','Radio Edit','Extended','Deluxe']},
   'Video':{adj:['Cinematic','Drone','Time-Lapse','Volumetric','Holographic','Immersive','Documentary','Generative','Solar-Lit','RAW'],noun:['Film Reel','Tutorial Series','Music Video','Short Film','B-Roll Pack','VFX Template','Motion Study','Scene Kit','Footage Archive','Visual Essay'],suffix:['4K','8K','HDR',"Director's Cut",'Extended','Uncut','Remastered','Season 1','Premiere','Open License']},
-  'Videos':{adj:['Cinematic','Viral','Documentary','Concert','Live','Tutorial','Behind-the-Scenes','Animated','Vertical','Slow-Motion'],noun:['Music Video','Short Film','Vlog','Interview','Performance','Recap','Highlight Reel','Trailer','Montage','Feature'],suffix:['4K','1080p','HDR','Uncut','Final Cut','Official','Directors Cut','Premiere','Extended','Remastered']},
   'Art':{adj:['Fractal','Neon','Holographic','Prismatic','Quantum','Solar','Cosmic','Bioluminescent','Kinetic','Ethereal'],noun:['Dreamscape','Canvas','Portrait','Mandala','Mosaic','Tapestry','Sculpture','Lattice','Aurora','Bloom'],suffix:['v2','HD','XR Edition',"Collector's",'Limited Run','Genesis','Infinite','Luminous','Remastered','Ultra']},
   'Photo':{adj:['Aerial','Macro','Infrared','Long-Exposure','Street','Astro','Solar','Golden Hour','Deep Field','Polaroid'],noun:['Photo Set','Print Collection','Lightroom Preset','Portfolio','Stock Pack','Documentary Series','Panorama','Composite','Archive','Gallery'],suffix:['Hi-Res','RAW','Licensed','Open','Curated','Limited','Signed','Volume 1','Platinum','Exhibition']},
   'Writing':{adj:['Speculative','Technical','Lyrical','Investigative','Collaborative','Serialized','Epistolary','Mythic','Solar Punk','Manifesto'],noun:['Novel Chapter','Essay Collection','Poetry Zine','Whitepaper','Field Notes','Script Draft','Research Paper','Blog Series','Anthology','Protocol Doc'],suffix:['First Edition','Draft','Annotated','Illustrated','Abridged','Extended','Open Access','Peer-Reviewed','Serialized','Deluxe']},
@@ -133,10 +132,12 @@ const ITEM_PARTS = {
   'Games':{adj:['Solar','Quantum','Neon','Retro','Procedural','Cooperative','Infinite','Pixel','Voxel','Emergent'],noun:['Puzzle','Strategy Game','Sim','RPG Module','Card Deck','Board Game','Arcade','Sandbox','World Map','Quest Pack'],suffix:['Alpha','Beta','Full','Deluxe','Expansion','Season Pass','Community','Open Source','Remastered','Definitive']},
   'Utilities':{adj:['Portable','Lightweight','Cross-Platform','Secure','Encrypted','Offline','Automated','Batch','CLI','Open-Source'],noun:['File Converter','Backup Tool','Password Vault','Network Scanner','System Monitor','Batch Processor','Data Cleaner','Log Analyzer','Config Manager','Deploy Script'],suffix:['Pro','Lite','v2','Free','Standard','Plus','Enterprise','Portable','CLI','GUI']},
   'Education':{adj:['Interactive','Self-Paced','Certified','Immersive','Hands-On','Adaptive','Guided','Comprehensive','Introductory','Advanced'],noun:['Tutorial Prompt','Course Module','Training Kit','Study Guide','Lesson Plan','Lab Exercise','Certification Prep','Curriculum Pack','Workshop Series','Knowledge Base'],suffix:['K-12','Associate','Bachelors','Post-Grad','Doctorate','Professional','Vocational','Trade','Public','Private']},
-  '3D Printing':{adj:['Parametric','Modular','Stackable','Ergonomic','Lattice','Honeycomb','Snap-Fit','Articulated','Precision','Functional'],noun:['Desk Caddy','Phone Stand','Cable Organizer','Shelf Bracket','Wall Hook','Planter Box','Gear Set','Tool Holder','Card Stand','Tile Set'],suffix:['v1','Pro','Mini','XL','Slim','Eco','Custom','Deluxe','Starter','Field Kit']}
+  '3D Printing':{adj:['Parametric','Modular','Stackable','Ergonomic','Lattice','Honeycomb','Snap-Fit','Articulated','Precision','Functional'],noun:['Desk Caddy','Phone Stand','Cable Organizer','Shelf Bracket','Wall Hook','Planter Box','Gear Set','Tool Holder','Card Stand','Tile Set'],suffix:['v1','Pro','Mini','XL','Slim','Eco','Custom','Deluxe','Starter','Field Kit']},
+  'Health & Wellness':{adj:['Holistic','Preventive','Therapeutic','Organic','Natural','Guided','Clinical','Mindful','Restorative','Adaptive'],noun:['Wellness Plan','Health Scan','Nutrition Guide','First Aid Kit','Mental Health Tool','Fitness Program','Safety Protocol','Recovery Pack','Vitality Monitor','Care Bundle'],suffix:['Daily','Weekly','Pro','Essential','Complete','Starter','Family','Personal','Clinical','Community']},
+  'Community':{adj:['Cooperative','Grassroots','Mutual Aid','Neighborhood','Civic','Collective','Inclusive','Local','Participatory','Regenerative'],noun:['Resource Hub','Support Network','Grant Fund','Action Plan','Outreach Kit','Volunteer Board','Impact Report','Sustainability Guide','Commons Pool','Solidarity Pack'],suffix:['Local','Regional','Open','Shared','Founding','Pilot','Standard','Community','Public','Universal']}
 };
 
-const MARKET_DEMAND = ['Basic Needs','Energy','Computronium','Software','AI Tools','Songs','Videos','Music','Art','Rent','Culture','Video','Photo','Writing','AI Create','Docs','Education','Games','Utilities','3D Printing'];
+const MARKET_DEMAND = ['Basic Needs','Energy','Computronium','Software','AI Tools','Songs','Music','Art','Rent','Culture','Health & Wellness','Community','Video','Photo','Writing','AI Create','Docs','Education','Games','Utilities','3D Printing'];
 
 const ALL_CATEGORIES = Object.keys(ITEM_PARTS);
 
@@ -149,7 +150,6 @@ const DELIVERY_TYPES = {
   'Music': 'virtual',
   'Songs': 'virtual',
   'Video': 'virtual',
-  'Videos': 'virtual',
   'Art': 'virtual',
   'Photo': 'virtual',
   'Writing': 'virtual',
@@ -160,7 +160,9 @@ const DELIVERY_TYPES = {
   'Games': 'virtual',
   'Utilities': 'virtual',
   'Education': 'virtual',
-  '3D Printing': '3d-print-code'
+  '3D Printing': '3d-print-code',
+  'Health & Wellness': 'virtual',
+  'Community': 'virtual'
 };
 
 let lastRunStatus = null;
@@ -355,10 +357,11 @@ function generatePrice(category, kwhFootprint) {
   const kwhSolar = kwhFootprint * SOLAR_KWH_RATE;
 
   const UNIQUENESS_FACTORS = {
-    'Computronium': 3.5, 'Songs': 2.5, 'Videos': 2.8, 'Music': 2.2, 'Video': 2.6,
+    'Computronium': 3.5, 'Songs': 2.5, 'Music': 2.2, 'Video': 2.8,
     'Art': 2.0, 'Photo': 1.8, 'Writing': 1.5, 'AI Tools': 3.0, 'AI Create': 2.8,
     'Software': 3.2, 'Docs': 1.3, 'Education': 1.4, 'Games': 2.5, 'Utilities': 1.6,
-    'Culture': 1.7, 'Basic Needs': 1.0, 'Rent': 1.2, 'Energy': 2.0, '3D Printing': 2.4
+    'Culture': 1.7, 'Basic Needs': 1.0, 'Rent': 1.2, 'Energy': 2.0, '3D Printing': 2.4,
+    'Health & Wellness': 1.2, 'Community': 1.1
   };
   const uniquenessFactor = (UNIQUENESS_FACTORS[category] || 1.5) + (Math.random() * 0.5 - 0.25);
 
@@ -398,6 +401,52 @@ function generateDescription(category, title) {
   return `${title} — ${descriptions[category] || 'Digital artifact on the Solar network.'}`;
 }
 
+function generateProductPrompt(category, title, description, contentFormat) {
+  const FORMAT_INSTRUCTIONS = {
+    'audio': 'Output format: high-quality audio file (WAV/MP3), ',
+    'video': 'Output format: video file (MP4/MOV), ',
+    'image': 'Output format: high-resolution image (PNG 4000x3000px), ',
+    'md': 'Output format: structured Markdown document, ',
+    'pdf': 'Output format: formatted PDF document, ',
+    'js': 'Output format: production-ready JavaScript module, ',
+    'json': 'Output format: structured JSON with schema, ',
+    'binary': 'Output format: compiled binary package, ',
+    'text': 'Output format: plain text document, ',
+    'stl': 'Output format: printable STL file with print guide, ',
+  };
+
+  const CATEGORY_VERBS = {
+    'Computronium': 'Build a high-performance distributed computing resource:',
+    'Culture': 'Create a cultural heritage artifact:',
+    'Basic Needs': 'Design an essential community resource:',
+    'Rent': 'Create a cooperative housing/workspace access system:',
+    'Energy': 'Build a solar energy measurement and optimization tool:',
+    'Music': 'Produce an original audio creation:',
+    'Songs': 'Compose and produce an original song:',
+    'Video': 'Produce a professional video:',
+    'Art': 'Create a digital artwork:',
+    'Photo': 'Capture/generate a professional photograph:',
+    'Writing': 'Write an original literary work:',
+    'AI Tools': 'Build an AI-powered tool:',
+    'AI Create': 'Create a generative AI system:',
+    'Software': 'Develop a software application:',
+    'Docs': 'Write comprehensive documentation:',
+    'Education': 'Create an educational resource:',
+    'Games': 'Design and build an interactive game:',
+    'Utilities': 'Build a practical utility tool:',
+    '3D Printing': 'Generate a 3D-printable model:',
+    'Health & Wellness': 'Design a health and wellness resource:',
+    'Community': 'Create a community support resource:',
+  };
+
+  const verb = CATEGORY_VERBS[category] || 'Create a digital product:';
+  const formatInstr = FORMAT_INSTRUCTIONS[contentFormat] || 'Output format: digital file, ';
+
+  const cleanTitle = title.replace(/\b(v\d+|Pro|Lite|HD|XL|SDK|API|Beta|Alpha|Deluxe|Remastered|Extended|Limited|Standard|Plus|Ultra|Starter|Suite|Kit|Bundle)\b/gi, '').trim();
+
+  return `${verb} "${cleanTitle}". ${description}. ${formatInstr}suitable for the Solar network marketplace. Include detailed specifications, quality benchmarks, and ensure the output is production-ready for distribution.`;
+}
+
 async function createArtifactsForAgent(pool, agent, memberId, assignedCategories) {
   const created = [];
   const errors = [];
@@ -411,7 +460,7 @@ async function createArtifactsForAgent(pool, agent, memberId, assignedCategories
   const categories = [bestCategory];
 
   const FILE_TYPES = {
-    'Songs': 'audio/mpeg', 'Videos': 'video/mp4', 'Music': 'audio/mpeg', 'Video': 'video/mp4', 'Art': 'image/png', 'Photo': 'image/jpeg',
+    'Songs': 'audio/mpeg', 'Music': 'audio/mpeg', 'Video': 'video/mp4', 'Art': 'image/png', 'Photo': 'image/jpeg',
     'Writing': 'text/markdown', 'Docs': 'application/pdf', 'Software': 'application/javascript',
     'AI Tools': 'application/json', 'AI Create': 'application/json', 'Games': 'application/zip',
     'Utilities': 'application/zip', 'Computronium': 'application/octet-stream',
@@ -420,7 +469,7 @@ async function createArtifactsForAgent(pool, agent, memberId, assignedCategories
   };
 
   const CONTENT_FORMATS = {
-    'Songs': 'audio', 'Videos': 'video', 'Music': 'audio', 'Video': 'video', 'Art': 'image', 'Photo': 'image',
+    'Songs': 'audio', 'Music': 'audio', 'Video': 'video', 'Art': 'image', 'Photo': 'image',
     'Writing': 'md', 'Docs': 'pdf', 'Software': 'js', 'AI Tools': 'json',
     'AI Create': 'json', 'Games': 'binary', 'Utilities': 'binary',
     'Computronium': 'binary', 'Culture': 'md', 'Basic Needs': 'text', 'Rent': 'text', 'Energy': 'json',
@@ -490,11 +539,13 @@ async function createArtifactsForAgent(pool, agent, memberId, assignedCategories
         contentBody = `${title}\n\n${description}\n\nCategory: ${category}\nCreated by: Agent ${agent.name} (${agent.code})\nClass: B — File Delivery\nGenerated: ${new Date().toISOString()}`;
       }
 
+      const productPrompt = generateProductPrompt(category, title, description, contentFormat);
+
       const artifactResult = await pool.query(
-        `INSERT INTO artifacts (slug, title, description, category, file_type, kwh_footprint, solar_amount_s, rays_amount, delivery_mode, creator_id, active, processing_status, artifact_class, source_type, content_body, content_format)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, 0, 'download', $8, true, 'complete', 'B', 'agent', $9, $10)
+        `INSERT INTO artifacts (slug, title, description, category, file_type, kwh_footprint, solar_amount_s, rays_amount, delivery_mode, creator_id, active, processing_status, artifact_class, source_type, content_body, content_format, product_prompt)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, 0, 'download', $8, true, 'complete', 'B', 'agent', $9, $10, $11)
          RETURNING id`,
-        [slug, title, description, category, fileType, String(kwhFootprint), String(price), String(memberId), contentBody, contentFormat]
+        [slug, title, description, category, fileType, String(kwhFootprint), String(price), String(memberId), contentBody, contentFormat, productPrompt]
       );
 
       const artifactId = artifactResult.rows[0].id;
@@ -1161,11 +1212,13 @@ async function runEducationBlitz(pool, agents) {
 
           const contentBody = `# ${titleWithSub}\n\n## Level: ${subcat}\n\n### Overview\n${description}\n\n### Learning Objectives\n- Master fundamental concepts in this ${subcat}-level program\n- Apply practical skills through hands-on exercises\n- Demonstrate competency through assessment activities\n\n### Module Content\nThis educational resource is designed for ${subcat} learners exploring the Solar network ecosystem. Topics include renewable energy systems, distributed computing, blockchain-based currency, and sustainable technology practices.\n\n### Key Topics\n1. Solar Energy Fundamentals and kWh-to-Solar Conversion\n2. Marketplace Economics and Foundation Fee Structure\n3. Agent Network Architecture and AI Collaboration\n4. Renewable Energy Policy and Global Standards\n\n### Exercises\n1. Calculate the Solar equivalent of 100 kWh of renewable energy\n2. Analyze a marketplace transaction including the 5% Foundation fee\n3. Research and present on a renewable energy initiative in your region\n4. Design a grant petition for a community energy project\n\n### Assessment\n- Knowledge Check: 10-question quiz on core concepts\n- Practical Project: Build a Solar energy calculation model\n- Peer Review: Exchange and evaluate proposals with fellow learners\n\n### Additional Resources\n- Solar Standard Protocol v1.0 documentation\n- TC-S Network marketplace for real-world practice\n- KID SOL AI assistant for guided tutoring\n- Agent Orion (Education Specialist) curated resources\n\nCreated by: Agent ${agent.name} (${agent.code})\nClass: B — Educational Content\nSubcategory: ${subcat}\nGenerated: ${new Date().toISOString()}`;
 
+          const productPrompt = generateProductPrompt('Education', titleWithSub, description, CONTENT_FORMAT);
+
           await pool.query(
-            `INSERT INTO artifacts (slug, title, description, category, file_type, kwh_footprint, solar_amount_s, rays_amount, delivery_mode, creator_id, active, processing_status, artifact_class, source_type, content_body, content_format)
-             VALUES ($1, $2, $3, 'Education', $4, $5, $6, 0, 'download', $7, true, 'complete', 'B', 'agent', $8, $9)
+            `INSERT INTO artifacts (slug, title, description, category, file_type, kwh_footprint, solar_amount_s, rays_amount, delivery_mode, creator_id, active, processing_status, artifact_class, source_type, content_body, content_format, product_prompt)
+             VALUES ($1, $2, $3, 'Education', $4, $5, $6, 0, 'download', $7, true, 'complete', 'B', 'agent', $8, $9, $10)
              RETURNING id`,
-            [slug, titleWithSub, description, FILE_TYPE, String(kwhFootprint), String(price), String(memberId), contentBody, CONTENT_FORMAT]
+            [slug, titleWithSub, description, FILE_TYPE, String(kwhFootprint), String(price), String(memberId), contentBody, CONTENT_FORMAT, productPrompt]
           );
 
           await pool.query(
@@ -1895,4 +1948,62 @@ function getRound2Status() {
   return lastRound2Status || { success: null, round: 2, message: 'No Round 2 tasks have been run yet', timestamp: null };
 }
 
-module.exports = { runDailyAgentTasks, runSingleAgentTasks, getTaskStatus, runEducationBlitz, ensureAgentMembers, submitKidSolarPrompt, runCustomAgentTask, ALL_CATEGORIES, runRound2AgentTasks, getRound2Status, addBulletinReply };
+async function upgradeArtifactPrompts(pool) {
+  console.log('\n🔧 ===== ARTIFACT PROMPT UPGRADE =====');
+  console.log('Agents reviewing their collections to add product prompts...\n');
+
+  const result = await pool.query(`
+    SELECT a.id, a.title, a.description, a.category, a.content_format, a.creator_id,
+           m.name as creator_name, m.username as agent_code
+    FROM artifacts a
+    LEFT JOIN members m ON CAST(m.id AS TEXT) = a.creator_id
+    WHERE a.product_prompt IS NULL
+    ORDER BY a.creator_id, a.created_at
+  `);
+
+  if (result.rows.length === 0) {
+    console.log('✅ All artifacts already have product prompts!');
+    return { upgraded: 0, total: 0, byAgent: {} };
+  }
+
+  console.log(`📦 Found ${result.rows.length} artifacts needing prompt upgrade\n`);
+
+  let upgraded = 0;
+  let errors = 0;
+  const byAgent = {};
+
+  for (const artifact of result.rows) {
+    try {
+      const agentLabel = artifact.creator_name || artifact.agent_code || `Creator#${artifact.creator_id}`;
+      const prompt = generateProductPrompt(
+        artifact.category,
+        artifact.title,
+        artifact.description || '',
+        artifact.content_format || 'text'
+      );
+
+      await pool.query('UPDATE artifacts SET product_prompt = $1 WHERE id = $2', [prompt, artifact.id]);
+
+      byAgent[agentLabel] = (byAgent[agentLabel] || 0) + 1;
+      upgraded++;
+
+      if (upgraded % 25 === 0) {
+        console.log(`   ... upgraded ${upgraded}/${result.rows.length} artifacts`);
+      }
+    } catch (err) {
+      console.error(`❌ Failed to upgrade artifact ${artifact.id}:`, err.message);
+      errors++;
+    }
+  }
+
+  for (const [agent, count] of Object.entries(byAgent)) {
+    console.log(`🤖 ${agent}: upgraded ${count} artifacts with product prompts`);
+  }
+
+  console.log(`\n🔧 ===== PROMPT UPGRADE COMPLETE =====`);
+  console.log(`   Upgraded: ${upgraded} | Errors: ${errors} | Total: ${result.rows.length}\n`);
+
+  return { upgraded, errors, total: result.rows.length, byAgent };
+}
+
+module.exports = { runDailyAgentTasks, runSingleAgentTasks, getTaskStatus, runEducationBlitz, ensureAgentMembers, submitKidSolarPrompt, runCustomAgentTask, ALL_CATEGORIES, runRound2AgentTasks, getRound2Status, addBulletinReply, upgradeArtifactPrompts };
