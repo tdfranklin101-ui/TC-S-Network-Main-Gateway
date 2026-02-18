@@ -18336,6 +18336,14 @@ setImmediate(() => {
 
     setTimeout(async () => {
       await normalizeCategoriesInDB();
+      try {
+        console.log('🔧 [STARTUP] Running product prompt backfill...');
+        const { upgradeArtifactPrompts } = require('./server/agent-daily-tasks');
+        const promptResult = await upgradeArtifactPrompts(pool);
+        console.log(`✅ [STARTUP] Prompt backfill: ${promptResult.upgraded} upgraded, ${promptResult.total} total`);
+      } catch (err) {
+        console.warn('⚠️ Startup prompt backfill warning:', err.message);
+      }
     }, 30000);
 
     // Startup distribution check — catches missed distributions after restarts
