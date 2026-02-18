@@ -9640,6 +9640,7 @@ const server = http.createServer(async (req, res) => {
           deliveryUrl: row.delivery_url || '',
           artifactClass: row.artifact_class || 'A',
           fileType: row.file_type || '',
+          productPrompt: row.product_prompt || '',
           createdAt: row.created_at
         }));
       } catch (artErr) {

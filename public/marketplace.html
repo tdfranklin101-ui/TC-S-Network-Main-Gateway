@@ -8354,6 +8354,7 @@
             var fileSizeMB = (rawSize / (1024 * 1024)).toFixed(3);
             var creationMethod = item.creationMethod || '';
             var creationSource = item.creationSource || '';
+            var productPrompt = item.productPrompt || item.product_prompt || '';
 
             var catLower = (category || '').toLowerCase();
             var isAudio = catLower === 'songs' || catLower === 'music' || (fileType || '').startsWith('audio');
@@ -8513,6 +8514,15 @@
             html += '</div>';
             html += '</div>';
 
+            if (productPrompt) {
+                html += '<div style="margin-bottom:10px;">';
+                html += '<div style="font-size:11px;font-weight:700;color:#00FFFF;margin-bottom:4px;">\ud83e\udde0 Product Prompt</div>';
+                html += '<div style="font-size:10px;color:#888;margin-bottom:6px;">Copy this prompt to regenerate or remix this artifact in any AI inference engine</div>';
+                html += '<div id="product-prompt-box" style="background:rgba(255,215,0,0.06);border:1px solid rgba(255,215,0,0.2);border-radius:8px;padding:12px 14px;font-size:12px;color:#ddd;line-height:1.6;max-height:120px;overflow-y:auto;font-family:monospace;white-space:pre-wrap;word-break:break-word;cursor:text;user-select:all;">' + escapeHtml(productPrompt) + '</div>';
+                html += '<button onclick="copyProductPrompt()" style="margin-top:6px;padding:5px 14px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid rgba(255,215,0,0.3);background:rgba(255,215,0,0.1);color:#FFD700;transition:all 0.2s;" onmouseover="this.style.background=\'rgba(255,215,0,0.2)\'" onmouseout="this.style.background=\'rgba(255,215,0,0.1)\'">\ud83d\udccb Copy Prompt</button>';
+                html += '</div>';
+            }
+
             html += '<div style="text-align:center;margin-top:8px;">';
             html += '<a href="https://ia-rl-v-1--tdfranklin101.replit.app/" target="_blank" rel="noopener" style="color:#00bfff;font-size:11px;text-decoration:none;">\ud83e\uddff Open LifeLens App \u2192</a>';
             html += '</div>';
@@ -8648,6 +8658,30 @@
             var overlay = document.getElementById('item-detail-overlay');
             overlay.style.display = 'flex';
             requestAnimationFrame(function() { overlay.classList.add('visible'); });
+        }
+
+        function copyProductPrompt() {
+            var box = document.getElementById('product-prompt-box');
+            if (!box) return;
+            var text = box.innerText || box.textContent;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(function() {
+                    var btn = event.target;
+                    var orig = btn.innerHTML;
+                    btn.innerHTML = '\u2705 Copied!';
+                    btn.style.borderColor = 'rgba(0,255,136,0.5)';
+                    btn.style.color = '#00ff88';
+                    setTimeout(function() { btn.innerHTML = orig; btn.style.borderColor = 'rgba(255,215,0,0.3)'; btn.style.color = '#FFD700'; }, 2000);
+                });
+            } else {
+                var range = document.createRange();
+                range.selectNodeContents(box);
+                var sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(range);
+                document.execCommand('copy');
+                sel.removeAllRanges();
+            }
         }
 
         function closeItemDetailModal() {
