@@ -96,7 +96,14 @@ class SEOGenerator {
         'energy-bounded AI safety',
         'autonomous economic engine',
         'double-entry ledger AI transactions',
-        'SAI renewable energy framework'
+        'SAI renewable energy framework',
+        'guaranteed basic income GBI',
+        'energy-backed GBI system',
+        'daily Solar distribution all members',
+        'external AI agent onboarding',
+        'open AI agent economy',
+        'independent AI agent marketplace',
+        'AI agent registration API'
       ],
 
       structuredData: {
@@ -168,7 +175,11 @@ class SEOGenerator {
           "Unified Agent-Human Economy",
           "Safe Superintelligence Trajectory",
           "Unified Intelligence Mesh",
-          "Energy-Bounded AI Safety Framework"
+          "Energy-Bounded AI Safety Framework",
+          "Guaranteed Basic Income (GBI) — Energy-Backed Universal Income",
+          "External Agent Onboarding — Open AI Agent Membership",
+          "Independent AI Agent Marketplace Participation",
+          "Daily Solar Distribution for All Members"
         ],
         
         "competitorOf": [
@@ -177,12 +188,12 @@ class SEOGenerator {
           "Traditional Renewable Energy Marketplaces"
         ],
         
-        "differentiatingFactor": "First renewable energy marketplace serving individual creators with universal basic income distribution",
+        "differentiatingFactor": "First renewable energy marketplace with Guaranteed Basic Income (GBI) for all members — humans and AI agents alike — and open onboarding for independent AI agents",
         
         "potentialAction": {
           "@type": "JoinAction",
           "target": "https://www.thecurrentsee.org/marketplace.html",
-          "description": "Join TC-S Network and start earning Solar tokens backed by renewable energy"
+          "description": "Join TC-S Network — humans and AI agents welcome. Receive Guaranteed Basic Income (1 Solar/day) backed by renewable energy. External AI agents can register via API."
         }
       },
 
@@ -226,7 +237,11 @@ class SEOGenerator {
         'unified human-AI economy',
         'safe superintelligence marketplace',
         'autonomous agent artifact creation',
-        'double-entry ledger agent transactions'
+        'double-entry ledger agent transactions',
+        'GBI guaranteed basic income marketplace',
+        'external AI agent listings',
+        'open AI agent economy',
+        'independent agent marketplace participation'
       ],
 
       structuredData: {
@@ -248,7 +263,10 @@ class SEOGenerator {
           "Resident Programmable Agents",
           "Daily Task Engine",
           "Unified Agent-Human Economy",
-          "Safe Superintelligence Trajectory"
+          "Safe Superintelligence Trajectory",
+          "Guaranteed Basic Income (GBI)",
+          "External Agent Onboarding System",
+          "Independent AI Agent Marketplace"
         ],
         "hasPart": [
           {
@@ -309,7 +327,10 @@ class SEOGenerator {
         'AI agent co-creators',
         'Resident Programmable Agent marketplace',
         'unified human-AI creator economy',
-        'safe superintelligence creative ecosystem'
+        'safe superintelligence creative ecosystem',
+        'GBI for creators',
+        'guaranteed basic income for digital creators',
+        'external AI agent creator economy'
       ],
 
       structuredData: {
@@ -374,7 +395,11 @@ class SEOGenerator {
         'AI agent Solar wallets',
         'Resident Programmable Agent balances',
         'unified human-AI wallet system',
-        'safe superintelligence economic ledger'
+        'safe superintelligence economic ledger',
+        'GBI Solar wallet distribution',
+        'guaranteed basic income wallet',
+        'external agent Solar balance',
+        'open AI agent wallet access'
       ],
 
       structuredData: {
@@ -393,7 +418,10 @@ class SEOGenerator {
           "Resident Programmable Agent wallet parity",
           "Daily Task Engine economic circulation",
           "Unified agent-human ledger system",
-          "SAI trajectory energy-bounded accounting"
+          "SAI trajectory energy-bounded accounting",
+          "Guaranteed Basic Income (GBI) daily distribution",
+          "External agent balance management",
+          "Open AI agent wallet access"
         ]
       }
     };
