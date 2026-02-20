@@ -448,20 +448,21 @@
 
   function loadSummary() {
     fetch('/api/solar-mint/summary').then(function(r) { return r.json(); }).then(function(data) {
-      if (data.daysSinceGenesis !== undefined) {
-        daysSinceEl.textContent = formatInt(data.daysSinceGenesis);
+      var mint = data.solarMint || {};
+      var dist = data.memberDistributions || {};
+      var util = data.mintUtilization || {};
+
+      if (mint.daysSinceGenesis !== undefined) {
+        daysSinceEl.textContent = formatInt(mint.daysSinceGenesis);
       }
-      if (data.utilizationPercent !== undefined) {
-        document.getElementById('utilization').textContent = data.utilizationPercent.toFixed(6) + '%';
-      } else if (data.totalDistributed !== undefined && data.totalMinted !== undefined && data.totalMinted > 0) {
-        var pct = (data.totalDistributed / data.totalMinted) * 100;
-        document.getElementById('utilization').textContent = pct.toFixed(6) + '%';
+      if (util.utilizationPercent !== undefined) {
+        document.getElementById('utilization').textContent = util.utilizationPercent.toFixed(6) + '%';
       }
-      if (data.totalDistributed !== undefined) {
-        document.getElementById('total-distributed').textContent = formatLarge(data.totalDistributed);
+      if (dist.totalSolarDistributed !== undefined) {
+        document.getElementById('total-distributed').textContent = formatLarge(dist.totalSolarDistributed);
       }
-      if (data.registeredMembers !== undefined) {
-        document.getElementById('member-count').textContent = formatInt(data.registeredMembers);
+      if (dist.registeredMembers !== undefined) {
+        document.getElementById('member-count').textContent = formatInt(dist.registeredMembers);
       }
     }).catch(function(err) {
       console.warn('Summary fetch failed:', err);
@@ -486,14 +487,14 @@
         entries.forEach(function(e) {
           var tr = document.createElement('tr');
           var dateStr = e.date || '—';
-          var dayNum = e.dayNumber || e.day || '—';
-          var dailyMinted = e.dailyMinted || SOLAR_PER_DAY;
-          var cumMinted = e.cumulativeMinted || 0;
-          var dailyKwh = e.dailyKwh || (dailyMinted * KWH_PER_SOLAR);
-          var cumKwh = e.cumulativeKwh || (cumMinted * KWH_PER_SOLAR);
+          var dayNum = e.daysSinceGenesis !== undefined ? e.daysSinceGenesis : (e.dayNumber || e.day || '—');
+          var dailyMinted = e.globalSolarMinted || e.dailyMinted || SOLAR_PER_DAY;
+          var cumMinted = e.cumulativeSolarMinted || e.cumulativeMinted || 0;
+          var dailyKwh = e.globalKwhGenerated || e.dailyKwh || (dailyMinted * KWH_PER_SOLAR);
+          var cumKwh = e.cumulativeKwhGenerated || e.cumulativeKwh || (cumMinted * KWH_PER_SOLAR);
           var members = e.membersDistributed || e.members || 0;
-          var solarDist = e.solarDistributed || e.distributed || 0;
-          var cumDist = e.cumulativeDistributed || 0;
+          var solarDist = e.memberSolarDistributed || e.solarDistributed || e.distributed || 0;
+          var cumDist = e.cumulativeMemberDistributed || e.cumulativeDistributed || 0;
 
           tr.innerHTML =
             '<td>' + dateStr + '</td>' +

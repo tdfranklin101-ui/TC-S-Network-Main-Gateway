@@ -18013,7 +18013,7 @@ Respond with valid JSON only. Be insightful and specific.`;
       const totalMinted = elapsedSeconds * (8500000000 / 86400);
       const totalKwh = totalMinted * 4913;
       
-      let memberStats = { totalDistributed: 0, totalMembers: 0, latestDate: null };
+      let memberStats = { totalDistributed: 0, totalMembers: 0, latestDate: null, registeredMembers: 0 };
       if (pool) {
         const mQ = await pool.query('SELECT SUM(member_solar_distributed) as total_dist, SUM(members_distributed) as total_members, MAX(ledger_date) as latest FROM solar_minting_ledger');
         if (mQ.rows.length > 0 && mQ.rows[0].total_dist) {
@@ -18021,8 +18021,12 @@ Respond with valid JSON only. Be insightful and specific.`;
           memberStats.totalMembers = parseInt(mQ.rows[0].total_members || 0);
           memberStats.latestDate = mQ.rows[0].latest;
         }
-        const memberCountQ = await pool.query('SELECT COUNT(*) as cnt FROM members');
-        memberStats.registeredMembers = parseInt(memberCountQ.rows[0].cnt);
+        const memberCountQ = await pool.query('SELECT COUNT(*) as cnt, SUM(total_solar) as total_solar FROM members WHERE is_placeholder = false AND is_reserve = false');
+        memberStats.registeredMembers = parseInt(memberCountQ.rows[0].cnt || 0);
+        const liveTotalSolar = parseFloat(memberCountQ.rows[0].total_solar || 0);
+        if (liveTotalSolar > memberStats.totalDistributed) {
+          memberStats.totalDistributed = liveTotalSolar;
+        }
       }
       
       res.writeHead(200, { 'Content-Type': 'application/json' });
