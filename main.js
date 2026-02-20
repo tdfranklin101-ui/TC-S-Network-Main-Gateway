@@ -2849,7 +2849,8 @@ async function initializeSolarAudit() {
     await pool.query('ALTER TABLE members ADD COLUMN IF NOT EXISTS agent_platform varchar(100) DEFAULT NULL');
     await pool.query('ALTER TABLE members ADD COLUMN IF NOT EXISTS agent_description text DEFAULT NULL');
     await pool.query('ALTER TABLE members ADD COLUMN IF NOT EXISTS sponsor_member_id integer DEFAULT NULL');
-    await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS idx_members_sponsor_unique ON members (sponsor_member_id) WHERE sponsor_member_id IS NOT NULL');
+    await pool.query('DROP INDEX IF EXISTS idx_members_sponsor_unique');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_members_sponsor ON members (sponsor_member_id) WHERE sponsor_member_id IS NOT NULL');
     await pool.query(`CREATE TABLE IF NOT EXISTS solar_minting_ledger (
   id SERIAL PRIMARY KEY,
   ledger_date VARCHAR(10) NOT NULL UNIQUE,
@@ -13384,19 +13385,53 @@ Only include products where you have found a real URL. Do not make up URLs.`
       const sponsorResult = await pool.query('SELECT id, username, is_agent, is_external_agent FROM members WHERE id = $1', [sponsorMemberId]);
       if (sponsorResult.rows.length === 0) {
         res.writeHead(403, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: false, error: 'Sponsor member not found. sponsorMemberId must reference a valid human member.' }));
+        res.end(JSON.stringify({ success: false, error: 'Sponsor member not found. sponsorMemberId must reference a valid member.' }));
         return;
       }
       const sponsor = sponsorResult.rows[0];
-      if (sponsor.is_agent || sponsor.is_external_agent) {
+      const isHumanSponsor = !sponsor.is_agent && !sponsor.is_external_agent;
+      const isAgentSponsor = sponsor.is_agent || sponsor.is_external_agent;
+      const maxSponsored = isHumanSponsor ? 10 : isAgentSponsor ? 5 : 0;
+
+      if (maxSponsored === 0) {
         res.writeHead(403, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: false, error: 'Sponsor must be a human member (not an agent). Agents cannot sponsor other agents.' }));
+        res.end(JSON.stringify({ success: false, error: 'This member type cannot sponsor agents.' }));
         return;
       }
-      const existingSponsorCheck = await pool.query('SELECT id FROM members WHERE sponsor_member_id = $1', [sponsorMemberId]);
-      if (existingSponsorCheck.rows.length > 0) {
+
+      if (isAgentSponsor) {
+        if (!sponsor.is_external_agent) {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Only external agents (registered via sponsorship) can sponsor sub-agents. Internal system agents cannot sponsor.' }));
+          return;
+        }
+        const agentAncestorCheck = await pool.query(
+          'SELECT sponsor_member_id FROM members WHERE id = $1', [sponsorMemberId]
+        );
+        const agentSponsor = agentAncestorCheck.rows[0];
+        if (!agentSponsor || !agentSponsor.sponsor_member_id) {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Agent sponsor must have a valid human sponsor in their chain. Unsponsored agents cannot sponsor.' }));
+          return;
+        }
+        const parentResult = await pool.query('SELECT is_agent, is_external_agent FROM members WHERE id = $1', [agentSponsor.sponsor_member_id]);
+        if (parentResult.rows.length === 0 || parentResult.rows[0].is_agent || parentResult.rows[0].is_external_agent) {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Only 2 levels allowed: human → agent → sub-agent. Sub-agents cannot sponsor further agents.' }));
+          return;
+        }
+      }
+
+      const existingSponsorCheck = await pool.query('SELECT COUNT(*)::int as count FROM members WHERE sponsor_member_id = $1', [sponsorMemberId]);
+      const currentSponsored = existingSponsorCheck.rows[0].count;
+      if (currentSponsored >= maxSponsored) {
         res.writeHead(403, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: false, error: '1-agent-per-human rule: this member has already sponsored an agent.' }));
+        res.end(JSON.stringify({ 
+          success: false, 
+          error: isHumanSponsor 
+            ? `Sponsorship limit reached: human members can sponsor up to 10 agents (currently ${currentSponsored}/10).`
+            : `Sponsorship limit reached: agent members can sponsor up to 5 sub-agents (currently ${currentSponsored}/5).`
+        }));
         return;
       }
 
