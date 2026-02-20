@@ -343,6 +343,22 @@ export const distributionLogs = pgTable("distribution_logs", {
   metadata: jsonb("metadata"), // Additional distribution details
 });
 
+// Solar Minting Ledger - tracks global Solar minting (8.5B/day) and member distributions
+export const solarMintingLedger = pgTable("solar_minting_ledger", {
+  id: serial("id").primaryKey(),
+  ledgerDate: varchar("ledger_date", { length: 10 }).notNull().unique(),
+  globalSolarMinted: numeric("global_solar_minted").notNull(),
+  cumulativeSolarMinted: numeric("cumulative_solar_minted").notNull(),
+  globalKwhGenerated: numeric("global_kwh_generated").notNull(),
+  cumulativeKwhGenerated: numeric("cumulative_kwh_generated").notNull(),
+  membersDistributed: integer("members_distributed").default(0),
+  memberSolarDistributed: numeric("member_solar_distributed").default("0"),
+  cumulativeMemberDistributed: numeric("cumulative_member_distributed").default("0"),
+  daysSinceGenesis: integer("days_since_genesis").notNull(),
+  solarPerSecond: numeric("solar_per_second").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Backup operation logs
 export const backupLogs = pgTable("backup_logs", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

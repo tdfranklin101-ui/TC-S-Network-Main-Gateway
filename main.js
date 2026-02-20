@@ -2848,6 +2848,20 @@ async function initializeSolarAudit() {
     await pool.query('ALTER TABLE members ADD COLUMN IF NOT EXISTS api_key varchar(255) DEFAULT NULL');
     await pool.query('ALTER TABLE members ADD COLUMN IF NOT EXISTS agent_platform varchar(100) DEFAULT NULL');
     await pool.query('ALTER TABLE members ADD COLUMN IF NOT EXISTS agent_description text DEFAULT NULL');
+    await pool.query(`CREATE TABLE IF NOT EXISTS solar_minting_ledger (
+  id SERIAL PRIMARY KEY,
+  ledger_date VARCHAR(10) NOT NULL UNIQUE,
+  global_solar_minted NUMERIC NOT NULL,
+  cumulative_solar_minted NUMERIC NOT NULL,
+  global_kwh_generated NUMERIC NOT NULL,
+  cumulative_kwh_generated NUMERIC NOT NULL,
+  members_distributed INTEGER DEFAULT 0,
+  member_solar_distributed NUMERIC DEFAULT 0,
+  cumulative_member_distributed NUMERIC DEFAULT 0,
+  days_since_genesis INTEGER NOT NULL,
+  solar_per_second NUMERIC NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+)`);
     console.log('✅ Bulletin board schema verified/updated (conversation + negotiation columns)');
   } catch (e) {
     console.warn('⚠️ Bulletin board schema update skipped (columns may already exist):', e.message);
@@ -2983,6 +2997,108 @@ function parseBody(req) {
   });
 }
 
+// ============ SOLAR MINTING LEDGER ============
+const SOLAR_MINT_GENESIS = new Date('2025-04-07T00:00:00Z');
+const SOLAR_MINT_DAILY = 8500000000; // 8.5 billion Solar minted globally per day
+const KWH_PER_SOLAR = 4913;
+const SOLAR_PER_SECOND = SOLAR_MINT_DAILY / 86400;
+
+async function recordMintingLedgerEntry(dateString, membersDistributed, memberSolarDistributed) {
+  if (!pool) return null;
+  try {
+    const entryDate = new Date(dateString + 'T00:00:00Z');
+    const daysSinceGenesis = Math.max(1, Math.floor((entryDate - SOLAR_MINT_GENESIS) / (1000 * 60 * 60 * 24)));
+    
+    const globalSolarMinted = SOLAR_MINT_DAILY;
+    const cumulativeSolarMinted = SOLAR_MINT_DAILY * daysSinceGenesis;
+    const globalKwhGenerated = globalSolarMinted * KWH_PER_SOLAR;
+    const cumulativeKwhGenerated = cumulativeSolarMinted * KWH_PER_SOLAR;
+
+    const prevQ = await pool.query(
+      `SELECT cumulative_member_distributed FROM solar_minting_ledger WHERE ledger_date < $1 ORDER BY ledger_date DESC LIMIT 1`,
+      [dateString]
+    );
+    const prevCumulativeMember = prevQ.rows.length > 0 ? parseFloat(prevQ.rows[0].cumulative_member_distributed || 0) : 0;
+    const cumulativeMemberDistributed = prevCumulativeMember + (memberSolarDistributed || 0);
+
+    const result = await pool.query(
+      `INSERT INTO solar_minting_ledger (ledger_date, global_solar_minted, cumulative_solar_minted, global_kwh_generated, cumulative_kwh_generated, members_distributed, member_solar_distributed, cumulative_member_distributed, days_since_genesis, solar_per_second)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+       ON CONFLICT (ledger_date) DO UPDATE SET
+         members_distributed = EXCLUDED.members_distributed,
+         member_solar_distributed = EXCLUDED.member_solar_distributed,
+         cumulative_member_distributed = EXCLUDED.cumulative_member_distributed
+       RETURNING *`,
+      [dateString, String(globalSolarMinted), String(cumulativeSolarMinted), String(globalKwhGenerated), String(cumulativeKwhGenerated), membersDistributed || 0, String(memberSolarDistributed || 0), String(cumulativeMemberDistributed), daysSinceGenesis, String(SOLAR_PER_SECOND)]
+    );
+    
+    console.log(`📒 Minting Ledger: ${dateString} | Day ${daysSinceGenesis} | Minted: ${(globalSolarMinted/1e9).toFixed(1)}B | Members: ${membersDistributed || 0} distributed ${memberSolarDistributed || 0} Solar`);
+    return result.rows[0];
+  } catch (err) {
+    if (err.code !== '23505') {
+      console.error('Minting ledger error:', err.message);
+    }
+    return null;
+  }
+}
+
+async function backfillMintingLedger() {
+  if (!pool) return;
+  try {
+    const existingQ = await pool.query('SELECT COUNT(*) as cnt FROM solar_minting_ledger');
+    const existingCount = parseInt(existingQ.rows[0].cnt);
+    
+    const today = new Date();
+    const totalDays = Math.floor((today - SOLAR_MINT_GENESIS) / (1000 * 60 * 60 * 24));
+    
+    if (existingCount >= totalDays) {
+      console.log(`📒 Minting Ledger: ${existingCount} entries already recorded (${totalDays} days since genesis)`);
+      return;
+    }
+    
+    console.log(`📒 Backfilling Solar Minting Ledger: ${existingCount} existing, need ${totalDays} total...`);
+    
+    const distQ = await pool.query(
+      `SELECT distribution_date, COUNT(*) as member_count, SUM(solar_amount) as total_solar
+       FROM distribution_logs
+       GROUP BY distribution_date
+       ORDER BY distribution_date`
+    );
+    const distMap = {};
+    for (const row of distQ.rows) {
+      distMap[row.distribution_date] = { members: parseInt(row.member_count), solar: parseFloat(row.total_solar || 0) };
+    }
+
+    let cumulativeMemberDist = 0;
+    let filled = 0;
+    
+    for (let d = 1; d <= totalDays; d++) {
+      const entryDate = new Date(SOLAR_MINT_GENESIS);
+      entryDate.setUTCDate(entryDate.getUTCDate() + d);
+      const dateStr = entryDate.toISOString().split('T')[0];
+      
+      const dist = distMap[dateStr] || { members: 0, solar: 0 };
+      cumulativeMemberDist += dist.solar;
+      
+      try {
+        await pool.query(
+          `INSERT INTO solar_minting_ledger (ledger_date, global_solar_minted, cumulative_solar_minted, global_kwh_generated, cumulative_kwh_generated, members_distributed, member_solar_distributed, cumulative_member_distributed, days_since_genesis, solar_per_second)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+           ON CONFLICT (ledger_date) DO NOTHING`,
+          [dateStr, String(SOLAR_MINT_DAILY), String(SOLAR_MINT_DAILY * d), String(SOLAR_MINT_DAILY * KWH_PER_SOLAR), String(SOLAR_MINT_DAILY * d * KWH_PER_SOLAR), dist.members, String(dist.solar), String(cumulativeMemberDist), d, String(SOLAR_PER_SECOND)]
+        );
+        filled++;
+      } catch (e) {
+        // skip duplicates
+      }
+    }
+    
+    console.log(`📒 Minting Ledger backfill complete: ${filled} new entries added (${totalDays} total days since genesis)`);
+  } catch (err) {
+    console.error('Minting ledger backfill error:', err.message);
+  }
+}
+
 // Daily Solar Distribution System
 async function processDailyDistribution() {
   const today = new Date();
@@ -3100,6 +3216,8 @@ async function processDailyDistribution() {
         await pool.query(logQuery, [member.id, todayString, 1.0000, 0.00]);
       }
       console.log(`📝 Distribution logged: ${updatedMembers.length} member distributions recorded`);
+      const totalDistributedToday = updatedMembers.length + totalCatchUp;
+      await recordMintingLedgerEntry(todayString, updatedMembers.length, totalDistributedToday);
     } catch (logError) {
       console.error('⚠️ Failed to log distribution:', logError.message);
     }
@@ -3129,6 +3247,14 @@ function initializeDailyDistribution() {
   // Or wait for scheduled run at 3:00 AM UTC
   console.log('ℹ️  Initial distribution check disabled - using scheduled cron only');
   console.log('📌 Manual trigger: POST /api/distribution/trigger');
+
+  setTimeout(async () => {
+    try {
+      await backfillMintingLedger();
+    } catch (err) {
+      console.error('Minting ledger backfill failed:', err.message);
+    }
+  }, 15000);
 }
 
 const FOUNDATION_USERNAME = 'tcs_foundation';
@@ -17809,6 +17935,182 @@ Respond with valid JSON only. Be insightful and specific.`;
       console.error('Last update endpoint error:', error);
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ last_update: null, categories: [] }));
+    }
+    return;
+  }
+
+  // ============ SOLAR MINTING LEDGER API ============
+  
+  if (pathname === '/api/solar-mint/summary' && req.method === 'GET') {
+    try {
+      const now = new Date();
+      const daysSinceGenesis = Math.floor((now - new Date('2025-04-07T00:00:00Z')) / (1000 * 60 * 60 * 24));
+      const elapsedSeconds = (now - new Date('2025-04-07T00:00:00Z')) / 1000;
+      const totalMinted = elapsedSeconds * (8500000000 / 86400);
+      const totalKwh = totalMinted * 4913;
+      
+      let memberStats = { totalDistributed: 0, totalMembers: 0, latestDate: null };
+      if (pool) {
+        const mQ = await pool.query('SELECT SUM(member_solar_distributed) as total_dist, SUM(members_distributed) as total_members, MAX(ledger_date) as latest FROM solar_minting_ledger');
+        if (mQ.rows.length > 0 && mQ.rows[0].total_dist) {
+          memberStats.totalDistributed = parseFloat(mQ.rows[0].total_dist);
+          memberStats.totalMembers = parseInt(mQ.rows[0].total_members || 0);
+          memberStats.latestDate = mQ.rows[0].latest;
+        }
+        const memberCountQ = await pool.query('SELECT COUNT(*) as cnt FROM members');
+        memberStats.registeredMembers = parseInt(memberCountQ.rows[0].cnt);
+      }
+      
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        solarMint: {
+          genesis: '2025-04-07',
+          daysSinceGenesis,
+          dailyMintRate: 8500000000,
+          dailyKwhEquivalent: 8500000000 * 4913,
+          solarPerSecond: parseFloat((8500000000 / 86400).toFixed(4)),
+          totalSolarMinted: parseFloat(totalMinted.toFixed(4)),
+          totalKwhGenerated: parseFloat(totalKwh.toFixed(4)),
+          kwhPerSolar: 4913,
+          currentTimestamp: now.toISOString()
+        },
+        memberDistributions: {
+          totalSolarDistributed: memberStats.totalDistributed,
+          registeredMembers: memberStats.registeredMembers || 0,
+          latestLedgerDate: memberStats.latestDate,
+          distributionRate: '1 Solar per member per day'
+        },
+        mintUtilization: {
+          distributed: memberStats.totalDistributed,
+          minted: parseFloat(totalMinted.toFixed(4)),
+          utilizationPercent: totalMinted > 0 ? parseFloat(((memberStats.totalDistributed / totalMinted) * 100).toFixed(8)) : 0
+        }
+      }));
+    } catch (error) {
+      console.error('Solar mint summary error:', error.message);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to load mint summary' }));
+    }
+    return;
+  }
+  
+  if (pathname === '/api/solar-mint/ledger' && req.method === 'GET') {
+    try {
+      if (!pool) {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Database unavailable' }));
+        return;
+      }
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      const limit = Math.min(parseInt(url.searchParams.get('limit') || '30'), 365);
+      const offset = parseInt(url.searchParams.get('offset') || '0');
+      const order = url.searchParams.get('order') === 'asc' ? 'ASC' : 'DESC';
+      
+      const result = await pool.query(
+        `SELECT * FROM solar_minting_ledger ORDER BY ledger_date ${order} LIMIT $1 OFFSET $2`,
+        [limit, offset]
+      );
+      const countQ = await pool.query('SELECT COUNT(*) as cnt FROM solar_minting_ledger');
+      
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        entries: result.rows.map(r => ({
+          date: r.ledger_date,
+          daysSinceGenesis: r.days_since_genesis,
+          globalSolarMinted: parseFloat(r.global_solar_minted),
+          cumulativeSolarMinted: parseFloat(r.cumulative_solar_minted),
+          globalKwhGenerated: parseFloat(r.global_kwh_generated),
+          cumulativeKwhGenerated: parseFloat(r.cumulative_kwh_generated),
+          membersDistributed: r.members_distributed,
+          memberSolarDistributed: parseFloat(r.member_solar_distributed || 0),
+          cumulativeMemberDistributed: parseFloat(r.cumulative_member_distributed || 0),
+          solarPerSecond: parseFloat(r.solar_per_second)
+        })),
+        total: parseInt(countQ.rows[0].cnt),
+        limit,
+        offset
+      }));
+    } catch (error) {
+      console.error('Solar mint ledger error:', error.message);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to load ledger' }));
+    }
+    return;
+  }
+  
+  if (pathname === '/api/solar-mint/today' && req.method === 'GET') {
+    try {
+      const now = new Date();
+      const todayStr = now.toISOString().split('T')[0];
+      const daysSinceGenesis = Math.floor((now - new Date('2025-04-07T00:00:00Z')) / (1000 * 60 * 60 * 24));
+      const elapsedToday = (now.getUTCHours() * 3600 + now.getUTCMinutes() * 60 + now.getUTCSeconds());
+      const mintedToday = elapsedToday * (8500000000 / 86400);
+      const kwhToday = mintedToday * 4913;
+      
+      let memberData = null;
+      if (pool) {
+        const lQ = await pool.query('SELECT * FROM solar_minting_ledger WHERE ledger_date = $1', [todayStr]);
+        if (lQ.rows.length > 0) {
+          memberData = {
+            membersDistributed: lQ.rows[0].members_distributed,
+            memberSolarDistributed: parseFloat(lQ.rows[0].member_solar_distributed || 0),
+            recorded: true
+          };
+        }
+      }
+      
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        today: {
+          date: todayStr,
+          daysSinceGenesis,
+          secondsElapsedToday: elapsedToday,
+          solarMintedSoFarToday: parseFloat(mintedToday.toFixed(4)),
+          kwhGeneratedSoFarToday: parseFloat(kwhToday.toFixed(4)),
+          dailyTarget: 8500000000,
+          percentComplete: parseFloat(((elapsedToday / 86400) * 100).toFixed(2)),
+          memberDistribution: memberData
+        }
+      }));
+    } catch (error) {
+      console.error('Solar mint today error:', error.message);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to load today data' }));
+    }
+    return;
+  }
+  
+  if (pathname === '/api/solar-mint/live' && req.method === 'GET') {
+    try {
+      const now = new Date();
+      const elapsedSeconds = (now - new Date('2025-04-07T00:00:00Z')) / 1000;
+      const solarPerSecond = 8500000000 / 86400;
+      const totalMinted = elapsedSeconds * solarPerSecond;
+      const totalKwh = totalMinted * 4913;
+      const daysSinceGenesis = Math.floor(elapsedSeconds / 86400);
+      
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        live: {
+          timestamp: now.toISOString(),
+          epochMs: now.getTime(),
+          genesis: '2025-04-07T00:00:00Z',
+          daysSinceGenesis,
+          elapsedSeconds: parseFloat(elapsedSeconds.toFixed(2)),
+          solarPerSecond: parseFloat(solarPerSecond.toFixed(4)),
+          totalSolarMinted: parseFloat(totalMinted.toFixed(4)),
+          totalKwhGenerated: parseFloat(totalKwh.toFixed(4)),
+          dailyRate: 8500000000,
+          kwhPerSolar: 4913
+        }
+      }));
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed' }));
     }
     return;
   }

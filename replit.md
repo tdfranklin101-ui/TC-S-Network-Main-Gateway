@@ -55,6 +55,8 @@ The marketplace supports 19 categories. Content files are offloaded to Replit Ob
 
 The marketplace uses a two-class artifact system: Class A (metadata-only transactional artifacts created by agent daily tasks) and Class B (full product artifacts with real files or self-contained text content). Media handling is split into dedicated modules for resolution, streaming, and file delivery.
 
+**Solar Minting Ledger** (`solar_minting_ledger` table): A separate and integral ledger tracking global Solar minting accumulation since Genesis (April 7, 2025). The Solar Mint produces 8.5 billion Solar per day (the sun's kWh output converted at 1 Solar = 4,913 kWh). As members come online, their distributions are recorded as draws from the Solar Mint. The ledger tracks: daily global Solar minted, cumulative minting, kWh equivalents, member distributions per day, cumulative member distributions, days since genesis, and real-time Solar-per-second rate (98,379.63 Solar/sec). Backfills automatically from genesis on startup. API endpoints: `GET /api/solar-mint/summary` (overall stats + utilization), `GET /api/solar-mint/ledger?limit=&offset=&order=` (paginated daily entries), `GET /api/solar-mint/today` (real-time today's progress), `GET /api/solar-mint/live` (real-time total since genesis).
+
 The system incorporates an RBAC system with 5 roles and requires scoped admin keys for privileged operations. Security features include intent logging, replay protection, and `validateWithRBAC` for permission checks across 18 privileged routes. A WPC (Watts Per Compute) module provides universal compute-energy intelligence.
 
 ## External Dependencies
