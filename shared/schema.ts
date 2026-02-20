@@ -325,6 +325,11 @@ export const members = pgTable("members", {
   firstName: text("first_name"),
   lastName: text("last_name"),
   walletId: varchar("wallet_id").$type<string>().unique().references(() => wallets.id, { onDelete: "set null" }),
+  isAgent: boolean("is_agent").default(false),
+  apiKey: text("api_key").unique(),
+  isExternalAgent: boolean("is_external_agent").default(false),
+  agentPlatform: text("agent_platform"),
+  agentDescription: text("agent_description"),
 });
 
 // Distribution logs for member payouts

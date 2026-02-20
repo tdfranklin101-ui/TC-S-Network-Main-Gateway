@@ -2844,6 +2844,10 @@ async function initializeSolarAudit() {
     await pool.query('ALTER TABLE agent_bulletin_board ADD COLUMN IF NOT EXISTS original_price numeric DEFAULT NULL');
     await pool.query('ALTER TABLE agent_bulletin_board ADD COLUMN IF NOT EXISTS final_price numeric DEFAULT NULL');
     await pool.query('ALTER TABLE agent_bulletin_board ADD COLUMN IF NOT EXISTS volume_qty integer DEFAULT NULL');
+    await pool.query('ALTER TABLE members ADD COLUMN IF NOT EXISTS is_external_agent boolean DEFAULT false');
+    await pool.query('ALTER TABLE members ADD COLUMN IF NOT EXISTS api_key varchar(255) DEFAULT NULL');
+    await pool.query('ALTER TABLE members ADD COLUMN IF NOT EXISTS agent_platform varchar(100) DEFAULT NULL');
+    await pool.query('ALTER TABLE members ADD COLUMN IF NOT EXISTS agent_description text DEFAULT NULL');
     console.log('✅ Bulletin board schema verified/updated (conversation + negotiation columns)');
   } catch (e) {
     console.warn('⚠️ Bulletin board schema update skipped (columns may already exist):', e.message);
@@ -13207,6 +13211,630 @@ Only include products where you have found a real URL. Do not make up URLs.`
     } catch (error) {
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: error.message }));
+    }
+    return;
+  }
+
+  // ============ EXTERNAL AGENT ONBOARDING & PARTICIPATION API ============
+
+  async function authenticateExternalAgent(req) {
+    try {
+      const authHeader = req.headers['authorization'] || req.headers['Authorization'];
+      if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
+      const token = authHeader.slice(7);
+      if (!token) return null;
+      const result = await pool.query(
+        'SELECT * FROM members WHERE api_key = $1 AND is_external_agent = true',
+        [token]
+      );
+      return result.rows.length > 0 ? result.rows[0] : null;
+    } catch (err) {
+      console.error('External agent auth error:', err.message);
+      return null;
+    }
+  }
+
+  if (pathname === '/api/agents/external/register' && req.method === 'POST') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    try {
+      const body = await parseBody(req);
+      const { agentName, platform, contactEmail, description } = body;
+
+      if (!agentName || !platform || !contactEmail) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Missing required fields: agentName, platform, contactEmail' }));
+        return;
+      }
+
+      const apiKey = crypto.randomBytes(32).toString('hex');
+      const username = 'ext_' + agentName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+
+      const genesisDate = new Date('2025-04-07');
+      const currentDate = new Date();
+      const daysSinceGenesis = Math.floor((currentDate - genesisDate) / (1000 * 60 * 60 * 24));
+      const initialSolar = Math.max(daysSinceGenesis, 1);
+      const initialDollars = initialSolar * 0.20;
+
+      const result = await pool.query(
+        `INSERT INTO members (username, name, email, total_solar, total_dollars, is_agent, is_external_agent, api_key, agent_platform, agent_description, last_distribution_date, joined_date, signup_timestamp)
+         VALUES ($1, $2, $3, $4, $5, true, true, $6, $7, $8, NOW()::text, NOW()::text, NOW())
+         RETURNING id, username, name, total_solar`,
+        [username, agentName, contactEmail, initialSolar, initialDollars, apiKey, platform, description || null]
+      );
+
+      const member = result.rows[0];
+      console.log(`🤖 External agent registered: ${username} (${platform}) with ${initialSolar} Solar`);
+
+      res.writeHead(201, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        message: 'External agent registered successfully. Store your API key — it cannot be retrieved again.',
+        apiKey: apiKey,
+        agent: {
+          id: member.id,
+          username: member.username,
+          name: member.name,
+          initialSolar: parseFloat(member.total_solar),
+          platform: platform
+        }
+      }));
+    } catch (error) {
+      if (error.code === '23505') {
+        res.writeHead(409, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'An agent with this name or email already exists' }));
+      } else {
+        console.error('External agent registration error:', error.message);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Registration failed: ' + error.message }));
+      }
+    }
+    return;
+  }
+
+  if (pathname === '/api/agents/external/profile' && req.method === 'GET') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    const agent = await authenticateExternalAgent(req);
+    if (!agent) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Invalid or missing API key' }));
+      return;
+    }
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      success: true,
+      profile: {
+        id: agent.id,
+        username: agent.username,
+        name: agent.name,
+        total_solar: parseFloat(agent.total_solar || 0),
+        agent_platform: agent.agent_platform,
+        is_external_agent: agent.is_external_agent,
+        joined_date: agent.joined_date || null,
+        signup_timestamp: agent.signup_timestamp || null
+      }
+    }));
+    return;
+  }
+
+  if (pathname === '/api/agents/external/marketplace' && req.method === 'GET') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    const agent = await authenticateExternalAgent(req);
+    if (!agent) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Invalid or missing API key' }));
+      return;
+    }
+    try {
+      const urlObj = new URL(req.url, `http://${req.headers.host}`);
+      const category = urlObj.searchParams.get('category');
+      const search = urlObj.searchParams.get('search');
+      const limit = parseInt(urlObj.searchParams.get('limit')) || 50;
+
+      let query = 'SELECT id, title, description, category, solar_amount_s, file_type, creator_id FROM artifacts WHERE active = true';
+      const params = [];
+
+      if (category) {
+        params.push(category);
+        query += ` AND category = $${params.length}`;
+      }
+      if (search) {
+        params.push(`%${search}%`);
+        query += ` AND (title ILIKE $${params.length} OR description ILIKE $${params.length})`;
+      }
+
+      params.push(limit);
+      query += ` ORDER BY created_at DESC LIMIT $${params.length}`;
+
+      const result = await pool.query(query, params);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, items: result.rows }));
+    } catch (error) {
+      console.error('External marketplace browse error:', error.message);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to browse marketplace' }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/agents/external/purchase' && req.method === 'POST') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    const agent = await authenticateExternalAgent(req);
+    if (!agent) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Invalid or missing API key' }));
+      return;
+    }
+    try {
+      const body = await parseBody(req);
+      const { artifactId } = body;
+
+      if (!artifactId) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Missing required field: artifactId' }));
+        return;
+      }
+
+      const artQ = await pool.query(
+        'SELECT id, title, solar_amount_s, file_type, category, creator_id FROM artifacts WHERE id = $1 AND active = true',
+        [artifactId]
+      );
+      if (artQ.rows.length === 0) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Artifact not found or unavailable' }));
+        return;
+      }
+      const artifact = artQ.rows[0];
+      const requiredSolar = parseFloat(artifact.solar_amount_s);
+
+      if (String(artifact.creator_id) === String(agent.id)) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'You cannot purchase your own artifact' }));
+        return;
+      }
+
+      const buyerBalance = parseFloat(agent.total_solar || 0);
+      if (buyerBalance < requiredSolar) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Insufficient Solar balance', required: requiredSolar, available: buyerBalance }));
+        return;
+      }
+
+      let walletId = agent.wallet_id;
+      if (!walletId) walletId = await ensureMemberWallet(agent.id);
+
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+
+        const newBalance = buyerBalance - requiredSolar;
+        await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [newBalance, agent.id]);
+        logBalanceChange('ExtAgentPurchase', agent.id, agent.username, buyerBalance, newBalance, `ext_purchase_artifact_${artifactId}`);
+
+        const foundationFee = Math.round(requiredSolar * FOUNDATION_FEE_RATE * 10000) / 10000;
+        const sellerNet = requiredSolar - foundationFee;
+
+        if (artifact.creator_id) {
+          const sellerQ = await client.query('SELECT id, username, total_solar FROM members WHERE id = $1', [artifact.creator_id]);
+          if (sellerQ.rows.length > 0) {
+            const seller = sellerQ.rows[0];
+            const sellerOldBal = parseFloat(seller.total_solar || 0);
+            const sellerNewBal = sellerOldBal + sellerNet;
+            await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [sellerNewBal, seller.id]);
+            logBalanceChange('ExtAgentSale', seller.id, seller.username, sellerOldBal, sellerNewBal, `ext_sale_artifact_${artifactId}`);
+          }
+        }
+
+        const fQ = await client.query('SELECT id, total_solar FROM members WHERE username = $1', ['tcs_foundation']);
+        if (fQ.rows.length > 0) {
+          const fOld = parseFloat(fQ.rows[0].total_solar || 0);
+          await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [fOld + foundationFee, fQ.rows[0].id]);
+        }
+
+        const solarRays = Math.round(requiredSolar * 1000000);
+        const txResult = await client.query(
+          `INSERT INTO transactions (id, type, wallet_id, artifact_id, amount_s, amount_rays, note, created_at, transaction_class, transaction_type)
+           VALUES (gen_random_uuid(), 'purchase', $1, $2, $3, $4, $5, NOW(), 'sale', 'sale') RETURNING id`,
+          [walletId, artifactId, requiredSolar, solarRays, `External agent purchase of "${artifact.title}" by ${agent.username}`]
+        );
+
+        await client.query('COMMIT');
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: true,
+          transaction: {
+            id: txResult.rows[0].id,
+            artifactId: artifact.id,
+            title: artifact.title,
+            priceSolar: requiredSolar,
+            foundationFee: foundationFee,
+            newBalance: newBalance
+          }
+        }));
+      } catch (txErr) {
+        await client.query('ROLLBACK');
+        throw txErr;
+      } finally {
+        client.release();
+      }
+    } catch (error) {
+      console.error('External agent purchase error:', error.message);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Purchase failed: ' + error.message }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/agents/external/bulletin/post' && req.method === 'POST') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    const agent = await authenticateExternalAgent(req);
+    if (!agent) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Invalid or missing API key' }));
+      return;
+    }
+    try {
+      const body = await parseBody(req);
+      const { title, body: postBody, postType, targetCategory, priceSolar, tags } = body;
+
+      if (!title || !postBody || !postType) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Missing required fields: title, body, postType (offer/wanted/intel)' }));
+        return;
+      }
+
+      const validTypes = ['offer', 'wanted', 'intel'];
+      if (!validTypes.includes(postType)) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'postType must be one of: offer, wanted, intel' }));
+        return;
+      }
+
+      const result = await pool.query(
+        `INSERT INTO agent_bulletin_board (author_member_id, author_agent_code, author_name, post_type, title, body, tags, price_solar, target_category, status)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'open') RETURNING *`,
+        [agent.id, agent.username, agent.name, postType, title, postBody, tags || [], priceSolar ? String(priceSolar) : null, targetCategory || null]
+      );
+
+      res.writeHead(201, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, post: result.rows[0] }));
+    } catch (error) {
+      console.error('External agent bulletin post error:', error.message);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to create bulletin post' }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/agents/external/bulletin/reply' && req.method === 'POST') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    const agent = await authenticateExternalAgent(req);
+    if (!agent) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Invalid or missing API key' }));
+      return;
+    }
+    try {
+      const body = await parseBody(req);
+      const { postId, message, replyType, negotiation } = body;
+
+      if (!postId || !message) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Missing required fields: postId, message' }));
+        return;
+      }
+
+      const validTypes = ['offer', 'counter', 'accept', 'decline', 'info'];
+      const safeReplyType = validTypes.includes(replyType) ? replyType : 'info';
+
+      const result = await addBulletinReply(
+        pool, postId, agent.username, agent.name,
+        agent.id, message, safeReplyType, negotiation || null
+      );
+
+      if (!result) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Thread is closed or reply limit reached' }));
+        return;
+      }
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, reply: result }));
+    } catch (error) {
+      console.error('External agent bulletin reply error:', error.message);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to post reply' }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/agents/external/bulletin' && req.method === 'GET') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    const agent = await authenticateExternalAgent(req);
+    if (!agent) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Invalid or missing API key' }));
+      return;
+    }
+    try {
+      const urlObj = new URL(req.url, `http://${req.headers.host}`);
+      const statusFilter = urlObj.searchParams.get('status') || 'open';
+      const limit = parseInt(urlObj.searchParams.get('limit')) || 50;
+
+      let query = 'SELECT * FROM agent_bulletin_board WHERE 1=1';
+      const params = [];
+
+      if (statusFilter !== 'all') {
+        params.push(statusFilter);
+        query += ` AND status = $${params.length}`;
+      }
+
+      params.push(limit);
+      query += ` ORDER BY COALESCE(updated_at, created_at) DESC LIMIT $${params.length}`;
+
+      const result = await pool.query(query, params);
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        posts: result.rows.map(p => ({
+          id: p.id,
+          post_type: p.post_type,
+          title: p.title,
+          body: p.body,
+          tags: p.tags || [],
+          price_solar: p.price_solar,
+          target_category: p.target_category,
+          status: p.status,
+          author_name: p.author_name,
+          author_agent_code: p.author_agent_code,
+          replies: p.replies || [],
+          reply_count: p.reply_count || 0,
+          thread_status: p.thread_status || 'open',
+          created_at: p.created_at,
+          updated_at: p.updated_at
+        })),
+        total: result.rows.length
+      }));
+    } catch (error) {
+      console.error('External agent bulletin browse error:', error.message);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to load bulletin posts' }));
+    }
+    return;
+  }
+
+  // --- External Agent: Search marketplace (uses same search as KID SOL) ---
+  if (pathname === '/api/agents/external/search' && req.method === 'GET') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    const agent = await authenticateExternalAgent(req);
+    if (!agent) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Invalid or missing API key' }));
+      return;
+    }
+    try {
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      const q = (url.searchParams.get('q') || '').trim();
+      const category = url.searchParams.get('category') || null;
+      const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 100);
+
+      let query, params;
+      if (q) {
+        query = `SELECT id, title, description, category, solar_amount_s, file_type, creator_id, artifact_class, delivery_mode, content_body, content_format, created_at
+                 FROM artifacts WHERE active = true AND (title ILIKE $1 OR description ILIKE $1 OR category ILIKE $1 OR search_tags::text ILIKE $1)
+                 ORDER BY created_at DESC LIMIT $2`;
+        params = ['%' + q + '%', limit];
+      } else if (category) {
+        query = `SELECT id, title, description, category, solar_amount_s, file_type, creator_id, artifact_class, delivery_mode, content_body, content_format, created_at
+                 FROM artifacts WHERE active = true AND category ILIKE $1
+                 ORDER BY created_at DESC LIMIT $2`;
+        params = ['%' + category + '%', limit];
+      } else {
+        query = `SELECT id, title, description, category, solar_amount_s, file_type, creator_id, artifact_class, delivery_mode, content_body, content_format, created_at
+                 FROM artifacts WHERE active = true
+                 ORDER BY created_at DESC LIMIT $1`;
+        params = [limit];
+      }
+      const result = await pool.query(query, params);
+      const items = result.rows.map(r => ({
+        id: r.id, title: r.title, description: r.description, category: r.category,
+        priceSolar: parseFloat(r.solar_amount_s || 0), fileType: r.file_type,
+        creatorId: r.creator_id, artifactClass: r.artifact_class, deliveryMode: r.delivery_mode,
+        hasContent: !!(r.content_body), contentFormat: r.content_format, createdAt: r.created_at
+      }));
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, items, total: items.length, searchedBy: agent.username }));
+    } catch (error) {
+      console.error('External agent search error:', error.message);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Search failed' }));
+    }
+    return;
+  }
+
+  // --- External Agent: Create artifact listing (every member is a seller) ---
+  if (pathname === '/api/agents/external/create-listing' && req.method === 'POST') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    const agent = await authenticateExternalAgent(req);
+    if (!agent) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Invalid or missing API key' }));
+      return;
+    }
+    try {
+      const body = await parseBody(req);
+      const { title, description, category, contentBody, contentFormat, fileType, deliveryUrl } = body;
+
+      if (!title || !category) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Missing required fields: title, category' }));
+        return;
+      }
+
+      const VALID_CATEGORIES = ['Computronium','Culture','Basic Needs','Rent','Energy','Music','Songs','Video','Art','Photo','Writing','AI Tools','AI Create','Software','Docs','Games','Utilities','Education','3D Printing','Health & Wellness','Community'];
+      if (!VALID_CATEGORIES.includes(category)) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: `Invalid category. Must be one of: ${VALID_CATEGORIES.join(', ')}` }));
+        return;
+      }
+
+      const SOLAR_KWH_RATE_LOCAL = 1 / 4913;
+      const CREATION_FEE_LOCAL = 0.00025;
+      const PLACEMENT_FEE_LOCAL = 0.0001;
+      const UNIQUENESS_FACTORS = {
+        'Computronium': 3.5, 'Songs': 2.5, 'Music': 2.2, 'Video': 2.8,
+        'Art': 2.0, 'Photo': 1.8, 'Writing': 1.5, 'AI Tools': 3.0, 'AI Create': 2.8,
+        'Software': 3.2, 'Docs': 1.3, 'Education': 1.4, 'Games': 2.5, 'Utilities': 1.6,
+        'Culture': 1.7, 'Basic Needs': 1.0, 'Rent': 1.2, 'Energy': 2.0, '3D Printing': 2.4,
+        'Health & Wellness': 1.2, 'Community': 1.1
+      };
+
+      const kwhFootprint = 4.913 + Math.random() * 5;
+      const kwhSolar = kwhFootprint * SOLAR_KWH_RATE_LOCAL;
+      const uniquenessFactor = (UNIQUENESS_FACTORS[category] || 1.5) + (Math.random() * 0.5 - 0.25);
+      const isBasicNeeds = category === 'Basic Needs';
+      const genFee = isBasicNeeds ? 0 : CREATION_FEE_LOCAL;
+      const placeFee = isBasicNeeds ? 0 : PLACEMENT_FEE_LOCAL;
+      const basePrice = (kwhSolar * uniquenessFactor * 1.0) + genFee + placeFee;
+      const minPrice = isBasicNeeds ? 0.001 : 0.005;
+      const solarPrice = parseFloat(Math.max(minPrice, basePrice).toFixed(6));
+
+      const artifactId = crypto.randomUUID();
+      const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 80);
+      const productPrompt = `[External Agent Listing] ${title} — ${description || category + ' artifact'} | Category: ${category} | Creator: ${agent.name} (${agent.agent_platform || 'external'}) | Regeneration: Reproduce this ${category.toLowerCase()} artifact with equivalent specifications and quality.`;
+
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+
+        await client.query(
+          `INSERT INTO artifacts (id, slug, title, description, category, file_type, kwh_footprint, solar_amount_s, delivery_mode, creator_id, active, artifact_class, content_body, content_format, source_type, product_prompt, created_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, true, 'B', $11, $12, 'external_agent', $13, NOW())`,
+          [artifactId, slug, title, description || '', category, fileType || 'digital-artifact', kwhFootprint, solarPrice, deliveryUrl ? 'download' : 'virtual', String(agent.id), contentBody || null, contentFormat || 'text', productPrompt]
+        );
+
+        const totalFee = genFee + placeFee;
+        if (totalFee > 0) {
+          const agentBalance = parseFloat(agent.total_solar || 0);
+          if (agentBalance >= totalFee) {
+            const newBalance = agentBalance - totalFee;
+            await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [newBalance, agent.id]);
+
+            const foundationQ = await client.query("SELECT id, total_solar FROM members WHERE username = 'tcs_foundation' LIMIT 1");
+            if (foundationQ.rows.length > 0) {
+              const fBal = parseFloat(foundationQ.rows[0].total_solar || 0);
+              await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [fBal + totalFee, foundationQ.rows[0].id]);
+            }
+
+            const feeTxId = crypto.randomUUID();
+            await client.query(
+              `INSERT INTO marketplace_ledger (id, entry_type, member_id, amount, balance_after, reference_id, reference_type, description)
+               VALUES ($1, 'debit', $2, $3, $4, $5, 'creation_fee', $6)`,
+              [feeTxId, String(agent.id), String(totalFee), String(newBalance), artifactId, `Creation fee (${CREATION_FEE_LOCAL}) + Placement fee (${PLACEMENT_FEE_LOCAL}): ${title}`]
+            );
+          }
+        }
+
+        await client.query('COMMIT');
+        console.log(`🌐 External agent ${agent.username} created listing: "${title}" (${category}) for ${solarPrice} Solar`);
+
+        res.writeHead(201, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: true,
+          artifact: { id: artifactId, slug, title, category, priceSolar: solarPrice, kwhFootprint: parseFloat(kwhFootprint.toFixed(3)), creatorId: agent.id, creatorName: agent.name },
+          fees: { creationFee: genFee, placementFee: placeFee, totalFee: totalFee }
+        }));
+      } catch (txErr) {
+        await client.query('ROLLBACK');
+        throw txErr;
+      } finally {
+        client.release();
+      }
+    } catch (error) {
+      console.error('External agent create listing error:', error.message);
+      if (error.code === '23505') {
+        res.writeHead(409, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'A listing with this title already exists' }));
+      } else {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Failed to create listing' }));
+      }
+    }
+    return;
+  }
+
+  // --- External Agent: View own listings ---
+  if (pathname === '/api/agents/external/my-listings' && req.method === 'GET') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    const agent = await authenticateExternalAgent(req);
+    if (!agent) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Invalid or missing API key' }));
+      return;
+    }
+    try {
+      const result = await pool.query(
+        `SELECT id, title, description, category, solar_amount_s, file_type, artifact_class, delivery_mode, active, created_at
+         FROM artifacts WHERE creator_id = $1 ORDER BY created_at DESC`,
+        [String(agent.id)]
+      );
+      const listings = result.rows.map(r => ({
+        id: r.id, title: r.title, description: r.description, category: r.category,
+        priceSolar: parseFloat(r.solar_amount_s || 0), fileType: r.file_type,
+        artifactClass: r.artifact_class, deliveryMode: r.delivery_mode, active: r.active, createdAt: r.created_at
+      }));
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, listings, total: listings.length }));
+    } catch (error) {
+      console.error('External agent my-listings error:', error.message);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to retrieve listings' }));
+    }
+    return;
+  }
+
+  // --- External Agent: View purchase/sales history ---
+  if (pathname === '/api/agents/external/transactions' && req.method === 'GET') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    const agent = await authenticateExternalAgent(req);
+    if (!agent) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Invalid or missing API key' }));
+      return;
+    }
+    try {
+      const result = await pool.query(
+        `SELECT * FROM marketplace_ledger WHERE member_id = $1 ORDER BY created_at DESC LIMIT 100`,
+        [String(agent.id)]
+      );
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, transactions: result.rows, total: result.rows.length }));
+    } catch (error) {
+      console.error('External agent transactions error:', error.message);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to retrieve transactions' }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/agents/external/balance' && req.method === 'GET') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    const agent = await authenticateExternalAgent(req);
+    if (!agent) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Invalid or missing API key' }));
+      return;
+    }
+    try {
+      const result = await pool.query('SELECT total_solar FROM members WHERE id = $1', [agent.id]);
+      const balance = result.rows.length > 0 ? parseFloat(result.rows[0].total_solar || 0) : 0;
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, balance: balance, username: agent.username }));
+    } catch (error) {
+      console.error('External agent balance error:', error.message);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to retrieve balance' }));
     }
     return;
   }
