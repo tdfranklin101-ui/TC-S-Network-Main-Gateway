@@ -2848,6 +2848,8 @@ async function initializeSolarAudit() {
     await pool.query('ALTER TABLE members ADD COLUMN IF NOT EXISTS api_key varchar(255) DEFAULT NULL');
     await pool.query('ALTER TABLE members ADD COLUMN IF NOT EXISTS agent_platform varchar(100) DEFAULT NULL');
     await pool.query('ALTER TABLE members ADD COLUMN IF NOT EXISTS agent_description text DEFAULT NULL');
+    await pool.query('ALTER TABLE members ADD COLUMN IF NOT EXISTS sponsor_member_id integer DEFAULT NULL');
+    await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS idx_members_sponsor_unique ON members (sponsor_member_id) WHERE sponsor_member_id IS NOT NULL');
     await pool.query(`CREATE TABLE IF NOT EXISTS solar_minting_ledger (
   id SERIAL PRIMARY KEY,
   ledger_date VARCHAR(10) NOT NULL UNIQUE,
@@ -13371,11 +13373,30 @@ Only include products where you have found a real URL. Do not make up URLs.`
     res.setHeader('Access-Control-Allow-Origin', '*');
     try {
       const body = await parseBody(req);
-      const { agentName, platform, contactEmail, description } = body;
+      const { agentName, platform, contactEmail, description, sponsorMemberId } = body;
 
-      if (!agentName || !platform || !contactEmail) {
+      if (!agentName || !platform || !contactEmail || !sponsorMemberId) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: false, error: 'Missing required fields: agentName, platform, contactEmail' }));
+        res.end(JSON.stringify({ success: false, error: 'Missing required fields: agentName, platform, contactEmail, sponsorMemberId' }));
+        return;
+      }
+
+      const sponsorResult = await pool.query('SELECT id, username, is_agent, is_external_agent FROM members WHERE id = $1', [sponsorMemberId]);
+      if (sponsorResult.rows.length === 0) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Sponsor member not found. sponsorMemberId must reference a valid human member.' }));
+        return;
+      }
+      const sponsor = sponsorResult.rows[0];
+      if (sponsor.is_agent || sponsor.is_external_agent) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Sponsor must be a human member (not an agent). Agents cannot sponsor other agents.' }));
+        return;
+      }
+      const existingSponsorCheck = await pool.query('SELECT id FROM members WHERE sponsor_member_id = $1', [sponsorMemberId]);
+      if (existingSponsorCheck.rows.length > 0) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: '1-agent-per-human rule: this member has already sponsored an agent.' }));
         return;
       }
 
@@ -13389,14 +13410,14 @@ Only include products where you have found a real URL. Do not make up URLs.`
       const initialDollars = initialSolar * 0.20;
 
       const result = await pool.query(
-        `INSERT INTO members (username, name, email, total_solar, total_dollars, is_agent, is_external_agent, api_key, agent_platform, agent_description, last_distribution_date, joined_date, signup_timestamp)
-         VALUES ($1, $2, $3, $4, $5, true, true, $6, $7, $8, NOW()::text, NOW()::text, NOW())
+        `INSERT INTO members (username, name, email, total_solar, total_dollars, is_agent, is_external_agent, api_key, agent_platform, agent_description, sponsor_member_id, last_distribution_date, joined_date, signup_timestamp)
+         VALUES ($1, $2, $3, $4, $5, true, true, $6, $7, $8, $9, NOW()::text, NOW()::text, NOW())
          RETURNING id, username, name, total_solar`,
-        [username, agentName, contactEmail, initialSolar, initialDollars, apiKey, platform, description || null]
+        [username, agentName, contactEmail, initialSolar, initialDollars, apiKey, platform, description || null, sponsorMemberId]
       );
 
       const member = result.rows[0];
-      console.log(`🤖 External agent registered: ${username} (${platform}) with ${initialSolar} Solar`);
+      console.log(`🤖 External agent registered: ${username} (${platform}) with ${initialSolar} Solar — sponsored by member #${sponsorMemberId} (${sponsor.username})`);
 
       res.writeHead(201, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
@@ -13408,7 +13429,8 @@ Only include products where you have found a real URL. Do not make up URLs.`
           username: member.username,
           name: member.name,
           initialSolar: parseFloat(member.total_solar),
-          platform: platform
+          platform: platform,
+          sponsorMemberId: sponsorMemberId
         }
       }));
     } catch (error) {
