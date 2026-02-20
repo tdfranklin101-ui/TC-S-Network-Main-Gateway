@@ -2998,19 +2998,23 @@ function parseBody(req) {
 }
 
 // ============ SOLAR MINTING LEDGER ============
+// === SOLAR MINTING LEDGER — Locked to Official Solar Clock (admin/js/global-solar-counter.js) ===
+// These constants MUST match the Solar Clock exactly. Do not modify independently.
+// Solar Clock: START_DATE='2025-04-07T00:00:00Z', SOLAR_PER_DAY=8.5B, KWH_PER_SOLAR=4913
+// Calculation: elapsedSeconds * (8,500,000,000 / 86,400) = totalSolarMinted
 const SOLAR_MINT_GENESIS = new Date('2025-04-07T00:00:00Z');
-const SOLAR_MINT_DAILY = 8500000000; // 8.5 billion Solar minted globally per day
-const KWH_PER_SOLAR = 4913;
-const SOLAR_PER_SECOND = SOLAR_MINT_DAILY / 86400;
+const SOLAR_MINT_DAILY = 8500000000; // 8.5 billion Solar minted globally per day — locked to Solar Clock
+const KWH_PER_SOLAR = 4913; // 1 Solar = 4,913 kWh — locked to Solar Clock
+const SOLAR_PER_SECOND = SOLAR_MINT_DAILY / 86400; // 98,379.6296 Solar/sec — locked to Solar Clock
 
 async function recordMintingLedgerEntry(dateString, membersDistributed, memberSolarDistributed) {
   if (!pool) return null;
   try {
     const entryDate = new Date(dateString + 'T00:00:00Z');
-    const daysSinceGenesis = Math.max(1, Math.floor((entryDate - SOLAR_MINT_GENESIS) / (1000 * 60 * 60 * 24)));
+    const daysSinceGenesis = Math.floor((entryDate - SOLAR_MINT_GENESIS) / (1000 * 60 * 60 * 24));
     
     const globalSolarMinted = SOLAR_MINT_DAILY;
-    const cumulativeSolarMinted = SOLAR_MINT_DAILY * daysSinceGenesis;
+    const cumulativeSolarMinted = SOLAR_MINT_DAILY * (daysSinceGenesis + 1);
     const globalKwhGenerated = globalSolarMinted * KWH_PER_SOLAR;
     const cumulativeKwhGenerated = cumulativeSolarMinted * KWH_PER_SOLAR;
 
@@ -3032,7 +3036,7 @@ async function recordMintingLedgerEntry(dateString, membersDistributed, memberSo
       [dateString, String(globalSolarMinted), String(cumulativeSolarMinted), String(globalKwhGenerated), String(cumulativeKwhGenerated), membersDistributed || 0, String(memberSolarDistributed || 0), String(cumulativeMemberDistributed), daysSinceGenesis, String(SOLAR_PER_SECOND)]
     );
     
-    console.log(`📒 Minting Ledger: ${dateString} | Day ${daysSinceGenesis} | Minted: ${(globalSolarMinted/1e9).toFixed(1)}B | Members: ${membersDistributed || 0} distributed ${memberSolarDistributed || 0} Solar`);
+    console.log(`📒 Minting Ledger: ${dateString} | Day ${daysSinceGenesis} | Minted: ${(globalSolarMinted/1e9).toFixed(1)}B | Cumulative: ${(cumulativeSolarMinted/1e9).toFixed(1)}B | Members: ${membersDistributed || 0} distributed ${memberSolarDistributed || 0} Solar`);
     return result.rows[0];
   } catch (err) {
     if (err.code !== '23505') {
@@ -3050,13 +3054,14 @@ async function backfillMintingLedger() {
     
     const today = new Date();
     const totalDays = Math.floor((today - SOLAR_MINT_GENESIS) / (1000 * 60 * 60 * 24));
+    const expectedEntries = totalDays + 1;
     
-    if (existingCount >= totalDays) {
-      console.log(`📒 Minting Ledger: ${existingCount} entries already recorded (${totalDays} days since genesis)`);
+    if (existingCount >= expectedEntries) {
+      console.log(`📒 Minting Ledger: ${existingCount} entries already recorded (day 0 through day ${totalDays})`);
       return;
     }
     
-    console.log(`📒 Backfilling Solar Minting Ledger: ${existingCount} existing, need ${totalDays} total...`);
+    console.log(`📒 Backfilling Solar Minting Ledger: ${existingCount} existing, need ${expectedEntries} total (day 0 = genesis through day ${totalDays})...`);
     
     const distQ = await pool.query(
       `SELECT distribution_date, COUNT(*) as member_count, SUM(solar_amount) as total_solar
@@ -3072,7 +3077,7 @@ async function backfillMintingLedger() {
     let cumulativeMemberDist = 0;
     let filled = 0;
     
-    for (let d = 1; d <= totalDays; d++) {
+    for (let d = 0; d <= totalDays; d++) {
       const entryDate = new Date(SOLAR_MINT_GENESIS);
       entryDate.setUTCDate(entryDate.getUTCDate() + d);
       const dateStr = entryDate.toISOString().split('T')[0];
@@ -3080,12 +3085,15 @@ async function backfillMintingLedger() {
       const dist = distMap[dateStr] || { members: 0, solar: 0 };
       cumulativeMemberDist += dist.solar;
       
+      const cumulativeMinted = SOLAR_MINT_DAILY * (d + 1);
+      const cumulativeKwh = cumulativeMinted * KWH_PER_SOLAR;
+      
       try {
         await pool.query(
           `INSERT INTO solar_minting_ledger (ledger_date, global_solar_minted, cumulative_solar_minted, global_kwh_generated, cumulative_kwh_generated, members_distributed, member_solar_distributed, cumulative_member_distributed, days_since_genesis, solar_per_second)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
            ON CONFLICT (ledger_date) DO NOTHING`,
-          [dateStr, String(SOLAR_MINT_DAILY), String(SOLAR_MINT_DAILY * d), String(SOLAR_MINT_DAILY * KWH_PER_SOLAR), String(SOLAR_MINT_DAILY * d * KWH_PER_SOLAR), dist.members, String(dist.solar), String(cumulativeMemberDist), d, String(SOLAR_PER_SECOND)]
+          [dateStr, String(SOLAR_MINT_DAILY), String(cumulativeMinted), String(SOLAR_MINT_DAILY * KWH_PER_SOLAR), String(cumulativeKwh), dist.members, String(dist.solar), String(cumulativeMemberDist), d, String(SOLAR_PER_SECOND)]
         );
         filled++;
       } catch (e) {
@@ -3093,7 +3101,7 @@ async function backfillMintingLedger() {
       }
     }
     
-    console.log(`📒 Minting Ledger backfill complete: ${filled} new entries added (${totalDays} total days since genesis)`);
+    console.log(`📒 Minting Ledger backfill complete: ${filled} new entries added (day 0 through day ${totalDays}, ${expectedEntries} total)`);
   } catch (err) {
     console.error('Minting ledger backfill error:', err.message);
   }
@@ -3216,8 +3224,7 @@ async function processDailyDistribution() {
         await pool.query(logQuery, [member.id, todayString, 1.0000, 0.00]);
       }
       console.log(`📝 Distribution logged: ${updatedMembers.length} member distributions recorded`);
-      const totalDistributedToday = updatedMembers.length + totalCatchUp;
-      await recordMintingLedgerEntry(todayString, updatedMembers.length, totalDistributedToday);
+      await recordMintingLedgerEntry(todayString, updatedMembers.length, updatedMembers.length);
     } catch (logError) {
       console.error('⚠️ Failed to log distribution:', logError.message);
     }
