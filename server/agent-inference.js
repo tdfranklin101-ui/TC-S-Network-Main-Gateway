@@ -458,11 +458,11 @@ async function gatherMarketSnapshot(pool, memberId) {
 
   try {
     const txHistory = await pool.query(
-      `SELECT ml.entry_type, ml.amount, ml.description, ml.created_at, ml.artifact_id
+      `SELECT ml.entry_type, ml.amount, ml.description, ml.created_at, ml.reference_id
        FROM marketplace_ledger ml
-       WHERE ml.member_id = $1 AND ml.created_at > NOW() - INTERVAL '7 days'
+       WHERE ml.account_id = $1 AND ml.created_at > NOW() - INTERVAL '7 days'
        ORDER BY ml.created_at DESC LIMIT 20`,
-      [memberId]
+      [String(memberId)]
     );
     const earnings = txHistory.rows.filter(t => t.entry_type === 'credit').reduce((s, t) => s + parseFloat(t.amount || 0), 0);
     const spending = txHistory.rows.filter(t => t.entry_type === 'debit').reduce((s, t) => s + Math.abs(parseFloat(t.amount || 0)), 0);

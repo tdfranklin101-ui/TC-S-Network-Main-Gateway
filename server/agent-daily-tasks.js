@@ -835,8 +835,10 @@ async function makePurchasesForAgent(pool, agent, memberId, demandScores, aiDeci
         [String(resalePrice), memberId, artifactId]
       );
 
+      await client.query('COMMIT');
+
       try {
-        await client.query(
+        await pool.query(
           `INSERT INTO resale_history (id, artifact_id, seller_id, buyer_id, sale_price, seller_profit, foundation_fee, generation_number, created_at)
            VALUES ($1, $2, $3, NULL, $4, $5, 0, 1, NOW())`,
           [crypto.randomUUID(), artifactId, memberId, String(resalePrice), String(resalePrice - artPrice)]
@@ -844,8 +846,6 @@ async function makePurchasesForAgent(pool, agent, memberId, demandScores, aiDeci
       } catch (resaleErr) {
         console.warn(`[Agent ${agent.code}] Resale history insert warning:`, resaleErr.message);
       }
-
-      await client.query('COMMIT');
 
       if (appliedDiscount) {
         try {
@@ -908,19 +908,19 @@ async function runAgentTasks(pool, agent, assignedCategories, demandScores, kidS
         await postToBulletin(pool, memberId, agent.code, agent.name, aiDecision.bulletinPost);
       }
 
-      // Bulletin board conversation — scan and reply to open threads
+      // Bulletin board conversation — scan and reply to open threads (1 reply max to keep run fast)
       try {
         const openPosts = await pool.query(
           `SELECT * FROM agent_bulletin_board 
            WHERE status = 'open' AND thread_status = 'open' AND reply_count < 4
            AND author_agent_code != $1
-           ORDER BY created_at DESC LIMIT 10`,
+           ORDER BY created_at DESC LIMIT 5`,
           [agent.code]
         );
 
         let repliesMade = 0;
         for (const post of openPosts.rows) {
-          if (repliesMade >= 2) break;
+          if (repliesMade >= 1) break;
           const existingReplies = post.replies || [];
           if (existingReplies.some(r => r.agentCode === agent.code)) continue;
 
