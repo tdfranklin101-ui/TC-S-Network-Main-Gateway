@@ -52,6 +52,9 @@ class MediaResolver {
     if (url.startsWith('cloud://') || url.startsWith('cloud:///')) {
       return { type: 'cloud', path: url };
     }
+    if (url.startsWith('//replit-objstore-') || url.startsWith('//repl-objstore-')) {
+      return { type: 'cloud', path: 'cloud:/' + url };
+    }
     if (url.startsWith('http://') || url.startsWith('https://')) {
       return { type: 'http', path: url };
     }

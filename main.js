@@ -16099,8 +16099,16 @@ Only include products where you have found a real URL. Do not make up URLs.`
       let cloudResult = null;
       try {
         const urlCol = fileType === 'master' ? 'master_file_url' : fileType === 'trade' ? 'trade_file_url' : 'preview_file_url';
-        const dbRow = await pool.query(`SELECT ${urlCol} FROM artifacts WHERE id = $1`, [artifactId]);
-        const storedUrl = dbRow.rows[0]?.[urlCol];
+        const allUrlCols = fileType === 'preview' ? [urlCol, 'trade_file_url', 'delivery_url', 'master_file_url'] : [urlCol];
+        const dbRow = await pool.query(`SELECT ${allUrlCols.join(', ')} FROM artifacts WHERE id = $1`, [artifactId]);
+        let storedUrl = null;
+        for (const col of allUrlCols) {
+          if (dbRow.rows[0]?.[col]) { storedUrl = dbRow.rows[0][col]; break; }
+        }
+        if (storedUrl) {
+          if (storedUrl.startsWith('cloud:///')) storedUrl = 'cloud://' + storedUrl.substring(8);
+          else if (storedUrl.startsWith('//replit-objstore-') || storedUrl.startsWith('//repl-objstore-')) storedUrl = 'cloud:/' + storedUrl;
+        }
         if (storedUrl && storedUrl.startsWith('cloud://')) {
           const cloudKey = storedUrl.replace('cloud://', '');
           const cloudStorage = require('./server/cloud-storage');
@@ -16115,10 +16123,14 @@ Only include products where you have found a real URL. Do not make up URLs.`
       }
       if (cloudResult) {
         const buf = Buffer.isBuffer(cloudResult.buffer) ? cloudResult.buffer : Buffer.from(cloudResult.buffer);
+        const ext = (cloudResult.key || '').split('.').pop().toLowerCase();
+        const mimeMap = { mp4: 'video/mp4', webm: 'video/webm', mp3: 'audio/mpeg', wav: 'audio/wav', ogg: 'audio/ogg', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', svg: 'image/svg+xml' };
+        const contentType = mimeMap[ext] || 'application/octet-stream';
         res.writeHead(200, {
-          'Content-Type': 'application/octet-stream',
+          'Content-Type': contentType,
           'Content-Length': buf.length,
-          'Cache-Control': 'no-cache, must-revalidate',
+          'Accept-Ranges': 'bytes',
+          'Cache-Control': 'private, max-age=300',
           'X-Secure-Access': 'true',
           'X-Storage-Provider': 'cloud'
         });
