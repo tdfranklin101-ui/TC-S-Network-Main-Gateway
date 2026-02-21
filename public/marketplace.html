@@ -3940,7 +3940,7 @@
     </div>
 
     <!-- Video Preview Modal -->
-    <div class="video-preview-modal" id="video-preview-modal" style="display: none;">
+    <div class="video-preview-modal" id="video-preview-modal">
         <div class="video-modal-content">
             <div class="video-modal-header">
                 <h3 id="video-preview-title">Video Preview</h3>
@@ -4257,7 +4257,7 @@
     </div>
 
     <!-- Music Preview Modal -->
-    <div class="music-preview-modal" id="music-preview-modal" style="display: none;">
+    <div class="music-preview-modal" id="music-preview-modal">
         <div class="music-modal-content">
             <div class="music-modal-header">
                 <h3 id="music-preview-title">Music Preview</h3>
@@ -7287,7 +7287,7 @@
                 
             } catch (error) {
                 console.error('Enhanced preview error:', error);
-                alert(`❌ Preview failed: ${error.message}`);
+                alert('❌ Preview unavailable. This content may require purchase to access, or try again later.');
             }
         }
 
@@ -7303,6 +7303,7 @@
             // Show modal
             const modal = document.getElementById('video-preview-modal');
             modal.classList.add('visible');
+            modal.style.display = 'flex';
             
             const videoPlayer = document.getElementById('video-player');
             const videoSource = document.getElementById('video-source');
@@ -7335,7 +7336,23 @@
                             return;
                         }
                     }
-                    throw new Error(`Preview request failed: ${previewResponse.status}`);
+                    
+                    // Third fallback: try direct stream-preview endpoint
+                    console.log('🔄 Trying direct stream-preview fallback');
+                    const directStreamUrl = `/api/artifacts/${artifact.id}/stream-preview`;
+                    try {
+                        const streamCheck = await fetch(directStreamUrl, { method: 'HEAD' });
+                        if (streamCheck.ok || streamCheck.status === 206) {
+                            videoSource.src = directStreamUrl;
+                            videoPlayer.load();
+                            videoPlayer.poster = '';
+                            console.log(`🎬 Direct stream preview ready: ${artifact.title}`);
+                            return;
+                        }
+                    } catch (streamErr) {
+                        console.warn('Direct stream fallback failed:', streamErr.message);
+                    }
+                    throw new Error('Preview not available for this content');
                 }
                 
                 const previewData = await previewResponse.json();
@@ -7372,6 +7389,7 @@
             
             // Hide modal
             modal.classList.remove('visible');
+            modal.style.display = '';
             currentPreviewArtifact = null;
             
             console.log('🔄 Enhanced video preview closed');
