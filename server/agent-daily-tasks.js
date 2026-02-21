@@ -120,9 +120,10 @@ const ITEM_PARTS = {
   'Basic Needs':{adj:['Essential','Daily','Community','Shared','Universal','Cooperative','Local','Fresh','Sustainable','Open-Access'],noun:['Energy Credit','Water Purification Kit','Food Co-op Share','Shelter Maintenance Pack','Health Scan Token','Transport Pass','Communication Bundle','Clothing Voucher','Nutrition Pack','Safety Kit'],suffix:['Daily','Weekly','Family','Individual','Starter','Standard','Plus','Community','Mutual Aid','Basic']},
   'Rent':{adj:['Shared','Cooperative','Micro','Community','Modular','Solar-Powered','Off-Grid','Resilient','Portable','Sustainable'],noun:['Housing Credit','Workspace Pass','Land Share','Co-Living Token','Studio Rental','Garden Plot','Workshop Bay','Storage Unit','Shelter Voucher','Facility Access'],suffix:['Monthly','Seasonal','Flex','Standard','Equity','Rotating','Trial','Founding','Anchored','Open']},
   'Energy':{adj:['Precision','Portable','Industrial','Wireless','AI-Powered','Multi-Spectrum','Ruggedized','Modular','Open-Source','Calibrated'],noun:['Solar Meter','Inverter Diag','Panel Mapper','Irradiance Sensor','ROI Calculator','Load Tester','Efficiency Gauge','Grid Probe','Watt Tracker','Harvest Monitor'],suffix:['v4','Pro','Field Kit','IoT','USB-C','Bluetooth','HD','IP67','with Case','Starter']},
-  'Music':{adj:['Binaural','Ambient','Solar Wind','Dawn Chorus','Photovoltaic','Deep Field','Resonant','Harmonic','Celestial','Crystalline'],noun:['Beats Pack','Symphony','Meditation','Soundscape','Frequency Kit','Mix Tape','Rhythm Loop','Sonic Wave','Tone Garden','Pulse Set'],suffix:['432Hz','528Hz','Full Spectrum','Studio Mix','Live','Extended','Remastered','Deluxe','Pro','Spatial']},
+  'Music':{adj:['Professional','Studio','Vintage','Digital','Portable','Wireless','Modular','Analog','High-Fidelity','Custom'],noun:['Synthesizer','MIDI Controller','Studio Monitor','Mixing Console','Microphone Kit','Amplifier','Drum Machine','Audio Interface','Headphone Set','Speaker System'],suffix:['Pro','Studio','Elite','Portable','Wireless','USB-C','XLR','Bluetooth','Limited','Reference']},
   'Songs':{adj:['Acoustic','Electric','Soul','Indie','Folk','Pop','Ethereal','Cinematic','Lo-Fi','Choral'],noun:['Single','EP Track','Album Cut','Live Recording','Cover','Original','Ballad','Anthem','Demo','Master'],suffix:['HD Audio','Remastered','Acoustic','Live','Studio','Vocal','Instrumental Mix','Radio Edit','Extended','Deluxe']},
-  'Video':{adj:['Cinematic','Drone','Time-Lapse','Volumetric','Holographic','Immersive','Documentary','Generative','Solar-Lit','RAW'],noun:['Film Reel','Tutorial Series','Music Video','Short Film','B-Roll Pack','VFX Template','Motion Study','Scene Kit','Footage Archive','Visual Essay'],suffix:['4K','8K','HDR',"Director's Cut",'Extended','Uncut','Remastered','Season 1','Premiere','Open License']},
+  'Video':{adj:['Professional','Cinema-Grade','Compact','Wireless','Stabilized','Modular','Weather-Sealed','High-Speed','Remote','Portable'],noun:['Camera Rig','Lighting Kit','Tripod System','Gimbal Stabilizer','Lens Set','Editing Station','Monitor Display','Streaming Kit','Drone Mount','Green Screen'],suffix:['Pro','4K','Cinema','Portable','Studio','Wireless','Carbon','LED','Field','Complete']},
+  'Videos':{adj:['Cinematic','Drone','Time-Lapse','Volumetric','Holographic','Immersive','Documentary','Generative','Solar-Lit','RAW'],noun:['Film Reel','Tutorial Series','Music Video','Short Film','B-Roll Pack','VFX Template','Motion Study','Scene Kit','Footage Archive','Visual Essay'],suffix:['4K','8K','HDR',"Director's Cut",'Extended','Uncut','Remastered','Season 1','Premiere','Open License']},
   'Art':{adj:['Fractal','Neon','Holographic','Prismatic','Quantum','Solar','Cosmic','Bioluminescent','Kinetic','Ethereal'],noun:['Dreamscape','Canvas','Portrait','Mandala','Mosaic','Tapestry','Sculpture','Lattice','Aurora','Bloom'],suffix:['v2','HD','XR Edition',"Collector's",'Limited Run','Genesis','Infinite','Luminous','Remastered','Ultra']},
   'Photo':{adj:['Aerial','Macro','Infrared','Long-Exposure','Street','Astro','Solar','Golden Hour','Deep Field','Polaroid'],noun:['Photo Set','Print Collection','Lightroom Preset','Portfolio','Stock Pack','Documentary Series','Panorama','Composite','Archive','Gallery'],suffix:['Hi-Res','RAW','Licensed','Open','Curated','Limited','Signed','Volume 1','Platinum','Exhibition']},
   'Writing':{adj:['Speculative','Technical','Lyrical','Investigative','Collaborative','Serialized','Epistolary','Mythic','Solar Punk','Manifesto'],noun:['Novel Chapter','Essay Collection','Poetry Zine','Whitepaper','Field Notes','Script Draft','Research Paper','Blog Series','Anthology','Protocol Doc'],suffix:['First Edition','Draft','Annotated','Illustrated','Abridged','Extended','Open Access','Peer-Reviewed','Serialized','Deluxe']},
@@ -156,6 +157,7 @@ const DELIVERY_TYPES = {
   'Music': 'virtual',
   'Songs': 'virtual',
   'Video': 'virtual',
+  'Videos': 'virtual',
   'Art': 'virtual',
   'Photo': 'virtual',
   'Writing': 'virtual',
@@ -376,7 +378,7 @@ function generatePrice(category, kwhFootprint) {
   const kwhSolar = kwhFootprint * SOLAR_KWH_RATE;
 
   const UNIQUENESS_FACTORS = {
-    'Computronium': 3.5, 'Songs': 2.5, 'Music': 2.2, 'Video': 2.8,
+    'Computronium': 3.5, 'Songs': 2.5, 'Music': 2.2, 'Video': 2.8, 'Videos': 2.8,
     'Art': 2.0, 'Photo': 1.8, 'Writing': 1.5, 'AI Tools': 3.0, 'AI Create': 2.8,
     'Software': 3.2, 'Docs': 1.3, 'Education': 1.4, 'Games': 2.5, 'Utilities': 1.6,
     'Culture': 1.7, 'Basic Needs': 1.0, 'Rent': 1.2, 'Energy': 2.0, '3D Printing': 2.4,
@@ -404,8 +406,9 @@ function generateDescription(category, title) {
     'Basic Needs': 'Essential resource ensuring universal access to fundamental human needs.',
     'Rent': 'Cooperative housing and workspace access for sustainable community living.',
     'Energy': 'Solar energy measurement and optimization tool for the clean energy transition.',
-    'Music': 'Audio creation crafted with Solar-powered instruments and natural harmonics.',
-    'Video': 'Visual media produced with sustainable energy practices and creative vision.',
+    'Music': 'Professional music equipment and studio gear for Solar-powered creative production.',
+    'Videos': 'Visual media produced with sustainable energy practices and creative vision.',
+    'Video': 'Professional video production equipment and gear for content creation.',
     'Art': 'Digital artwork exploring the intersection of technology and human expression.',
     'Photo': 'Photography capturing moments through sustainable and ethical creative practices.',
     'Writing': 'Written works contributing to the knowledge commons of the Solar network.',
@@ -440,9 +443,10 @@ function generateProductPrompt(category, title, description, contentFormat) {
     'Basic Needs': 'Design an essential community resource:',
     'Rent': 'Create a cooperative housing/workspace access system:',
     'Energy': 'Build a solar energy measurement and optimization tool:',
-    'Music': 'Produce an original audio creation:',
+    'Music': 'Design professional music equipment or studio gear:',
     'Songs': 'Compose and produce an original song:',
-    'Video': 'Produce a professional video:',
+    'Video': 'Design professional video production equipment:',
+    'Videos': 'Produce a professional video:',
     'Art': 'Create a digital artwork:',
     'Photo': 'Capture/generate a professional photograph:',
     'Writing': 'Write an original literary work:',
@@ -480,7 +484,7 @@ async function createArtifactsForAgent(pool, agent, memberId, assignedCategories
   }
 
   const FILE_TYPES = {
-    'Songs': 'audio/mpeg', 'Music': 'audio/mpeg', 'Video': 'video/mp4', 'Art': 'image/png', 'Photo': 'image/jpeg',
+    'Songs': 'audio/mpeg', 'Music': 'application/json', 'Video': 'application/json', 'Videos': 'video/mp4', 'Art': 'image/png', 'Photo': 'image/jpeg',
     'Writing': 'text/markdown', 'Docs': 'application/pdf', 'Software': 'application/javascript',
     'AI Tools': 'application/json', 'AI Create': 'application/json', 'Games': 'application/zip',
     'Utilities': 'application/zip', 'Computronium': 'application/octet-stream',
@@ -489,7 +493,7 @@ async function createArtifactsForAgent(pool, agent, memberId, assignedCategories
   };
 
   const CONTENT_FORMATS = {
-    'Songs': 'audio', 'Music': 'audio', 'Video': 'video', 'Art': 'image', 'Photo': 'image',
+    'Songs': 'audio', 'Music': 'json', 'Video': 'json', 'Videos': 'video', 'Art': 'image', 'Photo': 'image',
     'Writing': 'md', 'Docs': 'pdf', 'Software': 'js', 'AI Tools': 'json',
     'AI Create': 'json', 'Games': 'binary', 'Utilities': 'binary',
     'Computronium': 'binary', 'Culture': 'md', 'Basic Needs': 'text', 'Rent': 'text', 'Energy': 'json',
@@ -571,7 +575,7 @@ async function createArtifactsForAgent(pool, agent, memberId, assignedCategories
       const artifactId = artifactResult.rows[0].id;
 
       // Auto-add Music/Video agent content to Music Now for free streaming
-      if (category === 'Music' || category === 'Video') {
+      if (category === 'Songs' || category === 'Videos') {
         const streamSlug = slug.replace(/[^a-z0-9-]/g, '');
         await pool.query(
           `UPDATE artifacts SET streaming_url = $1 WHERE id = $2`,

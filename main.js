@@ -1113,12 +1113,14 @@ async function normalizeCategoriesInDB() {
   try {
     console.log('🔄 Normalizing artifact categories...');
     
-    const OFFICIAL = ['Computronium','Culture','Basic Needs','Rent','Energy','Music','Songs','Video','Art','Photo','Writing','AI Tools','AI Create','Software','Docs','Games','Utilities','Education','3D Printing','Health & Wellness','Community'];
+    const OFFICIAL = ['Computronium','Culture','Basic Needs','Rent','Energy','Music','Songs','Video','Videos','Art','Photo','Writing','AI Tools','AI Create','Software','Docs','Games','Utilities','Education','3D Printing','Health & Wellness','Community'];
     
     const caseFixes = [
       ["UPDATE artifacts SET category = 'Utilities' WHERE category = 'utilities'"],
-      ["UPDATE artifacts SET category = 'Music' WHERE category IN ('music', 'Audio/ Music')"],
-      ["UPDATE artifacts SET category = 'Video' WHERE category IN ('video', 'Videos')"],
+      ["UPDATE artifacts SET category = 'Songs' WHERE category IN ('Audio/ Music')"],
+      ["UPDATE artifacts SET category = 'Music' WHERE category = 'music'"],
+      ["UPDATE artifacts SET category = 'Video' WHERE category = 'video'"],
+      ["UPDATE artifacts SET category = 'Videos' WHERE category = 'videos'"],
       ["UPDATE artifacts SET category = 'Games' WHERE category = 'games'"],
       ["UPDATE artifacts SET category = 'Education' WHERE category = 'education'"],
       ["UPDATE artifacts SET category = 'Art' WHERE category IN ('art', 'arts')"],
@@ -1132,7 +1134,8 @@ async function normalizeCategoriesInDB() {
       ["UPDATE artifacts SET category = 'Software' WHERE category IN ('productivity', 'Software Development', 'Development Tools', 'Software Tools', 'Software Development Tools', 'Software/Development Tools', 'Software Development Kits (SDKs)', 'Software Development / Data Analysis', 'Software Development / Quantum Computing', 'Software Components', 'Developer Tools', 'System Monitoring Tools', 'Networking Tools', 'Network Optimization Tools', 'Network Security Tools', 'Security Tools', 'Data Processing Tools', 'Data Visualization Tools', 'Data Management', 'Data Assets', 'Data & Analytics', 'Data Analysis & Simulation', 'Finance & Investment Tools', 'Infrastructure & Performance', 'IoT Solutions', 'APIs', 'Technical Resources', 'Technology / Software Development', 'Design & Development', 'Digital Assets / Software Tools', 'automation', 'Smart Energy Management', 'Digital Resources', 'Resource Management', 'Resource Packs', 'Shelter Management Tools', 'Workspace Solutions')"],
       ["UPDATE artifacts SET category = 'Art' WHERE category IN ('Digital Art', 'Digital Art & Design', 'Digital Art & Graphics', 'Digital Art & Resources', 'Digital Art / SVG Artwork', 'Digital Art / Graphics', 'Digital Art / Graphic Design', 'Digital Art / Media Assets', 'Digital Art / Community Resources', 'Digital Art Publications', 'Digital Art Tools', 'Creative & Media', 'creative & media', 'creative-media', 'Creative Assets', 'Art & Design', 'Art & Culture', 'art & culture', 'Art & Photography', 'Graphics & Design', 'Graphic Design', 'Graphic Design / Templates', 'Graphics', 'Graphics & Illustrations', 'Visual Art & Photography', 'Textures & Patterns', 'Textures & Backgrounds', 'Digital Assets > Textures', 'Digital Assets > Graphics > SVG Files', 'Digital Assets > Images', 'Digital Art / Photography', 'Digital Content', 'Media & Entertainment', 'Media & Photography')"],
       ["UPDATE artifacts SET category = 'Photo' WHERE category IN ('Photography', 'Photography & Digital Art', 'Photography Presets', 'Stock Footage')"],
-      ["UPDATE artifacts SET category = 'Music' WHERE category IN ('Audio & Music', 'Audio & Sound Design', 'Audio', 'Audio Tools', 'Audio Assets', 'Audio Loops', 'Music & Sound Effects', 'Music & Audio', 'Music & Sound Healing', 'Music Production')"],
+      ["UPDATE artifacts SET category = 'Songs' WHERE category IN ('Audio & Music', 'Audio & Sound Design', 'Audio', 'Audio Assets', 'Audio Loops', 'Music & Sound Effects', 'Music & Audio', 'Music & Sound Healing')"],
+      ["UPDATE artifacts SET category = 'Music' WHERE category IN ('Audio Tools', 'Music Production', 'Music Equipment', 'Studio Equipment', 'Instruments')"],
       ["UPDATE artifacts SET category = 'Games' WHERE category IN ('Games & Entertainment', 'Games & Puzzles', 'Games & Toys', 'Gaming Assets', 'Gaming & Development', 'Gaming & Entertainment', 'Gaming Resources', 'Gaming Community Resources', 'Gaming Content Expansion', 'Game Development', 'Game Development / Simulation Enhancements', 'Game Development / JSON Files', 'Digital Assets / Game Development / Avatars')"],
       ["UPDATE artifacts SET category = 'Education' WHERE category IN ('Education & Training', 'Education & Learning', 'Educational Resources', 'Academic Research')"],
       ["UPDATE artifacts SET category = 'Docs' WHERE category IN ('Digital Goods', 'Digital Assets', 'Digital Assets > Vouchers & Coupons', 'Marketplace Goods')"],
@@ -1166,7 +1169,8 @@ async function normalizeCategoriesInDB() {
       {cat: 'Software', patterns: ['%software%','%tool%','%develop%','%data%','%network%','%security%','%api%']},
       {cat: 'Energy', patterns: ['%energy%','%solar%','%renewable%']},
       {cat: 'Rent', patterns: ['%housing%','%rent%','%real estate%','%shelter%','%transport%']},
-      {cat: 'Music', patterns: ['%music%','%audio%','%sound%']},
+      {cat: 'Music', patterns: ['%instrument%','%mixer%','%amplifier%','%studio gear%','%microphone%','%speaker%']},
+      {cat: 'Videos', patterns: ['%video%','%film%','%footage%','%movie%']},
       {cat: 'Education', patterns: ['%educat%','%learn%','%academ%','%research%']},
       {cat: 'Games', patterns: ['%game%','%gaming%']},
       {cat: 'Culture', patterns: ['%cultur%','%heritage%']},
@@ -3293,8 +3297,8 @@ const NETWORK_AGENTS = [
   {code:'03',name:'Charlie',icon:'©️',specialty:'Basic Needs'},
   {code:'04',name:'Delta',icon:'🔺',specialty:'Rent'},
   {code:'05',name:'Echo',icon:'📡',specialty:'Energy'},
-  {code:'06',name:'Foxtrot',icon:'🦊',specialty:'Music'},
-  {code:'07',name:'Golf',icon:'⛳',specialty:'Video'},
+  {code:'06',name:'Foxtrot',icon:'🦊',specialty:'Songs'},
+  {code:'07',name:'Golf',icon:'⛳',specialty:'Videos'},
   {code:'08',name:'Hotel',icon:'🏨',specialty:'Art'},
   {code:'09',name:'India',icon:'🇮🇳',specialty:'Photo'},
   {code:'10',name:'Juliet',icon:'🌹',specialty:'Writing'},
@@ -3304,10 +3308,10 @@ const NETWORK_AGENTS = [
   {code:'14',name:'Orion',icon:'🎓',specialty:'Education'},
   {code:'15',name:'Pulse',icon:'💓',specialty:'Games'},
   {code:'16',name:'Quasar',icon:'✨',specialty:'Utilities'},
-  {code:'17',name:'Radiant',icon:'☀️',specialty:'Computronium'},
+  {code:'17',name:'Radiant',icon:'☀️',specialty:'Music'},
   {code:'18',name:'Solaris',icon:'🔆',specialty:'Energy'},
   {code:'19',name:'Tesla',icon:'⚡',specialty:'AI Tools'},
-  {code:'20',name:'Zenith',icon:'🏔️',specialty:'Culture'},
+  {code:'20',name:'Zenith',icon:'🏔️',specialty:'Video'},
   {code:'ks',name:'KID SOL',icon:'🌞',specialty:'Orchestrator'},
   {code:'ksr',name:'Kid Solar',icon:'☀️',specialty:'Computronium Polymath'}
 ];
@@ -8178,12 +8182,18 @@ const server = http.createServer(async (req, res) => {
       }
 
       const artifact = artifactResult.rows[0];
-      const deliveryUrl = artifact.preview_file_url || artifact.streaming_url || artifact.master_file_url || artifact.trade_file_url || artifact.delivery_url;
+      let deliveryUrl = artifact.preview_file_url || artifact.streaming_url || artifact.master_file_url || artifact.trade_file_url || artifact.delivery_url;
 
       if (!deliveryUrl) {
-        res.writeHead(404, { 'Content-Type': 'text/plain' });
-        res.end('No media file available for this artifact');
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'No media file available for this artifact' }));
         return;
+      }
+
+      if (deliveryUrl.startsWith('cloud:///')) {
+        deliveryUrl = 'cloud://' + deliveryUrl.substring(8);
+      } else if (deliveryUrl.startsWith('//replit-objstore-') || deliveryUrl.startsWith('//repl-objstore-')) {
+        deliveryUrl = 'cloud:/' + deliveryUrl;
       }
 
       if (deliveryUrl.startsWith('cloud://')) {
