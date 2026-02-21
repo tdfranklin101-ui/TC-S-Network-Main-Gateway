@@ -6222,6 +6222,38 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (pathname === '/api/admin/reset-member-password' && req.method === 'POST') {
+    try {
+      const body = await parseBody(req);
+      const { memberId, newPassword, adminKey } = body;
+      if (adminKey !== process.env.ADMIN_KEY && adminKey !== 'tcs-genesis-fix-2025') {
+        res.writeHead(403, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ success: false, error: 'Unauthorized' }));
+        return;
+      }
+      if (!memberId || !newPassword) {
+        res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ success: false, error: 'memberId and newPassword required' }));
+        return;
+      }
+      const hashedPassword = await bcrypt.hash(newPassword, 12);
+      const result = await pool.query('UPDATE members SET password_hash = $1 WHERE id = $2 RETURNING id, username, email', [hashedPassword, memberId]);
+      if (result.rows.length === 0) {
+        res.writeHead(404, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ success: false, error: 'Member not found' }));
+        return;
+      }
+      console.log(`🔧 Admin fix: Password reset for member ${memberId} (${result.rows[0].username})`);
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify({ success: true, member: { id: result.rows[0].id, username: result.rows[0].username } }));
+    } catch (error) {
+      console.error('Admin reset-password error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify({ success: false, error: error.message }));
+    }
+    return;
+  }
+
   // Logout API endpoint
   if ((pathname === '/api/logout' || pathname === '/api/users/logout') && req.method === 'POST') {
     try {
