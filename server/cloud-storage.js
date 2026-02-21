@@ -9,16 +9,7 @@ try {
   client = null;
 }
 
-let PRIVATE_DIR = process.env.PRIVATE_OBJECT_DIR || '.private';
-if (PRIVATE_DIR.startsWith('/')) PRIVATE_DIR = PRIVATE_DIR.substring(1);
-const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
-if (bucketId && PRIVATE_DIR.startsWith(bucketId + '/')) {
-  PRIVATE_DIR = PRIVATE_DIR.substring(bucketId.length + 1);
-}
-if (PRIVATE_DIR.startsWith('replit-objstore-') || PRIVATE_DIR.startsWith('repl-objstore-')) {
-  const slashIdx = PRIVATE_DIR.indexOf('/');
-  if (slashIdx > 0) PRIVATE_DIR = PRIVATE_DIR.substring(slashIdx + 1);
-}
+const PRIVATE_DIR = process.env.PRIVATE_OBJECT_DIR || '.private';
 
 class ObjectStorageService {
   isAvailable() {
@@ -47,57 +38,38 @@ class ObjectStorageService {
     return this.uploadFromBuffer(key, buffer);
   }
 
-  _extractValue(result) {
-    if (!result.ok) return null;
+  async downloadFile(key) {
+    if (!client) throw new Error('Object storage is not available');
+    let normalizedKey = key;
+    if (normalizedKey.startsWith('/')) normalizedKey = normalizedKey.substring(1);
+    const bucketPrefix = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
+    if (bucketPrefix && normalizedKey.startsWith(bucketPrefix + '/')) {
+      normalizedKey = normalizedKey.substring(bucketPrefix.length + 1);
+    }
+    if (normalizedKey.startsWith('replit-objstore-')) {
+      const slashIdx = normalizedKey.indexOf('/');
+      if (slashIdx > 0) normalizedKey = normalizedKey.substring(slashIdx + 1);
+    }
+    const result = await client.downloadAsBytes(normalizedKey);
+    if (!result.ok) throw new Error(`Download failed for key: ${normalizedKey}`);
     const value = result.value;
     if (Array.isArray(value) && value.length > 0 && value[0].length > 0) return value[0];
     if (Buffer.isBuffer(value) && value.length > 0) return value;
-    return null;
-  }
-
-  _buildKeyVariants(key) {
-    const variants = [];
-    let base = key;
-    if (base.startsWith('/')) base = base.substring(1);
-    const bucketPrefix = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
-    let stripped = base;
-    if (bucketPrefix && stripped.startsWith(bucketPrefix + '/')) {
-      stripped = stripped.substring(bucketPrefix.length + 1);
-    }
-    if (stripped.startsWith('replit-objstore-') || stripped.startsWith('repl-objstore-')) {
-      const slashIdx = stripped.indexOf('/');
-      if (slashIdx > 0) stripped = stripped.substring(slashIdx + 1);
-    }
-    if (stripped) variants.push(stripped);
-    if (base && !variants.includes(base)) variants.push(base);
-    const withSlash = '/' + base;
-    if (!variants.includes(withSlash)) variants.push(withSlash);
-    return variants;
-  }
-
-  async downloadFile(key) {
-    if (!client) throw new Error('Object storage is not available');
-    const variants = this._buildKeyVariants(key);
-    for (const variant of variants) {
-      try {
-        const result = await client.downloadAsBytes(variant);
-        const value = this._extractValue(result);
-        if (value) return value;
-      } catch {}
-    }
-    throw new Error(`Download failed for key: ${key} (tried ${variants.length} variants)`);
+    throw new Error(`Empty or missing file for key: ${normalizedKey}`);
   }
 
   async fileExists(key) {
     if (!client) return false;
-    const variants = this._buildKeyVariants(key);
-    for (const variant of variants) {
-      try {
-        const result = await client.downloadAsBytes(variant);
-        if (this._extractValue(result)) return true;
-      } catch {}
+    try {
+      const result = await client.downloadAsBytes(key);
+      if (!result.ok) return false;
+      const value = result.value;
+      if (Array.isArray(value) && value.length > 0 && value[0].length > 0) return true;
+      if (Buffer.isBuffer(value) && value.length > 0) return true;
+      return false;
+    } catch {
+      return false;
     }
-    return false;
   }
 
   async deleteFile(key) {

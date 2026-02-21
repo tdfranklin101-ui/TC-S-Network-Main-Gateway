@@ -16054,7 +16054,6 @@ Only include products where you have found a real URL. Do not make up URLs.`
           artifactId: artifact.id,
           artifactTitle: artifact.title,
           previewUrl: secureUrl.url, // Use secure URL for better access control
-          streamUrl: secureUrl.url, // Match frontend expectation for streamUrl
           directUrl: previewUrl, // Fallback direct URL
           previewType: artifact.preview_type,
           expires: secureUrl.expires,
