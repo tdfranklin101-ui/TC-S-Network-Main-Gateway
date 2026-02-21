@@ -9,6 +9,8 @@ packages = ["ffmpeg", "freetype", "gh", "git-lfs", "jq", "lcms2", "libimagequant
 [deployment]
 run = "node main.js"
 deploymentTarget = "gce"
+build = ["sh", "-c", "npm install "]
+publicDir = "dist/public"
 
 [[ports]]
 localPort = 3002
