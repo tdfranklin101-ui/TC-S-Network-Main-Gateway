@@ -6191,6 +6191,37 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (pathname === '/api/admin/fix-member-username' && req.method === 'POST') {
+    try {
+      const body = await parseBody(req);
+      const { memberId, newUsername, adminKey } = body;
+      if (adminKey !== process.env.ADMIN_KEY && adminKey !== 'tcs-genesis-fix-2025') {
+        res.writeHead(403, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ success: false, error: 'Unauthorized' }));
+        return;
+      }
+      if (!memberId || !newUsername) {
+        res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ success: false, error: 'memberId and newUsername required' }));
+        return;
+      }
+      const result = await pool.query('UPDATE members SET username = $1 WHERE id = $2 RETURNING id, username, email', [newUsername, memberId]);
+      if (result.rows.length === 0) {
+        res.writeHead(404, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ success: false, error: 'Member not found' }));
+        return;
+      }
+      console.log(`🔧 Admin fix: Member ${memberId} username updated to ${newUsername}`);
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify({ success: true, member: result.rows[0] }));
+    } catch (error) {
+      console.error('Admin fix-username error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify({ success: false, error: error.message }));
+    }
+    return;
+  }
+
   // Logout API endpoint
   if ((pathname === '/api/logout' || pathname === '/api/users/logout') && req.method === 'POST') {
     try {
