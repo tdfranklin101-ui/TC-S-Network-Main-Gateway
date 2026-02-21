@@ -5632,7 +5632,7 @@ const server = http.createServer(async (req, res) => {
         try {
           // Check for user by username or email
           const result = await pool.query(
-            'SELECT id, username, email, first_name, last_name, password_hash, total_solar, signup_timestamp FROM members WHERE username = $1 OR email = $1',
+            'SELECT id, username, email, first_name, last_name, password_hash, total_solar, signup_timestamp FROM members WHERE LOWER(username) = LOWER($1) OR LOWER(email) = LOWER($1)',
             [username]
           );
 
