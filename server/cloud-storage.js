@@ -9,7 +9,16 @@ try {
   client = null;
 }
 
-const PRIVATE_DIR = process.env.PRIVATE_OBJECT_DIR || '.private';
+let PRIVATE_DIR = process.env.PRIVATE_OBJECT_DIR || '.private';
+if (PRIVATE_DIR.startsWith('/')) PRIVATE_DIR = PRIVATE_DIR.substring(1);
+const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
+if (bucketId && PRIVATE_DIR.startsWith(bucketId + '/')) {
+  PRIVATE_DIR = PRIVATE_DIR.substring(bucketId.length + 1);
+}
+if (PRIVATE_DIR.startsWith('replit-objstore-') || PRIVATE_DIR.startsWith('repl-objstore-')) {
+  const slashIdx = PRIVATE_DIR.indexOf('/');
+  if (slashIdx > 0) PRIVATE_DIR = PRIVATE_DIR.substring(slashIdx + 1);
+}
 
 class ObjectStorageService {
   isAvailable() {
