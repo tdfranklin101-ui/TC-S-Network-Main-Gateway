@@ -683,6 +683,11 @@ async function makePurchasesForAgent(pool, agent, memberId, demandScores, aiDeci
 
   const purchasedArtifactIds = [];
 
+  const allCategories = getOfficialCategories();
+  const scores = demandScores || {};
+  const rankedCategories = [...allCategories].sort((a, b) => (scores[b] || 0) - (scores[a] || 0));
+  const browsedCategories = [];
+
   for (let purchaseRound = 0; purchaseRound < 5; purchaseRound++) {
     const client = await pool.connect();
     try {
@@ -712,50 +717,118 @@ async function makePurchasesForAgent(pool, agent, memberId, demandScores, aiDeci
           [aiDecision.buyArtifactId, String(memberId), memberId]
         );
         artifact = aiResult.rows[0] || null;
+        if (artifact) {
+          console.log(`🔍 [Agent ${agent.code}] Purchase ${purchaseRound + 1}/5: AI picked "${artifact.title}" from [${artifact.category}]`);
+        }
       }
 
       if (!artifact) {
         const excludeIds = purchasedArtifactIds.length > 0 ? purchasedArtifactIds : ['__none__'];
+        let browseCategory = null;
+        for (const cat of rankedCategories) {
+          if (!browsedCategories.includes(cat)) {
+            browseCategory = cat;
+            break;
+          }
+        }
+        if (!browseCategory) {
+          browseCategory = rankedCategories[purchaseRound % rankedCategories.length];
+        }
+
+        console.log(`🔍 [Agent ${agent.code}] Purchase ${purchaseRound + 1}/5: Browsing category [${browseCategory}]`);
         const candidateResult = await client.query(
           `SELECT a.id, a.title, a.solar_amount_s, a.creator_id, a.category
            FROM artifacts a
            WHERE a.active = true
-             AND a.creator_id != $1
-             AND a.id NOT IN (SELECT artifact_id FROM artifact_copies WHERE owner_id = $2)
+             AND a.category = $1
+             AND a.creator_id != $2
+             AND a.id NOT IN (SELECT artifact_id FROM artifact_copies WHERE owner_id = $3)
              AND a.is_listed_for_resale = false
-             AND a.id != ALL($3::text[])
+             AND a.id != ALL($4::text[])
            ORDER BY a.solar_amount_s ASC
            LIMIT 10`,
-          [String(memberId), memberId, excludeIds]
+          [browseCategory, String(memberId), memberId, excludeIds]
         );
 
-        if (candidateResult.rows.length === 0) {
-          errors.push({ phase: 'purchase', error: `No eligible artifacts found for purchase round ${purchaseRound + 1}` });
-          client.release();
-          break;
-        }
+        browsedCategories.push(browseCategory);
 
-        let bestCandidate = null;
-        let bestScore = -1;
-        const scores = demandScores || {};
-        for (const candidate of candidateResult.rows) {
-          const price = parseFloat(candidate.solar_amount_s) || 0.01;
-          if (buyerBalance - price < RESERVE_FLOOR) continue;
-          const catScore = scores[candidate.category] || 0;
-          if (catScore > bestScore) {
-            bestScore = catScore;
-            bestCandidate = candidate;
+        if (candidateResult.rows.length === 0) {
+          console.log(`📂 [Agent ${agent.code}] No items found in [${browseCategory}], trying next category`);
+          for (const fallbackCat of rankedCategories) {
+            if (fallbackCat === browseCategory) continue;
+            const fallbackResult = await client.query(
+              `SELECT a.id, a.title, a.solar_amount_s, a.creator_id, a.category
+               FROM artifacts a
+               WHERE a.active = true
+                 AND a.category = $1
+                 AND a.creator_id != $2
+                 AND a.id NOT IN (SELECT artifact_id FROM artifact_copies WHERE owner_id = $3)
+                 AND a.is_listed_for_resale = false
+                 AND a.id != ALL($4::text[])
+               ORDER BY a.solar_amount_s ASC
+               LIMIT 5`,
+              [fallbackCat, String(memberId), memberId, excludeIds]
+            );
+            if (fallbackResult.rows.length > 0) {
+              console.log(`📂 [Agent ${agent.code}] Found items in fallback category [${fallbackCat}]`);
+              const affordable = fallbackResult.rows.find(c => buyerBalance - (parseFloat(c.solar_amount_s) || 0.01) >= RESERVE_FLOOR);
+              if (affordable) {
+                artifact = affordable;
+                break;
+              }
+            }
+          }
+          if (!artifact) {
+            errors.push({ phase: 'purchase', error: `No eligible artifacts found across categories for purchase round ${purchaseRound + 1}` });
+            client.release();
+            continue;
           }
         }
 
-        if (!bestCandidate) {
-          console.log(`🛡️ [Agent ${agent.code}] No profitable candidates in purchase round ${purchaseRound + 1}`);
-          errors.push({ phase: 'purchase', error: `No candidates within balance protection (round ${purchaseRound + 1})` });
-          client.release();
-          break;
-        }
+        if (!artifact) {
+          let bestCandidate = null;
+          for (const candidate of candidateResult.rows) {
+            const price = parseFloat(candidate.solar_amount_s) || 0.01;
+            if (buyerBalance - price < RESERVE_FLOOR) continue;
+            bestCandidate = candidate;
+            break;
+          }
 
-        artifact = bestCandidate;
+          if (!bestCandidate) {
+            console.log(`🛡️ [Agent ${agent.code}] No affordable items in [${browseCategory}], trying other categories`);
+            for (const fallbackCat of rankedCategories) {
+              if (fallbackCat === browseCategory) continue;
+              const fallbackResult2 = await client.query(
+                `SELECT a.id, a.title, a.solar_amount_s, a.creator_id, a.category
+                 FROM artifacts a
+                 WHERE a.active = true AND a.category = $1
+                   AND a.creator_id != $2
+                   AND a.id NOT IN (SELECT artifact_id FROM artifact_copies WHERE owner_id = $3)
+                   AND a.is_listed_for_resale = false
+                   AND a.id != ALL($4::text[])
+                 ORDER BY a.solar_amount_s ASC LIMIT 5`,
+                [fallbackCat, String(memberId), memberId, excludeIds]
+              );
+              if (fallbackResult2.rows.length > 0) {
+                const affordable2 = fallbackResult2.rows.find(c => buyerBalance - (parseFloat(c.solar_amount_s) || 0.01) >= RESERVE_FLOOR);
+                if (affordable2) {
+                  bestCandidate = affordable2;
+                  console.log(`📂 [Agent ${agent.code}] Found affordable item in [${fallbackCat}]`);
+                  break;
+                }
+              }
+            }
+          }
+
+          if (!bestCandidate) {
+            errors.push({ phase: 'purchase', error: `No affordable items across all categories (round ${purchaseRound + 1})` });
+            client.release();
+            continue;
+          }
+
+          artifact = bestCandidate;
+          console.log(`🛒 [Agent ${agent.code}] Selected "${artifact.title}" (${parseFloat(artifact.solar_amount_s).toFixed(4)} S) from [${artifact.category}]`);
+        }
       }
 
       let artPrice = parseFloat(artifact.solar_amount_s) || 0.01;
@@ -1873,6 +1946,185 @@ async function runRound2AgentTasks(pool, agents) {
           agentResult.errors.push({ phase: 'buy', error: buyErr.message });
         } finally {
           client.release();
+        }
+      }
+
+      const R2_TARGET_BUYS = 2;
+      const r2BuysMade = agentResult.buys.length;
+      const r2BuysNeeded = R2_TARGET_BUYS - r2BuysMade;
+      if (r2BuysNeeded > 0) {
+        console.log(`🔄 [R2] Agent ${agent.code}: AI suggested ${(aiDecision.buys || []).length} buys, ${r2BuysMade} succeeded — browsing categories for ${r2BuysNeeded} more`);
+        const r2PurchasedIds = agentResult.buys.map(b => String(b.artifactId));
+
+        const r2AllCategories = getOfficialCategories();
+        const r2Scores = snapshot.demandScores || {};
+        const r2RankedCats = [...r2AllCategories].sort((a, b) => (r2Scores[b] || 0) - (r2Scores[a] || 0));
+        const r2BrowsedCats = agentResult.buys.map(b => b.category);
+
+        for (let r2Auto = 0; r2Auto < r2BuysNeeded; r2Auto++) {
+          const r2Client = await pool.connect();
+          try {
+            const r2FreshBuyer = await r2Client.query('SELECT id, total_solar FROM members WHERE id = $1', [memberId]);
+            const r2BuyerBalance = parseFloat(r2FreshBuyer.rows[0]?.total_solar) || 0;
+            if (r2BuyerBalance <= RESERVE_FLOOR) {
+              r2Client.release();
+              break;
+            }
+
+            const r2ExcludeIds = r2PurchasedIds.length > 0 ? r2PurchasedIds : ['__none__'];
+            let r2BrowseCat = null;
+            for (const cat of r2RankedCats) {
+              if (!r2BrowsedCats.includes(cat)) {
+                r2BrowseCat = cat;
+                break;
+              }
+            }
+            if (!r2BrowseCat) {
+              r2BrowseCat = r2RankedCats[r2Auto % r2RankedCats.length];
+            }
+
+            console.log(`🔍 [R2] Agent ${agent.code}: Browsing category [${r2BrowseCat}] for purchase ${r2BuysMade + r2Auto + 1}/2`);
+            let r2Artifact = null;
+
+            const r2CatResult = await r2Client.query(
+              `SELECT a.id, a.title, a.solar_amount_s, a.creator_id, a.category
+               FROM artifacts a
+               WHERE a.active = true AND a.category = $1
+                 AND a.creator_id != $2
+                 AND a.id NOT IN (SELECT artifact_id FROM artifact_copies WHERE owner_id = $3)
+                 AND a.is_listed_for_resale = false
+                 AND a.id != ALL($4::text[])
+               ORDER BY a.solar_amount_s ASC LIMIT 10`,
+              [r2BrowseCat, String(memberId), memberId, r2ExcludeIds]
+            );
+
+            r2BrowsedCats.push(r2BrowseCat);
+
+            if (r2CatResult.rows.length > 0) {
+              r2Artifact = r2CatResult.rows.find(c => r2BuyerBalance - (parseFloat(c.solar_amount_s) || 0.01) >= RESERVE_FLOOR);
+            }
+
+            if (!r2Artifact) {
+              for (const fallCat of r2RankedCats) {
+                if (fallCat === r2BrowseCat) continue;
+                const fallResult = await r2Client.query(
+                  `SELECT a.id, a.title, a.solar_amount_s, a.creator_id, a.category
+                   FROM artifacts a
+                   WHERE a.active = true AND a.category = $1
+                     AND a.creator_id != $2
+                     AND a.id NOT IN (SELECT artifact_id FROM artifact_copies WHERE owner_id = $3)
+                     AND a.is_listed_for_resale = false
+                     AND a.id != ALL($4::text[])
+                   ORDER BY a.solar_amount_s ASC LIMIT 5`,
+                  [fallCat, String(memberId), memberId, r2ExcludeIds]
+                );
+                if (fallResult.rows.length > 0) {
+                  r2Artifact = fallResult.rows.find(c => r2BuyerBalance - (parseFloat(c.solar_amount_s) || 0.01) >= RESERVE_FLOOR);
+                  if (r2Artifact) break;
+                }
+              }
+            }
+
+            if (!r2Artifact) {
+              agentResult.errors.push({ phase: 'r2-browse', error: `No affordable items found across categories` });
+              r2Client.release();
+              continue;
+            }
+
+            let r2ArtPrice = parseFloat(r2Artifact.solar_amount_s) || 0.01;
+            let r2AutoDiscount = null;
+            const r2NegDiscount = await findNegotiatedDiscount(r2Client, memberId, r2Artifact.id, r2Artifact.category);
+            if (r2NegDiscount) {
+              const r2DiscPrice = Math.round(parseFloat(r2NegDiscount.negotiated_price) * 10000) / 10000;
+              if (r2DiscPrice > 0 && r2DiscPrice < r2ArtPrice) {
+                r2AutoDiscount = r2NegDiscount;
+                r2ArtPrice = r2DiscPrice;
+              }
+            }
+
+            if (r2BuyerBalance - r2ArtPrice < RESERVE_FLOOR) {
+              r2Client.release();
+              continue;
+            }
+
+            const r2FoundFee = Math.round(r2ArtPrice * FOUNDATION_FEE_RATE * 10000) / 10000;
+            const r2SellerNet = Math.round((r2ArtPrice - r2FoundFee) * 10000) / 10000;
+            const r2TxId = crypto.randomUUID();
+
+            await r2Client.query('BEGIN');
+
+            const r2NewBuyerBal = r2BuyerBalance - r2ArtPrice;
+            await r2Client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(r2NewBuyerBal), memberId]);
+
+            const r2Desc = r2AutoDiscount
+              ? `R2 Purchase: ${r2Artifact.title} [${r2Artifact.category}] (negotiated ${r2AutoDiscount.discount_pct}% off)`
+              : `R2 Purchase: ${r2Artifact.title} [${r2Artifact.category}]`;
+            await r2Client.query(
+              `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
+               VALUES ($1, 'debit', $2, 'user', $3, $4, 'purchase', $5, $6)`,
+              [r2TxId, String(memberId), String(r2ArtPrice), String(r2NewBuyerBal), r2Artifact.id, r2Desc]
+            );
+
+            const r2CreatorId = r2Artifact.creator_id;
+            const r2CreatorIdNum = parseInt(r2CreatorId) || 0;
+            const r2CreatorIdStr = String(r2CreatorId);
+            const r2SellerRow = await r2Client.query(
+              'SELECT id, username, total_solar FROM members WHERE id = $1 OR username = $2 LIMIT 1',
+              [r2CreatorIdNum, r2CreatorIdStr]
+            );
+            if (r2SellerRow.rows.length > 0) {
+              const r2Seller = r2SellerRow.rows[0];
+              const r2SellerOldBal = parseFloat(r2Seller.total_solar) || 0;
+              const r2SellerNewBal = r2SellerOldBal + r2SellerNet;
+              await r2Client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(r2SellerNewBal), r2Seller.id]);
+              await r2Client.query(
+                `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
+                 VALUES ($1, 'credit', $2, 'creator', $3, $4, 'purchase', $5, $6)`,
+                [r2TxId, String(r2Seller.id), String(r2SellerNet), String(r2SellerNewBal), r2Artifact.id, `R2 Sale: ${r2Artifact.title}`]
+              );
+            }
+
+            const r2AutoFoundation = await getOrCreateFoundationMember(r2Client.query.bind(r2Client));
+            const r2AutoFoundBalAfter = r2AutoFoundation.totalSolar + r2FoundFee;
+            await r2Client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(r2AutoFoundBalAfter), r2AutoFoundation.id]);
+            await r2Client.query(
+              `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
+               VALUES ($1, 'credit', $2, 'foundation', $3, $4, 'foundation_fee', $5, $6)`,
+              [r2TxId, String(r2AutoFoundation.id), String(r2FoundFee), String(r2AutoFoundBalAfter), r2Artifact.id, `Foundation fee (5%): ${r2Artifact.title}`]
+            );
+
+            await r2Client.query(
+              `INSERT INTO artifact_copies (artifact_id, owner_id, purchase_transaction_id, acquired_method, solar_paid) VALUES ($1, $2, $3, 'purchase', $4)`,
+              [r2Artifact.id, memberId, r2TxId, String(r2ArtPrice)]
+            );
+
+            const r2ResalePrice = parseFloat((r2ArtPrice * (1 + MARKUP)).toFixed(6));
+            await r2Client.query(
+              `UPDATE artifacts SET is_listed_for_resale = true, resale_price = $1, current_owner_id = $2 WHERE id = $3`,
+              [String(r2ResalePrice), memberId, r2Artifact.id]
+            );
+
+            await r2Client.query('COMMIT');
+
+            if (r2AutoDiscount) {
+              try {
+                await pool.query(
+                  `UPDATE negotiated_discounts SET status = 'used', settlement_transaction_id = $1, settled_at = NOW() WHERE id = $2`,
+                  [r2TxId, r2AutoDiscount.id]
+                );
+              } catch (discErr) { }
+            }
+
+            console.log(`🛒 [R2] Agent ${agent.name}: Browsed [${r2Artifact.category}] → Bought "${r2Artifact.title}" (${r2ArtPrice.toFixed(4)} S) → Resale at ${r2ResalePrice.toFixed(4)} S`);
+            agentResult.buys.push({ artifactId: r2Artifact.id, title: r2Artifact.title, category: r2Artifact.category, price: r2ArtPrice, resalePrice: r2ResalePrice, txId: r2TxId, reasoning: `Browsed [${r2Artifact.category}] category` });
+            r2PurchasedIds.push(String(r2Artifact.id));
+            totalBuys++;
+          } catch (r2AutoErr) {
+            try { await r2Client.query('ROLLBACK'); } catch (rbErr) { }
+            agentResult.errors.push({ phase: 'r2-browse-buy', error: r2AutoErr.message });
+          } finally {
+            r2Client.release();
+          }
         }
       }
 
