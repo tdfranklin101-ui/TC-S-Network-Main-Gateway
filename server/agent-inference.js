@@ -413,7 +413,7 @@ async function gatherMarketSnapshot(pool, memberId) {
       `SELECT a.id, a.title, a.category, a.solar_amount_s, a.creator_id, a.artifact_class,
               m.name as creator_name, a.is_listed_for_resale, a.resale_price
        FROM artifacts a
-       LEFT JOIN members m ON a.creator_id = m.id
+       LEFT JOIN members m ON a.creator_id::integer = m.id
        WHERE a.active = true AND a.created_at > NOW() - INTERVAL '24 hours'
        ORDER BY a.created_at DESC LIMIT 15`
     );
@@ -504,7 +504,7 @@ async function gatherMarketSnapshot(pool, memberId) {
               abb.title as thread_title, a.title as artifact_title
        FROM negotiated_discounts nd
        LEFT JOIN agent_bulletin_board abb ON nd.bulletin_thread_id = abb.id
-       LEFT JOIN artifacts a ON nd.artifact_id = a.id
+       LEFT JOIN artifacts a ON nd.artifact_id::text = a.id::text
        WHERE nd.buyer_member_id = $1 AND nd.status = 'active' AND nd.expires_at > NOW()
        ORDER BY nd.created_at DESC LIMIT 10`,
       [memberId]

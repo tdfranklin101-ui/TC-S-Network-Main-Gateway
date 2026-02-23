@@ -60,7 +60,7 @@ async function addBulletinReply(pool, postId, agentCode, agentName, memberId, me
             `INSERT INTO negotiated_discounts (id, bulletin_thread_id, buyer_member_id, buyer_agent_code, seller_member_id, seller_agent_code, artifact_id, category, original_price, negotiated_price, discount_pct, status, expires_at, metadata)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'active', NOW() + INTERVAL '48 hours', $12)`,
             [discountId, postId, buyerMemberId, buyerCode, sellerMemberId, sellerCode,
-             currentPost.related_artifact_id || null, currentPost.target_category || null,
+             null, currentPost.target_category || null,
              String(originalPrice), String(finalPrice), String(discountPct),
              JSON.stringify({ threadId: postId, postType: currentPost.post_type, agentName: agentName })]
           );
@@ -83,10 +83,10 @@ async function findNegotiatedDiscount(pool, buyerMemberId, artifactId, category)
        WHERE buyer_member_id = $1
          AND status = 'active'
          AND (expires_at IS NULL OR expires_at > NOW())
-         AND (artifact_id = $2 OR (artifact_id IS NULL AND category = $3))
-       ORDER BY CASE WHEN artifact_id = $2 THEN 0 ELSE 1 END, created_at DESC
+         AND (artifact_id IS NULL AND category = $2)
+       ORDER BY created_at DESC
        LIMIT 1`,
-      [buyerMemberId, artifactId, category]
+      [buyerMemberId, category]
     );
     return result.rows.length > 0 ? result.rows[0] : null;
   } catch (err) {
@@ -744,7 +744,7 @@ async function makePurchasesForAgent(pool, agent, memberId, demandScores, aiDeci
              AND a.creator_id != $2
              AND a.id NOT IN (SELECT artifact_id FROM artifact_copies WHERE owner_id = $3)
              AND a.is_listed_for_resale = false
-             AND a.id != ALL($4::text[])
+             AND a.id != ALL($4::uuid[])
            ORDER BY a.solar_amount_s ASC
            LIMIT 10`,
           [browseCategory, String(memberId), memberId, excludeIds]
@@ -764,7 +764,7 @@ async function makePurchasesForAgent(pool, agent, memberId, demandScores, aiDeci
                  AND a.creator_id != $2
                  AND a.id NOT IN (SELECT artifact_id FROM artifact_copies WHERE owner_id = $3)
                  AND a.is_listed_for_resale = false
-                 AND a.id != ALL($4::text[])
+                 AND a.id != ALL($4::uuid[])
                ORDER BY a.solar_amount_s ASC
                LIMIT 5`,
               [fallbackCat, String(memberId), memberId, excludeIds]
@@ -805,7 +805,7 @@ async function makePurchasesForAgent(pool, agent, memberId, demandScores, aiDeci
                    AND a.creator_id != $2
                    AND a.id NOT IN (SELECT artifact_id FROM artifact_copies WHERE owner_id = $3)
                    AND a.is_listed_for_resale = false
-                   AND a.id != ALL($4::text[])
+                   AND a.id != ALL($4::uuid[])
                  ORDER BY a.solar_amount_s ASC LIMIT 5`,
                 [fallbackCat, String(memberId), memberId, excludeIds]
               );
@@ -1993,7 +1993,7 @@ async function runRound2AgentTasks(pool, agents) {
                  AND a.creator_id != $2
                  AND a.id NOT IN (SELECT artifact_id FROM artifact_copies WHERE owner_id = $3)
                  AND a.is_listed_for_resale = false
-                 AND a.id != ALL($4::text[])
+                 AND a.id != ALL($4::uuid[])
                ORDER BY a.solar_amount_s ASC LIMIT 10`,
               [r2BrowseCat, String(memberId), memberId, r2ExcludeIds]
             );
@@ -2014,7 +2014,7 @@ async function runRound2AgentTasks(pool, agents) {
                      AND a.creator_id != $2
                      AND a.id NOT IN (SELECT artifact_id FROM artifact_copies WHERE owner_id = $3)
                      AND a.is_listed_for_resale = false
-                     AND a.id != ALL($4::text[])
+                     AND a.id != ALL($4::uuid[])
                    ORDER BY a.solar_amount_s ASC LIMIT 5`,
                   [fallCat, String(memberId), memberId, r2ExcludeIds]
                 );
@@ -2295,4 +2295,4 @@ async function upgradeArtifactPrompts(pool) {
   return { upgraded, errors, total: result.rows.length, byAgent };
 }
 
-module.exports = { runDailyAgentTasks, runSingleAgentTasks, getTaskStatus, runEducationBlitz, ensureAgentMembers, submitKidSolarPrompt, runCustomAgentTask, ALL_CATEGORIES, runRound2AgentTasks, getRound2Status, addBulletinReply, upgradeArtifactPrompts };
+module.exports = { runDailyAgentTasks, runSingleAgentTasks, getTaskStatus, runEducationBlitz, ensureAgentMembers, submitKidSolarPrompt, runCustomAgentTask, ALL_CATEGORIES, runRound2AgentTasks, getRound2Status, addBulletinReply, upgradeArtifactPrompts, analyzeMarketDemand };

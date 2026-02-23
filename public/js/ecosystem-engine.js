@@ -1486,7 +1486,8 @@ async function initCustomRunPanel() {
   if (!sel) return;
   try {
     var res = await fetch('/api/members');
-    var members = await res.json();
+    var data = await res.json();
+    var members = data.members || data || [];
     sel.innerHTML = '<option value="">— No requestor (marketplace only) —</option>';
     (members || []).sort(function(a, b) { return (a.name || '').localeCompare(b.name || ''); }).forEach(function(m) {
       sel.innerHTML += '<option value="' + m.id + '">' + (m.name || m.username || 'Member #' + m.id) + ' (' + parseFloat(m.total_solar || 0).toFixed(2) + ' S)</option>';
