@@ -145,21 +145,13 @@
       padding: 2rem 2.5rem;
       max-width: 800px;
       width: calc(100% - 2rem);
-      background: linear-gradient(135deg, 
-        rgba(139, 92, 246, 0.9) 0%, 
-        rgba(236, 72, 153, 0.9) 25%, 
-        rgba(249, 115, 22, 0.9) 50%, 
-        rgba(234, 179, 8, 0.9) 75%,
-        rgba(139, 92, 246, 0.9) 100%
-      );
-      background-size: 400% 400%;
-      animation: partyGradient 8s ease infinite;
+      background: url('/images/fractal-bg.jpeg') center center / cover no-repeat;
       border-radius: 20px;
       text-decoration: none;
       overflow: hidden;
-      box-shadow: 0 10px 40px rgba(139, 92, 246, 0.4), 0 0 60px rgba(236, 72, 153, 0.2);
+      box-shadow: 0 10px 40px rgba(139, 92, 246, 0.6), 0 0 80px rgba(0, 255, 255, 0.3), 0 0 120px rgba(236, 72, 153, 0.2);
       transition: all 0.4s ease;
-      border: 2px solid rgba(255, 255, 255, 0.3);
+      border: 2px solid rgba(255, 255, 255, 0.35);
     }
     
     .party-featured-card:hover {
@@ -175,13 +167,10 @@
     
     .party-glow {
       position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 150%;
-      height: 150%;
-      transform: translate(-50%, -50%);
-      background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(10, 0, 30, 0.52);
       pointer-events: none;
+      z-index: 1;
     }
     
     .party-content {
@@ -203,19 +192,32 @@
       text-shadow: 0 0 10px rgba(255,255,255,0.5);
     }
     
+    @keyframes titleGlowShift {
+      0%   { text-shadow: 0 0 15px #fff, 0 0 30px #00FFFF, 0 0 60px rgba(0,255,255,0.5); }
+      33%  { text-shadow: 0 0 15px #fff, 0 0 30px #FF00FF, 0 0 60px rgba(255,0,255,0.5); }
+      66%  { text-shadow: 0 0 15px #fff, 0 0 30px #FFD700, 0 0 60px rgba(255,215,0,0.5); }
+      100% { text-shadow: 0 0 15px #fff, 0 0 30px #00FFFF, 0 0 60px rgba(0,255,255,0.5); }
+    }
+    @keyframes taglineGlow {
+      0%,100% { text-shadow: 0 0 10px #39FF14, 0 0 20px rgba(57,255,20,0.6); color: #fff; }
+      50%      { text-shadow: 0 0 14px #00FFFF, 0 0 28px rgba(0,255,255,0.6); color: #e0ffff; }
+    }
+
     .party-title {
       font-size: clamp(1.5rem, 4vw, 2rem);
       font-weight: 900;
       color: #fff;
-      text-shadow: 0 2px 20px rgba(0,0,0,0.5);
+      animation: titleGlowShift 4s ease-in-out infinite;
       margin-bottom: 0.5rem;
     }
     
     .party-tagline {
-      font-size: 1rem;
-      color: rgba(255,255,255,0.95);
+      font-size: 1.05rem;
+      color: #fff;
       margin-bottom: 1rem;
       font-style: italic;
+      font-weight: 600;
+      animation: taglineGlow 3s ease-in-out infinite;
     }
     
     .party-cta-btn {
@@ -505,7 +507,7 @@
       <div class="party-content">
         <span class="party-badge">NEW EXPERIENCE</span>
         <h2 class="party-title">Psychedelic Solar Punk Party</h2>
-        <p class="party-tagline">Personal Solar. Global Connection. Infinite Joy.</p>
+        <p class="party-tagline">Movies, music, off grid solar gear and more</p>
         <span class="party-cta-btn">Power Your Own Dawn →</span>
       </div>
       <div class="dancing-figures">
