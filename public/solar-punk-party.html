@@ -3121,17 +3121,11 @@
   </nav>
 
   <!-- Floating Shuffle Player -->
-  <div class="shuffle-player" id="shufflePlayer">
-    <button class="shuffle-btn" id="shuffleBtn" onclick="toggleShufflePlay()">
-      <svg id="shufflePlayIcon" viewBox="0 0 24 24" fill="currentColor">
-        <polygon points="5 3 19 12 5 21 5 3"></polygon>
-      </svg>
-      <svg id="shufflePauseIcon" viewBox="0 0 24 24" fill="currentColor" style="display:none;">
-        <rect x="6" y="4" width="4" height="16"></rect>
-        <rect x="14" y="4" width="4" height="16"></rect>
-      </svg>
-      <span id="shuffleBtnText">SHUFFLE ALL</span>
-    </button>
+  <div class="shuffle-player" id="shufflePlayer" style="background:transparent;box-shadow:none;border:none;padding:0.5rem 1rem;">
+    <a href="https://music.apple.com/us/playlist/psychedelic-solar-punk-party/pl.u-AkAmPAkhW4l0Rj" target="_blank" rel="noopener noreferrer" class="shuffle-btn" style="text-decoration:none;display:inline-flex;align-items:center;gap:8px;font-size:0.85rem;padding:0.5rem 1.2rem;border-radius:20px;background:linear-gradient(135deg,#fa233b,#8B5CF6);letter-spacing:1px;">
+      <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" style="flex-shrink:0;"><path d="M16 3l4 4-4 4M8 7h12M8 21l-4-4 4-4M16 17H4"/></svg>
+      <span>Shuffle PSPP on Apple Music</span>
+    </a>
     <div class="shuffle-now-playing" id="shuffleNowPlaying">
       Now: <span id="shuffleSongName">-</span>
     </div>
@@ -3194,7 +3188,20 @@
     <!-- Film Screens -->
     <div class="cinema-marquee-row">
 
-      <!-- Screen 1: Snowmancer One -->
+      <!-- Screen 1: Psychedelic Solar Punk Party (Music Video) — Newest -->
+      <div class="cinema-screen">
+        <div class="screen-bezel">
+          <div class="screen-embed">
+            <iframe src="https://player.vimeo.com/video/1168948900?h=459a0cc3e5&badge=0&autopause=0&player_id=0&app_id=58479"
+              allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media"
+              allowfullscreen loading="lazy" title="Psychedelic Solar Punk Party"></iframe>
+          </div>
+          <button class="fullscreen-btn" onclick="toggleCinemaFullscreen(this)" title="Fullscreen">⛶</button>
+        </div>
+        <div class="screen-title">Psychedelic Solar Punk Party<br><span style="color:#FF6EC7;font-size:0.65em;letter-spacing:2px;">Batrhyme · Music Video</span></div>
+      </div>
+
+      <!-- Screen 2: Snowmancer One -->
       <div class="cinema-screen">
         <div class="screen-bezel">
           <div class="screen-embed">
@@ -3207,7 +3214,7 @@
         <div class="screen-title">Snowmancer One<br><span style="color:#FFD700;font-size:0.65em;letter-spacing:2px;">Monazite Music Video Premier</span></div>
       </div>
 
-      <!-- Screen 2: Unanimous -->
+      <!-- Screen 3: Unanimous -->
       <div class="cinema-screen">
         <div class="screen-bezel">
           <div class="screen-embed">
@@ -3220,7 +3227,7 @@
         <div class="screen-title">&ldquo;Unanimous&rdquo;</div>
       </div>
 
-      <!-- Screen 3: The Last Lieutenant -->
+      <!-- Screen 4: The Last Lieutenant -->
       <div class="cinema-screen">
         <div class="screen-bezel">
           <div class="screen-embed">
@@ -3233,7 +3240,7 @@
         <div class="screen-title">The Last Lieutenant</div>
       </div>
 
-      <!-- Screen 4: The Line -->
+      <!-- Screen 5: The Line -->
       <div class="cinema-screen">
         <div class="screen-bezel">
           <div class="screen-embed">
@@ -3246,7 +3253,7 @@
         <div class="screen-title">The Line</div>
       </div>
 
-      <!-- Screen 5: The Metaphor File -->
+      <!-- Screen 6: The Metaphor File -->
       <div class="cinema-screen">
         <div class="screen-bezel">
           <div class="screen-embed">
@@ -3257,19 +3264,6 @@
           <button class="fullscreen-btn" onclick="toggleCinemaFullscreen(this)" title="Fullscreen">⛶</button>
         </div>
         <div class="screen-title">The Metaphor File</div>
-      </div>
-
-      <!-- Screen 6: Psychedelic Solar Punk Party (Music Video) -->
-      <div class="cinema-screen" style="animation: chromaGlow2 4s ease-in-out infinite; animation-delay: 1.5s; border-color: #FF00FF;">
-        <div class="screen-bezel">
-          <div class="screen-embed">
-            <iframe src="https://player.vimeo.com/video/1168948900?h=459a0cc3e5&badge=0&autopause=0&player_id=0&app_id=58479"
-              allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media"
-              allowfullscreen loading="lazy" title="Psychedelic Solar Punk Party"></iframe>
-          </div>
-          <button class="fullscreen-btn" onclick="toggleCinemaFullscreen(this)" title="Fullscreen">⛶</button>
-        </div>
-        <div class="screen-title">Psychedelic Solar Punk Party<br><span style="color:#FF6EC7;font-size:0.65em;letter-spacing:2px;">Batrhyme · Music Video</span></div>
       </div>
 
     </div>
