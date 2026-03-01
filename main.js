@@ -3459,6 +3459,16 @@ console.log('🎯 AI automatic promotion system active');
 
 const server = http.createServer(async (req, res) => {
   const pathname = new URL(req.url, `http://${req.headers.host}`).pathname;
+
+  // Custom domain: psychedelicsolarpunkparty.com → serve Solar Punk Party page
+  const incomingHost = (req.headers.host || '').toLowerCase().replace(/:\d+$/, '');
+  if (incomingHost === 'psychedelicsolarpunkparty.com' || incomingHost === 'www.psychedelicsolarpunkparty.com') {
+    if (!serveCachedFile(res, '/solar-punk-party.html')) {
+      const filePath = path.resolve(__dirname, 'public', 'solar-punk-party.html');
+      serveHtmlFile(res, filePath);
+    }
+    return;
+  }
   
   try {
   // UIM Headers + Request ID + Logging
