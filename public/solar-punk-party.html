@@ -138,6 +138,236 @@
       min-height: 100vh;
     }
 
+    /* Cinema Section Styles */
+    .cinema-section {
+      position: relative;
+      width: 100%;
+      background: radial-gradient(circle at center, #1a0a2e 0%, #000 100%);
+      padding: 60px 20px;
+      overflow: hidden;
+      border-bottom: 2px solid rgba(0, 255, 255, 0.2);
+    }
+
+    /* Chasing Marquee Bulbs */
+    .cinema-bulb-strip {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 12px;
+      display: flex;
+      justify-content: space-around;
+      background: #111;
+      padding: 2px 0;
+    }
+
+    .cinema-bulb {
+      width: 8px;
+      height: 8px;
+      background: #EAB308;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #EAB308;
+      animation: bulbChase 1.5s infinite;
+    }
+
+    .cinema-bulb:nth-child(2n) { animation-delay: 0.5s; }
+    .cinema-bulb:nth-child(3n) { animation-delay: 1s; }
+
+    @keyframes bulbChase {
+      0%, 100% { opacity: 0.3; transform: scale(0.8); }
+      50% { opacity: 1; transform: scale(1.1); box-shadow: 0 0 15px #EAB308; }
+    }
+
+    .cinema-sign {
+      text-align: center;
+      margin-bottom: 50px;
+      position: relative;
+    }
+
+    .cinema-marquee-board {
+      display: inline-block;
+      padding: 20px 40px;
+      background: #000;
+      border: 4px solid #fff;
+      border-image: linear-gradient(45deg, var(--cyan), var(--violet), var(--neon-green), var(--gold)) 1;
+      box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+      animation: boardGlow 4s linear infinite;
+    }
+
+    @keyframes boardGlow {
+      0%, 100% { box-shadow: 0 0 30px rgba(0, 255, 255, 0.3); }
+      50% { box-shadow: 0 0 50px rgba(139, 92, 246, 0.5); }
+    }
+
+    .cinema-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(1.2rem, 4vw, 2.2rem);
+      font-weight: 900;
+      letter-spacing: 4px;
+      color: #fff;
+      text-shadow: 0 0 10px var(--cyan), 0 0 20px var(--violet);
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    .cinema-now-showing {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.9rem;
+      color: var(--gold);
+      letter-spacing: 6px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .cinema-marquee-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 30px;
+      max-width: 1400px;
+      margin: 0 auto;
+      perspective: 1000px;
+    }
+
+    .cinema-screen {
+      width: 320px;
+      position: relative;
+      transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .cinema-screen:hover {
+      transform: scale(1.05) rotateY(5deg);
+      z-index: 10;
+    }
+
+    .screen-bezel {
+      background: #050505;
+      padding: 12px;
+      border-radius: 8px;
+      border: 3px solid transparent;
+      background-image: linear-gradient(#050505, #050505), linear-gradient(45deg, var(--cyan), var(--violet), var(--neon-green), var(--gold));
+      background-origin: border-box;
+      background-clip: content-box, border-box;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cinema-screen:nth-child(1) .screen-bezel { animation: chromaGlow 6s infinite; }
+    .cinema-screen:nth-child(2) .screen-bezel { animation: chromaGlow 6s infinite 1.2s; }
+    .cinema-screen:nth-child(3) .screen-bezel { animation: chromaGlow 6s infinite 2.4s; }
+    .cinema-screen:nth-child(4) .screen-bezel { animation: chromaGlow 6s infinite 3.6s; }
+    .cinema-screen:nth-child(5) .screen-bezel { animation: chromaGlow 6s infinite 4.8s; }
+
+    @keyframes chromaGlow {
+      0% { box-shadow: 0 0 20px var(--cyan); }
+      25% { box-shadow: 0 0 20px var(--violet); }
+      50% { box-shadow: 0 0 20px var(--neon-green); }
+      75% { box-shadow: 0 0 20px var(--gold); }
+      100% { box-shadow: 0 0 20px var(--cyan); }
+    }
+
+    .screen-embed {
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: #000;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .screen-embed iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    .screen-title {
+      margin-top: 15px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--cyan);
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      animation: titlePulse 4s ease-in-out infinite;
+    }
+
+    @keyframes titlePulse {
+      0%, 100% { color: var(--cyan); text-shadow: 0 0 5px var(--cyan); }
+      50% { color: var(--neon-green); text-shadow: 0 0 10px var(--neon-green); }
+    }
+
+    .fullscreen-btn {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      width: 32px;
+      height: 32px;
+      background: var(--neon-green);
+      color: #000;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      opacity: 0.7;
+      transition: all 0.3s ease;
+      z-index: 5;
+    }
+
+    .fullscreen-btn:hover {
+      opacity: 1;
+      transform: scale(1.1);
+      box-shadow: 0 0 15px var(--neon-green);
+    }
+
+    .cinema-stars {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: -1;
+      background-image: radial-gradient(1px 1px at 10% 20%, #fff, transparent),
+                        radial-gradient(1.5px 1.5px at 50% 50%, #fff, transparent),
+                        radial-gradient(1px 1px at 80% 90%, #fff, transparent);
+      background-size: 200px 200px;
+      animation: starDrift 100s linear infinite;
+      opacity: 0.2;
+    }
+
+    @keyframes starDrift {
+      from { transform: translateY(0); }
+      to { transform: translateY(-200px); }
+    }
+
+    .cinema-bulb-strip-bottom {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 12px;
+      display: flex;
+      justify-content: space-around;
+      background: #111;
+      padding: 2px 0;
+    }
+
+    @media (max-width: 768px) {
+      .cinema-marquee-row {
+        flex-direction: column;
+        align-items: center;
+      }
+      .cinema-screen {
+        width: 100%;
+        max-width: 400px;
+      }
+    }
+
     /* Welcome Banner Styles */
     .welcome-banner {
       position: relative;
@@ -3216,7 +3446,7 @@
           </div>
           <button class="fullscreen-btn" onclick="toggleCinemaFullscreen(this)" title="Fullscreen">⛶</button>
         </div>
-        <div class="screen-title">Snowmancer One (R2)<br><span style="color:#00FFFF;font-size:0.65em;letter-spacing:2px;">Monazite · Music Video</span></div>
+        <div class="screen-title">Snowmancer One (R2)<br><span style="color:#00FFFF;font-size:0.65em;line-height:1.4;display:block;margin-top:4px;letter-spacing:1px;">Monazite · Music Video<br><span style="color:rgba(255,255,255,0.7);font-size:0.9em;font-style:italic;">Monazite Single available on Apple Music, Spotify, TikTok and all major streaming services (TC-S Network)</span></span></div>
       </div>
 
       <!-- Screen 2: We Said So -->
@@ -3229,7 +3459,7 @@
           </div>
           <button class="fullscreen-btn" onclick="toggleCinemaFullscreen(this)" title="Fullscreen">⛶</button>
         </div>
-        <div class="screen-title">We Said So<br><span style="color:#FFD700;font-size:0.65em;letter-spacing:2px;">Monazite · Music Video</span></div>
+        <div class="screen-title">We Said So<br><span style="color:#FFD700;font-size:0.65em;line-height:1.4;display:block;margin-top:4px;letter-spacing:1px;">Monazite · Music Video<br><span style="color:rgba(255,255,255,0.7);font-size:0.9em;font-style:italic;">Monazite Single available on Apple Music, Spotify and all major streaming services (TC-S Network)</span></span></div>
       </div>
 
       <!-- Screen 2: Psychedelic Solar Punk Party (Music Video) -->
@@ -3242,7 +3472,7 @@
           </div>
           <button class="fullscreen-btn" onclick="toggleCinemaFullscreen(this)" title="Fullscreen">⛶</button>
         </div>
-        <div class="screen-title">Psychedelic Solar Punk Party<br><span style="color:#FF6EC7;font-size:0.65em;letter-spacing:2px;">Batrhyme · Music Video</span></div>
+        <div class="screen-title">Psychedelic Solar Punk Party<br><span style="color:#FF6EC7;font-size:0.65em;line-height:1.4;display:block;margin-top:4px;letter-spacing:1px;">Batrhyme · Music Video<br><span style="color:rgba(255,255,255,0.7);font-size:0.9em;font-style:italic;">Batrhyme Single available on Apple Music, Spotify and all major streaming services (TC-S Network)</span></span></div>
       </div>
 
       <!-- Screen 2: Snowmancer One -->
@@ -3255,7 +3485,7 @@
           </div>
           <button class="fullscreen-btn" onclick="toggleCinemaFullscreen(this)" title="Fullscreen">⛶</button>
         </div>
-        <div class="screen-title">Snowmancer One<br><span style="color:#FFD700;font-size:0.65em;letter-spacing:2px;">Monazite Music Video Premier</span></div>
+        <div class="screen-title">Snowmancer One (R1)<br><span style="color:#FFD700;font-size:0.65em;line-height:1.4;display:block;margin-top:4px;letter-spacing:1px;">Monazite Music Video Premier<br><span style="color:rgba(255,255,255,0.7);font-size:0.9em;font-style:italic;">Monazite Single available on Apple Music, Spotify, TikTok and all major streaming services (TC-S Network)</span></span></div>
       </div>
 
       <!-- Screen 3: Unanimous -->
