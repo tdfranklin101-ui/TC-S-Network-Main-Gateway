@@ -682,6 +682,8 @@ async function makePurchasesForAgent(pool, agent, memberId, demandScores, aiDeci
   }
 
   const purchasedArtifactIds = [];
+  const MANDATORY_BASIC_PURCHASES = 2;
+  let basicNeedsBought = 0;
 
   const allCategories = getOfficialCategories();
   const scores = demandScores || {};
@@ -707,7 +709,32 @@ async function makePurchasesForAgent(pool, agent, memberId, demandScores, aiDeci
       }
 
       let artifact = null;
-      if (purchaseRound === 0 && aiDecision && aiDecision.buyArtifactId) {
+
+      // Mandatory Basic Needs purchases (rounds 0 and 1)
+      const basicNeedsStillNeeded = basicNeedsBought < MANDATORY_BASIC_PURCHASES;
+      if (basicNeedsStillNeeded) {
+        const excludeIds = purchasedArtifactIds.length > 0 ? purchasedArtifactIds : ['__none__'];
+        const bnResult = await client.query(
+          `SELECT a.id, a.title, a.solar_amount_s, a.creator_id, a.category
+           FROM artifacts a
+           WHERE a.active = true AND a.category = 'Basic Needs'
+             AND a.creator_id != $1
+             AND a.id NOT IN (SELECT artifact_id FROM artifact_copies WHERE owner_id = $2)
+             AND a.is_listed_for_resale = false
+             AND a.id != ALL($3::uuid[])
+           ORDER BY a.solar_amount_s ASC LIMIT 10`,
+          [String(memberId), memberId, excludeIds]
+        );
+        const bnAffordable = bnResult.rows.find(c => buyerBalance - (parseFloat(c.solar_amount_s) || 0.01) >= RESERVE_FLOOR);
+        if (bnAffordable) {
+          artifact = bnAffordable;
+          console.log(`🏠 [Agent ${agent.code}] Purchase ${purchaseRound + 1}/5: Mandatory Basic Needs (${basicNeedsBought + 1}/${MANDATORY_BASIC_PURCHASES}) — "${artifact.title}"`);
+        } else {
+          console.log(`⚠️ [Agent ${agent.code}] No affordable Basic Needs items for mandatory purchase ${basicNeedsBought + 1}, falling through to market`);
+        }
+      }
+
+      if (!artifact && purchaseRound === MANDATORY_BASIC_PURCHASES && aiDecision && aiDecision.buyArtifactId) {
         const aiResult = await client.query(
           `SELECT a.id, a.title, a.solar_amount_s, a.creator_id, a.category
            FROM artifacts a
@@ -936,7 +963,8 @@ async function makePurchasesForAgent(pool, agent, memberId, demandScores, aiDeci
       resaleListed += 1;
       totalResaleValue += resalePrice;
       purchasedArtifactIds.push(artifactId);
-      console.log(`🌞 [KID SOL] Agent ${agent.name}: Bought "${artifact.title}" (${artPrice.toFixed(4)} S) → Listed resale at ${resalePrice.toFixed(4)} S (+${Math.round(MARKUP * 100)}%) [Gen ${nextGeneration}] [purchase ${purchaseRound + 1}/5]`);
+      if (artifact.category === 'Basic Needs') basicNeedsBought++;
+      console.log(`🌞 [KID SOL] Agent ${agent.name}: Bought "${artifact.title}" [${artifact.category}] (${artPrice.toFixed(4)} S) → Listed resale at ${resalePrice.toFixed(4)} S (+${Math.round(MARKUP * 100)}%) [Gen ${nextGeneration}] [purchase ${purchaseRound + 1}/5]${artifact.category === 'Basic Needs' ? ` 🏠 BN:${basicNeedsBought}/${MANDATORY_BASIC_PURCHASES}` : ''}`);
 
       purchased.push({ artifactId, title: artifact.title, category: artifact.category, price: artPrice, txId, resalePrice });
     } catch (err) {
@@ -948,7 +976,7 @@ async function makePurchasesForAgent(pool, agent, memberId, demandScores, aiDeci
     }
   }
 
-  return { purchased, errors, resaleListed, totalResaleValue };
+  return { purchased, errors, resaleListed, totalResaleValue, basicNeedsBought };
 }
 
 async function runAgentTasks(pool, agent, assignedCategories, demandScores, kidSolObjectives) {
@@ -1023,6 +1051,7 @@ async function runAgentTasks(pool, agent, assignedCategories, demandScores, kidS
     result.errors.push(...purchaseResult.errors);
     result.resaleListed = purchaseResult.resaleListed || 0;
     result.totalResaleValue = purchaseResult.totalResaleValue || 0;
+    result.basicNeedsBought = purchaseResult.basicNeedsBought || 0;
 
     result.aiDecision = aiDecision ? {
       createCategory: aiDecision.createCategory,
