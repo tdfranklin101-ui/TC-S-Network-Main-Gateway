@@ -903,9 +903,11 @@ async function makePurchasesForAgent(pool, agent, memberId, demandScores, aiDeci
       );
 
       const resalePrice = parseFloat((artPrice * (1 + MARKUP)).toFixed(6));
+      const genRow = await client.query(`SELECT COALESCE(generation_number, 0) as gen FROM artifacts WHERE id = $1`, [artifactId]);
+      const nextGeneration = (parseInt(genRow.rows[0]?.gen) || 0) + 1;
       await client.query(
-        `UPDATE artifacts SET is_listed_for_resale = true, resale_price = $1, current_owner_id = $2 WHERE id = $3`,
-        [String(resalePrice), memberId, artifactId]
+        `UPDATE artifacts SET is_listed_for_resale = true, resale_price = $1, current_owner_id = $2, generation_number = $3 WHERE id = $4`,
+        [String(resalePrice), memberId, nextGeneration, artifactId]
       );
 
       await client.query('COMMIT');
@@ -913,8 +915,8 @@ async function makePurchasesForAgent(pool, agent, memberId, demandScores, aiDeci
       try {
         await pool.query(
           `INSERT INTO resale_history (id, artifact_id, seller_id, buyer_id, sale_price, seller_profit, foundation_fee, generation_number, created_at)
-           VALUES ($1, $2, $3, NULL, $4, $5, 0, 1, NOW())`,
-          [crypto.randomUUID(), artifactId, memberId, String(resalePrice), String(resalePrice - artPrice)]
+           VALUES ($1, $2, $3, NULL, $4, $5, 0, $6, NOW())`,
+          [crypto.randomUUID(), artifactId, memberId, String(resalePrice), String(resalePrice - artPrice), nextGeneration]
         );
       } catch (resaleErr) {
         console.warn(`[Agent ${agent.code}] Resale history insert warning:`, resaleErr.message);
@@ -934,7 +936,7 @@ async function makePurchasesForAgent(pool, agent, memberId, demandScores, aiDeci
       resaleListed += 1;
       totalResaleValue += resalePrice;
       purchasedArtifactIds.push(artifactId);
-      console.log(`🌞 [KID SOL] Agent ${agent.name}: Bought "${artifact.title}" (${artPrice.toFixed(4)} S) → Listed resale at ${resalePrice.toFixed(4)} S (+${Math.round(MARKUP * 100)}%) [purchase ${purchaseRound + 1}/5]`);
+      console.log(`🌞 [KID SOL] Agent ${agent.name}: Bought "${artifact.title}" (${artPrice.toFixed(4)} S) → Listed resale at ${resalePrice.toFixed(4)} S (+${Math.round(MARKUP * 100)}%) [Gen ${nextGeneration}] [purchase ${purchaseRound + 1}/5]`);
 
       purchased.push({ artifactId, title: artifact.title, category: artifact.category, price: artPrice, txId, resalePrice });
     } catch (err) {
@@ -1920,9 +1922,11 @@ async function runRound2AgentTasks(pool, agents) {
           );
 
           const resalePrice = parseFloat((artPrice * (1 + MARKUP)).toFixed(6));
+          const genRowR2 = await client.query(`SELECT COALESCE(generation_number, 0) as gen FROM artifacts WHERE id = $1`, [artifact.id]);
+          const nextGenerationR2 = (parseInt(genRowR2.rows[0]?.gen) || 0) + 1;
           await client.query(
-            `UPDATE artifacts SET is_listed_for_resale = true, resale_price = $1, current_owner_id = $2 WHERE id = $3`,
-            [String(resalePrice), memberId, artifact.id]
+            `UPDATE artifacts SET is_listed_for_resale = true, resale_price = $1, current_owner_id = $2, generation_number = $3 WHERE id = $4`,
+            [String(resalePrice), memberId, nextGenerationR2, artifact.id]
           );
 
           await client.query('COMMIT');
@@ -1938,7 +1942,7 @@ async function runRound2AgentTasks(pool, agents) {
             }
           }
 
-          console.log(`🌞 [R2] Agent ${agent.name}: Bought "${artifact.title}" (${artPrice.toFixed(4)} S, fee: ${foundationFee.toFixed(4)} S) → Listed resale at ${resalePrice.toFixed(4)} S`);
+          console.log(`🌞 [R2] Agent ${agent.name}: Bought "${artifact.title}" (${artPrice.toFixed(4)} S, fee: ${foundationFee.toFixed(4)} S) → Listed resale at ${resalePrice.toFixed(4)} S [Gen ${nextGenerationR2}]`);
           agentResult.buys.push({ artifactId: artifact.id, title: artifact.title, category: artifact.category, price: artPrice, resalePrice, txId, reasoning: buyOrder.reasoning });
           totalBuys++;
         } catch (buyErr) {
@@ -2099,9 +2103,11 @@ async function runRound2AgentTasks(pool, agents) {
             );
 
             const r2ResalePrice = parseFloat((r2ArtPrice * (1 + MARKUP)).toFixed(6));
+            const r2GenRow = await r2Client.query(`SELECT COALESCE(generation_number, 0) as gen FROM artifacts WHERE id = $1`, [r2Artifact.id]);
+            const r2NextGen = (parseInt(r2GenRow.rows[0]?.gen) || 0) + 1;
             await r2Client.query(
-              `UPDATE artifacts SET is_listed_for_resale = true, resale_price = $1, current_owner_id = $2 WHERE id = $3`,
-              [String(r2ResalePrice), memberId, r2Artifact.id]
+              `UPDATE artifacts SET is_listed_for_resale = true, resale_price = $1, current_owner_id = $2, generation_number = $3 WHERE id = $4`,
+              [String(r2ResalePrice), memberId, r2NextGen, r2Artifact.id]
             );
 
             await r2Client.query('COMMIT');
@@ -2115,7 +2121,7 @@ async function runRound2AgentTasks(pool, agents) {
               } catch (discErr) { }
             }
 
-            console.log(`🛒 [R2] Agent ${agent.name}: Browsed [${r2Artifact.category}] → Bought "${r2Artifact.title}" (${r2ArtPrice.toFixed(4)} S) → Resale at ${r2ResalePrice.toFixed(4)} S`);
+            console.log(`🛒 [R2] Agent ${agent.name}: Browsed [${r2Artifact.category}] → Bought "${r2Artifact.title}" (${r2ArtPrice.toFixed(4)} S) → Resale at ${r2ResalePrice.toFixed(4)} S [Gen ${r2NextGen}]`);
             agentResult.buys.push({ artifactId: r2Artifact.id, title: r2Artifact.title, category: r2Artifact.category, price: r2ArtPrice, resalePrice: r2ResalePrice, txId: r2TxId, reasoning: `Browsed [${r2Artifact.category}] category` });
             r2PurchasedIds.push(String(r2Artifact.id));
             totalBuys++;
@@ -2151,10 +2157,12 @@ async function runRound2AgentTasks(pool, agents) {
           );
           const solarPaid = parseFloat(copyRow.rows[0]?.solar_paid) || 0.01;
           const resalePrice = parseFloat((solarPaid * (1 + MARKUP)).toFixed(6));
+          const sellGenRow = await pool.query(`SELECT COALESCE(generation_number, 0) as gen FROM artifacts WHERE id = $1`, [sellOrder.artifactId]);
+          const sellNextGen = (parseInt(sellGenRow.rows[0]?.gen) || 0) + 1;
 
           await pool.query(
-            `UPDATE artifacts SET is_listed_for_resale = true, resale_price = $1 WHERE id = $2 AND current_owner_id = $3`,
-            [String(resalePrice), sellOrder.artifactId, memberId]
+            `UPDATE artifacts SET is_listed_for_resale = true, resale_price = $1, generation_number = $2 WHERE id = $3 AND current_owner_id = $4`,
+            [String(resalePrice), sellNextGen, sellOrder.artifactId, memberId]
           );
 
           console.log(`🏷️ [R2] Agent ${agent.name}: Listed "${sellOrder.artifactId}" for resale at ${resalePrice.toFixed(4)} S (paid ${solarPaid.toFixed(4)} S)`);
