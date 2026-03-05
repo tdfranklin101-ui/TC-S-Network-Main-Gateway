@@ -10556,6 +10556,181 @@ Only include products where you have found a real URL. Do not make up URLs.`
     return;
   }
 
+  // ── BACKFILL HISTORY ─────────────────────────────────────────────────────────
+  // POST /api/ecosystem-test/backfill-history
+  // Reads real historical activity from actual DB tables and creates run records
+  // for every day that agents were active but had no run record saved.
+  if (pathname === '/api/ecosystem-test/backfill-history' && req.method === 'POST') {
+    try {
+      if (!pool) {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Database unavailable' }));
+        return;
+      }
+
+      // 1. Get existing run dates so we don't double-insert
+      const existingRuns = await pool.query(
+        `SELECT DATE(run_timestamp) as run_date FROM ecosystem_test_runs`
+      );
+      const existingDates = new Set(existingRuns.rows.map(r =>
+        r.run_date instanceof Date ? r.run_date.toISOString().slice(0,10) : String(r.run_date).slice(0,10)
+      ));
+
+      // 2. Daily artifact creation by agent
+      const dailyArtifacts = await pool.query(`
+        SELECT
+          DATE(a.created_at) as day,
+          COUNT(*) as total_created,
+          COUNT(CASE WHEN a.category = 'Basic Needs' THEN 1 END) as bn_created,
+          COUNT(DISTINCT a.creator_id) as active_agents,
+          json_object_agg(a.category, cat_counts.cnt) as category_breakdown
+        FROM artifacts a
+        JOIN (
+          SELECT category, DATE(created_at) as d, COUNT(*) as cnt
+          FROM artifacts
+          WHERE creator_id IN (SELECT CAST(id AS TEXT) FROM members WHERE is_agent = true)
+          GROUP BY category, DATE(created_at)
+        ) cat_counts ON cat_counts.d = DATE(a.created_at) AND cat_counts.category = a.category
+        WHERE a.creator_id IN (SELECT CAST(id AS TEXT) FROM members WHERE is_agent = true)
+        GROUP BY DATE(a.created_at)
+        ORDER BY DATE(a.created_at)
+      `);
+
+      // 3. Daily purchases and solar from ledger
+      const dailyPurchases = await pool.query(`
+        SELECT
+          DATE(created_at) as day,
+          COUNT(*) as total_purchases,
+          ROUND(SUM(CAST(amount AS numeric))::numeric, 6) as solar_circulated,
+          COUNT(CASE WHEN description ILIKE '%basic needs%' THEN 1 END) as bn_purchased
+        FROM marketplace_ledger
+        WHERE entry_type = 'debit' AND reference_type = 'purchase'
+        GROUP BY DATE(created_at)
+        ORDER BY DATE(created_at)
+      `);
+
+      // 4. Daily seller revenue
+      const dailySeller = await pool.query(`
+        SELECT
+          DATE(created_at) as day,
+          ROUND(SUM(CAST(amount AS numeric))::numeric, 6) as seller_revenue
+        FROM marketplace_ledger
+        WHERE entry_type = 'credit' AND reference_type = 'purchase' AND account_type = 'creator'
+        GROUP BY DATE(created_at)
+        ORDER BY DATE(created_at)
+      `);
+
+      // 5. Agent member count
+      const agentCountRow = await pool.query(`SELECT COUNT(*) as cnt FROM members WHERE is_agent = true`);
+      const agentCount = parseInt(agentCountRow.rows[0]?.cnt) || 22;
+
+      // Build lookup maps
+      const purchaseMap = {};
+      dailyPurchases.rows.forEach(r => {
+        const d = r.day instanceof Date ? r.day.toISOString().slice(0,10) : String(r.day).slice(0,10);
+        purchaseMap[d] = r;
+      });
+
+      const sellerMap = {};
+      dailySeller.rows.forEach(r => {
+        const d = r.day instanceof Date ? r.day.toISOString().slice(0,10) : String(r.day).slice(0,10);
+        sellerMap[d] = r;
+      });
+
+      // 6. Merge and insert for each active day
+      let inserted = 0;
+      let skipped = 0;
+      const insertedDates = [];
+
+      for (const row of dailyArtifacts.rows) {
+        const day = row.day instanceof Date ? row.day.toISOString().slice(0,10) : String(row.day).slice(0,10);
+
+        if (existingDates.has(day)) {
+          skipped++;
+          continue;
+        }
+
+        const totalCreated   = parseInt(row.total_created) || 0;
+        const bnCreated      = parseInt(row.bn_created) || 0;
+        const activeAgents   = parseInt(row.active_agents) || 0;
+        const healthPct      = Math.round((activeAgents / agentCount) * 100);
+
+        const purchRow       = purchaseMap[day] || {};
+        const sellerRow      = sellerMap[day] || {};
+        const totalPurchases = parseInt(purchRow.total_purchases) || 0;
+        const solarCirc      = parseFloat(purchRow.solar_circulated) || 0;
+        const bnPurchased    = parseInt(purchRow.bn_purchased) || 0;
+        const sellerRevenue  = parseFloat(sellerRow.seller_revenue) || 0;
+
+        const bnCompliance   = totalPurchases > 0
+          ? Math.min(100, Math.round((bnPurchased / totalPurchases) * 100 * 5))
+          : 0;
+
+        let catBreakdown = {};
+        try { catBreakdown = row.category_breakdown || {}; } catch(e) {}
+
+        const runId = `backfill_${day}_${Date.now()}`;
+
+        await pool.query(
+          `INSERT INTO ecosystem_test_runs (
+            run_id, run_timestamp, agent_count, items_created, basic_needs_created,
+            searches_executed, t1_purchases, t2_sample_purchases, total_purchases,
+            basic_needs_purchased, basic_needs_compliance, solar_distributed,
+            solar_circulated, seller_revenue, total_end_balances,
+            vouchers_created, vouchers_purchased, vouchers_redeemed,
+            tier1_hits, tier2_hits, tier2_sample_posts, tier3_hits,
+            balance_blocked, limit_blocked, tier3_blocked,
+            successful_ops, failed_ops, health_score,
+            agent_ledger, mcp_engine_usage, category_breakdown, voucher_details, metadata
+          ) VALUES (
+            $1, $2::timestamptz, $3, $4, $5, 0, $6, 0, $6,
+            $7, $8, 0, $9, $10, 0,
+            0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, $11, 0, $12,
+            '[]'::jsonb, '{"runType":"backfill"}'::jsonb, $13::jsonb, '[]'::jsonb,
+            $14::jsonb
+          )`,
+          [
+            runId,
+            day + 'T04:00:00Z',
+            agentCount,
+            totalCreated,
+            bnCreated,
+            totalPurchases,
+            bnPurchased,
+            bnCompliance,
+            solarCirc,
+            sellerRevenue,
+            totalCreated + totalPurchases,
+            healthPct,
+            JSON.stringify(catBreakdown),
+            JSON.stringify({ source: 'backfill', day, activeAgents, autoSaved: true })
+          ]
+        );
+
+        existingDates.add(day);
+        insertedDates.push(day);
+        inserted++;
+      }
+
+      console.log(`📊 [Backfill] Complete: ${inserted} run records inserted, ${skipped} days skipped (already had records)`);
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        inserted,
+        skipped,
+        insertedDates,
+        message: `Backfilled ${inserted} daily run records from actual production activity. ${skipped} days already had records.`
+      }));
+    } catch (error) {
+      console.error('Backfill history error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: error.message }));
+    }
+    return;
+  }
+
   if (pathname === '/api/ecosystem-test/clear-runs' && req.method === 'POST') {
     try {
       if (!pool) {

@@ -106,6 +106,7 @@ tbody tr:last-child td{border-bottom:none}
     <option value="50">Last 50 runs</option>
   </select>
   <button class="refresh-btn" onclick="loadData()">⟳ Refresh Data</button>
+  <button class="refresh-btn" id="backfillBtn" onclick="backfillHistory()" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);margin-left:8px;" title="Create run records from all historical agent activity in the database">📚 Backfill History</button>
 </div>
 
 <div class="container" id="mainContent">
@@ -561,6 +562,31 @@ function renderAgentTable(runs) {
       <td class="td-gold">${endBal.toFixed(2)}</td>
     </tr>`;
   }).join('');
+}
+
+async function backfillHistory() {
+  const btn = document.getElementById('backfillBtn');
+  const orig = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '⏳ Backfilling...';
+  try {
+    const res = await fetch('/api/ecosystem-test/backfill-history', { method: 'POST' });
+    const data = await res.json();
+    if (data.success) {
+      const msg = data.inserted === 0
+        ? `✅ All days already documented — no new records needed.`
+        : `✅ Documented ${data.inserted} day${data.inserted !== 1 ? 's' : ''} of history:\n${data.insertedDates.join(', ')}\n\n${data.skipped} day${data.skipped !== 1 ? 's' : ''} already had records.`;
+      alert(msg);
+      await loadData();
+    } else {
+      alert('❌ Backfill failed: ' + (data.error || 'Unknown error'));
+    }
+  } catch (e) {
+    alert('❌ Network error: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = orig;
+  }
 }
 
 loadData();
