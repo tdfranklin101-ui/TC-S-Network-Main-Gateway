@@ -1120,6 +1120,86 @@ async function ensureAgentMembers(pool, agents) {
   return { provisioned, existing, failed, totalAgents: agents.length };
 }
 
+async function autoSaveRunRecord(pool, { runId, agentResults, agents, totalCreated, totalPurchased, healthPct, runType, elapsedSeconds }) {
+  try {
+    const bnCreated   = agentResults.reduce((s, r) => s + r.created.filter(c => c.category === 'Basic Needs').length, 0);
+    const bnPurchased = agentResults.reduce((s, r) => s + (r.basicNeedsBought || 0), 0);
+    const totalErrors = agentResults.reduce((s, r) => s + r.errors.length, 0);
+    const successOps  = agentResults.reduce((s, r) => s + r.created.length + (r.purchased || r.buys || []).length, 0);
+    const balBlocked  = agentResults.reduce((s, r) => s + r.errors.filter(e => e.error && e.error.includes('Balance protection')).length, 0);
+
+    const catBreakdown = {};
+    for (const r of agentResults) {
+      for (const c of (r.created || [])) {
+        catBreakdown[c.category] = (catBreakdown[c.category] || 0) + 1;
+      }
+    }
+
+    const agentLedger = agentResults.map(r => ({
+      code: r.agentCode,
+      name: r.agentName,
+      created: (r.created || []).length,
+      purchased: (r.purchased || r.buys || []).length,
+      basicNeedsBought: r.basicNeedsBought || 0,
+      netChange: r.netChange || 0,
+      errors: r.errors.length
+    }));
+
+    const windowMins = Math.max(2, Math.ceil((elapsedSeconds || 300) / 60) + 2);
+    const solarRows = await pool.query(
+      `SELECT COALESCE(SUM(CAST(amount AS numeric)), 0) as circulated,
+              COALESCE(SUM(CASE WHEN entry_type = 'credit' AND account_type = 'creator' THEN CAST(amount AS numeric) ELSE 0 END), 0) as seller_rev
+       FROM marketplace_ledger
+       WHERE created_at >= NOW() - INTERVAL '${windowMins} minutes'
+         AND reference_type = 'purchase'`
+    );
+    const solarCirculated = parseFloat(solarRows.rows[0]?.circulated) || 0;
+    const sellerRevenue   = parseFloat(solarRows.rows[0]?.seller_rev) || 0;
+
+    const bnCompliance = agentResults.length > 0
+      ? Math.round((agentResults.filter(r => (r.basicNeedsBought || 0) >= 2).length / agentResults.length) * 100)
+      : 0;
+
+    const uniqueRunId = `auto_${runType}_${runId}_${Date.now()}`;
+
+    await pool.query(
+      `INSERT INTO ecosystem_test_runs (
+        run_id, run_timestamp, agent_count, items_created, basic_needs_created,
+        searches_executed, t1_purchases, t2_sample_purchases, total_purchases,
+        basic_needs_purchased, basic_needs_compliance, solar_distributed,
+        solar_circulated, seller_revenue, total_end_balances,
+        vouchers_created, vouchers_purchased, vouchers_redeemed,
+        tier1_hits, tier2_hits, tier2_sample_posts, tier3_hits,
+        balance_blocked, limit_blocked, tier3_blocked,
+        successful_ops, failed_ops, health_score,
+        agent_ledger, mcp_engine_usage, category_breakdown, voucher_details, metadata
+      ) VALUES (
+        $1, NOW(), $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
+        $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27,
+        $28, $29, $30, $31, $32
+      )`,
+      [
+        uniqueRunId, agents.length, totalCreated, bnCreated,
+        0, totalPurchased, 0, totalPurchased,
+        bnPurchased, bnCompliance, 0,
+        solarCirculated, sellerRevenue, 0,
+        0, 0, 0,
+        0, 0, 0, 0,
+        balBlocked, 0, 0,
+        successOps, totalErrors, healthPct,
+        JSON.stringify(agentLedger),
+        JSON.stringify({ runType }),
+        JSON.stringify(catBreakdown),
+        JSON.stringify([]),
+        JSON.stringify({ runType, autoSaved: true, elapsedSeconds })
+      ]
+    );
+    console.log(`📊 [Auto-Save] ${runType.toUpperCase()} run record saved: ${uniqueRunId} | Health: ${healthPct}% | Created: ${totalCreated} | Purchased: ${totalPurchased} | Solar: ${solarCirculated.toFixed(4)} S`);
+  } catch (saveErr) {
+    console.warn(`⚠️ [Auto-Save] Failed to save run record for ${runType}:`, saveErr.message);
+  }
+}
+
 async function runDailyAgentTasks(pool, agents) {
   const startTime = Date.now();
   const runId = crypto.randomUUID().substring(0, 8);
@@ -1258,6 +1338,17 @@ async function runDailyAgentTasks(pool, agents) {
     timestamp: new Date().toISOString(),
     elapsedSeconds: parseFloat(elapsed)
   };
+
+  await autoSaveRunRecord(pool, {
+    runId,
+    agentResults,
+    agents,
+    totalCreated,
+    totalPurchased,
+    healthPct,
+    runType: 'round1',
+    elapsedSeconds: parseFloat(elapsed)
+  });
 
   return lastRunStatus;
 }
@@ -2253,6 +2344,10 @@ async function runRound2AgentTasks(pool, agents) {
   console.log(`\n🌞 ===== KID SOL PROVISIONAIRE — ROUND 2 COMPLETE (${runId}) =====`);
   console.log(`   Buys: ${totalBuys} | Sells: ${totalSells} | Errors: ${totalErrors} | Time: ${elapsed}s\n`);
 
+  const r2HealthPct = agents.length > 0
+    ? Math.round((agentResults.filter(r => r.errors.length === 0).length / agents.length) * 100)
+    : 0;
+
   lastRound2Status = {
     success: totalErrors === 0,
     round: 2,
@@ -2262,10 +2357,22 @@ async function runRound2AgentTasks(pool, agents) {
     totalBuys,
     totalSells,
     totalErrors,
+    healthPercent: r2HealthPct,
     kidSolObjectives,
     timestamp: new Date().toISOString(),
     elapsedSeconds: parseFloat(elapsed)
   };
+
+  await autoSaveRunRecord(pool, {
+    runId,
+    agentResults,
+    agents,
+    totalCreated: 0,
+    totalPurchased: totalBuys,
+    healthPct: r2HealthPct,
+    runType: 'round2',
+    elapsedSeconds: parseFloat(elapsed)
+  });
 
   return lastRound2Status;
 }
