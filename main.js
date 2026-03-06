@@ -3463,14 +3463,17 @@ console.log('🎯 AI automatic promotion system active');
 const server = http.createServer(async (req, res) => {
   const pathname = new URL(req.url, `http://${req.headers.host}`).pathname;
 
-  // Custom domain: psychedelicsolarpunkparty.com → serve Solar Punk Party page
+  // Custom domain: psychedelicsolarpunkparty.com → serve Solar Punk Party page (root only)
   const incomingHost = (req.headers.host || '').toLowerCase().replace(/:\d+$/, '');
   if (incomingHost === 'psychedelicsolarpunkparty.com' || incomingHost === 'www.psychedelicsolarpunkparty.com') {
-    if (!serveCachedFile(res, '/solar-punk-party.html')) {
-      const filePath = path.resolve(__dirname, 'public', 'solar-punk-party.html');
-      serveHtmlFile(res, filePath);
+    if (pathname === '/' || pathname === '/solar-punk-party.html') {
+      if (!serveCachedFile(res, '/solar-punk-party.html')) {
+        const filePath = path.resolve(__dirname, 'public', 'solar-punk-party.html');
+        serveHtmlFile(res, filePath);
+      }
+      return;
     }
-    return;
+    // All other paths (marketplace, index, homepage, etc.) fall through to normal routing below
   }
   
   try {
