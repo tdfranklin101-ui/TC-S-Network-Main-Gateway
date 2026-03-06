@@ -3463,13 +3463,24 @@ console.log('🎯 AI automatic promotion system active');
 const server = http.createServer(async (req, res) => {
   const pathname = new URL(req.url, `http://${req.headers.host}`).pathname;
 
-  // Custom domain: psychedelicsolarpunkparty.com → serve Solar Punk Party page (root only)
   const incomingHost = (req.headers.host || '').toLowerCase().replace(/:\d+$/, '');
+
+  // thecurrentsee.org → root index (main platform entry point)
+  if (incomingHost === 'thecurrentsee.org' || incomingHost === 'www.thecurrentsee.org') {
+    if (pathname === '/') {
+      if (!serveCachedFile(res, '/index.html')) {
+        serveHtmlFile(res, path.resolve(__dirname, 'public', 'index.html'));
+      }
+      return;
+    }
+    // All other paths serve normally (marketplace, pages, APIs, etc.)
+  }
+
+  // psychedelicsolarpunkparty.com → Solar Punk Party page at root only
   if (incomingHost === 'psychedelicsolarpunkparty.com' || incomingHost === 'www.psychedelicsolarpunkparty.com') {
     if (pathname === '/' || pathname === '/solar-punk-party.html') {
       if (!serveCachedFile(res, '/solar-punk-party.html')) {
-        const filePath = path.resolve(__dirname, 'public', 'solar-punk-party.html');
-        serveHtmlFile(res, filePath);
+        serveHtmlFile(res, path.resolve(__dirname, 'public', 'solar-punk-party.html'));
       }
       return;
     }
