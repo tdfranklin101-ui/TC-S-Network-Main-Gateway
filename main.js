@@ -143,7 +143,8 @@ process.on('unhandledRejection', (reason, promise) => {
 
 async function initializeFullPlatform() {
 console.log('🔄 Loading platform modules...');
-const { Pool, neonConfig } = require('@neondatabase/serverless');
+const { neonConfig } = require('@neondatabase/serverless');
+const { Pool } = require('pg');
 
 // Configure WebSocket for Node.js environment to fix distribution connectivity
 neonConfig.webSocketConstructor = require('ws');
@@ -1079,11 +1080,12 @@ try {
     // Use connection string (workspace/development)
     pool = new Pool({ 
       connectionString: process.env.DATABASE_URL,
-      max: 10,
+      max: 20,
       idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 10000,
+      connectionTimeoutMillis: 15000,
       ssl: sslConfig
     });
+    pool.on('error', (err) => console.warn('⚠️ Pool idle client error:', err.message));
     console.log('✅ Database connection ready (using DATABASE_URL)');
   } else if (process.env.PGHOST) {
     // Use individual PG* variables (deployed production site)
@@ -1093,11 +1095,12 @@ try {
       database: process.env.PGDATABASE,
       user: process.env.PGUSER,
       password: process.env.PGPASSWORD,
-      max: 10,
+      max: 20,
       idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 10000,
+      connectionTimeoutMillis: 15000,
       ssl: sslConfig
     });
+    pool.on('error', (err) => console.warn('⚠️ Pool idle client error:', err.message));
     console.log('✅ Database connection ready (using PG* variables for production)');
   } else {
     console.warn('⚠️ No database configuration found (neither DATABASE_URL nor PGHOST)');
@@ -19604,14 +19607,6 @@ setImmediate(() => {
 
     setTimeout(async () => {
       await normalizeCategoriesInDB();
-      try {
-        console.log('🔧 [STARTUP] Running product prompt backfill...');
-        const { upgradeArtifactPrompts } = require('./server/agent-daily-tasks');
-        const promptResult = await upgradeArtifactPrompts(pool);
-        console.log(`✅ [STARTUP] Prompt backfill: ${promptResult.upgraded} upgraded, ${promptResult.total} total`);
-      } catch (err) {
-        console.warn('⚠️ Startup prompt backfill warning:', err.message);
-      }
     }, 30000);
 
     // Startup distribution check — catches missed distributions after restarts

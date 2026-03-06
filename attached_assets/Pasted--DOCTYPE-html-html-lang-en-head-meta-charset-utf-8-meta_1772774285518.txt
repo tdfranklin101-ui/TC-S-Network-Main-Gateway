@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TC-S Network Presents — Prompt a Movie | Business</title>
+  <meta name="description" content="Prompt a Movie turns one text prompt into a complete, production-ready film package: treatment, roadmap, screenplay, continuity-locked video prompts, rendering, and assembly." />
+  <style>
+    :root{
+      --bg:#07070b;
+      --card:#0f1017;
+      --text:#e9ecff;
+      --muted:#b8bdd9;
+      --line:rgba(255,255,255,.12);
+      --accent:#9bffb4;
+      --accent2:#7aa7ff;
+      --warn:#ffd07a;
+      --shadow: 0 20px 60px rgba(0,0,0,.55);
+      --radius:18px;
+      --max: 980px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background: radial-gradient(1000px 600px at 20% 10%, rgba(122,167,255,.15), transparent 60%),
+                  radial-gradient(900px 700px at 80% 30%, rgba(155,255,180,.12), transparent 55%),
+                  radial-gradient(800px 800px at 40% 90%, rgba(255,208,122,.09), transparent 60%),
+                  var(--bg);
+      color:var(--text);
+      line-height:1.5;
+    }
+    a{color:inherit}
+    .wrap{max-width:var(--max); margin:0 auto; padding:38px 18px 56px}
+    header{
+      padding:18px 18px 8px;
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      position:relative;
+      overflow:hidden;
+    }
+    header:before{
+      content:"";
+      position:absolute; inset:-2px;
+      background: linear-gradient(120deg, rgba(155,255,180,.18), rgba(122,167,255,.15), rgba(255,208,122,.12));
+      filter: blur(26px);
+      opacity:.55;
+      z-index:0;
+    }
+    header > *{position:relative; z-index:1}
+    .kicker{
+      display:inline-flex; gap:10px; align-items:center;
+      font-size:12px; letter-spacing:.18em; text-transform:uppercase;
+      color:var(--muted);
+    }
+    .pill{
+      padding:6px 10px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      background: rgba(0,0,0,.25);
+    }
+    h1{
+      margin:12px 0 8px;
+      font-size: clamp(30px, 4vw, 44px);
+      line-height:1.1;
+    }
+    .sub{
+      margin:0 0 18px;
+      color:var(--muted);
+      font-size: 16px;
+      max-width: 72ch;
+    }
+    .ctaRow{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      margin: 14px 0 10px;
+    }
+    .btn{
+      display:inline-flex; align-items:center; justify-content:center;
+      padding:12px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      text-decoration:none;
+      font-weight: 650;
+      background: rgba(0,0,0,.25);
+      transition: transform .12s ease, border-color .12s ease, background .12s ease;
+      min-width: 210px;
+    }
+    .btn:hover{transform: translateY(-1px); border-color: rgba(255,255,255,.25); background: rgba(0,0,0,.35)}
+    .btn.primary{
+      border-color: rgba(155,255,180,.35);
+      background: linear-gradient(180deg, rgba(155,255,180,.18), rgba(0,0,0,.22));
+    }
+    .btn.secondary{
+      border-color: rgba(122,167,255,.35);
+      background: linear-gradient(180deg, rgba(122,167,255,.16), rgba(0,0,0,.22));
+    }
+    .btn.tertiary{
+      border-color: rgba(255,208,122,.35);
+      background: linear-gradient(180deg, rgba(255,208,122,.14), rgba(0,0,0,.22));
+    }
+    .smallNote{color:var(--muted); font-size:13px; margin: 0 0 6px}
+    main{margin-top:18px}
+    .grid{
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap:14px;
+    }
+    @media (max-width: 860px){
+      .grid{grid-template-columns: 1fr}
+      .btn{min-width: 100%}
+    }
+    .card{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      border-radius: var(--radius);
+      padding:18px;
+      box-shadow: 0 16px 40px rgba(0,0,0,.35);
+    }
+    h2{margin:0 0 10px; font-size:18px}
+    ul{margin:10px 0 0 18px; padding:0}
+    li{margin: 8px 0; color: var(--text)}
+    .muted{color:var(--muted)}
+    .tagRow{display:flex; flex-wrap:wrap; gap:8px; margin-top:10px}
+    .tag{
+      font-size:12px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.22);
+      color: var(--muted);
+    }
+    .hl{color: var(--accent)}
+    .hl2{color: var(--accent2)}
+    .warn{color: var(--warn)}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
+    .divider{height:1px; background: var(--line); margin: 14px 0}
+    .twoCol{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    @media (max-width: 560px){ .twoCol{grid-template-columns:1fr} }
+    .price{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:14px;
+      background: rgba(0,0,0,.22);
+    }
+    .price h3{margin:0 0 6px; font-size:16px}
+    .price .num{font-size:22px; font-weight:800}
+    .price .desc{color:var(--muted); font-size:13px; margin:6px 0 0}
+    footer{
+      margin-top:16px;
+      color:var(--muted);
+      font-size:12px;
+      text-align:center;
+      opacity:.9;
+    }
+    .form{
+      display:grid;
+      gap:10px;
+      margin-top:10px;
+    }
+    label{font-size:12px; color:var(--muted)}
+    input, textarea{
+      width:100%;
+      padding:12px 12px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.25);
+      color: var(--text);
+      outline:none;
+    }
+    textarea{min-height:120px; resize:vertical}
+    .mini{
+      font-size:12px;
+      color: var(--muted);
+    }
+    .copyRow{
+      display:flex; gap:10px; flex-wrap:wrap;
+      margin-top:10px;
+    }
+    .copyBtn{
+      border:1px solid var(--line);
+      border-radius:12px;
+      background: rgba(0,0,0,.25);
+      padding:10px 12px;
+      cursor:pointer;
+      color: var(--text);
+      font-weight:650;
+    }
+    .copyBtn:hover{border-color: rgba(255,255,255,.25); background: rgba(0,0,0,.35)}
+    .toast{
+      display:none;
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid rgba(155,255,180,.35);
+      background: rgba(155,255,180,.08);
+      color: var(--text);
+      font-size:13px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <div class="kicker">
+        <span class="pill">TC-S Network Presents</span>
+        <span class="pill">Business / Sponsorship</span>
+        <span class="pill mono">Prompt a Movie</span>
+      </div>
+
+      <h1>Turn one prompt into a finished film.</h1>
+      <p class="sub">
+        <span class="hl">Prompt a Movie</span> is an AI production pipeline: prompt → treatment → production roadmap → Fountain screenplay → continuity-locked
+        video prompts (Sora / Runway / Pika) → rendering + FFmpeg assembly into a finished cut with titles, credits, and optional music.
+      </p>
+
+      <div class="ctaRow">
+        <!-- Replace the mailto address below with your preferred email -->
+        <a class="btn primary" href="mailto:hello@thecurrentsee.org?subject=Prompt%20a%20Movie%20—%20Talk%20Business&body=Hi%20TC-S%20Network%2C%0A%0AI%20want%20to%20talk%20business%20about%20Prompt%20a%20Movie.%0A%0AProject%20type%3A%20%0ATarget%20length%3A%20%0ATimeline%3A%20%0ABudget%3A%20%0ALinks%20or%20references%3A%20%0A%0AThanks%2C%0A">
+          Talk business (email)
+        </a>
+
+        <!-- Replace the calendly link if you have one. If not, you can delete this button. -->
+        <a class="btn secondary" href="#intake">
+          Quick intake (2 minutes)
+        </a>
+
+        <a class="btn tertiary" href="#sponsor">
+          Sponsor the 90-min benchmark
+        </a>
+      </div>
+
+      <p class="smallNote">
+        This page is for creators, producers, agencies, labels, and investors. For samples, go back to <span class="mono">NOW SHOWING</span>.
+      </p>
+    </header>
+
+    <main class="grid">
+      <section class="card">
+        <h2>What you get (deliverables)</h2>
+        <ul>
+          <li><b>Finished cut</b> (1 / 5 / 15 / 30 / 90 minutes), assembled with titles + credits</li>
+          <li><b>Production package</b>: treatment, roadmap, casting profiles, style bible, and Fountain screenplay</li>
+          <li><b>Clip prompt pack</b>: continuity-locked prompts with @characteridentity blocks + shot tokens</li>
+          <li><b>Versioned builds</b>: snapshots you can restore, download, or extend into a longer cut</li>
+          <li><b>Cost + telemetry report</b>: API spend, retries, time-to-render, and pipeline metrics</li>
+        </ul>
+
+        <div class="divider"></div>
+
+        <h2>Why this is different</h2>
+        <p class="muted">
+          Most “AI video” tools produce clips. <span class="hl">Prompt a Movie</span> produces a <b>production system</b>—a studio-like agent matrix with
+          continuity enforcement, audits, metering, retries, and assembly.
+        </p>
+
+        <div class="tagRow">
+          <span class="tag">Continuity locks + audits</span>
+          <span class="tag">MCP @character protocol</span>
+          <span class="tag">Fountain screenplay output</span>
+          <span class="tag">Multi-platform prompt adapters</span>
+          <span class="tag">FFmpeg build system</span>
+          <span class="tag">Version restore / download</span>
+          <span class="tag">Cost metering per run</span>
+        </div>
+
+        <div class="divider"></div>
+
+        <h2>How it works (the pipeline)</h2>
+        <ol class="muted" style="margin:10px 0 0 18px">
+          <li><b>Story Architect</b> generates the treatment</li>
+          <li><b>Production Planner</b> extracts roadmap + style bible</li>
+          <li><b>Central Casting</b> creates canonical character profiles (single source of truth)</li>
+          <li><b>Script Agent</b> writes the Fountain screenplay</li>
+          <li><b>Continuity + MCP</b> injects identity blocks + shot tokens under a strict budget</li>
+          <li><b>Rendering & Assembly</b> generates clips in parallel and assembles the cut</li>
+        </ol>
+      </section>
+
+      <aside class="card">
+        <h2>Ways to work together</h2>
+
+        <div class="twoCol">
+          <div class="price">
+            <h3>AI Music Video Sprint</h3>
+            <div class="num">Custom quote</div>
+            <div class="desc">60–180 seconds + social cutdowns, lyric timing, optional singer roles and overlays.</div>
+          </div>
+
+          <div class="price">
+            <h3>Narrative Pilot Package</h3>
+            <div class="num">Custom quote</div>
+            <div class="desc">5–15 minutes, treatment approval loop, screenplay, assembled cut, prompt pack.</div>
+          </div>
+
+          <div class="price">
+            <h3>Brand / Agency Film</h3>
+            <div class="num">Custom quote</div>
+            <div class="desc">30–90 sec hero + cutdowns. Fast iteration, style bible, export packs.</div>
+          </div>
+
+          <div class="price">
+            <h3>Platform / Licensing</h3>
+            <div class="num">By discussion</div>
+            <div class="desc">Enterprise pipeline access, platform support, integrations, and usage metering.</div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <h2 id="sponsor">Sponsor the 90-minute benchmark</h2>
+        <p class="muted">
+          A feature-length benchmark run validates long-form reliability and produces a flagship case study.
+          Estimated model costs: <b class="warn">$750–$1,000</b> (depending on clip count, retries, and render strategy).
+        </p>
+        <ul>
+          <li><b>Sponsor credits</b> on the finished feature + on the Cinema page</li>
+          <li><b>Behind-the-scenes</b> breakdown: prompt → treatment → script → prompts → build metrics</li>
+          <li><b>Early access</b> to the benchmark pack and production telemetry</li>
+        </ul>
+        <p class="mini">
+          Sponsorship can be paired with a short custom add-on (pilot reel / music video) depending on scope.
+        </p>
+
+        <div class="divider"></div>
+
+        <h2 id="intake">Quick intake</h2>
+        <p class="muted">Send a short brief. This will open your email client with the details.</p>
+
+        <div class="form">
+          <div>
+            <label for="ptype">Project type</label>
+            <input id="ptype" placeholder="Feature / Short / Music Video / Documentary / Brand Film" />
+          </div>
+
+          <div>
+            <label for="length">Target length</label>
+            <input id="length" placeholder="1 min / 5 min / 15 min / 30 min / 90 min" />
+          </div>
+
+          <div>
+            <label for="deadline">Timeline / deadline</label>
+            <input id="deadline" placeholder="e.g., 2 weeks, festival date, campaign launch" />
+          </div>
+
+          <div>
+            <label for="budget">Budget range</label>
+            <input id="budget" placeholder="e.g., $2k–$5k, $10k–$25k" />
+          </div>
+
+          <div>
+            <label for="brief">One-paragraph brief</label>
+            <textarea id="brief" placeholder="What are we making? Any must-have style references (no copyrighted characters)? Any constraints?"></textarea>
+          </div>
+
+          <button class="copyBtn" id="sendEmail">Open email with this brief</button>
+          <div class="toast" id="toast">Draft email opened. If it didn’t, check pop-up / mail client settings.</div>
+
+          <div class="copyRow">
+            <button class="copyBtn" id="copyPitch">Copy 5-line pitch</button>
+            <button class="copyBtn" id="copySponsor">Copy sponsor blurb</button>
+          </div>
+
+          <p class="mini">
+            Tip: If you’d rather DM a brief, copy the pitch text and send it with a Vimeo link from NOW SHOWING.
+          </p>
+        </div>
+      </aside>
+    </main>
+
+    <footer>
+      © <span id="yr"></span> TC-S Network • Prompt a Movie • Continuity-locked AI cinema pipeline
+    </footer>
+  </div>
+
+  <script>
+    // Update year
+    document.getElementById("yr").textContent = new Date().getFullYear();
+
+    // Pitch copy blocks
+    const pitch5 = [
+      "Prompt a Movie is an AI film production pipeline: prompt → treatment → roadmap → Fountain screenplay → continuity-locked clip prompts → render + FFmpeg assembly into a finished cut.",
+      "It supports feature films, shorts, documentaries, and music videos, with versioned builds and full cost/telemetry metering.",
+      "Continuity is enforced via canonical casting profiles, audits, and SHA-256 lock signatures injected into every prompt.",
+      "We can produce custom shorts/pilots quickly, and we’re running a sponsor-backed 90-minute benchmark to publish a flagship case study.",
+      "Reply with project type + target length + deadline + budget to talk business."
+    ].join("\n\n");
+
+    const sponsorBlurb = [
+      "Sponsor the 90-minute Prompt a Movie benchmark run.",
+      "Estimated model costs: $750–$1,000 (clip count/retries/render strategy).",
+      "Includes sponsor credits on the finished feature + Cinema page, plus a behind-the-scenes breakdown (prompt → treatment → script → prompts → metrics).",
+      "Email: hello@thecurrentsee.org"
+    ].join("\n");
+
+    // Copy helpers
+    async function copyText(txt){
+      try{
+        await navigator.clipboard.writeText(txt);
+        return true;
+      }catch(e){
+        // fallback
+        const ta = document.createElement("textarea");
+        ta.value = txt;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+        return true;
+      }
+    }
+
+    document.getElementById("copyPitch").addEventListener("click", async () => {
+      await copyText(pitch5);
+      const t = document.getElementById("toast");
+      t.style.display = "block";
+      t.textContent = "Copied pitch to clipboard.";
+      setTimeout(()=> t.style.display="none", 2400);
+    });
+
+    document.getElementById("copySponsor").addEventListener("click", async () => {
+      await copyText(sponsorBlurb);
+      const t = document.getElementById("toast");
+      t.style.display = "block";
+      t.textContent = "Copied sponsor blurb to clipboard.";
+      setTimeout(()=> t.style.display="none", 2400);
+    });
+
+    // Build a mailto with intake fields
+    document.getElementById("sendEmail").addEventListener("click", () => {
+      const ptype = document.getElementById("ptype").value.trim();
+      const length = document.getElementById("length").value.trim();
+      const deadline = document.getElementById("deadline").value.trim();
+      const budget = document.getElementById("budget").value.trim();
+      const brief = document.getElementById("brief").value.trim();
+
+      const subject = encodeURIComponent("Prompt a Movie — Business Inquiry");
+      const body = encodeURIComponent(
+        "Hi TC-S Network,\n\n" +
+        "I want to talk business about Prompt a Movie.\n\n" +
+        "Project type: " + (ptype || "[fill]") + "\n" +
+        "Target length: " + (length || "[fill]") + "\n" +
+        "Timeline/deadline: " + (deadline || "[fill]") + "\n" +
+        "Budget range: " + (budget || "[fill]") + "\n\n" +
+        "Brief:\n" + (brief || "[fill]") + "\n\n" +
+        "Links/references:\n" +
+        "- \n\n" +
+        "Thanks,\n"
+      );
+
+      // Replace email if needed
+      const to = "hello@thecurrentsee.org";
+      window.location.href = `mailto:${to}?subject=${subject}&body=${body}`;
+
+      const t = document.getElementById("toast");
+      t.style.display = "block";
+      t.textContent = "Draft email opened. If it didn’t, check pop-up / mail client settings.";
+      setTimeout(()=> t.style.display="none", 2600);
+    });
+  </script>
+</body>
+</html>

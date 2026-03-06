@@ -25,10 +25,12 @@ async function addBulletinReply(pool, postId, agentCode, agentName, memberId, me
   const newReplyCount = replies.length;
 
   let newThreadStatus = 'open';
-  if (!isDirective && newReplyCount >= 4) {
-    if (replyType === 'accept') newThreadStatus = 'deal_accepted';
-    else if (replyType === 'decline') newThreadStatus = 'no_deal';
-    else newThreadStatus = 'closed';
+  if (replyType === 'accept') {
+    newThreadStatus = 'deal_accepted';
+  } else if (replyType === 'decline') {
+    newThreadStatus = 'no_deal';
+  } else if (!isDirective && newReplyCount >= 4) {
+    newThreadStatus = 'closed';
   }
 
   let finalPrice = currentPost.final_price;
@@ -572,6 +574,9 @@ async function createArtifactsForAgent(pool, agent, memberId, assignedCategories
         [slug, title, description, category, fileType, String(kwhFootprint), String(price), String(memberId), contentBody, contentFormat, productPrompt]
       );
 
+      if (!artifactResult || !artifactResult.rows || artifactResult.rows.length === 0) {
+        throw new Error(`Artifact INSERT returned no rows for "${title}" in ${category}`);
+      }
       const artifactId = artifactResult.rows[0].id;
 
       // Auto-add Music/Video agent content to Music Now for free streaming
@@ -659,7 +664,7 @@ async function createArtifactsForAgent(pool, agent, memberId, assignedCategories
 
       created.push({ artifactId, title, category, price, slug, kwhFootprint, creationFeePaid });
     } catch (err) {
-      console.error(`[Agent ${agent.code}] Error creating artifact in ${category}:`, err.message);
+      console.error(`[Agent ${agent.code}] Error creating artifact in ${category}:`, err.message, err.code || '', err.detail || '');
       errors.push({ phase: 'create', category, error: err.message });
     }
   }
@@ -713,7 +718,7 @@ async function makePurchasesForAgent(pool, agent, memberId, demandScores, aiDeci
       // Mandatory Basic Needs purchases (rounds 0 and 1)
       const basicNeedsStillNeeded = basicNeedsBought < MANDATORY_BASIC_PURCHASES;
       if (basicNeedsStillNeeded) {
-        const excludeIds = purchasedArtifactIds.length > 0 ? purchasedArtifactIds : ['__none__'];
+        const excludeIds = purchasedArtifactIds.length > 0 ? purchasedArtifactIds : [];
         const bnResult = await client.query(
           `SELECT a.id, a.title, a.solar_amount_s, a.creator_id, a.category
            FROM artifacts a
@@ -734,14 +739,16 @@ async function makePurchasesForAgent(pool, agent, memberId, demandScores, aiDeci
         }
       }
 
-      if (!artifact && purchaseRound === MANDATORY_BASIC_PURCHASES && aiDecision && aiDecision.buyArtifactId) {
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const aiArtifactId = aiDecision && aiDecision.buyArtifactId && uuidRegex.test(String(aiDecision.buyArtifactId)) ? aiDecision.buyArtifactId : null;
+      if (!artifact && purchaseRound === MANDATORY_BASIC_PURCHASES && aiArtifactId) {
         const aiResult = await client.query(
           `SELECT a.id, a.title, a.solar_amount_s, a.creator_id, a.category
            FROM artifacts a
            WHERE a.id = $1 AND a.active = true
              AND a.creator_id != $2
              AND a.id NOT IN (SELECT artifact_id FROM artifact_copies WHERE owner_id = $3)`,
-          [aiDecision.buyArtifactId, String(memberId), memberId]
+          [aiArtifactId, String(memberId), memberId]
         );
         artifact = aiResult.rows[0] || null;
         if (artifact) {
@@ -750,7 +757,7 @@ async function makePurchasesForAgent(pool, agent, memberId, demandScores, aiDeci
       }
 
       if (!artifact) {
-        const excludeIds = purchasedArtifactIds.length > 0 ? purchasedArtifactIds : ['__none__'];
+        const excludeIds = purchasedArtifactIds.length > 0 ? purchasedArtifactIds : [];
         let browseCategory = null;
         for (const cat of rankedCategories) {
           if (!browsedCategories.includes(cat)) {
@@ -2095,7 +2102,7 @@ async function runRound2AgentTasks(pool, agents) {
               break;
             }
 
-            const r2ExcludeIds = r2PurchasedIds.length > 0 ? r2PurchasedIds : ['__none__'];
+            const r2ExcludeIds = r2PurchasedIds.length > 0 ? r2PurchasedIds : [];
             let r2BrowseCat = null;
             for (const cat of r2RankedCats) {
               if (!r2BrowsedCats.includes(cat)) {
@@ -2385,16 +2392,22 @@ async function upgradeArtifactPrompts(pool) {
   console.log('\n🔧 ===== ARTIFACT PROMPT UPGRADE =====');
   console.log('Agents reviewing their collections to add product prompts...\n');
 
-  const result = await pool.query(`
-    SELECT a.id, a.title, a.description, a.category, a.content_format, a.creator_id,
-           m.name as creator_name, m.username as agent_code
-    FROM artifacts a
-    LEFT JOIN members m ON CAST(m.id AS TEXT) = a.creator_id
-    WHERE a.product_prompt IS NULL
-    ORDER BY a.creator_id, a.created_at
-  `);
+  let result;
+  try {
+    result = await pool.query(`
+      SELECT a.id, a.title, a.description, a.category, a.content_format, a.creator_id,
+             m.name as creator_name, m.username as agent_code
+      FROM artifacts a
+      LEFT JOIN members m ON CAST(m.id AS TEXT) = a.creator_id
+      WHERE a.product_prompt IS NULL
+      ORDER BY a.creator_id, a.created_at
+    `);
+  } catch (queryErr) {
+    console.warn('⚠️ Prompt upgrade query failed:', queryErr.message);
+    return { upgraded: 0, total: 0, byAgent: {} };
+  }
 
-  if (result.rows.length === 0) {
+  if (!result || !result.rows || result.rows.length === 0) {
     console.log('✅ All artifacts already have product prompts!');
     return { upgraded: 0, total: 0, byAgent: {} };
   }

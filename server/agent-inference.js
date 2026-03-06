@@ -387,7 +387,7 @@ async function gatherMarketSnapshot(pool, memberId) {
     );
     snapshot.bulletinPosts = bulletinResult.rows;
   } catch (err) {
-    console.warn('⚠️ [Inference] Bulletin posts query failed:', err.message);
+    console.warn('⚠️ [Inference] Bulletin posts query failed:', err.message, err.stack ? err.stack.split('\n')[1] : '');
   }
 
   try {
@@ -582,6 +582,25 @@ async function postToBulletin(pool, memberId, agentCode, agentName, post) {
     if (negotiation) metadata.negotiation = negotiation;
     if (post.targetAgentCode) metadata.targetAgentCode = post.targetAgentCode;
 
+    const toSafeNumStr = (v) => {
+      if (v == null || v === '' || v === 0) return null;
+      const n = parseFloat(String(v).trim());
+      if (isNaN(n) || n <= 0) return null;
+      return String(n);
+    };
+    const toSafeInt = (v) => {
+      if (v == null || v === '') return null;
+      const n = Number(v);
+      if (!Number.isFinite(n) || !Number.isInteger(n) || n <= 0) return null;
+      return n;
+    };
+    const safePriceSolar = toSafeNumStr(post.priceSolar);
+    const safeRefArtifactId = toSafeInt(post.referenceArtifactId);
+    const safeOriginalPrice = toSafeNumStr(originalPrice);
+    const safeFinalPrice = toSafeNumStr(finalPrice);
+    const safeVolumeQty = toSafeInt(volumeQty);
+    const safeNegotiationType = (negotiationType && String(negotiationType).trim() !== '') ? String(negotiationType).trim() : null;
+
     const result = await pool.query(
       `INSERT INTO agent_bulletin_board (author_member_id, author_agent_code, author_name, post_type, title, body, tags, price_solar, target_category, related_artifact_id, target_agent_code, negotiation_type, original_price, final_price, volume_qty, metadata, status)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, 'open')
@@ -594,14 +613,14 @@ async function postToBulletin(pool, memberId, agentCode, agentName, post) {
         post.title || '',
         post.body || '',
         tags,
-        post.priceSolar != null ? String(post.priceSolar) : null,
+        safePriceSolar,
         post.targetCategory || null,
-        post.referenceArtifactId || null,
+        safeRefArtifactId,
         post.targetAgentCode || null,
-        negotiationType,
-        originalPrice,
-        finalPrice,
-        volumeQty,
+        safeNegotiationType,
+        safeOriginalPrice,
+        safeFinalPrice,
+        safeVolumeQty,
         Object.keys(metadata).length > 0 ? JSON.stringify(metadata) : null
       ]
     );
@@ -893,7 +912,7 @@ NEGOTIATION POWERS:
 - Always reference artifact IDs for audit trail
 
 Reply types: offer, counter, accept, decline, info
-${isFinalReply ? 'IMPORTANT: This is the FINAL reply (reply 4 of 4). You MUST choose either "accept" or "decline" as your replyType.' : ''}
+${isFinalReply ? 'IMPORTANT: This is the FINAL reply (reply 4 of 4). You MUST choose "accept" or "decline" as your replyType. Lean toward "accept" if any price or terms have been discussed — closing deals is strongly preferred over walking away.' : ''}
 
 Respond in JSON:
 {
@@ -944,7 +963,7 @@ Craft your reply. ${isFinalReply ? 'You must accept or decline.' : 'You may offe
     const validTypes = ['offer', 'counter', 'accept', 'decline', 'info'];
     let replyType = validTypes.includes(reply.replyType) ? reply.replyType : 'info';
     if (isFinalReply && replyType !== 'accept' && replyType !== 'decline') {
-      replyType = 'decline';
+      replyType = 'accept';
     }
 
     let negotiation = reply.negotiation || null;
