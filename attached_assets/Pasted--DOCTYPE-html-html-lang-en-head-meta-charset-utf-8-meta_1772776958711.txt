@@ -31,27 +31,6 @@
     }
     a{color:inherit}
     .wrap{max-width:var(--max); margin:0 auto; padding:38px 18px 56px}
-    .back-btn{
-      display:inline-flex;
-      align-items:center;
-      gap:7px;
-      margin-bottom:18px;
-      padding:9px 16px;
-      border-radius:999px;
-      border:1px solid rgba(155,255,180,.3);
-      background: rgba(155,255,180,.07);
-      color: var(--accent);
-      text-decoration:none;
-      font-size:13px;
-      font-weight:650;
-      letter-spacing:.03em;
-      transition: border-color .14s ease, background .14s ease, transform .14s ease;
-    }
-    .back-btn:hover{
-      border-color: rgba(155,255,180,.55);
-      background: rgba(155,255,180,.13);
-      transform: translateX(-2px);
-    }
     header{
       padding:18px 18px 8px;
       border:1px solid var(--line);
@@ -228,9 +207,6 @@
 
 <body>
   <div class="wrap">
-
-    <a class="back-btn" href="/solar-punk-party.html">← Back to Cinema</a>
-
     <header>
       <div class="kicker">
         <span class="pill">TC-S Network Presents</span>
@@ -246,6 +222,7 @@
       </p>
 
       <div class="ctaRow">
+        <!-- Replace email if you want -->
         <a class="btn primary" href="mailto:hello@thecurrentsee.org?subject=Prompt%20a%20Movie%20—%20Talk%20Business&body=Hi%20TC-S%20Network%2C%0A%0AI%20want%20to%20talk%20business%20about%20Prompt%20a%20Movie.%0A%0AProject%20type%3A%20%0ATarget%20length%3A%20%0ATimeline%3A%20%0AReferences%20or%20links%3A%20%0A%0AThanks%2C%0A">
           Talk business (email)
         </a>
@@ -279,7 +256,7 @@
 
         <h2>What makes it different</h2>
         <p class="muted">
-          This isn't a single AI call. It's a <b>studio-grade agent matrix</b> that behaves like a film production workflow:
+          This isn’t a single AI call. It’s a <b>studio-grade agent matrix</b> that behaves like a film production workflow:
           Story → Planning → Casting → Script → Continuity Enforcement → Rendering → Assembly.
           Continuity is enforced via canonical casting profiles, contradiction checks, and lock signatures.
         </p>
@@ -337,7 +314,7 @@
 
         <h2>Interested in licensing / partnership?</h2>
         <p class="muted">
-          We're open to partnerships with studios, agencies, labels, and platform teams interested in
+          We’re open to partnerships with studios, agencies, labels, and platform teams interested in
           long-form AI production workflows, continuity enforcement, and measurable cost/time telemetry.
         </p>
 
@@ -396,7 +373,7 @@
       "Continuity is enforced via canonical casting profiles, contradiction checks, and lock signatures in every prompt.",
       "We produce finished cuts and can also discuss licensing / partnership for teams building AI production workflows.",
       "Email: hello@thecurrentsee.org"
-    ].join("\n\n");
+    ].join("\\n\\n");
 
     const techSummary = [
       "Technical summary:",
@@ -404,7 +381,7 @@
       "- MCP @characteridentity injection with SHA-256 lock signatures and contradiction repair.",
       "- Fountain screenplay output + platform-ready prompt packs (Sora/Runway/Pika adapters).",
       "- Rendering orchestration + FFmpeg assembly + restoreable snapshots + usage metering."
-    ].join("\n");
+    ].join("\\n");
 
     async function copyText(txt){
       try{ await navigator.clipboard.writeText(txt); return true; }
@@ -444,14 +421,14 @@
 
       const subject = encodeURIComponent("Prompt a Movie — Business Inquiry");
       const body = encodeURIComponent(
-        "Hi TC-S Network,\n\n" +
-        "I want to talk business about Prompt a Movie.\n\n" +
-        "Project type: " + (ptype || "[fill]") + "\n" +
-        "Target length: " + (length || "[fill]") + "\n" +
-        "Timeline: " + (timeline || "[fill]") + "\n\n" +
-        "Brief:\n" + (brief || "[fill]") + "\n\n" +
-        "Links/references:\n- \n\n" +
-        "Thanks,\n"
+        "Hi TC-S Network,\\n\\n" +
+        "I want to talk business about Prompt a Movie.\\n\\n" +
+        "Project type: " + (ptype || "[fill]") + "\\n" +
+        "Target length: " + (length || "[fill]") + "\\n" +
+        "Timeline: " + (timeline || "[fill]") + "\\n\\n" +
+        "Brief:\\n" + (brief || "[fill]") + "\\n\\n" +
+        "Links/references:\\n- \\n\\n" +
+        "Thanks,\\n"
       );
 
       window.location.href = "mailto:hello@thecurrentsee.org?subject=" + subject + "&body=" + body;
