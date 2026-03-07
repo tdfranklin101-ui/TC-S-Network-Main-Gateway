@@ -999,6 +999,7 @@ async function runAgentTasks(pool, agent, assignedCategories, demandScores, kidS
 
     const memberId = memberRow.rows[0].id;
     const startBalance = parseFloat(memberRow.rows[0].total_solar) || 0;
+    result.startBalance = startBalance;
     console.log(`🤖 [Agent ${agent.code} ${agent.name}] Starting profit-driven tasks (member ID: ${memberId}, balance: ${startBalance.toFixed(4)} S)`);
 
     // AI Inference: agent decides how to profit while fulfilling KID SOL's objectives
@@ -1078,6 +1079,7 @@ async function runAgentTasks(pool, agent, assignedCategories, demandScores, kidS
 
     const endRow = await pool.query('SELECT total_solar FROM members WHERE id = $1', [memberId]);
     const endBalance = endRow.rows.length > 0 ? parseFloat(endRow.rows[0].total_solar) || 0 : startBalance;
+    result.endBalance = endBalance;
     result.netChange = parseFloat((endBalance - startBalance).toFixed(6));
 
     const createdStr = result.created.length > 0 ? `Created "${result.created[0].title}" (${result.created[0].price.toFixed(4)} S)` : 'No creation';
@@ -1145,6 +1147,8 @@ async function autoSaveRunRecord(pool, { runId, agentResults, agents, totalCreat
     const agentLedger = agentResults.map(r => ({
       code: r.agentCode,
       name: r.agentName,
+      startBalance: parseFloat((r.startBalance || 0).toFixed(4)),
+      endBalance: parseFloat((r.endBalance || (r.startBalance || 0) + (r.netChange || 0)).toFixed(4)),
       created: (r.created || []).length,
       purchased: (r.purchased || r.buys || []).length,
       basicNeedsBought: r.basicNeedsBought || 0,
@@ -1166,6 +1170,20 @@ async function autoSaveRunRecord(pool, { runId, agentResults, agents, totalCreat
     const bnCompliance = agentResults.length > 0
       ? Math.round((agentResults.filter(r => (r.basicNeedsBought || 0) >= 2).length / agentResults.length) * 100)
       : 0;
+
+    const agentsWithDecisions = agentResults.filter(r => r.aiDecision !== undefined).length;
+    const totalArtifactsCreated = agentResults.reduce((s, r) => s + (r.created || []).length, 0);
+    const totalPurchaseOps = agentResults.reduce((s, r) => s + (r.purchased || r.buys || []).length, 0);
+    const totalSellOps = agentResults.reduce((s, r) => s + (r.sells || []).length, 0);
+    const bulletinPosts = agentResults.reduce((s, r) => s + (r.bulletinPosts || 0), 0);
+    const bulletinReplies = agentResults.reduce((s, r) => s + (r.bulletinReplies || 0), 0);
+
+    const mcpEngineUsage = {};
+    if (agentsWithDecisions > 0) mcpEngineUsage['GPT-4o (Decisions)'] = agentsWithDecisions;
+    if (totalArtifactsCreated > 0) mcpEngineUsage['GPT-4o (Content)'] = totalArtifactsCreated;
+    if (totalPurchaseOps > 0) mcpEngineUsage['Marketplace Buys'] = totalPurchaseOps;
+    if (totalSellOps > 0) mcpEngineUsage['Marketplace Sells'] = totalSellOps;
+    if (bulletinPosts + bulletinReplies > 0) mcpEngineUsage['Bulletin Board'] = bulletinPosts + bulletinReplies;
 
     const uniqueRunId = `auto_${runType}_${runId}_${Date.now()}`;
 
@@ -1195,7 +1213,7 @@ async function autoSaveRunRecord(pool, { runId, agentResults, agents, totalCreat
         balBlocked, 0, 0,
         successOps, totalErrors, healthPct,
         JSON.stringify(agentLedger),
-        JSON.stringify({ runType }),
+        JSON.stringify(mcpEngineUsage),
         JSON.stringify(catBreakdown),
         JSON.stringify([]),
         JSON.stringify({ runType, autoSaved: true, elapsedSeconds })
@@ -1317,8 +1335,9 @@ async function runDailyAgentTasks(pool, agents) {
 
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
   const totalErrors = agentResults.reduce((sum, r) => sum + r.errors.length, 0);
-  const successfulAgents = agentResults.filter(r => r.errors.length === 0).length;
-  const healthPct = agents.length > 0 ? Math.round((successfulAgents / agents.length) * 100) : 0;
+  const totalSuccessOps = agentResults.reduce((sum, r) => sum + r.created.length + r.purchased.length, 0);
+  const totalExpectedOps = agents.length * 10;
+  const healthPct = totalExpectedOps > 0 ? Math.min(100, Math.round((totalSuccessOps / totalExpectedOps) * 100)) : 0;
 
   console.log(`\n🌞 ===== KID SOL PROVISIONAIRE — RUN COMPLETE (${runId}) =====`);
   console.log(`   Deployed: ${deployedAgents.length}/${agents.length} | Health: ${healthPct}%`);
@@ -1798,8 +1817,9 @@ async function runKidSolOrchestratedCustom(pool, agents, purpose, requestorId) {
 
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
   const totalErrors = agentResults.reduce((sum, r) => sum + r.errors.length, 0);
-  const successfulAgents = agentResults.filter(r => r.errors.length === 0).length;
-  const healthPct = workerAgents.length > 0 ? Math.round((successfulAgents / workerAgents.length) * 100) : 0;
+  const totalSuccessOps = agentResults.reduce((sum, r) => sum + r.created.length + r.purchased.length, 0);
+  const totalExpectedOps = workerAgents.length * 10;
+  const healthPct = totalExpectedOps > 0 ? Math.min(100, Math.round((totalSuccessOps / totalExpectedOps) * 100)) : 0;
 
   console.log(`\n🌞 ===== KID SOL ORCHESTRATED CUSTOM RUN COMPLETE (${runId}) =====`);
   console.log(`   Objective: ${purpose}`);
@@ -1934,6 +1954,7 @@ async function runRound2AgentTasks(pool, agents) {
 
       const memberId = memberRow.rows[0].id;
       const startBalance = parseFloat(memberRow.rows[0].total_solar) || 0;
+      agentResult.startBalance = startBalance;
 
       const snapshot = await gatherRound2Snapshot(pool, memberId);
       const aiDecision = await makeRound2Decision(pool, agent, memberId, snapshot, kidSolObjectives);
@@ -2334,6 +2355,7 @@ async function runRound2AgentTasks(pool, agents) {
 
       const endRow = await pool.query('SELECT total_solar FROM members WHERE id = $1', [memberId]);
       const endBalance = endRow.rows.length > 0 ? parseFloat(endRow.rows[0].total_solar) || 0 : startBalance;
+      agentResult.endBalance = endBalance;
       agentResult.netChange = parseFloat((endBalance - startBalance).toFixed(6));
 
       console.log(`✅ [R2 Agent ${agent.code}] Done: ${agentResult.buys.length} buys, ${agentResult.sells.length} sells, net: ${agentResult.netChange >= 0 ? '+' : ''}${agentResult.netChange.toFixed(4)} S`);
@@ -2351,9 +2373,9 @@ async function runRound2AgentTasks(pool, agents) {
   console.log(`\n🌞 ===== KID SOL PROVISIONAIRE — ROUND 2 COMPLETE (${runId}) =====`);
   console.log(`   Buys: ${totalBuys} | Sells: ${totalSells} | Errors: ${totalErrors} | Time: ${elapsed}s\n`);
 
-  const r2HealthPct = agents.length > 0
-    ? Math.round((agentResults.filter(r => r.errors.length === 0).length / agents.length) * 100)
-    : 0;
+  const r2TotalSuccessOps = agentResults.reduce((sum, r) => sum + (r.buys || []).length + (r.sells || []).length + (r.created || []).length + (r.purchased || []).length, 0);
+  const r2TotalExpectedOps = agents.length * 10;
+  const r2HealthPct = r2TotalExpectedOps > 0 ? Math.min(100, Math.round((r2TotalSuccessOps / r2TotalExpectedOps) * 100)) : 0;
 
   lastRound2Status = {
     success: totalErrors === 0,
