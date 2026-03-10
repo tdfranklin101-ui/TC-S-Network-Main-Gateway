@@ -205,7 +205,7 @@ Balance: ${balance.toFixed(4)} Solar | Portfolio: ${(marketSnapshot.portfolioVal
 7-day P&L: earned ${(marketSnapshot.recentEarnings || 0).toFixed(4)} S, spent ${(marketSnapshot.recentSpending || 0).toFixed(4)} S, net ${(marketSnapshot.netProfitLoss || 0).toFixed(4)} S (${marketSnapshot.transactionCount || 0} transactions)
 Reserve floor: 1.0 Solar — never let balance drop below this.
 
-Your job: ASSESS your financial position, then CREATE A STRATEGIC PLAN to grow your wealth while fulfilling KID SOL's objectives. Buy undervalued items to resell at 15% markup. Create artifacts in high-demand categories. Use the bulletin board as your pre-trade intelligence hub.
+Your job: ASSESS your financial position, then CREATE A STRATEGIC PLAN to grow your wealth while fulfilling KID SOL's objectives. Buy undervalued items to resell at ${agent.code === '01' ? '25' : '15'}% markup. Create artifacts in high-demand categories. Use the bulletin board as your pre-trade intelligence hub.
 When posting to the bulletin board, reference other agents by name, respond to their offers, and mention specific artifact IDs. Your posts should feel like genuine trade-floor chatter — not generic announcements. If another agent posted something relevant to your specialty, acknowledge it.
 
 NEGOTIATION POWERS (autonomous):
@@ -701,7 +701,8 @@ async function makeRound2Decision(pool, agent, memberId, snapshot, kidSolObjecti
       .map(a => {
         const paid = parseFloat(a.solar_paid) || 0;
         const listed = a.is_listed_for_resale ? 'LISTED' : 'UNLISTED';
-        const resale = a.resale_price ? parseFloat(a.resale_price).toFixed(4) : (paid * 1.15).toFixed(4);
+        const defaultMarkup = agent.code === '01' ? 1.25 : 1.15;
+        const resale = a.resale_price ? parseFloat(a.resale_price).toFixed(4) : (paid * defaultMarkup).toFixed(4);
         return `id:${a.id} "${a.title}" [${a.category}] paid:${paid.toFixed(4)}S resale:${resale}S ${listed}`;
       })
       .join('\n');
@@ -760,7 +761,8 @@ async function makeRound2Decision(pool, agent, memberId, snapshot, kidSolObjecti
     const directiveBlock = objectives.dailyDirective ?
       `MORNING DIRECTIVE: ${objectives.dailyDirective}\nPriorities: ${(objectives.priorityCategories || []).join(', ')}` : '';
 
-    const systemPrompt = `You are ${agent.name}, AI trading agent on TC-S Solar Network. This is ROUND 2 — the afternoon strategic session. The morning run already provisioned inventory per KID SOL's objectives. Now you ASSESS your results, review your morning P&L, and execute 2 strategic buys + 2 strategic sells.
+    const r2AlphaBoost = agent.code === '01' ? `\nSENIOR TRADER STATUS: You are Alpha, the network's Senior Trader. Your resale markup is 25% (vs 15% standard). Focus on listing high-value Computronium items and buying only cheap items with strong resale potential. Prioritize SELLING over BUYING.\n` : '';
+    const systemPrompt = `You are ${agent.name}, AI trading agent on TC-S Solar Network. This is ROUND 2 — the afternoon strategic session. The morning run already provisioned inventory per KID SOL's objectives. Now you ASSESS your results, review your morning P&L, and execute 2 strategic buys + 2 strategic sells.${r2AlphaBoost}
 
 SELF-ASSESSMENT:
 Balance: ${balance.toFixed(4)} Solar | Portfolio: ${(snapshot.portfolioValue || 0).toFixed(4)} Solar (${snapshot.portfolioItemCount || 0} items) | Net Worth: ${(snapshot.netWorth || balance).toFixed(4)} Solar

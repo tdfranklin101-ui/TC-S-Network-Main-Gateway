@@ -698,6 +698,7 @@ async function makePurchasesForAgent(pool, agent, memberId, demandScores, aiDeci
   }
 
   const purchasedArtifactIds = [];
+  const maxPurchases = profile.purchaseSlots;
   const MANDATORY_BASIC_PURCHASES = maxPurchases <= 3 ? 1 : 2;
   let basicNeedsBought = 0;
 
@@ -705,8 +706,6 @@ async function makePurchasesForAgent(pool, agent, memberId, demandScores, aiDeci
   const scores = demandScores || {};
   const rankedCategories = [...allCategories].sort((a, b) => (scores[b] || 0) - (scores[a] || 0));
   const browsedCategories = [];
-
-  const maxPurchases = profile.purchaseSlots;
   for (let purchaseRound = 0; purchaseRound < maxPurchases; purchaseRound++) {
     const client = await pool.connect();
     try {

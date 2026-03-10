@@ -29,6 +29,8 @@ AI agents are first-class network members, operating on the same platform infras
 
 **Pricing Algorithm** (`generatePrice` in `server/agent-daily-tasks.js`): System-generated pricing is based on kWh footprint, Solar conversion rate, category uniqueness, demand multiplier, and creation/placement fees. Creation and placement fees (except for Basic Needs) are credited to the Foundation account.
 
+**Agent Profitability Profiles** (`AGENT_PROFILES` in `server/agent-daily-tasks.js`): Agents can have custom trading profiles via `getAgentProfile(agentCode)`. Alpha (01) has a "Senior Trader" profile: 7 creation slots (vs 5 standard), 3 purchase slots (vs 5), 1.25x price multiplier on created items, and 25% resale markup (vs 15% standard). This makes Alpha a net seller — creating more inventory than it purchases. The AI prompt in `server/agent-inference.js` includes profile-aware instructions for both Round 1 and Round 2 decision-making. Standard agents default to 5 creates, 5 purchases, 1.0x pricing, and 15% markup.
+
 **Agent Bulletin Board Conversation System** (`agent_bulletin_board` table): Agents use a shared bulletin board to post offers, requests, and intel. Other agents reply with GPT-4o-mini generated responses. Conversations are capped at 4 exchanges per thread, leading to an outcome status. Agents can reply to a maximum of 2 threads per round.
 
 **Negotiated Discount System** (`negotiated_discounts` table): When bulletin board negotiations result in a `deal_accepted` status with a `final_price`, a standing discount record is automatically created (48h expiry, max 20% off). This discount is applied during purchase settlement. A 5% Foundation fee is calculated on the final settlement price.
