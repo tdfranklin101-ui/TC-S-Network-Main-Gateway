@@ -103,6 +103,13 @@ const CREATION_FEE = 0.00025;
 const PLACEMENT_FEE = 0.0001;
 const SOLAR_KWH_RATE = 1 / 4913;
 
+const AGENT_PROFILES = {
+  '01': { role: 'Senior Trader', creationSlots: 7, purchaseSlots: 3, priceMultiplier: 1.25, resaleMarkup: 0.25 }
+};
+function getAgentProfile(agentCode) {
+  return AGENT_PROFILES[agentCode] || { role: 'Standard', creationSlots: 5, purchaseSlots: 5, priceMultiplier: 1.0, resaleMarkup: 0.15 };
+}
+
 async function getOrCreateFoundationMember(queryFn) {
   const existing = await queryFn('SELECT id, username, total_solar FROM members WHERE username = $1 LIMIT 1', [FOUNDATION_USERNAME]);
   if (existing.rows.length > 0) {
@@ -476,11 +483,13 @@ async function createArtifactsForAgent(pool, agent, memberId, assignedCategories
   const created = [];
   const errors = [];
 
+  const profile = getAgentProfile(agent.code);
+  const maxCreations = profile.creationSlots;
   let categories = [];
   if (assignedCategories && assignedCategories.length > 0) {
-    categories = assignedCategories.slice(0, 5);
+    categories = assignedCategories.slice(0, maxCreations);
   }
-  while (categories.length < 5) {
+  while (categories.length < maxCreations) {
     const fallback = agent.specialty && ITEM_PARTS[agent.specialty] ? agent.specialty : 'Basic Needs';
     categories.push(fallback);
   }
@@ -509,7 +518,8 @@ async function createArtifactsForAgent(pool, agent, memberId, assignedCategories
       const title = generateItemName(category);
       const slug = generateSlug(title);
       const kwhFootprint = parseFloat((0.001 + Math.random() * 0.499).toFixed(4));
-      const price = generatePrice(category, kwhFootprint);
+      const basePrice = generatePrice(category, kwhFootprint);
+      const price = parseFloat((basePrice * profile.priceMultiplier).toFixed(6));
       const description = generateDescription(category, title);
       const fileType = FILE_TYPES[category] || 'application/octet-stream';
       const contentFormat = CONTENT_FORMATS[category] || 'binary';
@@ -678,7 +688,8 @@ async function makePurchasesForAgent(pool, agent, memberId, demandScores, aiDeci
   let resaleListed = 0;
   let totalResaleValue = 0;
   const RESERVE_FLOOR = 1.0;
-  const MARKUP = 0.15;
+  const profile = getAgentProfile(agent.code);
+  const MARKUP = profile.resaleMarkup;
 
   const buyerRow = await pool.query('SELECT id, username, total_solar FROM members WHERE id = $1', [memberId]);
   if (buyerRow.rows.length === 0) {
@@ -687,7 +698,7 @@ async function makePurchasesForAgent(pool, agent, memberId, demandScores, aiDeci
   }
 
   const purchasedArtifactIds = [];
-  const MANDATORY_BASIC_PURCHASES = 2;
+  const MANDATORY_BASIC_PURCHASES = maxPurchases <= 3 ? 1 : 2;
   let basicNeedsBought = 0;
 
   const allCategories = getOfficialCategories();
@@ -695,7 +706,8 @@ async function makePurchasesForAgent(pool, agent, memberId, demandScores, aiDeci
   const rankedCategories = [...allCategories].sort((a, b) => (scores[b] || 0) - (scores[a] || 0));
   const browsedCategories = [];
 
-  for (let purchaseRound = 0; purchaseRound < 5; purchaseRound++) {
+  const maxPurchases = profile.purchaseSlots;
+  for (let purchaseRound = 0; purchaseRound < maxPurchases; purchaseRound++) {
     const client = await pool.connect();
     try {
       const freshBuyer = await client.query('SELECT id, username, total_solar FROM members WHERE id = $1', [memberId]);
@@ -971,7 +983,7 @@ async function makePurchasesForAgent(pool, agent, memberId, demandScores, aiDeci
       totalResaleValue += resalePrice;
       purchasedArtifactIds.push(artifactId);
       if (artifact.category === 'Basic Needs') basicNeedsBought++;
-      console.log(`🌞 [KID SOL] Agent ${agent.name}: Bought "${artifact.title}" [${artifact.category}] (${artPrice.toFixed(4)} S) → Listed resale at ${resalePrice.toFixed(4)} S (+${Math.round(MARKUP * 100)}%) [Gen ${nextGeneration}] [purchase ${purchaseRound + 1}/5]${artifact.category === 'Basic Needs' ? ` 🏠 BN:${basicNeedsBought}/${MANDATORY_BASIC_PURCHASES}` : ''}`);
+      console.log(`🌞 [KID SOL] Agent ${agent.name}: Bought "${artifact.title}" [${artifact.category}] (${artPrice.toFixed(4)} S) → Listed resale at ${resalePrice.toFixed(4)} S (+${Math.round(MARKUP * 100)}%) [Gen ${nextGeneration}] [purchase ${purchaseRound + 1}/${maxPurchases}]${artifact.category === 'Basic Needs' ? ` 🏠 BN:${basicNeedsBought}/${MANDATORY_BASIC_PURCHASES}` : ''}`);
 
       purchased.push({ artifactId, title: artifact.title, category: artifact.category, price: artPrice, txId, resalePrice });
     } catch (err) {
@@ -1000,7 +1012,8 @@ async function runAgentTasks(pool, agent, assignedCategories, demandScores, kidS
     const memberId = memberRow.rows[0].id;
     const startBalance = parseFloat(memberRow.rows[0].total_solar) || 0;
     result.startBalance = startBalance;
-    console.log(`🤖 [Agent ${agent.code} ${agent.name}] Starting profit-driven tasks (member ID: ${memberId}, balance: ${startBalance.toFixed(4)} S)`);
+    const taskProfile = getAgentProfile(agent.code);
+    console.log(`🤖 [Agent ${agent.code} ${agent.name}] Starting profit-driven tasks (member ID: ${memberId}, balance: ${startBalance.toFixed(4)} S, role: ${taskProfile.role}, create:${taskProfile.creationSlots}/buy:${taskProfile.purchaseSlots})`);
 
     // AI Inference: agent decides how to profit while fulfilling KID SOL's objectives
     let aiDecision = null;
@@ -1903,7 +1916,6 @@ async function runRound2AgentTasks(pool, agents) {
   const startTime = Date.now();
   const runId = crypto.randomUUID().substring(0, 8);
   const RESERVE_FLOOR = 1.0;
-  const MARKUP = 0.15;
 
   console.log(`\n🌞 ===== KID SOL PROVISIONAIRE — ROUND 2 STRATEGIC SESSION (Run ${runId}) =====`);
   console.log(`🌞 [KID SOL] ROUND 2: Afternoon strategic buys + sells for ${agents.length} agents`);
@@ -1955,6 +1967,8 @@ async function runRound2AgentTasks(pool, agents) {
       const memberId = memberRow.rows[0].id;
       const startBalance = parseFloat(memberRow.rows[0].total_solar) || 0;
       agentResult.startBalance = startBalance;
+      const r2Profile = getAgentProfile(agent.code);
+      const MARKUP = r2Profile.resaleMarkup;
 
       const snapshot = await gatherRound2Snapshot(pool, memberId);
       const aiDecision = await makeRound2Decision(pool, agent, memberId, snapshot, kidSolObjectives);
