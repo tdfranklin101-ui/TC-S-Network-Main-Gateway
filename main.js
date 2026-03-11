@@ -227,7 +227,7 @@ const kidRoutes = require('./routes/kid');
 const agentRoutes = require('./routes/agentRoutes');
 
 // Daily Agent Task Engine
-const { runDailyAgentTasks, runSingleAgentTasks, getTaskStatus, runEducationBlitz, ensureAgentMembers, submitKidSolarPrompt, runCustomAgentTask, ALL_CATEGORIES, runRound2AgentTasks, getRound2Status, addBulletinReply } = require('./server/agent-daily-tasks');
+const { runDailyAgentTasks, runSingleAgentTasks, getTaskStatus, runEducationBlitz, ensureAgentMembers, submitKidSolarPrompt, runCustomAgentTask, ALL_CATEGORIES, runRound2AgentTasks, getRound2Status, addBulletinReply, getAgentPortfolios, ARTIFACT_UTILITY_TYPES } = require('./server/agent-daily-tasks');
 
 // Daily greeting removed — was not rendering properly
 // const { scheduleDailyGreeting } = require('./server/generate-greeting');
@@ -12191,6 +12191,40 @@ Only include products where you have found a real URL. Do not make up URLs.`
       console.error('Agent list error:', error);
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ success: false, error: 'Failed to list agents' }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/agents/portfolios' && req.method === 'GET') {
+    try {
+      if (!pool) { res.writeHead(503, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ success: false, error: 'Database unavailable' })); return; }
+      const portfolios = await getAgentPortfolios(pool);
+      const agentList = NETWORK_AGENTS.map(a => {
+        const p = portfolios[a.code] || { balance: 0, artifactCount: 0, portfolioValue: 0, listedValue: 0, netWorth: 0, profile: {} };
+        return {
+          code: a.code,
+          name: a.name,
+          icon: a.icon,
+          specialty: a.specialty,
+          balance: p.balance,
+          artifactCount: p.artifactCount,
+          portfolioValue: parseFloat(p.portfolioValue.toFixed(4)),
+          listedValue: parseFloat(p.listedValue.toFixed(4)),
+          netWorth: parseFloat(p.netWorth.toFixed(4)),
+          role: p.profile.role || 'Standard',
+          creationSlots: p.profile.creationSlots || 5,
+          purchaseSlots: p.profile.purchaseSlots || 5,
+          resaleMarkup: p.profile.resaleMarkup || 0.15
+        };
+      });
+      const totalNetWorth = agentList.reduce((s, a) => s + a.netWorth, 0);
+      const totalArtifacts = agentList.reduce((s, a) => s + a.artifactCount, 0);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, agents: agentList, totalNetWorth: parseFloat(totalNetWorth.toFixed(4)), totalArtifacts, utilityTypes: Object.keys(ARTIFACT_UTILITY_TYPES).length }));
+    } catch (error) {
+      console.error('Portfolio API error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to get portfolios' }));
     }
     return;
   }

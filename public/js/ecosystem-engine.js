@@ -137,7 +137,7 @@ function initAgentCards(){
     const el=document.createElement('div');
     el.className='agent-card';
     el.id='agent-'+a.code;
-    el.innerHTML=`<div class="agent-icon">${a.icon}</div><div class="agent-name">Agent ${a.name}</div><div class="agent-balance">— ☀️</div><div class="agent-records" style="font-size:9px;color:#666;margin-top:2px"></div><div class="agent-status pending">loading...</div>`;
+    el.innerHTML=`<div class="agent-icon">${a.icon}</div><div class="agent-name">Agent ${a.name}</div><div class="agent-balance">— ☀️</div><div class="agent-portfolio" style="font-size:9px;color:#39ff14;margin-top:2px"></div><div class="agent-records" style="font-size:9px;color:#666;margin-top:2px"></div><div class="agent-status pending">loading...</div>`;
     el.addEventListener('click',()=>window.location.href='/agent-profile.html?code='+a.code);
     grid.appendChild(el);
   });
@@ -179,6 +179,7 @@ async function loadPersistentAgentStatus(){
         feedTarget.innerHTML=`<div class="feed-item"><span class="fi-icon">🤖</span><span class="fi-msg"><b>${data.count} persistent agent members</b> loaded — Total: <span class="solar">${totalSolar.toFixed(1)} ☀️</span></span></div><div class="feed-item"><span class="fi-icon">📊</span><span class="fi-msg">Agents receive daily <span class="solar">+1 Solar</span> alongside human members</span></div>`;
       }
       loadAgentRecordCounts(data.agents);
+      loadAgentPortfolios();
     } else {
       const feedTarget=$('cloudFeed');
       if(feedTarget) feedTarget.innerHTML='<div style="color:#888;padding:8px;font-size:12px">Agent data unavailable — run agents to populate</div>';
@@ -209,6 +210,31 @@ async function loadAgentRecordCounts(agentList){
         }
       }catch(e){}
     }));
+  }
+}
+
+async function loadAgentPortfolios(){
+  try{
+    const res=await fetch('/api/agents/portfolios');
+    const data=await res.json();
+    if(data.success&&data.agents){
+      data.agents.forEach(function(p){
+        var el=$('agent-'+p.code);
+        if(!el)return;
+        var pDiv=el.querySelector('.agent-portfolio');
+        if(pDiv){
+          var roleTag=p.role!=='Standard'?'<span style="color:#ff6b35">'+p.role+'</span> · ':'';
+          pDiv.innerHTML=roleTag+'📦 '+p.artifactCount+' items · 💰 '+p.portfolioValue.toFixed(2)+' S';
+        }
+      });
+      var feedTarget=$('cloudFeed');
+      if(feedTarget){
+        var existing=feedTarget.innerHTML;
+        feedTarget.innerHTML=existing+'<div class="feed-item"><span class="fi-icon">💼</span><span class="fi-msg">Network portfolio: <b>'+data.totalArtifacts+' artifacts</b> valued at <span class="solar">'+data.totalNetWorth.toFixed(2)+' ☀️</span> net worth</span></div>';
+      }
+    }
+  }catch(e){
+    console.warn('Portfolio load error:',e.message);
   }
 }
 

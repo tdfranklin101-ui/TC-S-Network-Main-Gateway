@@ -270,8 +270,10 @@ function buildIdentity(agent,data){
         '<span><span class="lbl">Balance:</span> <span class="val gold">'+balance+' Solar</span></span>'+
         '<span><span class="lbl">Joined:</span> <span class="val">'+joinDate+'</span></span>'+
       '</div>'+
+      '<div id="portfolioSummary" style="margin-top:8px;font-size:11px;color:#39ff14"></div>'+
     '</div>'+
     '<div class="id-badge"><span class="status-badge">Persistent Member</span></div>';
+  loadPortfolioData(agent.code);
 }
 
 function buildHistory(data){
@@ -524,6 +526,27 @@ document.querySelectorAll('.tab').forEach(function(tab){
     document.getElementById('tab-'+tab.dataset.tab).classList.add('active');
   });
 });
+
+async function loadPortfolioData(code) {
+  try {
+    var res = await fetch('/api/agents/portfolios');
+    var data = await res.json();
+    if (data.success && data.agents) {
+      var agent = data.agents.find(function(a) { return a.code === code; });
+      if (agent) {
+        var el = document.getElementById('portfolioSummary');
+        if (el) {
+          var roleStr = agent.role !== 'Standard' ? '<span style="color:#ff6b35;font-weight:bold">' + agent.role + '</span> · ' : '';
+          el.innerHTML = roleStr +
+            '📦 <b>' + agent.artifactCount + '</b> artifacts · ' +
+            '💰 Portfolio: <b>' + agent.portfolioValue.toFixed(2) + ' S</b> · ' +
+            '🏦 Net Worth: <b>' + agent.netWorth.toFixed(2) + ' S</b>' +
+            '<br>⚙️ Create: ' + agent.creationSlots + ' slots · Buy: ' + agent.purchaseSlots + ' slots · Markup: ' + Math.round(agent.resaleMarkup * 100) + '%';
+        }
+      }
+    }
+  } catch (e) {}
+}
 
 async function runSingleAgent() {
   var btn = document.getElementById('runAgentBtn');

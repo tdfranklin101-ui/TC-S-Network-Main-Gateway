@@ -103,11 +103,204 @@ const CREATION_FEE = 0.00025;
 const PLACEMENT_FEE = 0.0001;
 const SOLAR_KWH_RATE = 1 / 4913;
 
-const AGENT_PROFILES = {
+const AGENT_BASE_PROFILES = {
   '01': { role: 'Senior Trader', creationSlots: 7, purchaseSlots: 3, priceMultiplier: 1.25, resaleMarkup: 0.25 }
 };
+let dynamicProfiles = {};
+
 function getAgentProfile(agentCode) {
-  return AGENT_PROFILES[agentCode] || { role: 'Standard', creationSlots: 5, purchaseSlots: 5, priceMultiplier: 1.0, resaleMarkup: 0.15 };
+  if (dynamicProfiles[agentCode]) return dynamicProfiles[agentCode];
+  return AGENT_BASE_PROFILES[agentCode] || { role: 'Standard', creationSlots: 5, purchaseSlots: 5, priceMultiplier: 1.0, resaleMarkup: 0.15 };
+}
+
+const ARTIFACT_UTILITY_TYPES = {
+  'Computronium': { type: 'rentable-software', label: 'Rentable Software', desc: 'Executable compute module — licensable for distributed processing' },
+  'AI Tools': { type: 'ai-inference-prompt', label: 'AI Inference Prompt', desc: 'Ready-to-deploy AI prompt chain for inference tasks' },
+  'AI Create': { type: 'ai-inference-prompt', label: 'AI Inference Prompt', desc: 'Generative AI prompt template for creative production' },
+  'Software': { type: 'rentable-software', label: 'Rentable Software', desc: 'Licensed software module — deployable on Solar compute network' },
+  'Utilities': { type: 'rentable-software', label: 'Rentable Software', desc: 'Utility tool — licensable for Solar network operations' },
+  '3D Printing': { type: '3d-printer-code', label: '3D Printer Code', desc: 'Print-ready STL/G-code for physical fabrication' },
+  'Writing': { type: 'book-movie-prompt', label: 'Book/Movie Prompt', desc: 'Literary blueprint — publishable manuscript or screenplay prompt' },
+  'Videos': { type: 'book-movie-prompt', label: 'Book/Movie Prompt', desc: 'Film production prompt — scene direction and visual narrative' },
+  'Video': { type: 'book-movie-prompt', label: 'Book/Movie Prompt', desc: 'Video production equipment spec — studio-grade gear configuration' },
+  'Songs': { type: 'book-movie-prompt', label: 'Book/Movie Prompt', desc: 'Audio production prompt — composition and arrangement blueprint' },
+  'Music': { type: 'rentable-software', label: 'Rentable Software', desc: 'Music production toolkit — licensable instrument and effect chains' },
+  'Art': { type: 'ai-inference-prompt', label: 'AI Inference Prompt', desc: 'Visual art generation prompt — style, composition, and rendering parameters' },
+  'Photo': { type: 'ai-inference-prompt', label: 'AI Inference Prompt', desc: 'Photography prompt — lighting, composition, and post-processing spec' },
+  'Games': { type: 'rentable-software', label: 'Rentable Software', desc: 'Interactive game module — playable or licensable game engine asset' },
+  'Education': { type: 'ai-inference-prompt', label: 'AI Inference Prompt', desc: 'Educational AI prompt — adaptive learning module for guided instruction' },
+  'Docs': { type: 'ai-inference-prompt', label: 'AI Inference Prompt', desc: 'Documentation prompt — structured knowledge base template' },
+  'Basic Needs': { type: 'digital-asset', label: 'Digital Asset', desc: 'Essential resource for community sustenance and access' },
+  'Rent': { type: 'rentable-software', label: 'Rentable Software', desc: 'Cooperative space access license — time-bounded usage right' },
+  'Energy': { type: 'rentable-software', label: 'Rentable Software', desc: 'Energy metering and optimization module — licensable grid tool' },
+  'Culture': { type: 'book-movie-prompt', label: 'Book/Movie Prompt', desc: 'Cultural narrative prompt — heritage documentation and storytelling' },
+  'Health & Wellness': { type: 'digital-asset', label: 'Digital Asset', desc: 'Wellness resource — health optimization guide or tool' },
+  'Community': { type: 'digital-asset', label: 'Digital Asset', desc: 'Community coordination asset — governance and collaboration tool' }
+};
+
+function getArtifactUtility(category) {
+  return ARTIFACT_UTILITY_TYPES[category] || { type: 'digital-asset', label: 'Digital Asset', desc: 'General digital artifact on the Solar network' };
+}
+
+async function kidSolRebalanceProfiles(pool, agents) {
+  console.log('👑 [KID SOL] Portfolio analysis & agent rebalancing...');
+  try {
+    const balanceRows = await pool.query(
+      `SELECT m.username, m.total_solar,
+        (SELECT COUNT(*) FROM artifacts a WHERE a.creator_id = CAST(m.id AS TEXT) AND a.active = true) as artifact_count,
+        (SELECT COALESCE(SUM(CAST(a.solar_amount_s AS NUMERIC)), 0) FROM artifacts a WHERE a.creator_id = CAST(m.id AS TEXT) AND a.active = true) as portfolio_value
+       FROM members m WHERE m.username LIKE 'agent_eco_%'`
+    );
+
+    const agentData = {};
+    let totalBalance = 0;
+    let totalPortfolio = 0;
+    let agentCount = 0;
+
+    for (const row of balanceRows.rows) {
+      const code = row.username.replace('agent_eco_', '');
+      const balance = parseFloat(row.total_solar) || 0;
+      const portfolioValue = parseFloat(row.portfolio_value) || 0;
+      const artifactCount = parseInt(row.artifact_count) || 0;
+      agentData[code] = { balance, portfolioValue, artifactCount, netWorth: balance + portfolioValue };
+      totalBalance += balance;
+      totalPortfolio += portfolioValue;
+      agentCount++;
+    }
+
+    if (agentCount === 0) return;
+
+    const avgBalance = totalBalance / agentCount;
+    const avgPortfolio = totalPortfolio / agentCount;
+    const avgNetWorth = (totalBalance + totalPortfolio) / agentCount;
+
+    console.log(`👑 [KID SOL] Network: ${agentCount} agents | Avg Balance: ${avgBalance.toFixed(2)} S | Avg Portfolio: ${avgPortfolio.toFixed(2)} S (${Math.round(totalPortfolio / agentCount)} items avg)`);
+
+    const newProfiles = {};
+    for (const agent of agents) {
+      const data = agentData[agent.code];
+      if (!data) continue;
+
+      const base = AGENT_BASE_PROFILES[agent.code] || {};
+      const balanceRatio = avgBalance > 0 ? data.balance / avgBalance : 1;
+      const portfolioRatio = avgPortfolio > 0 ? data.portfolioValue / avgPortfolio : 1;
+
+      let role = base.role || 'Standard';
+      let creationSlots = base.creationSlots || 5;
+      let purchaseSlots = base.purchaseSlots || 5;
+      let priceMultiplier = base.priceMultiplier || 1.0;
+      let resaleMarkup = base.resaleMarkup || 0.15;
+
+      if (balanceRatio < 0.85) {
+        role = base.role ? `${base.role} (Boost)` : 'Recovery Mode';
+        creationSlots = Math.min((base.creationSlots || 5) + 2, 9);
+        purchaseSlots = Math.max((base.purchaseSlots || 5) - 2, 2);
+        priceMultiplier = Math.max(priceMultiplier, 1.15);
+        resaleMarkup = Math.max(resaleMarkup, 0.20);
+      } else if (balanceRatio > 1.15) {
+        role = base.role ? `${base.role} (Invest)` : 'Investor Mode';
+        creationSlots = Math.max((base.creationSlots || 5) - 1, 3);
+        purchaseSlots = Math.min((base.purchaseSlots || 5) + 1, 7);
+      }
+
+      if (portfolioRatio < 0.5 && balanceRatio >= 0.85) {
+        creationSlots = Math.min(creationSlots + 1, 9);
+        role = role.includes('(') ? role : `${role} (Build Stock)`;
+      }
+
+      newProfiles[agent.code] = { role, creationSlots, purchaseSlots, priceMultiplier, resaleMarkup };
+
+      const changed = (creationSlots !== (base.creationSlots || 5)) || (purchaseSlots !== (base.purchaseSlots || 5));
+      if (changed) {
+        console.log(`   📊 ${agent.name} (${agent.code}): ${data.balance.toFixed(2)} S + ${data.portfolioValue.toFixed(2)} S portfolio (${data.artifactCount} items) → ${role} [create:${creationSlots} buy:${purchaseSlots} markup:${Math.round(resaleMarkup*100)}%]`);
+      }
+    }
+
+    dynamicProfiles = newProfiles;
+    console.log(`👑 [KID SOL] Rebalancing complete — ${Object.keys(newProfiles).length} agents profiled`);
+  } catch (err) {
+    console.warn('⚠️ [KID SOL] Rebalancing failed, using base profiles:', err.message);
+    dynamicProfiles = {};
+  }
+}
+
+async function getAgentPortfolios(pool) {
+  try {
+    const result = await pool.query(
+      `SELECT m.username,
+        m.total_solar as balance,
+        COUNT(a.id) as artifact_count,
+        COALESCE(SUM(CAST(a.solar_amount_s AS NUMERIC)), 0) as portfolio_value,
+        COALESCE(SUM(CASE WHEN a.is_listed_for_resale THEN CAST(COALESCE(a.resale_price, a.solar_amount_s) AS NUMERIC) ELSE 0 END), 0) as listed_value,
+        COALESCE(SUM(CAST(a.solar_amount_s AS NUMERIC)), 0) as total_value
+       FROM members m
+       LEFT JOIN artifacts a ON a.creator_id = CAST(m.id AS TEXT) AND a.active = true
+       WHERE m.username LIKE 'agent_eco_%'
+       GROUP BY m.username, m.total_solar
+       ORDER BY m.username`
+    );
+
+    const agentData = {};
+    let totalBalance = 0;
+    let totalPortfolio = 0;
+    let agentCount = 0;
+    for (const row of result.rows) {
+      const code = row.username.replace('agent_eco_', '');
+      const balance = parseFloat(row.balance) || 0;
+      const portfolioValue = parseFloat(row.portfolio_value) || 0;
+      agentData[code] = { balance, portfolioValue, artifactCount: parseInt(row.artifact_count) || 0, listedValue: parseFloat(row.listed_value) || 0, totalValue: parseFloat(row.total_value) || 0 };
+      totalBalance += balance;
+      totalPortfolio += portfolioValue;
+      agentCount++;
+    }
+
+    const avgBalance = agentCount > 0 ? totalBalance / agentCount : 0;
+    const avgPortfolio = agentCount > 0 ? totalPortfolio / agentCount : 0;
+
+    const portfolios = {};
+    for (const code of Object.keys(agentData)) {
+      const d = agentData[code];
+      const base = AGENT_BASE_PROFILES[code] || {};
+      const balanceRatio = avgBalance > 0 ? d.balance / avgBalance : 1;
+      const portfolioRatio = avgPortfolio > 0 ? d.portfolioValue / avgPortfolio : 1;
+
+      let role = base.role || 'Standard';
+      let creationSlots = base.creationSlots || 5;
+      let purchaseSlots = base.purchaseSlots || 5;
+      let priceMultiplier = base.priceMultiplier || 1.0;
+      let resaleMarkup = base.resaleMarkup || 0.15;
+
+      if (balanceRatio < 0.85) {
+        role = base.role ? `${base.role} (Boost)` : 'Recovery Mode';
+        creationSlots = Math.min((base.creationSlots || 5) + 2, 9);
+        purchaseSlots = Math.max((base.purchaseSlots || 5) - 2, 2);
+        priceMultiplier = Math.max(priceMultiplier, 1.15);
+        resaleMarkup = Math.max(resaleMarkup, 0.20);
+      } else if (balanceRatio > 1.15) {
+        role = base.role ? `${base.role} (Invest)` : 'Investor Mode';
+        creationSlots = Math.max((base.creationSlots || 5) - 1, 3);
+        purchaseSlots = Math.min((base.purchaseSlots || 5) + 1, 7);
+      }
+      if (portfolioRatio < 0.5 && balanceRatio >= 0.85) {
+        creationSlots = Math.min(creationSlots + 1, 9);
+        role = role.includes('(') ? role : `${role} (Build Stock)`;
+      }
+
+      portfolios[code] = {
+        balance: d.balance,
+        artifactCount: d.artifactCount,
+        portfolioValue: d.portfolioValue,
+        listedValue: d.listedValue,
+        totalValue: d.totalValue,
+        netWorth: d.balance + d.portfolioValue,
+        profile: { role, creationSlots, purchaseSlots, priceMultiplier, resaleMarkup }
+      };
+    }
+    return portfolios;
+  } catch (err) {
+    console.warn('⚠️ Portfolio query failed:', err.message);
+    return {};
+  }
 }
 
 async function getOrCreateFoundationMember(queryFn) {
@@ -473,10 +666,11 @@ function generateProductPrompt(category, title, description, contentFormat) {
 
   const verb = CATEGORY_VERBS[category] || 'Create a digital product:';
   const formatInstr = FORMAT_INSTRUCTIONS[contentFormat] || 'Output format: digital file, ';
+  const utility = getArtifactUtility(category);
 
   const cleanTitle = title.replace(/\b(v\d+|Pro|Lite|HD|XL|SDK|API|Beta|Alpha|Deluxe|Remastered|Extended|Limited|Standard|Plus|Ultra|Starter|Suite|Kit|Bundle)\b/gi, '').trim();
 
-  return `${verb} "${cleanTitle}". ${description}. ${formatInstr}suitable for the Solar network marketplace. Include detailed specifications, quality benchmarks, and ensure the output is production-ready for distribution.`;
+  return `[${utility.label}] ${verb} "${cleanTitle}". ${description}. ${utility.desc}. ${formatInstr}suitable for the Solar network marketplace. Include detailed specifications, quality benchmarks, and ensure the output is production-ready for distribution.`;
 }
 
 async function createArtifactsForAgent(pool, agent, memberId, assignedCategories) {
@@ -572,7 +766,8 @@ async function createArtifactsForAgent(pool, agent, memberId, assignedCategories
           contentBody = `${title}\n\n${description}\n\nCategory: ${category}\nCreated by: Agent ${agent.name} (${agent.code})\nClass: A — Market Item\nGenerated: ${new Date().toISOString()}`;
         }
       } else {
-        contentBody = `${title}\n\n${description}\n\nCategory: ${category}\nCreated by: Agent ${agent.name} (${agent.code})\nClass: B — File Delivery\nGenerated: ${new Date().toISOString()}`;
+        const utility = getArtifactUtility(category);
+        contentBody = `# ${title}\n\n**Utility Type:** ${utility.label}\n**Use Case:** ${utility.desc}\n\n## Description\n${description}\n\n## Artifact Specifications\n- **Category:** ${category}\n- **Format:** ${utility.type}\n- **kWh Footprint:** ${kwhFootprint}\n- **Created by:** Agent ${agent.name} (${agent.code})\n- **Class:** B — ${utility.label}\n- **Generated:** ${new Date().toISOString()}\n\n## Usage Instructions\n${utility.type === 'ai-inference-prompt' ? 'Deploy this prompt via any compatible AI inference engine. Supports GPT-4o, Claude, and open-source models. Input parameters are pre-configured for optimal output quality.' : utility.type === 'rentable-software' ? 'License this module for deployment on the Solar compute network. Includes runtime environment specification, dependency manifest, and execution parameters.' : utility.type === '3d-printer-code' ? 'Load the STL/G-code file into any FDM or SLA 3D printer. Print settings and material specifications are included in the guide.' : utility.type === 'book-movie-prompt' ? 'Use this creative blueprint to produce a full-length work. Includes narrative structure, character development, visual direction, and production notes.' : 'Access this digital resource through the Solar network marketplace. Standard download and usage terms apply.'}`;
       }
 
       const productPrompt = generateProductPrompt(category, title, description, contentFormat);
@@ -603,7 +798,7 @@ async function createArtifactsForAgent(pool, agent, memberId, assignedCategories
         `INSERT INTO market_items (title, description, category, subcategory, price_solar, kwh_estimate, source_type, status, created_by_user_id, metadata)
          VALUES ($1, $2, $3, NULL, $4, $5, 'INTERNAL_STOCK', 'ACTIVE', $6, $7)`,
         [title, description, category, String(price), String(kwhFootprint), String(memberId),
-         JSON.stringify({ agentName: agent.name, agentCode: agent.code, artifactId, generatedAt: new Date().toISOString(), ...(artifact3dMeta || {}), inference: { label: inferLabel, print3d: matrix.print3d, print2d: matrix.print2d, fileType: matrix.file.type, deliverables: matrix.deliverables } })]
+         JSON.stringify({ agentName: agent.name, agentCode: agent.code, artifactId, generatedAt: new Date().toISOString(), utilityType: getArtifactUtility(category).type, utilityLabel: getArtifactUtility(category).label, ...(artifact3dMeta || {}), inference: { label: inferLabel, print3d: matrix.print3d, print2d: matrix.print2d, fileType: matrix.file.type, deliverables: matrix.deliverables } })]
       );
 
       // Fire-and-forget: generate LifeLens analysis for the new artifact
@@ -1270,6 +1465,8 @@ async function runDailyAgentTasks(pool, agents) {
       console.warn('🌞 [KID SOL] Could not mark prompts processed:', err.message);
     }
   }
+
+  await kidSolRebalanceProfiles(pool, agents);
 
   const supplyManifest = await buildSupplyManifest(pool, agents, demand);
 
@@ -2487,4 +2684,4 @@ async function upgradeArtifactPrompts(pool) {
   return { upgraded, errors, total: result.rows.length, byAgent };
 }
 
-module.exports = { runDailyAgentTasks, runSingleAgentTasks, getTaskStatus, runEducationBlitz, ensureAgentMembers, submitKidSolarPrompt, runCustomAgentTask, ALL_CATEGORIES, runRound2AgentTasks, getRound2Status, addBulletinReply, upgradeArtifactPrompts, analyzeMarketDemand };
+module.exports = { runDailyAgentTasks, runSingleAgentTasks, getTaskStatus, runEducationBlitz, ensureAgentMembers, submitKidSolarPrompt, runCustomAgentTask, ALL_CATEGORIES, runRound2AgentTasks, getRound2Status, addBulletinReply, upgradeArtifactPrompts, analyzeMarketDemand, getAgentPortfolios, getArtifactUtility, ARTIFACT_UTILITY_TYPES };
