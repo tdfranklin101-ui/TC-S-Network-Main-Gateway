@@ -1711,6 +1711,7 @@ window.signinUser = async function() {
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include',
       body: JSON.stringify({
         username: username,
         password: password
@@ -1720,10 +1721,8 @@ window.signinUser = async function() {
     const result = await response.json();
 
     if (response.ok) {
-      // Update marketplace instance if available
       const balance = parseFloat(result.solarBalance ?? 0);
       
-      // Create unified user object for both systems
       const userObj = {
         userId: result.userId,
         username: result.username,
@@ -1732,7 +1731,6 @@ window.signinUser = async function() {
         solarBalance: balance
       };
       
-      // Update external marketplace class
       if (window.marketplace) {
         window.marketplace.currentUser = userObj;
         window.marketplace.solarBalance = balance;
@@ -1740,25 +1738,40 @@ window.signinUser = async function() {
         window.marketplace.closeSigninModal();
       }
       
-      // Also update inline script's global currentUser if it exists
-      if (typeof window.currentUser !== 'undefined' || window.currentUser === null) {
-        window.currentUser = userObj;
-        // Also cache to localStorage for persistence
-        localStorage.setItem('tc_s_user', JSON.stringify(userObj));
-        // Call inline display update if available
-        if (typeof window.updateUserDisplay === 'function') {
-          window.updateUserDisplay();
-        }
+      window.currentUser = userObj;
+      if (typeof window.sessionState !== 'undefined') window.sessionState = 'authenticated';
+      localStorage.setItem('tc_s_user', JSON.stringify(userObj));
+      if (typeof window.syncCurrentUser === 'function') window.syncCurrentUser();
+      if (typeof window.updateUserDisplay === 'function') window.updateUserDisplay();
+
+      if (result.userId) {
+        const BALANCE_CACHE_KEY = 'tc_s_balance_cache';
+        sessionStorage.setItem(BALANCE_CACHE_KEY, JSON.stringify({
+          balance: balance,
+          userId: result.userId,
+          timestamp: Date.now()
+        }));
       }
+
+      if (typeof window.registerPersonalAgent === 'function') {
+        window.registerPersonalAgent(result.username, result.email || username);
+      }
+
+      const signinModal = document.getElementById('signin-modal');
+      if (signinModal) signinModal.classList.remove('visible');
+      
+      if (typeof window.updateUserDisplay === 'function') window.updateUserDisplay();
       
       const displayBalance = balance.toFixed(4);
-      alert(`🌱 Welcome back, ${result.username}! Balance: ${displayBalance} Solar`);
+      setTimeout(() => {
+        alert(`Welcome back, ${result.username}! Balance: ${displayBalance} Solar`);
+      }, 100);
     } else {
-      alert(`❌ Sign in failed: ${result.error}`);
+      alert(`Sign in failed: ${result.error}`);
     }
   } catch (error) {
     console.error('Sign in error:', error);
-    alert('❌ Network error during sign in');
+    alert('Network error during sign in');
   }
 };
 
@@ -1790,6 +1803,7 @@ window.signupUser = async function() {
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include',
       body: JSON.stringify({
         username: username,
         email: email,

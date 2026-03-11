@@ -5630,12 +5630,13 @@ const server = http.createServer(async (req, res) => {
 
   // Login API endpoint - with CORS support
   if ((pathname === '/api/login' || pathname === '/api/users/login')) {
-    // Handle OPTIONS preflight
     if (req.method === 'OPTIONS') {
+      const origin = req.headers.origin || '*';
       res.writeHead(204, {
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': origin,
         'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type'
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Credentials': 'true'
       });
       res.end();
       return;
@@ -5700,22 +5701,23 @@ const server = http.createServer(async (req, res) => {
       }
 
         if (loginSuccess) {
-          // Create session (async - database-backed for cross-domain)
           const sessionId = await createSession(userData.userId, userData);
           
-          // Set cross-domain session cookie (SameSite=None for Vercel/Replit)
           const cookieOptions = [
             `tc_s_session=${sessionId}`,
             'HttpOnly',
             'SameSite=None',
             'Secure',
             'Path=/',
-            `Max-Age=${30 * 24 * 60 * 60}` // 30 days
+            `Max-Age=${30 * 24 * 60 * 60}`
           ];
+          
+          const requestOrigin = req.headers.origin || req.headers.referer || '*';
+          const allowOrigin = requestOrigin !== '*' ? requestOrigin.replace(/\/$/, '') : '*';
           
           res.writeHead(200, { 
             'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Origin': allowOrigin,
             'Access-Control-Allow-Credentials': 'true',
             'Set-Cookie': cookieOptions.join('; ')
           });
@@ -5725,9 +5727,10 @@ const server = http.createServer(async (req, res) => {
             ...userData
           }));
         } else {
+          const requestOrigin = req.headers.origin || '*';
           res.writeHead(401, { 
             'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*'
+            'Access-Control-Allow-Origin': requestOrigin !== '*' ? requestOrigin.replace(/\/$/, '') : '*'
           });
           res.end(JSON.stringify({ success: false, error: 'Invalid username or password' }));
         }
@@ -5735,7 +5738,7 @@ const server = http.createServer(async (req, res) => {
         console.error('Login error:', error);
         res.writeHead(500, { 
           'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
+          'Access-Control-Allow-Origin': req.headers.origin || '*'
         });
         res.end(JSON.stringify({ success: false, error: 'Login failed' }));
       }
@@ -6049,12 +6052,13 @@ const server = http.createServer(async (req, res) => {
 
   // Registration API endpoint (for existing login.html page) - with CORS support
   if (pathname === '/api/register') {
-    // Handle OPTIONS preflight
     if (req.method === 'OPTIONS') {
+      const origin = req.headers.origin || '*';
       res.writeHead(204, {
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': origin,
         'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type'
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Credentials': 'true'
       });
       res.end();
       return;
