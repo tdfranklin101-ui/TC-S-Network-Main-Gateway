@@ -14179,24 +14179,47 @@ Only include products where you have found a real URL. Do not make up URLs.`
       }
 
       const SOLAR_KWH_RATE_LOCAL = 1 / 4913;
-      const CREATION_FEE_LOCAL = 0.00025;
-      const PLACEMENT_FEE_LOCAL = 0.0001;
-      const UNIQUENESS_FACTORS = {
-        'Computronium': 3.5, 'Songs': 2.5, 'Music': 2.2, 'Video': 2.8,
-        'Art': 2.0, 'Photo': 1.8, 'Writing': 1.5, 'AI Tools': 3.0, 'AI Create': 2.8,
-        'Software': 3.2, 'Docs': 1.3, 'Education': 1.4, 'Games': 2.5, 'Utilities': 1.6,
-        'Culture': 1.7, 'Basic Needs': 1.0, 'Rent': 1.2, 'Energy': 2.0, '3D Printing': 2.4,
-        'Health & Wellness': 1.2, 'Community': 1.1
+      const CREATION_FEE_LOCAL = 0.000005;
+      const PLACEMENT_FEE_LOCAL = 0.000002;
+      const CATEGORY_KWH_RANGES = {
+        'Basic Needs': { min: 0.5, max: 5 }, 'Rent': { min: 2, max: 15 },
+        'Energy': { min: 1, max: 20 }, 'Health & Wellness': { min: 0.5, max: 8 },
+        'Community': { min: 0.2, max: 3 }, 'Education': { min: 0.1, max: 2 },
+        'Docs': { min: 0.05, max: 1 }, 'Writing': { min: 0.1, max: 3 },
+        'Culture': { min: 0.2, max: 5 }, 'Songs': { min: 0.5, max: 8 },
+        'Music': { min: 1, max: 15 }, 'Videos': { min: 2, max: 30 },
+        'Video': { min: 3, max: 25 }, 'Photo': { min: 0.2, max: 5 },
+        'Art': { min: 0.3, max: 10 }, 'Games': { min: 2, max: 40 },
+        'Software': { min: 5, max: 50 }, 'AI Tools': { min: 3, max: 60 },
+        'AI Create': { min: 2, max: 40 }, 'Computronium': { min: 10, max: 100 },
+        '3D Printing': { min: 1, max: 20 }, 'Utilities': { min: 0.5, max: 10 }
       };
-
-      const kwhFootprint = 4.913 + Math.random() * 5;
-      const kwhSolar = kwhFootprint * SOLAR_KWH_RATE_LOCAL;
-      const uniquenessFactor = (UNIQUENESS_FACTORS[category] || 1.5) + (Math.random() * 0.5 - 0.25);
+      const EXEC_KWH = {
+        'ai-inference-prompt': { min: 0.5, max: 8 },
+        '3d-printer-code': { min: 2, max: 30 }
+      };
+      const UTILITY_MAP = {
+        'AI Tools': 'ai-inference-prompt', 'AI Create': 'ai-inference-prompt',
+        'Art': 'ai-inference-prompt', 'Photo': 'ai-inference-prompt',
+        'Education': 'ai-inference-prompt', 'Docs': 'ai-inference-prompt',
+        '3D Printing': '3d-printer-code'
+      };
+      const range = CATEGORY_KWH_RANGES[category] || { min: 0.5, max: 10 };
+      const creationKwh = range.min + Math.random() * (range.max - range.min);
+      const creationPrice = creationKwh * SOLAR_KWH_RATE_LOCAL;
+      const execType = UTILITY_MAP[category];
+      const execRange = execType ? EXEC_KWH[execType] : null;
+      let executionPrice = 0;
+      if (execRange) {
+        const execKwh = execRange.min + Math.random() * (execRange.max - execRange.min);
+        executionPrice = execKwh * SOLAR_KWH_RATE_LOCAL;
+      }
+      const kwhFootprint = creationKwh;
       const isBasicNeeds = category === 'Basic Needs';
       const genFee = isBasicNeeds ? 0 : CREATION_FEE_LOCAL;
       const placeFee = isBasicNeeds ? 0 : PLACEMENT_FEE_LOCAL;
-      const basePrice = (kwhSolar * uniquenessFactor * 1.0) + genFee + placeFee;
-      const minPrice = isBasicNeeds ? 0.001 : 0.005;
+      const basePrice = (creationPrice + executionPrice) + genFee + placeFee;
+      const minPrice = isBasicNeeds ? 0.00001 : 0.0001;
       const solarPrice = parseFloat(Math.max(minPrice, basePrice).toFixed(6));
 
       const artifactId = crypto.randomUUID();
