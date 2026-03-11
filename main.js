@@ -227,7 +227,7 @@ const kidRoutes = require('./routes/kid');
 const agentRoutes = require('./routes/agentRoutes');
 
 // Daily Agent Task Engine
-const { runDailyAgentTasks, runSingleAgentTasks, getTaskStatus, runEducationBlitz, ensureAgentMembers, submitKidSolarPrompt, runCustomAgentTask, ALL_CATEGORIES, runRound2AgentTasks, getRound2Status, addBulletinReply, getAgentPortfolios, ARTIFACT_UTILITY_TYPES } = require('./server/agent-daily-tasks');
+const { runDailyAgentTasks, runSingleAgentTasks, getTaskStatus, runEducationBlitz, ensureAgentMembers, submitKidSolarPrompt, runCustomAgentTask, ALL_CATEGORIES, runRound2AgentTasks, getRound2Status, addBulletinReply, getAgentPortfolios, ARTIFACT_UTILITY_TYPES, getArtifactUtility } = require('./server/agent-daily-tasks');
 
 // Daily greeting removed — was not rendering properly
 // const { scheduleDailyGreeting } = require('./server/generate-greeting');
@@ -5783,6 +5783,126 @@ const server = http.createServer(async (req, res) => {
       console.error('Members list error:', error);
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Failed to fetch members list' }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/members/cards' && req.method === 'GET') {
+    try {
+      if (!pool) { res.writeHead(503, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ success: false, error: 'Database unavailable' })); return; }
+      const hasExtCol = await pool.query(`SELECT column_name FROM information_schema.columns WHERE table_name='members' AND column_name='is_external_agent'`);
+      const extSelect = hasExtCol.rows.length > 0 ? 'm.is_external_agent' : 'false as is_external_agent';
+      const result = await pool.query(
+        `SELECT m.id, m.username, m.name, m.total_solar as balance, m.is_agent, m.signup_timestamp,
+          ${extSelect},
+          (SELECT COUNT(*) FROM artifact_copies ac WHERE ac.owner_id = m.id AND ac.is_active = true) as owned_count,
+          (SELECT COUNT(*) FROM artifacts a WHERE a.creator_id = CAST(m.id AS TEXT) AND a.active = true) as created_count
+         FROM members m
+         WHERE m.username != 'tcs_foundation'
+         ORDER BY m.total_solar DESC NULLS LAST`
+      );
+      const members = result.rows.map(m => {
+        let icon = '👤';
+        let specialty = null;
+        const isExt = m.is_external_agent === true;
+        if (m.is_agent && m.username && m.username.startsWith('agent_eco_')) {
+          const code = m.username.replace('agent_eco_', '');
+          const agentDef = NETWORK_AGENTS.find(a => a.code === code);
+          if (agentDef) { icon = agentDef.icon; specialty = agentDef.specialty; }
+          else icon = '🤖';
+        } else if (isExt) {
+          icon = '🌐';
+        }
+        return {
+          id: m.id, username: m.username, name: m.name || m.username,
+          balance: parseFloat(m.balance || 0),
+          isAgent: m.is_agent || false, isExternalAgent: isExt,
+          icon, specialty,
+          artifactCount: parseInt(m.owned_count || 0) + parseInt(m.created_count || 0),
+          ownedCount: parseInt(m.owned_count || 0),
+          createdCount: parseInt(m.created_count || 0),
+          joinDate: m.signup_timestamp
+        };
+      });
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify({ success: true, members, totalMembers: members.length }));
+    } catch (error) {
+      console.error('Member cards error:', error.message);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to load member cards' }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/members/storage' && req.method === 'GET') {
+    try {
+      if (!pool) { res.writeHead(503, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ success: false, error: 'Database unavailable' })); return; }
+      const sessionId = getCookie(req, 'tc_s_session');
+      const session = sessionId ? await getSession(sessionId) : null;
+      if (!session || !session.userId) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Not authenticated' }));
+        return;
+      }
+      const userId = session.userId;
+      const ownedResult = await pool.query(
+        `SELECT a.id, a.title, a.category, a.solar_amount_s as price, a.content_format,
+          a.kwh_footprint, a.artifact_class, a.source_type,
+          ac.solar_paid as price_paid, ac.acquired_method, ac.acquired_at,
+          ac.is_active
+         FROM artifact_copies ac
+         JOIN artifacts a ON a.id = ac.artifact_id
+         WHERE ac.owner_id = $1 AND ac.is_active = true
+         ORDER BY ac.acquired_at DESC`,
+        [userId]
+      );
+      const createdResult = await pool.query(
+        `SELECT id, title, category, solar_amount_s as price, content_format,
+          kwh_footprint, artifact_class, source_type, created_at as acquired_at
+         FROM artifacts
+         WHERE creator_id = $1 AND active = true
+         ORDER BY created_at DESC`,
+        [String(userId)]
+      );
+      const ownedArtifacts = ownedResult.rows.map(r => {
+        const util = getArtifactUtility(r.category);
+        return {
+          id: r.id, title: r.title, category: r.category,
+          price: parseFloat(r.price || 0), pricePaid: parseFloat(r.price_paid || r.price || 0),
+          acquiredMethod: r.acquired_method || 'purchase',
+          acquiredDate: r.acquired_at,
+          utilityType: util.type,
+          artifactClass: r.artifact_class, source: 'owned'
+        };
+      });
+      const createdIds = new Set(ownedArtifacts.map(a => a.id));
+      const createdArtifacts = createdResult.rows
+        .filter(r => !createdIds.has(r.id))
+        .map(r => {
+          const util = getArtifactUtility(r.category);
+          return {
+            id: r.id, title: r.title, category: r.category,
+            price: parseFloat(r.price || 0), pricePaid: 0,
+            acquiredMethod: 'created',
+            acquiredDate: r.acquired_at,
+            utilityType: util.type,
+            artifactClass: r.artifact_class, source: 'created'
+          };
+        });
+      const allArtifacts = ownedArtifacts.concat(createdArtifacts);
+      const portfolioValue = allArtifacts.reduce((s, a) => s + a.price, 0);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        artifacts: allArtifacts,
+        totalOwned: ownedArtifacts.length,
+        totalCreated: createdArtifacts.length,
+        portfolioValue: parseFloat(portfolioValue.toFixed(4))
+      }));
+    } catch (error) {
+      console.error('Member storage error:', error.message);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Failed to load storage' }));
     }
     return;
   }
