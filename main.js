@@ -1076,18 +1076,16 @@ try {
       sslConfig = { rejectUnauthorized: false };
   }
   
-  const dbUrl = process.env.PRODUCTION_DATABASE_URL || process.env.DATABASE_URL;
-  const dbLabel = process.env.PRODUCTION_DATABASE_URL ? 'PRODUCTION_DATABASE_URL' : 'DATABASE_URL';
-  if (dbUrl) {
+  if (process.env.DATABASE_URL) {
     pool = new Pool({ 
-      connectionString: dbUrl,
+      connectionString: process.env.DATABASE_URL,
       max: 20,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 15000,
       ssl: sslConfig
     });
     pool.on('error', (err) => console.warn('⚠️ Pool idle client error:', err.message));
-    console.log(`✅ Database connection ready (using ${dbLabel})`);
+    console.log('✅ Database connection ready (using DATABASE_URL)');
   } else if (process.env.PGHOST) {
     // Use individual PG* variables (deployed production site)
     pool = new Pool({
