@@ -4378,7 +4378,7 @@
             </div>
             <div class="form-buttons">
                 <button class="btn btn-secondary" onclick="closeSigninModal()">Cancel</button>
-                <button class="btn btn-primary" onclick="signinUser()">Sign In</button>
+                <button class="btn btn-primary" id="signin-submit-btn" onclick="if(window.signinUser){window.signinUser();}else{alert('Loading...');}">Sign In</button>
             </div>
         </div>
     </div>
@@ -6919,9 +6919,9 @@
         }
 
 
-        async function signinUser() {
-            const username = document.getElementById('signin-username').value;
-            const password = document.getElementById('signin-password').value;
+        window.signinUser = async function() {
+            var username = document.getElementById('signin-username').value;
+            var password = document.getElementById('signin-password').value;
 
             if (!username || !password) {
                 alert('Username/email and password are required');
@@ -6929,10 +6929,10 @@
             }
 
             try {
-                const response = await fetch('/api/login', {
+                var response = await fetch('/api/login', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
+                        'Content-Type': 'application/json'
                     },
                     credentials: 'include',
                     body: JSON.stringify({
@@ -6941,13 +6941,10 @@
                     })
                 });
 
-                const result = await response.json();
+                var result = await response.json();
 
                 if (response.ok) {
-                    console.log('✅ Sign-in successful:', result);
-                    
-                    // IMMEDIATELY set currentUser with login response data (authoritative balance)
-                    const loginBalance = Number(result.solarBalance) || 0;
+                    var loginBalance = Number(result.solarBalance) || 0;
                     currentUser = {
                         userId: result.userId,
                         username: result.username,
@@ -6956,9 +6953,7 @@
                     sessionState = 'authenticated';
                     syncCurrentUser();
                     updateUserDisplay();
-                    console.log(`💰 Login balance set: ${loginBalance} Solar`);
                     
-                    // Cache the balance to protect against session lookup issues
                     if (result.userId) {
                         sessionStorage.setItem(BALANCE_CACHE_KEY, JSON.stringify({
                             balance: loginBalance,
@@ -6967,28 +6962,20 @@
                         }));
                     }
                     
-                    // Register personal agent automatically
-                    await registerPersonalAgent(result.username, result.email || username);
+                    try { await registerPersonalAgent(result.username, result.email || username); } catch(e) {}
                     
-                    // Close modal
                     closeSigninModal();
-                    
-                    // Final display update after modal close
                     updateUserDisplay();
                     
-                    // Use setTimeout to ensure DOM updates before alert blocks the thread
-                    const welcomeMsg = `🌱 Welcome back, ${result.username}! Your agent is ready. Balance: ${loginBalance.toFixed(4)} Solar`;
-                    setTimeout(() => {
-                        alert(welcomeMsg);
-                    }, 100);
+                    var welcomeMsg = 'Welcome back, ' + result.username + '! Balance: ' + loginBalance.toFixed(4) + ' Solar';
+                    setTimeout(function() { alert(welcomeMsg); }, 100);
                 } else {
-                    alert(`❌ Sign in failed: ${result.error}`);
+                    alert('Sign in failed: ' + (result.error || 'Unknown error'));
                 }
             } catch (error) {
-                console.error('Sign in error:', error);
-                alert('❌ Network error during sign in');
+                alert('Network error during sign in: ' + error.message);
             }
-        }
+        };
 
         async function signupUser() {
             const username = document.getElementById('signup-username').value;
@@ -8319,7 +8306,7 @@
     </script>
 
     <!-- Marketplace functionality -->
-    <script src="/js/marketplace.js"></script>
+    <script src="/js/marketplace.js?v=20260312"></script>
 
     <!-- Item Detail Modal -->
     <div id="item-detail-overlay" class="item-detail-overlay" onclick="if(event.target===this)closeItemDetailModal()">
