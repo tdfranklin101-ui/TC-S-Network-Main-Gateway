@@ -91,6 +91,31 @@ const earlyServer = http.createServer((req, res) => {
     return;
   }
   
+  if (pathname === '/api/db-check') {
+    let info = { dbHost: (process.env.DATABASE_URL || '').replace(/^.*@/, '').replace(/\/.*$/, ''), poolReady: !!pool };
+    if (pool) {
+      Promise.all([
+        pool.query('SELECT COUNT(*) as c FROM members'),
+        pool.query('SELECT COUNT(*) as c FROM artifacts'),
+        pool.query('SELECT COUNT(*) as c FROM marketplace_ledger')
+      ]).then(([mc, ac, ml]) => {
+        info.members = parseInt(mc.rows[0].c);
+        info.artifacts = parseInt(ac.rows[0].c);
+        info.ledgerEntries = parseInt(ml.rows[0].c);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(info));
+      }).catch(e => {
+        info.error = e.message;
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(info));
+      });
+    } else {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(info));
+    }
+    return;
+  }
+  
   // Serve static files during initialization from in-memory cache
   if (!mainServerReady) {
     let servePath = pathname === '/' ? '/index.html' : pathname;
@@ -16626,12 +16651,23 @@ Only include products where you have found a real URL. Do not make up URLs.`
 
   // Health check endpoint - Cloud Run compatible
   if (pathname === '/health' || pathname === '/healthz' || pathname === '/_ah/health') {
+    let dbInfo = { connected: !!pool, members: 0, artifacts: 0, dbHost: 'unknown' };
+    if (pool) {
+      try {
+        const mc = await pool.query('SELECT COUNT(*) as c FROM members');
+        const ac = await pool.query('SELECT COUNT(*) as c FROM artifacts');
+        dbInfo.members = parseInt(mc.rows[0].c);
+        dbInfo.artifacts = parseInt(ac.rows[0].c);
+        dbInfo.dbHost = (process.env.DATABASE_URL || '').replace(/^.*@/, '').replace(/\/.*$/, '');
+      } catch(e) { dbInfo.error = e.message; }
+    }
     const healthData = { 
       status: 'healthy', 
       timestamp: new Date().toISOString(),
       server: 'deployment-ready',
       port: PORT,
-      service: 'current-see-platform'
+      service: 'current-see-platform',
+      database: dbInfo
     };
     
     res.writeHead(200, { 
