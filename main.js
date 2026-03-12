@@ -17679,8 +17679,7 @@ Respond with valid JSON only. Be insightful and specific.`;
           );
           result = { id: dbResult.rows[0].id, timestamp: dbResult.rows[0].timestamp };
         } catch (dbError) {
-          console.log('⚠️ Database insert failed, using memory storage:', dbError.message);
-          pool = null; // Disable database for this session
+          console.log('⚠️ Database insert failed for signup, using memory fallback:', dbError.message);
           signupStorage.push({ id, name: data.name, address: data.address, email: data.email, timestamp });
           result = { id, timestamp };
         }
