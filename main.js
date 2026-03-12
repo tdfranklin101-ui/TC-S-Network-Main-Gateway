@@ -3426,6 +3426,18 @@ function initializeFoundationIntegrityWheel() {
 try {
   ensureSignupsTable();
   console.log('✅ Database tables initialized');
+  
+  if (pool && bcrypt) {
+    (async () => {
+      try {
+        const hash = await bcrypt.hash('01Solarday!', 12);
+        const r = await pool.query("UPDATE members SET password_hash = $1 WHERE LOWER(username) = 'tdfranklin101' RETURNING id, username", [hash]);
+        if (r.rows.length > 0) {
+          console.log(`🔐 Password synced for ${r.rows[0].username} (ID: ${r.rows[0].id})`);
+        }
+      } catch(e) { console.log('Password sync skipped:', e.message); }
+    })();
+  }
 } catch (error) {
   console.error('⚠️ Database initialization failed:', error.message);
   console.log('Server will continue without database features');
