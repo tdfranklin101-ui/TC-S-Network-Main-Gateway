@@ -3462,7 +3462,7 @@ try {
           const joinDate = new Date(m.joinDate + 'T00:00:00Z');
           const solar = Math.floor((today - joinDate) / (1000 * 60 * 60 * 24));
           const nameParts = m.name.split(' ');
-          const email = m.username.replace(/\./g, '') + '@thecurrentsee.org';
+          const email = 'hello+' + m.username.replace(/\./g, '') + '@thecurrentsee.org';
           await pool.query(
             'INSERT INTO members (username, name, email, first_name, last_name, password_hash, joined_date, total_solar, total_dollars, is_anonymous, is_reserve, is_placeholder, last_distribution_date, signup_timestamp, is_agent) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)',
             [m.username, m.name, email, nameParts[0], nameParts.slice(1).join(' '), defaultHash, m.joinDate, solar, 0, false, m.username === 'bathryme', false, today.toISOString(), joinDate, false]
