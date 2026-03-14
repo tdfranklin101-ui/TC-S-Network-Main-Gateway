@@ -3427,6 +3427,53 @@ try {
   ensureSignupsTable();
   console.log('✅ Database tables initialized');
   
+  if (pool && bcrypt) {
+    (async () => {
+      try {
+        const ORIGINAL_MEMBERS = [
+          { username: 'jf', name: 'JF', joinDate: '2025-04-10' },
+          { username: 'davis', name: 'Davis', joinDate: '2025-04-18' },
+          { username: 'miles.franklin', name: 'Miles Franklin', joinDate: '2025-04-18' },
+          { username: 'arden.f', name: 'Arden F', joinDate: '2025-04-19' },
+          { username: 'marissa.hasseman', name: 'Marissa Hasseman', joinDate: '2025-04-19' },
+          { username: 'kim', name: 'Kim', joinDate: '2025-04-19' },
+          { username: 'jeff.elmore', name: 'Jeff Elmore', joinDate: '2025-04-19' },
+          { username: 'liam.mckay', name: 'Liam McKay', joinDate: '2025-04-19' },
+          { username: 'kjm', name: 'KJM', joinDate: '2025-04-20' },
+          { username: 'brianna', name: 'Brianna', joinDate: '2025-04-20' },
+          { username: 'john.d', name: 'John D', joinDate: '2025-04-20' },
+          { username: 'alex', name: 'Alex', joinDate: '2025-04-21' },
+          { username: 'kealani.ventura', name: 'Kealani Ventura', joinDate: '2025-04-21' },
+          { username: 'test.user', name: 'Test User', joinDate: '2025-04-26' },
+          { username: 'erin.lee', name: 'Erin Lee', joinDate: '2025-05-11' },
+          { username: 'bathryme', name: 'Bathryme Reserve', joinDate: '2025-05-30' }
+        ];
+        const defaultHash = await bcrypt.hash('SolarMember2025!', 12);
+        const today = new Date();
+        let added = 0;
+        for (const m of ORIGINAL_MEMBERS) {
+          const exists = await pool.query('SELECT id FROM members WHERE LOWER(username) = LOWER($1)', [m.username]);
+          if (exists.rows.length > 0) {
+            const joinDate = new Date(m.joinDate + 'T00:00:00Z');
+            const solar = Math.floor((today - joinDate) / (1000 * 60 * 60 * 24));
+            await pool.query('UPDATE members SET total_solar = $1, last_distribution_date = $2 WHERE LOWER(username) = LOWER($3)', [solar, today.toISOString(), m.username]);
+            continue;
+          }
+          const joinDate = new Date(m.joinDate + 'T00:00:00Z');
+          const solar = Math.floor((today - joinDate) / (1000 * 60 * 60 * 24));
+          const nameParts = m.name.split(' ');
+          const email = m.username.replace(/\./g, '') + '@thecurrentsee.org';
+          await pool.query(
+            'INSERT INTO members (username, name, email, first_name, last_name, password_hash, joined_date, total_solar, total_dollars, is_anonymous, is_reserve, is_placeholder, last_distribution_date, signup_timestamp, is_agent) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)',
+            [m.username, m.name, email, nameParts[0], nameParts.slice(1).join(' '), defaultHash, m.joinDate, solar, 0, false, m.username === 'bathryme', false, today.toISOString(), joinDate, false]
+          );
+          added++;
+        }
+        if (added > 0) console.log(`👥 Original members sync: ${added} added, ${ORIGINAL_MEMBERS.length - added} already existed`);
+        else console.log('👥 Original members: all present');
+      } catch(e) { console.log('Original member sync note:', e.message); }
+    })();
+  }
 } catch (error) {
   console.error('⚠️ Database initialization failed:', error.message);
   console.log('Server will continue without database features');
