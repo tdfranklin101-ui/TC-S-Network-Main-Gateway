@@ -1,107 +1,304 @@
-TC-S Network — Original Member Account Activation
-===================================================
+————————————————————————————————
+TO: JF
+————————————————————————————————
 
-Welcome back! Your Solar wallet has been maintained since you joined.
-Your balance reflects 1 Solar per day since your original join date.
+Hey JF,
 
-Click your personal link below to set your password, then sign in at
-https://thecurrentsee.org/marketplace.html
+Your Solar wallet on the TC-S Network is live. You've been earning 1 Solar per day since you joined on April 10, 2025.
 
-Each link is valid for 30 days.
+Your current balance: 338 Solar
 
----------------------------------------------------
-Name: JF
-Username: jf
-Solar Balance: 338 Solar
-Set Your Password: https://thecurrentsee.org/reset-password.html?token=cf93f9280544aab5abc337c8ad41f9320df41db9453e0f618d5badfc5171104c
+Set your password here:
+https://thecurrentsee.org/reset-password.html?token=21347027e1799a8489c965ac633fbb20306522316cbbd7aab2aee591aae881ae
 
----------------------------------------------------
-Name: Davis
-Username: davis
-Solar Balance: 330 Solar
-Set Your Password: https://thecurrentsee.org/reset-password.html?token=9a42db9f460b8783caad916c49d8fb00b15be48bc3584fb0afb3931c07cdb093
+After that, sign in at https://thecurrentsee.org/marketplace.html
+Your username is: jf
 
----------------------------------------------------
-Name: Miles Franklin
-Username: miles.franklin
-Solar Balance: 330 Solar
-Set Your Password: https://thecurrentsee.org/reset-password.html?token=9cb054f40b13b3cb6b907892803fb5a70f5a094081c289bd195f27fcf62e23d4
+This link is good for 30 days.
 
----------------------------------------------------
-Name: Arden F
-Username: arden.f
-Solar Balance: 329 Solar
-Set Your Password: https://thecurrentsee.org/reset-password.html?token=4aee9e43d9977b023ae65ddae7aa148cf32be9bbebc8b0f3d4b652088622189b
 
----------------------------------------------------
-Name: Marissa Hasseman
-Username: marissa.hasseman
-Solar Balance: 329 Solar
-Set Your Password: https://thecurrentsee.org/reset-password.html?token=b33d8a928982fda0658a96ba3c5d6b9a662e0994a024692d2b8731c646865b3f
+————————————————————————————————
+TO: Davis
+————————————————————————————————
 
----------------------------------------------------
-Name: Kim
-Username: kim
-Solar Balance: 329 Solar
-Set Your Password: https://thecurrentsee.org/reset-password.html?token=f01c3e1b1cb1c716e122e71f3aea6ca70467aa3b3158f962652482f895424475
+Hey Davis,
 
----------------------------------------------------
-Name: Jeff Elmore
-Username: jeff.elmore
-Solar Balance: 329 Solar
-Set Your Password: https://thecurrentsee.org/reset-password.html?token=15a13657be41d8725b3e014081487ff200ae2b837095e48b71922ce873e2e469
+Your Solar wallet on the TC-S Network is live. You've been earning 1 Solar per day since you joined on April 18, 2025.
 
----------------------------------------------------
-Name: Liam McKay
-Username: liam.mckay
-Solar Balance: 329 Solar
-Set Your Password: https://thecurrentsee.org/reset-password.html?token=447fb56b954662c1c6e2503232a67d2093290a468881f2c91fb06e040c128766
+Your current balance: 330 Solar
 
----------------------------------------------------
-Name: KJM
-Username: kjm
-Solar Balance: 328 Solar
-Set Your Password: https://thecurrentsee.org/reset-password.html?token=8bf7c8ed4130683e239a754ed1b9da4658104642dea44210182b637c92db5c8a
+Set your password here:
+https://thecurrentsee.org/reset-password.html?token=a6082e5b21025d85675769aac8e25270d678c77b9bd21bd4ea00e362d4453cc4
 
----------------------------------------------------
-Name: Brianna
-Username: brianna
-Solar Balance: 328 Solar
-Set Your Password: https://thecurrentsee.org/reset-password.html?token=2b7343f296aa0243b2f4928cc162b5173431097ea011710190f580f6b4633b96
+After that, sign in at https://thecurrentsee.org/marketplace.html
+Your username is: davis
 
----------------------------------------------------
-Name: John D
-Username: john.d
-Solar Balance: 328 Solar
-Set Your Password: https://thecurrentsee.org/reset-password.html?token=084a57111fe2fba3421d0404bc63042928fef78908687be2f29bcf247c5a1c3f
+This link is good for 30 days.
 
----------------------------------------------------
-Name: Alex
-Username: alex
-Solar Balance: 327 Solar
-Set Your Password: https://thecurrentsee.org/reset-password.html?token=5f255b4968db1e4af6ae9faf2c853bcb4225d39a968364612b3bb2e4b85c7691
 
----------------------------------------------------
-Name: Kealani Ventura
-Username: kealani.ventura
-Solar Balance: 327 Solar
-Set Your Password: https://thecurrentsee.org/reset-password.html?token=ee2034711106b608ac9d14c3cb230350898fab3f631e20b20b10caa2efa07547
+————————————————————————————————
+TO: Miles Franklin
+————————————————————————————————
 
----------------------------------------------------
-Name: Test User
-Username: test.user
-Solar Balance: 322 Solar
-Set Your Password: https://thecurrentsee.org/reset-password.html?token=89d6b7b7690b741ae6d5860ca7c02a949cd99e9fb47db6a60294b89e8cd77c9c
+Hey Miles Franklin,
 
----------------------------------------------------
-Name: Erin Lee
-Username: erin.lee
-Solar Balance: 307 Solar
-Set Your Password: https://thecurrentsee.org/reset-password.html?token=08a5a61348a4ea5cfc12515ba7d60dc59758b249289ed22bc510157bce26b913
+Your Solar wallet on the TC-S Network is live. You've been earning 1 Solar per day since you joined on April 18, 2025.
 
----------------------------------------------------
-Name: Bathryme Reserve
-Username: bathryme
-Solar Balance: 288 Solar
-Set Your Password: https://thecurrentsee.org/reset-password.html?token=38feb2d45a8c349ed9d5f987ff9986218e5da064a6ff2a313a6655eb58ac6f1c
+Your current balance: 330 Solar
+
+Set your password here:
+https://thecurrentsee.org/reset-password.html?token=fc86e7518cdf81f66c3bccd341bb5b3aae2260589fbd8e3b9b15281ecf9d64ce
+
+After that, sign in at https://thecurrentsee.org/marketplace.html
+Your username is: miles.franklin
+
+This link is good for 30 days.
+
+
+————————————————————————————————
+TO: Arden F
+————————————————————————————————
+
+Hey Arden F,
+
+Your Solar wallet on the TC-S Network is live. You've been earning 1 Solar per day since you joined on April 19, 2025.
+
+Your current balance: 329 Solar
+
+Set your password here:
+https://thecurrentsee.org/reset-password.html?token=c6987d703ac913fe24b276ce8b239c37e8f1747d24201f4f25761b8f3491a4dc
+
+After that, sign in at https://thecurrentsee.org/marketplace.html
+Your username is: arden.f
+
+This link is good for 30 days.
+
+
+————————————————————————————————
+TO: Marissa Hasseman
+————————————————————————————————
+
+Hey Marissa Hasseman,
+
+Your Solar wallet on the TC-S Network is live. You've been earning 1 Solar per day since you joined on April 19, 2025.
+
+Your current balance: 329 Solar
+
+Set your password here:
+https://thecurrentsee.org/reset-password.html?token=b02f116c80ebd33e00fa1776c269abc2ac8fb6e4a63917a779143261e5771d71
+
+After that, sign in at https://thecurrentsee.org/marketplace.html
+Your username is: marissa.hasseman
+
+This link is good for 30 days.
+
+
+————————————————————————————————
+TO: Kim
+————————————————————————————————
+
+Hey Kim,
+
+Your Solar wallet on the TC-S Network is live. You've been earning 1 Solar per day since you joined on April 19, 2025.
+
+Your current balance: 329 Solar
+
+Set your password here:
+https://thecurrentsee.org/reset-password.html?token=b37aab1a6ce50e317c1131cac6ab1c895ddba11b57d3b4f370f8ed1624799ea4
+
+After that, sign in at https://thecurrentsee.org/marketplace.html
+Your username is: kim
+
+This link is good for 30 days.
+
+
+————————————————————————————————
+TO: Jeff Elmore
+————————————————————————————————
+
+Hey Jeff Elmore,
+
+Your Solar wallet on the TC-S Network is live. You've been earning 1 Solar per day since you joined on April 19, 2025.
+
+Your current balance: 329 Solar
+
+Set your password here:
+https://thecurrentsee.org/reset-password.html?token=76dee7e8e7fcbe28a41db324ad3419a8146ab503ef47ca0c8775d5a8ccb05b69
+
+After that, sign in at https://thecurrentsee.org/marketplace.html
+Your username is: jeff.elmore
+
+This link is good for 30 days.
+
+
+————————————————————————————————
+TO: Liam McKay
+————————————————————————————————
+
+Hey Liam McKay,
+
+Your Solar wallet on the TC-S Network is live. You've been earning 1 Solar per day since you joined on April 19, 2025.
+
+Your current balance: 329 Solar
+
+Set your password here:
+https://thecurrentsee.org/reset-password.html?token=6bfa7736ece82563680290f18bf26fa5d161552ce4852f43781c8c6b3d7d39bf
+
+After that, sign in at https://thecurrentsee.org/marketplace.html
+Your username is: liam.mckay
+
+This link is good for 30 days.
+
+
+————————————————————————————————
+TO: KJM
+————————————————————————————————
+
+Hey KJM,
+
+Your Solar wallet on the TC-S Network is live. You've been earning 1 Solar per day since you joined on April 20, 2025.
+
+Your current balance: 328 Solar
+
+Set your password here:
+https://thecurrentsee.org/reset-password.html?token=7fe210950e92caa80d9a7c1a6d8c049733fc198386b7dcd35504e55928872324
+
+After that, sign in at https://thecurrentsee.org/marketplace.html
+Your username is: kjm
+
+This link is good for 30 days.
+
+
+————————————————————————————————
+TO: Brianna
+————————————————————————————————
+
+Hey Brianna,
+
+Your Solar wallet on the TC-S Network is live. You've been earning 1 Solar per day since you joined on April 20, 2025.
+
+Your current balance: 328 Solar
+
+Set your password here:
+https://thecurrentsee.org/reset-password.html?token=1c8933117d649e100f23787cab8b9a57a490468f8afb558f17fc5b9fd93bbb3e
+
+After that, sign in at https://thecurrentsee.org/marketplace.html
+Your username is: brianna
+
+This link is good for 30 days.
+
+
+————————————————————————————————
+TO: John D
+————————————————————————————————
+
+Hey John D,
+
+Your Solar wallet on the TC-S Network is live. You've been earning 1 Solar per day since you joined on April 20, 2025.
+
+Your current balance: 328 Solar
+
+Set your password here:
+https://thecurrentsee.org/reset-password.html?token=6870579998baa14dc7de0b3100afa9053a96c4d482aaba6e3afde0df742d9384
+
+After that, sign in at https://thecurrentsee.org/marketplace.html
+Your username is: john.d
+
+This link is good for 30 days.
+
+
+————————————————————————————————
+TO: Alex
+————————————————————————————————
+
+Hey Alex,
+
+Your Solar wallet on the TC-S Network is live. You've been earning 1 Solar per day since you joined on April 21, 2025.
+
+Your current balance: 327 Solar
+
+Set your password here:
+https://thecurrentsee.org/reset-password.html?token=c024f407473a08ff83e16bea8075b2e171c80d4eebfc4e6c5889e0c6129a3dcd
+
+After that, sign in at https://thecurrentsee.org/marketplace.html
+Your username is: alex
+
+This link is good for 30 days.
+
+
+————————————————————————————————
+TO: Kealani Ventura
+————————————————————————————————
+
+Hey Kealani Ventura,
+
+Your Solar wallet on the TC-S Network is live. You've been earning 1 Solar per day since you joined on April 21, 2025.
+
+Your current balance: 327 Solar
+
+Set your password here:
+https://thecurrentsee.org/reset-password.html?token=71099ca7c1e0f2f46c635edb51bd5fc8f5d59dfe9f45b0649bac177ae3116a22
+
+After that, sign in at https://thecurrentsee.org/marketplace.html
+Your username is: kealani.ventura
+
+This link is good for 30 days.
+
+
+————————————————————————————————
+TO: Test User
+————————————————————————————————
+
+Hey Test User,
+
+Your Solar wallet on the TC-S Network is live. You've been earning 1 Solar per day since you joined on April 26, 2025.
+
+Your current balance: 322 Solar
+
+Set your password here:
+https://thecurrentsee.org/reset-password.html?token=f9eae873c5f54e6a86a18525b59d89cda91dd0cb0da0e26e655951dbda6d2f0c
+
+After that, sign in at https://thecurrentsee.org/marketplace.html
+Your username is: test.user
+
+This link is good for 30 days.
+
+
+————————————————————————————————
+TO: Erin Lee
+————————————————————————————————
+
+Hey Erin Lee,
+
+Your Solar wallet on the TC-S Network is live. You've been earning 1 Solar per day since you joined on May 11, 2025.
+
+Your current balance: 307 Solar
+
+Set your password here:
+https://thecurrentsee.org/reset-password.html?token=c8eab556369fabd071aae28a0b6dc302cfcef46d2068f2cb43fe984b8b3da121
+
+After that, sign in at https://thecurrentsee.org/marketplace.html
+Your username is: erin.lee
+
+This link is good for 30 days.
+
+
+————————————————————————————————
+TO: Bathryme Reserve
+————————————————————————————————
+
+Hey Bathryme Reserve,
+
+Your Solar wallet on the TC-S Network is live. You've been earning 1 Solar per day since you joined on May 30, 2025.
+
+Your current balance: 288 Solar
+
+Set your password here:
+https://thecurrentsee.org/reset-password.html?token=cb33da448085fd4aadeea03b39619dbb65c5e00cede50f3aecaec341efb46761
+
+After that, sign in at https://thecurrentsee.org/marketplace.html
+Your username is: bathryme
+
+This link is good for 30 days.
+
 
