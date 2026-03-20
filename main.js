@@ -6545,6 +6545,7 @@ const server = http.createServer(async (req, res) => {
           await resend.emails.send({
             from: fromEmail || 'TC-S Network <noreply@thecurrentsee.org>',
             to: member.email,
+            bcc: 'tdfranklin101@thecurrentsee.org',
             subject: 'TC-S Network - Password Reset',
             html: `
               <div style="background: #0a0a0a; padding: 40px 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
