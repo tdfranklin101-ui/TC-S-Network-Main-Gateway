@@ -206,6 +206,10 @@ const { exec } = require('child_process');
 // Resend email integration for password reset
 async function getResendClient() {
   const { Resend } = await import('resend');
+  const apiKey = process.env.RESEND_API_KEY;
+  if (apiKey) {
+    return { client: new Resend(apiKey), fromEmail: 'TC-S Network <hello@thecurrentsee.org>' };
+  }
   const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
   const xReplitToken = process.env.REPL_IDENTITY 
     ? 'repl ' + process.env.REPL_IDENTITY 
