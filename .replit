@@ -8,8 +8,8 @@ packages = ["ffmpeg", "freetype", "gh", "git-lfs", "jq", "lcms2", "libimagequant
 
 [deployment]
 run = ["node", "main.js"]
-deploymentTarget = "vm"
-build = ["echo", "build complete"]
+deploymentTarget = "autoscale"
+build = ["echo", "ready"]
 publicDir = "dist/public"
 
 [[ports]]
