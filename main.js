@@ -135,6 +135,16 @@ const earlyServer = http.createServer((req, res) => {
   }
 });
 
+earlyServer.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.log(`⚠️ Port ${PORT} in use, retrying in 2s...`);
+    setTimeout(() => {
+      earlyServer.close();
+      earlyServer.listen(PORT, '0.0.0.0');
+    }, 2000);
+  }
+});
+
 earlyServer.listen(PORT, '0.0.0.0', () => {
   console.log(`\n🚀 Early health check server started on port ${PORT}`);
   console.log(`✅ Health check ready - initializing full platform...`);
