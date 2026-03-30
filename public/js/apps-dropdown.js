@@ -7,7 +7,7 @@
     { name: 'Radio Astronomy Now', icon: '📡', color: '#9D4EDD', href: 'https://astro-events-live--tdfranklin101.replit.app', desc: 'Live deep space signals & cosmic events', external: true },
     { name: 'TC-S Network Events', icon: '⚡', color: '#00CED1', href: 'https://farm-ops--tdfranklin101.replit.app', desc: 'AI-powered event operations with IQ agents', external: true },
     { name: 'Commission Network', icon: '🌐', color: '#39ff14', href: '/commission-network.html', desc: 'Solar-backed network commissioning' },
-    { name: 'Prompt a Movie', icon: '🎬', color: '#FF6EFF', href: '/prompt-a-movie-business.html', desc: 'Custom AI films & music videos' }
+    { name: 'Prompt a Movie', icon: '🎬', color: '#FF6EFF', href: 'https://continuity-locker.replit.app', desc: 'Custom AI films & music videos', external: true }
   ];
 
   var style = document.createElement('style');
