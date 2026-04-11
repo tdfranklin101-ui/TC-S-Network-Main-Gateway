@@ -46,6 +46,7 @@
     script.setAttribute('data-monitor', 'true');
     script.setAttribute('data-orientation', 'horizontal');
     script.setAttribute('data-position', 'right');
+    script.setAttribute('data-open-mode', 'expanded');
     
     document.body.appendChild(script);
     console.log('☀️ Kid Solar D-ID agent injected');
