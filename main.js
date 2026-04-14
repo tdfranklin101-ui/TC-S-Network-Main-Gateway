@@ -3174,12 +3174,12 @@ async function processDailyDistribution() {
     const catchUpQuery = `
       SELECT id, username, total_solar, last_distribution_date,
         LEAST(
-          EXTRACT(DAY FROM (CURRENT_DATE - DATE(last_distribution_date)))::integer,
+          (CURRENT_DATE - last_distribution_date::date),
           7
         ) AS missed_days
       FROM members
       WHERE last_distribution_date IS NOT NULL
-        AND DATE(last_distribution_date) < CURRENT_DATE - INTERVAL '1 day'
+        AND last_distribution_date::date < CURRENT_DATE - INTERVAL '1 day'
     `;
     
     const catchUpResult = await pool.query(catchUpQuery);
