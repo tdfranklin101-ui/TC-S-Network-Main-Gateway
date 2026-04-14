@@ -3468,9 +3468,6 @@ try {
         for (const m of ORIGINAL_MEMBERS) {
           const exists = await pool.query('SELECT id FROM members WHERE LOWER(username) = LOWER($1)', [m.username]);
           if (exists.rows.length > 0) {
-            const joinDate = new Date(m.joinDate + 'T00:00:00Z');
-            const solar = Math.floor((today - joinDate) / (1000 * 60 * 60 * 24));
-            await pool.query('UPDATE members SET total_solar = $1, last_distribution_date = $2 WHERE LOWER(username) = LOWER($3)', [solar, today.toISOString(), m.username]);
             continue;
           }
           const joinDate = new Date(m.joinDate + 'T00:00:00Z');
