@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>We Said So - Music Video | The Current-See</title>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #000000 0%, #001122 50%, #000000 100%);
+            color: white;
+            font-family: 'Arial', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .video-container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #000;
+            padding: 20px;
+        }
+        
+        .video-header {
+            text-align: center;
+            margin-bottom: 30px;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            border: 2px solid rgba(0,255,65,0.6);
+        }
+        
+        .video-title {
+            color: #00ff41;
+            font-size: 2.5rem;
+            font-weight: bold;
+            text-shadow: 0 0 30px rgba(0,255,65,1);
+            margin-bottom: 10px;
+        }
+        
+        .video-subtitle {
+            color: #ffff00;
+            font-size: 1.3rem;
+            text-shadow: 0 0 20px rgba(255,255,0,0.8);
+        }
+        
+        .simple-video {
+            width: 90%;
+            height: 70vh;
+            max-width: 1000px;
+            border-radius: 12px;
+            box-shadow: 0 0 50px rgba(0,255,65,0.3);
+            background: #000;
+            object-fit: contain;
+        }
+        
+        .fullscreen-mode .simple-video {
+            border-radius: 0;
+        }
+        
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0,255,65,0.2);
+            color: #00ff41;
+            padding: 12px 20px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: bold;
+            border: 2px solid #00ff41;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .back-button:hover {
+            background: rgba(0,255,65,0.4);
+            transform: scale(1.05);
+        }
+        
+        .video-info {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            text-align: center;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            padding: 15px;
+            border: 1px solid rgba(0,255,65,0.3);
+        }
+        
+        .status-display {
+            background: rgba(0,0,0,0.9);
+            color: #00ffff;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+        
+        @media (max-width: 768px) {
+            .video-title {
+                font-size: 2rem;
+            }
+            .video-subtitle {
+                font-size: 1.1rem;
+            }
+            .video-container {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="video-container">
+        <!-- Back to Homepage Button -->
+        <a href="/index.html" class="back-button">← Back to Platform</a>
+        
+        <!-- Video Header -->
+        <div class="video-header">
+            <h1 class="video-title">🎵 WE SAID SO 🎵</h1>
+            <p class="video-subtitle">by Monazite • Watch on YouTube</p>
+            
+            <!-- YouTube Link -->
+            <div style="text-align: center; margin: 20px 0;">
+                <a href="https://youtu.be/WgP9-ghAQJE" target="_blank" style="display: inline-block; background: #ff0000; color: white; padding: 15px 30px; text-decoration: none; border-radius: 10px; font-size: 18px; font-weight: bold; transition: all 0.3s ease;">
+                    📺 Watch on YouTube
+                </a>
+            </div>
+        </div>
+        
+        <!-- Buffer Status Display -->
+        <div id="bufferStatus" style="text-align: center; margin: 20px 0; padding: 10px; background: rgba(0,255,65,0.1); border-radius: 10px; display: none;">
+            <div style="color: #00ff41; font-size: 18px; margin-bottom: 5px;">🔄 Buffering Video...</div>
+            <div id="bufferProgress" style="color: #ffaa00; font-size: 14px;">Initializing memory buffer</div>
+        </div>
+
+        <!-- Simple HTML5 Video Player -->
+        <video 
+            id="simpleVideo"
+            class="simple-video"
+            controls 
+            preload="auto"
+            crossorigin="anonymous"
+            muted
+            style="display: none;"
+            poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='675'%3E%3Crect width='100%25' height='100%25' fill='%23000'/%3E%3Ctext x='50%25' y='45%25' font-family='Arial' font-size='48' fill='%23fff' text-anchor='middle'%3E🎵 WE SAID SO 🎵%3C/text%3E%3Ctext x='50%25' y='55%25' font-family='Arial' font-size='32' fill='%23ffaa00' text-anchor='middle'%3Eby Monazite%3C/text%3E%3Ctext x='50%25' y='65%25' font-family='Arial' font-size='24' fill='%2300ccff' text-anchor='middle'%3EReady to Play%3C/text%3E%3C/svg%3E">
+            
+            <!-- Primary source - We Said So by Monazite from object storage -->
+            <source src="/public-objects/we_said_so-by_Monazite.mp4" type="video/mp4">
+            <!-- Alternative paths for We Said So video -->
+            <source src="/public-objects/we_said_so_by_Monazite.mp4" type="video/mp4">
+            <source src="/public-objects/WeSaidSo-Monazite.mp4" type="video/mp4">
+            
+            <!-- Fallback Message -->
+            <p style="color: #ff4444; text-align: center; padding: 20px; background: rgba(0,0,0,0.8); border-radius: 10px;">
+                🎵 Video not loading? Try:<br>
+                • Refreshing the page<br>
+                • Checking your internet connection<br>
+                • Using a different browser<br>
+                <a href="/index.html" style="color: #00ff41;">Return to Platform</a>
+            </p>
+        </video>
+        
+        <!-- Video Information & Status -->
+        <div class="video-info">
+            <p style="color: #00ffff; font-size: 14px; margin: 0;">
+                📁 <strong>File:</strong> we_said_so_by_Monazite.mp4 • <strong>Size:</strong> 230.22MiB<br>
+                🎬 <strong>Artist:</strong> Monazite • <strong>Quality:</strong> HD Music Video with Audio
+            </p>
+            <div id="statusDisplay" class="status-display">
+                Status: Initializing...
+            </div>
+            <!-- Fullscreen Controls -->
+            <div id="fullscreenControls" style="margin-top: 10px; padding: 10px; background: rgba(0,255,65,0.1); border: 1px solid rgba(0,255,65,0.3); border-radius: 8px; font-size: 12px; color: #00ff41;">
+                🎬 <strong>Fullscreen Mode:</strong> Double-click video or use player controls for immersive experience
+            </div>
+        </div>
+    </div>
+    
+    <!-- Memory Buffer Video Loading System -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const video = document.getElementById('simpleVideo');
+            const statusDisplay = document.getElementById('statusDisplay');
+            const bufferStatus = document.getElementById('bufferStatus');
+            const bufferProgress = document.getElementById('bufferProgress');
+            
+            let memoryBuffer = null;
+            let isBuffering = false;
+            
+            function updateStatus(message) {
+                statusDisplay.textContent = 'Status: ' + message;
+                console.log('Video Status:', message);
+            }
+            
+            // Show buffer status immediately
+            if (bufferStatus) {
+                bufferStatus.style.display = 'block';
+            }
+            
+            // Memory buffer preloading function
+            async function preloadVideoToMemory() {
+                if (isBuffering) return;
+                isBuffering = true;
+                
+                const videoSources = [
+                    '/public-objects/we_said_so-by_Monazite.mp4',
+                    '/public-objects/we_said_so_by_Monazite.mp4',
+                    '/public-objects/WeSaidSo-Monazite.mp4'
+                ];
+                
+                updateStatus('🔄 Initializing memory buffer...');
+                
+                for (let i = 0; i < videoSources.length; i++) {
+                    try {
+                        if (bufferProgress) {
+                            bufferProgress.textContent = `Testing source ${i + 1}/${videoSources.length}: ${videoSources[i].split('/').pop()}`;
+                        }
+                        updateStatus(`🔍 Testing source ${i + 1}...`);
+                        
+                        // Test if source exists
+                        const response = await fetch(videoSources[i], {
+                            method: 'HEAD',
+                            cache: 'no-cache'
+                        });
+                        
+                        if (response.ok) {
+                            if (bufferProgress) {
+                                bufferProgress.textContent = `📥 Loading video into memory buffer...`;
+                            }
+                            updateStatus('📥 Loading video into memory...');
+                            
+                            // Fetch the actual video data into memory
+                            const videoResponse = await fetch(videoSources[i]);
+                            if (videoResponse.ok) {
+                                const blob = await videoResponse.blob();
+                                memoryBuffer = URL.createObjectURL(blob);
+                                
+                                // Set the buffered video source
+                                video.src = memoryBuffer;
+                                
+                                if (bufferProgress) {
+                                    bufferProgress.textContent = `✅ Video buffered successfully! Ready to play.`;
+                                }
+                                updateStatus('✅ Video loaded into memory buffer');
+                                
+                                // Hide buffer status and show video after short delay
+                                setTimeout(() => {
+                                    if (bufferStatus) bufferStatus.style.display = 'none';
+                                    if (video) {
+                                        video.style.display = 'block';
+                                        video.muted = false; // Unmute once buffered
+                                    }
+                                }, 1500);
+                                
+                                return;
+                            }
+                        }
+                    } catch (error) {
+                        console.log(`Source ${i + 1} failed:`, error);
+                        if (bufferProgress) {
+                            bufferProgress.textContent = `❌ Source ${i + 1} failed, trying next...`;
+                        }
+                        updateStatus(`❌ Source ${i + 1} failed`);
+                    }
+                }
+                
+                // If all sources fail
+                if (bufferProgress) {
+                    bufferProgress.textContent = `❌ All video sources failed. Check connection.`;
+                }
+                updateStatus('❌ All video sources failed');
+                
+                setTimeout(() => {
+                    if (bufferStatus) bufferStatus.style.display = 'none';
+                    if (video) video.style.display = 'block';
+                }, 3000);
+            }
+            
+            // Start preloading immediately
+            preloadVideoToMemory();
+            
+            if (video) {
+                video.addEventListener('loadstart', function() {
+                    updateStatus('🎬 Loading video...');
+                });
+                
+                video.addEventListener('canplay', function() {
+                    updateStatus('✅ Video ready to play');
+                });
+                
+                video.addEventListener('loadedmetadata', function() {
+                    updateStatus(`📊 Loaded: ${this.videoWidth}x${this.videoHeight}, ${Math.round(this.duration)}s`);
+                });
+                
+                video.addEventListener('play', function() {
+                    updateStatus('▶️ Playing');
+                });
+                
+                video.addEventListener('pause', function() {
+                    updateStatus('⏸️ Paused');
+                });
+                
+                video.addEventListener('ended', function() {
+                    updateStatus('🏁 Video ended');
+                });
+                
+                video.addEventListener('error', function() {
+                    updateStatus('❌ Error loading video');
+                    console.error('Video error:', this.error);
+                    
+                    if (this.error) {
+                        switch(this.error.code) {
+                            case 1:
+                                updateStatus('❌ Video loading aborted');
+                                break;
+                            case 2:
+                                updateStatus('❌ Network error loading video');
+                                break;
+                            case 3:
+                                updateStatus('❌ Video decode error');
+                                break;
+                            case 4:
+                                updateStatus('❌ Video format not supported');
+                                break;
+                            default:
+                                updateStatus('❌ Unknown video error');
+                        }
+                    }
+                });
+                
+                video.addEventListener('progress', function() {
+                    if (this.buffered.length > 0) {
+                        const bufferedEnd = this.buffered.end(this.buffered.length - 1);
+                        const duration = this.duration;
+                        if (duration > 0) {
+                            const percentage = (bufferedEnd / duration) * 100;
+                            updateStatus(`📡 Buffered: ${percentage.toFixed(1)}%`);
+                        }
+                    }
+                });
+                
+                // Handle successful buffer load
+                video.addEventListener('canplaythrough', function() {
+                    updateStatus('🎯 Video fully buffered - smooth playback ready');
+                });
+            }
+            
+            // Cleanup memory buffer when page unloads
+            window.addEventListener('beforeunload', function() {
+                if (memoryBuffer) {
+                    URL.revokeObjectURL(memoryBuffer);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

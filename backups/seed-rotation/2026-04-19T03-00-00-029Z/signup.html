@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Join The Current-See</title>
+  <link rel="stylesheet" href="/css/common.css">
+  <style>
+    .redirect-container {
+      max-width: 800px;
+      margin: 80px auto;
+      padding: 40px;
+      background-color: rgba(255, 255, 255, 0.95);
+      border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+    
+    .redirect-icon {
+      font-size: 48px;
+      margin-bottom: 20px;
+    }
+    
+    h1 {
+      color: #0057B8;
+      margin-bottom: 20px;
+    }
+    
+    p {
+      font-size: 18px;
+      line-height: 1.6;
+      color: #333;
+      margin-bottom: 30px;
+    }
+    
+    .btn-redirect {
+      display: inline-block;
+      background: linear-gradient(to right, #0057B8, #7bc144);
+      color: white;
+      font-weight: 600;
+      padding: 12px 24px;
+      border-radius: 6px;
+      text-decoration: none;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-redirect:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(0, 91, 184, 0.3);
+    }
+    
+    .countdown {
+      font-size: 16px;
+      color: #666;
+      margin-top: 20px;
+    }
+    
+    /* Sun ray watermark styling */
+    .sun-ray-watermark {
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .sun-ray-watermark::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: repeating-conic-gradient(
+        rgba(255, 215, 0, 0.04) 0deg 10deg,
+        rgba(255, 215, 0, 0.08) 10deg 20deg
+      );
+      animation: rotate 120s linear infinite;
+      z-index: -1;
+    }
+    
+    @keyframes rotate {
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+  <meta http-equiv="refresh" content="5;url=/#quick-join-form">
+</head>
+<body>
+  <div class="page-wrapper">
+    <!-- HEADER_PLACEHOLDER -->
+
+    <main>
+      <div class="redirect-container sun-ray-watermark">
+        <div class="redirect-icon">🔄</div>
+        <h1>We've Made Joining Easier!</h1>
+        <p>Our signup process has been simplified. You'll be redirected to our new quick join form on the homepage in a few seconds.</p>
+        <a href="/#quick-join-form" class="btn-redirect">Go to Quick Join Form Now</a>
+        <div class="countdown">Redirecting in <span id="countdown">5</span> seconds...</div>
+      </div>
+    </main>
+
+    <!-- FOOTER_PLACEHOLDER -->
+  </div>
+
+  <script>
+    // Countdown script
+    document.addEventListener('DOMContentLoaded', function() {
+      let seconds = 5;
+      const countdownElement = document.getElementById('countdown');
+      
+      const countdown = setInterval(() => {
+        seconds--;
+        if (countdownElement) {
+          countdownElement.textContent = seconds;
+        }
+        
+        if (seconds <= 0) {
+          clearInterval(countdown);
+          window.location.href = '/#quick-join-form';
+        }
+      }, 1000);
+    });
+  </script>
+</body>
+</html>

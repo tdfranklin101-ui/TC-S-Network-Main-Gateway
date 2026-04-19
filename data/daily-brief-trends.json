@@ -1,62 +1,60 @@
 {
-  "date": "2026-04-11",
-  "generatedAt": "2026-04-11T03:00:02.888Z",
+  "date": "2026-04-19",
+  "generatedAt": "2026-04-19T03:00:03.106Z",
   "currentIndices": [
     {
       "id": "si",
       "name": "Solar Index",
       "unit": "%",
-      "value": 72.1,
+      "value": 71.4,
       "description": "Global Energy & Ethics Balance — 7-Day Rolling Indicator.",
-      "asOf": "2026-04-11T03:00:00.020Z"
+      "asOf": "2026-04-19T03:00:00.009Z"
     },
     {
       "id": "srh",
       "name": "Solar Reserve Health",
       "unit": "%",
-      "value": 79.4,
+      "value": 79.6,
       "description": "Reserve stability and fulfillment factor across all regions.",
-      "asOf": "2026-04-11T03:00:00.020Z"
+      "asOf": "2026-04-19T03:00:00.009Z"
     },
     {
       "id": "gbi",
       "name": "Global Basic Income",
       "unit": "%",
-      "value": 41.2,
+      "value": 41.5,
       "description": "Percentage of humans enrolled and actively claiming GBI.",
-      "asOf": "2026-04-11T03:00:00.020Z"
+      "asOf": "2026-04-19T03:00:00.009Z"
     },
     {
       "id": "cai",
       "name": "Compute Alignment",
       "unit": "%",
-      "value": 88.3,
+      "value": 89.7,
       "description": "Ethically aligned compute flow — safe superintelligence readiness.",
-      "asOf": "2026-04-11T03:00:00.020Z"
+      "asOf": "2026-04-19T03:00:00.009Z"
     },
     {
       "id": "mli",
       "name": "Market Liquidity",
       "unit": "%",
-      "value": 22.9,
+      "value": 23,
       "description": "Health of the TC-S digital marketplace and token velocity.",
-      "asOf": "2026-04-11T03:00:00.020Z"
+      "asOf": "2026-04-19T03:00:00.009Z"
     },
     {
       "id": "eai",
       "name": "Ethical Alignment",
       "unit": "%",
-      "value": 91.7,
+      "value": 92.1,
       "description": "Acceptance ratio of tasks from the Ethics Engine.",
-      "asOf": "2026-04-11T03:00:00.020Z"
+      "asOf": "2026-04-19T03:00:00.009Z"
     }
   ],
   "trends": {
-    "analysisStatus": "success",
-    "direction": "neutral",
-    "analysis": "The market health indices show a stable trend, with slight fluctuations over the past seven days. Notably, the SI and SRH indices have improved, while the GBI and MLI have declined slightly. Overall, the stability in CAI and EAI suggests a balanced market environment.",
-    "insight": "Consider focusing on sectors with improving indices like SI and SRH to capitalize on potential growth opportunities.",
-    "generatedAt": "2026-04-11T03:00:02.887Z"
+    "analysisStatus": "failed",
+    "error": "429 You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.",
+    "note": "Indices are updating on schedule - AI analysis requires valid OpenAI API key"
   },
   "historyDays": 30
 }

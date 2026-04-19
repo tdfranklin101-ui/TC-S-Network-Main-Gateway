@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>WPC Test Panel | TC-S Network</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family: sans-serif; padding: 20px; background: #000; color: #fff;">
+  <h2 style="color: #0ff;">WPC Test Panel</h2>
+  <p style="color: #888;">Watts Per Compute - Energy Efficiency Calculator</p>
+
+  <div style="margin: 20px 0;">
+    <label>Model Type: </label>
+    <select id="model" style="padding: 5px;">
+      <option value="llm">LLM (Language Model)</option>
+      <option value="vision">Vision Model</option>
+      <option value="diffusion">Diffusion Model</option>
+    </select>
+  </div>
+
+  <div style="margin: 20px 0;">
+    <label>Tokens (for LLM): </label>
+    <input type="number" id="tokens" value="100" style="padding: 5px; width: 100px;">
+  </div>
+
+  <div style="margin: 20px 0;">
+    <label>Resolution (for Vision/Diffusion): </label>
+    <input type="number" id="resolution" value="512" style="padding: 5px; width: 100px;">
+  </div>
+
+  <div style="margin: 20px 0;">
+    <label>Power (Watts): </label>
+    <input type="number" id="powerWatts" value="65" style="padding: 5px; width: 100px;">
+  </div>
+
+  <div style="margin: 20px 0;">
+    <label>Inference Time (seconds): </label>
+    <input type="number" id="seconds" value="0.1" step="0.01" style="padding: 5px; width: 100px;">
+  </div>
+
+  <button onclick="runTest()" style="padding: 10px 20px; background: #0f0; color: #000; border: none; cursor: pointer; font-weight: bold;">
+    Run WPC Compute Test
+  </button>
+
+  <pre id="output" style="margin-top: 20px; background: #111; color: #0f0; padding: 20px; border-radius: 8px; overflow-x: auto;"></pre>
+
+  <script>
+    async function runTest() {
+      const payload = {
+        model: document.getElementById('model').value,
+        tokens: parseInt(document.getElementById('tokens').value),
+        resolution: parseInt(document.getElementById('resolution').value),
+        powerWatts: parseFloat(document.getElementById('powerWatts').value),
+        seconds: parseFloat(document.getElementById('seconds').value)
+      };
+
+      document.getElementById('output').innerText = 'Calculating...';
+
+      try {
+        const res = await fetch('/api/wpc/calculate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const out = await res.json();
+        document.getElementById('output').innerText = JSON.stringify(out, null, 2);
+      } catch (err) {
+        document.getElementById('output').innerText = 'Error: ' + err.message;
+      }
+    }
+  </script>
+</body>
+</html>

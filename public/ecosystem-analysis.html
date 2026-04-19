@@ -1,12 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
+<!DOCTYPE html><html lang="en"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>📊 TC-S Ecosystem Analysis Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Orbitron:wght@400;700;900&amp;display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -101,7 +99,7 @@ tbody tr:last-child td{border-bottom:none}
   <span class="last-refresh" id="lastRefresh">Last refreshed: —</span>
   <select class="run-select" id="runLimit" onchange="loadData()">
     <option value="5">Last 5 runs</option>
-    <option value="10" selected>Last 10 runs</option>
+    <option value="10" selected="">Last 10 runs</option>
     <option value="25">Last 25 runs</option>
     <option value="50">Last 50 runs</option>
   </select>
@@ -591,5 +589,5 @@ async function backfillHistory() {
 
 loadData();
 </script>
-</body>
-</html>
+
+</body></html>
