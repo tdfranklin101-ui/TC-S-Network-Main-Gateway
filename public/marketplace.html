@@ -9714,6 +9714,13 @@
   </style>
 
   <script>
+    (function() {
+      var el = document.getElementById('version-indicator');
+      if (!el) return;
+      var now = new Date();
+      el.textContent = 'Version #1 • ' + now.toLocaleString();
+    })();
+
     function printArtifactDetail(artifactId) {
         var item = allArtifacts.find(function(a) { return a.id == artifactId; });
         if (!item && typeof searchResultsCache !== 'undefined') item = searchResultsCache[artifactId];
