@@ -9,8 +9,7 @@
     { name: 'Commission Network', icon: '🌐', color: '#39ff14', href: '/commission-network.html', desc: 'Solar-backed network commissioning' },
     { name: 'Promptly (Ai Film Production Studio)', icon: '🎬', color: '#FF6EFF', href: 'https://continuity-locker.replit.app', desc: 'Custom AI films & music videos', external: true },
     { name: 'DMTXACTLY', icon: '🌀', color: '#8B5CF6', href: '/dmtxactly.html', desc: 'Tessellated visuals & generative art' },
-    { name: 'Tessellated Envoy', icon: '🧠', color: '#A78BFA', href: 'https://chatgpt.com/g/g-692cfd47e3488191a43f3607e0b5b43a-the-tessellated-envoy', desc: 'AI behind DMTXACTLY prompts', external: true },
-    { name: 'REC Optimization Research', icon: '🌞', color: '#ff8c00', href: '/post-fossil-fuel-civilization.html', desc: 'Mercury-orbit solar collectors white paper' }
+    { name: 'Tessellated Envoy', icon: '🧠', color: '#A78BFA', href: 'https://chatgpt.com/g/g-692cfd47e3488191a43f3607e0b5b43a-the-tessellated-envoy', desc: 'AI behind DMTXACTLY prompts', external: true }
   ];
 
   var style = document.createElement('style');
