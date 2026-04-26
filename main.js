@@ -9327,6 +9327,24 @@ const server = http.createServer(async (req, res) => {
     if (serveHtmlFile(res, path.join(__dirname, 'public', 'bulletin-board.html'))) return;
   }
 
+  if (pathname === '/foundation' || pathname === '/foundation.html') {
+    if (serveHtmlFile(res, path.join(__dirname, 'public', 'foundation.html'))) return;
+  }
+
+  if (pathname === '/favicon.ico') {
+    const svgPath = path.join(__dirname, 'public', 'favicon.svg');
+    if (fs.existsSync(svgPath)) {
+      try {
+        const content = fs.readFileSync(svgPath);
+        res.writeHead(200, { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'public, max-age=86400' });
+        res.end(content);
+        return;
+      } catch (err) {
+        console.error('Error serving favicon:', err.message);
+      }
+    }
+  }
+
   if (pathname === '/data/ecosystem-config.json') {
     const filePath = path.join(__dirname, 'public', 'data', 'ecosystem-config.json');
     if (fs.existsSync(filePath)) {
