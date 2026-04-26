@@ -101,7 +101,7 @@ I will guide you through the requirements gathering process.`,
         {
           name: 'networkName',
           prompt: 'What would you like to name your network?',
-          validation: { type: 'string', minLength: 3, maxLength: 100 },
+          validation: { type: 'string', minLength: 1, maxLength: 100 },
           required: true
         },
         {
