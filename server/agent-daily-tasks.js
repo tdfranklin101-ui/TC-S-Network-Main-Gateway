@@ -108,6 +108,15 @@ const AGENT_BASE_PROFILES = {
 };
 let dynamicProfiles = {};
 
+const RECOVERY_DONATION_PER_DONOR = 20;
+const RECOVERY_TOP_DONOR_COUNT = 4;
+const RECOVERY_DONOR_MIN_BALANCE = RECOVERY_DONATION_PER_DONOR + 5;
+let currentRecoveringMemberIds = [];
+
+function getCurrentRecoveringMemberIds() {
+  return currentRecoveringMemberIds.slice();
+}
+
 function getAgentProfile(agentCode) {
   if (dynamicProfiles[agentCode]) return dynamicProfiles[agentCode];
   return AGENT_BASE_PROFILES[agentCode] || { role: 'Standard', creationSlots: 5, purchaseSlots: 5, priceMultiplier: 1.0, resaleMarkup: 0.15 };
@@ -221,6 +230,111 @@ async function kidSolRebalanceProfiles(pool, agents) {
   } catch (err) {
     console.warn('⚠️ [KID SOL] Rebalancing failed, using base profiles:', err.message);
     dynamicProfiles = {};
+  }
+}
+
+async function processRecoveryDonations(pool, agents) {
+  console.log('🤝 [KID SOL] Recovery check — top agents donate to recovering peers...');
+  currentRecoveringMemberIds = [];
+  try {
+    const balRes = await pool.query(
+      `SELECT m.id, m.username, m.total_solar
+       FROM members m
+       WHERE m.username LIKE 'agent_eco_%'
+         AND m.username != 'agent_eco_KS'
+         AND m.username != 'agent_eco_KSR'`
+    );
+    if (balRes.rows.length === 0) return { recovering: 0, donations: 0, transferred: 0 };
+
+    const rows = balRes.rows.map(r => ({
+      id: r.id,
+      code: r.username.replace('agent_eco_', ''),
+      balance: parseFloat(r.total_solar) || 0
+    }));
+    const avgBalance = rows.reduce((s, r) => s + r.balance, 0) / rows.length;
+
+    const recovering = rows.filter(r => avgBalance > 0 && r.balance / avgBalance < 0.85);
+    if (recovering.length === 0) {
+      console.log('🤝 [KID SOL] No agents in recovery — no donations needed.');
+      return { recovering: 0, donations: 0, transferred: 0 };
+    }
+
+    const recoveringIds = new Set(recovering.map(r => r.id));
+    currentRecoveringMemberIds = recovering.map(r => String(r.id));
+
+    const donors = rows
+      .filter(r => !recoveringIds.has(r.id) && r.balance >= RECOVERY_DONOR_MIN_BALANCE)
+      .sort((a, b) => b.balance - a.balance)
+      .slice(0, RECOVERY_TOP_DONOR_COUNT);
+
+    if (donors.length === 0) {
+      console.log(`🤝 [KID SOL] ${recovering.length} agents recovering, but no eligible donors with >= ${RECOVERY_DONOR_MIN_BALANCE} S balance.`);
+      return { recovering: recovering.length, donations: 0, transferred: 0 };
+    }
+
+    console.log(`🤝 [KID SOL] Recovery: ${recovering.length} agents need help | ${donors.length} top donors selected`);
+    console.log(`   Donors: ${donors.map(d => `${d.code} (${d.balance.toFixed(2)} S)`).join(', ')}`);
+    console.log(`   Recipients: ${recovering.map(r => `${r.code} (${r.balance.toFixed(2)} S)`).join(', ')}`);
+
+    let donationCount = 0;
+    let totalTransferred = 0;
+
+    for (const recipient of recovering) {
+      for (const donor of donors) {
+        const client = await pool.connect();
+        try {
+          await client.query('BEGIN');
+          const donorRow = await client.query('SELECT total_solar FROM members WHERE id = $1 FOR UPDATE', [donor.id]);
+          const donorBal = parseFloat(donorRow.rows[0]?.total_solar) || 0;
+          if (donorBal < RECOVERY_DONOR_MIN_BALANCE) {
+            await client.query('ROLLBACK');
+            continue;
+          }
+          const recipRow = await client.query('SELECT total_solar FROM members WHERE id = $1 FOR UPDATE', [recipient.id]);
+          const recipBal = parseFloat(recipRow.rows[0]?.total_solar) || 0;
+
+          const amount = RECOVERY_DONATION_PER_DONOR;
+          const newDonorBal = donorBal - amount;
+          const newRecipBal = recipBal + amount;
+          const txId = crypto.randomUUID();
+
+          await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(newDonorBal), donor.id]);
+          await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(newRecipBal), recipient.id]);
+
+          await client.query(
+            `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
+             VALUES ($1, 'debit', $2, 'agent', $3, $4, 'recovery_donation', $5, $6)`,
+            [txId, String(donor.id), String(amount), String(newDonorBal), String(recipient.id),
+             `Recovery donation: top agent ${donor.code} → recovering agent ${recipient.code}`]
+          );
+          await client.query(
+            `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
+             VALUES ($1, 'credit', $2, 'agent', $3, $4, 'recovery_donation', $5, $6)`,
+            [txId, String(recipient.id), String(amount), String(newRecipBal), String(donor.id),
+             `Recovery donation: from top agent ${donor.code}`]
+          );
+
+          await client.query('COMMIT');
+          donor.balance = newDonorBal;
+          recipient.balance = newRecipBal;
+          donationCount++;
+          totalTransferred += amount;
+          console.log(`   💚 ${donor.code} → ${recipient.code}: ${amount} S (new balances: donor ${newDonorBal.toFixed(2)} S, recipient ${newRecipBal.toFixed(2)} S)`);
+        } catch (err) {
+          try { await client.query('ROLLBACK'); } catch (e) {}
+          console.warn(`   ⚠️ Donation failed (${donor.code} → ${recipient.code}):`, err.message);
+        } finally {
+          client.release();
+        }
+      }
+    }
+
+    console.log(`🤝 [KID SOL] Recovery complete: ${donationCount} donations, ${totalTransferred.toFixed(2)} S transferred`);
+    console.log(`🛒 [KID SOL] Purchase priority directive: artifacts from recovering agents will be purchased first this round`);
+    return { recovering: recovering.length, donations: donationCount, transferred: totalTransferred };
+  } catch (err) {
+    console.warn('⚠️ [KID SOL] Recovery donations failed:', err.message);
+    return { recovering: 0, donations: 0, transferred: 0, error: err.message };
   }
 }
 
@@ -958,16 +1072,18 @@ async function makePurchasesForAgent(pool, agent, memberId, demandScores, aiDeci
       const basicNeedsStillNeeded = basicNeedsBought < MANDATORY_BASIC_PURCHASES;
       if (basicNeedsStillNeeded) {
         const excludeIds = purchasedArtifactIds.length > 0 ? purchasedArtifactIds : [];
+        const bnRecoveringIds = getCurrentRecoveringMemberIds().filter(id => id !== String(memberId));
         const bnResult = await client.query(
-          `SELECT a.id, a.title, a.solar_amount_s, a.creator_id, a.category
+          `SELECT a.id, a.title, a.solar_amount_s, a.creator_id, a.category,
+                  CASE WHEN a.creator_id = ANY($4::text[]) THEN 0 ELSE 1 END AS recovery_priority
            FROM artifacts a
            WHERE a.active = true AND a.category = 'Basic Needs'
              AND a.creator_id != $1
              AND a.id NOT IN (SELECT artifact_id FROM artifact_copies WHERE owner_id = $2)
              AND a.is_listed_for_resale = false
              AND a.id != ALL($3::uuid[])
-           ORDER BY a.solar_amount_s ASC LIMIT 10`,
-          [String(memberId), memberId, excludeIds]
+           ORDER BY recovery_priority ASC, a.solar_amount_s ASC LIMIT 10`,
+          [String(memberId), memberId, excludeIds, bnRecoveringIds]
         );
         const bnAffordable = bnResult.rows.find(c => buyerBalance - (parseFloat(c.solar_amount_s) || 0.01) >= RESERVE_FLOOR);
         if (bnAffordable) {
@@ -1008,9 +1124,12 @@ async function makePurchasesForAgent(pool, agent, memberId, demandScores, aiDeci
           browseCategory = rankedCategories[purchaseRound % rankedCategories.length];
         }
 
-        console.log(`🔍 [Agent ${agent.code}] Purchase ${purchaseRound + 1}/5: Browsing category [${browseCategory}]`);
+        const recoveringIds = getCurrentRecoveringMemberIds().filter(id => id !== String(memberId));
+        const recoveryNote = recoveringIds.length > 0 ? ` (priority: recovering agents)` : '';
+        console.log(`🔍 [Agent ${agent.code}] Purchase ${purchaseRound + 1}/5: Browsing category [${browseCategory}]${recoveryNote}`);
         const candidateResult = await client.query(
-          `SELECT a.id, a.title, a.solar_amount_s, a.creator_id, a.category
+          `SELECT a.id, a.title, a.solar_amount_s, a.creator_id, a.category,
+                  CASE WHEN a.creator_id = ANY($5::text[]) THEN 0 ELSE 1 END AS recovery_priority
            FROM artifacts a
            WHERE a.active = true
              AND a.category = $1
@@ -1018,9 +1137,9 @@ async function makePurchasesForAgent(pool, agent, memberId, demandScores, aiDeci
              AND a.id NOT IN (SELECT artifact_id FROM artifact_copies WHERE owner_id = $3)
              AND a.is_listed_for_resale = false
              AND a.id != ALL($4::uuid[])
-           ORDER BY a.solar_amount_s ASC
+           ORDER BY recovery_priority ASC, a.solar_amount_s ASC
            LIMIT 10`,
-          [browseCategory, String(memberId), memberId, excludeIds]
+          [browseCategory, String(memberId), memberId, excludeIds, recoveringIds]
         );
 
         browsedCategories.push(browseCategory);
@@ -1029,8 +1148,10 @@ async function makePurchasesForAgent(pool, agent, memberId, demandScores, aiDeci
           console.log(`📂 [Agent ${agent.code}] No items found in [${browseCategory}], trying next category`);
           for (const fallbackCat of rankedCategories) {
             if (fallbackCat === browseCategory) continue;
+            const fbRecoveringIds = getCurrentRecoveringMemberIds().filter(id => id !== String(memberId));
             const fallbackResult = await client.query(
-              `SELECT a.id, a.title, a.solar_amount_s, a.creator_id, a.category
+              `SELECT a.id, a.title, a.solar_amount_s, a.creator_id, a.category,
+                      CASE WHEN a.creator_id = ANY($5::text[]) THEN 0 ELSE 1 END AS recovery_priority
                FROM artifacts a
                WHERE a.active = true
                  AND a.category = $1
@@ -1038,9 +1159,9 @@ async function makePurchasesForAgent(pool, agent, memberId, demandScores, aiDeci
                  AND a.id NOT IN (SELECT artifact_id FROM artifact_copies WHERE owner_id = $3)
                  AND a.is_listed_for_resale = false
                  AND a.id != ALL($4::uuid[])
-               ORDER BY a.solar_amount_s ASC
+               ORDER BY recovery_priority ASC, a.solar_amount_s ASC
                LIMIT 5`,
-              [fallbackCat, String(memberId), memberId, excludeIds]
+              [fallbackCat, String(memberId), memberId, excludeIds, fbRecoveringIds]
             );
             if (fallbackResult.rows.length > 0) {
               console.log(`📂 [Agent ${agent.code}] Found items in fallback category [${fallbackCat}]`);
@@ -1501,6 +1622,8 @@ async function runDailyAgentTasks(pool, agents) {
 
   await kidSolRebalanceProfiles(pool, agents);
 
+  const recoveryResult = await processRecoveryDonations(pool, agents);
+
   const supplyManifest = await buildSupplyManifest(pool, agents, demand);
 
   // KID SOL generates daily objectives using AI
@@ -1552,7 +1675,8 @@ async function runDailyAgentTasks(pool, agents) {
     provision,
     demandAnalysis: { totalInventory: demand.totalInventory, gaps: demand.gaps, requestCount: demand.memberRequests.length },
     supplyManifest,
-    kidSolObjectives
+    kidSolObjectives,
+    recovery: recoveryResult
   };
 
   const agentResults = [];
@@ -2717,4 +2841,4 @@ async function upgradeArtifactPrompts(pool) {
   return { upgraded, errors, total: result.rows.length, byAgent };
 }
 
-module.exports = { runDailyAgentTasks, runSingleAgentTasks, getTaskStatus, runEducationBlitz, ensureAgentMembers, submitKidSolarPrompt, runCustomAgentTask, ALL_CATEGORIES, runRound2AgentTasks, getRound2Status, addBulletinReply, upgradeArtifactPrompts, analyzeMarketDemand, getAgentPortfolios, getArtifactUtility, ARTIFACT_UTILITY_TYPES };
+module.exports = { runDailyAgentTasks, runSingleAgentTasks, getTaskStatus, runEducationBlitz, ensureAgentMembers, submitKidSolarPrompt, runCustomAgentTask, ALL_CATEGORIES, runRound2AgentTasks, getRound2Status, addBulletinReply, upgradeArtifactPrompts, analyzeMarketDemand, getAgentPortfolios, getArtifactUtility, ARTIFACT_UTILITY_TYPES, processRecoveryDonations, getCurrentRecoveringMemberIds };
