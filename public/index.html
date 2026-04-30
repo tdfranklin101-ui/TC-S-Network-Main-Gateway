@@ -435,7 +435,7 @@
       <div class="gateway-logo">☀️</div>
       <h1 class="gateway-title">TC-S Network Foundation</h1>
       <p class="gateway-subtitle">
-        Come join the experiment. Be part of our expanded 1,000 person trial.<br>
+        Come join the experiment. Be part of our expanded <span id="liveMemberTrialCount">1,000</span> person trial.<br>
         <em style="opacity: 0.8;">The future is unwritten.</em>
       </p>
       <div class="solar-value">1 Solar = 4,913 kWh</div>
@@ -656,5 +656,17 @@
       }
     });
   </script>
+<script>
+(function(){
+  fetch('/api/members', { headers: { 'Accept': 'application/json' } })
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(d){
+      if (!d || typeof d.totalMembers !== 'number') return;
+      var el = document.getElementById('liveMemberTrialCount');
+      if (el) el.textContent = d.totalMembers.toLocaleString();
+    })
+    .catch(function(){});
+})();
+</script>
 </body>
 </html>
