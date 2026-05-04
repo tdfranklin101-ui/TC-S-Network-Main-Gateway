@@ -3595,8 +3595,8 @@ const server = http.createServer(async (req, res) => {
     });
   }
   
-  // Stripe Solar Checkout + Network Config routes (handle before body parsing to preserve raw body for webhook)
-  if (pathname.startsWith('/api/solar-checkout') || pathname.startsWith('/api/network')) {
+  // Stripe Solar Checkout routes (handle before body parsing to preserve raw body for webhook)
+  if (pathname.startsWith('/api/solar-checkout')) {
     if (stripeSolarRoutes(req, res, pathname, pool, { getCookie, getSession })) return;
   }
 
