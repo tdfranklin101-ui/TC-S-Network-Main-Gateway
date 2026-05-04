@@ -542,7 +542,7 @@ export const insertAgentAssignmentSchema = createInsertSchema(agentAssignments).
 export type AgentAssignment = typeof agentAssignments.$inferSelect;
 export type InsertAgentAssignment = z.infer<typeof insertAgentAssignmentSchema>;
 
-// Solar withdrawal requests — members cash out Solar back to USD
+// Solar withdrawal requests (legacy — preserved for existing data)
 export const solarWithdrawals = pgTable("solar_withdrawals", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   memberId: integer("member_id").references(() => members.id).notNull(),
@@ -561,6 +561,50 @@ export const solarWithdrawals = pgTable("solar_withdrawals", {
 export const insertSolarWithdrawalSchema = createInsertSchema(solarWithdrawals).omit({ id: true, createdAt: true });
 export type SolarWithdrawal = typeof solarWithdrawals.$inferSelect;
 export type InsertSolarWithdrawal = z.infer<typeof insertSolarWithdrawalSchema>;
+
+// Commissioned networks — white-label marketplace instances
+export const networks = pgTable("networks", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  slug: varchar("slug").notNull().unique(),
+  status: varchar("status").notNull().default("active"),
+  settlementMode: varchar("settlement_mode").notNull().default("disabled"),
+  allowFiatActivation: boolean("allow_fiat_activation").default(true),
+  allowRecActivation: boolean("allow_rec_activation").default(true),
+  allowMemberToMemberTransfers: boolean("allow_member_to_member_transfers").default(true),
+  allowAgentTrading: boolean("allow_agent_trading").default(true),
+  allowAgentCommissions: boolean("allow_agent_commissions").default(true),
+  marketplaceScope: varchar("marketplace_scope").default("curated"),
+  networkRules: jsonb("network_rules"),
+  reservePolicy: jsonb("reserve_policy"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertNetworkSchema = createInsertSchema(networks).omit({ id: true, createdAt: true, updatedAt: true });
+export type Network = typeof networks.$inferSelect;
+export type InsertNetwork = z.infer<typeof insertNetworkSchema>;
+
+// Solar settlement requests — compliance-safe replacement for cash-out
+export const solarSettlementRequests = pgTable("solar_settlement_requests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  memberId: integer("member_id").references(() => members.id).notNull(),
+  networkId: varchar("network_id").references(() => networks.id).notNull(),
+  requestedSolarAmount: numeric("requested_solar_amount", { precision: 18, scale: 6 }).notNull(),
+  estimatedUsdValue: numeric("estimated_usd_value", { precision: 10, scale: 2 }).notNull(),
+  platformFeeAmount: numeric("platform_fee_amount", { precision: 18, scale: 6 }).notNull(),
+  netEstimatedUsd: numeric("net_estimated_usd", { precision: 10, scale: 2 }).notNull(),
+  status: varchar("status").notNull().default("pending"),
+  settlementMode: varchar("settlement_mode").notNull(),
+  complianceAcknowledged: boolean("compliance_acknowledged").default(false),
+  adminNotes: text("admin_notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertSettlementRequestSchema = createInsertSchema(solarSettlementRequests).omit({ id: true, createdAt: true, updatedAt: true });
+export type SolarSettlementRequest = typeof solarSettlementRequests.$inferSelect;
+export type InsertSettlementRequest = z.infer<typeof insertSettlementRequestSchema>;
 
 // Energy-based pricing constants
 export const KWH_PER_SOLAR = 4913;

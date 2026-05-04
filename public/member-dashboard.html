@@ -51,8 +51,8 @@ header p{color:#666;font-size:13px;margin-top:4px}
 
 .section-title{font-family:'Orbitron',sans-serif;font-size:14px;color:var(--cyan);text-transform:uppercase;letter-spacing:2px;margin:28px 0 12px;display:flex;align-items:center;gap:8px}
 
-.tabs{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:16px}
-.tab{flex:1;padding:12px;text-align:center;font-size:11px;font-weight:600;color:#666;cursor:pointer;border-bottom:3px solid transparent;transition:all .2s;text-transform:uppercase;letter-spacing:1px;user-select:none}
+.tabs{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:16px;flex-wrap:wrap}
+.tab{flex:1;padding:12px;text-align:center;font-size:11px;font-weight:600;color:#666;cursor:pointer;border-bottom:3px solid transparent;transition:all .2s;text-transform:uppercase;letter-spacing:1px;user-select:none;min-width:80px}
 .tab.active{color:var(--green);border-bottom-color:var(--green)}
 .tab:hover:not(.active){color:var(--cyan)}
 .tab-content{display:none}
@@ -71,6 +71,9 @@ header p{color:#666;font-size:13px;margin-top:4px}
 .rec-box{background:linear-gradient(135deg,rgba(0,255,136,.06),rgba(0,191,255,.04));border:1px solid rgba(0,255,136,.2);border-radius:12px;padding:16px;margin-top:12px}
 .rec-box h4{font-size:13px;color:var(--green);margin-bottom:6px}
 .rec-box p{font-size:12px;color:#888;line-height:1.5}
+.sponsor-box{background:linear-gradient(135deg,rgba(0,191,255,.06),rgba(138,43,226,.04));border:1px solid rgba(0,191,255,.2);border-radius:12px;padding:16px;margin-top:12px}
+.sponsor-box h4{font-size:13px;color:var(--cyan);margin-bottom:6px}
+.sponsor-box p{font-size:12px;color:#888;line-height:1.5}
 
 .agent-card{background:linear-gradient(135deg,rgba(57,255,20,.06),rgba(0,191,255,.04));border:1px solid rgba(57,255,20,.2);border-radius:14px;padding:20px;margin-bottom:16px}
 .agent-card .ac-header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
@@ -105,9 +108,10 @@ header p{color:#666;font-size:13px;margin-top:4px}
 .ledger-tag{display:inline-block;padding:2px 8px;border-radius:6px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
 .ledger-tag.credit{background:rgba(57,255,20,.1);color:var(--green)}
 .ledger-tag.debit{background:rgba(255,100,100,.1);color:#ff6666}
-.ledger-tag.purchase{background:rgba(0,191,255,.1);color:var(--cyan)}
+.ledger-tag.activation{background:rgba(0,191,255,.1);color:var(--cyan)}
 .ledger-tag.usd{background:rgba(255,215,0,.1);color:var(--gold)}
 .ledger-tag.rec{background:rgba(0,255,136,.1);color:var(--green)}
+.ledger-tag.settlement{background:rgba(255,165,0,.1);color:var(--orange)}
 
 .spinner{display:inline-block;width:24px;height:24px;border:3px solid #333;border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -130,11 +134,26 @@ header p{color:#666;font-size:13px;margin-top:4px}
 .task-status.success{display:block;background:rgba(57,255,20,.08);color:var(--green);border:1px solid rgba(57,255,20,.2)}
 .task-status.error{display:block;background:rgba(255,68,68,.08);color:#ff4444;border:1px solid rgba(255,68,68,.2)}
 
+.rules-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:12px}
+.rules-card .rc-title{font-family:'Orbitron',sans-serif;font-size:13px;color:var(--cyan);margin-bottom:12px}
+.rules-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:13px}
+.rules-row:last-child{border-bottom:none}
+.rules-row .rr-label{color:#888}
+.rules-row .rr-value{font-weight:600}
+.rules-row .rr-value.enabled{color:var(--green)}
+.rules-row .rr-value.disabled{color:#ff6666}
+
+.compliance-box{background:linear-gradient(135deg,rgba(0,191,255,.04),rgba(57,255,20,.02));border:1px solid rgba(0,191,255,.15);border-radius:12px;padding:16px;margin-top:16px;font-size:12px;color:#999;line-height:1.6}
+
+.settlement-checkbox{display:flex;align-items:flex-start;gap:10px;margin:16px 0;padding:14px;background:rgba(255,165,0,.04);border:1px solid rgba(255,165,0,.15);border-radius:10px}
+.settlement-checkbox input[type=checkbox]{margin-top:3px;accent-color:var(--gold)}
+.settlement-checkbox label{font-size:12px;color:#999;line-height:1.5;cursor:pointer}
+
 @media(max-width:600px){
   .hero-card{flex-direction:column;text-align:center;align-items:center}
   .packs-grid{grid-template-columns:1fr}
   .product-grid{grid-template-columns:1fr}
-  .tab{font-size:9px;padding:10px 4px;letter-spacing:.5px}
+  .tab{font-size:8px;padding:10px 4px;letter-spacing:.3px;min-width:60px}
   .assign-grid{grid-template-columns:repeat(auto-fill,minmax(100px,1fr))}
 }
 </style>
@@ -153,110 +172,76 @@ header p{color:#666;font-size:13px;margin-top:4px}
 <div class="container">
   <header>
     <h1>Member Dashboard</h1>
-    <p>Fund your agent. Get real products. Full ledger transparency.</p>
+    <p>Activate Solar. Participate in the marketplace. Full ledger transparency.</p>
   </header>
 
   <div id="heroSection"></div>
 
-  <div class="tabs">
-    <div class="tab active" data-tab="fund">Fund Solar</div>
-    <div class="tab" data-tab="agent">My Agent</div>
-    <div class="tab" data-tab="products">Products</div>
-    <div class="tab" data-tab="ledger">Ledger</div>
-    <div class="tab" data-tab="cashout">Cash Out</div>
-    <div class="tab" data-tab="commission">Commission</div>
-  </div>
+  <div class="tabs" id="tabBar"></div>
 
-  <div class="tab-content active" id="tab-fund">
-    <div class="section-title">Buy Solar Packs</div>
-    <p style="color:#888;font-size:13px;margin-bottom:16px">Purchase Solar tokens with USD. 1 Solar = 4,913 kWh at $0.45/kWh = <b style="color:var(--gold)">$2,210.85 per Solar</b>. Your agent begins trading immediately.</p>
-    <div class="packs-grid" id="packsGrid">
-      <div class="loading"><div class="spinner"></div><br>Loading packs...</div>
+  <div class="tab-content" id="tab-activate">
+    <div class="section-title">Activate Solar</div>
+    <p style="color:#888;font-size:13px;margin-bottom:16px">Activate Solar for marketplace participation. 1 Solar = 4,913 kWh at $0.45/kWh = <b style="color:var(--gold)">$2,210.85 per Solar</b>. Your agent begins marketplace activity immediately.</p>
+
+    <div id="fiatActivationSection">
+      <div class="section-title" style="font-size:11px;margin-top:12px">💵 Fiat Activation</div>
+      <p style="color:#888;font-size:12px;margin-bottom:12px">Activate Solar for marketplace participation using a fiat payment method.</p>
+      <div class="packs-grid" id="packsGrid">
+        <div class="loading"><div class="spinner"></div><br>Loading activation options...</div>
+      </div>
     </div>
-    <div class="rec-box">
-      <h4>⚡ Fund with Renewable Energy Certificates (RECs)</h4>
-      <p>Own solar panels or wind turbines? Verified RECs can fund Solar directly. 1 kWh of verified renewable generation = ~0.000204 Solar. Real energy backs the currency — no dollars needed.</p>
-      <p style="margin-top:8px;color:var(--cyan);font-size:11px">Contact us to connect your REC provider, or use the API endpoint for programmatic REC credits.</p>
+
+    <div id="recActivationSection">
+      <div class="rec-box">
+        <h4>⚡ REC Activation — Renewable Energy Contribution</h4>
+        <p>Activate Solar through verified renewable energy contribution records. Verified renewable generation may activate Solar according to the Solar Standard: 1 Solar = 4,913 kWh. 1 kWh = approximately 0.00020354 Solar.</p>
+        <p style="margin-top:8px;color:var(--cyan);font-size:11px">REC activation pending verification unless already verified. Contact us to connect your REC provider.</p>
+      </div>
     </div>
-    <div id="purchaseHistory" style="margin-top:20px"></div>
+
+    <div class="sponsor-box">
+      <h4>🏛️ Sponsor / Commissioner Allocation</h4>
+      <p>This network may provide Solar allocations funded by the commissioner, sponsor, event budget, or grant pool.</p>
+    </div>
+
+    <div id="activationHistory" style="margin-top:20px"></div>
   </div>
 
   <div class="tab-content" id="tab-agent">
     <div class="section-title">Your Assigned Agent</div>
+    <p style="color:#888;font-size:12px;margin-bottom:12px" id="agentDescriptionText"></p>
     <div id="agentSection">
       <div class="loading"><div class="spinner"></div><br>Loading agent...</div>
     </div>
   </div>
 
-  <div class="tab-content" id="tab-products">
-    <div class="section-title">Product Library <span id="productCount" style="font-size:11px;color:var(--green);font-family:'Space Grotesk',sans-serif"></span></div>
-    <p style="color:#888;font-size:13px;margin-bottom:16px">Products your agent has acquired or that you've purchased from the marketplace.</p>
+  <div class="tab-content" id="tab-marketplace">
+    <div class="section-title">Marketplace</div>
+    <p style="color:#888;font-size:13px;margin-bottom:16px">Browse and purchase goods, services, and digital assets from the Solar marketplace.</p>
+    <div style="text-align:center;padding:30px">
+      <a href="/marketplace.html" class="btn btn-cyan">Open Full Marketplace</a>
+    </div>
+  </div>
+
+  <div class="tab-content" id="tab-assets">
+    <div class="section-title">My Assets <span id="productCount" style="font-size:11px;color:var(--green);font-family:'Space Grotesk',sans-serif"></span></div>
+    <p style="color:#888;font-size:13px;margin-bottom:16px">Assets your agent has acquired or that you've obtained from the marketplace.</p>
     <div id="productGrid">
-      <div class="loading"><div class="spinner"></div><br>Loading products...</div>
+      <div class="loading"><div class="spinner"></div><br>Loading assets...</div>
     </div>
   </div>
 
   <div class="tab-content" id="tab-ledger">
     <div class="section-title">Transaction Ledger</div>
-    <p style="color:#888;font-size:13px;margin-bottom:16px">Complete chain: USD/REC paid → Solar credited → agent transactions → products delivered.</p>
+    <p style="color:#888;font-size:13px;margin-bottom:16px">Complete trail: activation → Solar credited → marketplace activity → assets delivered. USD values shown are energy reference values.</p>
     <div id="ledgerSection">
       <div class="loading"><div class="spinner"></div><br>Loading ledger...</div>
     </div>
   </div>
 
-  <div class="tab-content" id="tab-cashout">
-    <div class="section-title">Cash Out Solar → USD</div>
-    <p style="color:#888;font-size:13px;margin-bottom:16px">Convert your Solar tokens back to US dollars. 1 Solar = $2,210.85 (4,913 kWh × $0.45/kWh). A 5% platform fee applies. Minimum withdrawal: 0.001 Solar (~$2.21).</p>
-
-    <div id="cashoutForm" style="display:none">
-      <div class="agent-card" style="border-color:rgba(255,215,0,.3);background:linear-gradient(135deg,rgba(255,215,0,.06),rgba(255,100,100,.04))">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
-          <div style="font-size:36px">💸</div>
-          <div>
-            <div style="font-family:'Orbitron',sans-serif;font-size:16px;color:var(--gold);font-weight:700">Withdraw Solar</div>
-            <div style="font-size:11px;color:#888">Available balance: <span id="cashoutBalance" style="color:var(--green);font-weight:700">0</span> Solar</div>
-          </div>
-        </div>
-
-        <div class="task-form" style="background:transparent;border:none;padding:0">
-          <label>Solar Amount to Cash Out</label>
-          <input type="number" id="withdrawAmount" min="0.001" step="0.001" placeholder="e.g. 0.001, 0.01, 0.1" oninput="updateCashoutPreview()">
-
-          <div id="cashoutPreview" style="display:none;background:rgba(0,0,0,.4);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
-            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px">
-              <span style="color:#888">Solar to withdraw:</span>
-              <span id="previewSolar" style="color:var(--gold);font-family:'Orbitron',sans-serif">0 S</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px">
-              <span style="color:#888">Platform fee (5%):</span>
-              <span id="previewFee" style="color:#ff6666;font-family:'Orbitron',sans-serif">-0 S</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px">
-              <span style="color:#888">Net Solar converted:</span>
-              <span id="previewNet" style="color:var(--green);font-family:'Orbitron',sans-serif">0 S</span>
-            </div>
-            <div style="border-top:1px solid var(--border);padding-top:8px;margin-top:8px;display:flex;justify-content:space-between;font-size:14px">
-              <span style="color:var(--cyan);font-weight:600">You receive:</span>
-              <span id="previewUsd" style="color:var(--gold);font-family:'Orbitron',sans-serif;font-size:18px;font-weight:900">$0.00</span>
-            </div>
-          </div>
-
-          <button class="btn btn-gold" id="submitWithdraw" onclick="submitWithdrawal()">Request Cash Out</button>
-          <div class="task-status" id="withdrawStatus"></div>
-        </div>
-      </div>
-    </div>
-
-    <div id="cashoutLoginPrompt" style="display:none">
-      <div class="login-prompt"><p>Sign in to cash out your Solar tokens</p></div>
-    </div>
-
-    <div id="withdrawalHistory" style="margin-top:20px"></div>
-  </div>
-
   <div class="tab-content" id="tab-commission">
-    <div class="section-title">Commission Agent Task</div>
-    <p style="color:#888;font-size:13px;margin-bottom:16px">Select an agent and describe what you need. The agent will create the artifact and deliver it to your product library.</p>
+    <div class="section-title">Commission Agents</div>
+    <p style="color:#888;font-size:13px;margin-bottom:16px">Select an agent and describe what you need. The agent will create the asset and deliver it to your library through agent-assisted commerce.</p>
     <div id="agentSelectGrid" class="assign-grid"></div>
     <div class="task-form" id="taskForm" style="display:none">
       <div id="selectedAgentInfo" style="margin-bottom:14px;font-size:13px;color:var(--green)"></div>
@@ -266,6 +251,20 @@ header p{color:#666;font-size:13px;margin-top:4px}
       <textarea id="taskPurpose" placeholder="Describe what you want the agent to create or find for you..."></textarea>
       <button class="btn" id="submitTask" onclick="submitAgentTask()">Commission Agent</button>
       <div class="task-status" id="taskStatus"></div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="tab-rules">
+    <div class="section-title">Network Rules</div>
+    <div id="networkRulesSection">
+      <div class="loading"><div class="spinner"></div><br>Loading network configuration...</div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="tab-settlement">
+    <div class="section-title">Settlement</div>
+    <div id="settlementSection">
+      <div class="loading"><div class="spinner"></div><br>Loading...</div>
     </div>
   </div>
 </div>
@@ -301,38 +300,212 @@ var currentSession = null;
 var selectedAgent = null;
 var stripePublicKey = null;
 var USD_PER_SOLAR = 2210.85;
+var networkConfig = null;
 
 function esc(s){if(!s)return '';var d=document.createElement('div');d.textContent=String(s);return d.innerHTML}
 function fmtDate(d){if(!d)return '';return new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}
 function fmtSolar(v){return parseFloat(v||0).toFixed(6)}
 
-document.querySelectorAll('.tab').forEach(function(tab){
-  tab.addEventListener('click',function(){
-    document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active')});
-    document.querySelectorAll('.tab-content').forEach(function(t){t.classList.remove('active')});
-    tab.classList.add('active');
-    document.getElementById('tab-'+tab.dataset.tab).classList.add('active');
+function buildTabs(tabs){
+  var bar=document.getElementById('tabBar');
+  bar.innerHTML='';
+  tabs.forEach(function(t,i){
+    var div=document.createElement('div');
+    div.className='tab'+(i===0?' active':'');
+    div.dataset.tab=t.id;
+    div.textContent=t.label;
+    div.addEventListener('click',function(){
+      document.querySelectorAll('.tab').forEach(function(el){el.classList.remove('active')});
+      document.querySelectorAll('.tab-content').forEach(function(el){el.classList.remove('active')});
+      div.classList.add('active');
+      var target=document.getElementById('tab-'+t.id);
+      if(target)target.classList.add('active');
+    });
+    bar.appendChild(div);
   });
-});
+  var firstTab=document.getElementById('tab-'+(tabs[0]?tabs[0].id:'activate'));
+  if(firstTab)firstTab.classList.add('active');
+}
+
+async function loadNetworkConfig(){
+  try{
+    var res=await fetch('/api/network/config');
+    var data=await res.json();
+    if(data.success){
+      networkConfig=data;
+      if(data.energy&&data.energy.usdPerSolar)USD_PER_SOLAR=data.energy.usdPerSolar;
+      buildTabs(data.tabs||[
+        {id:'activate',label:'Activate Solar'},{id:'agent',label:'My Agent'},
+        {id:'marketplace',label:'Marketplace'},{id:'assets',label:'My Assets'},
+        {id:'ledger',label:'Ledger'},{id:'commission',label:'Commission Agents'},
+        {id:'rules',label:'Network Rules'}
+      ]);
+      applyNetworkConfig(data);
+    }else{
+      buildTabs([
+        {id:'activate',label:'Activate Solar'},{id:'agent',label:'My Agent'},
+        {id:'marketplace',label:'Marketplace'},{id:'assets',label:'My Assets'},
+        {id:'ledger',label:'Ledger'},{id:'commission',label:'Commission Agents'},
+        {id:'rules',label:'Network Rules'}
+      ]);
+    }
+  }catch(e){
+    buildTabs([
+      {id:'activate',label:'Activate Solar'},{id:'agent',label:'My Agent'},
+      {id:'marketplace',label:'Marketplace'},{id:'assets',label:'My Assets'},
+      {id:'ledger',label:'Ledger'},{id:'commission',label:'Commission Agents'},
+      {id:'rules',label:'Network Rules'}
+    ]);
+  }
+}
+
+function applyNetworkConfig(cfg){
+  var net=cfg.network||{};
+  if(!net.allow_fiat_activation){
+    var fs=document.getElementById('fiatActivationSection');
+    if(fs)fs.style.display='none';
+  }
+  if(!net.allow_rec_activation){
+    var rs=document.getElementById('recActivationSection');
+    if(rs)rs.style.display='none';
+  }
+  var descEl=document.getElementById('agentDescriptionText');
+  if(descEl&&cfg.compliance){
+    descEl.textContent=cfg.compliance.agentDescription||'';
+  }
+  renderNetworkRules(cfg);
+  if(net.settlement_mode&&net.settlement_mode!=='disabled'){
+    renderSettlement(cfg);
+  }else{
+    var stl=document.getElementById('settlementSection');
+    if(stl)stl.innerHTML='<div class="compliance-box" style="text-align:center">'+
+      '<p style="color:var(--cyan);font-size:14px;margin-bottom:8px">Settlement Not Available</p>'+
+      '<p>'+(cfg.compliance?cfg.compliance.settlementDisclaimer:'This network does not offer settlement.')+'</p></div>';
+  }
+}
+
+function renderNetworkRules(cfg){
+  var net=cfg.network||{};
+  var fees=cfg.fees||{};
+  var compliance=cfg.compliance||{};
+  var html='';
+
+  html+='<div class="rules-card"><div class="rc-title">'+esc(net.name||'TC-S Network')+' Configuration</div>';
+  html+='<div class="rules-row"><span class="rr-label">Network</span><span class="rr-value" style="color:var(--cyan)">'+esc(net.name||'TC-S Main Network')+'</span></div>';
+  html+='<div class="rules-row"><span class="rr-label">Settlement Mode</span><span class="rr-value '+(net.settlement_mode==='disabled'?'disabled':'enabled')+'">'+esc((net.settlement_mode||'disabled').replace(/_/g,' '))+'</span></div>';
+  html+='<div class="rules-row"><span class="rr-label">Fiat Activation</span><span class="rr-value '+(net.allow_fiat_activation!==false?'enabled':'disabled')+'">'+(net.allow_fiat_activation!==false?'Enabled':'Disabled')+'</span></div>';
+  html+='<div class="rules-row"><span class="rr-label">REC Activation</span><span class="rr-value '+(net.allow_rec_activation!==false?'enabled':'disabled')+'">'+(net.allow_rec_activation!==false?'Enabled':'Disabled')+'</span></div>';
+  html+='<div class="rules-row"><span class="rr-label">Agent Trading</span><span class="rr-value '+(net.allow_agent_trading!==false?'enabled':'disabled')+'">'+(net.allow_agent_trading!==false?'Enabled':'Disabled')+'</span></div>';
+  html+='<div class="rules-row"><span class="rr-label">Member Transfers</span><span class="rr-value '+(net.allow_member_to_member_transfers!==false?'enabled':'disabled')+'">'+(net.allow_member_to_member_transfers!==false?'Enabled':'Disabled')+'</span></div>';
+  html+='<div class="rules-row"><span class="rr-label">Marketplace Scope</span><span class="rr-value" style="color:var(--cyan)">'+esc(net.marketplace_scope||'curated')+'</span></div>';
+  html+='</div>';
+
+  html+='<div class="rules-card"><div class="rc-title">Fee Structure</div>';
+  html+='<div class="rules-row"><span class="rr-label">Marketplace Transaction Fee</span><span class="rr-value" style="color:var(--gold)">'+(fees.marketplaceTransactionFeePercent||5)+'%</span></div>';
+  html+='<div class="rules-row"><span class="rr-label">Agent Service Fee</span><span class="rr-value" style="color:var(--gold)">'+(fees.agentCommissionFeePercent||10)+'%</span></div>';
+  if(net.settlement_mode&&net.settlement_mode!=='disabled'){
+    html+='<div class="rules-row"><span class="rr-label">Administrative Settlement Fee</span><span class="rr-value" style="color:var(--gold)">'+(fees.settlementAdministrativeFeePercent||5)+'%</span></div>';
+  }
+  if(fees.activationProcessingFeePercent>0){
+    html+='<div class="rules-row"><span class="rr-label">Activation Processing Fee</span><span class="rr-value" style="color:var(--gold)">'+fees.activationProcessingFeePercent+'%</span></div>';
+  }
+  html+='</div>';
+
+  html+='<div class="compliance-box">';
+  html+='<p style="margin-bottom:8px">'+(compliance.marketplaceDescription||'')+'</p>';
+  if(net.settlement_mode==='disabled'){
+    html+='<p style="color:var(--orange);margin-top:8px">'+(compliance.settlementDisclaimer||'This network does not offer cash settlement.')+'</p>';
+  }else{
+    html+='<p style="color:var(--orange);margin-top:8px">'+(compliance.settlementDisclaimer||'')+'</p>';
+  }
+  html+='</div>';
+
+  if(net.network_rules){
+    var rules=typeof net.network_rules==='string'?JSON.parse(net.network_rules):net.network_rules;
+    var custom=Object.keys(rules).filter(function(k){return !['marketplaceTransactionFeePercent','agentCommissionFeePercent','settlementAdministrativeFeePercent','activationProcessingFeePercent'].includes(k)});
+    if(custom.length>0){
+      html+='<div class="rules-card" style="margin-top:12px"><div class="rc-title">Commissioner Rules</div>';
+      custom.forEach(function(k){
+        html+='<div class="rules-row"><span class="rr-label">'+esc(k.replace(/_/g,' '))+'</span><span class="rr-value" style="color:#ccc">'+esc(String(rules[k]))+'</span></div>';
+      });
+      html+='</div>';
+    }
+  }
+
+  document.getElementById('networkRulesSection').innerHTML=html;
+}
+
+function renderSettlement(cfg){
+  var net=cfg.network||{};
+  var fees=cfg.fees||{};
+  var compliance=cfg.compliance||{};
+  var feeRate=fees.settlementAdministrativeFeePercent||5;
+
+  var html='<div class="compliance-box" style="margin-bottom:16px;border-color:rgba(255,165,0,.2)">'+
+    '<p style="color:var(--orange);font-size:12px">'+(compliance.settlementDisclaimer||'')+'</p></div>';
+
+  html+='<div id="settlementForm" style="display:none">';
+  html+='<div class="agent-card" style="border-color:rgba(255,165,0,.3);background:linear-gradient(135deg,rgba(255,165,0,.06),rgba(255,100,100,.04))">';
+  html+='<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">';
+  html+='<div style="font-size:36px">📋</div>';
+  html+='<div><div style="font-family:\'Orbitron\',sans-serif;font-size:16px;color:var(--orange);font-weight:700">Submit Settlement Request</div>';
+  html+='<div style="font-size:11px;color:#888">Eligible balance: <span id="settlementBalance" style="color:var(--green);font-weight:700">0</span> Solar</div>';
+  html+='</div></div>';
+
+  html+='<div class="task-form" style="background:transparent;border:none;padding:0">';
+  html+='<label>Solar Amount for Settlement</label>';
+  html+='<input type="number" id="settlementAmount" min="0.001" step="0.001" placeholder="e.g. 0.001, 0.01, 0.1" oninput="updateSettlementPreview()">';
+
+  html+='<div id="settlementPreview" style="display:none;background:rgba(0,0,0,.4);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">';
+  html+='<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px"><span style="color:#888">Solar for settlement:</span><span id="prevStlSolar" style="color:var(--gold);font-family:\'Orbitron\',sans-serif">0 S</span></div>';
+  html+='<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px"><span style="color:#888">Administrative settlement fee ('+feeRate+'%):</span><span id="prevStlFee" style="color:#ff6666;font-family:\'Orbitron\',sans-serif">-0 S</span></div>';
+  html+='<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px"><span style="color:#888">Net Solar:</span><span id="prevStlNet" style="color:var(--green);font-family:\'Orbitron\',sans-serif">0 S</span></div>';
+  html+='<div style="border-top:1px solid var(--border);padding-top:8px;margin-top:8px;display:flex;justify-content:space-between;font-size:14px">';
+  html+='<span style="color:var(--cyan);font-weight:600">USD reference estimate:</span>';
+  html+='<span id="prevStlUsd" style="color:var(--gold);font-family:\'Orbitron\',sans-serif;font-size:18px;font-weight:900">$0.00</span></div></div>';
+
+  html+='<div class="settlement-checkbox"><input type="checkbox" id="complianceCheckbox"><label for="complianceCheckbox">I understand that settlement is subject to this network\'s rules, identity verification, reserve status, platform terms, and applicable law.</label></div>';
+
+  html+='<button class="btn btn-gold" id="submitSettlement" onclick="submitSettlementRequest()" disabled>Submit Settlement Request</button>';
+  html+='<div class="task-status" id="settlementStatus"></div>';
+  html+='</div></div></div>';
+
+  html+='<div id="settlementLoginPrompt" style="display:none"><div class="login-prompt"><p>Sign in to view settlement options</p></div></div>';
+  html+='<div id="settlementHistory" style="margin-top:20px"></div>';
+
+  document.getElementById('settlementSection').innerHTML=html;
+
+  var cb=document.getElementById('complianceCheckbox');
+  if(cb){cb.addEventListener('change',function(){
+    var btn=document.getElementById('submitSettlement');
+    if(btn)btn.disabled=!cb.checked;
+  })}
+}
 
 async function init(){
   var params = new URLSearchParams(window.location.search);
-  if(params.get('purchase')==='success'){
-    alert('Solar purchase successful! Your balance has been credited.');
+  if(params.get('activation')==='success'){
+    alert('Solar activation successful! Your balance has been credited.');
     window.history.replaceState({},'','/member-dashboard.html');
   }
+  if(params.get('purchase')==='success'){
+    alert('Solar activation successful! Your balance has been credited.');
+    window.history.replaceState({},'','/member-dashboard.html');
+  }
+  await loadNetworkConfig();
   await checkSession();
   loadPacks();
   buildAgentSelector();
   buildCategoryDropdown();
   if(currentSession){
     loadMyAgent();
-    loadProducts();
+    loadAssets();
     loadLedger();
-    loadPurchaseHistory();
-    initCashout();
+    loadActivationHistory();
+    initSettlement();
   } else {
-    document.getElementById('cashoutLoginPrompt').style.display='block';
+    var sp=document.getElementById('settlementLoginPrompt');
+    if(sp)sp.style.display='block';
   }
 }
 
@@ -352,7 +525,7 @@ async function checkSession(){
       buildHeroCard(currentSession);
     } else {
       document.getElementById('heroSection').innerHTML=
-        '<div class="login-prompt"><p>Sign in to access your dashboard, fund Solar, and see your agent in action</p>'+
+        '<div class="login-prompt"><p>Sign in to access your dashboard, activate Solar, and see your agent in action</p>'+
         '<a href="/marketplace.html" class="btn btn-cyan btn-sm" style="margin-right:8px">Sign In</a>'+
         '<a href="/marketplace.html" class="btn btn-sm">Register</a></div>';
     }
@@ -373,8 +546,8 @@ function buildHeroCard(s){
         '<div class="hc-stats">'+
           '<div class="stat-box"><div class="sv">'+balance+'</div><div class="sl">Solar Balance</div></div>'+
           '<div class="stat-box green"><div class="sv" id="statAgent">...</div><div class="sl">Agent</div></div>'+
-          '<div class="stat-box cyan"><div class="sv" id="statProducts">...</div><div class="sl">Products</div></div>'+
-          '<div class="stat-box"><div class="sv" id="statUsdSpent">$0</div><div class="sl">USD Invested</div></div>'+
+          '<div class="stat-box cyan"><div class="sv" id="statProducts">...</div><div class="sl">Assets</div></div>'+
+          '<div class="stat-box"><div class="sv" id="statUsdActivated">$0</div><div class="sl">USD Activated</div></div>'+
         '</div>'+
       '</div>'+
     '</div>';
@@ -387,10 +560,19 @@ async function loadPacks(){
     var data=await res.json();
     if(!data.success||!data.packs)throw new Error('No packs');
     if(data.usdPerSolar)USD_PER_SOLAR=data.usdPerSolar;
+    if(data.allowFiatActivation===false){
+      var fs=document.getElementById('fiatActivationSection');
+      if(fs)fs.style.display='none';
+      return;
+    }
+    if(data.allowRecActivation===false){
+      var rs=document.getElementById('recActivationSection');
+      if(rs)rs.style.display='none';
+    }
     var html='';
     data.packs.forEach(function(p,i){
       var popular=i===1?' popular':'';
-      html+='<div class="pack-card'+popular+'" onclick="buySolarPack(\''+p.id+'\')">'+
+      html+='<div class="pack-card'+popular+'" onclick="activateSolarPack(\''+p.id+'\')">'+
         '<div class="pc-label">'+esc(p.id.charAt(0).toUpperCase()+p.id.slice(1))+'</div>'+
         '<div class="pc-price">'+p.usdDisplay+'</div>'+
         '<div class="pc-solar">'+p.solarDisplay+' Solar</div>'+
@@ -399,11 +581,11 @@ async function loadPacks(){
     });
     grid.innerHTML=html;
   }catch(e){
-    grid.innerHTML='<div class="empty-state">Could not load packs</div>';
+    grid.innerHTML='<div class="empty-state">Could not load activation options</div>';
   }
 }
 
-async function buySolarPack(packId){
+async function activateSolarPack(packId){
   if(!currentSession){alert('Please sign in first');return;}
   try{
     var res=await fetch('/api/solar-checkout/create-session',{
@@ -415,10 +597,10 @@ async function buySolarPack(packId){
     if(data.success && data.url){
       window.location.href=data.url;
     } else {
-      alert('Could not create checkout: '+(data.error||'Unknown error'));
+      alert('Could not create activation session: '+(data.error||data.message||'Unknown error'));
     }
   }catch(e){
-    alert('Checkout error: '+e.message);
+    alert('Activation error: '+e.message);
   }
 }
 
@@ -428,7 +610,7 @@ async function loadMyAgent(){
     var res=await fetch('/api/solar-checkout/my-agent');
     var data=await res.json();
     if(!data.success||!data.assigned){
-      el.innerHTML='<div class="no-agent"><p>No agent assigned yet.</p><p style="margin-top:8px;color:var(--gold)">Purchase a Solar pack to get your personal trading agent.</p></div>';
+      el.innerHTML='<div class="no-agent"><p>No agent assigned yet.</p><p style="margin-top:8px;color:var(--gold)">Activate a Solar pack to get your personal marketplace agent.</p></div>';
       if(document.getElementById('statAgent'))document.getElementById('statAgent').textContent='None';
       return;
     }
@@ -445,7 +627,7 @@ async function loadMyAgent(){
       '</div>';
 
     if(data.recentActivity && data.recentActivity.length>0){
-      html+='<div class="section-title" style="margin-top:0;margin-bottom:8px;font-size:11px">Recent Activity</div><div class="activity-list">';
+      html+='<div class="section-title" style="margin-top:0;margin-bottom:8px;font-size:11px">Recent Marketplace Activity</div><div class="activity-list">';
       data.recentActivity.forEach(function(act){
         var icon=act.entry_type==='credit'?'\u{1F4B0}':'\u{1F6D2}';
         var cls=act.entry_type==='credit'?'credit':'debit';
@@ -466,13 +648,13 @@ async function loadMyAgent(){
   }
 }
 
-async function loadProducts(){
+async function loadAssets(){
   var el=document.getElementById('productGrid');
   try{
     var res=await fetch('/api/members/storage');
     var data=await res.json();
     if(!data.success||!data.artifacts||data.artifacts.length===0){
-      el.innerHTML='<div class="empty-state">No products yet. Purchase a Solar pack and your agent will start acquiring products for you.</div>';
+      el.innerHTML='<div class="empty-state">No assets yet. Activate a Solar pack and your agent will start acquiring marketplace assets for you.</div>';
       if(document.getElementById('statProducts'))document.getElementById('statProducts').textContent='0';
       return;
     }
@@ -490,7 +672,7 @@ async function loadProducts(){
     });
     el.innerHTML='<div class="product-grid">'+html+'</div>';
   }catch(e){
-    el.innerHTML='<div class="empty-state">Could not load products: '+e.message+'</div>';
+    el.innerHTML='<div class="empty-state">Could not load assets: '+e.message+'</div>';
   }
 }
 
@@ -501,13 +683,15 @@ async function loadLedger(){
     var data=await res.json();
 
     var html='';
-    if(data.solarPurchases && data.solarPurchases.length>0){
-      html+='<div class="section-title" style="margin-top:0;font-size:11px">\u{1F4B5} Solar Purchases (USD/REC \u2192 Solar)</div>';
-      html+='<table class="ledger-table"><thead><tr><th>Source</th><th>Amount</th><th>Solar Credited</th><th>Date</th></tr></thead><tbody>';
-      data.solarPurchases.forEach(function(p){
+    var activations=data.solarActivations||data.solarPurchases||[];
+    if(activations.length>0){
+      html+='<div class="section-title" style="margin-top:0;font-size:11px">\u26A1 Solar Activations</div>';
+      html+='<table class="ledger-table"><thead><tr><th>Source</th><th>Amount</th><th>Solar Activated</th><th>Date</th></tr></thead><tbody>';
+      activations.forEach(function(p){
         var src=p.funding_source==='usd'?'$'+parseFloat(p.usd_amount||0).toFixed(2):parseFloat(p.rec_kwh||0).toFixed(1)+' kWh';
         var tag=p.funding_source==='usd'?'usd':'rec';
-        html+='<tr><td><span class="ledger-tag '+tag+'">'+p.funding_source.toUpperCase()+'</span> '+src+'</td>'+
+        var typeLabel=p.funding_source==='usd'?'FIAT':'REC';
+        html+='<tr><td><span class="ledger-tag '+tag+'">'+typeLabel+'</span> '+src+'</td>'+
           '<td>'+src+'</td>'+
           '<td style="color:var(--green)">+'+fmtSolar(p.solar_credited)+' S</td>'+
           '<td style="color:#666">'+fmtDate(p.completed_at)+'</td></tr>';
@@ -517,21 +701,27 @@ async function loadLedger(){
 
     if(data.ledger && data.ledger.length>0){
       html+='<div class="section-title" style="font-size:11px">\u{1F4CA} Marketplace Ledger</div>';
-      html+='<table class="ledger-table"><thead><tr><th>Type</th><th>Description</th><th>Amount</th><th>Balance After</th><th>Date</th></tr></thead><tbody>';
+      html+='<table class="ledger-table"><thead><tr><th>Type</th><th>Description</th><th>Amount</th><th>Balance After</th><th>Ref Value</th><th>Date</th></tr></thead><tbody>';
       data.ledger.forEach(function(l){
         var cls=l.entry_type==='credit'?'credit':'debit';
+        if(l.reference_type&&l.reference_type.indexOf('settlement')>=0)cls='settlement';
+        if(l.reference_type&&(l.reference_type.indexOf('fiat_activation')>=0||l.reference_type.indexOf('rec_activation')>=0))cls='activation';
         var sign=l.entry_type==='credit'?'+':'-';
-        html+='<tr><td><span class="ledger-tag '+cls+'">'+esc(l.entry_type)+'</span></td>'+
-          '<td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(l.description||l.reference_type)+'</td>'+
+        var refType=l.reference_type||'';
+        refType=refType.replace(/_/g,' ');
+        var usdRef=l.amount?'$'+(parseFloat(l.amount)*USD_PER_SOLAR).toFixed(2):'';
+        html+='<tr><td><span class="ledger-tag '+cls+'">'+esc(refType||l.entry_type)+'</span></td>'+
+          '<td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(l.description||refType)+'</td>'+
           '<td class="ai-amount '+cls+'">'+sign+fmtSolar(l.amount)+' S</td>'+
           '<td style="color:#888">'+(l.balance_after?fmtSolar(l.balance_after)+' S':'')+'</td>'+
+          '<td style="color:#666;font-size:10px">'+usdRef+'</td>'+
           '<td style="color:#666">'+fmtDate(l.created_at)+'</td></tr>';
       });
       html+='</tbody></table>';
     }
 
     if(!html){
-      html='<div class="empty-state">No transactions yet. Purchase Solar to start building your ledger history.</div>';
+      html='<div class="empty-state">No transactions yet. Activate Solar to start building your ledger history.</div>';
     }
     el.innerHTML=html;
   }catch(e){
@@ -539,14 +729,108 @@ async function loadLedger(){
   }
 }
 
-async function loadPurchaseHistory(){
+async function loadActivationHistory(){
   try{
     var res=await fetch('/api/solar-checkout/my-purchases');
     var data=await res.json();
     if(data.success && data.totals){
-      if(document.getElementById('statUsdSpent'))document.getElementById('statUsdSpent').textContent='$'+data.totals.usd.toFixed(0);
+      if(document.getElementById('statUsdActivated'))document.getElementById('statUsdActivated').textContent='$'+data.totals.usd.toFixed(0);
     }
   }catch(e){}
+}
+
+function initSettlement(){
+  var net=networkConfig&&networkConfig.network?networkConfig.network:{};
+  if(!net.settlement_mode||net.settlement_mode==='disabled')return;
+  var form=document.getElementById('settlementForm');
+  if(form)form.style.display='block';
+  var bal=currentSession.solarBalance||0;
+  var balEl=document.getElementById('settlementBalance');
+  if(balEl)balEl.textContent=fmtSolar(bal);
+  loadSettlementHistory();
+}
+
+function updateSettlementPreview(){
+  var val=parseFloat(document.getElementById('settlementAmount').value)||0;
+  var preview=document.getElementById('settlementPreview');
+  if(val<=0){preview.style.display='none';return}
+  preview.style.display='block';
+  var fees=networkConfig&&networkConfig.fees?networkConfig.fees:{};
+  var feeRate=(fees.settlementAdministrativeFeePercent||5)/100;
+  var fee=val*feeRate;
+  var net=val-fee;
+  var usd=net*USD_PER_SOLAR;
+  document.getElementById('prevStlSolar').textContent=fmtSolar(val)+' S';
+  document.getElementById('prevStlFee').textContent='-'+fmtSolar(fee)+' S';
+  document.getElementById('prevStlNet').textContent=fmtSolar(net)+' S';
+  document.getElementById('prevStlUsd').textContent='$'+usd.toFixed(2);
+}
+
+async function submitSettlementRequest(){
+  if(!currentSession){alert('Please sign in first');return}
+  var cb=document.getElementById('complianceCheckbox');
+  if(!cb||!cb.checked){alert('Please acknowledge the settlement compliance terms.');return}
+  var amount=parseFloat(document.getElementById('settlementAmount').value);
+  if(!amount||amount<0.001){alert('Minimum settlement request is 0.001 Solar');return}
+  var bal=currentSession.solarBalance||0;
+  if(amount>bal){alert('Insufficient balance. You have '+fmtSolar(bal)+' Solar.');return}
+
+  var fees=networkConfig&&networkConfig.fees?networkConfig.fees:{};
+  var feeRate=(fees.settlementAdministrativeFeePercent||5)/100;
+  var fee=amount*feeRate;var net=amount-fee;var usd=(net*USD_PER_SOLAR).toFixed(2);
+
+  if(!confirm('Submit settlement request for '+fmtSolar(amount)+' Solar?\n\nAdministrative settlement fee ('+((feeRate*100).toFixed(0))+'%): '+fmtSolar(fee)+' S\nEstimated USD reference value: $'+usd+'\n\nThis amount will be held pending review.')){return}
+
+  var btn=document.getElementById('submitSettlement');
+  var status=document.getElementById('settlementStatus');
+  btn.disabled=true;btn.textContent='Processing...';
+  status.className='task-status pending';status.style.display='block';
+  status.innerHTML='<div class="spinner" style="width:16px;height:16px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:8px"></div> Submitting settlement request...';
+  try{
+    var res=await fetch('/api/solar-checkout/settlement-request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({solarAmount:amount,complianceAcknowledged:true})});
+    var data=await res.json();
+    if(data.success){
+      var s=data.settlement;
+      status.className='task-status success';
+      status.innerHTML='Settlement request submitted. '+fmtSolar(s.requestedSolar)+' Solar held for review. Estimated USD reference value: <b>$'+s.netEstimatedUsd.toFixed(2)+'</b>.<br><span style="color:#888;font-size:11px">Reference: '+s.id+' | Status: Pending</span>';
+      document.getElementById('settlementAmount').value='';
+      document.getElementById('settlementPreview').style.display='none';
+      currentSession.solarBalance=s.newBalance;
+      document.getElementById('settlementBalance').textContent=fmtSolar(s.newBalance);
+      checkSession();
+      loadSettlementHistory();
+      loadLedger();
+    }else{
+      status.className='task-status error';status.textContent='Error: '+(data.message||data.error||'Unknown error');
+    }
+  }catch(e){status.className='task-status error';status.textContent='Error: '+e.message}
+  btn.disabled=!document.getElementById('complianceCheckbox').checked;btn.textContent='Submit Settlement Request';
+}
+
+async function loadSettlementHistory(){
+  var el=document.getElementById('settlementHistory');
+  if(!el)return;
+  try{
+    var res=await fetch('/api/solar-checkout/my-settlements');
+    var data=await res.json();
+    if(!data.success||!data.settlements||data.settlements.length===0){el.innerHTML='';return}
+    var html='<div class="section-title" style="font-size:11px">Settlement History</div>';
+    html+='<table class="ledger-table"><thead><tr><th>Solar</th><th>Fee</th><th>USD Ref</th><th>Status</th><th>Date</th></tr></thead><tbody>';
+    data.settlements.forEach(function(s){
+      var statusCls=s.status==='processed'||s.status==='completed'?'credit':s.status==='pending'||s.status==='under_review'?'settlement':'debit';
+      var statusLabel=(s.status||'').replace(/_/g,' ');
+      statusLabel=statusLabel.charAt(0).toUpperCase()+statusLabel.slice(1);
+      html+='<tr>'+
+        '<td style="color:var(--gold)">'+fmtSolar(s.requested_solar_amount||s.solar_amount)+' S</td>'+
+        '<td style="color:#ff6666">-'+fmtSolar(s.platform_fee_amount||s.platform_fee)+' S</td>'+
+        '<td style="color:var(--cyan)">$'+parseFloat(s.net_estimated_usd||s.usd_payout||0).toFixed(2)+'</td>'+
+        '<td><span class="ledger-tag '+statusCls+'">'+statusLabel+(s.legacy?' (legacy)':'')+'</span></td>'+
+        '<td style="color:#666">'+fmtDate(s.created_at)+'</td>'+
+      '</tr>';
+    });
+    html+='</tbody></table>';
+    el.innerHTML=html;
+  }catch(e){el.innerHTML=''}
 }
 
 function buildAgentSelector(){
@@ -564,7 +848,7 @@ function buildAgentSelector(){
       document.getElementById('taskForm').style.display='block';
       document.getElementById('selectedAgentInfo').innerHTML=
         a.icon+' <b>'+a.name+'</b> selected \u2014 '+a.specialty+' Specialist'+
-        (a.code==='ks'?'<br><span style="color:var(--gold);font-size:11px">KID SOL will analyze your request and assign the best agents automatically</span>':'');
+        (a.code==='ks'?'<br><span style="color:var(--gold);font-size:11px">KID SOL will analyze your request and assign the best agents for marketplace fulfillment</span>':'');
     });
     grid.appendChild(el);
   });
@@ -578,6 +862,12 @@ function buildCategoryDropdown(){
 async function submitAgentTask(){
   if(!currentSession){alert('Please sign in first');return}
   if(!selectedAgent){alert('Please select an agent');return}
+
+  var net=networkConfig&&networkConfig.network?networkConfig.network:{};
+  if(net.allow_agent_commissions===false){
+    alert('Agent commissions are not enabled for this network.');return;
+  }
+
   var purpose=document.getElementById('taskPurpose').value.trim();
   if(!purpose){alert('Please describe what you need');return}
   var category=document.getElementById('taskCategory').value;
@@ -598,102 +888,17 @@ async function submitAgentTask(){
       status.className='task-status success';
       var msg='Task complete! ';
       if(delivered.length>0){
-        msg+=delivered.length+' artifact(s) delivered:<br>';
-        delivered.forEach(function(d){msg+='\u2022 <b>'+(d.title||'Artifact')+'</b> ('+(d.category||'')+') \u2014 S '+fmtSolar(d.totalRequestorCost||d.price)+'<br>'});
+        msg+=delivered.length+' asset(s) delivered:<br>';
+        delivered.forEach(function(d){msg+='\u2022 <b>'+(d.title||'Asset')+'</b> ('+(d.category||'')+') \u2014 S '+fmtSolar(d.totalRequestorCost||d.price)+'<br>'});
       }else if(created.length>0){
-        msg+=created.length+' artifact(s) created:<br>';
-        created.forEach(function(c){msg+='\u2022 <b>'+(c.title||'Artifact')+'</b> ('+(c.category||'')+') \u2014 S '+fmtSolar(c.price)+'<br>'});
-      }else{msg+='Agent completed the task. Check your products tab.'}
+        msg+=created.length+' asset(s) created:<br>';
+        created.forEach(function(c){msg+='\u2022 <b>'+(c.title||'Asset')+'</b> ('+(c.category||'')+') \u2014 S '+fmtSolar(c.price)+'<br>'});
+      }else{msg+='Agent completed the task. Check your assets tab.'}
       status.innerHTML=msg;
-      loadProducts();checkSession();
+      loadAssets();checkSession();
     }else{status.className='task-status error';status.textContent='Task failed: '+(data.error||'Unknown error')}
   }catch(e){status.className='task-status error';status.textContent='Error: '+e.message}
   btn.disabled=false;btn.textContent='Commission Agent';
-}
-
-function initCashout(){
-  document.getElementById('cashoutForm').style.display='block';
-  var bal=currentSession.solarBalance||0;
-  document.getElementById('cashoutBalance').textContent=fmtSolar(bal);
-  loadWithdrawalHistory();
-}
-
-function updateCashoutPreview(){
-  var val=parseFloat(document.getElementById('withdrawAmount').value)||0;
-  var preview=document.getElementById('cashoutPreview');
-  if(val<=0){preview.style.display='none';return}
-  preview.style.display='block';
-  var fee=val*0.05;
-  var net=val-fee;
-  var usd=net*USD_PER_SOLAR;
-  document.getElementById('previewSolar').textContent=fmtSolar(val)+' S';
-  document.getElementById('previewFee').textContent='-'+fmtSolar(fee)+' S';
-  document.getElementById('previewNet').textContent=fmtSolar(net)+' S';
-  document.getElementById('previewUsd').textContent='$'+usd.toFixed(2);
-}
-
-async function submitWithdrawal(){
-  if(!currentSession){alert('Please sign in first');return}
-  var amount=parseFloat(document.getElementById('withdrawAmount').value);
-  if(!amount||amount<0.001){alert('Minimum withdrawal is 0.001 Solar (~$2.21)');return}
-  var bal=currentSession.solarBalance||0;
-  if(amount>bal){alert('Insufficient balance. You have '+fmtSolar(bal)+' Solar.');return}
-  var fee=amount*0.05;var net=amount-fee;var usd=(net*USD_PER_SOLAR).toFixed(2);
-  if(!confirm('Cash out '+fmtSolar(amount)+' Solar?\n\nPlatform fee (5%): '+fmtSolar(fee)+' S\nYou receive: $'+usd+' USD\n\nThis will debit your Solar balance immediately.')){return}
-  var btn=document.getElementById('submitWithdraw');
-  var status=document.getElementById('withdrawStatus');
-  btn.disabled=true;btn.textContent='Processing...';
-  status.className='task-status pending';status.style.display='block';
-  status.innerHTML='<div class="spinner" style="width:16px;height:16px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:8px"></div> Processing your withdrawal...';
-  try{
-    var res=await fetch('/api/solar-checkout/withdraw',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({solarAmount:amount})});
-    var data=await res.json();
-    if(data.success){
-      var w=data.withdrawal;
-      status.className='task-status success';
-      status.innerHTML='Withdrawal submitted! '+fmtSolar(w.solarDebited)+' Solar debited. Payout of <b>$'+w.usdPayout.toFixed(2)+'</b> is pending processing.<br><span style="color:#888;font-size:11px">Reference: '+w.id+'</span>';
-      document.getElementById('withdrawAmount').value='';
-      document.getElementById('cashoutPreview').style.display='none';
-      currentSession.solarBalance=w.newBalance;
-      document.getElementById('cashoutBalance').textContent=fmtSolar(w.newBalance);
-      checkSession();
-      loadWithdrawalHistory();
-      loadLedger();
-    }else{
-      status.className='task-status error';status.textContent='Error: '+(data.error||'Unknown error');
-    }
-  }catch(e){status.className='task-status error';status.textContent='Error: '+e.message}
-  btn.disabled=false;btn.textContent='Request Cash Out';
-}
-
-async function loadWithdrawalHistory(){
-  var el=document.getElementById('withdrawalHistory');
-  try{
-    var res=await fetch('/api/solar-checkout/my-withdrawals');
-    var data=await res.json();
-    if(!data.success||!data.withdrawals||data.withdrawals.length===0){el.innerHTML='';return}
-    var html='<div class="section-title" style="font-size:11px">Withdrawal History</div>';
-    if(data.totals.pendingUsd>0){
-      html+='<div style="background:rgba(255,215,0,.06);border:1px solid rgba(255,215,0,.2);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:var(--gold)">Pending payouts: <b>$'+data.totals.pendingUsd.toFixed(2)+'</b></div>';
-    }
-    if(data.totals.paidUsd>0){
-      html+='<div style="background:rgba(57,255,20,.06);border:1px solid rgba(57,255,20,.2);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:var(--green)">Total paid out: <b>$'+data.totals.paidUsd.toFixed(2)+'</b></div>';
-    }
-    html+='<table class="ledger-table"><thead><tr><th>Solar</th><th>Fee</th><th>USD Payout</th><th>Status</th><th>Date</th></tr></thead><tbody>';
-    data.withdrawals.forEach(function(w){
-      var statusCls=w.status==='completed'?'credit':w.status==='pending'?'purchase':'debit';
-      var statusLabel=w.status.charAt(0).toUpperCase()+w.status.slice(1);
-      html+='<tr>'+
-        '<td style="color:var(--gold)">'+fmtSolar(w.solar_amount)+' S</td>'+
-        '<td style="color:#ff6666">-'+fmtSolar(w.platform_fee)+' S</td>'+
-        '<td style="color:var(--green);font-weight:600">$'+parseFloat(w.usd_payout).toFixed(2)+'</td>'+
-        '<td><span class="ledger-tag '+statusCls+'">'+statusLabel+'</span></td>'+
-        '<td style="color:#666">'+fmtDate(w.created_at)+'</td>'+
-      '</tr>';
-    });
-    html+='</tbody></table>';
-    el.innerHTML=html;
-  }catch(e){el.innerHTML=''}
 }
 
 init();

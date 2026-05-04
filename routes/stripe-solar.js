@@ -1,4 +1,7 @@
 const Stripe = require('stripe');
+const { COMPLIANCE_POLICY, isSettlementEnabled, validateSettlementMode } = require('../lib/compliancePolicy');
+const { getNetworkFees, getFeeLabel, calculateFee } = require('../lib/feePolicy');
+const { getDashboardTabs } = require('../lib/dashboardTabs');
 
 const KWH_PER_SOLAR = 4913;
 const USD_PER_KWH = 0.45;
@@ -60,6 +63,21 @@ async function getAuthenticatedMemberId(req, sessionHelpers) {
   return session?.userId || null;
 }
 
+async function getNetworkConfig(pool, networkId) {
+  const id = networkId || 'default';
+  const result = await pool.query(`SELECT * FROM networks WHERE id = $1 LIMIT 1`, [id]);
+  if (result.rows.length === 0) {
+    return {
+      id: 'default', name: 'TC-S Main Network', slug: 'tcs-main', status: 'active',
+      settlement_mode: 'disabled', allow_fiat_activation: true, allow_rec_activation: true,
+      allow_member_to_member_transfers: true, allow_agent_trading: true,
+      allow_agent_commissions: true, marketplace_scope: 'curated',
+      network_rules: null, reserve_policy: null,
+    };
+  }
+  return result.rows[0];
+}
+
 async function assignAgentToMember(pool, memberId) {
   const existing = await pool.query(
     `SELECT agent_code FROM agent_assignments WHERE member_id = $1 AND is_active = true LIMIT 1`,
@@ -105,39 +123,150 @@ async function creditSolarToMember(pool, memberId, solarAmount, source, metadata
 
   await pool.query(`UPDATE members SET total_solar = $1 WHERE id = $2`, [String(newBalance), memberId]);
 
-  const txId = `solar_purchase_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const txId = `solar_activation_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   await pool.query(
     `INSERT INTO marketplace_ledger (id, transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description, created_at)
      VALUES (gen_random_uuid(), $1, 'credit', $2, 'member', $3, $4, $5, $6, $7, NOW())`,
-    [txId, String(memberId), String(solarAmount), String(newBalance), source, metadata.purchaseId || txId, `Solar credited: ${solarAmount} S via ${source}`]
+    [txId, String(memberId), String(solarAmount), String(newBalance), source, metadata.purchaseId || txId, `Solar activated: ${solarAmount} S via ${source}`]
   );
 
   return { newBalance, txId };
 }
 
 module.exports = function stripeSolarRoutes(req, res, pathname, pool, sessionHelpers) {
-  if (!pathname.startsWith('/api/solar-checkout')) return false;
+  if (!pathname.startsWith('/api/solar-checkout') && !pathname.startsWith('/api/network')) return false;
+
+  if (pathname === '/api/network/config' && req.method === 'GET') {
+    (async () => {
+      try {
+        const url = new URL(req.url, `http://${req.headers.host}`);
+        const networkId = url.searchParams.get('network') || 'default';
+        const config = await getNetworkConfig(pool, networkId);
+        const fees = getNetworkFees(config);
+        const tabs = getDashboardTabs(config);
+
+        sendJSON(res, 200, {
+          success: true,
+          network: {
+            id: config.id,
+            name: config.name,
+            slug: config.slug,
+            status: config.status,
+            settlement_mode: config.settlement_mode,
+            allow_fiat_activation: config.allow_fiat_activation,
+            allow_rec_activation: config.allow_rec_activation,
+            allow_member_to_member_transfers: config.allow_member_to_member_transfers,
+            allow_agent_trading: config.allow_agent_trading,
+            allow_agent_commissions: config.allow_agent_commissions,
+            marketplace_scope: config.marketplace_scope,
+            network_rules: config.network_rules,
+            reserve_policy: config.reserve_policy,
+          },
+          fees,
+          tabs,
+          compliance: {
+            marketplaceDescription: COMPLIANCE_POLICY.approvedMarketplaceDescription,
+            settlementDisclaimer: isSettlementEnabled(config) ? COMPLIANCE_POLICY.approvedSettlementDisclaimer : COMPLIANCE_POLICY.settlementDisabledNotice,
+            closedLoopNotice: COMPLIANCE_POLICY.closedLoopNotice,
+            platformPositioning: COMPLIANCE_POLICY.platformPositioning,
+            agentDescription: COMPLIANCE_POLICY.agentMarketplaceDescription,
+            orchestratorDescription: COMPLIANCE_POLICY.orchestratorDescription,
+          },
+          energy: { usdPerSolar: USD_PER_SOLAR, solarPerUsd: SOLAR_PER_USD, usdPerKwh: USD_PER_KWH, kwhPerSolar: KWH_PER_SOLAR },
+        });
+      } catch (err) {
+        console.error('Network config error:', err.message);
+        sendJSON(res, 500, { error: 'Failed to load network config' });
+      }
+    })();
+    return true;
+  }
+
+  if (pathname === '/api/network/admin/update' && req.method === 'POST') {
+    (async () => {
+      try {
+        const authMemberId = await getAuthenticatedMemberId(req, sessionHelpers);
+        if (!authMemberId) return sendJSON(res, 401, { error: 'Authentication required' });
+
+        const memberCheck = await pool.query(`SELECT role FROM members WHERE id = $1`, [authMemberId]);
+        if (memberCheck.rows.length === 0) return sendJSON(res, 404, { error: 'Member not found' });
+        const memberRole = (memberCheck.rows[0].role || '').toLowerCase();
+        if (memberRole !== 'admin' && memberRole !== 'super_admin' && memberRole !== 'owner') {
+          return sendJSON(res, 403, { error: 'Admin access required. Only network administrators can modify network settings.' });
+        }
+
+        const body = await parseBody(req);
+        const { networkId, settlement_mode, allow_fiat_activation, allow_rec_activation,
+                allow_agent_trading, allow_agent_commissions, allow_member_to_member_transfers,
+                marketplace_scope, network_rules, reserve_policy, name } = body;
+
+        if (settlement_mode && !validateSettlementMode(settlement_mode)) {
+          return sendJSON(res, 400, { error: `Invalid settlement mode. Must be one of: ${COMPLIANCE_POLICY.validSettlementModes.join(', ')}` });
+        }
+
+        const id = networkId || 'default';
+        const fields = [];
+        const values = [];
+        let idx = 1;
+
+        if (name !== undefined) { fields.push(`name = $${idx++}`); values.push(name); }
+        if (settlement_mode !== undefined) { fields.push(`settlement_mode = $${idx++}`); values.push(settlement_mode); }
+        if (allow_fiat_activation !== undefined) { fields.push(`allow_fiat_activation = $${idx++}`); values.push(allow_fiat_activation); }
+        if (allow_rec_activation !== undefined) { fields.push(`allow_rec_activation = $${idx++}`); values.push(allow_rec_activation); }
+        if (allow_agent_trading !== undefined) { fields.push(`allow_agent_trading = $${idx++}`); values.push(allow_agent_trading); }
+        if (allow_agent_commissions !== undefined) { fields.push(`allow_agent_commissions = $${idx++}`); values.push(allow_agent_commissions); }
+        if (allow_member_to_member_transfers !== undefined) { fields.push(`allow_member_to_member_transfers = $${idx++}`); values.push(allow_member_to_member_transfers); }
+        if (marketplace_scope !== undefined) { fields.push(`marketplace_scope = $${idx++}`); values.push(marketplace_scope); }
+        if (network_rules !== undefined) { fields.push(`network_rules = $${idx++}`); values.push(JSON.stringify(network_rules)); }
+        if (reserve_policy !== undefined) { fields.push(`reserve_policy = $${idx++}`); values.push(JSON.stringify(reserve_policy)); }
+
+        if (fields.length === 0) return sendJSON(res, 400, { error: 'No fields to update' });
+
+        fields.push(`updated_at = NOW()`);
+        values.push(id);
+
+        await pool.query(`UPDATE networks SET ${fields.join(', ')} WHERE id = $${idx}`, values);
+
+        const updated = await getNetworkConfig(pool, id);
+        sendJSON(res, 200, { success: true, network: updated });
+      } catch (err) {
+        console.error('Network admin update error:', err.message);
+        sendJSON(res, 500, { error: 'Failed to update network config' });
+      }
+    })();
+    return true;
+  }
 
   if (pathname === '/api/solar-checkout/packs' && req.method === 'GET') {
-    sendJSON(res, 200, {
-      success: true,
-      packs: Object.entries(SOLAR_PACKS).map(([key, pack]) => ({
-        id: key,
-        label: pack.label,
-        usdCents: pack.usd,
-        usdDisplay: `$${(pack.usd / 100).toFixed(0)}`,
-        solar: pack.solar,
-        solarDisplay: pack.solar.toFixed(6),
-      })),
-      usdPerSolar: USD_PER_SOLAR,
-      solarPerUsd: SOLAR_PER_USD,
-      usdPerKwh: USD_PER_KWH,
-      kwhPerSolar: KWH_PER_SOLAR,
-      recInfo: {
-        description: `Renewable Energy Certificates (RECs) can also fund Solar. 1 kWh verified = ${KWH_TO_SOLAR_RATE.toFixed(6)} Solar. 1 Solar = ${KWH_PER_SOLAR} kWh = $${USD_PER_SOLAR.toFixed(2)}.`,
-        enabled: true,
+    (async () => {
+      try {
+        const config = await getNetworkConfig(pool, 'default');
+        sendJSON(res, 200, {
+          success: true,
+          packs: Object.entries(SOLAR_PACKS).map(([key, pack]) => ({
+            id: key,
+            label: pack.label,
+            usdCents: pack.usd,
+            usdDisplay: `$${(pack.usd / 100).toFixed(0)}`,
+            solar: pack.solar,
+            solarDisplay: pack.solar.toFixed(6),
+          })),
+          usdPerSolar: USD_PER_SOLAR,
+          solarPerUsd: SOLAR_PER_USD,
+          usdPerKwh: USD_PER_KWH,
+          kwhPerSolar: KWH_PER_SOLAR,
+          allowFiatActivation: config.allow_fiat_activation,
+          allowRecActivation: config.allow_rec_activation,
+          recInfo: {
+            description: `Verified renewable generation may activate Solar according to the Solar Standard: 1 Solar = ${KWH_PER_SOLAR} kWh. 1 kWh = ${KWH_TO_SOLAR_RATE.toFixed(6)} Solar.`,
+            enabled: config.allow_rec_activation,
+          }
+        });
+      } catch (err) {
+        console.error('Packs error:', err.message);
+        sendJSON(res, 500, { error: 'Failed to load packs' });
       }
-    });
+    })();
     return true;
   }
 
@@ -145,26 +274,22 @@ module.exports = function stripeSolarRoutes(req, res, pathname, pool, sessionHel
     (async () => {
       try {
         const authMemberId = await getAuthenticatedMemberId(req, sessionHelpers);
-        if (!authMemberId) {
-          return sendJSON(res, 401, { error: 'Authentication required' });
+        if (!authMemberId) return sendJSON(res, 401, { error: 'Authentication required' });
+
+        const config = await getNetworkConfig(pool, 'default');
+        if (!config.allow_fiat_activation) {
+          return sendJSON(res, 403, { error: 'fiat_activation_disabled', message: 'Fiat activation is not enabled for this network.' });
         }
 
         const body = await parseBody(req);
         const { packId } = body;
-
-        if (!packId) {
-          return sendJSON(res, 400, { error: 'packId required' });
-        }
+        if (!packId) return sendJSON(res, 400, { error: 'packId required' });
 
         const pack = SOLAR_PACKS[packId];
-        if (!pack) {
-          return sendJSON(res, 400, { error: 'Invalid pack ID' });
-        }
+        if (!pack) return sendJSON(res, 400, { error: 'Invalid pack ID' });
 
         const member = await pool.query(`SELECT id, username, email FROM members WHERE id = $1`, [authMemberId]);
-        if (member.rows.length === 0) {
-          return sendJSON(res, 404, { error: 'Member not found' });
-        }
+        if (member.rows.length === 0) return sendJSON(res, 404, { error: 'Member not found' });
 
         const s = getStripe();
         const host = req.headers.host || 'localhost:5000';
@@ -176,16 +301,16 @@ module.exports = function stripeSolarRoutes(req, res, pathname, pool, sessionHel
             price_data: {
               currency: 'usd',
               product_data: {
-                name: `Solar Pack: ${pack.label}`,
-                description: `${pack.solar} Solar tokens for the TC-S Network marketplace`,
+                name: `Solar Activation: ${pack.label}`,
+                description: `Activate ${pack.solar.toFixed(6)} Solar for TC-S marketplace participation`,
               },
               unit_amount: pack.usd,
             },
             quantity: 1,
           }],
           mode: 'payment',
-          success_url: `${protocol}://${host}/member-dashboard.html?purchase=success&pack=${packId}`,
-          cancel_url: `${protocol}://${host}/member-dashboard.html?purchase=cancelled`,
+          success_url: `${protocol}://${host}/member-dashboard.html?activation=success&pack=${packId}`,
+          cancel_url: `${protocol}://${host}/member-dashboard.html?activation=cancelled`,
           metadata: {
             memberId: String(authMemberId),
             packId,
@@ -203,7 +328,7 @@ module.exports = function stripeSolarRoutes(req, res, pathname, pool, sessionHel
         sendJSON(res, 200, { success: true, sessionId: session.id, url: session.url });
       } catch (err) {
         console.error('Stripe session creation error:', err.message);
-        sendJSON(res, 500, { error: 'Failed to create checkout session' });
+        sendJSON(res, 500, { error: 'Failed to create activation session' });
       }
     })();
     return true;
@@ -219,9 +344,7 @@ module.exports = function stripeSolarRoutes(req, res, pathname, pool, sessionHel
         let event;
         const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
         if (webhookSecret) {
-          if (!sig) {
-            return sendJSON(res, 400, { error: 'Missing stripe-signature header' });
-          }
+          if (!sig) return sendJSON(res, 400, { error: 'Missing stripe-signature header' });
           try {
             event = s.webhooks.constructEvent(rawBody, sig, webhookSecret);
           } catch (err) {
@@ -236,7 +359,7 @@ module.exports = function stripeSolarRoutes(req, res, pathname, pool, sessionHel
         if (event.type === 'checkout.session.completed') {
           const session = event.data.object;
           const memberId = parseInt(session.metadata?.memberId);
-          const solarAmount = parseInt(session.metadata?.solarAmount);
+          const solarAmount = parseFloat(session.metadata?.solarAmount);
           const packId = session.metadata?.packId;
 
           if (memberId && solarAmount) {
@@ -250,8 +373,8 @@ module.exports = function stripeSolarRoutes(req, res, pathname, pool, sessionHel
               return sendJSON(res, 200, { received: true, duplicate: true });
             }
 
-            const purchaseId = `stripe_${session.id}`;
-            const { newBalance, txId } = await creditSolarToMember(pool, memberId, solarAmount, 'usd_purchase', { purchaseId });
+            const purchaseId = `fiat_activation_${session.id}`;
+            const { newBalance } = await creditSolarToMember(pool, memberId, solarAmount, 'fiat_activation', { purchaseId });
 
             await pool.query(
               `UPDATE solar_purchases SET status = 'completed', stripe_payment_intent_id = $1, completed_at = NOW()
@@ -260,8 +383,7 @@ module.exports = function stripeSolarRoutes(req, res, pathname, pool, sessionHel
             );
 
             await assignAgentToMember(pool, memberId);
-
-            console.log(`💰 Solar purchase complete: Member ${memberId} credited ${solarAmount} Solar (${packId}). New balance: ${newBalance}`);
+            console.log(`⚡ Fiat activation complete: Member ${memberId} activated ${solarAmount} Solar (${packId}). New balance: ${newBalance}`);
           }
         }
 
@@ -278,29 +400,25 @@ module.exports = function stripeSolarRoutes(req, res, pathname, pool, sessionHel
     (async () => {
       try {
         const authMemberId = await getAuthenticatedMemberId(req, sessionHelpers);
-        if (!authMemberId) {
-          return sendJSON(res, 401, { error: 'Authentication required' });
+        if (!authMemberId) return sendJSON(res, 401, { error: 'Authentication required' });
+
+        const config = await getNetworkConfig(pool, 'default');
+        if (!config.allow_rec_activation) {
+          return sendJSON(res, 403, { error: 'rec_activation_disabled', message: 'REC activation is not enabled for this network.' });
         }
 
         const body = await parseBody(req);
         const { kwhAmount, certificateId } = body;
-
-        if (!kwhAmount) {
-          return sendJSON(res, 400, { error: 'kwhAmount required' });
-        }
+        if (!kwhAmount) return sendJSON(res, 400, { error: 'kwhAmount required' });
 
         const kwh = parseFloat(kwhAmount);
-        if (kwh <= 0 || kwh > 10000000) {
-          return sendJSON(res, 400, { error: 'kWh amount must be between 0 and 10,000,000' });
-        }
+        if (kwh <= 0 || kwh > 10000000) return sendJSON(res, 400, { error: 'kWh amount must be between 0 and 10,000,000' });
 
         const solarAmount = parseFloat((kwh * KWH_TO_SOLAR_RATE).toFixed(6));
-        if (solarAmount <= 0) {
-          return sendJSON(res, 400, { error: 'kWh amount too small to convert' });
-        }
+        if (solarAmount <= 0) return sendJSON(res, 400, { error: 'kWh amount too small to convert' });
 
-        const purchaseId = `rec_${Date.now()}`;
-        const { newBalance } = await creditSolarToMember(pool, authMemberId, solarAmount, 'rec_credit', { purchaseId, certificateId });
+        const purchaseId = `rec_activation_${Date.now()}`;
+        const { newBalance } = await creditSolarToMember(pool, authMemberId, solarAmount, 'rec_activation', { purchaseId, certificateId });
 
         await pool.query(
           `INSERT INTO solar_purchases (id, member_id, funding_source, rec_kwh, rec_certificate_id, solar_credited, exchange_rate, status, completed_at)
@@ -309,12 +427,139 @@ module.exports = function stripeSolarRoutes(req, res, pathname, pool, sessionHel
         );
 
         await assignAgentToMember(pool, authMemberId);
-
-        console.log(`⚡ REC credit: Member ${authMemberId} credited ${solarAmount} Solar from ${kwh} kWh (cert: ${certificateId || 'none'})`);
-        sendJSON(res, 200, { success: true, solarCredited: solarAmount, newBalance, kwhUsed: kwh });
+        console.log(`⚡ REC activation: Member ${authMemberId} activated ${solarAmount} Solar from ${kwh} kWh (cert: ${certificateId || 'pending verification'})`);
+        sendJSON(res, 200, { success: true, solarActivated: solarAmount, newBalance, kwhUsed: kwh, status: 'pending_verification' });
       } catch (err) {
-        console.error('REC credit error:', err.message);
-        sendJSON(res, 500, { error: 'REC credit processing failed' });
+        console.error('REC activation error:', err.message);
+        sendJSON(res, 500, { error: 'REC activation processing failed' });
+      }
+    })();
+    return true;
+  }
+
+  if (pathname === '/api/solar-checkout/settlement-request' && req.method === 'POST') {
+    (async () => {
+      try {
+        const authMemberId = await getAuthenticatedMemberId(req, sessionHelpers);
+        if (!authMemberId) return sendJSON(res, 401, { error: 'Authentication required' });
+
+        const config = await getNetworkConfig(pool, 'default');
+        if (!isSettlementEnabled(config)) {
+          return sendJSON(res, 403, {
+            error: 'settlement_disabled',
+            message: 'This network is configured as a closed-loop Solar marketplace and does not offer settlement.'
+          });
+        }
+
+        const body = await parseBody(req);
+        const { solarAmount, complianceAcknowledged } = body;
+
+        if (!solarAmount || isNaN(solarAmount)) return sendJSON(res, 400, { error: 'solarAmount required (numeric)' });
+        if (!complianceAcknowledged) return sendJSON(res, 400, { error: 'You must acknowledge the settlement compliance terms.' });
+
+        const solar = parseFloat(solarAmount);
+        const MIN_SETTLEMENT = 0.001;
+        if (solar < MIN_SETTLEMENT) {
+          return sendJSON(res, 400, { error: `Minimum settlement request is ${MIN_SETTLEMENT} Solar` });
+        }
+
+        const balRes = await pool.query(`SELECT total_solar FROM members WHERE id = $1`, [authMemberId]);
+        if (balRes.rows.length === 0) return sendJSON(res, 404, { error: 'Member not found' });
+
+        const currentBalance = parseFloat(balRes.rows[0].total_solar || '0');
+        if (solar > currentBalance) {
+          return sendJSON(res, 400, { error: `Insufficient balance. You have ${currentBalance.toFixed(6)} Solar.` });
+        }
+
+        const fees = getNetworkFees(config);
+        const feeRate = fees.settlementAdministrativeFeePercent / 100;
+        const platformFee = parseFloat((solar * feeRate).toFixed(6));
+        const netSolar = parseFloat((solar - platformFee).toFixed(6));
+        const estimatedUsd = parseFloat((solar * USD_PER_SOLAR).toFixed(2));
+        const netEstimatedUsd = parseFloat((netSolar * USD_PER_SOLAR).toFixed(2));
+
+        const newBalance = currentBalance - solar;
+        await pool.query(`UPDATE members SET total_solar = $1 WHERE id = $2`, [String(newBalance), authMemberId]);
+
+        const settlementId = `stl_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        await pool.query(
+          `INSERT INTO solar_settlement_requests (id, member_id, network_id, requested_solar_amount, estimated_usd_value, platform_fee_amount, net_estimated_usd, status, settlement_mode, compliance_acknowledged)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8, $9)`,
+          [settlementId, authMemberId, config.id, String(solar), String(estimatedUsd), String(platformFee), String(netEstimatedUsd), config.settlement_mode, complianceAcknowledged]
+        );
+
+        const txId = `settlement_${settlementId}`;
+        await pool.query(
+          `INSERT INTO marketplace_ledger (id, transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description, created_at)
+           VALUES (gen_random_uuid(), $1, 'debit', $2, 'member', $3, $4, 'settlement_hold', $5, $6, NOW())`,
+          [txId, String(authMemberId), String(solar), String(newBalance), settlementId, `Settlement hold: ${solar} S (USD ref value: $${estimatedUsd}, admin fee: ${platformFee} S)`]
+        );
+
+        await pool.query(
+          `INSERT INTO marketplace_ledger (id, transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description, created_at)
+           VALUES (gen_random_uuid(), $1, 'credit', 'tcs_foundation', 'platform', $2, '0', 'administrative_settlement_fee', $3, $4, NOW())`,
+          [txId, String(platformFee), settlementId, `Administrative settlement fee: ${platformFee} S from member ${authMemberId}`]
+        );
+
+        console.log(`📋 Settlement request: Member ${authMemberId} requesting ${solar} Solar settlement (USD ref: $${estimatedUsd}, fee: ${platformFee} S)`);
+
+        sendJSON(res, 200, {
+          success: true,
+          settlement: {
+            id: settlementId,
+            requestedSolar: solar,
+            platformFee,
+            netSolar,
+            estimatedUsd,
+            netEstimatedUsd,
+            status: 'pending',
+            newBalance,
+            disclaimer: COMPLIANCE_POLICY.approvedSettlementDisclaimer,
+          }
+        });
+      } catch (err) {
+        console.error('Settlement request error:', err.message);
+        sendJSON(res, 500, { error: 'Settlement request processing failed' });
+      }
+    })();
+    return true;
+  }
+
+  if (pathname === '/api/solar-checkout/my-settlements' && req.method === 'GET') {
+    (async () => {
+      try {
+        const authMemberId = await getAuthenticatedMemberId(req, sessionHelpers);
+        if (!authMemberId) return sendJSON(res, 401, { error: 'Authentication required' });
+
+        const settlements = await pool.query(
+          `SELECT id, requested_solar_amount, estimated_usd_value, platform_fee_amount, net_estimated_usd, status, settlement_mode, compliance_acknowledged, admin_notes, created_at, updated_at
+           FROM solar_settlement_requests WHERE member_id = $1 ORDER BY created_at DESC LIMIT 50`,
+          [authMemberId]
+        );
+
+        const legacy = await pool.query(
+          `SELECT id, solar_amount as requested_solar_amount, platform_fee as platform_fee_amount, usd_payout as net_estimated_usd, status, created_at
+           FROM solar_withdrawals WHERE member_id = $1 ORDER BY created_at DESC LIMIT 50`,
+          [authMemberId]
+        );
+
+        const allRequests = [...settlements.rows, ...legacy.rows.map(l => ({ ...l, legacy: true }))];
+        allRequests.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+        const pending = allRequests.filter(r => ['pending', 'under_review'].includes(r.status));
+        const processed = allRequests.filter(r => r.status === 'processed' || r.status === 'completed');
+
+        sendJSON(res, 200, {
+          success: true,
+          settlements: allRequests,
+          totals: {
+            pendingCount: pending.length,
+            processedCount: processed.length,
+          }
+        });
+      } catch (err) {
+        console.error('Settlement history error:', err.message);
+        sendJSON(res, 500, { error: 'Failed to fetch settlement history' });
       }
     })();
     return true;
@@ -322,85 +567,14 @@ module.exports = function stripeSolarRoutes(req, res, pathname, pool, sessionHel
 
   if (pathname === '/api/solar-checkout/withdraw' && req.method === 'POST') {
     (async () => {
-      try {
-        const authMemberId = await getAuthenticatedMemberId(req, sessionHelpers);
-        if (!authMemberId) {
-          return sendJSON(res, 401, { error: 'Authentication required' });
-        }
-
-        const body = await parseBody(req);
-        const { solarAmount } = body;
-
-        if (!solarAmount || isNaN(solarAmount)) {
-          return sendJSON(res, 400, { error: 'solarAmount required (numeric)' });
-        }
-
-        const solar = parseFloat(solarAmount);
-        const MIN_WITHDRAWAL = 0.001;
-        if (solar < MIN_WITHDRAWAL) {
-          return sendJSON(res, 400, { error: `Minimum withdrawal is ${MIN_WITHDRAWAL} Solar ($${(MIN_WITHDRAWAL * USD_PER_SOLAR).toFixed(2)})` });
-        }
-
-        const balRes = await pool.query(`SELECT total_solar FROM members WHERE id = $1`, [authMemberId]);
-        if (balRes.rows.length === 0) {
-          return sendJSON(res, 404, { error: 'Member not found' });
-        }
-
-        const currentBalance = parseFloat(balRes.rows[0].total_solar || '0');
-        if (solar > currentBalance) {
-          return sendJSON(res, 400, { error: `Insufficient balance. You have ${currentBalance.toFixed(4)} Solar.` });
-        }
-
-        const PLATFORM_FEE_RATE = 0.05;
-        const platformFee = parseFloat((solar * PLATFORM_FEE_RATE).toFixed(6));
-        const netSolar = parseFloat((solar - platformFee).toFixed(6));
-        const usdPayout = parseFloat((netSolar * USD_PER_SOLAR).toFixed(2));
-
-        if (usdPayout < 0.50) {
-          return sendJSON(res, 400, { error: 'Payout too small after fees. Minimum payout is $0.50.' });
-        }
-
-        const newBalance = currentBalance - solar;
-        await pool.query(`UPDATE members SET total_solar = $1 WHERE id = $2`, [String(newBalance), authMemberId]);
-
-        const withdrawalId = `wd_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        await pool.query(
-          `INSERT INTO solar_withdrawals (id, member_id, solar_amount, platform_fee, net_solar, usd_payout, status, payout_method)
-           VALUES ($1, $2, $3, $4, $5, $6, 'pending', 'stripe')`,
-          [withdrawalId, authMemberId, String(solar), String(platformFee), String(netSolar), String(usdPayout)]
-        );
-
-        const txId = `withdrawal_${withdrawalId}`;
-        await pool.query(
-          `INSERT INTO marketplace_ledger (id, transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description, created_at)
-           VALUES (gen_random_uuid(), $1, 'debit', $2, 'member', $3, $4, 'withdrawal', $5, $6, NOW())`,
-          [txId, String(authMemberId), String(solar), String(newBalance), withdrawalId, `Cash out: ${solar} Solar → $${usdPayout} USD (5% fee: ${platformFee} S)`]
-        );
-
-        await pool.query(
-          `INSERT INTO marketplace_ledger (id, transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description, created_at)
-           VALUES (gen_random_uuid(), $1, 'credit', 'tcs_foundation', 'platform', $2, '0', 'platform_fee', $3, $4, NOW())`,
-          [txId, String(platformFee), withdrawalId, `Withdrawal fee: ${platformFee} S from member ${authMemberId}`]
-        );
-
-        console.log(`💸 Withdrawal requested: Member ${authMemberId} cashing out ${solar} Solar → $${usdPayout} (fee: ${platformFee} S)`);
-
-        sendJSON(res, 200, {
-          success: true,
-          withdrawal: {
-            id: withdrawalId,
-            solarDebited: solar,
-            platformFee,
-            netSolar,
-            usdPayout,
-            status: 'pending',
-            newBalance,
-          }
+      const config = await getNetworkConfig(pool, 'default');
+      if (!isSettlementEnabled(config)) {
+        return sendJSON(res, 403, {
+          error: 'settlement_disabled',
+          message: 'This network is configured as a closed-loop Solar marketplace and does not offer settlement.'
         });
-      } catch (err) {
-        console.error('Withdrawal error:', err.message);
-        sendJSON(res, 500, { error: 'Withdrawal processing failed' });
       }
+      return sendJSON(res, 301, { error: 'Use /api/solar-checkout/settlement-request instead', redirect: '/api/solar-checkout/settlement-request' });
     })();
     return true;
   }
@@ -409,9 +583,7 @@ module.exports = function stripeSolarRoutes(req, res, pathname, pool, sessionHel
     (async () => {
       try {
         const authMemberId = await getAuthenticatedMemberId(req, sessionHelpers);
-        if (!authMemberId) {
-          return sendJSON(res, 401, { error: 'Authentication required' });
-        }
+        if (!authMemberId) return sendJSON(res, 401, { error: 'Authentication required' });
 
         const withdrawals = await pool.query(
           `SELECT id, solar_amount, platform_fee, net_solar, usd_payout, status, payout_method, payout_reference, processed_at, created_at
@@ -419,19 +591,13 @@ module.exports = function stripeSolarRoutes(req, res, pathname, pool, sessionHel
           [authMemberId]
         );
 
-        const totalPending = withdrawals.rows.filter(w => w.status === 'pending')
-          .reduce((sum, w) => sum + parseFloat(w.usd_payout || '0'), 0);
-        const totalPaid = withdrawals.rows.filter(w => w.status === 'completed')
-          .reduce((sum, w) => sum + parseFloat(w.usd_payout || '0'), 0);
-
         sendJSON(res, 200, {
           success: true,
           withdrawals: withdrawals.rows,
-          totals: { pendingUsd: totalPending, paidUsd: totalPaid }
         });
       } catch (err) {
-        console.error('Withdrawal history error:', err.message);
-        sendJSON(res, 500, { error: 'Failed to fetch withdrawals' });
+        console.error('Legacy withdrawal history error:', err.message);
+        sendJSON(res, 500, { error: 'Failed to fetch history' });
       }
     })();
     return true;
@@ -441,9 +607,7 @@ module.exports = function stripeSolarRoutes(req, res, pathname, pool, sessionHel
     (async () => {
       try {
         const authMemberId = await getAuthenticatedMemberId(req, sessionHelpers);
-        if (!authMemberId) {
-          return sendJSON(res, 401, { error: 'Authentication required' });
-        }
+        if (!authMemberId) return sendJSON(res, 401, { error: 'Authentication required' });
 
         const purchases = await pool.query(
           `SELECT id, funding_source, usd_amount, rec_kwh, rec_certificate_id, solar_credited, exchange_rate, status, completed_at, created_at
@@ -461,11 +625,11 @@ module.exports = function stripeSolarRoutes(req, res, pathname, pool, sessionHel
         sendJSON(res, 200, {
           success: true,
           purchases: purchases.rows,
-          totals: { usd: totalUsd, recKwh: totalRecKwh, solarCredited: totalSolar }
+          totals: { usd: totalUsd, recKwh: totalRecKwh, solarActivated: totalSolar }
         });
       } catch (err) {
-        console.error('Purchase history error:', err.message);
-        sendJSON(res, 500, { error: 'Failed to fetch purchases' });
+        console.error('Activation history error:', err.message);
+        sendJSON(res, 500, { error: 'Failed to fetch activations' });
       }
     })();
     return true;
@@ -475,9 +639,7 @@ module.exports = function stripeSolarRoutes(req, res, pathname, pool, sessionHel
     (async () => {
       try {
         const authMemberId = await getAuthenticatedMemberId(req, sessionHelpers);
-        if (!authMemberId) {
-          return sendJSON(res, 401, { error: 'Authentication required' });
-        }
+        if (!authMemberId) return sendJSON(res, 401, { error: 'Authentication required' });
 
         const assignment = await pool.query(
           `SELECT aa.agent_code, aa.assigned_at, m.username as agent_username, m.name as agent_name, m.total_solar as agent_balance
@@ -519,9 +681,8 @@ module.exports = function stripeSolarRoutes(req, res, pathname, pool, sessionHel
             assignedAt: agent.assigned_at,
           },
           recentActivity: recentActivity.rows,
-          todayStats: {
-            created: parseInt(todayCreated.rows[0]?.cnt || '0'),
-          }
+          todayStats: { created: parseInt(todayCreated.rows[0]?.cnt || '0') },
+          agentDescription: COMPLIANCE_POLICY.agentMarketplaceDescription,
         });
       } catch (err) {
         console.error('Agent info error:', err.message);
@@ -535,9 +696,7 @@ module.exports = function stripeSolarRoutes(req, res, pathname, pool, sessionHel
     (async () => {
       try {
         const authMemberId = await getAuthenticatedMemberId(req, sessionHelpers);
-        if (!authMemberId) {
-          return sendJSON(res, 401, { error: 'Authentication required' });
-        }
+        if (!authMemberId) return sendJSON(res, 401, { error: 'Authentication required' });
 
         const url = new URL(req.url, `http://${req.headers.host}`);
         const limit = parseInt(url.searchParams.get('limit') || '50');
@@ -561,7 +720,7 @@ module.exports = function stripeSolarRoutes(req, res, pathname, pool, sessionHel
         sendJSON(res, 200, {
           success: true,
           ledger: ledger.rows,
-          solarPurchases: purchases.rows,
+          solarActivations: purchases.rows,
         });
       } catch (err) {
         console.error('Ledger error:', err.message);
