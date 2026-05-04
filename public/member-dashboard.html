@@ -163,6 +163,7 @@ header p{color:#666;font-size:13px;margin-top:4px}
     <div class="tab" data-tab="agent">My Agent</div>
     <div class="tab" data-tab="products">Products</div>
     <div class="tab" data-tab="ledger">Ledger</div>
+    <div class="tab" data-tab="cashout">Cash Out</div>
     <div class="tab" data-tab="commission">Commission</div>
   </div>
 
@@ -218,6 +219,56 @@ header p{color:#666;font-size:13px;margin-top:4px}
     <div id="ledgerSection">
       <div class="loading"><div class="spinner"></div><br>Loading ledger...</div>
     </div>
+  </div>
+
+  <div class="tab-content" id="tab-cashout">
+    <div class="section-title">Cash Out Solar → USD</div>
+    <p style="color:#888;font-size:13px;margin-bottom:16px">Convert your Solar tokens back to US dollars. 100 Solar = $1. A 5% platform fee applies. Minimum withdrawal: 500 Solar ($5).</p>
+
+    <div id="cashoutForm" style="display:none">
+      <div class="agent-card" style="border-color:rgba(255,215,0,.3);background:linear-gradient(135deg,rgba(255,215,0,.06),rgba(255,100,100,.04))">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+          <div style="font-size:36px">💸</div>
+          <div>
+            <div style="font-family:'Orbitron',sans-serif;font-size:16px;color:var(--gold);font-weight:700">Withdraw Solar</div>
+            <div style="font-size:11px;color:#888">Available balance: <span id="cashoutBalance" style="color:var(--green);font-weight:700">0</span> Solar</div>
+          </div>
+        </div>
+
+        <div class="task-form" style="background:transparent;border:none;padding:0">
+          <label>Solar Amount to Cash Out</label>
+          <input type="number" id="withdrawAmount" min="500" step="100" placeholder="e.g. 500, 1000, 5000" oninput="updateCashoutPreview()">
+
+          <div id="cashoutPreview" style="display:none;background:rgba(0,0,0,.4);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px">
+              <span style="color:#888">Solar to withdraw:</span>
+              <span id="previewSolar" style="color:var(--gold);font-family:'Orbitron',sans-serif">0 S</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px">
+              <span style="color:#888">Platform fee (5%):</span>
+              <span id="previewFee" style="color:#ff6666;font-family:'Orbitron',sans-serif">-0 S</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px">
+              <span style="color:#888">Net Solar converted:</span>
+              <span id="previewNet" style="color:var(--green);font-family:'Orbitron',sans-serif">0 S</span>
+            </div>
+            <div style="border-top:1px solid var(--border);padding-top:8px;margin-top:8px;display:flex;justify-content:space-between;font-size:14px">
+              <span style="color:var(--cyan);font-weight:600">You receive:</span>
+              <span id="previewUsd" style="color:var(--gold);font-family:'Orbitron',sans-serif;font-size:18px;font-weight:900">$0.00</span>
+            </div>
+          </div>
+
+          <button class="btn btn-gold" id="submitWithdraw" onclick="submitWithdrawal()">Request Cash Out</button>
+          <div class="task-status" id="withdrawStatus"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="cashoutLoginPrompt" style="display:none">
+      <div class="login-prompt"><p>Sign in to cash out your Solar tokens</p></div>
+    </div>
+
+    <div id="withdrawalHistory" style="margin-top:20px"></div>
   </div>
 
   <div class="tab-content" id="tab-commission">
@@ -294,6 +345,9 @@ async function init(){
     loadProducts();
     loadLedger();
     loadPurchaseHistory();
+    initCashout();
+  } else {
+    document.getElementById('cashoutLoginPrompt').style.display='block';
   }
 }
 
@@ -547,6 +601,91 @@ async function submitAgentTask(){
     }else{status.className='task-status error';status.textContent='Task failed: '+(data.error||'Unknown error')}
   }catch(e){status.className='task-status error';status.textContent='Error: '+e.message}
   btn.disabled=false;btn.textContent='Commission Agent';
+}
+
+function initCashout(){
+  document.getElementById('cashoutForm').style.display='block';
+  var bal=currentSession.solarBalance||0;
+  document.getElementById('cashoutBalance').textContent=fmtSolar(bal);
+  loadWithdrawalHistory();
+}
+
+function updateCashoutPreview(){
+  var val=parseFloat(document.getElementById('withdrawAmount').value)||0;
+  var preview=document.getElementById('cashoutPreview');
+  if(val<1){preview.style.display='none';return}
+  preview.style.display='block';
+  var fee=val*0.05;
+  var net=val-fee;
+  var usd=net/100;
+  document.getElementById('previewSolar').textContent=fmtSolar(val)+' S';
+  document.getElementById('previewFee').textContent='-'+fmtSolar(fee)+' S';
+  document.getElementById('previewNet').textContent=fmtSolar(net)+' S';
+  document.getElementById('previewUsd').textContent='$'+usd.toFixed(2);
+}
+
+async function submitWithdrawal(){
+  if(!currentSession){alert('Please sign in first');return}
+  var amount=parseFloat(document.getElementById('withdrawAmount').value);
+  if(!amount||amount<500){alert('Minimum withdrawal is 500 Solar ($5)');return}
+  var bal=currentSession.solarBalance||0;
+  if(amount>bal){alert('Insufficient balance. You have '+fmtSolar(bal)+' Solar.');return}
+  var fee=amount*0.05;var net=amount-fee;var usd=(net/100).toFixed(2);
+  if(!confirm('Cash out '+fmtSolar(amount)+' Solar?\n\nPlatform fee (5%): '+fmtSolar(fee)+' S\nYou receive: $'+usd+' USD\n\nThis will debit your Solar balance immediately.')){return}
+  var btn=document.getElementById('submitWithdraw');
+  var status=document.getElementById('withdrawStatus');
+  btn.disabled=true;btn.textContent='Processing...';
+  status.className='task-status pending';status.style.display='block';
+  status.innerHTML='<div class="spinner" style="width:16px;height:16px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:8px"></div> Processing your withdrawal...';
+  try{
+    var res=await fetch('/api/solar-checkout/withdraw',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({solarAmount:amount})});
+    var data=await res.json();
+    if(data.success){
+      var w=data.withdrawal;
+      status.className='task-status success';
+      status.innerHTML='Withdrawal submitted! '+fmtSolar(w.solarDebited)+' Solar debited. Payout of <b>$'+w.usdPayout.toFixed(2)+'</b> is pending processing.<br><span style="color:#888;font-size:11px">Reference: '+w.id+'</span>';
+      document.getElementById('withdrawAmount').value='';
+      document.getElementById('cashoutPreview').style.display='none';
+      currentSession.solarBalance=w.newBalance;
+      document.getElementById('cashoutBalance').textContent=fmtSolar(w.newBalance);
+      checkSession();
+      loadWithdrawalHistory();
+      loadLedger();
+    }else{
+      status.className='task-status error';status.textContent='Error: '+(data.error||'Unknown error');
+    }
+  }catch(e){status.className='task-status error';status.textContent='Error: '+e.message}
+  btn.disabled=false;btn.textContent='Request Cash Out';
+}
+
+async function loadWithdrawalHistory(){
+  var el=document.getElementById('withdrawalHistory');
+  try{
+    var res=await fetch('/api/solar-checkout/my-withdrawals');
+    var data=await res.json();
+    if(!data.success||!data.withdrawals||data.withdrawals.length===0){el.innerHTML='';return}
+    var html='<div class="section-title" style="font-size:11px">Withdrawal History</div>';
+    if(data.totals.pendingUsd>0){
+      html+='<div style="background:rgba(255,215,0,.06);border:1px solid rgba(255,215,0,.2);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:var(--gold)">Pending payouts: <b>$'+data.totals.pendingUsd.toFixed(2)+'</b></div>';
+    }
+    if(data.totals.paidUsd>0){
+      html+='<div style="background:rgba(57,255,20,.06);border:1px solid rgba(57,255,20,.2);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:var(--green)">Total paid out: <b>$'+data.totals.paidUsd.toFixed(2)+'</b></div>';
+    }
+    html+='<table class="ledger-table"><thead><tr><th>Solar</th><th>Fee</th><th>USD Payout</th><th>Status</th><th>Date</th></tr></thead><tbody>';
+    data.withdrawals.forEach(function(w){
+      var statusCls=w.status==='completed'?'credit':w.status==='pending'?'purchase':'debit';
+      var statusLabel=w.status.charAt(0).toUpperCase()+w.status.slice(1);
+      html+='<tr>'+
+        '<td style="color:var(--gold)">'+fmtSolar(w.solar_amount)+' S</td>'+
+        '<td style="color:#ff6666">-'+fmtSolar(w.platform_fee)+' S</td>'+
+        '<td style="color:var(--green);font-weight:600">$'+parseFloat(w.usd_payout).toFixed(2)+'</td>'+
+        '<td><span class="ledger-tag '+statusCls+'">'+statusLabel+'</span></td>'+
+        '<td style="color:#666">'+fmtDate(w.created_at)+'</td>'+
+      '</tr>';
+    });
+    html+='</tbody></table>';
+    el.innerHTML=html;
+  }catch(e){el.innerHTML=''}
 }
 
 init();

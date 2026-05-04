@@ -314,6 +314,123 @@ module.exports = function stripeSolarRoutes(req, res, pathname, pool, sessionHel
     return true;
   }
 
+  if (pathname === '/api/solar-checkout/withdraw' && req.method === 'POST') {
+    (async () => {
+      try {
+        const authMemberId = await getAuthenticatedMemberId(req, sessionHelpers);
+        if (!authMemberId) {
+          return sendJSON(res, 401, { error: 'Authentication required' });
+        }
+
+        const body = await parseBody(req);
+        const { solarAmount } = body;
+
+        if (!solarAmount || isNaN(solarAmount)) {
+          return sendJSON(res, 400, { error: 'solarAmount required (numeric)' });
+        }
+
+        const solar = parseFloat(solarAmount);
+        const MIN_WITHDRAWAL = 500;
+        if (solar < MIN_WITHDRAWAL) {
+          return sendJSON(res, 400, { error: `Minimum withdrawal is ${MIN_WITHDRAWAL} Solar ($${(MIN_WITHDRAWAL / USD_TO_SOLAR_RATE).toFixed(0)})` });
+        }
+
+        const balRes = await pool.query(`SELECT total_solar FROM members WHERE id = $1`, [authMemberId]);
+        if (balRes.rows.length === 0) {
+          return sendJSON(res, 404, { error: 'Member not found' });
+        }
+
+        const currentBalance = parseFloat(balRes.rows[0].total_solar || '0');
+        if (solar > currentBalance) {
+          return sendJSON(res, 400, { error: `Insufficient balance. You have ${currentBalance.toFixed(4)} Solar.` });
+        }
+
+        const PLATFORM_FEE_RATE = 0.05;
+        const platformFee = parseFloat((solar * PLATFORM_FEE_RATE).toFixed(6));
+        const netSolar = parseFloat((solar - platformFee).toFixed(6));
+        const usdPayout = parseFloat((netSolar / USD_TO_SOLAR_RATE).toFixed(2));
+
+        if (usdPayout < 0.50) {
+          return sendJSON(res, 400, { error: 'Payout too small after fees. Minimum payout is $0.50.' });
+        }
+
+        const newBalance = currentBalance - solar;
+        await pool.query(`UPDATE members SET total_solar = $1 WHERE id = $2`, [String(newBalance), authMemberId]);
+
+        const withdrawalId = `wd_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        await pool.query(
+          `INSERT INTO solar_withdrawals (id, member_id, solar_amount, platform_fee, net_solar, usd_payout, status, payout_method)
+           VALUES ($1, $2, $3, $4, $5, $6, 'pending', 'stripe')`,
+          [withdrawalId, authMemberId, String(solar), String(platformFee), String(netSolar), String(usdPayout)]
+        );
+
+        const txId = `withdrawal_${withdrawalId}`;
+        await pool.query(
+          `INSERT INTO marketplace_ledger (id, transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description, created_at)
+           VALUES (gen_random_uuid(), $1, 'debit', $2, 'member', $3, $4, 'withdrawal', $5, $6, NOW())`,
+          [txId, String(authMemberId), String(solar), String(newBalance), withdrawalId, `Cash out: ${solar} Solar → $${usdPayout} USD (5% fee: ${platformFee} S)`]
+        );
+
+        await pool.query(
+          `INSERT INTO marketplace_ledger (id, transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description, created_at)
+           VALUES (gen_random_uuid(), $1, 'credit', 'tcs_foundation', 'platform', $2, '0', 'platform_fee', $3, $4, NOW())`,
+          [txId, String(platformFee), withdrawalId, `Withdrawal fee: ${platformFee} S from member ${authMemberId}`]
+        );
+
+        console.log(`💸 Withdrawal requested: Member ${authMemberId} cashing out ${solar} Solar → $${usdPayout} (fee: ${platformFee} S)`);
+
+        sendJSON(res, 200, {
+          success: true,
+          withdrawal: {
+            id: withdrawalId,
+            solarDebited: solar,
+            platformFee,
+            netSolar,
+            usdPayout,
+            status: 'pending',
+            newBalance,
+          }
+        });
+      } catch (err) {
+        console.error('Withdrawal error:', err.message);
+        sendJSON(res, 500, { error: 'Withdrawal processing failed' });
+      }
+    })();
+    return true;
+  }
+
+  if (pathname === '/api/solar-checkout/my-withdrawals' && req.method === 'GET') {
+    (async () => {
+      try {
+        const authMemberId = await getAuthenticatedMemberId(req, sessionHelpers);
+        if (!authMemberId) {
+          return sendJSON(res, 401, { error: 'Authentication required' });
+        }
+
+        const withdrawals = await pool.query(
+          `SELECT id, solar_amount, platform_fee, net_solar, usd_payout, status, payout_method, payout_reference, processed_at, created_at
+           FROM solar_withdrawals WHERE member_id = $1 ORDER BY created_at DESC LIMIT 50`,
+          [authMemberId]
+        );
+
+        const totalPending = withdrawals.rows.filter(w => w.status === 'pending')
+          .reduce((sum, w) => sum + parseFloat(w.usd_payout || '0'), 0);
+        const totalPaid = withdrawals.rows.filter(w => w.status === 'completed')
+          .reduce((sum, w) => sum + parseFloat(w.usd_payout || '0'), 0);
+
+        sendJSON(res, 200, {
+          success: true,
+          withdrawals: withdrawals.rows,
+          totals: { pendingUsd: totalPending, paidUsd: totalPaid }
+        });
+      } catch (err) {
+        console.error('Withdrawal history error:', err.message);
+        sendJSON(res, 500, { error: 'Failed to fetch withdrawals' });
+      }
+    })();
+    return true;
+  }
+
   if (pathname === '/api/solar-checkout/my-purchases' && req.method === 'GET') {
     (async () => {
       try {

@@ -542,6 +542,26 @@ export const insertAgentAssignmentSchema = createInsertSchema(agentAssignments).
 export type AgentAssignment = typeof agentAssignments.$inferSelect;
 export type InsertAgentAssignment = z.infer<typeof insertAgentAssignmentSchema>;
 
+// Solar withdrawal requests — members cash out Solar back to USD
+export const solarWithdrawals = pgTable("solar_withdrawals", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  memberId: integer("member_id").references(() => members.id).notNull(),
+  solarAmount: numeric("solar_amount", { precision: 18, scale: 6 }).notNull(),
+  platformFee: numeric("platform_fee", { precision: 18, scale: 6 }).notNull(),
+  netSolar: numeric("net_solar", { precision: 18, scale: 6 }).notNull(),
+  usdPayout: numeric("usd_payout", { precision: 10, scale: 2 }).notNull(),
+  status: varchar("status").notNull().default("pending"),
+  payoutMethod: varchar("payout_method").default("stripe"),
+  payoutReference: varchar("payout_reference"),
+  processedAt: timestamp("processed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  metadata: jsonb("metadata"),
+});
+
+export const insertSolarWithdrawalSchema = createInsertSchema(solarWithdrawals).omit({ id: true, createdAt: true });
+export type SolarWithdrawal = typeof solarWithdrawals.$inferSelect;
+export type InsertSolarWithdrawal = z.infer<typeof insertSolarWithdrawalSchema>;
+
 // Solar pack tier constants
 export const SOLAR_PACKS = {
   starter: { usd: 5, solar: 500, label: 'Starter' },
