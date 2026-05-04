@@ -26,8 +26,8 @@ import path from 'path';
 import session from 'express-session';
 import connectPgSimple from 'connect-pg-simple';
 
-const PLATFORM_USERNAME = 'tcs_foundation';
-const PLATFORM_FEE_RATE = 0.05;
+const FOUNDATION_USERNAME = 'tcs_foundation';
+const FOUNDATION_FEE_RATE = 0.05;
 
 // Storage interface for member data and timer-gated progression
 export interface IStorage {
@@ -1250,7 +1250,7 @@ export class DatabaseStorage implements IStorage {
       }
 
       const price = parseFloat(artifact.solarAmountS || '0');
-      const foundationFee = Math.round(price * PLATFORM_FEE_RATE * 10000) / 10000;
+      const foundationFee = Math.round(price * FOUNDATION_FEE_RATE * 10000) / 10000;
       const sellerNet = price - foundationFee;
 
       if (buyerBalance < price) {
@@ -1312,7 +1312,7 @@ export class DatabaseStorage implements IStorage {
         }
 
         // 4b. Foundation fee collection
-        const foundationMember = await tx.select().from(members).where(eq(members.username, PLATFORM_USERNAME)).limit(1);
+        const foundationMember = await tx.select().from(members).where(eq(members.username, FOUNDATION_USERNAME)).limit(1);
         if (foundationMember.length > 0) {
           const foundationBalance = parseFloat(foundationMember[0].totalSolar || '0');
           const foundationBalAfter = foundationBalance + foundationFee;
@@ -1323,16 +1323,16 @@ export class DatabaseStorage implements IStorage {
             accountType: 'foundation',
             amount: String(foundationFee),
             balanceAfter: String(foundationBalAfter),
-            referenceType: 'platform_fee',
+            referenceType: 'foundation_fee',
             referenceId: artifactId,
-            description: `Platform fee (5%): ${artifact.title}`
+            description: `Foundation fee (5%): ${artifact.title}`
           }).returning();
           ledgerEntries.push(foundationEntry);
           await tx.update(members)
             .set({ totalSolar: String(foundationBalAfter) })
             .where(eq(members.id, foundationMember[0].id));
         } else {
-          console.warn('⚠️ Platform revenue account (tcs_foundation) not found - platform fee not collected for transaction:', transactionId);
+          console.warn('⚠️ Foundation member (tcs_foundation) not found - foundation fee not collected for transaction:', transactionId);
         }
 
         // 5. Create artifact copy for buyer

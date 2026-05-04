@@ -280,9 +280,6 @@ const { normalizeCategory, getOfficialCategories, getCategoryWithSubcategories, 
 // DMTXACTLY Creative API routes (pre-generated mode)
 const dmtxactlyRoutes = require('./routes/dmtxactly');
 
-// Stripe Solar Checkout routes (USD/REC → Solar)
-const stripeSolarRoutes = require('./routes/stripe-solar');
-
 // TC-S Agentic Framework (Policy-gated actions)
 const { handleAgenticRoutes, initializeAgenticFramework } = require('./server/agentic/routes');
 
@@ -3595,11 +3592,6 @@ const server = http.createServer(async (req, res) => {
     });
   }
   
-  // Stripe Solar Checkout routes (handle before body parsing to preserve raw body for webhook)
-  if (pathname.startsWith('/api/solar-checkout')) {
-    if (stripeSolarRoutes(req, res, pathname, pool, { getCookie, getSession })) return;
-  }
-
   // TC-S Computronium Market API routes
   let body = null;
   if (req.method === 'POST' && (pathname.startsWith('/market') || pathname.startsWith('/energy') || pathname.startsWith('/kid') || pathname.startsWith('/api/agents') || pathname.startsWith('/api/wallets'))) {
