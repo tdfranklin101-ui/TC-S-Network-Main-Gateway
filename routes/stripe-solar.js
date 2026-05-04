@@ -1,13 +1,16 @@
 const Stripe = require('stripe');
 
-const SOLAR_PACKS = {
-  starter: { usd: 500, solar: 500, label: 'Starter — 500 Solar' },
-  builder: { usd: 2500, solar: 2500, label: 'Builder — 2,500 Solar' },
-  founder: { usd: 10000, solar: 10000, label: 'Founder — 10,000 Solar' },
-};
+const KWH_PER_SOLAR = 4913;
+const USD_PER_KWH = 0.45;
+const USD_PER_SOLAR = KWH_PER_SOLAR * USD_PER_KWH;
+const SOLAR_PER_USD = 1 / USD_PER_SOLAR;
+const KWH_TO_SOLAR_RATE = 1 / KWH_PER_SOLAR;
 
-const USD_TO_SOLAR_RATE = 100;
-const KWH_TO_SOLAR_RATE = 1 / 4913;
+const SOLAR_PACKS = {
+  starter:  { usd: 500,   solar: parseFloat((5   * SOLAR_PER_USD).toFixed(6)), label: 'Starter — $5' },
+  builder:  { usd: 2500,  solar: parseFloat((25  * SOLAR_PER_USD).toFixed(6)), label: 'Builder — $25' },
+  founder:  { usd: 10000, solar: parseFloat((100 * SOLAR_PER_USD).toFixed(6)), label: 'Founder — $100' },
+};
 
 const AGENT_CODES = [
   '01','02','03','04','05','06','07','08','09','10',
@@ -124,11 +127,14 @@ module.exports = function stripeSolarRoutes(req, res, pathname, pool, sessionHel
         usdCents: pack.usd,
         usdDisplay: `$${(pack.usd / 100).toFixed(0)}`,
         solar: pack.solar,
+        solarDisplay: pack.solar.toFixed(6),
       })),
-      usdToSolarRate: USD_TO_SOLAR_RATE,
-      kwhToSolarRate: KWH_TO_SOLAR_RATE,
+      usdPerSolar: USD_PER_SOLAR,
+      solarPerUsd: SOLAR_PER_USD,
+      usdPerKwh: USD_PER_KWH,
+      kwhPerSolar: KWH_PER_SOLAR,
       recInfo: {
-        description: 'Renewable Energy Certificates (RECs) can also fund Solar. 1 kWh verified = ~0.000204 Solar.',
+        description: `Renewable Energy Certificates (RECs) can also fund Solar. 1 kWh verified = ${KWH_TO_SOLAR_RATE.toFixed(6)} Solar. 1 Solar = ${KWH_PER_SOLAR} kWh = $${USD_PER_SOLAR.toFixed(2)}.`,
         enabled: true,
       }
     });
@@ -191,7 +197,7 @@ module.exports = function stripeSolarRoutes(req, res, pathname, pool, sessionHel
         await pool.query(
           `INSERT INTO solar_purchases (id, member_id, funding_source, stripe_session_id, usd_amount, solar_credited, exchange_rate, status)
            VALUES (gen_random_uuid(), $1, 'usd', $2, $3, $4, $5, 'pending')`,
-          [authMemberId, session.id, (pack.usd / 100).toFixed(2), String(pack.solar), String(USD_TO_SOLAR_RATE)]
+          [authMemberId, session.id, (pack.usd / 100).toFixed(2), String(pack.solar), String(SOLAR_PER_USD)]
         );
 
         sendJSON(res, 200, { success: true, sessionId: session.id, url: session.url });
@@ -299,7 +305,7 @@ module.exports = function stripeSolarRoutes(req, res, pathname, pool, sessionHel
         await pool.query(
           `INSERT INTO solar_purchases (id, member_id, funding_source, rec_kwh, rec_certificate_id, solar_credited, exchange_rate, status, completed_at)
            VALUES (gen_random_uuid(), $1, 'rec', $2, $3, $4, $5, 'completed', NOW())`,
-          [authMemberId, String(kwh), certificateId || null, String(solarAmount), String(KWH_TO_SOLAR_RATE)]
+          [authMemberId, String(kwh), certificateId || null, String(solarAmount), String(SOLAR_PER_USD)]
         );
 
         await assignAgentToMember(pool, authMemberId);
@@ -330,9 +336,9 @@ module.exports = function stripeSolarRoutes(req, res, pathname, pool, sessionHel
         }
 
         const solar = parseFloat(solarAmount);
-        const MIN_WITHDRAWAL = 500;
+        const MIN_WITHDRAWAL = 0.001;
         if (solar < MIN_WITHDRAWAL) {
-          return sendJSON(res, 400, { error: `Minimum withdrawal is ${MIN_WITHDRAWAL} Solar ($${(MIN_WITHDRAWAL / USD_TO_SOLAR_RATE).toFixed(0)})` });
+          return sendJSON(res, 400, { error: `Minimum withdrawal is ${MIN_WITHDRAWAL} Solar ($${(MIN_WITHDRAWAL * USD_PER_SOLAR).toFixed(2)})` });
         }
 
         const balRes = await pool.query(`SELECT total_solar FROM members WHERE id = $1`, [authMemberId]);
@@ -348,7 +354,7 @@ module.exports = function stripeSolarRoutes(req, res, pathname, pool, sessionHel
         const PLATFORM_FEE_RATE = 0.05;
         const platformFee = parseFloat((solar * PLATFORM_FEE_RATE).toFixed(6));
         const netSolar = parseFloat((solar - platformFee).toFixed(6));
-        const usdPayout = parseFloat((netSolar / USD_TO_SOLAR_RATE).toFixed(2));
+        const usdPayout = parseFloat((netSolar * USD_PER_SOLAR).toFixed(2));
 
         if (usdPayout < 0.50) {
           return sendJSON(res, 400, { error: 'Payout too small after fees. Minimum payout is $0.50.' });

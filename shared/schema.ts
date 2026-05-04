@@ -562,15 +562,19 @@ export const insertSolarWithdrawalSchema = createInsertSchema(solarWithdrawals).
 export type SolarWithdrawal = typeof solarWithdrawals.$inferSelect;
 export type InsertSolarWithdrawal = z.infer<typeof insertSolarWithdrawalSchema>;
 
-// Solar pack tier constants
-export const SOLAR_PACKS = {
-  starter: { usd: 5, solar: 500, label: 'Starter' },
-  builder: { usd: 25, solar: 2500, label: 'Builder' },
-  founder: { usd: 100, solar: 10000, label: 'Founder' },
-} as const;
+// Energy-based pricing constants
+export const KWH_PER_SOLAR = 4913;
+export const USD_PER_KWH = 0.45;
+export const USD_PER_SOLAR = KWH_PER_SOLAR * USD_PER_KWH; // $2,210.85
+export const SOLAR_PER_USD = 1 / USD_PER_SOLAR;
+export const KWH_TO_SOLAR_RATE = 1 / KWH_PER_SOLAR;
 
-export const USD_TO_SOLAR_RATE = 100;
-export const KWH_TO_SOLAR_RATE = 1 / 4913;
+// Solar pack tier constants (Solar amounts computed from energy math)
+export const SOLAR_PACKS = {
+  starter: { usd: 5, solar: 5 * SOLAR_PER_USD, label: 'Starter' },
+  builder: { usd: 25, solar: 25 * SOLAR_PER_USD, label: 'Builder' },
+  founder: { usd: 100, solar: 100 * SOLAR_PER_USD, label: 'Founder' },
+} as const;
 
 // Secure download tokens for purchased artifacts
 export const downloadTokens = pgTable("download_tokens", {
