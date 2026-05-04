@@ -505,6 +505,53 @@ export type InsertContactMessage = z.infer<typeof insertContactMessageSchema>;
 export type InsertSolarClock = z.infer<typeof insertSolarClockSchema>;
 export type InsertProduct = z.infer<typeof insertProductSchema>;
 
+// Solar Purchases — USD/REC → Solar conversion ledger
+export const solarPurchases = pgTable("solar_purchases", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  memberId: integer("member_id").references(() => members.id).notNull(),
+  fundingSource: varchar("funding_source").notNull().default("usd"),
+  stripeSessionId: varchar("stripe_session_id").unique(),
+  stripePaymentIntentId: varchar("stripe_payment_intent_id"),
+  usdAmount: numeric("usd_amount", { precision: 10, scale: 2 }),
+  recKwh: numeric("rec_kwh", { precision: 18, scale: 4 }),
+  recCertificateId: varchar("rec_certificate_id"),
+  solarCredited: numeric("solar_credited", { precision: 18, scale: 6 }).notNull(),
+  exchangeRate: numeric("exchange_rate", { precision: 18, scale: 6 }).notNull(),
+  status: varchar("status").notNull().default("pending"),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  metadata: jsonb("metadata"),
+});
+
+export const insertSolarPurchaseSchema = createInsertSchema(solarPurchases).omit({ id: true, createdAt: true });
+export type SolarPurchase = typeof solarPurchases.$inferSelect;
+export type InsertSolarPurchase = z.infer<typeof insertSolarPurchaseSchema>;
+
+// Agent-to-Member assignments — paying members get an agent working for them
+export const agentAssignments = pgTable("agent_assignments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  memberId: integer("member_id").references(() => members.id).notNull(),
+  agentMemberId: integer("agent_member_id").references(() => members.id).notNull(),
+  agentCode: varchar("agent_code").notNull(),
+  isActive: boolean("is_active").default(true),
+  assignedAt: timestamp("assigned_at").defaultNow(),
+  metadata: jsonb("metadata"),
+});
+
+export const insertAgentAssignmentSchema = createInsertSchema(agentAssignments).omit({ id: true, assignedAt: true });
+export type AgentAssignment = typeof agentAssignments.$inferSelect;
+export type InsertAgentAssignment = z.infer<typeof insertAgentAssignmentSchema>;
+
+// Solar pack tier constants
+export const SOLAR_PACKS = {
+  starter: { usd: 5, solar: 500, label: 'Starter' },
+  builder: { usd: 25, solar: 2500, label: 'Builder' },
+  founder: { usd: 100, solar: 10000, label: 'Founder' },
+} as const;
+
+export const USD_TO_SOLAR_RATE = 100;
+export const KWH_TO_SOLAR_RATE = 1 / 4913;
+
 // Secure download tokens for purchased artifacts
 export const downloadTokens = pgTable("download_tokens", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

@@ -97,8 +97,8 @@ async function findNegotiatedDiscount(pool, buyerMemberId, artifactId, category)
   }
 }
 
-const FOUNDATION_USERNAME = 'tcs_foundation';
-const FOUNDATION_FEE_RATE = 0.05;
+const PLATFORM_USERNAME = 'tcs_foundation';
+const PLATFORM_FEE_RATE = 0.05;
 const CREATION_FEE = 0.000005;
 const PLACEMENT_FEE = 0.000002;
 const SOLAR_KWH_RATE = 1 / 4913;
@@ -418,14 +418,14 @@ async function getAgentPortfolios(pool) {
 }
 
 async function getOrCreateFoundationMember(queryFn) {
-  const existing = await queryFn('SELECT id, username, total_solar FROM members WHERE username = $1 LIMIT 1', [FOUNDATION_USERNAME]);
+  const existing = await queryFn('SELECT id, username, total_solar FROM members WHERE username = $1 LIMIT 1', [PLATFORM_USERNAME]);
   if (existing.rows.length > 0) {
     return { id: existing.rows[0].id, totalSolar: parseFloat(existing.rows[0].total_solar) || 0 };
   }
   const inserted = await queryFn(
     `INSERT INTO members (username, name, email, total_solar, total_dollars, is_agent, password_hash)
      VALUES ($1, $2, $3, '0.0000', 0, false, '$2b$12$foundationreservewallet000000000000000000000000000') RETURNING id, total_solar`,
-    [FOUNDATION_USERNAME, 'TC-S Foundation Reserve', 'foundation@thecurrentsee.org']
+    [PLATFORM_USERNAME, 'TC-S Platform Reserve', 'foundation@thecurrentsee.org']
   );
   return { id: inserted.rows[0].id, totalSolar: 0 };
 }
@@ -981,12 +981,12 @@ async function createArtifactsForAgent(pool, agent, memberId, assignedCategories
           );
           if (agentBalRow.rows.length > 0) {
             const newAgentBal = parseFloat(agentBalRow.rows[0].total_solar);
-            const foundationMember = await getOrCreateFoundationMember(feeClient.query.bind(feeClient));
-            const foundationUpdated = await feeClient.query(
+            const platformMember = await getOrCreateFoundationMember(feeClient.query.bind(feeClient));
+            const platformUpdated = await feeClient.query(
               'UPDATE members SET total_solar = total_solar + $1 WHERE id = $2 RETURNING total_solar',
-              [totalCreationFee, foundationMember.id]
+              [totalCreationFee, platformMember.id]
             );
-            const foundationBalAfter = parseFloat(foundationUpdated.rows[0].total_solar);
+            const platformBalAfter = parseFloat(platformUpdated.rows[0].total_solar);
 
             const feeTxId = crypto.randomUUID();
             await feeClient.query(
@@ -996,8 +996,8 @@ async function createArtifactsForAgent(pool, agent, memberId, assignedCategories
             );
             await feeClient.query(
               `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
-               VALUES ($1, 'credit', $2, 'foundation', $3, $4, 'creation_fee', $5, $6)`,
-              [feeTxId, String(foundationMember.id), String(totalCreationFee), String(foundationBalAfter), String(artifactId), `Creation + Placement fee: ${title}`]
+               VALUES ($1, 'credit', $2, 'platform', $3, $4, 'creation_fee', $5, $6)`,
+              [feeTxId, String(platformMember.id), String(totalCreationFee), String(platformBalAfter), String(artifactId), `Creation + Placement fee: ${title}`]
             );
             await feeClient.query('COMMIT');
             creationFeePaid = totalCreationFee;
@@ -1237,8 +1237,8 @@ async function makePurchasesForAgent(pool, agent, memberId, demandScores, aiDeci
         }
       }
 
-      const foundationFee = Math.round(artPrice * FOUNDATION_FEE_RATE * 10000) / 10000;
-      const sellerNet = Math.round((artPrice - foundationFee) * 10000) / 10000;
+      const platformFee = Math.round(artPrice * PLATFORM_FEE_RATE * 10000) / 10000;
+      const sellerNet = Math.round((artPrice - platformFee) * 10000) / 10000;
 
       const txId = crypto.randomUUID();
       const artifactId = artifact.id;
@@ -1282,13 +1282,13 @@ async function makePurchasesForAgent(pool, agent, memberId, demandScores, aiDeci
         );
       }
 
-      const foundationMember = await getOrCreateFoundationMember(client.query.bind(client));
-      const foundationBalAfter = foundationMember.totalSolar + foundationFee;
-      await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(foundationBalAfter), foundationMember.id]);
+      const platformMember = await getOrCreateFoundationMember(client.query.bind(client));
+      const platformBalAfter = platformMember.totalSolar + platformFee;
+      await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(platformBalAfter), platformMember.id]);
       await client.query(
         `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
-         VALUES ($1, 'credit', $2, 'foundation', $3, $4, 'foundation_fee', $5, $6)`,
-        [txId, String(foundationMember.id), String(foundationFee), String(foundationBalAfter), artifactId, `Foundation fee (5%): ${artifact.title}`]
+         VALUES ($1, 'credit', $2, 'platform', $3, $4, 'platform_fee', $5, $6)`,
+        [txId, String(platformMember.id), String(platformFee), String(platformBalAfter), artifactId, `Platform fee (5%): ${artifact.title}`]
       );
 
       await client.query(
@@ -1934,8 +1934,8 @@ async function executeCommissionedSale(pool, artifact, creatorMemberId, requesto
     const kwhCost = parseFloat(artifact.kwhFootprint || 0);
     const kwhCompensation = parseFloat((kwhCost * KWH_COMPENSATION_RATE).toFixed(6));
     const totalAgentPay = parseFloat((creationPrice + kwhCompensation).toFixed(6));
-    const foundationFee = parseFloat((creationPrice * FOUNDATION_FEE_RATE).toFixed(6));
-    const totalRequestorCost = parseFloat((creationPrice + foundationFee).toFixed(6));
+    const platformFee = parseFloat((creationPrice * PLATFORM_FEE_RATE).toFixed(6));
+    const totalRequestorCost = parseFloat((creationPrice + platformFee).toFixed(6));
 
     const requestorRow = await client.query('SELECT id, total_solar FROM members WHERE id = $1', [requestorId]);
     if (requestorRow.rows.length === 0) {
@@ -1954,7 +1954,7 @@ async function executeCommissionedSale(pool, artifact, creatorMemberId, requesto
     await client.query(
       `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
        VALUES ($1, 'debit', $2, 'user', $3, $4, 'commission', $5, $6)`,
-      [txId, String(requestorId), String(totalRequestorCost), String(newRequestorBal), String(artifact.artifactId), `Commissioned: ${artifact.title} (price + 5% foundation fee)`]
+      [txId, String(requestorId), String(totalRequestorCost), String(newRequestorBal), String(artifact.artifactId), `Commissioned: ${artifact.title} (price + 5% platform fee)`]
     );
 
     const creatorRow = await client.query('SELECT total_solar FROM members WHERE id = $1', [creatorMemberId]);
@@ -1967,13 +1967,13 @@ async function executeCommissionedSale(pool, artifact, creatorMemberId, requesto
       [txId, String(creatorMemberId), String(totalAgentPay), String(creatorNewBal), String(artifact.artifactId), `Commission fulfilled: ${artifact.title} (creation + ${Math.round(KWH_COMPENSATION_RATE * 100)}% kWh compensation)`]
     );
 
-    const foundationMember = await getOrCreateFoundationMember(client.query.bind(client));
-    const foundationBalAfter = foundationMember.totalSolar + foundationFee;
-    await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(foundationBalAfter), foundationMember.id]);
+    const platformMember = await getOrCreateFoundationMember(client.query.bind(client));
+    const platformBalAfter = platformMember.totalSolar + platformFee;
+    await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(platformBalAfter), platformMember.id]);
     await client.query(
       `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
-       VALUES ($1, 'credit', $2, 'foundation', $3, $4, 'foundation_fee', $5, $6)`,
-      [txId, String(foundationMember.id), String(foundationFee), String(foundationBalAfter), String(artifact.artifactId), `Foundation fee (5%): ${artifact.title}`]
+       VALUES ($1, 'credit', $2, 'platform', $3, $4, 'platform_fee', $5, $6)`,
+      [txId, String(platformMember.id), String(platformFee), String(platformBalAfter), String(artifact.artifactId), `Platform fee (5%): ${artifact.title}`]
     );
 
     await client.query(
@@ -1997,7 +1997,7 @@ async function executeCommissionedSale(pool, artifact, creatorMemberId, requesto
       kwhCost,
       kwhCompensation,
       totalAgentPay,
-      foundationFee,
+      platformFee,
       totalRequestorCost,
       requestorNewBalance: newRequestorBal,
       creatorNewBalance: creatorNewBal
@@ -2240,7 +2240,7 @@ async function runKidSolOrchestratedCustom(pool, agents, purpose, requestorId) {
       totalAgentsPaid: parseFloat(totalCommissionPaid.toFixed(6)),
       totalRequestorCharged: parseFloat(totalRequestorSpent.toFixed(6)),
       kwhCompensationRate: `${Math.round(KWH_COMPENSATION_RATE * 100)}%`,
-      foundationFeeRate: `${Math.round(FOUNDATION_FEE_RATE * 100)}%`,
+      platformFeeRate: `${Math.round(PLATFORM_FEE_RATE * 100)}%`,
       sales: commissionedSales.map(s => ({
         title: s.title,
         category: s.category,
@@ -2248,7 +2248,7 @@ async function runKidSolOrchestratedCustom(pool, agents, purpose, requestorId) {
         kwhCost: s.kwhCost,
         kwhCompensation: s.kwhCompensation,
         totalAgentPay: s.totalAgentPay,
-        foundationFee: s.foundationFee,
+        platformFee: s.platformFee,
         totalRequestorCost: s.totalRequestorCost
       }))
     } : null,
@@ -2382,8 +2382,8 @@ async function runRound2AgentTasks(pool, agents) {
             continue;
           }
 
-          const foundationFee = Math.round(artPrice * FOUNDATION_FEE_RATE * 10000) / 10000;
-          const sellerNet = Math.round((artPrice - foundationFee) * 10000) / 10000;
+          const platformFee = Math.round(artPrice * PLATFORM_FEE_RATE * 10000) / 10000;
+          const sellerNet = Math.round((artPrice - platformFee) * 10000) / 10000;
 
           const txId = crypto.randomUUID();
           await client.query('BEGIN');
@@ -2422,13 +2422,13 @@ async function runRound2AgentTasks(pool, agents) {
             );
           }
 
-          const r2FoundationMember = await getOrCreateFoundationMember(client.query.bind(client));
-          const r2FoundationBalAfter = r2FoundationMember.totalSolar + foundationFee;
-          await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(r2FoundationBalAfter), r2FoundationMember.id]);
+          const r2PlatformMember = await getOrCreateFoundationMember(client.query.bind(client));
+          const r2PlatformBalAfter = r2PlatformMember.totalSolar + platformFee;
+          await client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(r2PlatformBalAfter), r2PlatformMember.id]);
           await client.query(
             `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
-             VALUES ($1, 'credit', $2, 'foundation', $3, $4, 'foundation_fee', $5, $6)`,
-            [txId, String(r2FoundationMember.id), String(foundationFee), String(r2FoundationBalAfter), artifact.id, `Foundation fee (5%): ${artifact.title}`]
+             VALUES ($1, 'credit', $2, 'platform', $3, $4, 'platform_fee', $5, $6)`,
+            [txId, String(r2PlatformMember.id), String(platformFee), String(r2PlatformBalAfter), artifact.id, `Platform fee (5%): ${artifact.title}`]
           );
 
           await client.query(
@@ -2457,7 +2457,7 @@ async function runRound2AgentTasks(pool, agents) {
             }
           }
 
-          console.log(`🌞 [R2] Agent ${agent.name}: Bought "${artifact.title}" (${artPrice.toFixed(4)} S, fee: ${foundationFee.toFixed(4)} S) → Listed resale at ${resalePrice.toFixed(4)} S [Gen ${nextGenerationR2}]`);
+          console.log(`🌞 [R2] Agent ${agent.name}: Bought "${artifact.title}" (${artPrice.toFixed(4)} S, fee: ${platformFee.toFixed(4)} S) → Listed resale at ${resalePrice.toFixed(4)} S [Gen ${nextGenerationR2}]`);
           agentResult.buys.push({ artifactId: artifact.id, title: artifact.title, category: artifact.category, price: artPrice, resalePrice, txId, reasoning: buyOrder.reasoning });
           totalBuys++;
         } catch (buyErr) {
@@ -2566,8 +2566,8 @@ async function runRound2AgentTasks(pool, agents) {
               continue;
             }
 
-            const r2FoundFee = Math.round(r2ArtPrice * FOUNDATION_FEE_RATE * 10000) / 10000;
-            const r2SellerNet = Math.round((r2ArtPrice - r2FoundFee) * 10000) / 10000;
+            const r2PlatformFee = Math.round(r2ArtPrice * PLATFORM_FEE_RATE * 10000) / 10000;
+            const r2SellerNet = Math.round((r2ArtPrice - r2PlatformFee) * 10000) / 10000;
             const r2TxId = crypto.randomUUID();
 
             await r2Client.query('BEGIN');
@@ -2603,13 +2603,13 @@ async function runRound2AgentTasks(pool, agents) {
               );
             }
 
-            const r2AutoFoundation = await getOrCreateFoundationMember(r2Client.query.bind(r2Client));
-            const r2AutoFoundBalAfter = r2AutoFoundation.totalSolar + r2FoundFee;
-            await r2Client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(r2AutoFoundBalAfter), r2AutoFoundation.id]);
+            const r2AutoPlatform = await getOrCreateFoundationMember(r2Client.query.bind(r2Client));
+            const r2AutoPlatformBalAfter = r2AutoPlatform.totalSolar + r2PlatformFee;
+            await r2Client.query('UPDATE members SET total_solar = $1 WHERE id = $2', [String(r2AutoPlatformBalAfter), r2AutoPlatform.id]);
             await r2Client.query(
               `INSERT INTO marketplace_ledger (transaction_id, entry_type, account_id, account_type, amount, balance_after, reference_type, reference_id, description)
-               VALUES ($1, 'credit', $2, 'foundation', $3, $4, 'foundation_fee', $5, $6)`,
-              [r2TxId, String(r2AutoFoundation.id), String(r2FoundFee), String(r2AutoFoundBalAfter), r2Artifact.id, `Foundation fee (5%): ${r2Artifact.title}`]
+               VALUES ($1, 'credit', $2, 'platform', $3, $4, 'platform_fee', $5, $6)`,
+              [r2TxId, String(r2AutoPlatform.id), String(r2PlatformFee), String(r2AutoPlatformBalAfter), r2Artifact.id, `Platform fee (5%): ${r2Artifact.title}`]
             );
 
             await r2Client.query(
