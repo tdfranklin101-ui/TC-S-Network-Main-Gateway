@@ -19554,8 +19554,38 @@ Respond with valid JSON only. Be insightful and specific.`;
         res.end('Server error');
       }
     } else {
-      res.writeHead(404, { 'Content-Type': 'text/plain' });
-      res.end('Not found');
+      // Pleasant, branded 404 — good for users and SEO crawlers alike
+      try {
+        const notFoundPath = path.join(__dirname, 'public', '404.html');
+        const accept = (req.headers['accept'] || '').toLowerCase();
+        const wantsHtml = accept.includes('text/html') || accept === '' || accept.includes('*/*');
+        if (wantsHtml && fs.existsSync(notFoundPath)) {
+          const body = fs.readFileSync(notFoundPath);
+          res.writeHead(404, {
+            'Content-Type': 'text/html; charset=utf-8',
+            'Content-Length': body.length,
+            'Cache-Control': 'public, max-age=300',
+            'X-Robots-Tag': 'noindex, follow'
+          });
+          res.end(body);
+        } else {
+          const msg = JSON.stringify({
+            status: 404,
+            message: 'Page not found',
+            suggestion: 'Try /, /marketplace.html, /SolarStandard.html, or /whitepapers.html',
+            home: 'https://www.thecurrentsee.org/'
+          });
+          res.writeHead(404, {
+            'Content-Type': 'application/json; charset=utf-8',
+            'Content-Length': Buffer.byteLength(msg),
+            'X-Robots-Tag': 'noindex, follow'
+          });
+          res.end(msg);
+        }
+      } catch (e) {
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.end('Page not found — visit https://www.thecurrentsee.org/');
+      }
     }
   }
   } catch (topLevelError) {
