@@ -6,7 +6,7 @@
     { name: 'Flare Now', icon: '☀️', color: '#FFD700', href: 'https://flare-now--tdfranklin101.replit.app', desc: 'Solar flares & space weather alerts', external: true },
     { name: 'Radio Astronomy Now', icon: '📡', color: '#9D4EDD', href: 'https://astro-events-live--tdfranklin101.replit.app', desc: 'Live deep space signals & cosmic events', external: true },
     { name: 'TC-S Network Events', icon: '⚡', color: '#00CED1', href: 'https://farm-ops--tdfranklin101.replit.app', desc: 'AI-powered event operations with IQ agents', external: true },
-    { name: 'Commission Network', icon: '🌐', color: '#39ff14', href: '/commission-network.html', desc: 'Solar-backed network commissioning' },
+    { name: 'Commission Network', icon: '🌐', color: '#39ff14', href: 'https://commissioning-loop-fix.replit.app/', external: true, desc: 'Solar-backed network commissioning' },
     { name: 'Promptly (Ai Film Production Studio)', icon: '🎬', color: '#FF6EFF', href: 'https://continuity-locker.replit.app', desc: 'Custom AI films & music videos', external: true },
     { name: 'DMTXACTLY', icon: '🌀', color: '#8B5CF6', href: '/dmtxactly.html', desc: 'Tessellated visuals & generative art' },
     { name: 'Tessellated Envoy', icon: '🧠', color: '#A78BFA', href: 'https://chatgpt.com/g/g-692cfd47e3488191a43f3607e0b5b43a-the-tessellated-envoy', desc: 'AI behind DMTXACTLY prompts', external: true },

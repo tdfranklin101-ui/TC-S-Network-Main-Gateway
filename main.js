@@ -519,7 +519,7 @@ function determineGatewayRoute(userType, intent, context) {
     
     return {
       path: 'commission',
-      route: '/commission-network.html',
+      route: 'https://commissioning-loop-fix.replit.app/',
       network: 'commissioned',
       onboarding: {
         steps: [
