@@ -120,13 +120,24 @@
     "@context": "https://schema.org",
     "@type": "ItemList",
     "name": "TC-S Network Midnight Cinema — Now Showing",
-    "description": "15-screen online cinema on psychedelicsolarpunkparty.com featuring original music videos and short films from TC-S Network artists.",
+    "description": "16-screen online cinema on psychedelicsolarpunkparty.com featuring original music videos and short films from TC-S Network artists.",
     "url": "https://www.psychedelicsolarpunkparty.com/#cinema",
-    "numberOfItems": 15,
+    "numberOfItems": 16,
     "itemListElement": [
       {
         "@type": "ListItem",
         "position": 1,
+        "item": {
+          "@type": "VideoObject",
+          "name": "Midnight Cinema — TC-S Network Featured Presentation",
+          "description": "Featured presentation now showing at the TC-S Network Midnight Cinema.",
+          "url": "https://vimeo.com/1197006956",
+          "embedUrl": "https://player.vimeo.com/video/1197006956"
+        }
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
         "item": {
           "@type": "VideoObject",
           "name": "Solar Day (Global) — Monazite Music Video",
@@ -3801,6 +3812,19 @@
 
     <!-- Film Screens -->
     <div class="cinema-marquee-row">
+
+      <!-- Screen 0: Midnight Cinema — Newest -->
+      <div class="cinema-screen">
+        <div class="screen-bezel">
+          <div class="screen-embed">
+            <iframe src="https://player.vimeo.com/video/1197006956?badge=0&autopause=0&player_id=0&app_id=58479"
+              allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media"
+              allowfullscreen loading="lazy" title="Midnight Cinema"></iframe>
+          </div>
+          <button class="fullscreen-btn" onclick="toggleCinemaFullscreen(this)" title="Fullscreen">⛶</button>
+        </div>
+        <div class="screen-title">Midnight Cinema<br><span style="color:#00FFFF;font-size:0.65em;line-height:1.4;display:block;margin-top:4px;letter-spacing:1px;">TC-S Network · Featured Presentation<br><span style="color:rgba(255,255,255,0.7);font-size:0.9em;font-style:italic;">Now showing at the TC-S Network Midnight Cinema</span></span></div>
+      </div>
 
       <!-- Screen 0: The Paper Clip Problem — Newest Short Film -->
       <div class="cinema-screen">
