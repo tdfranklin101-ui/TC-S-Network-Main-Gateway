@@ -10,7 +10,8 @@
     { name: 'Promptly (Ai Film Production Studio)', icon: '🎬', color: '#FF6EFF', href: 'https://continuity-locker.replit.app', desc: 'Custom AI films & music videos', external: true },
     { name: 'DMTXACTLY', icon: '🌀', color: '#8B5CF6', href: '/dmtxactly.html', desc: 'Tessellated visuals & generative art' },
     { name: 'Tessellated Envoy', icon: '🧠', color: '#A78BFA', href: 'https://chatgpt.com/g/g-692cfd47e3488191a43f3607e0b5b43a-the-tessellated-envoy', desc: 'AI behind DMTXACTLY prompts', external: true },
-    { name: 'TCSN Draw Anything', icon: '✏️', color: '#FFB347', href: 'https://draw-it-converter.replit.app', desc: 'Prompt to a sketch', external: true }
+    { name: 'TCSN Draw Anything', icon: '✏️', color: '#FFB347', href: 'https://draw-it-converter.replit.app', desc: 'Prompt to a sketch', external: true },
+    { name: 'Tattoo Finder', icon: '💉', color: '#FF1493', href: 'https://tattoo-finder.replit.app', desc: 'Discover & design your next tattoo', external: true }
   ];
 
   var style = document.createElement('style');
