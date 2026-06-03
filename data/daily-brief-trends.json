@@ -1,62 +1,62 @@
 {
-  "date": "2026-04-29",
-  "generatedAt": "2026-04-29T03:00:02.624Z",
+  "date": "2026-06-03",
+  "generatedAt": "2026-06-03T03:00:02.255Z",
   "currentIndices": [
     {
       "id": "si",
       "name": "Solar Index",
       "unit": "%",
-      "value": 69.8,
+      "value": 71.4,
       "description": "Global Energy & Ethics Balance — 7-Day Rolling Indicator.",
-      "asOf": "2026-04-29T03:00:00.010Z"
+      "asOf": "2026-06-03T03:00:00.026Z"
     },
     {
       "id": "srh",
       "name": "Solar Reserve Health",
       "unit": "%",
-      "value": 79.2,
+      "value": 77.4,
       "description": "Reserve stability and fulfillment factor across all regions.",
-      "asOf": "2026-04-29T03:00:00.010Z"
+      "asOf": "2026-06-03T03:00:00.026Z"
     },
     {
       "id": "gbi",
       "name": "Global Basic Income",
       "unit": "%",
-      "value": 41.6,
+      "value": 42.1,
       "description": "Percentage of humans enrolled and actively claiming GBI.",
-      "asOf": "2026-04-29T03:00:00.010Z"
+      "asOf": "2026-06-03T03:00:00.026Z"
     },
     {
       "id": "cai",
       "name": "Compute Alignment",
       "unit": "%",
-      "value": 88.2,
+      "value": 88.8,
       "description": "Ethically aligned compute flow — safe superintelligence readiness.",
-      "asOf": "2026-04-29T03:00:00.010Z"
+      "asOf": "2026-06-03T03:00:00.026Z"
     },
     {
       "id": "mli",
       "name": "Market Liquidity",
       "unit": "%",
-      "value": 23.1,
+      "value": 24,
       "description": "Health of the TC-S digital marketplace and token velocity.",
-      "asOf": "2026-04-29T03:00:00.010Z"
+      "asOf": "2026-06-03T03:00:00.026Z"
     },
     {
       "id": "eai",
       "name": "Ethical Alignment",
       "unit": "%",
-      "value": 92,
+      "value": 91.3,
       "description": "Acceptance ratio of tasks from the Ethics Engine.",
-      "asOf": "2026-04-29T03:00:00.010Z"
+      "asOf": "2026-06-03T03:00:00.026Z"
     }
   ],
   "trends": {
     "analysisStatus": "success",
     "direction": "neutral",
-    "analysis": "The market health indices show stability with slight fluctuations over the past week. While the 'si' and 'mli' indices decreased slightly, 'srh' and 'eai' remained stable, indicating no significant bullish or bearish momentum. Overall, the indices are hovering around their recent averages, suggesting a balanced market environment.",
-    "insight": "Monitor the 'si' and 'mli' closely; a further decline could signal emerging weakness, prompting a review of investment strategies.",
-    "generatedAt": "2026-04-29T03:00:02.624Z"
+    "analysis": "The market indices show stability, with the SI and SRH remaining relatively flat, while the GBI has shown slight improvement. However, the MLI has decreased slightly, indicating some underlying weakness. Overall, there are mixed signals with no clear trend towards bullish or bearish movement.",
+    "insight": "Consider monitoring the GBI and MLI closely for potential shifts in market sentiment, as improvements in these indices could signal a more favorable market environment.",
+    "generatedAt": "2026-06-03T03:00:02.255Z"
   },
   "historyDays": 30
 }
