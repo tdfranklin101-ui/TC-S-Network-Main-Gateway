@@ -1,0 +1,1 @@
+- [OpenAI image models](openai-image-models.md) — this key has only gpt-image-* (no dall-e-3); use gpt-image-1, never pass response_format, read b64_json.

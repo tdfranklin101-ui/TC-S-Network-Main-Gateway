@@ -8024,8 +8024,9 @@
 
                 var tier3Status = document.createElement('div');
                 tier3Status.style.cssText = 'grid-column:1/-1;';
-                tier3Status.innerHTML = tierStatusHtml('Tier 3', 'Request fulfillment from a TC-S Network participant (Solar)', 'action');
+                tier3Status.innerHTML = tierStatusHtml('Tier 3', 'Not yet real? KID SOL can produce it — or request fulfillment from the network (Solar)', 'action');
                 resultsGrid.appendChild(tier3Status);
+                resultsGrid.appendChild(createAiProduceSlot(query));
                 resultsGrid.appendChild(createOpenVoucherSlot(query));
 
                 var parts = [];
@@ -8041,6 +8042,56 @@
                 isSearching = false;
                 searchBtn.disabled = false;
                 searchBtn.innerHTML = '🔍 Search';
+            }
+        }
+
+        function createAiProduceSlot(query) {
+            var slot = document.createElement('div');
+            slot.style.cssText = 'grid-column:1/-1;padding:22px;background:linear-gradient(135deg,rgba(8,20,28,0.92),rgba(6,28,18,0.92));border:2px solid transparent;border-image:linear-gradient(135deg,#00e5ff,#39ff14) 1;border-radius:0;margin-top:14px;position:relative;overflow:hidden;';
+            var pid = 'aip-' + Date.now();
+            slot.innerHTML =
+                '<div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#00e5ff,#39ff14,#00e5ff);"></div>' +
+                '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">' +
+                    '<span style="font-size:20px;">🛰️</span>' +
+                    '<span style="color:#00e5ff;font-size:16px;font-weight:700;">Produce with AI — if it\'s not yet real</span>' +
+                '</div>' +
+                '<p style="color:#aaa;font-size:13px;margin-bottom:14px;line-height:1.5;">KID SOL can invent <span style="color:#39ff14;font-weight:600;">' + escapeHtml(query) + '</span> and produce it — generating real 3D-printer code (STL) you can download and print.</p>' +
+                '<button id="' + pid + '-btn" style="padding:10px 20px;background:linear-gradient(135deg,#00e5ff,#39ff14);color:#000;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:14px;transition:all 0.2s;">🛰️ Produce with AI</button>' +
+                '<div id="' + pid + '-result" style="margin-top:14px;"></div>';
+            var btn = slot.querySelector('#' + pid + '-btn');
+            if (btn) btn.onclick = function() { runAiProduce(pid, query); };
+            return slot;
+        }
+
+        async function runAiProduce(pid, query) {
+            var btn = document.getElementById(pid + '-btn');
+            var resultEl = document.getElementById(pid + '-result');
+            if (btn) { btn.disabled = true; btn.textContent = '🛰️ KID SOL is inventing & producing...'; btn.style.opacity = '0.7'; }
+            if (resultEl) resultEl.innerHTML = '';
+            try {
+                var resp = await fetch('/api/market/produce', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: query })
+                });
+                var data = await resp.json();
+                if (data.success && data.produced && data.kind === '3d-print') {
+                    resultEl.innerHTML =
+                        '<div style="background:rgba(0,0,0,0.45);border:1px solid rgba(57,255,20,0.4);border-radius:10px;padding:16px;">' +
+                            (data.imageUrl ? '<img src="' + data.imageUrl + '" alt="' + escapeHtml(data.invention.name) + '" loading="lazy" style="width:100%;max-width:320px;border-radius:10px;margin-bottom:12px;display:block;border:1px solid rgba(0,229,255,0.3);" />' : '') +
+                            '<div style="color:#39ff14;font-weight:700;font-size:15px;margin-bottom:6px;">✅ ' + escapeHtml(data.invention.name) + '</div>' +
+                            '<p style="color:#ccc;font-size:13px;margin-bottom:10px;line-height:1.5;">' + escapeHtml(data.invention.description) + '</p>' +
+                            '<div style="color:#8aa;font-size:12px;margin-bottom:12px;">Energy cost: ' + data.kwhFootprint + ' kWh &bull; Price: ' + data.priceSolar + ' Solar &bull; ' + data.triangleCount + ' triangles</div>' +
+                            '<a href="' + data.downloadUrl + '" target="_blank" style="display:inline-block;padding:9px 18px;background:linear-gradient(135deg,#00e5ff,#39ff14);color:#000;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;">⬇ Download 3D Print Code (STL)</a>' +
+                        '</div>';
+                    if (btn) btn.style.display = 'none';
+                } else {
+                    if (resultEl) resultEl.innerHTML = '<div style="color:#ffd700;font-size:13px;line-height:1.5;">' + escapeHtml(data.message || data.error || 'Could not auto-produce this item.') + '</div>';
+                    if (btn) { btn.disabled = false; btn.textContent = '🛰️ Produce with AI'; btn.style.opacity = '1'; }
+                }
+            } catch (e) {
+                if (resultEl) resultEl.innerHTML = '<div style="color:#ff6b35;font-size:13px;">Production failed. Please try again.</div>';
+                if (btn) { btn.disabled = false; btn.textContent = '🛰️ Produce with AI'; btn.style.opacity = '1'; }
             }
         }
 

@@ -331,6 +331,10 @@ function addUIMHeaders(req, res) {
 const RATE_LIMIT = 60; // requests per window
 const WINDOW_MS = 60000; // 1 minute window
 const requestCounts = new Map();
+// Dedicated limiter for paid/generative endpoints (e.g. Layer 3 AI produce)
+const produceRateLimit = new Map();
+const PRODUCE_MAX_PER_WINDOW = 5; // per IP per minute
+const PRODUCE_WINDOW_MS = 60000;
 
 function checkRateLimit(req, res) {
   // Simplified rate limiter - just track and allow all requests
@@ -3043,6 +3047,48 @@ function parseBody(req) {
       }
     });
   });
+}
+
+// ===== Wide marketplace search helpers (token relevance scoring) =====
+const SEARCH_STOPWORDS = new Set(['the','a','an','of','for','and','or','to','in','on','at','with','my','your','our','their','i','is','it','its','that','this','these','those','best','good','great','new','some','any','please','need','want','looking','buy','get','find','me','we','you','how','where','what','can']);
+
+function tokenizeSearch(s) {
+  return [...new Set((s || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]+/g, ' ')
+    .split(/\s+/)
+    .filter(t => t.length >= 2 && !SEARCH_STOPWORDS.has(t)))];
+}
+
+// Builds a relevance-scored, OR-matched query so items sharing ANY query word
+// surface (wide relationship), ranked by full-phrase + per-token weight.
+async function wideSearchTable(pool, cfg, fullPhrase, tokens, limit) {
+  const params = [];
+  let p = 0;
+  const add = v => { params.push(v); return '$' + (++p); };
+  const scoreParts = [];
+  const whereParts = [];
+  if (fullPhrase && fullPhrase.length >= 2) {
+    const fp = add('%' + fullPhrase + '%');
+    for (const f of cfg.fields) {
+      scoreParts.push(`(CASE WHEN ${f.col} ILIKE ${fp} THEN ${f.w * 5} ELSE 0 END)`);
+      whereParts.push(`${f.col} ILIKE ${fp}`);
+    }
+  }
+  for (const t of (tokens || [])) {
+    const tp = add('%' + t + '%');
+    for (const f of cfg.fields) {
+      scoreParts.push(`(CASE WHEN ${f.col} ILIKE ${tp} THEN ${f.w} ELSE 0 END)`);
+      whereParts.push(`${f.col} ILIKE ${tp}`);
+    }
+  }
+  if (whereParts.length === 0) return { rows: [] };
+  const lim = add(limit);
+  const scoreExpr = scoreParts.length ? scoreParts.join(' + ') : '0';
+  const sql = `SELECT *, (${scoreExpr}) AS _relevance FROM ${cfg.table}
+     WHERE ${cfg.where} AND (${whereParts.join(' OR ')})
+     ORDER BY _relevance DESC, created_at DESC LIMIT ${lim}`;
+  return pool.query(sql, params);
 }
 
 // ============ SOLAR MINTING LEDGER ============
@@ -10033,24 +10079,29 @@ const server = http.createServer(async (req, res) => {
 
       // Search market_items by search_text, title, or category (normalized + original query)
       // Use higher internal limit to capture all matches before deduplication
-      const internalLimit = Math.max(limit * 2, 50);
-      
-      let marketQuery = `SELECT * FROM market_items 
-         WHERE status = 'ACTIVE' 
-         AND (search_text ILIKE $1 OR title ILIKE $1 OR category ILIKE $1 
-              OR vendor_name ILIKE $1 OR description ILIKE $1 OR tags::text ILIKE $1
-              OR search_text ILIKE $3 OR title ILIKE $3 OR category ILIKE $3
-              OR vendor_name ILIKE $3 OR description ILIKE $3 OR tags::text ILIKE $3`;
-      const marketParams = ['%' + q + '%', internalLimit, '%' + qOriginal + '%'];
-      
-      aliases.forEach((alias, idx) => {
-        const paramIdx = idx + 4;
-        marketQuery += ` OR category ILIKE $${paramIdx}`;
-        marketParams.push('%' + alias + '%');
-      });
-      marketQuery += `) ORDER BY created_at DESC LIMIT $2`;
-      
-      const result = await pool.query(marketQuery, marketParams);
+      const internalLimit = Math.max(limit * 3, 60);
+
+      // WIDE relationship search: tokenize the query and match items that share
+      // ANY word, ranked by closeness (full-phrase + per-token relevance scoring),
+      // so related/similar items surface — not just exact substring matches.
+      const searchTokens = tokenizeSearch(q);
+      const aliasExpansion = [...aliases];
+      for (const t of searchTokens) if (categoryAliases[t]) aliasExpansion.push(...categoryAliases[t]);
+      const allTokens = [...new Set([...searchTokens, ...aliasExpansion.map(x => String(x).toLowerCase())])];
+      if (allTokens.length === 0 && q.length >= 2) allTokens.push(q);
+
+      const result = await wideSearchTable(pool, {
+        table: 'market_items',
+        where: "status = 'ACTIVE'",
+        fields: [
+          { col: 'title', w: 10 },
+          { col: 'search_text', w: 6 },
+          { col: 'category', w: 5 },
+          { col: 'vendor_name', w: 4 },
+          { col: 'description', w: 4 },
+          { col: 'tags::text', w: 3 }
+        ]
+      }, q, allTokens, internalLimit);
 
       const items = result.rows.map(row => ({
         id: row.id,
@@ -10066,7 +10117,8 @@ const server = http.createServer(async (req, res) => {
         vendorName: row.vendor_name,
         status: row.status,
         imageUrl: row.image_url,
-        createdAt: row.created_at
+        createdAt: row.created_at,
+        relevance: Number(row._relevance) || 0
       }));
 
       // Also search artifacts table for uploaded marketplace items
@@ -10075,24 +10127,19 @@ const server = http.createServer(async (req, res) => {
       const isCuratedCategorySearch = ['songs', 'videos', 'music', 'video'].includes(qOriginal);
       let artifactItems = [];
       try {
-        let artQuery = `SELECT * FROM artifacts 
-           WHERE active = true `;
-        if (isCuratedCategorySearch) {
-          artQuery += `AND NOT (file_type = 'digital-artifact' AND source_type = 'agent') `;
-        }
-        artQuery += `AND (title ILIKE $1 OR description ILIKE $1 OR category ILIKE $1
-                OR title ILIKE $3 OR description ILIKE $3 OR category ILIKE $3
-                OR search_tags::text ILIKE $1 OR search_tags::text ILIKE $3`;
-        const artParams = ['%' + q + '%', internalLimit, '%' + qOriginal + '%'];
-        
-        aliases.forEach((alias, idx) => {
-          const paramIdx = idx + 4;
-          artQuery += ` OR category ILIKE $${paramIdx}`;
-          artParams.push('%' + alias + '%');
-        });
-        artQuery += `) ORDER BY created_at DESC LIMIT $2`;
-        
-        const artifactResult = await pool.query(artQuery, artParams);
+        const artWhere = isCuratedCategorySearch
+          ? "active = true AND NOT (file_type = 'digital-artifact' AND source_type = 'agent')"
+          : 'active = true';
+        const artifactResult = await wideSearchTable(pool, {
+          table: 'artifacts',
+          where: artWhere,
+          fields: [
+            { col: 'title', w: 10 },
+            { col: 'category', w: 5 },
+            { col: 'description', w: 4 },
+            { col: 'search_tags::text', w: 3 }
+          ]
+        }, q, allTokens, internalLimit);
         artifactItems = artifactResult.rows.map(row => ({
           id: row.id,
           title: row.title,
@@ -10107,7 +10154,8 @@ const server = http.createServer(async (req, res) => {
           artifactClass: row.artifact_class || 'A',
           fileType: row.file_type || '',
           productPrompt: row.product_prompt || '',
-          createdAt: row.created_at
+          createdAt: row.created_at,
+          relevance: Number(row._relevance) || 0
         }));
       } catch (artErr) {
         console.error('Artifact search error:', artErr.message);
@@ -10164,7 +10212,18 @@ const server = http.createServer(async (req, res) => {
       const uniqueArtifacts = artifactItems.filter(a => !seenIds.has(a.id));
       uniqueArtifacts.forEach(a => seenIds.add(a.id));
       const uniqueCollection = collectionItems.filter(c => !seenIds.has(c.id));
-      const allItems = [...items, ...uniqueArtifacts, ...uniqueCollection];
+      // Rank ALL sources together by relevance so the closest matches appear first
+      const scoreItem = (it) => {
+        if (typeof it.relevance === 'number' && it.relevance > 0) return it.relevance;
+        const hay = ((it.title || '') + ' ' + (it.description || '') + ' ' + (it.category || '')).toLowerCase();
+        let s = 0;
+        if (q && q.length >= 2 && hay.includes(q)) s += 50;
+        for (const t of allTokens) if (hay.includes(t)) s += 5;
+        return s;
+      };
+      const allItems = [...items, ...uniqueArtifacts, ...uniqueCollection]
+        .sort((a, b) => scoreItem(b) - scoreItem(a))
+        .slice(0, limit);
 
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
@@ -10181,7 +10240,192 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // Web Search API - uses Perplexity Sonar for REAL web search with actual product URLs
+  // ===== LAYER 3: AI PRODUCE — invent the item & generate it (real 3D print code) when it is "not yet real" =====
+  if (pathname === '/api/market/produce' && req.method === 'POST') {
+    try {
+      const body = await parseBody(req);
+      const query = (body.query || '').trim();
+      if (!query) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'query is required' }));
+        return;
+      }
+      if (query.length > 300) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'query is too long (max 300 characters)' }));
+        return;
+      }
+
+      // Per-IP rate limit — this route makes paid model calls plus cloud/DB writes
+      const produceIp = (req.headers['x-forwarded-for'] || '').split(',')[0].trim()
+        || req.headers['x-real-ip'] || req.socket.remoteAddress || 'unknown';
+      const produceNow = Date.now();
+      const produceRecent = (produceRateLimit.get(produceIp) || []).filter(ts => produceNow - ts < PRODUCE_WINDOW_MS);
+      if (produceRecent.length >= PRODUCE_MAX_PER_WINDOW) {
+        res.writeHead(429, { 'Content-Type': 'application/json', 'Retry-After': '60' });
+        res.end(JSON.stringify({ success: false, error: 'Too many production requests. Please wait a minute and try again.' }));
+        return;
+      }
+      produceRecent.push(produceNow);
+      produceRateLimit.set(produceIp, produceRecent);
+
+      const openaiKey = process.env.OPENAI_API_KEY || process.env.NEW_OPENAI_API_KEY;
+      if (!openaiKey) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'AI production not available' }));
+        return;
+      }
+
+      const { inferDeliverables } = require('./server/deliverable-inference.js');
+      const artifact3dService = require('./server/artifact3d-service.js');
+      const matrix = inferDeliverables(query);
+      const templates = artifact3dService.getTemplates();
+      const templateList = templates.map(t =>
+        `- ${t.id}: ${t.name} — ${t.description}. params: ` +
+        Object.entries(t.paramSchema).map(([k, v]) => `${k} (${v.min}-${v.max} ${v.unit})`).join(', ')
+      ).join('\n');
+
+      const OpenAI = require('openai');
+      const openai = new OpenAI({ apiKey: openaiKey });
+
+      const systemPrompt = `You are KID SOL, the TC-S Network provisionaire. A member wants something that may not exist in the marketplace yet. Decide whether it can be PRODUCED right now as a real 3D-printable physical object using one of the available parametric templates, or whether it is a digital item, or neither.
+
+Available 3D-print templates:
+${templateList}
+
+Respond with valid JSON only:
+{
+  "producible": true or false,
+  "kind": "3d-print" or "digital" or "none",
+  "templateId": "one of the template ids above, or null",
+  "params": { numeric params chosen WITHIN each template's allowed range, or {} },
+  "inventedName": "concise product name",
+  "inventedDescription": "one or two sentences describing exactly what will be produced",
+  "reasoning": "short explanation"
+}
+
+Rules: pick "3d-print" and the closest template ONLY if the request is a small physical object that template can reasonably represent; keep every param within the stated min-max range. If the request is media, software, writing, or data, use "digital". If it cannot be produced, use "none".`;
+
+      const aiResp = await openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: `Member request: "${query}"` }
+        ],
+        temperature: 0.4,
+        response_format: { type: 'json_object' }
+      });
+
+      let plan;
+      try { plan = JSON.parse(aiResp.choices?.[0]?.message?.content || '{}'); }
+      catch (e) { plan = { producible: false, kind: 'none', reasoning: 'Could not parse production plan' }; }
+
+      if (plan.kind === '3d-print' && plan.templateId && artifact3dService.getTemplate(plan.templateId)) {
+        const result = artifact3dService.generateArtifact3d(plan.templateId, plan.params || {});
+        const artifact3dId = randomUUID();
+        const cloudStorage = require('./server/cloud-storage');
+        const stlKey = `.private/3d-models/${artifact3dId}_model.stl`;
+        const guideKey = `.private/3d-models/${artifact3dId}_guide.md`;
+        const stlResult = await cloudStorage.uploadFromBuffer(stlKey, result.stlBuffer);
+        const guideResult = await cloudStorage.uploadFromBuffer(guideKey, Buffer.from(result.printGuideText, 'utf-8'));
+        await pool.query(
+          `INSERT INTO artifact_3d_files (id, artifact_id, template_id, template_params, stl_url, print_guide_url, stl_hash, print_guide_hash, file_size, bounding_box, validation_status, validation_errors, generation_status, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW())`,
+          [
+            artifact3dId, artifact3dId, plan.templateId,
+            JSON.stringify(result.params),
+            `cloud://${stlResult.key}`, `cloud://${guideResult.key}`,
+            result.stlHash, result.printGuideHash, stlResult.size,
+            JSON.stringify(result.boundingBox),
+            result.validation.valid ? 'valid' : 'invalid',
+            JSON.stringify(result.validation.errors),
+            'completed'
+          ]
+        );
+        // Generate a preview image of the invented item (non-fatal if it fails)
+        let imageUrl = null;
+        try {
+          const imgResp = await openai.images.generate({
+            model: 'gpt-image-1',
+            prompt: `Product visualization of "${plan.inventedName}": ${plan.inventedDescription}. A single 3D-printable physical object, clean studio product photo, centered, plain neutral background, soft even lighting, no text, no watermark.`,
+            n: 1,
+            size: '1024x1024',
+            quality: 'low'
+          });
+          const imgData = imgResp.data?.[0];
+          let imgBuffer = null;
+          if (imgData?.b64_json) {
+            imgBuffer = Buffer.from(imgData.b64_json, 'base64');
+          } else if (imgData?.url) {
+            const imgFetch = await fetch(imgData.url);
+            imgBuffer = Buffer.from(await imgFetch.arrayBuffer());
+          }
+          if (imgBuffer) {
+            const imgKey = `.private/3d-models/${artifact3dId}_preview.png`;
+            await cloudStorage.uploadFromBuffer(imgKey, imgBuffer);
+            imageUrl = `/api/artifact3d/image/${artifact3dId}`;
+          }
+        } catch (imgErr) {
+          console.warn('Layer 3 preview image generation failed:', imgErr.message);
+        }
+        console.log(`🛰️ Layer 3 produce: invented '${plan.inventedName}' via template ${plan.templateId} for query "${query}"`);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: true,
+          layer: 3,
+          produced: true,
+          kind: '3d-print',
+          query,
+          invention: { name: plan.inventedName, description: plan.inventedDescription },
+          templateId: plan.templateId,
+          params: result.params,
+          artifact3dId,
+          imageUrl,
+          downloadUrl: `/api/artifact3d/download/${artifact3dId}`,
+          printGuide: result.printGuideText,
+          priceSolar: result.priceSolar,
+          kwhFootprint: result.kwhFootprint,
+          triangleCount: result.triangleCount,
+          boundingBox: result.boundingBox,
+          reasoning: plan.reasoning,
+          message: `KID SOL invented and produced "${plan.inventedName}" — real 3D print code (STL) ready to download.`
+        }));
+        return;
+      }
+
+      if (plan.kind === 'digital') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: true,
+          layer: 3,
+          produced: false,
+          kind: 'digital',
+          query,
+          invention: { name: plan.inventedName, description: plan.inventedDescription },
+          reasoning: plan.reasoning,
+          message: `"${plan.inventedName}" is a digital item — KID SOL can commission a network agent to create it on request.`
+        }));
+        return;
+      }
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        layer: 3,
+        produced: false,
+        kind: 'none',
+        query,
+        reasoning: plan.reasoning || 'This request cannot be auto-produced right now.',
+        message: 'KID SOL could not auto-produce this item. Post an open fulfillment request and a network participant can take it on.'
+      }));
+    } catch (error) {
+      console.error('Layer 3 produce error:', error.message);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Production failed: ' + error.message }));
+    }
+    return;
+  }
+
   if (pathname === '/api/market/web-search' && req.method === 'GET') {
     try {
       const wsUrl = new URL(req.url, `http://${req.headers.host}`);
@@ -17241,6 +17485,26 @@ Respond with valid JSON only. Be insightful and specific.`;
       console.error('3D download error:', error.message);
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Download failed: ' + error.message }));
+    }
+    return;
+  }
+
+  // 3c. GET /api/artifact3d/image/:id — Serve the AI-generated preview image (PNG) from cloud storage
+  if (pathname.startsWith('/api/artifact3d/image/') && req.method === 'GET') {
+    try {
+      const imgId = pathname.split('/api/artifact3d/image/')[1].split('?')[0];
+      const cloudStorage = require('./server/cloud-storage');
+      const imgKey = `.private/3d-models/${imgId}_preview.png`;
+      const buffer = await cloudStorage.downloadFile(imgKey);
+      res.writeHead(200, {
+        'Content-Type': 'image/png',
+        'Content-Length': buffer.length,
+        'Cache-Control': 'public, max-age=86400'
+      });
+      res.end(buffer);
+    } catch (error) {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Preview image not found' }));
     }
     return;
   }

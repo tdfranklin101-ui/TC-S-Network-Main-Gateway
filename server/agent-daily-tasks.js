@@ -2841,4 +2841,4 @@ async function upgradeArtifactPrompts(pool) {
   return { upgraded, errors, total: result.rows.length, byAgent };
 }
 
-module.exports = { runDailyAgentTasks, runSingleAgentTasks, getTaskStatus, runEducationBlitz, ensureAgentMembers, submitKidSolarPrompt, runCustomAgentTask, ALL_CATEGORIES, runRound2AgentTasks, getRound2Status, addBulletinReply, upgradeArtifactPrompts, analyzeMarketDemand, getAgentPortfolios, getArtifactUtility, ARTIFACT_UTILITY_TYPES, processRecoveryDonations, getCurrentRecoveringMemberIds };
+module.exports = { runDailyAgentTasks, runSingleAgentTasks, getTaskStatus, runEducationBlitz, ensureAgentMembers, submitKidSolarPrompt, runCustomAgentTask, ALL_CATEGORIES, runRound2AgentTasks, getRound2Status, addBulletinReply, upgradeArtifactPrompts, analyzeMarketDemand, getAgentPortfolios, getArtifactUtility, ARTIFACT_UTILITY_TYPES, processRecoveryDonations, getCurrentRecoveringMemberIds, executeCommissionedSale };
