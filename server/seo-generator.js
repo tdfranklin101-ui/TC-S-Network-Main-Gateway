@@ -61,11 +61,18 @@ class SEOGenerator {
     const currentTrends = this.extractCurrentTrends(marketData);
     
     return {
-      title: `TC-S Network Foundation Market - Live Energy Marketplace | ${currentTrends.aiDemand}GW AI Revolution 2025`,
+      title: `The Solar Replicator — Describe It, Print It | TC-S Network Foundation Market`,
       
-      description: `Join the renewable energy marketplace driving the $${marketData.globalDigitalEconomy.value}T digital economy. TC-S Network: 1 Solar = ${marketData.solarStandard.value} kWh. Daily distribution since ${this.formatDate(marketData.dailyDistribution.startDate)}. Built for the ${currentTrends.aiDemand}GW AI data center energy surge.`,
+      description: `Meet the Solar Replicator: describe anything and TC-S Network produces real, 3D-printable code you can fabricate into a physical object — powered by renewable Solar energy. Join humans and AI agents in the energy-backed economy. Sign up and receive your Genesis Solar on day one (1 Solar for every day since ${this.formatDate(marketData.dailyDistribution.startDate)}), then +1 Solar every day after. 1 Solar = ${marketData.solarStandard.value} kWh.`,
       
       keywords: [
+        'Solar Replicator',
+        'describe it print it',
+        'AI to 3D printable code',
+        'Produce with AI',
+        '3D printer code marketplace',
+        'AI replicator real objects',
+        'text to STL generator',
         'renewable energy marketplace 2025',
         `${currentTrends.aiDemand}GW AI energy demand`,
         'Solar currency blockchain',
@@ -112,7 +119,7 @@ class SEOGenerator {
         "name": "TC-S Network Foundation Market",
         "alternateName": "TC-S Foundation Market",
         "url": "https://www.thecurrentsee.org",
-        "description": `Revolutionary digital marketplace for renewable energy assets operated by The Current See PBC Inc. First platform enabling individual access to the ${currentTrends.aiDemand}GW renewable energy surge driven by AI data centers.`,
+        "description": `Home of the Solar Replicator — describe anything and receive real, 3D-printable code to fabricate physical objects, powered by renewable Solar energy. A digital marketplace operated by The Current See PBC Inc. enabling individual access to the ${currentTrends.aiDemand}GW renewable energy surge driven by AI data centers.`,
         "foundingDate": marketData.dailyDistribution.startDate,
         "slogan": "The value of the Solar is what you bring to the market",
         
@@ -157,6 +164,8 @@ class SEOGenerator {
         },
         
         "knowsAbout": [
+          "Solar Replicator — Produce with AI (text to 3D-printable code)",
+          "AI-Generated 3D Printer Code for Physical Fabrication",
           "Renewable Energy Trading",
           "AI Data Center Energy Solutions",
           "Sustainable Digital Economy", 
@@ -193,7 +202,7 @@ class SEOGenerator {
         "potentialAction": {
           "@type": "JoinAction",
           "target": "https://www.thecurrentsee.org/marketplace.html",
-          "description": "Join TC-S Network — humans and AI agents welcome. Receive Guaranteed Basic Income (1 Solar/day) backed by renewable energy. External AI agents can register via API."
+          "description": "Join TC-S Network — humans and AI agents welcome. Sign up and receive your Genesis Solar on day one (1 Solar for every day since April 7, 2025), then +1 Solar every day after. Use the Solar Replicator to describe anything and get real 3D-printable code. External AI agents can register via API."
         }
       },
 
@@ -213,11 +222,17 @@ class SEOGenerator {
     const trends = this.extractCurrentTrends(marketData);
     
     return {
-      title: `Digital Artifact Market - Creator Economy for $${marketData.globalDigitalEconomy.value}T Digital Revolution`,
+      title: `The Solar Replicator — Describe It, Print It | TC-S Digital Artifact Market`,
       
-      description: `Upload, price, and sell digital content with AI-powered Solar currency. Join the creator economy within the $${marketData.globalDigitalEconomy.value}T digital marketplace. Each Solar token backed by ${marketData.solarStandard.value} kWh renewable energy. Daily distribution since ${this.formatDate(marketData.dailyDistribution.startDate)}.`,
+      description: `Describe anything and the Solar Replicator produces it — real, 3D-printable code you can fabricate into a physical object, plus an instant AI preview. Buy, sell, and produce digital and physical artifacts with energy-backed Solar. Each Solar = ${marketData.solarStandard.value} kWh. Sign up and receive your Genesis Solar on day one, then +1 Solar every day after.`,
       
       keywords: [
+        'Solar Replicator',
+        'Produce with AI',
+        'AI 3D printer code generator',
+        'text to STL',
+        'describe it print it',
+        'on demand 3D fabrication',
         'digital asset marketplace 2025',
         'creator economy platform',
         'AI-powered content pricing', 
@@ -255,6 +270,8 @@ class SEOGenerator {
           "description": "Digital artifacts priced in energy-backed Solar tokens"
         },
         "knowsAbout": [
+          "Solar Replicator — Produce with AI (text to 3D-printable code)",
+          "AI-Generated 3D Printer Code for Physical Fabrication",
           "Kid Solar AI Voice Assistant",
           "Power Twin Energy Calculator",
           "Open Silicon Stack Digital Twin",
@@ -269,6 +286,11 @@ class SEOGenerator {
           "Independent AI Agent Marketplace"
         ],
         "hasPart": [
+          {
+            "@type": "SoftwareApplication",
+            "name": "Solar Replicator (Produce with AI)",
+            "description": "Describe anything and receive real, 3D-printable code plus an AI preview — fabricate physical objects, powered by Solar energy"
+          },
           {
             "@type": "SoftwareApplication",
             "name": "Kid Solar",
@@ -543,6 +565,8 @@ ${JSON.stringify(seoData.structuredData, null, 2)}
     
     return {
       uniqueKeywords: [
+        'Solar Replicator — describe it, print it',
+        'AI-generated 3D printer code marketplace',
         'energy-backed universal basic income',
         'individual renewable energy access',
         'AI-powered Solar token pricing',
@@ -579,9 +603,9 @@ ${JSON.stringify(seoData.structuredData, null, 2)}
   getFallbackSEOContent() {
     return {
       homepage: {
-        title: 'TC-S Network Foundation Market - Live Digital Energy Marketplace',
-        description: 'Revolutionary renewable energy marketplace with Solar token universal basic income. 1 Solar = 4,913 kWh. Daily distribution since April 7, 2025.',
-        keywords: ['renewable energy marketplace', 'Solar tokens', 'universal basic income', 'creator economy']
+        title: 'The Solar Replicator — Describe Anything, Print It | TC-S Network Foundation Market',
+        description: 'Meet the Solar Replicator: describe anything and get real, 3D-printable code, powered by renewable Solar energy. Join humans and AI agents — sign up and receive your Genesis Solar on day one, then +1 Solar every day. 1 Solar = 4,913 kWh.',
+        keywords: ['Solar Replicator', 'Produce with AI', 'AI 3D printer code', 'describe it print it', 'renewable energy marketplace', 'Solar tokens', 'guaranteed basic income', 'creator economy']
       }
     };
   }
