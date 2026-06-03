@@ -1,1 +1,2 @@
 - [OpenAI image models](openai-image-models.md) — this key has only gpt-image-* (no dall-e-3); use gpt-image-1, never pass response_format, read b64_json.
+- [Solar distribution model](solar-distribution-model.md) — distribution begins at sign-up: day one = Genesis Solar (1 Solar × days since Apr 7 2025), then +1/day. Not blanket-retroactive.
