@@ -1,5 +1,5 @@
 /**
- * OpenAI-Powered Dynamic Seed Rotation System
+ * Claude-Powered Dynamic Seed Rotation System
  * Automatically rotates Value-for-Value seeds across HTML pages every 24 hours
  * to keep SEO content fresh and organic while maintaining The Current-See's philosophy
  */
@@ -8,7 +8,7 @@ const fs = require('fs');
 const path = require('path');
 const schedule = require('node-schedule');
 const cheerio = require('cheerio');
-const openaiService = require('../openai-service');
+const claudeService = require('./claude-service');
 const seedDatabase = require('./seed-database');
 
 class SeedRotator {
@@ -29,7 +29,7 @@ class SeedRotator {
         // Maximum targets to modify per file
         maxTargetsPerFile: parseInt(process.env.SEED_MAX_TARGETS_PER_FILE) || 5,
         
-        // Enable/disable OpenAI for rotation planning
+        // Enable/disable AI for rotation planning
         useOpenAI: process.env.SEED_USE_OPENAI !== 'false',
         
         // Enable/disable automatic scheduling
@@ -171,7 +171,7 @@ class SeedRotator {
   }
 
   /**
-   * Use OpenAI to intelligently select and place seeds with comprehensive validation
+   * Use Claude to intelligently select and place seeds with comprehensive validation
    */
   async generateRotationPlan(targetLocations, availableSeeds) {
     // Input validation
@@ -181,8 +181,8 @@ class SeedRotator {
     }
 
     try {
-      if (!openaiService.hasValidApiKey || !openaiService.hasValidApiKey()) {
-        this.log('OpenAI API key not available, using fallback rotation logic', 'WARN');
+      if (!claudeService.hasValidApiKey()) {
+        this.log('Anthropic API key not available, using fallback rotation logic', 'WARN');
         return this.generateFallbackRotationPlan(targetLocations, availableSeeds);
       }
 
@@ -223,10 +223,10 @@ Respond with JSON in this exact format:
 }
 `;
 
-      const response = await openaiService.getEnergyAssistantResponse(prompt);
+      const response = await claudeService.getEnergyAssistantResponse(prompt);
       
       if (!response || typeof response !== 'string' || response.trim().length === 0) {
-        throw new Error('Empty or invalid response from OpenAI');
+        throw new Error('Empty or invalid response from Claude');
       }
       
       // Try to parse as JSON, fallback if needed
@@ -234,7 +234,7 @@ Respond with JSON in this exact format:
       try {
         plan = JSON.parse(response);
       } catch (parseError) {
-        this.log(`OpenAI response parsing failed: ${parseError.message}`, 'WARN');
+        this.log(`Claude response parsing failed: ${parseError.message}`, 'WARN');
         return this.generateFallbackRotationPlan(targetLocations, availableSeeds);
       }
 
@@ -248,7 +248,7 @@ Respond with JSON in this exact format:
       return plan;
       
     } catch (error) {
-      this.log(`❌ OpenAI rotation planning failed: ${error.message}`, 'ERROR');
+      this.log(`❌ Claude rotation planning failed: ${error.message}`, 'ERROR');
       return this.generateFallbackRotationPlan(targetLocations, availableSeeds);
     }
   }
@@ -401,7 +401,7 @@ Respond with JSON in this exact format:
   }
 
   /**
-   * Fallback rotation logic when OpenAI is not available
+   * Fallback rotation logic when AI is not available
    */
   generateFallbackRotationPlan(targetLocations, availableSeeds) {
     const plan = {
@@ -797,7 +797,7 @@ Respond with JSON in this exact format:
       // Get available seeds for rotation
       const availableSeeds = seedDatabase.getRandomSeeds(allTargets.length + 5); // Get a few extra for variety
 
-      // Generate rotation plan using OpenAI
+      // Generate rotation plan using AI
       const rotationPlan = await this.generateRotationPlan(allTargets, availableSeeds);
 
       if (!rotationPlan || !rotationPlan.rotation_plan) {

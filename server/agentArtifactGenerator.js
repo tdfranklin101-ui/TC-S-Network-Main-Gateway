@@ -1,4 +1,4 @@
-const OpenAI = require('openai');
+const { chatCompletion } = require('./claude-service');
 const crypto = require('crypto');
 const cloudStorage = require('./cloud-storage');
 
@@ -235,18 +235,17 @@ ${elements}
 </svg>`;
 }
 
-async function callOpenAI(systemPrompt, userPrompt) {
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  const completion = await openai.chat.completions.create({
+async function callClaude(systemPrompt, userPrompt) {
+  const result = await chatCompletion({
     model: 'gpt-4o',
+    system: systemPrompt,
     messages: [
-      { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt }
     ],
     max_tokens: 4000,
     temperature: 0.8
   });
-  return completion.choices[0].message.content;
+  return result;
 }
 
 function buildUserPrompt(agentCode, title, category, description) {
@@ -775,11 +774,11 @@ async function generateArtifactFile(agentCode, title, category, description, opt
         const systemPrompt = OPENAI_SYSTEM_PROMPTS[agent.specialty] || OPENAI_SYSTEM_PROMPTS['Computronium'];
         const userPrompt = buildUserPrompt(agentCode, title, category, description);
         try {
-          const raw = await callOpenAI(systemPrompt, userPrompt);
+          const raw = await callClaude(systemPrompt, userPrompt);
           content = cleanOpenAIResponse(raw, 'json');
           JSON.parse(content);
-        } catch (openaiErr) {
-          console.warn(`[AgentArtifactGen] OpenAI failed for ${agentCode}, using fallback:`, openaiErr.message);
+        } catch (claudeErr) {
+          console.warn(`[AgentArtifactGen] Claude failed for ${agentCode}, using fallback:`, claudeErr.message);
           content = generateFallbackJSON(agentCode, title, category);
         }
         break;
@@ -789,9 +788,9 @@ async function generateArtifactFile(agentCode, title, category, description, opt
         const systemPrompt = OPENAI_SYSTEM_PROMPTS[agent.specialty] || OPENAI_SYSTEM_PROMPTS['Docs'];
         const userPrompt = buildUserPrompt(agentCode, title, category, description);
         try {
-          content = cleanOpenAIResponse(await callOpenAI(systemPrompt, userPrompt), 'md');
-        } catch (openaiErr) {
-          console.warn(`[AgentArtifactGen] OpenAI failed for ${agentCode}, using fallback:`, openaiErr.message);
+          content = cleanOpenAIResponse(await callClaude(systemPrompt, userPrompt), 'md');
+        } catch (claudeErr) {
+          console.warn(`[AgentArtifactGen] Claude failed for ${agentCode}, using fallback:`, claudeErr.message);
           content = generateFallbackMD(agentCode, title, category);
         }
         break;
@@ -801,9 +800,9 @@ async function generateArtifactFile(agentCode, title, category, description, opt
         const systemPrompt = OPENAI_SYSTEM_PROMPTS[agent.specialty] || OPENAI_SYSTEM_PROMPTS['Software'];
         const userPrompt = buildUserPrompt(agentCode, title, category, description);
         try {
-          content = cleanOpenAIResponse(await callOpenAI(systemPrompt, userPrompt), 'js');
-        } catch (openaiErr) {
-          console.warn(`[AgentArtifactGen] OpenAI failed for ${agentCode}, using fallback:`, openaiErr.message);
+          content = cleanOpenAIResponse(await callClaude(systemPrompt, userPrompt), 'js');
+        } catch (claudeErr) {
+          console.warn(`[AgentArtifactGen] Claude failed for ${agentCode}, using fallback:`, claudeErr.message);
           content = generateFallbackJS(agentCode, title);
         }
         break;

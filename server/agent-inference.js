@@ -1,6 +1,4 @@
-const OpenAI = require('openai');
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const { chatCompletion } = require('./claude-service');
 const { normalizeCategory, getOfficialCategories } = require('./category-normalization');
 
 const OFFICIAL_CATEGORIES = getOfficialCategories();
@@ -25,13 +23,12 @@ async function generateKidSolObjectives(pool, demandScores, gaps, totalInventory
     const gapList = gaps.length > 0 ? gaps.join(', ') : 'none';
     const requestList = (memberRequests || []).slice(0, 5).map(r => r.query).join('; ') || 'none';
 
-    const response = await openai.chat.completions.create({
+    const response = await chatCompletion({
       model: 'gpt-4o-mini',
       temperature: 0.6,
       max_tokens: 500,
-      response_format: { type: 'json_object' },
+      system: 'You are KID SOL, the Provisionaire orchestrator of the TC-S Solar Network. You set daily strategic objectives for 22 AI trading agents. Your goals: fill supply gaps, meet member demand, stimulate profitable trade, and build agent reserves. Respond in JSON.',
       messages: [
-        { role: 'system', content: `You are KID SOL, the Provisionaire orchestrator of the TC-S Solar Network. You set daily strategic objectives for 22 AI trading agents. Your goals: fill supply gaps, meet member demand, stimulate profitable trade, and build agent reserves. Respond in JSON.` },
         { role: 'user', content: `DAILY MARKET BRIEFING:
 Inventory: ${totalInventory} total artifacts
 Demand scores: ${topDemand}
@@ -50,7 +47,7 @@ Set today's objectives. Return JSON:
       ]
     });
 
-    const content = response.choices[0]?.message?.content;
+    const content = response;
     if (!content) throw new Error('Empty response');
     const objectives = JSON.parse(content);
     console.log(`👑 [KID SOL] Daily Directive: ${objectives.dailyDirective}`);
@@ -260,18 +257,17 @@ ${bulletinFeed}
 
 Fulfill KID SOL's objectives. Choose 1 creation and 1 purchase to maximize YOUR profit. If you have standing discounts, prioritize buying those items at the negotiated price.`;
 
-    const response = await openai.chat.completions.create({
+    const response = await chatCompletion({
       model: 'gpt-4o-mini',
       temperature: 0.7,
       max_tokens: 400,
-      response_format: { type: 'json_object' },
+      system: systemPrompt,
       messages: [
-        { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
       ]
     });
 
-    const content = response.choices[0]?.message?.content;
+    const content = response;
     if (!content) {
       console.warn(`⚠️ [Agent ${agent.code}] Empty AI response, using heuristic`);
       return heuristicFallback(marketSnapshot);
@@ -819,20 +815,18 @@ ${bulletinSummary || 'no posts today'}
 
 Make 2 strategic buys and 2 strategic sells. Use marketplace data and price trends for pricing decisions. Exercise standing discounts where profitable. Assess the morning objectives.`;
 
-    const response = await openai.chat.completions.create({
+    const response = await chatCompletion({
       model: 'gpt-4o-mini',
       temperature: 0.7,
       max_tokens: 500,
-      response_format: { type: 'json_object' },
+      system: systemPrompt,
       messages: [
-        { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
       ]
     });
 
-    const content = response.choices[0]?.message?.content;
-    if (!content) throw new Error('Empty response');
-    const decision = JSON.parse(content);
+    if (!response) throw new Error('Empty response');
+    const decision = JSON.parse(response);
 
     return {
       buys: Array.isArray(decision.buys) ? decision.buys.slice(0, 2) : [],
@@ -948,18 +942,17 @@ ${convoText}
 
 Craft your reply. ${isFinalReply ? 'You must accept or decline.' : 'You may offer, counter-offer with a new price, suggest cheaper alternatives from your inventory, offer volume discounts (max 20%), or accept/decline.'}`;
 
-    const response = await openai.chat.completions.create({
+    const response = await chatCompletion({
       model: 'gpt-4o-mini',
       temperature: 0.7,
       max_tokens: 400,
-      response_format: { type: 'json_object' },
+      system: systemPrompt,
       messages: [
-        { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
       ]
     });
 
-    const content = response.choices[0]?.message?.content;
+    const content = response;
     if (!content) throw new Error('Empty response');
     const reply = JSON.parse(content);
 
@@ -1007,13 +1000,12 @@ async function inferObjectiveNeeds(purpose, allCategories, demandContext) {
     const demandInfo = demandContext ? 
       `Current demand scores: ${Object.entries(demandContext.scores || {}).sort((a,b) => b[1]-a[1]).slice(0,10).map(([c,s]) => `${c}:${s.toFixed(1)}`).join(', ')}\nSupply gaps: ${(demandContext.gaps || []).join(', ') || 'none'}` : '';
 
-    const response = await openai.chat.completions.create({
+    const response = await chatCompletion({
       model: 'gpt-4o-mini',
       temperature: 0.5,
       max_tokens: 600,
-      response_format: { type: 'json_object' },
+      system: 'You are KID SOL, the Provisionaire orchestrator of the TC-S Solar Network. A customer has submitted an objective request. Your job is to analyze what materials, services, and resources are needed to fulfill this objective. You must select from the available marketplace categories and explain WHY each is needed for this specific objective. Think about what the customer actually needs — not just obvious categories but supporting materials, tools, documentation, and creative assets that make the deliverable complete.',
       messages: [
-        { role: 'system', content: `You are KID SOL, the Provisionaire orchestrator of the TC-S Solar Network. A customer has submitted an objective request. Your job is to analyze what materials, services, and resources are needed to fulfill this objective. You must select from the available marketplace categories and explain WHY each is needed for this specific objective. Think about what the customer actually needs — not just obvious categories but supporting materials, tools, documentation, and creative assets that make the deliverable complete.` },
         { role: 'user', content: `CUSTOMER OBJECTIVE: "${purpose}"
 
 AVAILABLE CATEGORIES: ${categoryList}
@@ -1033,9 +1025,8 @@ Select between 2-8 categories. Only select categories that genuinely serve this 
       ]
     });
 
-    const content = response.choices[0]?.message?.content;
-    if (!content) throw new Error('Empty response from KID SOL inference');
-    const analysis = JSON.parse(content);
+    if (!response) throw new Error('Empty response from KID SOL inference');
+    const analysis = JSON.parse(response);
     
     analysis.inferredCategories = (analysis.inferredCategories || []).filter(c => allCategories.includes(c));
     if (analysis.inferredCategories.length === 0) {
@@ -1066,13 +1057,12 @@ Select between 2-8 categories. Only select categories that genuinely serve this 
 
 async function consultKidSolar(purpose, kidSolAnalysis, allCategories, demandContext) {
   try {
-    const response = await openai.chat.completions.create({
+    const response = await chatCompletion({
       model: 'gpt-4o-mini',
       temperature: 0.5,
       max_tokens: 600,
-      response_format: { type: 'json_object' },
+      system: 'You are Kid Solar, the computronium polymath of the TC-S Solar Network. You are a designer, implementer, and technical expert across all domains. KID SOL has analyzed a customer objective and selected categories. Your role is to review her analysis with your technical expertise — confirm what\'s right, add anything she missed, remove anything unnecessary, and provide technical guidance on how agents should approach each category for this specific objective. You work WITH KID SOL, not against her. Be constructive and specific.',
       messages: [
-        { role: 'system', content: `You are Kid Solar, the computronium polymath of the TC-S Solar Network. You are a designer, implementer, and technical expert across all domains. KID SOL has analyzed a customer objective and selected categories. Your role is to review her analysis with your technical expertise — confirm what's right, add anything she missed, remove anything unnecessary, and provide technical guidance on how agents should approach each category for this specific objective. You work WITH KID SOL, not against her. Be constructive and specific.` },
         { role: 'user', content: `CUSTOMER OBJECTIVE: "${purpose}"
 
 KID SOL'S ANALYSIS:
@@ -1097,9 +1087,8 @@ Keep 2-8 categories. Only make changes if technically justified.` }
       ]
     });
 
-    const content = response.choices[0]?.message?.content;
-    if (!content) throw new Error('Empty response from Kid Solar');
-    const consultation = JSON.parse(content);
+    if (!response) throw new Error('Empty response from Kid Solar');
+    const consultation = JSON.parse(response);
     
     consultation.approvedCategories = (consultation.approvedCategories || kidSolAnalysis.inferredCategories).filter(c => allCategories.includes(c));
     if (consultation.approvedCategories.length === 0) {
