@@ -11,9 +11,18 @@ when the player URL carries the privacy key: `player.vimeo.com/video/{id}?h={has
 403 WITHOUT it; a known fully-public Vimeo video returns 200 from a bare URL. So the hash
 is mandatory for these videos, not optional.
 
+**IMPORTANT — curl gives false negatives.** A `curl` test of `player.vimeo.com` can NOT
+reproduce a real browser's trusted handshake. For videos protected by DOMAIN WHITELISTING
+(owner allows only e.g. thecurrentsee.org to embed), Vimeo returns 401 to curl but 200 to a
+real browser on the approved domain. So a curl 401 does NOT prove the embed is broken —
+the live production site in a real browser is the source of truth. Owner confirmed the
+cinema films play in production even though curl reported 401 for them. Verify on the live
+domain (real browser), not via curl, before concluding an embed is broken.
+
 **How to apply:**
-- A cinema iframe returning 401/403 is almost always a video missing its `?h=` key (or a
-  stale/wrong key). It is NOT a code/iframe-format bug and NOT fixable from our side.
+- A cinema iframe returning 401/403 via curl may simply be domain-whitelisted (works in the
+  real browser on the live domain) OR missing its `?h=` key. Confirm in a real browser on the
+  production domain before telling the user it's broken. It is NOT a code/iframe-format bug.
 - The embed-format is already correct (`player.vimeo.com/video/{id}?...&app_id=58479`).
 - Toggling Vimeo's "Where can this be embedded?" to Anywhere does NOT substitute for the
   hash on an unlisted video. The two real fixes: (a) owner sets the video fully Public, then
