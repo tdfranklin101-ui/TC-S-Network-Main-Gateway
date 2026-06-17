@@ -122,8 +122,19 @@
     "name": "TC-S Network Midnight Cinema — Now Showing",
     "description": "16-screen online cinema on psychedelicsolarpunkparty.com featuring original music videos and short films from TC-S Network artists.",
     "url": "https://www.psychedelicsolarpunkparty.com/#cinema",
-    "numberOfItems": 20,
+    "numberOfItems": 22,
     "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "item": {
+          "@type": "VideoObject",
+          "name": "Inner Light",
+          "description": "What if intelligence merged with plants first? Created with Promptly (AI Film Production Studio).",
+          "url": "https://vimeo.com/1202183122",
+          "embedUrl": "https://player.vimeo.com/video/1202183122"
+        }
+      },
       {
         "@type": "ListItem",
         "position": 1,
@@ -3856,6 +3867,19 @@
 
     <!-- Film Screens -->
     <div class="cinema-marquee-row">
+
+      <!-- Screen 0: Inner Light — Newest -->
+      <div class="cinema-screen">
+        <div class="screen-bezel">
+          <div class="screen-embed">
+            <iframe src="https://player.vimeo.com/video/1202183122?badge=0&autopause=0&player_id=0&app_id=58479"
+              allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media"
+              allowfullscreen loading="lazy" title="Inner Light"></iframe>
+          </div>
+          <button class="fullscreen-btn" onclick="toggleCinemaFullscreen(this)" title="Fullscreen">⛶</button>
+        </div>
+        <div class="screen-title">Inner Light<br><span style="color:#00FFFF;font-size:0.65em;line-height:1.4;display:block;margin-top:4px;letter-spacing:1px;">Documentary · Promptly (AI Film Production Studio)<br><span style="color:rgba(255,255,255,0.7);font-size:0.9em;font-style:italic;">What if intelligence merged with plants first?</span></span></div>
+      </div>
 
       <!-- Screen 0: 2084 the movie — Newest -->
       <div class="cinema-screen">
