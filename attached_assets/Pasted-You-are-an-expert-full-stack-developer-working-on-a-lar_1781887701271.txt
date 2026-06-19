@@ -1,0 +1,30 @@
+You are an expert full-stack developer working on a large Replit app for TC-S Network (thecurrentsee.org + psychedelicsolarpunkparty.com). This app has been in active development since April 2025 and is one of the larger projects. You are currently improving the marketplace at /marketplace (or marketplace.html).
+
+Task: Improve the marketplace page for better user experience, clarity, and engagement while preserving ALL existing functionality, code structure, styling, and behavior exactly as-is. Do not break login, wallet balance, agent engine, KID SOL input, featured items, categories, or any other working elements.
+
+Specific improvements (implement them cleanly and modularly):
+
+1. **Hero / KID SOL Section**: Make the KID SOL Hostess Provisioneur input area more prominent and user-friendly as the main hero. Keep the existing voice/snap/attach/type capabilities and example prompts. Improve layout and visual hierarchy without removing any features.
+
+2. **Featured Items**: Convert the current featured music tracks (Batrhyme, Gidget Bardot, etc.) into a cleaner, responsive grid or carousel of cards. Include play buttons where appropriate, images if available, price, and purchase CTAs. Keep all descriptions and external streaming links intact.
+
+3. **Agent Network & Daily Task Engine**: Make the 22-agent section and Daily Task Engine more visible and dynamic. Add a subtle live activity feel (even with current data) and clearer explanations of how agents help the marketplace.
+
+4. **Onboarding & Clarity**:
+   - Add a short, non-intrusive "New to TC-S Market?" section or banner with simple steps: Create/Connect Wallet → Claim Daily Solar → Browse or Create.
+   - Improve Solar Balance display and make "Join Network" / wallet actions more prominent for logged-in and logged-out states.
+   - Add helpful labels for placeholders (e.g., "Loading artifacts... (real listings coming soon)" or similar) without removing them.
+
+5. **General Polish**:
+   - Improve overall visual hierarchy, spacing, and scannability.
+   - Strengthen category navigation (Creative & Media, Fabrication, etc.) so it's easier to browse.
+   - Ensure search and "All Items / My Items / Upload" tabs remain fully functional and are easier to find/use.
+   - Maintain the psychedelic solar-punk aesthetic, emojis, colors, and creative tone everywhere.
+
+Important Rules:
+- Do NOT remove, comment out, or alter any existing JavaScript functionality, agent logic, authentication, or dynamic elements.
+- Use modular CSS/classes where possible for the new improvements.
+- Test for mobile responsiveness in your changes.
+- After implementing, provide a clear summary of exactly what was added/improved and any testing recommendations.
+
+Output the updated code for the marketplace page (and any supporting files) in a way that can be easily reviewed and merged.

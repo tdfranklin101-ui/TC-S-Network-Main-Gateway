@@ -32,59 +32,291 @@
       position: fixed !important;
       z-index: 999999 !important;
     }
-    
-    .gateway-container {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      padding: 2rem 1rem;
-    }
-    
-    .gateway-header {
-      text-align: center;
-      margin-bottom: 3rem;
-    }
-    
-    .gateway-logo {
-      width: 80px;
-      height: 80px;
-      margin: 0 auto 1.5rem;
-      background: linear-gradient(135deg, #00FF88, #00f5d4);
-      border-radius: 20px;
+
+    /* ============ TOP NAVIGATION ============ */
+    .topnav {
+      position: sticky;
+      top: 0;
+      z-index: 9000;
       display: flex;
       align-items: center;
-      justify-content: center;
-      font-size: 2.5rem;
-      box-shadow: 0 10px 40px rgba(0, 255, 136, 0.3);
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.7rem 1.25rem;
+      background: rgba(10, 10, 18, 0.82);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(0, 245, 212, 0.18);
     }
-    
-    .gateway-title {
-      font-size: clamp(2rem, 5vw, 3rem);
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
       font-weight: 800;
-      margin-bottom: 0.5rem;
-      background: linear-gradient(135deg, #ffffff 0%, #00f5d4 100%);
+      font-size: 1rem;
+      color: #fff;
+      text-decoration: none;
+      flex-shrink: 0;
+    }
+    .nav-brand .nav-logo {
+      width: 34px; height: 34px;
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, #00FF88, #00f5d4);
+      font-size: 1.2rem;
+      box-shadow: 0 6px 18px rgba(0,255,136,0.3);
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .nav-links a {
+      color: rgba(255,255,255,0.78);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 0.45rem 0.7rem;
+      border-radius: 8px;
+      transition: all 0.25s ease;
+      white-space: nowrap;
+    }
+    .nav-links a:hover {
+      color: #00f5d4;
+      background: rgba(0, 245, 212, 0.08);
+    }
+    .nav-links a.nav-cta {
+      color: #0a0a0a;
+      background: linear-gradient(135deg, #00FF88, #00f5d4);
+      box-shadow: 0 4px 14px rgba(0,255,136,0.25);
+    }
+    .nav-links a.nav-cta:hover {
+      color: #0a0a0a;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(0,255,136,0.4);
+    }
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      flex-shrink: 0;
+    }
+    .nav-toggle {
+      display: none;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: #fff;
+      font-size: 1.3rem;
+      line-height: 1;
+      padding: 0.4rem 0.6rem;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    @media (max-width: 860px) {
+      .nav-toggle { display: block; }
+      .nav-links {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
+        padding: 0.5rem 0.75rem 0.9rem;
+        background: rgba(10, 10, 18, 0.98);
+        border-bottom: 1px solid rgba(0,245,212,0.2);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+      }
+      .topnav.nav-open .nav-links { display: flex; }
+      .nav-links a {
+        padding: 0.75rem 0.6rem;
+        font-size: 0.95rem;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+      }
+      .nav-links a.nav-cta { text-align: center; margin-top: 0.5rem; }
+    }
+
+    /* ============ PAGE WRAP ============ */
+    .page-wrap {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 0 1rem 2rem;
+    }
+
+    /* ============ HERO ============ */
+    .hero {
+      text-align: center;
+      padding: 3.5rem 1rem 2.5rem;
+    }
+    .hero-badge {
+      display: inline-block;
+      padding: 0.4rem 1rem;
+      background: rgba(0, 255, 136, 0.1);
+      border: 1px solid rgba(0, 255, 136, 0.3);
+      border-radius: 999px;
+      color: #00FF88;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      margin-bottom: 1.5rem;
+    }
+    .hero-title {
+      font-size: clamp(2.1rem, 6vw, 3.6rem);
+      font-weight: 800;
+      line-height: 1.1;
+      max-width: 900px;
+      margin: 0 auto 1.1rem;
+      background: linear-gradient(135deg, #ffffff 0%, #00f5d4 55%, #00FF88 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
-    
-    .gateway-subtitle {
-      font-size: 1.1rem;
-      color: rgba(255, 255, 255, 0.7);
-      max-width: 500px;
-      margin: 0 auto;
+    .hero-subtitle {
+      font-size: clamp(1rem, 2.4vw, 1.25rem);
+      color: rgba(255, 255, 255, 0.75);
+      max-width: 640px;
+      margin: 0 auto 1.75rem;
       line-height: 1.6;
     }
-    
+    .hero-ctas {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 1.75rem;
+    }
+    .btn-primary, .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.95rem 2rem;
+      border-radius: 14px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #00FF88, #00f5d4);
+      color: #0a0a0a;
+      box-shadow: 0 10px 30px rgba(0, 255, 136, 0.3);
+    }
+    .btn-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 16px 40px rgba(0, 255, 136, 0.45);
+    }
+    .btn-secondary {
+      background: rgba(139, 92, 246, 0.12);
+      color: #c4b5fd;
+      border: 2px solid rgba(139, 92, 246, 0.45);
+    }
+    .btn-secondary:hover {
+      transform: translateY(-3px);
+      background: rgba(139, 92, 246, 0.2);
+      border-color: #8B5CF6;
+      color: #fff;
+    }
+    .hero-meta {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 0.9rem;
+    }
+    .hero-meta .dot { opacity: 0.4; }
+    .solar-value {
+      display: inline-block;
+      padding: 0.45rem 1rem;
+      background: rgba(0, 255, 136, 0.1);
+      border: 1px solid rgba(0, 255, 136, 0.3);
+      border-radius: 999px;
+      color: #00FF88;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    .ledger-pill {
+      display: inline-block;
+      padding: 0.45rem 1.1rem;
+      background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(0, 255, 136, 0.1));
+      border: 1px solid rgba(255, 215, 0, 0.4);
+      border-radius: 999px;
+      color: #ffd700;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.3s ease;
+    }
+    .ledger-pill:hover {
+      background: linear-gradient(135deg, rgba(255,215,0,0.3), rgba(0,255,136,0.2));
+      border-color: #ffd700;
+    }
+
+    /* ============ SECTIONS ============ */
+    .section { margin: 0 0 3rem; }
+    .section-head {
+      text-align: center;
+      margin-bottom: 1.75rem;
+    }
+    .section-title {
+      font-size: clamp(1.4rem, 3.5vw, 2rem);
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 0.4rem;
+    }
+    .section-sub {
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 0.95rem;
+      max-width: 560px;
+      margin: 0 auto;
+      line-height: 1.5;
+    }
+
+    /* ============ LATEST NEWS TEASER ============ */
+    .news-teaser {
+      display: block;
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 1.5rem 1.75rem;
+      background: linear-gradient(135deg, rgba(0,245,212,0.08), rgba(139,92,246,0.08));
+      border: 1px solid rgba(0, 245, 212, 0.3);
+      border-radius: 18px;
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.3s ease;
+    }
+    .news-teaser:hover {
+      transform: translateY(-3px);
+      border-color: #00f5d4;
+      box-shadow: 0 16px 40px rgba(0, 245, 212, 0.18);
+    }
+    .news-tag {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #00f5d4;
+      background: rgba(0,245,212,0.12);
+      padding: 0.25rem 0.7rem;
+      border-radius: 999px;
+      margin-bottom: 0.75rem;
+    }
+    .news-date { font-size: 0.8rem; color: rgba(255,255,255,0.55); margin-left: 0.6rem; }
+    .news-headline { font-size: 1.2rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem; line-height: 1.35; }
+    .news-summary { font-size: 0.95rem; color: rgba(255,255,255,0.72); line-height: 1.6; margin-bottom: 0.9rem; }
+    .news-readmore { color: #00f5d4; font-weight: 700; font-size: 0.95rem; }
+
     .gateway-cards {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
       gap: 1.5rem;
-      max-width: 1000px;
       width: 100%;
-      padding: 0 1rem;
     }
     
     .gateway-card {
@@ -141,10 +373,10 @@
     .party-featured-card {
       display: block;
       position: relative;
-      margin: 2rem auto 0;
+      margin: 0 auto;
       padding: 2rem 2.5rem;
       max-width: 800px;
-      width: calc(100% - 2rem);
+      width: 100%;
       background: url('/images/fractal-bg.jpeg') center center / cover no-repeat;
       border-radius: 20px;
       text-decoration: none;
@@ -338,10 +570,11 @@
     }
     
     .gateway-footer {
-      margin-top: 3rem;
+      margin-top: 1rem;
       text-align: center;
       color: rgba(255, 255, 255, 0.5);
       font-size: 0.85rem;
+      padding-bottom: 2rem;
     }
     
     .gateway-footer a {
@@ -351,18 +584,6 @@
     
     .gateway-footer a:hover {
       text-decoration: underline;
-    }
-    
-    .solar-value {
-      display: inline-block;
-      margin-top: 1rem;
-      padding: 0.5rem 1rem;
-      background: rgba(0, 255, 136, 0.1);
-      border: 1px solid rgba(0, 255, 136, 0.3);
-      border-radius: 999px;
-      color: #00FF88;
-      font-size: 0.85rem;
-      font-weight: 600;
     }
     
     .drive-own-btn {
@@ -384,212 +605,281 @@
       color: #ffffff;
       transform: translateY(-2px);
     }
+
+    /* Quick Access tools grid */
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      max-width: 760px;
+      margin: 0 auto;
+    }
+    .tool-card {
+      display: block;
+      padding: 1.25rem 1.4rem;
+      background: rgba(0,0,0,0.45);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 14px;
+      text-decoration: none;
+      transition: all 0.3s ease;
+    }
+    .tool-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--tool-color, #00f5d4);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+    }
+    .tool-card .tool-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--tool-color, #00f5d4);
+      margin-bottom: 0.3rem;
+    }
+    .tool-card .tool-desc {
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.6);
+      line-height: 1.5;
+    }
+    .forever-box {
+      max-width: 760px;
+      margin: 1.5rem auto 0;
+      text-align: center;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      padding-top: 1.5rem;
+    }
     
     @media (max-width: 768px) {
       .gateway-cards {
         grid-template-columns: 1fr;
       }
-      
-      .gateway-header {
-        margin-bottom: 2rem;
-      }
-      
+      .hero { padding: 2.5rem 0.5rem 1.75rem; }
       .gateway-card {
         padding: 1.5rem;
       }
+      .btn-primary, .btn-secondary { width: 100%; justify-content: center; }
     }
     
   </style>
 </head>
 <body>
-  <div style="position:fixed;top:12px;right:12px;z-index:9990;" id="apps-dropdown-target"></div>
-  <script src="/js/apps-dropdown.js"></script>
-  <div id="version-indicator" style="position:fixed;top:58px;right:12px;z-index:9990;padding:6px 10px;border-radius:999px;background:rgba(139,92,246,0.18);border:1px solid rgba(139,92,246,0.45);color:#e9d5ff;font-size:12px;font-weight:700;backdrop-filter:blur(8px);box-shadow:0 8px 24px rgba(0,0,0,0.25);"></div>
-  <div style="position:fixed;top:94px;right:12px;z-index:9990;">
-    <details style="position:relative;">
-      <summary style="list-style:none;cursor:pointer;padding:8px 14px;border-radius:999px;background:linear-gradient(135deg,#ff8c00,#ff4d8d);color:#fff;font-size:12px;font-weight:800;box-shadow:0 8px 24px rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.18);">PRESS RELEASE!</summary>
-      <div style="position:absolute;right:0;top:44px;width:min(92vw,520px);max-height:70vh;overflow:auto;padding:18px 18px 14px;background:rgba(10,10,18,0.98);border:1px solid rgba(255,255,255,0.12);border-radius:18px;box-shadow:0 24px 60px rgba(0,0,0,0.5);color:#fff;font-size:13px;line-height:1.6;">
-        <div style="font-weight:800;letter-spacing:0.08em;color:#00f5d4;margin-bottom:8px;">FOR IMMEDIATE RELEASE</div>
-        <div style="font-size:12px;color:rgba(255,255,255,0.65);margin-bottom:14px;">4.24.2026</div>
-        <div style="font-weight:800;font-size:16px;margin-bottom:10px;">The Current-See, PBC, Inc. and TC-S Network Foundation, Inc. Announce Dual Launch of Promptly and AI-Native Solar Economy &amp; Marketplace Network</div>
-        <div style="color:rgba(255,255,255,0.88);margin-bottom:10px;">Dual launch introduces an AI-native film studio and a solar economy platform supporting the long-term development of a Global Basic Income Network</div>
-        <div style="margin-bottom:10px;">SAN FRANCISCO, Calif., April 24, 2026 — The Current-See, PBC, Inc. and TC-S Network Foundation, Inc. today announced a dual launch of Promptly, an AI-native agentic film studio, and the TC-S Network Solar Economy &amp; Marketplace Network, an AI-native platform designed to support the long-term development of a Global Basic Income Network.</div>
-        <div style="margin-bottom:10px;">The launch brings forward two connected initiatives. The Current-See, PBC, Inc. is the commercial entity developing the network infrastructure, AI systems, and marketplace tools that power Promptly and the broader TC-S platform. TC-S Network Foundation, Inc. is the mission-driven entity using that network to advance the buildout of a Global Basic Income Network.</div>
-        <div style="margin-bottom:10px;">Promptly is designed as an AI-native film studio that transforms a single prompt into a treatment, screenplay, scene plan, casting logic, render pathway, and production workflow through coordinated AI agents. The platform is intended to compress the path from concept to execution for creators, studios, and production teams.</div>
-        <div style="margin-bottom:10px;">TC-S Network Foundation, Inc. serves as custodian of the Solar reserve and is focused on applying the TC-S network toward solar-based economic participation and marketplace access. Within the system, 1 Solar is defined as 4,913 kilowatt-hours, and 8.5 billion Solar have been minted per day since April 7, 2025. As of this announcement, the reserve stands at approximately S3.2 trillion.</div>
-        <div style="margin-bottom:10px;">Both organizations are AI-native and utilize the Unified Intelligence Mesh together with Replit agentic coding to accelerate development, deployment, automation, and continuous system improvement.</div>
-        <div style="margin-bottom:10px;">“This dual launch reflects two aligned missions,” said Terry Franklin, Founder of The Current-See and TC-S Network Foundation. “One is to expand human creative capacity through AI-native production tools. The other is to build the economic and marketplace architecture for a future Global Basic Income Network.”</div>
-        <div style="margin-bottom:10px;">The organizations said the dual launch marks an early but foundational step in the development of infrastructure intended to support both advanced creative production and broader economic participation through AI-coordinated systems.</div>
-        <div style="margin-bottom:10px;font-weight:700;">About The Current-See, PBC, Inc.</div>
-        <div style="margin-bottom:10px;">The Current-See, PBC, Inc. is an AI-native public benefit corporation developing commercial infrastructure, agentic software systems, marketplace tools, and creative production platforms, including Promptly, an AI agentic film studio.</div>
-        <div style="margin-bottom:10px;font-weight:700;">About TC-S Network Foundation, Inc.</div>
-        <div style="margin-bottom:10px;">TC-S Network Foundation, Inc. is an AI-native mission-driven organization advancing the development of a Global Basic Income Network using the TC-S platform. The Foundation serves as custodian of the Solar reserve and supports the long-term buildout of solar-based economic participation.</div>
-        <div style="margin-bottom:10px;font-weight:700;">Media Contact</div>
-        <div style="margin-bottom:10px;">Terry Franklin<br>Founder<br>Tele/text: 415.320.0826<br>tdfranklin101@thecurrentsee.org<br>The Current-See, PBC, Inc. / TC-S Network Foundation, Inc.<br>https://www.thecurrentsee.org<br>(TC-S Network Platform)<br>https://www.PsychedelicSolarPunkParty.com<br>(TC-S Network Midnight Cinema and More)<br>https://TCSNetworkpromptamovie.com<br>(Promptly)<br>https://substack.com/@terryfranklin<br>Playlist on Apple Music and Spotify: Psychedelic Solar Punk Party</div>
+  <!-- Top Navigation -->
+  <nav class="topnav" id="topnav">
+    <a href="/" class="nav-brand"><span class="nav-logo">☀️</span> TC-S Network</a>
+    <button class="nav-toggle" aria-label="Menu" onclick="document.getElementById('topnav').classList.toggle('nav-open')">☰</button>
+    <div class="nav-right">
+      <div class="nav-links" id="nav-links">
+        <a href="/">Home</a>
+        <a href="/marketplace.html">Solar Economy</a>
+        <a href="/prompt-a-movie-business.html">Promptly</a>
+        <a href="/solar-punk-party.html">Cinema</a>
+        <a href="/solar-dashboard.html">Dashboard</a>
+        <a href="/whitepapers.html">Whitepaper</a>
+        <a href="/press-release.html">Press</a>
+        <a href="/homepage-full.html#foundation-apps">Apps</a>
+        <a href="/marketplace.html" class="nav-cta" onclick="trackGatewayChoice('gbi', 'individual')">Join →</a>
       </div>
-    </details>
-  </div>
-
-  <div class="gateway-container">
-    <header class="gateway-header">
-      <div class="gateway-logo">☀️</div>
-      <h1 class="gateway-title">TC-S Network Foundation</h1>
-      <p class="gateway-subtitle">
-        Join the <span id="liveMemberTrialCount">...</span> active members and member agents. 1,000 member goal for public prototype.<br>
-        <em style="opacity: 0.8;">The future is unwritten.</em>
-      </p>
-      <div class="solar-value">1 Solar = 4,913 kWh</div>
-      <a href="/solar-mint-ledger.html" style="display: inline-block; margin-top: 0.75rem; padding: 0.5rem 1.25rem; background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(0, 255, 136, 0.1)); border: 1px solid rgba(255, 215, 0, 0.4); border-radius: 999px; color: #ffd700; font-size: 0.85rem; font-weight: 600; text-decoration: none; transition: all 0.3s ease;" onmouseover="this.style.background='linear-gradient(135deg, rgba(255,215,0,0.3), rgba(0,255,136,0.2))';this.style.borderColor='#ffd700'" onmouseout="this.style.background='linear-gradient(135deg, rgba(255,215,0,0.15), rgba(0,255,136,0.1))';this.style.borderColor='rgba(255,215,0,0.4)'">📒 Solar Mint Ledger — Live</a>
-    </header>
-    
-    <div class="gateway-cards">
-      <!-- The universe trends toward maximum entropy and maximum creativity -->
-      <a href="/marketplace.html" class="gateway-card gbi" data-path="gbi" onclick="trackGatewayChoice('gbi', 'individual')">
-        <div class="card-icon">🌱</div>
-        <div class="card-label">For Individuals</div>
-        <h2 class="card-title">Join Solar Economy</h2>
-        <p class="card-description">
-          Receive daily Solar tokens, trade in the marketplace, and participate in the world's first energy-backed basic income network.
-        </p>
-        <ul class="card-features">
-          <li>Receive your Genesis Solar on day one, then 1 Solar every day at UTC midnight</li>
-          <li>Trade goods and services in kWh</li>
-          <li>Access AI tools and creative platforms</li>
-          <li>Stream 24+ tracks from Solar artists</li>
-        </ul>
-        <div class="card-cta">
-          Create Your Wallet <span>→</span>
-        </div>
-        <!-- Ecosystem Test Sub-Card -->
-        <div onclick="event.preventDefault();event.stopPropagation();window.location.href='/ecosystem-test.html'" style="margin-top:16px;padding:14px 16px;background:linear-gradient(135deg,rgba(0,0,0,0.4),rgba(0,255,136,0.06));border:1px solid rgba(0,255,136,0.3);border-radius:12px;cursor:pointer;transition:all 0.3s;" onmouseover="this.style.borderColor='#00ff88';this.style.background='linear-gradient(135deg,rgba(0,0,0,0.5),rgba(0,255,136,0.12))'" onmouseout="this.style.borderColor='rgba(0,255,136,0.3)';this.style.background='linear-gradient(135deg,rgba(0,0,0,0.4),rgba(0,255,136,0.06))'">
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
-            <span style="font-size:20px;">🌍</span>
-            <span style="font-size:14px;font-weight:700;color:#00ff88;">Agent Control Dashboard</span>
-          </div>
-          <div style="font-size:12px;color:rgba(255,255,255,0.7);line-height:1.4;margin-bottom:8px;">
-            Watch 20 AI agents create items via MCP engines, make purchases, and fulfill voucher provisions in real-time.
-          </div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <span style="background:rgba(0,255,136,0.15);border:1px solid rgba(0,255,136,0.3);color:#00ff88;padding:3px 10px;border-radius:10px;font-size:10px;font-weight:600;">20 Agents</span>
-            <span style="background:rgba(255,215,0,0.15);border:1px solid rgba(255,215,0,0.3);color:#ffd700;padding:3px 10px;border-radius:10px;font-size:10px;font-weight:600;">16 Categories</span>
-            <span style="background:rgba(0,191,255,0.15);border:1px solid rgba(0,191,255,0.3);color:#00bfff;padding:3px 10px;border-radius:10px;font-size:10px;font-weight:600;">☀️ Solar</span>
-          </div>
-        </div>
-      </a>
-      
-      <!-- Commission Path - B2B -->
-      <a href="https://commissioning-loop-fix.replit.app" target="_blank" rel="noopener" class="gateway-card commission" data-path="commission" onclick="trackGatewayChoice('commission', 'organization')">
-        <div class="card-icon">🏛️</div>
-        <div class="card-label">For Organizations</div>
-        <h2 class="card-title">Commission Your Network</h2>
-        <p class="card-description">
-          Deploy a custom Solar network for your festival, campus, co-working space, or community. White-label with your branding.
-        </p>
-        <p class="card-description" style="font-style: italic; opacity: 0.95;">
-          Agentic commissioner deploys your network's agent team, marketplace, and Solar (S) economy — energy-backed, network-only.
-        </p>
-        <ul class="card-features">
-          <li>Agent team, marketplace & Solar (S) economy deployed for you</li>
-          <li>30-60 day pilot programs from $5,000</li>
-          <li>Zero payment processing fees</li>
-          <li>Custom distribution rules & ethics layer</li>
-          <li>Full analytics and case study report</li>
-        </ul>
-        <div class="card-cta">
-          Commission Network <span>→</span>
-        </div>
-      </a>
-      
-      <!-- Explorer Path - Learn -->
-      <div class="gateway-card explore" data-path="explore">
-        <div class="card-icon">📚</div>
-        <div class="card-label">For Explorers</div>
-        <h2 class="card-title">Explore & Learn</h2>
-        <p class="card-description">
-          Understand how energy-backed currency works. Read the whitepaper, try foundation apps, and discover the Solar Standard.
-        </p>
-        <ul class="card-features" style="list-style: none; padding: 0;">
-          <li style="margin-bottom: 0.75rem;">
-            <a href="/SolarStandard.html" onclick="trackGatewayChoice('explore', 'solar-standard')" style="color: #00f5d4; text-decoration: none; display: flex; align-items: center; gap: 0.5rem;">
-              <span style="color: #00FF88;">✓</span> 5-page Solar Standard Protocol guide
-            </a>
-          </li>
-          <li style="margin-bottom: 0.75rem;">
-            <a href="/whitepapers.html" onclick="trackGatewayChoice('explore', 'whitepapers')" style="color: #00f5d4; text-decoration: none; display: flex; align-items: center; gap: 0.5rem;">
-              <span style="color: #00FF88;">✓</span> 11-chapter whitepaper suite
-            </a>
-          </li>
-          <li style="margin-bottom: 0.75rem;">
-            <a href="/homepage-full.html#foundation-apps" onclick="trackGatewayChoice('explore', 'apps')" style="color: #00f5d4; text-decoration: none; display: flex; align-items: center; gap: 0.5rem;">
-              <span style="color: #00FF88;">✓</span> Try LifeLens, Satellite ID, and more
-            </a>
-          </li>
-          <li style="margin-bottom: 0.75rem;">
-            <a href="/kid-solar-primer.html" onclick="trackGatewayChoice('explore', 'kid-solar')" style="color: #00f5d4; text-decoration: none; display: flex; align-items: center; gap: 0.5rem;">
-              <span style="color: #00FF88;">✓</span> Meet Kid Solar AI assistant
-            </a>
-          </li>
-        </ul>
-      </div>
+      <span id="apps-dropdown-target"></span>
     </div>
-    
-    <!-- No ledger can be larger than the sun -->
-    <a href="/solar-punk-party.html" class="party-featured-card" data-testid="link-solar-punk-party" onclick="trackGatewayChoice('party', 'experience')">
-      <div class="party-glow"></div>
-      <div class="party-content">
-        <span class="party-badge">NEW EXPERIENCE</span>
-        <h2 class="party-title">Psychedelic Solar Punk Party</h2>
-        <p class="party-tagline">Movies, music, off grid solar gear and more</p>
-        <div style="display:flex;flex-direction:column;gap:0.55rem;margin-bottom:1rem;position:relative;z-index:10;">
-          <div onclick="event.preventDefault();event.stopPropagation();window.location.href='/solar-punk-party.html'" style="cursor:pointer;display:inline-block;width:fit-content;color:#39FF14;text-shadow:0 0 8px #39FF14,0 0 18px rgba(57,255,20,0.55);font-size:0.88rem;font-weight:700;letter-spacing:0.04em;border-bottom:1px solid rgba(57,255,20,0.4);padding-bottom:1px;" onmouseover="this.style.textShadow='0 0 12px #39FF14,0 0 28px rgba(57,255,20,0.8)'" onmouseout="this.style.textShadow='0 0 8px #39FF14,0 0 18px rgba(57,255,20,0.55)'">☀ psychedelicsolarpunkparty.com →</div>
-          <div onclick="event.preventDefault();event.stopPropagation();window.open('https://continuity-locker.replit.app','_blank')" style="cursor:pointer;display:inline-block;width:fit-content;color:#FF6EFF;text-shadow:0 0 8px #FF00FF,0 0 18px rgba(255,0,255,0.55);font-size:0.88rem;font-weight:700;letter-spacing:0.04em;border-bottom:1px solid rgba(255,0,255,0.4);padding-bottom:1px;" onmouseover="this.style.textShadow='0 0 12px #FF6EFF,0 0 28px rgba(255,0,255,0.8)'" onmouseout="this.style.textShadow='0 0 8px #FF00FF,0 0 18px rgba(255,0,255,0.55)'">🎬 Ready to make a movie? Click here →</div>
+  </nav>
+  <script src="/js/apps-dropdown.js"></script>
+
+  <div id="version-indicator" style="position:fixed;bottom:12px;right:12px;z-index:9990;padding:6px 10px;border-radius:999px;background:rgba(139,92,246,0.18);border:1px solid rgba(139,92,246,0.45);color:#e9d5ff;font-size:12px;font-weight:700;backdrop-filter:blur(8px);box-shadow:0 8px 24px rgba(0,0,0,0.25);"></div>
+
+  <div class="page-wrap">
+    <!-- HERO -->
+    <header class="hero">
+      <div class="hero-badge">☀️ The world's first energy-backed economy</div>
+      <h1 class="hero-title">Energy-Backed AI Creativity &amp; Global Basic Income</h1>
+      <p class="hero-subtitle">
+        Join humans and AI agents in a solar-powered economy — receive daily Solar, trade in the marketplace, and create with AI-native film and music tools.
+      </p>
+      <div class="hero-ctas">
+        <a href="/marketplace.html" class="btn-primary" onclick="trackGatewayChoice('gbi', 'individual')">🌱 Join Solar Economy</a>
+        <a href="/prompt-a-movie-business.html" class="btn-secondary" onclick="trackGatewayChoice('explore', 'promptly')">🎬 Explore Promptly</a>
+      </div>
+      <div class="hero-meta">
+        <span class="solar-value">1 Solar = 4,913 kWh</span>
+        <span class="dot">•</span>
+        <span>Join the <span id="liveMemberTrialCount">...</span> active members &amp; agents <em style="opacity:0.7;">(1,000 goal)</em></span>
+        <span class="dot">•</span>
+        <a href="/solar-mint-ledger.html" class="ledger-pill">📒 Solar Mint Ledger — Live</a>
+      </div>
+    </header>
+
+    <!-- LATEST NEWS TEASER -->
+    <section class="section" id="latest-news">
+      <div class="section-head">
+        <h2 class="section-title">📰 Latest News</h2>
+      </div>
+      <a href="/press-release.html" class="news-teaser" data-testid="link-press-release">
+        <span class="news-tag">Press Release</span><span class="news-date">April 24, 2026</span>
+        <div class="news-headline">Dual Launch of Promptly &amp; AI-Native Solar Economy &amp; Marketplace Network</div>
+        <p class="news-summary">The Current-See, PBC, Inc. and TC-S Network Foundation, Inc. announce the launch of Promptly, an AI-native film studio, alongside a solar economy platform supporting the long-term buildout of a Global Basic Income Network.</p>
+        <span class="news-readmore">Read the full release →</span>
+      </a>
+    </section>
+
+    <!-- CHOOSE YOUR PATH -->
+    <section class="section" id="choose-path">
+      <div class="section-head">
+        <h2 class="section-title">Choose Your Path</h2>
+        <p class="section-sub">Three ways to enter the network — for individuals, organizations, and curious explorers.</p>
+      </div>
+      <div class="gateway-cards">
+        <!-- The universe trends toward maximum entropy and maximum creativity -->
+        <a href="/marketplace.html" class="gateway-card gbi" data-path="gbi" onclick="trackGatewayChoice('gbi', 'individual')">
+          <div class="card-icon">🌱</div>
+          <div class="card-label">For Individuals</div>
+          <h2 class="card-title">Join Solar Economy</h2>
+          <p class="card-description">
+            Receive daily Solar tokens, trade in the marketplace, and participate in the world's first energy-backed basic income network.
+          </p>
+          <ul class="card-features">
+            <li>Receive your Genesis Solar on day one, then 1 Solar every day at UTC midnight</li>
+            <li>Trade goods and services in kWh</li>
+            <li>Access AI tools and creative platforms</li>
+            <li>Stream 24+ tracks from Solar artists</li>
+          </ul>
+          <div class="card-cta">
+            Create Your Wallet <span>→</span>
+          </div>
+          <!-- Ecosystem Test Sub-Card -->
+          <div onclick="event.preventDefault();event.stopPropagation();window.location.href='/ecosystem-test.html'" style="margin-top:16px;padding:14px 16px;background:linear-gradient(135deg,rgba(0,0,0,0.4),rgba(0,255,136,0.06));border:1px solid rgba(0,255,136,0.3);border-radius:12px;cursor:pointer;transition:all 0.3s;" onmouseover="this.style.borderColor='#00ff88';this.style.background='linear-gradient(135deg,rgba(0,0,0,0.5),rgba(0,255,136,0.12))'" onmouseout="this.style.borderColor='rgba(0,255,136,0.3)';this.style.background='linear-gradient(135deg,rgba(0,0,0,0.4),rgba(0,255,136,0.06))'">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+              <span style="font-size:20px;">🌍</span>
+              <span style="font-size:14px;font-weight:700;color:#00ff88;">Agent Control Dashboard</span>
+            </div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.7);line-height:1.4;margin-bottom:8px;">
+              Watch 20 AI agents create items via MCP engines, make purchases, and fulfill voucher provisions in real-time.
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <span style="background:rgba(0,255,136,0.15);border:1px solid rgba(0,255,136,0.3);color:#00ff88;padding:3px 10px;border-radius:10px;font-size:10px;font-weight:600;">20 Agents</span>
+              <span style="background:rgba(255,215,0,0.15);border:1px solid rgba(255,215,0,0.3);color:#ffd700;padding:3px 10px;border-radius:10px;font-size:10px;font-weight:600;">16 Categories</span>
+              <span style="background:rgba(0,191,255,0.15);border:1px solid rgba(0,191,255,0.3);color:#00bfff;padding:3px 10px;border-radius:10px;font-size:10px;font-weight:600;">☀️ Solar</span>
+            </div>
+          </div>
+        </a>
+        
+        <!-- Commission Path - B2B -->
+        <a href="https://commissioning-loop-fix.replit.app" target="_blank" rel="noopener" class="gateway-card commission" data-path="commission" onclick="trackGatewayChoice('commission', 'organization')">
+          <div class="card-icon">🏛️</div>
+          <div class="card-label">For Organizations</div>
+          <h2 class="card-title">Commission Your Network</h2>
+          <p class="card-description">
+            Deploy a custom Solar network for your festival, campus, co-working space, or community. White-label with your branding.
+          </p>
+          <p class="card-description" style="font-style: italic; opacity: 0.95;">
+            Agentic commissioner deploys your network's agent team, marketplace, and Solar (S) economy — energy-backed, network-only.
+          </p>
+          <ul class="card-features">
+            <li>Agent team, marketplace &amp; Solar (S) economy deployed for you</li>
+            <li>30-60 day pilot programs from $5,000</li>
+            <li>Zero payment processing fees</li>
+            <li>Custom distribution rules &amp; ethics layer</li>
+            <li>Full analytics and case study report</li>
+          </ul>
+          <div class="card-cta">
+            Commission Network <span>→</span>
+          </div>
+        </a>
+        
+        <!-- Explorer Path - Learn -->
+        <div class="gateway-card explore" data-path="explore">
+          <div class="card-icon">📚</div>
+          <div class="card-label">For Explorers</div>
+          <h2 class="card-title">Explore &amp; Learn</h2>
+          <p class="card-description">
+            Understand how energy-backed currency works. Read the whitepaper, try foundation apps, and discover the Solar Standard.
+          </p>
+          <ul class="card-features" style="list-style: none; padding: 0;">
+            <li style="margin-bottom: 0.75rem;">
+              <a href="/SolarStandard.html" onclick="trackGatewayChoice('explore', 'solar-standard')" style="color: #00f5d4; text-decoration: none; display: flex; align-items: center; gap: 0.5rem;">
+                <span style="color: #00FF88;">✓</span> 5-page Solar Standard Protocol guide
+              </a>
+            </li>
+            <li style="margin-bottom: 0.75rem;">
+              <a href="/whitepapers.html" onclick="trackGatewayChoice('explore', 'whitepapers')" style="color: #00f5d4; text-decoration: none; display: flex; align-items: center; gap: 0.5rem;">
+                <span style="color: #00FF88;">✓</span> 11-chapter whitepaper suite
+              </a>
+            </li>
+            <li style="margin-bottom: 0.75rem;">
+              <a href="/homepage-full.html#foundation-apps" onclick="trackGatewayChoice('explore', 'apps')" style="color: #00f5d4; text-decoration: none; display: flex; align-items: center; gap: 0.5rem;">
+                <span style="color: #00FF88;">✓</span> Try LifeLens, Satellite ID, and more
+              </a>
+            </li>
+            <li style="margin-bottom: 0.75rem;">
+              <a href="/kid-solar-primer.html" onclick="trackGatewayChoice('explore', 'kid-solar')" style="color: #00f5d4; text-decoration: none; display: flex; align-items: center; gap: 0.5rem;">
+                <span style="color: #00FF88;">✓</span> Meet Kid Solar AI assistant
+              </a>
+            </li>
+          </ul>
         </div>
-        <span class="party-cta-btn">Power Your Own Dawn →</span>
       </div>
-      <div class="dancing-figures">
-        <div class="mini-dancer" style="animation-delay: 0s;"></div>
-        <div class="mini-dancer" style="animation-delay: 0.2s;"></div>
-        <div class="mini-dancer rainbow" style="animation-delay: 0.3s;"></div>
-        <div class="mini-dancer" style="animation-delay: 0.4s;"></div>
-        <div class="mini-dancer" style="animation-delay: 0.6s;"></div>
+    </section>
+
+    <!-- FEATURED EXPERIENCE -->
+    <section class="section" id="featured-experience">
+      <div class="section-head">
+        <h2 class="section-title">Featured Experience</h2>
+        <p class="section-sub">Midnight cinema, music, and off-grid solar culture.</p>
       </div>
-    </a>
-    
-    <!-- Direct Access Section -->
-    <div style="text-align: center; margin-top: 2.5rem; padding: 1.5rem; background: rgba(255, 140, 0, 0.1); border-radius: 16px; border: 1px solid rgba(255, 140, 0, 0.3); max-width: 500px;">
-      <a href="/homepage-full.html" class="drive-own-btn" onclick="trackGatewayChoice('self', 'explorer')" style="display: inline-block; margin-bottom: 0.75rem;">
-        🚗 Drive on your own
+      <!-- No ledger can be larger than the sun -->
+      <a href="/solar-punk-party.html" class="party-featured-card" data-testid="link-solar-punk-party" onclick="trackGatewayChoice('party', 'experience')">
+        <div class="party-glow"></div>
+        <div class="party-content">
+          <span class="party-badge">NEW EXPERIENCE</span>
+          <h2 class="party-title">Psychedelic Solar Punk Party</h2>
+          <p class="party-tagline">Movies, music, off grid solar gear and more</p>
+          <div style="display:flex;flex-direction:column;gap:0.55rem;margin-bottom:1rem;position:relative;z-index:10;">
+            <div onclick="event.preventDefault();event.stopPropagation();window.location.href='/solar-punk-party.html'" style="cursor:pointer;display:inline-block;width:fit-content;color:#39FF14;text-shadow:0 0 8px #39FF14,0 0 18px rgba(57,255,20,0.55);font-size:0.88rem;font-weight:700;letter-spacing:0.04em;border-bottom:1px solid rgba(57,255,20,0.4);padding-bottom:1px;" onmouseover="this.style.textShadow='0 0 12px #39FF14,0 0 28px rgba(57,255,20,0.8)'" onmouseout="this.style.textShadow='0 0 8px #39FF14,0 0 18px rgba(57,255,20,0.55)'">☀ psychedelicsolarpunkparty.com →</div>
+            <div onclick="event.preventDefault();event.stopPropagation();window.open('https://continuity-locker.replit.app','_blank')" style="cursor:pointer;display:inline-block;width:fit-content;color:#FF6EFF;text-shadow:0 0 8px #FF00FF,0 0 18px rgba(255,0,255,0.55);font-size:0.88rem;font-weight:700;letter-spacing:0.04em;border-bottom:1px solid rgba(255,0,255,0.4);padding-bottom:1px;" onmouseover="this.style.textShadow='0 0 12px #FF6EFF,0 0 28px rgba(255,0,255,0.8)'" onmouseout="this.style.textShadow='0 0 8px #FF00FF,0 0 18px rgba(255,0,255,0.55)'">🎬 Ready to make a movie? Click here →</div>
+          </div>
+          <span class="party-cta-btn">Power Your Own Dawn →</span>
+        </div>
+        <div class="dancing-figures">
+          <div class="mini-dancer" style="animation-delay: 0s;"></div>
+          <div class="mini-dancer" style="animation-delay: 0.2s;"></div>
+          <div class="mini-dancer rainbow" style="animation-delay: 0.3s;"></div>
+          <div class="mini-dancer" style="animation-delay: 0.4s;"></div>
+          <div class="mini-dancer" style="animation-delay: 0.6s;"></div>
+        </div>
       </a>
-      <p style="color: rgba(255,255,255,0.7); font-size: 0.85rem; margin-bottom: 1rem; line-height: 1.5;">
-        Skip the guided paths and explore everything directly.
-      </p>
-      <a href="/music-now.html" class="drive-own-btn" onclick="trackGatewayChoice('music', 'direct')" style="background: linear-gradient(135deg, #9b59b6, #8e44ad); display: inline-block;">
-        🎵 Music Now
-      </a>
-      <p style="color: rgba(255,255,255,0.5); font-size: 0.75rem; margin-top: 0.5rem; margin-bottom: 1rem;">
-        Stream Solar artists directly
-      </p>
-      <a href="/homepage-full.html#dmtxactly" class="drive-own-btn" onclick="trackGatewayChoice('dmt', 'direct')" style="background: linear-gradient(135deg, #8B5CF6, #6366F1); display: inline-block;">
-        🔮 DMTXACTLY
-      </a>
-      <p style="color: rgba(255,255,255,0.5); font-size: 0.75rem; margin-top: 0.5rem; margin-bottom: 1rem;">
-        Tessellated Envoy AI experience
-      </p>
-      <a href="/solar-dashboard.html" class="drive-own-btn" onclick="trackGatewayChoice('dashboard', 'direct')" style="background: linear-gradient(135deg, #FFD700, #FF8C00); color: #000; display: inline-block;">
-        📊 Solar Dashboard
-      </a>
-      <p style="color: rgba(255,255,255,0.5); font-size: 0.75rem; margin-top: 0.5rem; margin-bottom: 1rem;">
-        Global energy database for Solar adoption
-      </p>
-      <a href="/solar-mint-ledger.html" class="drive-own-btn" onclick="trackGatewayChoice('mint-ledger', 'direct')" style="background: linear-gradient(135deg, #00FF88, #00d4ff); color: #000; display: inline-block;">
-        📒 Solar Mint Ledger
-      </a>
-      <p style="color: rgba(255,255,255,0.5); font-size: 0.75rem; margin-top: 0.5rem; margin-bottom: 1.5rem;">
-        Live global minting tracker since Genesis
-      </p>
-      
+    </section>
+
+    <!-- QUICK ACCESS -->
+    <section class="section" id="quick-access">
+      <div class="section-head">
+        <h2 class="section-title">Quick Access</h2>
+        <p class="section-sub">Skip the guided paths and jump straight to the tools.</p>
+      </div>
+      <div class="tools-grid">
+        <a href="/homepage-full.html" class="tool-card" onclick="trackGatewayChoice('self', 'explorer')" style="--tool-color:#ff8c00;">
+          <div class="tool-title">🚗 Drive on Your Own</div>
+          <div class="tool-desc">Skip the guided paths and explore everything directly.</div>
+        </a>
+        <a href="/music-now.html" class="tool-card" onclick="trackGatewayChoice('music', 'direct')" style="--tool-color:#9b59b6;">
+          <div class="tool-title">🎵 Music Now</div>
+          <div class="tool-desc">Stream Solar artists directly.</div>
+        </a>
+        <a href="/homepage-full.html#dmtxactly" class="tool-card" onclick="trackGatewayChoice('dmt', 'direct')" style="--tool-color:#8B5CF6;">
+          <div class="tool-title">🔮 DMTXACTLY</div>
+          <div class="tool-desc">Tessellated Envoy AI experience.</div>
+        </a>
+        <a href="/solar-dashboard.html" class="tool-card" onclick="trackGatewayChoice('dashboard', 'direct')" style="--tool-color:#FFD700;">
+          <div class="tool-title">📊 Solar Dashboard</div>
+          <div class="tool-desc">Global energy database for Solar adoption.</div>
+        </a>
+        <a href="/solar-mint-ledger.html" class="tool-card" onclick="trackGatewayChoice('mint-ledger', 'direct')" style="--tool-color:#00FF88;">
+          <div class="tool-title">📒 Solar Mint Ledger</div>
+          <div class="tool-desc">Live global minting tracker since Genesis.</div>
+        </a>
+        <a href="/ecosystem-test.html" class="tool-card" onclick="trackGatewayChoice('gbi', 'individual')" style="--tool-color:#00bfff;">
+          <div class="tool-title">🌍 Agent Control Dashboard</div>
+          <div class="tool-desc">Watch the AI agent network trade in real-time.</div>
+        </a>
+      </div>
+
       <!-- So You Want to Live Forever Section -->
-      <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem;">
+      <div class="forever-box">
         <p style="color: #00f5d4; font-size: 0.95rem; font-weight: 600; margin-bottom: 0.75rem;">
           ✨ So you want to live forever?
         </p>
@@ -605,15 +895,16 @@
           Explore the atoms that make you
         </p>
       </div>
-    </div>
+    </section>
     
     <footer class="gateway-footer">
       <p>
         <a href="/whitepapers.html">Whitepapers</a> · 
+        <a href="/press-release.html">Press</a> · 
         <a href="/agent.html">Talk to Kid Solar</a> · 
         <a href="mailto:hello@thecurrentsee.org">Contact</a>
       </p>
-      <p style="margin-top: 0.75rem;">© TC-S Network Foundation, Inc.</p>
+      <p style="margin-top: 0.75rem;">© TC-S Network Foundation, Inc. · <em style="opacity:0.7;">The future is unwritten.</em></p>
     </footer>
   </div>
   
@@ -645,9 +936,17 @@
     
     // Add keyboard navigation
     document.addEventListener('keydown', (e) => {
+      if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
       if (e.key === '1') document.querySelector('.gateway-card.gbi').click();
       if (e.key === '2') document.querySelector('.gateway-card.commission').click();
       if (e.key === '3') document.querySelector('.gateway-card.explore').click();
+    });
+
+    // Close mobile nav when a link is tapped
+    document.querySelectorAll('#nav-links a').forEach(function(a) {
+      a.addEventListener('click', function() {
+        document.getElementById('topnav').classList.remove('nav-open');
+      });
     });
   </script>
 
