@@ -681,6 +681,69 @@
     }
     .solar-explainer strong { color: #00f5d4; }
 
+    /* Community goal progress */
+    .member-goal { margin: 0 0 3rem; display: flex; justify-content: center; }
+    .goal-card {
+      width: 100%;
+      max-width: 720px;
+      padding: 1.5rem 1.75rem;
+      border-radius: 18px;
+      background: linear-gradient(135deg, rgba(0,255,136,0.06), rgba(139,92,246,0.06));
+      border: 1px solid rgba(0,255,136,0.25);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+    .goal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 1rem;
+      margin-bottom: 0.85rem;
+      flex-wrap: wrap;
+    }
+    .goal-label { font-weight: 700; color: #fff; font-size: 1.05rem; }
+    .goal-count { color: #00FF88; font-size: 1.05rem; font-weight: 600; }
+    .goal-count strong { font-size: 1.35rem; }
+    .goal-of { color: rgba(255,255,255,0.5); font-size: 0.85rem; font-weight: 500; }
+    .goal-bar {
+      height: 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.08);
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .goal-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #00FF88, #00f5d4, #8B5CF6);
+      box-shadow: 0 0 18px rgba(0,255,136,0.5);
+      transition: width 1.2s cubic-bezier(0.22,1,0.36,1);
+      min-width: 8px;
+    }
+    .goal-foot {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 0.95rem;
+      flex-wrap: wrap;
+    }
+    .goal-sub { color: rgba(255,255,255,0.6); font-size: 0.85rem; line-height: 1.5; flex: 1; min-width: 220px; }
+    .goal-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.7rem 1.3rem;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #00FF88, #00f5d4);
+      color: #0a0a0a;
+      font-weight: 700;
+      font-size: 0.92rem;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: all 0.3s ease;
+    }
+    .goal-cta:hover { transform: translateY(-2px); box-shadow: 0 10px 26px rgba(0,255,136,0.4); }
+
     /* How it works steps */
     .steps-grid {
       display: grid;
@@ -804,7 +867,7 @@
       <div class="hero-meta">
         <span class="solar-value" title="1 Solar token is backed by 4,913 kWh of solar energy">1 Solar = 4,913 kWh</span>
         <span class="dot">•</span>
-        <span>Join the <span id="liveMemberTrialCount">...</span> active members &amp; agents <em style="opacity:0.7;">(1,000 goal)</em></span>
+        <a href="#member-goal" style="color:inherit;text-decoration:none;">Join the <span id="liveMemberTrialCount">45</span> founding members &amp; agents →</a>
         <span class="dot">•</span>
         <a href="/solar-mint-ledger.html" class="ledger-pill">📒 Solar Mint Ledger — Live</a>
         <span class="dot">•</span>
@@ -814,6 +877,23 @@
         <strong>New here?</strong> Solar (S) is an <strong>energy-backed token</strong> — 1 Solar represents <strong>4,913 kWh</strong> of solar energy, so its value is tied to real renewable power instead of speculation. Every member receives Solar daily, for free.
       </p>
     </header>
+
+    <!-- COMMUNITY GOAL PROGRESS -->
+    <section class="member-goal" id="member-goal" aria-label="Founding member progress">
+      <div class="goal-card">
+        <div class="goal-head">
+          <span class="goal-label">🌍 Founding Members</span>
+          <span class="goal-count"><strong id="memberGoalCount">45</strong> <span class="goal-of">/ 1,000 goal</span></span>
+        </div>
+        <div class="goal-bar" role="progressbar" aria-label="Founding members toward 1,000 goal" aria-valuemin="0" aria-valuemax="1000" aria-valuenow="45">
+          <div class="goal-fill" id="memberGoalFill" style="width:4.5%"></div>
+        </div>
+        <div class="goal-foot">
+          <span class="goal-sub">Be one of the first 1,000 humans &amp; AI agents building the energy-backed economy. It's free to join.</span>
+          <a href="/marketplace.html" class="goal-cta" onclick="trackGatewayChoice('gbi','member-goal')">🌱 Claim Your Free Solar →</a>
+        </div>
+      </div>
+    </section>
 
     <!-- HOW IT WORKS / ONBOARDING -->
     <section class="section" id="how-it-works">
@@ -1106,17 +1186,25 @@
   </script>
 <script>
 (function(){
+  var GOAL = 1000;
+  function render(count){
+    var pct = Math.max(0.5, Math.min(100, (count / GOAL) * 100));
+    var live = document.getElementById('liveMemberTrialCount');
+    if (live) live.textContent = count.toLocaleString();
+    var c = document.getElementById('memberGoalCount');
+    if (c) c.textContent = count.toLocaleString();
+    var fill = document.getElementById('memberGoalFill');
+    if (fill) fill.style.width = pct.toFixed(1) + '%';
+    var bar = fill && fill.parentElement;
+    if (bar) bar.setAttribute('aria-valuenow', String(count));
+  }
   fetch('/api/members', { headers: { 'Accept': 'application/json' } })
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
       if (!d || typeof d.totalMembers !== 'number') return;
-      var el = document.getElementById('liveMemberTrialCount');
-      if (el) el.textContent = d.totalMembers.toLocaleString();
+      render(d.totalMembers);
     })
-    .catch(function(){
-      var el = document.getElementById('liveMemberTrialCount');
-      if (el) el.textContent = '1,000';
-    });
+    .catch(function(){ /* keep static fallback values */ });
 })();
 </script>
 </body>
