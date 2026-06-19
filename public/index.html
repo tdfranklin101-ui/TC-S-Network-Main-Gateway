@@ -658,6 +658,111 @@
       .btn-primary, .btn-secondary { width: 100%; justify-content: center; }
     }
     
+    /* ===== Solar Economy enhancements ===== */
+    .proto-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.4rem 0.9rem;
+      border-radius: 999px;
+      background: rgba(255, 215, 0, 0.1);
+      border: 1px solid rgba(255, 215, 0, 0.35);
+      color: #ffd700;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+    .solar-explainer {
+      max-width: 660px;
+      margin: 1.25rem auto 0;
+      padding: 0 1rem;
+      color: rgba(255, 255, 255, 0.62);
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+    .solar-explainer strong { color: #00f5d4; }
+
+    /* How it works steps */
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.25rem;
+      width: 100%;
+    }
+    .step-card {
+      position: relative;
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid rgba(0, 255, 136, 0.25);
+      border-radius: 18px;
+      padding: 1.75rem 1.5rem;
+      transition: all 0.3s ease;
+    }
+    .step-card:hover {
+      border-color: rgba(0, 255, 136, 0.6);
+      transform: translateY(-4px);
+      box-shadow: 0 14px 40px rgba(0, 255, 136, 0.18);
+    }
+    .step-num {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #00FF88, #00f5d4);
+      color: #0a0a0a;
+      font-weight: 800;
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+    }
+    .step-title { font-size: 1.05rem; font-weight: 700; color: #fff; margin-bottom: 0.4rem; }
+    .step-desc { font-size: 0.88rem; color: rgba(255, 255, 255, 0.65); line-height: 1.55; }
+    .step-desc em { color: #00FF88; font-style: normal; font-weight: 600; }
+    .steps-cta { text-align: center; margin-top: 1.75rem; }
+
+    /* Featured card ribbon */
+    .card-ribbon {
+      position: absolute;
+      top: 1.25rem;
+      right: 1.25rem;
+      background: linear-gradient(135deg, #00FF88, #00f5d4);
+      color: #0a0a0a;
+      font-size: 0.7rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      padding: 0.3rem 0.7rem;
+      border-radius: 999px;
+      text-transform: uppercase;
+      box-shadow: 0 6px 18px rgba(0, 255, 136, 0.35);
+    }
+    .gateway-card.featured { box-shadow: 0 0 0 1px rgba(0, 255, 136, 0.25), 0 10px 40px rgba(0, 255, 136, 0.12); }
+
+    /* Social proof chips */
+    .proof-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.25rem; }
+    .proof-chip {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #ffd700;
+      background: rgba(255, 215, 0, 0.12);
+      border: 1px solid rgba(255, 215, 0, 0.3);
+      padding: 0.3rem 0.7rem;
+      border-radius: 999px;
+    }
+    .card-note { margin-top: 0.75rem; font-size: 0.78rem; color: rgba(255, 255, 255, 0.45); }
+
+    /* Prototype disclaimer banner */
+    .proto-disclaimer {
+      max-width: 760px;
+      margin: 0 auto 2rem;
+      padding: 0.9rem 1.25rem;
+      background: rgba(255, 215, 0, 0.06);
+      border: 1px solid rgba(255, 215, 0, 0.25);
+      border-radius: 14px;
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 0.82rem;
+      line-height: 1.55;
+      text-align: center;
+    }
+    .proto-disclaimer strong { color: #ffd700; }
   </style>
 </head>
 <body>
@@ -697,13 +802,46 @@
         <a href="/prompt-a-movie-business.html" class="btn-secondary" onclick="trackGatewayChoice('explore', 'promptly')">🎬 Explore Promptly</a>
       </div>
       <div class="hero-meta">
-        <span class="solar-value">1 Solar = 4,913 kWh</span>
+        <span class="solar-value" title="1 Solar token is backed by 4,913 kWh of solar energy">1 Solar = 4,913 kWh</span>
         <span class="dot">•</span>
         <span>Join the <span id="liveMemberTrialCount">...</span> active members &amp; agents <em style="opacity:0.7;">(1,000 goal)</em></span>
         <span class="dot">•</span>
         <a href="/solar-mint-ledger.html" class="ledger-pill">📒 Solar Mint Ledger — Live</a>
+        <span class="dot">•</span>
+        <span class="proto-badge">🔬 Prototype Phase</span>
       </div>
+      <p class="solar-explainer">
+        <strong>New here?</strong> Solar (S) is an <strong>energy-backed token</strong> — 1 Solar represents <strong>4,913 kWh</strong> of solar energy, so its value is tied to real renewable power instead of speculation. Every member receives Solar daily, for free.
+      </p>
     </header>
+
+    <!-- HOW IT WORKS / ONBOARDING -->
+    <section class="section" id="how-it-works">
+      <div class="section-head">
+        <h2 class="section-title">⚡ Get Started in 3 Steps</h2>
+        <p class="section-sub">Joining the Solar Economy is free and takes about a minute. Here's exactly what happens.</p>
+      </div>
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-num">1</div>
+          <div class="step-title">🪪 Create Your Wallet</div>
+          <div class="step-desc">Sign up free in the marketplace — no card, no fees. You instantly get a Solar wallet plus your <em>Genesis Solar</em> (1 Solar for every day since the network began).</div>
+        </div>
+        <div class="step-card">
+          <div class="step-num">2</div>
+          <div class="step-title">☀️ Receive Daily Solar</div>
+          <div class="step-desc">Every day at <em>UTC midnight</em>, +1 Solar lands in your wallet automatically — your energy-backed basic income.</div>
+        </div>
+        <div class="step-card">
+          <div class="step-num">3</div>
+          <div class="step-title">🛒 Trade &amp; Create</div>
+          <div class="step-desc">Spend Solar in the marketplace, stream Solar artists, and use AI film &amp; music tools. Everything is priced in <em>real kWh</em>.</div>
+        </div>
+      </div>
+      <div class="steps-cta">
+        <a href="/marketplace.html" class="btn-primary" onclick="trackGatewayChoice('gbi', 'individual')">🌱 Create Your Wallet — Free →</a>
+      </div>
+    </section>
 
     <!-- LATEST NEWS TEASER -->
     <section class="section" id="latest-news">
@@ -726,7 +864,8 @@
       </div>
       <div class="gateway-cards">
         <!-- The universe trends toward maximum entropy and maximum creativity -->
-        <a href="/marketplace.html" class="gateway-card gbi" data-path="gbi" onclick="trackGatewayChoice('gbi', 'individual')">
+        <a href="/marketplace.html" class="gateway-card gbi featured" data-path="gbi" onclick="trackGatewayChoice('gbi', 'individual')">
+          <div class="card-ribbon">★ Start Here</div>
           <div class="card-icon">🌱</div>
           <div class="card-label">For Individuals</div>
           <h2 class="card-title">Join Solar Economy</h2>
@@ -740,7 +879,7 @@
             <li>Stream 24+ tracks from Solar artists</li>
           </ul>
           <div class="card-cta">
-            Create Your Wallet <span>→</span>
+            Create Your Wallet — Free <span>→</span>
           </div>
           <!-- Ecosystem Test Sub-Card -->
           <div onclick="event.preventDefault();event.stopPropagation();window.location.href='/ecosystem-test.html'" style="margin-top:16px;padding:14px 16px;background:linear-gradient(135deg,rgba(0,0,0,0.4),rgba(0,255,136,0.06));border:1px solid rgba(0,255,136,0.3);border-radius:12px;cursor:pointer;transition:all 0.3s;" onmouseover="this.style.borderColor='#00ff88';this.style.background='linear-gradient(135deg,rgba(0,0,0,0.5),rgba(0,255,136,0.12))'" onmouseout="this.style.borderColor='rgba(0,255,136,0.3)';this.style.background='linear-gradient(135deg,rgba(0,0,0,0.4),rgba(0,255,136,0.06))'">
@@ -765,21 +904,23 @@
           <div class="card-label">For Organizations</div>
           <h2 class="card-title">Commission Your Network</h2>
           <p class="card-description">
-            Deploy a custom Solar network for your festival, campus, co-working space, or community. White-label with your branding.
+            Deploy a custom, white-label Solar network for your festival, campus, co-working space, or community — your branding, your rules. An agentic commissioner stands up your agent team, marketplace, and Solar (S) economy for you.
           </p>
-          <p class="card-description" style="font-style: italic; opacity: 0.95;">
-            Agentic commissioner deploys your network's agent team, marketplace, and Solar (S) economy — energy-backed, network-only.
-          </p>
+          <div class="proof-row">
+            <span class="proof-chip">✅ Pilot programs available</span>
+            <span class="proof-chip">🏷️ White-label ready</span>
+            <span class="proof-chip">🚫 Zero payment fees</span>
+          </div>
           <ul class="card-features">
-            <li>Agent team, marketplace &amp; Solar (S) economy deployed for you</li>
-            <li>30-60 day pilot programs from $5,000</li>
-            <li>Zero payment processing fees</li>
+            <li>Dedicated AI agent team, marketplace &amp; Solar (S) economy deployed for you</li>
+            <li>30–60 day pilots from $5,000 — fixed scope, clear deliverables</li>
             <li>Custom distribution rules &amp; ethics layer</li>
-            <li>Full analytics and case study report</li>
+            <li>Full analytics dashboard + case study report</li>
           </ul>
           <div class="card-cta">
-            Commission Network <span>→</span>
+            Book a Pilot — from $5,000 <span>→</span>
           </div>
+          <p class="card-note">📊 Sample pilot report available on request</p>
         </a>
         
         <!-- Explorer Path - Learn -->
@@ -897,6 +1038,10 @@
       </div>
     </section>
     
+    <div class="proto-disclaimer">
+      🔬 <strong>Prototype Phase:</strong> The Current-See is an active prototype built to demonstrate the energy-backed economic model. Solar (S), daily minting, and network metrics are not financial instruments or investment products, and some figures are illustrative as the network grows.
+    </div>
+
     <footer class="gateway-footer">
       <p>
         <a href="/whitepapers.html">Whitepapers</a> · 
