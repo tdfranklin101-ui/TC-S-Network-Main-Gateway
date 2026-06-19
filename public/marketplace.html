@@ -87,24 +87,87 @@
         }
 
         .header {
-            background: #0a0a0a;
-            border-bottom: 1px solid #2a2a2a;
-            padding: 15px 20px;
+            background: rgba(10, 10, 18, 0.82);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(0, 245, 212, 0.18);
+            padding: 12px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 16px;
+            position: sticky;
+            top: 0;
+            z-index: 9000;
         }
 
         .header-title {
-            font-size: 24px;
-            font-weight: bold;
+            font-size: 22px;
+            font-weight: 800;
             color: #ffffff;
+            line-height: 1.1;
         }
 
         .header-subtitle {
-            font-size: 14px;
+            font-size: 13px;
             color: #888;
-            margin-top: 2px;
+            margin-top: 1px;
+        }
+
+        .brand-block {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-width: 0;
+        }
+        .brand-top {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .nav-logo {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #00FF88, #00f5d4);
+            font-size: 1.3rem;
+            box-shadow: 0 6px 18px rgba(0, 255, 136, 0.3);
+            flex-shrink: 0;
+        }
+        .market-nav {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+        .market-nav a {
+            color: rgba(255, 255, 255, 0.78);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 5px 10px;
+            border-radius: 8px;
+            transition: all 0.25s ease;
+            white-space: nowrap;
+            letter-spacing: 0.02em;
+        }
+        .market-nav a:hover {
+            color: #00f5d4;
+            background: rgba(0, 245, 212, 0.08);
+        }
+        .market-nav a.active {
+            color: #0a0a0a;
+            background: linear-gradient(135deg, #00FF88, #00f5d4);
+        }
+        @media (max-width: 768px) {
+            .market-nav { gap: 2px; }
+            .market-nav a { font-size: 11px; padding: 4px 7px; }
+            .brand-block { gap: 6px; }
+            .header-title { font-size: 19px; }
+            .nav-logo { width: 32px; height: 32px; font-size: 1.1rem; }
         }
 
         .header-menu {
@@ -2350,14 +2413,24 @@
 <body>
     <!-- Header -->
     <div class="header">
-        <div>
-            <div class="header-title">TC-S Market</div>
-            <div class="header-subtitle">Solar Standard</div>
-            <div style="display:flex;gap:14px;margin-top:6px;align-items:center;">
-                <a href="/index.html" style="color:#00FF88;font-size:12px;font-weight:700;text-decoration:none;letter-spacing:.05em;text-shadow:0 0 6px rgba(0,255,136,0.5);" onmouseover="this.style.textShadow='0 0 10px #00FF88'" onmouseout="this.style.textShadow='0 0 6px rgba(0,255,136,0.5)'">Index</a>
-                <a href="/homepage-full.html" style="color:#00f5d4;font-size:12px;font-weight:700;text-decoration:none;letter-spacing:.05em;text-shadow:0 0 6px rgba(0,245,212,0.5);" onmouseover="this.style.textShadow='0 0 10px #00f5d4'" onmouseout="this.style.textShadow='0 0 6px rgba(0,245,212,0.5)'">Home</a>
+        <div class="brand-block">
+            <a href="/" class="brand-top" style="text-decoration:none;">
+                <span class="nav-logo">☀️</span>
+                <div>
+                    <div class="header-title">TC-S Market</div>
+                    <div class="header-subtitle">Solar Standard</div>
+                </div>
+            </a>
+            <nav class="market-nav">
+                <a href="/">Home</a>
+                <a href="/marketplace.html" class="active">Solar Economy</a>
+                <a href="/prompt-a-movie-business.html">Promptly</a>
+                <a href="/solar-punk-party.html">Cinema</a>
+                <a href="/solar-dashboard.html">Dashboard</a>
+                <a href="/whitepapers.html">Whitepaper</a>
+                <a href="/press-release.html">Press</a>
                 <span id="apps-dropdown-target"></span>
-            </div>
+            </nav>
         </div>
         <div class="header-actions" id="header-actions">
             <a href="/agent.html" class="register-btn" data-testid="link-agent-dashboard" style="display: inline-block; text-decoration: none; margin-right: 10px; background: linear-gradient(135deg, #00ffff, #00bfff);">🤖 My Agent</a>
