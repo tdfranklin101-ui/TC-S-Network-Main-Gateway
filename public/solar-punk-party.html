@@ -1560,6 +1560,77 @@
       box-shadow: 0 0 40px var(--gold);
     }
 
+    /* Quick Access Strip */
+    .quick-access {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 16px;
+      max-width: 920px;
+      margin: 36px auto 0;
+      padding: 0 10px;
+      opacity: 0;
+      animation: fadeIn 1s ease 2.8s forwards;
+    }
+    .qa-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 6px;
+      padding: 22px 16px;
+      border-radius: 18px;
+      text-decoration: none;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      transition: all 0.3s ease;
+    }
+    .qa-card:hover {
+      transform: translateY(-5px);
+      border-color: var(--cyan);
+      box-shadow: 0 0 30px rgba(0, 255, 255, 0.35);
+    }
+    .qa-music:hover { border-color: var(--neon-green); box-shadow: 0 0 30px rgba(57, 255, 20, 0.4); }
+    .qa-films:hover { border-color: var(--pink); box-shadow: 0 0 30px rgba(236, 72, 153, 0.4); }
+    .qa-promptly:hover { border-color: var(--gold); box-shadow: 0 0 30px rgba(234, 179, 8, 0.45); }
+    .qa-vibe:hover { border-color: var(--violet); box-shadow: 0 0 30px rgba(139, 92, 246, 0.45); }
+    .qa-emoji { font-size: 2rem; }
+    .qa-title { font-family: 'Orbitron', sans-serif; font-size: 0.95rem; font-weight: 700; color: #fff; }
+    .qa-desc { font-size: 0.8rem; color: rgba(255, 255, 255, 0.65); }
+
+    /* Manifesto collapse toggle */
+    .manifesto-blocks.is-collapsed .manifesto-extra { display: none; }
+    .manifesto-toggle-wrap { text-align: center; margin-top: 35px; }
+    .manifesto-toggle {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 14px 34px;
+      border-radius: 50px;
+      cursor: pointer;
+      color: #fff;
+      background: transparent;
+      border: 2px solid var(--cyan);
+      box-shadow: 0 0 20px rgba(0, 255, 255, 0.25);
+      transition: all 0.3s ease;
+    }
+    .manifesto-toggle:hover {
+      background: var(--cyan);
+      color: #000;
+      box-shadow: 0 0 40px var(--cyan);
+    }
+
+    /* Mood description */
+    .mood-desc {
+      font-size: 0.72rem;
+      color: rgba(255, 255, 255, 0.5);
+      line-height: 1.35;
+    }
+
+    /* Offset jump-link targets for the fixed nav */
+    #songs, #mood, #manifesto { scroll-margin-top: 100px; }
+
     /* Song Showcase Section */
     .song-showcase {
       padding: 80px 20px;
@@ -3717,10 +3788,12 @@
   <nav class="nav">
     <a href="homepage-full.html" class="nav-logo">TC-S NETWORK</a>
     <div class="nav-links">
-      <a href="index.html">Index</a>
-      <a href="homepage-full.html">Home</a>
+      <a href="#cinema">🎬 Films</a>
+      <a href="#songs">🎵 Music</a>
+      <a href="#mood">🌈 Vibe</a>
+      <a href="#manifesto">📜 Manifesto</a>
       <a href="marketplace.html">Marketplace</a>
-      <a href="solar-dashboard.html">Dashboard</a>
+      <a href="homepage-full.html">Home</a>
       <span id="apps-dropdown-target"></span>
     </div>
   </nav>
@@ -4397,8 +4470,33 @@
 
     <!-- CTA Buttons -->
     <div class="cta-container">
-      <a href="#songs" class="cta-button cta-primary">Play the Music</a>
-      <a href="#manifesto" class="cta-button cta-secondary">Read the Manifesto</a>
+      <a href="#songs" class="cta-button cta-primary">🎵 Listen Now</a>
+      <a href="#cinema" class="cta-button cta-secondary">🎬 Watch Films</a>
+      <a href="#mood" class="cta-button cta-secondary">🌈 Choose Your Vibe</a>
+    </div>
+
+    <!-- Quick Access Strip -->
+    <div class="quick-access">
+      <a href="#songs" class="qa-card qa-music">
+        <span class="qa-emoji">🎵</span>
+        <span class="qa-title">Soundtrack of Dawn</span>
+        <span class="qa-desc">Stream 4 solar anthems</span>
+      </a>
+      <a href="#cinema" class="qa-card qa-films">
+        <span class="qa-emoji">🎬</span>
+        <span class="qa-title">Midnight Cinema</span>
+        <span class="qa-desc">11+ AI-made short films</span>
+      </a>
+      <a href="/prompt-a-movie-business.html" class="qa-card qa-promptly">
+        <span class="qa-emoji">✨</span>
+        <span class="qa-title">Promptly Studio</span>
+        <span class="qa-desc">Make your own AI film</span>
+      </a>
+      <a href="#mood" class="qa-card qa-vibe">
+        <span class="qa-emoji">🌈</span>
+        <span class="qa-title">Choose Your Vibe</span>
+        <span class="qa-desc">Set the mood &amp; theme</span>
+      </a>
     </div>
   </section>
 
@@ -4486,7 +4584,7 @@
         <p class="manifesto-subtitle">The Grid Is a Lie You've Been Living Inside</p>
       </div>
 
-      <div class="manifesto-blocks">
+      <div class="manifesto-blocks is-collapsed" id="manifestoBlocks">
         <!-- Block 1: The Con -->
         <div class="manifesto-block truth-block">
           <span class="block-icon">🔌</span>
@@ -4515,7 +4613,7 @@
         </div>
 
         <!-- Block 4: Remembering Power -->
-        <div class="manifesto-block power-block">
+        <div class="manifesto-block power-block manifesto-extra">
           <span class="block-icon">🏠</span>
           <h3 class="block-title">You're Already Powerful</h3>
           <p class="block-text">
@@ -4524,7 +4622,7 @@
         </div>
 
         <!-- Block 5: The Shift -->
-        <div class="manifesto-block psychedelic-block">
+        <div class="manifesto-block psychedelic-block manifesto-extra">
           <span class="block-icon">⚡</span>
           <h3 class="block-title">When Everything Changes</h3>
           <p class="block-text">
@@ -4533,7 +4631,7 @@
         </div>
 
         <!-- Block 6: Mind-Manifesting -->
-        <div class="manifesto-block psychedelic-block">
+        <div class="manifesto-block psychedelic-block manifesto-extra">
           <span class="block-icon">🌀</span>
           <h3 class="block-title">Psychedelic: Mind-Manifesting</h3>
           <p class="block-text">
@@ -4542,7 +4640,7 @@
         </div>
 
         <!-- Block 7: Exponential -->
-        <div class="manifesto-block exponential-block">
+        <div class="manifesto-block exponential-block manifesto-extra">
           <span class="block-icon">🔥</span>
           <h3 class="block-title">The Exponential Spread</h3>
           <p class="block-text">
@@ -4551,13 +4649,18 @@
         </div>
 
         <!-- Block 8: The Movement -->
-        <div class="manifesto-block movement-block">
+        <div class="manifesto-block movement-block manifesto-extra">
           <span class="block-icon">🌍</span>
           <h3 class="block-title">Building the Revolution</h3>
           <p class="block-text">
             The Psychedelic Solarpunk Party isn't waiting for the revolution. We're <span class="highlight">building it one panel at a time</span>, one roof at a time, one mind at a time. We're weaving a mesh network of power generation that doesn't ask permission from the utility company or the government or the oil cartel. We're creating <span class="golden">beauty while we do it</span>—because why shouldn't liberation be gorgeous? Why shouldn't independence glow with neon and pulse with life?
           </p>
         </div>
+      </div>
+
+      <!-- Read Full Manifesto Toggle -->
+      <div class="manifesto-toggle-wrap">
+        <button class="manifesto-toggle" id="manifestoToggle" onclick="toggleManifesto()" aria-expanded="false">Read Full Manifesto ↓</button>
       </div>
 
       <!-- Closing Declaration -->
@@ -4809,28 +4912,32 @@
   <!-- Mood Selector Section -->
   <section class="mood-selector-section" id="mood">
     <h2 class="section-title">Choose Your Vibe</h2>
-    <p class="mood-intro">Select your energy and watch the world transform.</p>
+    <p class="mood-intro">Tap a vibe — the whole site changes color and the matching anthem starts playing. 🎧</p>
     
     <div class="mood-buttons">
       <button class="mood-btn party-mode" onclick="setMood('party')" data-mood="party">
         <span class="mood-emoji">🎉</span>
         <span class="mood-label">Party Mode</span>
-        <span class="mood-song">Psychedelic Solarpunk Party</span>
+        <span class="mood-desc">Neon &amp; pink — pure celebration</span>
+        <span class="mood-song">▶ Psychedelic Solarpunk Party</span>
       </button>
       <button class="mood-btn hacker-mode" onclick="setMood('hacker')" data-mood="hacker">
         <span class="mood-emoji">🧠</span>
         <span class="mood-label">Hacker Mode</span>
-        <span class="mood-song">Snowmancer One</span>
+        <span class="mood-desc">Cool blues — heads-down focus</span>
+        <span class="mood-song">▶ Snowmancer One</span>
       </button>
       <button class="mood-btn grounded-mode" onclick="setMood('grounded')" data-mood="grounded">
         <span class="mood-emoji">🌱</span>
         <span class="mood-label">Grounded Mode</span>
-        <span class="mood-song">Solar Day</span>
+        <span class="mood-desc">Earthy greens — calm &amp; rooted</span>
+        <span class="mood-song">▶ Solar Day</span>
       </button>
       <button class="mood-btn revolutionary-mode" onclick="setMood('revolutionary')" data-mood="revolutionary">
         <span class="mood-emoji">🔥</span>
         <span class="mood-label">Revolutionary Mode</span>
-        <span class="mood-song">We Said So</span>
+        <span class="mood-desc">Violet fire — rise up</span>
+        <span class="mood-song">▶ We Said So</span>
       </button>
     </div>
     
@@ -5478,6 +5585,16 @@
       
       // Expand and optionally play the corresponding song
       toggleSong(config.songId);
+    }
+
+    // Read Full Manifesto toggle
+    function toggleManifesto() {
+      const blocks = document.getElementById('manifestoBlocks');
+      const btn = document.getElementById('manifestoToggle');
+      if (!blocks || !btn) return;
+      const collapsed = blocks.classList.toggle('is-collapsed');
+      btn.setAttribute('aria-expanded', String(!collapsed));
+      btn.textContent = collapsed ? 'Read Full Manifesto ↓' : 'Show Less ↑';
     }
 
     // Initialize party mode as default
