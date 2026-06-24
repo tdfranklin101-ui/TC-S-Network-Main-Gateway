@@ -58,8 +58,8 @@ a:hover{text-decoration:underline}
 .tx-desc{color:#bbb}
 .tx-time{color:#555;font-size:10px}
 .asset-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-bottom:24px}
-.asset-card{background:#0d0d0d;border:1px solid var(--border);border-radius:10px;padding:14px;transition:border-color .2s}
-.asset-card:hover{border-color:var(--cyan)}
+.asset-card{display:block;background:#0d0d0d;border:1px solid var(--border);border-radius:10px;padding:14px;transition:border-color .2s,transform .2s;text-decoration:none;color:inherit;cursor:pointer}
+.asset-card:hover{border-color:var(--cyan);text-decoration:none;transform:translateY(-2px)}
 .asset-title{font-size:13px;font-weight:600;color:#ddd;margin-bottom:6px}
 .asset-cat{display:inline-block;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--purple);background:rgba(138,43,226,.1);padding:2px 8px;border-radius:10px;margin-bottom:6px}
 .asset-price{font-size:12px;color:var(--gold);font-family:'Orbitron',sans-serif}
@@ -333,12 +333,12 @@ function buildAssets(data){
     created.forEach(function(item){
       const date=item.createdAt?new Date(item.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric'}):'';
       const status=item.active!==false?'active':'sold';
-      html+='<div class="asset-card">'+
+      html+='<a class="asset-card" href="/artifact.html?id='+encodeURIComponent(item.id)+'">'+
         '<div class="asset-cat">'+(item.category||'General')+'</div>'+
         '<div class="asset-title">'+(item.title||item.name||'Untitled')+'</div>'+
         '<div class="asset-price">'+(item.price!=null?parseFloat(item.price).toFixed(4):' — ')+' Solar</div>'+
         '<div class="asset-meta"><span>'+date+'</span><span class="asset-status '+status+'">'+(status==='active'?'Active':'Sold')+'</span></div>'+
-        '</div>';
+        '</a>';
     });
     html+='</div>';
   }
@@ -351,12 +351,12 @@ function buildAssets(data){
       const date=item.acquiredAt||item.purchasedAt||item.createdAt;
       const dateStr=date?new Date(date).toLocaleDateString('en-US',{month:'short',day:'numeric'}):'';
       const paid=item.solarPaid!=null?item.solarPaid:(item.price!=null?item.price:null);
-      html+='<div class="asset-card">'+
+      html+='<a class="asset-card" href="/artifact.html?id='+encodeURIComponent(item.artifactId||item.id)+'">'+
         '<div class="asset-cat">'+(item.category||'General')+'</div>'+
         '<div class="asset-title">'+(item.title||item.name||'Untitled')+'</div>'+
         '<div class="asset-price">'+(paid!=null?parseFloat(paid).toFixed(4):' — ')+' Solar</div>'+
         '<div class="asset-meta"><span>'+dateStr+'</span><span style="font-size:10px;color:#888">'+(item.method||'Purchase')+'</span></div>'+
-        '</div>';
+        '</a>';
     });
     html+='</div>';
   }
