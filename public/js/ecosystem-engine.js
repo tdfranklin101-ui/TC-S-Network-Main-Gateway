@@ -570,8 +570,17 @@ async function phase2_items(){
         const specTag = cat === specialty && !isBasic ? '<span style="font-size:8px;color:var(--cyan)"> ★ specialty</span>' : '';
         const masteredTag = item.threeCopyMastered ? '<span style="font-size:8px;color:#ff0"> ⚡ 3-COPY</span>' : '';
         const fileTag = item.hasRealFile ? `<span style="font-size:8px;color:var(--green)"> 📁 ${item.creationMethod}</span>` : '';
-        const card = document.createElement('div');
+        const hasArtifactLink = !!item.itemId;
+        const card = document.createElement(hasArtifactLink ? 'a' : 'div');
         card.className = 'item-card';
+        if(hasArtifactLink){
+          card.href = '/artifact.html?id=' + encodeURIComponent(item.itemId);
+          card.style.textDecoration = 'none';
+          card.style.color = 'inherit';
+          card.style.display = 'block';
+          card.style.cursor = 'pointer';
+          card.title = 'View artifact record';
+        }
         card.style.borderColor = isBasic ? 'var(--gold)' : item.threeCopyMastered ? '#ff0' : item.hasRealFile ? 'var(--green)' : item.itemId ? 'var(--cyan)' : 'var(--border)';
         if(isBasic) card.style.background = 'rgba(255,215,0,0.05)';
         if(item.hasRealFile) card.style.background = 'rgba(57,255,20,0.04)';
@@ -579,7 +588,7 @@ async function phase2_items(){
         let previewHtml = '';
         if(item.hasRealFile && item.fileUrl) {
           if(item.previewType === 'image') previewHtml = `<div style="margin:6px 0"><img src="${item.fileUrl}" alt="${itemName}" style="width:100%;max-height:100px;object-fit:cover;border-radius:4px;border:1px solid var(--border)"></div>`;
-          else if(item.previewType === 'audio') previewHtml = `<div style="margin:6px 0"><audio controls style="width:100%;height:28px" preload="none"><source src="${item.fileUrl}" type="audio/mpeg"></audio></div>`;
+          else if(item.previewType === 'audio') previewHtml = `<div style="margin:6px 0" onclick="event.stopPropagation();event.preventDefault();"><audio controls style="width:100%;height:28px" preload="none"><source src="${item.fileUrl}" type="audio/mpeg"></audio></div>`;
           else if(item.previewType === 'text' || item.previewType === 'code') previewHtml = `<div style="margin:4px 0;font-size:9px;color:var(--cyan)">📄 ${item.fileType || 'text'} file ready</div>`;
         }
 
