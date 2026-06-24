@@ -8151,7 +8151,32 @@ const server = http.createServer(async (req, res) => {
         const a = result.rows[0];
         const meta = a.market_metadata || {};
         const hasFile = !!(a.master_file_url || a.trade_file_url || a.delivery_url);
-        const contentPreview = a.content_body ? a.content_body.substring(0, 2000) : null;
+        // Ownership gating: full content ("DNA") is only revealed to the creator or an owner/purchaser.
+        let isOwner = false;
+        try {
+          const viewerSessionId = getCookie(req, 'tc_s_session');
+          const viewerSession = viewerSessionId ? await getSession(viewerSessionId) : null;
+          if (viewerSession && viewerSession.userId) {
+            const viewerId = viewerSession.userId;
+            let viewerUsername = viewerSession.username || null;
+            if (!viewerUsername) {
+              const vu = await pool.query('SELECT username FROM members WHERE id = $1', [viewerId]);
+              viewerUsername = vu.rows[0]?.username || null;
+            }
+            const creatorMatch = String(a.creator_id) === String(viewerId) ||
+              (viewerUsername && (String(a.creator_id) === viewerUsername || a.creator_username === viewerUsername));
+            const ownerMatch = a.current_owner_id != null && String(a.current_owner_id) === String(viewerId);
+            if (creatorMatch || ownerMatch) {
+              isOwner = true;
+            } else {
+              const copyCheck = await pool.query('SELECT 1 FROM artifact_copies WHERE artifact_id = $1 AND owner_id = $2 AND is_active = true LIMIT 1', [a.id, viewerId]);
+              isOwner = copyCheck.rows.length > 0;
+            }
+          }
+        } catch (ownErr) {
+          console.error('Artifact ownership check failed (treating viewer as non-owner):', ownErr.message);
+        }
+        const contentPreview = (isOwner && a.content_body) ? a.content_body.substring(0, 2000) : null;
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
           success: true,
@@ -8164,6 +8189,7 @@ const server = http.createServer(async (req, res) => {
             searchTags: a.search_tags || [], contentFormat: a.content_format,
             sourceType: a.source_type || (a.creator_is_agent ? 'agent' : 'human'),
             hasFile, contentPreview,
+            isOwner, contentLocked: !isOwner,
             artifactClass: a.artifact_class || 'A',
             masterFileSize: a.master_file_size || 0, tradeFileSize: a.trade_file_size || 0,
             previewFileSize: a.preview_file_size || 0,

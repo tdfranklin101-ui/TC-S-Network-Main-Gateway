@@ -337,13 +337,13 @@ async function loadStorage() {
       html += '<div class="cat-group"><div class="cat-group-title">' + esc(cat) + ' <span style="color:#555">(' + grouped[cat].length + ')</span></div><div class="storage-grid">';
       grouped[cat].forEach(function(a) {
         var utilityLabel = a.utilityType ? a.utilityType.replace(/-/g, ' ') : '';
-        html += '<div class="storage-card">' +
+        html += '<a class="storage-card" href="/artifact.html?id=' + encodeURIComponent(a.artifactId || a.id || '') + '" style="text-decoration:none;color:inherit;display:block">' +
           '<div class="s-title">' + esc(a.title || 'Untitled') + '</div>' +
           '<span class="s-cat">' + esc(cat) + '</span>' +
           (utilityLabel ? '<span class="s-utility">' + esc(utilityLabel) + '</span>' : '') +
           '<div class="s-price">S ' + parseFloat(a.pricePaid || a.price || 0).toFixed(4) + '</div>' +
           '<div class="s-meta"><span>' + (a.acquiredMethod || 'owned') + '</span><span>' + (a.acquiredDate ? new Date(a.acquiredDate).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '') + '</span></div>' +
-        '</div>';
+        '</a>';
       });
       html += '</div></div>';
     });
