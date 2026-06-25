@@ -1,0 +1,780 @@
+<!DOCTYPE html><html lang="en"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Library — TC-S Network</title>
+  <meta name="description" content="Value received = value returned = system stability">
+  <link rel="canonical" href="https://www.thecurrentsee.org/my-library.html">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0a0a0a;
+      color: #e0e0e0;
+      min-height: 100vh;
+    }
+
+    a {
+      color: #00ffff;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .header {
+      background: #0a0a0a;
+      border-bottom: 1px solid #2a2a2a;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .header-title {
+      font-size: 24px;
+      font-weight: bold;
+      color: #00ffff;
+    }
+
+    .back-link {
+      font-size: 14px;
+      color: #00ffff;
+      transition: color 0.2s;
+    }
+
+    .back-link:hover {
+      color: #00ff88;
+      text-decoration: none;
+    }
+
+    .header-user {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+    }
+
+    .user-avatar {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, #00ff88, #00ffff);
+      color: #0a0a0a;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 16px;
+    }
+
+    .user-name {
+      font-weight: 600;
+      color: #e0e0e0;
+    }
+
+    .solar-balance {
+      font-size: 13px;
+      color: #ffaa00;
+      font-weight: bold;
+    }
+
+    .container {
+      padding: 20px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .library-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+
+    .stat-card {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: #00ffff;
+    }
+
+    .stat-value.solar {
+      color: #ffaa00;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: #888;
+      margin-top: 6px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .library-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    @media (max-width: 900px) {
+      .library-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 600px) {
+      .library-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .header-left {
+        flex-direction: column;
+        gap: 8px;
+      }
+    }
+
+    .artifact-card {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 12px;
+      padding: 20px;
+      transition: all 0.3s;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .artifact-card:hover {
+      border-color: #444;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px rgba(0, 255, 136, 0.05);
+    }
+
+    .artifact-icon {
+      font-size: 40px;
+      margin-bottom: 12px;
+    }
+
+    .artifact-category {
+      display: inline-block;
+      background: rgba(0, 255, 255, 0.1);
+      border: 1px solid rgba(0, 255, 255, 0.3);
+      color: #00ffff;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    .artifact-title {
+      font-size: 17px;
+      font-weight: bold;
+      color: #e0e0e0;
+      margin-bottom: 8px;
+      line-height: 1.3;
+    }
+
+    .artifact-meta {
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .artifact-price {
+      color: #ffaa00;
+      font-weight: bold;
+    }
+
+    .artifact-date {
+      color: #666;
+    }
+
+    .artifact-file-type {
+      display: inline-block;
+      background: #333;
+      color: #aaa;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      margin-bottom: 12px;
+    }
+
+    .download-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #00ff88, #00cc6a);
+      color: #0a0a0a;
+      border: none;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-top: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .download-btn:hover {
+      background: linear-gradient(135deg, #33ffaa, #00ff88);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
+    }
+
+    .download-btn:active {
+      transform: translateY(0);
+    }
+
+    .loading {
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid #2a2a2a;
+      border-top-color: #00ffff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      color: #888;
+      font-size: 14px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 80px 20px;
+    }
+
+    .empty-state .empty-icon {
+      font-size: 64px;
+      margin-bottom: 20px;
+      opacity: 0.4;
+    }
+
+    .empty-state h3 {
+      font-size: 22px;
+      color: #e0e0e0;
+      margin-bottom: 12px;
+    }
+
+    .empty-state p {
+      color: #888;
+      margin-bottom: 24px;
+      line-height: 1.5;
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .marketplace-link-btn {
+      display: inline-block;
+      background: linear-gradient(135deg, #00ffff, #0088cc);
+      color: #0a0a0a;
+      padding: 12px 28px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: bold;
+      text-decoration: none;
+      transition: all 0.3s;
+    }
+
+    .marketplace-link-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px rgba(0, 255, 255, 0.3);
+      text-decoration: none;
+    }
+
+    .signin-prompt {
+      text-align: center;
+      padding: 100px 20px;
+    }
+
+    .signin-prompt .lock-icon {
+      font-size: 64px;
+      margin-bottom: 20px;
+      opacity: 0.5;
+    }
+
+    .signin-prompt h2 {
+      font-size: 24px;
+      color: #00ffff;
+      margin-bottom: 12px;
+    }
+
+    .signin-prompt p {
+      color: #888;
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+
+    .signin-btn {
+      display: inline-block;
+      background: linear-gradient(135deg, #007bff, #0056b3);
+      color: white;
+      padding: 12px 28px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: bold;
+      text-decoration: none;
+      transition: all 0.3s;
+    }
+
+    .signin-btn:hover {
+      background: linear-gradient(135deg, #0056b3, #004085);
+      transform: translateY(-1px);
+      text-decoration: none;
+    }
+
+    .error-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #ff4444;
+    }
+
+    .error-state p {
+      margin-bottom: 16px;
+    }
+
+    .retry-btn {
+      background: #333;
+      color: #e0e0e0;
+      border: 1px solid #555;
+      padding: 10px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .retry-btn:hover {
+      background: #444;
+      border-color: #00ffff;
+    }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-box {
+      background: #1a1a1a;
+      border: 2px solid #00ff88;
+      border-radius: 16px;
+      padding: 30px;
+      max-width: 440px;
+      width: 100%;
+      box-shadow: 0 8px 40px rgba(0, 255, 136, 0.15);
+      text-align: center;
+    }
+
+    .modal-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    .modal-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #00ffff;
+      margin-bottom: 8px;
+    }
+
+    .modal-artifact-name {
+      font-size: 16px;
+      color: #e0e0e0;
+      margin-bottom: 6px;
+      word-break: break-word;
+    }
+
+    .modal-details {
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    .modal-details span {
+      color: #00ffff;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    .modal-cancel {
+      background: #333;
+      color: #e0e0e0;
+      border: 1px solid #555;
+      padding: 12px 28px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .modal-cancel:hover {
+      background: #444;
+      border-color: #888;
+    }
+
+    .modal-confirm {
+      background: linear-gradient(135deg, #00ff88, #00cc6a);
+      color: #0a0a0a;
+      border: none;
+      padding: 12px 28px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .modal-confirm:hover {
+      background: linear-gradient(135deg, #33ffaa, #00ff88);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
+    }
+
+    .modal-confirm:active {
+      transform: translateY(0);
+    }
+
+    .modal-confirm.downloading {
+      opacity: 0.7;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="header-left">
+      <div class="header-title">My Library</div>
+      <a href="/marketplace.html" class="back-link">← Back to Marketplace</a>
+    </div>
+    <div class="header-user" id="header-user" style="display:none;">
+      <div class="user-avatar" id="user-avatar"></div>
+      <div>
+        <div class="user-name" id="user-name"></div>
+        <div class="solar-balance" id="solar-balance"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div id="content-area">
+      <div class="loading" id="loading-state">
+        <div class="spinner"></div>
+        <div class="loading-text">Loading your library...</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="download-modal">
+    <div class="modal-box">
+      <div class="modal-icon" id="modal-icon"></div>
+      <div class="modal-title">Download to Device</div>
+      <div class="modal-artifact-name" id="modal-artifact-name"></div>
+      <div class="modal-details" id="modal-details"></div>
+      <div class="modal-actions">
+        <button class="modal-cancel" onclick="cancelDownload()">Cancel</button>
+        <button class="modal-confirm" id="modal-confirm-btn" onclick="confirmDownload()">⬇ Download</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentUser = null;
+
+    async function checkSession() {
+      try {
+        const res = await fetch('/api/session', { credentials: 'include' });
+        if (!res.ok) return null;
+        const data = await res.json();
+        if (data.loggedIn && data.user) {
+          return data.user;
+        }
+        return null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function showSignInPrompt() {
+      document.getElementById('content-area').innerHTML =
+        '<div class="signin-prompt">' +
+          '<div class="lock-icon">&#x1F512;</div>' +
+          '<h2>Sign In Required</h2>' +
+          '<p>Sign in on the marketplace to access your purchased artifacts and downloads.</p>' +
+          '<a href="/marketplace.html" class="signin-btn">Go to Marketplace</a>' +
+        '</div>';
+    }
+
+    function showError(message) {
+      document.getElementById('content-area').innerHTML =
+        '<div class="error-state">' +
+          '<p>' + message + '</p>' +
+          '<button class="retry-btn" onclick="init()">Try Again</button>' +
+        '</div>';
+    }
+
+    function showEmptyState() {
+      document.getElementById('content-area').innerHTML =
+        '<div class="library-stats">' +
+          '<div class="stat-card"><div class="stat-value">0</div><div class="stat-label">Artifacts Owned</div></div>' +
+          '<div class="stat-card"><div class="stat-value solar">0 Solar</div><div class="stat-label">Total Spent</div></div>' +
+        '</div>' +
+        '<div class="empty-state">' +
+          '<div class="empty-icon">&#x1F4DA;</div>' +
+          '<h3>No purchases yet</h3>' +
+          '<p>Visit the marketplace to discover artifacts from creators around the world.</p>' +
+          '<a href="/marketplace.html" class="marketplace-link-btn">Browse Marketplace</a>' +
+        '</div>';
+    }
+
+    function getFileIcon(artifact) {
+      var cat = (artifact.category || '').toLowerCase();
+      var fileType = (artifact.file_type || artifact.fileType || '').toLowerCase();
+
+      if (cat === 'music' || fileType.indexOf('audio') !== -1 || fileType === 'mp3' || fileType === 'wav' || fileType === 'flac') {
+        return '\uD83C\uDFB5';
+      }
+      if (cat === 'video' || fileType.indexOf('video') !== -1 || fileType === 'mp4' || fileType === 'mov' || fileType === 'avi') {
+        return '\uD83C\uDFAC';
+      }
+      if (cat === 'art' || cat === 'photo' || fileType.indexOf('image') !== -1 || fileType === 'png' || fileType === 'jpg' || fileType === 'jpeg' || fileType === 'gif') {
+        return '\uD83D\uDDBC\uFE0F';
+      }
+      return '\uD83D\uDCC4';
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '';
+      var d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    }
+
+    function formatPrice(price) {
+      if (price === undefined || price === null) return '0';
+      var num = parseFloat(price);
+      if (isNaN(num)) return '0';
+      if (num >= 1) return num.toFixed(2);
+      return num.toFixed(4);
+    }
+
+    var pendingDownload = null;
+
+    function requestDownload(artifactId, title, category, fileType) {
+      var icon = getFileIcon({ category: category, fileType: fileType });
+      var typeLabel = (fileType || 'file').toUpperCase();
+      var catLabel = (category || 'General');
+
+      document.getElementById('modal-icon').textContent = icon;
+      document.getElementById('modal-artifact-name').textContent = '"' + title + '"';
+      document.getElementById('modal-details').innerHTML =
+        'Type: <span>' + escapeHtml(typeLabel) + '</span><br>' +
+        'Category: <span>' + escapeHtml(catLabel) + '</span><br><br>' +
+        'This file will be saved to your device.';
+
+      var btn = document.getElementById('modal-confirm-btn');
+      btn.classList.remove('downloading');
+      btn.innerHTML = '&#x2B07; Download';
+
+      pendingDownload = { artifactId: artifactId, title: title };
+      document.getElementById('download-modal').classList.add('active');
+    }
+
+    function cancelDownload() {
+      pendingDownload = null;
+      document.getElementById('download-modal').classList.remove('active');
+    }
+
+    function confirmDownload() {
+      if (!pendingDownload || !currentUser) return;
+      var btn = document.getElementById('modal-confirm-btn');
+      btn.classList.add('downloading');
+      btn.innerHTML = '&#x23F3; Downloading...';
+
+      var a = document.createElement('a');
+      a.href = '/api/deliver/' + pendingDownload.artifactId + '?userId=' + currentUser.id;
+      a.download = pendingDownload.title;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      setTimeout(function() {
+        document.getElementById('download-modal').classList.remove('active');
+        pendingDownload = null;
+      }, 1500);
+    }
+
+    document.getElementById('download-modal').addEventListener('click', function(e) {
+      if (e.target === this) cancelDownload();
+    });
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      var div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function renderLibrary(artifacts) {
+      var totalSpent = 0;
+      for (var i = 0; i < artifacts.length; i++) {
+        var p = parseFloat(artifacts[i].price_paid || artifacts[i].pricePaid || artifacts[i].price || 0);
+        if (!isNaN(p)) totalSpent += p;
+      }
+
+      var statsHtml =
+        '<div class="library-stats">' +
+          '<div class="stat-card"><div class="stat-value">' + artifacts.length + '</div><div class="stat-label">Artifacts Owned</div></div>' +
+          '<div class="stat-card"><div class="stat-value solar">' + formatPrice(totalSpent) + ' Solar</div><div class="stat-label">Total Spent</div></div>' +
+        '</div>';
+
+      var gridHtml = '<div class="library-grid">';
+      for (var i = 0; i < artifacts.length; i++) {
+        var a = artifacts[i];
+        var icon = getFileIcon(a);
+        var title = escapeHtml(a.title || a.name || 'Untitled');
+        var category = escapeHtml(a.category || 'General');
+        var price = formatPrice(a.price_paid || a.pricePaid || a.price || 0);
+        var date = formatDate(a.acquired_at || a.acquiredAt || a.purchased_at || a.purchasedAt || a.created_at || a.createdAt);
+        var fileType = escapeHtml(a.file_type || a.fileType || '');
+        var artifactId = a.id || a.artifactId || a.artifact_id;
+
+        gridHtml +=
+          '<div class="artifact-card">' +
+            '<div class="artifact-icon">' + icon + '</div>' +
+            '<span class="artifact-category">' + category + '</span>' +
+            (fileType ? '<span class="artifact-file-type">' + fileType.toUpperCase() + '</span>' : '') +
+            '<div class="artifact-title">' + title + '</div>' +
+            '<div class="artifact-meta">' +
+              '<span class="artifact-price">' + price + ' Solar</span>' +
+              '<span class="artifact-date">' + date + '</span>' +
+            '</div>' +
+            '<button class="download-btn" onclick="requestDownload(\'' + artifactId + '\', \'' + title.replace(/'/g, "\\'") + '\', \'' + category.replace(/'/g, "\\'") + '\', \'' + fileType.replace(/'/g, "\\'") + '\')">' +
+              '&#x2B07; Download' +
+            '</button>' +
+          '</div>';
+      }
+      gridHtml += '</div>';
+
+      document.getElementById('content-area').innerHTML = statsHtml + gridHtml;
+    }
+
+    async function loadLibrary() {
+      try {
+        var res = await fetch('/api/my-library?userId=' + currentUser.id, { credentials: 'include' });
+        if (!res.ok) {
+          if (res.status === 404) {
+            showEmptyState();
+            return;
+          }
+          throw new Error('Failed to load library');
+        }
+        var data = await res.json();
+        var artifacts = Array.isArray(data) ? data : (data.artifacts || data.items || data.purchases || []);
+        if (artifacts.length === 0) {
+          showEmptyState();
+          return;
+        }
+        renderLibrary(artifacts);
+      } catch (e) {
+        showError('Unable to load your library. Please try again.');
+      }
+    }
+
+    function showUserInfo(user) {
+      var headerUser = document.getElementById('header-user');
+      var avatar = document.getElementById('user-avatar');
+      var userName = document.getElementById('user-name');
+      var balance = document.getElementById('solar-balance');
+
+      var initial = (user.username || user.name || 'U').charAt(0).toUpperCase();
+      avatar.textContent = initial;
+      userName.textContent = user.username || user.name || 'User';
+      balance.textContent = formatPrice(user.total_solar || user.totalSolar || user.balance || 0) + ' Solar';
+      headerUser.style.display = 'flex';
+    }
+
+    async function init() {
+      document.getElementById('content-area').innerHTML =
+        '<div class="loading"><div class="spinner"></div><div class="loading-text">Loading your library...</div></div>';
+
+      var user = await checkSession();
+      if (!user) {
+        showSignInPrompt();
+        return;
+      }
+
+      currentUser = user;
+      showUserInfo(user);
+      await loadLibrary();
+    }
+
+    init();
+  </script>
+
+
+</body></html>

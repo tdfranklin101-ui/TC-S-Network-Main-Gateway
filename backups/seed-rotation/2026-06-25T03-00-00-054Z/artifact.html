@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Artifact Record — TC-S Network</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--green:#39FF14;--cyan:#00bfff;--purple:#8a2be2;--orange:#ffa500;--gold:#ffd700;--bg:#0a0a0a;--card:#111;--border:#222}
+body{font-family:'Space Grotesk',system-ui,sans-serif;background:var(--bg);color:#e0e0e0;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:linear-gradient(rgba(57,255,20,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(57,255,20,.02) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+a{color:var(--cyan);text-decoration:none}
+a:hover{text-decoration:underline}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:#111}
+::-webkit-scrollbar-thumb{background:#333;border-radius:3px}
+.top-bar{display:flex;justify-content:space-between;align-items:center;padding:10px 20px;position:relative;z-index:1}
+.back-link{display:inline-flex;align-items:center;gap:6px;font-size:14px;color:var(--cyan);transition:color .2s}
+.back-link:hover{color:var(--green);text-decoration:none}
+.nav-links{display:flex;gap:8px}
+.nav-links a{display:inline-flex;align-items:center;gap:4px;padding:6px 14px;border:1px solid var(--border);border-radius:8px;font-size:13px;color:#aaa;transition:all .2s}
+.nav-links a:hover{border-color:var(--green);color:var(--green);text-decoration:none}
+.container{max-width:880px;margin:0 auto;padding:0 16px 60px;position:relative;z-index:1}
+.loading{text-align:center;padding:80px 20px;color:#666;font-size:14px}
+.loading .spinner{display:inline-block;width:30px;height:30px;border:3px solid #333;border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.error-state{text-align:center;padding:80px 20px;color:#ff4444;font-size:14px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.record{animation:fadeUp .4s ease}
+.hero{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:18px;display:flex;gap:20px;flex-wrap:wrap}
+.hero-art{width:120px;height:120px;border-radius:14px;background:#0d0d0d;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:54px;overflow:hidden;flex-shrink:0}
+.hero-art img{width:100%;height:100%;object-fit:cover}
+.hero-info{flex:1;min-width:220px}
+.h-title{font-family:'Orbitron',sans-serif;font-size:clamp(20px,3.5vw,28px);font-weight:900;line-height:1.2;background:linear-gradient(135deg,var(--green),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px}
+.badges{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.badge{font-size:9px;text-transform:uppercase;letter-spacing:1px;padding:3px 9px;border-radius:10px;font-weight:600}
+.badge.cat{color:var(--purple);background:rgba(138,43,226,.12);border:1px solid rgba(138,43,226,.3)}
+.badge.cls{color:var(--cyan);background:rgba(0,191,255,.1);border:1px solid rgba(0,191,255,.3)}
+.badge.agent{color:var(--green);background:rgba(57,255,20,.1);border:1px solid rgba(57,255,20,.3)}
+.badge.human{color:var(--gold);background:rgba(255,215,0,.1);border:1px solid rgba(255,215,0,.3)}
+.h-meta{font-size:12px;color:#888;margin-bottom:4px}
+.h-meta a{color:var(--cyan)}
+.stat-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.stat{background:#0d0d0d;border:1px solid var(--border);border-radius:10px;padding:10px 14px;flex:1;min-width:120px}
+.stat .lbl{font-size:9px;color:#666;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
+.stat .val{font-family:'Orbitron',sans-serif;font-size:16px;color:var(--gold);font-weight:700}
+.stat .sub{font-size:10px;color:#666;margin-top:2px}
+.panel{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:18px}
+.panel-title{font-family:'Orbitron',sans-serif;font-size:13px;color:var(--cyan);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.desc{font-size:14px;color:#cfcfcf;line-height:1.6;white-space:pre-wrap}
+.tags{margin-top:12px;display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-size:10px;color:#9aa;background:#0d0d0d;border:1px solid var(--border);border-radius:10px;padding:3px 9px}
+.ll-section{padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.ll-section:last-child{border-bottom:none}
+.ll-label{font-size:11px;color:var(--green);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;font-weight:600}
+.ll-val{color:#bbb;font-size:12px;line-height:1.6}
+.ll-formula{font-family:'Orbitron',sans-serif;color:var(--gold);font-size:12px}
+.fit{display:flex;align-items:center;gap:14px;margin-bottom:14px;flex-wrap:wrap}
+.fit-score{font-family:'Orbitron',sans-serif;font-size:30px;font-weight:900;color:var(--green);line-height:1}
+.fit-score small{font-size:13px;color:#666}
+.fit-exp{font-size:12px;color:#aaa;flex:1;min-width:180px}
+.needs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}
+.need{background:#0d0d0d;border:1px solid var(--border);border-radius:10px;padding:10px 12px}
+.need-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.need-name{font-size:12px;color:#ddd;font-weight:600;text-transform:capitalize}
+.intensity{font-size:9px;text-transform:uppercase;letter-spacing:.5px;padding:2px 8px;border-radius:8px;font-weight:600}
+.intensity.high{color:var(--green);background:rgba(57,255,20,.14)}
+.intensity.medium{color:var(--gold);background:rgba(255,215,0,.12)}
+.intensity.low{color:var(--cyan);background:rgba(0,191,255,.1)}
+.intensity.none{color:#555;background:rgba(255,255,255,.04)}
+.need-exp{font-size:11px;color:#888;line-height:1.5}
+.framework-title{font-size:11px;color:var(--purple);text-transform:uppercase;letter-spacing:1px;margin:14px 0 8px;font-weight:600}
+.dna-owned{border-color:rgba(57,255,20,.3)}
+.dna-locked{border-color:rgba(255,165,0,.25);background:linear-gradient(135deg,rgba(255,165,0,.04),rgba(138,43,226,.04))}
+.lock-note{font-size:13px;color:#cbb;line-height:1.6;margin-bottom:14px}
+.pre{background:#070707;border:1px solid var(--border);border-radius:10px;padding:14px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:#cfcfcf;white-space:pre-wrap;word-break:break-word;max-height:420px;overflow:auto}
+.btn{display:inline-flex;align-items:center;gap:6px;font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;padding:10px 20px;border-radius:24px;cursor:pointer;letter-spacing:.5px;transition:all .25s;border:2px solid;text-decoration:none}
+.btn.green{border-color:var(--green);background:rgba(57,255,20,.08);color:var(--green)}
+.btn.green:hover{background:rgba(57,255,20,.18);text-decoration:none}
+.btn.cyan{border-color:var(--cyan);background:rgba(0,191,255,.08);color:var(--cyan)}
+.btn.cyan:hover{background:rgba(0,191,255,.18);text-decoration:none}
+.btn.ghost{border-color:#333;background:transparent;color:#aaa}
+.btn.ghost:hover{border-color:var(--green);color:var(--green);text-decoration:none}
+.btn-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px}
+.owned-flag{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--green);background:rgba(57,255,20,.1);border:1px solid rgba(57,255,20,.3);border-radius:20px;padding:5px 14px;margin-bottom:14px;font-weight:600}
+.preview-media{width:100%;margin-top:6px;border-radius:10px}
+.muted{color:#666;font-size:11px;margin-top:8px}
+.ll-loading{font-size:12px;color:#666;font-style:italic}
+@media(max-width:600px){.hero{flex-direction:column}.hero-art{width:90px;height:90px;font-size:40px}}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <a href="/marketplace.html" class="back-link">← Marketplace</a>
+  <div class="nav-links">
+    <a href="/marketplace.html">🛒 <span>Marketplace</span></a>
+    <a href="/member-dashboard.html">📦 <span>My Storage</span></a>
+  </div>
+</div>
+
+<div class="container">
+  <div id="loadingState" class="loading"><div class="spinner"></div><div>Loading artifact record…</div></div>
+  <div id="errorState" class="error-state" style="display:none"></div>
+  <div id="record" class="record" style="display:none"></div>
+</div>
+
+<script>
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function getId(){return new URLSearchParams(location.search).get('id');}
+
+function fmtDate(d){if(!d)return '';try{return new Date(d).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});}catch(e){return '';}}
+
+function copyLink(){
+  navigator.clipboard.writeText(location.href).then(function(){
+    var b=document.getElementById('copyBtn');if(b){var t=b.innerHTML;b.innerHTML='✓ Link copied';setTimeout(function(){b.innerHTML=t;},1500);}
+  }).catch(function(){});
+}
+
+function energyReport(a){
+  var kwh=parseFloat(a.kwhFootprint)||0, solar=parseFloat(a.solarPrice)||0;
+  var content=(kwh*0.7).toFixed(4),proc=(kwh*0.15).toFixed(4),stor=(kwh*0.05).toFixed(4),del=(kwh*0.1).toFixed(4);
+  var src=a.sourceType==='agent'||a.creatorIsAgent?'🤖 AI Creator':'👤 Human Creator';
+  return ''+
+    '<div class="ll-section"><div class="ll-label">⚡ Energy Footprint Breakdown</div><div class="ll-val">'+
+      'Content creation: '+content+' kWh<br>Processing: '+proc+' kWh<br>Storage: '+stor+' kWh<br>Delivery: '+del+' kWh<br>'+
+      '<b style="color:#ddd">Total: '+kwh.toFixed(4)+' kWh</b></div></div>'+
+    '<div class="ll-section"><div class="ll-label">☀️ Solar Pricing Formula</div><div class="ll-val">'+
+      '<div class="ll-formula">'+kwh.toFixed(4)+' kWh ÷ 4,913 kWh/Solar = '+solar.toFixed(4)+' Solar</div>'+
+      '<div style="margin-top:4px;color:#888;font-size:10px">1 Solar = 4,913 kWh renewable energy equivalent</div></div></div>'+
+    '<div class="ll-section"><div class="ll-label">🔬 Creation</div><div class="ll-val">'+src+'<br>'+
+      'File type: '+esc(a.fileType||'digital')+(a.fileDuration?(' · '+a.fileDuration):'')+'</div></div>';
+}
+
+var INTENS=['none','low','medium','high'];
+function needCard(name,obj){
+  var inten=(obj&&INTENS.indexOf(obj.intensity)>=0)?obj.intensity:'none';
+  var exp=obj&&obj.explanation?obj.explanation:'';
+  var label=name.replace(/([A-Z])/g,' $1');
+  return '<div class="need"><div class="need-head"><span class="need-name">'+esc(label)+'</span>'+
+    '<span class="intensity '+inten+'">'+inten+'</span></div>'+
+    (exp?'<div class="need-exp">'+esc(exp)+'</div>':'')+'</div>';
+}
+
+function renderDecisionLens(an){
+  var el=document.getElementById('llReport');if(!el)return;
+  if(!an){el.innerHTML='<div class="ll-loading">Decision Lens analysis is not available for this artifact.</div>';return;}
+  var html='';
+  if(an.fitScore!=null){
+    html+='<div class="fit"><div class="fit-score">'+esc(an.fitScore)+'<small>/10</small></div>'+
+      '<div class="fit-exp">'+esc(an.fitExplanation||an.needsSummary||'')+'</div></div>';
+  }
+  if(an.needsSummary){html+='<div class="ll-section"><div class="ll-label">🧭 Needs Summary</div><div class="ll-val">'+esc(an.needsSummary)+'</div></div>';}
+  var m=an.humanNeedsMapping&&an.humanNeedsMapping.maslow;
+  var r=an.humanNeedsMapping&&an.humanNeedsMapping.robbins;
+  if(m){
+    html+='<div class="framework-title">Maslow\u2019s Hierarchy</div><div class="needs-grid">';
+    ['physiological','safety','loveBelonging','esteem','selfActualization','transcendence'].forEach(function(k){if(m[k])html+=needCard(k,m[k]);});
+    html+='</div>';
+  }
+  if(r){
+    html+='<div class="framework-title">Tony Robbins\u2019 Core Needs</div><div class="needs-grid">';
+    ['certainty','variety','significance','loveConnection','growth','contribution'].forEach(function(k){if(r[k])html+=needCard(k,r[k]);});
+    html+='</div>';
+  }
+  if(an.energyInsight){html+='<div class="ll-section" style="margin-top:12px"><div class="ll-label">⚡ Energy Insight</div><div class="ll-val">'+esc(an.energyInsight)+'</div></div>';}
+  if(an.provisionNotes){html+='<div class="ll-section"><div class="ll-label">📦 Provision Notes</div><div class="ll-val">'+esc(an.provisionNotes)+'</div></div>';}
+  el.innerHTML=html||'<div class="ll-loading">No decision-lens detail returned.</div>';
+}
+
+function loadDecisionLens(a){
+  // Use stored analysis if present, else request a fresh one (analyzes public metadata only).
+  if(a.lifelens_analysis){
+    try{var stored=typeof a.lifelens_analysis==='string'?JSON.parse(a.lifelens_analysis):a.lifelens_analysis;renderDecisionLens(stored);return;}catch(e){}
+  }
+  fetch('/api/lifelens/analyze-artifact',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+    artifactId:a.id,title:a.title,description:a.description,category:a.category,priceSolar:a.solarPrice,kwhFootprint:a.kwhFootprint
+  })}).then(function(r){return r.json();}).then(function(d){renderDecisionLens(d&&d.success?d.analysis:null);}).catch(function(){renderDecisionLens(null);});
+}
+
+function dnaSection(a){
+  var isAudio=(a.previewType==='audio')||((a.fileType||'').indexOf('audio')===0);
+  var isVideo=(a.previewType==='video')||((a.fileType||'').indexOf('video')===0);
+  var teaserSrc=a.streamPreviewUrl||a.previewUrl||a.streamUrl||a.streamingUrl;
+  var teaser='';
+  if(teaserSrc&&isAudio)teaser='<div class="ll-label" style="color:var(--cyan)">🎧 Preview</div><audio class="preview-media" controls src="'+esc(teaserSrc)+'"></audio>';
+  else if(teaserSrc&&isVideo)teaser='<div class="ll-label" style="color:var(--cyan)">🎬 Preview</div><video class="preview-media" controls src="'+esc(teaserSrc)+'"></video>';
+
+  if(a.isOwner){
+    var body='<div class="owned-flag">✓ You own this — full DNA unlocked</div>';
+    if(a.contentPreview)body+='<div class="pre">'+esc(a.contentPreview)+'</div>';
+    if(teaser)body+='<div style="margin-top:14px">'+teaser+'</div>';
+    body+='<div class="btn-row">'+
+      (a.hasFile?'<a class="btn green" href="/member-dashboard.html">⬇ Open in your Storage</a>':'')+
+      '<button class="btn ghost" id="copyBtn" onclick="copyLink()">🔗 Copy share link</button></div>';
+    return '<div class="panel dna-owned"><div class="panel-title">🧬 Artifact DNA</div>'+body+'</div>';
+  }
+  // Locked for non-owners
+  var locked='<div class="lock-note">🔒 The full artifact formation (its DNA) is reserved for the creator and owners. '+
+    'You can see the complete record above, but the actual content unlocks once you create or purchase it.</div>';
+  if(teaser)locked+='<div style="margin-bottom:14px">'+teaser+'</div>';
+  locked+='<div class="btn-row">'+
+    '<a class="btn green" href="/marketplace.html?search='+encodeURIComponent(a.title||'')+'">🛒 View in Marketplace</a>'+
+    '<button class="btn ghost" id="copyBtn" onclick="copyLink()">🔗 Copy share link</button></div>';
+  return '<div class="panel dna-locked"><div class="panel-title">🧬 Artifact DNA</div>'+locked+'</div>';
+}
+
+function render(a){
+  var art=a.coverArtUrl?'<img src="'+esc(a.coverArtUrl)+'" alt="">':'🧿';
+  var srcBadge=(a.sourceType==='agent'||a.creatorIsAgent)?'<span class="badge agent">AI Created</span>':'<span class="badge human">Human Created</span>';
+  var creator='';
+  if(a.creatorName||a.creatorUsername){
+    var nm=esc(a.creatorName||a.creatorUsername);
+    creator=a.creatorUsername?('<a href="/member-profile.html?username='+encodeURIComponent(a.creatorUsername)+'">'+nm+'</a>'):nm;
+  }
+  var energyEq=((parseFloat(a.solarPrice)||0)*4913).toFixed(2);
+  var html='<div class="hero">'+
+      '<div class="hero-art">'+art+'</div>'+
+      '<div class="hero-info">'+
+        '<div class="h-title">'+esc(a.title||'Untitled')+'</div>'+
+        '<div class="badges"><span class="badge cat">'+esc(a.category||'General')+'</span>'+
+          '<span class="badge cls">Class '+esc(a.artifactClass||'A')+'</span>'+srcBadge+'</div>'+
+        (creator?'<div class="h-meta">Created by '+creator+'</div>':'')+
+        (a.createdAt?'<div class="h-meta">'+fmtDate(a.createdAt)+'</div>':'')+
+        '<div class="stat-row">'+
+          '<div class="stat"><div class="lbl">Price</div><div class="val">'+(parseFloat(a.solarPrice)||0).toFixed(4)+' ☀️</div><div class="sub">Solar</div></div>'+
+          '<div class="stat"><div class="lbl">Energy Footprint</div><div class="val">'+(parseFloat(a.kwhFootprint)||0).toFixed(4)+'</div><div class="sub">kWh to create</div></div>'+
+          '<div class="stat"><div class="lbl">Energy Equivalent</div><div class="val">'+energyEq+'</div><div class="sub">kWh of value</div></div>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+
+  if(a.description){
+    html+='<div class="panel"><div class="panel-title">📄 Description</div><div class="desc">'+esc(a.description)+'</div>'+
+      (a.searchTags&&a.searchTags.length?'<div class="tags">'+a.searchTags.map(function(t){return '<span class="tag">'+esc(t)+'</span>';}).join('')+'</div>':'')+'</div>';
+  }
+
+  // DNA (gated content)
+  html+=dnaSection(a);
+
+  // LifeLens energy/pricing report (public)
+  html+='<div class="panel"><div class="panel-title">🧿 LifeLens — Energy & Pricing</div>'+energyReport(a)+'</div>';
+
+  // Rob Low Decision Lens (Maslow + Robbins) — public analysis of the record
+  html+='<div class="panel"><div class="panel-title">🧭 Rob Low Decision Lens — Human Needs</div>'+
+    '<div id="llReport"><div class="ll-loading">Mapping this item to Maslow\u2019s hierarchy and Robbins\u2019 core needs…</div></div></div>';
+
+  var rec=document.getElementById('record');
+  rec.innerHTML=html;
+  document.getElementById('loadingState').style.display='none';
+  rec.style.display='block';
+  loadDecisionLens(a);
+}
+
+async function load(){
+  var id=getId();
+  if(!id){document.getElementById('loadingState').style.display='none';document.getElementById('errorState').style.display='block';document.getElementById('errorState').textContent='No artifact id provided.';return;}
+  try{
+    var res=await fetch('/api/artifacts/'+encodeURIComponent(id)+'/detail');
+    var data=await res.json();
+    if(res.ok&&data&&data.success&&data.artifact){render(data.artifact);}
+    else{document.getElementById('loadingState').style.display='none';var e=document.getElementById('errorState');e.style.display='block';e.textContent=(data&&data.error)?data.error:'Artifact not found.';}
+  }catch(err){
+    document.getElementById('loadingState').style.display='none';var e=document.getElementById('errorState');e.style.display='block';e.textContent='Could not load this artifact record.';
+  }
+}
+load();
+</script>
+</body>
+</html>

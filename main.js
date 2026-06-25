@@ -8236,6 +8236,82 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // GET /api/artifacts/{id}/eia - Read-only Energetic-Ethical Alignment metric for pre-purchase
+  // inspection. Side-effect-free: no purchase, no balance change, no persistence. Calls the SAi UIM
+  // layer in PERMISSIVE mode so an outage degrades gracefully (never fabricates a score); falls back
+  // to the last stored value in lifelens_analysis->'uim' if the live service is unreachable.
+  if (pathname.startsWith('/api/artifacts/') && pathname.endsWith('/eia') && req.method === 'GET') {
+    try {
+      const artifactId = pathname.split('/')[3];
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!artifactId || !pool || !uuidRegex.test(artifactId)) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ available: false, source: 'error', message: 'Valid artifact ID required' }));
+        return;
+      }
+      const r = await pool.query(
+        'SELECT id, title, category, kwh_footprint, solar_amount_s, lifelens_analysis FROM artifacts WHERE id = $1',
+        [artifactId]
+      );
+      if (r.rows.length === 0) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ available: false, source: 'error', message: 'Artifact not found' }));
+        return;
+      }
+      const a = r.rows[0];
+      const uimResult = await SAiUIM.requestUimMetric({
+        artifact_id: a.id,
+        name: a.title,
+        category: a.category,
+        energy_footprint_kwh: a.kwh_footprint,
+        solar_price: parseFloat(a.solar_amount_s),
+      }, 'inspect', { strict: false });
+      const metric = uimResult && uimResult.uim_metric;
+      if (metric) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          available: true,
+          source: 'live',
+          approved: !!metric.approved,
+          alignmentScore: metric.alignment_score != null ? metric.alignment_score : null,
+          approvalThreshold: metric.approval_threshold != null ? metric.approval_threshold : null,
+          indicesLive: metric.indices_freshness ? metric.indices_freshness.live : null,
+          rendered: uimResult.rendered_text || null,
+        }));
+        return;
+      }
+      // Live service unavailable — fall back to the last stored metric, if any.
+      const stored = (a.lifelens_analysis && a.lifelens_analysis.uim) ? a.lifelens_analysis.uim : null;
+      if (stored && stored.alignmentScore != null) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          available: true,
+          source: 'cached',
+          approved: !!stored.approved,
+          alignmentScore: stored.alignmentScore,
+          approvalThreshold: null,
+          indicesLive: stored.indicesLive != null ? stored.indicesLive : null,
+          rendered: 'Showing the most recent stored alignment result — the live SAi UIM layer is currently unreachable.',
+          evaluatedAt: stored.evaluatedAt || null,
+        }));
+        return;
+      }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        available: false,
+        source: 'unavailable',
+        message: (uimResult && uimResult.message) || 'Energetic-ethical alignment service is currently unavailable.',
+        rendered: uimResult ? uimResult.rendered_text : null,
+      }));
+      return;
+    } catch (e) {
+      console.error('EIA inspection error:', e.message);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ available: false, source: 'error', message: 'Energetic-ethical alignment check failed.' }));
+      return;
+    }
+  }
+
   // GET /api/artifacts/{id}/detail - Full artifact info for detail page
   if (pathname.startsWith('/api/artifacts/') && pathname.endsWith('/detail') && req.method === 'GET') {
     try {

@@ -6665,6 +6665,19 @@
                         alert('Insufficient Solar balance. You need ' + (result.required || '?') + ' Solar but only have ' + (result.available || '?') + ' Solar.');
                     } else if (result.isOwner) {
                         alert('This is your listing! You already own this artifact.');
+                    } else if (response.status === 403 && result.error === 'Purchase blocked by energetic-ethical alignment') {
+                        var msg = '🚫 Purchase blocked by Energetic-Ethical Alignment (EIA)\n\n';
+                        if (result.alignmentScore != null) {
+                            msg += 'Alignment score: ' + result.alignmentScore;
+                            if (result.approvalThreshold != null) msg += ' (needs ≥ ' + result.approvalThreshold + ')';
+                            msg += '\n\n';
+                        }
+                        msg += result.rendered
+                            ? result.rendered
+                            : 'This artifact did not meet the network\'s energetic-ethical alignment threshold.';
+                        alert(msg);
+                    } else if (response.status === 503) {
+                        alert('⚠️ ' + (result.error || 'Energetic-ethical alignment check is temporarily unavailable. Please try again shortly.'));
                     } else {
                         alert('Purchase failed: ' + (result.error || 'Unknown error'));
                     }
@@ -8589,6 +8602,11 @@
             html += '<div class="detail-section">';
             html += '<div class="detail-section-label">\ud83e\uddff LifeLens Report</div>';
 
+            html += '<div id="eia-inspect-block" style="margin-bottom:14px;padding:12px 14px;background:rgba(0,255,255,0.05);border:1px solid rgba(0,255,255,0.2);border-radius:10px;">';
+            html += '<div style="font-size:11px;font-weight:700;color:#00FFFF;margin-bottom:6px;">\u2696\ufe0f Energetic-Ethical Alignment (EIA)</div>';
+            html += '<div id="eia-inspect-content" style="font-size:12px;color:#bbb;line-height:1.5;">\u23f3 Checking alignment with the SAi UIM layer\u2026</div>';
+            html += '</div>';
+
             html += '<div style="margin-bottom:10px;">';
             html += '<div style="font-size:11px;font-weight:700;color:#00FFFF;margin-bottom:4px;">\u26a1 Energy Footprint Breakdown</div>';
             html += '<div class="detail-section-val">';
@@ -8771,6 +8789,60 @@
             var overlay = document.getElementById('item-detail-overlay');
             overlay.style.display = 'flex';
             requestAnimationFrame(function() { overlay.classList.add('visible'); });
+
+            loadEiaInspection(id);
+        }
+
+        var EIA_ACTIVE_ID = null;
+        async function loadEiaInspection(artifactId) {
+            EIA_ACTIVE_ID = artifactId;
+            var box = document.getElementById('eia-inspect-content');
+            if (!box) return;
+            try {
+                var resp = await fetch('/api/artifacts/' + artifactId + '/eia');
+                var data = await resp.json();
+                // Guard: bail if the user switched to a different artifact while this was in flight.
+                if (EIA_ACTIVE_ID !== artifactId) return;
+                box = document.getElementById('eia-inspect-content');
+                if (!box) return;
+
+                if (!data || data.available === false) {
+                    box.innerHTML = '<span style="color:#ffae42;">\u26a0\ufe0f Alignment check unavailable.</span> '
+                        + escapeHtml((data && data.message) || 'The SAi UIM layer could not be reached right now. Purchases are gated at checkout regardless.');
+                    return;
+                }
+
+                var approved = !!data.approved;
+                var badge = approved
+                    ? '<span style="display:inline-block;background:rgba(57,255,20,0.15);color:#39FF14;border:1px solid rgba(57,255,20,0.4);padding:2px 10px;border-radius:20px;font-weight:700;font-size:11px;">\u2713 ALIGNED \u2014 PASSES</span>'
+                    : '<span style="display:inline-block;background:rgba(255,69,58,0.15);color:#ff6b6b;border:1px solid rgba(255,69,58,0.4);padding:2px 10px;border-radius:20px;font-weight:700;font-size:11px;">\u2715 NOT ALIGNED \u2014 WOULD BLOCK</span>';
+
+                var html = '<div style="margin-bottom:8px;">' + badge + '</div>';
+
+                if (data.alignmentScore != null) {
+                    var scoreColor = approved ? '#39FF14' : '#ff6b6b';
+                    html += '<div style="margin-bottom:6px;">Alignment score: <b style="color:' + scoreColor + ';">' + escapeHtml(String(data.alignmentScore)) + '</b>';
+                    if (data.approvalThreshold != null) {
+                        html += ' <span style="color:#888;">(needs \u2265 ' + escapeHtml(String(data.approvalThreshold)) + ')</span>';
+                    }
+                    html += '</div>';
+                }
+
+                if (data.rendered) {
+                    html += '<div style="color:#cfcfcf;font-size:11px;line-height:1.55;margin-top:6px;border-top:1px solid rgba(255,255,255,0.08);padding-top:6px;">' + escapeHtml(data.rendered) + '</div>';
+                }
+
+                if (data.source === 'cached') {
+                    html += '<div style="color:#888;font-size:10px;margin-top:6px;font-style:italic;">Stored result (live layer unreachable)</div>';
+                } else if (data.indicesLive === false) {
+                    html += '<div style="color:#ffae42;font-size:10px;margin-top:6px;">Energy indices not live \u2014 evaluated against cached indices.</div>';
+                }
+
+                box.innerHTML = html;
+            } catch (e) {
+                box = document.getElementById('eia-inspect-content');
+                if (box) box.innerHTML = '<span style="color:#ffae42;">\u26a0\ufe0f Alignment check unavailable.</span> Could not reach the alignment service.';
+            }
         }
 
         function copyProductPrompt() {
@@ -9897,7 +9969,7 @@
     }
   </script>
 
-  <!-- Kid Solar Controller - Persistent across pages -->
+  <!-- Physics doesn't negotiate; economics do -->
   <script src="/js/kid-solar-controller.js"></script>
 <script src="/js/apps-dropdown.js"></script>
 </body>

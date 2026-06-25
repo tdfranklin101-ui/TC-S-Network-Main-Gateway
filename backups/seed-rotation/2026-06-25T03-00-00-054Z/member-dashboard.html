@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Member Dashboard — TC-S Network</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--green:#39FF14;--cyan:#00bfff;--purple:#8a2be2;--orange:#ffa500;--gold:#ffd700;--bg:#0a0a0a;--card:#111;--border:#222}
+body{font-family:'Space Grotesk',system-ui,sans-serif;background:var(--bg);color:#e0e0e0;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:linear-gradient(rgba(57,255,20,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(57,255,20,.02) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+a{color:var(--cyan);text-decoration:none}
+a:hover{text-decoration:underline}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:#111}
+::-webkit-scrollbar-thumb{background:#333;border-radius:3px}
+.top-bar{display:flex;justify-content:space-between;align-items:center;padding:10px 20px;position:relative;z-index:1;flex-wrap:wrap;gap:8px}
+.back-link{display:inline-flex;align-items:center;gap:6px;font-size:14px;color:var(--cyan);transition:color .2s}
+.back-link:hover{color:var(--green);text-decoration:none}
+.nav-links{display:flex;gap:8px;flex-wrap:wrap}
+.nav-links a{display:inline-flex;align-items:center;gap:4px;padding:6px 14px;border:1px solid var(--border);border-radius:8px;font-size:12px;color:#aaa;transition:all .2s}
+.nav-links a:hover{border-color:var(--green);color:var(--green);text-decoration:none}
+.container{max-width:1100px;margin:0 auto;padding:0 16px 60px;position:relative;z-index:1}
+header{text-align:center;padding:20px 20px 10px}
+header h1{font-family:'Orbitron',sans-serif;font-size:clamp(20px,4vw,28px);background:linear-gradient(135deg,var(--cyan),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:900}
+header p{color:#666;font-size:13px;margin-top:4px}
+
+.my-card{background:linear-gradient(135deg,rgba(0,191,255,.08),rgba(57,255,20,.05));border:1px solid rgba(0,191,255,.3);border-radius:16px;padding:24px;margin:16px 0 24px;display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+.my-card .mc-icon{font-size:48px}
+.my-card .mc-info{flex:1;min-width:200px}
+.my-card .mc-name{font-family:'Orbitron',sans-serif;font-size:22px;color:var(--cyan);font-weight:900}
+.my-card .mc-username{font-size:12px;color:#666;margin-top:2px}
+.my-card .mc-stats{display:flex;flex-wrap:wrap;gap:16px;margin-top:12px}
+.mc-stat{background:rgba(0,0,0,.4);border:1px solid var(--border);border-radius:10px;padding:10px 16px;text-align:center;min-width:100px}
+.mc-stat .stat-val{font-family:'Orbitron',sans-serif;font-size:18px;font-weight:700;color:var(--gold)}
+.mc-stat .stat-lbl{font-size:9px;color:#666;text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+.my-card .mc-badge{margin-left:auto;align-self:flex-start}
+.badge{display:inline-block;padding:5px 12px;border-radius:20px;font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase}
+.badge-member{background:rgba(0,191,255,.12);color:var(--cyan);border:1px solid rgba(0,191,255,.3)}
+.badge-agent{background:rgba(57,255,20,.12);color:var(--green);border:1px solid rgba(57,255,20,.3)}
+.badge-external{background:rgba(138,43,226,.12);color:var(--purple);border:1px solid rgba(138,43,226,.3)}
+.login-prompt{text-align:center;padding:30px;background:var(--card);border:1px solid var(--border);border-radius:16px;margin:16px 0 24px}
+.login-prompt p{color:#888;font-size:14px;margin-bottom:12px}
+.btn{font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;padding:10px 24px;border:2px solid var(--green);background:rgba(57,255,20,.08);color:var(--green);border-radius:30px;cursor:pointer;transition:all .3s;letter-spacing:1px}
+.btn:hover{background:rgba(57,255,20,.18);box-shadow:0 0 20px rgba(57,255,20,.2)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-cyan{border-color:var(--cyan);color:var(--cyan);background:rgba(0,191,255,.08)}
+.btn-cyan:hover{background:rgba(0,191,255,.18);box-shadow:0 0 20px rgba(0,191,255,.2)}
+.btn-sm{font-size:10px;padding:6px 14px}
+
+.section-title{font-family:'Orbitron',sans-serif;font-size:14px;color:var(--cyan);text-transform:uppercase;letter-spacing:2px;margin:24px 0 12px;display:flex;align-items:center;gap:8px}
+.section-title .count{font-size:11px;color:var(--green);font-family:'Space Grotesk',sans-serif}
+
+.tabs{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:16px}
+.tab{flex:1;padding:12px;text-align:center;font-size:12px;font-weight:600;color:#666;cursor:pointer;border-bottom:3px solid transparent;transition:all .2s;text-transform:uppercase;letter-spacing:1px;user-select:none}
+.tab.active{color:var(--green);border-bottom-color:var(--green)}
+.tab:hover:not(.active){color:var(--cyan)}
+.tab-content{display:none}
+.tab-content.active{display:block;animation:fadeUp .4s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+.members-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;max-height:420px;overflow-y:auto;padding:4px}
+.member-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;cursor:pointer;transition:all .2s;position:relative}
+.member-card:hover{border-color:var(--cyan);transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,191,255,.1)}
+.member-card .m-icon{font-size:28px;margin-bottom:4px}
+.member-card .m-name{font-size:11px;font-weight:600;color:#ddd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.member-card .m-balance{font-size:10px;color:var(--gold);font-family:'Orbitron',sans-serif;margin-top:4px}
+.member-card .m-meta{font-size:8px;color:#555;margin-top:4px}
+.member-card .m-type{position:absolute;top:6px;right:6px;font-size:7px;padding:2px 6px;border-radius:8px}
+.member-card.human .m-type{background:rgba(0,191,255,.12);color:var(--cyan)}
+.member-card.agent .m-type{background:rgba(57,255,20,.12);color:var(--green)}
+.member-card.external .m-type{background:rgba(138,43,226,.12);color:var(--purple)}
+
+.storage-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
+.storage-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;transition:border-color .2s}
+.storage-card:hover{border-color:var(--green)}
+.storage-card .s-title{font-size:13px;font-weight:600;color:#ddd;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.storage-card .s-cat{display:inline-block;font-size:8px;text-transform:uppercase;letter-spacing:1px;color:var(--purple);background:rgba(138,43,226,.1);padding:2px 8px;border-radius:10px;margin-bottom:6px}
+.storage-card .s-utility{display:inline-block;font-size:8px;text-transform:uppercase;letter-spacing:1px;color:var(--cyan);background:rgba(0,191,255,.1);padding:2px 8px;border-radius:10px;margin-left:4px}
+.storage-card .s-price{font-size:11px;color:var(--gold);font-family:'Orbitron',sans-serif}
+.storage-card .s-meta{font-size:10px;color:#555;margin-top:6px;display:flex;justify-content:space-between}
+.storage-empty{color:#555;font-size:13px;padding:30px;text-align:center;font-style:italic;border:1px dashed #333;border-radius:10px}
+.cat-group{margin-bottom:16px}
+.cat-group-title{font-size:11px;color:var(--green);font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+
+.agent-select-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-bottom:16px}
+.agent-sel{background:var(--card);border:2px solid var(--border);border-radius:10px;padding:12px;text-align:center;cursor:pointer;transition:all .2s}
+.agent-sel:hover{border-color:var(--cyan)}
+.agent-sel.selected{border-color:var(--green);background:rgba(57,255,20,.06);box-shadow:0 0 12px rgba(57,255,20,.15)}
+.agent-sel .as-icon{font-size:24px}
+.agent-sel .as-name{font-size:10px;font-weight:600;color:#ddd;margin-top:4px}
+.agent-sel .as-spec{font-size:8px;color:var(--purple);margin-top:2px}
+.task-form{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-top:12px}
+.task-form label{display:block;font-size:11px;color:var(--cyan);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:600}
+.task-form select,.task-form textarea,.task-form input{width:100%;background:#0a0a0a;border:1px solid #333;color:#ccc;padding:10px 12px;border-radius:8px;font-size:13px;font-family:'Space Grotesk',sans-serif;outline:none;transition:border-color .2s;margin-bottom:14px}
+.task-form select:focus,.task-form textarea:focus,.task-form input:focus{border-color:var(--green);color:var(--green)}
+.task-form textarea{min-height:80px;resize:vertical}
+.task-status{margin-top:12px;padding:12px;border-radius:8px;font-size:12px;display:none}
+.task-status.pending{display:block;background:rgba(255,215,0,.08);color:var(--gold);border:1px solid rgba(255,215,0,.2)}
+.task-status.success{display:block;background:rgba(57,255,20,.08);color:var(--green);border:1px solid rgba(57,255,20,.2)}
+.task-status.error{display:block;background:rgba(255,68,68,.08);color:#ff4444;border:1px solid rgba(255,68,68,.2)}
+.loading{text-align:center;padding:30px;color:#666;font-size:13px}
+.spinner{display:inline-block;width:24px;height:24px;border:3px solid #333;border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:600px){
+  .my-card{flex-direction:column;text-align:center;align-items:center}
+  .my-card .mc-badge{margin-left:0}
+  .members-grid{grid-template-columns:repeat(auto-fill,minmax(110px,1fr))}
+  .agent-select-grid{grid-template-columns:repeat(auto-fill,minmax(100px,1fr))}
+  .storage-grid{grid-template-columns:1fr}
+  .tab{font-size:10px;padding:10px 6px;letter-spacing:.5px}
+}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <a href="/" class="back-link">← Home</a>
+  <div class="nav-links">
+    <a href="/marketplace.html">🛒 Marketplace</a>
+    <a href="/my-library.html">📚 Library</a>
+    <a href="/ecosystem-test.html">🤖 Agents</a>
+    <a href="/my-solar.html">☀️ Solar</a>
+  </div>
+</div>
+
+<div class="container">
+  <header>
+    <h1>Member Dashboard</h1>
+    <p>Your card, storage holds, and agent task assignment</p>
+  </header>
+
+  <div id="myCardSection"></div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="network">Network Members</div>
+    <div class="tab" data-tab="storage">My Storage Holds</div>
+    <div class="tab" data-tab="assign">Assign Agent Task</div>
+  </div>
+
+  <div class="tab-content active" id="tab-network">
+    <div class="section-title">Network Members <span class="count" id="memberCount"></span></div>
+    <div id="membersGrid" class="members-grid">
+      <div class="loading"><div class="spinner"></div><br>Loading members...</div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="tab-storage">
+    <div class="section-title">Storage Holds <span class="count" id="storageCount"></span></div>
+    <div id="storageContent">
+      <div class="loading"><div class="spinner"></div><br>Loading storage...</div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="tab-assign">
+    <div class="section-title">Assign Agent to Task</div>
+    <p style="color:#888;font-size:13px;margin-bottom:16px">Select an agent and describe what you need. The agent will create the artifact and deliver it to your storage holds. You can assign KID SOL to orchestrate the best agent automatically.</p>
+    <div id="agentSelectGrid" class="agent-select-grid"></div>
+    <div class="task-form" id="taskForm" style="display:none">
+      <div id="selectedAgentInfo" style="margin-bottom:14px;font-size:13px;color:var(--green)"></div>
+      <label>Category (optional for KID SOL)</label>
+      <select id="taskCategory">
+        <option value="">Let agent decide</option>
+      </select>
+      <label>What do you need?</label>
+      <textarea id="taskPurpose" placeholder="Describe what you want the agent to create or find for you..."></textarea>
+      <button class="btn" id="submitTask" onclick="submitAgentTask()">Commission Agent</button>
+      <div class="task-status" id="taskStatus"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+var AGENTS=[
+{code:'01',name:'Alpha',icon:'\u{1F170}\uFE0F',specialty:'Computronium'},
+{code:'02',name:'Bravo',icon:'\u{1F171}\uFE0F',specialty:'Culture'},
+{code:'03',name:'Charlie',icon:'\u00A9\uFE0F',specialty:'Basic Needs'},
+{code:'04',name:'Delta',icon:'\u{1F53A}',specialty:'Rent'},
+{code:'05',name:'Echo',icon:'\u{1F4E1}',specialty:'Energy'},
+{code:'06',name:'Foxtrot',icon:'\u{1F98A}',specialty:'Music'},
+{code:'07',name:'Golf',icon:'\u26F3',specialty:'Video'},
+{code:'08',name:'Hotel',icon:'\u{1F3E8}',specialty:'Art'},
+{code:'09',name:'India',icon:'\u{1F1EE}\u{1F1F3}',specialty:'Photo'},
+{code:'10',name:'Juliet',icon:'\u{1F339}',specialty:'Writing'},
+{code:'11',name:'Kilo',icon:'\u2696\uFE0F',specialty:'AI Tools'},
+{code:'12',name:'Lima',icon:'\u{1F33F}',specialty:'AI Create'},
+{code:'13',name:'Nova',icon:'\u{1F4AB}',specialty:'Software'},
+{code:'14',name:'Orion',icon:'\u{1F30C}',specialty:'Docs'},
+{code:'15',name:'Pulse',icon:'\u{1F493}',specialty:'Games'},
+{code:'16',name:'Quasar',icon:'\u2728',specialty:'Utilities'},
+{code:'17',name:'Radiant',icon:'\u2600\uFE0F',specialty:'Computronium'},
+{code:'18',name:'Solaris',icon:'\u{1F506}',specialty:'Energy'},
+{code:'19',name:'Tesla',icon:'\u26A1',specialty:'AI Tools'},
+{code:'20',name:'Zenith',icon:'\u{1F3D4}\uFE0F',specialty:'Culture'},
+{code:'ks',name:'KID SOL',icon:'\u{1F451}',specialty:'Orchestrator'},
+{code:'ksr',name:'Kid Solar',icon:'\u{1F31E}',specialty:'Computronium Polymath'}
+];
+
+var ALL_CATEGORIES=['Computronium','Culture','Basic Needs','Rent','Energy','Music','Songs','Video','Videos','Art','Photo','Writing','AI Tools','AI Create','Software','Docs','Education','Games','Utilities','3D Printing','Health & Wellness','Community'];
+
+var currentSession = null;
+var selectedAgent = null;
+
+function esc(s) {
+  if (!s) return '';
+  var d = document.createElement('div');
+  d.textContent = String(s);
+  return d.innerHTML;
+}
+
+document.querySelectorAll('.tab').forEach(function(tab){
+  tab.addEventListener('click',function(){
+    document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active')});
+    document.querySelectorAll('.tab-content').forEach(function(t){t.classList.remove('active')});
+    tab.classList.add('active');
+    document.getElementById('tab-'+tab.dataset.tab).classList.add('active');
+  });
+});
+
+async function init() {
+  await checkSession();
+  loadMembers();
+  buildAgentSelector();
+  buildCategoryDropdown();
+  if (currentSession) {
+    loadStorage();
+  }
+}
+
+async function checkSession() {
+  try {
+    var res = await fetch('/api/session');
+    var data = await res.json();
+    if (data.success && data.authenticated) {
+      currentSession = data;
+      buildMyCard(data);
+    } else {
+      document.getElementById('myCardSection').innerHTML =
+        '<div class="login-prompt"><p>Sign in to see your member card, storage holds, and assign agents</p><a href="/marketplace.html" class="btn btn-cyan btn-sm">Sign In via Marketplace</a></div>';
+    }
+  } catch(e) {
+    document.getElementById('myCardSection').innerHTML =
+      '<div class="login-prompt"><p>Could not check session</p></div>';
+  }
+}
+
+function buildMyCard(session) {
+  var icon = session.is_agent ? '\u{1F916}' : '\u{1F464}';
+  var badgeClass = session.is_agent ? 'badge-agent' : 'badge-member';
+  var badgeText = session.is_agent ? 'Agent' : 'Member';
+  var balance = session.solarBalance != null ? parseFloat(session.solarBalance).toFixed(4) : '0.0000';
+  var name = session.name || session.username || 'Member';
+
+  document.getElementById('myCardSection').innerHTML =
+    '<div class="my-card">' +
+      '<div class="mc-icon">' + icon + '</div>' +
+      '<div class="mc-info">' +
+        '<div class="mc-name">' + name + '</div>' +
+        '<div class="mc-username">@' + (session.username || '') + ' \u00B7 Member ID: MBR-' + (session.userId || '') + '</div>' +
+        '<div class="mc-stats" id="myCardStats">' +
+          '<div class="mc-stat"><div class="stat-val">' + balance + '</div><div class="stat-lbl">Solar Balance</div></div>' +
+          '<div class="mc-stat"><div class="stat-val" id="myArtifactCount">...</div><div class="stat-lbl">Artifacts Owned</div></div>' +
+          '<div class="mc-stat"><div class="stat-val" id="myCreatedCount">...</div><div class="stat-lbl">Created</div></div>' +
+          '<div class="mc-stat"><div class="stat-val" id="myNetWorth">...</div><div class="stat-lbl">Net Worth</div></div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="mc-badge"><span class="badge ' + badgeClass + '">' + badgeText + '</span></div>' +
+    '</div>';
+}
+
+async function loadMembers() {
+  try {
+    var res = await fetch('/api/members/cards');
+    var data = await res.json();
+    if (!data.success) { document.getElementById('membersGrid').innerHTML = '<div style="color:#888;padding:20px">No member data available</div>'; return; }
+    var grid = document.getElementById('membersGrid');
+    grid.innerHTML = '';
+    document.getElementById('memberCount').textContent = '(' + data.members.length + ' members)';
+
+    data.members.forEach(function(m) {
+      var card = document.createElement('div');
+      var typeClass = m.isExternalAgent ? 'external' : (m.isAgent ? 'agent' : 'human');
+      var typeLabel = m.isExternalAgent ? 'EXT' : (m.isAgent ? 'AGT' : 'MBR');
+      card.className = 'member-card ' + typeClass;
+      card.innerHTML =
+        '<div class="m-type">' + esc(typeLabel) + '</div>' +
+        '<div class="m-icon">' + (m.icon || '\u{1F464}') + '</div>' +
+        '<div class="m-name">' + esc(m.name || m.username) + '</div>' +
+        '<div class="m-balance">' + parseFloat(m.balance || 0).toFixed(2) + ' \u2600\uFE0F</div>' +
+        '<div class="m-meta">' + (m.artifactCount || 0) + ' artifacts</div>';
+      card.addEventListener('click', function() {
+        window.location.href = '/member-profile.html?username=' + encodeURIComponent(m.username);
+      });
+      grid.appendChild(card);
+    });
+  } catch(e) {
+    document.getElementById('membersGrid').innerHTML = '<div style="color:#ff4444;padding:20px">Failed to load members</div>';
+  }
+}
+
+async function loadStorage() {
+  var el = document.getElementById('storageContent');
+  try {
+    var res = await fetch('/api/members/storage');
+    var data = await res.json();
+    if (!data.success) {
+      el.innerHTML = '<div class="storage-empty">Sign in to view your storage holds</div>';
+      return;
+    }
+
+    if (document.getElementById('myArtifactCount')) document.getElementById('myArtifactCount').textContent = data.totalOwned || 0;
+    if (document.getElementById('myCreatedCount')) document.getElementById('myCreatedCount').textContent = data.totalCreated || 0;
+    if (document.getElementById('myNetWorth')) {
+      var nw = (parseFloat(currentSession.solarBalance || 0) + parseFloat(data.portfolioValue || 0)).toFixed(2);
+      document.getElementById('myNetWorth').textContent = nw + ' S';
+    }
+
+    document.getElementById('storageCount').textContent = '(' + (data.totalOwned || 0) + ' items)';
+
+    if (!data.artifacts || data.artifacts.length === 0) {
+      el.innerHTML = '<div class="storage-empty">No artifacts in your storage yet. Purchase items from the marketplace or commission an agent to create something for you.</div>';
+      return;
+    }
+
+    var grouped = {};
+    data.artifacts.forEach(function(a) {
+      var cat = a.category || 'Uncategorized';
+      if (!grouped[cat]) grouped[cat] = [];
+      grouped[cat].push(a);
+    });
+
+    var html = '';
+    Object.keys(grouped).sort().forEach(function(cat) {
+      html += '<div class="cat-group"><div class="cat-group-title">' + esc(cat) + ' <span style="color:#555">(' + grouped[cat].length + ')</span></div><div class="storage-grid">';
+      grouped[cat].forEach(function(a) {
+        var utilityLabel = a.utilityType ? a.utilityType.replace(/-/g, ' ') : '';
+        html += '<a class="storage-card" href="/artifact.html?id=' + encodeURIComponent(a.artifactId || a.id || '') + '" style="text-decoration:none;color:inherit;display:block">' +
+          '<div class="s-title">' + esc(a.title || 'Untitled') + '</div>' +
+          '<span class="s-cat">' + esc(cat) + '</span>' +
+          (utilityLabel ? '<span class="s-utility">' + esc(utilityLabel) + '</span>' : '') +
+          '<div class="s-price">S ' + parseFloat(a.pricePaid || a.price || 0).toFixed(4) + '</div>' +
+          '<div class="s-meta"><span>' + (a.acquiredMethod || 'owned') + '</span><span>' + (a.acquiredDate ? new Date(a.acquiredDate).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '') + '</span></div>' +
+        '</a>';
+      });
+      html += '</div></div>';
+    });
+    el.innerHTML = html;
+  } catch(e) {
+    el.innerHTML = '<div class="storage-empty">Could not load storage: ' + e.message + '</div>';
+  }
+}
+
+function buildAgentSelector() {
+  var grid = document.getElementById('agentSelectGrid');
+  grid.innerHTML = '';
+  AGENTS.forEach(function(a) {
+    var el = document.createElement('div');
+    el.className = 'agent-sel';
+    el.dataset.code = a.code;
+    el.innerHTML =
+      '<div class="as-icon">' + a.icon + '</div>' +
+      '<div class="as-name">' + a.name + '</div>' +
+      '<div class="as-spec">' + a.specialty + '</div>';
+    el.addEventListener('click', function() {
+      document.querySelectorAll('.agent-sel').forEach(function(s){s.classList.remove('selected')});
+      el.classList.add('selected');
+      selectedAgent = a;
+      document.getElementById('taskForm').style.display = 'block';
+      document.getElementById('selectedAgentInfo').innerHTML =
+        a.icon + ' <b>' + a.name + '</b> selected \u2014 ' + a.specialty + ' Specialist' +
+        (a.code === 'ks' ? '<br><span style="color:var(--gold);font-size:11px">KID SOL will analyze your request and assign the best agents automatically</span>' : '');
+      var catSel = document.getElementById('taskCategory');
+      if (a.code === 'ks') {
+        catSel.value = '';
+        catSel.disabled = false;
+      } else {
+        for (var i = 0; i < catSel.options.length; i++) {
+          if (catSel.options[i].value === a.specialty) { catSel.selectedIndex = i; break; }
+        }
+      }
+    });
+    grid.appendChild(el);
+  });
+}
+
+function buildCategoryDropdown() {
+  var sel = document.getElementById('taskCategory');
+  ALL_CATEGORIES.forEach(function(cat) {
+    var opt = document.createElement('option');
+    opt.value = cat;
+    opt.textContent = cat;
+    sel.appendChild(opt);
+  });
+}
+
+async function submitAgentTask() {
+  if (!currentSession) { alert('Please sign in first'); return; }
+  if (!selectedAgent) { alert('Please select an agent'); return; }
+
+  var purpose = document.getElementById('taskPurpose').value.trim();
+  if (!purpose) { alert('Please describe what you need'); return; }
+
+  var category = document.getElementById('taskCategory').value;
+  var btn = document.getElementById('submitTask');
+  var status = document.getElementById('taskStatus');
+
+  btn.disabled = true;
+  btn.textContent = 'Commissioning...';
+  status.className = 'task-status pending';
+  status.style.display = 'block';
+  status.innerHTML = '<div class="spinner" style="width:16px;height:16px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:8px"></div> ' +
+    selectedAgent.icon + ' ' + selectedAgent.name + ' is working on your request...';
+
+  try {
+    var body = {
+      agentCode: selectedAgent.code,
+      purpose: purpose,
+      requestorId: currentSession.userId
+    };
+    if (selectedAgent.code !== 'ks' && category) {
+      body.categories = [category];
+    } else if (selectedAgent.code !== 'ks') {
+      body.categories = [selectedAgent.specialty];
+    }
+
+    var res = await fetch('/api/agents/daily-tasks/custom-run', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    var data = await res.json();
+
+    if (data.success) {
+      var created = data.results ? data.results.filter(function(r){return r.created && r.created.length}).reduce(function(sum,r){return sum.concat(r.created)},[]) : [];
+      var delivered = data.commissionedSales || [];
+      status.className = 'task-status success';
+      var msg = 'Task complete! ';
+      if (delivered.length > 0) {
+        msg += delivered.length + ' artifact(s) delivered to your storage holds:<br>';
+        delivered.forEach(function(d) {
+          msg += '\u2022 <b>' + (d.title || 'Artifact') + '</b> (' + (d.category || '') + ') \u2014 S ' + parseFloat(d.totalRequestorCost || d.price || 0).toFixed(4) + '<br>';
+        });
+      } else if (created.length > 0) {
+        msg += created.length + ' artifact(s) created:<br>';
+        created.forEach(function(c) {
+          msg += '\u2022 <b>' + (c.title || 'Artifact') + '</b> (' + (c.category || '') + ') \u2014 S ' + parseFloat(c.price || 0).toFixed(4) + '<br>';
+        });
+      } else {
+        msg += 'Agent completed the task. Check your storage holds for deliveries.';
+      }
+      status.innerHTML = msg;
+      loadStorage();
+      checkSession();
+    } else {
+      status.className = 'task-status error';
+      status.textContent = 'Task failed: ' + (data.error || 'Unknown error');
+    }
+  } catch(e) {
+    status.className = 'task-status error';
+    status.textContent = 'Error: ' + e.message;
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Commission Agent';
+}
+
+init();
+</script>
+</body>
+</html>

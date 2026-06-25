@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Solar Transfer Demo | The Current-See</title>
+  <link rel="stylesheet" href="/css/common.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <style>
+    :root {
+      --primary-color: #7bc144;
+      --secondary-color: #f3c622;
+      --accent-color: #3498db;
+    }
+    
+    body {
+      background: linear-gradient(135deg, #f9fcf7, #fdfcf4);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #333;
+      position: relative;
+    }
+    
+    body::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: repeating-conic-gradient(
+        rgba(123, 193, 68, 0.03) 0deg 15deg,
+        rgba(243, 198, 34, 0.03) 15deg 30deg
+      );
+      animation: sun-ray-rotate 120s linear infinite;
+      z-index: -1;
+    }
+    
+    @keyframes sun-ray-rotate {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    
+    .wallet-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      padding: 2rem;
+      margin-bottom: 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .wallet-card::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 150px;
+      height: 150px;
+      background: radial-gradient(circle, rgba(243,198,34,0.1) 0%, rgba(255,255,255,0) 70%);
+      z-index: 0;
+    }
+    
+    .wallet-title {
+      font-weight: 600;
+      font-size: 1.5rem;
+      color: var(--text-dark);
+      margin-bottom: 1rem;
+      border-bottom: 2px solid var(--accent-light);
+      padding-bottom: 0.5rem;
+      display: inline-block;
+    }
+    
+    .wallet-balance {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+      margin: 1rem 0;
+    }
+    
+    .wallet-address {
+      font-family: 'Roboto Mono', monospace;
+      background: #f5f7fa;
+      padding: 0.75rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      border: 1px dashed #ddd;
+    }
+    
+    .transaction-list {
+      margin-top: 2rem;
+    }
+    
+    .transaction-item {
+      border-bottom: 1px solid #eee;
+      padding: 1rem 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .transaction-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--primary-light);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 1rem;
+      flex-shrink: 0;
+    }
+    
+    .transaction-icon.outgoing {
+      background: var(--accent-light);
+    }
+    
+    .transaction-details {
+      flex-grow: 1;
+    }
+    
+    .transaction-amount {
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+    
+    .transaction-amount.outgoing {
+      color: var(--accent-dark);
+    }
+    
+    .transaction-amount.incoming {
+      color: var(--primary-dark);
+    }
+    
+    .btn-transfer {
+      background: var(--accent-color);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn-transfer:hover {
+      background: var(--accent-dark);
+      transform: translateY(-2px);
+    }
+    
+    .transfer-status {
+      margin-top: 2rem;
+      padding: 1rem;
+      border-radius: 8px;
+      background: #f4f9ff;
+      border-left: 4px solid var(--accent-color);
+    }
+    
+    .transfer-success {
+      background: #f0f9f0;
+      border-left: 4px solid var(--primary-color);
+    }
+    
+    .transfer-error {
+      background: #fff4f4;
+      border-left: 4px solid #e74c3c;
+    }
+    
+    .transfer-controls {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    
+    /* Transaction History Styles */
+    .transaction-history-container {
+      margin: 3rem 0;
+      background-color: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      padding: 1.5rem;
+      position: relative;
+    }
+    
+    .section-title {
+      color: var(--text-dark);
+      margin-bottom: 1.5rem;
+      position: relative;
+      display: inline-block;
+      font-size: 1.35rem;
+      font-weight: 700;
+    }
+    
+    .section-title::after {
+      content: '';
+      position: absolute;
+      bottom: -8px;
+      left: 0;
+      width: 50px;
+      height: 3px;
+      background: var(--accent-color);
+      border-radius: 2px;
+    }
+    
+    .transaction-history-log {
+      max-height: 300px;
+      overflow-y: auto;
+      background-color: #f9f9f9;
+      border-radius: 8px;
+      padding: 0.5rem 1rem;
+    }
+    
+    .transaction-history-entry {
+      padding: 1rem;
+      border-bottom: 1px solid #e5e5e5;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    
+    .transaction-history-entry:last-child {
+      border-bottom: none;
+    }
+    
+    .transaction-history-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    
+    .transaction-history-icon.transfer-to {
+      background-color: #e1f5fe;
+      color: #0288d1;
+    }
+    
+    .transaction-history-icon.transfer-from {
+      background-color: #e8f5e9;
+      color: #388e3c;
+    }
+    
+    .transaction-history-details {
+      flex-grow: 1;
+    }
+    
+    .transaction-history-time {
+      font-size: 0.8rem;
+      color: #767676;
+    }
+    
+    .transaction-history-amount {
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+    
+    .transaction-history-empty {
+      padding: 2rem;
+      text-align: center;
+      color: #767676;
+      font-style: italic;
+    }
+    
+    /* Network Speed Controls */
+    .transaction-speed-container {
+      background-color: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    
+    .network-speed-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    
+    /* Pending Transfer Animation */
+    .pending-transfer {
+      position: relative;
+      padding-left: 25px;
+    }
+    
+    .pending-transfer::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--accent-color);
+      border-top: 2px solid transparent;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: translateY(-50%) rotate(0deg); }
+      100% { transform: translateY(-50%) rotate(360deg); }
+    }
+    
+    @media (min-width: 768px) {
+      .wallet-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <!-- HEADER_PLACEHOLDER -->
+    
+    <main>
+      <div class="container">
+        <h1 class="page-title">Solar Transfer Demo</h1>
+        <p class="page-description">
+          This demonstration shows how SOLAR tokens can be transferred between two wallets in a secure and efficient manner.
+        </p>
+        
+        <div class="wallet-grid">
+          <!-- First Wallet -->
+          <div class="wallet-card">
+            <h2 class="wallet-title">Wallet A</h2>
+            <p class="wallet-label">Balance:</p>
+            <div class="wallet-balance" id="wallet-a-balance">10.000000 SOLAR</div>
+            <p class="wallet-label">Address:</p>
+            <div class="wallet-address">SOL-A87B49C3E711D590</div>
+            
+            <div class="transaction-list">
+              <h3>Recent Transactions</h3>
+              <div class="transaction-item">
+                <div class="transaction-icon incoming">
+                  <i class="fas fa-arrow-down"></i>
+                </div>
+                <div class="transaction-details">
+                  <div class="transaction-title">Received from Distribution</div>
+                  <div class="transaction-date">April 10, 2025</div>
+                </div>
+                <div class="transaction-amount incoming">+10.000000 SOLAR</div>
+              </div>
+            </div>
+            
+            <div class="transfer-controls">
+              <input type="number" id="transfer-amount" class="form-control" placeholder="Amount to transfer" min="0.000001" max="10" step="0.000001">
+              <button class="btn-transfer" id="send-to-b">Send to Wallet B</button>
+            </div>
+          </div>
+          
+          <!-- Second Wallet -->
+          <div class="wallet-card">
+            <h2 class="wallet-title">Wallet B</h2>
+            <p class="wallet-label">Balance:</p>
+            <div class="wallet-balance" id="wallet-b-balance">5.000000 SOLAR</div>
+            <p class="wallet-label">Address:</p>
+            <div class="wallet-address">SOL-D42E18F7A90B3528</div>
+            
+            <div class="transaction-list">
+              <h3>Recent Transactions</h3>
+              <div class="transaction-item">
+                <div class="transaction-icon incoming">
+                  <i class="fas fa-arrow-down"></i>
+                </div>
+                <div class="transaction-details">
+                  <div class="transaction-title">Received from Distribution</div>
+                  <div class="transaction-date">April 10, 2025</div>
+                </div>
+                <div class="transaction-amount incoming">+5.000000 SOLAR</div>
+              </div>
+            </div>
+            
+            <div class="transfer-controls">
+              <input type="number" id="transfer-amount-b" class="form-control" placeholder="Amount to transfer" min="0.000001" max="5" step="0.000001">
+              <button class="btn-transfer" id="send-to-a">Send to Wallet A</button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="transfer-status" id="transfer-status" style="display: none;">
+          <h3>Transfer Status</h3>
+          <p id="transfer-message"></p>
+        </div>
+        
+        <!-- Transfer History Log -->
+        <div class="transaction-history-container mt-4">
+          <h2 class="section-title">Transfer History</h2>
+          <div class="transaction-history-log" id="transaction-history-log">
+            <!-- Transactions will be added here dynamically -->
+            <div class="transaction-history-empty" id="empty-history-message">No transfers have been made yet.</div>
+          </div>
+        </div>
+
+        <!-- Transaction Speed Simulator -->
+        <div class="transaction-speed-container mt-4">
+          <h3 class="section-title">Network Speed Simulator</h3>
+          <div class="network-speed-controls">
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="radio" name="networkSpeed" id="speedFast" value="fast" checked>
+              <label class="form-check-label" for="speedFast">Fast (Instant)</label>
+            </div>
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="radio" name="networkSpeed" id="speedMedium" value="medium">
+              <label class="form-check-label" for="speedMedium">Medium (2s)</label>
+            </div>
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="radio" name="networkSpeed" id="speedSlow" value="slow">
+              <label class="form-check-label" for="speedSlow">Slow (5s)</label>
+            </div>
+          </div>
+        </div>
+        
+        <div class="button-group text-center mt-5">
+          <a href="/wallet.html" class="btn-secondary">Back to Wallet</a>
+          <a href="/" class="btn-return">Return to Home</a>
+        </div>
+      </div>
+    </main>
+    
+    <!-- FOOTER_PLACEHOLDER -->
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const walletABalance = document.getElementById('wallet-a-balance');
+      const walletBBalance = document.getElementById('wallet-b-balance');
+      const transferAmount = document.getElementById('transfer-amount');
+      const transferAmountB = document.getElementById('transfer-amount-b');
+      const sendToB = document.getElementById('send-to-b');
+      const sendToA = document.getElementById('send-to-a');
+      const transferStatus = document.getElementById('transfer-status');
+      const transferMessage = document.getElementById('transfer-message');
+      const historyLog = document.getElementById('transaction-history-log');
+      const emptyHistoryMessage = document.getElementById('empty-history-message');
+      const speedControls = document.querySelectorAll('input[name="networkSpeed"]');
+      
+      // Initial balances
+      let balanceA = 10.000000;
+      let balanceB = 5.000000;
+      let transferCount = 0;
+      
+      // Get the selected network speed
+      function getNetworkSpeed() {
+        const selectedSpeed = document.querySelector('input[name="networkSpeed"]:checked').value;
+        switch (selectedSpeed) {
+          case 'slow':
+            return 5000; // 5 seconds
+          case 'medium':
+            return 2000; // 2 seconds
+          case 'fast':
+          default:
+            return 0; // Instant
+        }
+      }
+      
+      // Update displays
+      function updateBalances() {
+        walletABalance.textContent = balanceA.toFixed(6) + ' SOLAR';
+        walletBBalance.textContent = balanceB.toFixed(6) + ' SOLAR';
+        
+        // Update max values on inputs
+        transferAmount.max = balanceA;
+        transferAmountB.max = balanceB;
+      }
+      
+      // Transfer from A to B
+      sendToB.addEventListener('click', function() {
+        const amount = parseFloat(transferAmount.value);
+        
+        // Validate amount
+        if (isNaN(amount) || amount <= 0) {
+          showError('Please enter a valid amount greater than 0.');
+          return;
+        }
+        
+        if (amount > balanceA) {
+          showError('Insufficient balance in Wallet A.');
+          return;
+        }
+        
+        // Disable send buttons during transfer
+        sendToB.disabled = true;
+        sendToA.disabled = true;
+        
+        // Get transaction time
+        const transactionDate = new Date();
+        const formattedDate = transactionDate.toLocaleDateString();
+        const formattedTime = transactionDate.toLocaleTimeString();
+        
+        // Create a pending transaction in the history log
+        const pendingEntryId = 'pending-transfer-' + Date.now();
+        addToTransferHistory({
+          id: pendingEntryId,
+          fromWallet: 'Wallet A',
+          toWallet: 'Wallet B',
+          amount: amount,
+          timestamp: formattedTime,
+          date: formattedDate,
+          status: 'pending'
+        });
+        
+        // Add a delay based on network speed
+        const delay = getNetworkSpeed();
+        
+        setTimeout(() => {
+          // Process transfer
+          balanceA -= amount;
+          balanceB += amount;
+          updateBalances();
+          
+          // Update the pending transaction to completed
+          updateTransferHistoryStatus(pendingEntryId, 'completed');
+          
+          // Clear input
+          transferAmount.value = '';
+          
+          // Show success message
+          showSuccess(`Successfully transferred ${amount.toFixed(6)} SOLAR from Wallet A to Wallet B.`);
+          
+          // Add transaction to the wallet history
+          addTransaction('Wallet A', 'outgoing', 'Sent to Wallet B', formattedDate, amount);
+          addTransaction('Wallet B', 'incoming', 'Received from Wallet A', formattedDate, amount);
+          
+          // Re-enable send buttons
+          sendToB.disabled = false;
+          sendToA.disabled = false;
+        }, delay);
+      });
+      
+      // Transfer from B to A
+      sendToA.addEventListener('click', function() {
+        const amount = parseFloat(transferAmountB.value);
+        
+        // Validate amount
+        if (isNaN(amount) || amount <= 0) {
+          showError('Please enter a valid amount greater than 0.');
+          return;
+        }
+        
+        if (amount > balanceB) {
+          showError('Insufficient balance in Wallet B.');
+          return;
+        }
+        
+        // Disable send buttons during transfer
+        sendToB.disabled = true;
+        sendToA.disabled = true;
+        
+        // Get transaction time
+        const transactionDate = new Date();
+        const formattedDate = transactionDate.toLocaleDateString();
+        const formattedTime = transactionDate.toLocaleTimeString();
+        
+        // Create a pending transaction in the history log
+        const pendingEntryId = 'pending-transfer-' + Date.now();
+        addToTransferHistory({
+          id: pendingEntryId,
+          fromWallet: 'Wallet B',
+          toWallet: 'Wallet A',
+          amount: amount,
+          timestamp: formattedTime,
+          date: formattedDate,
+          status: 'pending'
+        });
+        
+        // Add a delay based on network speed
+        const delay = getNetworkSpeed();
+        
+        setTimeout(() => {
+          // Process transfer
+          balanceB -= amount;
+          balanceA += amount;
+          updateBalances();
+          
+          // Update the pending transaction to completed
+          updateTransferHistoryStatus(pendingEntryId, 'completed');
+          
+          // Clear input
+          transferAmountB.value = '';
+          
+          // Show success message
+          showSuccess(`Successfully transferred ${amount.toFixed(6)} SOLAR from Wallet B to Wallet A.`);
+          
+          // Add transaction to the wallet history
+          addTransaction('Wallet B', 'outgoing', 'Sent to Wallet A', formattedDate, amount);
+          addTransaction('Wallet A', 'incoming', 'Received from Wallet B', formattedDate, amount);
+          
+          // Re-enable send buttons
+          sendToB.disabled = false;
+          sendToA.disabled = false;
+        }, delay);
+      });
+      
+      // Add transaction to the wallet card
+      function addTransaction(walletId, type, title, date, amount) {
+        const walletElement = walletId === 'Wallet A' ? 
+          document.querySelector('.wallet-card:first-child .transaction-list') : 
+          document.querySelector('.wallet-card:last-child .transaction-list');
+        
+        const transactionHTML = `
+          <div class="transaction-item">
+            <div class="transaction-icon ${type}">
+              <i class="fas fa-arrow-${type === 'incoming' ? 'down' : 'up'}"></i>
+            </div>
+            <div class="transaction-details">
+              <div class="transaction-title">${title}</div>
+              <div class="transaction-date">${date}</div>
+            </div>
+            <div class="transaction-amount ${type}">${type === 'incoming' ? '+' : '-'}${amount.toFixed(6)} SOLAR</div>
+          </div>
+        `;
+        
+        walletElement.insertAdjacentHTML('afterbegin', transactionHTML);
+      }
+      
+      // Add a transaction to the transfer history log
+      function addToTransferHistory(transfer) {
+        // Hide empty message if this is the first transfer
+        if (transferCount === 0) {
+          emptyHistoryMessage.style.display = 'none';
+        }
+        
+        transferCount++;
+        
+        // Create the transfer entry HTML
+        const transferHTML = `
+          <div class="transaction-history-entry" id="${transfer.id}">
+            <div class="transaction-history-icon transfer-to">
+              <i class="fas fa-exchange-alt"></i>
+            </div>
+            <div class="transaction-history-details">
+              <div class="transaction-history-title">
+                ${transfer.status === 'pending' ? 
+                  `<span class="pending-transfer">Transfer in progress</span>` : 
+                  'Transfer completed'}
+              </div>
+              <div>${transfer.fromWallet} → ${transfer.toWallet}</div>
+              <div class="transaction-history-time">${transfer.date} at ${transfer.timestamp}</div>
+            </div>
+            <div class="transaction-history-amount">${transfer.amount.toFixed(6)} SOLAR</div>
+          </div>
+        `;
+        
+        // Add to the top of the history log
+        historyLog.insertAdjacentHTML('afterbegin', transferHTML);
+      }
+      
+      // Update a pending transaction status
+      function updateTransferHistoryStatus(id, status) {
+        const entry = document.getElementById(id);
+        if (entry) {
+          const titleElement = entry.querySelector('.transaction-history-title');
+          if (titleElement) {
+            if (status === 'completed') {
+              titleElement.innerHTML = 'Transfer completed';
+              entry.classList.add('transfer-completed');
+            } else if (status === 'failed') {
+              titleElement.innerHTML = '<span class="transfer-failed">Transfer failed</span>';
+              entry.classList.add('transfer-failed');
+            }
+          }
+        }
+      }
+      
+      function showSuccess(message) {
+        transferStatus.className = 'transfer-status transfer-success';
+        transferMessage.textContent = message;
+        transferStatus.style.display = 'block';
+        
+        // Hide after 5 seconds
+        setTimeout(() => {
+          transferStatus.style.display = 'none';
+        }, 5000);
+      }
+      
+      function showError(message) {
+        transferStatus.className = 'transfer-status transfer-error';
+        transferMessage.textContent = message;
+        transferStatus.style.display = 'block';
+        
+        // Hide after 5 seconds
+        setTimeout(() => {
+          transferStatus.style.display = 'none';
+        }, 5000);
+      }
+    });
+  </script>
+</body>
+</html>
