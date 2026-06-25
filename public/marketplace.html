@@ -5322,7 +5322,7 @@
                     
                     console.log('🎁 Bundle purchased:', result.purchase);
                 } else {
-                    alert(`❌ Purchase failed: ${result.error}`);
+                    alertPurchaseError(response.status, result);
                 }
             } catch (error) {
                 console.error('Bundle purchase error:', error);
@@ -5366,7 +5366,7 @@
                     var trackTitle = track.title || 'Monazite Track';
                     showPurchaseSuccessModal(result, trackTitle);
                 } else {
-                    alert(`❌ Purchase failed: ${result.error || 'Unknown error'}`);
+                    alertPurchaseError(response.status, result);
                 }
             } catch (error) {
                 console.error('Track purchase error:', error);
@@ -5414,7 +5414,7 @@
                 if (response.ok && result.success) {
                     showPurchaseSuccessModal(result, batrhymeTrack.title);
                 } else {
-                    alert(`❌ Purchase failed: ${result.error || 'Unknown error'}`);
+                    alertPurchaseError(response.status, result);
                 }
             } catch (error) {
                 console.error('Batrhyme purchase error:', error);
@@ -5462,7 +5462,7 @@
                 if (response.ok && result.success) {
                     showPurchaseSuccessModal(result, batrhyme2Track.title);
                 } else {
-                    alert(`❌ Purchase failed: ${result.error || 'Unknown error'}`);
+                    alertPurchaseError(response.status, result);
                 }
             } catch (error) {
                 console.error('Batrhyme 2 purchase error:', error);
@@ -5510,7 +5510,7 @@
                 if (response.ok && result.success) {
                     showPurchaseSuccessModal(result, batrhymeOmenTrack.title);
                 } else {
-                    alert(`❌ Purchase failed: ${result.error || 'Unknown error'}`);
+                    alertPurchaseError(response.status, result);
                 }
             } catch (error) {
                 console.error('Batrhyme Omen purchase error:', error);
@@ -5558,7 +5558,7 @@
                 if (response.ok && result.success) {
                     showPurchaseSuccessModal(result, gidgetTrack.title);
                 } else {
-                    alert(`❌ Purchase failed: ${result.error || 'Unknown error'}`);
+                    alertPurchaseError(response.status, result);
                 }
             } catch (error) {
                 console.error('Gidget Bardot purchase error:', error);
@@ -6138,7 +6138,7 @@
                     }
                     loadArtifacts();
                 } else {
-                    alert('Purchase failed: ' + (data.error || 'Unknown error'));
+                    alertPurchaseError(resp.status, data);
                 }
             } catch (err) {
                 console.error('Resale purchase error:', err);
@@ -6625,6 +6625,33 @@
         // Store current data for copying functionality
         let currentMyItemsData = null;
 
+        // Shared purchase-error handler: shows Energetic-Ethical Alignment (EIA)
+        // detail (score / threshold / explanation) on any blocked purchase, plus
+        // balance / ownership / service-unavailable cases. Used by every buy flow.
+        function alertPurchaseError(status, result) {
+            result = result || {};
+            if (result.error === 'Insufficient Solar balance') {
+                alert('Insufficient Solar balance. You need ' + (result.required || '?') + ' Solar but only have ' + (result.available || '?') + ' Solar.');
+            } else if (result.isOwner) {
+                alert('This is your listing! You already own this artifact.');
+            } else if (status === 403 && result.error === 'Purchase blocked by energetic-ethical alignment') {
+                var msg = '🚫 Purchase blocked by Energetic-Ethical Alignment (EIA)\n\n';
+                if (result.alignmentScore != null) {
+                    msg += 'Alignment score: ' + result.alignmentScore;
+                    if (result.approvalThreshold != null) msg += ' (needs ≥ ' + result.approvalThreshold + ')';
+                    msg += '\n\n';
+                }
+                msg += result.rendered
+                    ? result.rendered
+                    : 'This artifact did not meet the network\'s energetic-ethical alignment threshold.';
+                alert(msg);
+            } else if (status === 503) {
+                alert('⚠️ ' + (result.error || 'Energetic-ethical alignment check is temporarily unavailable. Please try again shortly.'));
+            } else {
+                alert('❌ Purchase failed: ' + (result.error || 'Unknown error'));
+            }
+        }
+
         async function purchaseArtifact(artifactId) {
             if (!currentUser) {
                 showSignupModal();
@@ -6661,26 +6688,7 @@
                     var artTitle = (artifact && artifact.title) || result.artifactTitle || 'Artifact';
                     showPurchaseSuccessModal(result, artTitle);
                 } else {
-                    if (result.error === 'Insufficient Solar balance') {
-                        alert('Insufficient Solar balance. You need ' + (result.required || '?') + ' Solar but only have ' + (result.available || '?') + ' Solar.');
-                    } else if (result.isOwner) {
-                        alert('This is your listing! You already own this artifact.');
-                    } else if (response.status === 403 && result.error === 'Purchase blocked by energetic-ethical alignment') {
-                        var msg = '🚫 Purchase blocked by Energetic-Ethical Alignment (EIA)\n\n';
-                        if (result.alignmentScore != null) {
-                            msg += 'Alignment score: ' + result.alignmentScore;
-                            if (result.approvalThreshold != null) msg += ' (needs ≥ ' + result.approvalThreshold + ')';
-                            msg += '\n\n';
-                        }
-                        msg += result.rendered
-                            ? result.rendered
-                            : 'This artifact did not meet the network\'s energetic-ethical alignment threshold.';
-                        alert(msg);
-                    } else if (response.status === 503) {
-                        alert('⚠️ ' + (result.error || 'Energetic-ethical alignment check is temporarily unavailable. Please try again shortly.'));
-                    } else {
-                        alert('Purchase failed: ' + (result.error || 'Unknown error'));
-                    }
+                    alertPurchaseError(response.status, result);
                 }
             } catch (error) {
                 console.error('Purchase error:', error);
