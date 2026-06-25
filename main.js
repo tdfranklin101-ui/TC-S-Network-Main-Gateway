@@ -7,19 +7,43 @@ const path = require('path');
 const SAiUIM = require('./services/SAiUIMLayer');
 
 // Persist the SAi UIM Ethical Layer's flat artifact_record_patch onto the artifacts row.
+// Stored under the existing lifelens_analysis jsonb column at key `uim` (rather than
+// dedicated columns) so it stays fully SQL-queryable/sortable without introducing a
+// schema change — a new column would create a dev↔prod delta that blocks publishing.
+// Query examples:
+//   ... WHERE (lifelens_analysis->'uim'->>'approved')::boolean = true
+//   ... ORDER BY (lifelens_analysis->'uim'->>'alignmentScore')::float DESC
 async function persistUimPatchToArtifact(executor, artifactId, patch) {
   if (!executor || !artifactId || !patch || typeof patch !== 'object') return;
-  const cols = ['uim_alignment_score','uim_approved','uim_rating','uim_policy_version','uim_indices_live','uim_indices_source','uim_certificate_signature','uim_evaluated_at'];
-  const sets = [];
-  const vals = [];
-  let i = 1;
-  for (const col of cols) {
-    if (patch[col] !== undefined) { sets.push(`${col} = $${i++}`); vals.push(patch[col]); }
+  const keyMap = {
+    uim_alignment_score: 'alignmentScore',
+    uim_approved: 'approved',
+    uim_rating: 'rating',
+    uim_policy_version: 'policyVersion',
+    uim_indices_live: 'indicesLive',
+    uim_indices_source: 'indicesSource',
+    uim_certificate_signature: 'certificateSignature',
+    uim_evaluated_at: 'evaluatedAt'
+  };
+  const uim = {};
+  for (const [snake, camel] of Object.entries(keyMap)) {
+    if (patch[snake] !== undefined && patch[snake] !== null) uim[camel] = patch[snake];
   }
-  if (sets.length === 0) return;
-  vals.push(artifactId);
+  if (Object.keys(uim).length === 0) return;
   try {
-    await executor.query(`UPDATE artifacts SET ${sets.join(', ')} WHERE id = $${i}`, vals);
+    // jsonb_set with COALESCE preserves any existing lifelens_analysis keys and
+    // creates the object if the column is currently null.
+    await executor.query(
+      `UPDATE artifacts
+         SET lifelens_analysis = jsonb_set(
+           COALESCE(lifelens_analysis, '{}'::jsonb),
+           '{uim}',
+           $1::jsonb,
+           true
+         )
+       WHERE id = $2`,
+      [JSON.stringify(uim), artifactId]
+    );
   } catch (e) {
     console.error('UIM patch persist error:', e.message);
   }
