@@ -1,0 +1,172 @@
+You are working on the TC-S Market app (current-see-website-tdfranklin101.replit.app).
+Integrate the SAi UIM Energetic Ethical Layer (a separate, already-deployed FastAPI
+service at https://s-ai-uim-layer-tdfranklin101.replit.app) so that every artifact
+LifeLens identifies and prices also gets an energetic-ethical ALIGNMENT METRIC,
+and purchases are gated on that metric.
+
+Do exactly the following:
+
+## 1. Add the client file
+Create `services/SAiUIMLayer.js` with the contents in the "CLIENT FILE" section below.
+Leave UIM_SHARED_SECRET empty for now (the layer is in open mode). If we later set a
+UIM_SHARED_SECRET secret on the layer, set the SAME value here.
+
+## 2. Wire the metric into the LifeLens flow at these moments
+LifeLens already produces an artifact object (id, name, category, energy_footprint_kwh,
+solar_price). After it runs, call the client with the matching context:
+
+  - Agent CREATES an artifact   -> attachUimMetricToLifeLensReport(report, artifact, "create")
+  - Artifact LISTED to the grid -> attachUimMetricToLifeLensReport(report, artifact, "list")
+  - Search "request a voucher to be created" -> attachUimMetricToLifeLensReport(report, artifact, "search_voucher_request")
+  - Member BUYS (checkout)       -> requestUimMetric(artifact, "purchase", { strict: true })
+
+Pass through these artifact fields:
+  artifact_id, transaction_id (the order/txn id — used as the idempotency key),
+  name, category (any of the 16 marketplace categories, e.g. "Art", "Songs (Recordings)",
+  "3D Printing"), energy_footprint_kwh, solar_price, and optional
+  attributes: { high_emissions, low_transparency }.
+
+## 3. Checkout is the GATING point (block on the decision)
+At purchase confirmation, use strict mode and block if not approved:
+
+  import { requestUimMetric } from "./services/SAiUIMLayer.js";
+
+  async function onConfirmPurchase(artifact) {
+    const result = await requestUimMetric(
+      {
+        artifact_id: artifact.id,
+        transaction_id: artifact.orderId,   // same id => same decision (idempotent)
+        name: artifact.name,
+        category: artifact.category,
+        energy_footprint_kwh: artifact.kwh, // from LifeLens
+        solar_price: artifact.priceSolar,   // from LifeLens
+      },
+      "purchase",
+      { strict: true }
+    );
+    const m = result.uim_metric;
+    if (!m.approved) {
+      showRejection(m.alignment_score, m.approval_threshold); // below 0.62 => blocked
+      return;
+    }
+    // approved: save result.artifact_record_patch onto the artifact record,
+    // print result.rendered_text in the artifact content, then settle Solar payment.
+    proceedWithSolarPayment(artifact, result.order_id);
+  }
+
+For create / list / search_voucher_request use the default (permissive) mode so the
+LifeLens report still renders if the layer is briefly unreachable — it will show the
+metric as UNAVAILABLE rather than faking a score.
+
+## 4. Persist what comes back
+- Merge result.lifelens_report_patch into the LifeLens report (mergeUimMetricIntoReport
+  does this and attaches uim_rendered for display in the artifact content).
+- Save result.artifact_record_patch (flat fields) onto the artifact record:
+  uim_alignment_score, uim_approved, uim_rating, uim_policy_version, uim_indices_live,
+  uim_indices_source, uim_certificate_signature, uim_evaluated_at.
+
+## 5. Notes / guarantees from the layer (do not re-implement these)
+- Idempotent: repeating a transaction_id returns the SAME decision/order
+  (idempotent_replay: true) — safe to retry checkout.
+- Honest freshness: each response states whether the score used the live Solar Reserve
+  oracle or a disclosed fallback (uim_metric.indices_freshness) — never a silent default.
+- Confirm the contract anytime with: GET https://s-ai-uim-layer-tdfranklin101.replit.app/lifelens/info
+
+Do not change scoring math, indices, or auth — those live in the Ethical Layer.
+
+============================================================
+CLIENT FILE — create services/SAiUIMLayer.js with exactly this:
+============================================================
+
+// ====================================================================
+// SAi UIM Frontend Integration — TC-S Market
+// Calls the SAi UIM Energetic Ethical Layer for the LifeLens alignment metric.
+// ====================================================================
+
+const UIM_API_BASE_URL = "https://s-ai-uim-layer-tdfranklin101.replit.app";
+
+// Shared-secret token for the LifeLens UIM metric endpoint.
+// Leave empty for open-mode testing; set it once the layer has UIM_SHARED_SECRET.
+const UIM_SHARED_SECRET = "";
+
+/**
+ * Request the UIM alignment metric for an already identified & priced artifact.
+ * @param {Object} artifact { artifact_id, transaction_id?, name?, category?,
+ *   energy_footprint_kwh?, solar_price?, attributes? }
+ * @param {("create"|"list"|"purchase"|"search_voucher_request")} [context]
+ * @param {Object} [opts] { indices_override?, idempotency_key?, strict? }
+ * @returns {Promise<Object>} { uim_metric, lifelens_report_patch, artifact_record_patch,
+ *   rendered_text, order_id, idempotent_replay }
+ */
+async function requestUimMetric(artifact, context = "unspecified", opts = {}) {
+  const headers = { "Content-Type": "application/json", "Accept": "application/json" };
+  if (UIM_SHARED_SECRET) headers["X-UIM-Token"] = UIM_SHARED_SECRET;
+
+  const body = { artifact, context };
+  if (opts.indices_override) body.indices_override = opts.indices_override;
+  if (opts.idempotency_key) body.idempotency_key = opts.idempotency_key;
+
+  try {
+    const response = await fetch(`${UIM_API_BASE_URL}/lifelens/uim_metric`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(body),
+    });
+    if (!response.ok) {
+      throw new Error(`UIM Metric API Error: ${response.status} ${response.statusText}`);
+    }
+    const result = await response.json();
+    console.log("🌞 UIM Metric:", {
+      artifact_id: artifact.artifact_id,
+      score: result.uim_metric?.alignment_score,
+      approved: result.uim_metric?.approved,
+      indices_live: result.uim_metric?.indices_freshness?.live,
+      replay: result.idempotent_replay,
+    });
+    return result;
+  } catch (error) {
+    console.error("❌ UIM Metric request failed:", error.message);
+    if (opts.strict) throw error; // STRICT: let the caller block on failure.
+    // PERMISSIVE (default): clearly-marked error envelope, no silent/fake score.
+    return {
+      error: true,
+      message: error.message,
+      uim_metric: null,
+      lifelens_report_patch: { uim_alignment: { error: error.message } },
+      artifact_record_patch: null,
+      rendered_text: `🌞 UIM Energetic-Ethical Alignment: UNAVAILABLE (${error.message})`,
+    };
+  }
+}
+
+/** Merge a UIM metric result into an existing LifeLens report object. */
+function mergeUimMetricIntoReport(lifeLensReport, metricResult) {
+  const report = { ...(lifeLensReport || {}) };
+  Object.assign(report, metricResult?.lifelens_report_patch || {});
+  if (metricResult?.rendered_text) report.uim_rendered = metricResult.rendered_text;
+  return report;
+}
+
+/** Call after LifeLens identifies & prices an artifact (create/list/search). */
+async function attachUimMetricToLifeLensReport(lifeLensReport, artifact, context) {
+  const result = await requestUimMetric(artifact, context, { strict: false });
+  const report = mergeUimMetricIntoReport(lifeLensReport, result);
+  return { report, artifactRecordPatch: result.artifact_record_patch, raw: result };
+}
+
+/** Optional: pull dashboard stats (includes category_breakdown across 16 categories). */
+async function getUIMStatistics() {
+  try {
+    const r = await fetch(`${UIM_API_BASE_URL}/dashboard/summary`, {
+      headers: { Accept: "application/json" },
+    });
+    if (!r.ok) throw new Error(`UIM API Error: ${r.status}`);
+    return await r.json();
+  } catch (e) {
+    console.error("❌ Failed to fetch UIM statistics:", e.message);
+    return null;
+  }
+}
+
+export { requestUimMetric, mergeUimMetricIntoReport, attachUimMetricToLifeLensReport, getUIMStatistics };
+// CommonJS: module.exports = { requestUimMetric, mergeUimMetricIntoReport, attachUimMetricToLifeLensReport, getUIMStatistics };
