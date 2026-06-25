@@ -8249,16 +8249,39 @@ const server = http.createServer(async (req, res) => {
         res.end(JSON.stringify({ available: false, source: 'error', message: 'Valid artifact ID required' }));
         return;
       }
+      // Resolve the artifact from BOTH the artifacts table and the market_items table.
+      // The marketplace listing (/api/artifacts/available) and search (/api/market/search)
+      // surface market_items that are NOT mirrored into the artifacts table, so EIA must
+      // look there too — otherwise the majority of listings can never get an alignment check.
+      let a = null;
       const r = await pool.query(
         'SELECT id, title, category, kwh_footprint, solar_amount_s, lifelens_analysis FROM artifacts WHERE id = $1',
         [artifactId]
       );
-      if (r.rows.length === 0) {
+      if (r.rows.length > 0) {
+        a = r.rows[0];
+      } else {
+        const mi = await pool.query(
+          "SELECT id, title, category, kwh_estimate, price_solar FROM market_items WHERE id = $1 AND status = 'ACTIVE'",
+          [artifactId]
+        );
+        if (mi.rows.length > 0) {
+          const m = mi.rows[0];
+          a = {
+            id: m.id,
+            title: m.title,
+            category: m.category,
+            kwh_footprint: m.kwh_estimate,
+            solar_amount_s: m.price_solar,
+            lifelens_analysis: null,
+          };
+        }
+      }
+      if (!a) {
         res.writeHead(404, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ available: false, source: 'error', message: 'Artifact not found' }));
         return;
       }
-      const a = r.rows[0];
       const uimResult = await SAiUIM.requestUimMetric({
         artifact_id: a.id,
         name: a.title,

@@ -141,6 +141,28 @@ async function test(name, fn) {
         }
       }
     });
+
+    // Regression guard: the marketplace listing/search surface market_items that are NOT
+    // mirrored into the artifacts table. EIA must resolve those too (previously they 404'd).
+    await test('market_items listing id resolves (not "Artifact not found")', async () => {
+      const list = await realFetch(BASE + '/api/artifacts/available');
+      const data = await list.json();
+      const arr = data.artifacts || data.items || (Array.isArray(data) ? data : []);
+      const marketItem = Array.isArray(arr) && arr.find(x => x && x.source === 'market_items' && x.id);
+      if (!marketItem) {
+        console.log('    (no market_items in listing to test; assertion skipped)');
+        return;
+      }
+      const res = await realFetch(BASE + '/api/artifacts/' + marketItem.id + '/eia');
+      assert.strictEqual(res.status, 200);
+      const body = await res.json();
+      assert.ok('available' in body, 'response must always carry an "available" flag');
+      assert.notStrictEqual(
+        body.message,
+        'Artifact not found',
+        'market_items listing id must resolve via the market_items fallback'
+      );
+    });
   }
 
   console.log('\n' + passed + ' passed, ' + failed + ' failed');
