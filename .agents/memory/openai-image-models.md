@@ -5,7 +5,7 @@ description: Which image models the OpenAI key can actually use, and the param q
 
 # OpenAI image generation
 
-The OpenAI key in this repl (project-scoped `sk-proj...`) does **NOT** have access to the DALL·E models. Calling `images.generate({ model: 'dall-e-3' })` fails with `400 The model 'dall-e-3' does not exist.`
+The OpenAI key in this repl (project-scoped) does **NOT** have access to the DALL·E models. Calling `images.generate({ model: 'dall-e-3' })` fails with `400 The model 'dall-e-3' does not exist.`
 
 Available image models on this account are the `gpt-image` family only:
 `gpt-image-1`, `gpt-image-1-mini`, `gpt-image-1.5`, `chatgpt-image-latest`, `gpt-image-2`, `gpt-image-2-2026-04-21`.

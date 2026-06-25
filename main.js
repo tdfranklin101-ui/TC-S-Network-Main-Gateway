@@ -4,6 +4,26 @@ process.on('unhandledRejection', (err) => { console.error('UNHANDLED REJECTION:'
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const SAiUIM = require('./services/SAiUIMLayer');
+
+// Persist the SAi UIM Ethical Layer's flat artifact_record_patch onto the artifacts row.
+async function persistUimPatchToArtifact(executor, artifactId, patch) {
+  if (!executor || !artifactId || !patch || typeof patch !== 'object') return;
+  const cols = ['uim_alignment_score','uim_approved','uim_rating','uim_policy_version','uim_indices_live','uim_indices_source','uim_certificate_signature','uim_evaluated_at'];
+  const sets = [];
+  const vals = [];
+  let i = 1;
+  for (const col of cols) {
+    if (patch[col] !== undefined) { sets.push(`${col} = $${i++}`); vals.push(patch[col]); }
+  }
+  if (sets.length === 0) return;
+  vals.push(artifactId);
+  try {
+    await executor.query(`UPDATE artifacts SET ${sets.join(', ')} WHERE id = $${i}`, vals);
+  } catch (e) {
+    console.error('UIM patch persist error:', e.message);
+  }
+}
 
 const FILE_CACHE = new Map();
 const MIME_TYPES_GLOBAL = {'.html':'text/html','.css':'text/css','.js':'application/javascript','.json':'application/json','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.svg':'image/svg+xml','.ico':'image/x-icon','.mp3':'audio/mpeg','.mp4':'video/mp4','.webp':'image/webp','.woff2':'font/woff2','.gif':'image/gif','.ttf':'font/ttf','.woff':'font/woff','.pdf':'application/pdf','.txt':'text/plain','.xml':'application/xml','.webm':'video/webm'};
@@ -7167,7 +7187,7 @@ const server = http.createServer(async (req, res) => {
         artifactResult = await pool.query(
           `SELECT id, title, solar_amount_s, delivery_url, active,
                   master_file_url, preview_file_url, trade_file_url,
-                  file_type, category, trade_file_size, processing_status, creator_id,
+                  file_type, category, kwh_footprint, trade_file_size, processing_status, creator_id,
                   content_body, content_format
            FROM artifacts WHERE id = $1`, [artifactId]
         );
@@ -7295,6 +7315,36 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
+      // === SAi UIM Energetic-Ethical gate (STRICT): block checkout if not approved ===
+      const uimOrderId = crypto.randomUUID();
+      let uimResult = null;
+      let uimMetric = null;
+      try {
+        uimResult = await SAiUIM.requestUimMetric({
+          artifact_id: artifact.id,
+          transaction_id: uimOrderId,
+          name: artifact.title,
+          category: artifact.category,
+          energy_footprint_kwh: artifact.kwh_footprint,
+          solar_price: requiredSolar,
+        }, 'purchase', { strict: true });
+        uimMetric = uimResult && uimResult.uim_metric;
+      } catch (uimErr) {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Energetic-ethical alignment check unavailable. Purchase not completed.', detail: uimErr.message }));
+        return;
+      }
+      if (!uimMetric || !uimMetric.approved) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          error: 'Purchase blocked by energetic-ethical alignment',
+          alignmentScore: uimMetric ? uimMetric.alignment_score : null,
+          approvalThreshold: uimMetric ? uimMetric.approval_threshold : null,
+          rendered: uimResult ? uimResult.rendered_text : null,
+        }));
+        return;
+      }
+
       let walletId = user.wallet_id;
       if (!walletId) {
         walletId = await ensureMemberWallet(userId);
@@ -7418,6 +7468,11 @@ const server = http.createServer(async (req, res) => {
       }
       client.release();
 
+      // Persist the approved UIM metric onto the artifact record (non-blocking).
+      if (uimResult && uimResult.artifact_record_patch) {
+        await persistUimPatchToArtifact(pool, artifact.id, uimResult.artifact_record_patch);
+      }
+
       const hasFile = !!(artifact.master_file_url || artifact.trade_file_url || artifact.delivery_url || artifact.content_body);
       const downloadUrl = (tokenCreated && tokenValue && hasFile) ? `/api/delivery/${tokenValue}` : null;
       const isTextOnly = !!artifact.content_body && !artifact.master_file_url && !artifact.trade_file_url && !artifact.delivery_url;
@@ -7438,6 +7493,7 @@ const server = http.createServer(async (req, res) => {
         downloadExpires: expiresAt ? expiresAt.toISOString() : null,
         expiresIn: '7 days',
         discountApplied: discountApplied || undefined,
+        uimAlignment: uimMetric || undefined,
         message: `Successfully purchased "${artifact.title}" for ${formatSolar(requiredSolar)} Solar${discountApplied ? ` (negotiated ${discountApplied.discountPct}% off)` : ''}. Your new balance is ${formatSolar(newBalance)} Solar.`
       };
 
@@ -7490,7 +7546,7 @@ const server = http.createServer(async (req, res) => {
       const artifactResult = await pool.query(
         `SELECT id, title, solar_amount_s, delivery_url, active,
                 master_file_url, preview_file_url, trade_file_url,
-                file_type, category, trade_file_size, processing_status, creator_id
+                file_type, category, kwh_footprint, trade_file_size, processing_status, creator_id
          FROM artifacts WHERE id = $1`, [artifactId]
       );
       if (artifactResult.rows.length === 0) {
@@ -7550,6 +7606,36 @@ const server = http.createServer(async (req, res) => {
       if (buyerBalance < requiredSolar) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Insufficient Solar balance', required: requiredSolar, available: buyerBalance, shortfall: requiredSolar - buyerBalance }));
+        return;
+      }
+
+      // === SAi UIM Energetic-Ethical gate (STRICT): block checkout if not approved ===
+      const uimOrderId2 = crypto.randomUUID();
+      let uimResult2 = null;
+      let uimMetric2 = null;
+      try {
+        uimResult2 = await SAiUIM.requestUimMetric({
+          artifact_id: artifact.id,
+          transaction_id: uimOrderId2,
+          name: artifact.title,
+          category: artifact.category,
+          energy_footprint_kwh: artifact.kwh_footprint,
+          solar_price: requiredSolar,
+        }, 'purchase', { strict: true });
+        uimMetric2 = uimResult2 && uimResult2.uim_metric;
+      } catch (uimErr) {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Energetic-ethical alignment check unavailable. Purchase not completed.', detail: uimErr.message }));
+        return;
+      }
+      if (!uimMetric2 || !uimMetric2.approved) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          error: 'Purchase blocked by energetic-ethical alignment',
+          alignmentScore: uimMetric2 ? uimMetric2.alignment_score : null,
+          approvalThreshold: uimMetric2 ? uimMetric2.approval_threshold : null,
+          rendered: uimResult2 ? uimResult2.rendered_text : null,
+        }));
         return;
       }
 
@@ -10647,10 +10733,34 @@ Only include products where you have found a real URL. Do not make up URLs.`
       const voucherId = result.rows[0].id;
       console.log(`🎫 Voucher request created: "${query}" by ${requestedBy} (ID: ${voucherId})`);
 
+      // Attach the SAi UIM energetic-ethical alignment metric (permissive — voucher request).
+      let uimAlignment = null;
+      try {
+        const uim = await SAiUIM.attachUimMetricToLifeLensReport(null, {
+          artifact_id: String(voucherId),
+          name: query,
+          category: (constraints && constraints.category) || 'Utilities',
+        }, 'search_voucher_request');
+        if (uim.raw && uim.raw.uim_metric) {
+          uimAlignment = uim.raw.uim_metric;
+          try {
+            const mergedConstraints = { ...(constraints || {}), uim_alignment: uimAlignment };
+            await pool.query('UPDATE market_requests SET constraints = $1 WHERE id = $2', [JSON.stringify(mergedConstraints), voucherId]);
+          } catch (persistErr) {
+            console.error('UIM voucher constraints persist error:', persistErr.message);
+          }
+        } else if (uim.raw && uim.raw.rendered_text) {
+          uimAlignment = { rendered: uim.raw.rendered_text };
+        }
+      } catch (uimErr) {
+        console.error('UIM attach (voucher) error:', uimErr.message);
+      }
+
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
         success: true,
         voucherId,
+        uimAlignment: uimAlignment || undefined,
         message: 'Fulfillment voucher created. A network participant will fulfill your request.'
       }));
     } catch (error) {
@@ -11729,7 +11839,7 @@ Only include products where you have found a real URL. Do not make up URLs.`
       
       let artQ = { rows: [] };
       if (isValidUUID) {
-        artQ = await pool.query('SELECT id, title, solar_amount_s, trade_file_url, master_file_url, delivery_url, file_type, category, creator_id, content_body, content_format FROM artifacts WHERE id = $1 AND active = true', [artifactId]);
+        artQ = await pool.query('SELECT id, title, solar_amount_s, kwh_footprint, trade_file_url, master_file_url, delivery_url, file_type, category, creator_id, content_body, content_format FROM artifacts WHERE id = $1 AND active = true', [artifactId]);
       }
       let artifact;
       if (artQ.rows.length > 0) {
@@ -11809,6 +11919,37 @@ Only include products where you have found a real URL. Do not make up URLs.`
       if (buyerBalance < requiredSolar) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: false, error: 'Insufficient Solar balance', required: requiredSolar, available: buyerBalance }));
+        return;
+      }
+
+      // === SAi UIM Energetic-Ethical gate (STRICT): block checkout if not approved ===
+      const uimOrderIdM = crypto.randomUUID();
+      let uimResultM = null;
+      let uimMetricM = null;
+      try {
+        uimResultM = await SAiUIM.requestUimMetric({
+          artifact_id: artifact.id,
+          transaction_id: uimOrderIdM,
+          name: artifact.title,
+          category: artifact.category,
+          energy_footprint_kwh: artifact.kwh_footprint,
+          solar_price: requiredSolar,
+        }, 'purchase', { strict: true });
+        uimMetricM = uimResultM && uimResultM.uim_metric;
+      } catch (uimErr) {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Energetic-ethical alignment check unavailable. Purchase not completed.', detail: uimErr.message }));
+        return;
+      }
+      if (!uimMetricM || !uimMetricM.approved) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: false,
+          error: 'Purchase blocked by energetic-ethical alignment',
+          alignmentScore: uimMetricM ? uimMetricM.alignment_score : null,
+          approvalThreshold: uimMetricM ? uimMetricM.approval_threshold : null,
+          rendered: uimResultM ? uimResultM.rendered_text : null,
+        }));
         return;
       }
       
@@ -11910,6 +12051,11 @@ Only include products where you have found a real URL. Do not make up URLs.`
       }
       client.release();
 
+      // Persist the approved UIM metric onto the artifact record (non-blocking).
+      if (uimResultM && uimResultM.artifact_record_patch) {
+        await persistUimPatchToArtifact(pool, artifact.id, uimResultM.artifact_record_patch);
+      }
+
       const hasRealFile = !!(artifact.trade_file_url || artifact.master_file_url || artifact.delivery_url);
       const hasFile = hasRealFile || !!artifact.content_body;
       const downloadUrl = (tokenCreated && dlToken && hasFile) ? `/api/delivery/${dlToken}` : null;
@@ -11952,6 +12098,7 @@ Only include products where you have found a real URL. Do not make up URLs.`
         contentFormat: artifact.content_format || null,
         expiresIn: '7 days',
         genesisStatus: genesisStatus,
+        uimAlignment: uimMetricM || undefined,
         genesisMessage: needsGenesis ? 'Your artifact DNA is being materialized into a deliverable product. The file will be ready for download shortly.' : null,
         message: needsGenesis
           ? `Successfully purchased "${artifact.title}" for ${formatSolar(requiredSolar)} Solar. The product is being generated from artifact DNA — check back in a moment to download.`
@@ -12144,6 +12291,39 @@ Only include products where you have found a real URL. Do not make up URLs.`
       const buyerSolar = parseFloat(buyerQ.rows[0].total_solar);
       if (buyerSolar < resalePrice) { await client.query('ROLLBACK'); client.release(); res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ success: false, error: `Insufficient Solar. Need ${formatSolar(resalePrice)}, have ${formatSolar(buyerSolar)}` })); return; }
 
+      // === SAi UIM Energetic-Ethical gate (STRICT): block resale checkout if not approved ===
+      const uimOrderIdR = crypto.randomUUID();
+      let uimResultR = null;
+      let uimMetricR = null;
+      try {
+        uimResultR = await SAiUIM.requestUimMetric({
+          artifact_id: art.id,
+          transaction_id: uimOrderIdR,
+          name: art.title,
+          category: art.category,
+          energy_footprint_kwh: art.kwh_footprint,
+          solar_price: resalePrice,
+        }, 'purchase', { strict: true });
+        uimMetricR = uimResultR && uimResultR.uim_metric;
+      } catch (uimErr) {
+        await client.query('ROLLBACK'); client.release();
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Energetic-ethical alignment check unavailable. Purchase not completed.', detail: uimErr.message }));
+        return;
+      }
+      if (!uimMetricR || !uimMetricR.approved) {
+        await client.query('ROLLBACK'); client.release();
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: false,
+          error: 'Purchase blocked by energetic-ethical alignment',
+          alignmentScore: uimMetricR ? uimMetricR.alignment_score : null,
+          approvalThreshold: uimMetricR ? uimMetricR.approval_threshold : null,
+          rendered: uimResultR ? uimResultR.rendered_text : null,
+        }));
+        return;
+      }
+
       const sellerQ = await client.query('SELECT id, username, total_solar, wallet_id FROM members WHERE id = $1 FOR UPDATE', [sellerId]);
       const seller = sellerQ.rows[0];
 
@@ -12209,6 +12389,11 @@ Only include products where you have found a real URL. Do not make up URLs.`
       await client.query('COMMIT');
       client.release();
 
+      // Persist the approved UIM metric onto the artifact record (non-blocking).
+      if (uimResultR && uimResultR.artifact_record_patch) {
+        await persistUimPatchToArtifact(pool, artifactId, uimResultR.artifact_record_patch);
+      }
+
       const downloadUrl = `/api/artifacts/${artifactId}/download?token=${dlToken}`;
 
       res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -12222,6 +12407,7 @@ Only include products where you have found a real URL. Do not make up URLs.`
         sellerNet,
         newGeneration,
         buyerNewBalance: buyerNewBal,
+        uimAlignment: uimMetricR || undefined,
         downloadUrl
       }));
     } catch (err) {
@@ -14370,7 +14556,7 @@ Only include products where you have found a real URL. Do not make up URLs.`
       }
 
       const artQ = await pool.query(
-        'SELECT id, title, solar_amount_s, file_type, category, creator_id FROM artifacts WHERE id = $1 AND active = true',
+        'SELECT id, title, solar_amount_s, file_type, category, kwh_footprint, creator_id FROM artifacts WHERE id = $1 AND active = true',
         [artifactId]
       );
       if (artQ.rows.length === 0) {
@@ -14391,6 +14577,37 @@ Only include products where you have found a real URL. Do not make up URLs.`
       if (buyerBalance < requiredSolar) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: false, error: 'Insufficient Solar balance', required: requiredSolar, available: buyerBalance }));
+        return;
+      }
+
+      // === SAi UIM Energetic-Ethical gate (STRICT): block agent purchase if not approved ===
+      const uimOrderId = crypto.randomUUID();
+      let uimResult = null;
+      let uimMetric = null;
+      try {
+        uimResult = await SAiUIM.requestUimMetric({
+          artifact_id: artifact.id,
+          transaction_id: uimOrderId,
+          name: artifact.title,
+          category: artifact.category,
+          energy_footprint_kwh: artifact.kwh_footprint,
+          solar_price: requiredSolar,
+        }, 'purchase', { strict: true });
+        uimMetric = uimResult && uimResult.uim_metric;
+      } catch (uimErr) {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Energetic-ethical alignment check unavailable. Purchase not completed.', detail: uimErr.message }));
+        return;
+      }
+      if (!uimMetric || !uimMetric.approved) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: false,
+          error: 'Purchase blocked by energetic-ethical alignment',
+          alignmentScore: uimMetric ? uimMetric.alignment_score : null,
+          approvalThreshold: uimMetric ? uimMetric.approval_threshold : null,
+          rendered: uimResult ? uimResult.rendered_text : null,
+        }));
         return;
       }
 
@@ -14434,6 +14651,11 @@ Only include products where you have found a real URL. Do not make up URLs.`
 
         await client.query('COMMIT');
 
+        // Persist the approved UIM metric onto the artifact record (non-blocking).
+        if (uimResult && uimResult.artifact_record_patch) {
+          await persistUimPatchToArtifact(pool, artifact.id, uimResult.artifact_record_patch);
+        }
+
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
           success: true,
@@ -14444,7 +14666,8 @@ Only include products where you have found a real URL. Do not make up URLs.`
             priceSolar: requiredSolar,
             foundationFee: foundationFee,
             newBalance: newBalance
-          }
+          },
+          uimAlignment: uimMetric || undefined
         }));
       } catch (txErr) {
         await client.query('ROLLBACK');
@@ -14756,6 +14979,22 @@ Only include products where you have found a real URL. Do not make up URLs.`
 
         await client.query('COMMIT');
         console.log(`🌐 External agent ${agent.username} created listing: "${title}" (${category}) for ${solarPrice} Solar`);
+
+        // Attach the SAi UIM energetic-ethical alignment metric (permissive — creation).
+        try {
+          const uim = await SAiUIM.attachUimMetricToLifeLensReport(null, {
+            artifact_id: artifactId,
+            name: title,
+            category,
+            energy_footprint_kwh: kwhFootprint,
+            solar_price: solarPrice,
+          }, 'create');
+          if (uim.artifactRecordPatch) {
+            await persistUimPatchToArtifact(pool, artifactId, uim.artifactRecordPatch);
+          }
+        } catch (uimErr) {
+          console.error('UIM attach (create) error:', uimErr.message);
+        }
 
         res.writeHead(201, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
@@ -17331,17 +17570,35 @@ Respond with valid JSON only. Be insightful and specific.`;
           return;
         }
 
-        global.lifeLensCache[artifactId] = { result, timestamp: Date.now() };
+        // Attach the SAi UIM energetic-ethical alignment metric (permissive — listing/display).
+        let analysis = result;
+        try {
+          const uim = await SAiUIM.attachUimMetricToLifeLensReport(result, {
+            artifact_id: artifactId,
+            name: title,
+            category,
+            energy_footprint_kwh: kwhFootprint,
+            solar_price: priceSolar,
+          }, 'list');
+          analysis = uim.report;
+          if (uim.artifactRecordPatch) {
+            await persistUimPatchToArtifact(pool, artifactId, uim.artifactRecordPatch);
+          }
+        } catch (uimErr) {
+          console.error('UIM attach (list) error:', uimErr.message);
+        }
+
+        global.lifeLensCache[artifactId] = { result: analysis, timestamp: Date.now() };
 
         // Also persist to DB if not already stored
         try {
-          await pool.query('UPDATE artifacts SET lifelens_analysis = $1 WHERE id = $2 AND lifelens_analysis IS NULL', [JSON.stringify(result), artifactId]);
+          await pool.query('UPDATE artifacts SET lifelens_analysis = $1 WHERE id = $2 AND lifelens_analysis IS NULL', [JSON.stringify(analysis), artifactId]);
         } catch (dbErr) {
           console.error('LifeLens DB persist error:', dbErr.message);
         }
 
         res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-        res.end(JSON.stringify({ success: true, analysis: result, cached: false }));
+        res.end(JSON.stringify({ success: true, analysis, cached: false }));
       } catch (error) {
         console.error('LifeLens artifact analysis error:', error.message);
         res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
