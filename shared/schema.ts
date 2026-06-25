@@ -494,15 +494,6 @@ export const artifacts = pgTable("artifacts", {
   lifeLensAnalysis: jsonb("lifelens_analysis"), // LifeLens × Rob Low needs analysis stored at creation
   productPrompt: text("product_prompt"), // AI prompt that can regenerate/represent what this artifact is
   subcategory: text("subcategory"), // Original creative category name preserved as subcategory
-  // SAi UIM Energetic-Ethical alignment metric (from the external Ethical Layer)
-  uimAlignmentScore: doublePrecision("uim_alignment_score"), // 0..1 alignment score
-  uimApproved: boolean("uim_approved"), // approved >= policy threshold
-  uimRating: text("uim_rating"), // human-readable rating label
-  uimPolicyVersion: text("uim_policy_version"), // policy version that scored it
-  uimIndicesLive: boolean("uim_indices_live"), // true if scored with live Solar Reserve oracle
-  uimIndicesSource: text("uim_indices_source"), // disclosed source of indices used
-  uimCertificateSignature: text("uim_certificate_signature"), // ed25519 signature of the decision
-  uimEvaluatedAt: timestamp("uim_evaluated_at"), // when the metric was evaluated
 });
 
 // Insert types for additional tables
