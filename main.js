@@ -17721,7 +17721,7 @@ Respond with valid JSON only. Be insightful and specific.`;
 
         // Also persist to DB if not already stored
         try {
-          await pool.query("UPDATE artifacts SET lifelens_analysis = $1 WHERE id = $2 AND (lifelens_analysis IS NULL OR NOT jsonb_exists(lifelens_analysis, 'humanNeedsMapping'))", [JSON.stringify(analysis), artifactId]);
+          await pool.query("UPDATE artifacts SET lifelens_analysis = $1 WHERE id = $2 AND (lifelens_analysis IS NULL OR NOT (jsonb_exists(lifelens_analysis, 'humanNeedsMapping') OR jsonb_exists(lifelens_analysis, 'fitScore') OR jsonb_exists(lifelens_analysis, 'needsSummary')))", [JSON.stringify(analysis), artifactId]);
         } catch (dbErr) {
           console.error('LifeLens DB persist error:', dbErr.message);
         }

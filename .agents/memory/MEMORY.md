@@ -1,6 +1,7 @@
 - [Publish blocked by DB diff](publish-diff-blocked.md) — publish-time schema diff fails here; ANY new column/table blocks publish. Persist into existing jsonb instead.
 - [OpenAI image models](openai-image-models.md) — this key has only gpt-image-* (no dall-e-3); use gpt-image-1, never pass response_format, read b64_json.
 - [Solar distribution model](solar-distribution-model.md) — distribution begins at sign-up: day one = Genesis Solar (1 Solar × days since Apr 7 2025), then +1/day. Not blanket-retroactive.
+- [LifeLens analysis cache](lifelens-analysis-cache.md) — lifelens_analysis is shared by Rob Low + UIM; a uim-only record makes the Rob Low card blank. Cache hit needs human-needs fields; advisory reads must not persist uim patches.
 - [Static cache restart](static-cache-restart.md) — public/*.html is served from an in-memory cache built at boot; restart the workflow after editing or the preview serves a stale copy.
 - [Vimeo cinema embeds](vimeo-cinema-embeds.md) — unlisted films need `?h=` key to embed; 401/403 = missing key, not a code bug; "embed anywhere" toggle doesn't substitute.
 - [UIM abundance lens](uim-abundance-lens.md) — replay of old-policy artifacts returns empty abundance_lens {}; send a unique transaction_id to force the full advisory lens. Only blocked===true is a hard-deny.
