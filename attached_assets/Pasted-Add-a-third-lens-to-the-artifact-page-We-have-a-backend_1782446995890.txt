@@ -1,0 +1,87 @@
+Add a third lens to the artifact page. We have a backend "SAi UIM Energetic-Ethical Layer" that already returns the data — your job is to call it and render the new lens card beside the two we already show (LIFELENS — ENERGY & PRICING and ROB LOW DECISION LENS — HUMAN NEEDS). This new card fills the currently-empty "No decision-lens detail returned" slot with a sibling card.
+
+Backend endpoint
+
+POST https://s-ai-uim-layer-tdfranklin101.replit.app/lifelens/uim_metric
+Auth: currently open. If a shared secret is configured, send header X-UIM-Token: <secret> (or Authorization: Bearer <secret>).
+Discovery/contract: GET .../lifelens/info.
+Request body (send the artifact you already have; energy footprint is what drives the lens):
+
+{
+  "artifact": {
+    "artifact_id": "string",
+    "transaction_id": "string (optional, used for idempotency)",
+    "name": "string",
+    "category": "string (e.g. 3d_printing, ai_create, music, video, software, docs...)",
+    "description": "string",
+    "energy_footprint_kwh": 0.3,
+    "solar_price": 0.0001
+  },
+  "context": "list"
+}
+Response — the new lens lives at uim_metric.abundance_lens:
+
+{
+  "uim_metric": {
+    "abundance_score": 0.62,
+    "approved": true,
+    "blocked": false,
+    "recommended": false,
+    "abundance_lens": {
+      "advisory": true,
+      "blocked": false,
+      "gate": null,
+      "band": "aligned",
+      "band_meaning": "Aligned with current world-state abundance — a reasonable energetic footprint.",
+      "abundance_score": 0.62,
+      "recommended": false,
+      "classification": { "category": "3d_printing", "energy_profile": "efficient" },
+      "remediation": { "text": "Reducing this artifact's footprint by ~X kWh (about Y Solar) would move it toward 'aligned'." },
+      "insights": ["...short bullet strings, already human-readable..."]
+    },
+    "rendered_text": "🌞 UIM Energetic-Ethical Abundance Lens\n..."
+  },
+  "artifact_record_patch": {
+    "uim_abundance_score": 0.62, "uim_abundance_band": "aligned",
+    "uim_abundance_recommended": false, "uim_abundance_blocked": false,
+    "uim_abundance_advisory": true
+  }
+}
+Critical behavior rules (do not violate):
+
+This lens is ADVISORY — the human decides. Never use it to auto-block, hide, or reject an artifact based on its band/score. Bands are: abundant (best), aligned, consider, strained.
+The ONLY hard block is abundance_lens.blocked === true (mandated prohibited content). When that's true, this is the signal the existing Sign Off Kid Solar shut-off switch acts on — wire the block to that switch, and show the deny reason from abundance_lens.gate.reason.
+approved already means "not hard-denied" — don't add your own gating on top of recommended or band.
+Where it goes: render a new card immediately after the ROB LOW DECISION LENS card on the artifact page, matching the existing dark lens-card styling. It pairs with (does not replace) the human-needs lens.
+
+Drop-in renderer (adapt to your component framework; or just print uim_metric.rendered_text for a no-markup version):
+
+function renderAbundanceLens(lens) {
+  if (!lens) return '';
+  if (lens.blocked) {
+    return `
+      <section class="lens-card lens-deny">
+        <h3>🛑 ENERGETIC-ETHICAL ABUNDANCE LENS</h3>
+        <p><strong>Hard-deny:</strong> ${lens.gate?.reason ?? 'Prohibited content.'}</p>
+        <p>Use the Sign Off Kid Solar shut-off switch on this item.</p>
+      </section>`;
+  }
+  const bandColor = { abundant:'#34d399', aligned:'#60a5fa', consider:'#fbbf24', strained:'#f87171' }[lens.band] || '#9ca3af';
+  const status = lens.recommended ? 'Recommended' : 'Advisory — your choice';
+  return `
+    <section class="lens-card">
+      <h3>♻️ ENERGETIC-ETHICAL ABUNDANCE LENS</h3>
+      <p style="color:${bandColor}"><strong>${lens.band.toUpperCase()}</strong>
+         · ${(lens.abundance_score * 100).toFixed(0)}/100 · ${status}</p>
+      <p>${lens.band_meaning}</p>
+      <ul>${(lens.insights || []).map(i => `<li>${i}</li>`).join('')}</ul>
+      ${lens.remediation?.text ? `<p>↦ ${lens.remediation.text}</p>` : ''}
+      <p class="muted">Advisory guidance paired with the human-needs analysis. The choice is yours.</p>
+    </section>`;
+}
+// usage: container.insertAdjacentHTML('beforeend', renderAbundanceLens(uimMetric.abundance_lens));
+Acceptance criteria:
+
+The artifact page shows three lens cards; the third renders real data (no "No detail returned" placeholder).
+An efficient digital artifact shows abundant/aligned; a heavy one shows consider/strained with a remediation line.
+A prohibited item shows the hard-deny card and triggers the Sign Off Kid Solar switch — and nothing else is ever auto-blocked.

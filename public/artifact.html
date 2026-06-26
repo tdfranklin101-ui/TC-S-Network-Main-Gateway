@@ -89,6 +89,13 @@ a:hover{text-decoration:underline}
 .preview-media{width:100%;margin-top:6px;border-radius:10px}
 .muted{color:#666;font-size:11px;margin-top:8px}
 .ll-loading{font-size:12px;color:#666;font-style:italic}
+.ab-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.ab-band{font-size:14px;font-weight:700;letter-spacing:.04em}
+.ab-score{font-size:13px;color:#ccc;font-weight:600}
+.ab-status{font-size:12px;color:#888}
+.ab-list{margin:6px 0 0 18px;color:#ccc;font-size:12px;line-height:1.6}
+.ab-list li{margin-bottom:4px}
+.ab-deny{border:1px solid #f87171;background:rgba(248,113,113,.08);border-radius:10px;padding:12px}
 @media(max-width:600px){.hero{flex-direction:column}.hero-art{width:90px;height:90px;font-size:40px}}
 </style>
 </head>
@@ -171,6 +178,49 @@ function renderDecisionLens(an){
   el.innerHTML=html||'<div class="ll-loading">No decision-lens detail returned.</div>';
 }
 
+function renderAbundanceLens(lens, rendered){
+  var el=document.getElementById('abLens');if(!el)return;
+  if(!lens){
+    el.innerHTML='<div class="ll-loading">'+(rendered?esc(rendered):'Abundance lens detail is not available for this artifact.')+'</div>';
+    return;
+  }
+  // HARD-DENY is the ONLY auto-block. Wire it to the Sign Off Kid Solar shut-off switch.
+  if(lens.blocked){
+    try{if(window.KidSolarController&&typeof window.KidSolarController.deactivate==='function')window.KidSolarController.deactivate();}catch(e){}
+    var reason=(lens.gate&&lens.gate.reason)?lens.gate.reason:'Prohibited content.';
+    el.innerHTML='<div class="ab-deny"><div class="ab-band" style="color:#f87171">🛑 HARD-DENY</div>'+
+      '<div class="ll-val" style="margin-top:6px">'+esc(reason)+'</div>'+
+      '<div class="ll-val" style="margin-top:8px;color:#f7931e">Kid Solar has been signed off for this item via the shut-off switch.</div></div>';
+    return;
+  }
+  var colors={abundant:'#34d399',aligned:'#60a5fa',consider:'#fbbf24',strained:'#f87171'};
+  var c=colors[lens.band]||'#9ca3af';
+  var status=lens.recommended?'Recommended':'Advisory — your choice';
+  var score=(lens.abundance_score!=null)?Math.round(lens.abundance_score*100):null;
+  var html='<div class="ab-head"><span class="ab-band" style="color:'+c+'">'+esc((lens.band||'').toUpperCase())+'</span>'+
+    (score!=null?'<span class="ab-score">'+score+'/100</span>':'')+
+    '<span class="ab-status">'+esc(status)+'</span></div>';
+  if(lens.band_meaning)html+='<div class="ll-val" style="margin:8px 0">'+esc(lens.band_meaning)+'</div>';
+  if(lens.insights&&lens.insights.length){
+    html+='<div class="ll-section"><div class="ll-label">💡 Insights</div><ul class="ab-list">'+
+      lens.insights.map(function(i){return '<li>'+esc(i)+'</li>';}).join('')+'</ul></div>';
+  }
+  if(lens.remediation&&lens.remediation.text){
+    html+='<div class="ll-section"><div class="ll-label">↦ Remediation</div><div class="ll-val">'+esc(lens.remediation.text)+'</div></div>';
+  }
+  html+='<div class="ll-loading" style="margin-top:10px">Advisory guidance paired with the human-needs analysis. The choice is yours.</div>';
+  el.innerHTML=html;
+}
+
+function loadAbundanceLens(a){
+  fetch('/api/lifelens/abundance-lens',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+    artifactId:a.id,title:a.title,description:a.description,category:a.category,solarPrice:a.solarPrice,kwhFootprint:a.kwhFootprint
+  })}).then(function(r){return r.json();}).then(function(d){
+    var lens=(d&&d.uim_metric)?d.uim_metric.abundance_lens:null;
+    renderAbundanceLens(lens,d&&d.rendered_text);
+  }).catch(function(){renderAbundanceLens(null);});
+}
+
 function loadDecisionLens(a){
   // Use stored analysis if present, else request a fresh one (analyzes public metadata only).
   if(a.lifelens_analysis){
@@ -248,11 +298,16 @@ function render(a){
   html+='<div class="panel"><div class="panel-title">🧭 Rob Low Decision Lens — Human Needs</div>'+
     '<div id="llReport"><div class="ll-loading">Mapping this item to Maslow\u2019s hierarchy and Robbins\u2019 core needs…</div></div></div>';
 
+  // Energetic-Ethical Abundance Lens (SAi UIM) — advisory, paired with the human-needs lens
+  html+='<div class="panel"><div class="panel-title">♻️ Energetic-Ethical Abundance Lens</div>'+
+    '<div id="abLens"><div class="ll-loading">Checking this item against current world-state abundance…</div></div></div>';
+
   var rec=document.getElementById('record');
   rec.innerHTML=html;
   document.getElementById('loadingState').style.display='none';
   rec.style.display='block';
   loadDecisionLens(a);
+  loadAbundanceLens(a);
 }
 
 async function load(){
@@ -269,5 +324,6 @@ async function load(){
 }
 load();
 </script>
+<script src="/js/kid-solar-controller.js"></script>
 </body>
 </html>

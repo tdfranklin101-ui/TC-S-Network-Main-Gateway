@@ -17731,6 +17731,60 @@ Respond with valid JSON only. Be insightful and specific.`;
     return;
   }
 
+  // ===== SAi UIM Energetic-Ethical Abundance Lens (advisory) =====
+  // Server-side proxy to the SAi UIM layer. Keeps any shared secret off the
+  // client and avoids cross-origin issues. ADVISORY only — never auto-blocks
+  // here; the client wires abundance_lens.blocked to the Sign Off Kid Solar switch.
+  if (pathname === '/api/lifelens/abundance-lens' && req.method === 'POST') {
+    try {
+      const body = await parseBody(req);
+      const { artifactId, transactionId, title, description, category, kwhFootprint, solarPrice } = body;
+      if (!artifactId) {
+        res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ success: false, error: 'No artifactId provided' }));
+        return;
+      }
+      const artifact = {
+        artifact_id: String(artifactId),
+        name: title || '',
+        category: category || '',
+        description: description || '',
+      };
+      if (kwhFootprint != null && kwhFootprint !== '') artifact.energy_footprint_kwh = Number(kwhFootprint);
+      if (solarPrice != null && solarPrice !== '') artifact.solar_price = Number(solarPrice);
+      // Force a fresh evaluation each request. The UIM layer keys idempotency on
+      // transaction_id (falling back to artifact_id); replays of artifacts cached
+      // under an older policy return a slimmed payload with an EMPTY abundance_lens.
+      // A unique transaction_id guarantees the full advisory lens (band, insights,
+      // remediation, gate) every time. This is an advisory read, not an order.
+      artifact.transaction_id = transactionId
+        ? String(transactionId)
+        : `lens-${artifact.artifact_id}-${Date.now()}`;
+
+      const result = await SAiUIM.requestUimMetric(artifact, 'list', { strict: false });
+
+      // Persist the advisory band/score patch if the layer returned one.
+      if (result && result.artifact_record_patch) {
+        try { await persistUimPatchToArtifact(pool, artifactId, result.artifact_record_patch); }
+        catch (pErr) { console.error('Abundance lens patch persist error:', pErr.message); }
+      }
+
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify({
+        success: !(result && result.error),
+        uim_metric: (result && result.uim_metric) || null,
+        rendered_text: (result && result.rendered_text) || null,
+        artifact_record_patch: (result && result.artifact_record_patch) || null,
+        error: (result && result.error) ? result.message : undefined,
+      }));
+    } catch (error) {
+      console.error('Abundance lens error:', error.message);
+      res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify({ success: false, error: error.message }));
+    }
+    return;
+  }
+
   // ================== DELIVERABLE INFERENCE ENDPOINT ==================
   if (pathname === '/api/artifact/infer' && req.method === 'POST') {
     try {
