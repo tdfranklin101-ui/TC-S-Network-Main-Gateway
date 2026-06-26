@@ -96,6 +96,11 @@ a:hover{text-decoration:underline}
 .ab-list{margin:6px 0 0 18px;color:#ccc;font-size:12px;line-height:1.6}
 .ab-list li{margin-bottom:4px}
 .ab-deny{border:1px solid #f87171;background:rgba(248,113,113,.08);border-radius:10px;padding:12px}
+.panel-title.toggle{cursor:pointer;user-select:none}
+.chev{margin-left:auto;transition:transform .35s ease;color:#888;font-size:11px}
+.panel.open .chev{transform:rotate(90deg);color:var(--green)}
+.collapse{max-height:0;overflow:hidden;opacity:0;transition:max-height .5s ease,opacity .4s ease}
+.panel.open .collapse{max-height:12000px;opacity:1}
 @media(max-width:600px){.hero{flex-direction:column}.hero-art{width:90px;height:90px;font-size:40px}}
 </style>
 </head>
@@ -152,8 +157,11 @@ function needCard(name,obj){
     (exp?'<div class="need-exp">'+esc(exp)+'</div>':'')+'</div>';
 }
 
+function toggleRobLow(){var p=document.getElementById('robLowPanel');if(p)p.classList.toggle('open');}
+
 function renderDecisionLens(an){
   var el=document.getElementById('llReport');if(!el)return;
+  var p=document.getElementById('robLowPanel');if(p)p.classList.add('open'); // expand when presented
   if(!an){el.innerHTML='<div class="ll-loading">Decision Lens analysis is not available for this artifact.</div>';return;}
   var html='';
   if(an.fitScore!=null){
@@ -294,9 +302,9 @@ function render(a){
   // LifeLens energy/pricing report (public)
   html+='<div class="panel"><div class="panel-title">🧿 LifeLens — Energy & Pricing</div>'+energyReport(a)+'</div>';
 
-  // Rob Low Decision Lens (Maslow + Robbins) — public analysis of the record
-  html+='<div class="panel"><div class="panel-title">🧭 Rob Low Decision Lens — Human Needs</div>'+
-    '<div id="llReport"><div class="ll-loading">Mapping this item to Maslow\u2019s hierarchy and Robbins\u2019 core needs…</div></div></div>';
+  // Rob Low Decision Lens (Maslow + Robbins) — collapsible; expands when its analysis is presented
+  html+='<div class="panel" id="robLowPanel"><div class="panel-title toggle" onclick="toggleRobLow()">🧭 Rob Low Decision Lens — Human Needs<span class="chev">▸</span></div>'+
+    '<div class="collapse" id="robLowBody"><div id="llReport"><div class="ll-loading">Mapping this item to Maslow\u2019s hierarchy and Robbins\u2019 core needs…</div></div></div></div>';
 
   // Energetic-Ethical Abundance Lens (SAi UIM) — advisory, paired with the human-needs lens
   html+='<div class="panel"><div class="panel-title">♻️ Energetic-Ethical Abundance Lens</div>'+
