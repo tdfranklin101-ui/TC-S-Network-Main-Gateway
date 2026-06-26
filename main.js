@@ -17670,17 +17670,23 @@ Respond with valid JSON only. Be insightful and specific.`;
           const dbResult = await pool.query('SELECT lifelens_analysis FROM artifacts WHERE id = $1 AND lifelens_analysis IS NOT NULL', [artifactId]);
           if (dbResult.rows.length > 0 && dbResult.rows[0].lifelens_analysis) {
             const stored = typeof dbResult.rows[0].lifelens_analysis === 'string' ? JSON.parse(dbResult.rows[0].lifelens_analysis) : dbResult.rows[0].lifelens_analysis;
-            global.lifeLensCache[artifactId] = { result: stored, timestamp: Date.now() };
-            res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-            res.end(JSON.stringify({ success: true, analysis: stored, cached: true }));
-            return;
+            // Only treat as a complete cache if it actually carries the human-needs
+            // mapping. Records holding only the UIM block (e.g. written by a uim
+            // patch onto a previously-null column) must NOT short-circuit — fall
+            // through and regenerate the full Rob Low analysis.
+            if (stored && (stored.humanNeedsMapping || stored.fitScore != null || stored.needsSummary)) {
+              global.lifeLensCache[artifactId] = { result: stored, timestamp: Date.now() };
+              res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+              res.end(JSON.stringify({ success: true, analysis: stored, cached: true }));
+              return;
+            }
           }
         } catch (dbErr) {
           console.error('LifeLens DB lookup error:', dbErr.message);
         }
 
         const cached = global.lifeLensCache[artifactId];
-        if (cached && (Date.now() - cached.timestamp < 24 * 60 * 60 * 1000)) {
+        if (cached && cached.result && (cached.result.humanNeedsMapping || cached.result.fitScore != null || cached.result.needsSummary) && (Date.now() - cached.timestamp < 24 * 60 * 60 * 1000)) {
           res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
           res.end(JSON.stringify({ success: true, analysis: cached.result, cached: true }));
           return;
@@ -17715,7 +17721,7 @@ Respond with valid JSON only. Be insightful and specific.`;
 
         // Also persist to DB if not already stored
         try {
-          await pool.query('UPDATE artifacts SET lifelens_analysis = $1 WHERE id = $2 AND lifelens_analysis IS NULL', [JSON.stringify(analysis), artifactId]);
+          await pool.query("UPDATE artifacts SET lifelens_analysis = $1 WHERE id = $2 AND (lifelens_analysis IS NULL OR NOT jsonb_exists(lifelens_analysis, 'humanNeedsMapping'))", [JSON.stringify(analysis), artifactId]);
         } catch (dbErr) {
           console.error('LifeLens DB persist error:', dbErr.message);
         }
@@ -17763,11 +17769,10 @@ Respond with valid JSON only. Be insightful and specific.`;
 
       const result = await SAiUIM.requestUimMetric(artifact, 'list', { strict: false });
 
-      // Persist the advisory band/score patch if the layer returned one.
-      if (result && result.artifact_record_patch) {
-        try { await persistUimPatchToArtifact(pool, artifactId, result.artifact_record_patch); }
-        catch (pErr) { console.error('Abundance lens patch persist error:', pErr.message); }
-      }
+      // NOTE: intentionally do NOT persist a uim patch here. This is an advisory
+      // display read (fresh eval each call). Writing uim into a previously-null
+      // lifelens_analysis would make analyze-artifact treat the record as a
+      // complete cache and skip generating the Rob Low human-needs analysis.
 
       res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
       res.end(JSON.stringify({
