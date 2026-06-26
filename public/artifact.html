@@ -233,9 +233,12 @@ function loadAbundanceLens(a){
 }
 
 function loadDecisionLens(a){
-  // Use stored analysis if present, else request a fresh one (analyzes public metadata only).
+  // Use stored analysis only if it actually carries the human-needs mapping;
+  // a uim-only record must NOT short-circuit — request a fresh full analysis.
   if(a.lifelens_analysis){
-    try{var stored=typeof a.lifelens_analysis==='string'?JSON.parse(a.lifelens_analysis):a.lifelens_analysis;renderDecisionLens(stored);return;}catch(e){}
+    try{var stored=typeof a.lifelens_analysis==='string'?JSON.parse(a.lifelens_analysis):a.lifelens_analysis;
+      if(stored&&(stored.humanNeedsMapping||stored.fitScore!=null||stored.needsSummary)){renderDecisionLens(stored);return;}
+    }catch(e){}
   }
   fetch('/api/lifelens/analyze-artifact',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
     artifactId:a.id,title:a.title,description:a.description,category:a.category,priceSolar:a.solarPrice,kwhFootprint:a.kwhFootprint
