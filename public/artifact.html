@@ -186,8 +186,11 @@ function renderDecisionLens(an){
   el.innerHTML=html||'<div class="ll-loading">No decision-lens detail returned.</div>';
 }
 
+function toggleAbLens(){var p=document.getElementById('abLensPanel');if(p)p.classList.toggle('open');}
+
 function renderAbundanceLens(lens, rendered){
   var el=document.getElementById('abLens');if(!el)return;
+  var p=document.getElementById('abLensPanel');if(p)p.classList.add('open'); // expand when presented
   if(!lens){
     el.innerHTML='<div class="ll-loading">'+(rendered?esc(rendered):'Abundance lens detail is not available for this artifact.')+'</div>';
     return;
@@ -306,9 +309,9 @@ function render(a){
   html+='<div class="panel" id="robLowPanel"><div class="panel-title toggle" onclick="toggleRobLow()">🧭 Rob Low Decision Lens — Human Needs<span class="chev">▸</span></div>'+
     '<div class="collapse" id="robLowBody"><div id="llReport"><div class="ll-loading">Mapping this item to Maslow\u2019s hierarchy and Robbins\u2019 core needs…</div></div></div></div>';
 
-  // Energetic-Ethical Abundance Lens (SAi UIM) — advisory, paired with the human-needs lens
-  html+='<div class="panel"><div class="panel-title">♻️ Energetic-Ethical Abundance Lens</div>'+
-    '<div id="abLens"><div class="ll-loading">Checking this item against current world-state abundance…</div></div></div>';
+  // Energetic-Ethical Abundance Lens (SAi UIM) — collapsible; expands when its data is presented
+  html+='<div class="panel" id="abLensPanel"><div class="panel-title toggle" onclick="toggleAbLens()">♻️ Energetic-Ethical Abundance Lens<span class="chev">▸</span></div>'+
+    '<div class="collapse" id="abLensBody"><div id="abLens"><div class="ll-loading">Checking this item against current world-state abundance…</div></div></div></div>';
 
   var rec=document.getElementById('record');
   rec.innerHTML=html;
