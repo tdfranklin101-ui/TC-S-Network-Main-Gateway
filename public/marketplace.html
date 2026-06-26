@@ -91,68 +91,81 @@
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             border-bottom: 1px solid rgba(0, 245, 212, 0.18);
-            padding: 12px 20px;
+            padding: 8px 18px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 16px;
+            flex-wrap: wrap;
+            gap: 6px 16px;
             position: sticky;
             top: 0;
             z-index: 9000;
         }
 
         .header-title {
-            font-size: 22px;
+            font-size: 20px;
             font-weight: 800;
             color: #ffffff;
-            line-height: 1.1;
+            line-height: 1.05;
+            white-space: nowrap;
         }
 
         .header-subtitle {
-            font-size: 13px;
+            font-size: 12px;
             color: #888;
-            margin-top: 1px;
+            margin-top: 0;
+            white-space: nowrap;
         }
 
         .brand-block {
             display: flex;
-            flex-direction: column;
-            gap: 8px;
+            align-items: center;
+            flex: 1 1 auto;
             min-width: 0;
         }
         .brand-top {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
         }
         .nav-logo {
-            width: 38px;
-            height: 38px;
-            border-radius: 10px;
+            width: 34px;
+            height: 34px;
+            border-radius: 9px;
             display: flex;
             align-items: center;
             justify-content: center;
             background: linear-gradient(135deg, #00FF88, #00f5d4);
-            font-size: 1.3rem;
+            font-size: 1.2rem;
             box-shadow: 0 6px 18px rgba(0, 255, 136, 0.3);
             flex-shrink: 0;
         }
         .market-nav {
             display: flex;
             align-items: center;
-            flex-wrap: wrap;
+            flex: 1 1 100%;
+            order: 3;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
             gap: 4px;
+            margin-top: 4px;
+            padding-top: 4px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
         }
+        .market-nav::-webkit-scrollbar { display: none; }
         .market-nav a {
             color: rgba(255, 255, 255, 0.78);
             text-decoration: none;
             font-size: 13px;
             font-weight: 600;
-            padding: 5px 10px;
+            padding: 4px 10px;
             border-radius: 8px;
             transition: all 0.25s ease;
             white-space: nowrap;
             letter-spacing: 0.02em;
+            flex-shrink: 0;
         }
         .market-nav a:hover {
             color: #00f5d4;
@@ -163,11 +176,13 @@
             background: linear-gradient(135deg, #00FF88, #00f5d4);
         }
         @media (max-width: 768px) {
-            .market-nav { gap: 2px; }
-            .market-nav a { font-size: 11px; padding: 4px 7px; }
-            .brand-block { gap: 6px; }
-            .header-title { font-size: 19px; }
-            .nav-logo { width: 32px; height: 32px; font-size: 1.1rem; }
+            .header { padding: 6px 12px; gap: 4px 10px; }
+            .market-nav { gap: 2px; margin-top: 3px; padding-top: 3px; }
+            .market-nav a { font-size: 12px; padding: 4px 8px; }
+            .header-title { font-size: 17px; }
+            .header-subtitle { font-size: 11px; }
+            .brand-top { gap: 8px; }
+            .nav-logo { width: 30px; height: 30px; font-size: 1rem; }
         }
 
         .header-menu {
@@ -222,7 +237,7 @@
         /* Mobile responsive header */
         @media (max-width: 768px) {
             .header {
-                flex-wrap: nowrap;
+                flex-wrap: wrap;
             }
             
             .header-actions {
@@ -2421,16 +2436,6 @@
                     <div class="header-subtitle">Solar Standard</div>
                 </div>
             </a>
-            <nav class="market-nav">
-                <a href="/">Home</a>
-                <a href="/marketplace.html" class="active">Solar Economy</a>
-                <a href="/prompt-a-movie-business.html">Promptly</a>
-                <a href="/solar-punk-party.html">Cinema</a>
-                <a href="/solar-dashboard.html">Dashboard</a>
-                <a href="/whitepapers.html">Whitepaper</a>
-                <a href="/press-release.html">Press</a>
-                <span id="apps-dropdown-target"></span>
-            </nav>
         </div>
         <div class="header-actions" id="header-actions">
             <a href="/agent.html" class="register-btn" data-testid="link-agent-dashboard" style="display: inline-block; text-decoration: none; margin-right: 10px; background: linear-gradient(135deg, #00ffff, #00bfff);">🤖 My Agent</a>
@@ -2453,6 +2458,16 @@
             <span></span>
             <span></span>
         </div>
+        <nav class="market-nav">
+            <a href="/">Home</a>
+            <a href="/marketplace.html" class="active">Solar Economy</a>
+            <a href="/prompt-a-movie-business.html">Promptly</a>
+            <a href="/solar-punk-party.html">Cinema</a>
+            <a href="/solar-dashboard.html">Dashboard</a>
+            <a href="/whitepapers.html">Whitepaper</a>
+            <a href="/press-release.html">Press</a>
+            <span id="apps-dropdown-target"></span>
+        </nav>
     </div>
 
     <!-- Main Container -->
