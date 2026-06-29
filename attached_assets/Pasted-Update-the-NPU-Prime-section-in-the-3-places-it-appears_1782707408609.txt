@@ -1,0 +1,51 @@
+Update the NPU-Prime section in the 3 places it appears, to match our newly
+deployed app's branding and capabilities. Only touch the NPU-Prime section in
+each location — leave everything else (especially the "Solar" currency/economy
+wording, the Solar Standard, and the marketplace) exactly as is.
+
+THE 3 LOCATIONS (the NPU-Prime block + its "Start Researching" link):
+1. www.thecurrentsee.org  → the "🧠 NPU-Prime Research AI" section
+2. www.psychedelicsolarpunkparty.com  → the "🧠 NPU-Prime — Recursive Research AI" section
+3. www.thecurrentsee.org/marketplace.html  → the "⚙️ SERVICE — NOT AN ARTIFACT /
+   🧠 NPU-Prime — Recursive Research AI" section
+
+BRANDING
+- Rename the product to its full name on first mention: "TC-S Network NPU-Prime"
+  (then "NPU-Prime" is fine afterward). Always uppercase "TC-S" — never "Tc-S".
+- If you name the engine anywhere, call it "Neural Prime".
+- Keep the existing 🧠 icon and the overall look of each section.
+
+REPLACE THE COPY IN EACH SECTION WITH THIS (use verbatim so all 3 match):
+
+  Heading:   TC-S Network NPU-Prime — Recursive Research AI
+
+  Tagline:   Rent a recursive learning AI that runs a full virtual scientific
+             method on a loop — until the answer aligns. Pay only for the
+             minutes you use.
+
+  Body:      NPU-Prime works through your question like a scientist: it forms a
+             hypothesis, tests it against evidence, and refines on a loop until
+             the answer holds up. Every run is saved to a private, searchable
+             audit trail that only you own — and the more you use it, the smarter
+             your reasoning base gets. Nothing to install; open it in your
+             browser.
+
+  Bullets:   🔁 Runs a full virtual scientific method — hypothesize, test, refine
+             🎯 Evidence-checked answers you can trust
+             🗂️ Every experiment saved to a searchable audit trail you own
+             🧪 Designs and runs its own comparison experiments
+             ⏱️ No install — pay only for the time you use
+
+  Button:    Start Researching →
+
+THE LINK
+- The "Start Researching →" button must keep pointing to:
+  https://solar-compute-hub.replit.app/
+- Open it in a new tab.
+
+GUARDRAILS
+- Do NOT change any "Solar" currency/economy wording, prices, the Solar Standard,
+  or marketplace content — those are separate products.
+- Do NOT rename any real URLs or domains; only update the NPU-Prime display copy.
+- Replace any stray "Solar Network" or "Tc-S" text with "TC-S Network" if you see
+  it inside these NPU-Prime sections.
