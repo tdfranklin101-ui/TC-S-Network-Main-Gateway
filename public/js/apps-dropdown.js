@@ -11,7 +11,8 @@
     { name: 'DMTXACTLY', icon: '🌀', color: '#8B5CF6', href: '/dmtxactly.html', desc: 'Tessellated visuals & generative art' },
     { name: 'Tessellated Envoy', icon: '🧠', color: '#A78BFA', href: 'https://chatgpt.com/g/g-692cfd47e3488191a43f3607e0b5b43a-the-tessellated-envoy', desc: 'AI behind DMTXACTLY prompts', external: true },
     { name: 'TCSN Draw Anything', icon: '✏️', color: '#FFB347', href: 'https://draw-it-converter.replit.app', desc: 'Prompt to a sketch', external: true },
-    { name: 'Tattoo Finder', icon: '💉', color: '#FF1493', href: 'https://tattoo-finder.replit.app', desc: 'Discover & design your next tattoo', external: true }
+    { name: 'Tattoo Finder', icon: '💉', color: '#FF1493', href: 'https://tattoo-finder.replit.app', desc: 'Discover & design your next tattoo', external: true },
+    { name: 'Mind Mirror', icon: '🪞', color: '#C77DFF', href: 'https://attached-assets-tdfranklin101.replit.app', desc: 'Reflect on your thoughts & inner patterns', external: true }
   ];
 
   var style = document.createElement('style');
