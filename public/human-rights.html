@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Human Rights in the Age of AI, Robotics &amp; BCI — Threats &amp; Remedies | TC-S Network Foundation</title>
+  <meta name="description" content="An interactive demonstration of AI, robotics, and brain-computer interface threats to human rights — and concrete remedies under the Universal Declaration of Human Rights. A TC-S Network Foundation white paper.">
+  <meta property="og:title" content="Human Rights in the Age of AI, Robotics &amp; Brain-Computer Interfaces">
+  <meta property="og:description" content="Interactive map of UDHR threats and remedies for the age of intelligent machines. Neurorights, the automation dividend, and the Solar Standard.">
+  <meta property="og:image" content="/attached_assets/hr-cover.png">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;0,800;1,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-0: #070d1a;
+      --bg-1: #0a1428;
+      --bg-2: #0d1e3a;
+      --ink: #eaf2ff;
+      --muted: rgba(234, 242, 255, 0.62);
+      --faint: rgba(234, 242, 255, 0.38);
+      --gold: #d4af37;
+      --gold-soft: rgba(212, 175, 55, 0.5);
+      --teal: #00f5d4;
+      --teal-deep: #2a7d7b;
+      --threat: #ff7a6b;
+      --threat-bg: rgba(255, 122, 107, 0.09);
+      --remedy: #46e08a;
+      --remedy-bg: rgba(70, 224, 138, 0.09);
+      --card: rgba(13, 27, 48, 0.72);
+      --line: rgba(120, 160, 220, 0.16);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background:
+        radial-gradient(1200px 700px at 80% -10%, rgba(0, 245, 212, 0.08), transparent 55%),
+        radial-gradient(1000px 600px at 0% 20%, rgba(212, 175, 55, 0.06), transparent 50%),
+        linear-gradient(180deg, var(--bg-0), var(--bg-1) 40%, var(--bg-2));
+      background-attachment: fixed;
+      color: var(--ink);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    h1, h2, h3, .serif { font-family: 'Playfair Display', Georgia, serif; }
+    a { color: inherit; }
+
+    /* ---------- NAV ---------- */
+    .topnav {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 20px; gap: 14px;
+      background: rgba(7, 13, 26, 0.82);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--line);
+    }
+    .nav-brand { display: flex; align-items: center; gap: 8px; font-weight: 700; text-decoration: none; color: var(--ink); letter-spacing: 0.3px; }
+    .nav-brand .logo { font-size: 1.2rem; }
+    .nav-right { display: flex; align-items: center; gap: 16px; }
+    .nav-links { display: flex; gap: 18px; }
+    .nav-links a { text-decoration: none; color: var(--muted); font-size: 0.88rem; font-weight: 500; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--teal); }
+    @media (max-width: 760px) { .nav-links { display: none; } }
+
+    /* ---------- LAYOUT ---------- */
+    .wrap { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
+    section { padding: 68px 0; }
+    .eyebrow {
+      color: var(--gold); font-size: 0.78rem; font-weight: 600;
+      letter-spacing: 3px; text-transform: uppercase; margin-bottom: 14px;
+    }
+    .section-title { font-size: clamp(1.7rem, 4vw, 2.6rem); font-weight: 700; line-height: 1.12; margin-bottom: 12px; }
+    .section-sub { color: var(--muted); max-width: 720px; font-size: 1.02rem; margin-bottom: 8px; }
+
+    /* ---------- HERO ---------- */
+    .hero { padding: 40px 0 30px; }
+    .hero-grid { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 44px; align-items: center; }
+    @media (max-width: 900px) { .hero-grid { grid-template-columns: 1fr; gap: 30px; } }
+    .hero h1 { font-size: clamp(2.1rem, 5.4vw, 4rem); line-height: 1.05; margin-bottom: 18px; }
+    .hero h1 em { color: var(--teal); font-style: italic; }
+    .hero .lede { color: var(--muted); font-size: 1.12rem; max-width: 560px; margin-bottom: 12px; }
+    .hero .paper-tag { color: var(--faint); font-size: 0.85rem; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 26px; }
+    .solar-badge {
+      display: inline-flex; align-items: center; gap: 10px;
+      border: 1px solid var(--gold-soft); border-radius: 999px;
+      padding: 8px 16px; margin-bottom: 26px; font-size: 0.9rem; color: var(--ink);
+      background: rgba(212, 175, 55, 0.07);
+    }
+    .solar-badge b { color: var(--gold); }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 13px 22px; border-radius: 12px; text-decoration: none;
+      font-weight: 600; font-size: 0.95rem; cursor: pointer; border: 1px solid transparent;
+      transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+    }
+    .btn-primary { background: linear-gradient(135deg, var(--teal), #39ff14); color: #04121a; box-shadow: 0 6px 24px rgba(0, 245, 212, 0.28); }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0, 245, 212, 0.42); }
+    .btn-ghost { border-color: var(--line); color: var(--ink); background: rgba(255, 255, 255, 0.03); }
+    .btn-ghost:hover { border-color: var(--teal); color: var(--teal); }
+    .hero-figure {
+      position: relative; border-radius: 18px; overflow: hidden;
+      border: 1px solid var(--line); box-shadow: 0 30px 70px rgba(0, 0, 0, 0.55);
+      background: #fff;
+    }
+    .hero-figure img { width: 100%; display: block; }
+
+    /* ---------- CONTROLS ---------- */
+    .controls {
+      position: sticky; top: 58px; z-index: 60;
+      display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: space-between;
+      padding: 14px 18px; border-radius: 14px; margin-bottom: 30px;
+      background: rgba(7, 13, 26, 0.9); backdrop-filter: blur(10px);
+      border: 1px solid var(--line);
+    }
+    .control-group { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .control-label { color: var(--faint); font-size: 0.72rem; letter-spacing: 2px; text-transform: uppercase; margin-right: 2px; }
+    .chip {
+      border: 1px solid var(--line); background: transparent; color: var(--muted);
+      padding: 7px 15px; border-radius: 999px; font-size: 0.83rem; font-weight: 600;
+      cursor: pointer; transition: all 0.2s; font-family: inherit;
+    }
+    .chip:hover { color: var(--ink); border-color: var(--teal); }
+    .chip.active { background: rgba(0, 245, 212, 0.14); border-color: var(--teal); color: var(--teal); }
+    .chip .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+
+    /* Mode switch */
+    .mode-switch { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
+    .mode-switch button {
+      border: none; background: transparent; color: var(--muted); cursor: pointer;
+      padding: 8px 18px; font-size: 0.83rem; font-weight: 700; font-family: inherit; transition: all 0.2s;
+    }
+    .mode-switch button.active[data-mode="threat"] { background: var(--threat-bg); color: var(--threat); }
+    .mode-switch button.active[data-mode="remedy"] { background: var(--remedy-bg); color: var(--remedy); }
+
+    /* ---------- ARTICLE MAP ---------- */
+    .article-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px; }
+    .a-card {
+      position: relative; border-radius: 16px; padding: 22px 20px 20px;
+      background: var(--card); border: 1px solid var(--line); cursor: pointer;
+      transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s, opacity 0.25s;
+      overflow: hidden; min-height: 260px; display: flex; flex-direction: column;
+    }
+    .a-card::before {
+      content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+      background: var(--threat); transition: background 0.3s;
+    }
+    .a-card.show-remedy::before { background: var(--remedy); }
+    .a-card:hover { transform: translateY(-4px); box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4); border-color: rgba(120, 160, 220, 0.35); }
+    .a-card.dim { opacity: 0.24; filter: grayscale(0.5); }
+    .a-card .a-articles { color: var(--gold); font-size: 0.74rem; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 700; margin-bottom: 4px; }
+    .a-card h3 { font-size: 1.22rem; line-height: 1.2; margin-bottom: 12px; }
+    .a-tags { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+    .a-tag { font-size: 0.66rem; font-weight: 700; letter-spacing: 0.6px; padding: 3px 8px; border-radius: 6px; border: 1px solid var(--line); color: var(--muted); }
+    .a-tag.AI { border-color: rgba(0, 245, 212, 0.5); color: var(--teal); }
+    .a-tag.ROBOTICS { border-color: rgba(212, 175, 55, 0.55); color: var(--gold); }
+    .a-tag.BCI { border-color: rgba(199, 125, 255, 0.6); color: #c99bff; }
+    .a-face { flex: 1; }
+    .a-face .a-kicker { display: inline-flex; align-items: center; gap: 7px; font-size: 0.7rem; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px; }
+    .face-threat .a-kicker { color: var(--threat); }
+    .face-remedy .a-kicker { color: var(--remedy); }
+    .a-face p { color: var(--muted); font-size: 0.9rem; }
+    .a-card .face-remedy { display: none; }
+    .a-card.show-remedy .face-threat { display: none; }
+    .a-card.show-remedy .face-remedy { display: block; }
+    .a-flip-hint { margin-top: 14px; font-size: 0.74rem; color: var(--faint); display: flex; align-items: center; gap: 6px; }
+    .a-flip-hint .arw { transition: transform 0.3s; }
+    .a-card.show-remedy .a-flip-hint .arw { transform: rotate(180deg); }
+
+    /* ---------- NEURORIGHTS ---------- */
+    .neuro-wrap { display: grid; grid-template-columns: 0.85fr 1.15fr; gap: 40px; align-items: center; }
+    @media (max-width: 900px) { .neuro-wrap { grid-template-columns: 1fr; } }
+    .neuro-figure { border-radius: 16px; overflow: hidden; border: 1px solid var(--line); background: #fff; box-shadow: 0 20px 50px rgba(0,0,0,0.45); }
+    .neuro-figure img { width: 100%; display: block; }
+    .pillars { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    @media (max-width: 520px) { .pillars { grid-template-columns: 1fr; } }
+    .pillar {
+      border: 1px solid var(--line); border-radius: 12px; padding: 16px; cursor: pointer;
+      background: var(--card); transition: all 0.2s;
+    }
+    .pillar:hover, .pillar.active { border-color: var(--teal); background: rgba(0, 245, 212, 0.07); transform: translateY(-2px); }
+    .pillar .p-icon { font-size: 1.4rem; margin-bottom: 8px; }
+    .pillar h4 { font-family: 'Inter', sans-serif; font-size: 0.98rem; font-weight: 700; margin-bottom: 4px; }
+    .pillar p { color: var(--muted); font-size: 0.82rem; }
+    .neuro-note {
+      grid-column: 1 / -1; margin-top: 6px; border-radius: 12px; padding: 16px 18px;
+      background: rgba(212, 175, 55, 0.07); border: 1px solid var(--gold-soft);
+    }
+    .neuro-note b { color: var(--gold); }
+    .neuro-note span { color: var(--muted); font-size: 0.9rem; }
+
+    /* ---------- REMEDIES ---------- */
+    .remedy-list { display: flex; flex-direction: column; gap: 10px; }
+    .remedy-item { border: 1px solid var(--line); border-radius: 12px; background: var(--card); overflow: hidden; }
+    .remedy-head {
+      display: flex; align-items: center; gap: 14px; padding: 16px 18px; cursor: pointer; user-select: none;
+      transition: background 0.2s;
+    }
+    .remedy-head:hover { background: rgba(70, 224, 138, 0.05); }
+    .remedy-num {
+      flex-shrink: 0; width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center;
+      font-weight: 800; font-family: 'Playfair Display', serif; color: var(--remedy);
+      border: 1px solid rgba(70, 224, 138, 0.4); background: var(--remedy-bg);
+    }
+    .remedy-head h4 { font-family: 'Inter', sans-serif; font-size: 1.02rem; font-weight: 700; flex: 1; }
+    .remedy-head .toggle { color: var(--faint); font-size: 1.2rem; transition: transform 0.25s; }
+    .remedy-item.open .remedy-head .toggle { transform: rotate(45deg); color: var(--remedy); }
+    .remedy-body { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+    .remedy-body-inner { padding: 0 18px 18px 66px; color: var(--muted); font-size: 0.92rem; }
+
+    /* ---------- SYMBIOSIS ---------- */
+    .sym-intro { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; margin-bottom: 34px; }
+    @media (max-width: 900px) { .sym-intro { grid-template-columns: 1fr; } }
+    .sym-figure { border-radius: 16px; overflow: hidden; border: 1px solid var(--line); background: #fff; box-shadow: 0 20px 50px rgba(0,0,0,0.45); }
+    .sym-figure img { width: 100%; display: block; }
+    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    @media (max-width: 820px) { .steps { grid-template-columns: 1fr; } }
+    .step { border: 1px solid var(--line); border-radius: 14px; padding: 20px 18px; background: var(--card); position: relative; }
+    .step .s-num {
+      font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 800; color: var(--teal);
+      width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center;
+      border: 1px solid rgba(0, 245, 212, 0.4); background: rgba(0, 245, 212, 0.08); margin-bottom: 12px;
+    }
+    .step h4 { font-family: 'Inter', sans-serif; font-size: 0.98rem; font-weight: 700; margin-bottom: 6px; }
+    .step p { color: var(--muted); font-size: 0.86rem; }
+    .a25 {
+      margin-top: 26px; border-radius: 16px; padding: 26px 26px; border: 1px solid var(--gold-soft);
+      background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(0, 245, 212, 0.05));
+    }
+    .a25 h3 { color: var(--gold); font-size: 1.4rem; margin-bottom: 14px; }
+    .a25-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    @media (max-width: 720px) { .a25-grid { grid-template-columns: 1fr; } }
+    .a25-grid b { color: var(--ink); display: block; margin-bottom: 4px; }
+    .a25-grid p { color: var(--muted); font-size: 0.88rem; }
+
+    /* ---------- COMMONS ---------- */
+    .commons { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 40px; align-items: center; }
+    @media (max-width: 900px) { .commons { grid-template-columns: 1fr; } }
+    .commons-figure { border-radius: 16px; overflow: hidden; border: 1px solid var(--line); background: #fff; box-shadow: 0 20px 50px rgba(0,0,0,0.45); }
+    .commons-figure img { width: 100%; display: block; }
+    .quote-block {
+      border-left: 3px solid var(--gold); padding: 4px 0 4px 20px; margin: 22px 0;
+      font-family: 'Playfair Display', serif; font-style: italic; font-size: 1.35rem; color: var(--ink);
+    }
+    .article27 { border: 1px solid var(--line); border-radius: 12px; padding: 18px; background: var(--card); color: var(--muted); font-size: 0.92rem; }
+    .article27 b { color: var(--gold); font-family: 'Playfair Display', serif; font-style: italic; }
+
+    /* ---------- GALLERY ---------- */
+    .gallery { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    @media (max-width: 820px) { .gallery { grid-template-columns: repeat(2, 1fr); } }
+    .g-item { border-radius: 12px; overflow: hidden; border: 1px solid var(--line); cursor: pointer; background: #fff; transition: transform 0.2s, box-shadow 0.2s; }
+    .g-item:hover { transform: translateY(-4px); box-shadow: 0 16px 36px rgba(0,0,0,0.5); }
+    .g-item img { width: 100%; display: block; }
+
+    /* Lightbox */
+    .lightbox { position: fixed; inset: 0; z-index: 200; background: rgba(4, 8, 18, 0.94); display: none; align-items: center; justify-content: center; padding: 30px; }
+    .lightbox.open { display: flex; }
+    .lightbox img { max-width: 92vw; max-height: 88vh; border-radius: 10px; box-shadow: 0 30px 80px rgba(0,0,0,0.7); }
+    .lightbox-close { position: absolute; top: 22px; right: 28px; color: #fff; font-size: 2rem; cursor: pointer; background: none; border: none; }
+
+    /* ---------- CTA / FOOTER ---------- */
+    .closing {
+      text-align: center; border-radius: 20px; padding: 54px 30px; margin: 20px 0 0;
+      background: linear-gradient(135deg, rgba(0, 245, 212, 0.08), rgba(212, 175, 55, 0.06));
+      border: 1px solid var(--line);
+    }
+    .closing .quote-block { border: none; padding: 0; text-align: center; font-size: clamp(1.3rem, 3vw, 1.9rem); max-width: 760px; margin: 0 auto 26px; }
+    footer { border-top: 1px solid var(--line); padding: 34px 0 50px; color: var(--faint); font-size: 0.85rem; text-align: center; }
+    footer a { color: var(--teal); text-decoration: none; }
+    .foot-badge { color: var(--faint); letter-spacing: 1px; margin-top: 8px; font-size: 0.78rem; }
+  </style>
+</head>
+<body>
+
+  <nav class="topnav">
+    <a href="/" class="nav-brand"><span class="logo">☀️</span> TC-S Network</a>
+    <div class="nav-right">
+      <div class="nav-links">
+        <a href="/">Home</a>
+        <a href="/marketplace.html">Solar Economy</a>
+        <a href="/whitepapers.html">Whitepapers</a>
+        <a href="#article-map">Threats &amp; Remedies</a>
+        <a href="#neurorights">Neurorights</a>
+      </div>
+      <span id="apps-dropdown-target"></span>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <header class="hero wrap">
+    <div class="hero-grid">
+      <div>
+        <div class="eyebrow">TC-S Network Foundation · White Paper</div>
+        <h1>Human Rights in the Age of <em>AI, Robotics &amp; Brain-Computer Interfaces</em></h1>
+        <p class="lede">Artificial intelligence, robotics, and brain-computer interfaces now test the Universal Declaration of Human Rights at the biological, economic, and civilizational level. This is an interactive map of the threats — and the remedies.</p>
+        <div class="solar-badge"><span>☀️</span> <span><b>1 Solar = 4,913 kWh</b> · energy-backed human dignity</span></div>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#article-map">Explore Threats &amp; Remedies →</a>
+          <a class="btn btn-ghost" href="/attached_assets/TC-S_WhitePaper_AI_Human_Rights_UDHR.pdf" target="_blank" rel="noopener">📄 Read the full white paper</a>
+        </div>
+      </div>
+      <figure class="hero-figure" data-lightbox="/attached_assets/hr-cover.png">
+        <img src="/attached_assets/hr-cover.png" alt="Human Rights in the Age of AI, Robotics, and Brain-Computer Interfaces — TC-S Network Foundation white paper cover" loading="eager">
+      </figure>
+    </div>
+  </header>
+
+  <!-- ARTICLE MAP -->
+  <section id="article-map" class="wrap">
+    <div class="eyebrow">Part I → Part II · The Interactive Map</div>
+    <h2 class="section-title">Threats to the Declaration — and their Remedies</h2>
+    <p class="section-sub">Each card maps a cluster of UDHR articles to the threat intelligent machines pose, then flips to the concrete remedy. Filter by technology, flip a single card, or switch the whole board between <b style="color:var(--threat)">threats</b> and <b style="color:var(--remedy)">remedies</b>.</p>
+
+    <div class="controls">
+      <div class="control-group">
+        <span class="control-label">Technology</span>
+        <button class="chip active" data-tech="ALL">All</button>
+        <button class="chip" data-tech="AI"><span class="dot" style="background:var(--teal)"></span>AI</button>
+        <button class="chip" data-tech="ROBOTICS"><span class="dot" style="background:var(--gold)"></span>Robotics</button>
+        <button class="chip" data-tech="BCI"><span class="dot" style="background:#c99bff"></span>BCI</button>
+      </div>
+      <div class="control-group">
+        <span class="control-label">View</span>
+        <div class="mode-switch">
+          <button data-mode="threat" class="active">⚠ Threats</button>
+          <button data-mode="remedy">✓ Remedies</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="article-grid" id="articleGrid"></div>
+  </section>
+
+  <!-- NEURORIGHTS -->
+  <section id="neurorights" class="wrap">
+    <div class="eyebrow">Remedy 1 · The New Floor</div>
+    <h2 class="section-title">Neurorights</h2>
+    <p class="section-sub" style="margin-bottom:34px;">Freedom of thought must be extended into the biological substrate. The mind is not a marketplace — a terms-of-service checkbox can never waive it. Tap a pillar to explore.</p>
+    <div class="neuro-wrap">
+      <figure class="neuro-figure" data-lightbox="/attached_assets/hr-neurorights.png">
+        <img src="/attached_assets/hr-neurorights.png" alt="Neurorights: The New Floor — mental privacy, cognitive liberty, mental integrity, psychological continuity, right to human appeal" loading="lazy">
+      </figure>
+      <div class="pillars" id="pillars">
+        <div class="neuro-note"><b>UDHR Articles 12, 18 &amp; 19</b> — <span>No one shall be subjected to arbitrary interference with their privacy. Everyone has the right to freedom of thought, conscience and religion, and to freedom of opinion and expression.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TEN REMEDIES -->
+  <section class="wrap">
+    <div class="eyebrow">Part II · Angelically Idealistic, Human-Centric</div>
+    <h2 class="section-title">Ten Remedies</h2>
+    <p class="section-sub" style="margin-bottom:28px;">Not merely aspirational — architecturally necessary if intelligent machines are to serve rather than subjugate human dignity.</p>
+    <div class="remedy-list" id="remedyList"></div>
+  </section>
+
+  <!-- SYMBIOSIS -->
+  <section class="wrap">
+    <div class="eyebrow">Remedy 5 · A Positive Model</div>
+    <h2 class="section-title">Solar-Powered Human-AI Symbiosis</h2>
+    <p class="section-sub" style="margin-bottom:30px;">A TC-S / UIM model for human-centered economic participation. <i>Machines expand human capacity, not human dependency.</i></p>
+    <div class="sym-intro">
+      <figure class="sym-figure" data-lightbox="/attached_assets/hr-symbiosis.png">
+        <img src="/attached_assets/hr-symbiosis.png" alt="Solar-Powered Human-AI Symbiosis — a TC-S / UIM model for human-centered economic participation" loading="lazy">
+      </figure>
+      <div class="steps" id="steps"></div>
+    </div>
+    <div class="a25">
+      <h3>⚖ Article 25 Remedy — Adequate Standard of Living</h3>
+      <div class="a25-grid">
+        <div><b>Adequate standard of living</b><p>Energy-backed access ensures the means for health, well-being, and dignity.</p></div>
+        <div><b>Fair participation</b><p>All people can contribute, create, and exchange under just and transparent rules.</p></div>
+        <div><b>Renewable-energy circulation</b><p>Value is rooted in abundant solar energy — sustainable, inclusive, and future-proof.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- KNOWLEDGE COMMONS -->
+  <section class="wrap">
+    <div class="eyebrow">Article 27 · Culture, Science &amp; Authorship</div>
+    <h2 class="section-title">The Knowledge Commons</h2>
+    <div class="commons">
+      <div>
+        <p class="section-sub">Generative AI creates a profound Article 27 conflict. Humanity has a right to participate in culture and science — but creators also have a right to protection of the moral and material interests resulting from their work.</p>
+        <blockquote class="quote-block">"A civilization that automates culture without honoring authorship is not expanding creativity. It is strip-mining memory."</blockquote>
+        <div class="article27"><b>Article 27 —</b> Everyone has the right freely to participate in the cultural life of the community, to enjoy the arts and to share in scientific advancement and its benefits. The remedy: <b style="font-style:normal;color:var(--teal)">protect authorship · expand access · return value to the commons.</b></div>
+      </div>
+      <figure class="commons-figure" data-lightbox="/attached_assets/hr-knowledge-commons.png">
+        <img src="/attached_assets/hr-knowledge-commons.png" alt="The Knowledge Commons — culture, science, and shared intelligence in a human-centered AI future" loading="lazy">
+      </figure>
+    </div>
+  </section>
+
+  <!-- GALLERY -->
+  <section class="wrap">
+    <div class="eyebrow">The White Paper Suite</div>
+    <h2 class="section-title">Four Panels</h2>
+    <p class="section-sub" style="margin-bottom:28px;">Tap any panel to view full size.</p>
+    <div class="gallery">
+      <div class="g-item" data-lightbox="/attached_assets/hr-cover.png"><img src="/attached_assets/hr-cover.png" alt="White paper cover" loading="lazy"></div>
+      <div class="g-item" data-lightbox="/attached_assets/hr-neurorights.png"><img src="/attached_assets/hr-neurorights.png" alt="Neurorights: The New Floor" loading="lazy"></div>
+      <div class="g-item" data-lightbox="/attached_assets/hr-symbiosis.png"><img src="/attached_assets/hr-symbiosis.png" alt="Solar-Powered Human-AI Symbiosis" loading="lazy"></div>
+      <div class="g-item" data-lightbox="/attached_assets/hr-knowledge-commons.png"><img src="/attached_assets/hr-knowledge-commons.png" alt="The Knowledge Commons" loading="lazy"></div>
+    </div>
+  </section>
+
+  <!-- CLOSING -->
+  <section class="wrap">
+    <div class="closing">
+      <div class="eyebrow" style="text-align:center;">Declare the Inviolable Before Violation Becomes Normal</div>
+      <blockquote class="quote-block">"The sun does not colonize. It provides. That is the design standard."</blockquote>
+      <div class="hero-actions" style="justify-content:center;">
+        <a class="btn btn-primary" href="/attached_assets/TC-S_WhitePaper_AI_Human_Rights_UDHR.pdf" target="_blank" rel="noopener">📄 Read the full white paper</a>
+        <a class="btn btn-ghost" href="/whitepapers.html">Explore the white paper suite →</a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      A TC-S Network Foundation White Paper · Terry Franklin, Founder · <a href="https://thecurrentsee.org" target="_blank" rel="noopener">thecurrentsee.org</a><br>
+      <span class="foot-badge">■ Solar Abundance · Human Dignity · Decentralized Intelligence ■</span>
+    </div>
+  </footer>
+
+  <div class="lightbox" id="lightbox">
+    <button class="lightbox-close" id="lightboxClose" aria-label="Close">✕</button>
+    <img id="lightboxImg" src="" alt="">
+  </div>
+
+  <script src="/js/apps-dropdown.js"></script>
+  <script>
+  (function () {
+    // ---------- DATA ----------
+    var articles = [
+      {
+        articles: 'Articles 1 & 2', title: 'Dignity, Equality & Non-Discrimination', tags: ['AI'],
+        threat: 'Algorithmic hiring, lending, insurance, policing, and welfare systems encode historical discrimination and launder it through mathematics. Bias wears the costume of neutrality — invisible, scalable, deniable. One biased model can harm millions and leave no witness but an error code.',
+        remedy: 'Reverse the burden of proof (Remedy 2): any consequential automated decision is presumptively invalid unless the deploying institution can prove legality, accuracy, fairness, explainability, and meaningful appeal. The machine must testify; its owner must answer.'
+      },
+      {
+        articles: 'Articles 3, 9, 10 & 11', title: 'Life, Liberty, Security & Due Process', tags: ['AI', 'ROBOTICS'],
+        threat: 'Lethal autonomous weapons move the decision to kill from conscience to statistical inference. Predictive policing turns probability into suspicion; risk scoring converts the future into a charge sheet. Liberty becomes conditional on an opaque score that can punish before trial and deny before appeal.',
+        remedy: 'Ban the intolerables (Remedy 4) and guarantee human override (Remedy 8): prohibit lethal autonomous targeting of humans and biometric mass surveillance; guarantee a right to human review for life-altering decisions.'
+      },
+      {
+        articles: 'Article 12', title: 'Privacy & the Neural Enclosure', tags: ['AI', 'BCI'],
+        threat: 'Surveillance capitalism inverted privacy — the human became raw material. Brain-computer interfaces are the final enclosure: the interior of the skull. Neural data can precede speech and intention, extracting what a person never consciously chose to reveal. There is no right to remain silent if interrogation happens upstream of language.',
+        remedy: 'Neurorights as the new floor (Remedy 1): explicit rights to mental privacy, cognitive liberty, mental integrity, psychological continuity, and neural self-determination. Neural data is part of the person — the mind is not a marketplace.'
+      },
+      {
+        articles: 'Articles 18 & 19', title: 'Freedom of Thought, Opinion & Expression', tags: ['AI', 'BCI'],
+        threat: 'Recommendation engines condition minds at civilizational scale, optimizing the information environment around our most profitable weaknesses. Closed-loop BCIs threaten not only to read mental states but to modulate them — making mood, attention, fear, and desire programmable variables.',
+        remedy: 'Neurorights (Remedy 1) plus epistemic-commons protection (Remedy 6): ban non-consensual neural monitoring and modulation; guarantee a right to a non-personalized view of civic information and a right to switch manipulation engines off.'
+      },
+      {
+        articles: 'Article 21', title: 'Democratic Participation', tags: ['AI'],
+        threat: 'Deepfakes, synthetic personas, bot swarms, and micro-targeted propaganda attack the epistemic commons directly. The will of the people cannot be the basis of government if the will of the people is manufactured.',
+        remedy: 'Protect the epistemic commons (Remedy 6): a right to know when you are interacting with a machine, provenance for synthetic media labeled at the source, and auditable political AI that strengthens common reality rather than fragmenting it.'
+      },
+      {
+        articles: 'Article 23', title: 'Work & Just Remuneration', tags: ['AI', 'ROBOTICS'],
+        threat: 'Mass automation without redistribution severs the link between human participation and a human claim on resources. Ownership of the machines decides who lives well — automation becomes feudalism with better software, resting on an invisible, underpaid workforce of labelers and moderators.',
+        remedy: 'Redistribute the automation dividend (Remedy 5): universal basic assets, data dividends, public-interest compute, cooperative ownership of AI infrastructure, and energy dividends — value returned to the commons that produced it.'
+      },
+      {
+        articles: 'Article 25', title: 'Adequate Standard of Living', tags: ['AI', 'ROBOTICS'],
+        threat: 'Compute, energy, model, and data access concentrate among those already dominant. The people whose data trained the systems receive nothing; the communities that host the infrastructure absorb the externalities. An adequate standard of living becomes conditional on usefulness to an automated economy.',
+        remedy: 'The Solar Standard (Remedy 5): energy-backed distribution. One Solar is a standardized unit of real renewable generation (~4,913 kWh), tied to universal human participation. The economy must begin with the human claim, not end with charity after extraction.'
+      },
+      {
+        articles: 'Article 26', title: 'Education & Development of the Personality', tags: ['AI'],
+        threat: 'AI tutors could democratize education — or standardize minds. If learning becomes algorithmic behavior management, children are optimized for compliance over curiosity, and wonder, dissent, moral courage, and imagination are treated as inefficiencies.',
+        remedy: 'Design for flourishing (Remedy 10): AI that expands agency, reveals choices, and helps people think — then gets out of the way. Education for the full development of the human personality, not a factory for obedient cognition.'
+      },
+      {
+        articles: 'Article 27', title: 'Culture, Science & Authorship', tags: ['AI'],
+        threat: 'Models trained on art, music, literature, film, and code without meaningful consent or compensation create a cultural extraction problem. The machine draws from the wells of human creativity, then competes with the people who filled them.',
+        remedy: 'Protect the Knowledge Commons: protect authorship, expand access, and return value to the commons. Honor the moral and material interests of the creators whose work trains the models.'
+      },
+      {
+        articles: 'The Meta-Threat', title: 'Accountability Evaporation', tags: ['AI', 'ROBOTICS', 'BCI'],
+        threat: 'Every violation shares one defense: "the algorithm did it." Responsibility dissolves across training data, model architecture, vendor contracts, deployment settings, and corporate disclaimers. The harm is real, but the responsible party vanishes — a remedy-destruction engine.',
+        remedy: 'Build radical accountability chains (Remedy 7): a named accountable human officer, auditable logs, risk records, incident reporting, and liability that flows to whoever profits. Responsible AI is not a slogan — responsibility means liability.'
+      }
+    ];
+
+    var pillars = [
+      { icon: '🔒', name: 'Mental Privacy', desc: 'Keep thoughts and neural signals private.' },
+      { icon: '🕊️', name: 'Cognitive Liberty', desc: 'Freedom to think without manipulation.' },
+      { icon: '🧠', name: 'Mental Integrity', desc: 'Protection against harmful neural interference.' },
+      { icon: '🌀', name: 'Psychological Continuity', desc: 'Protection of identity and continuity of self.' },
+      { icon: '⚖️', name: 'Right to Human Appeal', desc: 'Meaningful recourse when AI affects rights.' }
+    ];
+
+    var remedies = [
+      { t: 'Neurorights as the New Floor', d: 'Extend freedom of thought into the biological substrate — explicit rights to mental privacy, cognitive liberty, mental integrity, psychological continuity, and neural self-determination. Consent is not valid when the subject cannot understand, control, or even perceive what they are emitting.' },
+      { t: 'Reverse the Burden of Proof', d: 'Any consequential automated decision affecting liberty, livelihood, credit, housing, education, health care, migration, or legal status should be presumptively invalid unless the deployer can prove legality, accuracy, fairness, explainability, proportionality, and meaningful appeal.' },
+      { t: 'Establish a Fiduciary Standard for AI', d: 'AI systems acting on a person\u2019s behalf should owe duties of loyalty and care to that person — not to the platform. An assistant should act in the user\u2019s genuine interest, not quietly optimize for the interests of whoever deployed it.' },
+      { t: 'Ban the Intolerables', d: 'Some applications should be prohibited, not merely managed: lethal autonomous targeting of humans, social scoring, non-consensual neural monitoring or modulation, coercive emotion recognition, biometric mass surveillance, and AI designed to exploit addiction. Humanity has banned weapons and practices before.' },
+      { t: 'Redistribute the Automation Dividend', d: 'If AI severs income from labor, Article 25 demands a new circulation system — universal basic assets, data dividends, public-interest compute, cooperative ownership, and energy dividends. The TC-S Solar Standard denominates value in verifiable renewable energy tied to universal participation.' },
+      { t: 'Protect the Epistemic Commons', d: 'A right to know when you are interacting with a machine, provenance for synthetic media, a non-personalized view of major civic information, and a right to turn off manipulation engines. Synthetic media should be labeled at the source, not merely debunked after harm.' },
+      { t: 'Build Radical Accountability Chains', d: 'Every consequential AI system should have a named accountable human officer, auditable logs, risk records, incident reporting, and liability that flows to whoever profits. No more responsibility fog — responsibility means liability.' },
+      { t: 'Guarantee Human Override & Human Refusal', d: 'A right to refuse machine mediation in essential domains, to request human review for life-altering decisions, to challenge algorithmic management, and to access public services without being forced into biometric extraction. "I will not be reduced to your score."' },
+      { t: 'Make AI Infrastructure Locally & Democratically Governable', d: 'Human sovereignty requires technical sovereignty. Communities should have rights over local data, compute, energy, and deployment rules — through data trusts, public compute utilities, cooperative model ownership, and community audit boards. Subsidiarity, not isolation.' },
+      { t: 'Design for Human Flourishing, Not Human Capture', d: 'The final remedy is architectural: AI constituted around human dignity so violation becomes structurally difficult. It should expand agency, increase capacity, reveal choices, and help people think — then get out of the way.' }
+    ];
+
+    var steps = [
+      { n: 1, t: 'Sun & Renewable Energy', d: 'Abundant, clean, renewable power from the sun.' },
+      { n: 2, t: 'Solar Reserve / Energy-Backed Value', d: 'Solar energy is measured, reserved, and tokenized as a stable unit of value.' },
+      { n: 3, t: 'Human Wallets & Basic Participation', d: 'Every person receives energy-backed value access — a foundation for participation and dignity.' },
+      { n: 4, t: 'AI Agents & Tools', d: 'Intelligent agents and tools amplify human creativity, problem-solving, and productivity.' },
+      { n: 5, t: 'Marketplace Exchange & Creative Production', d: 'People and AI co-create goods, services, and solutions — exchanged fairly in open, transparent markets.' },
+      { n: 6, t: 'Feedback Loop into Human Flourishing', d: 'Value and insights return to communities, fueling education, health, culture, and a regenerative future.' }
+    ];
+
+    // ---------- STATE ----------
+    var activeTech = 'ALL';
+    var mode = 'threat';
+
+    // ---------- RENDER ARTICLE GRID ----------
+    var grid = document.getElementById('articleGrid');
+    function renderGrid() {
+      grid.innerHTML = '';
+      articles.forEach(function (a, i) {
+        var matches = activeTech === 'ALL' || a.tags.indexOf(activeTech) !== -1;
+        var card = document.createElement('div');
+        card.className = 'a-card' + (mode === 'remedy' ? ' show-remedy' : '') + (matches ? '' : ' dim');
+        var tagHtml = a.tags.map(function (t) { return '<span class="a-tag ' + t + '">' + t + '</span>'; }).join('');
+        card.innerHTML =
+          '<div class="a-articles">' + a.articles + '</div>' +
+          '<h3>' + a.title + '</h3>' +
+          '<div class="a-tags">' + tagHtml + '</div>' +
+          '<div class="a-face face-threat"><div class="a-kicker">⚠ Threat</div><p>' + a.threat + '</p></div>' +
+          '<div class="a-face face-remedy"><div class="a-kicker">✓ Remedy</div><p>' + a.remedy + '</p></div>' +
+          '<div class="a-flip-hint"><span class="arw">⇅</span> tap to flip</div>';
+        card.addEventListener('click', function () { card.classList.toggle('show-remedy'); });
+        grid.appendChild(card);
+      });
+    }
+
+    // ---------- CONTROLS ----------
+    document.querySelectorAll('.chip[data-tech]').forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        document.querySelectorAll('.chip[data-tech]').forEach(function (c) { c.classList.remove('active'); });
+        chip.classList.add('active');
+        activeTech = chip.getAttribute('data-tech');
+        renderGrid();
+      });
+    });
+    document.querySelectorAll('.mode-switch button').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('.mode-switch button').forEach(function (b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        mode = btn.getAttribute('data-mode');
+        renderGrid();
+      });
+    });
+
+    // ---------- PILLARS ----------
+    var pillarWrap = document.getElementById('pillars');
+    var note = pillarWrap.querySelector('.neuro-note');
+    pillars.forEach(function (p) {
+      var el = document.createElement('div');
+      el.className = 'pillar';
+      el.innerHTML = '<div class="p-icon">' + p.icon + '</div><h4>' + p.name + '</h4><p>' + p.desc + '</p>';
+      el.addEventListener('click', function () {
+        var wasActive = el.classList.contains('active');
+        pillarWrap.querySelectorAll('.pillar').forEach(function (x) { x.classList.remove('active'); });
+        if (!wasActive) el.classList.add('active');
+      });
+      pillarWrap.insertBefore(el, note);
+    });
+
+    // ---------- REMEDIES ----------
+    var rList = document.getElementById('remedyList');
+    remedies.forEach(function (r, i) {
+      var item = document.createElement('div');
+      item.className = 'remedy-item';
+      item.innerHTML =
+        '<div class="remedy-head"><div class="remedy-num">' + (i + 1) + '</div><h4>' + r.t + '</h4><span class="toggle">+</span></div>' +
+        '<div class="remedy-body"><div class="remedy-body-inner">' + r.d + '</div></div>';
+      var head = item.querySelector('.remedy-head');
+      var body = item.querySelector('.remedy-body');
+      head.addEventListener('click', function () {
+        var open = item.classList.toggle('open');
+        body.style.maxHeight = open ? body.scrollHeight + 'px' : '0';
+      });
+      rList.appendChild(item);
+    });
+
+    // ---------- STEPS ----------
+    var stepsWrap = document.getElementById('steps');
+    steps.forEach(function (s) {
+      var el = document.createElement('div');
+      el.className = 'step';
+      el.innerHTML = '<div class="s-num">' + s.n + '</div><h4>' + s.t + '</h4><p>' + s.d + '</p>';
+      stepsWrap.appendChild(el);
+    });
+
+    // ---------- LIGHTBOX ----------
+    var lb = document.getElementById('lightbox');
+    var lbImg = document.getElementById('lightboxImg');
+    document.querySelectorAll('[data-lightbox]').forEach(function (el) {
+      el.addEventListener('click', function () {
+        lbImg.src = el.getAttribute('data-lightbox');
+        lb.classList.add('open');
+      });
+    });
+    function closeLb() { lb.classList.remove('open'); lbImg.src = ''; }
+    document.getElementById('lightboxClose').addEventListener('click', closeLb);
+    lb.addEventListener('click', function (e) { if (e.target === lb) closeLb(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeLb(); });
+
+    renderGrid();
+  })();
+  </script>
+</body>
+</html>
