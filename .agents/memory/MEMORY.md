@@ -1,4 +1,5 @@
 - [Publish blocked by DB diff](publish-diff-blocked.md) — publish-time schema diff fails here; ANY new column/table blocks publish. Persist into existing jsonb instead.
+- [Prod PORT override breaks publish](prod-port-override.md) — never set PORT in production env; platform assigns it and health-checks that port. Override = crash-looping VM.
 - [OpenAI image models](openai-image-models.md) — this key has only gpt-image-* (no dall-e-3); use gpt-image-1, never pass response_format, read b64_json.
 - [Solar distribution model](solar-distribution-model.md) — distribution begins at sign-up: day one = Genesis Solar (1 Solar × days since Apr 7 2025), then +1/day. Not blanket-retroactive.
 - [LifeLens analysis cache](lifelens-analysis-cache.md) — lifelens_analysis is shared by Rob Low + UIM; a uim-only record makes the Rob Low card blank. Cache hit needs human-needs fields; advisory reads must not persist uim patches.
