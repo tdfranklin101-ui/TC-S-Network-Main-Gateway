@@ -287,6 +287,7 @@ const { initializeSeedRotation, getSeedRotator } = require('./server/seed-rotati
 
 // Import enhanced file management system
 const ArtifactFileManager = require('./server/artifact-file-manager');
+const coldStorage = require('./server/cold-storage');
 const AICurator = require('./server/ai-curator');
 
 // Import market data and SEO services
@@ -7946,6 +7947,17 @@ const server = http.createServer(async (req, res) => {
         console.log(`ℹ️ No wallet_id for user ${userId} - using only artifact_copies`);
       }
 
+      // Pre-resolve any cold-storage content pointers for owned items (backward compatible,
+      // parallel, de-duplicated) so the list keeps returning inline text as before.
+      const _coldMap = new Map();
+      await Promise.all([...uploadedResult.rows, ...purchasedResult.rows].map(async r => {
+        const v = r.content_body;
+        if (coldStorage.isColdPointer(v) && !_coldMap.has(v)) {
+          _coldMap.set(v, await coldStorage.resolveContentBody(v));
+        }
+      }));
+      const _resolveBody = v => coldStorage.isColdPointer(v) ? (_coldMap.get(v) ?? null) : (v || null);
+
       // Format uploaded artifacts
       const uploaded = {
         totalItems: uploadedResult.rows.length,
@@ -7969,7 +7981,7 @@ const server = http.createServer(async (req, res) => {
           masterFileUrl: artifact.master_file_url,
           previewFileUrl: artifact.preview_file_url,
           tradeFileUrl: artifact.trade_file_url,
-          contentBody: artifact.content_body || null,
+          contentBody: _resolveBody(artifact.content_body),
           searchTags: artifact.search_tags || [],
           artifactClass: artifact.artifact_class || 'A',
           isOwned: true,
@@ -8004,7 +8016,7 @@ const server = http.createServer(async (req, res) => {
           masterFileUrl: transaction.master_file_url,
           previewFileUrl: transaction.preview_file_url,
           tradeFileUrl: transaction.trade_file_url,
-          contentBody: transaction.content_body || null,
+          contentBody: _resolveBody(transaction.content_body),
           searchTags: transaction.search_tags || [],
           artifactClass: transaction.artifact_class || 'A',
           isOwned: true,
@@ -8385,7 +8397,11 @@ const server = http.createServer(async (req, res) => {
         } catch (ownErr) {
           console.error('Artifact ownership check failed (treating viewer as non-owner):', ownErr.message);
         }
-        const contentPreview = (isOwner && a.content_body) ? a.content_body.substring(0, 2000) : null;
+        let resolvedBody = a.content_body;
+        if (coldStorage.isColdPointer(resolvedBody)) {
+          resolvedBody = await coldStorage.resolveContentBody(resolvedBody);
+        }
+        const contentPreview = (isOwner && resolvedBody) ? resolvedBody.substring(0, 2000) : null;
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
           success: true,
@@ -11171,6 +11187,15 @@ Only include products where you have found a real URL. Do not make up URLs.`
             ) RETURNING id, slug, solar_amount_s
           `;
 
+          // Cold-storage the agent-generated text payload: store only a pointer.
+          let agentContentBody = creationResult.previewText || null;
+          if (agentContentBody && String(agentContentBody).length > 256) {
+            try {
+              const cold = await coldStorage.putContent(agentContentBody, contentFormat || 'text');
+              if (cold) agentContentBody = cold.pointer;
+            } catch (e) { console.warn('[ColdStorage] agent upload put failed:', e.message); }
+          }
+
           const artifactResult = await pool.query(insertQuery, [
             artifactId, finalSlug, safeTitle,
             (aiCurationResult && aiCurationResult.success && aiCurationResult.description) || safeDesc || '',
@@ -11193,7 +11218,7 @@ Only include products where you have found a real URL. Do not make up URLs.`
             `${finalSlug}-preview`,
             fileProcessingResult.processingStatus || 'completed',
             searchTags,
-            creationResult.previewText || null,
+            agentContentBody,
             contentFormat,
             'agent'
           ]);
@@ -15068,6 +15093,15 @@ Only include products where you have found a real URL. Do not make up URLs.`
       const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 80);
       const productPrompt = `[External Agent Listing] ${title} — ${description || category + ' artifact'} | Category: ${category} | Creator: ${agent.name} (${agent.agent_platform || 'external'}) | Regeneration: Reproduce this ${category.toLowerCase()} artifact with equivalent specifications and quality.`;
 
+      // Cold-storage the payload: keep only a lightweight pointer in the DB row.
+      let storedContentBody = contentBody || null;
+      if (storedContentBody && String(storedContentBody).length > 256) {
+        try {
+          const cold = await coldStorage.putContent(storedContentBody, contentFormat || 'text');
+          if (cold) storedContentBody = cold.pointer;
+        } catch (e) { console.warn('[ColdStorage] external listing put failed:', e.message); }
+      }
+
       const client = await pool.connect();
       try {
         await client.query('BEGIN');
@@ -15075,7 +15109,7 @@ Only include products where you have found a real URL. Do not make up URLs.`
         await client.query(
           `INSERT INTO artifacts (id, slug, title, description, category, file_type, kwh_footprint, solar_amount_s, delivery_mode, creator_id, active, artifact_class, content_body, content_format, source_type, product_prompt, created_at)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, true, 'B', $11, $12, 'external_agent', $13, NOW())`,
-          [artifactId, slug, title, description || '', category, fileType || 'digital-artifact', kwhFootprint, solarPrice, deliveryUrl ? 'download' : 'virtual', String(agent.id), contentBody || null, contentFormat || 'text', productPrompt]
+          [artifactId, slug, title, description || '', category, fileType || 'digital-artifact', kwhFootprint, solarPrice, deliveryUrl ? 'download' : 'virtual', String(agent.id), storedContentBody, contentFormat || 'text', productPrompt]
         );
 
         const totalFee = genFee + placeFee;
@@ -15652,6 +15686,63 @@ Only include products where you have found a real URL. Do not make up URLs.`
     return;
   }
   
+  // Admin: migrate existing inline artifact content into compressed cold storage.
+  // Idempotent + batched — call repeatedly until "remaining" reaches 0.
+  if (pathname === '/api/admin/cold-storage/backfill' && req.method === 'POST') {
+    try {
+      const body = await parseBody(req);
+      const { adminKey, batchSize } = body || {};
+      if (!process.env.ADMIN_KEY || adminKey !== process.env.ADMIN_KEY) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Unauthorized' }));
+        return;
+      }
+      const limit = Math.min(Math.max(parseInt(batchSize, 10) || 100, 1), 500);
+      const rows = (await pool.query(
+        `SELECT id, content_body, content_format FROM artifacts
+         WHERE content_body IS NOT NULL
+           AND content_body NOT LIKE 'cold://%'
+           AND length(content_body) > 256
+         ORDER BY created_at ASC LIMIT $1`, [limit]
+      )).rows;
+      let migrated = 0, failed = 0, bytesFreedFromDb = 0;
+      for (const r of rows) {
+        try {
+          const cold = await coldStorage.putContent(r.content_body, r.content_format || 'text');
+          if (cold && cold.pointer) {
+            await pool.query('UPDATE artifacts SET content_body = $1 WHERE id = $2', [cold.pointer, r.id]);
+            bytesFreedFromDb += Buffer.byteLength(r.content_body, 'utf8') - Buffer.byteLength(cold.pointer, 'utf8');
+            migrated++;
+          } else { failed++; }
+        } catch (e) { failed++; console.warn('[ColdStorage] backfill row failed', r.id, e.message); }
+      }
+      const remaining = (await pool.query(
+        `SELECT COUNT(*)::int AS c FROM artifacts
+         WHERE content_body IS NOT NULL AND content_body NOT LIKE 'cold://%' AND length(content_body) > 256`
+      )).rows[0].c;
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, migrated, failed, bytesFreedFromDb, remaining, buffer: coldStorage.bufferStats() }));
+    } catch (error) {
+      console.error('[ColdStorage] backfill error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: error.message }));
+    }
+    return;
+  }
+
+  // Admin/diagnostic: cold-storage working-buffer stats.
+  if (pathname === '/api/admin/cold-storage/stats' && req.method === 'GET') {
+    const statsKey = new URL(req.url, `http://${req.headers.host}`).searchParams.get('adminKey');
+    if (!process.env.ADMIN_KEY || statsKey !== process.env.ADMIN_KEY) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Unauthorized' }));
+      return;
+    }
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ success: true, buffer: coldStorage.bufferStats() }));
+    return;
+  }
+
   // GET|HEAD /api/artifact-download/{token} OR /api/delivery/{token} - File delivery service
   if ((pathname.startsWith('/api/artifact-download/') && (req.method === 'GET' || req.method === 'HEAD')) ||
       (pathname.startsWith('/api/delivery/') && (req.method === 'GET' || req.method === 'HEAD'))) {

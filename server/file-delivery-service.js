@@ -1,5 +1,6 @@
 const MediaResolver = require('./media-resolver');
 const cloudStorage = require('./cloud-storage');
+const coldStorage = require('./cold-storage');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
@@ -159,7 +160,17 @@ class FileDeliveryService {
     if (item.contentBody && !item.tradeFileUrl && !item.masterFileUrl && !item.deliveryUrl && !item.previewFileUrl) {
       const contentType = item.contentFormat === 'markdown' ? 'text/markdown' : 'text/plain';
       const ext = item.contentFormat === 'markdown' ? 'md' : 'txt';
-      const body = Buffer.from(item.contentBody, 'utf8');
+      const resolvedContent = coldStorage.isColdPointer(item.contentBody)
+        ? await coldStorage.resolveContentBody(item.contentBody)
+        : item.contentBody;
+      if (resolvedContent == null) {
+        // Cold-storage payload could not be retrieved — fail loudly instead of
+        // serving a 200 with an empty file (silent data loss).
+        res.writeHead(502, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Artifact content is temporarily unavailable from cold storage' }));
+        return false;
+      }
+      const body = Buffer.from(resolvedContent, 'utf8');
       res.writeHead(200, {
         'Content-Type': contentType,
         'Content-Length': body.length,
