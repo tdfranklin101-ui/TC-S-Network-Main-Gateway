@@ -1,5 +1,6 @@
 const OpenAI = require('openai');
 const cloudStorage = require('./cloud-storage');
+const coldStorage = require('./cold-storage');
 const crypto = require('crypto');
 
 const PRIVATE_DIR = process.env.PRIVATE_OBJECT_DIR || '.private';
@@ -62,6 +63,18 @@ class ArtifactGenesisService {
       }
 
       const artifact = result.rows[0];
+
+      // The DNA (content_body) may live in cold storage as a `cold://` pointer.
+      // Resolve it to the real blueprint before feeding it to the generators —
+      // otherwise the pointer string itself would be sent to the AI.
+      if (coldStorage.isColdPointer(artifact.content_body)) {
+        const resolvedDNA = await coldStorage.resolveContentBody(artifact.content_body);
+        if (resolvedDNA == null) {
+          return { success: false, error: 'Artifact DNA is unavailable from cold storage' };
+        }
+        artifact.content_body = resolvedDNA;
+      }
+
       const genesisType = this._getGenesisType(artifact.category);
 
       if (!genesisType) {

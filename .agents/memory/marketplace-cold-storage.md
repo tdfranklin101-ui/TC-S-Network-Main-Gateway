@@ -34,13 +34,21 @@ compatible with plain inline text (older rows) AND `cold://` pointers.
   request and the frontend does client-side search over it — server-side
   pagination there would break search UX and is a separate, higher-risk task.
 
-**Extension (user's vision):** for regenerable artifacts, store ONLY the
-`product_prompt` (DNA) and re-infer on read instead of storing a payload. This
-rides the same resolver: pointer→file and pointer→inference become interchangeable
-resolution strategies behind one read path.
+**DNA reconstitution (implemented):** the purchase workflow already had a
+reconstitution step — `ArtifactGenesisService.generateFromDNA(artifactId)` in
+`server/audio-genesis-service.js` — which reads the artifact's DNA from
+`content_body` and materializes a real deliverable (audio/HTML/text) via GPT-4o
+into cloud storage. Because DNA now lives in cold storage as a `cold://` pointer,
+`generateFromDNA` resolves that pointer to the real blueprint BEFORE feeding it to
+the generators (fails loud if resolution returns null). `generateTeaser` needs no
+resolution — it only uses title/description/category. This is the "connection to
+the DNA pools": cold storage holds the DNA, the existing genesis path regenerates
+the product from it on purchase.
 
-DNA reconstitution is configured to run through the **LifeLens workflow** — the
-stored DNA (product_prompt) is fed into LifeLens, and the reconstituted result is
-emitted as part of the artifact on read. So the future inference-resolution
-strategy is specifically "resolve pointer → invoke LifeLens with the DNA → return
-its output as the artifact content," not a generic one-off inference call.
+**Why:** without resolution the generators would receive the literal `cold://...`
+pointer string as the blueprint and produce garbage. The genesis method is the
+single normalization point — all generator methods are invoked only through it.
+
+**Further vision:** store ONLY the DNA/prompt and regenerate on demand; the same
+resolver makes pointer→file and pointer→regeneration interchangeable behind one
+read path.
