@@ -7,7 +7,7 @@ channel = "stable-22_11"
 packages = ["ffmpeg", "freetype", "gh", "git-lfs", "jq", "lcms2", "libimagequant", "libjpeg", "libtiff", "libwebp", "libxcrypt", "nano", "openjpeg", "tcl", "tk", "zlib"]
 
 [deployment]
-run = ["node", "main.js"]
+run = ["node", "--max-old-space-size=1400", "main.js"]
 deploymentTarget = "vm"
 build = ["sh", "-c", "npm install"]
 publicDir = "dist/public"
