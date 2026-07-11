@@ -723,6 +723,10 @@
             const mb = (totalBytesFreed / (1024 * 1024)).toFixed(2);
             statusEl.textContent = `✅ Done. Migrated ${totalMigrated} artifact(s), ${totalFailed} failed, ${data.remaining} remaining.\nFreed ~${mb} MB from the database.`;
             showToast('Cold storage backfill complete', 'success');
+            if ((data.remaining || 0) === 0) {
+              statusEl.textContent += '\nSweep complete — this panel will disappear.';
+              setTimeout(() => { const p = document.getElementById('cold-storage-panel'); if (p) p.remove(); }, 4000);
+            }
             return;
           }
         }
@@ -778,8 +782,26 @@
       });
     });
 
+    // Auto-remove the cold-storage panel once the sweep is complete. Driven by
+    // live DB state (remaining === 0), so it stays gone on every future load —
+    // new listings already write straight to cold storage.
+    async function maybeHideColdPanel() {
+      const key = localStorage.getItem('admin_token') || localStorage.getItem('cold_admin_key') || '';
+      if (!key) return; // no key stored yet — leave panel visible so admin can run it
+      try {
+        const res = await fetch('/api/admin/cold-storage/stats?adminKey=' + encodeURIComponent(key));
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.success && data.remaining === 0) {
+          const panel = document.getElementById('cold-storage-panel');
+          if (panel) panel.remove();
+        }
+      } catch (e) {}
+    }
+
     fetchActions();
     setInterval(fetchActions, 30000);
+    maybeHideColdPanel();
   </script>
 </body>
 </html>

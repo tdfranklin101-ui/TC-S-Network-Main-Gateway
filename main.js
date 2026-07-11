@@ -15738,8 +15738,15 @@ Only include products where you have found a real URL. Do not make up URLs.`
       res.end(JSON.stringify({ success: false, error: 'Unauthorized' }));
       return;
     }
+    let remaining = null;
+    try {
+      remaining = (await pool.query(
+        `SELECT COUNT(*)::int AS c FROM artifacts
+         WHERE content_body IS NOT NULL AND content_body NOT LIKE 'cold://%' AND length(content_body) > 256`
+      )).rows[0].c;
+    } catch (e) { console.warn('[ColdStorage] stats remaining count failed:', e.message); }
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ success: true, buffer: coldStorage.bufferStats() }));
+    res.end(JSON.stringify({ success: true, remaining, buffer: coldStorage.bufferStats() }));
     return;
   }
 
