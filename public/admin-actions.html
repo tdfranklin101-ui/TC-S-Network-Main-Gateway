@@ -381,6 +381,19 @@
     </div>
   </div>
 
+  <div class="action-card" id="cold-storage-panel" style="margin-bottom: 24px;">
+    <h2 style="margin: 0 0 6px; font-size: 1.1rem;">🧊 Marketplace Cold Storage</h2>
+    <p style="color: #6b7280; font-size: 0.85rem; margin: 0 0 14px;">
+      Move existing inline artifact content into compressed cold storage so platform memory stays flat as the catalog grows.
+      Runs in batches — click once and it will keep going until every artifact is migrated.
+    </p>
+    <div class="action-buttons" style="margin-bottom: 12px;">
+      <button class="btn btn-execute" id="backfill-btn" onclick="runColdBackfill()">Run Backfill</button>
+      <button class="btn btn-secondary" onclick="checkColdStats()">Check Buffer Stats</button>
+    </div>
+    <div id="cold-storage-status" style="font-size: 0.85rem; color: #9ca3af; line-height: 1.6; white-space: pre-wrap;"></div>
+  </div>
+
   <div class="filter-tabs">
     <button class="filter-tab active" data-filter="all">All</button>
     <button class="filter-tab" data-filter="pending">Pending</button>
@@ -664,6 +677,87 @@
 
     function refreshActions() {
       fetchActions();
+    }
+
+    function getAdminKey() {
+      let key = localStorage.getItem('admin_token') || localStorage.getItem('cold_admin_key') || '';
+      if (!key) {
+        key = prompt('Enter admin key to run cold storage actions:') || '';
+        if (key) localStorage.setItem('cold_admin_key', key);
+      }
+      return key;
+    }
+
+    async function runColdBackfill() {
+      const adminKey = getAdminKey();
+      if (!adminKey) return;
+      const btn = document.getElementById('backfill-btn');
+      const statusEl = document.getElementById('cold-storage-status');
+      btn.disabled = true;
+      let totalMigrated = 0, totalFailed = 0, totalBytesFreed = 0, pass = 0;
+      try {
+        while (true) {
+          pass++;
+          statusEl.textContent = `Migrating... pass ${pass} — ${totalMigrated} migrated so far.`;
+          const res = await fetch('/api/admin/cold-storage/backfill', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ adminKey, batchSize: 100 })
+          });
+          if (res.status === 403) {
+            localStorage.removeItem('cold_admin_key');
+            statusEl.textContent = '❌ Unauthorized — admin key rejected. Click Run Backfill to re-enter.';
+            showToast('Unauthorized admin key', 'error');
+            return;
+          }
+          const data = await res.json();
+          if (!data.success) {
+            statusEl.textContent = `❌ Backfill error: ${data.error || 'unknown error'}`;
+            showToast('Backfill failed', 'error');
+            return;
+          }
+          totalMigrated += data.migrated || 0;
+          totalFailed += data.failed || 0;
+          totalBytesFreed += data.bytesFreedFromDb || 0;
+          if ((data.migrated || 0) === 0 || (data.remaining || 0) === 0) {
+            const mb = (totalBytesFreed / (1024 * 1024)).toFixed(2);
+            statusEl.textContent = `✅ Done. Migrated ${totalMigrated} artifact(s), ${totalFailed} failed, ${data.remaining} remaining.\nFreed ~${mb} MB from the database.`;
+            showToast('Cold storage backfill complete', 'success');
+            return;
+          }
+        }
+      } catch (err) {
+        statusEl.textContent = `❌ Backfill error: ${err.message}`;
+        showToast('Backfill failed', 'error');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function checkColdStats() {
+      const adminKey = getAdminKey();
+      if (!adminKey) return;
+      const statusEl = document.getElementById('cold-storage-status');
+      try {
+        const res = await fetch('/api/admin/cold-storage/stats?adminKey=' + encodeURIComponent(adminKey));
+        if (res.status === 403) {
+          localStorage.removeItem('cold_admin_key');
+          statusEl.textContent = '❌ Unauthorized — admin key rejected. Click again to re-enter.';
+          return;
+        }
+        const data = await res.json();
+        if (!data.success) {
+          statusEl.textContent = `❌ ${data.error || 'Could not fetch stats'}`;
+          return;
+        }
+        const b = data.buffer || {};
+        const usedMb = ((b.totalBytes || 0) / (1024 * 1024)).toFixed(2);
+        const maxMb = ((b.maxBytes || 0) / (1024 * 1024)).toFixed(0);
+        const pct = ((b.utilization || 0) * 100).toFixed(2);
+        statusEl.textContent = `Working buffer: ${b.entries || 0} item(s), ${usedMb} MB / ${maxMb} MB (${pct}% used).`;
+      } catch (err) {
+        statusEl.textContent = `❌ ${err.message}`;
+      }
     }
 
     function showToast(message, type) {
