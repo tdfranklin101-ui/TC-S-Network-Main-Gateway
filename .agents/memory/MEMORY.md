@@ -8,3 +8,4 @@
 - [Vimeo cinema embeds](vimeo-cinema-embeds.md) — unlisted films need `?h=` key to embed; 401/403 = missing key, not a code bug; "embed anywhere" toggle doesn't substitute.
 - [UIM abundance lens](uim-abundance-lens.md) — replay of old-policy artifacts returns empty abundance_lens {}; send a unique transaction_id to force the full advisory lens. Only blocked===true is a hard-deny.
 - [Marketplace cold storage](marketplace-cold-storage.md) — text payloads gzip'd to object storage; `cold://` pointer lives in existing content_body (no schema diff); resolve on every real read, fail loud on null.
+- [Deployment secrets don't auto-sync](deployment-secrets-sync.md) — new workspace secrets never reach the existing VM deploy; add in deployment secrets pane + republish. Also: bash background jobs freeze between tool calls.
