@@ -153,26 +153,36 @@ class MarketplaceApp {
     try {
       this.showLoading(true);
       
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 15000); // 15 second timeout for artifacts
-      
-      const response = await fetch('/api/artifacts/available', {
-        signal: controller.signal
-      });
-      clearTimeout(timeout);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      // Fetch the catalog in pages (the endpoint is paginated so the server
+      // never builds the full 19k+ item list in memory per request)
+      const pageSize = 500;
+      let offset = 0;
+      let pagedArtifacts = [];
+      let data = null;
+      for (let page = 0; page < 100; page++) {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 20000);
+        const response = await fetch(`/api/artifacts/available?limit=${pageSize}&offset=${offset}`, {
+          signal: controller.signal
+        });
+        clearTimeout(timeout);
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        data = await response.json();
+        if (!data || typeof data !== 'object') {
+          throw new Error('Invalid response format: expected JSON object');
+        }
+        const items = Array.isArray(data.artifacts) ? data.artifacts : [];
+        pagedArtifacts = pagedArtifacts.concat(items);
+        offset += pageSize;
+        if (!data.hasMore || items.length === 0) break;
       }
-      
-      const data = await response.json();
-      
-      // Validate response structure
-      if (!data || typeof data !== 'object') {
-        throw new Error('Invalid response format: expected JSON object');
-      }
-      
-      if (data.success && Array.isArray(data.artifacts)) {
+      if (data) data.artifacts = pagedArtifacts;
+
+      if (data && data.success && Array.isArray(data.artifacts)) {
         // Normalize and validate artifact data with comprehensive error handling
         this.artifacts = data.artifacts.map((artifact, index) => {
           try {

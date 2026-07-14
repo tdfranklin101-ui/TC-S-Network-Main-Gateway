@@ -8047,9 +8047,18 @@ const server = http.createServer(async (req, res) => {
   // Get Available Artifacts API (for marketplace display)
   if (pathname === '/api/artifacts/available' && req.method === 'GET') {
     try {
+      // Paginated to keep server memory flat: the catalog is served in pages
+      // (default 500, max 1000) instead of loading all artifacts + market_items
+      // into memory per request (the old behavior OOM'd the production VM).
+      const availParams = new URL(req.url, `http://${req.headers.host}`).searchParams;
+      const pageLimit = Math.min(Math.max(parseInt(availParams.get('limit'), 10) || 500, 1), 1000);
+      const pageOffset = Math.max(parseInt(availParams.get('offset'), 10) || 0, 0);
+
       let artifacts = [];
-      
+      let dbCount = 0;
+
       if (pool) {
+        dbCount = (await pool.query(`SELECT COUNT(*)::int AS c FROM artifacts WHERE active = true`)).rows[0].c;
         const artifactsQuery = `
           SELECT a.id, a.title, a.description, a.category, a.file_type, a.kwh_footprint, a.solar_amount_s, 
                  a.is_bonus, a.cover_art_url, a.delivery_mode, a.creator_id, a.delivery_url,
@@ -8070,10 +8079,14 @@ const server = http.createServer(async (req, res) => {
           )
           LEFT JOIN members owner ON owner.id = a.current_owner_id
           WHERE a.active = true 
-          ORDER BY a.is_bonus ASC, a.solar_amount_s ASC, a.title ASC
+          ORDER BY a.is_bonus ASC, a.solar_amount_s ASC, a.title ASC, a.id ASC
+          LIMIT $1 OFFSET $2
         `;
         
-        const artifactsResult = await pool.query(artifactsQuery);
+        const dbTake = Math.max(Math.min(pageLimit, dbCount - pageOffset), 0);
+        const artifactsResult = dbTake > 0
+          ? await pool.query(artifactsQuery, [dbTake, pageOffset])
+          : { rows: [] };
         
         artifacts = artifactsResult.rows.map(artifact => {
           const meta = artifact.market_metadata || {};
@@ -8127,12 +8140,13 @@ const server = http.createServer(async (req, res) => {
         });
       }
 
-      // Load and merge JSON collection files
+      // Load and merge JSON collection files (small, static lists)
       const collectionsToLoad = [
         'public/models/monazite-collection.json',
         'public/models/gidget-bardot-collection.json'
       ];
 
+      let collectionItems = [];
       for (const collectionPath of collectionsToLoad) {
         try {
           if (fs.existsSync(collectionPath)) {
@@ -8166,21 +8180,49 @@ const server = http.createServer(async (req, res) => {
                 fileSize: artifact.fileSize
               }));
             
-            artifacts = artifacts.concat(collectionArtifacts);
-            console.log(`✅ Loaded ${collectionArtifacts.length} artifacts from ${path.basename(collectionPath)}`);
+            collectionItems = collectionItems.concat(collectionArtifacts);
           }
         } catch (collectionError) {
           console.warn(`⚠️ Could not load ${collectionPath}:`, collectionError.message);
         }
       }
 
-      // Load ecosystem test items from market_items table
+      // Page window over the virtual list: [db artifacts, collections, market_items].
+      // Collections come after the DB rows; only the slice that falls inside the
+      // requested page is appended.
+      const colCount = collectionItems.length;
+      const colStart = Math.max(pageOffset - dbCount, 0);
+      const colNeeded = pageLimit - artifacts.length;
+      if (colNeeded > 0 && colStart < colCount) {
+        artifacts = artifacts.concat(collectionItems.slice(colStart, colStart + colNeeded));
+      }
+
+      // Load ecosystem test items from market_items table (paginated tail of the
+      // virtual list; rows whose id collides with an artifact are excluded so the
+      // old first-occurrence-wins dedup is preserved without loading everything).
+      let mktCount = 0;
       if (pool) {
         try {
-          const marketItemsResult = await pool.query(
-            `SELECT id, title, description, category, price_solar, kwh_estimate, source_type, metadata, created_by_user_id
-             FROM market_items WHERE status = 'ACTIVE' ORDER BY id DESC`
-          );
+          // Exclude rows colliding with DB artifacts OR JSON collection ids so
+          // "first occurrence wins" holds globally, and counts stay accurate.
+          const collectionIds = collectionItems.map(a => String(a.id));
+          const mktDedupWhere = `status = 'ACTIVE'
+               AND NOT (id = ANY($1::text[]))
+               AND NOT EXISTS (
+               SELECT 1 FROM artifacts a WHERE a.active = true AND a.id::text = market_items.id)`;
+          mktCount = (await pool.query(
+            `SELECT COUNT(*)::int AS c FROM market_items WHERE ${mktDedupWhere}`,
+            [collectionIds]
+          )).rows[0].c;
+          const mktStart = Math.max(pageOffset - dbCount - colCount, 0);
+          const mktNeeded = pageLimit - artifacts.length;
+          const marketItemsResult = (mktNeeded > 0 && mktStart < mktCount)
+            ? await pool.query(
+                `SELECT id, title, description, category, price_solar, kwh_estimate, source_type, metadata, created_by_user_id
+                 FROM market_items WHERE ${mktDedupWhere} ORDER BY id DESC LIMIT $2 OFFSET $3`,
+                [collectionIds, mktNeeded, mktStart]
+              )
+            : { rows: [] };
           const marketItems = marketItemsResult.rows.map(row => {
             const meta = typeof row.metadata === 'string' ? JSON.parse(row.metadata) : (row.metadata || {});
             return {
@@ -8205,15 +8247,12 @@ const server = http.createServer(async (req, res) => {
             };
           });
           artifacts = artifacts.concat(marketItems);
-          if (marketItems.length > 0) {
-            console.log(`✅ Loaded ${marketItems.length} market items into artifacts listing`);
-          }
         } catch (miErr) {
           console.warn('⚠️ Could not load market_items:', miErr.message);
         }
       }
 
-      // Deduplicate: first occurrence wins (DB artifacts → JSON collections → market_items)
+      // Dedup within the page (collections could collide with a DB artifact id)
       const seenIds = new Set();
       const deduped = [];
       for (const a of artifacts) {
@@ -8225,17 +8264,48 @@ const server = http.createServer(async (req, res) => {
       }
       artifacts = deduped;
 
-      // Calculate price range
-      const allCategories = [...new Set(artifacts.map(a => a.category))];
-      const priceRange = artifacts.length > 0 ? {
+      const totalArtifacts = dbCount + colCount + mktCount;
+      const hasMore = pageOffset + pageLimit < totalArtifacts;
+
+      // Catalog-wide categories + price range via cheap aggregates (not the page)
+      let allCategories = [...new Set(artifacts.map(a => a.category))];
+      let priceRange = artifacts.length > 0 ? {
         min: Math.min(...artifacts.map(a => a.solarPrice)),
         max: Math.max(...artifacts.map(a => a.solarPrice))
       } : { min: 0, max: 0 };
+      if (pool) {
+        try {
+          const agg = (await pool.query(`
+            SELECT MIN(p) AS min, MAX(p) AS max FROM (
+              SELECT solar_amount_s::numeric AS p FROM artifacts WHERE active = true
+              UNION ALL
+              SELECT price_solar::numeric FROM market_items WHERE status = 'ACTIVE'
+            ) x`)).rows[0];
+          if (agg && agg.min !== null) {
+            priceRange = { min: parseFloat(agg.min), max: parseFloat(agg.max) };
+          }
+          const cats = (await pool.query(`
+            SELECT DISTINCT category FROM (
+              SELECT category FROM artifacts WHERE active = true
+              UNION
+              SELECT category FROM market_items WHERE status = 'ACTIVE'
+            ) c WHERE category IS NOT NULL`)).rows.map(r => r.category);
+          if (cats.length > 0) {
+            allCategories = [...new Set(cats.concat(collectionItems.map(a => a.category)))];
+          }
+        } catch (aggErr) {
+          console.warn('⚠️ Catalog aggregate query failed:', aggErr.message);
+        }
+      }
 
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
         success: true,
-        totalArtifacts: artifacts.length,
+        totalArtifacts: totalArtifacts,
+        count: artifacts.length,
+        limit: pageLimit,
+        offset: pageOffset,
+        hasMore: hasMore,
         artifacts: artifacts,
         categories: allCategories,
         priceRange: priceRange

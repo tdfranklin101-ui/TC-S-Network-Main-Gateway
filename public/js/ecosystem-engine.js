@@ -710,9 +710,15 @@ async function phase4_purchases(){
   await sleep(300);
   let catalogItems = [];
   try {
-    const catalogRes = await fetch('/api/artifacts/available', { credentials: 'include' });
-    const catalogData = await catalogRes.json().catch(() => ({}));
-    const allArtifacts = catalogData.artifacts || catalogData.items || [];
+    // Page through the full catalog (endpoint is paginated to protect server memory)
+    let allArtifacts = [];
+    for (let off = 0, page = 0; page < 100; page++, off += 1000) {
+      const catalogRes = await fetch('/api/artifacts/available?limit=1000&offset=' + off, { credentials: 'include' });
+      const catalogData = await catalogRes.json().catch(() => ({}));
+      const items = catalogData.artifacts || catalogData.items || [];
+      allArtifacts = allArtifacts.concat(items);
+      if (!catalogData.hasMore || items.length === 0) break;
+    }
     catalogItems = allArtifacts
       .filter(a => a.active !== false)
       .map(a => ({

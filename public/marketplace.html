@@ -5197,14 +5197,31 @@
             });
         }
 
+        // Fetch the full catalog in pages so the server never has to build the
+        // whole 19k+ item list in memory for a single request.
+        async function fetchAllArtifactPages(pageSize) {
+            const size = pageSize || 500;
+            let all = [], offset = 0;
+            for (let page = 0; page < 100; page++) {
+                const res = await fetch('/api/artifacts/available?limit=' + size + '&offset=' + offset);
+                if (!res.ok) break;
+                const data = await res.json();
+                const items = data.artifacts || [];
+                all = all.concat(items);
+                offset += size;
+                if (!data.hasMore || items.length === 0) break;
+            }
+            return all;
+        }
+
         async function loadArtifacts() {
             try {
-                // Load existing database artifacts
-                const response = await fetch('/api/artifacts/available');
+                // Load existing database artifacts (paged)
                 let dbArtifacts = [];
-                if (response.ok) {
-                    const data = await response.json();
-                    dbArtifacts = data.artifacts || [];
+                try {
+                    dbArtifacts = await fetchAllArtifactPages(500);
+                } catch (e) {
+                    console.warn('Paged artifact load failed:', e);
                 }
 
                 // Load TC-S Computronium Market artifacts from all categories
@@ -7950,8 +7967,8 @@
             container.innerHTML = html;
 
             if (action === 'created') {
-                fetch('/api/artifacts/available').then(function(r) { return r.json(); }).then(function(d) {
-                    if (d.artifacts) { allArtifacts = d.artifacts; }
+                fetchAllArtifactPages(500).then(function(items) {
+                    if (items.length) { allArtifacts = items; }
                 }).catch(function() {});
             }
         }
