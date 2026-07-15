@@ -1,0 +1,121 @@
+# The Livingry Convergence — Operational Action Plans
+
+**Companion to: WWW.V3: Livingry as the Superior Operating System to War**
+*The Current-See Network • July 2026*
+
+---
+
+## How to Read This Document
+
+The white paper makes the argument. This document makes the argument executable. Each action plan translates one element of the WWW.V3 architecture into a bounded, fundable, measurable program with named workstreams, sequencing, and failure criteria. The organizing discipline throughout: **prove the stack at pilot scale before claiming it at civilizational scale.** A livingry framework that cannot de-escalate one regional resource dispute has no standing to propose planetary architecture.
+
+The plans run on three horizons:
+
+- **Horizon 1 (0–12 months): Demonstrate.** Build the minimum credible stack inside TC-S's existing infrastructure.
+- **Horizon 2 (12–36 months): Federate.** Deploy shared de-escalation pilots with institutional partners in one stressed region.
+- **Horizon 3 (36+ months): Standardize.** Convert pilot results into open protocols, policy templates, and treaty-adjacent instruments.
+
+---
+
+## Action Plan 1 — Civil Condition Sensing (Layer 1)
+
+**Objective:** A public-interest sensing dashboard that tracks conflict-onset indicators — energy insecurity, commodity shocks, displacement, unemployment spikes, institutional mistrust — without becoming a surveillance platform.
+
+**Horizon 1 workstreams:**
+1. **Indicator selection.** Convene a small advisory group (conflict researchers, humanitarian data specialists, one civil liberties reviewer) to select 8–12 open-source indicators. Public data only: FAO food price indices, grid stress data, UNHCR displacement figures, labor statistics, media sentiment from published sources.
+2. **Sensing agents.** Repurpose a subset of the TC-S marketplace agents as sensing agents, each responsible for one indicator domain, publishing structured weekly readings with confidence levels and source citations.
+3. **Legal safeguard charter.** Publish, before launch, a binding charter: no individual-level data, no covert collection, all sources auditable, all methods public. This is the document that distinguishes livingry sensing from intelligence collection — write it first, not retroactively.
+
+**Success metric:** Dashboard live with 90-day track record; at least one external researcher citing or stress-testing its readings.
+**Failure criterion:** If safeguard charter cannot be honored with available data, the layer pauses rather than degrades.
+
+---
+
+## Action Plan 2 — Crisis Interpretation (Layer 2)
+
+**Objective:** An interpretation engine that distinguishes noise from genuine escalation pathways and asks the WWW.V3 question — *what is making confrontation appear rational here?* — rather than the threat-assessment question.
+
+**Horizon 1 workstreams:**
+1. **Interpretation protocol.** Codify the analytic method as a published prompt/protocol stack: conditions analysis → rationality mapping (why escalation looks rational to each actor) → intervention surface (which conditions are tractable).
+2. **Backtesting.** Run the protocol against 5–10 historical crises with known outcomes (e.g., resource-driven disputes with documented de-escalation or escalation). Publish where the method would have flagged early and where it would have missed.
+3. **Red-team pass.** Invite adversarial review: can the interpretation layer be gamed, captured by one party's narrative, or induced to launder bias as analysis?
+
+**Success metric:** Published backtest with honest miss rates. Credibility here comes from documented failure, not claimed accuracy.
+
+---
+
+## Action Plan 3 — Generative Alternative Design (Layer 3)
+
+**Objective:** A working option-generation capability that produces dignified, materially grounded alternatives — energy swaps, debt standstills, relief corridors, mediated sequences — for live or simulated crisis conditions.
+
+**Horizon 1 workstreams:**
+1. **Alternative pattern library.** Catalog 30–50 historically used de-escalation instruments (commodity swap agreements, water-sharing compacts, labor stabilization packages, communication protocols) as structured, reusable templates.
+2. **Generation exercises.** Quarterly public exercises: take one live stress condition from the Layer 1 dashboard, run the full stack, publish the generated option set with cost estimates and feasibility notes.
+3. **Dignity constraint.** Every generated option must pass a stated test: no party is required to accept humiliation, framed defeat, or loss of standing as the price of de-escalation. Options that fail this are logged, not published.
+
+**Success metric:** One generated option set reviewed by a practitioner (mediator, humanitarian logistician, or regional policy analyst) and judged plausible enough to table.
+
+---
+
+## Action Plan 4 — Human Governance (Layer 4)
+
+**Objective:** Governance architecture that makes the "human accountability" principle structural rather than rhetorical.
+
+**Horizon 1 workstreams:**
+1. **Decision-rights matrix.** Publish exactly what agents may do autonomously (sense, interpret, generate, verify) and what requires human sign-off (any publication of a live-crisis assessment, any outreach to affected parties, any resource commitment).
+2. **Audit trail.** Every agent output in the stack carries provenance: model, prompt lineage, sources, human reviewer. Logs are inspectable by design.
+3. **Contestability channel.** A public mechanism by which any named party in an assessment can challenge it and receive a reasoned response within a stated window.
+4. **Independent review seat.** At least one governance reviewer outside TC-S with authority to freeze a workstream — not advise, freeze. Governance without a brake is theater.
+
+**Success metric:** First contestation handled publicly and well. The governance layer proves itself the first time it constrains the project against its own preferences.
+
+---
+
+## Action Plan 5 — Delivery Infrastructure (Layer 5)
+
+**Objective:** Demonstrate that constructive response can move at coercive-response speed — the white paper's hardest claim and the one most often left as hand-waving.
+
+**Honest framing:** TC-S cannot field relief logistics. What it *can* field is the financial and coordination rail — and that is where the Solar/Rays architecture stops being adjacent and becomes the delivery mechanism.
+
+**Horizon 1–2 workstreams:**
+1. **Rapid-relief financial rail.** Prototype a mechanism where the Foundation Grant Reserve can commit micro-denominated relief funding (Rays) to a verified stress condition within 72 hours of a Layer 2 flag — with the full audit trail from Layer 4.
+2. **GBI-as-stabilizer pilot.** Model, then pilot at small scale, GBI circulation as a scarcity-dampening instrument in one stressed community context — the direct operational test of "distributed prosperity as security policy."
+3. **Delivery partnerships.** Because execution capacity is the binding constraint, Horizon 2 requires at least two partnerships with organizations that already move goods and services under crisis conditions (humanitarian logistics NGOs, mutual aid networks, municipal resilience offices). TC-S provides sensing, options, and financial rails; partners provide trucks, staff, and legitimacy.
+
+**Success metric:** One end-to-end run — signal detected, interpreted, option generated, governance-approved, funds moved, delivery confirmed — however small. A single completed loop is worth more than any deck.
+
+---
+
+## Action Plan 6 — Federation and Policy Conversion (Horizons 2–3)
+
+**Objective:** Convert a working pilot into shared infrastructure and policy leverage.
+
+**Workstreams:**
+1. **Regional pilot selection.** Choose one region where resource stress, infrastructure fragility, and narrative conflict intersect at *manageable* scale — a watershed dispute, a cross-border energy corridor, an urban heat/grid stress zone. Not a great-power flashpoint. The pilot must be survivable.
+2. **Shared-stack protocol.** Publish the full stack as an open protocol so other institutions can run instances — federation, not franchise. The Local Solar Utility Index concept extends naturally here as a shared prosperity indicator between federated nodes.
+3. **Policy instrument drafting.** Translate pilot results into the three policy shifts the white paper names: model legislation for de-escalation infrastructure investment, frontier-AI governance language on escalation limits, and a pilot charter template for international institutions.
+4. **Adversarial hardening.** Standing red-team function addressing the asymmetry risk: how the stack behaves when one party exploits its openness, floods its sensing layer, or games its option generation. Publish the hardening doctrine.
+
+---
+
+## Cross-Cutting Operating Disciplines
+
+1. **Publish failures at the same cadence as successes.** The framework's credibility depends on it behaving unlike the systems it critiques.
+2. **No claim outruns the pilot.** Public language stays one horizon behind demonstrated capability.
+3. **Budget the brake.** Governance, audit, and contestability are funded workstreams with owners, not values statements.
+4. **The convergence test.** Every quarter, one question: did any part of this stack make a constructive response faster, cheaper, or more legitimate than it would otherwise have been? If the answer is no for two consecutive quarters, the plan — not the vision — gets rebuilt.
+
+---
+
+## 12-Month Sequence at a Glance
+
+| Quarter | Milestone |
+| --- | --- |
+| Q1 | Safeguard charter published; indicator set selected; sensing agents live |
+| Q2 | Interpretation protocol published; historical backtest released |
+| Q3 | First public generation exercise; governance matrix and contestability channel live |
+| Q4 | Rapid-relief rail prototyped; first delivery partnership signed; end-to-end loop attempted |
+
+---
+
+*The strongest form of peace is built, funded, staffed, audited, and shipped. This document is the shipping manifest.*
