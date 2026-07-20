@@ -82,6 +82,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Add cookie parser middleware for authentication
   app.use(cookieParser());
+
+  // Mount Solar Passport auth bridge (cross-origin member auth)
+  const { authBridgeRouter } = await import('./authBridge');
+  app.use('/auth', authBridgeRouter);
   
   // Set up Replit authentication
   await setupReplitAuth(app);

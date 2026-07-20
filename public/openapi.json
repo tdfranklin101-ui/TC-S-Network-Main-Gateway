@@ -1,22 +1,146 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "title": "Satellite ID Anywhere",
-    "version": "1.0.0",
-    "description": "Normalize satellite lookups by COSPAR or NORAD"
+    "title": "TC-S Solar Passport Bridge API",
+    "version": "1.1.0",
+    "description": "Cross-origin auth bridge for the Solar Passport app. Authenticates against the shared production members table with HMAC-signed session cookies."
   },
+  "servers": [
+    { "url": "https://www.thecurrentsee.org", "description": "Production" }
+  ],
   "paths": {
-    "/api/lookup": {
-      "get": {
-        "summary": "Lookup by COSPAR or NORAD",
-        "parameters": [
-          {"name": "cospar", "in": "query", "schema": {"type": "string"}},
-          {"name": "norad", "in": "query", "schema": {"type": "string"}}
-        ],
+    "/auth/login": {
+      "post": {
+        "summary": "Sign in as an existing member",
+        "tags": ["Authentication"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["identifier", "password"],
+                "properties": {
+                  "identifier": { "type": "string", "description": "Username or email", "example": "Tdfranklin101" },
+                  "password": { "type": "string", "description": "Member password", "example": "SolarMember2025!" }
+                }
+              }
+            }
+          }
+        },
         "responses": {
-          "200": {"description": "Record found"},
-          "400": {"description": "Invalid query"},
-          "404": {"description": "Not found"}
+          "200": {
+            "description": "Authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "member": { "$ref": "#/components/schemas/AuthMember" },
+                    "token": { "type": "string", "description": "HMAC-signed session token (also set as tcs_auth cookie)" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Invalid credentials" },
+          "400": { "description": "Invalid input" }
+        }
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "summary": "Create a new member account",
+        "tags": ["Authentication"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["username", "email", "password"],
+                "properties": {
+                  "username": { "type": "string", "minLength": 2, "maxLength": 50, "example": "new_member_42" },
+                  "email": { "type": "string", "format": "email", "example": "member@example.com" },
+                  "password": { "type": "string", "minLength": 6, "maxLength": 120, "example": "securePass123!" },
+                  "firstName": { "type": "string", "maxLength": 50 },
+                  "lastName": { "type": "string", "maxLength": 50 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Member created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "member": { "$ref": "#/components/schemas/AuthMember" },
+                    "token": { "type": "string" },
+                    "genesisSolar": { "type": "number", "description": "Initial Solar balance (days since April 7, 2025)" }
+                  }
+                }
+              }
+            }
+          },
+          "409": { "description": "Username or email already exists" },
+          "400": { "description": "Invalid input" }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "summary": "Clear session cookie",
+        "tags": ["Authentication"],
+        "responses": {
+          "204": { "description": "Logged out successfully" }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "summary": "Get current authenticated member",
+        "tags": ["Authentication"],
+        "responses": {
+          "200": {
+            "description": "Member data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "member": { "$ref": "#/components/schemas/AuthMember" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Not authenticated" }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AuthMember": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "example": 1 },
+          "username": { "type": "string", "example": "Tdfranklin101" },
+          "name": { "type": "string", "example": "T. D. Franklin" },
+          "email": { "type": "string", "example": "tdfranklin101@thecurrentsee.org" },
+          "firstName": { "type": "string" },
+          "lastName": { "type": "string" },
+          "totalSolar": { "type": "number", "example": 368.0002, "description": "Current Solar balance" },
+          "isAgent": { "type": "boolean" },
+          "isExternalAgent": { "type": "boolean" },
+          "memberSince": { "type": "string", "format": "date-time" }
         }
       }
     }
