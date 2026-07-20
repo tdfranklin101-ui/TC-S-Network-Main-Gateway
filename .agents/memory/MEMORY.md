@@ -9,3 +9,4 @@
 - [UIM abundance lens](uim-abundance-lens.md) — replay of old-policy artifacts returns empty abundance_lens {}; send a unique transaction_id to force the full advisory lens. Only blocked===true is a hard-deny.
 - [Marketplace cold storage](marketplace-cold-storage.md) — text payloads gzip'd to object storage; `cold://` pointer lives in existing content_body (no schema diff); resolve on every real read, fail loud on null.
 - [Deployment secrets don't auto-sync](deployment-secrets-sync.md) — new workspace secrets never reach the existing VM deploy; add in deployment secrets pane + republish. Also: bash background jobs freeze between tool calls.
+- [main.js is the prod router](mainjs-is-prod-router.md) — production runs raw-http main.js; routes mounted in Express server/routes.ts never run live. Wire endpoints into main.js dispatch.

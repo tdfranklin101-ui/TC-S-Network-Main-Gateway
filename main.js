@@ -5,6 +5,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const SAiUIM = require('./services/SAiUIMLayer');
+const { handleAuthBridge } = require('./server/auth-bridge');
 
 // Persist the SAi UIM Ethical Layer's flat artifact_record_patch onto the artifacts row.
 // Stored under the existing lifelens_analysis jsonb column at key `uim` (rather than
@@ -3664,6 +3665,11 @@ const server = http.createServer(async (req, res) => {
   try {
   // UIM Headers + Request ID + Logging
   addUIMHeaders(req, res);
+
+  // Solar Passport auth bridge (cross-origin member auth + GBI status)
+  if (pathname.startsWith('/auth/')) {
+    if (await handleAuthBridge(req, res, pathname, { pool, bcrypt })) return;
+  }
   
   // NOTE: Rate limiting temporarily disabled pending deployment testing
   // TODO: Re-enable rate limiting after successful initial deployment

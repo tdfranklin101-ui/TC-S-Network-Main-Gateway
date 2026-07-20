@@ -98,7 +98,55 @@
         "summary": "Clear session cookie",
         "tags": ["Authentication"],
         "responses": {
-          "204": { "description": "Logged out successfully" }
+          "200": { "description": "Logged out successfully (session cookie cleared)" }
+        }
+      }
+    },
+    "/auth/gbi-status": {
+      "get": {
+        "summary": "Verify active GBI (Global Basic Income) membership",
+        "description": "With a session token (tcs_auth cookie or Authorization: Bearer <token>), returns the full GBI status including Solar balance. With ?member=<username or email> and no token, returns a minimal public verification (no balance).",
+        "tags": ["GBI Membership"],
+        "parameters": [
+          {
+            "name": "member",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" },
+            "description": "Username or email for public membership verification (no balance returned)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "GBI membership status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "member": { "type": "string", "example": "Tdfranklin101" },
+                    "active": { "type": "boolean", "example": true },
+                    "gbi": {
+                      "type": "object",
+                      "properties": {
+                        "program": { "type": "string", "example": "TC-S Solar Daily Distribution" },
+                        "dailyRate": { "type": "number", "example": 1 },
+                        "unit": { "type": "string", "example": "SOLAR" },
+                        "kwhPerSolar": { "type": "number", "example": 4913 },
+                        "lastDistribution": { "type": "string", "format": "date-time" }
+                      }
+                    },
+                    "memberSince": { "type": "string", "format": "date-time" },
+                    "daysInNetwork": { "type": "integer" },
+                    "totalSolar": { "type": "number", "description": "Only included for authenticated requests" }
+                  }
+                }
+              }
+            }
+          },
+          "404": { "description": "Member not found" },
+          "401": { "description": "No token and no ?member= lookup provided" }
         }
       }
     },
