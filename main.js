@@ -3688,6 +3688,15 @@ const server = http.createServer(async (req, res) => {
       console.error('❌ Analytics tracking failed:', err.message);
     });
   }
+
+  // Page-view + referrer visibility logging (log-only, no DB changes)
+  // Covers real pages (.html and clean paths) so referrers and crawlers show up in deployment logs
+  if (req.method === 'GET' && (pathname === '/' || pathname.endsWith('.html') || (!pathname.startsWith('/api/') && !pathname.includes('.')))) {
+    const pvIp = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket?.remoteAddress || 'unknown';
+    const pvRef = req.headers.referer || req.headers.referrer || 'direct';
+    const pvUa = String(req.headers['user-agent'] || 'unknown').slice(0, 100);
+    console.log(`👁️ PAGEVIEW ${pathname} | ref: ${pvRef} | ip: ${pvIp} | ua: ${pvUa}`);
+  }
   
   // TC-S Computronium Market API routes
   let body = null;
