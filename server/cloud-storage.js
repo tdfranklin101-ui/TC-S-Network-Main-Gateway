@@ -40,22 +40,50 @@ class ObjectStorageService {
 
   async downloadFile(key) {
     if (!client) throw new Error('Object storage is not available');
-    let normalizedKey = key;
-    if (normalizedKey.startsWith('/')) normalizedKey = normalizedKey.substring(1);
+    // Objects have historically been stored under two key shapes: verbatim as
+    // uploaded (often "/{bucket-id}/.private/..." because PRIVATE_OBJECT_DIR
+    // includes the bucket prefix) and fully normalized (".private/...").
+    // Uploads never normalized, so the verbatim form is tried FIRST — reads
+    // that only try the normalized form fail for every object uploaded with a
+    // prefixed key. Fall back through the progressively normalized candidates
+    // so both populations stay readable.
+    const candidates = [key];
+    let k = key;
+    if (!k.startsWith('/')) {
+      // Callers sometimes strip the leading slash (e.g. `cloud:///` handling);
+      // stored bucket-prefixed names keep it, so try the slashed form too.
+      const slashed = '/' + k;
+      if (!candidates.includes(slashed)) candidates.push(slashed);
+    }
+    if (k.startsWith('/')) {
+      k = k.substring(1);
+      if (!candidates.includes(k)) candidates.push(k);
+    }
     const bucketPrefix = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
-    if (bucketPrefix && normalizedKey.startsWith(bucketPrefix + '/')) {
-      normalizedKey = normalizedKey.substring(bucketPrefix.length + 1);
+    if (bucketPrefix && k.startsWith(bucketPrefix + '/')) {
+      k = k.substring(bucketPrefix.length + 1);
+      if (!candidates.includes(k)) candidates.push(k);
     }
-    if (normalizedKey.startsWith('replit-objstore-')) {
-      const slashIdx = normalizedKey.indexOf('/');
-      if (slashIdx > 0) normalizedKey = normalizedKey.substring(slashIdx + 1);
+    if (k.startsWith('replit-objstore-')) {
+      const slashIdx = k.indexOf('/');
+      if (slashIdx > 0) {
+        k = k.substring(slashIdx + 1);
+        if (!candidates.includes(k)) candidates.push(k);
+      }
     }
-    const result = await client.downloadAsBytes(normalizedKey);
-    if (!result.ok) throw new Error(`Download failed for key: ${normalizedKey}`);
-    const value = result.value;
-    if (Array.isArray(value) && value.length > 0 && value[0].length > 0) return value[0];
-    if (Buffer.isBuffer(value) && value.length > 0) return value;
-    throw new Error(`Empty or missing file for key: ${normalizedKey}`);
+    for (const candidate of candidates) {
+      let result;
+      try {
+        result = await client.downloadAsBytes(candidate);
+      } catch {
+        continue;
+      }
+      if (!result.ok) continue;
+      const value = result.value;
+      if (Array.isArray(value) && value.length > 0 && value[0].length > 0) return value[0];
+      if (Buffer.isBuffer(value) && value.length > 0) return value;
+    }
+    throw new Error(`Download failed for key: ${key} (tried ${candidates.length} key forms)`);
   }
 
   async fileExists(key) {

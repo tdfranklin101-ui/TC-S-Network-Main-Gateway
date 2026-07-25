@@ -7,6 +7,6 @@
 - [Static cache restart](static-cache-restart.md) — public/*.html is served from an in-memory cache built at boot; restart the workflow after editing or the preview serves a stale copy.
 - [Vimeo cinema embeds](vimeo-cinema-embeds.md) — unlisted films need `?h=` key to embed; 401/403 = missing key, not a code bug; "embed anywhere" toggle doesn't substitute.
 - [UIM abundance lens](uim-abundance-lens.md) — replay of old-policy artifacts returns empty abundance_lens {}; send a unique transaction_id to force the full advisory lens. Only blocked===true is a hard-deny.
-- [Marketplace cold storage](marketplace-cold-storage.md) — text payloads gzip'd to object storage; `cold://` pointer lives in existing content_body (no schema diff); resolve on every real read, fail loud on null.
+- [Marketplace cold storage](marketplace-cold-storage.md) — gzip'd payloads behind `cold://` pointers in content_body; reads must try the verbatim (bucket-prefixed) object key first; fail loud on null.
 - [Deployment secrets don't auto-sync](deployment-secrets-sync.md) — new workspace secrets never reach the existing VM deploy; add in deployment secrets pane + republish. Also: bash background jobs freeze between tool calls.
 - [main.js is the prod router](mainjs-is-prod-router.md) — production runs raw-http main.js; routes mounted in Express server/routes.ts never run live. Wire endpoints into main.js dispatch.

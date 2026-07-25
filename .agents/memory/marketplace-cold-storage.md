@@ -29,6 +29,9 @@ compatible with plain inline text (older rows) AND `cold://` pointers.
   never a 200 with an empty body — silent data loss otherwise.
 - Backfill existing inline rows via `POST /api/admin/cold-storage/backfill`
   (ADMIN_KEY-guarded, batched, idempotent; skips `cold://%`). Run until remaining=0.
+  NEVER run the backfill in an environment whose deployed code cannot read the
+  pointers it writes — backfilling prod before a read-path fix is published
+  converts readable inline rows into unreadable pointers.
 - `/api/artifacts/available` is metadata-only (never selected content_body); its
   memory cost is row-count, not content. It still loads the FULL catalog per
   request and the frontend does client-side search over it — server-side
@@ -48,6 +51,17 @@ the product from it on purchase.
 **Why:** without resolution the generators would receive the literal `cold://...`
 pointer string as the blueprint and produce garbage. The genesis method is the
 single normalization point — all generator methods are invoked only through it.
+
+**Object-storage key shapes (critical):** uploads store object names VERBATIM —
+and because `PRIVATE_OBJECT_DIR` includes a leading `/{bucket-id}/` prefix, most
+objects (cold/, master/, trade/) live under bucket-prefixed names, while a few
+paths that hardcode `.private/...` live under normalized names. Reads that
+normalize the prefix away miss the verbatim population entirely; this failure
+was masked by the 24h working buffer (reads succeed right after writes) and
+only surfaced after restarts as "orphaned pointer" noise — the objects were
+never missing. `downloadFile` must try the verbatim key FIRST, then
+progressively normalized forms. Never "fix" this by normalizing uploads:
+18k+ objects already live under prefixed names.
 
 **Further vision:** store ONLY the DNA/prompt and regenerate on demand; the same
 resolver makes pointer→file and pointer→regeneration interchangeable behind one

@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const coldStorage = require('./cold-storage');
 const { generateKidSolObjectives, makeAgentDecision, gatherMarketSnapshot, postToBulletin, gatherRound2Snapshot, makeRound2Decision, generateBulletinReply, inferObjectiveNeeds, consultKidSolar } = require('./agent-inference');
 const { normalizeCategory, getOfficialCategories, getCategoryIcon, getCategoryWithSubcategories } = require('./category-normalization');
 
@@ -919,11 +920,21 @@ async function createArtifactsForAgent(pool, agent, memberId, assignedCategories
 
       const productPrompt = generateProductPrompt(category, title, description, contentFormat);
 
+      // Cold-store the generated text payload: keep only a `cold://` pointer in
+      // the DB row. Falls back to inline content if object storage is unavailable.
+      let storedContentBody = contentBody;
+      if (storedContentBody && String(storedContentBody).length > 256) {
+        try {
+          const cold = await coldStorage.putContent(storedContentBody, contentFormat || 'text');
+          if (cold && cold.pointer) storedContentBody = cold.pointer;
+        } catch (e) { console.warn('[ColdStorage] daily-task artifact put failed:', e.message); }
+      }
+
       const artifactResult = await pool.query(
         `INSERT INTO artifacts (slug, title, description, category, subcategory, file_type, kwh_footprint, solar_amount_s, rays_amount, delivery_mode, creator_id, active, processing_status, artifact_class, source_type, content_body, content_format, product_prompt)
          VALUES ($1, $2, $3, $4, NULL, $5, $6, $7, 0, 'download', $8, true, 'complete', 'B', 'agent', $9, $10, $11)
          RETURNING id`,
-        [slug, title, description, category, fileType, String(kwhFootprint), String(price), String(memberId), contentBody, contentFormat, productPrompt]
+        [slug, title, description, category, fileType, String(kwhFootprint), String(price), String(memberId), storedContentBody, contentFormat, productPrompt]
       );
 
       if (!artifactResult || !artifactResult.rows || artifactResult.rows.length === 0) {
@@ -1836,11 +1847,20 @@ async function runEducationBlitz(pool, agents) {
 
           const productPrompt = generateProductPrompt('Education', titleWithSub, description, CONTENT_FORMAT);
 
+          // Cold-store the education payload; inline fallback if storage is down.
+          let storedEduBody = contentBody;
+          if (storedEduBody && String(storedEduBody).length > 256) {
+            try {
+              const cold = await coldStorage.putContent(storedEduBody, CONTENT_FORMAT || 'text');
+              if (cold && cold.pointer) storedEduBody = cold.pointer;
+            } catch (e) { console.warn('[ColdStorage] education artifact put failed:', e.message); }
+          }
+
           await pool.query(
             `INSERT INTO artifacts (slug, title, description, category, subcategory, file_type, kwh_footprint, solar_amount_s, rays_amount, delivery_mode, creator_id, active, processing_status, artifact_class, source_type, content_body, content_format, product_prompt)
              VALUES ($1, $2, $3, 'Education', $4, $5, $6, $7, 0, 'download', $8, true, 'complete', 'B', 'agent', $9, $10, $11)
              RETURNING id`,
-            [slug, titleWithSub, description, subcat, FILE_TYPE, String(kwhFootprint), String(price), String(memberId), contentBody, CONTENT_FORMAT, productPrompt]
+            [slug, titleWithSub, description, subcat, FILE_TYPE, String(kwhFootprint), String(price), String(memberId), storedEduBody, CONTENT_FORMAT, productPrompt]
           );
 
           await pool.query(
