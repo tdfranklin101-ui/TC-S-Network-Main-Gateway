@@ -88,7 +88,8 @@ function verifyToken(token) {
       return null;
     }
     const payload = JSON.parse(Buffer.from(value, 'base64url').toString('utf8'));
-    if (!payload.memberId || !payload.iat) return null;
+    if (!payload.memberId || typeof payload.iat !== 'number' || !Number.isFinite(payload.iat)) return null;
+    if (payload.iat > Date.now() + 5 * 60 * 1000) return null; // reject future-skewed tokens
     if (Date.now() - payload.iat > MAX_AGE_MS) return null;
     return payload;
   } catch {
@@ -221,34 +222,67 @@ function gbiStatus(row) {
 }
 
 // ---------------------------------------------------------------
-// Welcome email (non-blocking)
+// Solar Passport email (non-blocking)
+// The passport ARTIFACT itself is delivered by email — no external
+// UI is involved. Any signup path (site or bridge) signals through
+// here so every new member receives their passport.
 // ---------------------------------------------------------------
-async function sendWelcomeEmail(member, genesisSolar) {
+async function getEnvResendClient() {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return null;
+  const { Resend } = await import('resend');
+  return { client: new Resend(apiKey), fromEmail: 'TC-S Network <hello@thecurrentsee.org>' };
+}
+
+async function sendSolarPassportEmail(member, genesisSolar, getClient) {
   try {
-    const { Resend } = await import('resend');
-    const apiKey = process.env.RESEND_API_KEY;
-    if (!apiKey || !member.email) return;
-    const resend = new Resend(apiKey);
-    await resend.emails.send({
-      from: 'TC-S Network <hello@thecurrentsee.org>',
+    if (!member || !member.email) return;
+    let resendCtx = null;
+    if (typeof getClient === 'function') {
+      try { resendCtx = await getClient(); } catch (err) {
+        console.warn('⚠️ Resend connector unavailable, trying env key:', err.message);
+      }
+    }
+    if (!resendCtx) resendCtx = await getEnvResendClient();
+    if (!resendCtx) {
+      console.warn(`⚠️ Solar Passport email skipped for ${member.email} — no Resend credentials`);
+      return;
+    }
+    const { client, fromEmail } = resendCtx;
+    const memberSince = new Date(member.signup_timestamp || member.joined_date || Date.now());
+    const passportId = `TCS-${String(member.id).padStart(6, '0')}`;
+    const holderName = member.name || `${member.first_name || ''} ${member.last_name || ''}`.trim() || member.username;
+    const verifyUrl = `https://www.thecurrentsee.org/auth/gbi-status?member=${encodeURIComponent(member.username)}`;
+    await client.emails.send({
+      from: fromEmail || 'TC-S Network <hello@thecurrentsee.org>',
       to: member.email,
-      subject: 'Welcome to The Current-See — Your Solar Membership is Active',
+      subject: '🛂 Your Solar Passport — The Current-See Network',
       html: `
-        <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#0a1828;color:#fff;padding:32px;border-radius:12px">
-          <h1 style="color:#00f5d4">Welcome, ${member.name || member.username}!</h1>
-          <p>Your TC-S Network membership is now active. You are part of the solar-backed Global Basic Income.</p>
+        <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#0a1828;color:#fff;padding:32px;border-radius:12px;border:1px solid rgba(0,245,212,0.35)">
+          <div style="text-align:center;border-bottom:1px solid rgba(255,255,255,0.15);padding-bottom:16px;margin-bottom:20px">
+            <div style="font-size:11px;letter-spacing:4px;color:rgba(255,255,255,0.65)">THE CURRENT-SEE NETWORK</div>
+            <h1 style="color:#00f5d4;margin:8px 0 0;letter-spacing:2px">☀️ SOLAR PASSPORT</h1>
+          </div>
+          <table style="width:100%;border-collapse:collapse;font-size:14px">
+            <tr><td style="padding:6px 0;color:rgba(255,255,255,0.55);width:45%">Passport No.</td><td style="padding:6px 0;color:#fff;font-weight:bold">${passportId}</td></tr>
+            <tr><td style="padding:6px 0;color:rgba(255,255,255,0.55)">Holder</td><td style="padding:6px 0;color:#fff;font-weight:bold">${holderName}</td></tr>
+            <tr><td style="padding:6px 0;color:rgba(255,255,255,0.55)">Username</td><td style="padding:6px 0;color:#fff">${member.username}</td></tr>
+            <tr><td style="padding:6px 0;color:rgba(255,255,255,0.55)">Member Since</td><td style="padding:6px 0;color:#fff">${memberSince.toISOString().slice(0, 10)}</td></tr>
+          </table>
           <div style="background:rgba(0,245,212,0.08);border:1px solid rgba(0,245,212,0.3);border-radius:8px;padding:16px;margin:20px 0">
             <p style="margin:4px 0"><strong style="color:#39ff14">Genesis Solar Balance:</strong> ${genesisSolar} SOLAR</p>
-            <p style="margin:4px 0"><strong style="color:#39ff14">Daily GBI:</strong> +1 SOLAR every day</p>
+            <p style="margin:4px 0"><strong style="color:#39ff14">Daily Distribution:</strong> +1 SOLAR every day</p>
             <p style="margin:4px 0"><strong style="color:#39ff14">Energy Backing:</strong> 1 SOLAR = 4,913 kWh</p>
           </div>
-          <p>Visit the <a href="https://www.thecurrentsee.org/marketplace.html" style="color:#00f5d4">marketplace</a> to explore Solar-priced artifacts, or check your balance anytime at <a href="https://www.thecurrentsee.org" style="color:#00f5d4">thecurrentsee.org</a>.</p>
+          <p style="font-size:13px;color:rgba(255,255,255,0.75)">This passport certifies your active membership in the solar-backed Global Basic Income. Verify your membership status anytime at:<br>
+          <a href="${verifyUrl}" style="color:#00f5d4;word-break:break-all">${verifyUrl}</a></p>
+          <p>Visit the <a href="https://www.thecurrentsee.org/marketplace.html" style="color:#00f5d4">marketplace</a> to transact with your Solar, or check your balance anytime at <a href="https://www.thecurrentsee.org" style="color:#00f5d4">thecurrentsee.org</a>.</p>
           <p style="color:rgba(255,255,255,0.6);font-size:13px;margin-top:24px">The Current-See Foundation • Contribution begets compensation</p>
         </div>`
     });
-    console.log(`📧 Welcome email sent to ${member.email}`);
+    console.log(`🛂 Solar Passport ${passportId} emailed to ${member.email}`);
   } catch (err) {
-    console.warn('⚠️ Welcome email failed (non-blocking):', err.message);
+    console.warn('⚠️ Solar Passport email failed (non-blocking):', err.message);
   }
 }
 
@@ -257,7 +291,7 @@ async function sendWelcomeEmail(member, genesisSolar) {
 // ---------------------------------------------------------------
 async function handleAuthBridge(req, res, pathname, ctx) {
   if (!pathname.startsWith('/auth/')) return false;
-  const { pool, bcrypt } = ctx;
+  const { pool, bcrypt, getResendClient } = ctx;
 
   if (req.method === 'OPTIONS') {
     res.writeHead(204, corsHeaders(req));
@@ -332,7 +366,7 @@ async function handleAuthBridge(req, res, pathname, ctx) {
       const member = result.rows[0];
       const token = createToken({ memberId: member.id, username: member.username, iat: Date.now() });
       console.log(`📝 [Passport Bridge] New member: ${member.username} (ID: ${member.id}) | Genesis: ${genesisSolar} Solar`);
-      sendWelcomeEmail(member, genesisSolar); // fire-and-forget
+      sendSolarPassportEmail(member, genesisSolar, getResendClient); // fire-and-forget
       json(req, res, 201, { success: true, member: memberResponse(member), token, genesisSolar }, { 'Set-Cookie': authCookie(token) });
     } catch (err) {
       console.error('[Passport Bridge] register error:', err.message);
@@ -408,4 +442,4 @@ async function handleAuthBridge(req, res, pathname, ctx) {
   return true;
 }
 
-module.exports = { handleAuthBridge, verifyToken, createToken };
+module.exports = { handleAuthBridge, verifyToken, createToken, sendSolarPassportEmail };

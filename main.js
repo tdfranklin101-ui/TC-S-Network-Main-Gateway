@@ -5,7 +5,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const SAiUIM = require('./services/SAiUIMLayer');
-const { handleAuthBridge } = require('./server/auth-bridge');
+const { handleAuthBridge, sendSolarPassportEmail, verifyToken: verifyBridgeToken } = require('./server/auth-bridge');
 
 // Persist the SAi UIM Ethical Layer's flat artifact_record_patch onto the artifacts row.
 // Stored under the existing lifelens_analysis jsonb column at key `uim` (rather than
@@ -938,6 +938,26 @@ async function ensureMemberWallet(memberId) {
 }
 
 // Cookie helper function
+// Passport→site session exchange guard: cap NEW session creation per member
+// (reuse of an existing session is always allowed and costs no DB insert)
+const passportExchangeLog = new Map(); // memberId -> [creation timestamps]
+function passportExchangeAllowed(memberId) {
+  const now = Date.now();
+  const windowMs = 60 * 60 * 1000; // 1 hour
+  const max = 10;
+  let arr = passportExchangeLog.get(memberId);
+  if (!arr) { arr = []; passportExchangeLog.set(memberId, arr); }
+  while (arr.length && now - arr[0] > windowMs) arr.shift();
+  if (arr.length >= max) return false;
+  arr.push(now);
+  if (passportExchangeLog.size > 5000) {
+    for (const [k, v] of passportExchangeLog) {
+      if (!v.length || now - v[v.length - 1] > windowMs) passportExchangeLog.delete(k);
+    }
+  }
+  return true;
+}
+
 function getCookie(req, name) {
   const cookies = req.headers.cookie;
   if (!cookies) return null;
@@ -3668,7 +3688,7 @@ const server = http.createServer(async (req, res) => {
 
   // Solar Passport auth bridge (cross-origin member auth + GBI status)
   if (pathname.startsWith('/auth/')) {
-    if (await handleAuthBridge(req, res, pathname, { pool, bcrypt })) return;
+    if (await handleAuthBridge(req, res, pathname, { pool, bcrypt, getResendClient })) return;
   }
   
   // NOTE: Rate limiting temporarily disabled pending deployment testing
@@ -6103,15 +6123,70 @@ const server = http.createServer(async (req, res) => {
   if (pathname === '/api/session' && req.method === 'GET') {
     try {
       const sessionId = getCookie(req, 'tc_s_session');
-      
-      if (!sessionId) {
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: false, authenticated: false }));
-        return;
+      let session = sessionId ? await getSession(sessionId) : null;
+      let passportCookieHeader = null;
+
+      // Solar Passport routing: a valid passport token (bridge auth) signs
+      // the member into the site — exchanged here for a regular site session.
+      if (!session) {
+        const authHeader = req.headers.authorization || '';
+        const passportToken = authHeader.startsWith('Bearer ')
+          ? authHeader.slice(7).trim()
+          : getCookie(req, 'tcs_auth');
+        const payload = passportToken ? verifyBridgeToken(passportToken) : null;
+        if (payload && pool) {
+          try {
+            const pr = await pool.query(
+              'SELECT id, username, email, first_name, last_name, total_solar FROM members WHERE id = $1',
+              [payload.memberId]
+            );
+            if (pr.rows.length > 0) {
+              const m = pr.rows[0];
+              // Idempotent exchange: reuse the member's newest active site
+              // session when one exists (no DB insert on repeat exchanges).
+              let exchSessionId = null;
+              try {
+                const existing = await pool.query(
+                  "SELECT sid FROM session WHERE sess::jsonb->>'userId' = $1 AND expire > NOW() ORDER BY expire DESC LIMIT 1",
+                  [String(m.id)]
+                );
+                exchSessionId = existing.rows[0]?.sid || null;
+              } catch (reuseErr) {
+                console.warn('Passport exchange reuse lookup failed:', reuseErr.message);
+              }
+              if (!exchSessionId) {
+                if (!passportExchangeAllowed(m.id)) {
+                  console.warn(`🛂 [SESSION] Passport exchange rate-limited for member ${m.id} (${m.username})`);
+                } else {
+                  exchSessionId = await createSession(m.id, {
+                    userId: m.id,
+                    username: m.username,
+                    email: m.email,
+                    firstName: m.first_name,
+                    lastName: m.last_name,
+                    solarBalance: parseFloat(m.total_solar) || 0
+                  });
+                }
+              }
+              if (exchSessionId) {
+                session = await getSession(exchSessionId);
+                passportCookieHeader = [
+                  `tc_s_session=${exchSessionId}`,
+                  'HttpOnly',
+                  'SameSite=None',
+                  'Secure',
+                  'Path=/',
+                  `Max-Age=${30 * 24 * 60 * 60}`
+                ].join('; ');
+                console.log(`🛂 [SESSION] Solar Passport token exchanged for site session: ${m.username}`);
+              }
+            }
+          } catch (err) {
+            console.error('Passport session exchange error:', err.message);
+          }
+        }
       }
-      
-      const session = await getSession(sessionId);
-      
+
       if (!session) {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: false, authenticated: false }));
@@ -6217,7 +6292,9 @@ const server = http.createServer(async (req, res) => {
       console.log(`✅ [SESSION CHECK] Returning balance for ${session.username}: ${currentBalance} Solar (source: ${balanceSource})`);
       
       // Return session data with current balance
-      res.writeHead(200, { 'Content-Type': 'application/json' });
+      const sessionRespHeaders = { 'Content-Type': 'application/json' };
+      if (passportCookieHeader) sessionRespHeaders['Set-Cookie'] = passportCookieHeader;
+      res.writeHead(200, sessionRespHeaders);
       res.end(JSON.stringify({
         success: true,
         authenticated: true,
@@ -6306,6 +6383,14 @@ const server = http.createServer(async (req, res) => {
             success = true;
             console.log(`📝 New TC-S Network member registered: ${username} (DB ID: ${userId}) | Initial balance: ${initialSolarAllocation} Solar`);
             logBalanceChange('Registration', userId, username, 0, initialSolarAllocation, 'initial_allocation');
+            // Bridge signal: email the Solar Passport artifact to the new member (fire-and-forget)
+            if (!isAnonymous) {
+              sendSolarPassportEmail(
+                { id: userId, username, email, name: displayName, first_name: firstName || '', signup_timestamp: currentDate.toISOString() },
+                initialSolarAllocation,
+                getResendClient
+              );
+            }
           }
         } catch (dbError) {
           console.error('Database registration error:', dbError);
@@ -7058,6 +7143,15 @@ const server = http.createServer(async (req, res) => {
         const member = memberResult.rows[0];
 
         console.log(`🌱 New member created: ${username} with ${initialSolarAmount} Solar (${daysSinceGenesis} days since genesis)`);
+
+        // Bridge signal: email the Solar Passport artifact to the new member (fire-and-forget)
+        if (!isAgent) {
+          sendSolarPassportEmail(
+            { id: member.id, username: member.username, email, name: displayName, first_name: firstName || '', signup_timestamp: new Date().toISOString() },
+            initialSolarAmount,
+            getResendClient
+          );
+        }
 
         // Create session for immediate login (async - database-backed)
         const sessionId = await createSession(member.id, {
