@@ -89,10 +89,10 @@ Focus on: What problem it solves, who would use it, and why it's valuable.
 
     try {
       const response = await this.openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: "gpt-5.4-mini",
         messages: [{ role: "user", content: prompt }],
         temperature: 0.7,
-        max_tokens: 500,
+        max_completion_tokens: 500,
         response_format: { type: "json_object" }
       });
 
@@ -132,10 +132,10 @@ Emphasize practical value and AI innovation.
 
     try {
       const response = await this.openai.chat.completions.create({
-        model: "gpt-4o-mini", 
+        model: "gpt-5.4-mini", 
         messages: [{ role: "user", content: prompt }],
         temperature: 0.7,
-        max_tokens: 400,
+        max_completion_tokens: 400,
         response_format: { type: "json_object" }
       });
 
@@ -170,10 +170,10 @@ Generate JSON:
 
     try {
       const response = await this.openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: "gpt-5.4-mini",
         messages: [{ role: "user", content: prompt }],
         temperature: 0.6,
-        max_tokens: 300,
+        max_completion_tokens: 300,
         response_format: { type: "json_object" }
       });
 
@@ -209,10 +209,10 @@ Generate appealing marketplace copy in JSON:
 
     try {
       const response = await this.openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: "gpt-5.4-mini",
         messages: [{ role: "user", content: prompt }],
         temperature: 0.6,
-        max_tokens: 300,
+        max_completion_tokens: 300,
         response_format: { type: "json_object" }
       });
 

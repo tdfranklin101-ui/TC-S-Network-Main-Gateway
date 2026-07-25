@@ -10,22 +10,23 @@ const anthropic = new Anthropic({
 });
 
 const MODEL_MAP = {
-  'gpt-4o-mini': 'claude-sonnet-4-6',
-  'gpt-4o': 'claude-opus-4-8'
+  'gpt-4o-mini': 'claude-sonnet-5',
+  'gpt-4o': 'claude-opus-5'
 };
 
 function getClaudeModel(openaiModel) {
-  return MODEL_MAP[openaiModel] || 'claude-sonnet-4-6';
+  return MODEL_MAP[openaiModel] || 'claude-sonnet-5';
 }
 
 /**
  * Generic chat completion with Anthropic Claude
- * @param {Object} options - { model, system, messages, temperature, max_tokens }
+ * @param {Object} options - { model, system, messages, max_tokens }
+ *   Note: `temperature` is accepted but ignored — the Claude 5 family
+ *   deprecated the temperature parameter (API rejects it).
  * @returns {Promise<string>} - The response text
  */
 async function chatCompletion(options) {
   const model = getClaudeModel(options.model);
-  const temperature = options.temperature ?? 0.7;
   const maxTokens = options.max_tokens ?? 4000;
 
   // Extract system prompt (top-level param for Anthropic, not in messages)
@@ -43,7 +44,6 @@ async function chatCompletion(options) {
     model,
     system: systemPrompt,
     messages: userMessages,
-    temperature,
     max_tokens: maxTokens
   });
 
@@ -88,10 +88,9 @@ Speak in a helpful, informative, and professional tone. Focus your answers on so
 If asked about topics unrelated to these areas, politely redirect the conversation.`;
 
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
+      model: 'claude-sonnet-5',
       system: systemPrompt,
       messages: [{ role: 'user', content: query }],
-      temperature: 0.7,
       max_tokens: 500
     });
 

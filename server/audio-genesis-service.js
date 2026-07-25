@@ -6,12 +6,12 @@ const crypto = require('crypto');
 const PRIVATE_DIR = process.env.PRIVATE_OBJECT_DIR || '.private';
 
 const GENESIS_TYPES = {
-  'music':            { output: 'audio',  ext: '.mp3', mime: 'audio/mpeg',    ttsModel: 'tts-1-hd', voice: 'nova' },
-  'songs':            { output: 'audio',  ext: '.mp3', mime: 'audio/mpeg',    ttsModel: 'tts-1-hd', voice: 'nova' },
-  'audio & music':    { output: 'audio',  ext: '.mp3', mime: 'audio/mpeg',    ttsModel: 'tts-1-hd', voice: 'nova' },
-  'audio':            { output: 'audio',  ext: '.mp3', mime: 'audio/mpeg',    ttsModel: 'tts-1-hd', voice: 'nova' },
-  'video':            { output: 'audio',  ext: '.mp3', mime: 'audio/mpeg',    ttsModel: 'tts-1-hd', voice: 'shimmer' },
-  'videos':           { output: 'audio',  ext: '.mp3', mime: 'audio/mpeg',    ttsModel: 'tts-1-hd', voice: 'shimmer' },
+  'music':            { output: 'audio',  ext: '.mp3', mime: 'audio/mpeg',    ttsModel: 'gpt-4o-mini-tts', voice: 'nova' },
+  'songs':            { output: 'audio',  ext: '.mp3', mime: 'audio/mpeg',    ttsModel: 'gpt-4o-mini-tts', voice: 'nova' },
+  'audio & music':    { output: 'audio',  ext: '.mp3', mime: 'audio/mpeg',    ttsModel: 'gpt-4o-mini-tts', voice: 'nova' },
+  'audio':            { output: 'audio',  ext: '.mp3', mime: 'audio/mpeg',    ttsModel: 'gpt-4o-mini-tts', voice: 'nova' },
+  'video':            { output: 'audio',  ext: '.mp3', mime: 'audio/mpeg',    ttsModel: 'gpt-4o-mini-tts', voice: 'shimmer' },
+  'videos':           { output: 'audio',  ext: '.mp3', mime: 'audio/mpeg',    ttsModel: 'gpt-4o-mini-tts', voice: 'shimmer' },
   'writing':          { output: 'html',   ext: '.html', mime: 'text/html' },
   'docs':             { output: 'html',   ext: '.html', mime: 'text/html' },
   'education':        { output: 'html',   ext: '.html', mime: 'text/html' },
@@ -144,7 +144,7 @@ class ArtifactGenesisService {
     console.log('🧬 [Genesis] TTS script length:', script.length);
 
     const mp3Response = await this.openai.audio.speech.create({
-      model: genesisType.ttsModel || 'tts-1-hd',
+      model: genesisType.ttsModel || 'gpt-4o-mini-tts',
       voice: genesisType.voice || 'nova',
       input: script,
       response_format: 'mp3'
@@ -161,13 +161,12 @@ class ArtifactGenesisService {
     const prompt = this._buildHTMLPrompt(title, description, category, content_body, dnaData);
 
     const completion = await this.openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-5.5',
       messages: [
         { role: 'system', content: `You are a product designer for the TC-S Network marketplace. Generate a complete, self-contained HTML file that IS the deliverable product. The HTML should be beautiful, interactive, and production-ready. Use inline CSS and JavaScript. The design should use a dark theme (#0a0a0a background, white text, cyan (#00ffff) accents, neon green (#39FF14) highlights). Include the TC-S Network branding subtly. The HTML must be a complete standalone file with <!DOCTYPE html>. Do NOT use any external dependencies or CDNs. Output ONLY the HTML — no markdown fences, no explanation.` },
         { role: 'user', content: prompt }
       ],
-      max_tokens: 4000,
-      temperature: 0.8
+      max_completion_tokens: 4000,
     });
 
     let html = completion.choices[0]?.message?.content || '';
@@ -201,13 +200,12 @@ class ArtifactGenesisService {
     const userPrompt = `Create a complete "${category}" product titled "${title}".\n\nDescription: ${description || 'No description'}\n\nDNA/Blueprint:\n${content_body ? content_body.substring(0, 3000) : 'Generate based on the title and category.'}`;
 
     const completion = await this.openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-5.5',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
       ],
-      max_tokens: 4000,
-      temperature: 0.7
+      max_completion_tokens: 4000,
     });
 
     let content = completion.choices[0]?.message?.content || '';
@@ -241,7 +239,7 @@ class ArtifactGenesisService {
       console.log('🧬 [Genesis] Teaser script length:', script.length);
 
       const mp3Response = await this.openai.audio.speech.create({
-        model: 'tts-1',
+        model: 'gpt-4o-mini-tts',
         voice: 'nova',
         input: script,
         response_format: 'mp3'

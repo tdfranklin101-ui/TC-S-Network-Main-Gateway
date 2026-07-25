@@ -31,7 +31,7 @@ class KidSolarVoice {
       apiKey: process.env.OPENAI_API_KEY
     });
     
-    this.model = 'gpt-4o';
+    this.model = 'gpt-5.5';
     this.ttsVoice = 'nova';
     
     this.systemPrompt = `You are KID SOL (she/her), Agent #21 of the TC-S Network — the marketplace orchestrator and the user's personal agent. You command 20 specialist agents and work with Kid Solar (Agent #22) for building and technical design.
@@ -452,7 +452,7 @@ Context:
 
       const transcription = await this.openai.audio.transcriptions.create({
         file: fs.createReadStream(tempFile),
-        model: 'whisper-1',
+        model: 'gpt-4o-mini-transcribe',
         language: 'en'
       });
 
@@ -505,8 +505,7 @@ User said: "${text}"`;
         messages: messages,
         tools: this.functionDefinitions,
         tool_choice: "auto",
-        temperature: 0.7,
-        max_tokens: 300
+        max_completion_tokens: 300
       });
 
       const responseMessage = completion.choices[0].message;
@@ -546,8 +545,7 @@ User said: "${text}"`;
         const finalCompletion = await this.openai.chat.completions.create({
           model: this.model,
           messages: messages,
-          temperature: 0.7,
-          max_tokens: 400
+          max_completion_tokens: 400
         });
 
         const finalText = finalCompletion.choices[0].message.content;
@@ -1338,9 +1336,9 @@ User said: "${text}"`;
       ];
 
       const completion = await this.openai.chat.completions.create({
-        model: 'gpt-4o',
+        model: 'gpt-5.5',
         messages: messages,
-        max_tokens: 300
+        max_completion_tokens: 300
       });
 
       return {
@@ -1394,7 +1392,7 @@ User said: "${text}"`;
       const completion = await this.openai.chat.completions.create({
         model: this.model,
         messages: messages,
-        max_tokens: 300
+        max_completion_tokens: 300
       });
 
       return {
@@ -1414,7 +1412,7 @@ User said: "${text}"`;
   async textToSpeech(text) {
     try {
       const mp3 = await this.openai.audio.speech.create({
-        model: 'tts-1',
+        model: 'gpt-4o-mini-tts',
         voice: this.ttsVoice,
         input: text,
         speed: 1.0

@@ -26,8 +26,8 @@ class AIMarketIntelligence {
       apiKey: process.env.OPENAI_API_KEY
     });
     
-    // GPT-4o model for advanced market analysis
-    this.model = 'gpt-4o';
+    // GPT-5.5 model for advanced market analysis
+    this.model = 'gpt-5.5';
     
     // System prompt for market intelligence
     this.systemPrompt = `
@@ -154,7 +154,6 @@ ${includeForecasts ? 'Include specific forecasts for the next 7, 30, and 90 days
           { role: 'system', content: this.systemPrompt },
           { role: 'user', content: analysisPrompt }
         ],
-        temperature: 0.2, // Lower temperature for more analytical responses
         response_format: { type: "json_object" }
       });
 
@@ -227,7 +226,6 @@ Provide specific numerical predictions with confidence intervals where possible.
           { role: 'system', content: this.systemPrompt },
           { role: 'user', content: forecastPrompt }
         ],
-        temperature: 0.3,
         response_format: { type: "json_object" }
       });
 
@@ -296,7 +294,6 @@ Provide specific price recommendations with A/B testing suggestions.
           { role: 'system', content: this.systemPrompt },
           { role: 'user', content: optimizationPrompt }
         ],
-        temperature: 0.25,
         response_format: { type: "json_object" }
       });
 
@@ -366,7 +363,6 @@ Rank recommendations by expected engagement probability and value to user.
           { role: 'system', content: this.systemPrompt },
           { role: 'user', content: recommendationPrompt }
         ],
-        temperature: 0.4, // Slightly higher for diverse recommendations
         response_format: { type: "json_object" }
       });
 
@@ -440,7 +436,6 @@ Flag any critical issues requiring immediate attention.
           { role: 'system', content: this.systemPrompt },
           { role: 'user', content: healthPrompt }
         ],
-        temperature: 0.1, // Very low for consistent health monitoring
         response_format: { type: "json_object" }
       });
 
@@ -849,8 +844,7 @@ Provide comprehensive market analysis with actionable insights.`;
           { role: "system", content: this.systemPrompt },
           { role: "user", content: prompt }
         ],
-        temperature: 0.6,
-        max_tokens: 1200
+        max_completion_tokens: 1200
       });
 
       return JSON.parse(completion.choices[0].message.content);
@@ -886,8 +880,7 @@ Provide helpful market intelligence response.`;
           { role: "system", content: this.systemPrompt },
           { role: "user", content: prompt }
         ],
-        temperature: 0.7,
-        max_tokens: 800
+        max_completion_tokens: 800
       });
 
       return JSON.parse(completion.choices[0].message.content);

@@ -2,7 +2,7 @@ import OpenAI from "openai";
 
 /*
 Follow these instructions when using this blueprint:
-1. Note that the newest OpenAI model is "gpt-4o", not "gpt-4". gpt-4o was released after your knowledge cutoff. Always prefer using gpt-4o as it is the latest model. When copying code from this blueprint, ensure you also mention this information verbatim as a comment so that you don't revert it to "gpt-4": `// the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user`
+1. Note that the newest stable OpenAI model is "gpt-5.5" (released April 2026). Always prefer gpt-5.5 unless explicitly requested otherwise. GPT-5.x models require `max_completion_tokens` (NOT `max_tokens`) and do not accept a custom `temperature` (default only). When copying code from this blueprint, keep this comment so the model is not reverted: `// the newest OpenAI model is "gpt-5.5" (released April 2026). do not change this unless explicitly requested by the user`
 2. Use the response_format: { type: "json_object" } option
 3. Request output in JSON format in the prompt
 */
@@ -18,7 +18,7 @@ async function analyzeProduct(productName, productDescription) {
   
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+      model: "gpt-5.5", // the newest OpenAI model is "gpt-5.5" (released April 2026). do not change this unless explicitly requested by the user
       messages: [
         {
           role: "system",

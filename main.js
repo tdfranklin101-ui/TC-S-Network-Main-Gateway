@@ -10699,7 +10699,7 @@ const server = http.createServer(async (req, res) => {
       produceRecent.push(produceNow);
       produceRateLimit.set(produceIp, produceRecent);
 
-      const openaiKey = process.env.OPENAI_API_KEY || process.env.NEW_OPENAI_API_KEY;
+      const openaiKey = process.env.OPENAI_API_KEY;
       if (!openaiKey) {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: false, error: 'AI production not available' }));
@@ -10737,12 +10737,11 @@ Respond with valid JSON only:
 Rules: pick "3d-print" and the closest template ONLY if the request is a small physical object that template can reasonably represent; keep every param within the stated min-max range. If the request is media, software, writing, or data, use "digital". If it cannot be produced, use "none".`;
 
       const aiResp = await openai.chat.completions.create({
-        model: 'gpt-4o',
+        model: 'gpt-5.5',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: `Member request: "${query}"` }
         ],
-        temperature: 0.4,
         response_format: { type: 'json_object' }
       });
 
@@ -10776,7 +10775,7 @@ Rules: pick "3d-print" and the closest template ONLY if the request is a small p
         let imageUrl = null;
         try {
           const imgResp = await openai.images.generate({
-            model: 'gpt-image-1',
+            model: 'gpt-image-2',
             prompt: `Product visualization of "${plan.inventedName}": ${plan.inventedDescription}. A single 3D-printable physical object, clean studio product photo, centered, plain neutral background, soft even lighting, no text, no watermark.`,
             n: 1,
             size: '1024x1024',
@@ -17727,7 +17726,7 @@ Only include products where you have found a real URL. Do not make up URLs.`
         days_since_genesis: daysSinceGenesis
       },
       voice_enabled: true,
-      models: { text: 'gpt-4o', speech_to_text: 'whisper-1', text_to_speech: 'tts-1', voice: 'nova' },
+      models: { text: 'gpt-5.5', speech_to_text: 'gpt-4o-mini-transcribe', text_to_speech: 'gpt-4o-mini-tts', voice: 'nova' },
       last_updated: new Date().toISOString()
     }));
     return;
@@ -17747,7 +17746,7 @@ Only include products where you have found a real URL. Do not make up URLs.`
           return;
         }
 
-        const openaiKey = process.env.OPENAI_API_KEY || process.env.NEW_OPENAI_API_KEY;
+        const openaiKey = process.env.OPENAI_API_KEY;
         if (!openaiKey) {
           res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
           res.end(JSON.stringify({ error: 'AI service unavailable' }));
@@ -17777,7 +17776,7 @@ Only include products where you have found a real URL. Do not make up URLs.`
         }
 
         const response = await openai.chat.completions.create({
-          model: 'gpt-4o',
+          model: 'gpt-5.5',
           messages: [
             {
               role: 'system',
@@ -17807,8 +17806,7 @@ Always respond with valid JSON only. Be specific and detailed in observations.`
               ]
             }
           ],
-          max_tokens: robLow ? 1200 : 1000,
-          temperature: 0.3
+          max_completion_tokens: robLow ? 1200 : 1000
         });
 
         let result;
@@ -17833,7 +17831,7 @@ Always respond with valid JSON only. Be specific and detailed in observations.`
 
   // ================== REUSABLE LIFELENS ANALYSIS GENERATOR ==================
   async function generateLifeLensAnalysis({ title, description, category, priceSolar, kwhFootprint }) {
-    const openaiKey = process.env.OPENAI_API_KEY || process.env.NEW_OPENAI_API_KEY;
+    const openaiKey = process.env.OPENAI_API_KEY;
     if (!openaiKey) return null;
     
     try {
@@ -17880,10 +17878,9 @@ Return a JSON object with these fields:
 Respond with valid JSON only. Be insightful and specific.`;
 
       const response = await openai.chat.completions.create({
-        model: 'gpt-4o',
+        model: 'gpt-5.5',
         messages: [{ role: 'system', content: prompt }],
-        max_tokens: 1200,
-        temperature: 0.3
+        max_completion_tokens: 1200
       });
 
       let result;
@@ -20653,7 +20650,7 @@ Object.entries(secretChecks).forEach(([k, v]) => {
 
 console.log(`\n[SERVICES]`);
 console.log(`  Database:      ${process.env.DATABASE_URL ? 'PostgreSQL Connected ✅' : 'NOT CONFIGURED ❌'}`);
-console.log(`  OpenAI:        ${process.env.OPENAI_API_KEY ? 'GPT-4o / Whisper / TTS ✅' : 'Unavailable ❌'}`);
+console.log(`  OpenAI:        ${process.env.OPENAI_API_KEY ? 'GPT-5.5 / Transcribe / TTS ✅' : 'Unavailable ❌'}`);
 console.log(`  D-ID:          ${process.env.DID_API_KEY ? 'Kid Solar Agent ✅' : 'Unavailable ❌'}`);
 console.log(`  Pika:          ${process.env.PIKA_API_KEY ? 'Video Generation ✅' : 'Unavailable ❌'}`);
 console.log(`  EIA:           ${process.env.EIA_API_KEY ? 'Energy Data API ✅' : 'Unavailable ❌'}`);

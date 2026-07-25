@@ -22,8 +22,8 @@ class AIWalletAssistant {
       apiKey: process.env.OPENAI_API_KEY
     });
     
-    // GPT-4o model for advanced reasoning
-    this.model = 'gpt-4o';
+    // GPT-5.5 model for advanced reasoning
+    this.model = 'gpt-5.5';
     
     // System prompt for wallet assistant
     this.systemPrompt = `
@@ -143,7 +143,6 @@ ${includeRecommendations ? 'Include specific actionable recommendations.' : 'Foc
           { role: 'system', content: this.systemPrompt },
           { role: 'user', content: analysisPrompt }
         ],
-        temperature: 0.3, // Lower temperature for more consistent financial analysis
         response_format: { type: "json_object" }
       });
 
@@ -195,7 +194,6 @@ Format as a natural response but still return structured JSON with insights and 
           { role: 'system', content: this.systemPrompt },
           { role: 'user', content: queryPrompt }
         ],
-        temperature: 0.5, // Slightly higher for more conversational responses
         response_format: { type: "json_object" }
       });
 
@@ -255,7 +253,6 @@ Provide specific evidence for any concerns raised.
           { role: 'system', content: this.systemPrompt },
           { role: 'user', content: fraudAnalysisPrompt }
         ],
-        temperature: 0.1, // Very low temperature for consistent security analysis
         response_format: { type: "json_object" }
       });
 
@@ -309,7 +306,6 @@ Provide specific, actionable recommendations with reasoning and expected outcome
           { role: 'system', content: this.systemPrompt },
           { role: 'user', content: recommendationPrompt }
         ],
-        temperature: 0.4,
         response_format: { type: "json_object" }
       });
 
@@ -723,8 +719,7 @@ Focus on actionable recommendations that maximize value and engagement.`;
           { role: "system", content: this.systemPrompt },
           { role: "user", content: prompt }
         ],
-        temperature: 0.7,
-        max_tokens: 1000
+        max_completion_tokens: 1000
       });
 
       return JSON.parse(completion.choices[0].message.content);
