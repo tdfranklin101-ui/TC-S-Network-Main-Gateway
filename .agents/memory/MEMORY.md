@@ -15,3 +15,5 @@
 - [Era 21 Operations Agent](era21-operations-agent.md) — tcs-operations-agent-v1 registered; UIM endpoints live at /api/uim/*; all on era21-operations-agent branch (not merged to main).
 - [Era 21.1 Schema Quirks](era21-1-schema-quirks.md) — transactions.wallet_id NOT NULL, artifact_copies FKs artifacts not market_items, network_knowledge PK is knowledge_id, agent_registry.rate_limit_window is integer.
 - [Era 21.1 Test Suite](era21-1-test-suite.md) — tests/era21-1.test.js 34/34; Era 21.0 tests updated TRANSFER_SOLAR→MINT_SOLAR since TRANSFER_SOLAR is now allowed.
+- [network_knowledge column layout](era21-2-network-knowledge-schema.md) — no `value` column; JSON payloads go into `structured_facts` (JSONB); `summary` is required text.
+- [Era 21.2 frozen](era21-2-orchestrator-readiness.md) — branch era21-orchestrator-readiness, tag era21.2-orchestrator-readiness @ 358af54; 31/31 tests; workflow_runs + workflow_run_steps tables; plan-validator, capability-metrics, provenance modules; 4 new UIM endpoints.
