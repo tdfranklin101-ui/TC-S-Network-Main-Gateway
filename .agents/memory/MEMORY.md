@@ -12,3 +12,4 @@
 - [Deployment secrets don't auto-sync](deployment-secrets-sync.md) — new workspace secrets never reach the existing VM deploy; add in deployment secrets pane + republish. Also: bash background jobs freeze between tool calls.
 - [main.js is the prod router](mainjs-is-prod-router.md) — production runs raw-http main.js; routes mounted in Express server/routes.ts never run live. Wire endpoints into main.js dispatch.
 - [Solar Passport auth](solar-passport-auth.md) — two token systems: site session (tc_s_session) + passport HMAC (tcs_auth); /api/session exchanges passport→site session; every signup emails the passport artifact.
+- [Era 21 Operations Agent](era21-operations-agent.md) — tcs-operations-agent-v1 registered; UIM endpoints live at /api/uim/*; all on era21-operations-agent branch (not merged to main).

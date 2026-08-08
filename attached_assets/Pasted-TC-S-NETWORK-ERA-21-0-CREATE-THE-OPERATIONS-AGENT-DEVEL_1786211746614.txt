@@ -1,0 +1,753 @@
+TC-S NETWORK — ERA 21.0
+CREATE THE OPERATIONS AGENT
+DEVELOPMENT ONLY / NO NEW LLM / NO PRODUCTION DEPLOYMENT
+
+CONTEXT
+
+We are working in the existing Replit development workspace:
+
+current-see-website-tdfranklin101
+
+Canonical GitHub repository:
+
+https://github.com/tdfranklin101-ui/TC-S-Network-Main-Gateway.git
+
+The repository is now synchronized with the current Replit development state.
+
+Known production remains isolated at:
+
+production-known-good → a2ae35c
+
+Current canonical development HEAD is after cleanup commit:
+
+e66436c
+
+Do NOT deploy or publish production as part of this task.
+
+Do NOT introduce a new LLM, new model provider, new database, new framework, new cloud provider, or replacement architecture.
+
+Stay in the existing lanes.
+
+The purpose of this task is to formalize the first TC-S OPERATIONS AGENT using the existing Agentic Framework, Policy Engine, Executor, API Surface, UIM infrastructure, database, and current AI stack.
+
+============================================================
+ARCHITECTURAL MODEL
+============================================================
+
+TC-S now distinguishes three classes of agency:
+
+A. OPERATIONS AGENTS
+
+Network-side functional agents.
+
+They perform authorized work for the TC-S Network.
+
+Examples:
+
+- commissioning
+- marketplace operations
+- artifact creation
+- LifeLens analysis
+- energy calculation
+- reporting
+- fabrication
+- settlement
+- network administration
+
+This task creates the first general Operations Agent.
+
+B. MEMBER AGENTS
+
+Future persistent agents representing individual human members.
+
+Their role will be:
+
+"Understand my human's intent and represent that intent to the Network."
+
+DO NOT build Member Agents in this task.
+
+C. SYSTEM ORCHESTRATOR / FUTURE REPLICATOR
+
+A future frontier open-weight orchestrator will sit above Operations Agents and UIM.
+
+It will:
+
+- understand intent
+- decompose work
+- discover capabilities
+- delegate to Operations Agents
+- assemble results
+- verify completion
+
+DO NOT add this new frontier model now.
+
+DO NOT add RunPod inference now.
+
+We are creating the operational substrate it will eventually operate.
+
+============================================================
+CORE PRINCIPLE
+============================================================
+
+The Operations Agent MUST NOT become a privileged bypass around the existing TC-S architecture.
+
+It must operate through:
+
+UIM
+→ Agentic API Surface
+→ Policy Engine
+→ Executor
+→ Existing handlers/services
+→ Ledger/database
+→ Audit log
+
+The Operations Agent MUST NOT:
+
+- write directly to PostgreSQL
+- bypass the Policy Engine
+- bypass approval requirements
+- mutate balances directly
+- circumvent authentication
+- invent new network state
+- bypass audit logging
+- invoke unsupported actions
+- silently fall back to direct service calls when policy rejects an action
+
+The ledger/database remains the Network source of truth.
+
+The Operations Agent reasons about state only after reading authoritative state through existing network services.
+
+============================================================
+EXISTING AUDIT ARTIFACTS
+============================================================
+
+Use the existing files:
+
+docs/replicator-readiness-audit.md
+docs/capability-registry.json
+
+Treat these as the Era 20 baseline.
+
+The capability registry identifies:
+
+29 live capabilities
+7 stubs
+4 missing Era 21 capabilities
+30 currently UIM-exposable capabilities
+
+Do not recreate capabilities that already exist.
+
+============================================================
+TASK 1 — CREATE AN ERA 21 DEVELOPMENT BRANCH
+============================================================
+
+Before code changes:
+
+Create or switch to a branch named:
+
+era21-operations-agent
+
+Do not alter production deployment configuration.
+
+Do not publish.
+
+Do not merge to main automatically.
+
+Report current branch and starting SHA.
+
+============================================================
+TASK 2 — REGISTER THE OPERATIONS AGENT
+============================================================
+
+Create a formal Agent Registry record for:
+
+agent_id:
+tcs-operations-agent-v1
+
+display_name:
+TC-S Operations Agent
+
+class:
+OPERATIONS_AGENT
+
+principal:
+TC-S_NETWORK
+
+status:
+ACTIVE_DEVELOPMENT
+
+authority:
+POLICY_GOVERNED
+
+direct_database_access:
+false
+
+direct_ledger_write:
+false
+
+policy_bypass:
+false
+
+audit_required:
+true
+
+uim_capability_discovery:
+true
+
+production_enabled:
+false
+
+This should use the existing agent_registry infrastructure.
+
+Do not create a second agent registry system.
+
+If seeding is required, implement it using the current database initialization/seed conventions.
+
+It must be idempotent:
+
+Starting the application multiple times must not create duplicate Operations Agent records.
+
+============================================================
+TASK 3 — DEFINE THE OPERATIONS AGENT PERMISSION ENVELOPE
+============================================================
+
+The Operations Agent should initially have READ + LOW-RISK EXECUTION authority only.
+
+Initial ALLOWED capabilities should include only capabilities confirmed LIVE in capability-registry.json and appropriate for development testing.
+
+Prefer capabilities such as:
+
+QUERY_NETWORK
+QUERY_MEMBER
+QUERY_BALANCE
+QUERY_MARKETPLACE
+CALCULATE_ENERGY
+GENERATE_REPORT
+
+And existing LOW-RISK artifact operations where the Policy Engine already permits them safely:
+
+ASSET.CREATE
+ASSET.ENRICH
+
+If ASSET.LIST requires approval according to current policy, preserve that approval requirement.
+
+Do NOT grant unrestricted authority for:
+
+TRANSFER_SOLAR
+PURCHASE_ARTIFACT
+UPDATE_MEMBER
+SUSPEND_MEMBER
+factory physical execution
+settlement
+admin functions
+critical network changes
+
+Do not turn stubs into live actions merely to satisfy this task.
+
+Create a clear policy configuration describing the Operations Agent's currently authorized capability set.
+
+============================================================
+TASK 4 — CREATE THE UIM CAPABILITY DISCOVERY ENDPOINT
+============================================================
+
+Implement:
+
+GET /api/uim/capabilities
+
+This endpoint should read:
+
+docs/capability-registry.json
+
+or a safe runtime copy/module derived from it.
+
+Return machine-readable capability information.
+
+Default behavior:
+
+return only capabilities where:
+
+status = live
+AND
+uim_exposable = true
+
+Each returned capability should include, where available:
+
+capability_id
+domain
+description
+risk_level
+approval_required
+async
+input_schema or expected parameters
+output description
+current implementation route/action
+status
+
+Allow an authenticated development/admin query such as:
+
+?include_stubs=true
+
+to inspect stubs.
+
+Do not expose sensitive implementation information, credentials, secrets, internal DB strings, or private keys.
+
+============================================================
+TASK 5 — CREATE STANDARD UIM INVOKE ENDPOINT
+============================================================
+
+Implement:
+
+POST /api/uim/invoke
+
+This MUST be a thin adapter.
+
+It must NOT implement capabilities itself.
+
+Input contract should resemble:
+
+{
+  "agent_id": "tcs-operations-agent-v1",
+  "capability_id": "QUERY_MARKETPLACE",
+  "intent": "Find available solar-powered irrigation artifacts",
+  "parameters": {
+    ...
+  },
+  "request_context": {
+    ...
+  }
+}
+
+Required execution path:
+
+1. authenticate caller
+2. resolve agent
+3. verify agent status
+4. resolve capability from Capability Registry
+5. confirm status = live
+6. confirm uim_exposable = true
+7. confirm Operations Agent permission envelope
+8. translate capability_id into existing agentic action_type / handler
+9. submit through EXISTING Agentic Executor
+10. run EXISTING Policy Engine
+11. preserve approval requirements
+12. execute existing handler/service
+13. record normal intent/action/audit records
+14. return normalized UIM response
+
+Never invoke handlers directly if doing so bypasses the Agentic Executor.
+
+============================================================
+TASK 6 — STANDARD RESPONSE ENVELOPE
+============================================================
+
+Normalize UIM responses into:
+
+{
+  "request_id": "...",
+  "agent_id": "tcs-operations-agent-v1",
+  "capability_id": "...",
+  "status": "SUCCEEDED|PENDING_APPROVAL|RUNNING|FAILED|REJECTED",
+  "result": {},
+  "policy": {
+    "risk_level": "...",
+    "approval_required": false
+  },
+  "audit": {
+    "action_request_id": "...",
+    "audit_log_id": "..."
+  },
+  "error": null
+}
+
+Do not expose private reasoning or hidden model chain-of-thought.
+
+============================================================
+TASK 7 — CREATE UIM REQUEST STATUS WRAPPER
+============================================================
+
+Implement:
+
+GET /api/uim/requests/:id/status
+
+This should wrap the existing:
+
+/api/agentic/action/status
+
+or the underlying existing status implementation.
+
+Do not build another request-status database.
+
+Return the standardized UIM response envelope.
+
+This supports future Operations Agent actions requiring:
+
+PENDING
+APPROVAL
+RUNNING
+SUCCEEDED
+FAILED
+REJECTED
+
+============================================================
+TASK 8 — CREATE OPERATIONS AGENT SERVICE
+============================================================
+
+Create a small service/module such as:
+
+server/operations-agent.js
+
+or follow the existing server/agentic/agents structure if more consistent.
+
+Responsibilities:
+
+- represent tcs-operations-agent-v1
+- request capability discovery
+- validate requested capability
+- construct agentic action request
+- invoke through the UIM adapter
+- normalize result
+- expose no direct DB mutation path
+
+This Operations Agent is NOT an LLM agent yet.
+
+It is a deterministic operational identity and execution facade.
+
+Think of it as:
+
+"the network worker interface that future intelligence can operate."
+
+============================================================
+TASK 9 — NO NEW MODEL
+============================================================
+
+Do NOT:
+
+- install gpt-oss
+- configure RunPod
+- add another OpenAI model
+- change GPT-5.5
+- change Claude Sonnet 5
+- change Claude Opus 5
+- change Perplexity
+- change D-ID
+- add new model routing
+- add Runtime Broker yet
+
+Existing model-backed capabilities may continue using the providers they already use.
+
+The Operations Agent simply accesses those capabilities through UIM.
+
+============================================================
+TASK 10 — DEVELOPMENT TEST HARNESS
+============================================================
+
+Create a DEVELOPMENT-ONLY test page or CLI harness.
+
+Suggested route:
+
+/operations-agent-test
+
+or:
+
+scripts/test-operations-agent.js
+
+It should allow us to test:
+
+1. Discover capabilities
+
+2. QUERY_NETWORK
+
+3. QUERY_MARKETPLACE
+
+4. CALCULATE_ENERGY
+
+5. GENERATE_REPORT
+
+6. ASSET.CREATE
+   only if current policy permits development execution
+
+For every invocation display:
+
+Operations Agent
+Capability requested
+Intent
+Policy decision
+Request ID
+Execution status
+Result
+Audit reference
+
+Do NOT expose this publicly in production navigation.
+
+============================================================
+TASK 11 — TEST POLICY REJECTION
+============================================================
+
+Test at least one capability the Operations Agent is NOT authorized to execute.
+
+Example:
+
+TRANSFER_SOLAR
+
+or another currently restricted/stub capability.
+
+Expected behavior:
+
+REJECTED
+
+with a policy reason.
+
+The test must demonstrate that the Operations Agent cannot bypass policy.
+
+============================================================
+TASK 12 — TEST UNKNOWN CAPABILITY
+============================================================
+
+Invoke something deliberately nonexistent:
+
+REPLICATE_UNIVERSE
+
+Expected behavior:
+
+REJECTED or NOT_FOUND
+
+No fallback execution.
+
+No hallucinated capability.
+
+No arbitrary service invocation.
+
+============================================================
+TASK 13 — TEST AUDITABILITY
+============================================================
+
+For every successful, pending, rejected, and failed test operation verify:
+
+- intent record exists where appropriate
+- action request exists
+- policy result is traceable
+- executor result is traceable
+- audit log exists
+- initiating agent = tcs-operations-agent-v1
+
+Produce IDs in the test report.
+
+============================================================
+TASK 14 — SECURITY
+============================================================
+
+Do not alter authentication globally.
+
+Do not re-enable global rate limiting in this task unless required for the new UIM routes.
+
+Protect /api/uim/invoke from anonymous public mutation.
+
+Capability discovery may be publicly readable only if the returned registry contains no sensitive information.
+
+Use current authentication patterns.
+
+Do not create API keys in source.
+
+Do not expose Replit secrets.
+
+============================================================
+TASK 15 — PHYSICAL CAPABILITIES REMAIN DISABLED
+============================================================
+
+The readiness audit found unauthenticated factory printer registration and heartbeat routes.
+
+Until that security issue is addressed:
+
+DO NOT expose physical printer execution through the Operations Agent.
+
+Factory capabilities should appear as:
+
+available_in_platform: true
+uim_operations_enabled: false
+reason: "factory authentication hardening required"
+
+Do not modify the factory system in this task.
+
+============================================================
+TASK 16 — DOCUMENT THE AGENT MODEL
+============================================================
+
+Create:
+
+docs/era21-agent-architecture.md
+
+Document:
+
+HUMAN MEMBER
+      ↓
+future MEMBER AGENT
+      ↓
+authenticated intent
+      ↓
+future SYSTEM ORCHESTRATOR / REPLICATOR
+      ↓
+UIM
+      ↓
+OPERATIONS AGENTS
+      ↓
+POLICY ENGINE
+      ↓
+EXECUTOR
+      ↓
+NETWORK CAPABILITIES
+      ↓
+LEDGER
+
+Explain clearly:
+
+MEMBER AGENT
+represents a human
+
+OPERATIONS AGENT
+performs Network functions
+
+SYSTEM ORCHESTRATOR
+coordinates multiple Operations Agents/capabilities
+
+UIM
+provides capability discovery and invocation abstraction
+
+POLICY ENGINE
+authorizes actions
+
+LEDGER
+is authoritative state/history
+
+============================================================
+TASK 17 — PRESERVE CURRENT 22-AGENT ECONOMY
+============================================================
+
+Do not alter the existing production/member agent system.
+
+Do not renumber existing agents.
+
+Do not convert the 22 existing agents into Operations Agents.
+
+Do not modify their daily create/buy behavior.
+
+The new:
+
+tcs-operations-agent-v1
+
+is a separate NETWORK OPERATIONS identity.
+
+It should not receive the daily member Solar distribution unless the existing policy explicitly requires network Operations Agents to do so.
+
+Default assumption:
+
+Operations Agent does NOT receive GBI/member Solar issuance.
+
+============================================================
+TASK 18 — TESTS
+============================================================
+
+Add automated tests covering:
+
+- Operations Agent seeded once
+- duplicate seed prevented
+- capability discovery filters correctly
+- live UIM capability invokes successfully
+- unauthorized capability rejected
+- unknown capability rejected
+- executor path used
+- policy path used
+- audit entry created
+- status endpoint returns result
+- direct DB write not exposed by Operations Agent module
+
+Run existing test suite as well.
+
+Do not silently disable existing failing tests.
+
+Report pre-existing failures separately from new failures.
+
+============================================================
+TASK 19 — GIT / DEPLOYMENT RULES
+============================================================
+
+Commit all Era 21.0 changes to:
+
+era21-operations-agent
+
+Do NOT merge into main.
+
+Do NOT deploy production.
+
+Do NOT publish the Replit deployment.
+
+Do NOT change production-known-good.
+
+Do NOT modify the two existing safety tags.
+
+At completion provide:
+
+- branch
+- starting SHA
+- ending SHA
+- files added
+- files modified
+- DB migration/schema changes
+- new routes
+- new agent record
+- allowed capabilities
+- denied capabilities tested
+- automated test results
+- security observations
+- any blockers
+
+============================================================
+SUCCESS CRITERIA
+============================================================
+
+Era 21.0 succeeds when this deterministic sequence works:
+
+TC-S Operations Agent
+        ↓
+GET /api/uim/capabilities
+        ↓
+select existing capability
+        ↓
+POST /api/uim/invoke
+        ↓
+existing Agentic Policy Engine
+        ↓
+existing Agentic Executor
+        ↓
+existing TC-S capability
+        ↓
+existing ledger/database
+        ↓
+audit record
+        ↓
+normalized UIM result
+
+AND:
+
+A forbidden capability is rejected by policy.
+
+AND:
+
+An unknown capability cannot be invented.
+
+AND:
+
+No new LLM has been added.
+
+AND:
+
+Production is unchanged.
+
+FINAL PRINCIPLE
+
+We are NOT building the Replicator in this task.
+
+We are building the Operations Layer that the Replicator will eventually operate.
+
+The Network already knows how to do many things.
+
+Era 21 begins by giving those existing abilities one governed, machine-readable doorway.

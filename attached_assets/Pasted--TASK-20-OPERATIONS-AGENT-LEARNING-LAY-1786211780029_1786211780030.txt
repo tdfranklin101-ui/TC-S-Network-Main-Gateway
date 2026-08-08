@@ -1,0 +1,351 @@
+============================================================
+TASK 20 — OPERATIONS AGENT LEARNING LAYER
+============================================================
+
+Add a governed learning capability for tcs-operations-agent-v1.
+
+The purpose is to let Operations Agents continuously learn how the TC-S Network actually operates as the Network changes over time.
+
+This learning MUST be grounded in authoritative network events.
+
+The Operations Agent must NOT invent policy, rewrite history, or treat model-generated summaries as source-of-truth.
+
+The ledger/database remains authoritative.
+
+Create a learning pipeline that observes and summarizes relevant Network events, including at minimum:
+
+SOLAR
+- Solar issuance
+- Solar minting
+- daily distribution
+- reserve accounting
+- Solar balance changes
+- Solar Standard constants and version changes
+
+SALES / PURCHASES
+- artifact listings
+- price changes
+- purchases
+- seller credits
+- buyer debits
+- marketplace fees
+- foundation fees
+- reserve allocations
+- settlements
+- vouchers if applicable
+
+MEMBERS / AGENTS
+- member creation
+- agent creation
+- role changes
+- network joins
+- permission changes
+- Solar Passport events
+
+NETWORK OPERATIONS
+- network commissioning
+- capability additions
+- capability deprecations
+- policy changes
+- UIM protocol changes
+- compute governance changes
+- new external services
+- new artifact types
+
+============================================================
+LEARNING PRINCIPLE
+============================================================
+
+Separate:
+
+1. SOURCE OF TRUTH
+   raw ledger/database/network events
+
+2. DERIVED KNOWLEDGE
+   summaries, trends, rules, inferred operating patterns
+
+3. AGENT MEMORY
+   useful operational context retrieved for a specific task
+
+Never overwrite source-of-truth records with learned interpretations.
+
+============================================================
+CREATE NETWORK KNOWLEDGE RECORDS
+============================================================
+
+Create a durable derived-knowledge structure using the current database and schema conventions.
+
+Suggested logical fields:
+
+knowledge_id
+knowledge_type
+network_id
+source_event_ids[]
+source_table
+subject
+summary
+structured_facts
+valid_from
+valid_to
+confidence
+created_at
+updated_at
+supersedes
+status
+
+Possible knowledge_type values:
+
+SOLAR_DISTRIBUTION_RULE
+TRANSACTION_PATTERN
+MARKETPLACE_BEHAVIOR
+POLICY_RULE
+NETWORK_CHANGE
+CAPABILITY_CHANGE
+MEMBER_RULE
+AGENT_RULE
+SETTLEMENT_RULE
+ENERGY_STANDARD
+PROTOCOL_CHANGE
+
+Every learned record MUST retain references to the source event(s) that produced it.
+
+============================================================
+EVENT INGESTION
+============================================================
+
+Use existing ledger/database tables and audit logs.
+
+Do NOT introduce a second event ledger.
+
+Create an Operations Learning service such as:
+
+server/agentic/operations-learning.js
+
+or the closest existing architectural location.
+
+It should be able to consume new authoritative events incrementally.
+
+Prefer event-driven or scheduled incremental processing over rescanning the entire database.
+
+Maintain a checkpoint such as:
+
+last_processed_event_id
+or
+last_processed_timestamp
+
+so learning resumes safely after restart.
+
+============================================================
+SOLAR LEARNING
+============================================================
+
+The Operations Agent should be able to answer operational questions such as:
+
+- What is the current Solar issuance rule?
+- How is daily Solar distribution calculated?
+- What changed in the distribution system recently?
+- Which reserve rules apply?
+- How is a Solar-backed transaction settled?
+- What fees are currently applied?
+- What version of the Solar Standard is active?
+
+Answers must be generated from current authoritative records and versioned knowledge.
+
+Do not hardcode business rules into the Operations Agent when they already exist in the Network.
+
+============================================================
+TRANSACTION LEARNING
+============================================================
+
+Build derived transaction intelligence from completed sales and purchase events.
+
+The Operations Agent should learn:
+
+- normal transaction lifecycle
+- buyer debit sequence
+- seller credit sequence
+- marketplace fee behavior
+- foundation fee behavior
+- reserve allocation behavior
+- settlement timing
+- common failure states
+- common rollback states
+- artifact ownership transitions
+
+This is operational learning, not autonomous financial authority.
+
+The Operations Agent must still use policy + executor for every transaction.
+
+============================================================
+CHANGE DETECTION
+============================================================
+
+Implement a Network Change Detector.
+
+When rules or behavior change, create a new versioned knowledge record.
+
+Examples:
+
+- Solar distribution formula changes
+- fee percentage changes
+- new transaction type appears
+- new marketplace category appears
+- new capability becomes live
+- UIM protocol version changes
+- new external provider is added
+- policy risk level changes
+
+Do NOT silently overwrite old knowledge.
+
+Preserve history.
+
+============================================================
+KNOWLEDGE RETRIEVAL
+============================================================
+
+Add a safe Operations Agent function such as:
+
+getNetworkKnowledge({
+  subject,
+  knowledge_type,
+  network_id,
+  as_of
+})
+
+It should return:
+
+- current applicable knowledge
+- source references
+- confidence
+- version
+- effective date
+
+The Operations Agent should retrieve this knowledge before performing relevant work.
+
+Example:
+
+Before executing a purchase workflow:
+
+1. retrieve current TRANSACTION_RULE knowledge
+2. retrieve current fee/reserve rules
+3. invoke existing policy/executor
+4. compare actual result against expected pattern
+5. record anomaly if different
+
+============================================================
+LEARNING FROM OUTCOMES
+============================================================
+
+After every Operations Agent action, compare:
+
+EXPECTED
+vs
+ACTUAL
+
+Record:
+
+- success/failure
+- latency
+- policy decision
+- handler used
+- errors
+- retries
+- final state
+- ledger/audit references
+
+Use this only to improve future operational planning and routing.
+
+Do not allow learned behavior to bypass deterministic policy.
+
+============================================================
+ANOMALY DETECTION
+============================================================
+
+Flag unexpected behavior such as:
+
+- incorrect Solar debit/credit pattern
+- fee mismatch
+- missing reserve allocation
+- duplicate transaction
+- failed settlement
+- action succeeds but no audit record exists
+- capability output changes unexpectedly
+- Solar distribution differs from current rule
+
+Create an anomaly record and surface it to admins/development logs.
+
+Do NOT auto-correct financial state in Era 21.0.
+
+============================================================
+NETWORK SELF-DESCRIPTION
+============================================================
+
+Add a machine-readable Network Knowledge endpoint:
+
+GET /api/uim/network-knowledge
+
+Support filtered queries such as:
+
+?subject=solar
+?subject=transactions
+?subject=marketplace
+?subject=capabilities
+?as_of=timestamp
+
+This endpoint should expose derived operational knowledge, not secrets or raw private member data.
+
+============================================================
+LEARNING TESTS
+============================================================
+
+Add tests proving that the Operations Agent can:
+
+1. read current Solar distribution knowledge
+2. identify a completed sale transaction lifecycle
+3. identify buyer debit + seller credit
+4. identify current fee/reserve behavior
+5. detect a simulated rule change
+6. create a new versioned knowledge record
+7. retrieve the new current rule
+8. preserve the previous rule historically
+9. trace every learned statement back to authoritative source events
+10. refuse to treat unsupported inference as authoritative knowledge
+
+============================================================
+CRITICAL SAFETY RULE
+============================================================
+
+The Operations Agent learns FROM the Network.
+
+It does not define the Network.
+
+LEARNING
+does not equal
+AUTHORITY.
+
+Derived knowledge may guide planning, but:
+
+Policy Engine
+Executor
+Ledger/database
+remain authoritative.
+
+============================================================
+FUTURE COMPATIBILITY
+============================================================
+
+Design the learning layer so new Network event types can be added without rewriting the Operations Agent.
+
+Use extensible event categories and schemas.
+
+Unknown event types should be stored and flagged for classification rather than discarded.
+
+The system should be able to encounter future TC-S capabilities, protocols, transaction types, and network rules that do not exist today and preserve them for later interpretation.
+
+FINAL LEARNING PRINCIPLE
+
+The Network changes.
+The ledger records the change.
+The learning layer understands the change.
+The Operations Agent adapts to the change.
+The policy engine still decides what is allowed.
