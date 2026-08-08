@@ -1,0 +1,729 @@
+TC-S NETWORK — ERA 21.1
+ECONOMIC AUTONOMY + DETERMINISTIC CREATION WORKFLOW
+DEVELOPMENT ONLY / NO NEW LLM / NO PRODUCTION DEPLOYMENT
+
+CONTEXT
+
+We are continuing from the completed Era 21.0 Operations Agent implementation.
+
+Development branch:
+era21-operations-agent
+
+Production remains unchanged.
+
+Do NOT deploy.
+Do NOT publish.
+Do NOT merge to main automatically.
+Do NOT add RunPod.
+Do NOT add a new LLM.
+Do NOT replace the current OpenAI / Anthropic / Perplexity / D-ID stack.
+
+Current Era 21.0 baseline includes:
+
+- tcs-operations-agent-v1
+- UIM capability discovery
+- UIM invoke endpoint
+- UIM request status endpoint
+- Operations Agent deterministic execution facade
+- policy-governed execution
+- audit trail
+- Operational Learning Layer
+- network knowledge endpoint
+- factory capabilities blocked at UIM layer pending hardening
+
+The purpose of Era 21.1 is to make the Operations Layer economically complete enough to execute a full creation → listing → purchase → settlement lifecycle safely.
+
+============================================================
+ARCHITECTURAL PRINCIPLE
+============================================================
+
+The Operations Agent does not own the economy.
+
+It requests governed economic actions.
+
+All value movement must follow:
+
+INTENT
+→ UIM
+→ POLICY
+→ EXECUTOR
+→ TRANSACTION VALIDATION
+→ LEDGER/DATABASE
+→ AUDIT
+→ LEARNING
+
+No direct balance mutation.
+
+No direct SQL from Operations Agent code.
+
+No policy bypass.
+
+No hidden settlement logic in UIM.
+
+============================================================
+TASK 1 — VERIFY ERA 21.0 BASELINE
+============================================================
+
+Before changes:
+
+- verify branch = era21-operations-agent
+- verify current HEAD
+- run the existing Era 21.0 automated tests
+- confirm 15/15 still pass or report exact current count
+- confirm production-known-good tag unchanged
+- confirm production deployment unchanged
+
+Do not proceed if the existing Operations Agent or UIM path is broken.
+
+============================================================
+TASK 2 — COMPLETE FACTORY AUTHENTICATION HARDENING
+============================================================
+
+If the factory-hardening task currently underway is already complete, verify it.
+
+Otherwise finish it before enabling any physical UIM capability.
+
+At minimum:
+
+- printer registration requires authenticated factory credential
+- heartbeat requires authenticated printer/factory identity
+- print submission is authenticated and policy-gated
+- printer identity cannot be spoofed by arbitrary callers
+- pickup/status paths expose only authorized information
+- no credentials hardcoded in source
+
+Do not expose physical execution through UIM until tests prove authentication works.
+
+Update capability-registry.json accordingly.
+
+============================================================
+TASK 3 — REGISTER A SCHEDULER OPERATIONS IDENTITY
+============================================================
+
+Create a real, idempotently seeded agent record:
+
+agent_id:
+tcs-scheduler-agent-v1
+
+class:
+OPERATIONS_AGENT
+
+principal:
+TC-S_NETWORK
+
+purpose:
+scheduled settlement, audit, maintenance jobs
+
+authority:
+POLICY_GOVERNED
+
+production_enabled:
+false
+
+gbi_exempt:
+true
+
+policy_bypass:
+false
+
+audit_required:
+true
+
+This should use the same agent_registry infrastructure.
+
+Do not use string-only pseudo-agents for scheduled jobs.
+
+Update scheduler logic so scheduled jobs resolve to this actual agent record.
+
+============================================================
+TASK 4 — IMPLEMENT TRANSFER_SOLAR
+============================================================
+
+Complete TRANSFER_SOLAR as a real governed capability.
+
+Requirements:
+
+- source identity exists
+- destination identity exists
+- source has sufficient available balance
+- amount > 0
+- currency/unit valid
+- no self-transfer unless explicitly allowed by current rules
+- policy review required according to risk level
+- idempotency/replay protection
+- transaction record created
+- buyer/source debit and recipient credit are atomic
+- failure rolls back both sides
+- audit log created
+- Operations Learning receives authoritative transaction event
+
+Do NOT mutate members.solar_balance in two unrelated statements without atomic protection.
+
+Use the current DB transaction mechanism if available.
+
+If the current schema supports canonical transaction/ledger entries, use them.
+
+Return a normalized result including:
+
+transaction_id
+source
+destination
+amount
+pre_balance_source
+post_balance_source
+pre_balance_destination
+post_balance_destination
+audit_reference
+
+============================================================
+TASK 5 — IMPLEMENT PURCHASE_ARTIFACT
+============================================================
+
+Complete PURCHASE_ARTIFACT as a governed capability.
+
+Required lifecycle:
+
+1. validate buyer
+2. validate artifact/listing
+3. validate seller
+4. validate price
+5. validate listing active
+6. validate buyer balance
+7. calculate applicable fees
+8. calculate foundation allocation if active
+9. calculate reserve allocation if active
+10. debit buyer
+11. credit seller
+12. allocate fees/reserves
+13. create ownership/copy/license record
+14. create marketplace transaction record
+15. create audit record
+16. update learning layer
+
+All financial changes must commit atomically.
+
+If any step fails, the entire purchase must fail cleanly.
+
+Do not create partial ownership with failed payment.
+
+============================================================
+TASK 6 — IMPLEMENT AUDIT_TRANSACTION
+============================================================
+
+Create/complete a capability:
+
+AUDIT_TRANSACTION
+
+Purpose:
+deterministically verify a completed transaction against current network rules.
+
+It should inspect:
+
+- transaction exists
+- source debit correct
+- destination credit correct
+- marketplace price correct
+- fee allocations correct
+- foundation allocation correct
+- reserve allocation correct
+- ownership transition correct
+- audit event present
+- no duplicate settlement
+- Solar amount math consistent
+
+Return:
+
+PASS
+PASS_WITH_WARNING
+FAIL
+
+with structured findings.
+
+Do not use an LLM for financial verification.
+
+This must be deterministic.
+
+============================================================
+TASK 7 — IMPLEMENT SETTLEMENT.RUN
+============================================================
+
+Complete SETTLEMENT.RUN so scheduled and admin-triggered settlement can execute through:
+
+tcs-scheduler-agent-v1
+→ Policy
+→ Executor
+→ settlement handler
+
+Requirements:
+
+- idempotent per settlement period
+- no double-settlement
+- logs period start/end
+- records transaction IDs settled
+- records totals
+- records failures
+- creates action audit log
+- learning layer ingests settlement outcome
+
+If there is no unsettled work, return a clean NO_OP result rather than failure.
+
+============================================================
+TASK 8 — UPDATE CAPABILITY REGISTRY
+============================================================
+
+Update docs/capability-registry.json to reflect actual implementation state.
+
+If completed and tested:
+
+TRANSFER_SOLAR → live
+PURCHASE_ARTIFACT → live
+AUDIT_TRANSACTION → live
+SETTLEMENT.RUN → live
+
+For each include:
+
+risk_level
+approval_required
+uim_exposable
+input contract
+output contract
+handler
+audit behavior
+learning event type
+
+Do not mark anything live before tests prove the path.
+
+============================================================
+TASK 9 — OPERATIONS AGENT PERMISSION EXPANSION
+============================================================
+
+Expand tcs-operations-agent-v1 permissions carefully.
+
+Allow:
+
+TRANSFER_SOLAR
+PURCHASE_ARTIFACT
+AUDIT_TRANSACTION
+
+only at appropriate policy-controlled risk levels.
+
+Do NOT grant unrestricted admin authority.
+
+SETTLEMENT.RUN should default to:
+
+tcs-scheduler-agent-v1
+
+not the general Operations Agent, unless explicitly admin-triggered.
+
+SUSPEND_MEMBER and UPDATE_MEMBER remain restricted.
+
+MINT_SOLAR remains restricted unless current deterministic network rules already define an authorized path.
+
+============================================================
+TASK 10 — BUILD A DETERMINISTIC MULTI-CAPABILITY WORKFLOW
+============================================================
+
+Create the first Era 21.1 workflow:
+
+ARTIFACT_COMMERCE_LOOP_V1
+
+No new LLM.
+
+The workflow should orchestrate existing capabilities in sequence:
+
+CREATE_ARTIFACT
+→ CALCULATE_ENERGY
+→ PRICE.QUOTE
+→ ASSET.ENRICH
+→ ASSET.LIST
+→ PURCHASE_ARTIFACT
+→ AUDIT_TRANSACTION
+→ LEARNING UPDATE
+
+Use existing live capability IDs exactly where possible.
+
+If CREATE_ARTIFACT is still a stub but ASSET.CREATE is live, use ASSET.CREATE.
+
+Do not build a duplicate artifact creation system.
+
+============================================================
+TASK 11 — WORKFLOW INPUT
+============================================================
+
+Create a deterministic test input such as:
+
+{
+  "initiator_agent_id": "tcs-operations-agent-v1",
+  "artifact": {
+    "title": "Era 21 Test Artifact",
+    "category": "Digital Artifact",
+    "description": "Deterministic Era 21.1 commerce lifecycle test"
+  },
+  "seller_member_id": "<development seller>",
+  "buyer_member_id": "<development buyer>",
+  "energy_input": {
+    "compute_or_creation_metric": "<existing supported format>"
+  },
+  "listing": {
+    "auto_list": true
+  }
+}
+
+Use dedicated development/test members.
+
+Do not use production member balances.
+
+============================================================
+TASK 12 — WORKFLOW STATE MACHINE
+============================================================
+
+Track workflow status:
+
+CREATED
+RUNNING
+WAITING_APPROVAL
+FAILED
+ROLLED_BACK
+SUCCEEDED
+
+Store workflow_run_id.
+
+Each step should record:
+
+step_id
+capability_id
+request_id
+status
+started_at
+finished_at
+result_reference
+audit_reference
+
+Do not hide intermediate failures.
+
+============================================================
+TASK 13 — ROLLBACK BEHAVIOR
+============================================================
+
+Financial rollback must be strict.
+
+Examples:
+
+If ASSET.LIST fails:
+- do not purchase
+
+If PURCHASE_ARTIFACT fails:
+- no ownership transfer
+- no partial seller credit
+- no partial fee allocation
+
+If AUDIT_TRANSACTION fails:
+- flag the transaction/workflow for admin review
+- do NOT silently reverse completed financial state unless existing deterministic rollback logic explicitly supports that action
+
+No automatic "repair by guessing."
+
+============================================================
+TASK 14 — LEARNING INTEGRATION
+============================================================
+
+After each workflow step, Operational Learning should ingest:
+
+- capability invoked
+- policy outcome
+- execution result
+- financial result
+- audit result
+- anomaly result
+
+Create or update derived knowledge such as:
+
+TRANSACTION_PATTERN
+MARKETPLACE_BEHAVIOR
+SETTLEMENT_RULE
+CAPABILITY_CHANGE
+NETWORK_CHANGE
+
+Preserve source references.
+
+============================================================
+TASK 15 — ECONOMIC KNOWLEDGE TESTS
+============================================================
+
+Add tests proving the learning system can identify:
+
+- buyer debit
+- seller credit
+- fee allocation
+- foundation allocation
+- reserve allocation
+- ownership transition
+- settlement
+- failed transaction
+- duplicate prevention
+- current transaction rule version
+
+The Learning Layer may summarize these patterns.
+
+It may not authorize them.
+
+============================================================
+TASK 16 — RATE LIMITING FOR UIM MUTATION
+============================================================
+
+Add scoped rate limiting for:
+
+POST /api/uim/invoke
+
+and any new economic mutation route if appropriate.
+
+Do NOT globally re-enable a broken rate limiter across the whole app in this task.
+
+Use a conservative per-agent/per-session limit.
+
+Authenticated internal scheduled jobs should have a separate controlled path.
+
+Report exact limits chosen.
+
+============================================================
+TASK 17 — SAi UIM CIRCUIT BREAKER
+============================================================
+
+Add a lightweight circuit breaker/timeout wrapper around the external SAi UIM dependency.
+
+Requirements:
+
+- explicit timeout
+- failure count threshold
+- temporary open state
+- recovery probe
+- clear degraded response
+
+Do not let external SAi UIM failure crash economic workflows.
+
+If LifeLens/abundance analysis is nonessential to a transaction, the transaction should degrade gracefully rather than fail unless current policy explicitly requires that analysis.
+
+============================================================
+TASK 18 — DEVELOPMENT ADMIN VIEW
+============================================================
+
+Extend the development-only Operations Agent test harness with an:
+
+ERA 21.1 WORKFLOW
+
+section showing:
+
+workflow_run_id
+artifact creation
+energy calculation
+price quote
+listing
+purchase
+Solar movement
+fees
+ownership
+audit result
+learning update
+final status
+
+Also display raw request IDs and audit references.
+
+Do not add this page to production navigation.
+
+============================================================
+TASK 19 — SECURITY TESTS
+============================================================
+
+Test:
+
+- anonymous TRANSFER_SOLAR rejected
+- unauthorized agent transfer rejected
+- insufficient balance rejected
+- negative amount rejected
+- duplicate/replay transfer rejected
+- purchase inactive listing rejected
+- purchase insufficient balance rejected
+- purchase cannot create ownership without payment
+- factory spoofed heartbeat rejected
+- scheduler action from fake scheduler identity rejected
+- admin/session/auth behavior unchanged
+
+============================================================
+TASK 20 — ATOMICITY TESTS
+============================================================
+
+Simulate failures during purchase at multiple points:
+
+- after validation
+- after debit attempt
+- before seller credit
+- before ownership creation
+- before fee allocation
+
+Verify database ends in a consistent state.
+
+No partial economic state.
+
+============================================================
+TASK 21 — AUDIT TESTS
+============================================================
+
+For every financial action verify:
+
+- intent_log
+- action_requests
+- policy_checks
+- action_audit_log
+- transaction record
+- relevant marketplace record
+- ownership/copy record
+- learning record
+
+All must trace back to:
+
+initiating agent
+request ID
+workflow ID where applicable
+
+============================================================
+TASK 22 — NO NEW LLM
+============================================================
+
+Do NOT:
+
+- add gpt-oss
+- add RunPod inference
+- add frontier orchestrator
+- add new model routing
+- add new provider
+- change current model names
+- convert the deterministic workflow into an LLM planner
+
+Existing model-backed capability behavior may remain as-is.
+
+The workflow itself must remain deterministic.
+
+============================================================
+TASK 23 — DOCUMENT ERA 21.1
+============================================================
+
+Create:
+
+docs/era21-economic-autonomy.md
+
+Document:
+
+- transaction lifecycle
+- purchase lifecycle
+- settlement lifecycle
+- scheduler identity
+- policy boundaries
+- atomicity
+- rollback rules
+- learning integration
+- UIM exposure
+- workflow state machine
+- security assumptions
+- remaining blockers before frontier orchestrator
+
+============================================================
+TASK 24 — TESTS
+============================================================
+
+Run:
+
+- existing Era 21.0 test suite
+- all new Era 21.1 tests
+- workflow end-to-end test
+- transaction atomicity tests
+- security tests
+- scheduler test
+- learning tests
+
+Do not disable failing legacy tests.
+
+Separate:
+
+PRE-EXISTING FAILURES
+
+from
+
+NEW ERA 21.1 FAILURES
+
+============================================================
+TASK 25 — GIT RULES
+============================================================
+
+Stay on:
+
+era21-operations-agent
+
+or create child branch:
+
+era21-economic-autonomy
+
+if cleaner.
+
+Do not merge to main automatically.
+
+Do not deploy production.
+
+Do not publish.
+
+At completion:
+
+commit all changes
+push the development branch to GitHub
+do not modify production-known-good
+do not rewrite history
+do not force-push
+
+============================================================
+SUCCESS CRITERIA
+============================================================
+
+Era 21.1 succeeds when this works end-to-end:
+
+Operations Agent
+      ↓
+ASSET.CREATE
+      ↓
+CALCULATE_ENERGY
+      ↓
+PRICE.QUOTE
+      ↓
+ASSET.ENRICH
+      ↓
+ASSET.LIST
+      ↓
+PURCHASE_ARTIFACT
+      ↓
+TRANSFER / SETTLEMENT
+      ↓
+AUDIT_TRANSACTION
+      ↓
+LEDGER
+      ↓
+LEARNING
+
+AND:
+
+- balances reconcile
+- fees reconcile
+- ownership reconciles
+- audit passes
+- learning observes the completed lifecycle
+- unauthorized actions are rejected
+- failures do not create partial economic state
+- no new LLM is introduced
+- production remains untouched
+
+FINAL PRINCIPLE
+
+Era 21.0 gave the Network a governed Operations Agent.
+
+Era 21.1 gives that Operations Agent a complete economic lifecycle.
+
+We are still not building the frontier Replicator.
+
+We are building the reliable machine the future Replicator will operate.

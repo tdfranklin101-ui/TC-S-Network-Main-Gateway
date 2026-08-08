@@ -9,6 +9,7 @@
 const { getActionById, RISK_LEVELS } = require('./api-surface');
 const { PolicyEngine, POLICY_DECISIONS } = require('./policy');
 const { MarketplaceHandlers } = require('./handlers/marketplace-handlers');
+const { EconomicHandlers } = require('./handlers/economic-handlers');
 
 class ActionExecutor {
   constructor(pool) {
@@ -16,8 +17,10 @@ class ActionExecutor {
     this.policyEngine = new PolicyEngine(pool);
     this.handlers = {};
     this.marketplaceHandlers = new MarketplaceHandlers(pool);
+    this.economicHandlers = new EconomicHandlers(pool);
     this.registerDefaultHandlers();
     this.registerMarketplaceHandlers();
+    this.registerEconomicHandlers();
   }
 
   registerDefaultHandlers() {
@@ -50,6 +53,13 @@ class ActionExecutor {
     this.handlers['MODERATION.REVIEW'] = mh.executeModerationReview.bind(mh);
     this.handlers['SEARCH.FULFILLMENT.RECOMMEND'] = mh.executeSearchFulfillmentRecommend.bind(mh);
     this.handlers['ALERT.CREATE'] = mh.executeAlertCreate.bind(mh);
+  }
+
+  registerEconomicHandlers() {
+    const eh = this.economicHandlers;
+    this.handlers['TRANSFER_SOLAR']      = eh.executeTransferSolar.bind(eh);
+    this.handlers['PURCHASE_ARTIFACT']   = eh.executePurchaseArtifact.bind(eh);
+    this.handlers['AUDIT_TRANSACTION']   = eh.executeAuditTransaction.bind(eh);
   }
 
   registerHandler(actionType, handler) {

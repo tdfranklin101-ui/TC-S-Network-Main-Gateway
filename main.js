@@ -2964,6 +2964,7 @@ async function initializeSolarAudit() {
     await pool.query('ALTER TABLE agent_bulletin_board ADD COLUMN IF NOT EXISTS volume_qty integer DEFAULT NULL');
     await pool.query('ALTER TABLE members ADD COLUMN IF NOT EXISTS is_external_agent boolean DEFAULT false');
     await pool.query('ALTER TABLE members ADD COLUMN IF NOT EXISTS api_key varchar(255) DEFAULT NULL');
+    await pool.query('ALTER TABLE factory_printers ADD COLUMN IF NOT EXISTS metadata jsonb DEFAULT \'{}\'');
     await pool.query('ALTER TABLE members ADD COLUMN IF NOT EXISTS agent_platform varchar(100) DEFAULT NULL');
     await pool.query('ALTER TABLE members ADD COLUMN IF NOT EXISTS agent_description text DEFAULT NULL');
     await pool.query('ALTER TABLE members ADD COLUMN IF NOT EXISTS sponsor_member_id integer DEFAULT NULL');
@@ -3773,6 +3774,9 @@ const server = http.createServer(async (req, res) => {
     try {
       const { executor } = await initializeAgenticFramework(pool);
       await initializeUimRouter(pool, executor);
+      // Era 21.1: seed scheduler operations agent (idempotent)
+      const { initializeSchedulerAgent } = require('./server/agentic/agents/scheduler-agent');
+      await initializeSchedulerAgent(pool);
     } catch (uimInitErr) {
       console.error('[UIM] Initialization error:', uimInitErr.message);
     }
@@ -18536,9 +18540,20 @@ Respond with valid JSON only. Be insightful and specific.`;
     return;
   }
 
-  // 6. POST /api/factory/printers/register — Register a printer
+  // 6. POST /api/factory/printers/register — Register a printer (Era 21.1: requires X-Admin-Key or X-Factory-Owner-Key)
   if (pathname === '/api/factory/printers/register' && req.method === 'POST') {
     try {
+      // Authentication: require admin key or a factory owner credential
+      const regAdminKey = req.headers['x-admin-key'];
+      const regOwnerKey = req.headers['x-factory-owner-key'];
+      if (
+        (!regAdminKey || regAdminKey !== process.env.ADMIN_KEY) &&
+        (!regOwnerKey || regOwnerKey !== process.env.FACTORY_OWNER_KEY)
+      ) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Unauthorized: printer registration requires X-Admin-Key or X-Factory-Owner-Key' }));
+        return;
+      }
       const body = await parseBody(req);
       const { name, ownerId, eventId, location, printerModel, capabilities, buildVolume, materials } = body;
       if (!name) {
@@ -18547,6 +18562,9 @@ Respond with valid JSON only. Be insightful and specific.`;
         return;
       }
       const printerId = randomUUID();
+      // Generate a secure per-printer API key (returned once; store hash)
+      const printerApiKeyPlain = require('crypto').randomBytes(32).toString('hex');
+      const printerApiKeyHash = require('crypto').createHash('sha256').update(printerApiKeyPlain).digest('hex');
       await pool.query(
         `INSERT INTO factory_printers (id, name, owner_id, event_id, location, printer_model, capabilities, build_volume, materials, status, is_active, total_jobs_completed, last_heartbeat, created_at)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'idle', true, 0, NOW(), NOW())`,
@@ -18562,9 +18580,15 @@ Respond with valid JSON only. Be insightful and specific.`;
           materials || ['PLA']
         ]
       );
-      console.log(`🖨️ Printer registered: ${printerId} name=${name}`);
+      // Store the API key hash in the metadata column (added at startup)
+      await pool.query(
+        'UPDATE factory_printers SET metadata = jsonb_set(COALESCE(metadata, \'{}\'::jsonb), \'{api_key_hash}\', $1) WHERE id = $2',
+        [JSON.stringify(printerApiKeyHash), printerId]
+      );
+      console.log(`🖨️ Printer registered: ${printerId} name=${name} (authenticated)`);
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ success: true, printerId, name }));
+      // Return the API key ONCE — it cannot be recovered after this response
+      res.end(JSON.stringify({ success: true, printerId, name, printer_api_key: printerApiKeyPlain, warning: 'Store printer_api_key securely — it will not be shown again' }));
     } catch (error) {
       console.error('🖨️ Printer registration error:', error.message);
       res.writeHead(500, { 'Content-Type': 'application/json' });
@@ -18593,17 +18617,52 @@ Respond with valid JSON only. Be insightful and specific.`;
     return;
   }
 
-  // 8. POST /api/factory/printers/:id/heartbeat — Printer heartbeat
+  // 8. POST /api/factory/printers/:id/heartbeat — Printer heartbeat (Era 21.1: requires X-Factory-Key matching stored hash)
   if (pathname.startsWith('/api/factory/printers/') && pathname.endsWith('/heartbeat') && req.method === 'POST') {
     try {
       const parts = pathname.split('/');
       const printerId = parts[4];
+      // Authentication: require X-Factory-Key header
+      const factoryKey = req.headers['x-factory-key'];
+      if (!factoryKey) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Unauthorized: X-Factory-Key required for heartbeat' }));
+        return;
+      }
+      // Load printer and verify key against stored hash
+      const printerRow = await pool.query(
+        'SELECT id, metadata, is_active FROM factory_printers WHERE id = $1',
+        [printerId]
+      );
+      if (printerRow.rows.length === 0) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Printer not found' }));
+        return;
+      }
+      const printer = printerRow.rows[0];
+      if (!printer.is_active) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Printer is inactive' }));
+        return;
+      }
+      const storedHash = printer.metadata?.api_key_hash;
+      const suppliedHash = require('crypto').createHash('sha256').update(factoryKey).digest('hex');
+      if (!storedHash || storedHash !== suppliedHash) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Forbidden: invalid X-Factory-Key' }));
+        return;
+      }
       const body = await parseBody(req);
       const status = body.status || 'idle';
-      await pool.query(
-        'UPDATE factory_printers SET last_heartbeat = NOW(), status = $1 WHERE id = $2',
+      const result = await pool.query(
+        'UPDATE factory_printers SET last_heartbeat = NOW(), status = $1 WHERE id = $2 RETURNING id',
         [status, printerId]
       );
+      if (result.rowCount === 0) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Printer not found' }));
+        return;
+      }
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ success: true, printerId, status, timestamp: new Date().toISOString() }));
     } catch (error) {

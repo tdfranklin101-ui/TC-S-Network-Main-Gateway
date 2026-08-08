@@ -1,5 +1,5 @@
 /**
- * TC-S Network — Era 21.0
+ * TC-S Network — Era 21.1
  * Operations Agent — tcs-operations-agent-v1
  *
  * Class: OPERATIONS_AGENT
@@ -24,34 +24,41 @@ const AGENT_ID   = 'tcs-operations-agent-v1';
 const AGENT_NAME = 'TC-S Operations Agent';
 
 // ──────────────────────────────────────────────────────────────────────────────
-// PERMISSION ENVELOPE
-// Only LOW-risk capabilities for initial development.
-// LOG_ETHICS_EVENT is MEDIUM-risk — excluded from initial envelope.
-// Physical/factory capabilities excluded (security hardening required).
-// Stub actions excluded (no executor handler).
+// PERMISSION ENVELOPE — Era 21.1 expansion
+// TRANSFER_SOLAR, PURCHASE_ARTIFACT, AUDIT_TRANSACTION now live.
+// SETTLEMENT.RUN remains tcs-scheduler-agent-v1 only (not general ops agent).
+// Physical/factory capabilities excluded (security hardening complete but
+// factory UIM exposure requires separate policy decision).
 // ──────────────────────────────────────────────────────────────────────────────
 const ALLOWED_ACTIONS = [
+  // Era 21.0 — query + read
   'QUERY_NETWORK',
   'QUERY_MEMBER',
   'QUERY_BALANCE',
   'QUERY_MARKETPLACE',
   'CALCULATE_ENERGY',
   'GENERATE_REPORT',
+  // Era 21.0 — marketplace creation
   'ASSET.CREATE',
   'ASSET.ENRICH',
+  'ASSET.LIST',
+  'ASSET.UNLIST',
+  'ASSET.UPDATE',
+  'PRICE.QUOTE',
+  // Era 21.1 — economic capabilities (policy-governed, risk-rated)
+  'TRANSFER_SOLAR',      // medium risk — policy approval may be required
+  'PURCHASE_ARTIFACT',   // medium risk — full atomic lifecycle
+  'AUDIT_TRANSACTION',   // low risk  — read + verify only
 ];
 
 // Actions explicitly NOT in the envelope (for documentation and test assertions)
 const DENIED_ACTIONS = [
-  'TRANSFER_SOLAR',      // stub + HIGH risk — not authorized
   'MINT_SOLAR',          // admin-only, critical
-  'PURCHASE_ARTIFACT',   // stub
-  'UPDATE_MEMBER',       // stub
-  'SUSPEND_MEMBER',      // stub
-  'SETTLEMENT.RUN',      // broken scheduler
+  'UPDATE_MEMBER',       // admin domain
+  'SUSPEND_MEMBER',      // admin domain
+  'SETTLEMENT.RUN',      // scheduler-agent domain only (tcs-scheduler-agent-v1)
   'CREATE_NETWORK',      // requires approval, commissioning-agent domain
   'DELETE_NETWORK',      // critical
-  'FACTORY.*',           // unauthenticated factory endpoints
 ];
 
 const AGENT_METADATA = {
@@ -64,7 +71,7 @@ const AGENT_METADATA = {
   audit_required: true,
   uim_capability_discovery: true,
   production_enabled: false,
-  era: '21.0',
+  era: '21.1',
   gbi_exempt: true,            // does NOT receive member Solar distribution
   physical_execution: false,   // factory disabled pending auth hardening
   created_in: 'era21-operations-agent',

@@ -1,5 +1,5 @@
 /**
- * TC-S Network — Era 21.0
+ * TC-S Network — Era 21.1
  * UIM Router — GET /api/uim/capabilities
  *              POST /api/uim/invoke
  *              GET  /api/uim/requests/:id/status
@@ -23,6 +23,8 @@ const crypto = require('crypto');
 
 const { OperationsAgent, AGENT_ID, ALLOWED_ACTIONS } = require('./agents/operations-agent');
 const { OperationsLearning } = require('./operations-learning');
+const { uimRateLimitCheck } = require('./rate-limiter');
+const { saiUimBreaker } = require('./circuit-breaker');
 
 // ─── Singleton instances (initialized once) ──────────────────────────────────
 let _operationsAgent  = null;
@@ -228,7 +230,7 @@ async function handleCapabilities(req, res, json, pool) {
 
     json(200, {
       registry_version:    _capabilityRegistry._meta?.registry_version || '0.1.0',
-      era:                 '21.0',
+      era:                 '21.1',
       platform:            'TC-S Network',
       platform_url:        _capabilityRegistry._meta?.platform_url,
       uim_handshake:       _capabilityRegistry._meta?.uim_handshake,
@@ -262,6 +264,19 @@ async function handleInvoke(req, res, body, json, pool) {
 
     if (!_operationsAgent) {
       json(503, { status: 'FAILED', error: 'Operations Agent not initialized' });
+      return true;
+    }
+
+    // ── Rate limiting (Task 16) ────────────────────────────────────────────
+    const invokerAgentId = auth.agentId || null;
+    const sessionKey     = req.headers['x-session-token'] || req.socket?.remoteAddress || null;
+    const rlResult       = uimRateLimitCheck(invokerAgentId, sessionKey);
+    if (!rlResult.allowed) {
+      json(429, {
+        status: 'REJECTED',
+        error:  `Rate limit exceeded. Retry after ${Math.ceil(rlResult.resetMs / 1000)}s.`,
+        policy: { rejection_code: 'RATE_LIMIT_EXCEEDED', reset_ms: rlResult.resetMs },
+      });
       return true;
     }
 

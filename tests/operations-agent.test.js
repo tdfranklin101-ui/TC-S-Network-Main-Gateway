@@ -159,17 +159,17 @@ async function runTests() {
   });
 
   // ── Test 5: Unauthorized capability rejected ───────────────────────────────
-  await test('5. TRANSFER_SOLAR: rejected by Operations Agent permission envelope', async () => {
+  // Era 21.1 note: TRANSFER_SOLAR moved to ALLOWED_ACTIONS; test updated to MINT_SOLAR (still denied)
+  await test('5. MINT_SOLAR: rejected by Operations Agent permission envelope', async () => {
     const result = await agent.invoke({
-      capability_id: 'tcs.solar.transfer',
-      action_type:   'TRANSFER_SOLAR',
-      parameters:    { fromWalletId: 'a', toWalletId: 'b', amount: 100 },
-      intent:        'Test: attempt unauthorized transfer (should fail)',
+      capability_id: 'tcs.solar.mint',
+      action_type:   'MINT_SOLAR',
+      parameters:    { amount: 100, recipient: 'a' },
+      intent:        'Test: attempt unauthorized mint (should fail)',
     });
 
     assertEqual(result.status, 'REJECTED', 'Status should be REJECTED');
     assert(result.policy?.rejection_code, 'Should have rejection code');
-    assert(!result.result?.transferred, 'No transfer should have occurred');
     assert(result.request_id === null, 'Rejected before executor — no request_id');
   });
 
@@ -310,28 +310,28 @@ async function runTests() {
   });
 
   // ── Test 15: Unsupported inference not treated as authoritative ───────────
+  // Era 21.1 note: TRANSFER_SOLAR is now allowed; test updated to MINT_SOLAR (admin-only, still denied).
+  // The invariant being tested: learning ≠ authority — knowing about an action does not unlock it.
   await test('15. Learning Layer: derived knowledge does not grant policy authority', async () => {
-    // Even with knowledge about Solar transfers, the Operations Agent cannot invoke TRANSFER_SOLAR
-    // This confirms learning ≠ authority
     await learning.createKnowledge({
       knowledge_type: KNOWLEDGE_TYPES.TRANSACTION_PATTERN,
-      subject:        'solar_transfer_learned',
-      summary:        'Observed: Solar transfers happen via TRANSFER_SOLAR action with source/dest wallets',
-      structured_facts: { action: 'TRANSFER_SOLAR', typical_amount: 100 },
+      subject:        'solar_mint_learned',
+      summary:        'Observed: Solar minting happens via MINT_SOLAR (admin-only)',
+      structured_facts: { action: 'MINT_SOLAR', admin_only: true },
       source_event_ids: [],
       source_table:   'transactions',
       confidence:     0.85,
     });
 
-    // Knowledge exists — but the agent still cannot invoke TRANSFER_SOLAR
+    // Knowledge exists — but the agent still cannot invoke MINT_SOLAR
     const result = await agent.invoke({
-      capability_id: 'tcs.solar.transfer',
-      action_type:   'TRANSFER_SOLAR',
-      parameters:    { fromWalletId: 'a', toWalletId: 'b', amount: 1 },
+      capability_id: 'tcs.solar.mint',
+      action_type:   'MINT_SOLAR',
+      parameters:    { amount: 1, recipient: 'a' },
       intent:        'Test: learning should not unlock unauthorized actions',
     });
 
-    assertEqual(result.status, 'REJECTED', 'TRANSFER_SOLAR still REJECTED even with learned knowledge');
+    assertEqual(result.status, 'REJECTED', 'MINT_SOLAR still REJECTED even with learned knowledge');
     assert(result.error || result.policy?.rejection_code, 'Should state rejection reason');
   });
 

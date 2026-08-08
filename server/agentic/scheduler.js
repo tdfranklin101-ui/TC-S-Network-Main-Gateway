@@ -297,8 +297,8 @@ class Scheduler {
 
     const result = await this.executor.submitAction({
       actionType: 'SETTLEMENT.RUN',
-      agentId: 'scheduler-agent',
-      requesterId: 'system-scheduler',
+      agentId: 'tcs-scheduler-agent-v1',
+      requesterId: 'tcs-scheduler-agent-v1',
       payload: {
         networkId,
         periodStart: periodStart.toISOString(),
