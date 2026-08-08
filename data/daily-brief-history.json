@@ -4,36 +4,6 @@
     "indices": [
       {
         "id": "si",
-        "value": 71.4
-      },
-      {
-        "id": "srh",
-        "value": 76.6
-      },
-      {
-        "id": "gbi",
-        "value": 40.8
-      },
-      {
-        "id": "cai",
-        "value": 89.1
-      },
-      {
-        "id": "mli",
-        "value": 23
-      },
-      {
-        "id": "eai",
-        "value": 91.6
-      }
-    ],
-    "timestamp": "2026-02-08T20:22:13.434Z"
-  },
-  {
-    "date": "2026-02-08",
-    "indices": [
-      {
-        "id": "si",
         "value": 70.3
       },
       {
@@ -898,5 +868,35 @@
       }
     ],
     "timestamp": "2026-06-25T03:00:00.026Z"
+  },
+  {
+    "date": "2026-08-08",
+    "indices": [
+      {
+        "id": "si",
+        "value": 71
+      },
+      {
+        "id": "srh",
+        "value": 79.1
+      },
+      {
+        "id": "gbi",
+        "value": 42.3
+      },
+      {
+        "id": "cai",
+        "value": 88.8
+      },
+      {
+        "id": "mli",
+        "value": 23.5
+      },
+      {
+        "id": "eai",
+        "value": 91.6
+      }
+    ],
+    "timestamp": "2026-08-08T03:00:00.193Z"
   }
 ]
