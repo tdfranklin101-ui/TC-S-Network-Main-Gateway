@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TC-S Ops Agent — Dev Harness (Era 21.2)</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Courier New',monospace;background:#0a0d12;color:#c9d1d9;min-height:100vh;padding:20px}
+    h1{color:#58a6ff;font-size:1.3rem;margin-bottom:4px}
+    .era-badge{display:inline-block;background:#1f6feb;color:#fff;font-size:.7rem;padding:2px 8px;border-radius:4px;margin-bottom:16px}
+    .dev-banner{background:#3d1f00;border:1px solid #f79000;color:#f79000;padding:8px 12px;border-radius:6px;font-size:.8rem;margin-bottom:20px}
+    .section{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:16px;margin-bottom:20px}
+    .section h2{color:#79c0ff;font-size:1rem;margin-bottom:12px;border-bottom:1px solid #21262d;padding-bottom:8px}
+    .section h3{color:#58a6ff;font-size:.9rem;margin-bottom:8px;margin-top:16px}
+    .btn{background:#238636;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:.8rem;margin:4px 2px}
+    .btn:hover{background:#2ea043}
+    .btn.secondary{background:#21262d;border:1px solid #30363d}
+    .btn.secondary:hover{background:#30363d}
+    .btn.danger{background:#b91c1c;color:#fff}
+    .input-row{display:flex;gap:8px;align-items:center;margin:6px 0;flex-wrap:wrap}
+    .input-row label{color:#8b949e;font-size:.8rem;min-width:100px}
+    input,textarea,select{background:#0d1117;border:1px solid #30363d;color:#c9d1d9;padding:5px 8px;border-radius:4px;font-family:inherit;font-size:.8rem}
+    input:focus,textarea:focus{outline:none;border-color:#58a6ff}
+    textarea{width:100%;min-height:60px;resize:vertical}
+    pre{background:#0d1117;border:1px solid #21262d;border-radius:4px;padding:10px;font-size:.75rem;overflow-x:auto;white-space:pre-wrap;max-height:500px;overflow-y:auto}
+    .status-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.75rem;font-weight:bold}
+    .SUCCEEDED{background:#1a472a;color:#56d364}
+    .RUNNING{background:#1f3a5f;color:#58a6ff}
+    .FAILED{background:#4a0e0e;color:#f85149}
+    .CREATED{background:#21262d;color:#8b949e}
+    .VALID{background:#1a472a;color:#56d364}
+    .INVALID{background:#4a0e0e;color:#f85149}
+    .REQUIRES_APPROVAL{background:#3d2200;color:#f79000}
+    .step-timeline{border-left:2px solid #30363d;padding-left:16px;margin-top:12px}
+    .step-item{position:relative;margin-bottom:12px}
+    .step-item::before{content:'';position:absolute;left:-20px;top:6px;width:8px;height:8px;border-radius:50%;background:#30363d}
+    .step-item.SUCCEEDED::before{background:#56d364}
+    .step-item.FAILED::before{background:#f85149}
+    .step-item.RUNNING::before{background:#58a6ff;animation:pulse 1s infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+    .step-header{font-size:.8rem;color:#79c0ff}
+    .step-detail{font-size:.75rem;color:#8b949e;margin-top:2px}
+    .kv-grid{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:.8rem}
+    .kv-key{color:#8b949e}
+    .kv-val{color:#e6edf3;word-break:break-all}
+    .tabs{display:flex;gap:4px;margin-bottom:12px}
+    .tab{background:#21262d;border:1px solid #30363d;color:#8b949e;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:.8rem}
+    .tab.active{background:#1f6feb;color:#fff;border-color:#1f6feb}
+    .tab-panel{display:none}
+    .tab-panel.active{display:block}
+    .finding{padding:4px 8px;border-radius:3px;font-size:.75rem;margin:2px 0}
+    .ERROR{background:#4a0e0e22;border-left:3px solid #f85149;color:#f85149}
+    .WARNING{background:#3d220022;border-left:3px solid #f79000;color:#f79000}
+    .INFO{background:#1f3a5f22;border-left:3px solid #58a6ff;color:#58a6ff}
+    .BLOCKED{background:#4a0e4e22;border-left:3px solid #d2a8ff;color:#d2a8ff}
+    #loading{color:#58a6ff;font-size:.8rem;display:none}
+    .metric-bar{background:#21262d;border-radius:4px;height:6px;margin-top:4px}
+    .metric-fill{background:#56d364;height:6px;border-radius:4px;transition:width .5s}
+    .capability-card{border:1px solid #21262d;border-radius:6px;padding:10px;margin:6px 0;background:#0d1117}
+    .cap-id{color:#79c0ff;font-weight:bold;font-size:.85rem}
+    .cap-meta{color:#8b949e;font-size:.75rem}
+  </style>
+</head>
+<body>
+<h1>⚡ TC-S Operations Agent — Development Harness</h1>
+<span class="era-badge">ERA 21.2 — Workflow Provenance &amp; Orchestrator Readiness</span>
+<div class="dev-banner">⚠️ DEVELOPMENT ONLY — This page is not accessible in production. Requires X-Admin-Key authentication.</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" onclick="showTab('system')">🌐 System</div>
+  <div class="tab" onclick="showTab('capabilities')">📋 Capabilities</div>
+  <div class="tab" onclick="showTab('validator')">✅ Plan Validator</div>
+  <div class="tab" onclick="showTab('invoke')">⚡ Invoke</div>
+  <div class="tab" onclick="showTab('workflow')">🔍 Workflow</div>
+  <div class="tab" onclick="showTab('metrics')">📊 Metrics</div>
+</div>
+
+<!-- SYSTEM TAB -->
+<div id="tab-system" class="tab-panel active">
+  <div class="section">
+    <h2>🌐 System Manifest — GET /api/uim/system</h2>
+    <button class="btn" onclick="loadSystem()">Refresh System Status</button>
+    <button class="btn secondary" onclick="loadReadiness()">Check Orchestrator Readiness</button>
+    <div id="system-output" style="margin-top:12px"></div>
+  </div>
+</div>
+
+<!-- CAPABILITIES TAB -->
+<div id="tab-capabilities" class="tab-panel">
+  <div class="section">
+    <h2>📋 Capability Registry</h2>
+    <div class="input-row">
+      <label>Filter:</label>
+      <select id="cap-filter" onchange="loadCapabilities()">
+        <option value="live">Live + UIM Exposable</option>
+        <option value="all">All (including stubs)</option>
+        <option value="physical">Physical only</option>
+        <option value="economic">Economic only</option>
+      </select>
+    </div>
+    <button class="btn" onclick="loadCapabilities()">Load Capabilities</button>
+    <div id="cap-output" style="margin-top:12px"></div>
+  </div>
+</div>
+
+<!-- VALIDATOR TAB -->
+<div id="tab-validator" class="tab-panel">
+  <div class="section">
+    <h2>✅ Plan Validator — POST /api/uim/plan/validate (Zero Mutations)</h2>
+    <h3>Pre-built Plans</h3>
+    <button class="btn" onclick="loadCommercePlan()">ARTIFACT_COMMERCE_LOOP_V1</button>
+    <button class="btn secondary" onclick="loadInvalidPlan('unknown')">Unknown Capability</button>
+    <button class="btn secondary" onclick="loadInvalidPlan('physical')">Physical Capability</button>
+    <button class="btn secondary" onclick="loadInvalidPlan('risk')">Risk Ceiling Exceeded</button>
+
+    <h3 style="margin-top:12px">Plan JSON</h3>
+    <textarea id="plan-json" rows="18" placeholder='{"workflow_run_id":"...","workflow_type":"...","steps":[...]}'></textarea>
+    <div class="input-row" style="margin-top:8px">
+      <label>Admin Key:</label>
+      <input type="password" id="plan-admin-key" placeholder="ADMIN_KEY" style="width:200px" />
+      <button class="btn" onclick="validatePlan()">Validate (Dry Run)</button>
+    </div>
+    <div id="validator-output" style="margin-top:12px"></div>
+  </div>
+</div>
+
+<!-- INVOKE TAB -->
+<div id="tab-invoke" class="tab-panel">
+  <div class="section">
+    <h2>⚡ Invoke — POST /api/uim/invoke</h2>
+    <div class="input-row">
+      <label>Capability ID:</label>
+      <input id="invoke-cap" value="tcs.marketplace.query" style="width:250px" />
+    </div>
+    <div class="input-row">
+      <label>Version:</label>
+      <input id="invoke-ver" value="1.0" style="width:80px" />
+    </div>
+    <div class="input-row">
+      <label>Admin Key:</label>
+      <input type="password" id="invoke-key" placeholder="ADMIN_KEY" style="width:200px" />
+    </div>
+    <div class="input-row"><label>Parameters:</label></div>
+    <textarea id="invoke-params" rows="4">{}</textarea>
+    <div class="input-row" style="margin-top:8px">
+      <button class="btn" onclick="invokeCapability()">Invoke</button>
+      <button class="btn secondary" onclick="loadQuickInvoke('query')">Query Marketplace</button>
+      <button class="btn secondary" onclick="loadQuickInvoke('energy')">Calculate Energy</button>
+    </div>
+    <div id="invoke-output" style="margin-top:12px"></div>
+  </div>
+</div>
+
+<!-- WORKFLOW TAB -->
+<div id="tab-workflow" class="tab-panel">
+  <div class="section">
+    <h2>🔍 ERA 21.2 — Workflow Observability</h2>
+    <p style="color:#8b949e;font-size:.8rem;margin-bottom:12px">Inspect a completed workflow run as a full timeline. Shows steps, policy decisions, Solar movements, ownership, audit, and provenance.</p>
+    <div class="input-row">
+      <label>Workflow Run ID:</label>
+      <input id="wf-run-id" placeholder="UUID or wf_...  format" style="width:340px" />
+      <button class="btn" onclick="loadWorkflow()">Load Workflow</button>
+    </div>
+    <div class="input-row">
+      <label>Admin Key:</label>
+      <input type="password" id="wf-admin-key" placeholder="ADMIN_KEY" style="width:200px" />
+    </div>
+    <div style="margin-top:8px">
+      <button class="btn secondary" onclick="loadRecentWorkflows()">Recent Runs</button>
+    </div>
+    <div id="wf-output" style="margin-top:12px"></div>
+  </div>
+</div>
+
+<!-- METRICS TAB -->
+<div id="tab-metrics" class="tab-panel">
+  <div class="section">
+    <h2>📊 Capability Performance Observations</h2>
+    <p style="color:#8b949e;font-size:.8rem;margin-bottom:8px">Observations only. These CANNOT change risk_level, permissions, or policy authority.</p>
+    <button class="btn" onclick="loadMetrics()">Load Metrics</button>
+    <div id="metrics-output" style="margin-top:12px"></div>
+  </div>
+</div>
+
+<span id="loading">⏳ Loading…</span>
+
+<script>
+const BASE = '';
+
+function showTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.target.classList.add('active');
+}
+
+function adminKey(id) {
+  return document.getElementById(id)?.value || '';
+}
+
+function loading(show) {
+  document.getElementById('loading').style.display = show ? 'inline' : 'none';
+}
+
+async function fetchJson(url, opts = {}) {
+  loading(true);
+  try {
+    const r = await fetch(url, { ...opts, headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) } });
+    const text = await r.text();
+    try { return { status: r.status, data: JSON.parse(text) }; }
+    catch { return { status: r.status, data: text }; }
+  } finally { loading(false); }
+}
+
+function renderJson(el, data, status) {
+  const badge = status ? `<span class="status-badge ${status < 300 ? 'SUCCEEDED' : 'FAILED'}">${status}</span> ` : '';
+  el.innerHTML = `${badge}<pre>${JSON.stringify(data, null, 2)}</pre>`;
+}
+
+// ── System ───────────────────────────────────────────────────────────────────
+async function loadSystem() {
+  const out = document.getElementById('system-output');
+  const { status, data } = await fetchJson('/api/uim/system');
+  const html = `<div class="kv-grid">
+    <span class="kv-key">System:</span><span class="kv-val">${data.system || '—'}</span>
+    <span class="kv-key">Era:</span><span class="kv-val">${data.era || '—'}</span>
+    <span class="kv-key">UIM Version:</span><span class="kv-val">${data.uim_version || '—'}</span>
+    <span class="kv-key">Live Capabilities:</span><span class="kv-val">${data.live_capability_count || 0}</span>
+    <span class="kv-key">Physical UIM Enabled:</span><span class="kv-val" style="color:#f85149">NO</span>
+    <span class="kv-key">Production Enabled:</span><span class="kv-val" style="color:#f85149">NO</span>
+    <span class="kv-key">Operations Agent:</span><span class="kv-val" style="color:${data.component_status?.operations_agent==='ACTIVE'?'#56d364':'#f85149'}">${data.component_status?.operations_agent||'?'}</span>
+    <span class="kv-key">Learning Layer:</span><span class="kv-val" style="color:${data.component_status?.learning_layer==='ACTIVE'?'#56d364':'#f85149'}">${data.component_status?.learning_layer||'?'}</span>
+    <span class="kv-key">Policy Engine:</span><span class="kv-val" style="color:#56d364">${data.component_status?.policy_engine||'?'}</span>
+  </div>
+  <h3 style="margin-top:12px">Interfaces</h3>
+  ${Object.entries(data.interfaces||{}).map(([k,v])=>`<div class="capability-card"><span class="cap-id">${k}</span><div class="cap-meta">${v.description||''} — auth: ${v.auth||''}</div></div>`).join('')}
+  `;
+  out.innerHTML = html;
+}
+
+async function loadReadiness() {
+  const out = document.getElementById('system-output');
+  const { status, data } = await fetchJson('/api/uim/orchestrator-readiness');
+  const ready = data.ready_for_external_orchestrator;
+  out.innerHTML = `
+    <div style="margin-bottom:12px">
+      <strong>Ready for External Orchestrator:</strong>
+      <span class="status-badge ${ready?'SUCCEEDED':'FAILED'}">${ready?'YES':'NO'}</span>
+    </div>
+    <div class="kv-grid" style="margin-bottom:12px">
+      ${Object.entries(data.interfaces||{}).map(([k,v])=>`<span class="kv-key">${k}:</span><span class="kv-val" style="color:${v?'#56d364':'#f85149'}">${v?'✅':'❌'}</span>`).join('')}
+    </div>
+    <h3>Constraints</h3>
+    <div class="kv-grid">
+      ${Object.entries(data.constraints||{}).map(([k,v])=>`<span class="kv-key">${k}:</span><span class="kv-val" style="color:#f85149">${String(v)}</span>`).join('')}
+    </div>
+    <h3 style="margin-top:12px">Orchestrator CAN</h3>
+    <ul style="color:#56d364;font-size:.8rem;padding-left:16px">${(data.orchestrator_can||[]).map(x=>`<li>${x}</li>`).join('')}</ul>
+    <h3 style="margin-top:8px">Orchestrator CANNOT</h3>
+    <ul style="color:#f85149;font-size:.8rem;padding-left:16px">${(data.orchestrator_cannot||[]).map(x=>`<li>${x}</li>`).join('')}</ul>
+  `;
+}
+
+// ── Capabilities ─────────────────────────────────────────────────────────────
+async function loadCapabilities() {
+  const out = document.getElementById('cap-output');
+  const filter = document.getElementById('cap-filter')?.value || 'live';
+  const params = filter === 'all' ? '?include_stubs=true' : '';
+  const { status, data } = await fetchJson('/api/uim/capabilities' + params);
+  let caps = data.capabilities || [];
+  if (filter === 'physical') caps = caps.filter(c => c.side_effect_class === 'PHYSICAL');
+  if (filter === 'economic') caps = caps.filter(c => c.side_effect_class === 'ECONOMIC');
+
+  out.innerHTML = `<div style="color:#8b949e;font-size:.8rem;margin-bottom:8px">Era ${data.era} · Registry v${data.registry_version} · ${caps.length} capabilities</div>` +
+    caps.map(c => `<div class="capability-card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span class="cap-id">${c.capability_id}</span>
+        <span>
+          <span class="status-badge" style="background:#21262d;color:#8b949e">v${c.version||'1.0'}</span>
+          <span class="status-badge" style="background:${c.uim_operations_enabled===false?'#3d0000':'#1a472a'};color:${c.uim_operations_enabled===false?'#f85149':'#56d364'}">${c.uim_operations_enabled===false?'UIM BLOCKED':c.side_effect_class||'?'}</span>
+        </span>
+      </div>
+      <div class="cap-meta">${c.description||''}</div>
+      <div class="cap-meta" style="margin-top:4px">
+        Risk: <strong style="color:${c.risk_level==='low'?'#56d364':c.risk_level==='medium'?'#f79000':'#f85149'}">${c.risk_level}</strong>
+        · Mode: ${c.execution_mode||'SYNC'}
+        · Idempotent: ${c.idempotency_supported?'✅':'❌'}
+        · Approval: ${c.approval_required?'required':'auto'}
+      </div>
+      ${c.input_schema?`<div class="cap-meta" style="margin-top:2px">Required inputs: ${(c.params_required||[]).join(', ')||'none'}</div>`:''}
+    </div>`).join('');
+}
+
+// ── Plan Validator ────────────────────────────────────────────────────────────
+const COMMERCE_PLAN = {
+  task_id: '00000000-0000-0000-0000-000000000001',
+  workflow_run_id: crypto.randomUUID ? crypto.randomUUID() : 'wf_' + Date.now(),
+  workflow_type: 'ARTIFACT_COMMERCE_LOOP_V1',
+  principal: { type: 'AGENT', id: 'tcs-operations-agent-v1' },
+  constraints: { max_risk_level: 'medium', physical_execution: false },
+  steps: [
+    { sequence: 1, capability_id: 'tcs.marketplace.asset_create',  version: '1.0', parameters: {} },
+    { sequence: 2, capability_id: 'tcs.solar.calculate_energy',     version: '1.0', parameters_from: ['step:1'] },
+    { sequence: 3, capability_id: 'tcs.marketplace.price_quote',    version: '1.0', parameters_from: ['step:1'] },
+    { sequence: 4, capability_id: 'tcs.marketplace.asset_enrich',   version: '1.0', parameters_from: ['step:1', 'step:2'] },
+    { sequence: 5, capability_id: 'tcs.marketplace.asset_list',     version: '1.0', parameters_from: ['step:1'] },
+    { sequence: 6, capability_id: 'tcs.marketplace.purchase',       version: '1.0', parameters_from: ['step:5'] },
+    { sequence: 7, capability_id: 'tcs.solar.audit_transaction',    version: '1.0', parameters_from: ['step:6'] },
+    { sequence: 8, capability_id: 'tcs.capability_discovery',       version: '1.0', parameters: { type: 'LEARNING_UPDATE' }, optional: true },
+  ],
+};
+
+function loadCommercePlan() {
+  document.getElementById('plan-json').value = JSON.stringify(COMMERCE_PLAN, null, 2);
+}
+
+function loadInvalidPlan(type) {
+  let plan = { workflow_run_id: 'wf_test_' + Date.now(), workflow_type: 'TEST', steps: [] };
+  if (type === 'unknown') {
+    plan.steps = [{ sequence: 1, capability_id: 'REPLICATE_UNIVERSE', version: '1.0', parameters: {} }];
+  } else if (type === 'physical') {
+    plan.steps = [
+      { sequence: 1, capability_id: 'tcs.marketplace.query', version: '1.0', parameters: {} },
+      { sequence: 2, capability_id: 'tcs.factory.submit_print', version: '1.0', parameters: {} },
+    ];
+    plan.constraints = { physical_execution: false };
+  } else if (type === 'risk') {
+    plan.steps = [
+      { sequence: 1, capability_id: 'tcs.solar.transfer', version: '1.0', parameters: {} },
+      { sequence: 2, capability_id: 'tcs.network.create', version: '1.0', parameters: {} },
+    ];
+    plan.constraints = { max_risk_level: 'low' }; // both are medium — ceiling exceeded
+  }
+  document.getElementById('plan-json').value = JSON.stringify(plan, null, 2);
+}
+
+async function validatePlan() {
+  const out = document.getElementById('validator-output');
+  let plan;
+  try { plan = JSON.parse(document.getElementById('plan-json').value); }
+  catch (e) { out.innerHTML = `<div class="finding ERROR">JSON parse error: ${e.message}</div>`; return; }
+
+  const key = adminKey('plan-admin-key');
+  const { status, data } = await fetchJson('/api/uim/plan/validate', {
+    method: 'POST',
+    headers: { 'X-Admin-Key': key },
+    body: JSON.stringify({ plan }),
+  });
+
+  const pv = data.plan_validation || data;
+  const result = pv.result || '?';
+  out.innerHTML = `
+    <div style="margin-bottom:8px">
+      <strong>Result:</strong> <span class="status-badge ${result}">${result}</span>
+      <span style="color:#8b949e;font-size:.8rem;margin-left:8px">Dry run · ${pv.mutations_performed ?? 0} mutations</span>
+    </div>
+    <div class="kv-grid" style="margin-bottom:8px">
+      <span class="kv-key">Steps:</span><span class="kv-val">${pv.step_count ?? pv.estimated_effects?.step_count ?? '?'}</span>
+      <span class="kv-key">Max Risk:</span><span class="kv-val">${pv.estimated_effects?.max_risk_level||'?'}</span>
+      <span class="kv-key">Estimated Solar:</span><span class="kv-val">${pv.estimated_effects?.estimated_solar_spend||0}</span>
+      <span class="kv-key">Requires Approval:</span><span class="kv-val">${pv.estimated_effects?.requires_approval?'Yes':'No'}</span>
+      <span class="kv-key">Blocked:</span><span class="kv-val">${(pv.estimated_effects?.blocked_capabilities||[]).join(', ')||'none'}</span>
+    </div>
+    <strong style="font-size:.8rem">Findings (${(pv.findings||[]).length}):</strong>
+    <div style="margin-top:4px">
+      ${(pv.findings||[]).map(f=>`<div class="finding ${f.severity||'INFO'}">[${f.code}] ${f.detail||f.message||''}</div>`).join('')||'<div class="finding INFO">No findings</div>'}
+    </div>
+    ${(pv.estimated_effects?.expected_execution_path||[]).length ? `
+    <strong style="font-size:.8rem;display:block;margin-top:8px">Expected Execution Path:</strong>
+    <div class="step-timeline">
+      ${(pv.estimated_effects.expected_execution_path||[]).map(s=>`
+        <div class="step-item ${s.approval?'RUNNING':'SUCCEEDED'}">
+          <div class="step-header">Step ${s.sequence} — ${s.capability_id}</div>
+          <div class="step-detail">Risk: ${s.risk} · Mode: ${s.side_effects} · ${s.approval?'Approval required':'Auto'}</div>
+        </div>
+      `).join('')}
+    </div>` : ''}
+  `;
+}
+
+// ── Invoke ────────────────────────────────────────────────────────────────────
+function loadQuickInvoke(type) {
+  if (type === 'query') {
+    document.getElementById('invoke-cap').value = 'tcs.marketplace.query';
+    document.getElementById('invoke-params').value = JSON.stringify({ limit: 5 }, null, 2);
+  } else if (type === 'energy') {
+    document.getElementById('invoke-cap').value = 'tcs.solar.calculate_energy';
+    document.getElementById('invoke-params').value = JSON.stringify({ computationType: 'inference', parameters: {} }, null, 2);
+  }
+}
+
+async function invokeCapability() {
+  const out = document.getElementById('invoke-output');
+  const cap = document.getElementById('invoke-cap').value;
+  const ver = document.getElementById('invoke-ver').value || '1.0';
+  const key = adminKey('invoke-key');
+  let params;
+  try { params = JSON.parse(document.getElementById('invoke-params').value || '{}'); } catch { params = {}; }
+
+  const { status, data } = await fetchJson('/api/uim/invoke', {
+    method: 'POST',
+    headers: { 'X-Admin-Key': key },
+    body: JSON.stringify({ capability_id: cap, version: ver, parameters: params, intent: 'dev-harness test' }),
+  });
+
+  renderJson(out, data, status);
+}
+
+// ── Workflow ──────────────────────────────────────────────────────────────────
+async function loadWorkflow() {
+  const out = document.getElementById('wf-output');
+  const runId = document.getElementById('wf-run-id').value.trim();
+  const key = adminKey('wf-admin-key');
+  if (!runId) { out.innerHTML = '<div class="finding ERROR">Enter a workflow_run_id</div>'; return; }
+
+  const { status, data } = await fetchJson(`/api/uim/workflow-runs/${encodeURIComponent(runId)}`, {
+    headers: { 'X-Admin-Key': key },
+  });
+  if (status !== 200) { renderJson(out, data, status); return; }
+  renderWorkflow(out, data);
+}
+
+async function loadRecentWorkflows() {
+  const out = document.getElementById('wf-output');
+  const key = adminKey('wf-admin-key');
+  // Query network_knowledge for WORKFLOW_RUN records
+  const { status, data } = await fetchJson('/api/uim/network-knowledge?knowledge_type=WORKFLOW_RUN', {
+    headers: { 'X-Admin-Key': key },
+  });
+  if (status !== 200) { renderJson(out, data, status); return; }
+  const records = (data.records || []).slice(0, 10);
+  out.innerHTML = `<div style="color:#8b949e;font-size:.8rem;margin-bottom:8px">${records.length} recent workflow run(s) from network_knowledge</div>` +
+    records.map(r => {
+      const v = r.value || r;
+      return `<div class="capability-card" style="cursor:pointer" onclick="loadWorkflowById('${v.workflow_run_id}')">
+        <span class="cap-id">${v.workflow_run_id || '?'}</span>
+        <div class="cap-meta">Type: ${v.workflow_type||v.workflow_id||'?'} · State: <span class="status-badge ${v.state||v.status||'UNKNOWN'}">${v.state||v.status||'?'}</span></div>
+        <div class="cap-meta">Started: ${v.started_at||'?'}</div>
+      </div>`;
+    }).join('') || '<div style="color:#8b949e;font-size:.8rem">No workflow runs found in network_knowledge</div>';
+}
+
+function loadWorkflowById(id) {
+  document.getElementById('wf-run-id').value = id;
+  loadWorkflow();
+}
+
+function renderWorkflow(out, data) {
+  const steps = data.steps || [];
+  const prov  = data.provenance;
+  const state = data.status || data.state || '?';
+
+  out.innerHTML = `
+    <div style="margin-bottom:12px">
+      <strong>WORKFLOW: ${data.workflow_type||'?'}</strong>
+    </div>
+    <div class="kv-grid" style="margin-bottom:12px">
+      <span class="kv-key">workflow_run_id:</span><span class="kv-val">${data.workflow_run_id||'?'}</span>
+      <span class="kv-key">initiator:</span><span class="kv-val">${data.initiator_agent_id||'?'}</span>
+      <span class="kv-key">intent:</span><span class="kv-val">${data.intent||'?'}</span>
+      <span class="kv-key">STATUS:</span><span class="kv-val"><span class="status-badge ${state}">${state}</span></span>
+      <span class="kv-key">started_at:</span><span class="kv-val">${data.started_at||'?'}</span>
+      <span class="kv-key">finished_at:</span><span class="kv-val">${data.finished_at||'—'}</span>
+      <span class="kv-key">steps:</span><span class="kv-val">${data.success_count||0}/${data.step_count||steps.length} succeeded</span>
+    </div>
+
+    ${data.result_summary ? `<div style="margin-bottom:12px">
+      <strong style="font-size:.8rem">Result Summary:</strong>
+      <div class="kv-grid">${Object.entries(data.result_summary||{}).map(([k,v])=>`<span class="kv-key">${k}:</span><span class="kv-val">${v||'—'}</span>`).join('')}</div>
+    </div>` : ''}
+
+    <strong style="font-size:.85rem">Steps</strong>
+    <div class="step-timeline">
+      ${steps.map((s,i) => {
+        const cap = s.capability_id || s.step_id;
+        const st  = s.status || 'UNKNOWN';
+        const dur = s.latency_ms || (s.metadata?.latency_ms) || null;
+        const auditRef = s.audit_reference;
+        return `<div class="step-item ${st}">
+          <div class="step-header">STEP ${s.sequence||i+1}: ${cap}</div>
+          <div class="step-detail">
+            ${s.request_id?`request_id: ${s.request_id} · `:''}
+            policy: ${s.status||'?'} · duration: ${dur?dur+'ms':'?'}
+            ${auditRef?` · audit: ${auditRef}`:''}
+            ${s.error?`<div style="color:#f85149">Error: ${s.error}</div>`:''}
+            ${s.result_reference?`<div style="color:#8b949e;font-size:.7rem">${(s.result_reference||'').slice(0,200)}</div>`:''}
+          </div>
+        </div>`;
+      }).join('') || '<div style="color:#8b949e;font-size:.8rem">No step records available</div>'}
+    </div>
+
+    ${prov ? `
+    <h3 style="margin-top:16px">Creation Provenance</h3>
+    <div class="kv-grid">
+      <span class="kv-key">creation_id:</span><span class="kv-val">${prov.creation_id||'?'}</span>
+      <span class="kv-key">artifacts:</span><span class="kv-val">${(prov.artifact_ids||[]).join(', ')||'none'}</span>
+      <span class="kv-key">transactions:</span><span class="kv-val">${(prov.transaction_ids||[]).join(', ')||'none'}</span>
+      <span class="kv-key">capabilities:</span><span class="kv-val">${(prov.capability_invocations||[]).join(' → ')||'none'}</span>
+      <span class="kv-key">status:</span><span class="kv-val">${prov.status||'?'}</span>
+    </div>` : ''}
+    ${data.error_summary?`<div class="finding ERROR" style="margin-top:8px">Error: ${data.error_summary}</div>`:''}
+  `;
+}
+
+// ── Metrics ───────────────────────────────────────────────────────────────────
+async function loadMetrics() {
+  const out = document.getElementById('metrics-output');
+  const { status, data } = await fetchJson('/api/uim/network-knowledge?knowledge_type=CAPABILITY_METRICS');
+  const records = data.records || [];
+  if (!records.length) {
+    out.innerHTML = '<div style="color:#8b949e;font-size:.8rem">No capability metrics recorded yet. Invoke capabilities to generate observations.</div>';
+    return;
+  }
+  out.innerHTML = `<div style="color:#8b949e;font-size:.8rem;margin-bottom:8px">Observations only — cannot change policy, risk, or authority</div>` +
+    records.map(r => {
+      const v = r.value || r;
+      const sr = Math.round((v.success_rate||0)*100);
+      return `<div class="capability-card">
+        <span class="cap-id">${v.capability_id||'?'}</span>
+        <div class="kv-grid" style="margin-top:4px">
+          <span class="kv-key">Invocations:</span><span class="kv-val">${v.invocation_count||0}</span>
+          <span class="kv-key">Success Rate:</span><span class="kv-val">${sr}%</span>
+          <span class="kv-key">Avg Latency:</span><span class="kv-val">${Math.round(v.median_latency_ms||0)}ms</span>
+          <span class="kv-key">Last Success:</span><span class="kv-val">${v.last_success_at||'never'}</span>
+        </div>
+        <div class="metric-bar"><div class="metric-fill" style="width:${sr}%;background:${sr>80?'#56d364':sr>50?'#f79000':'#f85149'}"></div></div>
+      </div>`;
+    }).join('');
+}
+
+// ── Auto-load system on page open ─────────────────────────────────────────────
+window.addEventListener('load', () => loadSystem());
+</script>
+</body>
+</html>

@@ -1,0 +1,1217 @@
+TC-S NETWORK — FREEZE ERA 21.1 + BUILD ERA 21.2
+WORKFLOW PROVENANCE, OBSERVABILITY & ORCHESTRATOR READINESS
+
+DEVELOPMENT ONLY
+NO NEW LLM
+NO RUNPOD YET
+NO PRODUCTION DEPLOYMENT
+FACTORY EXECUTION REMAINS BLOCKED
+
+============================================================
+CURRENT VERIFIED STATE
+============================================================
+
+We are continuing from the completed Era 21.1 implementation.
+
+Current development branch:
+
+era21-operations-agent
+
+Era 21.1 verification:
+
+34/34 Era 21.1 tests PASS
+15/15 Era 21.0 regression tests PASS
+
+Current production remains unchanged.
+
+production-known-good must remain untouched.
+
+The TC-S Network currently has:
+
+- deterministic Operations Agent
+- UIM capability discovery
+- standardized UIM invocation
+- UIM request-status wrapper
+- deterministic Policy Engine
+- Agentic Executor
+- ledger/database as authoritative Network state
+- Operational Learning Layer
+- versioned network knowledge
+- Solar transfer capability
+- artifact purchase capability
+- deterministic transaction audit
+- scheduler Operations identity
+- settlement capability
+- deterministic artifact commerce workflow
+- current OpenAI / Anthropic / Perplexity stack unchanged
+
+DO NOT introduce:
+
+- gpt-oss
+- a new OpenAI model
+- a frontier orchestrator
+- RunPod inference
+- new model providers
+- new database infrastructure
+- new agent framework
+- microservice decomposition
+- production deployment
+
+Era 21.2 prepares a stable external interface that a future frontier orchestrator can operate.
+
+============================================================
+PHASE 0 — FREEZE ERA 21.1 IN GITHUB FIRST
+============================================================
+
+Before making Era 21.2 changes:
+
+1. Run:
+
+node tests/era21-1.test.js
+
+Confirm:
+
+34/34 PASS
+
+2. Run Era 21.0 regression tests.
+
+Confirm:
+
+15/15 PASS
+
+3. Confirm:
+
+- current branch
+- current HEAD SHA
+- working tree status
+- production-known-good tag unchanged
+- no production deployment occurred
+
+4. Commit any currently uncommitted verified Era 21.1 work.
+
+Suggested commit message:
+
+Era 21.1 economic autonomy verified
+
+5. Push:
+
+era21-operations-agent
+
+to GitHub.
+
+6. Create an annotated Git tag:
+
+era21.1-economic-autonomy
+
+at the exact verified commit.
+
+Tag annotation:
+
+TC-S Era 21.1 — Operations Agent economic autonomy
+34/34 Era 21.1 tests
+15/15 Era 21.0 regression
+No frontier orchestrator
+No production deployment
+
+7. Push the tag to GitHub.
+
+8. Verify remote branch SHA and tag SHA exactly match local.
+
+STOP if they do not.
+
+Do not force-push.
+
+Do not rewrite history.
+
+============================================================
+PHASE 1 — CREATE ERA 21.2 BRANCH
+============================================================
+
+After Era 21.1 has been safely frozen:
+
+Create:
+
+era21-orchestrator-readiness
+
+from:
+
+era21.1-economic-autonomy
+
+Report:
+
+Era 21.1 frozen SHA
+Era 21.2 starting SHA
+
+Do not modify main.
+
+Do not deploy production.
+
+============================================================
+PHASE 2 — CLOSE LOOSE END #1
+CANONICAL WORKFLOW_RUN_ID
+============================================================
+
+The current commerce workflow has an _workflowRunId initialization problem.
+
+Fix it properly.
+
+Every multi-capability workflow must receive ONE immutable:
+
+workflow_run_id
+
+before execution starts.
+
+Generate using:
+
+crypto.randomUUID()
+
+or current canonical UUID conventions.
+
+The workflow ID must be created during construction/init, not after run() begins.
+
+Every step must inherit the same workflow_run_id.
+
+Trace it through:
+
+workflow
+→ UIM invoke
+→ action request
+→ policy check
+→ executor
+→ capability handler
+→ transaction
+→ artifact
+→ ownership
+→ settlement
+→ audit
+→ learning
+
+Where schemas permit, store workflow_run_id directly.
+
+Where existing tables do not have a workflow_run_id field and adding one is inappropriate, include it in structured metadata.
+
+Do NOT create duplicate workflow IDs for individual steps.
+
+Individual actions retain their own request_id/action_request_id.
+
+Relationship:
+
+ONE workflow_run_id
+MANY request_ids
+
+============================================================
+PHASE 3 — WORKFLOW RUN RECORD
+============================================================
+
+Create a canonical workflow execution record using existing DB/schema conventions.
+
+Suggested table:
+
+workflow_runs
+
+Fields logically equivalent to:
+
+workflow_run_id UUID PRIMARY KEY
+workflow_type
+initiator_agent_id
+principal_id
+network_id
+status
+intent
+input_payload
+started_at
+finished_at
+current_step
+step_count
+success_count
+failure_count
+result_summary
+error_summary
+metadata
+
+Statuses:
+
+CREATED
+RUNNING
+WAITING_APPROVAL
+FAILED
+ROLLED_BACK
+SUCCEEDED
+CANCELLED
+
+Create:
+
+workflow_run_steps
+
+or equivalent structured child records if appropriate.
+
+Each step should preserve:
+
+workflow_run_id
+step_id
+sequence
+capability_id
+request_id
+action_request_id
+status
+started_at
+finished_at
+input_reference
+result_reference
+audit_reference
+error
+metadata
+
+Use migrations consistent with the current schema system.
+
+Do not create a separate database.
+
+============================================================
+PHASE 4 — CLOSE LOOSE END #2
+DEVELOPMENT ADMIN / WORKFLOW VIEW
+============================================================
+
+Build the missing development-only observability interface.
+
+Preferred URL:
+
+/operations-agent-test
+
+or extend the existing development harness.
+
+Add an:
+
+ERA 21.2 — WORKFLOW OBSERVABILITY
+
+section.
+
+It must display a complete workflow as a timeline.
+
+Example:
+
+WORKFLOW
+ARTIFACT_COMMERCE_LOOP_V1
+
+workflow_run_id:
+...
+
+initiator:
+tcs-operations-agent-v1
+
+STATUS:
+SUCCEEDED
+
+STEP 1
+ASSET.CREATE
+request_id
+policy
+result
+audit reference
+duration
+
+STEP 2
+CALCULATE_ENERGY
+...
+
+STEP 3
+PRICE.QUOTE
+...
+
+STEP 4
+ASSET.ENRICH
+...
+
+STEP 5
+ASSET.LIST
+...
+
+STEP 6
+PURCHASE_ARTIFACT
+...
+
+STEP 7
+AUDIT_TRANSACTION
+...
+
+STEP 8
+LEARNING UPDATE
+...
+
+Display:
+
+- workflow_run_id
+- initiating agent
+- human/test principal where applicable
+- original intent
+- each capability
+- policy decision
+- executor status
+- transaction IDs
+- artifact IDs
+- Solar debits
+- Solar credits
+- fee allocations
+- ownership transition
+- audit result
+- learning record
+- total duration
+- final state
+
+Development only.
+
+DO NOT add to production navigation.
+
+DO NOT expose admin secrets.
+
+============================================================
+PHASE 5 — CLOSE LOOSE END #3
+FACTORY REMAINS BLOCKED
+============================================================
+
+Factory authentication may now be improved, but physical execution remains explicitly disabled for general UIM/Ops Agent use in Era 21.2.
+
+Keep:
+
+FACTORY_CAPABILITY_IDS
+
+or equivalent UIM execution block.
+
+Capability Registry should distinguish:
+
+platform_available: true
+
+from:
+
+uim_operations_enabled: false
+
+Reason:
+
+PHYSICAL_EXECUTION_REQUIRES_EXPLICIT_ERA_APPROVAL
+
+The following must NOT become generally invocable by:
+
+tcs-operations-agent-v1
+
+in this task:
+
+- printer registration
+- printer heartbeat mutation
+- print submission
+- print execution
+- physical pickup transition
+- arbitrary robot/machine control
+
+Read-only factory status may be exposed if authenticated and safe.
+
+Document the physical-world boundary.
+
+============================================================
+ERA 21.2 CORE OBJECTIVE
+============================================================
+
+Create a CLEAN, STABLE, MACHINE-READABLE DOORWAY that a future frontier orchestrator can use without understanding TC-S internal code.
+
+The future orchestrator should only need to understand:
+
+1. WHAT capabilities exist
+2. WHAT inputs each capability requires
+3. WHAT outputs it returns
+4. WHAT risk and approval rules apply
+5. HOW to invoke it
+6. HOW to check status
+7. HOW to observe the completed workflow
+
+It should NOT need to know:
+
+- PostgreSQL schema
+- main.js implementation
+- handler filenames
+- balance mutation details
+- marketplace internals
+- Replit deployment structure
+- model provider internals
+
+============================================================
+TASK — FORMAL CAPABILITY CONTRACTS
+============================================================
+
+Upgrade the existing Capability Registry into explicit orchestrator-ready contracts.
+
+For every UIM-exposable LIVE capability include:
+
+capability_id
+version
+domain
+title
+description
+
+input_schema
+
+output_schema
+
+risk_level
+
+approval_required
+
+execution_mode:
+SYNC | ASYNC | APPROVAL_GATED
+
+side_effect_class:
+NONE
+READ_ONLY
+ECONOMIC
+IDENTITY
+CONTENT
+NETWORK_CONFIGURATION
+PHYSICAL
+
+idempotency_supported
+
+learning_events[]
+
+required_permissions[]
+
+dependencies[]
+
+status
+
+deprecated
+
+replacement_capability_id
+
+Do not expose secrets or internal database structures.
+
+Use JSON Schema-style contracts where practical.
+
+============================================================
+TASK — CAPABILITY VERSIONING
+============================================================
+
+Introduce explicit capability versioning.
+
+Example:
+
+tcs.marketplace.query@1.0
+tcs.asset.create@1.0
+tcs.solar.transfer@1.0
+
+Do not break current capability IDs.
+
+Support:
+
+capability_id
+version
+
+as separate fields if cleaner.
+
+Future changes should permit:
+
+1.0
+1.1
+2.0
+
+without silently changing semantics.
+
+============================================================
+TASK — UIM SYSTEM MANIFEST
+============================================================
+
+Create a machine-readable system manifest such as:
+
+docs/tcs-system-manifest.json
+
+or a runtime-safe equivalent.
+
+Include:
+
+system:
+TC-S Network
+
+era:
+21.2
+
+interfaces:
+
+GET /api/uim/capabilities
+POST /api/uim/invoke
+GET /api/uim/requests/:id/status
+GET /api/uim/network-knowledge
+
+Add:
+
+GET /api/uim/system
+
+Return a sanitized runtime manifest.
+
+Include:
+
+network protocol version
+UIM version
+capability registry version
+Operations Agent version
+learning layer status
+policy engine status
+executor status
+physical execution status
+current supported workflow types
+
+DO NOT expose credentials.
+
+============================================================
+TASK — ORCHESTRATOR TASK ENVELOPE
+============================================================
+
+Define a runtime-neutral orchestration request object.
+
+Create documentation/schema for:
+
+ORCHESTRATION_TASK_V1
+
+Example:
+
+{
+  "task_id": "uuid",
+  "principal": {
+    "type": "MEMBER|AGENT|NETWORK",
+    "id": "..."
+  },
+
+  "intent": "Create and list a useful digital artifact",
+
+  "constraints": {
+    "max_risk_level": "low",
+    "max_solar_spend": 0.01,
+    "deadline": null,
+    "physical_execution": false
+  },
+
+  "requested_outcome": {
+    "type": "ARTIFACT_LISTED"
+  },
+
+  "context": {},
+
+  "metadata": {}
+}
+
+This is NOT an LLM prompt format.
+
+It is a Network intent envelope.
+
+============================================================
+TASK — ORCHESTRATION PLAN FORMAT
+============================================================
+
+Define:
+
+ORCHESTRATION_PLAN_V1
+
+Example:
+
+{
+  "task_id": "...",
+  "workflow_run_id": "...",
+
+  "steps": [
+    {
+      "sequence": 1,
+      "capability_id": "tcs.asset.create",
+      "version": "1.0",
+      "parameters": {}
+    },
+
+    {
+      "sequence": 2,
+      "capability_id": "tcs.energy.calculate",
+      "version": "1.0",
+      "parameters_from": ["step:1"]
+    }
+  ]
+}
+
+Era 21.2 does NOT allow arbitrary orchestration-plan execution from anonymous callers.
+
+This format prepares the future orchestrator interface.
+
+============================================================
+TASK — PLAN VALIDATOR
+============================================================
+
+Build a deterministic:
+
+validateOrchestrationPlan()
+
+It must check:
+
+- all capabilities exist
+- all capability versions supported
+- all capabilities live
+- all capabilities UIM-exposable
+- requesting agent authorized
+- risk ceiling not exceeded
+- physical capabilities disallowed
+- required inputs structurally valid
+- dependencies valid
+- no circular dependencies
+- maximum step count
+- economic spend constraints
+- policy compatibility
+
+Return:
+
+VALID
+INVALID
+REQUIRES_APPROVAL
+
+with structured findings.
+
+No LLM.
+
+============================================================
+TASK — DRY RUN / SIMULATION MODE
+============================================================
+
+Add:
+
+POST /api/uim/plan/validate
+
+Authenticated development/admin use.
+
+Input:
+
+ORCHESTRATION_PLAN_V1
+
+It performs NO mutations.
+
+Return:
+
+- capability resolution
+- version resolution
+- estimated risk
+- approval requirements
+- estimated economic effects where deterministic
+- blocked actions
+- missing inputs
+- expected execution path
+
+This becomes the future frontier orchestrator's pre-flight check.
+
+============================================================
+TASK — EXISTING WORKFLOW AS REFERENCE PLAN
+============================================================
+
+Represent:
+
+ARTIFACT_COMMERCE_LOOP_V1
+
+using ORCHESTRATION_PLAN_V1.
+
+Do NOT change its deterministic execution logic.
+
+This should prove that the plan format can describe something the Network already successfully executes.
+
+============================================================
+TASK — ORCHESTRATOR READINESS ENDPOINT
+============================================================
+
+Add:
+
+GET /api/uim/orchestrator-readiness
+
+Return a sanitized report such as:
+
+{
+  "era": "21.2",
+
+  "ready_for_external_orchestrator": true,
+
+  "interfaces": {
+    "capability_discovery": true,
+    "plan_validation": true,
+    "invoke": true,
+    "status": true,
+    "workflow_observability": true,
+    "learning": true
+  },
+
+  "constraints": {
+    "physical_execution": false,
+    "production_enabled": false
+  }
+}
+
+Set:
+
+ready_for_external_orchestrator
+
+to true ONLY if all required Era 21.2 tests pass.
+
+============================================================
+TASK — LEARNING FEEDBACK INTO CAPABILITY RECORDS
+============================================================
+
+Do not let Learning change capability authority.
+
+But allow the system to maintain observed operational metrics for capability selection.
+
+For each capability, derive metrics such as:
+
+invocation_count
+success_count
+failure_count
+success_rate
+median_latency
+last_success_at
+last_failure_at
+common_error_classes
+
+These are OBSERVATIONS.
+
+They do not change:
+
+risk_level
+permissions
+policy
+authority
+
+without explicit deterministic/admin-approved configuration.
+
+============================================================
+TASK — OUTCOME / SUCCESS SPECIFICATION
+============================================================
+
+Introduce an explicit requested outcome contract.
+
+Examples:
+
+ARTIFACT_CREATED
+ARTIFACT_LISTED
+ARTIFACT_PURCHASED
+TRANSACTION_SETTLED
+NETWORK_CREATED
+REPORT_GENERATED
+
+For workflows, success must be evaluated against the requested outcome.
+
+Example:
+
+requested_outcome:
+ARTIFACT_LISTED
+
+Workflow success requires:
+
+artifact exists
+listing exists
+listing active
+audit trace exists
+
+Do not mark a workflow SUCCEEDED merely because all functions returned HTTP 200.
+
+============================================================
+TASK — CREATION PROVENANCE RECORD
+============================================================
+
+Create a canonical derived creation record for workflows that produce artifacts.
+
+Suggested logical record:
+
+creation_id
+workflow_run_id
+network_id
+principal_id
+initiator_agent_id
+intent
+artifact_ids[]
+capability_invocations[]
+transaction_ids[]
+energy_records[]
+ownership_records[]
+audit_records[]
+knowledge_records[]
+started_at
+completed_at
+status
+content_hashes[]
+metadata
+
+This is NOT a replacement for the ledger.
+
+It is a provenance index pointing back to authoritative records.
+
+Every reference must trace to existing Network data.
+
+============================================================
+TASK — EXTERNAL CALLER TEST
+============================================================
+
+Build a test client that behaves as if it were an external orchestrator.
+
+It may know ONLY the public/sanitized UIM contracts.
+
+It must NOT import:
+
+economic handlers
+database modules
+policy internals
+executor internals
+marketplace internals
+
+It should:
+
+1. GET /api/uim/system
+
+2. GET /api/uim/capabilities
+
+3. construct ARTIFACT_COMMERCE_LOOP_V1 plan
+
+4. POST /api/uim/plan/validate
+
+5. invoke permitted capabilities using:
+
+POST /api/uim/invoke
+
+6. poll:
+
+GET /api/uim/requests/:id/status
+
+when necessary
+
+7. inspect workflow completion
+
+8. confirm requested outcome
+
+If this test succeeds without internal module imports, Era 21.2 has achieved its purpose.
+
+============================================================
+TASK — FAILURE TEST
+============================================================
+
+Construct a plan containing:
+
+REPLICATE_UNIVERSE
+
+Expected:
+
+INVALID
+
+No execution.
+
+Then construct a plan containing a physical factory capability.
+
+Expected:
+
+INVALID or REQUIRES_APPROVAL/BLOCKED
+
+with reason:
+
+PHYSICAL_EXECUTION_DISABLED
+
+Then construct a plan exceeding the Operations Agent risk ceiling.
+
+Expected:
+
+REQUIRES_APPROVAL or INVALID
+
+No policy bypass.
+
+============================================================
+TASK — OBSERVABILITY
+============================================================
+
+Add structured logging keyed by:
+
+workflow_run_id
+task_id
+request_id
+agent_id
+capability_id
+
+Do not log:
+
+passwords
+tokens
+database URLs
+API keys
+private member data unnecessarily
+
+Make it possible to trace one creation from original intent through all actions.
+
+============================================================
+TASK — DOCUMENT FRONTIER ORCHESTRATOR BOUNDARY
+============================================================
+
+Create:
+
+docs/era21-2-orchestrator-readiness.md
+
+Document the future architectural boundary:
+
+MEMBER
+   ↓
+MEMBER AGENT
+   ↓
+AUTHENTICATED INTENT
+   ↓
+FUTURE FRONTIER ORCHESTRATOR
+   ↓
+ORCHESTRATION TASK
+   ↓
+CAPABILITY DISCOVERY
+   ↓
+PLAN
+   ↓
+PLAN VALIDATION
+   ↓
+UIM
+   ↓
+OPERATIONS AGENTS
+   ↓
+POLICY
+   ↓
+EXECUTOR
+   ↓
+CAPABILITIES
+   ↓
+LEDGER
+   ↓
+LEARNING
+
+The future frontier orchestrator:
+
+CAN:
+
+- reason
+- plan
+- discover capabilities
+- request actions
+- interpret results
+- revise plans
+
+CANNOT:
+
+- directly write DB
+- directly change ledger state
+- bypass policy
+- grant itself permissions
+- invent capabilities
+- activate physical execution without permission
+- alter Network rules through learned inference
+
+============================================================
+TEST REQUIREMENTS
+============================================================
+
+Run all existing tests.
+
+Required:
+
+Era 21.0 regression:
+15/15 PASS
+
+Era 21.1:
+34/34 PASS
+
+Add Era 21.2 tests for:
+
+1. workflow_run_id generated before workflow begins
+
+2. same workflow_run_id carried across all steps
+
+3. workflow run persisted
+
+4. workflow steps persisted
+
+5. provenance record references authoritative records
+
+6. capability contracts contain input/output schema
+
+7. capability versioning resolves correctly
+
+8. unsupported version rejected
+
+9. system manifest endpoint works
+
+10. plan validator accepts valid plan
+
+11. unknown capability rejected
+
+12. physical capability blocked
+
+13. risk ceiling enforced
+
+14. dry-run performs zero mutations
+
+15. external test client uses only UIM APIs
+
+16. requested outcome verified correctly
+
+17. capability performance observations recorded
+
+18. Learning cannot change policy authority
+
+19. development admin view displays full workflow
+
+20. no production route exposes the dev admin screen
+
+Add additional tests where needed.
+
+============================================================
+NO NEW LLM
+============================================================
+
+This constraint is absolute for Era 21.2.
+
+DO NOT:
+
+- install gpt-oss
+- configure RunPod inference
+- create OAFR runtime
+- add a frontier-model call
+- add a new provider
+- convert deterministic plan validation to AI
+- allow current GPT or Claude models to become system orchestrator
+
+Existing model-backed capabilities continue unchanged.
+
+============================================================
+PRODUCTION SAFETY
+============================================================
+
+Do not:
+
+- deploy
+- publish
+- merge to main
+- modify production-known-good
+- modify Era 21.1 tag
+- activate physical execution
+- change production agent behavior
+- change the existing 22-agent economy
+
+============================================================
+GIT COMPLETION
+============================================================
+
+When Era 21.2 is complete and all tests pass:
+
+1. Commit all Era 21.2 changes on:
+
+era21-orchestrator-readiness
+
+2. Push branch to GitHub.
+
+3. Create annotated tag:
+
+era21.2-orchestrator-readiness
+
+Only create this tag if all required tests pass.
+
+4. Push tag.
+
+Do NOT merge to main.
+
+Do NOT deploy.
+
+============================================================
+FINAL DELIVERY REPORT
+============================================================
+
+Report:
+
+ERA 21.1 FREEZE
+
+- frozen SHA
+- GitHub branch status
+- era21.1-economic-autonomy tag SHA
+
+ERA 21.2
+
+- starting SHA
+- ending SHA
+- branch
+- files added
+- files modified
+- DB/schema migrations
+- new routes
+- new schemas/contracts
+- new workflow records
+- capability contract count
+- physical capability status
+- factory UIM status
+- learning status
+- external-caller test result
+- all test counts
+- pre-existing failures
+- new failures
+- production status
+
+Also answer explicitly:
+
+CAN A FUTURE FRONTIER ORCHESTRATOR OPERATE TC-S USING ONLY THE ERA 21.2 UIM CONTRACTS?
+
+YES / NO
+
+If NO:
+list exact remaining blockers.
+
+If YES:
+list exact interfaces it would use.
+
+============================================================
+ERA 21.2 SUCCESS DEFINITION
+============================================================
+
+Era 21.2 succeeds when an external, model-neutral caller that knows nothing about TC-S internals can:
+
+DISCOVER
+what the Network can do
+
+DESCRIBE
+an intended result
+
+CONSTRUCT
+a valid capability plan
+
+VALIDATE
+that plan before execution
+
+INVOKE
+authorized capabilities
+
+OBSERVE
+their progress
+
+VERIFY
+the requested outcome
+
+TRACE
+the complete creation provenance
+
+LEARN
+from Network outcomes
+
+while remaining unable to:
+
+BYPASS POLICY
+WRITE DIRECTLY TO THE LEDGER
+INVENT CAPABILITIES
+ESCALATE ITS OWN AUTHORITY
+EXECUTE PHYSICAL MACHINERY
+
+FINAL PRINCIPLE
+
+Era 21.0 created the governed Operations Agent.
+
+Era 21.1 gave it economic capability.
+
+Era 21.2 creates the universal doorway.
+
+The future frontier orchestrator will not become TC-S.
+
+It will discover, plan, and operate TC-S through this doorway.
+
+The Network remains sovereign.
+The ledger remains truth.
+The Policy Engine remains authority.
+The Operations Layer remains execution.
+The Learning Layer remains understanding.

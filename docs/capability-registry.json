@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "registry_version": "0.1.0-draft",
+    "registry_version": "0.2.0",
     "platform": "TC-S Network",
     "platform_url": "https://thecurrentsee.org",
     "uim_handshake": "https://thecurrentsee.org/.well-known/uim-handshake.json",
@@ -8,7 +8,7 @@
     "source_commit": "2349f26",
     "source_repo": "tdfranklin101-ui/TC-S-Network-Main-Gateway",
     "audit_type": "read-only-static-analysis",
-    "era": "Era 20 (pre-Era 21 baseline)",
+    "era": "Era 21.2",
     "notes": [
       "Status field: live=implemented+tested, stub=defined no handler, partial=handler incomplete, missing=not yet built",
       "uim_exposable: capability is safe and meaningful to expose to external UIM agents",
@@ -16,25 +16,60 @@
       "solar_constant: 1 Solar = 4913 kWh (Buckminster Fuller constant)"
     ]
   },
-
   "auth_methods": {
-    "public": { "description": "No authentication required", "header": null },
-    "site_session": { "description": "tc_s_session cookie (HttpOnly, 30-day)", "header": "Cookie: tc_s_session=<64-hex>" },
-    "solar_passport": { "description": "HMAC-signed Passport token", "header": "Authorization: Bearer <tcs_auth>" },
-    "agent_api_key": { "description": "Registered agent API key", "headers": ["X-Agent-API-Key: <key>", "X-Agent-Id: <id>", "X-Req-Id: <uuid>"] },
-    "admin_key": { "description": "Platform admin key", "header": "X-Admin-Key: <ADMIN_KEY>" },
-    "ownership_token": { "description": "Per-artifact delivery token", "header": null, "note": "Embedded in URL path" }
+    "public": {
+      "description": "No authentication required",
+      "header": null
+    },
+    "site_session": {
+      "description": "tc_s_session cookie (HttpOnly, 30-day)",
+      "header": "Cookie: tc_s_session=<64-hex>"
+    },
+    "solar_passport": {
+      "description": "HMAC-signed Passport token",
+      "header": "Authorization: Bearer <tcs_auth>"
+    },
+    "agent_api_key": {
+      "description": "Registered agent API key",
+      "headers": [
+        "X-Agent-API-Key: <key>",
+        "X-Agent-Id: <id>",
+        "X-Req-Id: <uuid>"
+      ]
+    },
+    "admin_key": {
+      "description": "Platform admin key",
+      "header": "X-Admin-Key: <ADMIN_KEY>"
+    },
+    "ownership_token": {
+      "description": "Per-artifact delivery token",
+      "header": null,
+      "note": "Embedded in URL path"
+    }
   },
-
   "policy_levels": {
-    "low":      { "approval_required": false,  "multisig": false, "auto_execute_eligible": true },
-    "medium":   { "approval_required": true,   "multisig": false, "auto_execute_eligible": false },
-    "high":     { "approval_required": true,   "multisig": false, "human_review_flag": true },
-    "critical": { "approval_required": true,   "multisig": true,  "human_review_flag": true }
+    "low": {
+      "approval_required": false,
+      "multisig": false,
+      "auto_execute_eligible": true
+    },
+    "medium": {
+      "approval_required": true,
+      "multisig": false,
+      "auto_execute_eligible": false
+    },
+    "high": {
+      "approval_required": true,
+      "multisig": false,
+      "human_review_flag": true
+    },
+    "critical": {
+      "approval_required": true,
+      "multisig": true,
+      "human_review_flag": true
+    }
   },
-
   "capabilities": [
-
     {
       "id": "tcs.network.create",
       "name": "Create Network",
@@ -48,13 +83,73 @@
       "multisig_required": false,
       "auth_for_uim": "agent_api_key",
       "endpoint": "POST /api/agentic/action",
-      "params_required": ["name", "networkType", "capabilities"],
-      "params_optional": ["region", "energySource", "initialSolarAllocation", "metadata"],
-      "outputs": ["networkId", "status", "createdAt"],
-      "side_effects": ["INSERT network_specs"],
-      "rate_limit": "10 agent-actions/minute"
+      "params_required": [
+        "name",
+        "networkType",
+        "capabilities"
+      ],
+      "params_optional": [
+        "region",
+        "energySource",
+        "initialSolarAllocation",
+        "metadata"
+      ],
+      "outputs": [
+        "networkId",
+        "status",
+        "createdAt"
+      ],
+      "side_effects": [
+        "INSERT network_specs"
+      ],
+      "rate_limit": "10 agent-actions/minute",
+      "deprecated": false,
+      "platform_available": true,
+      "version": "1.0",
+      "side_effect_class": "NETWORK_CONFIGURATION",
+      "execution_mode": "SYNC",
+      "idempotency_supported": false,
+      "learning_events": [
+        "network_created"
+      ],
+      "required_permissions": [
+        "CREATE_NETWORK"
+      ],
+      "dependencies": [],
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "name",
+          "networkType",
+          "capabilities"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "networkType": {
+            "type": "string"
+          },
+          "capabilities": {
+            "type": "array"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "networkId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        }
+      }
     },
-
     {
       "id": "tcs.network.query",
       "name": "Query Network",
@@ -67,11 +162,52 @@
       "approval_required": false,
       "auth_for_uim": "agent_api_key",
       "endpoint": "POST /api/agentic/action",
-      "params_required": ["networkId"],
-      "params_optional": ["includeMetrics", "includeMembers"],
-      "outputs": ["network", "metrics", "members"]
+      "params_required": [
+        "networkId"
+      ],
+      "params_optional": [
+        "includeMetrics",
+        "includeMembers"
+      ],
+      "outputs": [
+        "network",
+        "metrics",
+        "members"
+      ],
+      "deprecated": false,
+      "platform_available": true,
+      "version": "1.0",
+      "side_effect_class": "READ_ONLY",
+      "execution_mode": "SYNC",
+      "idempotency_supported": true,
+      "learning_events": [],
+      "required_permissions": [
+        "QUERY_NETWORK"
+      ],
+      "dependencies": [],
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "networkId": {
+            "type": "string"
+          },
+          "filters": {
+            "type": "object"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "networks": {
+            "type": "array"
+          },
+          "total": {
+            "type": "integer"
+          }
+        }
+      }
     },
-
     {
       "id": "tcs.network.update",
       "name": "Update Network",
@@ -82,9 +218,19 @@
       "status": "stub",
       "risk_level": "medium",
       "approval_required": true,
-      "note": "No executor handler — action defined but not implemented"
+      "note": "No executor handler \u2014 action defined but not implemented",
+      "version": "1.0",
+      "side_effect_class": "READ_ONLY",
+      "execution_mode": "SYNC",
+      "idempotency_supported": false,
+      "learning_events": [],
+      "required_permissions": [],
+      "dependencies": [],
+      "deprecated": false,
+      "input_schema": null,
+      "output_schema": null,
+      "platform_available": true
     },
-
     {
       "id": "tcs.network.delete",
       "name": "Delete Network",
@@ -96,9 +242,19 @@
       "risk_level": "critical",
       "approval_required": true,
       "multisig_required": true,
-      "note": "No executor handler"
+      "note": "No executor handler",
+      "version": "1.0",
+      "side_effect_class": "READ_ONLY",
+      "execution_mode": "SYNC",
+      "idempotency_supported": false,
+      "learning_events": [],
+      "required_permissions": [],
+      "dependencies": [],
+      "deprecated": false,
+      "input_schema": null,
+      "output_schema": null,
+      "platform_available": true
     },
-
     {
       "id": "tcs.member.create",
       "name": "Create Member",
@@ -111,13 +267,78 @@
       "approval_required": false,
       "auth_for_uim": "agent_api_key",
       "endpoint": "POST /api/agentic/action",
-      "params_required": ["username", "email"],
-      "params_optional": ["fullName", "initialSolarGrant"],
-      "param_constraints": { "initialSolarGrant": { "min": 0, "max": 10, "default": 1 } },
-      "outputs": ["memberId", "solarBalance", "createdAt"],
-      "side_effects": ["INSERT member", "Solar genesis grant", "Solar Passport email via Resend"]
+      "params_required": [
+        "username",
+        "email"
+      ],
+      "params_optional": [
+        "fullName",
+        "initialSolarGrant"
+      ],
+      "param_constraints": {
+        "initialSolarGrant": {
+          "min": 0,
+          "max": 10,
+          "default": 1
+        }
+      },
+      "outputs": [
+        "memberId",
+        "solarBalance",
+        "createdAt"
+      ],
+      "side_effects": [
+        "INSERT member",
+        "Solar genesis grant",
+        "Solar Passport email via Resend"
+      ],
+      "deprecated": false,
+      "platform_available": true,
+      "version": "1.0",
+      "side_effect_class": "IDENTITY",
+      "execution_mode": "SYNC",
+      "idempotency_supported": false,
+      "learning_events": [
+        "member_joined"
+      ],
+      "required_permissions": [
+        "CREATE_MEMBER"
+      ],
+      "dependencies": [],
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "username",
+          "email"
+        ],
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "memberId": {
+            "type": "integer"
+          },
+          "username": {
+            "type": "string"
+          },
+          "solarBalance": {
+            "type": "string"
+          }
+        }
+      }
     },
-
     {
       "id": "tcs.member.query",
       "name": "Query Member",
@@ -130,11 +351,50 @@
       "approval_required": false,
       "auth_for_uim": "agent_api_key",
       "endpoint": "POST /api/agentic/action",
-      "params_required": ["memberId"],
-      "params_optional": ["email", "includeBalance", "includeTransactions"],
-      "outputs": ["member", "solarBalance", "transactions"]
+      "params_required": [
+        "memberId"
+      ],
+      "params_optional": [
+        "email",
+        "includeBalance",
+        "includeTransactions"
+      ],
+      "outputs": [
+        "member",
+        "solarBalance",
+        "transactions"
+      ],
+      "deprecated": false,
+      "platform_available": true,
+      "version": "1.0",
+      "side_effect_class": "READ_ONLY",
+      "execution_mode": "SYNC",
+      "idempotency_supported": true,
+      "learning_events": [],
+      "required_permissions": [
+        "QUERY_MEMBER"
+      ],
+      "dependencies": [],
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "memberId": {
+            "type": "integer"
+          },
+          "username": {
+            "type": "string"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "member": {
+            "type": "object"
+          }
+        }
+      }
     },
-
     {
       "id": "tcs.member.suspend",
       "name": "Suspend Member",
@@ -145,9 +405,19 @@
       "status": "stub",
       "risk_level": "high",
       "approval_required": true,
-      "note": "No executor handler"
+      "note": "No executor handler",
+      "version": "1.0",
+      "side_effect_class": "READ_ONLY",
+      "execution_mode": "SYNC",
+      "idempotency_supported": false,
+      "learning_events": [],
+      "required_permissions": [],
+      "dependencies": [],
+      "deprecated": false,
+      "input_schema": null,
+      "output_schema": null,
+      "platform_available": true
     },
-
     {
       "id": "tcs.member.update",
       "name": "Update Member",
@@ -157,9 +427,19 @@
       "uim_exposable": false,
       "status": "stub",
       "risk_level": "low",
-      "note": "No executor handler"
+      "note": "No executor handler",
+      "version": "1.0",
+      "side_effect_class": "READ_ONLY",
+      "execution_mode": "SYNC",
+      "idempotency_supported": false,
+      "learning_events": [],
+      "required_permissions": [],
+      "dependencies": [],
+      "deprecated": false,
+      "input_schema": null,
+      "output_schema": null,
+      "platform_available": true
     },
-
     {
       "id": "tcs.solar.query_balance",
       "name": "Query Solar Balance",
@@ -172,11 +452,54 @@
       "approval_required": false,
       "auth_for_uim": "agent_api_key",
       "endpoint": "POST /api/agentic/action",
-      "params_required": ["walletId"],
-      "params_optional": ["includeHistory"],
-      "outputs": ["balance", "currency", "history"]
+      "params_required": [
+        "walletId"
+      ],
+      "params_optional": [
+        "includeHistory"
+      ],
+      "outputs": [
+        "balance",
+        "currency",
+        "history"
+      ],
+      "deprecated": false,
+      "platform_available": true,
+      "version": "1.0",
+      "side_effect_class": "READ_ONLY",
+      "execution_mode": "SYNC",
+      "idempotency_supported": true,
+      "learning_events": [],
+      "required_permissions": [
+        "QUERY_SOLAR_BALANCE"
+      ],
+      "dependencies": [],
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "member_id"
+        ],
+        "properties": {
+          "member_id": {
+            "type": "integer"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "member_id": {
+            "type": "integer"
+          },
+          "balance_solar": {
+            "type": "string"
+          },
+          "solar_constant": {
+            "type": "string"
+          }
+        }
+      }
     },
-
     {
       "id": "tcs.solar.calculate_energy",
       "name": "Calculate Energy / Solar Conversion",
@@ -189,12 +512,59 @@
       "approval_required": false,
       "auth_for_uim": "public",
       "endpoint": "POST /api/agentic/action or POST /api/wpc/calculate",
-      "params_required": ["kWh or solar"],
-      "params_optional": ["direction"],
-      "outputs": ["solar", "kWh", "conversionRate"],
-      "constants": { "kWh_per_solar": 4913 }
+      "params_required": [
+        "kWh or solar"
+      ],
+      "params_optional": [
+        "direction"
+      ],
+      "outputs": [
+        "solar",
+        "kWh",
+        "conversionRate"
+      ],
+      "constants": {
+        "kWh_per_solar": 4913
+      },
+      "deprecated": false,
+      "platform_available": true,
+      "version": "1.0",
+      "side_effect_class": "READ_ONLY",
+      "execution_mode": "SYNC",
+      "idempotency_supported": true,
+      "learning_events": [
+        "energy_calculated"
+      ],
+      "required_permissions": [
+        "CALCULATE_ENERGY"
+      ],
+      "dependencies": [],
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "computationType": {
+            "type": "string"
+          },
+          "parameters": {
+            "type": "object"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "energyKwh": {
+            "type": "number"
+          },
+          "solarEquivalent": {
+            "type": "string"
+          },
+          "computationType": {
+            "type": "string"
+          }
+        }
+      }
     },
-
     {
       "id": "tcs.solar.transfer",
       "name": "Transfer Solar",
@@ -208,33 +578,131 @@
       "multisig_required": false,
       "auth_for_uim": "agent_api_key",
       "handler": "server/agentic/handlers/economic-handlers.js#executeTransferSolar",
-      "params_required": ["source_member_id", "destination_member_id", "amount"],
-      "params_optional": ["idempotency_key"],
-      "param_constraints": { "amount": "> 0", "source_member_id": "!= destination_member_id" },
-      "outputs": ["transaction_id", "source", "destination", "amount", "currency", "pre_balance_source", "post_balance_source", "pre_balance_destination", "post_balance_destination", "audit_reference"],
+      "params_required": [
+        "source_member_id",
+        "destination_member_id",
+        "amount"
+      ],
+      "params_optional": [
+        "idempotency_key"
+      ],
+      "param_constraints": {
+        "amount": "> 0",
+        "source_member_id": "!= destination_member_id"
+      },
+      "outputs": [
+        "transaction_id",
+        "source",
+        "destination",
+        "amount",
+        "currency",
+        "pre_balance_source",
+        "post_balance_source",
+        "pre_balance_destination",
+        "post_balance_destination",
+        "audit_reference"
+      ],
       "audit_behavior": "marketplace_ledger double-entry + transactions table debit+credit rows",
       "learning_event_type": "TRANSACTION_PATTERN",
-      "policy_guards": ["from != to", "amount > 0", "source balance >= amount"],
+      "policy_guards": [
+        "from != to",
+        "amount > 0",
+        "source balance >= amount"
+      ],
       "atomicity": "DB transaction (BEGIN/COMMIT/ROLLBACK)",
       "idempotency": "idempotency_key embedded in transaction note field",
-      "era": "21.1"
+      "era": "21.1",
+      "deprecated": false,
+      "platform_available": true,
+      "version": "1.0",
+      "side_effect_class": "ECONOMIC",
+      "execution_mode": "SYNC",
+      "idempotency_supported": true,
+      "learning_events": [
+        "solar_transferred"
+      ],
+      "required_permissions": [
+        "TRANSFER_SOLAR"
+      ],
+      "dependencies": [],
+      "economic_cost_solar": 0,
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "source_member_id",
+          "destination_member_id",
+          "amount"
+        ],
+        "properties": {
+          "source_member_id": {
+            "type": "integer"
+          },
+          "destination_member_id": {
+            "type": "integer"
+          },
+          "amount": {
+            "type": "number",
+            "minimum": 1e-06
+          },
+          "idempotency_key": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "transaction_id": {
+            "type": "string"
+          },
+          "pre_balance_source": {
+            "type": "number"
+          },
+          "post_balance_source": {
+            "type": "number"
+          },
+          "pre_balance_destination": {
+            "type": "number"
+          },
+          "post_balance_destination": {
+            "type": "number"
+          },
+          "audit_reference": {
+            "type": "string"
+          }
+        }
+      }
     },
-
     {
       "id": "tcs.solar.mint",
       "name": "Mint Solar",
       "category": "economic",
       "action_type": "MINT_SOLAR",
-      "description": "Mint new Solar backed by verified energy generation (kWhVerified ≥ amount × 4,913)",
+      "description": "Mint new Solar backed by verified energy generation (kWhVerified \u2265 amount \u00d7 4,913)",
       "uim_exposable": false,
       "status": "stub",
       "risk_level": "critical",
       "approval_required": true,
       "multisig_required": true,
-      "policy_guards": ["kwhVerified >= amount * 4913"],
-      "note": "Policy enforced; no executor handler; audit reference required"
+      "policy_guards": [
+        "kwhVerified >= amount * 4913"
+      ],
+      "note": "Policy enforced; no executor handler; audit reference required",
+      "version": "1.0",
+      "side_effect_class": "READ_ONLY",
+      "execution_mode": "SYNC",
+      "idempotency_supported": false,
+      "learning_events": [],
+      "required_permissions": [],
+      "dependencies": [],
+      "deprecated": false,
+      "input_schema": null,
+      "output_schema": null,
+      "platform_available": true
     },
-
     {
       "id": "tcs.solar.audit_transaction",
       "name": "Audit Transaction",
@@ -247,56 +715,248 @@
       "approval_required": false,
       "auth_for_uim": "agent_api_key",
       "handler": "server/agentic/handlers/economic-handlers.js#executeAuditTransaction",
-      "params_required": ["transaction_id"],
-      "outputs": ["verdict", "transaction_id", "transaction_class", "amount", "currency", "findings[]", "audited_at"],
-      "verdict_values": ["PASS", "PASS_WITH_WARNING", "FAIL"],
+      "params_required": [
+        "transaction_id"
+      ],
+      "outputs": [
+        "verdict",
+        "transaction_id",
+        "transaction_class",
+        "amount",
+        "currency",
+        "findings[]",
+        "audited_at"
+      ],
+      "verdict_values": [
+        "PASS",
+        "PASS_WITH_WARNING",
+        "FAIL"
+      ],
       "audit_behavior": "read-only; no DB writes",
       "learning_event_type": "AUDIT_RESULT",
-      "era": "21.1"
+      "era": "21.1",
+      "deprecated": false,
+      "platform_available": true,
+      "version": "1.0",
+      "side_effect_class": "READ_ONLY",
+      "execution_mode": "SYNC",
+      "idempotency_supported": true,
+      "learning_events": [
+        "transaction_audited"
+      ],
+      "required_permissions": [
+        "AUDIT_TRANSACTION"
+      ],
+      "dependencies": [],
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "transaction_id"
+        ],
+        "properties": {
+          "transaction_id": {
+            "type": "string"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "verdict": {
+            "type": "string",
+            "enum": [
+              "PASS",
+              "PASS_WITH_WARNING",
+              "FAIL"
+            ]
+          },
+          "findings": {
+            "type": "array"
+          },
+          "transaction_id": {
+            "type": "string"
+          }
+        }
+      }
     },
-
     {
       "id": "tcs.marketplace.purchase",
       "name": "Purchase Artifact",
       "category": "marketplace",
       "action_type": "PURCHASE_ARTIFACT",
-      "description": "Governed artifact purchase lifecycle: validate buyer/seller/listing, calculate fees (5% foundation), debit buyer, credit seller, create ownership record — all atomically.",
+      "description": "Governed artifact purchase lifecycle: validate buyer/seller/listing, calculate fees (5% foundation), debit buyer, credit seller, create ownership record \u2014 all atomically.",
       "uim_exposable": true,
       "status": "live",
-      "risk_level": "medium",
-      "approval_required": true,
+      "risk_level": "low",
+      "approval_required": false,
       "multisig_required": false,
       "auth_for_uim": "agent_api_key",
       "handler": "server/agentic/handlers/economic-handlers.js#executePurchaseArtifact",
-      "params_required": ["buyer_member_id", "market_item_id"],
-      "params_optional": ["idempotency_key"],
-      "param_constraints": { "listing": "status must be ACTIVE", "buyer_balance": ">= price" },
-      "outputs": ["transaction_id", "copy_id", "buyer", "seller", "listing", "price", "foundation_fee", "seller_net", "currency", "pre_balance_buyer", "post_balance_buyer", "post_balance_seller", "audit_reference"],
+      "params_required": [
+        "buyer_member_id",
+        "market_item_id"
+      ],
+      "params_optional": [
+        "idempotency_key"
+      ],
+      "param_constraints": {
+        "listing": "status must be ACTIVE",
+        "buyer_balance": ">= price"
+      },
+      "outputs": [
+        "transaction_id",
+        "copy_id",
+        "buyer",
+        "seller",
+        "listing",
+        "price",
+        "foundation_fee",
+        "seller_net",
+        "currency",
+        "pre_balance_buyer",
+        "post_balance_buyer",
+        "post_balance_seller",
+        "audit_reference"
+      ],
       "audit_behavior": "marketplace_ledger triple-entry (debit buyer, credit seller, credit foundation) + artifact_copies ownership record",
       "learning_event_type": "MARKETPLACE_BEHAVIOR",
-      "fee_structure": { "foundation": "5%", "seller_net": "95% of price" },
-      "atomicity": "DB transaction (BEGIN/COMMIT/ROLLBACK) — failure rolls back all sides",
+      "fee_structure": {
+        "foundation": "5%",
+        "seller_net": "95% of price"
+      },
+      "atomicity": "DB transaction (BEGIN/COMMIT/ROLLBACK) \u2014 failure rolls back all sides",
       "idempotency": "checks artifact_copies for existing buyer+item pair; optional idempotency_key in metadata",
-      "era": "21.1"
+      "era": "21.1",
+      "deprecated": false,
+      "platform_available": true,
+      "version": "1.0",
+      "side_effect_class": "ECONOMIC",
+      "execution_mode": "SYNC",
+      "idempotency_supported": true,
+      "learning_events": [
+        "artifact_purchased"
+      ],
+      "required_permissions": [
+        "PURCHASE_ARTIFACT"
+      ],
+      "dependencies": [],
+      "economic_cost_solar": 0,
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "buyer_member_id",
+          "market_item_id"
+        ],
+        "properties": {
+          "buyer_member_id": {
+            "type": "integer"
+          },
+          "market_item_id": {
+            "type": "string"
+          },
+          "idempotency_key": {
+            "type": "string"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "transaction_id": {
+            "type": "string"
+          },
+          "copy_id": {
+            "type": "integer"
+          },
+          "price": {
+            "type": "number"
+          },
+          "foundation_fee": {
+            "type": "number"
+          },
+          "seller_net": {
+            "type": "number"
+          },
+          "post_balance_buyer": {
+            "type": "number"
+          }
+        }
+      }
     },
-
     {
       "id": "tcs.marketplace.query",
       "name": "Query Marketplace",
       "category": "marketplace",
       "action_type": "QUERY_MARKETPLACE",
-      "description": "Search active marketplace artifacts by query text and category; limit ≤ 100",
+      "description": "Search active marketplace artifacts by query text and category; limit \u2264 100",
       "uim_exposable": true,
       "status": "live",
       "risk_level": "low",
       "approval_required": false,
       "auth_for_uim": "public",
       "endpoint": "POST /api/agentic/action or GET /api/artifacts/available",
-      "params_optional": ["query", "category", "minPrice", "maxPrice", "limit"],
-      "param_constraints": { "limit": { "max": 100 }, "minPrice": "ignored in current implementation", "maxPrice": "ignored in current implementation" },
-      "outputs": ["artifacts[]", "total", "page"]
+      "params_optional": [
+        "query",
+        "category",
+        "minPrice",
+        "maxPrice",
+        "limit"
+      ],
+      "param_constraints": {
+        "limit": {
+          "max": 100
+        },
+        "minPrice": "ignored in current implementation",
+        "maxPrice": "ignored in current implementation"
+      },
+      "outputs": [
+        "artifacts[]",
+        "total",
+        "page"
+      ],
+      "deprecated": false,
+      "platform_available": true,
+      "version": "1.0",
+      "side_effect_class": "READ_ONLY",
+      "execution_mode": "SYNC",
+      "idempotency_supported": true,
+      "learning_events": [],
+      "required_permissions": [
+        "QUERY_MARKETPLACE"
+      ],
+      "dependencies": [],
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string"
+          },
+          "limit": {
+            "type": "integer"
+          },
+          "offset": {
+            "type": "integer"
+          },
+          "search": {
+            "type": "string"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array"
+          },
+          "total": {
+            "type": "integer"
+          },
+          "page": {
+            "type": "integer"
+          }
+        }
+      }
     },
-
     {
       "id": "tcs.marketplace.asset_create",
       "name": "Create Asset",
@@ -308,12 +968,89 @@
       "risk_level": "low",
       "approval_required": false,
       "auth_for_uim": "agent_api_key",
-      "params_required": ["title", "description"],
-      "params_optional": ["category", "condition", "quantity", "imageUrls", "pickupLocation", "pickupRules", "tags", "createdByUserId"],
-      "param_constraints": { "condition": ["new", "like_new", "good", "fair", "parts"] },
-      "outputs": ["assetId", "status"]
+      "params_required": [
+        "title",
+        "description"
+      ],
+      "params_optional": [
+        "category",
+        "condition",
+        "quantity",
+        "imageUrls",
+        "pickupLocation",
+        "pickupRules",
+        "tags",
+        "createdByUserId"
+      ],
+      "param_constraints": {
+        "condition": [
+          "new",
+          "like_new",
+          "good",
+          "fair",
+          "parts"
+        ]
+      },
+      "outputs": [
+        "assetId",
+        "status"
+      ],
+      "deprecated": false,
+      "platform_available": true,
+      "version": "1.0",
+      "side_effect_class": "CONTENT",
+      "execution_mode": "SYNC",
+      "idempotency_supported": false,
+      "learning_events": [
+        "asset_created"
+      ],
+      "required_permissions": [
+        "ASSET.CREATE"
+      ],
+      "dependencies": [],
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "title",
+          "description",
+          "createdByUserId"
+        ],
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "createdByUserId": {
+            "type": "string"
+          },
+          "sourceType": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "marketItemId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      }
     },
-
     {
       "id": "tcs.marketplace.asset_enrich",
       "name": "Enrich Asset",
@@ -323,14 +1060,68 @@
       "uim_exposable": true,
       "status": "live",
       "risk_level": "low",
-      "auto_execute_if": ["low_risk", "high_confidence"],
+      "auto_execute_if": [
+        "low_risk",
+        "high_confidence"
+      ],
       "auth_for_uim": "agent_api_key",
-      "params_required": ["assetId"],
-      "params_optional": ["forceRefresh"],
-      "outputs": ["metadata", "category", "brand", "kWh", "carbonFootprint", "riskScore", "comparables"],
-      "model_used": "claude-sonnet-5 or gpt-5.4-mini"
+      "params_required": [
+        "assetId"
+      ],
+      "params_optional": [
+        "forceRefresh"
+      ],
+      "outputs": [
+        "metadata",
+        "category",
+        "brand",
+        "kWh",
+        "carbonFootprint",
+        "riskScore",
+        "comparables"
+      ],
+      "model_used": "claude-sonnet-5 or gpt-5.4-mini",
+      "deprecated": false,
+      "platform_available": true,
+      "version": "1.0",
+      "side_effect_class": "CONTENT",
+      "execution_mode": "SYNC",
+      "idempotency_supported": true,
+      "learning_events": [
+        "asset_enriched"
+      ],
+      "required_permissions": [
+        "ASSET.ENRICH"
+      ],
+      "dependencies": [
+        "tcs.marketplace.asset_create"
+      ],
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "marketItemId"
+        ],
+        "properties": {
+          "marketItemId": {
+            "type": "string"
+          },
+          "energyData": {
+            "type": "object"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "marketItemId": {
+            "type": "string"
+          },
+          "enriched": {
+            "type": "boolean"
+          }
+        }
+      }
     },
-
     {
       "id": "tcs.marketplace.asset_list",
       "name": "List Asset",
@@ -340,12 +1131,61 @@
       "uim_exposable": true,
       "status": "live",
       "risk_level": "low",
-      "auto_execute_if": ["low_risk", "high_confidence", "price_within_bounds"],
+      "auto_execute_if": [
+        "low_risk",
+        "high_confidence",
+        "price_within_bounds"
+      ],
       "auth_for_uim": "agent_api_key",
-      "params_required": ["assetId"],
-      "outputs": ["listingId", "status", "price"]
+      "params_required": [
+        "assetId"
+      ],
+      "outputs": [
+        "listingId",
+        "status",
+        "price"
+      ],
+      "deprecated": false,
+      "platform_available": true,
+      "version": "1.0",
+      "side_effect_class": "CONTENT",
+      "execution_mode": "SYNC",
+      "idempotency_supported": true,
+      "learning_events": [
+        "asset_listed"
+      ],
+      "required_permissions": [
+        "ASSET.LIST"
+      ],
+      "dependencies": [
+        "tcs.marketplace.asset_create"
+      ],
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "marketItemId"
+        ],
+        "properties": {
+          "marketItemId": {
+            "type": "string"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "marketItemId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE"
+            ]
+          }
+        }
+      }
     },
-
     {
       "id": "tcs.marketplace.asset_unlist",
       "name": "Unlist Asset",
@@ -356,10 +1196,46 @@
       "status": "live",
       "risk_level": "low",
       "auth_for_uim": "agent_api_key",
-      "params_required": ["assetId"],
-      "params_optional": ["reason"]
+      "params_required": [
+        "assetId"
+      ],
+      "params_optional": [
+        "reason"
+      ],
+      "deprecated": false,
+      "platform_available": true,
+      "version": "1.0",
+      "side_effect_class": "CONTENT",
+      "execution_mode": "SYNC",
+      "idempotency_supported": true,
+      "learning_events": [],
+      "required_permissions": [
+        "ASSET.UNLIST"
+      ],
+      "dependencies": [],
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "marketItemId"
+        ],
+        "properties": {
+          "marketItemId": {
+            "type": "string"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "marketItemId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      }
     },
-
     {
       "id": "tcs.marketplace.price_quote",
       "name": "Price Quote",
@@ -370,11 +1246,61 @@
       "status": "live",
       "risk_level": "low",
       "auth_for_uim": "agent_api_key",
-      "params_required": ["assetId"],
-      "params_optional": ["networkId", "includeComparables"],
-      "outputs": ["recommendedPrice", "confidence", "feeBreakdown", "explanation", "comparables"]
+      "params_required": [
+        "assetId"
+      ],
+      "params_optional": [
+        "networkId",
+        "includeComparables"
+      ],
+      "outputs": [
+        "recommendedPrice",
+        "confidence",
+        "feeBreakdown",
+        "explanation",
+        "comparables"
+      ],
+      "deprecated": false,
+      "platform_available": true,
+      "version": "1.0",
+      "side_effect_class": "READ_ONLY",
+      "execution_mode": "SYNC",
+      "idempotency_supported": true,
+      "learning_events": [
+        "price_quoted"
+      ],
+      "required_permissions": [
+        "PRICE.QUOTE"
+      ],
+      "dependencies": [
+        "tcs.marketplace.asset_create"
+      ],
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "marketItemId"
+        ],
+        "properties": {
+          "marketItemId": {
+            "type": "string"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "price_solar": {
+            "type": "string"
+          },
+          "fee_rate": {
+            "type": "number"
+          },
+          "seller_net": {
+            "type": "string"
+          }
+        }
+      }
     },
-
     {
       "id": "tcs.marketplace.order_create",
       "name": "Create Order",
@@ -386,10 +1312,58 @@
       "risk_level": "low",
       "approval_required": false,
       "auth_for_uim": "agent_api_key",
-      "params_required": ["assetId", "buyerId"],
-      "outputs": ["orderId", "status", "amount", "foundationFee"]
+      "params_required": [
+        "assetId",
+        "buyerId"
+      ],
+      "outputs": [
+        "orderId",
+        "status",
+        "amount",
+        "foundationFee"
+      ],
+      "deprecated": false,
+      "platform_available": true,
+      "version": "1.0",
+      "side_effect_class": "ECONOMIC",
+      "execution_mode": "APPROVAL_GATED",
+      "idempotency_supported": true,
+      "learning_events": [
+        "order_created"
+      ],
+      "required_permissions": [
+        "CREATE_ORDER"
+      ],
+      "dependencies": [
+        "tcs.marketplace.asset_list"
+      ],
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "buyer_member_id",
+          "market_item_id"
+        ],
+        "properties": {
+          "buyer_member_id": {
+            "type": "integer"
+          },
+          "market_item_id": {
+            "type": "string"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "order_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      }
     },
-
     {
       "id": "tcs.marketplace.generate_report",
       "name": "Generate Report",
@@ -401,18 +1375,73 @@
       "risk_level": "low",
       "approval_required": false,
       "auth_for_uim": "agent_api_key",
-      "params_required": ["reportType"],
-      "params_optional": ["startDate", "endDate", "format"],
-      "param_constraints": { "reportType": ["energy", "transactions", "members", "marketplace", "compliance"] },
-      "outputs": ["report", "data", "generatedAt"]
+      "params_required": [
+        "reportType"
+      ],
+      "params_optional": [
+        "startDate",
+        "endDate",
+        "format"
+      ],
+      "param_constraints": {
+        "reportType": [
+          "energy",
+          "transactions",
+          "members",
+          "marketplace",
+          "compliance"
+        ]
+      },
+      "outputs": [
+        "report",
+        "data",
+        "generatedAt"
+      ],
+      "deprecated": false,
+      "platform_available": true,
+      "version": "1.0",
+      "side_effect_class": "CONTENT",
+      "execution_mode": "ASYNC",
+      "idempotency_supported": true,
+      "learning_events": [
+        "report_generated"
+      ],
+      "required_permissions": [
+        "GENERATE_REPORT"
+      ],
+      "dependencies": [],
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "reportType": {
+            "type": "string"
+          },
+          "filters": {
+            "type": "object"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "reportId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        }
+      }
     },
-
     {
       "id": "tcs.ethics.log_event",
       "name": "Log Ethics Event",
       "category": "ethics",
       "action_type": "LOG_ETHICS_EVENT",
-      "description": "Record an ethics event for the UIM protocol with optional ethics score (0–100)",
+      "description": "Record an ethics event for the UIM protocol with optional ethics score (0\u2013100)",
       "uim_exposable": true,
       "status": "live",
       "risk_level": "medium",
@@ -420,13 +1449,75 @@
       "auth_for_uim": "agent_api_key",
       "uim_annotation": "explicitly annotated for UIM protocol in api-surface.js",
       "endpoint": "POST /api/agentic/action",
-      "params_required": ["eventType", "agentId"],
-      "params_optional": ["description", "ethicsScore", "metadata"],
-      "param_constraints": { "ethicsScore": { "min": 0, "max": 100 } },
-      "outputs": ["eventId", "recorded", "auditRef"],
-      "side_effects": ["INSERT audit_log with type=ethics_event"]
+      "params_required": [
+        "eventType",
+        "agentId"
+      ],
+      "params_optional": [
+        "description",
+        "ethicsScore",
+        "metadata"
+      ],
+      "param_constraints": {
+        "ethicsScore": {
+          "min": 0,
+          "max": 100
+        }
+      },
+      "outputs": [
+        "eventId",
+        "recorded",
+        "auditRef"
+      ],
+      "side_effects": [
+        "INSERT audit_log with type=ethics_event"
+      ],
+      "deprecated": false,
+      "platform_available": true,
+      "version": "1.0",
+      "side_effect_class": "CONTENT",
+      "execution_mode": "SYNC",
+      "idempotency_supported": false,
+      "learning_events": [
+        "ethics_event_logged"
+      ],
+      "required_permissions": [
+        "LOG_ETHICS_EVENT"
+      ],
+      "dependencies": [],
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "eventType",
+          "description"
+        ],
+        "properties": {
+          "eventType": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "eventId": {
+            "type": "string"
+          },
+          "logged": {
+            "type": "boolean"
+          }
+        }
+      }
     },
-
     {
       "id": "tcs.uim.abundance_lens",
       "name": "Abundance Lens",
@@ -438,13 +1529,67 @@
       "approval_required": false,
       "auth_for_uim": "public",
       "endpoint": "POST /api/lifelens/abundance-lens",
-      "params_required": ["artifact"],
-      "params_optional": ["context", "indices_override", "idempotency_key"],
-      "outputs": ["uim_metric", "lifelens_report_patch", "artifact_record_patch", "rendered_text", "order_id"],
+      "params_required": [
+        "artifact"
+      ],
+      "params_optional": [
+        "context",
+        "indices_override",
+        "idempotency_key"
+      ],
+      "outputs": [
+        "uim_metric",
+        "lifelens_report_patch",
+        "artifact_record_patch",
+        "rendered_text",
+        "order_id"
+      ],
       "external_service": "SAi UIM Layer (s-ai-uim-layer-tdfranklin101.replit.app)",
-      "contexts": ["create", "list", "purchase", "search_voucher_request"]
+      "contexts": [
+        "create",
+        "list",
+        "purchase",
+        "search_voucher_request"
+      ],
+      "deprecated": false,
+      "platform_available": true,
+      "version": "1.0",
+      "side_effect_class": "READ_ONLY",
+      "execution_mode": "SYNC",
+      "idempotency_supported": true,
+      "learning_events": [
+        "abundance_lens_evaluated"
+      ],
+      "required_permissions": [
+        "UIM_ABUNDANCE_LENS"
+      ],
+      "dependencies": [],
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "artifactId": {
+            "type": "string"
+          },
+          "transaction_id": {
+            "type": "string"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "abundance_lens": {
+            "type": "object"
+          },
+          "approved": {
+            "type": "boolean"
+          },
+          "alignmentScore": {
+            "type": "number"
+          }
+        }
+      }
     },
-
     {
       "id": "tcs.uim.handshake",
       "name": "UIM Handshake Document",
@@ -455,9 +1600,47 @@
       "risk_level": "low",
       "auth_for_uim": "public",
       "endpoint": "GET /.well-known/uim-handshake.json",
-      "outputs": ["platform", "capabilities", "version", "contact"]
+      "outputs": [
+        "platform",
+        "capabilities",
+        "version",
+        "contact"
+      ],
+      "deprecated": false,
+      "platform_available": true,
+      "version": "1.0",
+      "side_effect_class": "NONE",
+      "execution_mode": "SYNC",
+      "idempotency_supported": true,
+      "learning_events": [],
+      "required_permissions": [],
+      "dependencies": [],
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "systemId": {
+            "type": "string"
+          },
+          "capabilities": {
+            "type": "array"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "accepted": {
+            "type": "boolean"
+          },
+          "networkId": {
+            "type": "string"
+          },
+          "solarCost": {
+            "type": "string"
+          }
+        }
+      }
     },
-
     {
       "id": "tcs.3d.generate",
       "name": "Generate 3D Artifact",
@@ -469,17 +1652,78 @@
       "approval_required": false,
       "auth_for_uim": "site_session",
       "endpoint": "POST /api/artifact3d/generate",
-      "params_required": ["templateId", "params"],
-      "outputs": ["stlUrl", "printGuideUrl", "stlHash", "solarPrice", "kWhFootprint", "estimatedMinutes", "validation"],
+      "params_required": [
+        "templateId",
+        "params"
+      ],
+      "outputs": [
+        "stlUrl",
+        "printGuideUrl",
+        "stlHash",
+        "solarPrice",
+        "kWhFootprint",
+        "estimatedMinutes",
+        "validation"
+      ],
       "param_constraints": {
         "max_file_size_mb": 50,
         "max_dimension_mm": 300,
         "max_triangles": 500000
       },
-      "templates": ["desk-caddy", "phone-stand", "cable-organizer", "nameplate", "coaster", "wall-hook", "card-holder", "planter", "bookmark", "keychain"],
-      "side_effects": ["INSERT artifact_3d_files", "upload STL+guide to object storage"]
+      "templates": [
+        "desk-caddy",
+        "phone-stand",
+        "cable-organizer",
+        "nameplate",
+        "coaster",
+        "wall-hook",
+        "card-holder",
+        "planter",
+        "bookmark",
+        "keychain"
+      ],
+      "side_effects": [
+        "INSERT artifact_3d_files",
+        "upload STL+guide to object storage"
+      ],
+      "deprecated": false,
+      "version": "1.0",
+      "side_effect_class": "PHYSICAL",
+      "execution_mode": "ASYNC",
+      "idempotency_supported": false,
+      "learning_events": [],
+      "required_permissions": [
+        "3D_GENERATE"
+      ],
+      "dependencies": [],
+      "platform_available": true,
+      "uim_operations_enabled": false,
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "prompt"
+        ],
+        "properties": {
+          "prompt": {
+            "type": "string"
+          },
+          "format": {
+            "type": "string"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "modelId": {
+            "type": "string"
+          },
+          "downloadUrl": {
+            "type": "string"
+          }
+        }
+      }
     },
-
     {
       "id": "tcs.3d.mint",
       "name": "Mint 3D Artifact to Marketplace",
@@ -490,11 +1734,58 @@
       "risk_level": "medium",
       "auth_for_uim": "agent_api_key",
       "endpoint": "POST /api/artifact3d/mint",
-      "params_required": ["templateId", "params"],
-      "outputs": ["artifactId", "marketItemId", "stlUrl", "solarPrice"],
-      "side_effects": ["INSERT artifact_3d_files", "INSERT artifacts (file_type=3d-model)", "INSERT market_items"]
+      "params_required": [
+        "templateId",
+        "params"
+      ],
+      "outputs": [
+        "artifactId",
+        "marketItemId",
+        "stlUrl",
+        "solarPrice"
+      ],
+      "side_effects": [
+        "INSERT artifact_3d_files",
+        "INSERT artifacts (file_type=3d-model)",
+        "INSERT market_items"
+      ],
+      "deprecated": false,
+      "version": "1.0",
+      "side_effect_class": "PHYSICAL",
+      "execution_mode": "ASYNC",
+      "idempotency_supported": false,
+      "learning_events": [],
+      "required_permissions": [
+        "3D_MINT"
+      ],
+      "dependencies": [
+        "tcs.3d.generate"
+      ],
+      "platform_available": true,
+      "uim_operations_enabled": false,
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "modelId"
+        ],
+        "properties": {
+          "modelId": {
+            "type": "string"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "mintId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      }
     },
-
     {
       "id": "tcs.factory.register_printer",
       "name": "Register Factory Printer",
@@ -505,14 +1796,69 @@
       "risk_level": "low",
       "approval_required": false,
       "auth_for_uim": "public",
-      "auth_gap": "UNPROTECTED — no auth currently required on registration",
+      "auth_gap": "UNPROTECTED \u2014 no auth currently required on registration",
       "endpoint": "POST /api/factory/printers/register",
-      "params_required": ["name", "location"],
-      "params_optional": ["capabilities", "materials", "printerUrl", "operatorId", "maxBuildVolume", "layerResolution", "eventId"],
-      "defaults": { "materials": ["PLA"], "status": "idle" },
-      "outputs": ["printerId", "status"]
+      "params_required": [
+        "name",
+        "location"
+      ],
+      "params_optional": [
+        "capabilities",
+        "materials",
+        "printerUrl",
+        "operatorId",
+        "maxBuildVolume",
+        "layerResolution",
+        "eventId"
+      ],
+      "defaults": {
+        "materials": [
+          "PLA"
+        ],
+        "status": "idle"
+      },
+      "outputs": [
+        "printerId",
+        "status"
+      ],
+      "deprecated": false,
+      "version": "1.0",
+      "side_effect_class": "PHYSICAL",
+      "execution_mode": "APPROVAL_GATED",
+      "idempotency_supported": true,
+      "learning_events": [],
+      "required_permissions": [
+        "FACTORY_ADMIN"
+      ],
+      "dependencies": [],
+      "platform_available": true,
+      "uim_operations_enabled": false,
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "location": {
+            "type": "string"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "printerId": {
+            "type": "string"
+          },
+          "registered": {
+            "type": "boolean"
+          }
+        }
+      }
     },
-
     {
       "id": "tcs.factory.submit_print",
       "name": "Submit Print Job",
@@ -523,12 +1869,64 @@
       "risk_level": "medium",
       "auth_for_uim": "site_session",
       "endpoint": "POST /api/factory/print",
-      "params_required": ["artifact3dId", "buyerId"],
-      "params_optional": ["eventId", "printSettings", "notes"],
-      "outputs": ["queueJobId", "pickupCode", "pickupQrUrl", "estimatedMinutes", "printerId"],
-      "lifecycle": "PENDING → QUEUED → PRINTING → COMPLETE → PICKED_UP"
+      "params_required": [
+        "artifact3dId",
+        "buyerId"
+      ],
+      "params_optional": [
+        "eventId",
+        "printSettings",
+        "notes"
+      ],
+      "outputs": [
+        "queueJobId",
+        "pickupCode",
+        "pickupQrUrl",
+        "estimatedMinutes",
+        "printerId"
+      ],
+      "lifecycle": "PENDING \u2192 QUEUED \u2192 PRINTING \u2192 COMPLETE \u2192 PICKED_UP",
+      "deprecated": false,
+      "version": "1.0",
+      "side_effect_class": "PHYSICAL",
+      "execution_mode": "ASYNC",
+      "idempotency_supported": true,
+      "learning_events": [],
+      "required_permissions": [
+        "FACTORY_SUBMIT"
+      ],
+      "dependencies": [
+        "tcs.factory.register_printer"
+      ],
+      "platform_available": true,
+      "uim_operations_enabled": false,
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "printerId",
+          "modelId"
+        ],
+        "properties": {
+          "printerId": {
+            "type": "string"
+          },
+          "modelId": {
+            "type": "string"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "jobId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      }
     },
-
     {
       "id": "tcs.factory.queue_status",
       "name": "Factory Queue Status",
@@ -539,10 +1937,48 @@
       "risk_level": "low",
       "auth_for_uim": "public",
       "endpoint": "GET /api/factory/queue",
-      "params_optional": ["eventId", "printerId"],
-      "outputs": ["queue[]", "pending", "printing", "complete"]
+      "params_optional": [
+        "eventId",
+        "printerId"
+      ],
+      "outputs": [
+        "queue[]",
+        "pending",
+        "printing",
+        "complete"
+      ],
+      "deprecated": false,
+      "version": "1.0",
+      "side_effect_class": "PHYSICAL",
+      "execution_mode": "SYNC",
+      "idempotency_supported": true,
+      "learning_events": [],
+      "required_permissions": [
+        "FACTORY_STATUS"
+      ],
+      "dependencies": [],
+      "platform_available": true,
+      "uim_operations_enabled": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "printerId": {
+            "type": "string"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "queue": {
+            "type": "array"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      }
     },
-
     {
       "id": "tcs.factory.pickup",
       "name": "Artifact Pickup",
@@ -556,10 +1992,53 @@
         "lookup": "GET /api/factory/pickup/:code",
         "complete": "POST /api/factory/pickup/:code/complete"
       },
-      "outputs": ["job", "artifact", "status"],
-      "side_effects": ["marks job PICKED_UP", "marks printer idle", "increments completedJobs"]
+      "outputs": [
+        "job",
+        "artifact",
+        "status"
+      ],
+      "side_effects": [
+        "marks job PICKED_UP",
+        "marks printer idle",
+        "increments completedJobs"
+      ],
+      "deprecated": false,
+      "version": "1.0",
+      "side_effect_class": "PHYSICAL",
+      "execution_mode": "SYNC",
+      "idempotency_supported": true,
+      "learning_events": [],
+      "required_permissions": [
+        "FACTORY_PICKUP"
+      ],
+      "dependencies": [
+        "tcs.factory.submit_print"
+      ],
+      "platform_available": true,
+      "uim_operations_enabled": false,
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "jobId"
+        ],
+        "properties": {
+          "jobId": {
+            "type": "string"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "pickedUp": {
+            "type": "boolean"
+          },
+          "completedAt": {
+            "type": "string"
+          }
+        }
+      }
     },
-
     {
       "id": "tcs.ai.kid_solar_chat",
       "name": "Kid Solar Chat",
@@ -571,11 +2050,26 @@
       "auth_for_uim": "site_session",
       "endpoint": "POST /api/kid-solar/chat",
       "model": "gpt-5.5",
-      "capabilities": ["text", "function_calling", "vision", "platform_context"],
+      "capabilities": [
+        "text",
+        "function_calling",
+        "vision",
+        "platform_context"
+      ],
       "rate_limit": "session-based",
-      "note": "Personalized platform assistant — not suitable for generic UIM exposure"
+      "note": "Personalized platform assistant \u2014 not suitable for generic UIM exposure",
+      "version": "1.0",
+      "side_effect_class": "READ_ONLY",
+      "execution_mode": "SYNC",
+      "idempotency_supported": false,
+      "learning_events": [],
+      "required_permissions": [],
+      "dependencies": [],
+      "deprecated": false,
+      "input_schema": null,
+      "output_schema": null,
+      "platform_available": true
     },
-
     {
       "id": "tcs.ai.voice",
       "name": "Voice Assistant",
@@ -586,10 +2080,23 @@
       "risk_level": "low",
       "auth_for_uim": "site_session",
       "endpoint": "POST /api/ai/voice",
-      "models": { "transcription": "gpt-4o-mini-transcribe", "tts": "gpt-4o-mini-tts (voice: nova)" },
-      "rate_limit": "5 requests/user/minute"
+      "models": {
+        "transcription": "gpt-4o-mini-transcribe",
+        "tts": "gpt-4o-mini-tts (voice: nova)"
+      },
+      "rate_limit": "5 requests/user/minute",
+      "version": "1.0",
+      "side_effect_class": "READ_ONLY",
+      "execution_mode": "SYNC",
+      "idempotency_supported": false,
+      "learning_events": [],
+      "required_permissions": [],
+      "dependencies": [],
+      "deprecated": false,
+      "input_schema": null,
+      "output_schema": null,
+      "platform_available": true
     },
-
     {
       "id": "tcs.ai.lifelens_analyze",
       "name": "LifeLens Artifact Analysis",
@@ -601,9 +2108,50 @@
       "auth_for_uim": "public",
       "endpoint": "POST /api/lifelens/analyze",
       "model": "claude-sonnet-5",
-      "outputs": ["humanNeedsMapping", "energyInsights", "alignmentScore"]
+      "outputs": [
+        "humanNeedsMapping",
+        "energyInsights",
+        "alignmentScore"
+      ],
+      "deprecated": false,
+      "platform_available": true,
+      "version": "1.0",
+      "side_effect_class": "CONTENT",
+      "execution_mode": "ASYNC",
+      "idempotency_supported": true,
+      "learning_events": [
+        "analysis_completed"
+      ],
+      "required_permissions": [
+        "LIFELENS_ANALYZE"
+      ],
+      "dependencies": [],
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "artifactId"
+        ],
+        "properties": {
+          "artifactId": {
+            "type": "string"
+          },
+          "context": {
+            "type": "object"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "analysis": {
+            "type": "object"
+          },
+          "score": {
+            "type": "number"
+          }
+        }
+      }
     },
-
     {
       "id": "tcs.ai.product_search",
       "name": "Product Search (Perplexity)",
@@ -615,9 +2163,52 @@
       "auth_for_uim": "agent_api_key",
       "endpoint": "POST /api/agentic/action (QUERY_MARKETPLACE or internal)",
       "model": "llama-3.1-sonar-small-128k-online (Perplexity)",
-      "outputs": ["products[]", "prices", "sources", "citations"]
+      "outputs": [
+        "products[]",
+        "prices",
+        "sources",
+        "citations"
+      ],
+      "deprecated": false,
+      "platform_available": true,
+      "version": "1.0",
+      "side_effect_class": "READ_ONLY",
+      "execution_mode": "SYNC",
+      "idempotency_supported": true,
+      "learning_events": [],
+      "required_permissions": [
+        "PRODUCT_SEARCH"
+      ],
+      "dependencies": [],
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "query"
+        ],
+        "properties": {
+          "query": {
+            "type": "string"
+          },
+          "filters": {
+            "type": "object"
+          },
+          "limit": {
+            "type": "integer"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "results": {
+            "type": "array"
+          },
+          "total": {
+            "type": "integer"
+          }
+        }
+      }
     },
-
     {
       "id": "tcs.commissioning.capabilities",
       "name": "Commissioning Capability Manifest",
@@ -628,10 +2219,51 @@
       "risk_level": "low",
       "auth_for_uim": "public",
       "endpoint": "GET /api/agentic/commissioning/capabilities",
-      "outputs": ["agentId", "name", "allowedActions", "networkTypes", "capabilityOptions", "regions", "energySources"],
-      "registered_agent": { "id": "commissioning-agent-v1", "max_risk": "medium", "type": "commissioning" }
+      "outputs": [
+        "agentId",
+        "name",
+        "allowedActions",
+        "networkTypes",
+        "capabilityOptions",
+        "regions",
+        "energySources"
+      ],
+      "registered_agent": {
+        "id": "commissioning-agent-v1",
+        "max_risk": "medium",
+        "type": "commissioning"
+      },
+      "deprecated": false,
+      "platform_available": true,
+      "version": "1.0",
+      "side_effect_class": "READ_ONLY",
+      "execution_mode": "SYNC",
+      "idempotency_supported": true,
+      "learning_events": [],
+      "required_permissions": [
+        "QUERY_CAPABILITIES"
+      ],
+      "dependencies": [],
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "filters": {
+            "type": "object"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "capabilities": {
+            "type": "array"
+          },
+          "total": {
+            "type": "integer"
+          }
+        }
+      }
     },
-
     {
       "id": "tcs.scheduler.status",
       "name": "Scheduler Status",
@@ -643,15 +2275,44 @@
       "auth_for_uim": "admin_key",
       "endpoint": "GET /api/agentic/scheduler/status",
       "scheduled_jobs": [
-        { "id": "settlement.daily", "cron": "02:00 daily" },
-        { "id": "report.daily", "cron": "03:00 daily" },
-        { "id": "risk.scan", "cron": "hourly" },
-        { "id": "inventory.audit", "cron": "Sunday 04:00" },
-        { "id": "policy.review", "cron": "Monday 05:00", "note": "switch case missing — skipped silently" },
-        { "id": "session.cleanup", "cron": "midnight" }
-      ]
+        {
+          "id": "settlement.daily",
+          "cron": "02:00 daily"
+        },
+        {
+          "id": "report.daily",
+          "cron": "03:00 daily"
+        },
+        {
+          "id": "risk.scan",
+          "cron": "hourly"
+        },
+        {
+          "id": "inventory.audit",
+          "cron": "Sunday 04:00"
+        },
+        {
+          "id": "policy.review",
+          "cron": "Monday 05:00",
+          "note": "switch case missing \u2014 skipped silently"
+        },
+        {
+          "id": "session.cleanup",
+          "cron": "midnight"
+        }
+      ],
+      "version": "1.0",
+      "side_effect_class": "READ_ONLY",
+      "execution_mode": "SYNC",
+      "idempotency_supported": false,
+      "learning_events": [],
+      "required_permissions": [],
+      "dependencies": [],
+      "deprecated": false,
+      "input_schema": null,
+      "output_schema": null,
+      "platform_available": true
     },
-
     {
       "id": "tcs.capability_discovery",
       "name": "UIM Capability Discovery",
@@ -661,10 +2322,45 @@
       "status": "live",
       "auth_for_uim": "public",
       "endpoint": "GET /api/uim/capabilities",
-      "outputs": ["capabilities[]", "registry_version", "era", "platform", "auth_methods"],
-      "era": "21.0"
+      "outputs": [
+        "capabilities[]",
+        "registry_version",
+        "era",
+        "platform",
+        "auth_methods"
+      ],
+      "era": "21.0",
+      "deprecated": false,
+      "platform_available": true,
+      "version": "1.0",
+      "side_effect_class": "READ_ONLY",
+      "execution_mode": "SYNC",
+      "idempotency_supported": true,
+      "learning_events": [
+        "knowledge_recorded"
+      ],
+      "required_permissions": [],
+      "dependencies": [],
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "workflow_run_id": {
+            "type": "string"
+          }
+        }
+      }
     },
-
     {
       "id": "tcs.uim.action_invoke",
       "name": "UIM Standardized Action Invocation",
@@ -674,13 +2370,46 @@
       "status": "live",
       "auth_for_uim": "agent_api_key",
       "endpoint": "POST /api/uim/invoke",
-      "params_required": ["capability_id"],
-      "params_optional": ["agent_id", "parameters", "request_context"],
-      "outputs": ["request_id", "agent_id", "capability_id", "status", "result", "policy", "audit", "error"],
-      "rate_limits": { "per_agent": "20/min", "per_session": "10/min", "scheduler": "60/hr" },
-      "era": "21.1"
+      "params_required": [
+        "capability_id"
+      ],
+      "params_optional": [
+        "agent_id",
+        "parameters",
+        "request_context"
+      ],
+      "outputs": [
+        "request_id",
+        "agent_id",
+        "capability_id",
+        "status",
+        "result",
+        "policy",
+        "audit",
+        "error"
+      ],
+      "rate_limits": {
+        "per_agent": "20/min",
+        "per_session": "10/min",
+        "scheduler": "60/hr"
+      },
+      "era": "21.1",
+      "deprecated": false,
+      "platform_available": true,
+      "version": "1.0",
+      "side_effect_class": "READ_ONLY",
+      "execution_mode": "SYNC",
+      "idempotency_supported": true,
+      "learning_events": [],
+      "required_permissions": [],
+      "dependencies": [],
+      "input_schema": {
+        "type": "object"
+      },
+      "output_schema": {
+        "type": "object"
+      }
     },
-
     {
       "id": "tcs.uim.async_callback",
       "name": "UIM Async Callback / Webhook",
@@ -689,9 +2418,19 @@
       "uim_exposable": true,
       "status": "missing",
       "priority": "ERA_21_P1",
-      "note": "Approval-gated actions (medium/high/critical) complete asynchronously. UIM callers need a callback URL or polling endpoint."
+      "note": "Approval-gated actions (medium/high/critical) complete asynchronously. UIM callers need a callback URL or polling endpoint.",
+      "version": "1.0",
+      "side_effect_class": "READ_ONLY",
+      "execution_mode": "SYNC",
+      "idempotency_supported": false,
+      "learning_events": [],
+      "required_permissions": [],
+      "dependencies": [],
+      "deprecated": false,
+      "input_schema": null,
+      "output_schema": null,
+      "platform_available": true
     },
-
     {
       "id": "tcs.uim.agent_registry",
       "name": "UIM External Agent Registry Entry",
@@ -700,8 +2439,18 @@
       "uim_exposable": true,
       "status": "missing",
       "priority": "ERA_21_P1",
-      "note": "uim_handshakes table exists but no platform self-registration logic"
+      "note": "uim_handshakes table exists but no platform self-registration logic",
+      "version": "1.0",
+      "side_effect_class": "READ_ONLY",
+      "execution_mode": "SYNC",
+      "idempotency_supported": false,
+      "learning_events": [],
+      "required_permissions": [],
+      "dependencies": [],
+      "deprecated": false,
+      "input_schema": null,
+      "output_schema": null,
+      "platform_available": true
     }
-
   ]
 }

@@ -1,0 +1,102 @@
+{
+  "_meta": {
+    "schema": "tcs:system-manifest:v1",
+    "era": "21.2",
+    "generated": "2026-08-08",
+    "description": "Machine-readable TC-S Network system manifest for external orchestrators. Does NOT expose secrets or internal database structure.",
+    "note": "Runtime values are served at GET /api/uim/system. This file contains the static schema reference."
+  },
+
+  "system": {
+    "name":                    "TC-S Network",
+    "description":             "The Current See Network — Solar-powered distributed digital economy",
+    "network_protocol_version": "1.0",
+    "uim_version":             "1.0",
+    "era":                     "21.2"
+  },
+
+  "interfaces": {
+    "GET /api/uim/capabilities": {
+      "description":  "Discover all live, UIM-exposable capabilities",
+      "auth":         "public",
+      "returns":      "capability_registry v0.2.0 with full contracts"
+    },
+    "POST /api/uim/invoke": {
+      "description":  "Invoke a single capability through Policy → Executor pipeline",
+      "auth":         "X-Agent-API-Key + X-Agent-Id  OR  X-Admin-Key",
+      "body":         { "capability_id": "string", "version": "string", "parameters": "object", "intent": "string", "task_id": "uuid?", "workflow_run_id": "string?" }
+    },
+    "GET /api/uim/requests/:id/status": {
+      "description":  "Poll the status of an action request by request_id",
+      "auth":         "agent_api_key or admin"
+    },
+    "GET /api/uim/network-knowledge": {
+      "description":  "Query the Learning Layer's derived knowledge. Filter by knowledge_type=CAPABILITY_METRICS for performance observations.",
+      "auth":         "public",
+      "query_params": ["subject", "knowledge_type", "network_id", "as_of"]
+    },
+    "GET /api/uim/system": {
+      "description":  "Sanitized runtime manifest — component status, supported workflows, live capability count",
+      "auth":         "public"
+    },
+    "GET /api/uim/orchestrator-readiness": {
+      "description":  "Reports whether all interfaces are up and the Network is ready for an external orchestrator",
+      "auth":         "public"
+    },
+    "POST /api/uim/plan/validate": {
+      "description":  "Dry-run plan validator. Accepts ORCHESTRATION_PLAN_V1. ZERO MUTATIONS. Returns capability resolution, risk estimate, approval requirements, blocked actions.",
+      "auth":         "agent_api_key or admin",
+      "body":         { "plan": "ORCHESTRATION_PLAN_V1" }
+    },
+    "GET /api/uim/workflow-runs/:id": {
+      "description":  "Observe a completed workflow run: steps, status, provenance, audit trail",
+      "auth":         "agent_api_key or admin"
+    }
+  },
+
+  "orchestration_formats": {
+    "ORCHESTRATION_TASK_V1": {
+      "description": "Network intent envelope from external orchestrator",
+      "fields":      ["task_id", "principal", "intent", "constraints", "requested_outcome", "context", "metadata"]
+    },
+    "ORCHESTRATION_PLAN_V1": {
+      "description": "Ordered capability execution plan. ONE workflow_run_id → MANY request_ids.",
+      "fields":      ["task_id", "workflow_run_id", "workflow_type", "principal", "constraints", "steps", "metadata"],
+      "step_fields": ["sequence", "capability_id", "version", "parameters", "parameters_from", "optional"]
+    }
+  },
+
+  "outcome_types": [
+    "ARTIFACT_CREATED",
+    "ARTIFACT_LISTED",
+    "ARTIFACT_PURCHASED",
+    "TRANSACTION_SETTLED",
+    "NETWORK_CREATED",
+    "REPORT_GENERATED",
+    "KNOWLEDGE_RECORDED"
+  ],
+
+  "side_effect_classes": ["NONE", "READ_ONLY", "ECONOMIC", "IDENTITY", "CONTENT", "NETWORK_CONFIGURATION", "PHYSICAL"],
+  "execution_modes":     ["SYNC", "ASYNC", "APPROVAL_GATED"],
+
+  "physical_execution": {
+    "status":  "DISABLED",
+    "reason":  "PHYSICAL_EXECUTION_REQUIRES_EXPLICIT_ERA_APPROVAL",
+    "blocked_capability_ids": [
+      "tcs.factory.submit_print",
+      "tcs.factory.queue_status",
+      "tcs.factory.pickup",
+      "tcs.factory.register_printer",
+      "tcs.3d.generate",
+      "tcs.3d.mint"
+    ]
+  },
+
+  "invariants": {
+    "policy_engine":         "All capability invocations pass through Policy Engine. No bypass.",
+    "ledger_authority":      "The database/ledger is the authoritative Network state. External callers cannot write directly.",
+    "capability_authority":  "Capability definitions are static registry entries. Learning cannot change risk_level, permissions, or policy.",
+    "orchestrator_boundary": "External orchestrators DISCOVER, PLAN, INVOKE, OBSERVE. They do not control the Network.",
+    "physical_boundary":     "No physical execution without explicit era-level approval."
+  }
+}

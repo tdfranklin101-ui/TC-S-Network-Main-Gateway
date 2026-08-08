@@ -2988,6 +2988,57 @@ async function initializeSolarAudit() {
   } catch (e) {
     console.warn('⚠️ Bulletin board schema update skipped (columns may already exist):', e.message);
   }
+
+  // ── Era 21.2: Workflow Provenance + Orchestrator Readiness ─────────────────
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS workflow_runs (
+        workflow_run_id   UUID PRIMARY KEY,
+        workflow_type     VARCHAR(100) NOT NULL,
+        initiator_agent_id VARCHAR(100),
+        principal_id      VARCHAR(100),
+        network_id        VARCHAR(100) DEFAULT 'default',
+        status            VARCHAR(30)  NOT NULL DEFAULT 'CREATED',
+        intent            TEXT,
+        input_payload     JSONB,
+        started_at        TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+        finished_at       TIMESTAMPTZ,
+        current_step      VARCHAR(100),
+        step_count        INTEGER      DEFAULT 0,
+        success_count     INTEGER      DEFAULT 0,
+        failure_count     INTEGER      DEFAULT 0,
+        result_summary    JSONB,
+        error_summary     TEXT,
+        metadata          JSONB        DEFAULT '{}'
+      )
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS workflow_run_steps (
+        id                SERIAL PRIMARY KEY,
+        workflow_run_id   UUID         NOT NULL REFERENCES workflow_runs(workflow_run_id) ON DELETE CASCADE,
+        step_id           VARCHAR(100) NOT NULL,
+        sequence          INTEGER      NOT NULL,
+        capability_id     VARCHAR(200),
+        request_id        VARCHAR(200),
+        action_request_id VARCHAR(200),
+        status            VARCHAR(30)  NOT NULL DEFAULT 'PENDING',
+        started_at        TIMESTAMPTZ,
+        finished_at       TIMESTAMPTZ,
+        input_reference   TEXT,
+        result_reference  TEXT,
+        audit_reference   TEXT,
+        error             TEXT,
+        metadata          JSONB        DEFAULT '{}',
+        UNIQUE(workflow_run_id, step_id)
+      )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_wf_runs_status     ON workflow_runs(status)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_wf_runs_agent      ON workflow_runs(initiator_agent_id)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_wf_steps_run       ON workflow_run_steps(workflow_run_id)`);
+    console.log('✅ Era 21.2: workflow_runs + workflow_run_steps tables ready');
+  } catch (e) {
+    console.warn('⚠️ Era 21.2 workflow_runs migration skipped:', e.message);
+  }
   
   // Seed regional data (Phase 1: Regional Energy Breakdown System)
   await seedAuditRegions();
@@ -3763,6 +3814,30 @@ const server = http.createServer(async (req, res) => {
     if (await dmtxactlyRoutes(req, res, pathname, body)) return;
   }
   
+  // ============================================================
+  // Era 21.2 — Development Admin: Workflow Observability
+  // DEVELOPMENT ONLY — guarded by X-Admin-Key
+  // NOT added to production navigation
+  // ============================================================
+  if (pathname === '/operations-agent-test' && req.method === 'GET') {
+    const adminKeyHeader = req.headers['x-admin-key'];
+    if (!adminKeyHeader || adminKeyHeader !== process.env.ADMIN_KEY) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Unauthorized: X-Admin-Key required for development admin view', dev_only: true }));
+      return;
+    }
+    const devAdminPath = path.resolve(__dirname, 'public', 'operations-agent-test.html');
+    try {
+      const html = fs.readFileSync(devAdminPath, 'utf8');
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store, no-cache' });
+      res.end(html);
+    } catch (e) {
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      res.end('Dev admin page not found');
+    }
+    return;
+  }
+
   // ============================================================
   // Era 21.0 — UIM Routes (Operations Agent + Learning Layer)
   // ============================================================
