@@ -329,6 +329,9 @@ const dmtxactlyRoutes = require('./routes/dmtxactly');
 // TC-S Agentic Framework (Policy-gated actions)
 const { handleAgenticRoutes, initializeAgenticFramework } = require('./server/agentic/routes');
 
+// Era 21.0 — UIM Router (Operations Agent + Learning Layer)
+const { handleUimRoutes, initializeUimRouter } = require('./server/agentic/uim-router');
+
 // WPC (Watts Per Compute) efficiency calculator
 const { estimateFlops, estimateEnergy, computeWPC, joulesToSolar } = require('./lib/wpc.js');
 
@@ -3759,6 +3762,23 @@ const server = http.createServer(async (req, res) => {
     if (await dmtxactlyRoutes(req, res, pathname, body)) return;
   }
   
+  // ============================================================
+  // Era 21.0 — UIM Routes (Operations Agent + Learning Layer)
+  // ============================================================
+  if (pathname.startsWith('/api/uim')) {
+    if (!body && req.method === 'POST') {
+      try { body = await parseBody(req); } catch (e) {}
+    }
+    // Ensure agentic framework is up (executor required by UIM router)
+    try {
+      const { executor } = await initializeAgenticFramework(pool);
+      await initializeUimRouter(pool, executor);
+    } catch (uimInitErr) {
+      console.error('[UIM] Initialization error:', uimInitErr.message);
+    }
+    if (await handleUimRoutes(req, res, pathname, body, pool)) return;
+  }
+
   // Try TC-S Agentic Framework routes (Policy-gated actions)
   if (pathname.startsWith('/api/agentic') || pathname === '/api/me' || pathname === '/api/audit' || pathname.startsWith('/api/admin/assets') || pathname.startsWith('/api/admin/settlements')) {
     if (!body && req.method === 'POST') {
