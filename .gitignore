@@ -17,9 +17,17 @@ attached_assets/*.pdf
 
 # Development files
 node_modules/
+.env
 .env.local
 test_*
 debug_*
+
+# User uploads and runtime data
+uploads/
+backups/
+data/daily-brief.json
+data/daily-brief-history.json
+data/daily-brief-trends.json
 
 # Keep essential files
 !attached_assets/requirements*.txt
