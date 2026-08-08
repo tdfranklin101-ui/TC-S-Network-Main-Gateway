@@ -1,0 +1,663 @@
+{
+  "_meta": {
+    "registry_version": "0.1.0-draft",
+    "platform": "TC-S Network",
+    "platform_url": "https://thecurrentsee.org",
+    "uim_handshake": "https://thecurrentsee.org/.well-known/uim-handshake.json",
+    "generated": "2026-08-08",
+    "source_commit": "2349f26",
+    "source_repo": "tdfranklin101-ui/TC-S-Network-Main-Gateway",
+    "audit_type": "read-only-static-analysis",
+    "era": "Era 20 (pre-Era 21 baseline)",
+    "notes": [
+      "Status field: live=implemented+tested, stub=defined no handler, partial=handler incomplete, missing=not yet built",
+      "uim_exposable: capability is safe and meaningful to expose to external UIM agents",
+      "auth_for_uim: recommended auth method when called via UIM protocol",
+      "solar_constant: 1 Solar = 4913 kWh (Buckminster Fuller constant)"
+    ]
+  },
+
+  "auth_methods": {
+    "public": { "description": "No authentication required", "header": null },
+    "site_session": { "description": "tc_s_session cookie (HttpOnly, 30-day)", "header": "Cookie: tc_s_session=<64-hex>" },
+    "solar_passport": { "description": "HMAC-signed Passport token", "header": "Authorization: Bearer <tcs_auth>" },
+    "agent_api_key": { "description": "Registered agent API key", "headers": ["X-Agent-API-Key: <key>", "X-Agent-Id: <id>", "X-Req-Id: <uuid>"] },
+    "admin_key": { "description": "Platform admin key", "header": "X-Admin-Key: <ADMIN_KEY>" },
+    "ownership_token": { "description": "Per-artifact delivery token", "header": null, "note": "Embedded in URL path" }
+  },
+
+  "policy_levels": {
+    "low":      { "approval_required": false,  "multisig": false, "auto_execute_eligible": true },
+    "medium":   { "approval_required": true,   "multisig": false, "auto_execute_eligible": false },
+    "high":     { "approval_required": true,   "multisig": false, "human_review_flag": true },
+    "critical": { "approval_required": true,   "multisig": true,  "human_review_flag": true }
+  },
+
+  "capabilities": [
+
+    {
+      "id": "tcs.network.create",
+      "name": "Create Network",
+      "category": "network",
+      "action_type": "CREATE_NETWORK",
+      "description": "Register a new Solar-powered network specification with capabilities and energy source",
+      "uim_exposable": true,
+      "status": "live",
+      "risk_level": "medium",
+      "approval_required": true,
+      "multisig_required": false,
+      "auth_for_uim": "agent_api_key",
+      "endpoint": "POST /api/agentic/action",
+      "params_required": ["name", "networkType", "capabilities"],
+      "params_optional": ["region", "energySource", "initialSolarAllocation", "metadata"],
+      "outputs": ["networkId", "status", "createdAt"],
+      "side_effects": ["INSERT network_specs"],
+      "rate_limit": "10 agent-actions/minute"
+    },
+
+    {
+      "id": "tcs.network.query",
+      "name": "Query Network",
+      "category": "network",
+      "action_type": "QUERY_NETWORK",
+      "description": "Retrieve network specification, metrics, and member list",
+      "uim_exposable": true,
+      "status": "live",
+      "risk_level": "low",
+      "approval_required": false,
+      "auth_for_uim": "agent_api_key",
+      "endpoint": "POST /api/agentic/action",
+      "params_required": ["networkId"],
+      "params_optional": ["includeMetrics", "includeMembers"],
+      "outputs": ["network", "metrics", "members"]
+    },
+
+    {
+      "id": "tcs.network.update",
+      "name": "Update Network",
+      "category": "network",
+      "action_type": "UPDATE_NETWORK",
+      "description": "Update network name, capabilities, or status",
+      "uim_exposable": false,
+      "status": "stub",
+      "risk_level": "medium",
+      "approval_required": true,
+      "note": "No executor handler — action defined but not implemented"
+    },
+
+    {
+      "id": "tcs.network.delete",
+      "name": "Delete Network",
+      "category": "network",
+      "action_type": "DELETE_NETWORK",
+      "description": "Permanently delete a network specification",
+      "uim_exposable": false,
+      "status": "stub",
+      "risk_level": "critical",
+      "approval_required": true,
+      "multisig_required": true,
+      "note": "No executor handler"
+    },
+
+    {
+      "id": "tcs.member.create",
+      "name": "Create Member",
+      "category": "member",
+      "action_type": "CREATE_MEMBER",
+      "description": "Register a new TC-S Network member with optional Solar grant (max 10 Solar)",
+      "uim_exposable": true,
+      "status": "live",
+      "risk_level": "low",
+      "approval_required": false,
+      "auth_for_uim": "agent_api_key",
+      "endpoint": "POST /api/agentic/action",
+      "params_required": ["username", "email"],
+      "params_optional": ["fullName", "initialSolarGrant"],
+      "param_constraints": { "initialSolarGrant": { "min": 0, "max": 10, "default": 1 } },
+      "outputs": ["memberId", "solarBalance", "createdAt"],
+      "side_effects": ["INSERT member", "Solar genesis grant", "Solar Passport email via Resend"]
+    },
+
+    {
+      "id": "tcs.member.query",
+      "name": "Query Member",
+      "category": "member",
+      "action_type": "QUERY_MEMBER",
+      "description": "Look up member profile, balance, and transaction history",
+      "uim_exposable": true,
+      "status": "live",
+      "risk_level": "low",
+      "approval_required": false,
+      "auth_for_uim": "agent_api_key",
+      "endpoint": "POST /api/agentic/action",
+      "params_required": ["memberId"],
+      "params_optional": ["email", "includeBalance", "includeTransactions"],
+      "outputs": ["member", "solarBalance", "transactions"]
+    },
+
+    {
+      "id": "tcs.member.suspend",
+      "name": "Suspend Member",
+      "category": "member",
+      "action_type": "SUSPEND_MEMBER",
+      "description": "Temporarily or indefinitely suspend a member account",
+      "uim_exposable": false,
+      "status": "stub",
+      "risk_level": "high",
+      "approval_required": true,
+      "note": "No executor handler"
+    },
+
+    {
+      "id": "tcs.member.update",
+      "name": "Update Member",
+      "category": "member",
+      "action_type": "UPDATE_MEMBER",
+      "description": "Update member email, full name, or preferences",
+      "uim_exposable": false,
+      "status": "stub",
+      "risk_level": "low",
+      "note": "No executor handler"
+    },
+
+    {
+      "id": "tcs.solar.query_balance",
+      "name": "Query Solar Balance",
+      "category": "economic",
+      "action_type": "QUERY_BALANCE",
+      "description": "Query Solar balance for a member or agent wallet",
+      "uim_exposable": true,
+      "status": "live",
+      "risk_level": "low",
+      "approval_required": false,
+      "auth_for_uim": "agent_api_key",
+      "endpoint": "POST /api/agentic/action",
+      "params_required": ["walletId"],
+      "params_optional": ["includeHistory"],
+      "outputs": ["balance", "currency", "history"]
+    },
+
+    {
+      "id": "tcs.solar.calculate_energy",
+      "name": "Calculate Energy / Solar Conversion",
+      "category": "economic",
+      "action_type": "CALCULATE_ENERGY",
+      "description": "Convert between kWh and Solar using the 4,913 kWh/Solar constant",
+      "uim_exposable": true,
+      "status": "live",
+      "risk_level": "low",
+      "approval_required": false,
+      "auth_for_uim": "public",
+      "endpoint": "POST /api/agentic/action or POST /api/wpc/calculate",
+      "params_required": ["kWh or solar"],
+      "params_optional": ["direction"],
+      "outputs": ["solar", "kWh", "conversionRate"],
+      "constants": { "kWh_per_solar": 4913 }
+    },
+
+    {
+      "id": "tcs.solar.transfer",
+      "name": "Transfer Solar",
+      "category": "economic",
+      "action_type": "TRANSFER_SOLAR",
+      "description": "Transfer Solar between wallets; same-wallet transfers rejected; >100 Solar triggers review",
+      "uim_exposable": false,
+      "status": "stub",
+      "risk_level": "high",
+      "approval_required": true,
+      "policy_guards": ["from != to", "amount >= 0.001", "amount > 100 → human review flag"],
+      "note": "Policy fully defined; no executor handler implemented"
+    },
+
+    {
+      "id": "tcs.solar.mint",
+      "name": "Mint Solar",
+      "category": "economic",
+      "action_type": "MINT_SOLAR",
+      "description": "Mint new Solar backed by verified energy generation (kWhVerified ≥ amount × 4,913)",
+      "uim_exposable": false,
+      "status": "stub",
+      "risk_level": "critical",
+      "approval_required": true,
+      "multisig_required": true,
+      "policy_guards": ["kwhVerified >= amount * 4913"],
+      "note": "Policy enforced; no executor handler; audit reference required"
+    },
+
+    {
+      "id": "tcs.solar.audit_transaction",
+      "name": "Audit Transaction",
+      "category": "economic",
+      "action_type": "AUDIT_TRANSACTION",
+      "description": "Request a formal audit of a specific transaction",
+      "uim_exposable": false,
+      "status": "stub",
+      "risk_level": "high",
+      "approval_required": true,
+      "note": "No executor handler"
+    },
+
+    {
+      "id": "tcs.marketplace.query",
+      "name": "Query Marketplace",
+      "category": "marketplace",
+      "action_type": "QUERY_MARKETPLACE",
+      "description": "Search active marketplace artifacts by query text and category; limit ≤ 100",
+      "uim_exposable": true,
+      "status": "live",
+      "risk_level": "low",
+      "approval_required": false,
+      "auth_for_uim": "public",
+      "endpoint": "POST /api/agentic/action or GET /api/artifacts/available",
+      "params_optional": ["query", "category", "minPrice", "maxPrice", "limit"],
+      "param_constraints": { "limit": { "max": 100 }, "minPrice": "ignored in current implementation", "maxPrice": "ignored in current implementation" },
+      "outputs": ["artifacts[]", "total", "page"]
+    },
+
+    {
+      "id": "tcs.marketplace.asset_create",
+      "name": "Create Asset",
+      "category": "marketplace",
+      "action_type": "ASSET.CREATE",
+      "description": "Create a new marketplace asset record (not yet listed)",
+      "uim_exposable": true,
+      "status": "live",
+      "risk_level": "low",
+      "approval_required": false,
+      "auth_for_uim": "agent_api_key",
+      "params_required": ["title", "description"],
+      "params_optional": ["category", "condition", "quantity", "imageUrls", "pickupLocation", "pickupRules", "tags", "createdByUserId"],
+      "param_constraints": { "condition": ["new", "like_new", "good", "fair", "parts"] },
+      "outputs": ["assetId", "status"]
+    },
+
+    {
+      "id": "tcs.marketplace.asset_enrich",
+      "name": "Enrich Asset",
+      "category": "marketplace",
+      "action_type": "ASSET.ENRICH",
+      "description": "AI-enrich asset with metadata, category, brand, kWh footprint, carbon, risk, comparables",
+      "uim_exposable": true,
+      "status": "live",
+      "risk_level": "low",
+      "auto_execute_if": ["low_risk", "high_confidence"],
+      "auth_for_uim": "agent_api_key",
+      "params_required": ["assetId"],
+      "params_optional": ["forceRefresh"],
+      "outputs": ["metadata", "category", "brand", "kWh", "carbonFootprint", "riskScore", "comparables"],
+      "model_used": "claude-sonnet-5 or gpt-5.4-mini"
+    },
+
+    {
+      "id": "tcs.marketplace.asset_list",
+      "name": "List Asset",
+      "category": "marketplace",
+      "action_type": "ASSET.LIST",
+      "description": "Activate an asset listing on the marketplace",
+      "uim_exposable": true,
+      "status": "live",
+      "risk_level": "low",
+      "auto_execute_if": ["low_risk", "high_confidence", "price_within_bounds"],
+      "auth_for_uim": "agent_api_key",
+      "params_required": ["assetId"],
+      "outputs": ["listingId", "status", "price"]
+    },
+
+    {
+      "id": "tcs.marketplace.asset_unlist",
+      "name": "Unlist Asset",
+      "category": "marketplace",
+      "action_type": "ASSET.UNLIST",
+      "description": "Remove an asset from the marketplace listing",
+      "uim_exposable": true,
+      "status": "live",
+      "risk_level": "low",
+      "auth_for_uim": "agent_api_key",
+      "params_required": ["assetId"],
+      "params_optional": ["reason"]
+    },
+
+    {
+      "id": "tcs.marketplace.price_quote",
+      "name": "Price Quote",
+      "category": "marketplace",
+      "action_type": "PRICE.QUOTE",
+      "description": "Get AI-powered pricing recommendation with fee breakdown, confidence, and comparables",
+      "uim_exposable": true,
+      "status": "live",
+      "risk_level": "low",
+      "auth_for_uim": "agent_api_key",
+      "params_required": ["assetId"],
+      "params_optional": ["networkId", "includeComparables"],
+      "outputs": ["recommendedPrice", "confidence", "feeBreakdown", "explanation", "comparables"]
+    },
+
+    {
+      "id": "tcs.marketplace.order_create",
+      "name": "Create Order",
+      "category": "marketplace",
+      "action_type": "ORDER.CREATE",
+      "description": "Initiate a marketplace purchase order",
+      "uim_exposable": true,
+      "status": "live",
+      "risk_level": "low",
+      "approval_required": false,
+      "auth_for_uim": "agent_api_key",
+      "params_required": ["assetId", "buyerId"],
+      "outputs": ["orderId", "status", "amount", "foundationFee"]
+    },
+
+    {
+      "id": "tcs.marketplace.generate_report",
+      "name": "Generate Report",
+      "category": "analytics",
+      "action_type": "GENERATE_REPORT",
+      "description": "Generate analytics reports across energy, transactions, members, marketplace, or compliance",
+      "uim_exposable": true,
+      "status": "live",
+      "risk_level": "low",
+      "approval_required": false,
+      "auth_for_uim": "agent_api_key",
+      "params_required": ["reportType"],
+      "params_optional": ["startDate", "endDate", "format"],
+      "param_constraints": { "reportType": ["energy", "transactions", "members", "marketplace", "compliance"] },
+      "outputs": ["report", "data", "generatedAt"]
+    },
+
+    {
+      "id": "tcs.ethics.log_event",
+      "name": "Log Ethics Event",
+      "category": "ethics",
+      "action_type": "LOG_ETHICS_EVENT",
+      "description": "Record an ethics event for the UIM protocol with optional ethics score (0–100)",
+      "uim_exposable": true,
+      "status": "live",
+      "risk_level": "medium",
+      "approval_required": false,
+      "auth_for_uim": "agent_api_key",
+      "uim_annotation": "explicitly annotated for UIM protocol in api-surface.js",
+      "endpoint": "POST /api/agentic/action",
+      "params_required": ["eventType", "agentId"],
+      "params_optional": ["description", "ethicsScore", "metadata"],
+      "param_constraints": { "ethicsScore": { "min": 0, "max": 100 } },
+      "outputs": ["eventId", "recorded", "auditRef"],
+      "side_effects": ["INSERT audit_log with type=ethics_event"]
+    },
+
+    {
+      "id": "tcs.uim.abundance_lens",
+      "name": "Abundance Lens",
+      "category": "uim",
+      "description": "Get UIM abundance metric and LifeLens analysis for an artifact via SAi UIM Layer",
+      "uim_exposable": true,
+      "status": "live",
+      "risk_level": "low",
+      "approval_required": false,
+      "auth_for_uim": "public",
+      "endpoint": "POST /api/lifelens/abundance-lens",
+      "params_required": ["artifact"],
+      "params_optional": ["context", "indices_override", "idempotency_key"],
+      "outputs": ["uim_metric", "lifelens_report_patch", "artifact_record_patch", "rendered_text", "order_id"],
+      "external_service": "SAi UIM Layer (s-ai-uim-layer-tdfranklin101.replit.app)",
+      "contexts": ["create", "list", "purchase", "search_voucher_request"]
+    },
+
+    {
+      "id": "tcs.uim.handshake",
+      "name": "UIM Handshake Document",
+      "category": "uim",
+      "description": "Machine-readable UIM protocol handshake and capability declaration",
+      "uim_exposable": true,
+      "status": "live",
+      "risk_level": "low",
+      "auth_for_uim": "public",
+      "endpoint": "GET /.well-known/uim-handshake.json",
+      "outputs": ["platform", "capabilities", "version", "contact"]
+    },
+
+    {
+      "id": "tcs.3d.generate",
+      "name": "Generate 3D Artifact",
+      "category": "physical",
+      "description": "Generate a parametric STL artifact from a registered template with Solar pricing",
+      "uim_exposable": true,
+      "status": "live",
+      "risk_level": "medium",
+      "approval_required": false,
+      "auth_for_uim": "site_session",
+      "endpoint": "POST /api/artifact3d/generate",
+      "params_required": ["templateId", "params"],
+      "outputs": ["stlUrl", "printGuideUrl", "stlHash", "solarPrice", "kWhFootprint", "estimatedMinutes", "validation"],
+      "param_constraints": {
+        "max_file_size_mb": 50,
+        "max_dimension_mm": 300,
+        "max_triangles": 500000
+      },
+      "templates": ["desk-caddy", "phone-stand", "cable-organizer", "nameplate", "coaster", "wall-hook", "card-holder", "planter", "bookmark", "keychain"],
+      "side_effects": ["INSERT artifact_3d_files", "upload STL+guide to object storage"]
+    },
+
+    {
+      "id": "tcs.3d.mint",
+      "name": "Mint 3D Artifact to Marketplace",
+      "category": "physical",
+      "description": "Generate STL and simultaneously list it as a purchasable marketplace item",
+      "uim_exposable": true,
+      "status": "live",
+      "risk_level": "medium",
+      "auth_for_uim": "agent_api_key",
+      "endpoint": "POST /api/artifact3d/mint",
+      "params_required": ["templateId", "params"],
+      "outputs": ["artifactId", "marketItemId", "stlUrl", "solarPrice"],
+      "side_effects": ["INSERT artifact_3d_files", "INSERT artifacts (file_type=3d-model)", "INSERT market_items"]
+    },
+
+    {
+      "id": "tcs.factory.register_printer",
+      "name": "Register Factory Printer",
+      "category": "physical",
+      "description": "Register a physical 3D printer into the factory network",
+      "uim_exposable": true,
+      "status": "live",
+      "risk_level": "low",
+      "approval_required": false,
+      "auth_for_uim": "public",
+      "auth_gap": "UNPROTECTED — no auth currently required on registration",
+      "endpoint": "POST /api/factory/printers/register",
+      "params_required": ["name", "location"],
+      "params_optional": ["capabilities", "materials", "printerUrl", "operatorId", "maxBuildVolume", "layerResolution", "eventId"],
+      "defaults": { "materials": ["PLA"], "status": "idle" },
+      "outputs": ["printerId", "status"]
+    },
+
+    {
+      "id": "tcs.factory.submit_print",
+      "name": "Submit Print Job",
+      "category": "physical",
+      "description": "Submit a 3D artifact to the factory queue; assigns to least-busy idle printer; generates pickup code",
+      "uim_exposable": true,
+      "status": "live",
+      "risk_level": "medium",
+      "auth_for_uim": "site_session",
+      "endpoint": "POST /api/factory/print",
+      "params_required": ["artifact3dId", "buyerId"],
+      "params_optional": ["eventId", "printSettings", "notes"],
+      "outputs": ["queueJobId", "pickupCode", "pickupQrUrl", "estimatedMinutes", "printerId"],
+      "lifecycle": "PENDING → QUEUED → PRINTING → COMPLETE → PICKED_UP"
+    },
+
+    {
+      "id": "tcs.factory.queue_status",
+      "name": "Factory Queue Status",
+      "category": "physical",
+      "description": "View current print queue, optionally filtered by event or printer",
+      "uim_exposable": true,
+      "status": "live",
+      "risk_level": "low",
+      "auth_for_uim": "public",
+      "endpoint": "GET /api/factory/queue",
+      "params_optional": ["eventId", "printerId"],
+      "outputs": ["queue[]", "pending", "printing", "complete"]
+    },
+
+    {
+      "id": "tcs.factory.pickup",
+      "name": "Artifact Pickup",
+      "category": "physical",
+      "description": "Lookup and complete a physical artifact pickup by 6-character pickup code",
+      "uim_exposable": true,
+      "status": "live",
+      "risk_level": "low",
+      "auth_for_uim": "public",
+      "endpoints": {
+        "lookup": "GET /api/factory/pickup/:code",
+        "complete": "POST /api/factory/pickup/:code/complete"
+      },
+      "outputs": ["job", "artifact", "status"],
+      "side_effects": ["marks job PICKED_UP", "marks printer idle", "increments completedJobs"]
+    },
+
+    {
+      "id": "tcs.ai.kid_solar_chat",
+      "name": "Kid Solar Chat",
+      "category": "ai",
+      "description": "Conversational AI agent with function calling, vision, and platform-aware context",
+      "uim_exposable": false,
+      "status": "live",
+      "risk_level": "low",
+      "auth_for_uim": "site_session",
+      "endpoint": "POST /api/kid-solar/chat",
+      "model": "gpt-5.5",
+      "capabilities": ["text", "function_calling", "vision", "platform_context"],
+      "rate_limit": "session-based",
+      "note": "Personalized platform assistant — not suitable for generic UIM exposure"
+    },
+
+    {
+      "id": "tcs.ai.voice",
+      "name": "Voice Assistant",
+      "category": "ai",
+      "description": "Voice input (transcription) + TTS response using OpenAI models",
+      "uim_exposable": false,
+      "status": "live",
+      "risk_level": "low",
+      "auth_for_uim": "site_session",
+      "endpoint": "POST /api/ai/voice",
+      "models": { "transcription": "gpt-4o-mini-transcribe", "tts": "gpt-4o-mini-tts (voice: nova)" },
+      "rate_limit": "5 requests/user/minute"
+    },
+
+    {
+      "id": "tcs.ai.lifelens_analyze",
+      "name": "LifeLens Artifact Analysis",
+      "category": "ai",
+      "description": "Human-needs mapping and energy insights for a marketplace artifact",
+      "uim_exposable": true,
+      "status": "live",
+      "risk_level": "low",
+      "auth_for_uim": "public",
+      "endpoint": "POST /api/lifelens/analyze",
+      "model": "claude-sonnet-5",
+      "outputs": ["humanNeedsMapping", "energyInsights", "alignmentScore"]
+    },
+
+    {
+      "id": "tcs.ai.product_search",
+      "name": "Product Search (Perplexity)",
+      "category": "ai",
+      "description": "Web-grounded product search with citations via Perplexity",
+      "uim_exposable": true,
+      "status": "live",
+      "risk_level": "low",
+      "auth_for_uim": "agent_api_key",
+      "endpoint": "POST /api/agentic/action (QUERY_MARKETPLACE or internal)",
+      "model": "llama-3.1-sonar-small-128k-online (Perplexity)",
+      "outputs": ["products[]", "prices", "sources", "citations"]
+    },
+
+    {
+      "id": "tcs.commissioning.capabilities",
+      "name": "Commissioning Capability Manifest",
+      "category": "network",
+      "description": "Machine-readable manifest of commissioning agent capabilities, allowed actions, regions, energy sources",
+      "uim_exposable": true,
+      "status": "live",
+      "risk_level": "low",
+      "auth_for_uim": "public",
+      "endpoint": "GET /api/agentic/commissioning/capabilities",
+      "outputs": ["agentId", "name", "allowedActions", "networkTypes", "capabilityOptions", "regions", "energySources"],
+      "registered_agent": { "id": "commissioning-agent-v1", "max_risk": "medium", "type": "commissioning" }
+    },
+
+    {
+      "id": "tcs.scheduler.status",
+      "name": "Scheduler Status",
+      "category": "admin",
+      "description": "View scheduler job status and next-run times",
+      "uim_exposable": false,
+      "status": "live",
+      "risk_level": "low",
+      "auth_for_uim": "admin_key",
+      "endpoint": "GET /api/agentic/scheduler/status",
+      "scheduled_jobs": [
+        { "id": "settlement.daily", "cron": "02:00 daily" },
+        { "id": "report.daily", "cron": "03:00 daily" },
+        { "id": "risk.scan", "cron": "hourly" },
+        { "id": "inventory.audit", "cron": "Sunday 04:00" },
+        { "id": "policy.review", "cron": "Monday 05:00", "note": "switch case missing — skipped silently" },
+        { "id": "session.cleanup", "cron": "midnight" }
+      ]
+    },
+
+    {
+      "id": "tcs.capability_discovery",
+      "name": "UIM Capability Discovery",
+      "category": "uim",
+      "description": "Machine-readable capability registry endpoint for UIM agent discovery",
+      "uim_exposable": true,
+      "status": "missing",
+      "priority": "ERA_21_P0",
+      "auth_for_uim": "public",
+      "proposed_endpoint": "GET /api/uim/capabilities",
+      "proposed_outputs": ["capabilities[]", "registry_version", "platform", "auth_methods"],
+      "note": "Era 21 must build this. Currently only /.well-known/uim-handshake.json exists."
+    },
+
+    {
+      "id": "tcs.uim.action_invoke",
+      "name": "UIM Standardized Action Invocation",
+      "category": "uim",
+      "description": "Single standardized entry point for external UIM agents to invoke any exposed capability",
+      "uim_exposable": true,
+      "status": "missing",
+      "priority": "ERA_21_P0",
+      "proposed_endpoint": "POST /api/uim/invoke",
+      "proposed_params": ["capability_id", "params", "uim_agent_id", "idempotency_key"],
+      "proposed_outputs": ["result", "status", "request_id", "callback_url"],
+      "note": "Era 21 must build this. Current /api/agentic/action is close but uses internal action_type naming."
+    },
+
+    {
+      "id": "tcs.uim.async_callback",
+      "name": "UIM Async Callback / Webhook",
+      "category": "uim",
+      "description": "Webhook delivery for async capability results (approval-gated actions, long-running jobs)",
+      "uim_exposable": true,
+      "status": "missing",
+      "priority": "ERA_21_P1",
+      "note": "Approval-gated actions (medium/high/critical) complete asynchronously. UIM callers need a callback URL or polling endpoint."
+    },
+
+    {
+      "id": "tcs.uim.agent_registry",
+      "name": "UIM External Agent Registry Entry",
+      "category": "uim",
+      "description": "Formal registration of the TC-S Network platform as a UIM agent/provider",
+      "uim_exposable": true,
+      "status": "missing",
+      "priority": "ERA_21_P1",
+      "note": "uim_handshakes table exists but no platform self-registration logic"
+    }
+
+  ]
+}
