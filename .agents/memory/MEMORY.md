@@ -13,3 +13,5 @@
 - [main.js is the prod router](mainjs-is-prod-router.md) — production runs raw-http main.js; routes mounted in Express server/routes.ts never run live. Wire endpoints into main.js dispatch.
 - [Solar Passport auth](solar-passport-auth.md) — two token systems: site session (tc_s_session) + passport HMAC (tcs_auth); /api/session exchanges passport→site session; every signup emails the passport artifact.
 - [Era 21 Operations Agent](era21-operations-agent.md) — tcs-operations-agent-v1 registered; UIM endpoints live at /api/uim/*; all on era21-operations-agent branch (not merged to main).
+- [Era 21.1 Schema Quirks](era21-1-schema-quirks.md) — transactions.wallet_id NOT NULL, artifact_copies FKs artifacts not market_items, network_knowledge PK is knowledge_id, agent_registry.rate_limit_window is integer.
+- [Era 21.1 Test Suite](era21-1-test-suite.md) — tests/era21-1.test.js 34/34; Era 21.0 tests updated TRANSFER_SOLAR→MINT_SOLAR since TRANSFER_SOLAR is now allowed.
