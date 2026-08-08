@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Era 21.3 — Frontier Orchestrator Dev Console</title>
+<style>
+  :root {
+    --bg: #0a0e1a; --surface: #111827; --surface2: #1c2437; --border: #2a3a5a;
+    --accent: #4f8ef7; --accent2: #7c6af7; --green: #22c55e; --red: #ef4444;
+    --yellow: #eab308; --text: #e2e8f0; --muted: #64748b; --font: 'JetBrains Mono', 'Fira Code', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 13px; line-height: 1.5; }
+  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 20px; display: flex; align-items: center; gap: 12px; }
+  header h1 { font-size: 15px; color: var(--accent); }
+  header .badge { background: #1e3a1e; color: var(--green); padding: 2px 8px; border-radius: 4px; font-size: 11px; }
+  header .warn { background: #3a1e1e; color: var(--red); padding: 2px 8px; border-radius: 4px; font-size: 11px; }
+  .tabs { display: flex; border-bottom: 1px solid var(--border); background: var(--surface); }
+  .tab { padding: 10px 18px; cursor: pointer; border-bottom: 2px solid transparent; color: var(--muted); font-size: 12px; }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab:hover:not(.active) { color: var(--text); }
+  .pane { display: none; padding: 16px; }
+  .pane.active { display: block; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 14px; margin-bottom: 12px; }
+  .card h3 { font-size: 12px; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .row { display: flex; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+  .field { flex: 1; min-width: 200px; }
+  label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  input, textarea, select { width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 8px; border-radius: 4px; font-family: var(--font); font-size: 12px; }
+  textarea { min-height: 80px; resize: vertical; }
+  button { padding: 8px 16px; border-radius: 4px; border: none; cursor: pointer; font-family: var(--font); font-size: 12px; font-weight: 600; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #3a7ae0; }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-danger { background: var(--red); color: #fff; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+  .dot-green { background: var(--green); }
+  .dot-red { background: var(--red); }
+  .dot-yellow { background: var(--yellow); }
+  .dot-grey { background: var(--muted); }
+  .kv { display: grid; grid-template-columns: 180px 1fr; gap: 4px 12px; }
+  .kv .k { color: var(--muted); font-size: 11px; }
+  .kv .v { word-break: break-all; }
+  .json { background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 10px; overflow-x: auto; font-size: 11px; white-space: pre; max-height: 400px; overflow-y: auto; }
+  .tag { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 10px; font-weight: 600; }
+  .tag-green { background: #1a2e1a; color: var(--green); }
+  .tag-red { background: #2e1a1a; color: var(--red); }
+  .tag-yellow { background: #2e2a1a; color: var(--yellow); }
+  .tag-blue { background: #1a2040; color: var(--accent); }
+  .tag-purple { background: #201a40; color: var(--accent2); }
+  .step-row { border-left: 2px solid var(--border); padding-left: 10px; margin-bottom: 8px; }
+  .step-row.ok { border-left-color: var(--green); }
+  .step-row.fail { border-left-color: var(--red); }
+  .step-row.run { border-left-color: var(--yellow); }
+  .divider { border-top: 1px solid var(--border); margin: 12px 0; }
+  #log { font-size: 11px; color: var(--muted); height: 200px; overflow-y: auto; background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 8px; }
+  .log-line { margin-bottom: 2px; }
+  .log-ok { color: var(--green); }
+  .log-err { color: var(--red); }
+  .log-info { color: var(--accent); }
+  .spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .receipt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
+  .receipt-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 5px; padding: 10px; }
+  .receipt-card .rc-title { font-size: 11px; color: var(--accent); margin-bottom: 6px; }
+  .history-row { border-bottom: 1px solid var(--border); padding: 8px 0; cursor: pointer; }
+  .history-row:hover { background: var(--surface2); }
+  .pill-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  #resultPanel { margin-top: 12px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>⬡ Era 21.3 — Frontier Orchestrator</h1>
+  <span class="badge">TCS-OAFR-001</span>
+  <span class="warn">DEV ONLY</span>
+  <span style="margin-left: auto; color: var(--muted); font-size: 11px;">gpt-oss-120b via RunPod</span>
+</header>
+
+<div class="tabs">
+  <div class="tab active" data-tab="health">Health</div>
+  <div class="tab" data-tab="run">Run Orchestrator</div>
+  <div class="tab" data-tab="result">Last Result</div>
+  <div class="tab" data-tab="receipts">Inference Receipts</div>
+  <div class="tab" data-tab="history">History</div>
+</div>
+
+<!-- ── Health ──────────────────────────────────────────────────────────────── -->
+<div class="pane active" id="pane-health">
+  <div class="card">
+    <h3>RunPod Endpoint</h3>
+    <div class="kv" id="healthKv">
+      <span class="k">Status</span><span class="v" id="h-status"><span class="dot-grey status-dot"></span>—</span>
+      <span class="k">Model</span><span class="v" id="h-model">—</span>
+      <span class="k">Endpoint ID</span><span class="v" id="h-endpoint">—</span>
+      <span class="k">Latency</span><span class="v" id="h-latency">—</span>
+      <span class="k">TC-S UIM Era</span><span class="v" id="h-era">—</span>
+    </div>
+    <div style="margin-top:10px; display:flex; gap:8px;">
+      <button class="btn-primary" onclick="checkHealth()">Refresh Health</button>
+      <button class="btn-secondary" onclick="checkReadiness()">Check UIM Readiness</button>
+    </div>
+  </div>
+  <div class="card" id="readinessCard" style="display:none">
+    <h3>UIM Orchestrator Readiness</h3>
+    <pre class="json" id="readinessJson"></pre>
+  </div>
+  <div class="card">
+    <h3>Live Log</h3>
+    <div id="log"></div>
+  </div>
+</div>
+
+<!-- ── Run ─────────────────────────────────────────────────────────────────── -->
+<div class="pane" id="pane-run">
+  <div class="card">
+    <h3>Intent</h3>
+    <div class="field">
+      <label>Human Intent (treated as untrusted text — will be sanitized)</label>
+      <textarea id="intentInput" rows="3">Create a useful artifact, prepare it for the TC-S marketplace, and return a verified creation record.</textarea>
+    </div>
+    <div class="row" style="margin-top:10px;">
+      <div class="field">
+        <label>Requested Outcome</label>
+        <select id="requestedOutcome">
+          <option value="">— none —</option>
+          <option value="ARTIFACT_LISTED">ARTIFACT_LISTED</option>
+          <option value="ARTIFACT_PURCHASED">ARTIFACT_PURCHASED</option>
+          <option value="MEMBER_CREATED">MEMBER_CREATED</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Model Mode</label>
+        <select id="modelMode">
+          <option value="real">Real Model (RunPod) — requires secrets</option>
+          <option value="mock" selected>Mock Model — no RunPod needed</option>
+          <option value="mock_invalid">Mock: Always Invalid Plan</option>
+          <option value="mock_physical">Mock: Physical Plan (blocked)</option>
+          <option value="mock_unknown">Mock: Unknown Capability</option>
+          <option value="mock_high_risk">Mock: High Risk Plan</option>
+        </select>
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>Max Frontier Calls</label>
+        <input type="number" id="maxCalls" value="10" min="1" max="20">
+      </div>
+      <div class="field">
+        <label>Principal ID (optional)</label>
+        <input type="text" id="principalId" placeholder="member_xxx">
+      </div>
+    </div>
+    <div style="margin-top:10px; display:flex; gap:8px;">
+      <button class="btn-primary" id="runBtn" onclick="runOrchestrator()">▶ Run Orchestrator</button>
+      <button class="btn-secondary" onclick="document.getElementById('intentInput').value = REPLICATOR_001">REPLICATOR 001</button>
+      <button class="btn-secondary" onclick="document.getElementById('intentInput').value = REPLICATOR_002">REPLICATOR 002</button>
+    </div>
+  </div>
+  <div id="runStatus" style="display:none" class="card">
+    <h3>Running</h3>
+    <div style="display:flex;align-items:center;gap:8px;"><div class="spinner"></div><span id="runStatusMsg">Starting orchestration loop…</span></div>
+  </div>
+</div>
+
+<!-- ── Result ──────────────────────────────────────────────────────────────── -->
+<div class="pane" id="pane-result">
+  <div id="resultPanel">
+    <div class="card" style="color:var(--muted);font-size:12px;">No result yet — run the orchestrator first.</div>
+  </div>
+</div>
+
+<!-- ── Inference Receipts ──────────────────────────────────────────────────── -->
+<div class="pane" id="pane-receipts">
+  <div class="card">
+    <h3>Inference Receipts (from network_knowledge)</h3>
+    <div style="display:flex;gap:8px;margin-bottom:10px;">
+      <button class="btn-primary" onclick="loadReceipts()">Refresh</button>
+    </div>
+    <div id="receiptsGrid" class="receipt-grid">
+      <div style="color:var(--muted)">Click Refresh to load…</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── History ─────────────────────────────────────────────────────────────── -->
+<div class="pane" id="pane-history">
+  <div class="card">
+    <h3>Task History (session)</h3>
+    <div id="historyList">
+      <div style="color:var(--muted)">No history yet.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const REPLICATOR_001 = `Create a useful artifact, prepare it for the TC-S marketplace, determine its energy-derived economic characteristics, list it appropriately, and return a verified creation record.`;
+const REPLICATOR_002 = `Create an artifact that helps a new TC-S member understand how Solar distribution and marketplace purchasing currently work.`;
+
+let lastResult = null;
+const taskHistory = [];
+
+// ── Tab nav ──────────────────────────────────────────────────────────────────
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('pane-' + tab.dataset.tab).classList.add('active');
+  });
+});
+
+// ── Logging ───────────────────────────────────────────────────────────────────
+function log(msg, cls = '') {
+  const el = document.getElementById('log');
+  const line = document.createElement('div');
+  line.className = 'log-line ' + cls;
+  line.textContent = new Date().toLocaleTimeString() + ' — ' + msg;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+}
+
+// ── API helpers ───────────────────────────────────────────────────────────────
+const adminKey = () => {
+  const k = sessionStorage.getItem('adminKey');
+  if (k) return k;
+  const entered = prompt('Enter X-Admin-Key:');
+  if (entered) { sessionStorage.setItem('adminKey', entered); return entered; }
+  return null;
+};
+
+async function apiFetch(path, opts = {}) {
+  const headers = { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey(), ...(opts.headers || {}) };
+  const res = await fetch(path, { ...opts, headers });
+  if (!res.ok) {
+    const txt = await res.text().catch(() => '');
+    throw new Error(`HTTP ${res.status}: ${txt.slice(0, 200)}`);
+  }
+  return res.json();
+}
+
+// ── Health ────────────────────────────────────────────────────────────────────
+async function checkHealth() {
+  log('Checking orchestrator health…', 'log-info');
+  try {
+    const data = await apiFetch('/api/orchestrator/health');
+    const f = data.frontier || {};
+    const ok = f.status === 'healthy';
+    document.getElementById('h-status').innerHTML = `<span class="status-dot ${ok?'dot-green':'dot-red'}"></span>${f.status || 'unknown'}`;
+    document.getElementById('h-model').textContent    = f.model       || '—';
+    document.getElementById('h-endpoint').textContent = f.endpoint_id || '(not configured)';
+    document.getElementById('h-latency').textContent  = f.latency_ms != null ? `${f.latency_ms}ms` : '—';
+    document.getElementById('h-era').textContent      = data.tcs_uim?.era || '—';
+    log(ok ? '✓ Frontier healthy' : '✗ Frontier unavailable: ' + (f.error || ''), ok ? 'log-ok' : 'log-err');
+  } catch (e) {
+    log('Health check failed: ' + e.message, 'log-err');
+    document.getElementById('h-status').innerHTML = `<span class="status-dot dot-red"></span>ERROR`;
+  }
+}
+
+async function checkReadiness() {
+  try {
+    const data = await apiFetch('/api/uim/orchestrator-readiness');
+    document.getElementById('readinessCard').style.display = '';
+    document.getElementById('readinessJson').textContent = JSON.stringify(data, null, 2);
+    log('UIM readiness retrieved', 'log-ok');
+  } catch(e) { log('Readiness check failed: ' + e.message, 'log-err'); }
+}
+
+// ── Run Orchestrator ──────────────────────────────────────────────────────────
+async function runOrchestrator() {
+  const intent    = document.getElementById('intentInput').value.trim();
+  const outcome   = document.getElementById('requestedOutcome').value;
+  const mode      = document.getElementById('modelMode').value;
+  const maxCalls  = parseInt(document.getElementById('maxCalls').value, 10);
+  const principal = document.getElementById('principalId').value.trim();
+
+  if (!intent) { alert('Intent is required.'); return; }
+
+  const btn = document.getElementById('runBtn');
+  btn.disabled = true;
+  document.getElementById('runStatus').style.display = '';
+  document.getElementById('runStatusMsg').textContent = 'Sending to orchestrator…';
+
+  log(`Starting orchestration: "${intent.slice(0,60)}…"`, 'log-info');
+  log(`Mode: ${mode} | Outcome: ${outcome || 'none'} | MaxCalls: ${maxCalls}`, '');
+
+  const body = {
+    intent,
+    requested_outcome: outcome || undefined,
+    model_mode: mode,
+    limits: { maxFrontierCalls: maxCalls },
+    principal_id: principal || undefined,
+  };
+
+  try {
+    const t0 = Date.now();
+    const data = await apiFetch('/api/orchestrator/run', { method: 'POST', body: JSON.stringify(body) });
+    const elapsed = Date.now() - t0;
+    lastResult = data;
+    taskHistory.unshift({ intent, result: data, elapsed, timestamp: new Date().toISOString() });
+
+    const status = data.status || 'UNKNOWN';
+    log(`Done in ${elapsed}ms — status: ${status} | revisions: ${data.plan_revisions} | frontier_calls: ${data.frontier_calls}`, status === 'SUCCEEDED' ? 'log-ok' : 'log-err');
+
+    renderResult(data, elapsed);
+    // Switch to result tab
+    document.querySelector('.tab[data-tab="result"]').click();
+    renderHistory();
+  } catch (e) {
+    log('Orchestration failed: ' + e.message, 'log-err');
+    renderResult({ status: 'CLIENT_ERROR', error: e.message }, 0);
+  } finally {
+    btn.disabled = false;
+    document.getElementById('runStatus').style.display = 'none';
+  }
+}
+
+// ── Render Result ─────────────────────────────────────────────────────────────
+function renderResult(r, elapsed) {
+  const status = r.status || 'UNKNOWN';
+  const statusClass = { SUCCEEDED: 'tag-green', FAILED: 'tag-red', LIMIT_EXCEEDED: 'tag-red',
+    WAITING_APPROVAL: 'tag-yellow', ORCHESTRATOR_UNAVAILABLE: 'tag-red',
+    COMPLETED_UNVERIFIED: 'tag-yellow', CLIENT_ERROR: 'tag-red' }[status] || 'tag-blue';
+
+  const ov = r.outcome_verification;
+  const verified = ov?.verified;
+
+  let html = `
+  <div class="card">
+    <h3>Task Result <span class="tag ${statusClass}">${status}</span></h3>
+    <div class="kv">
+      <span class="k">Task ID</span><span class="v">${r.task_id || '—'}</span>
+      <span class="k">Status</span><span class="v"><span class="tag ${statusClass}">${status}</span></span>
+      <span class="k">Workflow Run</span><span class="v">${r.workflow_run_id || '—'}</span>
+      <span class="k">Plan Revisions</span><span class="v">${r.plan_revisions ?? '—'}</span>
+      <span class="k">Frontier Calls</span><span class="v">${r.frontier_calls ?? '—'}</span>
+      <span class="k">Wall Time</span><span class="v">${elapsed ? elapsed + 'ms' : '—'}</span>
+      ${r.error ? `<span class="k">Error</span><span class="v" style="color:var(--red)">${r.error}</span>` : ''}
+    </div>
+  </div>`;
+
+  if (ov) {
+    html += `<div class="card">
+      <h3>Outcome Verification <span class="tag ${verified?'tag-green':'tag-red'}">${verified?'VERIFIED':'UNVERIFIED'}</span></h3>
+      <div class="kv">
+        <span class="k">Requested</span><span class="v">${ov.requested_outcome || 'none'}</span>
+        <span class="k">Method</span><span class="v">${ov.method || '—'}</span>
+      </div>
+      <div class="pill-row">
+        ${(ov.checks||[]).map(c => `<span class="tag ${c.pass?'tag-green':'tag-red'}">${c.code}</span>`).join(' ')}
+      </div>
+    </div>`;
+  }
+
+  if (r.plan) {
+    html += `<div class="card"><h3>Generated Plan (${(r.plan.steps||[]).length} steps)</h3>
+      <pre class="json">${JSON.stringify(r.plan, null, 2)}</pre></div>`;
+  }
+
+  if (r.validation) {
+    const pv = r.validation.plan_validation || r.validation;
+    html += `<div class="card"><h3>Validation Result: <span class="tag ${pv.result==='VALID'?'tag-green':'tag-red'}">${pv.result}</span></h3>
+      <div class="pill-row">${(pv.findings||[]).map(f=>`<span class="tag tag-red">${f.code||JSON.stringify(f)}</span>`).join(' ')||'<span style="color:var(--green)">No findings</span>'}</div>
+    </div>`;
+  }
+
+  if (r.steps_executed?.length) {
+    html += `<div class="card"><h3>Execution Timeline (${r.steps_executed.length} steps)</h3>`;
+    for (const s of r.steps_executed) {
+      const sc = s.status === 'SUCCEEDED' ? 'ok' : s.status === 'FAILED' ? 'fail' : 'run';
+      html += `<div class="step-row ${sc}">
+        <div><strong>${s.step_id}</strong> <span class="tag ${sc==='ok'?'tag-green':'tag-red'}">${s.status}</span></div>
+        <div style="color:var(--muted)">${s.capability_id || '—'}</div>
+        ${s.request_id ? `<div style="font-size:10px;color:var(--muted)">req: ${s.request_id}</div>` : ''}
+        ${s.error ? `<div style="color:var(--red)">${s.error}</div>` : ''}
+      </div>`;
+    }
+    html += `</div>`;
+  }
+
+  if (r.inference_receipts?.length) {
+    html += `<div class="card"><h3>Inference Receipts (${r.inference_receipts.length})</h3><div class="receipt-grid">`;
+    for (const rc of r.inference_receipts) {
+      html += `<div class="receipt-card">
+        <div class="rc-title">${rc.call_type} <span class="tag tag-blue">${rc.model}</span></div>
+        <div class="kv">
+          <span class="k">Tokens</span><span class="v">${rc.total_tokens}</span>
+          <span class="k">Latency</span><span class="v">${rc.latency_ms}ms</span>
+          <span class="k">Est. Cost</span><span class="v">${rc.estimated_cost_usd != null ? '$' + rc.estimated_cost_usd : 'n/a'}</span>
+          <span class="k">Energy</span><span class="v">${rc.estimated_energy_wh != null ? rc.estimated_energy_wh + ' Wh' : 'n/a'}</span>
+          <span class="k">Hash</span><span class="v" style="font-size:10px">${rc.output_hash ? rc.output_hash.slice(0,16)+'…' : '—'}</span>
+        </div>
+      </div>`;
+    }
+    html += `</div></div>`;
+  }
+
+  if (r.provenance) {
+    html += `<div class="card"><h3>Provenance</h3><pre class="json">${JSON.stringify(r.provenance, null, 2)}</pre></div>`;
+  }
+
+  document.getElementById('resultPanel').innerHTML = html;
+}
+
+// ── Inference Receipts ────────────────────────────────────────────────────────
+async function loadReceipts() {
+  try {
+    const data = await apiFetch('/api/uim/network-knowledge?knowledge_type=INFERENCE_RECEIPT');
+    const records = data.records || [];
+    const grid = document.getElementById('receiptsGrid');
+    if (!records.length) { grid.innerHTML = '<div style="color:var(--muted)">No inference receipts found.</div>'; return; }
+    grid.innerHTML = records.slice(0, 20).map(r => {
+      const sf = r.structured_facts || {};
+      return `<div class="receipt-card">
+        <div class="rc-title">${sf.call_type || '?'} <span class="tag tag-blue">${sf.model || '?'}</span></div>
+        <div class="kv">
+          <span class="k">Task</span><span class="v" style="font-size:10px">${(sf.task_id||'—').slice(0,8)}…</span>
+          <span class="k">Tokens</span><span class="v">${sf.total_tokens ?? '—'}</span>
+          <span class="k">Latency</span><span class="v">${sf.latency_ms != null ? sf.latency_ms+'ms' : '—'}</span>
+          <span class="k">Est. Cost</span><span class="v">${sf.estimated_cost_usd != null ? '$'+sf.estimated_cost_usd : '—'}</span>
+          <span class="k">Hash</span><span class="v" style="font-size:10px">${sf.output_hash ? sf.output_hash.slice(0,12)+'…' : '—'}</span>
+          <span class="k">Status</span><span class="v">${sf.status || '—'}</span>
+        </div>
+      </div>`;
+    }).join('');
+    log(`Loaded ${records.length} inference receipt(s)`, 'log-ok');
+  } catch(e) { log('Failed to load receipts: ' + e.message, 'log-err'); }
+}
+
+// ── History ───────────────────────────────────────────────────────────────────
+function renderHistory() {
+  const list = document.getElementById('historyList');
+  if (!taskHistory.length) { list.innerHTML = '<div style="color:var(--muted)">No history yet.</div>'; return; }
+  list.innerHTML = taskHistory.map((entry, i) => {
+    const s = entry.result?.status || 'UNKNOWN';
+    const cls = { SUCCEEDED:'tag-green', FAILED:'tag-red', LIMIT_EXCEEDED:'tag-red',
+      WAITING_APPROVAL:'tag-yellow', ORCHESTRATOR_UNAVAILABLE:'tag-red' }[s] || 'tag-blue';
+    return `<div class="history-row" onclick="showHistoryItem(${i})">
+      <span class="tag ${cls}">${s}</span>
+      <span style="margin:0 8px;color:var(--muted)">${entry.timestamp.slice(11,19)}</span>
+      ${entry.intent.slice(0,80)}${entry.intent.length>80?'…':''}
+      <span style="margin-left:auto;color:var(--muted)">${entry.elapsed}ms</span>
+    </div>`;
+  }).join('');
+}
+
+function showHistoryItem(i) {
+  const entry = taskHistory[i];
+  if (!entry) return;
+  lastResult = entry.result;
+  renderResult(entry.result, entry.elapsed);
+  document.querySelector('.tab[data-tab="result"]').click();
+}
+
+// Auto-check health on load
+window.addEventListener('DOMContentLoaded', () => {
+  checkHealth();
+});
+</script>
+</body>
+</html>

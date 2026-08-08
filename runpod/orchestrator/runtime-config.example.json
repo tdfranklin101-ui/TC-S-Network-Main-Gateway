@@ -1,0 +1,43 @@
+{
+  "_comment": "EXAMPLE ONLY — do NOT commit real values. Copy relevant fields to Replit Secrets.",
+  "_instructions": "See runpod/orchestrator/README.md for deployment steps.",
+
+  "runpod": {
+    "endpoint_id": "REPLACE_WITH_YOUR_RUNPOD_ENDPOINT_ID",
+    "base_url_pattern": "https://api.runpod.ai/v2/{endpoint_id}/openai",
+    "serverless": true,
+    "gpu_options": ["H100 80GB SXM", "H100 80GB PCIe", "A100 80GB"],
+    "min_workers": 0,
+    "max_workers": 1,
+    "scale_to_zero": true
+  },
+
+  "model": {
+    "name": "gpt-oss-120b",
+    "runtime": "vllm",
+    "vllm_args": [
+      "--model", "gpt-oss-120b",
+      "--tensor-parallel-size", "1",
+      "--max-model-len", "32768",
+      "--gpu-memory-utilization", "0.90",
+      "--enforce-eager",
+      "--served-model-name", "gpt-oss-120b"
+    ],
+    "openai_compatible": true,
+    "chat_endpoint": "/chat/completions",
+    "models_endpoint": "/models"
+  },
+
+  "replit_secrets_to_set": {
+    "RUNPOD_API_KEY":                     "YOUR_RUNPOD_API_KEY_FROM_RUNPOD_DASHBOARD",
+    "RUNPOD_ORCHESTRATOR_ENDPOINT_ID":    "YOUR_SERVERLESS_ENDPOINT_ID",
+    "RUNPOD_ORCHESTRATOR_BASE_URL":       "https://api.runpod.ai/v2/YOUR_ENDPOINT_ID/openai",
+    "RUNPOD_ORCHESTRATOR_MODEL":          "gpt-oss-120b",
+    "OAFR_AGENT_KEY":                     "GENERATE_A_STRONG_RANDOM_KEY_HERE"
+  },
+
+  "development_defaults_when_unset": {
+    "RUNPOD_ORCHESTRATOR_MODEL":  "gpt-oss-120b",
+    "OAFR_AGENT_KEY":             "dev-oafr-001-key-do-not-use-in-production"
+  }
+}

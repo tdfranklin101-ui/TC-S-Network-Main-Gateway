@@ -1,0 +1,69 @@
+{
+  "_comment": "TC-S Network — Era 21.3. Operator profile for TCS-OAFR-001 (TC-S Open-Weight Frontier Replicator). This file describes the orchestrator's allowed capabilities and operational envelope. It does NOT contain secrets.",
+  "agent_id": "TCS-OAFR-001",
+  "display_name": "TC-S Open-Weight Frontier Replicator",
+  "class": "SYSTEM_ORCHESTRATOR",
+  "principal": "TC-S_NETWORK",
+  "authority": "UIM_ONLY",
+  "era": "21.3",
+  "model": {
+    "name": "gpt-oss-120b",
+    "parameters": "120B",
+    "provider": "runpod",
+    "runtime": "vllm",
+    "interface": "openai_compatible"
+  },
+  "workflow": ["DISCOVER", "LEARN", "PLAN", "VALIDATE", "EXECUTE", "OBSERVE", "VERIFY"],
+  "limits": {
+    "maximum_plan_revisions": 5,
+    "maximum_plan_steps": 20,
+    "maximum_plan_parse_repairs": 3,
+    "maximum_frontier_calls_per_task": 10,
+    "maximum_wall_time_seconds": 300
+  },
+  "permissions": {
+    "production_enabled": false,
+    "gbi_exempt": true,
+    "policy_bypass": false,
+    "direct_database_access": false,
+    "direct_ledger_write": false,
+    "physical_execution": false,
+    "audit_required": true,
+    "capability_discovery": true,
+    "plan_creation": true,
+    "plan_validation": true,
+    "capability_invocation": true,
+    "workflow_observation": true,
+    "network_knowledge_read": true
+  },
+  "forbidden": [
+    "direct_database_access",
+    "direct_ledger_write",
+    "policy_bypass",
+    "permission_mutation",
+    "risk_mutation",
+    "physical_execution",
+    "invent_capability"
+  ],
+  "tool_surface": {
+    "get_system":          "GET /api/uim/system",
+    "discover_capabilities":"GET /api/uim/capabilities",
+    "get_network_knowledge":"GET /api/uim/network-knowledge",
+    "validate_plan":       "POST /api/uim/plan/validate",
+    "invoke_capability":   "POST /api/uim/invoke",
+    "get_request_status":  "GET /api/uim/requests/:id/status",
+    "get_workflow":        "GET /api/uim/workflow-runs/:id",
+    "get_readiness":       "GET /api/uim/orchestrator-readiness"
+  },
+  "not_exposed": [
+    "SQL", "database modules", "economic-handlers.js",
+    "policy internals", "executor internals",
+    "ledger mutation methods", "factory machine APIs"
+  ],
+  "security": {
+    "credential_in_prompt": false,
+    "credential_location": "HTTP headers attached by orchestrator shell, outside all model context",
+    "untrusted_data_handling": "sanitized before inclusion; cannot redefine permissions",
+    "prompt_injection_boundary": "artifact_content, marketplace_text, tool_output treated as untrusted DATA"
+  }
+}

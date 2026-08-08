@@ -3815,6 +3815,88 @@ const server = http.createServer(async (req, res) => {
   }
   
   // ============================================================
+  // Era 21.3 — Frontier Orchestrator Routes
+  // DEVELOPMENT ONLY — guarded by X-Admin-Key
+  // NOT added to production navigation
+  // ============================================================
+  if (pathname === '/frontier-orchestrator-test' && req.method === 'GET') {
+    const adminKeyHeader = req.headers['x-admin-key'];
+    if (!adminKeyHeader || adminKeyHeader !== process.env.ADMIN_KEY) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Unauthorized: X-Admin-Key required', dev_only: true }));
+      return;
+    }
+    const devPage = path.resolve(__dirname, 'public', 'frontier-orchestrator-test.html');
+    try {
+      const html = fs.readFileSync(devPage, 'utf8');
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store, no-cache' });
+      res.end(html);
+    } catch (e) {
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      res.end('Frontier orchestrator dev page not found');
+    }
+    return;
+  }
+
+  if (pathname === '/api/orchestrator/health' && req.method === 'GET') {
+    const adminKeyHeader = req.headers['x-admin-key'];
+    if (!adminKeyHeader || adminKeyHeader !== process.env.ADMIN_KEY) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'X-Admin-Key required' }));
+      return;
+    }
+    try {
+      const { RunPodFrontierClient } = require('./server/orchestrator/frontier-client');
+      const { TCSFrontierOrchestrator } = require('./server/orchestrator/tcs-frontier-orchestrator');
+      const client = new RunPodFrontierClient();
+      const orch   = new TCSFrontierOrchestrator({ frontierClient: client, pool });
+      const health = await orch.health();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(health));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: e.message }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/orchestrator/run' && req.method === 'POST') {
+    const adminKeyHeader = req.headers['x-admin-key'];
+    if (!adminKeyHeader || adminKeyHeader !== process.env.ADMIN_KEY) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'X-Admin-Key required' }));
+      return;
+    }
+    try {
+      if (!body) body = await parseBody(req).catch(() => ({}));
+      const { intent, requested_outcome, model_mode, limits, principal_id, network_id } = body || {};
+      if (!intent) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'intent is required' }));
+        return;
+      }
+      const { RunPodFrontierClient, MockFrontierClient } = require('./server/orchestrator/frontier-client');
+      const { TCSFrontierOrchestrator } = require('./server/orchestrator/tcs-frontier-orchestrator');
+      // Select frontier client based on model_mode param
+      let client;
+      if (!model_mode || model_mode === 'real') {
+        client = new RunPodFrontierClient();
+      } else {
+        const mockMode = model_mode.startsWith('mock_') ? model_mode.slice(5) : (model_mode === 'mock' ? 'valid_plan' : model_mode);
+        client = new MockFrontierClient({ mode: mockMode });
+      }
+      const orch   = new TCSFrontierOrchestrator({ frontierClient: client, pool, limits: limits || {} });
+      const result = await orch.run(intent, { requested_outcome, principal_id, network_id });
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(result));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: e.message }));
+    }
+    return;
+  }
+
+  // ============================================================
   // Era 21.2 — Development Admin: Workflow Observability
   // DEVELOPMENT ONLY — guarded by X-Admin-Key
   // NOT added to production navigation
@@ -3852,6 +3934,9 @@ const server = http.createServer(async (req, res) => {
       // Era 21.1: seed scheduler operations agent (idempotent)
       const { initializeSchedulerAgent } = require('./server/agentic/agents/scheduler-agent');
       await initializeSchedulerAgent(pool);
+      // Era 21.3: seed frontier orchestrator agent (idempotent)
+      const { seedOrchestratorAgent } = require('./server/orchestrator/seed-orchestrator-agent');
+      await seedOrchestratorAgent(pool);
     } catch (uimInitErr) {
       console.error('[UIM] Initialization error:', uimInitErr.message);
     }
