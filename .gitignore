@@ -48,3 +48,8 @@ public/videos/*.mkv
 attached_assets/*.mov
 attached_assets/*.mp4
 *.mov
+
+# Backup snapshots — tracked files removed 2026-08-08; ignore future recurrences
+*.backup
+*-backup.html
+*_backup.html
