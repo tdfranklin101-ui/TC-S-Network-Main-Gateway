@@ -599,7 +599,13 @@ function _normalizePlan(plan, taskId, agentId) {
     workflow_run_id: plan.workflow_run_id  || planId, // validator requires this
     agent_id:        plan.agent_id        || agentId,
     era:             plan.era             || '21.3',
-    steps:           Array.isArray(plan.steps) ? plan.steps : [],
+    // Safety net: inject sequence (1-indexed) if the model omitted it.
+    // The plan validator requires sequence: integer ≥ 1 on every step.
+    steps: (Array.isArray(plan.steps) ? plan.steps : []).map((s, i) => ({
+      ...s,
+      sequence: (typeof s.sequence === 'number' && Number.isInteger(s.sequence) && s.sequence >= 1)
+                ? s.sequence : i + 1,
+    })),
   };
 }
 

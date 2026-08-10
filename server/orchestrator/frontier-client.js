@@ -121,10 +121,14 @@ class RunPodFrontierClient extends FrontierClient {
       return { status: 'ORCHESTRATOR_UNAVAILABLE', model: this.model, latency_ms: 0, error: 'RunPod endpoint not configured (missing RUNPOD_API_KEY or endpoint URL)' };
     }
     const start = Date.now();
+    // RunPod serverless endpoints route health requests through their job queue,
+    // so even with a ready worker the /models GET can take >10s to arrive.
+    // 60s matches typical serverless routing overhead; generateStructuredPlan uses 300s.
+    const healthTimeout = 60000;
     try {
       // Try the /models endpoint as a lightweight health check
       const url = this._modelsUrl || this._completionsUrl;
-      await this._request('GET', url, null, 10000);
+      await this._request('GET', url, null, healthTimeout);
       return { status: 'healthy', model: this.model, endpoint_id: this.endpointId, latency_ms: Date.now() - start };
     } catch (err) {
       return { status: 'ORCHESTRATOR_UNAVAILABLE', model: this.model, latency_ms: Date.now() - start, error: err.message };
@@ -136,7 +140,7 @@ class RunPodFrontierClient extends FrontierClient {
       return { model: this.model, provider: 'runpod', runtime: 'vllm', status: 'not_configured' };
     }
     try {
-      const data = await this._request('GET', this._modelsUrl, null, 10000);
+      const data = await this._request('GET', this._modelsUrl, null, 60000);
       return {
         model:    this.model,
         provider: 'runpod',
@@ -184,19 +188,26 @@ class RunPodFrontierClient extends FrontierClient {
 
   async _chatComplete(systemInstruction, userMessage) {
     const start   = Date.now();
+    // gpt-oss-120b is a reasoning model: it generates a chain-of-thought in
+    // message.reasoning before writing message.content.  Keep max_tokens small
+    // (1500) so reasoning + plan JSON fits within a ~150s inference window at
+    // 10 tok/s on RunPod.  response_format:json_object is omitted because it
+    // conflicts with vLLM's reasoning model output path (content stays null).
     const payload = {
-      model:           this.model,
-      messages:        [{ role: 'system', content: systemInstruction }, { role: 'user', content: userMessage }],
-      response_format: { type: 'json_object' },
-      temperature:     0.1,
-      max_tokens:      4096,
+      model:       this.model,
+      messages:    [{ role: 'system', content: systemInstruction }, { role: 'user', content: userMessage }],
+      temperature: 0.1,
+      max_tokens:  1500,
     };
 
     const data      = await this._request('POST', this._completionsUrl, payload, this.timeoutMs);
     const latency_ms = Date.now() - start;
 
-    const choice       = data?.choices?.[0];
-    const raw_output   = choice?.message?.content || '';
+    const choice     = data?.choices?.[0];
+    // Reasoning models put the final answer in content; the scratchpad is in
+    // reasoning.  If content is null the model ran out of tokens mid-reasoning —
+    // fall back to reasoning so the caller can attempt a JSON parse / revision.
+    const raw_output = choice?.message?.content ?? choice?.message?.reasoning ?? '';
     const usage        = data?.usage || {};
 
     return {
@@ -430,9 +441,12 @@ class MockFrontierClient extends FrontierClient {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function _buildPlanningUserMessage(task, availableCaps, networkKnowledge) {
-  const capSummary = (availableCaps || [])
-    .filter(c => c.uim_exposable && c.status === 'live' && c.uim_operations_enabled !== false)
-    .map(c => `  • ${c.id} [${c.risk_level || 'low'}] — ${c.description || ''}`)
+  const liveCaps = (availableCaps || [])
+    .filter(c => c.uim_exposable && c.status === 'live' && c.uim_operations_enabled !== false);
+
+  // Numbered list with explicit capability_id so the model copies the exact string
+  const capSummary = liveCaps
+    .map((c, i) => `  ${i + 1}. capability_id="${c.capability_id || c.id}" risk=${c.risk_level || 'low'} — ${c.description || ''}`)
     .join('\n');
 
   const knowledgeSummary = (networkKnowledge || [])
@@ -445,19 +459,34 @@ function _buildPlanningUserMessage(task, availableCaps, networkKnowledge) {
     `Intent: ${task.intent}`,
     `Task ID: ${task.task_id}`,
     ``,
-    `# Available Capabilities (DO NOT use any capability not listed here)`,
+    `# Available Capabilities (you MUST use capability_id values exactly as shown below)`,
     capSummary || '  (none)',
     ``,
     `# Current Network Knowledge`,
     knowledgeSummary || '  (none)',
     ``,
-    `# Instruction`,
-    `Output ONLY a valid ORCHESTRATION_PLAN_V1 JSON object. No commentary.`,
-    `Required top-level fields: schema_version, task_id, plan_id, agent_id, era, intent, constraints, steps`,
-    `Each step requires: step_id, capability_id (must match a listed capability exactly), depends_on (array), input (object)`,
-    `Set constraints.max_risk_level to "low".`,
-    `Set agent_id to "TCS-OAFR-001".`,
-    `Set era to "21.3".`,
+    `# Output Instructions`,
+    `Output ONLY a valid JSON object — no prose, no markdown fences, no commentary before or after.`,
+    ``,
+    `Required top-level fields:`,
+    `  schema_version  → "ORCHESTRATION_PLAN_V1"`,
+    `  task_id         → "${task.task_id}"`,
+    `  plan_id         → a new UUID string`,
+    `  agent_id        → "TCS-OAFR-001"`,
+    `  era             → "21.3"`,
+    `  intent          → copy the intent string`,
+    `  constraints     → {"max_risk_level":"low"}`,
+    `  steps           → array of step objects (see format below)`,
+    ``,
+    `Each step object MUST have ALL of these fields:`,
+    `  step_id       → unique string e.g. "step_1"`,
+    `  sequence      → integer starting at 1, increments by 1 for each step`,
+    `  capability_id → copy EXACTLY one capability_id from the list above`,
+    `  depends_on    → [] for first step; ["step_1"] if step depends on step_1`,
+    `  input         → {} or an object with relevant parameters`,
+    ``,
+    `Example of a single-step plan:`,
+    `{"schema_version":"ORCHESTRATION_PLAN_V1","task_id":"${task.task_id}","plan_id":"00000000-0000-0000-0000-000000000001","agent_id":"TCS-OAFR-001","era":"21.3","intent":"example","constraints":{"max_risk_level":"low"},"steps":[{"step_id":"step_1","sequence":1,"capability_id":"tcs.network.query","depends_on":[],"input":{}}]}`,
   ].join('\n');
 }
 
@@ -466,25 +495,28 @@ function _buildRevisionUserMessage(task, availableCaps, networkKnowledge, previo
     .map(f => `  • [${f.code}] ${f.message || f.detail || JSON.stringify(f)}`)
     .join('\n');
 
+  const capSummary = (availableCaps || [])
+    .filter(c => c.uim_exposable && c.status === 'live' && c.uim_operations_enabled !== false)
+    .map((c, i) => `  ${i + 1}. capability_id="${c.capability_id || c.id}" risk=${c.risk_level || 'low'}`)
+    .join('\n');
+
   return [
     `# Plan Revision Required`,
     ``,
-    `The previous plan was INVALID. Validator findings:`,
+    `The previous plan was INVALID. You must fix ALL of the following validator findings:`,
     findingsText || '  (no specific findings)',
     ``,
-    `# Previous Plan`,
+    `# Previous Plan (DO NOT copy — produce a corrected version)`,
     JSON.stringify(previousPlan, null, 2),
     ``,
-    `# Available Capabilities`,
-    (availableCaps || [])
-      .filter(c => c.uim_exposable && c.status === 'live' && c.uim_operations_enabled !== false)
-      .map(c => `  • ${c.id} [${c.risk_level || 'low'}]`)
-      .join('\n') || '  (none)',
+    `# Available Capabilities (use capability_id values EXACTLY as shown)`,
+    capSummary || '  (none)',
     ``,
-    `# Instruction`,
-    `Fix ALL validation findings. Output ONLY valid ORCHESTRATION_PLAN_V1 JSON. No commentary.`,
-    `Use only capabilities listed above. Use step_id, capability_id, depends_on, input for each step.`,
+    `# Output Instructions`,
+    `Output ONLY a valid JSON object — no prose, no markdown fences, no commentary.`,
+    `Each step MUST include: step_id, sequence (integer ≥ 1), capability_id (exact match), depends_on (array), input (object).`,
     `Set agent_id to "TCS-OAFR-001", era to "21.3", constraints.max_risk_level to "low".`,
+    `Keep task_id as "${task.task_id}".`,
   ].join('\n');
 }
 

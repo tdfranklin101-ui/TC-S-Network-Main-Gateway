@@ -1,0 +1,81 @@
+RUNPOD OAFR IS NOW HEALTHY — RUN LIVE ERA 21.3 VERIFICATION
+
+The RunPod endpoint has now successfully initialized openai/gpt-oss-120b.
+
+Verified from RunPod logs:
+
+* MAX_MODEL_LEN=8192
+* model weights loaded 15/15
+* model memory approximately 65.52 GiB
+* available KV cache approximately 8.3 GiB
+* vLLM engine initialized successfully
+* fitness checks passed
+* OpenAI serving engines initialized successfully
+* endpoint subsequently scaled down normally after completing queued work
+
+Do not modify RunPod configuration.
+Do not modify the model.
+Do not deploy production.
+Do not enable physical execution.
+
+PHASE 1 — LIVE HEALTH TEST
+
+Using the existing Era 21.3 RunPodFrontierClient, perform one live health/model request against the configured RunPod OpenAI-compatible endpoint.
+
+Confirm:
+
+1. endpoint reachable
+2. actual served model identity
+3. valid OpenAI-compatible response
+4. latency including cold-start separately from inference latency where measurable
+5. no API key or credential appears in model context or logs
+
+If PASS, continue.
+
+PHASE 2 — LIVE REPLICATOR_TEST_001
+
+Run REPLICATOR_TEST_001 using:
+
+model_mode: "live"
+
+Intent:
+
+“Determine the current TC-S Solar Standard and identify which available capabilities could be used to inspect Solar balances and marketplace activity. Produce a valid execution plan. Do not execute value movement or physical actions.”
+
+Require the live gpt-oss-120b model to:
+
+* retrieve current Network knowledge
+* discover actual UIM capabilities
+* produce structured ORCHESTRATION_PLAN_V1
+* use only discovered capability IDs
+* submit the plan to /api/uim/plan/validate
+* make zero mutations unless the deterministic validator explicitly returns VALID for a read-only action
+
+Capture an inference receipt.
+
+IMPORTANT: the previous mock test showed QUERY_NETWORK was not authorized for TCS-OAFR-001 and required networkId. Do not weaken policy to make the test pass. Let the live model see the validator findings and exercise the Era 21.3 plan-revision loop. Determine whether it can revise its plan into a valid authorized read-only plan using the existing capability contracts.
+
+PHASE 3 — REPORT ONLY
+
+Return:
+
+* RunPod health PASS/FAIL
+* served model
+* cold-start time
+* inference time
+* input/output tokens
+* live frontier response summary
+* first plan
+* validator result
+* any revised plan(s)
+* final validator result
+* capabilities selected
+* steps executed
+* mutations performed
+* inference receipt ID
+* workflow/task IDs
+* estimated RunPod compute time/cost where deterministically available
+* confirmation that physical execution remains blocked
+
+Do not make architectural changes simply to obtain a passing result.
+Do not merge or deploy.
