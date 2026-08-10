@@ -3869,7 +3869,7 @@ const server = http.createServer(async (req, res) => {
     }
     try {
       if (!body) body = await parseBody(req).catch(() => ({}));
-      const { intent, requested_outcome, model_mode, limits, principal_id, network_id } = body || {};
+      const { intent, requested_outcome, model_mode, mock_mode, limits, principal_id, network_id } = body || {};
       if (!intent) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'intent is required' }));
@@ -3878,11 +3878,15 @@ const server = http.createServer(async (req, res) => {
       const { RunPodFrontierClient, MockFrontierClient } = require('./server/orchestrator/frontier-client');
       const { TCSFrontierOrchestrator } = require('./server/orchestrator/tcs-frontier-orchestrator');
       // Select frontier client based on model_mode param
+      // 'live' or 'real' (or omitted) → RunPodFrontierClient
+      // 'mock' → MockFrontierClient with mode from mock_mode param (default: valid_plan)
+      // 'mock_<mode>' → MockFrontierClient with <mode>
       let client;
-      if (!model_mode || model_mode === 'real') {
+      if (!model_mode || model_mode === 'live' || model_mode === 'real') {
         client = new RunPodFrontierClient();
       } else {
-        const mockMode = model_mode.startsWith('mock_') ? model_mode.slice(5) : (model_mode === 'mock' ? 'valid_plan' : model_mode);
+        const mockMode = model_mode.startsWith('mock_') ? model_mode.slice(5)
+                       : (mock_mode || (model_mode === 'mock' ? 'valid_plan' : model_mode));
         client = new MockFrontierClient({ mode: mockMode });
       }
       const orch   = new TCSFrontierOrchestrator({ frontierClient: client, pool, limits: limits || {} });

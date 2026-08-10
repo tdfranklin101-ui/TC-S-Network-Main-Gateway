@@ -91,11 +91,13 @@ class RunPodFrontierClient extends FrontierClient {
    */
   constructor(config = {}) {
     super();
-    this.apiKey     = config.apiKey     || process.env.RUNPOD_API_KEY                    || null;
-    this.endpointId = config.endpointId || process.env.RUNPOD_ORCHESTRATOR_ENDPOINT_ID   || null;
-    this.baseUrl    = config.baseUrl    || process.env.RUNPOD_ORCHESTRATOR_BASE_URL       || null;
-    this.model      = config.model      || process.env.RUNPOD_ORCHESTRATOR_MODEL          || 'gpt-oss-120b';
-    this.timeoutMs  = config.timeoutMs  || 60000;
+    // Use `'key' in config` so explicit null overrides the env (needed for tests).
+    this.apiKey     = ('apiKey'     in config) ? config.apiKey     : (process.env.RUNPOD_API_KEY                  || null);
+    this.endpointId = ('endpointId' in config) ? config.endpointId : (process.env.RUNPOD_ORCHESTRATOR_ENDPOINT_ID || null);
+    this.baseUrl    = ('baseUrl'    in config) ? config.baseUrl    : (process.env.RUNPOD_ORCHESTRATOR_BASE_URL    || null);
+    this.model      = ('model'      in config) ? config.model      : (process.env.RUNPOD_ORCHESTRATOR_MODEL       || 'gpt-oss-120b');
+    // Default 300s — 120B model cold-start on RunPod can take 3–5 min to load weights
+    this.timeoutMs  = config.timeoutMs  || 300000;
 
     // Build the completions URL
     if (this.baseUrl) {
