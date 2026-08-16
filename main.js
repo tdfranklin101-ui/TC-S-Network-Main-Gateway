@@ -20891,13 +20891,9 @@ Object.entries(secretChecks).forEach(([k, v]) => {
   console.log(`  ${k.padEnd(25)} ${v ? '✅ SET' : '❌ MISSING'}`);
 });
 
-console.log(`\n[SERVICES]`);
-console.log(`  Database:      ${process.env.DATABASE_URL ? 'PostgreSQL Connected ✅' : 'NOT CONFIGURED ❌'}`);
-console.log(`  OpenAI:        ${process.env.OPENAI_API_KEY ? 'GPT-5.5 / Transcribe / TTS ✅' : 'Unavailable ❌'}`);
-console.log(`  D-ID:          ${process.env.DID_API_KEY ? 'Kid Solar Agent ✅' : 'Unavailable ❌'}`);
-console.log(`  Pika:          ${process.env.PIKA_API_KEY ? 'Video Generation ✅' : 'Unavailable ❌'}`);
-console.log(`  EIA:           ${process.env.EIA_API_KEY ? 'Energy Data API ✅' : 'Unavailable ❌'}`);
-console.log(`  Stripe:        ${process.env.STRIPE_SECRET_KEY ? 'Payment Processing ✅' : 'Unavailable ❌'}`);
+// [SERVICES] block removed — service availability is already covered by
+// the [SECRETS AUDIT] section above, which logs SET/MISSING without
+// referencing service names alongside secret-like variable names.
 
 const publicDir = path.join(__dirname, 'public');
 const criticalPages = ['index.html', 'marketplace.html', 'ecosystem-test.html', 'ecosystem-analysis.html'];
