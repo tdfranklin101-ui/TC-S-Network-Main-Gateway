@@ -6,6 +6,11 @@ const fs = require('fs');
 const path = require('path');
 const SAiUIM = require('./services/SAiUIMLayer');
 const { handleAuthBridge, sendSolarPassportEmail, verifyToken: verifyBridgeToken } = require('./server/auth-bridge');
+// ERA 22.1 — Frontier Orchestration with Frontier Diversification
+// (OpenAI orchestrates, Gemini 3 engineers/sees inside ArmOS, RunPod ON_HOLD)
+const armosAdapter = require('./server/replicator/armos-adapter');
+const frontierOrchestrator = require('./server/replicator/frontier-orchestrator');
+const modelRouter = require('./server/replicator/model-router');
 
 // Persist the SAi UIM Ethical Layer's flat artifact_record_patch onto the artifacts row.
 // Stored under the existing lifelens_analysis jsonb column at key `uim` (rather than
@@ -3871,6 +3876,63 @@ const server = http.createServer(async (req, res) => {
     }
   }
   
+  // ═══════════════════════════════════════════════════════════════════════
+  // ERA 22.1 — TC-S REPLICATOR ORCHESTRATION API
+  // Marketplace → OpenAI Frontier Orchestrator → ArmOS Replicator → Gemini 3
+  // ═══════════════════════════════════════════════════════════════════════
+  if (pathname.startsWith('/api/replicator/')) {
+    const jsonOut = (code, obj) => { res.writeHead(code, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(obj)); };
+    try {
+      if (pathname === '/api/replicator/capabilities' && req.method === 'GET') {
+        return jsonOut(200, { ...(await armosAdapter.getCapabilities()), model_router: { runpod_status: modelRouter.RUNPOD_STATUS, open_weight_inference_enabled: modelRouter.OPEN_WEIGHT_INFERENCE_ENABLED, providers: modelRouter.PROVIDERS } });
+      }
+      if (pathname === '/api/replicator/nodes' && req.method === 'GET') {
+        return jsonOut(200, await armosAdapter.getNodes());
+      }
+      if (pathname === '/api/replicator/mission' && req.method === 'POST') {
+        const body = await parseBody(req) || {};
+        const intent = String(body.intent || '').trim().replace(/[<>]/g, '').slice(0, 300);
+        if (intent.length < 3) return jsonOut(400, { error: 'Provide a mission intent, e.g. "Build a table".' });
+        const requestedNode = body.node_id && armosAdapter.NODES.find(n => n.node_id === body.node_id) ? body.node_id : null;
+        const mission = armosAdapter.createMissionRecord(intent);
+        jsonOut(202, { mission_id: mission.mission_id, status: mission.status });
+        // Orchestrate asynchronously; client polls GET /api/replicator/mission/:id
+        frontierOrchestrator.orchestrateMission(mission, requestedNode).catch(err => {
+          console.error(`[REPLICATOR] Mission ${mission.mission_id} orchestration failed:`, err.message);
+          mission.status = 'ORCHESTRATION_FAILED';
+          mission.error = err.message;
+          mission.timeline.push({ stage: 'ORCHESTRATION_FAILED', at: new Date().toISOString() });
+        });
+        return;
+      }
+      const missionMatch = pathname.match(/^\/api\/replicator\/mission\/(TCSM-[A-F0-9]+)(\/(capsule|approve|cancel|status|result))?$/);
+      if (missionMatch) {
+        const mission = armosAdapter.getMission(missionMatch[1]);
+        if (!mission) return jsonOut(404, { error: 'Unknown mission.' });
+        const sub = missionMatch[3];
+        if (!sub && req.method === 'GET') {
+          // Live-refresh execution state before returning the record.
+          if (mission.status === 'EXECUTING' || mission.status === 'REPLICATION_COMPLETE') await armosAdapter.getMissionStatus(mission.mission_id);
+          const { engineering, ...safe } = mission;
+          return jsonOut(200, safe);
+        }
+        if (sub === 'capsule' && req.method === 'GET') {
+          if (!mission.capsule) return jsonOut(404, { error: 'No capsule yet.' });
+          res.writeHead(200, { 'Content-Type': 'application/json', 'Content-Disposition': `attachment; filename="${mission.mission_id}-creation-capsule.json"` });
+          return res.end(JSON.stringify(mission.capsule, null, 2));
+        }
+        if (sub === 'status' && req.method === 'GET') return jsonOut(200, await armosAdapter.getMissionStatus(mission.mission_id));
+        if (sub === 'result' && req.method === 'GET') return jsonOut(200, await armosAdapter.getMissionResult(mission.mission_id));
+        if (sub === 'approve' && req.method === 'POST') return jsonOut(200, await armosAdapter.executeMission(mission.mission_id));
+        if (sub === 'cancel' && req.method === 'POST') { armosAdapter.cancelMission(mission.mission_id); return jsonOut(200, { mission_id: mission.mission_id, status: 'CANCELLED' }); }
+      }
+      return jsonOut(404, { error: 'Unknown replicator endpoint.' });
+    } catch (error) {
+      console.error('[REPLICATOR] API error:', error.message);
+      return jsonOut(error.message.includes('Unknown mission') ? 404 : 500, { error: error.message });
+    }
+  }
+
   // D-ID Agent API Endpoints for Kid Solar Avatar
   if (pathname === '/api/did/create-stream' && req.method === 'POST') {
     try {

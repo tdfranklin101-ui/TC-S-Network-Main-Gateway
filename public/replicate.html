@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>REPLICATE THIS — Agentic Fabrication Mission | TC-S Network</title>
+<meta name="description" content="Era 22.1 Frontier Orchestration demonstration: TC-S Marketplace → OpenAI Frontier Orchestrator → ArmOS Replicator → Gemini 3 → Creation Capsule → Provenance.">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:linear-gradient(160deg,#02040a 0%,#050b18 55%,#03101c 100%);color:#f1f5f9;min-height:100vh}
+a{color:#38bdf8}
+.wrap{max-width:980px;margin:0 auto;padding:2rem 1.25rem 4rem}
+.topnav{display:flex;justify-content:space-between;align-items:center;padding:.4rem 0 1.4rem;font-size:.9rem}
+.topnav a{text-decoration:none;color:#94a3b8}
+.topnav a:hover{color:#38bdf8}
+.era{display:inline-block;font-size:.7rem;letter-spacing:.18em;color:#5eead4;border:1px solid rgba(94,234,212,.35);border-radius:999px;padding:.3rem .9rem;margin-bottom:1rem}
+h1{font-size:clamp(2rem,5vw,3rem);letter-spacing:.04em}
+.sub{color:#7dd3fc;font-weight:600;margin:.4rem 0 1rem;letter-spacing:.08em;text-transform:uppercase;font-size:.95rem}
+.desc{color:#cbd5e1;line-height:1.65;max-width:760px}
+.panel{background:rgba(10,18,36,.75);border:1px solid rgba(56,189,248,.18);border-radius:16px;padding:1.5rem;margin-top:1.5rem}
+.panel h2{font-size:1rem;letter-spacing:.14em;color:#7dd3fc;margin-bottom:1rem}
+.intent-row{display:flex;gap:.75rem;flex-wrap:wrap}
+#intent{flex:1;min-width:240px;background:#060d1d;border:1px solid rgba(148,163,184,.3);border-radius:10px;color:#f1f5f9;padding:.9rem 1rem;font-size:1rem}
+#nodeSel{background:#060d1d;border:1px solid rgba(148,163,184,.3);border-radius:10px;color:#f1f5f9;padding:.9rem .7rem}
+button{cursor:pointer;border:none;border-radius:10px;font-weight:700;font-size:.95rem;padding:.9rem 1.6rem;letter-spacing:.06em}
+.btn-rep{background:linear-gradient(90deg,#0ea5e9,#22d3ee);color:#03121f}
+.btn-rep:disabled{opacity:.45;cursor:not-allowed}
+.btn-approve{background:linear-gradient(90deg,#16a34a,#4ade80);color:#03210d}
+.btn-cancel{background:rgba(248,113,113,.15);color:#fca5a5;border:1px solid rgba(248,113,113,.4)}
+.btn-ghost{background:rgba(56,189,248,.12);color:#7dd3fc;border:1px solid rgba(56,189,248,.35)}
+.chips{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.9rem}
+.chip{background:rgba(56,189,248,.08);border:1px solid rgba(56,189,248,.25);color:#a5d8f5;border-radius:999px;padding:.35rem .9rem;font-size:.82rem;cursor:pointer}
+.chip:hover{background:rgba(56,189,248,.2)}
+.flow{display:flex;flex-direction:column;gap:.35rem;font-family:'SF Mono',Consolas,monospace;font-size:.85rem}
+.stage{display:flex;align-items:center;gap:.7rem;padding:.45rem .8rem;border-radius:8px;color:#64748b;border:1px solid transparent}
+.stage .dot{width:10px;height:10px;border-radius:50%;background:#1e293b;flex-shrink:0}
+.stage.done{color:#5eead4}.stage.done .dot{background:#2dd4bf}
+.stage.active{color:#fbbf24;border-color:rgba(251,191,36,.35);background:rgba(251,191,36,.06)}
+.stage.active .dot{background:#fbbf24;animation:pulse 1.1s infinite alternate}
+@keyframes pulse{from{opacity:.4}to{opacity:1}}
+.hidden{display:none}
+.gate{border-color:rgba(251,191,36,.45)}
+.gate h2{color:#fbbf24}
+.gate .actions{display:flex;gap:.8rem;margin-top:1rem;flex-wrap:wrap}
+.kv{display:grid;grid-template-columns:minmax(140px,max-content) 1fr;gap:.35rem .9rem;font-size:.88rem}
+.kv dt{color:#64748b}.kv dd{color:#e2e8f0;word-break:break-all}
+details{margin-top:1rem}
+summary{cursor:pointer;color:#7dd3fc;letter-spacing:.1em;font-size:.9rem;padding:.5rem 0}
+pre{background:#040910;border:1px solid rgba(56,189,248,.15);border-radius:10px;padding:1rem;overflow:auto;font-size:.78rem;max-height:420px;color:#a5f3fc}
+.routing{display:grid;gap:.9rem;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.rcard{background:#060d1d;border:1px solid rgba(148,163,184,.18);border-radius:12px;padding:1rem}
+.rcard .prov{font-weight:800;font-size:1.05rem}
+.rcard .role{color:#94a3b8;font-size:.82rem;margin-top:.3rem;line-height:1.4}
+.rcard .tag{display:inline-block;margin-top:.5rem;font-size:.7rem;letter-spacing:.12em;padding:.2rem .6rem;border-radius:999px}
+.tag.active{background:rgba(45,212,191,.15);color:#5eead4}
+.tag.hold{background:rgba(251,191,36,.13);color:#fbbf24}
+.status-line{font-family:'SF Mono',Consolas,monospace;font-size:.85rem;color:#fbbf24;margin-top:1rem;min-height:1.2em}
+.err{color:#fca5a5}
+.cloudnine{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.parts-table{width:100%;border-collapse:collapse;font-size:.8rem;margin-top:.6rem}
+.parts-table th,.parts-table td{text-align:left;padding:.4rem .6rem;border-bottom:1px solid rgba(148,163,184,.12)}
+.parts-table th{color:#64748b;font-weight:600}
+.parts-table td{color:#cbd5e1}.mono{font-family:'SF Mono',Consolas,monospace;font-size:.72rem;color:#7dd3fc}
+.receipt{border-color:rgba(45,212,191,.4)}.receipt h2{color:#5eead4}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="topnav">
+    <a href="/">← TC-S Network</a>
+    <a href="/marketplace.html">Marketplace</a>
+  </nav>
+
+  <span class="era">ERA 22.1 — FRONTIER ORCHESTRATION WITH FRONTIER DIVERSIFICATION</span>
+  <h1>REPLICATE THIS</h1>
+  <div class="sub">Agentic Fabrication Mission</div>
+  <p class="desc">Describe something. The TC-S Network will engineer it, select a compatible replication node, create its manufacturing contract, fabricate its components, rediscover them through machine perception, assemble the object, inspect the result, and return its provenance.</p>
+
+  <div class="panel">
+    <h2>MISSION INTENT</h2>
+    <div class="intent-row">
+      <input id="intent" placeholder="Build a large six-legged red table…" maxlength="300" data-testid="input-intent">
+      <select id="nodeSel" data-testid="select-node">
+        <option value="">Node: Auto-route</option>
+        <option value="RP-0001">RP-0001 · single-arm</option>
+        <option value="RP-0002">RP-0002 · micro-precision</option>
+        <option value="RP-0003">RP-0003 · dual-arm large</option>
+      </select>
+      <button class="btn-rep" id="btnReplicate" data-testid="button-replicate">REPLICATE</button>
+    </div>
+    <div class="chips" id="chips"></div>
+    <div class="status-line" id="statusLine"></div>
+  </div>
+
+  <div class="panel hidden" id="flowPanel">
+    <h2>EXECUTION FLOW — AUTHORITATIVE ARMOS STATE</h2>
+    <div class="flow" id="flow"></div>
+  </div>
+
+  <div class="panel gate hidden" id="gatePanel">
+    <h2>⏸ WAITING_APPROVAL — HUMAN-IN-THE-LOOP GOVERNANCE</h2>
+    <p class="desc" id="gateSummary"></p>
+    <div class="actions">
+      <button class="btn-approve" id="btnApprove" data-testid="button-approve">APPROVE REPLICATION</button>
+      <button class="btn-cancel" id="btnCancel" data-testid="button-cancel">CANCEL</button>
+    </div>
+  </div>
+
+  <div class="panel hidden" id="capsulePanel">
+    <h2>CREATION CAPSULE — UIM/REPLICATOR PROTOCOL ARTIFACT</h2>
+    <dl class="kv" id="capsuleKv"></dl>
+    <div id="partsWrap"></div>
+    <details><summary>FULL CAPSULE JSON</summary><pre id="capsuleJson"></pre></details>
+    <div style="margin-top:1rem"><button class="btn-ghost" id="btnDownload" data-testid="button-download-capsule">DOWNLOAD JSON</button></div>
+  </div>
+
+  <div class="panel receipt hidden" id="resultPanel">
+    <h2>✅ REPLICATION COMPLETE — PROVENANCE RECEIPT</h2>
+    <dl class="kv" id="resultKv"></dl>
+    <details><summary>FULL PROVENANCE JSON</summary><pre id="resultJson"></pre></details>
+  </div>
+
+  <div class="panel">
+    <details id="routingDetails">
+      <summary>INFERENCE ROUTING</summary>
+      <div class="routing" style="margin-top:1rem">
+        <div class="rcard"><div class="prov">OpenAI</div><div class="role">NETWORK ORCHESTRATION<br>Intent / Planning / Capability Routing</div><span class="tag active">ACTIVE</span></div>
+        <div class="rcard"><div class="prov">Gemini 3</div><div class="role">MANUFACTURING INTELLIGENCE<br>Engineering / Manufacturing</div><span class="tag active">ACTIVE · ARMOS</span></div>
+        <div class="rcard"><div class="prov">Gemini 3</div><div class="role">VISION INTELLIGENCE<br>Perception / Inspection</div><span class="tag active">ACTIVE · ARMOS</span></div>
+        <div class="rcard"><div class="prov">RunPod</div><div class="role">OPEN-WEIGHT COMPUTE<br>gpt-oss-120b / future Nemotron routing</div><span class="tag hold">ON HOLD</span></div>
+      </div>
+      <p class="desc" style="font-size:.82rem;margin-top:1rem;color:#64748b">The TC-S Network does not belong to one AI model. OpenAI orchestrates. Gemini engineers and sees. Open-weight inference returns as an additional routing option after this execution loop is verified. UIM provides the common capability language; the Creation Capsule defines execution; provenance records what happened.</p>
+    </details>
+  </div>
+
+  <div class="panel cloudnine">
+    <div>
+      <h2>CLOUD NINE DEMONSTRATION</h2>
+      <p class="desc" style="font-size:.9rem">The system-scale Replicator example: an autonomous drone swarm assembling Cloud Nine habitat panels on the live ArmOS digital-twin display.</p>
+    </div>
+    <a href="https://suspicious-pristine-struct.replit.app/cloudnine" target="_blank" rel="noopener"><button class="btn-ghost" data-testid="button-cloud-nine">OPEN CLOUD NINE →</button></a>
+  </div>
+</div>
+
+<script>
+(function(){
+  const EXAMPLES=["Build a table.","Build a large six-legged red table.","Build a stool.","Build a simple storage rack.","Build a geodesic structure."];
+  const STAGES=["MARKETPLACE ORDER","MISSION INTENT","OPENAI FRONTIER ORCHESTRATOR","CAPABILITY DISCOVERY","NODE DISCOVERY","ENGINEERING REQUEST (ARMOS + GEMINI 3)","CREATION CAPSULE","WAITING_APPROVAL","APPROVED","FABRICATION","SCRAMBLE","PERCEPTION","ASSEMBLY","INSPECTION","REPLICATION_COMPLETE"];
+  const $=id=>document.getElementById(id);
+  let missionId=null, pollTimer=null, mission=null;
+
+  const chipsEl=$('chips');
+  EXAMPLES.forEach(t=>{const c=document.createElement('span');c.className='chip';c.textContent=t;c.onclick=()=>{$('intent').value=t;};chipsEl.appendChild(c);});
+
+  function setStatus(msg,isErr){const el=$('statusLine');el.textContent=msg||'';el.className='status-line'+(isErr?' err':'');}
+
+  function renderFlow(timeline,status){
+    $('flowPanel').classList.remove('hidden');
+    const done=new Set(timeline.map(t=>t.stage.replace(/ \(RP-\d+\)$/,'')));
+    const routeEvents=timeline.filter(t=>t.stage.startsWith('ROUTE_REQUIRED'));
+    const flow=$('flow');flow.innerHTML='';
+    let activeShown=false;
+    STAGES.forEach(s=>{
+      const isDone=done.has(s)||[...done].some(d=>d.startsWith(s));
+      const div=document.createElement('div');
+      let cls='stage';
+      if(isDone)cls+=' done';
+      else if(!activeShown&&(status==='ORCHESTRATING'||status==='EXECUTING')){cls+=' active';activeShown=true;}
+      div.className=cls;
+      div.innerHTML='<span class="dot"></span>'+s;
+      flow.appendChild(div);
+      if(s==='NODE DISCOVERY'&&routeEvents.length){routeEvents.forEach(r=>{const rd=document.createElement('div');rd.className='stage done';rd.style.color='#fbbf24';rd.innerHTML='<span class="dot" style="background:#fbbf24"></span>'+r.stage+' → discovering alternative node';flow.appendChild(rd);});}
+    });
+  }
+
+  function renderCapsule(c){
+    if(!c)return;$('capsulePanel').classList.remove('hidden');
+    const kv=$('capsuleKv');
+    const rows=[["Mission ID",c.mission_id],["Object",c.object_name],["Node",c.node.node_id+" · "+c.node.class+(c.node.dual_arm?" · DUAL-ARM":"")],["Node capabilities",c.node.capabilities.join(", ")],["Parts",c.totals.parts],["Fabrication est.",c.totals.fabrication_estimate_s+" s"],["Material est.",c.totals.material_estimate_kg+" kg"],["Energy est.",c.totals.energy_estimate_wh+" Wh"],["Scramble seed",c.scramble_seed],["Capsule hash",c.provenance.capsule_hash],["Specialist model",c.provenance.specialist_model],["Execution mode",c.execution_mode]];
+    kv.innerHTML=rows.map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join('');
+    $('partsWrap').innerHTML='<table class="parts-table"><tr><th>Part</th><th>Label</th><th>Connector</th><th>Tolerance</th><th>Geometry hash</th><th>Machine code</th></tr>'+c.parts.map(p=>`<tr><td>${p.part_id}</td><td>${p.label} (${p.color})</td><td>${p.connector}</td><td>±${p.tolerance_mm}mm</td><td class="mono">${p.geometry_hash.slice(0,16)}…</td><td class="mono">${p.machine_code_ref}</td></tr>`).join('')+'</table>';
+    $('capsuleJson').textContent=JSON.stringify(c,null,2);
+  }
+
+  function renderResult(r){
+    if(!r)return;$('resultPanel').classList.remove('hidden');
+    const rows=[["Mission",r.mission_id],["Inspection",r.inspection.verdict+" · "+r.inspection.parts_inspected+" parts · "+r.inspection.critical_defects+" critical defects"],["Perception",r.perception.parts_rediscovered+" parts rediscovered after scramble (seed "+r.perception.scramble_seed+")"],["Dual-arm used",r.dual_arm_used?"YES":"no"],["Node",r.provenance.node_id],["Completed",r.provenance.completed_at],["Open-weight compute","RunPod · "+r.provenance.open_weight_compute.status+" · "+r.provenance.open_weight_compute.requests_routed+" requests routed"]];
+    $('resultKv').innerHTML=rows.map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join('');
+    $('resultJson').textContent=JSON.stringify(r,null,2);
+  }
+
+  async function poll(){
+    if(!missionId)return;
+    try{
+      const r=await fetch('/api/replicator/mission/'+missionId);
+      if(!r.ok)throw new Error('mission fetch failed');
+      mission=await r.json();
+      renderFlow(mission.timeline,mission.status);
+      renderCapsule(mission.capsule);
+      if(mission.status==='WAITING_APPROVAL'){
+        $('gatePanel').classList.remove('hidden');
+        $('gateSummary').textContent=mission.orchestrator_summary||('The orchestrator engineered "'+(mission.capsule?mission.capsule.object_name:mission.intent)+'" and locked node '+(mission.capsule?mission.capsule.node.node_id:'—')+'. Approve to begin simulated fabrication.');
+        setStatus('Mission '+missionId+' — WAITING_APPROVAL');
+        return; // stop polling until user acts
+      }
+      if(mission.status==='REPLICATION_COMPLETE'){
+        const res=await fetch('/api/replicator/mission/'+missionId+'/result').then(x=>x.json());
+        renderResult(res.result);
+        setStatus('Mission '+missionId+' — REPLICATION COMPLETE · MARKETPLACE ORDER COMPLETE');
+        return;
+      }
+      if(mission.status==='ORCHESTRATION_FAILED'||mission.status==='ORCHESTRATION_INCOMPLETE'){
+        setStatus('Orchestration failed: '+(mission.error||'incomplete — see timeline'),true);return;
+      }
+      if(mission.status==='CANCELLED'){setStatus('Mission cancelled.');return;}
+      setStatus('Mission '+missionId+' — '+mission.status+'…');
+      pollTimer=setTimeout(poll,2000);
+    }catch(e){setStatus('Status error: '+e.message,true);pollTimer=setTimeout(poll,4000);}
+  }
+
+  $('btnReplicate').onclick=async()=>{
+    const intent=$('intent').value.trim();
+    if(intent.length<3){setStatus('Describe what to replicate first.',true);return;}
+    clearTimeout(pollTimer);
+    ['gatePanel','capsulePanel','resultPanel'].forEach(id=>$(id).classList.add('hidden'));
+    $('btnReplicate').disabled=true;setStatus('Submitting marketplace order…');
+    try{
+      const body={intent};const node=$('nodeSel').value;if(node)body.node_id=node;
+      const r=await fetch('/api/replicator/mission',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      const j=await r.json();
+      if(!r.ok)throw new Error(j.error||'request failed');
+      missionId=j.mission_id;
+      renderFlow([{stage:'MARKETPLACE ORDER'},{stage:'MISSION INTENT'}],'ORCHESTRATING');
+      poll();
+    }catch(e){setStatus(e.message,true);}
+    $('btnReplicate').disabled=false;
+  };
+
+  $('btnApprove').onclick=async()=>{
+    $('gatePanel').classList.add('hidden');setStatus('Approved — beginning simulated fabrication…');
+    try{await fetch('/api/replicator/mission/'+missionId+'/approve',{method:'POST'});poll();}
+    catch(e){setStatus(e.message,true);}
+  };
+  $('btnCancel').onclick=async()=>{
+    try{await fetch('/api/replicator/mission/'+missionId+'/cancel',{method:'POST'});$('gatePanel').classList.add('hidden');setStatus('Mission cancelled.');}
+    catch(e){setStatus(e.message,true);}
+  };
+  $('btnDownload').onclick=()=>{if(missionId)window.location='/api/replicator/mission/'+missionId+'/capsule';};
+})();
+</script>
+</body>
+</html>
