@@ -1,0 +1,794 @@
+ERA 22.1 — FRONTIER ORCHESTRATION + MARKETPLACE → ARMOS DEMONSTRATION
+
+Upgrade the existing TC-S Network / ArmOS Replicator implementation without removing or regressing any Era 22.0 functionality.
+
+PRIMARY OBJECTIVE
+
+Connect the TC-S Marketplace to the existing ArmOS Replicator endpoint through an OpenAI API orchestration layer.
+
+Current Replicator endpoint:
+
+https://suspicious-pristine-struct.replit.app/
+
+The demonstration must show:
+
+TC-S MARKETPLACE → OPENAI FRONTIER ORCHESTRATOR → ARMOS REPLICATOR → GEMINI 3 MANUFACTURING/VISION → CREATION CAPSULE → FABRICATION/ASSEMBLY → VERIFICATION → PROVENANCE RESULT → MARKETPLACE
+
+This is a demonstration of frontier orchestration with frontier diversification.
+
+OpenAI is the network-level reasoning/orchestration intelligence.
+
+Gemini 3 remains the specialized frontier intelligence already used by ArmOS for manufacturing and vision inference.
+
+Do NOT replace Gemini 3 inside ArmOS.
+
+
+
+1. PUT RUNPOD WORK ON HOLD
+
+The existing unpublished RunPod/open-weight inference work must NOT be deleted.
+
+Preserve all existing:
+
+● RunPod integration code
+
+● endpoint configuration
+
+● gpt-oss-120b integration
+
+● health checks
+
+● model routing logic
+
+● credentials/environment-variable hooks
+
+● inference adapters
+
+● REPLICATOR_TEST_001 work
+
+● Era 21.3 verification logic
+
+● future Nemotron/open-weight routing work
+
+But mark this entire execution path:
+
+RUNPOD_STATUS = "ON_HOLD"
+
+and:
+
+OPEN_WEIGHT_INFERENCE_ENABLED = false
+
+Do not route production/demo requests to RunPod.
+
+Add an architectural comment/documentation note:
+
+> RunPod/open-weight inference is intentionally retained but placed ON HOLD during Era 22.1. The TC-S model architecture remains inference-provider-independent. Open-weight inference will return as an additional routing option after the Marketplace → Orchestrator → Replicator execution loop is verified.
+
+No RunPod code should be destroyed.
+
+
+
+2. CURRENT FRONTIER ARCHITECTURE
+
+Implement/document the active architecture as:
+
+```text
+TC-S NETWORK
+      │
+      ▼
+OPENAI FRONTIER ORCHESTRATOR
+      │
+      │ UIM / capability request
+      ▼
+ARMOS REPLICATOR API
+      │
+      ├── Engineering
+      ├── Manufacturing reasoning
+      ├── Vision / perception
+      └── Assembly reasoning
+               │
+               ▼
+            GEMINI 3
+               │
+               ▼
+PHYSICAL / SIMULATED EXECUTION LAYER
+```
+
+This is deliberately NOT a single-model architecture.
+
+Label the architectural principle:
+
+FRONTIER ORCHESTRATION WITH FRONTIER DIVERSIFICATION
+
+OpenAI and Gemini are complementary inference resources.
+
+Neither should be hard-coded as the permanent exclusive intelligence of the TC-S Network.
+
+
+
+3. RESPONSIBILITY BOUNDARIES
+
+These boundaries are important.
+
+OpenAI
+
+OpenAI acts as the TC-S frontier orchestrator.
+
+Responsibilities:
+
+● understand marketplace/user intent
+
+● discover available capabilities
+
+● determine whether Replicator is appropriate
+
+● normalize mission intent
+
+● select/request an appropriate replication capability
+
+● initiate the ArmOS workflow
+
+● monitor mission state
+
+● interpret returned status
+
+● present results to the marketplace
+
+● coordinate approval requirements
+
+● coordinate future routing between inference providers
+
+OpenAI must NOT fabricate manufacturing results.
+
+It must never invent:
+
+● geometry hashes
+
+● fabrication completion
+
+● inspection results
+
+● tolerances achieved
+
+● machine-code references
+
+● part provenance
+
+● assembly success
+
+● Replication Complete status
+
+Those must originate from ArmOS/Replicator.
+
+Gemini 3 / ArmOS
+
+Gemini 3 remains ArmOS’s specialist intelligence for:
+
+● manufacturing inference
+
+● engineering interpretation where currently implemented
+
+● machine/part reasoning
+
+● visual perception
+
+● part identification
+
+● spatial reasoning
+
+● assembly assistance
+
+● inspection/vision analysis
+
+ArmOS remains authoritative for execution state.
+
+
+
+4. ARMOS AS A NETWORK CAPABILITY
+
+Treat ArmOS as a discoverable TC-S capability rather than hard-wiring application-specific behavior into the orchestrator.
+
+Create a capability descriptor similar to:
+
+```json
+{
+  "capability_id": "TC-S.REPLICATOR.ARMOS",
+  "name": "TC-S Replicator / ArmOS",
+  "type": "FABRICATION_ASSEMBLY",
+  "endpoint": "https://suspicious-pristine-struct.replit.app/",
+  "status": "AVAILABLE",
+  "execution_mode": "SIMULATION",
+  "specialist_inference": {
+    "provider": "GOOGLE",
+    "model_family": "GEMINI_3",
+    "roles": [
+      "MANUFACTURING",
+      "VISION",
+      "PERCEPTION",
+      "ASSEMBLY"
+    ]
+  },
+  "supports": [
+    "ENGINEER",
+    "CAPSULE",
+    "FABRICATE",
+    "PERCEIVE",
+    "ASSEMBLE",
+    "INSPECT",
+    "PROVENANCE"
+  ]
+}
+```
+
+Do not expose API secrets or credentials in this descriptor.
+
+
+
+5. ARMOS API ADAPTER
+
+Create a clean ArmOS adapter/service layer.
+
+The OpenAI orchestrator should communicate with this adapter rather than embedding ArmOS-specific HTTP calls throughout the application.
+
+Provide logical operations equivalent to:
+
+```text
+armos.getCapabilities()
+armos.getNodes()
+armos.engineerMission()
+armos.createCapsule()
+armos.executeMission()
+armos.getMissionStatus()
+armos.getMissionResult()
+```
+
+Map these onto existing ArmOS endpoints wherever they already exist.
+
+Do NOT unnecessarily rewrite working Era 22.0 functionality.
+
+If an API route is missing, create the smallest REST interface required to expose the existing function.
+
+
+
+6. OPENAI FRONTIER ORCHESTRATOR
+
+Use the current OpenAI API as the primary network orchestrator.
+
+Use the OpenAI Responses API/function-tool architecture.
+
+The orchestrator should receive a mission such as:
+
+> Build me a six-legged red table.
+
+It should reason about the intent and invoke the Replicator capability through structured tools.
+
+Provide tools corresponding to:
+
+```text
+discover_capabilities
+get_replicator_nodes
+engineer_replication_mission
+create_replication_capsule
+request_replication_execution
+get_replication_status
+get_replication_result
+```
+
+Tool results are authoritative.
+
+The LLM must not substitute generated prose for an actual tool result.
+
+
+
+7. MARKETPLACE DEMONSTRATION
+
+Create a marketplace demonstration item:
+
+REPLICATE THIS
+
+Subtitle:
+
+Agentic Fabrication Mission
+
+Description:
+
+> Describe something. The TC-S Network will engineer it, select a compatible replication node, create its manufacturing contract, fabricate its components, rediscover them through machine perception, assemble the object, inspect the result, and return its provenance.
+
+Provide:
+
+REPLICATE
+
+control/button.
+
+Allow natural-language intent.
+
+Example prompts:
+
+● Build a table.
+
+● Build a large six-legged red table.
+
+● Build a stool.
+
+● Build a simple storage rack.
+
+● Build a geodesic structure.
+
+Include a link/button for:
+
+CLOUD NINE DEMONSTRATION
+
+using the existing Cloud Nine use case.
+
+
+
+8. MARKETPLACE EXECUTION FLOW
+
+When REPLICATE is selected:
+
+```text
+MARKETPLACE ORDER
+       ↓
+MISSION INTENT
+       ↓
+OPENAI FRONTIER ORCHESTRATOR
+       ↓
+CAPABILITY DISCOVERY
+       ↓
+TC-S.REPLICATOR.ARMOS
+       ↓
+NODE DISCOVERY
+       ↓
+ENGINEERING REQUEST
+       ↓
+ARMOS + GEMINI 3
+       ↓
+CREATION CAPSULE
+       ↓
+WAITING_APPROVAL
+       ↓
+EXECUTE
+       ↓
+FABRICATION
+       ↓
+SCRAMBLE
+       ↓
+PERCEPTION
+       ↓
+ASSEMBLY
+       ↓
+INSPECTION
+       ↓
+REPLICATION COMPLETE
+       ↓
+PROVENANCE RECEIPT
+       ↓
+MARKETPLACE ORDER COMPLETE
+```
+
+Display this process visually.
+
+Do not fake stages based upon timers if authoritative ArmOS state is available.
+
+The Marketplace should reflect ArmOS’s actual returned mission state.
+
+
+
+9. APPROVAL GATE
+
+Retain human-in-the-loop governance.
+
+The OpenAI orchestrator may:
+
+● interpret
+
+● engineer
+
+● discover
+
+● recommend
+
+● create/request the capsule
+
+But actual execution should reach:
+
+WAITING_APPROVAL
+
+before fabrication begins.
+
+Provide:
+
+APPROVE REPLICATION
+
+and:
+
+CANCEL
+
+For the current demonstration, approval initiates simulated execution.
+
+This boundary should survive future physical-machine deployment.
+
+
+
+10. CREATION CAPSULE
+
+Preserve the complete Era 22.0 Creation Capsule.
+
+Marketplace should be able to display returned information including:
+
+● mission ID
+
+● object name
+
+● node
+
+● node capabilities
+
+● individual parts
+
+● dimensions
+
+● material
+
+● orientation
+
+● geometry hashes
+
+● grasp regions
+
+● fabrication estimates
+
+● material estimates
+
+● energy estimates
+
+● machine-code references
+
+● tolerances
+
+● assembly graph
+
+● success criteria
+
+● scramble seed
+
+● provenance
+
+● inspection result
+
+Continue supporting:
+
+DOWNLOAD JSON
+
+The Marketplace copy should reference the same authoritative capsule, not generate a second independent capsule.
+
+
+
+11. NODE ROUTING
+
+Preserve Era 22.0 behavior:
+
+RP-0001
+
+Compatible table mission:
+
+ACCEPTED
+
+RP-0002
+
+Incompatible mission:
+
+ROUTE_REQUIRED
+
+RP-0003
+
+Large-volume dual-arm:
+
+ACCEPTED
+
+with dual-arm capability recorded.
+
+Do not allow OpenAI to override an ArmOS compatibility rejection.
+
+Instead:
+
+```text
+ARMOS → ROUTE_REQUIRED
+          ↓
+OPENAI ORCHESTRATOR
+          ↓
+DISCOVER ALTERNATIVE NODE
+          ↓
+REQUEST NEW CAPSULE
+```
+
+This is the beginning of distributed manufacturing routing.
+
+
+
+12. FRONTIER DIVERSIFICATION TELEMETRY
+
+Add an expandable panel:
+
+INFERENCE ROUTING
+
+For each mission display something similar to:
+
+```text
+NETWORK ORCHESTRATION
+OpenAI
+Role: Intent / Planning / Capability Routing
+
+MANUFACTURING INTELLIGENCE
+Gemini 3
+Role: Engineering / Manufacturing
+
+VISION INTELLIGENCE
+Gemini 3
+Role: Perception / Inspection
+
+OPEN-WEIGHT COMPUTE
+RunPod
+Status: ON HOLD
+```
+
+Record provider/model-family usage as provenance metadata where appropriate.
+
+Never expose API keys, tokens, hidden prompts, reasoning traces, or credentials.
+
+
+
+13. MODEL-INDEPENDENT UIM PRINCIPLE
+
+Do not make the Creation Capsule dependent upon either OpenAI or Gemini.
+
+The capsule is a UIM/Replicator protocol artifact.
+
+Conceptually:
+
+```text
+MODEL
+  ↓
+UIM
+  ↓
+CREATION CAPSULE
+  ↓
+EXECUTION
+```
+
+not:
+
+```text
+OPENAI CAPSULE
+```
+
+or:
+
+```text
+GEMINI CAPSULE
+```
+
+This distinction is critical.
+
+Models provide inference.
+
+UIM defines capability.
+
+The Creation Capsule defines execution.
+
+The ledger/provenance system records what happened.
+
+
+
+14. FUTURE MODEL ROUTER
+
+Create the abstraction now, but do NOT activate RunPod.
+
+Desired future architecture:
+
+
+
+
+                TC-S ORCHESTRATOR
+
+                       │
+
+                 MODEL ROUTER
+
+                /      |      \
+
+               /       |       \
+
+          OPENAI    GEMINI    RUNPOD
+
+             \         |         /
+
+              \        |        /
+
+                    UIM
+
+                     │
+
+               CAPABILITIES
+
+                     │
+
+                REPLICATOR
+
+
+
+OPENAI = ACTIVE ORCHESTRATOR
+
+GEMINI_3 = ACTIVE ARMOS SPECIALIST
+
+RUNPOD = ON_HOLD
+
+
+
+The router should make later activation possible without rewriting the Replicator.
+
+
+15. GITHUB PREPARATION
+
+Prepare ArmOS/Replicator for GitHub synchronization.
+
+Do NOT expose secrets.
+
+Ensure .gitignore excludes:
+
+.env
+API keys
+credentials
+tokens
+generated secret files
+temporary fabrication output where inappropriate
+Add/update README documentation describing:
+
+TC-S Replicator / ArmOS
+
+and:
+
+Era 22.1 — Frontier Orchestration with Frontier Diversification
+
+Document:
+
+Era 22.0 replication chain
+OpenAI orchestration
+Gemini 3 manufacturing/vision specialization
+UIM abstraction
+Creation Capsule
+node routing
+provenance
+Cloud Nine
+RunPod ON HOLD
+future model-router architecture
+Create a release/tag-ready state for:
+
+era-22.0
+
+and current development:
+
+era-22.1-frontier-orchestration
+
+Do not overwrite or lose the verified Era 22.0 baseline.
+
+
+16. DEMONSTRATION SUCCESS CRITERIA
+
+The Era 22.1 implementation passes when this can be demonstrated end-to-end:
+
+TEST A
+
+Marketplace:
+
+Build a table
+
+
+Marketplace
+
+→ OpenAI
+
+→ ArmOS
+
+→ Gemini 3
+
+→ Creation Capsule
+
+→ WAITING_APPROVAL
+
+→ Approve
+
+→ RP-0001
+
+→ fabrication
+
+→ perception
+
+→ assembly
+
+→ inspection
+
+→ REPLICATION COMPLETE
+
+→ Marketplace fulfillment
+
+TEST B
+
+Request RP-0002.
+
+Expected:
+
+ROUTE_REQUIRED
+
+OpenAI must recognize the result and offer/request another compatible node.
+
+TEST C
+
+Request RP-0003.
+
+Expected:
+
+ACCEPTED
+
+Dual-arm capability appears in capsule/provenance.
+
+TEST D
+
+Cloud Nine demonstration remains operational and accessible as the system-scale Replicator example.
+
+TEST E
+
+No execution request reaches RunPod.
+
+RunPod remains visibly:
+
+ON_HOLD
+
+TEST F
+
+No API credential appears in:
+
+browser source
+client JavaScript
+logs returned to browser
+Creation Capsule
+provenance
+GitHub repository
+
+DO NOT REGRESS ERA 22.0
+
+Preserve all existing verified behavior:
+
+Creation Capsule
+fabrication lifecycle
+recorded scramble
+perception
+timeline
+provenance
+node locking
+capsule re-engineering by node
+input sanitization
+RP-0001
+RP-0002
+RP-0003
+Cloud Nine
+Build Era 22.1 on top of the verified Era 22.0 implementation.
+
+ARCHITECTURAL PRINCIPLE
+
+The resulting demonstration should make this visibly understandable:
+
+The TC-S Network does not belong to one AI model.
+
+OpenAI can orchestrate.
+
+Gemini can engineer and see.
+
+Later, open-weight models can perform additional network work.
+
+UIM provides the common capability language connecting them.
+
+The Replicator turns that intelligence into execution.
+
+Marketplace → Intelligence → UIM → Creation → Provenance
+

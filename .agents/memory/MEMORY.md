@@ -11,4 +11,5 @@
 - [Marketplace cold storage](marketplace-cold-storage.md) — gzip'd payloads behind `cold://` pointers in content_body; reads must try the verbatim (bucket-prefixed) object key first; fail loud on null.
 - [Deployment secrets don't auto-sync](deployment-secrets-sync.md) — new workspace secrets never reach the existing VM deploy; add in deployment secrets pane + republish. Also: bash background jobs freeze between tool calls.
 - [main.js is the prod router](mainjs-is-prod-router.md) — production runs raw-http main.js; routes mounted in Express server/routes.ts never run live. Wire endpoints into main.js dispatch.
+- [Era 22.1 ArmOS integration](era22-replicator-integration.md) — ArmOS is a remote app; only /api/engineer is live (retries needed, 504s on complex prompts); execution is labeled local simulation; approval race lesson.
 - [Solar Passport auth](solar-passport-auth.md) — two token systems: site session (tc_s_session) + passport HMAC (tcs_auth); /api/session exchanges passport→site session; every signup emails the passport artifact.
