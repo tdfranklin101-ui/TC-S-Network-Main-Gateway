@@ -31,6 +31,11 @@ button{cursor:pointer;border:none;border-radius:10px;font-weight:700;font-size:.
 .chips{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.9rem}
 .chip{background:rgba(56,189,248,.08);border:1px solid rgba(56,189,248,.25);color:#a5d8f5;border-radius:999px;padding:.35rem .9rem;font-size:.82rem;cursor:pointer}
 .chip:hover{background:rgba(56,189,248,.2)}
+.twin-tabs{display:flex;gap:.4rem;margin-bottom:.7rem}
+.twin-tab{font-family:'SF Mono',Consolas,monospace;font-size:.7rem;letter-spacing:.12em;padding:.4rem .9rem;border-radius:999px;cursor:pointer;background:transparent;color:#64748b;border:1px solid rgba(148,163,184,.2)}
+.twin-tab.active{background:rgba(56,189,248,.12);color:#7dd3fc;border-color:rgba(56,189,248,.4)}
+#armosFrame{width:100%;height:520px;border:0;display:block;background:#020617}
+@media(max-width:640px){#armosFrame{height:420px}}
 .twin-wrap{position:relative;background:radial-gradient(ellipse at 50% 70%,rgba(14,165,233,.08),transparent 65%),#030711;border:1px solid rgba(56,189,248,.15);border-radius:12px;overflow:hidden}
 #twin{width:100%;height:auto;display:block}
 .twin-stage{position:absolute;top:.7rem;left:.9rem;font-family:'SF Mono',Consolas,monospace;font-size:.78rem;letter-spacing:.14em;color:#fbbf24;text-shadow:0 0 12px rgba(251,191,36,.4)}
@@ -97,7 +102,14 @@ pre{background:#040910;border:1px solid rgba(56,189,248,.15);border-radius:10px;
 
   <div class="panel hidden" id="flowPanel">
     <h2>DIGITAL TWIN — LIVE EXECUTION</h2>
-    <div class="twin-wrap">
+    <div class="twin-tabs">
+      <button class="twin-tab active" id="tabArmos" data-testid="tab-armos">ARMOS APP — LIVE</button>
+      <button class="twin-tab" id="tabLocal" data-testid="tab-local">MISSION TWIN</button>
+    </div>
+    <div class="twin-wrap" id="armosWrap">
+      <iframe id="armosFrame" title="ArmOS Digital Twin Display" loading="lazy" allow="fullscreen"></iframe>
+    </div>
+    <div class="twin-wrap hidden" id="localWrap">
       <canvas id="twin" width="900" height="420"></canvas>
       <div class="twin-stage" id="twinStage"></div>
     </div>
@@ -303,8 +315,26 @@ pre{background:#040910;border:1px solid rgba(56,189,248,.15);border-radius:10px;
   }
   // ---------- /DIGITAL TWIN ----------
 
-  function renderFlow(timeline,status){
+  // ---------- ARMOS APP EMBED ----------
+  const ARMOS_APP_URL='https://suspicious-pristine-struct.replit.app/';
+  function showFlowPanel(){
     $('flowPanel').classList.remove('hidden');
+    const fr=$('armosFrame');
+    if(!fr.src)fr.src=ARMOS_APP_URL; // load only when first needed
+  }
+  function setTwinTab(which){
+    const armos=which==='armos';
+    $('tabArmos').classList.toggle('active',armos);
+    $('tabLocal').classList.toggle('active',!armos);
+    $('armosWrap').classList.toggle('hidden',!armos);
+    $('localWrap').classList.toggle('hidden',armos);
+  }
+  $('tabArmos').onclick=()=>setTwinTab('armos');
+  $('tabLocal').onclick=()=>setTwinTab('local');
+  // ---------- /ARMOS APP EMBED ----------
+
+  function renderFlow(timeline,status){
+    showFlowPanel();
     const done=new Set(timeline.map(t=>t.stage.replace(/ \(RP-\d+\)$/,'')));
     const routeEvents=timeline.filter(t=>t.stage.startsWith('ROUTE_REQUIRED'));
     const flow=$('flow');flow.innerHTML='';
