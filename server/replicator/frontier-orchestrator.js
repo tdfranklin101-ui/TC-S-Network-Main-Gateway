@@ -131,8 +131,10 @@ async function orchestrateMission(mission, requestedNodeId) {
     }
   }
 
-  if (mission.status !== 'WAITING_APPROVAL') {
-    // Orchestration did not reach the approval gate — surface loudly.
+  // Mark incomplete ONLY if the mission never reached the approval gate.
+  // (Approval may already have happened while the final summary round ran —
+  // never stomp an EXECUTING/COMPLETE/CANCELLED status.)
+  if (!mission.timeline.find(t => t.stage === 'WAITING_APPROVAL')) {
     mission.status = 'ORCHESTRATION_INCOMPLETE';
     mission.timeline.push({ stage: 'ORCHESTRATION_INCOMPLETE', at: new Date().toISOString() });
   }

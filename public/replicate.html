@@ -147,7 +147,8 @@ pre{background:#040910;border:1px solid rgba(56,189,248,.15);border-radius:10px;
   const EXAMPLES=["Build a table.","Build a large six-legged red table.","Build a stool.","Build a simple storage rack.","Build a geodesic structure."];
   const STAGES=["MARKETPLACE ORDER","MISSION INTENT","OPENAI FRONTIER ORCHESTRATOR","CAPABILITY DISCOVERY","NODE DISCOVERY","ENGINEERING REQUEST (ARMOS + GEMINI 3)","CREATION CAPSULE","WAITING_APPROVAL","APPROVED","FABRICATION","SCRAMBLE","PERCEPTION","ASSEMBLY","INSPECTION","REPLICATION_COMPLETE"];
   const $=id=>document.getElementById(id);
-  let missionId=null, pollTimer=null, mission=null;
+  let missionId=null, missionToken=null, pollTimer=null, mission=null;
+  const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
   const chipsEl=$('chips');
   EXAMPLES.forEach(t=>{const c=document.createElement('span');c.className='chip';c.textContent=t;c.onclick=()=>{$('intent').value=t;};chipsEl.appendChild(c);});
@@ -177,15 +178,15 @@ pre{background:#040910;border:1px solid rgba(56,189,248,.15);border-radius:10px;
     if(!c)return;$('capsulePanel').classList.remove('hidden');
     const kv=$('capsuleKv');
     const rows=[["Mission ID",c.mission_id],["Object",c.object_name],["Node",c.node.node_id+" · "+c.node.class+(c.node.dual_arm?" · DUAL-ARM":"")],["Node capabilities",c.node.capabilities.join(", ")],["Parts",c.totals.parts],["Fabrication est.",c.totals.fabrication_estimate_s+" s"],["Material est.",c.totals.material_estimate_kg+" kg"],["Energy est.",c.totals.energy_estimate_wh+" Wh"],["Scramble seed",c.scramble_seed],["Capsule hash",c.provenance.capsule_hash],["Specialist model",c.provenance.specialist_model],["Execution mode",c.execution_mode]];
-    kv.innerHTML=rows.map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join('');
-    $('partsWrap').innerHTML='<table class="parts-table"><tr><th>Part</th><th>Label</th><th>Connector</th><th>Tolerance</th><th>Geometry hash</th><th>Machine code</th></tr>'+c.parts.map(p=>`<tr><td>${p.part_id}</td><td>${p.label} (${p.color})</td><td>${p.connector}</td><td>±${p.tolerance_mm}mm</td><td class="mono">${p.geometry_hash.slice(0,16)}…</td><td class="mono">${p.machine_code_ref}</td></tr>`).join('')+'</table>';
+    kv.innerHTML=rows.map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('');
+    $('partsWrap').innerHTML='<table class="parts-table"><tr><th>Part</th><th>Label</th><th>Connector</th><th>Tolerance</th><th>Geometry hash</th><th>Machine code</th></tr>'+c.parts.map(p=>`<tr><td>${esc(p.part_id)}</td><td>${esc(p.label)} (${esc(p.color)})</td><td>${esc(p.connector)}</td><td>±${esc(p.tolerance_mm)}mm</td><td class="mono">${esc(p.geometry_hash.slice(0,16))}…</td><td class="mono">${esc(p.machine_code_ref)}</td></tr>`).join('')+'</table>';
     $('capsuleJson').textContent=JSON.stringify(c,null,2);
   }
 
   function renderResult(r){
     if(!r)return;$('resultPanel').classList.remove('hidden');
     const rows=[["Mission",r.mission_id],["Inspection",r.inspection.verdict+" · "+r.inspection.parts_inspected+" parts · "+r.inspection.critical_defects+" critical defects"],["Perception",r.perception.parts_rediscovered+" parts rediscovered after scramble (seed "+r.perception.scramble_seed+")"],["Dual-arm used",r.dual_arm_used?"YES":"no"],["Node",r.provenance.node_id],["Completed",r.provenance.completed_at],["Open-weight compute","RunPod · "+r.provenance.open_weight_compute.status+" · "+r.provenance.open_weight_compute.requests_routed+" requests routed"]];
-    $('resultKv').innerHTML=rows.map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join('');
+    $('resultKv').innerHTML=rows.map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('');
     $('resultJson').textContent=JSON.stringify(r,null,2);
   }
 
@@ -229,7 +230,7 @@ pre{background:#040910;border:1px solid rgba(56,189,248,.15);border-radius:10px;
       const r=await fetch('/api/replicator/mission',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
       const j=await r.json();
       if(!r.ok)throw new Error(j.error||'request failed');
-      missionId=j.mission_id;
+      missionId=j.mission_id;missionToken=j.control_token;
       renderFlow([{stage:'MARKETPLACE ORDER'},{stage:'MISSION INTENT'}],'ORCHESTRATING');
       poll();
     }catch(e){setStatus(e.message,true);}
@@ -238,11 +239,11 @@ pre{background:#040910;border:1px solid rgba(56,189,248,.15);border-radius:10px;
 
   $('btnApprove').onclick=async()=>{
     $('gatePanel').classList.add('hidden');setStatus('Approved — beginning simulated fabrication…');
-    try{await fetch('/api/replicator/mission/'+missionId+'/approve',{method:'POST'});poll();}
+    try{await fetch('/api/replicator/mission/'+missionId+'/approve',{method:'POST',headers:{'X-Mission-Token':missionToken}});poll();}
     catch(e){setStatus(e.message,true);}
   };
   $('btnCancel').onclick=async()=>{
-    try{await fetch('/api/replicator/mission/'+missionId+'/cancel',{method:'POST'});$('gatePanel').classList.add('hidden');setStatus('Mission cancelled.');}
+    try{await fetch('/api/replicator/mission/'+missionId+'/cancel',{method:'POST',headers:{'X-Mission-Token':missionToken}});$('gatePanel').classList.add('hidden');setStatus('Mission cancelled.');}
     catch(e){setStatus(e.message,true);}
   };
   $('btnDownload').onclick=()=>{if(missionId)window.location='/api/replicator/mission/'+missionId+'/capsule';};

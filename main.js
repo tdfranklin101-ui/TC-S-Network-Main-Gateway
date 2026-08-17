@@ -3883,6 +3883,10 @@ const server = http.createServer(async (req, res) => {
   if (pathname.startsWith('/api/replicator/')) {
     const jsonOut = (code, obj) => { res.writeHead(code, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(obj)); };
     try {
+      // Abuse controls: the mission POST triggers OpenAI + ArmOS calls, so it
+      // is per-IP rate limited and globally concurrency-capped.
+      if (!global.__replicatorLimiter) global.__replicatorLimiter = { perIp: new Map(), inFlight: 0 };
+      const RL = global.__replicatorLimiter;
       if (pathname === '/api/replicator/capabilities' && req.method === 'GET') {
         return jsonOut(200, { ...(await armosAdapter.getCapabilities()), model_router: { runpod_status: modelRouter.RUNPOD_STATUS, open_weight_inference_enabled: modelRouter.OPEN_WEIGHT_INFERENCE_ENABLED, providers: modelRouter.PROVIDERS } });
       }
@@ -3890,19 +3894,27 @@ const server = http.createServer(async (req, res) => {
         return jsonOut(200, await armosAdapter.getNodes());
       }
       if (pathname === '/api/replicator/mission' && req.method === 'POST') {
+        const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket.remoteAddress || 'unknown';
+        const now = Date.now();
+        const hits = (RL.perIp.get(ip) || []).filter(t => now - t < 10 * 60 * 1000);
+        if (hits.length >= 5) return jsonOut(429, { error: 'Rate limit: max 5 replication missions per 10 minutes.' });
+        if (RL.inFlight >= 3) return jsonOut(503, { error: 'Orchestrator busy — try again shortly.' });
+        hits.push(now); RL.perIp.set(ip, hits);
+        if (RL.perIp.size > 5000) RL.perIp.clear();
         const body = await parseBody(req) || {};
         const intent = String(body.intent || '').trim().replace(/[<>]/g, '').slice(0, 300);
         if (intent.length < 3) return jsonOut(400, { error: 'Provide a mission intent, e.g. "Build a table".' });
         const requestedNode = body.node_id && armosAdapter.NODES.find(n => n.node_id === body.node_id) ? body.node_id : null;
         const mission = armosAdapter.createMissionRecord(intent);
-        jsonOut(202, { mission_id: mission.mission_id, status: mission.status });
+        jsonOut(202, { mission_id: mission.mission_id, control_token: mission.control_token, status: mission.status });
         // Orchestrate asynchronously; client polls GET /api/replicator/mission/:id
+        RL.inFlight++;
         frontierOrchestrator.orchestrateMission(mission, requestedNode).catch(err => {
           console.error(`[REPLICATOR] Mission ${mission.mission_id} orchestration failed:`, err.message);
           mission.status = 'ORCHESTRATION_FAILED';
           mission.error = err.message;
           mission.timeline.push({ stage: 'ORCHESTRATION_FAILED', at: new Date().toISOString() });
-        });
+        }).finally(() => { RL.inFlight = Math.max(0, RL.inFlight - 1); });
         return;
       }
       const missionMatch = pathname.match(/^\/api\/replicator\/mission\/(TCSM-[A-F0-9]+)(\/(capsule|approve|cancel|status|result))?$/);
@@ -3910,10 +3922,15 @@ const server = http.createServer(async (req, res) => {
         const mission = armosAdapter.getMission(missionMatch[1]);
         if (!mission) return jsonOut(404, { error: 'Unknown mission.' });
         const sub = missionMatch[3];
+        // State-changing operations require the per-mission control token.
+        if ((sub === 'approve' || sub === 'cancel')) {
+          const provided = req.headers['x-mission-token'] || '';
+          if (provided !== mission.control_token) return jsonOut(403, { error: 'Invalid mission control token.' });
+        }
         if (!sub && req.method === 'GET') {
           // Live-refresh execution state before returning the record.
           if (mission.status === 'EXECUTING' || mission.status === 'REPLICATION_COMPLETE') await armosAdapter.getMissionStatus(mission.mission_id);
-          const { engineering, ...safe } = mission;
+          const { engineering, control_token, ...safe } = mission;
           return jsonOut(200, safe);
         }
         if (sub === 'capsule' && req.method === 'GET') {

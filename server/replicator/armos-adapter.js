@@ -294,13 +294,18 @@ function buildResult(m) {
   return {
     mission_id: m.mission_id,
     status: 'REPLICATION_COMPLETE',
+    execution_source: 'TC-S_LOCAL_SIMULATION', // NOT live ArmOS machine state:
+    // ArmOS exposes engineering only; execution runs in the adapter's declared
+    // simulator (capability execution_mode: SIMULATION).
     inspection: {
+      source: 'TC-S_LOCAL_SIMULATION',
       verdict: 'PASS',
       parts_inspected: c.parts.length,
       critical_defects: 0,
       tolerances_verified: c.parts.map(p => ({ part_id: p.part_id, tolerance_mm: p.tolerance_mm, within_tolerance: true }))
     },
     perception: {
+      source: 'TC-S_LOCAL_SIMULATION',
       scramble_seed: c.scramble_seed,
       parts_rediscovered: c.parts.length,
       identification: c.parts.map(p => ({ part_id: p.part_id, matched_geometry_hash: p.geometry_hash }))
@@ -328,9 +333,12 @@ async function getMissionResult(mission_id) {
 function getMission(mission_id) { return MISSIONS.get(mission_id) || null; }
 
 function createMissionRecord(intent) {
-  const mission_id = 'TCSM-' + crypto.randomBytes(4).toString('hex').toUpperCase();
+  // 96-bit random id (unguessable) + separate control token required for
+  // state-changing operations (approve/cancel).
+  const mission_id = 'TCSM-' + crypto.randomBytes(12).toString('hex').toUpperCase();
   const m = {
     mission_id,
+    control_token: crypto.randomBytes(16).toString('hex'),
     intent,
     status: 'ORCHESTRATING',
     created_at: new Date().toISOString(),
