@@ -200,6 +200,12 @@ async function createCapsule({ mission_id, intent, engineering, node_id }) {
       connector: piece.connector,
       dimensions_m: { max: +maxDim.toFixed(3) },
       orientation: piece.mount || { x: 0, y: 0, z: 0 },
+      // Sanitized geometry primitives from the authoritative ArmOS engineering
+      // result — lets clients render a digital twin of the real part shapes.
+      prims: (piece.prims || []).map(p => ({
+        kind: p.kind, x: +p.x || 0, y: +p.y || 0, z: +p.z || 0,
+        a: +p.a || 0, b: +p.b || 0, c: +p.c || 0
+      })),
       geometry_hash: geometryHash,
       grasp_regions: (piece.prims || []).map((p, j) => ({ region_id: `G${j + 1}`, kind: p.kind, offset: { x: p.x, y: p.y, z: p.z } })),
       machine_code_ref: `MC-${geometryHash.slice(0, 12)}`,
