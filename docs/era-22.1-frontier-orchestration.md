@@ -106,7 +106,8 @@ credential files.
 ## Note on the ArmOS repository
 
 The ArmOS Replicator itself runs as a standalone Replit app
-(`https://suspicious-pristine-struct.replit.app/`). GitHub preparation,
+(`https://suspicious-pristine-struct.replit.app/`), with its source on GitHub
+at `https://github.com/tdfranklin101-ui/tcs-replicator-armos`. GitHub preparation,
 `era-22.0` baseline tagging and `era-22.1-frontier-orchestration` development
 tagging for the ArmOS codebase must be performed inside that app's own
 workspace — it is not part of this repository.
