@@ -3939,6 +3939,20 @@ const server = http.createServer(async (req, res) => {
               'Ledger-derived completion recovery');
             state = await productionLedger.getRequest(pool, requestId);
           }
+          // Stranded remediation: charged IN_PRODUCTION but neither a mission
+          // route nor a digital output ever persisted (e.g. failure between the
+          // charge commit and route-event write on a crashed process). After a
+          // grace window, reverse the full charge so no buyer stays paid-with-
+          // nothing. refundProduction is idempotent (tx-checked inside lock).
+          if (state.status === 'IN_PRODUCTION' && !state.mission && !state.output && state.production_transaction_id) {
+            const chargedAt = (state.timeline.find(t => t.event === 'PRODUCTION_SOLAR_CHARGED') || {}).at;
+            const ageMs = chargedAt ? (Date.now() - new Date(chargedAt).getTime()) : Infinity;
+            if (ageMs > 120000) {
+              const refund = await productionLedger.refundProduction(pool, requestId, state, userId, 'No execution route persisted after charge — stranded request remediation');
+              state = await productionLedger.getRequest(pool, requestId);
+              state.refund_result = refund;
+            }
+          }
           // Physical route: reflect replicator mission progress + reconcile completion.
           if (state.mission && state.mission.mission_id && ['IN_PRODUCTION', 'COMPLETED_AWAITING_LEDGER_RECONCILIATION'].includes(state.status)) {
             const m = armosAdapter.getMission(state.mission.mission_id);
@@ -3990,11 +4004,20 @@ const server = http.createServer(async (req, res) => {
             // KID SOL → OpenAI frontier orchestration → ArmOS (Gemini 3).
             // Physical fabrication keeps the human approval gate: the mission
             // stops at WAITING_APPROVAL; execution stays labeled SIMULATION.
-            const missionIntent = (state.request.parameters && String(state.request.parameters.intent || '').trim())
-              || `Build a physical instance of ${state.request.root_title}`;
-            const mission = armosAdapter.createMissionRecord(missionIntent.slice(0, 300));
-            await productionLedger.writeEvent(pool.query.bind(pool), requestId, 'EXECUTION_ROUTED', userId,
-              { mission: { mission_id: mission.mission_id }, route: 'TC-S.REPLICATOR.ARMOS', execution_mode: 'SIMULATION' }, `Routed to Replicator mission ${mission.mission_id}`);
+            let mission;
+            try {
+              const missionIntent = (state.request.parameters && String(state.request.parameters.intent || '').trim())
+                || `Build a physical instance of ${state.request.root_title}`;
+              mission = armosAdapter.createMissionRecord(missionIntent.slice(0, 300));
+              await productionLedger.writeEvent(pool.query.bind(pool), requestId, 'EXECUTION_ROUTED', userId,
+                { mission: { mission_id: mission.mission_id }, route: 'TC-S.REPLICATOR.ARMOS', execution_mode: 'SIMULATION' }, `Routed to Replicator mission ${mission.mission_id}`);
+            } catch (routeErr) {
+              // Compensation: charge committed but the route never persisted —
+              // reverse every leg (idempotent) instead of stranding the buyer.
+              console.error(`[Production] Physical routing failed after charge for ${requestId}:`, routeErr.message);
+              const refund = await productionLedger.refundProduction(pool, requestId, state, userId, `Routing/persistence failed after charge: ${routeErr.message}`);
+              return jsonOut(502, { error: `Production routing failed: ${routeErr.message}`, refund });
+            }
             frontierOrchestrator.orchestrateMission(mission, null).catch(err => {
               console.error(`[Production] Mission ${mission.mission_id} orchestration failed:`, err.message);
               mission.status = 'ORCHESTRATION_FAILED';
