@@ -449,10 +449,57 @@ async function listRequestsForArtifact(pool, userId, artifactId) {
   return out;
 }
 
+/**
+ * Server-side stranded-request remediation. Scans the ledger for requests
+ * that were CHARGED but never routed to any execution (no EXECUTION_ROUTED,
+ * no DIGITAL_OUTPUT_CREATED) and never failed/refunded — the crash window
+ * between the charge commit and route persistence. Refunds them fully.
+ * Restart-safe (state is derived purely from the ledger) and idempotent
+ * (refundProduction re-checks its transaction id inside the buyer lock).
+ * Runs at boot and on an interval; does not rely on any client status read.
+ */
+async function remediateStranded(pool, graceMinutes = 2) {
+  const rows = (await pool.query(
+    `SELECT c.reference_id, c.account_id
+     FROM marketplace_ledger c
+     WHERE c.entry_type = 'event' AND c.reference_type = $1
+       AND c.metadata->>'event' = 'PRODUCTION_SOLAR_CHARGED'
+       AND c.created_at < NOW() - ($2 || ' minutes')::interval
+       AND NOT EXISTS (
+         SELECT 1 FROM marketplace_ledger e
+         WHERE e.reference_id = c.reference_id AND e.entry_type = 'event' AND e.reference_type = $1
+           AND e.metadata->>'event' IN ('EXECUTION_ROUTED', 'DIGITAL_OUTPUT_CREATED', 'PRODUCTION_FAILED', 'TRANSACTION_REFUNDED')
+       )
+     LIMIT 25`, [EVENT_REF_TYPE, String(graceMinutes)])).rows;
+  const results = [];
+  for (const r of rows) {
+    try {
+      const state = await getRequest(pool, r.reference_id);
+      if (!state || !state.production_transaction_id) continue;
+      const refund = await refundProduction(pool, r.reference_id, state, parseInt(r.account_id), 'No execution route persisted after charge — automatic stranded-request remediation');
+      if (refund.refunded) console.log(`⚖️ [Production] Stranded request ${r.reference_id} remediated: refunded ${refund.amount} Solar to member ${r.account_id}`);
+      results.push({ request_id: r.reference_id, ...refund });
+    } catch (e) {
+      console.error(`⚖️ [Production] Stranded remediation failed for ${r.reference_id}: ${e.message}`);
+    }
+  }
+  return results;
+}
+
+/** Boot + interval scheduling for the remediation scan. */
+function startRemediationWorker(pool, intervalMs = 5 * 60 * 1000) {
+  const run = () => remediateStranded(pool).catch(e => console.error('⚖️ [Production] Remediation scan error:', e.message));
+  setTimeout(run, 15000);          // shortly after boot (restart-safe recovery)
+  const t = setInterval(run, intervalMs);
+  if (t.unref) t.unref();
+  return t;
+}
+
 module.exports = {
   EVENT_REF_TYPE, pendingReconciliation,
   verifyOwnership, classifyCapability, computeQuote,
   createRequest, getRequest, chargeProduction,
   commitWithReconciliation, retryReconciliation, refundProduction,
-  chargeDelivery, listRequestsForArtifact, writeEvent, newId
+  chargeDelivery, listRequestsForArtifact, writeEvent, newId,
+  remediateStranded, startRemediationWorker
 };

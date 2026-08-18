@@ -1225,6 +1225,11 @@ try {
   pool = null;
 }
 
+// Durable stranded-production remediation: scans the ledger (boot + every
+// 5 minutes) for charged-but-never-routed requests and refunds them fully,
+// independent of any client status read.
+if (pool) productionLedger.startRemediationWorker(pool);
+
 async function normalizeCategoriesInDB() {
   if (!pool) return;
   try {

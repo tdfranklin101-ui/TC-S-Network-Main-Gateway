@@ -852,12 +852,17 @@
           if (!res3.ok) throw new Error(d3.error || 'Delivery failed');
           if (d3.new_balance !== undefined) document.getElementById('solar-balance').textContent = formatPrice(d3.new_balance) + ' Solar';
           prod.phase = 'delivered';
-          setProdStatus('Sealed and delivered (' + d3.status + '). Download your instance below, or make another at root cost S0.0000.', 'ok');
           btn.textContent = 'Make Another — Root S0.0000';
           btn.disabled = false;
-          var dl = document.createElement('a');
-          dl.href = '/api/production/' + prod.requestId + '/output';
-          dl.click();
+          if (d3.status === 'DIGITALLY_DELIVERED') {
+            setProdStatus('Sealed and digitally delivered. Your download is starting — or make another at root cost S0.0000.', 'ok');
+            var dl = document.createElement('a');
+            dl.href = '/api/production/' + prod.requestId + '/output';
+            dl.click();
+          } else {
+            // Physical route: SHIPPED (simulation-labeled fulfillment) — no digital download.
+            setProdStatus('Sealed and shipped (' + d3.status + ', simulation-labeled physical fulfillment). No digital download for physical instances — make another at root cost S0.0000.', 'ok');
+          }
           refreshProdState();
         } else if (prod.phase === 'awaiting_gate') {
           // Human approval gate for physical fabrication (execution stays
