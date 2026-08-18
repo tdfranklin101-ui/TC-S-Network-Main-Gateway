@@ -1,0 +1,1461 @@
+TC-S NETWORK — LEDGER-FIRST PRODUCTIVE ARTIFACT BRIDGE
+
+ERA 22.x MARKETPLACE → PRODUCTION INTEGRATION
+
+Upgrade the existing TC-S Network Marketplace, My Library, KID SOL orchestration, and production interfaces so that a purchased Marketplace artifact becomes a persistent productive intelligence asset capable of being instantiated through digital or physical production.
+
+Do NOT redesign the existing Marketplace.
+
+Do NOT create a parallel production marketplace.
+
+Do NOT create a second authoritative database of ownership or production state.
+
+Build this upgrade into the existing TC-S Network architecture.
+
+
+0. ABSOLUTE ARCHITECTURAL RULE — THE LEDGER IS REALITY
+
+The TC-S Network ledger is the system of record and source of truth.
+
+All transactions live in the ledger together with the assets being transacted.
+
+The Marketplace, My Library, KID SOL, Replicator, ArmOS, production services, rendering engines, agent memory, databases, caches, and user interfaces are participants in or views of ledger reality.
+
+They are NOT independent sources of truth.
+
+Use this governing rule:
+
+If it is not committed to the ledger, it did not happen.
+
+Every authoritative economic or asset transition must be represented in the ledger.
+
+This includes:
+
+artifact creation
+artifact listing
+artifact purchase
+ownership transfer
+buyer artifact copy
+production request
+production authorization
+production transaction
+produced instance
+sealing
+delivery
+shipping
+digital transfer
+provenance relationships
+refunds
+reversals
+failed transactions
+derived artifact creation
+The ledger should contain or reference both:
+
+the transaction
+the asset or assets transacted
+Do not treat the ledger as an after-the-fact audit log.
+
+The ledger defines network state.
+
+
+1. EXISTING SYSTEMS TO PRESERVE
+
+Build on the existing working systems:
+
+TC-S Network Marketplace
+Solar wallets
+double-entry Solar ledger
+Marketplace listings
+artifact transactions
+buyer artifact copies
+My Library
+KID SOL
+existing Marketplace agents
+TC-S specialist agents
+UIM capability layer
+digital production capabilities
+TC-S Replicator
+ArmOS
+Gemini 3 manufacturing inference
+Gemini 3 vision/perception inference
+Creation Capsule
+Replicator demonstration
+Cloud Nine demonstration
+existing provenance infrastructure
+Do not regress existing functionality.
+
+
+2. CORE ECONOMIC MODEL
+
+The member purchases the root artifact once.
+
+The purchased root artifact is the productive intelligence asset.
+
+It may contain or reference:
+
+prompt
+design intent
+structured instructions
+parameters
+creative specification
+engineering knowledge
+production recipe
+UIM metadata
+linked assets
+version information
+production rights
+Once the member owns that root artifact, the member does NOT repurchase it every time another instance is required.
+
+Instead there are three separate economic events:
+
+A. ROOT ARTIFACT PURCHASE
+
+Charged once when the artifact is purchased.
+
+B. PRODUCTION
+
+Charged separately in Solar when an approved production job actually begins.
+
+C. SEALING + DELIVERY
+
+Charged separately in Solar when approved fulfillment begins.
+
+This establishes:
+
+Buy the intelligence once. Produce what you need when you need it. Pay for the resources required to make and deliver each new instance.
+
+
+3. LEDGER ASSET MODEL
+
+Treat assets as first-class ledger entities.
+
+Conceptually support asset classes such as:
+
+ROOT_ARTIFACT
+ARTIFACT_COPY
+PRODUCTION_INSTANCE
+DIGITAL_OUTPUT
+PHYSICAL_OUTPUT
+CREATION_CAPSULE
+DELIVERY_PACKAGE
+DERIVED_ARTIFACT
+Each asset should have a persistent unique identifier.
+
+Example:
+
+{
+  "asset_id": "TCS-ART-000381",
+  "asset_class": "ROOT_ARTIFACT",
+  "asset_type": "PROMPT_INTELLIGENCE",
+  "creator_id": "member-or-agent-id",
+  "current_owner_id": "member-id",
+  "version": 1,
+  "status": "ACTIVE"
+}
+Do not rely only on UI copies to establish ownership.
+
+Ownership must be derivable from ledger state.
+
+
+4. TRANSACTIONS MUST REFERENCE ASSETS
+
+Every economic transaction should explicitly reference the asset or assets involved.
+
+Conceptually:
+
+{
+  "transaction_id": "TCS-TXN-xxxx",
+  "transaction_type": "ARTIFACT_PURCHASE",
+  "asset_ids": [
+    "TCS-ART-000381"
+  ],
+  "from_party": "seller-id",
+  "to_party": "buyer-id",
+  "solar_amount": "0.0042",
+  "status": "COMMITTED"
+}
+Production transactions should likewise reference:
+
+root artifact
+buyer-owned artifact
+production instance
+production quote
+Creation Capsule where applicable
+Delivery transactions should reference:
+
+production instance
+delivery package
+final recipient
+
+5. CURRENT MARKETPLACE PURCHASE FLOW
+
+Preserve the existing Marketplace transaction pattern.
+
+Conceptually:
+
+BUY ARTIFACT
+      ↓
+VALIDATE BUYER
+      ↓
+VALIDATE ASSET
+      ↓
+LEDGER TRANSACTION BEGINS
+      ↓
+DEBIT BUYER SOLAR
+      ↓
+CREDIT SELLER SOLAR
+      ↓
+TRANSFER / CREATE BUYER ASSET RIGHTS
+      ↓
+CREATE BUYER ARTIFACT COPY
+      ↓
+COMMIT LEDGER
+      ↓
+MY LIBRARY REFLECTS LEDGER STATE
+The buyer artifact copy must reference the original root artifact.
+
+Example:
+
+{
+  "asset_id": "TCS-COPY-000842",
+  "asset_class": "ARTIFACT_COPY",
+  "root_artifact_id": "TCS-ART-000381",
+  "owner_id": "buyer-id",
+  "production_rights": {
+    "enabled": true
+  }
+}
+The buyer’s library is a view of these ledger-backed assets.
+
+
+6. MY LIBRARY BECOMES A PRODUCTIVE-ASSET VIEW
+
+Do not turn My Library into a competing production database.
+
+My Library should query ledger-backed ownership and asset state.
+
+For production-enabled assets, add:
+
+PRODUCE
+
+Example:
+
+SIX-LEG TABLE
+
+ROOT ARTIFACT OWNED ✓
+
+Purchased once.
+Available for additional production.
+
+[ OPEN ]
+[ PRODUCE ]
+[ DOWNLOAD ]
+Selecting PRODUCE does NOT create another root-artifact purchase.
+
+
+7. KID SOL REMAINS THE TC-S ORCHESTRATOR
+
+KID SOL remains the user-facing Marketplace orchestration agent.
+
+Do not introduce a separate branded OpenAI agent to the user.
+
+Architecture:
+
+MEMBER
+   ↓
+KID SOL
+TC-S ORCHESTRATOR
+   ↓
+FRONTIER REASONING
+   ↓
+TC-S AGENTS
++
+UIM CAPABILITY DISCOVERY
+   ↓
+PRODUCTION SYSTEMS
+OpenAI currently provides frontier reasoning/orchestration intelligence to KID SOL.
+
+OpenAI does not become the TC-S identity.
+
+
+8. FRONTIER DIVERSIFICATION
+
+Preserve the architecture:
+
+KID SOL
+   ↓
+OPENAI
+Frontier orchestration
+   ↓
+TC-S AGENTS / UIM
+   │
+   ├── DIGITAL PRODUCTION
+   │
+   ├── ENGINEERING
+   │
+   ├── RENDERING
+   │
+   └── REPLICATOR / ARMOS
+                    ↓
+                 GEMINI 3
+          Manufacturing + Vision
+ArmOS currently uses Gemini 3 for:
+
+manufacturing reasoning
+engineering support where implemented
+machine perception
+vision
+spatial reasoning
+inspection
+assembly inference
+Do not replace Gemini 3 in ArmOS during this pass.
+
+
+9. RUNPOD
+
+Preserve all unpublished RunPod work.
+
+Update that code during this pass so it remains compatible with the current:
+
+model-router abstraction
+UIM architecture
+production orchestration interfaces
+ledger-first execution pattern
+Do not preserve stale incompatible code merely for archival purposes.
+
+Bring it forward architecturally, verify that its adapter still fits, and then leave:
+
+RUNPOD_STATUS = ON_HOLD
+OPEN_WEIGHT_INFERENCE_ENABLED = false
+No Marketplace production job should route to RunPod during this pass.
+
+
+10. PRODUCTION REQUEST
+
+When a member selects PRODUCE, KID SOL reads the owned artifact and discovers production capabilities.
+
+No Solar charge occurs simply because production options are requested.
+
+Create a ledger-backed production request.
+
+Conceptually:
+
+PRODUCTION_REQUEST_CREATED
+Reference:
+
+owner
+root artifact
+buyer artifact copy
+requested output
+requested quantity
+parameters
+timestamp
+The production request itself may be a ledger asset or ledger-linked state object.
+
+
+11. PRODUCTION CAPABILITY DISCOVERY
+
+KID SOL should inspect:
+
+artifact intelligence
+permitted production rights
+required output
+available TC-S agents
+UIM capabilities
+available production nodes
+user preferences
+node compatibility
+production constraints
+Production classes may include:
+
+SIMULATION
+DIGITAL_RENDER
+IMAGE
+VIDEO
+AUDIO
+3D_MODEL
+ENGINEERING_PACKAGE
+3D_PRINT
+PHYSICAL_FABRICATION
+ROBOTIC_ASSEMBLY
+HYBRID
+OTHER_REGISTERED_UIM_CAPABILITY
+Do not permanently hard-code production to these classes.
+
+Use capability discovery.
+
+
+12. PRODUCTION PLAN AND QUOTE
+
+KID SOL generates a production plan.
+
+Example:
+
+PRODUCTION PLAN
+
+Owned Artifact:
+Six-Legged Table
+
+Production:
+Physical Fabrication + Assembly
+
+Required:
+Engineering
+3D Geometry
+Replicator
+Fabrication Node
+Machine Vision
+Assembly
+Inspection
+
+Production Provider:
+TC-S Replicator / ArmOS
+
+Specialist Inference:
+Gemini 3
+
+Production Price:
+S0.xxxx
+
+STATUS:
+WAITING APPROVAL
+Create ledger-backed quote data.
+
+Recommended event:
+
+PRODUCTION_QUOTE_ISSUED
+No wallet transaction yet.
+
+
+13. PRODUCTION CHARGE OCCURS ONLY AT PRODUCTION START
+
+When the member approves production:
+
+PRODUCTION_APPROVED
+Still do not mark the asset as produced.
+
+Immediately before actual production resources begin to execute:
+
+PRODUCTION_STARTED
+Perform the Solar transaction atomically.
+
+Ledger transaction should reference:
+
+root artifact
+buyer artifact copy
+production instance
+production job
+Solar amount
+provider/capability
+Then record:
+
+PRODUCTION_SOLAR_CHARGED
+Do not permit production execution unless the ledger transaction successfully commits.
+
+
+14. PRODUCTION INSTANCE IS A NEW LEDGER ASSET
+
+Every execution creates a new production instance asset.
+
+Example:
+
+{
+  "asset_id": "TCS-INSTANCE-000042",
+  "asset_class": "PRODUCTION_INSTANCE",
+  "root_artifact_id": "TCS-ART-000381",
+  "source_copy_id": "TCS-COPY-000842",
+  "owner_id": "member-id",
+  "instance_number": 4,
+  "production_mode": "PHYSICAL_FABRICATION",
+  "status": "IN_PRODUCTION"
+}
+The new instance is distinct from the root artifact.
+
+The root intelligence survives indefinitely unless its rights say otherwise.
+
+
+15. ROOT → INSTANCE LINEAGE
+
+Maintain explicit ledger lineage:
+
+ROOT ARTIFACT
+     ↓
+BUYER-OWNED COPY
+     ↓
+PRODUCTION INSTANCE 001
+
+ROOT ARTIFACT
+     ↓
+BUYER-OWNED COPY
+     ↓
+PRODUCTION INSTANCE 002
+
+ROOT ARTIFACT
+     ↓
+BUYER-OWNED COPY
+     ↓
+PRODUCTION INSTANCE 003
+Every instance must be traceable to its root intelligence asset.
+
+
+16. DIGITAL PRODUCTION
+
+Support digital production through the same ledger-first architecture.
+
+Example:
+
+OWNED ROOT ARTIFACT
+      ↓
+PRODUCTION REQUEST
+      ↓
+KID SOL
+      ↓
+DIGITAL PRODUCTION CAPABILITY
+      ↓
+QUOTE
+      ↓
+APPROVAL
+      ↓
+LEDGER PRODUCTION TRANSACTION
+      ↓
+RENDER
+      ↓
+DIGITAL OUTPUT ASSET CREATED
+The rendered output should itself receive an asset ID.
+
+Example:
+
+TCS-DIGITAL-xxxx
+Then link:
+
+ROOT ARTIFACT
+→ PRODUCTION INSTANCE
+→ DIGITAL OUTPUT
+
+17. PHYSICAL PRODUCTION — ARMOS
+
+For Replicator-compatible artifacts:
+
+OWNED ROOT ARTIFACT
+      ↓
+KID SOL
+      ↓
+OPENAI ORCHESTRATION
+      ↓
+ENGINEERING
+      ↓
+UIM
+      ↓
+TC-S REPLICATOR / ARMOS
+      ↓
+GEMINI 3
+Manufacturing + Vision
+      ↓
+CREATION CAPSULE
+      ↓
+NODE COMPATIBILITY
+      ↓
+PRODUCTION APPROVAL
+      ↓
+LEDGER PRODUCTION CHARGE
+      ↓
+FABRICATION
+      ↓
+PERCEPTION
+      ↓
+ASSEMBLY
+      ↓
+INSPECTION
+      ↓
+PHYSICAL INSTANCE ASSET
+ArmOS reports execution facts.
+
+The ledger records authoritative network facts.
+
+
+18. ARMOS IS NOT THE SYSTEM OF RECORD
+
+ArmOS may maintain temporary mission execution state.
+
+That state is necessary operationally but is not the final TC-S source of truth.
+
+For example:
+
+ArmOS:
+PRINTING 63%
+
+ArmOS:
+ASSEMBLY COMPLETE
+
+ArmOS:
+INSPECTION PASS
+These are execution observations.
+
+Authoritative TC-S state becomes:
+
+LEDGER:
+PRODUCTION_COMPLETED
+only after successful reconciliation and commit.
+
+If ArmOS reports completion but the ledger write fails, do NOT show the network asset as authoritatively completed.
+
+Implement retry/reconciliation behavior.
+
+
+19. CREATION CAPSULE
+
+Preserve the existing Creation Capsule.
+
+For physical production it should contain or reference:
+
+root_artifact_id
+source_copy_id
+production_instance_id
+ledger_transaction_id
+production_job_id
+node
+parts
+dimensions
+materials
+geometry hashes
+orientations
+grasp regions
+fabrication estimates
+energy estimates
+machine-code references
+tolerances
+assembly graph
+success criteria
+scramble seed
+inspection results
+provenance
+The Creation Capsule is a production contract.
+
+The ledger is still the source of truth for ownership and transaction state.
+
+
+20. NODE ROUTING
+
+Preserve Era 22.x behavior:
+
+RP-0001
+ACCEPTED
+
+RP-0002
+ROUTE_REQUIRED
+
+RP-0003
+ACCEPTED
+DUAL_ARM
+If a production endpoint returns:
+
+ROUTE_REQUIRED
+KID SOL may discover another compatible production node.
+
+No completed production state should be written to the ledger until actual production succeeds.
+
+
+21. MAKE ANOTHER
+
+After successful production, add:
+
+MAKE ANOTHER
+
+This should verify ledger ownership of the root asset.
+
+Do NOT merely trust browser state.
+
+Flow:
+
+MAKE ANOTHER
+     ↓
+CHECK LEDGER OWNERSHIP
+     ↓
+ROOT ARTIFACT OWNED
+     ↓
+CREATE NEW PRODUCTION REQUEST
+     ↓
+NEW QUOTE
+     ↓
+APPROVAL
+     ↓
+NEW PRODUCTION TRANSACTION
+     ↓
+NEW INSTANCE ASSET
+Root artifact cost:
+
+S0.0000
+because the member already owns the intelligence.
+
+Production and delivery remain separately priced.
+
+
+22. PARAMETERIZED REPRODUCTION
+
+Allow permitted modifications.
+
+Examples:
+
+Make another in blue.
+
+Make two more.
+
+Make this version larger.
+
+Render it for vertical video.
+
+Produce only replacement leg #3.
+KID SOL determines whether the request represents:
+
+NEW_INSTANCE
+PARAMETER_VARIATION
+REPLACEMENT_COMPONENT
+DERIVED_ARTIFACT
+NEW_ENGINEERING_REQUIRED
+Ledger lineage must remain intact.
+
+
+23. DERIVED ARTIFACTS
+
+If a modification creates materially new reusable intelligence rather than merely a production parameter change, allow creation of:
+
+DERIVED_ARTIFACT
+Example lineage:
+
+ROOT ARTIFACT A
+      ↓
+DERIVED ARTIFACT B
+      ↓
+PRODUCTION INSTANCE
+Do not silently overwrite the root artifact.
+
+Preserve version and provenance relationships.
+
+
+24. SEALING + DELIVERY
+
+Production completion creates a produced instance asset.
+
+It does NOT automatically create delivery.
+
+After production:
+
+PRODUCTION_COMPLETED
+      ↓
+DELIVERY OPTIONS
+Delivery can be:
+
+DIGITAL
+
+file sealing
+packaging
+export
+archival preparation
+network transfer
+secure delivery
+download availability
+PHYSICAL
+
+finishing
+sealing
+packaging
+labeling
+handling
+logistics
+shipping
+Issue a separate quote:
+
+SEALING_DELIVERY_QUOTE_ISSUED
+No charge yet.
+
+After approval and immediately before fulfillment begins:
+
+SEALING_DELIVERY_STARTED
+Perform Solar transaction.
+
+Then:
+
+SEALING_DELIVERY_SOLAR_CHARGED
+
+25. DELIVERY CREATES OR UPDATES LEDGER ASSET STATE
+
+When delivered, update the ledger-backed instance state.
+
+Examples:
+
+DIGITALLY_DELIVERED
+PHYSICALLY_SHIPPED
+DELIVERED
+Where useful create a delivery asset:
+
+{
+  "asset_class": "DELIVERY_PACKAGE",
+  "production_instance_id": "TCS-INSTANCE-000042"
+}
+The final state must remain traceable through the ledger.
+
+
+26. THREE DISTINCT SOLAR TRANSACTIONS
+
+The architecture must maintain strict separation between:
+
+ROOT PURCHASE
+
+Artifact price
+PRODUCTION
+
+Inference
+Engineering
+Compute
+Energy
+Materials
+Machine time
+Rendering
+Robotic work
+Other resources
+SEALING + DELIVERY
+
+Packaging
+Finalization
+Digital transfer
+Storage
+Handling
+Logistics
+Shipping
+Never silently bundle later services back into the root artifact purchase.
+
+
+27. PRICING DISPLAY
+
+Example:
+
+ROOT ARTIFACT
+OWNED ✓
+
+Original purchase:
+S0.0040
+
+NEW INSTANCE PRODUCTION:
+S0.0142
+
+SEAL + DELIVERY:
+Not selected
+After delivery selection:
+
+ROOT ARTIFACT
+Already owned
+
+PRODUCTION:
+S0.0142
+
+SEAL + DELIVERY:
+S0.0021
+
+ROOT ARTIFACT REPURCHASE:
+S0.0000
+
+28. DOUBLE-ENTRY ACCOUNTING
+
+Continue using existing TC-S double-entry ledger principles.
+
+Every Solar movement must reconcile.
+
+Do not create production-specific balance logic outside the main ledger.
+
+Support appropriate parties such as:
+
+buyer
+seller
+production provider
+renderer
+fabrication node
+network fees
+reserves
+other existing TC-S distribution rules
+Reuse the existing economic architecture wherever possible.
+
+
+29. ATOMICITY AND IDEMPOTENCY
+
+Every financial transition must be idempotent.
+
+Never double-charge due to:
+
+refresh
+retry
+agent repeat call
+browser duplicate request
+network timeout
+ArmOS retry
+model retry
+Recommended transaction states:
+
+CREATED
+APPROVED
+COMMITTING
+COMMITTED
+FAILED
+REVERSED
+REFUNDED
+Use unique transaction/idempotency keys.
+
+
+30. FAILURE AND RECONCILIATION
+
+Example:
+
+Production debit commits
+↓
+ArmOS fails to start
+Do not leave a contradictory silent state.
+
+Use existing rollback/refund behavior or produce a ledger-backed remediation transaction.
+
+Likewise:
+
+ArmOS completes
+↓
+Ledger reconciliation temporarily fails
+Do not simply declare completion in Marketplace state.
+
+Retry ledger reconciliation.
+
+Expose status such as:
+
+COMPLETED_AWAITING_LEDGER_RECONCILIATION
+internally if required.
+
+Once reconciled:
+
+PRODUCTION_COMPLETED
+becomes authoritative.
+
+
+31. MARKETPLACE UI IS A LEDGER VIEW
+
+The Marketplace should derive:
+
+listing status
+owner
+purchase status
+production rights
+production instance count
+available fulfillment state
+from ledger-backed data.
+
+Avoid client-local authoritative assumptions.
+
+
+32. MY LIBRARY IS A LEDGER VIEW
+
+My Library should answer:
+
+What assets does this member own?
+from authoritative ledger ownership.
+
+Then display those assets.
+
+It should not independently establish ownership merely because an artifact exists in a separate table.
+
+
+33. KID SOL MUST USE LEDGER TO VERIFY OWNERSHIP
+
+Before KID SOL initiates production:
+
+VERIFY ROOT ASSET
+VERIFY MEMBER OWNERSHIP
+VERIFY PRODUCTION RIGHTS
+VERIFY ASSET STATUS
+Only then may it create the production request.
+
+Agent memory is not sufficient evidence of ownership.
+
+
+34. AGENT ACTIONS
+
+Agents may:
+
+interpret
+recommend
+engineer
+route
+quote
+invoke tools
+manage workflows
+Agents may not independently declare authoritative:
+
+ownership
+payment
+asset transfer
+completed production
+delivery
+Those require ledger-backed transitions.
+
+
+35. PROVENANCE IS LEDGER-LINKED
+
+Every production instance should preserve lineage such as:
+
+CREATOR
+  ↓
+ROOT ARTIFACT
+  ↓
+MARKETPLACE TRANSACTION
+  ↓
+BUYER COPY
+  ↓
+PRODUCTION REQUEST
+  ↓
+PRODUCTION TRANSACTION
+  ↓
+CREATION CAPSULE
+  ↓
+PRODUCTION INSTANCE
+  ↓
+DELIVERY TRANSACTION
+  ↓
+DELIVERED INSTANCE
+Use stable IDs so provenance can be traversed programmatically.
+
+
+36. PRESERVE REPLICATOR DEMONSTRATIONS
+
+Do not remove:
+
+Replicate This
+table demonstrations
+fabrication lifecycle
+Creation Capsule UI
+RP-0001
+RP-0002
+RP-0003
+recorded scramble
+perception
+assembly
+inspection
+provenance
+Cloud Nine
+These remain demonstration/reference experiences.
+
+Marketplace production should reuse the same underlying Replicator capabilities.
+
+
+37. CLOUD NINE
+
+Keep Cloud Nine operational as the system-scale demonstration of the same architecture.
+
+Cloud Nine illustrates:
+
+COMPONENT
+→ PRODUCT
+→ STRUCTURE
+→ ENVIRONMENT
+Do not force Cloud Nine into real production economics until those capabilities are actually available.
+
+
+38. UIM CAPABILITY ARCHITECTURE
+
+Do not create a one-off Marketplace → ArmOS connection.
+
+Use:
+
+OWNED LEDGER ASSET
+      ↓
+KID SOL
+      ↓
+PRODUCTION INTENT
+      ↓
+UIM CAPABILITY DISCOVERY
+      ↓
+PRODUCTION PROVIDER
+Potential providers:
+
+REPLICATOR_ARMOS
+DIGITAL_RENDER
+FUTURE_CNC
+FUTURE_LASER
+FUTURE_TEXTILE
+FUTURE_PCB
+FUTURE_DRONE_ASSEMBLY
+Only expose providers actually available.
+
+
+39. PROVIDER STATE VS LEDGER STATE
+
+Maintain the distinction:
+
+PROVIDER STATE
+"What is the machine doing?"
+
+LEDGER STATE
+"What happened in the TC-S Network?"
+Both matter.
+
+Only ledger state is authoritative for TC-S economic and asset reality.
+
+
+40. MODEL-INDEPENDENT ARCHITECTURE
+
+Do not make the root artifact dependent on OpenAI.
+
+Do not make the Creation Capsule dependent on Gemini.
+
+Do not make ownership dependent on KID SOL memory.
+
+Architecture:
+
+MODEL
+   ↓
+AGENT
+   ↓
+UIM
+   ↓
+CAPABILITY
+   ↓
+EXECUTION
+   ↓
+LEDGER COMMIT
+Models may change.
+
+Agents may change.
+
+Production providers may change.
+
+Ledger-backed assets and transactions persist.
+
+
+41. USER EXPERIENCE
+
+The complexity should remain mostly invisible.
+
+The member experiences:
+
+I bought this artifact.
+
+It is mine.
+
+I can make another whenever I need it.
+
+I choose Produce.
+
+KID SOL shows what can be made.
+
+I see the production Solar price.
+
+I approve.
+
+Production begins.
+
+My Solar pays for the resources used.
+
+When complete, I choose delivery.
+
+I pay the delivery Solar cost.
+
+The produced instance is now one of my ledger-backed assets.
+
+42. GBI ABUNDANCE MODEL
+
+The Marketplace should communicate:
+
+Buy the intelligence once. Produce what you need when you need it.
+
+Supporting idea:
+
+Your purchased artifact remains yours as a reusable productive asset. Future instances require only the Solar needed for new production and delivery.
+
+This is not unlimited free production.
+
+Production still consumes real resources.
+
+The abundance comes from:
+
+durable ownership of intelligence
+reusable designs
+agentic production
+renewable energy
+distributed production capability
+continuing Solar issuance
+
+43. LEDGER EVENT MODEL
+
+Support events equivalent to:
+
+ARTIFACT_CREATED
+ARTIFACT_LISTED
+
+ARTIFACT_PURCHASED
+ARTIFACT_COPY_CREATED
+OWNERSHIP_ESTABLISHED
+
+PRODUCTION_REQUESTED
+PRODUCTION_QUOTE_ISSUED
+PRODUCTION_APPROVED
+PRODUCTION_STARTED
+PRODUCTION_SOLAR_CHARGED
+
+PRODUCTION_INSTANCE_CREATED
+PRODUCTION_COMPLETED
+
+DELIVERY_QUOTE_ISSUED
+DELIVERY_APPROVED
+SEALING_DELIVERY_STARTED
+SEALING_DELIVERY_SOLAR_CHARGED
+
+SEALED
+SHIPPED
+DIGITALLY_DELIVERED
+DELIVERED
+
+DERIVED_ARTIFACT_CREATED
+
+TRANSACTION_REVERSED
+TRANSACTION_REFUNDED
+
+PROVENANCE_LINK_CREATED
+Use existing ledger structures where possible rather than proliferating unnecessary tables.
+
+
+44. TEST — LEDGER OWNERSHIP
+
+Purchase an eligible artifact.
+
+Verify:
+
+Marketplace transaction committed
+Solar debit/credit committed
+Asset ownership/copy recorded
+My Library reflects ledger ownership
+Then remove/ignore local UI state and reload.
+
+Expected:
+
+Ownership still derives correctly from the ledger.
+
+
+45. TEST — PRODUCE WITHOUT REPURCHASE
+
+Select PRODUCE.
+
+Expected:
+
+Ledger verifies ownership
+No new artifact purchase transaction
+Production request created
+Quote generated
+
+46. TEST — PRODUCTION QUOTE
+
+Create production plan.
+
+Expected:
+
+PRODUCTION_QUOTE_ISSUED
+Wallet unchanged.
+
+
+47. TEST — PRODUCTION START
+
+Approve.
+
+Expected:
+
+PRODUCTION_STARTED
+Solar production transaction committed
+Production instance asset created
+Execution begins
+Only one production debit.
+
+
+48. TEST — ARMOS
+
+Use Replicator-compatible artifact.
+
+Expected:
+
+KID SOL
+→ OpenAI
+→ UIM
+→ ArmOS
+→ Gemini 3
+→ Creation Capsule
+→ production
+→ inspection
+→ ArmOS result
+→ ledger reconciliation
+→ PRODUCTION_COMPLETED
+
+49. TEST — PROVIDER/Ledger DISAGREEMENT
+
+Simulate ArmOS completion with failed ledger commit.
+
+Expected:
+
+Marketplace must not falsely show authoritative completion.
+
+Retry reconciliation.
+
+Once committed:
+
+PRODUCTION_COMPLETED
+
+50. TEST — DELIVERY
+
+After production:
+
+issue delivery quote
+Wallet unchanged.
+
+After approval/start:
+
+delivery Solar transaction commits
+Then delivery status advances.
+
+
+51. TEST — MAKE ANOTHER
+
+Select MAKE ANOTHER.
+
+Expected:
+
+Ledger ownership verified
+Root artifact purchase cost = zero
+New production request
+New production transaction
+New production instance
+Root artifact remains unchanged.
+
+
+52. TEST — DIGITAL PRODUCTION
+
+Produce a digital asset.
+
+Expected:
+
+Root artifact
+→ production transaction
+→ production instance
+→ digital output asset
+→ delivery transaction
+→ delivered digital asset
+All lineage ledger-backed.
+
+
+53. TEST — RUNPOD
+
+Verify:
+
+RUNPOD_STATUS = ON_HOLD
+OPEN_WEIGHT_INFERENCE_ENABLED = false
+Verify its adapter matches the new orchestration architecture.
+
+No production request executes through it.
+
+
+54. GITHUB
+
+Continue preparing:
+
+tcs-replicator-armos
+
+as the Replicator/ArmOS production-capability repository.
+
+Do not make ArmOS the owner of Marketplace ledger logic.
+
+ArmOS reports execution.
+
+The TC-S Network ledger records authoritative asset and economic state.
+
+Preserve:
+
+era-22.0
+as the verified replication baseline.
+
+Update current development to reflect:
+
+frontier orchestration
+Gemini 3 ArmOS specialization
+Marketplace production integration
+UIM capability routing
+ledger-first reconciliation
+RunPod compatibility with ON HOLD status
+
+55. FINAL ARCHITECTURAL MODEL
+
+TC-S LEDGER
+SYSTEM OF RECORD
+      │
+      │ establishes ownership
+      ▼
+PURCHASED ROOT ARTIFACT
+      │
+      ▼
+MY LIBRARY
+ledger-backed view
+      │
+      ▼
+KID SOL
+TC-S orchestrator
+      │
+      ▼
+OPENAI + SPECIALIST AGENTS
+      │
+      ▼
+UIM CAPABILITY ROUTER
+      │
+ ┌────┴─────────────┐
+ ▼                  ▼
+DIGITAL           ARMOS
+PRODUCTION          │
+                    ▼
+                 GEMINI 3
+                    │
+                    ▼
+                EXECUTION
+ └──────────┬─────────┘
+            ▼
+      EXECUTION RESULT
+            │
+            ▼
+      TC-S LEDGER COMMIT
+            │
+            ▼
+    PRODUCED INSTANCE
+            │
+            ▼
+    SEALING + DELIVERY
+            │
+            ▼
+      TC-S LEDGER COMMIT
+            │
+            ▼
+       FINAL ASSET STATE
+
+FINAL RULE
+
+The implementation must never confuse:
+
+what an AI says happened
+
+with
+
+what the TC-S Network says happened.
+
+AI and production systems create observations and actions.
+
+The TC-S ledger establishes network reality.
+
+IF IT IS NOT IN THE LEDGER, IT DID NOT HAPPEN.
+
+And the economic principle remains:
+
+BUY THE INTELLIGENCE ONCE.
+
+PRODUCE ON DEMAND.
+
+PAY FOR NEW PRODUCTION.
+
+PAY FOR DELIVERY.
+
+RECORD THE ASSET AND EVERY TRANSACTION IN THE LEDGER.
+
